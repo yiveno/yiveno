@@ -1,7 +1,7 @@
 <script setup lang="ts">
 /**
- * Side Panel 冷启动全屏门禁：分阶段真实进度（import → rules → AI 尽力）。
- * 与可跳过的 Getting Started 分离；文案占位可后续微调。
+ * Side Panel 冷启动全屏门禁：分阶段真实进度（library align → rules → AI 尽力）。
+ * 书签 bulk 用户主进度在 Getting Started；本门禁 import 步为等待/对齐，非二次导入课。
  */
 import { computed } from 'vue'
 import AppLinearProgress from '@/infrastructure/ui/AppLinearProgress.vue'

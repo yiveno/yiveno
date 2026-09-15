@@ -14,10 +14,16 @@ import {
   getRecallOutcomeSettlePolicy,
   recallOutcomeCountsAsSettled
 } from '@/core/recall/recall-outcome-calibration'
-import { buildRecallOutcomePairRecord } from '@/core/recall/recall-outcome-pairs'
+import {
+  buildRecallOutcomePairRecord,
+  fingerprintRecallClue
+} from '@/core/recall/recall-outcome-pairs'
 import { flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { recordRecallSettle } from '@/infrastructure/messaging/background-client'
-import { appendRecallOutcomePair } from '@/infrastructure/storage/recall-outcome-pairs-storage'
+import {
+  appendRecallOutcomePair,
+  revokeTargetOutcomePairsForFingerprint
+} from '@/infrastructure/storage/recall-outcome-pairs-storage'
 
 /** 会话信号快照（Side Panel 组件内持有；关 Panel 丢弃）。 */
 export interface RecallOutcomeSessionState {
@@ -108,7 +114,15 @@ export async function commitRecallOutcome(input: {
 
   // §7.2 P3：本机持久化 (clue→target) / none 硬负例，供后续重排
   let pairPersisted = false
+  let targetPairsRevoked = 0
   try {
+    // None / dismiss：撤销同指纹脏正例（不回滚 settledCount）
+    if (event.label === 'none_in_results' && event.resultIds.length > 0) {
+      targetPairsRevoked = await revokeTargetOutcomePairsForFingerprint({
+        fingerprint: fingerprintRecallClue(event.effectiveClue),
+        deniedTargetIds: event.resultIds
+      })
+    }
     const pair = buildRecallOutcomePairRecord({
       effectiveClue: event.effectiveClue,
       label: event.label,
@@ -127,6 +141,7 @@ export async function commitRecallOutcome(input: {
     // 忽略：对写入失败不挡结算
   }
   logData.pairPersisted = pairPersisted
+  logData.targetPairsRevoked = targetPairsRevoked
 
   flowOk('RecallOutcome', '结算', startedAt, logData)
 

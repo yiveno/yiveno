@@ -28,6 +28,10 @@ export type Env = Cloudflare.Env & {
   AI_ENRICHMENT_PROXY_ENABLED?: string
   /** enrichment 提议按 IP 日调用上限（默认 80） */
   AI_ENRICHMENT_DAILY_LIMIT?: string
+  /** Getting Started 示意 clue 代理开关；"false" 关闭 */
+  AI_GS_CLUE_SAMPLES_PROXY_ENABLED?: string
+  /** GS 示意 clue 按 IP 日调用上限（默认 40） */
+  AI_GS_CLUE_SAMPLES_DAILY_LIMIT?: string
   /** embedding 按用户日调用上限（Pro，默认 500） */
   AI_EMBED_DAILY_LIMIT?: string
   /** embedding Free 日上限（默认 100） */

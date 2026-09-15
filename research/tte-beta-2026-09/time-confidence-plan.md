@@ -21,6 +21,7 @@
 4. ✅ Framing：low → `Around …,`（非 `Within`）
 5. ✅ 闭集 surface：`some time ago` → `a_while_ago`；`a long time ago` → `long_ago`
 6. ✅ 单测 + recall-eval must；MCP UI：high=`Within last week`；low=`Around a while ago` + postgres 邻域命中（对照原 T28 硬空）
+7. ✅ **2026-09-11 内容佐证例外：** high 硬筛后无 contentTerms 佐证 → 一次 soft 回退；权威见产品文档相对时间段 + ADR-011 后果段（本页非 Normative）
 
 ## 与采样关系
 

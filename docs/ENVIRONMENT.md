@@ -114,6 +114,7 @@ bun run env:check:prod
     - 若 Gateway 开启 Authenticated Gateway：另需 Secret `AI_GATEWAY_TOKEN`（`cf-aig-authorization`）；未配时 Worker 遇 401 会回退直连 DeepSeek
     - Handler 经 `resolveAiChatProvider(env)` 调用上游，业务不直连 DeepSeek 客户端
     - Capture enrichment：`POST /api/ai/enrichment/complete`；可选 `AI_ENRICHMENT_PROXY_ENABLED=false` 关闭；`AI_ENRICHMENT_DAILY_LIMIT`（默认 80，按 IP）
+    - Getting Started 示意 clue：`POST /api/ai/gs-clue-samples/complete`；可选 `AI_GS_CLUE_SAMPLES_PROXY_ENABLED=false` 关闭；`AI_GS_CLUE_SAMPLES_DAILY_LIMIT`（默认 40，按 IP）
 - `website`
   - 读取 `website/.env`
 

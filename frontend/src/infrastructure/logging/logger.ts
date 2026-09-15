@@ -1,3 +1,5 @@
+import type { LogScope } from '@/infrastructure/logging/log-scopes'
+
 /** Service Worker 与页面均可使用的轻量日志接口。 */
 type LogData = unknown
 
@@ -6,6 +8,20 @@ type LogData = unknown
  * warn/error 始终保留。开发构建（`import.meta.env.DEV`）全开。
  */
 const ENABLE_VERBOSE_LOG = import.meta.env.DEV
+
+/**
+ * 本地墙钟（`YYYY-MM-DD HH:mm:ss`），写入 console 首行。
+ * chrome://extensions 错误页只展示首行字符串，带时间戳便于对照发生时刻。
+ */
+export function formatLogTimestamp(now = new Date()): string {
+  const y = now.getFullYear()
+  const m = String(now.getMonth() + 1).padStart(2, '0')
+  const d = String(now.getDate()).padStart(2, '0')
+  const hh = String(now.getHours()).padStart(2, '0')
+  const mm = String(now.getMinutes()).padStart(2, '0')
+  const ss = String(now.getSeconds()).padStart(2, '0')
+  return `${y}-${m}-${d} ${hh}:${mm}:${ss}`
+}
 
 /**
  * 从第二参数提取可读错误摘要。
@@ -52,7 +68,7 @@ export function summarizeLogError(data: unknown): string | undefined {
 
 function write(
   level: 'debug' | 'info' | 'warn' | 'error',
-  scope: string,
+  scope: LogScope,
   message: string,
   data?: LogData
 ): void {
@@ -66,7 +82,7 @@ function write(
       line = `${message} — ${detail}`
     }
   }
-  const prefix = `[Yiveno:${scope}] ${line}`
+  const prefix = `[${formatLogTimestamp()}] [Yiveno:${scope}] ${line}`
   if (data === undefined) {
     console[level](prefix)
     return
@@ -75,8 +91,8 @@ function write(
 }
 
 export const logger = {
-  debug: (scope: string, message: string, data?: LogData) => write('debug', scope, message, data),
-  info: (scope: string, message: string, data?: LogData) => write('info', scope, message, data),
-  warn: (scope: string, message: string, data?: LogData) => write('warn', scope, message, data),
-  error: (scope: string, message: string, data?: LogData) => write('error', scope, message, data)
+  debug: (scope: LogScope, message: string, data?: LogData) => write('debug', scope, message, data),
+  info: (scope: LogScope, message: string, data?: LogData) => write('info', scope, message, data),
+  warn: (scope: LogScope, message: string, data?: LogData) => write('warn', scope, message, data),
+  error: (scope: LogScope, message: string, data?: LogData) => write('error', scope, message, data)
 }

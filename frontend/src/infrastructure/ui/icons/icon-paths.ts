@@ -34,6 +34,7 @@ export const APP_ICON_NAMES = [
   'open_in_new',
   'package',
   'refresh',
+  'shuffle',
   'settings',
   'stacks',
   'triangle_alert'
@@ -73,6 +74,7 @@ export const APP_ICON_LUCIDE_SOURCE: Record<AppIconName, string> = {
   open_in_new: 'ExternalLink',
   package: 'Package',
   refresh: 'RefreshCw',
+  shuffle: 'Shuffle',
   settings: 'Settings',
   stacks: 'Layers',
   triangle_alert: 'TriangleAlert'
@@ -266,6 +268,13 @@ export const APP_ICON_NODES: Record<AppIconName, readonly AppIconNode[]> = {
     ['path', { d: 'M21 3v5h-5' }],
     ['path', { d: 'M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16' }],
     ['path', { d: 'M8 16H3v5' }]
+  ] as const,
+  shuffle: [
+    ['path', { d: 'm18 14 4 4-4 4' }],
+    ['path', { d: 'm18 2 4 4-4 4' }],
+    ['path', { d: 'M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22' }],
+    ['path', { d: 'M2 6h1.9c1.5 0 2.9.9 3.6 2.2' }],
+    ['path', { d: 'M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8' }]
   ] as const,
   settings: [
     [

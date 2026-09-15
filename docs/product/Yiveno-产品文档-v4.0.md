@@ -16,32 +16,63 @@
 
 **Yiveno 是那个找东西的。**  
 看到好东西，划一下、存一下，**扔进你的仓库**；过阵子只记得一点点，**找 Yiveno 要就行**。  
-（工程口径仍称「个人信息寻回系统」；对外心智优先 **「那个找东西的」** / 「帮你在仓库找东西」。**「记忆硬盘」仅作对内隐喻**，不得当作对外主 slogan，也不得暗示每次替用户做终审、零失误神谕。）
+（工程口径仍称「个人信息寻回系统」；对外心智优先 **「那个找东西的」** / **find things** / 「帮你在仓库找东西」。早期履约句可用 _Find what you saved_。**「记忆硬盘」仅作对内隐喻**，不得当作对外主 slogan，也不得暗示每次替用户做终审、零失误神谕。）
 
 **工程/市场等价表述（对内 · Normative）：** 与竞品、投资人沟通时可等价称为 **Personal Knowledge Retrieval（个人知识召回）**——用户**主动 Capture** 的个人痕迹，经口语线索被**可靠找回并带可验证来源**，不是 AI 书签管理器、不是 PKM 编辑器、不是生活助理。长期平台形态（仅在本品命题与留存验证后）可演进为 **User-authorized Context Layer for AI（用户授权的 AI 上下文层）**；**当前不得**当作对外主 slogan 或 sprint 范围。竞争与市场的一手研究见仓库 **`yiveno_research/`**（证据与坐标为 Non-normative；**已吸收进本文 Normative 的结论以本文为准**）。
 
-**对外最短印象（Normative · 防跑题）：** 用户心里只应留下一句——**「那个找东西的」**。  
+**对外最短印象（Normative · 防跑题）：** 用户心里只应留下一句——**「那个找东西的」**（英：_the one that finds things_ / _Find what you saved_）。  
 不是个人助理、不是整理器、不是第二大脑全能壳、不是「好像啥都做」、不是「永远押中那一条的 AI」。做产品最忌写跑题：印象一散，用户既记不住你，也不再信任找回承诺。  
 **筛功能唯一题干：** 是否让「随便说一点 → 走进自己存过的东西的邻域、并带上明确建议」更稳、更快、更可信？答不清 → 不做主路径。
+
+#### things 一语双关与可选后手（Normative · 2026-09-11 · ADR-012）
+
+> **定位句从始至终不变。** _things_ 宽语义是**品牌后手**（可加厚外延），**不是**必须走完的「工具→记忆」固定路线——是否翻牌、何时加厚，**视发展再定**。
+
+**why「找东西 / find things」留得住：** _things_（与中文「东西」）在普世认知里，**既**可指书签、摘录、文件、视频，**也**可指对话、回忆、喜好等。当前借大众默认义进门（工具心智）；若日后痕迹与能力够了，同一句定位**可以**翻开深层义——用户感到顿悟式升级而非跨行。**可以 ≠ 必须。**
+
+| 层                   | 用户当下听到的                           | 产品态度                                          |
+| -------------------- | ---------------------------------------- | ------------------------------------------------- |
+| **表层（当前入口）** | 帮我找存过的书签 / 摘录 / 文件 / 视频    | **必达履约**：口语 → 邻域；工具换用量与痕迹       |
+| **深层（可选后手）** | 帮我找回那段记忆 / 喜好 / 对我意味着什么 | **有交付才启用**；燃料 = 用户附着痕迹，非模型脑补 |
+
+**战略危险（必须诚实承认）：** 「AI 口语找已存内容」会变成手机相册、网盘、浏览器、系统助手的**基础能力**——本质是可商品化的 retrieval / search。**内容层找东西不值得当长期护城河押注。**
+
+**护城河分层（Normative）：**
+
+|                | **内容语义（可商品化）**             | **记忆语义（难复制）**                       |
+| -------------- | ------------------------------------ | -------------------------------------------- |
+| 例：海边夕阳照 | 栏杆、夕阳、海鸥——任意多模态 AI 可认 | 「去年跟男朋友在海边的那次」——只在用户痕迹里 |
+| 谁都能做       | 识别 + 通用检索                      | 关系、情境、情绪、时间线等**私有增量**       |
+| 战略态度       | 当前入口与履约必要，**不是**终局壁垒 | 私有增量上的表达；**非**「做记忆就免疫 AI」  |
+
+**终局壁垒（斧正 · Normative）：** 用户**不愿迁走的私有增量 + 找回习惯 + 信任**。记忆层若出现，只是该资产的产品表达——**不是**「Search 升级成 Memory」的品类跳跃，也不是存活的必要条件（后手永不启用，邻域极爽 + 本地可信仍可成立）。
+
+**当前怎么做（必达）vs 后手（可选）：**
+
+1. **当前（工具履约）：** _Find what you saved_；口语 → 邻域。文案锋利；_things_ 勿说死成仅文件/书签搜索；**禁止**提前主打人生记忆产品。工具期就要让摘录/附注当主角——否则后手无燃料（见 ADR-012 斧正纪律）。
+2. **中段（库复利）：** 痕迹变厚、附注/打开/Outcome 进排序（与下方库状态发育同向）。
+3. **后手（可选外延）：** 仅当痕迹、§5.9/留存与竞争格局支持时，才考虑加厚 things 外延或启用翻牌句；**到时再定，不预支承诺。**
+
+**预留翻牌句（Non-normative · 未启用 · 后手）：** _Why should things just be things?_ ——无交付则只作对内战略语言；**当前不得**写进官网 hero / 扩展主 slogan / CWS 主描述。斧正细则（双关≠路径、传感器天花板、终局叙事≠可糊召回等）见 [ADR-012](../architecture/decisions/ADR-012-find-things-dual-meaning.md)，本文不重复。
 
 **存要轻松，找要准、要爽。** 就这两件事。
 
 **立身之本（Normative）：** 用户浏览时**天然会按兴趣筛内容**——哪些有意思、哪些无聊，不需要产品培养。真正的鸿沟在 **「这次感兴趣」→「下次还想找回来」**：传统做法要求用户认真保存、放进指定目录，下次才「有可能」很快找到——这是严重的心智负担。用户心里真正想要的是：**随便存，随时找得到**。  
-Yiveno 卖的就是这份 **超轻心智负担 + 永久踏实感**：扔进来不用想放哪；想不起来也找得着。**没这份爽，就没有立身之本。**
+Yiveno 卖的就是这份 **超轻心智负担 + 永久踏实感**：扔进来不用想放哪；想不起来也找得着。**没这份爽，就没有立身之本。**（当前爽点落在工具履约；长期可迁移的壁垒落在私有增量与习惯——记忆层外延是加分后手，不是替代履约的借口。）
 
 **不是**书签管理器，**不是**笔记整理工具，**不是**开放式聊天机器人，**不是**「AI 自动帮你归类一切」。  
-业务其实简单；复杂的是体验。没有文件夹体系、没有功能清单可以当护城河——**若没实质性解决「找不到」的痛、没让人在第一屏邻域里感到「对，就在这附近 / 就是这个」的爽，这个产品就没有立身之本。**
+业务其实简单；复杂的是体验。没有文件夹体系、没有功能清单、也**没有「通用 AI 搜得更准」**可以当护城河——**若没实质性解决「找不到」的痛、没让人在第一屏邻域里感到「对，就在这附近 / 就是这个」的爽，这个产品就没有立身之本；若只有内容检索而无个人痕迹厚度，长期会被平台级找东西能力压扁。**
 
-**发育路线（前期最难，后期才稳）：**
+**发育路线（库状态 · 前期最难，后期才稳）：**
 
 1. **开头**：库空或弱锚点时，自然语言往往对不上——**库状态上的谷底是正常现象**（没存过就找不到，随机甩一条才是致命 bug）。但**第一天产品体验不得用「发育型」合理化成破体验**：须有诚实空态、极低负担 Capture、尽快一次成功找回。
 2. **中段**：语料变厚、打开与反馈开始进排序——越用越准，复利开始转。
-3. **后期**：切换成本与成对习惯长成——「看到有意思就先扔 Yiveno」+「想不起来就先开 Yiveno」——流失下降。这是**前期发育、后期变强**的路线，不是上线一堆功能就赢。
+3. **后期**：切换成本与成对习惯长成——「看到有意思就先扔 Yiveno」+「想不起来就先开 Yiveno」——流失下降；things 外延**仅作可选后手**（ADR-012）。这是**前期发育、后期变强**的库状态路线，不是上线一堆功能就赢，也不是必须翻牌。
 
 **因此：Yiveno 注定是持续发育型产品（越用越好用）；上限短期受「库里有无可对齐的个人痕迹」强约束。**  
-前期用体验买数据与习惯；后期用数据与习惯锁体验。做功能、接模型、上云同步、接第三方语料，都只能服务「找东西」；反过来用功能堆砌、管理回潮、开放式闲聊、助理人设、同步中台叙事来「显得完整」，就是偏航。
+前期用体验买数据与习惯；后期用数据与习惯锁体验；things 外延加厚仅为**可选后手**（ADR-012）。做功能、接模型、上云同步、接第三方语料，都只能服务「找东西」；反过来用功能堆砌、管理回潮、开放式闲聊、助理人设、同步中台叙事、或**用通用 AI Search 叙事冒充记忆护城河**来「显得完整」，就是偏航。
 
-一句话（给实现与文案用）：Yiveno = **扔进就记着 + 想找就找得着**（工程分解：**Capture 低负担 + Recall 高置信邻域**）。  
+一句话（给实现与文案用）：Yiveno = **扔进就记着 + 想找就找得着**（工程分解：**Capture 低负担 + Recall 高置信邻域**）；品牌句 = **找东西 / find things**（双关为后手，见上）。  
 **北极星（Normative · 2026-08 纠偏）：** 模糊线索 → 第一屏进入**正确邻域**；交付是**按符合度排序的相关集合**（告知总数 N；**首屏默认 ≤5**，可 Show more），**不是**神谕式唯一 Top1。最终选择在用户。会话成功 = 用户在邻域（含续展）里拿到了想要的；头名命中是 delight，**不是唯一 KPI**，也**不得**因目标在第 2/3 名而判产品失败。
 
 **体验质量共指标（Normative · 2026-08 市场对齐）：** 邻域命中仍是**会话履约**主尺；须并列追踪 **Verified Retrievals per WAU**（每周活跃用户中，经**打开来源/原文/保存副本**确认找回成功的次数）与 **TTE-V**（从提交模糊线索到**首次看见可自验证据单元**的时间；定义见 §5.9）。**禁止**用「模型更快说完一句话」替代 verified retrieval。**Normative 纪律：** verified retrieval / TTE 未持续改善前，不得扩大 memory、自主 Agent 或连接器面。
@@ -76,8 +107,9 @@ Yiveno 卖的就是这份 **超轻心智负担 + 永久踏实感**：扔进来�
 
 #### 用户心智（Normative）
 
-对外承诺的一句话：**Yiveno 是那个找东西的**（仓库里帮你找；记得一点就能要）。  
-「记忆硬盘」可作对内/工程隐喻，**不得**写成对外唯一承诺句，也不得暗示零失误回忆。
+对外承诺的一句话：**Yiveno 是那个找东西的**（英：_find things_ / 早期履约 _Find what you saved_；仓库里帮你找；记得一点就能要）。  
+「记忆硬盘」可作对内/工程隐喻，**不得**写成对外唯一承诺句，也不得暗示零失误回忆。  
+**things 双关见 §0.1 / ADR-012：** 用户可把 things 听成「存过的内容」；产品不纠正、不摊牌。外延加厚与翻牌是**后手、视发展再定**——**禁止**对外承诺「我们一定会做成记忆产品」，也**禁止**另起第二心智。
 
 | 阶段     | 用户感受                           | 产品职责                                                                     |
 | -------- | ---------------------------------- | ---------------------------------------------------------------------------- |
@@ -286,22 +318,28 @@ Chrome 书签只有标题、URL、文件夹位置——用户存一个网页时�
 
 #### 核心资产（谁是主角）
 
-Yiveno 的不可替代资产 **不是** Chrome 书签 URL，**也不是**用户从零写的长文笔记。
+Yiveno 的不可替代资产 **不是** Chrome 书签 URL，**也不是**用户从零写的长文笔记，**更不是**「比竞品更准的通用 AI 内容检索」。
 
 **核心资产 = 用户在消费互联网信息时，附着在原文上的个人痕迹**（摘录、短附注/`clues.note`、以及将来极瘦的标记类能力）：
 
 - 有**出处锚**（页面 / URL / 域 / 上下文）；
-- 有**个人增量**（划下的句子、自己的话）——Google 索引里没有「你的那条」；
+- 有**个人增量**（划下的句子、自己的话）——Google 索引里没有「你的那条」；任意相册/网盘 AI 也没有「去年跟男朋友在海边」这种**只对你成立**的记忆语义；
 - 在库内有稳定 **MemoryItem id**（工程身份；勿对外当卖点话术）。
 
-一句话：**引用公共信息 + 创造私有增量。** 护城河长在私有增量与找回习惯上，不长在文件夹整齐或模型品牌上。
+一句话：**引用公共信息 + 创造私有增量。**  
+**护城河长在私有增量、找回习惯与信任上**——不长在文件夹整齐、模型品牌，或「AI 找东西」品类本身；记忆层外延若启用，只是该资产的表达（ADR-012），**不是**必须翻的牌。
 
-| 知识形态                | 角色                  | 说明                                                                                                    |
-| ----------------------- | --------------------- | ------------------------------------------------------------------------------------------------------- |
-| **摘录 `text_excerpt`** | **主角**              | 主动 Capture；对 Google 有非对称优势；存/找叙事与 demo 优先用它                                         |
-| **`clues.note` 附注**   | **强线索 / 私有增量** | 可挂在摘录或书签上；是「自己的话」，不是独立笔记库；**书签侧经记忆库树编辑，像给好友加附注**            |
-| **书签 `bookmark`**     | **配角**              | 导入 + 原生 sync 灌库；价值在 URL + **私人附注层**；冷门/私有 URL 偶发有用；**不得**当知识主力与主 demo |
-| **独立 `note` 类型**    | **禁区（当前）**      | 空白创作 → Notion 赛道；见 §0.4；未验证前不得暗示已有                                                   |
+| 知识形态                | 角色                  | 说明                                                                                                                                                                                    |
+| ----------------------- | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **摘录 `text_excerpt`** | **主角**              | 主动 Capture；对 Google 有非对称优势；**长期**存/找叙事与护城河优先用它                                                                                                                 |
+| **`clues.note` 附注**   | **强线索 / 私有增量** | 可挂在摘录或书签上；是「自己的话」，不是独立笔记库；**书签侧经记忆库树编辑，像给好友加附注**；亦为可选后手攒燃料                                                                        |
+| **书签 `bookmark`**     | **配角（库存）**      | 用户**自带**；**经启动设置明示同意后**灌库（默认关）；**day-0 履约燃料**；价值在 URL + **私人附注层**；冷门/私有 URL 偶发有用；**不得**当长期护城河主叙事，但**得**当冷启动首召履约燃料 |
+| **独立 `note` 类型**    | **禁区（当前）**      | 空白创作 → Notion 赛道；见 §0.4；未验证前不得暗示已有                                                                                                                                   |
+
+**两种来源 × 召回能力（Normative · 2026-09-14）：** 对 Hybrid / 关键词等**核心召回能力**，书签与摘录都是 `MemoryItem`，**引擎侧无本质差别**。差别在**时间与资产**：书签 = 用户带来的即时库存；摘录 = 安装后积累的私有增量。  
+**演示顺序 ≠ 资产重要性：** 证明「能找回」优先用已有书签；摘录主角仍指**终局壁垒与非对称优势**，不是「首日必须先造一条摘录再召回」。
+
+**内容语义 vs 记忆语义（对内纪律）：** enrichment / 多模态可写「图里有什么」（内容层）；**不得**把通用识别结果包装成「我们懂你的人生」。记忆层只认用户附着与可验证库内事实。
 
 #### 价值边界（两个替代品）
 
@@ -647,7 +685,15 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 - **low**：糊时间印象 → **禁止**仅因时间硬切导致邻域空 / 轻易 `no_match`；中心窗内软加分，窗外可留在邻域。Framing：high 用 Within；low 用 Around。
 - **刚存**（`recently_saved` 且无显式 timeLabel）：合成 `recent` 窗时按 **high** 处理（用户在说「刚存」，非糊远距）。
 
-NA 分立：`a while ago` / `some time ago` → 数周；`a while back` → `few_months_ago`（常偏数月）。改窗宽、confidence 表或增 label → 同批改 lexicon + LLM enum + 本表 + ADR-011。
+**内容佐证门 × 硬筛空/弱窗（Normative · 2026-09-11 · ADR-011 例外）：**  
+优先级：**禁止甩无关**（见上节空结果）**>** 日历硬筛 **>** 弱语义填屏。当 `contentTerms` 非空时：
+
+1. 邻域候选必须对至少一个 contentTerm 在条目索引字段（title / textExcerpt / excerptContext / pageTitle / summary / domain / url / keywords / tags / **note**）上有**词面佐证**（与 keyword-filter 归一/折叠同规；**禁止**内容别名表）。不得仅靠弱 embedding / `hybridRrf` / `outcomePair` / 类型·时间加成交付邻域。
+2. **high 仍先硬筛**。硬筛 + 佐证门后池空 → **同一 clue 内容优先回退一次**：时间按 soft（不硬切窗外；窗内仍可软加分），Framing 用 **Around** 并诚实提示时间可能不准；只接受有佐证的命中。仍空 → 诚实 `no_match`。
+3. **无 contentTerms**（纯类型/时间/刚存）：不启用本门，避免误伤约束邻域。
+4. 回退最多 **1** 次；禁止无限扩窗。
+
+NA 分立：`a while ago` / `some time ago` → 数周；`a while back` → `few_months_ago`（常偏数月）。改窗宽、confidence 表、佐证门或回退 → 同批改 lexicon + LLM enum + 本表 + ADR-011 + must。
 
 **Capture enrichment 应能承接的 recall 关键词（English canonical 示例）：**
 
@@ -673,7 +719,7 @@ NA 分立：`a while ago` / `some time ago` → 数周；`a while back` → `few
 **P0 做（有记忆锚点）：**
 
 - 数据：规则 enrichment（高频站 / 标题类型词面 / recall 导向英文 keywords；**无**主题·实体 seed）+ 用户附注；写回 `tags` / `keywords`（`entities` 规则层为空，可由 LLM enrichment 补）— **新建已接入**；**存量经 `ensureMemoryEnrichmentBackfilled` 启动回填（版本幂等，当前 v5：`clip` 仅线索侧；正文不因 clip 打 video；scrub 存量误标）**
-- 编排：约束软加权 + **`timeRange` 按 timeConfidence 硬筛或软排（ADR-011）** + keyword-filter + 线索置信度决策 — **`recallByKeywordWithParsedClue` 已接入 Hybrid 降级路径**；**追问：仅 `need_a_clue` 走 LLM NLG（`assistantFollowUp`）；`no_match` 诚实终局、无规则缺槽问卷**
+- 编排：约束软加权 + **`timeRange` 按 timeConfidence 硬筛或软排（ADR-011）** + **内容佐证门（`contentTerms` 非空）** + 硬筛空窗一次 soft 回退 + keyword-filter + 线索置信度决策 — **`recallByKeywordWithParsedClue` 已接入 Hybrid 降级路径**；**追问：仅 `need_a_clue` 走 LLM NLG（`assistantFollowUp`）；`no_match` 诚实终局、无规则缺槽问卷**
 - Query：时间词、对象类型词、附注指向、弱行为词 → 结构化约束；内容实体先当关键词 — **`parseRecallClue` 已落地**（词典以真实英语口语为主，见「市场语言策略」典型语料）
 - Enrichment：域名 / 对象类型词面 + **recall 导向英文 keywords**（如 `listen` `tutorial` `repo`）；写回 `tags` / `keywords`；**规则层不写专名 `entities`**
 - **LLM enrichment 插座（已接线·稀疏异步）**：提议 Zod（`MemoryEnrichmentProposal`）+ merge（`mergeMemoryClueEnrichment`：existing → rule → proposal；`summary` 仅空槽；永不写 `note`/`embedding`）+ Worker `POST /api/ai/enrichment/complete`；Capture 经 `memoryItemService` **新建**落库后 `scheduleAsyncMemoryLlmEnrichment`（串行队列；已有 summary / 信号过短跳过；bulk `putMany`/repository 续传不经 service 故不烧配额）；失败降级保留规则层；**不改 `updatedAt`**
@@ -711,26 +757,31 @@ NA 分立：`a while ago` / `some time ago` → 数周；`a while back` → `few
 
 #### 隐患清单与规避（决策自检）
 
-| 隐患                           | 若放任的后果                         | 规避                                                   |
-| ------------------------------ | ------------------------------------ | ------------------------------------------------------ |
-| 用查阅类书签当主 demo / 主叙事 | 被 Google 压死，价值证伪             | demo 与文案主角 = 摘录或「自己的话」                   |
-| 叙事滑成「完全失忆」(A)        | 需求显得极窄                         | 对外坚持 B：残缺线索找回个人痕迹                       |
-| 早期做书签自动整理             | 滑入管理器，稀释寻回                 | 已否决；爽点做在抓住感与找回承诺                       |
-| 推独立笔记创作                 | 进 Notion 红海                       | 只做附着标记；独立 `note` 维持 §0.4                    |
-| 无线索体感、只堆无形 clues     | 用户当下无正向反馈                   | 存侧可感知反馈与尽早一次找回成功                       |
-| 过早 LLM / AI 主卖点           | 战场错位、伤信任                     | 先反馈排序；LLM 可关且非主体                           |
-| 把对话做成开放式闲聊           | 主任务失焦、成本失控                 | 只允许围绕 Recall 线索澄清与结果推进                   |
-| 滑成「生活小助手」             | 范围无限、偏离「找东西的」           | 只找回库内痕迹；禁零锚点助手 demo                      |
-| 全库喂 LLM 当检索              | 成本/幻觉/隐私/不可测                | 先检索候选再（可选）喂模型；答案必须有 id              |
-| LLM 直接执行查插改删           | 幻觉当事务、不可测、难回滚           | 只允提议→Zod/门禁→确定性代码；见数据平面边界           |
-| 服务「几乎不 Capture」的大众   | 库空，找回无燃料                     | 先打会存的人；验证存意愿先于功能堆砌                   |
-| 第一次模糊找回失败             | 信任杀死飞轮                         | 空状态诚实终局、线索解释；命中体验优先；禁矛盾补救 CTA |
-| 空结果改偏好建档闲聊           | 滑成助理；能力幻觉                   | 空结果只导向 Capture/追问；见空结果契约                |
-| 过早多源同步 / 连接器堆砌      | 变同步中台；找回质量假象             | 适配器按「能否提高找回成功率」排队；契约先行           |
-| 过早开放检索框架 / 平台化      | 印象分裂；复杂度淹没主题             | 自有场景命题验死后才谈有限嵌入（附录 A.7）             |
-| 主动 Agent 先于可靠 retrieval  | 高权限错误成本；Comet/Mem 占行动入口 | 先只读 evidence / MCP；见 §0.1.1 闭环次序              |
-| 定位膨胀成「个人全能记忆」     | 与平台 history/memory 硬碰；隐私成本 | 固守「用户主动 Capture 的痕迹」直到 TTE/留存验证       |
-| 卖 AI token 而非找回质量       | 与 ChatGPT 配额竞争；价值锚模糊      | 卖更快、更可信的**再利用**；召回质量不分 Free/Pro      |
+| 隐患                           | 若放任的后果                            | 规避                                                                                           |
+| ------------------------------ | --------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| 用查阅类书签当主 demo / 主叙事 | 被 Google 压死，价值证伪                | demo 与文案主角 = 摘录或「自己的话」                                                           |
+| 叙事滑成「完全失忆」(A)        | 需求显得极窄                            | 对外坚持 B：残缺线索找回个人痕迹                                                               |
+| 早期做书签自动整理             | 滑入管理器，稀释寻回                    | 已否决；爽点做在抓住感与找回承诺                                                               |
+| 推独立笔记创作                 | 进 Notion 红海                          | 只做附着标记；独立 `note` 维持 §0.4                                                            |
+| 无线索体感、只堆无形 clues     | 用户当下无正向反馈                      | 存侧可感知反馈与尽早一次找回成功                                                               |
+| 过早 LLM / AI 主卖点           | 战场错位、伤信任                        | 先反馈排序；LLM 可关且非主体                                                                   |
+| 把对话做成开放式闲聊           | 主任务失焦、成本失控                    | 只允许围绕 Recall 线索澄清与结果推进                                                           |
+| 滑成「生活小助手」             | 范围无限、偏离「找东西的」              | 只找回库内痕迹；禁零锚点助手 demo                                                              |
+| 全库喂 LLM 当检索              | 成本/幻觉/隐私/不可测                   | 先检索候选再（可选）喂模型；答案必须有 id                                                      |
+| LLM 直接执行查插改删           | 幻觉当事务、不可测、难回滚              | 只允提议→Zod/门禁→确定性代码；见数据平面边界                                                   |
+| 服务「几乎不 Capture」的大众   | 库空，找回无燃料                        | 先打会存的人；验证存意愿先于功能堆砌                                                           |
+| 第一次模糊找回失败             | 信任杀死飞轮                            | 空状态诚实终局、线索解释；命中体验优先；禁矛盾补救 CTA                                         |
+| 空结果改偏好建档闲聊           | 滑成助理；能力幻觉                      | 空结果只导向 Capture/追问；见空结果契约                                                        |
+| 过早多源同步 / 连接器堆砌      | 变同步中台；找回质量假象                | 适配器按「能否提高找回成功率」排队；契约先行                                                   |
+| 过早开放检索框架 / 平台化      | 印象分裂；复杂度淹没主题                | 自有场景命题验死后才谈有限嵌入（附录 A.7）                                                     |
+| 主动 Agent 先于可靠 retrieval  | 高权限错误成本；Comet/Mem 占行动入口    | 先只读 evidence / MCP；见 §0.1.1 闭环次序                                                      |
+| 定位膨胀成「个人全能记忆」     | 与平台 history/memory 硬碰；隐私成本    | 固守「用户主动 Capture 的痕迹」直到 TTE/留存验证；后期 things 外延 ≠ 零锚点全能记忆（ADR-012） |
+| 把「AI 找东西」当长期护城河    | 品类商品化后被相册/网盘/系统助手压扁    | 内容检索只作当前入口；壁垒押私有增量与习惯（§0.1）                                             |
+| 过早启用翻牌句 / 摊牌记忆产品  | 撕碎工具心智；能力未到承诺先到          | _Why should things just be things?_ 后手未达门槛不得上官网主句                                 |
+| 把双关后手当固定路线图         | 叙事自洽替代验收；sprint 预支未验证能力 | 后手视发展再定；翻牌非存活条件（ADR-012 斧正）                                                 |
+| 用终局诗学放松当前召回         | §5.9 未过却谈记忆层                     | 「非长期壁垒」≠「现在可以糊」                                                                  |
+| 用内容识别冒充记忆语义         | 可复制、无非对称；伤信任                | 「图里有什么」≠「对你意味着什么」；后者须用户痕迹                                              |
+| 卖 AI token 而非找回质量       | 与 ChatGPT 配额竞争；价值锚模糊         | 卖更快、更可信的**再利用**；召回质量不分 Free/Pro                                              |
 
 **立项/加功能前三问：**
 
@@ -759,7 +810,7 @@ NA 分立：`a while ago` / `some time ago` → 数周；`a while back` → `few
 
 ### 0.3 MUST NOT
 
-- 偏离 §0.1 / §0.1.1：用功能堆砌、管理回潮、开放式闲聊、AI 主卖点、**生活小助手叙事**、**「好像啥都做」的平台叙事**替代「那个找东西的」。
+- 偏离 §0.1 / §0.1.1：用功能堆砌、管理回潮、开放式闲聊、AI 主卖点、**生活小助手叙事**、**「好像啥都做」的平台叙事**、或**通用 AI Search / 「找文件更准」当长期护城河叙事**替代「那个找东西的」；**禁止**无痕迹厚度时提前主打「人生记忆产品」或启用 ADR-012 翻牌句。
 - 以查阅类书签找回、书签自动归文件夹/智能整理 Chrome 树为主卖点或主 demo（被 Google / 整理器逻辑压死；见 §0.1.1）。
 - 把独立空白笔记创作做成可用主路径或 UI 暗示已有笔记库（Notion 赛道；见 §0.4）。
 - 恢复旧双面板书签树、**侧边栏管理页**（书签树/整理中心）、AI 智能重构/聚类主卖点、以「管理书签」为中心的 UI。  
@@ -854,6 +905,8 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 | 手动「保存当前页」               | 不做                                           | 与 Chrome 原生书签重复；已移除 UI/快捷键/消息                                                                                                                                                                                   |
 | 结果线索解释强化                 | 已上线（core + Side Panel / Omnibox 卡面 ECS） | 主因字段 + token + 次要字段；五要素卡面 §5.10.1                                                                                                                                                                                 |
 | 找回壳空状态分层                 | 已上线（壳迁移中）                             | 空库 / 有库 idle 与 no_match 分文案；`no_match` 诚实终局、不附缩短再试；迁 Side Panel 后文案归属随壳走                                                                                                                          |
+| Recall 可见进展（等待态）        | **已上线**（体验 · A/B 度量进行中）            | §7.0：真实 pipeline 三阶段；&lt;500ms 不展示；禁 Thinking/CoT/假进度；与 §5.9 TTE **分计**                                                                                                                                      |
+| 理解回声（结果态）               | **已上线**（体验）                             | §7.0：`Heard as` + 真实 Parsed 槽位芯片；有芯片时省略 Framing P1 / 泛化 Mainly based on；禁 CoT                                                                                                                                 |
 | 摘录详情落地页                   | 已上线                                         | `detail.html?id=`；摘录打开详情；书签仍直开 URL；`GET_MEMORY_ITEM`                                                                                                                                                              |
 | 记忆库轻浏览                     | 已上线                                         | `library.html`；**默认摘录**；书签=Chrome 目录只读树；摘录/书签列表均展示**保存时间**（`createdAt` / `chromeCreatedAt`）；`?type=` 刷新保留                                                                                     |
 | 摘录删除                         | 已上线                                         | 软删 `deletedAt`；记忆库列表 / 详情页；`DELETE_MEMORY_ITEM`；书签不经此删                                                                                                                                                       |
@@ -1032,26 +1085,27 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 - `scope` 必须为 `'background'`（`BACKGROUND_MESSAGE_SCOPE`）。
 - **已登记 type（禁止擅自增删拼写）：**
 
-| type                                | 用途                                        |
-| ----------------------------------- | ------------------------------------------- |
-| `PING`                              | 探活                                        |
-| `GET_LOCAL_IDENTITY`                | 本地身份 + ownerId                          |
-| `CAPTURE_BOOKMARK`                  | 写入书签记忆（sync/内部）                   |
-| `CAPTURE_TEXT_EXCERPT`              | 写入摘录                                    |
-| `LIST_MEMORY_ITEMS`                 | 列表                                        |
-| `GET_MEMORY_ITEM`                   | 按 id 读取单条 MemoryItem                   |
-| `DELETE_MEMORY_ITEM`                | 软删 MemoryItem（当前仅摘录）               |
-| `UPDATE_MEMORY_NOTE`                | 更新 `clues.note`（书签/摘录事后补注）      |
-| `RECALL_WITH_CLUE`                  | 线索找回                                    |
-| `GET_CHROME_BOOKMARK_IMPORT_STATUS` | 导入进度                                    |
-| `GET_COLD_START_STATUS`             | 冷启动三阶段门禁进度（import / rules / AI） |
-| `GET_BOOKMARK_LIBRARY_TREE`         | 记忆库书签目录树（只读）                    |
-| `GET_EXTENSION_COMMANDS`            | 读取命令与快捷键绑定                        |
-| `OPEN_CHROME_SHORTCUTS_PAGE`        | 打开 Chrome 快捷键设置页                    |
-| `OPEN_RECALL_SHELL`                 | 打开/聚焦 Recall Side Panel                 |
-| `NAVIGATE_ACTIVE_TAB`               | 结果卡打开：默认当前活动标签；可新开        |
-| `GET_USER_SETTINGS`                 | 读取用户设置                                |
-| `UPDATE_USER_SETTINGS`              | 更新用户设置                                |
+| type                                    | 用途                                          |
+| --------------------------------------- | --------------------------------------------- |
+| `PING`                                  | 探活                                          |
+| `GET_LOCAL_IDENTITY`                    | 本地身份 + ownerId                            |
+| `CAPTURE_BOOKMARK`                      | 写入书签记忆（sync/内部）                     |
+| `CAPTURE_TEXT_EXCERPT`                  | 写入摘录                                      |
+| `LIST_MEMORY_ITEMS`                     | 列表                                          |
+| `GET_MEMORY_ITEM`                       | 按 id 读取单条 MemoryItem                     |
+| `DELETE_MEMORY_ITEM`                    | 软删 MemoryItem（当前仅摘录）                 |
+| `UPDATE_MEMORY_NOTE`                    | 更新 `clues.note`（书签/摘录事后补注）        |
+| `RECALL_WITH_CLUE`                      | 线索找回                                      |
+| `GET_CHROME_BOOKMARK_IMPORT_STATUS`     | 导入进度                                      |
+| `GET_COLD_START_STATUS`                 | 冷启动三阶段门禁进度（import / rules / AI）   |
+| `GENERATE_GETTING_STARTED_CLUE_SAMPLES` | Getting Started 示意 clue（LLM×4 / 模板回退） |
+| `GET_BOOKMARK_LIBRARY_TREE`             | 记忆库书签目录树（只读）                      |
+| `GET_EXTENSION_COMMANDS`                | 读取命令与快捷键绑定                          |
+| `OPEN_CHROME_SHORTCUTS_PAGE`            | 打开 Chrome 快捷键设置页                      |
+| `OPEN_RECALL_SHELL`                     | 打开/聚焦 Recall Side Panel                   |
+| `NAVIGATE_ACTIVE_TAB`                   | 结果卡打开：默认当前活动标签；可新开          |
+| `GET_USER_SETTINGS`                     | 读取用户设置                                  |
+| `UPDATE_USER_SETTINGS`                  | 更新用户设置                                  |
 
 新增能力：先改 `frontend/src/core/messaging/*` + handler，再改 UI。
 
@@ -1059,19 +1113,19 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 
 **消息域 `errorCode`（已落地）：**
 
-| 域       | code                                                     | 含义                        |
-| -------- | -------------------------------------------------------- | --------------------------- |
-| Memory   | `MEMORY_NOT_FOUND`                                       | 记忆不存在或已删            |
-| Memory   | `MEMORY_DELETE_BOOKMARK_FORBIDDEN`                       | 书签不可经扩展软删          |
-| Memory   | `MEMORY_OPERATION_FAILED`                                | 其它 Memory 操作失败        |
-| Memory   | `CAPTURE_UNSAVABLE_PAGE`                                 | 不可保存选区的页面          |
-| Memory   | `CAPTURE_EMPTY_SELECTION`                                | 选区为空                    |
-| Recall   | `RECALL_FAILED`                                          | 线索找回失败                |
-| Settings | `SETTINGS_READ_FAILED` / `SETTINGS_UPDATE_FAILED`        | 读写用户设置失败            |
-| Import   | `IMPORT_STATUS_READ_FAILED` / `LIBRARY_TREE_READ_FAILED` | 导入状态 / 书签树读取失败   |
-| Commands | `COMMANDS_READ_FAILED` / `SHORTCUTS_PAGE_OPEN_FAILED`    | 快捷键列表 / 打开设置页失败 |
-| Identity | `IDENTITY_READ_FAILED`                                   | 本地身份读取失败            |
-| Dispatch | `UNKNOWN_MESSAGE_TYPE` / `MESSAGE_DISPATCH_FAILED`       | 未知消息或分发未捕获异常    |
+| 域       | code                                                                                | 含义                             |
+| -------- | ----------------------------------------------------------------------------------- | -------------------------------- |
+| Memory   | `MEMORY_NOT_FOUND`                                                                  | 记忆不存在或已删                 |
+| Memory   | `MEMORY_DELETE_BOOKMARK_FORBIDDEN`                                                  | 书签不可经扩展软删               |
+| Memory   | `MEMORY_OPERATION_FAILED`                                                           | 其它 Memory 操作失败             |
+| Memory   | `CAPTURE_UNSAVABLE_PAGE`                                                            | 不可保存选区的页面               |
+| Memory   | `CAPTURE_EMPTY_SELECTION`                                                           | 选区为空                         |
+| Recall   | `RECALL_FAILED`                                                                     | 线索找回失败                     |
+| Settings | `SETTINGS_READ_FAILED` / `SETTINGS_UPDATE_FAILED`                                   | 读写用户设置失败                 |
+| Import   | `IMPORT_STATUS_READ_FAILED` / `LIBRARY_TREE_READ_FAILED` / `GS_CLUE_SAMPLES_FAILED` | 导入状态 / 书签树 / GS 示意 clue |
+| Commands | `COMMANDS_READ_FAILED` / `SHORTCUTS_PAGE_OPEN_FAILED`                               | 快捷键列表 / 打开设置页失败      |
+| Identity | `IDENTITY_READ_FAILED`                                                              | 本地身份读取失败                 |
+| Dispatch | `UNKNOWN_MESSAGE_TYPE` / `MESSAGE_DISPATCH_FAILED`                                  | 未知消息或分发未捕获异常         |
 
 书签 bulk 导入持久状态失败时写 `errorCode: BOOKMARK_IMPORT_FAILED`（`ChromeBookmarkImportState`）。
 
@@ -1118,7 +1172,7 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 > 与 §7.0 Composer 双通道对齐；工程旁挂 [`Recall-Placeholder与追问芯片-双通道.md`](../engineering/Recall-Placeholder与追问芯片-双通道.md)。  
 > 预计 ≤ 5 分钟。正式包 **未登录** 时 LLM 芯片不可用；可用 **当前站环境弱芯片** 验让位（窄结果 N&lt;6 或 `need_a_clue`；宽邻域 top_pick 不挂环境芯片，留给 Narrow）。
 
-1. **Idle：** 新会话 / New find 后，composer placeholder 为 Idle 模板（`e.g. that article…` 类），无芯片；**无**会话标题。
+1. **Idle：** 新会话 / New find 后，composer placeholder 为 Idle 模板（`e.g. that article…` 类）；库 `ready` 且非 Capture-first 时空态主区展示 **2–3 条可点口语范式样句**（填入不自动发）；**无**会话标题。
 2. **宽邻域 Narrow：** 输入可召回 ≥6 互异组的线索（例：`javascript`）→ 无芯片；composer **上方**出现**会话标题**（首轮线索字面，无 `Narrowing:` 前缀）+ 可见 **New find**；placeholder **点名标题**（`Add detail to "…"`）且举例词可在结果卡字段中核验（或 generic 无举例句）。
 3. **有芯片让位：** 出现追问芯片（登录后 LLM，或窄结果下的 **Related to this site**）→ placeholder 为点名标题的中性短句，**无** `like "…"` 举例。宽邻域 top_pick **不**挂环境芯片。
 4. **Dismiss：** None of these 后 **无** site/quote/note/type 固定四芯片；placeholder 中性（有标题则点名）。
@@ -1134,18 +1188,28 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 > 目标：第一天可用且可信；空库找不到是正确，乱猜才是 bug。与 §0.1.1 空结果契约一致。  
 > 预计耗时：≤ 10 分钟。失败任一步 → 不得宣称冷启动通过。
 
-**安装引导（Normative · 已上线）：** 首次 `install` 自动打开 `getting-started.html`；演示「Save this line → 找回主壳用自己的话找回」。未完成引导且 `excerptCaptureCount === 0` 时找回壳展示 Capture-first 空态（即使书签已导入）。跳过或首次打开找回结果后结束引导。
+**安装引导 · 产品口径与实现（Normative · 2026-09-14 · 启动设置双源 tab）：**
+
+- **页面定位（Normative）：** Getting Started = **首次启动设置页**（first-run setup），**不是**产品演示/导览页。类比 App 开机须先完成必要决定，再进入真正产品（Side Panel Recall）。
+- **双源 tab（Normative）：** 默认 **Bookmarks**；同级 **Excerpts**。同意只在 Bookmarks tab 内；Excerpts 永远可进。页眉叙事：_Give Yiveno something to remember_（非终态 Recall 口号）；Tab 随时可切换（非逐步锁定）。页底软出口 _Continue to Yiveno_ / 未导入时 _Continue without importing_（`markInstallOnboardingDone` + 开 Side Panel）；主 Magic Moment 仍靠书签 _Try it_ 或摘录定稿 clue _Try it_。关页签亦可离场（未授权则灌库保持关）。
+- **Bookmarks tab：** 未授权时 framing _Bring in what you've already saved_ + 标题 _Import your Chrome bookmarks_、主按钮 _Import my bookmarks_（非 Settings 式 toggle / 无额外 checkbox / **无** sync 脚注以免 Import≠Sync 混淆）；一点即写入 `chromeBookmarkIngestEnabled=true` 并 bulk + 持续 sync；文案讲清价值（自然语言找回）。**用户可见主进度 UI 仅在此**（`AppLinearProgress` + imported/total）；完成后 _Your bookmarks are ready_ + LLM 示意 clue + _Try it_。**示意 clue（Normative）：** 库 ready 后自动一次 LLM（`GENERATE_GETTING_STARTED_CLUE_SAMPLES` / Worker `POST /api/ai/gs-clue-samples/complete`）对**一条**真实书签生成 **4** 条英文口语 clue；UI 只展示当前 1 条 + 随机切换图标 + _Try it_（`writeRecallPrefill` + 扩展页直调 Side Panel → 自动提交 + 结束引导）。**书签 tab 不展示页内 composer / Find it**（与 Try it 开壳重复）。输入仅 title/url/可选 description（**不抓网页正文**）；关 AI / 配额 / 失败 → 标题模板 1–3 条回退。关灌库仅 Settings。Chrome 无书签时诚实 empty。
+- **Excerpts tab（Normative · 移植预书签定稿流程）：** framing _Save what you want to remember_；无摘录时 _Nothing here yet_（生命周期空态，非错误）+ 固定文学微段 **Things we miss**（`getting_started_passage_line_*`）→ **Select this passage** → 真划词浮层 Save（`captureEntry: getting_started`）。存后展示**定稿示意 clue**（`getting_started_sample_clue`：意义/感觉印象，非细节拼盘）+ _Try it_（`writeRecallPrefill` + 扩展页直调 Side Panel → 自动提交 + 结束引导）。**不**用 LLM / 不从用户其它摘录动态生成样句；**不**展示页内 composer / Find it。禁止种假摘录。
+- **两种来源：** 书签与摘录对召回引擎等价；差别在时间与资产，见 §0.1.1。
+- **完成：** 书签或摘录 _Try it_、或页底 _Continue…_ → 引导结束（`installOnboardingDone` / `firstRecallOpenDone`）；尽量关 GS 页签。
+- **实现：** 首次 `install` 打开 `getting-started.html`；`AppSectionTabs`；Getting Started bundle 打入划词脚本（扩展页不可 `executeScript`）。
+- **Capture-first 空态：** 仅当引导未完成且**无可召库存**（无书签且无摘录）时展示；**仅有书签**时走普通 Idle。
+- **书签 bulk 入口（Normative · 2026-09-14）：** **主路径** = GS Bookmarks 授权；**后路** = Settings 开 `chromeBookmarkIngestEnabled`。Side Panel **不再**展示书签 bulk 导入顶栏细条。冷启动门禁 Import 阶段 = 工程等待/幂等 `ensure` 对齐，**不是**二次授权导入课。
 
 #### 5.8.1 冷启动双表面与进度门禁（Normative · 2026-08）
 
-**产品前提：** 多数用户已被官网/社媒吸引而来体验；**第一次 Recall 质量是生死关**，不得用「发育型」合理化半生不熟的首召。书签量不可预测（数十～上万）；量越大往往越刚需。
+**产品前提：** 多数用户已被官网/社媒吸引而来体验；**第一次 Recall 质量是生死关**，不得用「发育型」合理化半生不熟的首召。书签量不可预测（数十～上万）；量越大往往越刚需——**故首日履约燃料优先书签库存**（须用户在启动设置 Bookmarks tab 明示同意灌库）；拒授权仍可走 Excerpts / 日后划存。
 
 **双表面（目标不同，不可互相替代）：**
 
-| 表面                                | 目标                        | 可跳过？                                  | 与灌库关系                         |
-| ----------------------------------- | --------------------------- | ----------------------------------------- | ---------------------------------- |
-| **Getting Started / Capture-first** | 教育与吸引；占用等待时间    | **是**（随时 Skip）                       | 顺带争取时间，**不是**工程门禁     |
-| **Side Panel 全屏进度门禁**         | 工程就绪兜底 + 减轻等待焦虑 | **否**（就绪或 best-effort 放行前挡主壳） | **正式门禁**；引导关掉后仍靠此兜底 |
+| 表面                            | 目标                                                                                    | 可跳过？                                  | 与灌库关系                                                                            |
+| ------------------------------- | --------------------------------------------------------------------------------------- | ----------------------------------------- | ------------------------------------------------------------------------------------- |
+| **Getting Started（启动设置）** | **双源设置**：Bookmarks Import+主进度+示意 clue / Excerpts 真划存；页底 Continue 软出口 | **是**（Continue / 关页签 / Try it）      | 产品设置面；同意只在书签 tab；**主进度 UI**                                           |
+| **Side Panel 全屏进度门禁**     | 工程就绪兜底 + 减轻等待焦虑                                                             | **否**（就绪或 best-effort 放行前挡主壳） | **正式工程门禁**；Import = 等待/对齐已有 bulk（非二次导入课）；设置页关掉后仍靠此兜底 |
 
 **开门契约（方案 A · 本地质量门禁 + 可选云端加厚）：**
 
@@ -1153,9 +1217,19 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 2. **LLM enrichment 尽力** — **未登录亦跑**（Worker `/api/ai/enrichment/complete` IP 日配额；无须 Bearer）；**Embed 仅已登录**时进入。有配额/超时占位；加厚模糊语义 / Hybrid，**不**要求全库绿，**不是**首召质量前提，**禁止**暗示必须登录才能用好 Recall。
 3. 未登录 → 规则 + LLM 短窗尽力后以 `local_ready` 放行（无 embed）；已登录则 embed + LLM 短窗尽力后放行。超时/配额触顶仍放行。具体秒数与文案为**可调占位**。
 
-**进度 UX（须精细）：** 展示 Import → Keyword index → Enrich recall fields（best effort）。未登录第三步为 LLM enrichment（无 embed）；已登录第三步含 embed + LLM。说明时间花在哪；禁止一根假平滑条假装「AI 全库齐」。小库可快进。
+**进度 UX（须精细）：** 展示 Preparing bookmarks（等待/对齐）→ Keyword index → Enrich recall fields（best effort）。书签 bulk 真进度以 GS 为准；门禁 Import 步禁止暗示「请在此导入」。未登录第三步为 LLM enrichment（无 embed）；已登录第三步含 embed + LLM。说明时间花在哪；禁止一根假平滑条假装「AI 全库齐」。小库可快进。
 
-**实现：** `application/onboarding/cold-start-pipeline-service.ts`；状态 `core/memory/cold-start-pipeline-state.ts`；UI `ColdStartGate.vue`；消息 `GET_COLD_START_STATUS`。存量已完成书签导入**且**安装引导已完成的用户迁移为 `ready`（`migrated_existing`），**不**重弹门禁。**首次 install / 重装**（引导未完成）绝不迁移，Side Panel 在 pipeline 落盘前也先显示门禁占位。
+**放行后轻条（Normative · 2026-09-11 · 体验）：** 目的：给用户**时间预期**——门禁已放行、主壳可用，但后台仍在尽力 enrichment 加厚库内条目，**当下可用 ≠ 模糊找回已到最佳**。全屏门禁以 `ready` 放行后：
+
+- 若本轮冷启动 **LLM enrichment 批次**存在且进行中 / 配额暂停：顶栏非阻挡轻条 + **真实进度条**（`settled / total`，本批入队上限内；禁止匀速假推进）。文案意向：`You can recall now—but it’s not at its best yet. Enriching your library… 12 of 40.`；配额熔断：`… paused at 12 of 40 (daily AI limit)`。
+- 批次 `completed` / `cleared` 后自动隐藏；可 Dismiss（session 绑定该次 `readyAt`）。
+- 无批次时的弱回退：`aiLlmEnqueued > 0` 或 `ai_best_effort_timeout` + 自 `readyAt` 起默认 **5 分钟** TTL（提示窗口，**不是**后台完工时钟）。
+- `migrated_existing` / `ai_skipped_empty` / `ingest_disabled` / `import_failed` **不**出此条。
+- **禁止**再挡主壳 / composer；**禁止**写成「必须等完才能用」；与 §7.0 可见进展同属体验面，**不得**冒充 §5.9 质量达标。
+
+**实现：** `cold-start-enrichment-batch` + `scheduleAsyncMemoryLlmEnrichment({ coldStartBatchId })`；`GET_COLD_START_STATUS.enrichmentBatch`；UI Side Panel 放行后轻条。
+
+**实现：** `application/onboarding/cold-start-pipeline-service.ts`；状态 `core/memory/cold-start-pipeline-state.ts`（含 `shouldShowColdStartPostReleaseBanner`）；UI `ColdStartGate.vue` + Side Panel 放行后轻条；消息 `GET_COLD_START_STATUS`。存量已完成书签导入**且**安装引导已完成的用户迁移为 `ready`（`migrated_existing`），**不**重弹门禁。**首次 install / 重装**（引导未完成）绝不迁移，Side Panel 在 pipeline 落盘前也先显示门禁占位。
 
 #### A. 空库诚实（不得编造）
 
@@ -1448,26 +1522,28 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 下列 case **id** 为 Normative 命名；实现时写入 `recall-eval-cases.ts`，corpus 项写入 `recall-eval-ids.ts` / `recall-eval-corpus.ts`。
 
-| id                                            | clueClass  | clue（示例）                                         | expectation                                               | 意图 / 说明                                                                   |
-| --------------------------------------------- | ---------- | ---------------------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `r4-semi-fuzzy-time-excerpt`                  | semi_fuzzy | `article I didn't finish last week`                  | `in_topk` k=3 · half-read 摘录                            | 行为+时间 · 钉死一条                                                          |
-| `r4-semi-fuzzy-note-anchor`                   | semi_fuzzy | `page where I left a note about deploy`              | `in_topk` k=3 · 带 note 条目                              | 附注指向 · R4/Explain                                                         |
-| `semi-fuzzy-note-inflection-over-shared-word` | semi_fuzzy | `newsletter where I disagreed with section 3`        | `top1` · note「disagree with section 3」                  | 屈折+多词附注压过共享词 newsletter 对手                                       |
-| `semi-fuzzy-weak-title-note-anchor`           | semi_fuzzy | `the untitled doc where I noted NSF grant narrative` | `top1` · 弱标题+附注                                      | 弱标题靠 note 钉死                                                            |
-| `semi-fuzzy-few-days-ago-privacy`             | semi_fuzzy | `the privacy article from a few days ago`            | `top1` · URL 含 privacy 近几天项                          | `a few days ago`/`the other day`→`recent`（勿误入 `a_while_ago` 排除近 3 天） |
-| `semi-fuzzy-old-adjective-dense-passage`      | semi_fuzzy | `that old DPR paper on arxiv`                        | `top1` · 旧稿+内容锚                                      | soft「old」不作时间硬窗；靠内容词                                             |
-| `r4-vague-recently-saved`                     | vague      | `just saved something about i18n`                    | `in_topk` k=3 · 近因摘录                                  | recently_saved 邻域                                                           |
-| `r4-vague-often-opened`                       | vague      | `the Yiveno page I kept opening`                     | `top1` 或 `in_topk` k=3 · 高 openCount                    | 行为排序                                                                      |
-| `r4-cluster-yiveno-docs`                      | semi_fuzzy | `Yiveno docs I saved`                                | **两条** `in_topk` k=6（实现拆 `…-product` / `…-design`） | **逛一簇**；须两条都进名单（不同 host，避免同域互斥）                         |
-| `r4-negative-zero-anchor`                     | negative   | `play some songs I like`                             | `no_match`                                                | 零锚点 · 禁助手路径                                                           |
-| `r0-zero-anchor-bored-pick`                   | negative   | `i feel bored pick something fun for me`             | `no_match`                                                | 无聊助手发令 · 禁扫库                                                         |
-| `r0-zero-anchor-recommend-movie`              | negative   | `recommend a good movie I should watch tonight`      | `no_match`                                                | 推荐≠找回；有 video 词面也不得当娱乐推荐                                      |
-| `r0-non-recall-weather`                       | negative   | `what is the weather going to be like tomorrow`      | `no_match`                                                | 天气问答非找回                                                                |
-| `r0-non-recall-order-food`                    | negative   | `order me some pizza for dinner`                     | `no_match`                                                | 点餐非找回                                                                    |
-| `r0-non-recall-summarize`                     | negative   | `summarize the latest news for me`                   | `no_match`                                                | 摘要助手非找回                                                                |
-| `r0-non-recall-plan-trip`                     | negative   | `plan a weekend trip to seattle for me`              | `no_match`                                                | 行程规划非找回                                                                |
-| `r0-non-recall-codegen`                       | negative   | `write a python script that renames my files`        | `no_match`                                                | 写码助手非找回                                                                |
-| `r4-constrained-time-empty`                   | semi_fuzzy | `poem I saved yesterday`（库中无 poem+昨天）         | `no_match` + `constrained_none` 语义                      | 强约束诚实空（eval 断言 emptyKind 若 exposed）                                |
+| id                                            | clueClass  | clue（示例）                                                                 | expectation                                               | 意图 / 说明                                                                   |
+| --------------------------------------------- | ---------- | ---------------------------------------------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| `r4-semi-fuzzy-time-excerpt`                  | semi_fuzzy | `article I didn't finish last week`                                          | `in_topk` k=3 · half-read 摘录                            | 行为+时间 · 钉死一条                                                          |
+| `r4-semi-fuzzy-note-anchor`                   | semi_fuzzy | `page where I left a note about deploy`                                      | `in_topk` k=3 · 带 note 条目                              | 附注指向 · R4/Explain                                                         |
+| `semi-fuzzy-note-inflection-over-shared-word` | semi_fuzzy | `newsletter where I disagreed with section 3`                                | `top1` · note「disagree with section 3」                  | 屈折+多词附注压过共享词 newsletter 对手                                       |
+| `semi-fuzzy-weak-title-note-anchor`           | semi_fuzzy | `the untitled doc where I noted NSF grant narrative`                         | `top1` · 弱标题+附注                                      | 弱标题靠 note 钉死                                                            |
+| `semi-fuzzy-few-days-ago-privacy`             | semi_fuzzy | `the privacy article from a few days ago`                                    | `top1` · URL 含 privacy 近几天项                          | `a few days ago`/`the other day`→`recent`（勿误入 `a_while_ago` 排除近 3 天） |
+| `semi-fuzzy-old-adjective-dense-passage`      | semi_fuzzy | `that old DPR paper on arxiv`                                                | `top1` · 旧稿+内容锚                                      | soft「old」不作时间硬窗；靠内容词                                             |
+| `r4-vague-recently-saved`                     | vague      | `just saved something about i18n`                                            | `in_topk` k=3 · 近因摘录                                  | recently_saved 邻域                                                           |
+| `r4-vague-often-opened`                       | vague      | `the Yiveno page I kept opening`                                             | `top1` 或 `in_topk` k=3 · 高 openCount                    | 行为排序                                                                      |
+| `r4-cluster-yiveno-docs`                      | semi_fuzzy | `Yiveno docs I saved`                                                        | **两条** `in_topk` k=6（实现拆 `…-product` / `…-design`） | **逛一簇**；须两条都进名单（不同 host，避免同域互斥）                         |
+| `r4-negative-zero-anchor`                     | negative   | `play some songs I like`                                                     | `no_match`                                                | 零锚点 · 禁助手路径                                                           |
+| `r0-zero-anchor-bored-pick`                   | negative   | `i feel bored pick something fun for me`                                     | `no_match`                                                | 无聊助手发令 · 禁扫库                                                         |
+| `r0-zero-anchor-recommend-movie`              | negative   | `recommend a good movie I should watch tonight`                              | `no_match`                                                | 推荐≠找回；有 video 词面也不得当娱乐推荐                                      |
+| `r0-non-recall-weather`                       | negative   | `what is the weather going to be like tomorrow`                              | `no_match`                                                | 天气问答非找回                                                                |
+| `r0-non-recall-order-food`                    | negative   | `order me some pizza for dinner`                                             | `no_match`                                                | 点餐非找回                                                                    |
+| `r0-non-recall-summarize`                     | negative   | `summarize the latest news for me`                                           | `no_match`                                                | 摘要助手非找回                                                                |
+| `r0-non-recall-plan-trip`                     | negative   | `plan a weekend trip to seattle for me`                                      | `no_match`                                                | 行程规划非找回                                                                |
+| `r0-non-recall-codegen`                       | negative   | `write a python script that renames my files`                                | `no_match`                                                | 写码助手非找回                                                                |
+| `r4-constrained-time-empty`                   | semi_fuzzy | `poem I saved yesterday`（库中无 poem+昨天）                                 | `no_match` + `constrained_none` 语义                      | 强约束诚实空（eval 断言 emptyKind 若 exposed）                                |
+| `content-corroboration-time-soft-reopen`      | semi_fuzzy | `that article I saved yesterday about xenonretentionprotocol`                | `in_topk` k=3 · 窗外专有内容锚点                          | high 硬筛后窗内无佐证 → **一次 soft 回退** 捞窗外内容锚点（ADR-011 例外）     |
+| `content-corroboration-reject-weak-neighbor`  | semi_fuzzy | `that article I saved yesterday about standupscrapnoise`（库仅窗内无关摘录） | `no_match`                                                | 有 contentTerms 时禁止窗内弱 embedding 甩无关                                 |
 
 **已有 must 须保持绿：** 全部现有 `gate: 'must'` case；R4 **不得**为抬 TTE 牺牲 `negative-*` / `r0-zero-anchor-*`。
 
@@ -1529,7 +1605,7 @@ Omnibox **离线快跳轨**专用 must（与 Side Panel `recall-eval` 正交）�
 
 | 分区（侧栏） | `section` id   | 状态            | 说明                                                                                                                                    |
 | ------------ | -------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| 保存         | `capture`      | 已上线          | 划词浮层开关（默认开）；**Chrome 书签灌库**开关（默认开；关后卸监听/停 bulk，不删已有）                                                 |
+| 保存         | `capture`      | 已上线          | 划词浮层开关（默认开）；**Chrome 书签灌库**开关（**默认关**；GS/Settings 明示开；关后卸监听/停 bulk，不删已有）                         |
 | 快捷键       | `shortcuts`    | 已上线          | 展示绑定；改键跳转 `chrome://extensions/shortcuts`                                                                                      |
 | 账户与同步   | `account_sync` | 已上线          | 顶栏头像登录；**同步 = Pro+登录+开关**；订阅升级（回焦自动对账）；禁止缩量盖云；孤儿桶；退出三选一；默认同步关                          |
 | 数据         | `data`         | 已上线          | **Backup 整库导出**（§5.5.1）；**清除本机记忆**（不动 Chrome 原生书签；并关书签灌库；若同步开着则关同步）；**删云端记忆**；**删除账号** |
@@ -1645,7 +1721,7 @@ Chrome API / 选区
   - **官网隐私政策（Normative）**：`https://yiveno.com/privacy`（及同源部署的 `/privacy`）提供与当前实现对齐的**美式英语**正文；官网页脚与登录页、扩展 Settings「隐私」须外链至此。正文重大变更时更新日期；扩展内同步确认文案重大变更时递增 `privacyNoticeVersion`。本页**不是**律师意见书；未上线能力不得写入为已提供。
   - **关 AI + 模型说明（Normative）**：Settings「AI」提供 `aiFeaturesEnabled`（默认开）；关闭后线索 LLM completer 清空、Capture LLM enrichment 跳过；页内说明 Worker 路径与数据平面边界。
   - **服务条款（Normative）**：官网 `/terms`（美式英语）；页脚 / 登录 / Settings 可外链。
-  - **书签灌库开关（Normative）**：Settings「保存」提供 `chromeBookmarkIngestEnabled`（默认开）；关闭后**卸载** `bookmarks.on*` 监听、跳过 bulk 导入与增量写入，并拒绝 `CAPTURE_BOOKMARK`；**不删除**已灌入的书签 Memory；重新开启后重新挂监听并补跑 / 续跑 bulk（含 reconcile 补洞）。
+  - **书签灌库开关（Normative）**：Settings「保存」与 Getting Started 共用 `chromeBookmarkIngestEnabled`（**默认关**；须用户明示打开）。**用户可见 bulk 主进度 = GS Bookmarks tab**；Settings 打开开关仍触发 `ensureChromeBookmarksImported`（Skip GS 后的后路），**不**在 Side Panel 顶栏展示导入细条。关闭后**卸载** `bookmarks.on*` 监听、跳过 bulk 导入与增量写入，并拒绝 `CAPTURE_BOOKMARK`；**不删除**已灌入的书签 Memory；重新开启后重新挂监听并补跑 / 续跑 bulk（含 reconcile 补洞）。
 - **数据处置（Normative · Settings「数据」）**：
   - **Backup 整库导出**（§5.5.1）：导出当前 owner 本机全部 Memory（含软删、`clues` 全字段，即 L1+L2+L3）为 JSON（`EXPORT_LOCAL_MEMORY`）；不含孤儿桶（孤儿仍走账户与同步导出）。**Portable 可迁移原料未上线前，本条即用户主权导出的唯一必需路径。**
   - **清除本机记忆**（`CLEAR_LOCAL_MEMORY`）：硬清当前 owner 本机 IndexedDB Memory；**不得**改写/删除 Chrome 原生书签；成功后关闭书签灌库并卸载监听；若云同步开着则关闭同步并提示云端副本需另行删除。二次确认。
@@ -1740,6 +1816,73 @@ Chrome API / 选区
 7. **「都不是这些」之后：** 保留线程约束；**不得**再挂 site/quote/note/type 等固定追问芯片银行；composer 用中性 placeholder，由用户自由续打。
 8. **会话标题（Normative · 2026-08-26；宽度自适应 · 2026-09-08）：** 有 `priorUserUtterances` / `accumulated` 时 composer **上方**展示本场找回**标题**（首轮用户句优先，否则 `contentTerms`）。标题是**身份标签**（类 ChatGPT 会话名），不是过程说明；**禁止**前缀 `Narrowing:`；P0 **禁止** LLM 开放摘要造题（日后可选润色须 fold/字面门禁）。**可见截断**用 CSS ellipsis，随 Side Panel / 壳宽度增减多露或少露字；**禁止**固定字符数硬截成短标题再展示（病态超长串可另设安全上限）。旁路 **可见「New find」文案**（可配与 Header 同款图标），与 Header New find **同路径**（含出口条）。**禁止**仅用 ✕ 表示开新找。有标题时 Narrow/Neutral placeholder **须点名标题**（`Add detail to “…”`），避免听起来像全新搜索框。
 
+#### Recall 可见进展（等待态 · Normative · 2026-09-11 · 体验高优 · 已接线）
+
+**为何做：** Yiveno 处理的是「模糊印象 → 候选内容」。用户天然不确定，且理解 LLM / 检索常 **>1s**。可见进展同时：① 降低等待焦虑；② 显性化系统正在把**碎片印象当线索**接住，而不是要求用户先补齐标题/关键词。这是**减轻记忆负担**的产品面，不是装饰。
+
+**定位：** Side Panel pending 的**真实阶段披露**（progress disclosure）。**不是** ChatGPT 式「思考中 / 联网 / 工具调用」轨迹，**不是** CoT 外露。
+
+**用户可见阶段（仅 en · 须与真实 pipeline 对齐；假进度禁止）：**
+
+| 顺序 | 产品文案（Normative 意向）       | 对应真实阶段（实现须挂钩，不可空转）     |
+| ---- | -------------------------------- | ---------------------------------------- |
+| 1    | Making sense of your impression… | 理解层（规则或 LLM NLU → Zod/ground）    |
+| 2    | Narrowing down your library…     | Filter / 倒排 / Hybrid 扫库与收窄        |
+| 3    | Checking the closest matches…    | 邻域成卡 / 排序收敛 / Framing 事实就绪前 |
+
+**交互边界：**
+
+- **禁止**文案「Thinking…」/「思考中」及任何内心独白、链式推理外露。
+- **&lt;500ms 不展示**阶段 UI（可保持极轻脉冲或无文案）；仅慢请求才渐进出现，避免闪烁。
+- 阶段切换必须来自 **真实 pipeline 信号**（如 `RecallFlow` / backend 进度事件）；禁止定时器假推进。
+- Omnibox 离线快跳路径不适用完整三阶段秀（ADR-007）；本 Normative 主指 Side Panel。
+
+**结果页轻解释（有候选时 · 列表级一句，可与 Framing 协同、勿重复 Explain）：**
+
+> Mainly based on: rough timing, where it came from, and what you meant to use it for.
+
+（实现时可按本轮真实槽位删减「未用到的依据」，禁止编造未参与排序的维度。）
+
+**`no_match` 收束文案（意向 · 仍诚实终局）：**
+
+> Nothing close enough turned up. Try another detail that stuck with you.
+
+- **仍禁止**「缩短再试」等**换查询补救 CTA**（按钮/芯片）；上句是正文软引导「再丢一个下意识细节」，不暗示「系统还能救刚才那次检索」。
+- 空库 Capture 轻提示规则不变。
+
+**验收与度量（先 A/B，再全量）：**
+
+| 指标                                             | 用途                     | **不是**                        |
+| ------------------------------------------------ | ------------------------ | ------------------------------- |
+| 放弃率（发 clue 后关 Panel / New find 未看结果） | 等待焦虑是否下降         | 召回质量                        |
+| 同线程改写线索次数                               | 是否更敢补印象细节       | Top1 / Hybrid 分数              |
+| `no_match` 接受率（未立刻再砸无关句）            | 终局是否可读、是否少挫败 | §5.9 Beta 达标                  |
+| 真实库 TTE 确认率（种子协议）                    | 体验是否帮到「找得到」   | 工程探针 / eval corpus 冒充种子 |
+
+**硬边界：** 真实库 TTE / §5.9 与工程探针、`recall-eval` **分计**。体验反馈变好 **不得**当作召回质量已验证。
+
+**本切片不做：** Agent 工具轨迹 UI；流式 CoT；把网关/Zod/RRF 等工程名暴露给用户。
+
+#### 理解回声（结果态 · Normative · 2026-09-11 · 体验 · 已接线）
+
+**为何做：** 用户提交模糊 clue 后，最常见的下一动作是「改哪一刀」。若只把「听成了什么」埋在 Framing 散文里，扫读成本高。理解回声把**合并后 Parsed 的真实闭集槽位**压成一行可扫芯片，降低盲打第二句。
+
+**定位：** Side Panel 助手气泡内、列表 Framing 文案**上方**的只读槽位回声。**不是** Thinking / CoT；**不是**可点追问芯片；**不是**神谕分数。
+
+**展示规则：**
+
+| 项                       | 规范                                                                                          |
+| ------------------------ | --------------------------------------------------------------------------------------------- |
+| 前缀文案                 | `Heard as`（仅 en · `popup_recall_heard_as`）                                                 |
+| 芯片内容（有则出，按序） | 对象类型 → 相对时间 → 行为提示 → 附注指向 → 内容词（≤3）                                      |
+| 时间 low 置信            | 芯片前缀 `~`（如 `~a while ago`）；high 不加                                                  |
+| 内容词                   | 用线索字面 token，加引号；禁止主题 seed / 编造专名                                            |
+| 无有意义槽位             | **不展示**整行（含噪音拒绝、空约束）                                                          |
+| 与 Framing P1            | **互斥**：有回声芯片时气泡省略 Framing P1「听成了什么」散文，且不追加泛化「Mainly based on…」 |
+| Omnibox                  | 本 Normative **不要求**（主指 Side Panel）                                                    |
+
+**验收：** 含时间/类型的 clue 提交后 a11y 树可见 `Heard as` + 槽位芯片；无槽位 clue 不出现空前缀；Framing 正文不与芯片重复「Looking for… / Within…」。
+
 **Composer 双通道（Normative · Placeholder × 追问芯片 · 2026-08-26）：**
 
 同一目标：帮下一轮在**本轮邻域内**收窄。Yiveno 掌控的是邻域**可切割结构**，不是用户真值答案。工程旁挂（实现分期）：[`Recall-Placeholder与追问芯片-双通道.md`](../engineering/Recall-Placeholder与追问芯片-双通道.md)。
@@ -1748,6 +1891,20 @@ Chrome API / 选区
 | --------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **Placeholder** | 软引导             | composer **对话承载体**；常驻有英文文案；带举例的收窄句必须 **grounded 本轮候选**（类型 / 字面 token / host）；禁止主题 seed；**有会话标题时须点名标题** |
 | **追问芯片**    | 硬输入（点击即发） | 仅白名单：① `need_a_clue` + LLM suggestions；② §7.1 环境弱芯片。**禁止**无候选缺槽问卷与 dismiss 固定芯片银行；点击**不**走软岔路口                      |
+
+**Idle 口语范式样句（Normative · 2026-09-11 · 体验）：**
+
+**定位：** 第一印象是 **chat 式接住**（你说啥都行），不是检索框「请输入关键词」。垂直场景下可**推荐**少量口语句式捷径，**绝不强制**——拿掉样句后任意口语路径仍须成立。
+
+| 规则               | 要求                                                                                                                                  |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------- |
+| **何时展示**       | 空线程 + 库已 `ready` + **非** Capture-first；Capture-first / 空库仍只导向先留下痕迹                                                  |
+| **条数**           | **2–3** 条完整英文口语样句（可点）                                                                                                    |
+| **点击**           | **填入** composer（可改再发）；**不**自动提交；**不**当追问芯片「点即发」                                                             |
+| **文案**           | 美式英语、口语；引导意向如 `Try saying it like…`；**禁止**「Enter keywords / valid query」腔                                          |
+| **内容**           | 示范**句式形态**（内容印象 · 时间印象 · 附注印象等）；**禁止**专名/主题灰名单表冒充通解；P0 可用稳定通用样句（与 placeholder 同气质） |
+| **与 Placeholder** | Idle placeholder 仍可保留 `e.g. …`；样句是空态主区的**可见捷径**，不替代 composer                                                     |
+| **验收**           | 任意非样句 clue 仍走全链路；样句成功 ≠ 产品成功                                                                                       |
 
 **优先级：** 当前 turn **有白名单芯片展示** → 以芯片为主；placeholder **退中性短句、不带举例**（有会话标题时中性句仍点名标题）。  
 **宽邻域 `top_pick`（报 N）：** 默认 **只走动态 placeholder**，不上内容芯片。  
@@ -1807,7 +1964,7 @@ Chrome API / 选区
 
 **空结果与追问原则（Normative · 三条）：**
 
-1. **库内事实优先；无候选即终局。** 扫库无相关命中（含清晰约束下为零）→ 诚实说明「没有对上的痕迹」并**结束本轮追问**。记错/没存过是合法答案。**不得**暗示检索坏了，也不得改口成「你当时没看过」。**不得**在 `no_match` 上附「缩短再试」等换查询补救 CTA（用户可自行改线索；空库可轻提示 Capture）。文案只谈库内痕迹。
+1. **库内事实优先；无候选即终局。** 扫库无相关命中（含清晰约束下为零）→ 诚实说明「没有对上的痕迹」并**结束本轮追问**。记错/没存过是合法答案。**不得**暗示检索坏了，也不得改口成「你当时没看过」。**不得**在 `no_match` 上附「缩短再试」等换查询补救 CTA（用户可自行改线索；空库可轻提示 Capture）。正文允许软引导「再丢一个下意识记得的细节」（见 **Recall 可见进展**），语气谈印象与库内痕迹，不谈「缩短就能搜出来」。文案只谈库内痕迹。
 2. **追问只为收窄已有候选。** 仅 `need_a_clue`（或等价：已返回可点选候选）可追问。目的是区分候选，不是补全时间/类型空表。**永远禁止**固定顺序全局问卷（先问哪天再问文章/歌/代码）。优先 LLM 结合候选上下文生成下一句（Zod/门禁；计入托管配额）；失败 → 静态不确定文案、不发规则芯片。
 3. **疑似记错时：可荐最近同类，但必须硬标为猜测。** 仅当库中确有真实 `MemoryItem`；**禁止编造**。UI 与主答案分离；文案明示「猜测 / 不是答案」。猜测卡**不是**追问对话，不附带问卷芯片。
 
@@ -1994,6 +2151,12 @@ RecallOutcomeEvent {
 
 **P3 实现切片（2026-08-24）：** 本机 `chrome.storage.local` ring buffer 持久化 settled `(clue fingerprint → target)` 与 `none_in_results` 硬负例；Hybrid / 关键词 finalize 路径软升权 / 降权重排（`applyOutcomePairScoreAdjustments`）；**禁止**用人设建档。eval 纯关键词路径不读 storage（保持确定性）。
 
+**Outcome 对 × 内容佐证（Normative · 2026-09-11）：**
+
+- 本轮 `contentTerms` 非空时：**正例 +升权仅当**该候选已通过内容佐证门；无佐证不得因 `outcomePair` 单独留池或抬成 `top_pick`。
+- **None of these / 整轮 dismiss**（`none_in_results`）：对当前 clue fingerprint，若已有 `label=target` 且 `targetId` ∈ 本轮否定集合 → **删除该正例对或改写为硬负例**（跨会话可纠错）。**不**回滚条目 `settledCount`（避免历史统计抖动）。
+- ring buffer 仍无 TTL；纠错靠负例 / 撤正例，不靠时间衰减。
+
 #### 反模式（禁止）
 
 - 用 **最后一次 open** 单独写 `target` 或进 `often_opened` 主路径。
@@ -2001,6 +2164,7 @@ RecallOutcomeEvent {
 - 把 `none_in_results` 与 `absent` 混成同一错误码导致排序误学。
 - 无会话边界地把跨次打开累加成「本次答案」。
 - 用 outcome 标签做偏好建档 / 人格记忆（见 §0.1.1）。
+- 在无内容佐证时用历史 `target` pair 把弱语义假阳性钉成 `top_pick`。
 
 ---
 
@@ -2030,12 +2194,12 @@ RecallOutcomeEvent {
 
 **权威表述以 §0.1 + §0.1.1 为准**；此处补读者与验证口径，勿另起一套故事。
 
-- **承诺：** **那个找东西的**——**随便存，随时找得着**；不用记、不用整理；只记得一点点也能走进自己的**记忆邻域**，并看到 Yiveno 认为最像的那条建议；最终选择在用户。
-- **信念：** 用户浏览时会自己筛兴趣，产品不培养这个；**Yiveno 只填「这次感兴趣 → 下次找回来」的鸿沟**；长期应养成「interesting → 按快捷键、不担心乱存」——这在旧书签体系下不可能，因 Yiveno 才成立；要的是未来能用，不是整理；**对话式找回是主路径，但开放式闲聊与生活小助手不是目标**；AI 是寻回引擎的能力核心，**不是对外宣传招牌**；**LLM 是强理解器，不是可扩展的记忆硬盘，更不是每次替用户做终审的神谕**。
-- **对外话术：** 优先「找东西 / 仓库 / Find what you saved」；「记忆硬盘」「知识库」勿作主 slogan；禁止「永远押中那一条」。
-- **资产：** 附着在互联网原文上的个人增量（摘录/附注）为主；书签配角；空白创作非目标。
-- **立身：** 业务简单（存 + 找）；体验必须精打细磨。无爽点 = 无护城河。履约看邻域，delight 看头名。
-- **发育：** 靠用户长期使用慢慢长厚；开头最难，越往后越稳。前期体验买习惯与语料，后期习惯与语料锁体验。
+- **承诺：** **那个找东西的 / find things**——**随便存，随时找得着**；不用记、不用整理；只记得一点点也能走进自己的**记忆邻域**，并看到 Yiveno 认为最像的那条建议；最终选择在用户。定位句不变；things 双关为**后手**（视发展再定），见 §0.1 / ADR-012。
+- **信念：** 用户浏览时会自己筛兴趣，产品不培养这个；**Yiveno 只填「这次感兴趣 → 下次找回来」的鸿沟**；长期应养成「interesting → 按快捷键、不担心乱存」——这在旧书签体系下不可能，因 Yiveno 才成立；要的是未来能用，不是整理；**对话式找回是主路径，但开放式闲聊与生活小助手不是目标**；AI 是寻回引擎的能力核心，**不是对外宣传招牌**；**LLM 是强理解器，不是可扩展的记忆硬盘，更不是每次替用户做终审的神谕**；**内容层 AI 找东西会商品化；终局壁垒在私有增量与习惯**；记忆层外延是可选表达，不是「免疫 AI」或必须路线。
+- **对外话术：** 优先「找东西 / 仓库 / Find what you saved」；口语可保留 _things_ 宽语义；「记忆硬盘」「知识库」勿作主 slogan；禁止「永远押中那一条」；**翻牌句未启用；不得把后手写成对外必达路线图**。
+- **资产：** 附着在互联网原文上的个人增量（摘录/附注）为主；书签配角；空白创作非目标；若启用外延仍须落在主动 Capture 痕迹上。
+- **立身：** 业务简单（存 + 找）；体验必须精打细磨。无爽点 = 无护城河。履约看邻域，delight 看头名；长期可迁移壁垒看私有增量与习惯，不看「搜得更准」；**后手永不启用仍可成立**。
+- **发育：** 靠用户长期使用慢慢长厚；开头最难，越往后越稳。前期体验买习惯与语料（工具定位）；things 外延加厚**视发展可选**，不预支。
 - **目标用户：** 会主动划存/标注的**跨来源网络研究者、创作者/设计研究者、开发者/产品人**（不是「几乎不 Capture」的大众）；话术仍对外统一「那个找东西的」。详见 §0.1.1「首发用户与种子验证」。
 - **MVP 验证：** 是否更愿划存摘录、是否优先打开 Yiveno 找回个人痕迹、是否稳定进入正确邻域、**Verified Retrievals 与 TTE-V 是否改善**、是否愿为语义/同步付费；并能回答「为何不用 Google」。
 
@@ -2138,8 +2302,10 @@ RecallOutcomeEvent {
 
 ### A.4 品牌
 
-禁：AI Bookmark Manager、管理你的书签、自动整理一切、永久保存看过的所有内容、更好的书签搜索（易被理解成打 Google）、你的 AI 生活助手、帮你决定听什么/看什么、零锚点「放首歌/好无聊看点东西」主 demo、**永远准确的那一条 / AI-powered 主 slogan / 模型·架构名词当招牌 / 置信百分比神谕**。  
-荐：那个找东西的；帮你在仓库找东西；看到好东西扔进来；想找的时候找它要；Find what you saved.；记得一点 → 最像的 + 附近几条；Google 找不到的是你的痕迹；Save what matters. Recall it later.（「记忆硬盘」仅对内，勿作官网主句）。对内/投资人可补充 **Personal Knowledge Retrieval**，但**不得**替代对外主句。
+禁：AI Bookmark Manager、管理你的书签、自动整理一切、永久保存看过的所有内容、更好的书签搜索（易被理解成打 Google）、你的 AI 生活助手、帮你决定听什么/看什么、零锚点「放首歌/好无聊看点东西」主 demo、**永远准确的那一条 / AI-powered 主 slogan / 模型·架构名词当招牌 / 置信百分比神谕**、**无门槛启用「人生记忆产品」或翻牌句冒充已交付**、**把 Yiveno 卖成「又一个 AI 找文件/相册」**。  
+荐：那个找东西的；find things；帮你在仓库找东西；看到好东西扔进来；想找的时候找它要；**Find what you saved.**（当前履约）；记得一点 → 最像的 + 附近几条；Google 找不到的是你的痕迹；Save what matters. Recall it later.（「记忆硬盘」仅对内，勿作官网主句）。口语可用 _things_ 保留双关空间，**勿**说死成仅书签/文件。对内可补充 ADR-012（双关=后手、视发展），**不得**替代对外主句或写成必达路线。  
+**官网 Hero（已采纳）：** 小字 epithet _The one that finds things_ + H1 _Find what you saved._ ——心智在小字、履约在最大字；**禁止**裸 _Find things._ 独占 H1。细则见设计标准 §6.1。  
+**预留（未启用 · 后手）：** _Why should things just be things?_ ——仅外延已可交付时再议；无交付只作对内语言。
 
 ### A.5 Text Excerpt 明确不做
 
@@ -2182,6 +2348,33 @@ RecallOutcomeEvent {
 
 | 日期       | 变更                                                                                                                                                                                                                                                   |
 | ---------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2026-09-15 | **GS 启动叙事：** Give Yiveno something to remember；去品牌行；弱 Tab；删 sync 脚注；Continue 软出口；Excerpts Nothing here yet；§5.8                                                                                                                  |
+| 2026-09-15 | **GS 书签授权文案：** Import / Bring + 价值句；脚注 stop syncing（非 turn off）；§5.8                                                                                                                                                                  |
+| 2026-09-15 | **GS Excerpts 移植预书签定稿：** Things we miss 全文 + 定稿示意 clue + Try it 开壳；无页内 composer；§5.8                                                                                                                                              |
+| 2026-09-14 | **GS 去掉 Start using / Skip：** 进产品靠 Try it / 摘录首召；§5.8                                                                                                                                                                                      |
+| 2026-09-14 | **GS LLM 示意 clue：** 一次 4 条 + 随机切换 + Try it 开壳自动提交；失败回退模板；§5.8                                                                                                                                                                  |
+| 2026-09-14 | **书签 bulk 主进度仅 GS：** Side Panel 去掉导入细条；冷启动 Import=等待/对齐；Settings 开开关仍 ensure；§5.8                                                                                                                                           |
+| 2026-09-14 | **GS 书签授权 CTA：** Add my bookmarks → 导入进度 → 已授权；非 toggle；§5.8                                                                                                                                                                            |
+| 2026-09-14 | **GS 双源 tab：** Bookmarks（同意门闩）/ Excerpts（真划存）；Start using 不绑开关；§5.8                                                                                                                                                                |
+| 2026-09-14 | **GS = 启动设置页（非演示）：** 必要决定（书签灌库授权）→ 同意后首召履约 → 进产品；Skip=拒绝灌库；§5.8                                                                                                                                                 |
+| 2026-09-14 | **书签灌库默认关 + GS 同意开关：** 新用户须打开开关才灌库；下方步骤置灰；与 Settings 同键；§5.8 / Settings                                                                                                                                             |
+| 2026-09-14 | **Getting Started 页内真 Recall：** composer + 书签建议句 + `recallWithClue` 页内 Top Pick；Capture 仅 CSS 示意动画；CTA Start using Yiveno；§5.8                                                                                                      |
+| 2026-09-14 | **Getting Started 书签首召已接线：** importing/ready/empty；真实书签样句 + Try recalling 开壳；Capture 不进 GS；Capture-first 仅无书签且无摘录；§5.8                                                                                                   |
+| 2026-09-14 | **Getting Started 口径：** 主证明 = 书签首召；Capture 不进 GS 主路径；当前 UI 仍为存→召过渡，待改版；§0.1.1 两种来源×召回                                                                                                                              |
+| 2026-09-14 | **Getting Started Select this passage：** 一键选中整段 demo → 划词菜单 Save（不代存）；Step 1 文案改 passage                                                                                                                                           |
+| 2026-09-13 | **Getting Started 完成态：** You are set 在邻域 `top_pick` 出现后（或打开结果）；去掉 paste 提示；仅开壳不算完成                                                                                                                                       |
+| 2026-09-13 | **Getting Started Saved 浮层：** 本页不展示 Try recalling（与 Step 2 重复）；Capture 完成后自动滚到 Step 2 按钮                                                                                                                                        |
+| 2026-09-13 | **Getting Started 文学 demo + 自己动手 Recall：** 固定 Things we miss 微段；示意 clue 可复制；Try recalling 只开壳；清预填禁自动提交                                                                                                                   |
+| 2026-09-13 | **Getting Started Step 1：** 去掉页内 Save 按钮；引导划词 + 浮动菜单（真实 Capture）；示意 clue + Try recalling 自动提交不变                                                                                                                           |
+| 2026-09-13 | **Getting Started Try recalling：** 示意 clue 预填 + Side Panel 自动提交；扩展页直调 `sidePanel.open`；`OPEN_RECALL_SHELL` 跳过 bootstrap await                                                                                                        |
+| 2026-09-13 | **Getting Started 激活收敛（§5.8）：** 主路径一键 Save this line；demo 嵌 Step 1 下、below 指引成立；页眉仅品牌；Skip/Close 尽量关页签；划词菜单降为次要 web tip                                                                                       |
+| 2026-09-11 | **官网 Hero：** epithet _The one that finds things_ + H1 _Find what you saved._（禁裸 Find things 独占最大字）；设计标准 §6.1 / A.4                                                                                                                    |
+| 2026-09-11 | **Idle 口语范式样句**（§7.0）：chat 心智 + 可选 2–3 条填入样句；不强制、不自动发；非 Capture-first / 库 ready；§5.2.1 Idle 同步                                                                                                                        |
+| 2026-09-11 | **冷启动放行后轻条 · 真实进度**：本轮 LLM enrichment `settled/total` 进度条；配额暂停诚实文案；`GET_COLD_START_STATUS.enrichmentBatch`                                                                                                                 |
+| 2026-09-11 | **冷启动放行后轻条**（§5.8.1）：门禁 ready 后顶栏非阻挡提示后台加厚；Dismiss + 5min TTL；不挡 Recall；与 §5.9 分计                                                                                                                                     |
+| 2026-09-11 | **内容佐证门 × 硬筛空窗回退（ADR-011）：** `contentTerms` 非空须词面佐证；high 硬筛后无佐证 → 一次 soft 回退；Outcome 正例须佐证、None/dismiss 可撤同指纹 target pair；§5.11.2 两条 must；禁止弱 embedding 甩无关                                      |
+| 2026-09-11 | **理解回声**（§7.0）：结果态 `Heard as` + Parsed 槽位芯片；有芯片时省略 Framing P1 / 泛化 Mainly based on；§1 标已上线                                                                                                                                 |
+| 2026-09-11 | **Recall 可见进展**（§7.0）：体验高优 Normative **已接线**；真实 pipeline 三阶段 en 文案；&lt;500ms 不展示；禁 Thinking/CoT/假进度；先 A/B 度量；与 §5.9 TTE **分计**；§1 标已上线                                                                     |
 | 2026-09-08 | **ADR-010 接受**（理解层默认单次 LLM；条件 Stage 2）；**相对时间闭集**增 `last_month` / `few_months_ago`（含 `a while back`→数月）；语料表 + M1 拓扑同步                                                                                               |
 | 2026-09-07 | **术语消歧：** 术语表 §8.1「种子」四义；§5.11.1a / DEV-调试API / Omnibox 手测对齐 Console 文案（手写精选 / 半仿真 / 无关干扰 / 随机种子）；探针词非产品面                                                                                              |
 | 2026-09-06 | **Probe Console：** 去掉 replace 确认勾选；新增一键清理（`DEV_PROBE_CLEANUP`：噪声/精选/整库 + 类型 + Chrome）                                                                                                                                         |

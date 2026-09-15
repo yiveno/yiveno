@@ -1,17 +1,12 @@
-/** Getting Started 演示保存按钮状态。 */
-export type GettingStartedSaveState = 'idle' | 'saving' | 'saved' | 'error'
-
-export function canSaveGettingStartedDemo(input: {
-  saveState: GettingStartedSaveState
-  captureDone: boolean
-}): boolean {
-  return input.saveState !== 'saving' && !input.captureDone
-}
-
-export function canTryGettingStartedRecall(input: {
+/** Getting Started 是否可提交 clue。 */
+export function canSubmitGettingStartedRecall(input: {
   recallBusy: boolean
-  captureDone: boolean
-  recallDone: boolean
+  canRecall: boolean
+  clue: string
+  /** 书签 tab 须已同意灌库；摘录 tab 传 true */
+  sourceUnlocked: boolean
 }): boolean {
-  return !input.recallBusy && input.captureDone && !input.recallDone
+  return (
+    input.sourceUnlocked && !input.recallBusy && input.canRecall && input.clue.trim().length > 0
+  )
 }

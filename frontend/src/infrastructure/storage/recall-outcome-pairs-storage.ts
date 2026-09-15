@@ -79,3 +79,33 @@ export async function appendRecallOutcomePair(pair: RecallOutcomePairRecord): Pr
   const next = [validated, ...filtered].slice(0, MAX_PAIRS)
   await writeChromeStorageLocal(RECALL_OUTCOME_PAIRS_LOCAL_KEY, { pairs: next })
 }
+
+/**
+ * None of these / dismiss：撤销同指纹下、targetId ∈ deniedIds 的正例对。
+ * 不回滚 settledCount；返回删除条数。
+ */
+export async function revokeTargetOutcomePairsForFingerprint(input: {
+  fingerprint: string
+  deniedTargetIds: readonly string[]
+}): Promise<number> {
+  const key = input.fingerprint.trim()
+  const denied = new Set(input.deniedTargetIds.filter(Boolean))
+  if (!key || denied.size === 0) {
+    return 0
+  }
+  const existing = await listRecallOutcomePairs()
+  const next = existing.filter(pair => {
+    if (pair.fingerprint !== key || pair.label !== 'target' || !pair.targetId) {
+      return true
+    }
+    return !denied.has(pair.targetId)
+  })
+  const removed = existing.length - next.length
+  if (removed === 0) {
+    return 0
+  }
+  await writeChromeStorageLocal(RECALL_OUTCOME_PAIRS_LOCAL_KEY, {
+    pairs: next.slice(0, MAX_PAIRS)
+  })
+  return removed
+}

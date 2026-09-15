@@ -75,8 +75,8 @@ describe('recall-shell-empty-copy', () => {
   })
 
   it('R1 welcome copy stays focused on recall, not assistance', () => {
-    expect(testTranslateEn('popup_welcome_title')).toBe('What are you trying to find?')
-    expect(testTranslateEn('popup_welcome_body')).toMatch(/saved|find/i)
+    expect(testTranslateEn('popup_welcome_title')).toBe('What do you want to recall?')
+    expect(testTranslateEn('popup_welcome_body')).toMatch(/remember|detail|starter/i)
     expect(testTranslateEn('popup_welcome_body')).not.toMatch(FORBIDDEN)
   })
 })

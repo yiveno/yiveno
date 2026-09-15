@@ -17,5 +17,6 @@
 | [ADR-009](./ADR-009-yiveno-probe-package.md)         | 召回探针 / 测试数据工作台独立为 `@yiveno/probe`    | 已接受 |
 | [ADR-010](./ADR-010-clue-understanding-pipeline.md)  | Clue 理解流水线（LLM NLU → 可执行约束）            | 已接受 |
 | [ADR-011](./ADR-011-recall-time-confidence.md)       | 相对时间置信度分层（hard 筛 vs soft 排）           | 已接受 |
+| [ADR-012](./ADR-012-find-things-dual-meaning.md)     | find things 双关为后手；终局壁垒=私有增量与习惯    | 已接受 |
 
 **新增 ADR：** 先写本文目录 + 文件，再在产品文档 / `CURRENT.md` 引用。

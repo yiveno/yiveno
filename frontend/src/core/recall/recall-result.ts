@@ -4,6 +4,7 @@ import { explainRecallMatch, getRecallMatchFieldLabel } from '@/core/recall/expl
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import type { RecallFramingFacts } from '@/core/recall/recall-framing-facts'
 import type { RecallPipelineTiming } from '@/core/recall/recall-telemetry'
+import type { RecallVisibleProgressStage } from '@/core/recall/visible-progress'
 
 /** 单次召回命中项。 */
 export interface RecallMatch {
@@ -99,6 +100,11 @@ export interface RecallResult {
   composerNarrowExamples?: string[]
   /** 理解 vs 检索分段耗时（TTE / 性能观测；§5.9）。 */
   pipelineTiming?: RecallPipelineTiming
+  /**
+   * 本轮真实走过的可见进展阶段（§7.0）。
+   * 供 UI 在推送与响应竞态时补全展示；Omnibox 通常不附。
+   */
+  visibleProgressStages?: RecallVisibleProgressStage[]
 }
 
 /** UI 展示用的 MemoryItem 摘要。 */

@@ -9,7 +9,8 @@
 
 ## 0. 一句话目标
 
-把现行实现收束到不可动摇的主题：**Yiveno = 那个找东西的**——自然语言稳定对上用户自己的内容；不助理化、不同步中台化、不过早平台化。
+把现行实现收束到不可动摇的主题：**Yiveno = 那个找东西的 / find things**——自然语言稳定对上用户自己的内容；不助理化、不同步中台化、不过早平台化。  
+**战略（ADR-012）：** 定位句不变；当前工具履约；双关/记忆层外延为**后手（视发展再定，可以≠必须）**；终局壁垒在私有增量与习惯。当前仍按锋利找东西产品交付，**不**预支翻牌或记忆产品承诺。
 
 ---
 
@@ -165,18 +166,18 @@
 
 #### 已有（可当真）
 
-| 能力                | 说明                                                                |
-| ------------------- | ------------------------------------------------------------------- |
-| Side Panel 主壳     | 无 `default_popup`；图标 / `_execute_action` 开 Panel               |
-| 线程 + Composer     | 用户泡 / 助手块；Enter 发送、Shift+Enter 换行；空线程 composer 加重 |
-| 结果三分 UI         | `top_pick` / `need_a_clue` / `no_match`（+ error）                  |
-| 结构化助手回复      | 主卡、「可能是这些」、猜测卡、追问芯片、None of these               |
-| 多轮 refine         | 同线程传 `RECALL_WITH_CLUE.context`；core 槽位 merge                |
-| New find            | 显式清 `dialogState` + 气泡                                         |
-| Session status      | 续找时固定短句（非思维链）                                          |
-| `no_match` 诚实终局 | **无**追问芯片；**无**「缩短再试」等换查询补救 CTA                  |
-| 等待态 / 黏底       | pending 脉冲；近底跟随，上翻暂停；发送强制黏底                      |
-| 关 Panel 丢会话     | P0 不持久化                                                         |
+| 能力                | 说明                                                                                                                      |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| Side Panel 主壳     | 无 `default_popup`；图标 / `_execute_action` 开 Panel                                                                     |
+| 线程 + Composer     | 用户泡 / 助手块；Enter 发送、Shift+Enter 换行；空线程 composer 加重                                                       |
+| 结果三分 UI         | `top_pick` / `need_a_clue` / `no_match`（+ error）                                                                        |
+| 结构化助手回复      | 主卡、「可能是这些」、猜测卡、追问芯片、None of these                                                                     |
+| 多轮 refine         | 同线程传 `RECALL_WITH_CLUE.context`；core 槽位 merge                                                                      |
+| New find            | 显式清 `dialogState` + 气泡                                                                                               |
+| Session status      | 续找时固定短句（非思维链）                                                                                                |
+| `no_match` 诚实终局 | **无**追问芯片；**无**「缩短再试」等换查询补救 CTA                                                                        |
+| 等待态 / 黏底       | pending 脉冲；近底跟随；**可见进展**三阶段（§7.0 · 已接线；&lt;500ms 不展示）；结果态 **理解回声**（`Heard as` 槽位芯片） |
+| 关 Panel 丢会话     | P0 不持久化                                                                                                               |
 
 #### 明确不做（除非改 §7.0 / 本表）
 
@@ -185,14 +186,15 @@
 | Fork LibreChat / Open WebUI / Lobe 等完整 Chat 产品 | 产品边界会被对方定义                                |
 | 主壳换 React + assistant-ui / AI Elements           | 扩展真相源是 Vue Side Panel；换栈吃算法时间         |
 | 流式长文 Markdown 工作台、代码块主路径              | 找回以短 NL + Memory 卡为主                         |
-| 持久多会话历史侧栏 / 分支 / 编辑消息 / regenerate   | 核心对象是个人痕迹，不是 Conversation 树；P0 关即丢 |
+| Agent「思考中 / 工具轨迹」式 pending 秀             | 与可见进展 Normative 冲突；禁止 CoT / 假进度        |
+| 持久多会话历史侧栏 / 分支 / 编辑消息 /tokenize      | 核心对象是个人痕迹，不是 Conversation 树；P0 关即丢 |
 | 自动话题切换 / 猜成败清线程                         | 只认 New find + 关 Panel                            |
 | `no_match` 后再推销缩短/换查询                      | 与诚实终局矛盾（2026-08-21 已废）                   |
 | 借 Panel 做书签树/整理中心                          | §0.3                                                |
 
 #### 允许的薄维护（非主战场）
 
-仅当 **阻塞信任或算法手测** 时修：composer / 滚底 / pending / 空态可读性、卡片在线程内过挤等。**禁止**借「更像 ChatGPT」开无验收的大 redesign。
+仅当 **阻塞信任或算法手测** 时修：composer / 滚底 / 空态可读性、卡片在线程内过挤等。**例外（2026-09-11）：** **Recall 可见进展**升为体验高优，权威在产品文档 §7.0——仍禁止借机做 ChatGPT 大 redesign。
 
 #### 默认下一主线（壳外）
 
@@ -260,6 +262,7 @@ R-shell / R-shell-session / R-shell-chat 基线（已）
 
 | 日期       | 变更                                                                                                                              |
 | ---------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-11 | Recall **可见进展**升为体验高优（对齐产品 §7.0）；R-shell-chat 例外；禁 Agent CoT 式 pending                                      |
 | 2026-08-28 | **CURRENT + ADR：** 新增 `CURRENT.md` 与 `architecture/decisions/`；R4 状态对齐产品文档 §1（核心已落地，Outcome Labeling 进行中） |
 | 2026-08-24 | **§7.2 Outcome Labeling：** 改版计划 R4 交付表增加提问↔答案对照（对齐产品文档）                                                   |
 | 2026-08-24 | **R4 验收规格：** 产品文档 §5.10/§5.11；工程旁挂 `R4-Phase-E-验收与eval.md`                                                       |

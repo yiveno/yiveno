@@ -20,7 +20,9 @@ export const RecallPipelineTimingSchema = z.object({
   /** 理解来源：llm | rules | … */
   understandSource: z.string().optional(),
   /** 是否走 Hybrid 融合 */
-  usedHybrid: z.boolean().optional()
+  usedHybrid: z.boolean().optional(),
+  /** 内容佐证空窗后是否做过一次时间 soft 回退（ADR-011 例外） */
+  timeSoftReopen: z.boolean().optional()
 })
 
 export type RecallPipelineTiming = z.infer<typeof RecallPipelineTimingSchema>

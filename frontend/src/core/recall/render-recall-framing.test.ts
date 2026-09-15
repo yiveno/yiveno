@@ -92,4 +92,26 @@ describe('renderRecallFraming', () => {
 
     expect(renderRecallFraming(facts, translate)).toContain('Within last week,')
   })
+
+  it('omitUnderstood 时跳过 P1，仍保留路径与计数', () => {
+    const facts: RecallFramingCandidateFacts = {
+      kind: 'candidates',
+      understood: {
+        objectTypes: ['video'],
+        contentTerms: [],
+        behaviorHints: [],
+        noteHint: false
+      },
+      retrievalPath: 'constraint_neighborhood',
+      buckets: [],
+      stance: 'weak_candidates',
+      counts: { total: 12, shown: 5 },
+      isWideNeighborhood: true
+    }
+
+    const text = renderRecallFraming(facts, translate, { omitUnderstood: true })
+    expect(text).not.toContain('Looking for')
+    expect(text).toContain('These match the kind you pointed at.')
+    expect(text).toContain('12 related')
+  })
 })

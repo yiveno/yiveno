@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 import type { BookmarkLibraryIndex } from '@/core/memory/bookmark-library-index'
 import type { ChromeBookmarkImportState } from '@/core/memory/chrome-bookmark-import-state'
+import type { ColdStartEnrichmentBatch } from '@/core/memory/cold-start-enrichment-batch'
 import type { ColdStartPipelineState } from '@/core/memory/cold-start-pipeline-state'
 import {
   ThirdPartyCorpusImportErrorCodeSchema,
@@ -14,7 +15,8 @@ import type { BackgroundMessageScope } from '@/core/messaging/constants'
 export const ImportErrorCodeSchema = z.enum([
   'IMPORT_STATUS_READ_FAILED', // 读取导入状态失败
   'LIBRARY_TREE_READ_FAILED', // 读取书签树失败
-  'COLD_START_STATUS_READ_FAILED' // 读取冷启动门禁状态失败
+  'COLD_START_STATUS_READ_FAILED', // 读取冷启动门禁状态失败
+  'GS_CLUE_SAMPLES_FAILED' // Getting Started 示意 clue 生成失败
 ])
 
 export type ImportErrorCode = z.infer<typeof ImportErrorCodeSchema>
@@ -90,6 +92,8 @@ export type GetColdStartStatusMessage = {
 export type ColdStartStatusSuccessResponse = {
   ok: true
   state: ColdStartPipelineState | null
+  /** 本轮冷启动 LLM enrichment 批次进度（无则 null）。 */
+  enrichmentBatch: ColdStartEnrichmentBatch | null
 }
 
 export type ColdStartStatusErrorResponse = {
@@ -99,6 +103,41 @@ export type ColdStartStatusErrorResponse = {
 }
 
 export type ColdStartStatusResponse = ColdStartStatusSuccessResponse | ColdStartStatusErrorResponse
+
+const generateGettingStartedClueSamplesPayloadSchema = z
+  .object({
+    /** 无书签时的英文兜底口语（由 UI t() 注入） */
+    fallbackClue: z.string().trim().min(1).max(200).optional()
+  })
+  .strict()
+
+/** 生成 Getting Started 示意 clue（LLM 一次 4 条；失败回退模板）。 */
+export type GenerateGettingStartedClueSamplesMessage = {
+  scope: BackgroundMessageScope
+  type: 'GENERATE_GETTING_STARTED_CLUE_SAMPLES'
+  payload?: z.infer<typeof generateGettingStartedClueSamplesPayloadSchema>
+}
+
+export type GenerateGettingStartedClueSamplesSuccessResponse = {
+  ok: true
+  clues: string[]
+  /** llm：Worker；template：标题模板 */
+  origin: 'llm' | 'template'
+  chromeId: string
+  title: string
+  url?: string
+  fromCache: boolean
+}
+
+export type GenerateGettingStartedClueSamplesErrorResponse = {
+  ok: false
+  errorCode: ImportErrorCode
+  error?: string
+}
+
+export type GenerateGettingStartedClueSamplesResponse =
+  | GenerateGettingStartedClueSamplesSuccessResponse
+  | GenerateGettingStartedClueSamplesErrorResponse
 
 const importThirdPartyCorpusPayloadSchema = z.object({
   source: ThirdPartyCorpusSourceSchema,
@@ -153,6 +192,7 @@ export type ImportBackgroundMessage =
   | GetChromeBookmarkImportStatusMessage
   | GetBookmarkLibraryTreeMessage
   | GetColdStartStatusMessage
+  | GenerateGettingStartedClueSamplesMessage
   | ImportThirdPartyCorpusMessage
   | GetThirdPartyCorpusImportStatusMessage
 
@@ -160,11 +200,21 @@ export type ImportBackgroundResponse =
   | ChromeBookmarkImportStatusResponse
   | GetBookmarkLibraryTreeResponse
   | ColdStartStatusResponse
+  | GenerateGettingStartedClueSamplesResponse
   | ImportThirdPartyCorpusResponse
   | ThirdPartyCorpusImportStatusResponse
 
 export function parseImportThirdPartyCorpusPayload(value: unknown) {
   return importThirdPartyCorpusPayloadSchema.parse(value)
+}
+
+export function parseGenerateGettingStartedClueSamplesPayload(value: unknown): {
+  fallbackClue?: string
+} {
+  if (value === undefined) {
+    return {}
+  }
+  return generateGettingStartedClueSamplesPayloadSchema.parse(value) as { fallbackClue?: string }
 }
 
 const getBookmarkLibraryTreePayloadSchema = z

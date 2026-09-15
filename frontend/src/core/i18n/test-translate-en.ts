@@ -19,9 +19,13 @@ const EN: Record<string, string> = {
   popup_no_match_title: 'No matching memory yet',
   popup_no_match_body:
     "There isn't a matching trace in your library yet. Try a shorter clue or save a trace first.",
-  popup_welcome_title: 'What are you trying to find?',
-  popup_welcome_body:
-    "Use whatever clue you remember to find something you've already saved - a page, excerpt, or note.",
+  popup_welcome_title: 'What do you want to recall?',
+  popup_welcome_body: 'Say it however you remember—any detail works.',
+  popup_idle_paradigm_hint: 'Try saying it like…',
+  popup_idle_paradigm_content_time: 'that article I saved yesterday about caching',
+  popup_idle_paradigm_note: 'something I noted about the pricing page',
+  popup_idle_paradigm_saved_when: 'the page I saved this morning',
+  popup_idle_paradigm_fill_aria: 'Fill clue: $1',
   popup_greeting_morning: 'Good morning',
   popup_greeting_afternoon: 'Good afternoon',
   popup_greeting_evening: 'Good evening',

@@ -66,6 +66,7 @@ describe('cold-start-shell-contract §5.8', () => {
   it('must：Capture-first 闸门与空态文案一致（§5.8 安装引导）', () => {
     const showCaptureFirst = shouldShowCaptureFirstRecallShell({
       excerptCaptureCount: 0,
+      bookmarkCount: 0,
       installOnboardingDone: false
     })
     expect(showCaptureFirst).toBe(true)
@@ -82,12 +83,27 @@ describe('cold-start-shell-contract §5.8', () => {
     expect(shouldOpenGettingStartedOnInstall('update')).toBe(false)
   })
 
-  it('must：有摘录或引导完成后不再 Capture-first', () => {
+  it('must：有书签或有摘录或引导完成后不再 Capture-first', () => {
     expect(
-      shouldShowCaptureFirstRecallShell({ excerptCaptureCount: 1, installOnboardingDone: false })
+      shouldShowCaptureFirstRecallShell({
+        excerptCaptureCount: 0,
+        bookmarkCount: 5,
+        installOnboardingDone: false
+      })
     ).toBe(false)
     expect(
-      shouldShowCaptureFirstRecallShell({ excerptCaptureCount: 0, installOnboardingDone: true })
+      shouldShowCaptureFirstRecallShell({
+        excerptCaptureCount: 1,
+        bookmarkCount: 0,
+        installOnboardingDone: false
+      })
+    ).toBe(false)
+    expect(
+      shouldShowCaptureFirstRecallShell({
+        excerptCaptureCount: 0,
+        bookmarkCount: 0,
+        installOnboardingDone: true
+      })
     ).toBe(false)
   })
 })

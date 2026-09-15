@@ -3,6 +3,7 @@
  *
  * - `/clue/complete`：开发/未登录降级路径（IP 日配额；正式 Pro 走 hosted）
  * - `/enrichment/complete`：Capture enrichment 结构化提议（扩展 merge 后写库）
+ * - `/gs-clue-samples/complete`：Getting Started 示意 clue（一次 4 条；IP 日配额）
  * - `/hosted/*`：Pro 托管口语 LLM（Bearer + 月配额；扩展已接线）
  */
 
@@ -11,6 +12,7 @@ import type { Env } from '../types/env'
 import { handleClueComplete } from '../handlers/ai-clue'
 import { handleEmbed } from '../handlers/ai-embed'
 import { handleEnrichmentComplete } from '../handlers/ai-enrichment'
+import { handleGsClueSamplesComplete } from '../handlers/ai-gs-clue-samples'
 import { handleHostedComplete, handleHostedQuota } from '../handlers/ai-hosted'
 import { supabaseAuth } from '../middleware/supabase-auth'
 
@@ -41,6 +43,15 @@ aiRouter.post('/clue/complete', async c => {
  */
 aiRouter.post('/enrichment/complete', async c => {
   return handleEnrichmentComplete(c.req.raw, c.env)
+})
+
+/**
+ * POST /api/ai/gs-clue-samples/complete
+ *
+ * Getting Started：一次生成 4 条口语示意 clue（返回 JSON；扩展缓存后展示）。
+ */
+aiRouter.post('/gs-clue-samples/complete', async c => {
+  return handleGsClueSamplesComplete(c.req.raw, c.env)
 })
 
 /**

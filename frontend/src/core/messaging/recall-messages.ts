@@ -20,7 +20,12 @@ export type RecallDialogContext = z.infer<typeof recallDialogContextSchema>
 
 const recallWithCluePayloadSchema = z.object({
   clue: z.string().min(1).max(2000),
-  context: recallDialogContextSchema.optional()
+  context: recallDialogContextSchema.optional(),
+  /**
+   * Side Panel 可见进展：本轮请求 id，SW 经 RECALL_VISIBLE_PROGRESS 回推阶段。
+   * Omnibox / 无 UI 监听时可省略。
+   */
+  progressRequestId: z.string().min(1).max(128).optional()
 })
 
 /** Recall 面向 UI 的稳定错误码。 */

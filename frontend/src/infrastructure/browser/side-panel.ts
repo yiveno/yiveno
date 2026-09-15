@@ -1,6 +1,9 @@
 /**
  * Chrome Side Panel（Recall 主壳 R-shell）。
- * 仅 Background / Service Worker 调用。
+ *
+ * - **Service Worker**：`openRecallSidePanel`（划词等经 `OPEN_RECALL_SHELL`；须在手势链上尽快调用，禁止先 await bootstrap/storage）
+ * - **扩展页**：`openRecallSidePanelFromExtensionPage`（Getting Started 等按钮须本页直调；经 SW 会丢用户手势）
+ *
  * `@types/chrome` 未覆盖 sidePanel 时用最小本地类型。
  */
 
@@ -19,7 +22,7 @@ type ChromeWithSidePanel = typeof chrome & { sidePanel?: SidePanelApi }
 export interface OpenRecallSidePanelOptions {
   /** 优先：当前标签（content script 消息常带） */
   tabId?: number
-  /** 次选：窗口 id（扩展页消息） */
+  /** 次选：窗口 id（扩展页 / 无 tab 时） */
   windowId?: number
 }
 
@@ -55,15 +58,15 @@ export async function ensureSidePanelOpensOnActionClick(): Promise<void> {
     flowFail('SidePanel', '配置 openPanelOnActionClick', startedAt, error)
     logger.error(
       'SidePanel',
-      'setPanelBehavior 失败（工具栏图标路径可能不可用；扩展页仍可经 OPEN_RECALL_SHELL 打开）',
+      'setPanelBehavior 失败（工具栏图标路径可能不可用；扩展页仍可本页直调 open）',
       error
     )
   }
 }
 
 /**
- * 在用户手势链上打开/聚焦 Recall Side Panel。
- * 优先 tabId → windowId → chrome.windows.getCurrent()。
+ * 打开/聚焦 Recall Side Panel。
+ * 优先 tabId → 显式 windowId → `WINDOW_ID_CURRENT`（禁止先 await getCurrent，以免丢用户手势）。
  */
 export async function openRecallSidePanel(options: OpenRecallSidePanelOptions = {}): Promise<void> {
   const startedAt = flowStart('SidePanel', '打开 Recall 主壳')
@@ -81,19 +84,24 @@ export async function openRecallSidePanel(options: OpenRecallSidePanelOptions = 
       return
     }
 
-    let windowId = options.windowId
-    if (typeof windowId !== 'number') {
-      const current = await chrome.windows.getCurrent()
-      windowId = current.id
-    }
-    if (typeof windowId !== 'number') {
-      throw new Error('无法解析 windowId')
-    }
+    const windowId =
+      typeof options.windowId === 'number' ? options.windowId : chrome.windows.WINDOW_ID_CURRENT
 
     await api.open({ windowId })
-    flowOk('SidePanel', '打开 Recall 主壳', startedAt, { via: 'windowId', windowId })
+    flowOk('SidePanel', '打开 Recall 主壳', startedAt, {
+      via: typeof options.windowId === 'number' ? 'windowId' : 'WINDOW_ID_CURRENT',
+      windowId
+    })
   } catch (error) {
     flowFail('SidePanel', '打开 Recall 主壳', startedAt, error)
     throw error
   }
+}
+
+/**
+ * 扩展页按钮手势内打开 Side Panel。
+ * Getting Started 等不得 `sendMessage`→SW：bootstrap / 消息往返会丢掉 `sidePanel.open` 所需用户手势。
+ */
+export async function openRecallSidePanelFromExtensionPage(): Promise<void> {
+  await openRecallSidePanel({ windowId: chrome.windows.WINDOW_ID_CURRENT })
 }

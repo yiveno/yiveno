@@ -1,8 +1,10 @@
 /**
  * 业务流日志约定辅助：开始 / 完成 / 失败，便于 SW 控制台按 scope 过滤。
  * 新增业务路径应优先用本模块，避免只打 error、没有进度。
+ * scope 须为 `log-scopes.ts` 闭集成员。
  */
 
+import type { LogScope } from '@/infrastructure/logging/log-scopes'
 import { logger } from '@/infrastructure/logging/logger'
 
 function durationMs(startedAt: number): number {
@@ -10,14 +12,14 @@ function durationMs(startedAt: number): number {
 }
 
 /** 业务步骤开始。 */
-export function flowStart(scope: string, action: string, data?: Record<string, unknown>): number {
+export function flowStart(scope: LogScope, action: string, data?: Record<string, unknown>): number {
   logger.info(scope, `${action}：开始`, data)
   return Date.now()
 }
 
 /** 业务步骤成功结束。 */
 export function flowOk(
-  scope: string,
+  scope: LogScope,
   action: string,
   startedAt: number,
   data?: Record<string, unknown>
@@ -30,7 +32,7 @@ export function flowOk(
 
 /** 业务步骤失败（已捕获或即将返回错误响应）。 */
 export function flowFail(
-  scope: string,
+  scope: LogScope,
   action: string,
   startedAt: number,
   error: unknown,

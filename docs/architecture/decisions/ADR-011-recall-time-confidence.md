@@ -24,6 +24,19 @@
 - 改 label↔confidence 表或硬/软行为 → 同批改产品文档相对时间表 + 本 ADR + 单测/must。
 - 自然 clue 采样仍决定 must 扩面与后续槽位优先级；本 ADR 不宣称「时间已是采样证实的第一自发维度」，只修已知产品坑。
 
+### 空/弱窗 × contentTerms（Normative 例外 · 2026-09-11）
+
+**优先级：** 禁止甩无关 **>** 日历硬筛 **>** 弱语义填屏。
+
+当 `ParsedRecallClue.contentTerms` 非空时：
+
+1. **内容佐证门：** 邻域候选须对至少一个 contentTerm 在条目索引字段（title / 摘录 / 附注 / keywords 等，见产品文档）上有**词面佐证**；禁止仅靠弱 embedding / RRF / outcome 对交卷。
+2. **high 仍先硬筛**（本 ADR 决定 2 不变）。
+3. **内容优先回退一次：** 硬筛 + 佐证门后池空 → **同一 clue** 再检索一轮，时间按 **soft**（不硬切窗外）；Framing 用 Around + 诚实提示时间可能不准；仍只接受有佐证的命中。仍空 → 诚实 `no_match`。
+4. **禁止：** 无限扩窗；内容别名灰名单；用窗内无佐证弱条填 `top_pick`。
+
+改本例外 → 同批改产品文档相对时间段 / §7.2 Outcome 护栏 / must。
+
 ## 参考
 
 - [`research/tte-beta-2026-09/time-confidence-plan.md`](../../research/tte-beta-2026-09/time-confidence-plan.md)

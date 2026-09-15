@@ -128,25 +128,6 @@
   "popup_import_failed_fallback": {
     "message": "Bookmark import failed. Reload the extension and try again."
   },
-  "popup_import_progress": {
-    "message": "Importing bookmarks $imported$ / $total$",
-    "placeholders": {
-      "imported": {
-        "content": "$1",
-        "example": "3"
-      },
-      "total": {
-        "content": "$2",
-        "example": "120"
-      }
-    }
-  },
-  "popup_import_progress_indeterminate": {
-    "message": "Importing bookmarks…"
-  },
-  "popup_import_progress_aria": {
-    "message": "Bookmark import progress"
-  },
   "cold_start_eyebrow": {
     "message": "First-time setup"
   },
@@ -160,10 +141,10 @@
     "message": "Yiveno is preparing your bookmarks so you can find them with fuzzy clues."
   },
   "cold_start_stage_import_title": {
-    "message": "Importing your bookmarks"
+    "message": "Preparing your library"
   },
   "cold_start_stage_import_body": {
-    "message": "Bringing Chrome bookmarks into your local library so you can find them with clues."
+    "message": "Making sure bookmarks you already authorized are ready in your local library."
   },
   "cold_start_stage_rules_title": {
     "message": "Making your library easier to find"
@@ -184,7 +165,7 @@
     "message": "Your library is ready. Sign in later if you want richer fuzzy matching."
   },
   "cold_start_detail_import": {
-    "message": "Imported $imported$ of $total$ bookmarks",
+    "message": "Ready $imported$ of $total$ bookmarks",
     "placeholders": {
       "imported": {
         "content": "$1",
@@ -197,7 +178,7 @@
     }
   },
   "cold_start_detail_import_indeterminate": {
-    "message": "Reading your Chrome bookmark tree…"
+    "message": "Waiting for bookmarks…"
   },
   "cold_start_detail_rules": {
     "message": "Scanned $scanned$ items · updated $updated$",
@@ -242,7 +223,7 @@
     }
   },
   "cold_start_step_import": {
-    "message": "1 · Import bookmarks"
+    "message": "1 · Preparing bookmarks"
   },
   "cold_start_step_rules": {
     "message": "2 · Prepare library"
@@ -250,11 +231,70 @@
   "cold_start_step_ai": {
     "message": "3 · Improve fuzzy find (best effort)"
   },
+  "cold_start_post_release_banner": {
+    "message": "You can recall now—but it’s not at its best yet. We’re still enriching your library in the background. Give it a few minutes."
+  },
+  "cold_start_post_release_banner_progress": {
+    "message": "You can recall now—but it’s not at its best yet. Enriching your library… $DONE$ of $TOTAL$.",
+    "placeholders": {
+      "done": {
+        "content": "$1",
+        "example": "12"
+      },
+      "total": {
+        "content": "$2",
+        "example": "40"
+      }
+    }
+  },
+  "cold_start_post_release_banner_paused": {
+    "message": "You can recall now. Library enrichment paused at $DONE$ of $TOTAL$ (daily AI limit). It’ll resume later.",
+    "placeholders": {
+      "done": {
+        "content": "$1",
+        "example": "12"
+      },
+      "total": {
+        "content": "$2",
+        "example": "40"
+      }
+    }
+  },
+  "cold_start_post_release_progress_aria": {
+    "message": "Library enrichment progress"
+  },
+  "cold_start_post_release_dismiss": {
+    "message": "Dismiss"
+  },
+  "cold_start_post_release_dismiss_aria": {
+    "message": "Dismiss background setup notice"
+  },
   "popup_welcome_title": {
     "message": "What do you want to recall?"
   },
   "popup_welcome_body": {
-    "message": "Use a clue you remember to find what you saved—a site, an excerpt, or a note."
+    "message": "Say it however you remember—any detail works."
+  },
+  "popup_idle_paradigm_hint": {
+    "message": "Try saying it like…"
+  },
+  "popup_idle_paradigm_content_time": {
+    "message": "that article I saved yesterday about caching"
+  },
+  "popup_idle_paradigm_note": {
+    "message": "something I noted about the pricing page"
+  },
+  "popup_idle_paradigm_saved_when": {
+    "message": "the page I saved this morning"
+  },
+  "popup_idle_paradigm_fill_aria": {
+    "message": "Fill clue: $1",
+    "placeholders": {
+      "clue": {
+        "content": "$1",
+        "example": "that article I saved yesterday about caching"
+      }
+    }
   },
   "popup_greeting_morning": {
     "message": "Good morning"
@@ -437,6 +477,75 @@
   "popup_recall_pending": {
     "message": "Looking through what you saved…"
   },
+  "popup_recall_progress_understanding": {
+    "message": "Making sense of your impression…"
+  },
+  "popup_recall_progress_narrowing": {
+    "message": "Narrowing down your library…"
+  },
+  "popup_recall_progress_checking": {
+    "message": "Checking the closest matches…"
+  },
+  "popup_recall_progress_basis": {
+    "message": "Mainly based on: $PARTS$.",
+    "placeholders": {
+      "parts": {
+        "content": "$1",
+        "example": "rough timing, where it came from, and what you meant to use it for"
+      }
+    }
+  },
+  "popup_recall_progress_basis_timing": {
+    "message": "rough timing"
+  },
+  "popup_recall_progress_basis_source": {
+    "message": "where it came from"
+  },
+  "popup_recall_progress_basis_purpose": {
+    "message": "what you meant to use it for"
+  },
+  "popup_recall_progress_basis_sep": {
+    "message": ", "
+  },
+  "popup_recall_progress_basis_sep_last": {
+    "message": ", and "
+  },
+  "popup_recall_heard_as": {
+    "message": "Heard as"
+  },
+  "popup_recall_echo_aria_sep": {
+    "message": ", "
+  },
+  "popup_recall_echo_time_soft": {
+    "message": "~$1",
+    "placeholders": {
+      "label": {
+        "content": "$1",
+        "example": "a while ago"
+      }
+    }
+  },
+  "popup_recall_echo_behavior_half_read": {
+    "message": "half-read"
+  },
+  "popup_recall_echo_behavior_often_opened": {
+    "message": "opened often"
+  },
+  "popup_recall_echo_behavior_recently_saved": {
+    "message": "just saved"
+  },
+  "popup_recall_echo_note": {
+    "message": "note"
+  },
+  "popup_recall_echo_term": {
+    "message": "“$1”",
+    "placeholders": {
+      "term": {
+        "content": "$1",
+        "example": "retention"
+      }
+    }
+  },
   "popup_shorten_retry": {
     "message": "Shorten and retry"
   },
@@ -551,7 +660,7 @@
     "message": "These might be related, but the fit is weak. Refine the clue above, or say none of these."
   },
   "popup_reply_miss": {
-    "message": "Nothing here matches that clue. You might be remembering differently—or it was never saved. Save a trace first if you want to find it later."
+    "message": "Nothing close enough turned up. Try another detail that stuck with you."
   },
   "popup_session_status_continuing": {
     "message": "Still refining this find — not a new one."
@@ -953,7 +1062,7 @@
     "message": "Add Chrome bookmarks to your library"
   },
   "settings_toggle_chrome_bookmark_ingest_hint": {
-    "message": "When off, stops import and live updates; keeps what you already have."
+    "message": "Off by default. When on, copies bookmarks into your local library; turning off stops new imports and keeps what you already have."
   },
   "settings_section_shortcuts": {
     "message": "Shortcuts"
@@ -1580,6 +1689,9 @@
   "error_cold_start_status_read_failed": {
     "message": "Could not read first-time setup status"
   },
+  "error_gs_clue_samples_failed": {
+    "message": "Couldn’t prepare a sample clue. Try typing one yourself."
+  },
   "action_retry": {
     "message": "Retry"
   },
@@ -1613,71 +1725,210 @@
   "popup_skip_onboarding": {
     "message": "Skip for now"
   },
+  "getting_started_eyebrow": {
+    "message": "Setup"
+  },
+  "getting_started_consent_aria": {
+    "message": "Chrome bookmark import"
+  },
+  "getting_started_consent_title": {
+    "message": "Import your Chrome bookmarks"
+  },
+  "getting_started_consent_body": {
+    "message": "Bring your bookmarks to Yiveno so you can find them later, even when you don’t remember exactly what they’re called."
+  },
+  "getting_started_consent_cta": {
+    "message": "Import my bookmarks"
+  },
+  "getting_started_consent_failed": {
+    "message": "Couldn’t start that just now. Try again."
+  },
+  "getting_started_consent_importing_title": {
+    "message": "Importing your bookmarks…"
+  },
+  "getting_started_consent_importing_body": {
+    "message": "You can keep going while we bring them in."
+  },
+  "getting_started_consent_progress_aria": {
+    "message": "Bookmark import progress"
+  },
+  "getting_started_consent_progress_detail": {
+    "message": "$imported$ of $total$",
+    "placeholders": {
+      "imported": {
+        "content": "$1",
+        "example": "12"
+      },
+      "total": {
+        "content": "$2",
+        "example": "40"
+      }
+    }
+  },
+  "getting_started_consent_progress_indeterminate": {
+    "message": "Working on it…"
+  },
+  "getting_started_consent_authorized_title": {
+    "message": "Your bookmarks are ready."
+  },
+  "getting_started_consent_authorized_body": {
+    "message": "Pick a clue below to try finding one."
+  },
+  "getting_started_consent_failed_title": {
+    "message": "Couldn’t finish importing"
+  },
+  "getting_started_consent_failed_body": {
+    "message": "Your permission is saved. Retry the import, or try recalling what you already have."
+  },
+  "getting_started_consent_retry": {
+    "message": "Try importing again"
+  },
   "getting_started_hero_title": {
-    "message": "Remember this. Find it later."
+    "message": "Give Yiveno something to remember."
   },
   "getting_started_hero_body": {
-    "message": "Save one line, then describe it in your own words—no exact title needed."
+    "message": "Bring in what you’ve already saved, or save something new."
   },
-  "getting_started_steps_aria": {
-    "message": "Getting started steps"
+  "getting_started_continue": {
+    "message": "Continue to Yiveno"
   },
-  "getting_started_step_capture_title": {
-    "message": "1. Save a trace"
+  "getting_started_continue_without": {
+    "message": "Continue without importing"
   },
-  "getting_started_step_capture_body": {
-    "message": "Highlight the demo line below, then tap Save in the floating menu—not the button at the bottom."
+  "getting_started_tabs_aria": {
+    "message": "Library sources"
   },
-  "getting_started_step_recall_title": {
-    "message": "2. Recall it"
+  "getting_started_tab_bookmarks": {
+    "message": "Bookmarks"
   },
-  "getting_started_step_recall_body": {
-    "message": "Open Yiveno and describe what you saved without copying the exact words."
+  "getting_started_tab_excerpts": {
+    "message": "Excerpts"
   },
-  "getting_started_demo_aria": {
-    "message": "Demo excerpt"
+  "getting_started_recall_card_aria": {
+    "message": "Recall something from your bookmarks"
   },
-  "getting_started_demo_context_before": {
-    "message": "When you browse,"
+  "getting_started_excerpt_recall_aria": {
+    "message": "Recall something from your excerpts"
   },
-  "getting_started_demo_line": {
-    "message": "you do not need the exact title—just describe what you remember."
+  "getting_started_excerpt_empty_title": {
+    "message": "Nothing here yet."
   },
-  "getting_started_demo_context_after": {
-    "message": "That is how Yiveno works."
+  "getting_started_excerpt_empty_body": {
+    "message": "When you find something worth remembering, save a line to Yiveno."
   },
-  "getting_started_save_demo": {
-    "message": "Save this line"
+  "getting_started_excerpt_frame": {
+    "message": "Save what you want to remember."
   },
-  "getting_started_save_demo_fallback": {
-    "message": "Save without selecting (fallback)"
+  "getting_started_bookmarks_frame": {
+    "message": "Bring in what you’ve already saved."
   },
-  "getting_started_demo_save_hint": {
-    "message": "Highlight the line, then tap Save in the menu that appears above your selection."
+  "getting_started_excerpt_sample_clue_fallback": {
+    "message": "something I highlighted"
   },
-  "getting_started_capture_done_hint": {
-    "message": "Saved. Continue with step 2 below."
+  "getting_started_passage_aria": {
+    "message": "Practice passage"
   },
-  "getting_started_saving": {
-    "message": "Saving…"
+  "getting_started_passage_lead": {
+    "message": "Select this passage, then tap Save on the floating menu."
   },
-  "getting_started_saved": {
-    "message": "Saved to Yiveno"
+  "getting_started_passage_line_1": {
+    "message": "Some things we miss never actually happened."
   },
-  "getting_started_save_failed": {
-    "message": "Save failed. Try again."
+  "getting_started_passage_line_2": {
+    "message": "A train we didn't take."
   },
-  "getting_started_recall_hint": {
-    "message": "Try recalling: “that line about remembering without the exact title”"
+  "getting_started_passage_line_3": {
+    "message": "A message we answered too late."
   },
-  "getting_started_recall_done_title": {
-    "message": "You are set"
+  "getting_started_passage_line_4": {
+    "message": "A place we passed without stopping."
   },
-  "getting_started_recall_done_body": {
-    "message": "You saved a trace and recalled it in your own words. On any page, highlight text to capture; open Yiveno when something comes back to mind."
+  "getting_started_passage_line_5": {
+    "message": "And then there are the things we somehow keep—a sentence we can't quite remember, a photograph with no clear reason for being special, a song whose name is gone but whose first few seconds still feel familiar."
   },
-  "getting_started_skip": {
-    "message": "Skip for now"
+  "getting_started_passage_line_6": {
+    "message": "We forget the details."
+  },
+  "getting_started_passage_line_7": {
+    "message": "Not always the feeling."
+  },
+  "getting_started_passage_select": {
+    "message": "Select this passage"
+  },
+  "getting_started_passage_hint": {
+    "message": "After it’s saved, try the sample clue in the side panel."
+  },
+  "getting_started_sample_clue": {
+    "message": "I remember reading something about missing things that never happened. It had a quiet, almost nostalgic feeling."
+  },
+  "getting_started_importing_title": {
+    "message": "Bringing in your bookmarks…"
+  },
+  "getting_started_importing_body": {
+    "message": "Hang tight—once they’re in, you can try recalling one in your own words."
+  },
+  "getting_started_empty_title": {
+    "message": "No bookmarks to recall yet"
+  },
+  "getting_started_empty_body": {
+    "message": "When you have bookmarks in Chrome, describe one in your own words here. You can still continue below."
+  },
+  "getting_started_composer_label": {
+    "message": "What are you looking for?"
+  },
+  "getting_started_composer_placeholder": {
+    "message": "something about…"
+  },
+  "getting_started_composer_submit": {
+    "message": "Find it"
+  },
+  "getting_started_looking": {
+    "message": "Looking…"
+  },
+  "getting_started_suggestions_lead": {
+    "message": "Try saying it like:"
+  },
+  "getting_started_oral_sample_lead": {
+    "message": "Try recalling something:"
+  },
+  "getting_started_oral_sample_generating": {
+    "message": "Writing a clue from your bookmarks…"
+  },
+  "getting_started_oral_sample_shuffle_aria": {
+    "message": "Try another clue"
+  },
+  "getting_started_oral_sample_try": {
+    "message": "Try it"
+  },
+  "getting_started_sample_clue_fallback": {
+    "message": "something I bookmarked"
+  },
+  "getting_started_found_it": {
+    "message": "Found it?"
+  },
+  "getting_started_found_yes": {
+    "message": "Yes"
+  },
+  "getting_started_you_found_something": {
+    "message": "You found something."
+  },
+  "getting_started_no_match_body": {
+    "message": "Nothing close enough turned up. Try another detail that stuck with you."
+  },
+  "getting_started_recall_failed": {
+    "message": "Couldn’t recall just now. Try again in a moment."
+  },
+  "getting_started_open_result_aria": {
+    "message": "Open $title$",
+    "placeholders": {
+      "title": {
+        "content": "$1",
+        "example": "Article title"
+      }
+    }
+  },
+  "getting_started_open_result_failed": {
+    "message": "Couldn’t open that link. Try again."
   },
   "popup_no_match_title_with_clue": {
     "message": "Nothing related to “$clue$”",
@@ -1692,7 +1943,7 @@
     "message": "No match yet"
   },
   "popup_no_match_body": {
-    "message": "No saved trace matched that clue. Try a shorter word or a fragment from a note—or save another selection and recall later."
+    "message": "Nothing close enough turned up. Try another detail that stuck with you."
   },
   "explain_field_title": {
     "message": "title"

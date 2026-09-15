@@ -26,11 +26,17 @@ const props = withDefaults(
     showNewFind?: boolean
     /** 有活动线程时可点；空壳时禁用。 */
     newFindEnabled?: boolean
+    /**
+     * 是否展示右侧导航（账号 / 记忆库 / 设置 / DEV）。
+     * Getting Started 等首跑激活页可关，避免首屏 chrome 抢注意力。
+     */
+    showNav?: boolean
   }>(),
   {
     current: 'none',
     showNewFind: false,
-    newFindEnabled: false
+    newFindEnabled: false,
+    showNav: true
   }
 )
 
@@ -227,7 +233,7 @@ onUnmounted(() => {
       />
       <p class="app-page-header__brand">{{ t('app_name') }}</p>
     </div>
-    <nav class="app-page-header__nav" :aria-label="t('nav_aria_label')">
+    <nav v-if="showNav" class="app-page-header__nav" :aria-label="t('nav_aria_label')">
       <AppIconButton
         v-if="showNewFind"
         :title="t('nav_new_find')"

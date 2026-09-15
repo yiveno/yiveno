@@ -47,7 +47,14 @@ export const RECALL_EVAL_IDS = {
   /** R4：附注含 deploy checklist */
   deployNoteExcerpt: '11111111-1111-4111-8111-111111111125',
   /** R4：近因刚存 + i18n 锚点 */
-  recentI18nExcerpt: '11111111-1111-4111-8111-111111111126'
+  recentI18nExcerpt: '11111111-1111-4111-8111-111111111126',
+  /**
+   * 内容佐证：昨天窗内无关摘录（无 retention）；
+   * 与 retentionFramework 窗外真目标配对测 soft 回退。
+   */
+  weakYesterdayStandupScrap: '11111111-1111-4111-8111-111111111127',
+  /** 窗外专有内容词，供 soft 回退 must（勿与 typeB yesterday 撞车） */
+  softReopenXenonRetention: '11111111-1111-4111-8111-111111111128'
 } as const
 
 export type RecallEvalItemId = (typeof RECALL_EVAL_IDS)[keyof typeof RECALL_EVAL_IDS]

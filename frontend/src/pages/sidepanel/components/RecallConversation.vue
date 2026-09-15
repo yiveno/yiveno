@@ -30,6 +30,8 @@ const props = defineProps<{
   /** 等待本轮 Recall 结果时展示脉冲占位 */
   pending?: boolean
   pendingLabel: string
+  /** 可见进展：慢请求揭示后的步骤（已完成 + 当前） */
+  pendingSteps?: Array<{ label: string; active: boolean }>
   selectedDetailExportIds?: Set<string>
   /** 为 true 时结果卡才显示 detail export 勾选框 */
   detailExportSelectionActive?: boolean
@@ -52,6 +54,28 @@ const emit = defineEmits<{
   useSuggestion: [value: string]
   toggleDetailExportSelection: [memoryItemId: string]
 }>()
+
+/** a11y：优先当前阶段 / 步骤，否则通用 pending。 */
+const pendingAriaLabel = computed(() => {
+  if (pendingActiveLabel.value) {
+    return pendingActiveLabel.value
+  }
+  if (props.pendingLabel.trim()) {
+    return props.pendingLabel
+  }
+  return t('popup_recall_pending')
+})
+
+/** 当前进行中的阶段文案（与三点同一行）。 */
+const pendingActiveLabel = computed(() => {
+  const active = props.pendingSteps?.find(step => step.active)
+  return active?.label?.trim() ?? ''
+})
+
+/** 已完成阶段（列在当前行下方，弱化）。 */
+const pendingDoneLabels = computed(() =>
+  (props.pendingSteps ?? []).filter(step => !step.active).map(step => step.label)
+)
 
 /** 用户已展开的更早 turn 数（超出默认尾部窗口）。 */
 const earlierRevealedCount = ref(0)
@@ -168,6 +192,11 @@ function onShowEarlierClick(mode: 'page' | 'all'): void {
   )
 }
 
+/** 理解回声 a11y：前缀 + 芯片用逗号连接。 */
+function understandingEchoAriaLabel(chips: string[]): string {
+  return `${t('popup_recall_heard_as')} ${chips.join(t('popup_recall_echo_aria_sep'))}`
+}
+
 function isDetailExportSelected(id: string): boolean {
   return props.selectedDetailExportIds?.has(id) === true
 }
@@ -231,6 +260,24 @@ function cardMemoDeps(
         <div class="assistant-turn">
           <p class="assistant-turn-name">Yiveno</p>
           <p v-if="turn.contextStatus" class="assistant-turn-status">{{ turn.contextStatus }}</p>
+          <p
+            v-if="turn.understandingEcho && turn.understandingEcho.length > 0"
+            class="assistant-turn-echo"
+            :aria-label="understandingEchoAriaLabel(turn.understandingEcho)"
+          >
+            <span class="assistant-turn-echo-prefix">{{ t('popup_recall_heard_as') }}</span>
+            <span class="assistant-turn-echo-chips">
+              <template
+                v-for="(chip, echoIndex) in turn.understandingEcho"
+                :key="`${turn.id}-echo-${echoIndex}`"
+              >
+                <span v-if="echoIndex > 0" class="assistant-turn-echo-sep" aria-hidden="true"
+                  >·</span
+                >
+                <span class="assistant-turn-echo-chip">{{ chip }}</span>
+              </template>
+            </span>
+          </p>
           <p
             class="assistant-turn-copy"
             :class="{ 'assistant-turn-copy--error': turn.tone === 'error' }"
@@ -379,16 +426,29 @@ function cardMemoDeps(
       v-if="pending"
       class="conversation-turn conversation-turn--assistant"
       role="status"
-      :aria-label="pendingLabel"
+      :aria-label="pendingAriaLabel"
     >
       <div class="assistant-turn assistant-turn--pending">
         <p class="assistant-turn-name">Yiveno</p>
-        <div class="pending-indicator">
-          <span class="pending-dot" />
-          <span class="pending-dot" />
-          <span class="pending-dot" />
+        <div class="pending-status-row" aria-live="polite">
+          <div class="pending-indicator" aria-hidden="true">
+            <span class="pending-dot" />
+            <span class="pending-dot" />
+            <span class="pending-dot" />
+          </div>
+          <p v-if="pendingActiveLabel" class="pending-label">{{ pendingActiveLabel }}</p>
+          <p v-else-if="pendingLabel" class="pending-label">{{ pendingLabel }}</p>
         </div>
-        <p class="pending-label">{{ pendingLabel }}</p>
+        <ol v-if="pendingDoneLabels.length > 0" class="pending-steps-done">
+          <li
+            v-for="(label, index) in pendingDoneLabels"
+            :key="`${index}-${label}`"
+            class="pending-step pending-step--done"
+          >
+            <span class="pending-step-mark" aria-hidden="true">✓</span>
+            <span>{{ label }}</span>
+          </li>
+        </ol>
       </div>
     </div>
   </section>
@@ -452,6 +512,76 @@ function cardMemoDeps(
   gap: var(--space-sm);
 }
 
+.pending-status-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+
+.pending-indicator {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 5px;
+  align-items: center;
+}
+
+.pending-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: var(--on-surface-muted);
+  opacity: 0.35;
+  animation: pending-pulse 1.1s ease-in-out infinite;
+}
+
+.pending-dot:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.pending-dot:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.pending-label {
+  margin: 0;
+  min-width: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--on-surface);
+}
+
+.pending-steps-done {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pending-step {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--on-surface-muted);
+}
+
+.pending-step--done {
+  opacity: 0.72;
+}
+
+.pending-step-mark {
+  flex: 0 0 auto;
+  width: 0.9em;
+  font-size: 11px;
+  line-height: 1.4;
+  text-align: center;
+}
+
 .assistant-turn-name {
   margin: 0;
   font-size: 12px;
@@ -468,6 +598,44 @@ function cardMemoDeps(
   line-height: 1.4;
   color: var(--on-surface-muted);
   text-wrap: pretty;
+  overflow-wrap: anywhere;
+}
+
+.assistant-turn-echo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+  align-items: baseline;
+  max-width: 100%;
+  min-width: 0;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--on-surface-muted);
+}
+
+.assistant-turn-echo-prefix {
+  flex: 0 0 auto;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.assistant-turn-echo-chips {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.assistant-turn-echo-sep {
+  color: var(--on-surface-muted);
+  opacity: 0.55;
+}
+
+.assistant-turn-echo-chip {
+  min-width: 0;
+  color: var(--on-surface);
   overflow-wrap: anywhere;
 }
 
@@ -576,37 +744,6 @@ function cardMemoDeps(
   gap: var(--space-xs) var(--space-sm);
   justify-content: flex-start;
   padding-top: var(--space-2xs);
-}
-
-.pending-indicator {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  min-height: 20px;
-}
-
-.pending-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: var(--radius-full);
-  background: var(--on-surface-muted);
-  opacity: 0.35;
-  animation: pending-pulse 1.1s ease-in-out infinite;
-}
-
-.pending-dot:nth-child(2) {
-  animation-delay: 0.15s;
-}
-
-.pending-dot:nth-child(3) {
-  animation-delay: 0.3s;
-}
-
-.pending-label {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.4;
-  color: var(--on-surface-muted);
 }
 
 @keyframes pending-pulse {

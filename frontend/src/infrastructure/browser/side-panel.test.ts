@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { ensureSidePanelOpensOnActionClick, openRecallSidePanel } from './side-panel'
+import {
+  ensureSidePanelOpensOnActionClick,
+  openRecallSidePanel,
+  openRecallSidePanelFromExtensionPage
+} from './side-panel'
 
 describe('side-panel', () => {
   beforeEach(() => {
@@ -27,23 +31,34 @@ describe('side-panel', () => {
     const open = vi.fn(async () => undefined)
     vi.stubGlobal('chrome', {
       sidePanel: { setPanelBehavior: vi.fn(), open },
-      windows: { getCurrent: vi.fn() }
+      windows: { getCurrent: vi.fn(), WINDOW_ID_CURRENT: -2 }
     })
 
     await openRecallSidePanel({ tabId: 3 })
     expect(open).toHaveBeenCalledWith({ tabId: 3 })
   })
 
-  it('openRecallSidePanel 无 tab 时用当前 window', async () => {
+  it('openRecallSidePanel 无上下文时用 WINDOW_ID_CURRENT（不 await getCurrent）', async () => {
     const open = vi.fn(async () => undefined)
     const getCurrent = vi.fn(async () => ({ id: 9 }))
     vi.stubGlobal('chrome', {
       sidePanel: { setPanelBehavior: vi.fn(), open },
-      windows: { getCurrent }
+      windows: { getCurrent, WINDOW_ID_CURRENT: -2 }
     })
 
     await openRecallSidePanel()
-    expect(getCurrent).toHaveBeenCalled()
-    expect(open).toHaveBeenCalledWith({ windowId: 9 })
+    expect(getCurrent).not.toHaveBeenCalled()
+    expect(open).toHaveBeenCalledWith({ windowId: -2 })
+  })
+
+  it('openRecallSidePanelFromExtensionPage 走 WINDOW_ID_CURRENT', async () => {
+    const open = vi.fn(async () => undefined)
+    vi.stubGlobal('chrome', {
+      sidePanel: { setPanelBehavior: vi.fn(), open },
+      windows: { WINDOW_ID_CURRENT: -2 }
+    })
+
+    await openRecallSidePanelFromExtensionPage()
+    expect(open).toHaveBeenCalledWith({ windowId: -2 })
   })
 })

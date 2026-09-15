@@ -5,17 +5,23 @@ import {
 import type {
   ChromeBookmarkImportStatusResponse,
   ColdStartStatusResponse,
+  GenerateGettingStartedClueSamplesResponse,
   GetBookmarkLibraryTreeResponse,
   ImportThirdPartyCorpusResponse,
   ThirdPartyCorpusImportStatusResponse
 } from '@/core/messaging/import-messages'
-import { parseImportThirdPartyCorpusPayload } from '@/core/messaging/import-messages'
+import {
+  parseGenerateGettingStartedClueSamplesPayload,
+  parseImportThirdPartyCorpusPayload
+} from '@/core/messaging/import-messages'
 import { getChromeBookmarkImportStatus } from '@/application/capture/import-chrome-bookmarks-service'
 import {
   ThirdPartyCorpusImportError,
   getThirdPartyCorpusImportStatus,
   importThirdPartyCorpusExport
 } from '@/application/capture/import-third-party-corpus-service'
+import { generateGettingStartedClueSamples } from '@/application/onboarding/generate-getting-started-clue-samples'
+import { readColdStartEnrichmentBatch } from '@/application/onboarding/cold-start-enrichment-batch-store'
 import { readColdStartPipelineState } from '@/application/onboarding/cold-start-pipeline-service'
 import {
   getLastBuiltBookmarkLibraryTree,
@@ -51,17 +57,67 @@ export async function handleGetChromeBookmarkImportStatus(): Promise<ChromeBookm
 export async function handleGetColdStartStatus(): Promise<ColdStartStatusResponse> {
   const startedAt = flowStart('ColdStart', '读取冷启动门禁状态')
   try {
-    const state = await readColdStartPipelineState()
+    const [state, enrichmentBatch] = await Promise.all([
+      readColdStartPipelineState(),
+      readColdStartEnrichmentBatch()
+    ])
     flowOk('ColdStart', '读取冷启动门禁状态', startedAt, {
       status: state?.status ?? null,
-      stage: state?.stage ?? null
+      stage: state?.stage ?? null,
+      enrichmentSettled: enrichmentBatch?.settled ?? null,
+      enrichmentTotal: enrichmentBatch?.total ?? null,
+      enrichmentStatus: enrichmentBatch?.status ?? null
     })
-    return { ok: true, state }
+    return { ok: true, state, enrichmentBatch }
   } catch (error) {
     flowFail('ColdStart', '读取冷启动门禁状态', startedAt, error)
     return {
       ok: false,
       errorCode: 'COLD_START_STATUS_READ_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/** Getting Started：生成示意 clue（LLM 或模板回退）。 */
+export async function handleGenerateGettingStartedClueSamples(
+  payload: unknown
+): Promise<GenerateGettingStartedClueSamplesResponse> {
+  const startedAt = flowStart('Onboarding', '生成 GS 示意 clue')
+  try {
+    const parsed = parseGenerateGettingStartedClueSamplesPayload(payload)
+    const tree = await handleGetBookmarkLibraryTree({})
+    if (!tree.ok || !('index' in tree) || !tree.index) {
+      flowFail('Onboarding', '生成 GS 示意 clue', startedAt, new Error('library_tree_unavailable'))
+      return { ok: false, errorCode: 'LIBRARY_TREE_READ_FAILED' }
+    }
+
+    const result = await generateGettingStartedClueSamples({
+      nodes: tree.index.nodes,
+      fallbackClue: parsed.fallbackClue ?? 'something I bookmarked'
+    })
+    if (!result) {
+      return { ok: false, errorCode: 'GS_CLUE_SAMPLES_FAILED', error: 'no_clues' }
+    }
+    flowOk('Onboarding', '生成 GS 示意 clue', startedAt, {
+      origin: result.origin,
+      fromCache: result.fromCache,
+      clueCount: result.clues.length
+    })
+    return {
+      ok: true,
+      clues: result.clues,
+      origin: result.origin,
+      chromeId: result.chromeId,
+      title: result.title,
+      ...(result.url ? { url: result.url } : {}),
+      fromCache: result.fromCache
+    }
+  } catch (error) {
+    flowFail('Onboarding', '生成 GS 示意 clue', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'GS_CLUE_SAMPLES_FAILED',
       ...(error instanceof Error ? { error: error.message } : {})
     }
   }

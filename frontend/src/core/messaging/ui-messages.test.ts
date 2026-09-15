@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   isUiScopedMessage,
   parseChromeBookmarkTreeChangedMessage,
+  parseRecallVisibleProgressMessage,
   UI_MESSAGE_SCOPE
 } from '@/core/messaging/ui-messages'
 
@@ -16,6 +17,20 @@ describe('ui-messages', () => {
     ).toEqual({ scope: 'ui', type: 'CHROME_BOOKMARK_TREE_CHANGED' })
   })
 
+  it('解析 RECALL_VISIBLE_PROGRESS', () => {
+    expect(
+      parseRecallVisibleProgressMessage({
+        scope: UI_MESSAGE_SCOPE,
+        type: 'RECALL_VISIBLE_PROGRESS',
+        payload: { progressRequestId: 'req-1', stage: 'narrowing' }
+      })
+    ).toEqual({
+      scope: 'ui',
+      type: 'RECALL_VISIBLE_PROGRESS',
+      payload: { progressRequestId: 'req-1', stage: 'narrowing' }
+    })
+  })
+
   it('拒绝 background scope 与未知 type', () => {
     expect(
       parseChromeBookmarkTreeChangedMessage({
@@ -27,6 +42,13 @@ describe('ui-messages', () => {
       parseChromeBookmarkTreeChangedMessage({
         scope: UI_MESSAGE_SCOPE,
         type: 'UNKNOWN'
+      })
+    ).toBeNull()
+    expect(
+      parseRecallVisibleProgressMessage({
+        scope: UI_MESSAGE_SCOPE,
+        type: 'RECALL_VISIBLE_PROGRESS',
+        payload: { progressRequestId: 'x', stage: 'thinking' }
       })
     ).toBeNull()
     expect(isUiScopedMessage({ scope: 'ui', type: 'x' })).toBe(true)

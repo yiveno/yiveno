@@ -141,14 +141,24 @@ export function renderRecallFramingCounts(
   return renderCounts(facts.counts.total, facts.counts.shown, translate)
 }
 
+export type RenderRecallFramingOptions = {
+  /**
+   * 跳过 P1「听成了什么」散文（由 Side Panel 理解回声芯片承接，避免重复）。
+   */
+  omitUnderstood?: boolean
+}
+
 /** P1–P5 规则正文（不含 P6 计数）。 */
 export function renderRecallFramingRulesBody(
   facts: RecallFramingFacts,
-  translate: TranslateFn
+  translate: TranslateFn,
+  options: RenderRecallFramingOptions = {}
 ): string {
+  const includeUnderstood = options.omitUnderstood !== true
+
   if (facts.kind === 'guess') {
     const parts = [
-      renderUnderstood(facts.understood, translate),
+      ...(includeUnderstood ? [renderUnderstood(facts.understood, translate)] : []),
       translate(
         facts.emptyKind === 'constrained_none'
           ? 'framing_guess_constrained_none'
@@ -160,7 +170,7 @@ export function renderRecallFramingRulesBody(
   }
 
   const parts: string[] = [
-    renderUnderstood(facts.understood, translate),
+    ...(includeUnderstood ? [renderUnderstood(facts.understood, translate)] : []),
     renderRetrievalPath(facts.retrievalPath, translate),
     renderBuckets(facts.buckets, translate),
     renderStance(facts.stance, translate)
@@ -174,13 +184,17 @@ export function renderRecallFramingRulesBody(
 }
 
 /** 将 Framing 事实渲染为单段气泡文案。 */
-export function renderRecallFraming(facts: RecallFramingFacts, translate: TranslateFn): string {
+export function renderRecallFraming(
+  facts: RecallFramingFacts,
+  translate: TranslateFn,
+  options: RenderRecallFramingOptions = {}
+): string {
   if (facts.kind === 'guess') {
-    return renderRecallFramingRulesBody(facts, translate)
+    return renderRecallFramingRulesBody(facts, translate, options)
   }
 
   return joinSentences([
-    renderRecallFramingRulesBody(facts, translate),
+    renderRecallFramingRulesBody(facts, translate, options),
     renderRecallFramingCounts(facts, translate)
   ])
 }

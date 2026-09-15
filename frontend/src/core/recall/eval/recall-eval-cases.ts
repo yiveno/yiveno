@@ -438,6 +438,22 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
     expectation: { kind: 'no_match' },
     note: 'R4：poem + yesterday 强约束库空 → 诚实 no_match'
   },
+  {
+    id: 'content-corroboration-time-soft-reopen',
+    clue: 'that article I saved yesterday about xenonretentionprotocol',
+    clueClass: 'semi_fuzzy',
+    gate: 'must',
+    expectation: { kind: 'in_topk', expectedId: RECALL_EVAL_IDS.softReopenXenonRetention, k: 3 },
+    note: '内容佐证：yesterday 硬筛后窗内无 xenonretentionprotocol → soft 回退捞窗外真目标'
+  },
+  {
+    id: 'content-corroboration-reject-weak-neighbor',
+    clue: 'that article I saved yesterday about standupscrapnoise',
+    clueClass: 'semi_fuzzy',
+    gate: 'must',
+    expectation: { kind: 'no_match' },
+    note: '内容佐证：窗内仅无关 standup 摘录且库无 standupscrapnoise → 禁止弱邻域交卷'
+  },
 
   // —— stretch：仍需同义/语义层 ——
   {

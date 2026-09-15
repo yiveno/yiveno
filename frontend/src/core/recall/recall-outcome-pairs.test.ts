@@ -111,4 +111,30 @@ describe('applyOutcomePairScoreAdjustments', () => {
     )
     expect(adjusted.find(m => m.item.id === 'pos')?.matchedFields).toContain('outcomePair')
   })
+
+  it('contentTerms 非空时：无佐证正例不得升权', () => {
+    const matches = [
+      matchFor('noise', 20, 'Standup scrap blockers'),
+      matchFor('keep', 18, 'Cloud recording retention')
+    ]
+    const fp = fingerprintRecallClue('yesterday about retention')
+    const adjusted = applyOutcomePairScoreAdjustments(
+      matches,
+      fp,
+      [
+        {
+          fingerprint: fp,
+          cluePreview: 'yesterday about retention',
+          label: 'target',
+          targetId: 'noise',
+          source: 'settled_single',
+          confidence: 'medium',
+          createdAt: '2026-09-11T00:00:00.000Z'
+        }
+      ],
+      { contentTerms: ['retention'] }
+    )
+    expect(adjusted.find(m => m.item.id === 'noise')?.score).toBe(20)
+    expect(adjusted.find(m => m.item.id === 'noise')?.matchedFields).not.toContain('outcomePair')
+  })
 })

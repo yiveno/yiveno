@@ -21,7 +21,7 @@ Action Popup 失焦即关，不适合持续对话式 Recall。Chrome Side Panel 
 **必须：**
 
 - 新 Recall UI 默认在 Side Panel 实现或复用其组件。
-- `OPEN_RECALL_SHELL` / 划词 / Getting Started 走 `sidePanel.open`。
+- `OPEN_RECALL_SHELL`（划词等 content → SW）/ Getting Started（**扩展页本页直调** `sidePanel.open`，因经 SW 会丢失用户手势）打开主壳。
 
 **禁止：**
 

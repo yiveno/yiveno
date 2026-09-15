@@ -15,7 +15,7 @@
 - **Cursor Hooks：** `.cursor/hooks.json`（拦截破坏性 git）— 见 `.cursor/hooks/README.md`。
 - **跨 IDE 薄指针：** 根目录 [`CLAUDE.md`](CLAUDE.md)（Claude Code）· `bun run sync:ide-boot` 同步开机「当下」块
 - **Chrome 扩展 Agent Skills（Modern Web Guidance）：** 本机 `.agents/skills/`（`npx modern-web-guidance@latest install --choose`，选 `chrome-extensions` + `modern-web-guidance`）；锁文件 `skills-lock.json`。MV3 / 扩展 API / 上架合规见 `chrome-extensions`；现代 Web/CSS/性能见 `modern-web-guidance`。与 Yiveno 产品文档、分层规则冲突时**以本仓权威文档为准**。
-- 对外心智：「那个找东西的」/ 仓库；找回 = 高置信**邻域**，Top1=建议；AI 能力核心不作宣传招牌。
+- 对外心智：「那个找东西的」/ find things / 仓库；找回 = 高置信**邻域**，Top1=建议；AI 能力核心不作宣传招牌。**ADR-012：** 双关/翻牌为**后手（视发展再定）**；终局壁垒=私有增量+习惯；翻牌非存活条件。
 - **文档 ↔ 代码同步（铁律）：** 任何代码改动若与权威文档脱节或有差异，**必须同批更新对应文档**（产品 / 设计 / 工程 / `AGENTS.md`·`project.mdc`）；报完成 = 代码与文档可对照。禁止「先改代码、文档以后再补」。纯重构且契约不变、或 bugfix 且行为已与文档一致，可不改文档。细则见 `.cursor/rules/project.mdc`「文档 ↔ 代码同步」。
 
 ### 产品语言（硬规则）
@@ -78,7 +78,7 @@ Agent 硬规则（原文，勿改措辞）：
 - 扩展用户文案：仅 `_locales/en` + `frontend/src/infrastructure/i18n` 的 `t()`；禁止写死 UI 文案与 `|| 'fallback'`；禁止新增非 en 产品 locale。`core` 注入 `t` 或返回 message key。官网与扩展分离，产品向文案均为美式英语。
 - **CSS / JS 展示分工（硬约定）：** 交互样式与可见截断（ellipsis、line-clamp、随壳宽自适应多露字）**交给 CSS**；JS/`core` 专注业务逻辑与数据（检索、状态机、预填短线索、协议/存储/telemetry 上限）。**禁止**用固定字符数把标题/标签/卡片 reason/浮层预览硬截成短串再塞进 UI 冒充布局省略。允许：(1) 病态超长安全上限；(2) 真正的业务/协议限（omnibox、embedding、表单 maxLength、预填短线索）。先例：会话标题 / 存完 preview / explain token 引用。
 - TypeScript 禁止 `any` / `as any`；外部数据用 Zod 校验；**注释与 JSDoc 必须中文**（标识符、API 专有名词可保留英文）。**字符串联合 / `z.enum` 每个字面量须有中文释义**（见 `docs/engineering/业务日志与注释约定.md`）。
-- **业务可观测性（硬约定）**：新增或改动业务路径时，必须有**清晰中文注释（意图/边界）** + **关键步骤日志**（开始 / 分支决策 / 成功或失败原因；失败不可静默吞掉）。扩展侧优先用 `frontend/src/infrastructure/logging/flow-log.ts`（`flowStart` / `flowOk` / `flowFail`），scope 稳定可过滤（如 `Msg` / `Capture` / `Recall` / `RecallFlow` / `ClueLlm`）；core 可通过注入 `trace`，禁止 core 直连 Chrome。长文本只打 preview，避免刷屏。细则：`docs/engineering/业务日志与注释约定.md`。
+- **业务可观测性（硬约定）**：新增或改动业务路径时，必须有**清晰中文注释（意图/边界）** + **关键步骤日志**（开始 / 分支决策 / 成功或失败原因；失败不可静默吞掉）。扩展侧优先用 `frontend/src/infrastructure/logging/flow-log.ts`（`flowStart` / `flowOk` / `flowFail`）；**scope 闭集**见 `frontend/src/infrastructure/logging/log-scopes.ts`（`LogScope`，禁止调用点自由发明）；core 可通过注入 `trace`，禁止 core 直连 Chrome。长文本只打 preview，避免刷屏。细则：`docs/engineering/业务日志与注释约定.md`。
 - Vue 组件必须 `defineOptions({ name: 'ComponentName' })`。
 - 需要跨层事件时再引入事件总线（当前无 mitt / emitEvent）。
 - Map 响应式更新：若引入 Map 状态，优先不可变更新模式（当前找回主壳用组件内状态即可）。

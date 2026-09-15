@@ -8,6 +8,7 @@ import { applyStoredOutcomePairsToMatches } from '@/application/recall/apply-sto
 import { createRecallFlowTrace } from '@/application/recall/create-recall-flow-trace'
 import { getClueLlmCompleter } from '@/application/recall/clue-llm-completer-registry'
 import type { RecallBackend, RecallWithClueOptions } from '@/application/recall/recall-backend'
+import type { RecallVisibleProgressStage } from '@/core/recall/visible-progress'
 import { applyCurrentTabDomainBoost } from '@/application/recall/apply-current-tab-domain-boost'
 import { RECALL_SCAN_LIMIT } from '@/application/recall/backends/recall-scan-limit'
 import { buildEnvironmentRecallSuggestions } from '@/core/recall/build-environment-recall-suggestions'
@@ -46,6 +47,11 @@ import {
   shouldRecallByConstraintNeighborhood,
   shouldSkipRecallAsZeroAnchor
 } from '@/core/recall/orchestrate-keyword-recall'
+import {
+  filterMatchesByContentTermCorroboration,
+  parsedClueForTimeSoftReopen,
+  shouldAttemptTimeSoftReopen
+} from '@/core/recall/content-term-corroboration'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
 import { getMemoryItemDisplay } from '@/core/recall/recall-result'
@@ -104,11 +110,16 @@ async function finalizeKeywordResult(
   parsed: ParsedRecallClue,
   currentTabDomain: string | undefined,
   pairClue: string
-): Promise<RecallResult> {
+): Promise<{ result: RecallResult; effectiveParsed: ParsedRecallClue; timeSoftReopen: boolean }> {
   const base = recallByKeywordWithParsedClue(items, displayClue, {
     candidateLimit: RECALL_RESULT_POOL_LIMIT,
     parsed
   })
+  const effectiveParsed = base.parsed ?? parsed
+  const timeSoftReopen =
+    effectiveParsed.timeConfidence === 'low' &&
+    parsed.timeConfidence === 'high' &&
+    Boolean(parsed.contentTerms?.length)
   const matches = applyCurrentTabDomainBoost(
     [...(base.topPick ? [base.topPick] : []), ...base.alsoPossible],
     currentTabDomain
@@ -119,9 +130,111 @@ async function finalizeKeywordResult(
     }
     return b.item.updatedAt.localeCompare(a.item.updatedAt)
   })
-  // §7.2 P3：本机 Outcome 对软调整（指纹对齐 effectiveClue）
-  const withPairs = await applyStoredOutcomePairsToMatches(matches, pairClue)
-  return buildRecallResult(displayClue, withPairs)
+  // §7.2 P3：本机 Outcome 对软调整（正例须内容佐证）
+  const withPairs = await applyStoredOutcomePairsToMatches(matches, pairClue, {
+    contentTerms: effectiveParsed.contentTerms
+  })
+  const corroborated = filterMatchesByContentTermCorroboration(
+    withPairs,
+    effectiveParsed.contentTerms
+  )
+  return {
+    result: buildRecallResult(displayClue, corroborated, {
+      contentTerms: effectiveParsed.contentTerms
+    }),
+    effectiveParsed,
+    timeSoftReopen
+  }
+}
+
+/** 对已打分的 keyword / semantic 池做时间筛 → RRF → 域加成。 */
+function fuseScoredPools(input: {
+  keywordMatches: RecallMatch[]
+  semanticMatches: RecallMatch[]
+  parsed: ParsedRecallClue
+  currentTabDomain?: string
+}): RecallMatch[] {
+  const keywordTimed = filterMatchesByParsedTimeRange(input.keywordMatches, input.parsed)
+  const semanticTimed = filterMatchesByParsedTimeRange(input.semanticMatches, input.parsed)
+  if (semanticTimed.length === 0 && keywordTimed.length === 0) {
+    return []
+  }
+  // 无语义时仍可用关键词池（供佐证门 / soft 回退）
+  const keywordOrder = keywordTimed.map(match => match.item.id)
+  const semanticOrder = semanticTimed.map(match => match.item.id)
+  const lists = [keywordOrder, semanticOrder].filter(list => list.length > 0)
+  if (lists.length === 0) {
+    return []
+  }
+  const fusedIds = sortIdsByRrf(lists)
+  const byId = new Map(keywordTimed.map(match => [match.item.id, match]))
+  for (const match of semanticTimed) {
+    const existing = byId.get(match.item.id)
+    if (!existing) {
+      byId.set(match.item.id, match)
+      continue
+    }
+    byId.set(match.item.id, {
+      ...existing,
+      score: Math.max(existing.score, match.score),
+      matchedFields: existing.matchedFields.includes('embedding')
+        ? existing.matchedFields
+        : [...existing.matchedFields, 'embedding']
+    })
+  }
+
+  const fusedMatches: RecallMatch[] = []
+  fusedIds.forEach((id, index) => {
+    const base = byId.get(id)
+    if (!base) {
+      return
+    }
+    const rrfBoost = Math.max(0, 40 - index)
+    fusedMatches.push({
+      ...base,
+      score: base.score + rrfBoost,
+      matchedFields: base.matchedFields.includes('hybridRrf')
+        ? base.matchedFields
+        : [...base.matchedFields, 'hybridRrf']
+    })
+  })
+
+  const keywordScoreOrder = [...keywordTimed].sort((left, right) => {
+    if (right.score !== left.score) {
+      return right.score - left.score
+    }
+    return right.item.updatedAt.localeCompare(left.item.updatedAt)
+  })
+  const guardedFused = preferKeywordLeaderInHybridFusion(
+    fusedMatches.map(match => ({
+      id: match.item.id,
+      score: match.score,
+      match
+    })),
+    keywordScoreOrder.map(match => ({
+      id: match.item.id,
+      score: match.score,
+      match
+    }))
+  ).map(entry => {
+    const base = entry.match
+    if (base.score === entry.score) {
+      return base
+    }
+    return { ...base, score: entry.score }
+  })
+
+  const boosted = applyCurrentTabDomainBoost(
+    guardedFused.map(match => applyParsedClueScoreBoosts(match, input.parsed)),
+    input.currentTabDomain
+  )
+  boosted.sort((left, right) => {
+    if (right.score !== left.score) {
+      return right.score - left.score
+    }
+    return right.item.updatedAt.localeCompare(left.item.updatedAt)
+  })
+  return boosted
 }
 
 function collectWeakCandidateTitles(result: RecallResult): string[] {
@@ -390,7 +503,11 @@ async function fuseHybridMatches(input: {
   clueEmbeddingText: string
   currentTabDomain?: string
   trace: ReturnType<typeof createRecallFlowTrace>
-}): Promise<RecallResult | null> {
+}): Promise<{
+  result: RecallResult
+  effectiveParsed: ParsedRecallClue
+  timeSoftReopen: boolean
+} | null> {
   const session = await getAuthSession()
   if (!session?.accessToken) {
     input.trace('info', 'Hybrid：无登录态，跳过向量融合')
@@ -398,13 +515,10 @@ async function fuseHybridMatches(input: {
   }
 
   // 先全量打分再折叠到 Hybrid 关键词池，避免重复书签占满 HYBRID_KEYWORD_POOL
-  const keywordMatches = collapseRecallMatches(
-    filterMatchesByParsedTimeRange(
-      filterKeywordMatchesBeforeCollapse(input.items, input.filterClue).map(match =>
-        applyParsedClueScoreBoosts(match, input.parsed)
-      ),
-      input.parsed
-    ).filter(match => !isGenericOnlyHitAgainstSpecificClue(input.filterClue, match.item)),
+  const keywordScored = collapseRecallMatches(
+    filterKeywordMatchesBeforeCollapse(input.items, input.filterClue)
+      .map(match => applyParsedClueScoreBoosts(match, input.parsed))
+      .filter(match => !isGenericOnlyHitAgainstSpecificClue(input.filterClue, match.item)),
     { limit: HYBRID_KEYWORD_POOL }
   )
 
@@ -436,7 +550,7 @@ async function fuseHybridMatches(input: {
   }
 
   const itemsById = new Map(input.items.map(item => [item.id, item]))
-  const semanticMatches = rankIdsByCosineToQuery(queryVector, embeddedCandidates).flatMap(
+  const semanticScored = rankIdsByCosineToQuery(queryVector, embeddedCandidates).flatMap(
     neighbor => {
       const item = itemsById.get(neighbor.id)
       if (!item) {
@@ -454,107 +568,68 @@ async function fuseHybridMatches(input: {
       ]
     }
   )
-  const timedSemantic = filterMatchesByParsedTimeRange(semanticMatches, input.parsed)
 
-  if (timedSemantic.length === 0) {
+  if (semanticScored.length === 0 && keywordScored.length === 0) {
+    input.trace('info', 'Hybrid：无关键词与语义候选，降级关键词路径')
+    return null
+  }
+
+  const fuseWithParsed = (parsed: ParsedRecallClue): RecallMatch[] =>
+    fuseScoredPools({
+      keywordMatches: keywordScored,
+      semanticMatches: semanticScored,
+      parsed,
+      ...(input.currentTabDomain !== undefined ? { currentTabDomain: input.currentTabDomain } : {})
+    })
+
+  let fused = fuseWithParsed(input.parsed)
+  let corroborated = filterMatchesByContentTermCorroboration(fused, input.parsed.contentTerms)
+  let effectiveParsed = input.parsed
+  let timeSoftReopen = false
+
+  if (shouldAttemptTimeSoftReopen(input.parsed, corroborated.length)) {
+    timeSoftReopen = true
+    effectiveParsed = parsedClueForTimeSoftReopen(input.parsed)
+    fused = fuseWithParsed(effectiveParsed)
+    corroborated = filterMatchesByContentTermCorroboration(fused, input.parsed.contentTerms)
+    input.trace('info', 'Hybrid：内容佐证空窗，已做一次时间 soft 回退', {
+      afterCount: corroborated.length
+    })
+  }
+
+  // 无语义硬筛池且佐证后仍空：让调用方走纯关键词（含 soft 回退）
+  if (
+    filterMatchesByParsedTimeRange(semanticScored, input.parsed).length === 0 &&
+    corroborated.length === 0 &&
+    !timeSoftReopen
+  ) {
     input.trace('info', 'Hybrid：无过阈值语义近邻，降级关键词', {
-      keywordCount: keywordMatches.length
+      keywordCount: keywordScored.length
     })
     return null
   }
 
-  if (keywordMatches.length === 0) {
-    input.trace('info', 'Hybrid：关键词池为空，仅用全库语义近邻', {
-      semanticCount: timedSemantic.length
-    })
-  }
-
-  const keywordOrder = keywordMatches.map(match => match.item.id)
-  const semanticOrder = timedSemantic.map(match => match.item.id)
-  const fusedIds = sortIdsByRrf([keywordOrder, semanticOrder].filter(list => list.length > 0))
-  const byId = new Map(keywordMatches.map(match => [match.item.id, match]))
-  for (const match of timedSemantic) {
-    const existing = byId.get(match.item.id)
-    if (!existing) {
-      byId.set(match.item.id, match)
-      continue
-    }
-    // 取词面/语义较高分，避免弱关键词（泛词残留）压住强语义
-    byId.set(match.item.id, {
-      ...existing,
-      score: Math.max(existing.score, match.score),
-      matchedFields: existing.matchedFields.includes('embedding')
-        ? existing.matchedFields
-        : [...existing.matchedFields, 'embedding']
-    })
-  }
-
-  const fusedMatches: RecallMatch[] = []
-  fusedIds.forEach((id, index) => {
-    const base = byId.get(id)
-    if (!base) {
-      return
-    }
-    const rrfBoost = Math.max(0, 40 - index)
-    fusedMatches.push({
-      ...base,
-      score: base.score + rrfBoost,
-      matchedFields: base.matchedFields.includes('hybridRrf')
-        ? base.matchedFields
-        : [...base.matchedFields, 'hybridRrf']
-    })
+  const withPairs = await applyStoredOutcomePairsToMatches(corroborated, input.pairClue, {
+    contentTerms: input.parsed.contentTerms
   })
+  const afterPairs = filterMatchesByContentTermCorroboration(withPairs, input.parsed.contentTerms)
 
-  // 词面分差够大时，禁止 RRF/语义把关键词领先者挤出融合首位
-  const keywordScoreOrder = [...keywordMatches].sort((left, right) => {
-    if (right.score !== left.score) {
-      return right.score - left.score
-    }
-    return right.item.updatedAt.localeCompare(left.item.updatedAt)
-  })
-  const guardedFused = preferKeywordLeaderInHybridFusion(
-    fusedMatches.map(match => ({
-      id: match.item.id,
-      score: match.score,
-      match
-    })),
-    keywordScoreOrder.map(match => ({
-      id: match.item.id,
-      score: match.score,
-      match
-    }))
-  ).map(entry => {
-    const base = entry.match
-    if (base.score === entry.score) {
-      return base
-    }
-    return { ...base, score: entry.score }
-  })
-
-  const boosted = applyCurrentTabDomainBoost(
-    guardedFused.map(match => applyParsedClueScoreBoosts(match, input.parsed)),
-    input.currentTabDomain
-  )
-
-  boosted.sort((left, right) => {
-    if (right.score !== left.score) {
-      return right.score - left.score
-    }
-    return right.item.updatedAt.localeCompare(left.item.updatedAt)
-  })
-
-  // §7.2 P3：本机 Outcome 对软调整后再折叠
-  const withPairs = await applyStoredOutcomePairsToMatches(boosted, input.pairClue)
-
-  const collapsed = collapseRecallMatches(withPairs, {
+  const collapsed = collapseRecallMatches(afterPairs, {
     limit: RECALL_RESULT_POOL_LIMIT + RECALL_COLLAPSE_BACKFILL_EXTRA
   })
   input.trace('info', 'Hybrid：RRF 融合完成', {
-    keywordCount: keywordMatches.length,
-    semanticCount: timedSemantic.length,
-    fusedCount: collapsed.length
+    keywordCount: keywordScored.length,
+    semanticCount: semanticScored.length,
+    fusedCount: collapsed.length,
+    timeSoftReopen
   })
-  return buildRecallResult(input.displayClue, collapsed)
+  return {
+    result: buildRecallResult(input.displayClue, collapsed, {
+      contentTerms: input.parsed.contentTerms
+    }),
+    effectiveParsed,
+    timeSoftReopen
+  }
 }
 
 export class HybridRecallBackend implements RecallBackend {
@@ -589,6 +664,16 @@ export class HybridRecallBackend implements RecallBackend {
     })
 
     const complete = isOmniboxEntry ? undefined : (getClueLlmCompleter() ?? undefined)
+    const visibleProgressStages: RecallVisibleProgressStage[] = []
+    const reportProgress = (stage: RecallVisibleProgressStage) => {
+      if (isOmniboxEntry) {
+        return
+      }
+      visibleProgressStages.push(stage)
+      options?.onVisibleProgress?.(stage)
+    }
+
+    reportProgress('understanding')
     const understandStartedAt = Date.now()
     const understood = await understandRecallClue(normalizedClue, {
       ...(complete ? { complete } : {}),
@@ -611,7 +696,8 @@ export class HybridRecallBackend implements RecallBackend {
         alsoPossible: [],
         totalRankedCount: 0,
         clue: normalizedClue,
-        pipelineTiming
+        pipelineTiming,
+        visibleProgressStages: [...visibleProgressStages]
       }
     }
 
@@ -622,6 +708,7 @@ export class HybridRecallBackend implements RecallBackend {
       currentUtterance: normalizedClue
     })
 
+    reportProgress('narrowing')
     const candidateLoadStartedAt = Date.now()
     const listedResult = await memoryItemService.listForKeywordRecall({
       rawClue: normalizedClue,
@@ -643,11 +730,14 @@ export class HybridRecallBackend implements RecallBackend {
       candidateCount: items.length
     })
 
+    reportProgress('checking')
     let usedHybrid = false
     let result: RecallResult
     const retrieveStartedAt = Date.now()
 
     const pairClue = merge.effectiveRaw
+    let effectiveParsedForFraming = merge.merged
+    let timeSoftReopen = false
 
     // 零锚点助手发令 / 无内容且无约束：诚实空，禁止 raw 整句或类型邻域冒充推荐
     if (shouldSkipRecallAsZeroAnchor(normalizedClue, merge.merged)) {
@@ -660,13 +750,16 @@ export class HybridRecallBackend implements RecallBackend {
       }
     } else if (shouldRecallByConstraintNeighborhood(merge.merged)) {
       // 无内容词的时间+类型（如 recently collected bookmark）：近因邻域，不走关键词/向量扫虚词
-      result = await finalizeKeywordResult(
+      const finalized = await finalizeKeywordResult(
         normalizedClue,
         items,
         merge.merged,
         currentTabDomain,
         pairClue
       )
+      result = finalized.result
+      effectiveParsedForFraming = finalized.effectiveParsed
+      timeSoftReopen = finalized.timeSoftReopen
     } else {
       const hybrid =
         (await fuseHybridMatches({
@@ -682,15 +775,20 @@ export class HybridRecallBackend implements RecallBackend {
 
       if (hybrid) {
         usedHybrid = true
-        result = hybrid
+        result = hybrid.result
+        effectiveParsedForFraming = hybrid.effectiveParsed
+        timeSoftReopen = hybrid.timeSoftReopen
       } else {
-        result = await finalizeKeywordResult(
+        const finalized = await finalizeKeywordResult(
           normalizedClue,
           items,
           merge.merged,
           currentTabDomain,
           pairClue
         )
+        result = finalized.result
+        effectiveParsedForFraming = finalized.effectiveParsed
+        timeSoftReopen = finalized.timeSoftReopen
       }
     }
 
@@ -699,7 +797,7 @@ export class HybridRecallBackend implements RecallBackend {
 
     const withMeta = attachDialogMeta(result, {
       clue: normalizedClue,
-      parsed: merge.merged,
+      parsed: effectiveParsedForFraming,
       effectiveClue: merge.effectiveRaw
     })
 
@@ -710,11 +808,13 @@ export class HybridRecallBackend implements RecallBackend {
         retrieveMs,
         totalMs: Date.now() - pipelineStartedAt,
         understandSource: understood.source,
-        usedHybrid
+        usedHybrid,
+        ...(timeSoftReopen ? { timeSoftReopen: true } : {})
       }
       trace('info', 'Omnibox 离线查找：流水线结束', {
         durationMs: pipelineTiming.totalMs,
         usedHybrid,
+        timeSoftReopen,
         understandSource: understood.source,
         outcome: withMeta.outcome,
         topPickId: withMeta.topPick?.item.id ?? null
@@ -725,7 +825,7 @@ export class HybridRecallBackend implements RecallBackend {
       }
     }
 
-    const enriched = enrichEmptyRecallResult(withMeta, items, merge.merged)
+    const enriched = enrichEmptyRecallResult(withMeta, items, effectiveParsedForFraming)
 
     const withNarrowExamples = await attachComposerNarrowExamplesIfNeeded(enriched, {
       clue: normalizedClue,
@@ -739,7 +839,7 @@ export class HybridRecallBackend implements RecallBackend {
       ? await attachRecallFramingLlmPolish(withFraming, {
           complete,
           clue: normalizedClue,
-          parsed: merge.merged,
+          parsed: effectiveParsedForFraming,
           trace
         })
       : withFraming
@@ -758,7 +858,8 @@ export class HybridRecallBackend implements RecallBackend {
       postProcessMs,
       totalMs: Date.now() - pipelineStartedAt,
       understandSource: understood.source,
-      usedHybrid
+      usedHybrid,
+      ...(timeSoftReopen ? { timeSoftReopen: true } : {})
     }
 
     trace('info', 'Hybrid Recall：流水线结束', {
@@ -781,7 +882,8 @@ export class HybridRecallBackend implements RecallBackend {
 
     return {
       ...withFollowUp,
-      pipelineTiming
+      pipelineTiming,
+      visibleProgressStages: [...visibleProgressStages]
     }
   }
 }

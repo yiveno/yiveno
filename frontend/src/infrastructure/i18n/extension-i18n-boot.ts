@@ -32,7 +32,14 @@ const CRITICAL_MESSAGE_KEYS_BY_PAGE: Record<ExtensionPageId, readonly MessageKey
   settings: ['settings_title', 'settings_tabs_aria', 'nav_aria_label'],
   library: ['library_title', 'library_tabs_aria', 'nav_aria_label'],
   detail: ['detail_title', 'nav_aria_label'],
-  getting_started: ['getting_started_hero_title', 'getting_started_steps_aria', 'nav_aria_label']
+  getting_started: [
+    'getting_started_eyebrow',
+    'getting_started_consent_title',
+    'getting_started_hero_title',
+    'getting_started_tab_bookmarks',
+    'getting_started_tab_excerpts',
+    'nav_aria_label'
+  ]
 }
 
 /** 划词浮层首屏关键文案（Save / Note / Try recall / 错误态）。 */

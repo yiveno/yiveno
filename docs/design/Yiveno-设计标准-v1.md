@@ -252,6 +252,10 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 
 - 完整 Brand Core + Fraunces/Work Sans
 - 首屏：品牌 + 一句标题 + 一句支持 + 主 CTA + **找回证明（线索 → Closest）**
+- **Hero 文案层级（已采纳 · ADR-012）：**
+  - **Epithet（小字，非 H1）：** _The one that finds things_ — 心智标签
+  - **H1（最大字）：** _Find what you saved._ — 可验证履约
+  - **禁止**把裸 _Find things._ 单独占最大标题（易读成通用搜）
 - Waitlist 阶段：Nav 诚实（勿假装已上线账号体系）；主行动 = Notify me
 - 禁止空的 Closest/结果区
 - 文案禁用用户可见的「搜索 / Search」产品名词（见产品文档）
@@ -396,11 +400,15 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 
 | 宜                                     | 不宜                        |
 | -------------------------------------- | --------------------------- |
-| Find what you saved                    | AI-powered bookmark manager |
+| Find what you saved.（Hero H1）        | AI-powered bookmark manager |
+| The one that finds things（Hero 小字） | 裸 Find things. 占最大标题  |
+| find things（宽语义 · 勿说死成文件搜） | 「又一个 AI 找相册/网盘」   |
 | What do you remember?                  | Search your bookmarks       |
 | Closest matches — you pick             | 99% confidence / 神谕单答   |
 | Save first. Organize later — or never. | 自动整理一切                |
 | Your memories are yours.               | 企业级安全徽章墙（无依据）  |
+
+**预留翻牌句（未启用 · 后手 · ADR-012）：** _Why should things just be things?_ ——视发展再定；不得升为当前官网/物料主句，直至产品文档明确启用。可以 ≠ 必须。
 
 开发期叙事（越用越好用）**不得**在视觉或文案上暗示「第一天是坏产品」。
 

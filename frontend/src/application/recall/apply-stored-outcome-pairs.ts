@@ -11,11 +11,12 @@ import { listRecallOutcomePairs } from '@/infrastructure/storage/recall-outcome-
 
 /**
  * 用 storage 中的 (clue→target / none) 对调整候选分后重排。
- * 读取失败则原样返回（best-effort）。
+ * contentTerms 非空时正例须通过内容佐证。读取失败则原样返回（best-effort）。
  */
 export async function applyStoredOutcomePairsToMatches(
   matches: RecallMatch[],
-  pairClue: string
+  pairClue: string,
+  options?: { contentTerms?: readonly string[] }
 ): Promise<RecallMatch[]> {
   if (matches.length === 0 || !pairClue.trim()) {
     return matches
@@ -25,7 +26,12 @@ export async function applyStoredOutcomePairsToMatches(
     if (pairs.length === 0) {
       return matches
     }
-    return applyOutcomePairScoreAdjustments(matches, fingerprintRecallClue(pairClue), pairs)
+    return applyOutcomePairScoreAdjustments(
+      matches,
+      fingerprintRecallClue(pairClue),
+      pairs,
+      options?.contentTerms ? { contentTerms: options.contentTerms } : undefined
+    )
   } catch {
     return matches
   }

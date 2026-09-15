@@ -4,6 +4,7 @@
  */
 
 import { normalizeRecallText } from '@/core/recall/keyword-filter'
+import { itemCorroboratesContentTerms } from '@/core/recall/content-term-corroboration'
 import type { RecallMatch } from '@/core/recall/recall-result'
 import type {
   RecallOutcomeConfidence,
@@ -37,17 +38,21 @@ export interface RecallOutcomePairRecord {
 
 /**
  * 按指纹对候选分做 P3 调整：正例升、硬负例降，再按分排序。
- * 无对或不命中则原样返回（仍复制排序稳定性）。
+ * contentTerms 非空时：正例 +升权仅当条目已通过内容佐证（禁止钉死弱语义假阳性）。
  */
 export function applyOutcomePairScoreAdjustments(
   matches: RecallMatch[],
   fingerprint: string,
-  pairs: RecallOutcomePairRecord[]
+  pairs: RecallOutcomePairRecord[],
+  options?: { contentTerms?: readonly string[] }
 ): RecallMatch[] {
   const key = fingerprint.trim()
   if (!key || matches.length === 0 || pairs.length === 0) {
     return matches
   }
+
+  const contentTerms = options?.contentTerms
+  const requireCorroboration = Boolean(contentTerms && contentTerms.length > 0)
 
   const positiveIds = new Set<string>()
   const negativeIds = new Set<string>()
@@ -74,7 +79,11 @@ export function applyOutcomePairScoreAdjustments(
   const adjusted = matches.map(match => {
     let delta = 0
     if (positiveIds.has(match.item.id)) {
-      delta += RECALL_OUTCOME_PAIR_POSITIVE_BOOST
+      const allowPositive =
+        !requireCorroboration || itemCorroboratesContentTerms(match.item, contentTerms)
+      if (allowPositive) {
+        delta += RECALL_OUTCOME_PAIR_POSITIVE_BOOST
+      }
     }
     if (negativeIds.has(match.item.id)) {
       delta -= RECALL_OUTCOME_PAIR_NEGATIVE_PENALTY

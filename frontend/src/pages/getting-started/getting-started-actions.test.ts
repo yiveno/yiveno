@@ -1,29 +1,48 @@
 import { describe, expect, it } from 'vitest'
 
-import {
-  canSaveGettingStartedDemo,
-  canTryGettingStartedRecall
-} from '@/pages/getting-started/getting-started-actions'
+import { canSubmitGettingStartedRecall } from '@/pages/getting-started/getting-started-actions'
 
 describe('getting-started-actions', () => {
-  it('canSaveGettingStartedDemo 保存中或已完成时不可再点', () => {
-    expect(canSaveGettingStartedDemo({ saveState: 'idle', captureDone: false })).toBe(true)
-    expect(canSaveGettingStartedDemo({ saveState: 'saving', captureDone: false })).toBe(false)
-    expect(canSaveGettingStartedDemo({ saveState: 'idle', captureDone: true })).toBe(false)
-  })
-
-  it('canTryGettingStartedRecall 需已 Capture 且未完成 Recall', () => {
+  it('canSubmitGettingStartedRecall 需解锁、可召、非忙、有 clue', () => {
     expect(
-      canTryGettingStartedRecall({ recallBusy: false, captureDone: true, recallDone: false })
+      canSubmitGettingStartedRecall({
+        recallBusy: false,
+        canRecall: true,
+        clue: 'that article',
+        sourceUnlocked: true
+      })
     ).toBe(true)
     expect(
-      canTryGettingStartedRecall({ recallBusy: true, captureDone: true, recallDone: false })
+      canSubmitGettingStartedRecall({
+        recallBusy: false,
+        canRecall: true,
+        clue: 'that article',
+        sourceUnlocked: false
+      })
     ).toBe(false)
     expect(
-      canTryGettingStartedRecall({ recallBusy: false, captureDone: false, recallDone: false })
+      canSubmitGettingStartedRecall({
+        recallBusy: true,
+        canRecall: true,
+        clue: 'that article',
+        sourceUnlocked: true
+      })
     ).toBe(false)
     expect(
-      canTryGettingStartedRecall({ recallBusy: false, captureDone: true, recallDone: true })
+      canSubmitGettingStartedRecall({
+        recallBusy: false,
+        canRecall: false,
+        clue: 'that article',
+        sourceUnlocked: true
+      })
+    ).toBe(false)
+    expect(
+      canSubmitGettingStartedRecall({
+        recallBusy: false,
+        canRecall: true,
+        clue: '  ',
+        sourceUnlocked: true
+      })
     ).toBe(false)
   })
 })

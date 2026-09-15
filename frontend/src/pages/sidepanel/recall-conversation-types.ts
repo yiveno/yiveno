@@ -43,6 +43,11 @@ export type AssistantTurn = {
   composerNarrowExamples?: string[]
   /** 列表级 Framing 事实；Show more 时重渲染 P6 计数。 */
   recallFramingFacts?: RecallFramingFacts
+  /**
+   * 理解回声芯片（已翻译）：本轮合并 Parsed 的真实槽位。
+   * 与 Framing P1 互斥展示（有芯片则气泡省略 P1）。
+   */
+  understandingEcho?: string[]
   allowDismiss: boolean
 }
 

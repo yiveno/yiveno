@@ -22,8 +22,10 @@ RecallResult（outcome + pool + parsed）
   → renderRecallFramingStatic(t)    # 无 LLM：i18n 模板拼接 P1–P6
   → completeRecallFramingNlg()    # 可选：LLM 仅润色 facts（同 clue 配额桶）
   → RecallResult.recallFraming
-  → SidePanel assistant turn.text（+ 现有 chips / placeholder 不变）
+  → SidePanel：`understandingEcho` 芯片（有槽位时省略 P1）+ assistant `text`（P2–P6 / 润色）
 ```
+
+**P1 与理解回声：** 有真实槽位芯片时 UI **省略** Framing P1 散文，改由 `Heard as` 芯片承接（产品 §7.0）；无芯片路径仍走完整 P1–P6。
 
 ### 2.1 新增类型（草案）
 

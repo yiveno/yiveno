@@ -31,14 +31,21 @@
 
 ## 1. 产品定位（一句话锚点）
 
-| 概念                         | 英文                    | 中文（开发讨论）            | 定义                                                                                             |
-| ---------------------------- | ----------------------- | --------------------------- | ------------------------------------------------------------------------------------------------ |
-| **产品心智**                 | —                       | 那个找东西的 / 仓库         | 帮用户**找回自己主动存过的个人痕迹**；不是书签管理器、笔记工具、聊天机器人、生活助理             |
-| **核心分解**                 | Capture + Recall        | 保存低负担 + 找回高置信邻域 | 扔进就记着 + 想找就找得着                                                                        |
-| **北极星**                   | neighborhood retrieval  | 邻域找回                    | 模糊线索 → 第一屏进入**正确邻域**；交付排序相关集合（报 N，首屏 ≤5，可续展），**非**神谕唯一答案 |
-| **用户选 Yiveno 的唯一理由** | understand fuzzy speech | 听懂随便说的话              | 不必整理文件夹、不必记精确标题；加一点线索即可走进记忆邻域                                       |
+| 概念                         | 英文                      | 中文（开发讨论）            | 定义                                                                                                                                                   |
+| ---------------------------- | ------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **产品心智**                 | find things               | 那个找东西的 / 仓库         | 帮用户**找回自己主动存过的个人痕迹**；不是书签管理器、笔记工具、聊天机器人、生活助理                                                                   |
+| **things（一语双关）**       | things                    | 东西                        | **表层（当前）：** 书签/摘录/文件/视频等；**深层：** 记忆/喜好等（须用户痕迹）。双关是**品牌后手**，外延是否加厚**视发展再定**，非固定路线。见 ADR-012 |
+| **核心分解**                 | Capture + Recall          | 保存低负担 + 找回高置信邻域 | 扔进就记着 + 想找就找得着                                                                                                                              |
+| **北极星**                   | neighborhood retrieval    | 邻域找回                    | 模糊线索 → 第一屏进入**正确邻域**；交付排序相关集合（报 N，首屏 ≤5，可续展），**非**神谕唯一答案                                                       |
+| **用户选 Yiveno 的唯一理由** | understand fuzzy speech   | 听懂随便说的话              | 不必整理文件夹、不必记精确标题；加一点线索即可走进记忆邻域                                                                                             |
+| **内容语义 vs 记忆语义**     | content vs memory sense   | 内容语义 / 记忆语义         | 内容=「图里有什么」（可商品化）；记忆=「对你意味着什么」。禁止用前者冒充后者；记忆赛道本身仍会被巨头/Agent 挤压                                        |
+| **终局壁垒**                 | private increment + habit | 私有增量 + 习惯 + 信任      | 不是「Search→Memory」品类跳跃；记忆层若出现只是资产的产品表达；后手永不启用仍可成立（ADR-012）                                                         |
+| **双关后手**                 | optional brand option     | 双关/翻牌后手               | _Why should things just be things?_ 等为预留；**可以 ≠ 必须**；无交付只作对内战略语言                                                                  |
 
-**禁止对外承诺：** 「每次押中那一条」「永远唯一正确答案」「全知助理」。
+**禁止对外承诺：** 「每次押中那一条」「永远唯一正确答案」「全知助理」。  
+**禁止过早摊牌 / 预支路线：** 无痕迹厚度时主打「人生记忆产品」；未达门槛启用翻牌句；把后手写成对外必达 Phase（ADR-012）。
+
+**当前履约句（产品面）：** _Find what you saved._ ——与 find things 同根；强调「你存过的」，不把 things 说死成文件搜索。
 
 ---
 
@@ -102,11 +109,11 @@ Recall（找）   →  clue 输入  →  理解  →  Filter/Hybrid  →  邻域
 
 ### 4.2 条目类型（MVP 可写）
 
-| 概念                 | 英文                                     | 中文             | 角色                               |
-| -------------------- | ---------------------------------------- | ---------------- | ---------------------------------- |
-| **摘录**             | `text_excerpt` / `bookmark` 类型中的摘录 | 摘录             | **主角**；划词保存的正文片段       |
-| **书签**             | `bookmark`                               | 书签             | **配角**；Chrome 书签 sync         |
-| **预留 `note` 类型** | `note`（类型）                           | （勿与附注混淆） | **当前不做**；有边界需求但不在范围 |
+| 概念                 | 英文                                     | 中文             | 角色                                                                                            |
+| -------------------- | ---------------------------------------- | ---------------- | ----------------------------------------------------------------------------------------------- |
+| **摘录**             | `text_excerpt` / `bookmark` 类型中的摘录 | 摘录             | **主角（长期）**；划词保存的正文片段；安装后积累                                                |
+| **书签**             | `bookmark`                               | 书签             | **配角（库存）**；Chrome 书签 sync；**day-0 即时库存**；对召回引擎与摘录等价，见产品文档 §0.1.1 |
+| **预留 `note` 类型** | `note`（类型）                           | （勿与附注混淆） | **当前不做**；有边界需求但不在范围                                                              |
 
 ### 4.3 附注 vs 线索 vs clues 字段 ★（最易混）
 
@@ -305,19 +312,19 @@ MemoryItem.clues.note      →  附注 · 存时写的私有提示
 
 ### 10.2 Filter / Embedding 实现标识符
 
-| 标识符                                         | 含义                                         |
-| ---------------------------------------------- | -------------------------------------------- |
-| `buildFilterClueFromParsed`                    | 从 `ParsedRecallClue` 拼 **Filter 检索词面** |
-| `filterClue`                                   | 传入 `keyword-filter` / 倒排 lookup 的字符串 |
-| `buildClueEmbeddingText` / `clueEmbeddingText` | 拼 **embedding 请求**文本                    |
-| `collectFilterIndexFields`                     | 收集条目可索引字段（供 Filter / 倒排）       |
-| `clueSubmittedAt`                              | 遥测任务 t0 时间戳（`beginClue`）            |
-| `beginClue`                                    | Side Panel 提交 clue 时开启 TTE 任务         |
-| `recall-shell-empty-copy`                      | Recall 壳空态 / no_match 文案纯函数模块      |
-| `RecallShellLibraryState`                      | Recall 壳侧记忆库空/就绪状态                 |
-| `shouldShowCaptureFirstRecallShell`            | 安装引导 Capture-first 空态门禁              |
-| `popup_clue_*` / `popup_*`（i18n）             | **遗留 i18n key 前缀**（语义为 clue / 空态） |
-| `URLSearchParams` / `location.search`          | URL 查询参数（与 Recall clue 无关）          |
+| 标识符                                         | 含义                                                            |
+| ---------------------------------------------- | --------------------------------------------------------------- |
+| `buildFilterClueFromParsed`                    | 从 `ParsedRecallClue` 拼 **Filter 检索词面**                    |
+| `filterClue`                                   | 传入 `keyword-filter` / 倒排 lookup 的字符串                    |
+| `buildClueEmbeddingText` / `clueEmbeddingText` | 拼 **embedding 请求**文本                                       |
+| `collectFilterIndexFields`                     | 收集条目可索引字段（供 Filter / 倒排）                          |
+| `clueSubmittedAt`                              | 遥测任务 t0 时间戳（`beginClue`）                               |
+| `beginClue`                                    | Side Panel 提交 clue 时开启 TTE 任务                            |
+| `recall-shell-empty-copy`                      | Recall 壳空态 / no_match 文案纯函数模块                         |
+| `RecallShellLibraryState`                      | Recall 壳侧记忆库空/就绪状态                                    |
+| `shouldShowCaptureFirstRecallShell`            | 安装引导 Capture-first 空态门禁（仅无可召库存：无书签且无摘录） |
+| `popup_clue_*` / `popup_*`（i18n）             | **遗留 i18n key 前缀**（语义为 clue / 空态）                    |
+| `URLSearchParams` / `location.search`          | URL 查询参数（与 Recall clue 无关）                             |
 
 ---
 
@@ -334,16 +341,16 @@ MemoryItem.clues.note      →  附注 · 存时写的私有提示
 
 ## 12. 相关文档
 
-| 文档                                            | 关系                                       |
-| ----------------------------------------------- | ------------------------------------------ |
-| `Yiveno-产品文档-v4.0.md`                       | 行为/契约/验收；术语含义以本文为准         |
-| `Yiveno-设计标准-v1.md`                         | 视觉；术语引用本文                         |
-| `.cursor/rules/terminology.mdc`                 | AI 协作速查；指向本文                      |
-| `docs/engineering/Recall-Framing-邻域说明.md`   | Recall Framing 工程细则                    |
-| `docs/architecture/Yiveno-运行时架构流程-v1.md` | 运行时流程；术语服从本文                   |
-| `docs/engineering/DEV-调试API.md`               | DEV 工作台 / 种库 API；§8.1 探针词权威文案 |
-| `docs/architecture/decisions/ADR-009-*.md`      | `@yiveno/probe` 隔离；探针词非产品面       |
+| 文档                                            | 关系                                            |
+| ----------------------------------------------- | ----------------------------------------------- |
+| `Yiveno-产品文档-v4.0.md`                       | 行为/契约/验收；术语含义以本文为准              |
+| `Yiveno-设计标准-v1.md`                         | 视觉；术语引用本文                              |
+| `.cursor/rules/terminology.mdc`                 | AI 协作速查；指向本文                           |
+| `docs/engineering/Recall-Framing-邻域说明.md`   | Recall Framing 工程细则                         |
+| `docs/architecture/Yiveno-运行时架构流程-v1.md` | 运行时流程；术语服从本文                        |
+| `docs/engineering/DEV-调试API.md`               | DEV 工作台 / 种库 API；§8.1 探针词权威文案      |
+| `docs/architecture/decisions/ADR-012-*.md`      | find things 双关为后手；终局壁垒=私有增量与习惯 |
 
 ---
 
-_最后更新：2026-09-07 · §8.1 种子四义消歧；探针词指向 DEV-调试API / ADR-009_
+_最后更新：2026-09-11 · §1 双关后手 / 终局壁垒斧正（ADR-012）_

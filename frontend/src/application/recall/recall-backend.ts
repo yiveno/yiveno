@@ -1,5 +1,6 @@
 import type { RecallDialogContext } from '@/core/messaging/recall-messages'
 import type { RecallResult } from '@/core/recall/recall-result'
+import type { RecallVisibleProgressStage } from '@/core/recall/visible-progress'
 
 /**
  * Recall 后端：把 “给定线索 clue，返回 RecallResult” 作为唯一契约。
@@ -20,6 +21,11 @@ export type RecallWithClueOptions = {
   context?: RecallDialogContext
   /** 入口分轨；缺省 sidepanel。 */
   entry?: RecallEntryPoint
+  /**
+   * 真实 pipeline 阶段回调（§7.0 可见进展）。
+   * 仅 Side Panel 路径注入；Omnibox 不推。
+   */
+  onVisibleProgress?: (stage: RecallVisibleProgressStage) => void
 }
 
 export interface RecallBackend {

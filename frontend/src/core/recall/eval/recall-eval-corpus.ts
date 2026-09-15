@@ -407,6 +407,37 @@ export function buildRecallEvalCorpus(): MemoryItem[] {
       }),
       RECALL_EVAL_IDS.recentI18nExcerpt,
       '2026-07-25T08:00:00.000Z'
+    ),
+    // RECALL_EVAL_NOW = 2026-07-25 → yesterday = 2026-07-24；无 retention 词面
+    withStableIdentity(
+      createTextExcerptMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          selectedText: 'Standup scrap — blockers copied from yesterday.',
+          sourceUrl: 'https://docs.google.com/document/d/eval-standup-scrap',
+          pageTitle: 'Notes'
+        },
+        clues: { note: 'wait on vendor SSO reply' },
+        now: () => '2026-07-24T12:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.weakYesterdayStandupScrap,
+      '2026-07-24T12:00:00.000Z'
+    ),
+    // 窗外（非 07-24）专有锚点：测 high 硬筛空佐证后 soft 回退
+    withStableIdentity(
+      createTextExcerptMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          selectedText: 'Handbook section on xenonretentionprotocol for vendor audits.',
+          sourceUrl: 'https://docs.example.com/xenonretentionprotocol',
+          pageTitle: 'Vendor audit handbook'
+        },
+        now: () => '2026-07-10T12:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.softReopenXenonRetention,
+      '2026-07-10T12:00:00.000Z'
     )
   ]
 }

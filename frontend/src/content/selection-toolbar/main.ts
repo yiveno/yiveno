@@ -2,7 +2,10 @@ import type { CaptureEntry } from '@/core/memory/capture-entry'
 import { buildCaptureSavedPreview, buildRecallPrefillClue } from '@/core/recall/build-prefill-clue'
 import { shouldShowFirstRecallHint } from '@/core/recall/first-recall-onboarding'
 import { extractSelectionContextOnPage } from '@/infrastructure/browser/selection-context-page'
-import { isSavablePageUrl } from '@/infrastructure/browser/active-tab-reader'
+import {
+  isGettingStartedPageUrl,
+  isSavablePageUrl
+} from '@/infrastructure/browser/active-tab-reader'
 import { captureTextExcerpt, openRecallShell } from '@/infrastructure/messaging/background-client'
 import {
   computeSelectionToolbarAnchor,
@@ -724,7 +727,9 @@ async function handleSaveClick(
       ...(capture?.contextBefore ? { contextBefore: capture.contextBefore } : {}),
       ...(capture?.contextAfter ? { contextAfter: capture.contextAfter } : {}),
       ...(note === undefined ? {} : { note }),
-      captureEntry: options.captureEntry ?? 'selection_toolbar'
+      captureEntry:
+        options.captureEntry ??
+        (isGettingStartedPageUrl(window.location.href) ? 'getting_started' : 'selection_toolbar')
     })
 
     if (!ensureLiveContext()) {
@@ -760,17 +765,23 @@ async function handleSaveClick(
     showStatus('saved', saved)
 
     const preview = buildCaptureSavedPreview(selectedText)
-    const prefill = buildRecallPrefillClue(selectedText)
+    const onGettingStarted = isGettingStartedPageUrl(window.location.href)
+    const prefill = onGettingStarted ? null : buildRecallPrefillClue(selectedText)
     let hint: string | null = null
     let showRecallAction = false
     let recallAriaLabel: string | null = null
     try {
+      // Getting Started Step 2 要用户自己贴 clue，禁止写入预填以免 Side Panel 自动提交
       if (prefill) {
         await writeRecallPrefill(prefill)
+      } else if (onGettingStarted) {
+        await writeRecallPrefill('')
       }
       const captureCount = await readExcerptCaptureCount()
       const firstDone = await readFirstRecallOpenDone()
+      // Getting Started 有独立 Step 2，Saved 浮层不再塞 Try recalling
       if (
+        !onGettingStarted &&
         shouldShowFirstRecallHint({
           excerptCaptureCount: captureCount,
           firstRecallOpenDone: firstDone
@@ -1117,8 +1128,8 @@ const BOOT_FLAG = '__yivenoSelectionToolbarBootId' as const
 
 type BootFlagWindow = Window & { [BOOT_FLAG]?: string }
 
-/** 本 IIFE 启动时的 runtime id；teardown 只清自己写下的标记。 */
-const bootRuntimeId = (() => {
+/** 本脚本启动时的 runtime id；teardown 只清自己写下的标记；可在 bootSelectionToolbar 补写。 */
+let bootRuntimeId = (() => {
   try {
     return chrome.runtime?.id ?? ''
   } catch {
@@ -1267,12 +1278,34 @@ function registerListeners(): void {
   connectKeepalivePort()
 }
 
-if (shouldBootThisInstance()) {
+/**
+ * 挂载划词浮层（content script IIFE 与 Getting Started 扩展页共用）。
+ * 扩展页在 `getting-started/main` 再显式调用一次，避免仅靠顶层 side-effect。
+ */
+export function bootSelectionToolbar(): boolean {
+  if (tornDown) {
+    return false
+  }
+  const runtimeId = (() => {
+    try {
+      return chrome.runtime?.id ?? ''
+    } catch {
+      return ''
+    }
+  })()
+  if (!runtimeId) {
+    return false
+  }
+  if (!bootRuntimeId) {
+    bootRuntimeId = runtimeId
+  }
+  if (readBootFlag() === runtimeId && isSelectionToolbarBooted()) {
+    return true
+  }
+
   warnIfContentScriptMessagesMissing('selection_toolbar')
-  writeBootFlag(bootRuntimeId)
-  // 接管旧实例时清掉残留 host，避免双浮层
+  writeBootFlag(runtimeId)
   document.getElementById(TOOLBAR_HOST_ID)?.remove()
-  // 同步挂监听 + 页内 API：快捷键经 executeScript 调用，与点击按钮同一套 UI
   installPageApi()
   registerListeners()
   void refreshToolbarEnabledFromStorage().catch(() => {
@@ -1282,4 +1315,18 @@ if (shouldBootThisInstance()) {
     }
     toolbarEnabled = DEFAULT_USER_SETTINGS.selectionToolbarEnabled
   })
+  return isSelectionToolbarBooted()
+}
+
+/** 划词页内 API 是否已挂上（扩展页自检用）。 */
+export function isSelectionToolbarBooted(): boolean {
+  try {
+    return Boolean((globalThis as PageApiGlobal)[SELECTION_TOOLBAR_PAGE_API_KEY])
+  } catch {
+    return false
+  }
+}
+
+if (shouldBootThisInstance()) {
+  bootSelectionToolbar()
 }

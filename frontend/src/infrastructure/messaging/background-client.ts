@@ -36,6 +36,8 @@ import type {
 import type {
   ChromeBookmarkImportStatusResponse,
   ColdStartStatusResponse,
+  GenerateGettingStartedClueSamplesMessage,
+  GenerateGettingStartedClueSamplesResponse,
   GetBookmarkLibraryTreeResponse,
   GetChromeBookmarkImportStatusMessage,
   GetColdStartStatusMessage,
@@ -239,6 +241,18 @@ export async function fetchColdStartStatus(): Promise<ColdStartStatusResponse> {
   return sendBackgroundMessage<ColdStartStatusResponse>(message)
 }
 
+/** Getting Started：生成示意 clue（LLM 一次 4 条；失败回退模板）。 */
+export async function generateGettingStartedClueSamplesMessage(options?: {
+  fallbackClue?: string
+}): Promise<GenerateGettingStartedClueSamplesResponse> {
+  const message: GenerateGettingStartedClueSamplesMessage = {
+    scope: 'background',
+    type: 'GENERATE_GETTING_STARTED_CLUE_SAMPLES',
+    ...(options?.fallbackClue ? { payload: { fallbackClue: options.fallbackClue } } : {})
+  }
+  return sendBackgroundMessage<GenerateGettingStartedClueSamplesResponse>(message)
+}
+
 /** 读取记忆库书签目录树（Chrome 结构 + Memory 对齐）。 */
 export async function fetchBookmarkLibraryTree(options?: {
   clientHash?: string | undefined
@@ -269,7 +283,7 @@ export async function openChromeShortcutsPage(): Promise<OpenChromeShortcutsPage
   return sendBackgroundMessage<OpenChromeShortcutsPageResponse>(message)
 }
 
-/** 在用户手势链上打开 Recall Side Panel（预填线索须已写入 session）。 */
+/** 打开 Recall Side Panel（划词等 content script → SW；扩展页应本页直调 sidePanel.open）。 */
 export async function openRecallShell(): Promise<OpenRecallShellResponse> {
   const message: OpenRecallShellMessage = {
     scope: 'background',

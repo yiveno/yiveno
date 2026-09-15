@@ -20,6 +20,14 @@ vi.mock('@/infrastructure/settings/user-settings-service', () => ({
   }))
 }))
 
+vi.mock('@/application/onboarding/cold-start-enrichment-batch-store', () => ({
+  settleColdStartEnrichmentBatchItem: vi.fn(async () => null),
+  pauseColdStartEnrichmentBatchForQuota: vi.fn(async () => undefined),
+  clearColdStartEnrichmentBatchRemainder: vi.fn(async () => undefined),
+  beginColdStartEnrichmentBatch: vi.fn(async () => null),
+  readColdStartEnrichmentBatch: vi.fn(async () => null)
+}))
+
 import { buildMergedMemoryEnrichment } from '@/application/memory/build-merged-memory-enrichment'
 import { getUserSettings } from '@/infrastructure/settings/user-settings-service'
 

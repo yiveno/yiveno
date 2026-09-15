@@ -34,6 +34,11 @@ import {
   setCachedEnrichmentReuse
 } from '@/application/memory/memory-duplicate-reuse-cache'
 import {
+  clearColdStartEnrichmentBatchRemainder,
+  pauseColdStartEnrichmentBatchForQuota,
+  settleColdStartEnrichmentBatchItem
+} from '@/application/onboarding/cold-start-enrichment-batch-store'
+import {
   memoryItemRepository,
   type MemoryItemRepository
 } from '@/infrastructure/indexeddb/memory-item-repository'
@@ -202,6 +207,11 @@ export function clearAsyncMemoryLlmEnrichmentQueue(reason = 'manual'): void {
   queueGeneration += 1
   queue = Promise.resolve()
   clearMemoryDuplicateReuseCaches()
+  if (reason === 'quota_exceeded') {
+    void pauseColdStartEnrichmentBatchForQuota()
+  } else {
+    void clearColdStartEnrichmentBatchRemainder()
+  }
   logger.info('MemoryEnrichment', '异步 LLM 队列已清空', {
     reason,
     generation: queueGeneration
@@ -368,7 +378,10 @@ export async function runAsyncMemoryLlmEnrichment(
  * 若此前因日配额熔断：允许新 Capture 解除熔断并再试一次；
  * 若仍超限，会再次 trip 并清空队列（不会永久卡死）。
  */
-export function scheduleAsyncMemoryLlmEnrichment(itemId: string): void {
+export function scheduleAsyncMemoryLlmEnrichment(
+  itemId: string,
+  options: { coldStartBatchId?: string } = {}
+): void {
   const id = itemId.trim()
   if (!id) {
     return
@@ -380,13 +393,29 @@ export function scheduleAsyncMemoryLlmEnrichment(itemId: string): void {
     logger.info('MemoryEnrichment', '新任务入队：已解除配额熔断并重试', { itemId: id })
   }
 
+  const batchId = options.coldStartBatchId?.trim() || undefined
   const scheduledGeneration = queueGeneration
   queue = queue
     .then(async () => {
       if (scheduledGeneration !== queueGeneration) {
+        // 清队列已处理批次（pause/clear）；丢弃任务不再 settle，避免双计
         return
       }
-      await runAsyncMemoryLlmEnrichment(id)
+      try {
+        await runAsyncMemoryLlmEnrichment(id)
+      } finally {
+        if (batchId) {
+          try {
+            await settleColdStartEnrichmentBatchItem(batchId)
+          } catch (error) {
+            logger.warn('MemoryEnrichment', '冷启动 enrichment 批次 settle 失败', {
+              batchId,
+              itemId: id,
+              error: error instanceof Error ? error.message : String(error)
+            })
+          }
+        }
+      }
       await sleep(ENRICHMENT_JOB_GAP_MS)
     })
     .catch(error => {

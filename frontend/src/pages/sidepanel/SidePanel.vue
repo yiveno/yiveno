@@ -5,11 +5,16 @@ import AppLinearProgress from '@/infrastructure/ui/AppLinearProgress.vue'
 
 import { watchAuthSessionStorage } from '@/infrastructure/auth/watch-auth-session-storage'
 import type { ChromeBookmarkImportState } from '@/core/memory/chrome-bookmark-import-state'
-import { getChromeBookmarkImportPercent } from '@/core/memory/chrome-bookmark-import-state'
 import {
   shouldShowColdStartGate,
+  shouldShowColdStartPostReleaseBanner,
+  COLD_START_POST_RELEASE_BANNER_TTL_MS,
   type ColdStartPipelineState
 } from '@/core/memory/cold-start-pipeline-state'
+import {
+  coldStartEnrichmentBatchProgressRatio,
+  type ColdStartEnrichmentBatch
+} from '@/core/memory/cold-start-enrichment-batch'
 import { shouldShowCaptureFirstRecallShell } from '@/core/capture/install-onboarding'
 import {
   getRecallShellIdleEmptyCopy,
@@ -29,9 +34,33 @@ import {
 } from '@/core/recall/should-offer-thread-pivot-confirm'
 import { renderRecallFraming } from '@/core/recall/render-recall-framing'
 import type { RecallFramingFacts } from '@/core/recall/recall-framing-facts'
-import { tImportStateError, tRecallError } from '@/infrastructure/i18n/background-error'
+import {
+  listIdleClueParadigmSpecs,
+  shouldShowIdleClueParadigms
+} from '@/core/recall/idle-clue-paradigms'
+import {
+  formatRecallUnderstandingEchoChips,
+  recallUnderstandingEchoSourceFromParsed
+} from '@/core/recall/format-recall-understanding-echo'
+import { formatRecallVisibleProgressBasis } from '@/core/recall/format-recall-visible-progress-basis'
+import { selectRecallVisibleProgressBasisKinds } from '@/core/recall/visible-progress-basis'
+import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
+import {
+  advanceRecallVisibleProgress,
+  RECALL_VISIBLE_PROGRESS_MESSAGE_KEYS,
+  RECALL_VISIBLE_PROGRESS_REVEAL_MS,
+  RECALL_VISIBLE_PROGRESS_STAGE_MIN_DWELL_MS,
+  shouldRevealRecallVisibleProgress,
+  type RecallVisibleProgressStage
+} from '@/core/recall/visible-progress'
+import { parseRecallVisibleProgressMessage } from '@/core/messaging/ui-messages'
+import { tRecallError } from '@/infrastructure/i18n/background-error'
 import { openGettingStartedPage } from '@/infrastructure/browser/getting-started-page'
 import { t } from '@/infrastructure/i18n/t'
+import {
+  readColdStartPostReleaseBannerDismissedReadyAt,
+  writeColdStartPostReleaseBannerDismissedReadyAt
+} from '@/infrastructure/storage/cold-start-post-release-banner-storage'
 import {
   fetchAuthState,
   fetchChromeBookmarkImportStatus,
@@ -43,7 +72,7 @@ import {
   recordRecallDismiss
 } from '@/infrastructure/messaging/background-client'
 import {
-  consumeRecallPrefill,
+  consumeRecallPrefillWithRetry,
   markFirstRecallOpenDone,
   readExcerptCaptureCount
 } from '@/infrastructure/storage/first-recall-onboarding-storage'
@@ -91,9 +120,173 @@ const clue = ref('')
 const clueInputRef = ref<InstanceType<typeof RecallComposer> | null>(null)
 /** 有旧结果时后台刷新，避免拆掉列表 DOM。 */
 const isRecallRefreshing = ref(false)
+/** §7.0 可见进展：本轮 progressRequestId 与阶段（慢请求才揭示）。 */
+const recallProgressRequestId = ref<string | null>(null)
+const recallProgressStartedAt = ref(0)
+const recallProgressRevealed = ref(false)
+const recallProgressCurrent = ref<RecallVisibleProgressStage | null>(null)
+const recallProgressCompleted = ref<RecallVisibleProgressStage[]>([])
+let recallProgressRevealTimer: ReturnType<typeof setTimeout> | null = null
+/** 阶段展示队列：真实已发生，但 pacing 以免后两步一闪而过。 */
+const recallProgressStageQueue: RecallVisibleProgressStage[] = []
+let recallProgressQueueFlushing = false
+let recallProgressQueueWaiters: Array<() => void> = []
 const errorMessage = ref('')
+
+function sleepMs(ms: number): Promise<void> {
+  return new Promise(resolve => {
+    setTimeout(resolve, ms)
+  })
+}
+
+function settleRecallProgressQueueWaiters(): void {
+  const waiters = recallProgressQueueWaiters
+  recallProgressQueueWaiters = []
+  for (const resolve of waiters) {
+    resolve()
+  }
+}
+
+function clearRecallVisibleProgressUi(): void {
+  if (recallProgressRevealTimer !== null) {
+    clearTimeout(recallProgressRevealTimer)
+    recallProgressRevealTimer = null
+  }
+  recallProgressStageQueue.length = 0
+  recallProgressQueueFlushing = false
+  settleRecallProgressQueueWaiters()
+  recallProgressRequestId.value = null
+  recallProgressStartedAt.value = 0
+  recallProgressRevealed.value = false
+  recallProgressCurrent.value = null
+  recallProgressCompleted.value = []
+}
+
+function startRecallVisibleProgressUi(progressRequestId: string): void {
+  clearRecallVisibleProgressUi()
+  recallProgressRequestId.value = progressRequestId
+  recallProgressStartedAt.value = Date.now()
+  recallProgressRevealTimer = setTimeout(() => {
+    if (recallProgressRequestId.value !== progressRequestId) {
+      return
+    }
+    if (shouldRevealRecallVisibleProgress(Date.now() - recallProgressStartedAt.value)) {
+      recallProgressRevealed.value = true
+    }
+  }, RECALL_VISIBLE_PROGRESS_REVEAL_MS)
+}
+
+function applyRecallVisibleProgressStageNow(stage: RecallVisibleProgressStage): void {
+  const advanced = advanceRecallVisibleProgress(
+    recallProgressCurrent.value,
+    stage,
+    recallProgressCompleted.value
+  )
+  recallProgressCurrent.value = advanced.current
+  recallProgressCompleted.value = advanced.completed
+  if (
+    !recallProgressRevealed.value &&
+    shouldRevealRecallVisibleProgress(Date.now() - recallProgressStartedAt.value)
+  ) {
+    recallProgressRevealed.value = true
+  }
+}
+
+async function flushRecallVisibleProgressQueue(): Promise<void> {
+  if (recallProgressQueueFlushing) {
+    await new Promise<void>(resolve => {
+      recallProgressQueueWaiters.push(resolve)
+    })
+    return
+  }
+  recallProgressQueueFlushing = true
+  try {
+    while (recallProgressStageQueue.length > 0) {
+      const stage = recallProgressStageQueue.shift()
+      if (!stage) {
+        break
+      }
+      applyRecallVisibleProgressStageNow(stage)
+      await sleepMs(RECALL_VISIBLE_PROGRESS_STAGE_MIN_DWELL_MS)
+    }
+  } finally {
+    recallProgressQueueFlushing = false
+    settleRecallProgressQueueWaiters()
+  }
+}
+
+function enqueueRecallVisibleProgressStage(stage: RecallVisibleProgressStage): void {
+  recallProgressStageQueue.push(stage)
+  void flushRecallVisibleProgressQueue()
+}
+
+/** 结果带回的阶段列表：补上推送竞态丢失的后半段（不立刻 flush，交给 finish）。 */
+function enqueueMissingVisibleProgressStages(
+  stages: readonly RecallVisibleProgressStage[] | undefined
+): void {
+  if (!stages || stages.length === 0) {
+    return
+  }
+  const seen = new Set<RecallVisibleProgressStage>([
+    ...recallProgressCompleted.value,
+    ...(recallProgressCurrent.value ? [recallProgressCurrent.value] : []),
+    ...recallProgressStageQueue
+  ])
+  for (const stage of stages) {
+    if (seen.has(stage)) {
+      continue
+    }
+    seen.add(stage)
+    recallProgressStageQueue.push(stage)
+  }
+}
+
+/** 结果已回：排空真实阶段队列后再撤 pending，避免只看见 understanding。 */
+async function finishRecallVisibleProgressUi(): Promise<void> {
+  await flushRecallVisibleProgressQueue()
+  clearRecallVisibleProgressUi()
+}
+
+const recallPendingSteps = computed(() => {
+  if (!isRecallRefreshing.value || !recallProgressRevealed.value) {
+    return []
+  }
+  const steps: Array<{ label: string; active: boolean }> = []
+  for (const stage of recallProgressCompleted.value) {
+    steps.push({
+      label: t(RECALL_VISIBLE_PROGRESS_MESSAGE_KEYS[stage]),
+      active: false
+    })
+  }
+  if (recallProgressCurrent.value) {
+    steps.push({
+      label: t(RECALL_VISIBLE_PROGRESS_MESSAGE_KEYS[recallProgressCurrent.value]),
+      active: true
+    })
+  }
+  return steps
+})
+
+const recallPendingLabel = computed(() => {
+  if (!isRecallRefreshing.value) {
+    return t('popup_recall_pending')
+  }
+  if (recallProgressRevealed.value && recallProgressCurrent.value) {
+    return t(RECALL_VISIBLE_PROGRESS_MESSAGE_KEYS[recallProgressCurrent.value])
+  }
+  // &lt;500ms：不展示阶段文案（仅脉冲）
+  return ''
+})
+
 const importState = ref<ChromeBookmarkImportState | null>(null)
 const coldStartState = ref<ColdStartPipelineState | null>(null)
+/** 本轮冷启动 LLM enrichment 批次进度。 */
+const coldStartEnrichmentBatch = ref<ColdStartEnrichmentBatch | null>(null)
+/** 本会话关闭放行后轻条时绑定的 readyAt。 */
+const coldStartPostReleaseDismissedReadyAt = ref<string | null>(null)
+/** 驱动轻条 TTL 到期重算。 */
+const coldStartBannerNowMs = ref(Date.now())
+let coldStartBannerExpiryTimer: ReturnType<typeof setTimeout> | null = null
 const libraryState = ref<RecallShellLibraryState>('unknown')
 const excerptCaptureCount = ref(0)
 const installOnboardingDone = ref(true)
@@ -279,6 +472,7 @@ async function completeNewFindSession(reason: string): Promise<void> {
   await flushOutcomeSession(reason, true)
   recallRequestId += 1
   isRecallRefreshing.value = false
+  clearRecallVisibleProgressUi()
   dialogState.value = {
     priorUserUtterances: [],
     accumulated: null,
@@ -415,13 +609,6 @@ let coldStartPollTimer: ReturnType<typeof setInterval> | null = null
 /** 递增以丢弃过期找回响应，避免慢请求覆盖新线索结果。 */
 let recallRequestId = 0
 
-const importProgressPercent = computed(() => {
-  if (!importState.value) {
-    return 0
-  }
-  return getChromeBookmarkImportPercent(importState.value)
-})
-
 const showColdStartGate = computed(() => {
   if (coldStartState.value?.status === 'ready') {
     return false
@@ -474,34 +661,65 @@ const coldStartGateState = computed((): ColdStartPipelineState | null => {
   return null
 })
 
-const showImportProgress = computed(() => {
-  // 全屏门禁已覆盖导入进度时不重复显示顶栏细条
+/** 门禁已放行：后台加厚轻条（不挡 Recall）。 */
+const showColdStartPostReleaseBanner = computed(() => {
   if (showColdStartGate.value) {
     return false
   }
-  const status = importState.value?.status
-  return status === 'running' || status === 'failed'
+  return shouldShowColdStartPostReleaseBanner({
+    state: coldStartState.value,
+    nowMs: coldStartBannerNowMs.value,
+    dismissedReadyAt: coldStartPostReleaseDismissedReadyAt.value,
+    enrichmentBatch: coldStartEnrichmentBatch.value
+  })
 })
 
+const coldStartEnrichmentProgressRatio = computed(() => {
+  const batch = coldStartEnrichmentBatch.value
+  if (!batch || batch.total <= 0) {
+    return 0
+  }
+  return coldStartEnrichmentBatchProgressRatio(batch)
+})
+
+const coldStartPostReleaseBannerLabel = computed(() => {
+  const batch = coldStartEnrichmentBatch.value
+  if (batch?.status === 'paused_quota') {
+    return t('cold_start_post_release_banner_paused', [String(batch.settled), String(batch.total)])
+  }
+  if (batch && batch.total > 0 && batch.status === 'running') {
+    return t('cold_start_post_release_banner_progress', [
+      String(batch.settled),
+      String(batch.total)
+    ])
+  }
+  return t('cold_start_post_release_banner')
+})
+
+const showColdStartEnrichmentProgressBar = computed(() => {
+  const batch = coldStartEnrichmentBatch.value
+  return Boolean(batch && batch.total > 0 && batch.status !== 'cleared')
+})
+
+/** 书签 bulk 是否在跑（空态文案 / Capture-first；主进度 UI 在 Getting Started）。 */
 const isImporting = computed(() => importState.value?.status === 'running')
 
-const importProgressLabel = computed(() => {
-  const state = importState.value
-  if (!state) {
-    return ''
+/** 书签库存：导入计数；库已 ready 且无摘录计数时视为至少有书签可召（防 Capture-first 误伤）。 */
+const captureFirstBookmarkCount = computed(() => {
+  const imported = importState.value?.importedCount ?? 0
+  if (imported > 0) {
+    return imported
   }
-  if (state.status === 'failed') {
-    return state.errorCode ? tImportStateError(state.errorCode) : t('popup_import_failed_fallback')
+  if (libraryState.value === 'ready' && excerptCaptureCount.value === 0) {
+    return 1
   }
-  if (state.totalCount && state.totalCount > 0) {
-    return t('popup_import_progress', [String(state.importedCount), String(state.totalCount)])
-  }
-  return t('popup_import_progress_indeterminate')
+  return 0
 })
 
 const captureFirstMode = computed(() =>
   shouldShowCaptureFirstRecallShell({
     excerptCaptureCount: excerptCaptureCount.value,
+    bookmarkCount: captureFirstBookmarkCount.value,
     installOnboardingDone: installOnboardingDone.value
   })
 )
@@ -509,6 +727,26 @@ const captureFirstMode = computed(() =>
 const idleEmptyCopy = computed(() =>
   getRecallShellIdleEmptyCopy(libraryState.value, isImporting.value, t, {
     captureFirst: captureFirstMode.value
+  })
+)
+
+/** Idle 口语范式：库 ready + 非 Capture-first；推荐句式，填入不自动发。 */
+const showIdleClueParadigms = computed(() =>
+  shouldShowIdleClueParadigms({
+    hasConversationTurns: conversationTurns.value.length > 0,
+    captureFirst: captureFirstMode.value,
+    library: libraryState.value
+  })
+)
+
+const idleClueParadigmButtons = computed(() =>
+  listIdleClueParadigmSpecs().map(spec => {
+    const clueText = t(spec.clueMessageKey)
+    return {
+      id: spec.id,
+      clue: clueText,
+      ariaLabel: t('popup_idle_paradigm_fill_aria', clueText)
+    }
   })
 )
 
@@ -615,43 +853,73 @@ function formatRankedReplyText(total: number, visible: number): string {
   return t('popup_reply_ranked_partial', [String(total), '1', String(shown)])
 }
 
-/** 列表级 Framing 文案；无 framing 时回退静态计数句。 */
+/** 有真实槽位时生成理解回声芯片；无则 undefined。 */
+function resolveUnderstandingEchoChips(parsed: ParsedRecallClue | undefined): string[] | undefined {
+  const source = recallUnderstandingEchoSourceFromParsed(parsed)
+  if (!source) {
+    return undefined
+  }
+  const chips = formatRecallUnderstandingEchoChips(source, t)
+  return chips.length > 0 ? chips : undefined
+}
+
+/** 列表级 Framing 文案；有理解回声时省略 P1 / 「主要依据」，避免重复。 */
 function resolveListReplyText(
   result: RecallResult,
   total: number,
   visibleCount: number,
-  fallback: string
+  fallback: string,
+  options: { omitUnderstood?: boolean } = {}
 ): { text: string; recallFramingFacts?: RecallFramingFacts } {
+  const omitUnderstood = options.omitUnderstood === true
   const facts = result.recallFraming?.facts
+  let text: string
   if (facts) {
-    return {
-      text: renderFramingWithShownCount(facts, total, visibleCount),
-      recallFramingFacts: facts
+    text = renderFramingWithShownCount(facts, total, visibleCount, { omitUnderstood })
+  } else if (result.recallFraming?.text.trim() && !omitUnderstood) {
+    text = result.recallFraming.text
+  } else {
+    text = fallback
+  }
+
+  // 理解回声已展示具体槽位时，不再追加泛化「Mainly based on」
+  if (!omitUnderstood) {
+    const framingForBasis = facts ?? result.recallFraming?.facts
+    const basisKinds = selectRecallVisibleProgressBasisKinds({
+      ...(result.parsed !== undefined ? { parsed: result.parsed } : {}),
+      ...(framingForBasis !== undefined ? { framingFacts: framingForBasis } : {})
+    })
+    const basis = formatRecallVisibleProgressBasis(basisKinds, t)
+    if (basis) {
+      text = `${text} ${basis}`
     }
   }
-  if (result.recallFraming?.text.trim()) {
-    return {
-      text: result.recallFraming.text,
-      recallFramingFacts: result.recallFraming.facts
-    }
+
+  if (facts) {
+    return { text, recallFramingFacts: facts }
   }
-  return { text: fallback }
+  if (result.recallFraming?.facts) {
+    return { text, recallFramingFacts: result.recallFraming.facts }
+  }
+  return { text }
 }
 
 function renderFramingWithShownCount(
   facts: RecallFramingFacts,
   total: number,
-  shown: number
+  shown: number,
+  options: { omitUnderstood?: boolean } = {}
 ): string {
   if (facts.kind !== 'candidates') {
-    return renderRecallFraming(facts, t)
+    return renderRecallFraming(facts, t, options)
   }
   return renderRecallFraming(
     {
       ...facts,
       counts: { total, shown: Math.min(shown, total) }
     },
-    t
+    t,
+    options
   )
 }
 
@@ -668,9 +936,12 @@ function handleShowMoreMatches(turnId: string, mode: 'page' | 'all' = 'page'): v
     const currentVisible = turn.visibleCount ?? RECALL_RESULT_PAGE_SIZE
     const nextVisible = resolveNextRecallVisibleCount(currentVisible, total, mode)
     const rankedTotal = turn.rankedTotalCount ?? total
+    const omitUnderstood = (turn.understandingEcho?.length ?? 0) > 0
     const nextText =
       turn.recallFramingFacts !== undefined
-        ? renderFramingWithShownCount(turn.recallFramingFacts, rankedTotal, nextVisible)
+        ? renderFramingWithShownCount(turn.recallFramingFacts, rankedTotal, nextVisible, {
+            omitUnderstood
+          })
         : turn.tone === 'confident'
           ? formatRankedReplyText(rankedTotal, nextVisible)
           : turn.text
@@ -935,12 +1206,82 @@ async function refreshColdStartStatus() {
     return
   }
   coldStartState.value = response.state
+  coldStartEnrichmentBatch.value = response.enrichmentBatch
+  scheduleColdStartPostReleaseBannerExpiry()
+  const batchActive =
+    response.enrichmentBatch?.status === 'running' &&
+    response.enrichmentBatch.settled < response.enrichmentBatch.total
   if (response.state?.status === 'ready' || response.state?.status === 'failed') {
-    stopColdStartPolling()
+    if (!batchActive) {
+      stopColdStartPolling()
+    } else if (!coldStartPollTimer) {
+      startColdStartPolling()
+    }
     if (response.state.status === 'ready') {
       void probeMemoryLibrary()
     }
   }
+}
+
+function clearColdStartPostReleaseBannerExpiry() {
+  if (coldStartBannerExpiryTimer) {
+    clearTimeout(coldStartBannerExpiryTimer)
+    coldStartBannerExpiryTimer = null
+  }
+}
+
+/** 轻条仍在 TTL 内（且无活跃批次）时预约到期刷新。 */
+function scheduleColdStartPostReleaseBannerExpiry() {
+  clearColdStartPostReleaseBannerExpiry()
+  coldStartBannerNowMs.value = Date.now()
+  const state = coldStartState.value
+  const readyAt = state?.readyAt
+  if (!state || state.status !== 'ready' || !readyAt) {
+    return
+  }
+  if (
+    !shouldShowColdStartPostReleaseBanner({
+      state,
+      nowMs: coldStartBannerNowMs.value,
+      dismissedReadyAt: coldStartPostReleaseDismissedReadyAt.value,
+      enrichmentBatch: coldStartEnrichmentBatch.value
+    })
+  ) {
+    return
+  }
+  // 有真实批次进行中：靠轮询更新，不靠 TTL 定时器
+  const batch = coldStartEnrichmentBatch.value
+  if (batch && (batch.status === 'running' || batch.status === 'paused_quota')) {
+    return
+  }
+  const readyMs = Date.parse(readyAt)
+  if (!Number.isFinite(readyMs)) {
+    return
+  }
+  const remaining = readyMs + COLD_START_POST_RELEASE_BANNER_TTL_MS - coldStartBannerNowMs.value
+  if (remaining <= 0) {
+    return
+  }
+  coldStartBannerExpiryTimer = setTimeout(() => {
+    coldStartBannerNowMs.value = Date.now()
+    coldStartBannerExpiryTimer = null
+  }, remaining + 50)
+}
+
+async function dismissColdStartPostReleaseBanner() {
+  const readyAt = coldStartState.value?.readyAt
+  if (readyAt) {
+    coldStartPostReleaseDismissedReadyAt.value = readyAt
+    try {
+      await writeColdStartPostReleaseBannerDismissedReadyAt(readyAt)
+    } catch {
+      // 会话写失败仍本地隐藏
+    }
+  } else {
+    // 无 readyAt 时用本地强制隐藏（不应出现；兜底）
+    coldStartPostReleaseDismissedReadyAt.value = '__force_hidden__'
+  }
+  clearColdStartPostReleaseBannerExpiry()
 }
 
 function startColdStartPolling() {
@@ -964,13 +1305,16 @@ async function runRecall(trimmedClue: string): Promise<void> {
   const trimmed = trimmedClue.trim()
   if (!trimmed) {
     isRecallRefreshing.value = false
+    clearRecallVisibleProgressUi()
     errorMessage.value = ''
     return
   }
 
   const requestId = ++recallRequestId
+  const progressRequestId = `sp-${requestId}-${Date.now()}`
   errorMessage.value = ''
   isRecallRefreshing.value = true
+  startRecallVisibleProgressUi(progressRequestId)
 
   const priorUserUtterances = [...dialogState.value.priorUserUtterances]
   const accumulated = dialogState.value.accumulated
@@ -991,6 +1335,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
   try {
     const response = await recallWithClue({
       clue: trimmed,
+      progressRequestId,
       ...(priorUserUtterances.length > 0 || accumulated || dismissedIds.length > 0
         ? {
             context: {
@@ -1001,6 +1346,13 @@ async function runRecall(trimmedClue: string): Promise<void> {
           }
         : {})
     })
+    if (requestId !== recallRequestId) {
+      return
+    }
+    if (response.ok) {
+      enqueueMissingVisibleProgressStages(response.result.visibleProgressStages)
+    }
+    await finishRecallVisibleProgressUi()
     if (requestId !== recallRequestId) {
       return
     }
@@ -1084,11 +1436,13 @@ async function runRecall(trimmedClue: string): Promise<void> {
       const total = response.result.totalRankedCount || rankedCards.length
       const visibleCount = Math.min(RECALL_RESULT_PAGE_SIZE, rankedCards.length)
       const envOrLlmFollowUp = response.result.assistantFollowUp
+      const understandingEcho = resolveUnderstandingEchoChips(response.result.parsed)
       const listReply = resolveListReplyText(
         response.result,
         total,
         visibleCount,
-        formatRankedReplyText(total, visibleCount)
+        formatRankedReplyText(total, visibleCount),
+        { omitUnderstood: Boolean(understandingEcho) }
       )
       conversationTurns.value.push(
         createAssistantTurn({
@@ -1096,6 +1450,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
           tone: 'confident',
           text: listReply.text,
           ...contextStatusFields,
+          ...(understandingEcho ? { understandingEcho } : {}),
           candidateCards: rankedCards,
           visibleCount,
           rankedTotalCount: total,
@@ -1111,6 +1466,10 @@ async function runRecall(trimmedClue: string): Promise<void> {
           allowDismiss: rankedCards.length > 0
         })
       )
+      // Getting Started Step 2：邻域出现即算「召回到信息」，不必再点开结果
+      void markFirstRecallOpenDone().catch(() => {
+        // 忽略：引导标记失败不影响结果展示
+      })
     } else if (response.result.outcome === 'need_a_clue') {
       const llmFollowUp = response.result.assistantFollowUp
       const candidateCards = response.result.alsoPossible.map((match, index) =>
@@ -1118,11 +1477,13 @@ async function runRecall(trimmedClue: string): Promise<void> {
       )
       const total = response.result.totalRankedCount || candidateCards.length
       const visibleCount = Math.min(RECALL_RESULT_PAGE_SIZE, candidateCards.length)
+      const understandingEcho = resolveUnderstandingEchoChips(response.result.parsed)
       const listReply = resolveListReplyText(
         response.result,
         total,
         visibleCount,
-        formatRankedReplyText(total, visibleCount)
+        formatRankedReplyText(total, visibleCount),
+        { omitUnderstood: Boolean(understandingEcho) }
       )
       conversationTurns.value.push(
         createAssistantTurn({
@@ -1130,6 +1491,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
           tone: 'uncertain',
           text: listReply.text,
           ...contextStatusFields,
+          ...(understandingEcho ? { understandingEcho } : {}),
           candidateCards,
           visibleCount,
           rankedTotalCount: total,
@@ -1153,18 +1515,28 @@ async function runRecall(trimmedClue: string): Promise<void> {
         library: libraryState.value,
         clue: highlightClue
       })
-      const missReply = response.result.recallFraming?.text.trim()
-        ? {
-            text: response.result.recallFraming.text,
-            recallFramingFacts: response.result.recallFraming.facts
-          }
-        : { text: missFallback }
+      const understandingEcho = resolveUnderstandingEchoChips(response.result.parsed)
+      const omitUnderstood = Boolean(understandingEcho)
+      const missFacts = response.result.recallFraming?.facts
+      const missReply =
+        missFacts !== undefined
+          ? {
+              text: renderRecallFraming(missFacts, t, { omitUnderstood }),
+              recallFramingFacts: missFacts
+            }
+          : response.result.recallFraming?.text.trim() && !omitUnderstood
+            ? {
+                text: response.result.recallFraming.text,
+                recallFramingFacts: response.result.recallFraming.facts
+              }
+            : { text: missFallback }
       conversationTurns.value.push(
         createAssistantTurn({
           id: nextTurnId(),
           tone: 'miss',
           text: missReply.text,
           ...contextStatusFields,
+          ...(understandingEcho ? { understandingEcho } : {}),
           ...(missReply.recallFramingFacts !== undefined
             ? { recallFramingFacts: missReply.recallFramingFacts }
             : {}),
@@ -1195,6 +1567,10 @@ async function runRecall(trimmedClue: string): Promise<void> {
       clueInputRef.value?.focus()
     })
   } catch {
+    if (requestId !== recallRequestId) {
+      return
+    }
+    await finishRecallVisibleProgressUi()
     if (requestId !== recallRequestId) {
       return
     }
@@ -1309,6 +1685,18 @@ function handleUseSuggestion(value: string): void {
   void handleSendTurn(value, { skipPivotCheck: true })
 }
 
+/** Idle 口语范式：仅填入 composer，可改再发（推荐不强制）。 */
+function handleIdleParadigmFill(value: string): void {
+  const trimmed = value.trim()
+  if (!trimmed || isRecallRefreshing.value) {
+    return
+  }
+  clue.value = trimmed
+  void nextTick(() => {
+    clueInputRef.value?.focus()
+  })
+}
+
 /**
  * 关 Side Panel：静默结算 Outcome（不跨次打开补问出口条）。
  * Chrome 无法拦截原生关闭；跨次问「上次找没找到」无上下文、易错愕。
@@ -1325,7 +1713,19 @@ async function handlePanelCloseOutcome(): Promise<void> {
 /** 取消登录态 storage 订阅。 */
 let stopWatchAuthSession: (() => void) | null = null
 
+function handleRecallVisibleProgressPush(message: unknown): void {
+  const parsed = parseRecallVisibleProgressMessage(message)
+  if (!parsed) {
+    return
+  }
+  if (parsed.payload.progressRequestId !== recallProgressRequestId.value) {
+    return
+  }
+  enqueueRecallVisibleProgressStage(parsed.payload.stage)
+}
+
 onMounted(() => {
+  chrome.runtime.onMessage.addListener(handleRecallVisibleProgressPush)
   void nextTick(() => {
     clueInputRef.value?.focus()
   })
@@ -1336,7 +1736,8 @@ onMounted(() => {
   })
   void (async () => {
     try {
-      const prefill = await consumeRecallPrefill()
+      // Getting Started 等：写 prefill 与开壳可能竞态，短窗重试
+      const prefill = await consumeRecallPrefillWithRetry()
       if (!prefill) {
         return
       }
@@ -1349,9 +1750,21 @@ onMounted(() => {
   void probeMemoryLibrary()
   startImportPolling()
   startColdStartPolling()
+  void (async () => {
+    try {
+      coldStartPostReleaseDismissedReadyAt.value =
+        await readColdStartPostReleaseBannerDismissedReadyAt()
+      scheduleColdStartPostReleaseBannerExpiry()
+    } catch {
+      // 忽略：无 dismiss 记录不阻塞
+    }
+  })()
 })
 
 onUnmounted(() => {
+  chrome.runtime.onMessage.removeListener(handleRecallVisibleProgressPush)
+  clearRecallVisibleProgressUi()
+  clearColdStartPostReleaseBannerExpiry()
   void handlePanelCloseOutcome()
   recallTelemetry.clearActiveTask()
   recallRequestId += 1
@@ -1377,17 +1790,30 @@ onUnmounted(() => {
       />
 
       <section
-        v-if="showImportProgress"
-        class="recall-import"
-        :class="{ 'recall-import--error': importState?.status === 'failed' }"
+        v-if="showColdStartPostReleaseBanner"
+        class="recall-post-release"
+        role="status"
         aria-live="polite"
       >
-        <p class="recall-import-label">{{ importProgressLabel }}</p>
-        <AppLinearProgress
-          v-if="importState?.status === 'running'"
-          :value="importProgressPercent / 100"
-          :aria-label="t('popup_import_progress_aria')"
-        />
+        <div class="recall-post-release-main">
+          <p class="recall-post-release-label">{{ coldStartPostReleaseBannerLabel }}</p>
+          <AppLinearProgress
+            v-if="showColdStartEnrichmentProgressBar"
+            class="recall-post-release-bar"
+            :value="coldStartEnrichmentProgressRatio"
+            :aria-label="t('cold_start_post_release_progress_aria')"
+          />
+        </div>
+        <AppButton
+          type="button"
+          variant="text"
+          class="recall-post-release-dismiss"
+          :title="t('cold_start_post_release_dismiss')"
+          :aria-label="t('cold_start_post_release_dismiss_aria')"
+          @click="dismissColdStartPostReleaseBanner"
+        >
+          {{ t('cold_start_post_release_dismiss') }}
+        </AppButton>
       </section>
     </header>
 
@@ -1408,6 +1834,27 @@ onUnmounted(() => {
           <p class="recall-empty-copy">
             {{ idleEmptyCopy?.body ?? t('popup_welcome_body') }}
           </p>
+          <div
+            v-if="showIdleClueParadigms"
+            class="recall-idle-paradigms"
+            role="group"
+            :aria-label="t('popup_idle_paradigm_hint')"
+          >
+            <p class="recall-idle-paradigms__hint">{{ t('popup_idle_paradigm_hint') }}</p>
+            <div class="recall-idle-paradigms__pills">
+              <button
+                v-for="paradigm in idleClueParadigmButtons"
+                :key="paradigm.id"
+                type="button"
+                class="recall-idle-paradigm-pill"
+                :title="paradigm.clue"
+                :aria-label="paradigm.ariaLabel"
+                @click="handleIdleParadigmFill(paradigm.clue)"
+              >
+                {{ paradigm.clue }}
+              </button>
+            </div>
+          </div>
           <div v-if="captureFirstMode" class="recall-empty-actions">
             <AppButton type="button" @click="handleOpenGettingStarted" variant="tonal">
               {{ t('popup_open_getting_started') }}
@@ -1432,7 +1879,8 @@ onUnmounted(() => {
         :collapseLabel="t('popup_duplicate_collapse')"
         :noteFieldLabel="t('detail_note_label')"
         :pending="isRecallRefreshing"
-        :pendingLabel="t('popup_recall_pending')"
+        :pendingLabel="recallPendingLabel"
+        :pendingSteps="recallPendingSteps"
         :selected-detail-export-ids="selectedDetailExportIds"
         :detail-export-selection-active="detailExportMode"
         @open="handleCardOpen"
@@ -1665,7 +2113,11 @@ onUnmounted(() => {
   color: var(--on-surface-muted);
 }
 
-.recall-import {
+.recall-post-release {
+  display: flex;
+  gap: var(--space-sm);
+  align-items: flex-start;
+  justify-content: space-between;
   margin-top: var(--space-xs);
   margin-bottom: 0;
   padding: var(--space-sm);
@@ -1674,21 +2126,30 @@ onUnmounted(() => {
   background: var(--surface-white);
 }
 
-.recall-import--error {
-  border-color: color-mix(in srgb, var(--danger) 16%, var(--paper));
-  background: color-mix(in srgb, var(--danger) 16%, var(--paper));
+.recall-post-release-main {
+  display: grid;
+  flex: 1 1 auto;
+  gap: var(--space-2xs);
+  min-width: 0;
 }
 
-.recall-import-label {
-  margin: 0 0 var(--space-xs);
+.recall-post-release-label {
+  margin: 0;
+  min-width: 0;
   font-size: 12px;
   line-height: 1.4;
   color: var(--on-surface-muted);
   overflow-wrap: anywhere;
+  text-wrap: pretty;
 }
 
-.recall-import--error .recall-import-label {
-  color: var(--danger);
+.recall-post-release-bar {
+  max-width: 100%;
+}
+
+.recall-post-release-dismiss {
+  flex: 0 0 auto;
+  margin: -2px 0 0;
 }
 
 .recall-body {
@@ -1745,7 +2206,7 @@ onUnmounted(() => {
   flex-shrink: 0;
   gap: var(--space-xs);
   width: 100%;
-  max-width: 36ch;
+  max-width: 44ch;
 }
 
 .recall-empty-title {
@@ -1764,6 +2225,54 @@ onUnmounted(() => {
   line-height: 1.5;
   color: var(--on-surface-muted);
   text-wrap: pretty;
+}
+
+.recall-idle-paradigms {
+  display: grid;
+  gap: var(--space-2xs);
+  width: 100%;
+  max-width: 100%;
+  margin-top: var(--space-2xs);
+}
+
+.recall-idle-paradigms__hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--on-surface-muted);
+}
+
+.recall-idle-paradigms__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.recall-idle-paradigm-pill {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  min-height: 32px;
+  padding: 0 var(--space-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.3;
+  color: var(--on-surface);
+  background: var(--surface-white);
+  cursor: pointer;
+  text-align: left;
+  text-wrap: pretty;
+}
+
+.recall-idle-paradigm-pill:hover {
+  background: var(--surface-chrome);
+}
+
+.recall-idle-paradigm-pill:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .recall-empty-actions {

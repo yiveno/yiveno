@@ -156,6 +156,63 @@ describe('runColdStartPipeline', () => {
     expect(state.status).toBe('ready')
   })
 
+  it('灌库关闭：不调 ensure，ingest_disabled 放行', async () => {
+    getUserSettingsMock.mockResolvedValue({ chromeBookmarkIngestEnabled: false })
+    getAuthSessionMock.mockResolvedValue(null)
+    listByOwnerMock.mockResolvedValue([])
+    let stored: Record<string, unknown> | null = null
+    readChromeStorageLocalMock.mockImplementation(async () => stored)
+    writeChromeStorageLocalMock.mockImplementation(
+      async (_key: string, value: Record<string, unknown>) => {
+        stored = value
+        return value
+      }
+    )
+    getChromeBookmarkImportStatusMock.mockResolvedValue({
+      status: 'pending',
+      importedCount: 0
+    })
+
+    const promise = runColdStartPipeline()
+    await vi.runAllTimersAsync()
+    const state = await promise
+
+    expect(ensureChromeBookmarksImportedMock).not.toHaveBeenCalled()
+    expect(state.releaseReason).toBe('ingest_disabled')
+    expect(state.status).toBe('ready')
+  })
+
+  it('灌库开启：幂等调用 ensure 作对齐/等待兜底', async () => {
+    getUserSettingsMock.mockResolvedValue({ chromeBookmarkIngestEnabled: true })
+    readInstallOnboardingDoneMock.mockResolvedValue(false)
+    let stored: Record<string, unknown> | null = null
+    readChromeStorageLocalMock.mockImplementation(async () => stored)
+    writeChromeStorageLocalMock.mockImplementation(
+      async (_key: string, value: Record<string, unknown>) => {
+        stored = value
+        return value
+      }
+    )
+    getChromeBookmarkImportStatusMock.mockResolvedValue({
+      status: 'completed',
+      importedCount: 5,
+      totalCount: 5
+    })
+    ensureChromeBookmarksImportedMock.mockResolvedValue({
+      status: 'completed',
+      importedCount: 5,
+      totalCount: 5
+    })
+
+    const promise = runColdStartPipeline()
+    await vi.runAllTimersAsync()
+    const state = await promise
+
+    expect(ensureChromeBookmarksImportedMock).toHaveBeenCalledTimes(1)
+    expect(state.status).toBe('ready')
+    expect(state.releaseReason).not.toBe('ingest_disabled')
+  })
+
   it('未登录：规则后进 AI 阶段，LLM 入队、无 embed，local_ready 放行', async () => {
     getAuthSessionMock.mockResolvedValue(null)
     listByOwnerMock.mockResolvedValue([
@@ -184,7 +241,10 @@ describe('runColdStartPipeline', () => {
     const state = await promise
 
     expect(runSilentMemoryEmbeddingMaintenanceMock).not.toHaveBeenCalled()
-    expect(scheduleAsyncMemoryLlmEnrichmentMock).toHaveBeenCalledWith('item-1')
+    expect(scheduleAsyncMemoryLlmEnrichmentMock).toHaveBeenCalledWith(
+      'item-1',
+      expect.objectContaining({ coldStartBatchId: expect.stringMatching(/^cold-start-llm-/) })
+    )
     expect(state.releaseReason).toBe('local_ready')
     expect(state.status).toBe('ready')
     expect(state.aiLlmEnqueued).toBe(1)

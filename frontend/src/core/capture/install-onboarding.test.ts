@@ -6,18 +6,40 @@ import {
 } from '@/core/capture/install-onboarding'
 
 describe('install-onboarding', () => {
-  it('Capture-first：未完成引导且无摘录时展示', () => {
+  it('Capture-first：未完成引导且无书签无摘录时展示', () => {
     expect(
-      shouldShowCaptureFirstRecallShell({ excerptCaptureCount: 0, installOnboardingDone: false })
+      shouldShowCaptureFirstRecallShell({
+        excerptCaptureCount: 0,
+        bookmarkCount: 0,
+        installOnboardingDone: false
+      })
     ).toBe(true)
+  })
+
+  it('Capture-first：仅有书签时不展示（勿误伤书签首召）', () => {
+    expect(
+      shouldShowCaptureFirstRecallShell({
+        excerptCaptureCount: 0,
+        bookmarkCount: 12,
+        installOnboardingDone: false
+      })
+    ).toBe(false)
   })
 
   it('Capture-first：已有摘录或已完成引导时不展示', () => {
     expect(
-      shouldShowCaptureFirstRecallShell({ excerptCaptureCount: 1, installOnboardingDone: false })
+      shouldShowCaptureFirstRecallShell({
+        excerptCaptureCount: 1,
+        bookmarkCount: 0,
+        installOnboardingDone: false
+      })
     ).toBe(false)
     expect(
-      shouldShowCaptureFirstRecallShell({ excerptCaptureCount: 0, installOnboardingDone: true })
+      shouldShowCaptureFirstRecallShell({
+        excerptCaptureCount: 0,
+        bookmarkCount: 0,
+        installOnboardingDone: true
+      })
     ).toBe(false)
   })
 

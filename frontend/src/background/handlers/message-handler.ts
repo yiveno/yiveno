@@ -38,6 +38,7 @@ import {
   handleGetBookmarkLibraryTree,
   handleGetChromeBookmarkImportStatus,
   handleGetColdStartStatus,
+  handleGenerateGettingStartedClueSamples,
   handleGetThirdPartyCorpusImportStatus,
   handleImportThirdPartyCorpus
 } from '@/background/handlers/import-handler'
@@ -92,8 +93,8 @@ async function dispatchBackgroundMessage(
   message: BackgroundMessage,
   sender?: chrome.runtime.MessageSender
 ): Promise<BackgroundMessageResponse> {
-  // 探活 PING 不阻塞；其余消息须等 bootstrap（IDB / 身份）完成，避免冷启动竞态
-  if (message.type !== 'PING') {
+  // 探活 PING 不阻塞；开 Side Panel 亦不可 await bootstrap（会丢掉用户手势）
+  if (message.type !== 'PING' && message.type !== 'OPEN_RECALL_SHELL') {
     await ensureBackgroundBootstrapped()
   }
 
@@ -170,6 +171,8 @@ async function dispatchBackgroundMessage(
       return handleGetChromeBookmarkImportStatus()
     case 'GET_COLD_START_STATUS':
       return handleGetColdStartStatus()
+    case 'GENERATE_GETTING_STARTED_CLUE_SAMPLES':
+      return handleGenerateGettingStartedClueSamples(message.payload)
     case 'IMPORT_THIRD_PARTY_CORPUS':
       return handleImportThirdPartyCorpus(message.payload)
     case 'GET_THIRD_PARTY_CORPUS_IMPORT_STATUS':

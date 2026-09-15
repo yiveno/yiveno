@@ -1,5 +1,10 @@
 import { z } from 'zod'
 
+import {
+  shouldShowColdStartEnrichmentBatchProgress,
+  type ColdStartEnrichmentBatch
+} from '@/core/memory/cold-start-enrichment-batch'
+
 /** 冷启动三阶段门禁状态（chrome.storage.local）。 */
 export const COLD_START_PIPELINE_STORAGE_KEY = 'yiveno.coldStartPipeline' as const
 
@@ -111,4 +116,88 @@ export function getColdStartOverallPercent(state: ColdStartPipelineState): numbe
   }
 
   return 0
+}
+
+/** 放行后轻条默认可见窗口（自 readyAt 起）。 */
+export const COLD_START_POST_RELEASE_BANNER_TTL_MS = 5 * 60_000
+
+/** 不展示「后台加厚」轻条的放行原因（无未完成尽力工作）。 */
+const POST_RELEASE_BANNER_SKIP_REASONS = new Set<ColdStartReleaseReason>([
+  'migrated_existing', // 存量跳过门禁
+  'ingest_disabled', // 未灌书签
+  'ai_skipped_empty', // 无需 AI 补齐
+  'import_failed' // 导入失败放行；另有 import 错误条
+])
+
+export type ShouldShowColdStartPostReleaseBannerInput = {
+  state: ColdStartPipelineState | null
+  /** 当前时间（ms）；可注入便于单测。 */
+  nowMs: number
+  /** 本会话已对应该次 readyAt 点过关闭。 */
+  dismissedReadyAt?: string | null
+  /** 覆盖默认 TTL（测试用）。 */
+  ttlMs?: number
+  /**
+   * 本轮冷启动 LLM enrichment 批次进度。
+   * 有进行中/配额暂停批时优先据此展示（真实进度条）。
+   */
+  enrichmentBatch?: ColdStartEnrichmentBatch | null
+}
+
+/**
+ * 门禁已放行、主壳可用，但 LLM 尽力可能仍在后台时，展示非阻挡轻条。
+ * 禁止挡 Recall；批次完成 / 关闭 / TTL 后消失。
+ */
+export function shouldShowColdStartPostReleaseBanner(
+  input: ShouldShowColdStartPostReleaseBannerInput
+): boolean {
+  const { state, nowMs, dismissedReadyAt = null, enrichmentBatch = null } = input
+  if (!state || state.status !== 'ready' || state.stage !== 'done') {
+    return false
+  }
+
+  const readyAt = state.readyAt
+  if (!readyAt) {
+    return false
+  }
+
+  if (dismissedReadyAt && dismissedReadyAt === readyAt) {
+    return false
+  }
+
+  const readyMs = Date.parse(readyAt)
+  if (!Number.isFinite(readyMs)) {
+    return false
+  }
+
+  const reason = state.releaseReason
+  if (reason && POST_RELEASE_BANNER_SKIP_REASONS.has(reason)) {
+    return false
+  }
+
+  // 有真实批次进度：进行中或配额暂停 → 展示（完成即隐，不靠 TTL 砍条）
+  if (enrichmentBatch) {
+    if (shouldShowColdStartEnrichmentBatchProgress(enrichmentBatch)) {
+      return true
+    }
+    if (
+      enrichmentBatch.status === 'completed' ||
+      enrichmentBatch.status === 'cleared' ||
+      (enrichmentBatch.total > 0 && enrichmentBatch.settled >= enrichmentBatch.total)
+    ) {
+      return false
+    }
+  }
+
+  const ttlMs = input.ttlMs ?? COLD_START_POST_RELEASE_BANNER_TTL_MS
+  if (nowMs - readyMs >= ttlMs || nowMs < readyMs) {
+    return false
+  }
+
+  // 无批次时的弱启发式（如 timeout 且尚未写出 batch）
+  if (state.aiLlmEnqueued > 0 || reason === 'ai_best_effort_timeout') {
+    return true
+  }
+
+  return false
 }

@@ -5,6 +5,7 @@ import type {
 } from '@/core/messaging/recall-messages'
 import { parseRecallWithCluePayload } from '@/core/messaging/recall-messages'
 import { extractDomainFromUrl } from '@/core/memory/payload'
+import { notifyRecallVisibleProgress } from '@/infrastructure/messaging/notify-recall-visible-progress'
 import { logger } from '@/infrastructure/logging/logger'
 
 /** 是否可作为 §7.1 当前站信号的 http(s) 页。 */
@@ -68,10 +69,21 @@ export async function handleRecallWithClue(payload: unknown): Promise<RecallBack
       priorCount: context?.priorUserUtterances?.length ?? 0,
       hasAccumulated: Boolean(context?.accumulated),
       dismissedCount: context?.dismissedIds?.length ?? 0,
-      currentTabDomain: context?.currentTabDomain ?? null
+      currentTabDomain: context?.currentTabDomain ?? null,
+      progressRequestId: input.progressRequestId ?? null
     })
 
-    const result = await recallService.recallWithClue(input.clue, context ? { context } : undefined)
+    const progressRequestId = input.progressRequestId
+    const result = await recallService.recallWithClue(input.clue, {
+      ...(context ? { context } : {}),
+      ...(progressRequestId
+        ? {
+            onVisibleProgress: stage => {
+              notifyRecallVisibleProgress({ progressRequestId, stage })
+            }
+          }
+        : {})
+    })
     logger.info('Recall', 'RECALL_WITH_CLUE 完成', {
       durationMs: Date.now() - startedAt,
       outcome: result.outcome,

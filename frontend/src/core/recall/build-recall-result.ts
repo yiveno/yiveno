@@ -7,6 +7,7 @@ import {
   collapseRecallMatches,
   recallMatchConflictsWithTopPick
 } from '@/core/recall/collapse-recall-duplicates'
+import { itemCorroboratesContentTerms } from '@/core/recall/content-term-corroboration'
 import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
 import type { MemoryItem } from '@/core/memory/memory-item'
 
@@ -96,19 +97,38 @@ export function buildRankedRecallPool(
 }
 
 /** 由已折叠的互异组构建结果；池内全量交给 UI，首屏由 PAGE_SIZE 控制。 */
-export function buildRecallResult(clue: string, collapsedGroups: RecallMatch[]): RecallResult {
-  if (collapsedGroups.length === 0) {
+export function buildRecallResult(
+  clue: string,
+  collapsedGroups: RecallMatch[],
+  options?: { contentTerms?: readonly string[] }
+): RecallResult {
+  const contentTerms = options?.contentTerms
+  const groups =
+    contentTerms && contentTerms.length > 0
+      ? collapsedGroups.filter(match => itemCorroboratesContentTerms(match.item, contentTerms))
+      : collapsedGroups
+
+  if (groups.length === 0) {
     return emptyRecallResult(clue)
   }
 
-  const best = collapsedGroups[0]
+  const best = groups[0]
   if (!best) {
+    return emptyRecallResult(clue)
+  }
+
+  // 安全带：有 contentTerms 却无佐证（漏网）→ 诚实空
+  if (
+    contentTerms &&
+    contentTerms.length > 0 &&
+    !itemCorroboratesContentTerms(best.item, contentTerms)
+  ) {
     return emptyRecallResult(clue)
   }
 
   // 有词面命中但未达 Top Pick：Need A Clue（弱候选池，请用户再补线索）
   if (best.score < RECALL_TOP_PICK_MIN_SCORE) {
-    const pool = buildRankedRecallPool(collapsedGroups, { withTopConflictFilter: false })
+    const pool = buildRankedRecallPool(groups, { withTopConflictFilter: false })
     return {
       outcome: 'need_a_clue',
       topPick: null,
@@ -120,7 +140,7 @@ export function buildRecallResult(clue: string, collapsedGroups: RecallMatch[]):
 
   // 泛词 clue 不得仅凭出处页名（pageTitle）当 Top1，降级为弱候选追问
   if (recallTopPickBlockedByGenericPageTitleGate(clue, best.matchedFields)) {
-    const pool = buildRankedRecallPool(collapsedGroups, { withTopConflictFilter: false })
+    const pool = buildRankedRecallPool(groups, { withTopConflictFilter: false })
     return {
       outcome: 'need_a_clue',
       topPick: null,
@@ -130,7 +150,7 @@ export function buildRecallResult(clue: string, collapsedGroups: RecallMatch[]):
     }
   }
 
-  const pool = buildRankedRecallPool(collapsedGroups, { withTopConflictFilter: true })
+  const pool = buildRankedRecallPool(groups, { withTopConflictFilter: true })
   const head = pool[0] ?? best
   return {
     outcome: 'top_pick',

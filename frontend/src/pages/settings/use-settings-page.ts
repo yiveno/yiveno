@@ -79,7 +79,7 @@ export function useSettingsPage() {
   const awaitingShortcutsReturn = ref(false)
 
   const selectionToolbarEnabled = ref(true)
-  const chromeBookmarkIngestEnabled = ref(true)
+  const chromeBookmarkIngestEnabled = ref(false)
   const aiFeaturesEnabled = ref(true)
   const mcpReadOnlyEnabled = ref(false)
   const settingsState = ref<SettingsLoadState>('loading')

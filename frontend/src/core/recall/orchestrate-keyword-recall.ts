@@ -14,6 +14,11 @@ import {
 import { collapseRecallMatches } from '@/core/recall/collapse-recall-duplicates'
 import { normalizeRecallText, RECALL_TOP_PICK_MIN_SCORE } from '@/core/recall/keyword-filter'
 import {
+  filterMatchesByContentTermCorroboration,
+  parsedClueForTimeSoftReopen,
+  shouldAttemptTimeSoftReopen
+} from '@/core/recall/content-term-corroboration'
+import {
   parseRecallClue,
   resolveRelativeTimeRange,
   timeConfidenceForRelativeLabel
@@ -577,6 +582,32 @@ export function applyParsedClueScoreBoosts(
 }
 
 /**
+ * 时间硬/软筛 → 内容佐证；high 空佐证时一次 soft 回退。
+ */
+export function applyTimeFilterThenContentCorroborationWithSoftReopen(
+  scoredMatches: RecallMatch[],
+  parsed: ParsedRecallClue
+): {
+  matches: RecallMatch[]
+  effectiveParsed: ParsedRecallClue
+  timeSoftReopen: boolean
+} {
+  const hardTimed = filterMatchesByParsedTimeRange(scoredMatches, parsed)
+  let corroborated = filterMatchesByContentTermCorroboration(hardTimed, parsed.contentTerms)
+  if (!shouldAttemptTimeSoftReopen(parsed, corroborated.length)) {
+    return { matches: corroborated, effectiveParsed: parsed, timeSoftReopen: false }
+  }
+  const softParsed = parsedClueForTimeSoftReopen(parsed)
+  const softTimed = filterMatchesByParsedTimeRange(scoredMatches, softParsed)
+  corroborated = filterMatchesByContentTermCorroboration(softTimed, parsed.contentTerms)
+  return {
+    matches: corroborated,
+    effectiveParsed: softParsed,
+    timeSoftReopen: true
+  }
+}
+
+/**
  * 带口语解析的关键词 Recall。
  * RecallResult.clue 仍为用户原始 clue（UI 展示）；内部 Filter 可用剥离槽位后的 `filterClue`。
  * 无内容词且具备时间+类型（或刚存）时走约束邻域，不把虚词当检索词。
@@ -629,22 +660,35 @@ export function recallByKeywordWithParsedClue(
 
   const filterClue = buildFilterClueFromParsed(parsed)
 
-  const matches = filterMatchesByParsedTimeRange(
-    filterKeywordMatchesBeforeCollapse(items, filterClue, { nowMs }).map(match =>
-      applyParsedClueScoreBoosts(match, parsed, nowMs)
-    ),
-    parsed
+  const scored = filterKeywordMatchesBeforeCollapse(items, filterClue, { nowMs }).map(match =>
+    applyParsedClueScoreBoosts(match, parsed, nowMs)
   )
+  const { matches, effectiveParsed, timeSoftReopen } =
+    applyTimeFilterThenContentCorroborationWithSoftReopen(scored, parsed)
 
-  matches.sort((left, right) => {
+  // soft 回退时用 softParsed 再叠一次时间软加分（窗内 +12）
+  const rescored = timeSoftReopen
+    ? matches.map(match => applyParsedClueScoreBoosts(match, effectiveParsed, nowMs))
+    : matches
+
+  rescored.sort((left, right) => {
     if (right.score !== left.score) {
       return right.score - left.score
     }
     return right.item.updatedAt.localeCompare(left.item.updatedAt)
   })
 
-  const collapsed = collapseRecallMatches(matches, {
+  const collapsed = collapseRecallMatches(rescored, {
     limit: poolLimit + RECALL_COLLAPSE_BACKFILL_EXTRA
   })
-  return buildRecallResult(raw, collapsed)
+  const result = buildRecallResult(raw, collapsed, {
+    contentTerms: parsed.contentTerms
+  })
+  if (!timeSoftReopen) {
+    return result
+  }
+  return {
+    ...result,
+    parsed: effectiveParsed
+  }
 }

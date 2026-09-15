@@ -12,12 +12,16 @@ defineOptions({ name: 'AppIcon' })
 const props = withDefaults(
   defineProps<{
     name: AppIconName
-    /** 边长，默认 24px。 */
-    size?: string
+    /** 边长，默认 24px；数字按 px。 */
+    size?: string | number
   }>(),
   {
     size: '24px'
   }
+)
+
+const resolvedSize = computed(() =>
+  typeof props.size === 'number' ? `${props.size}px` : props.size
 )
 
 const nodes = computed(() => getAppIconNodes(props.name))
@@ -29,8 +33,8 @@ const viewBox = computed(() => getAppIconViewBox(props.name))
     class="app-icon"
     xmlns="http://www.w3.org/2000/svg"
     :viewBox="viewBox"
-    :width="size"
-    :height="size"
+    :width="resolvedSize"
+    :height="resolvedSize"
     fill="none"
     stroke="currentColor"
     stroke-width="2"

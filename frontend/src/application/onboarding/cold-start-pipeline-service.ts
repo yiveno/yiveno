@@ -1,5 +1,6 @@
 /**
- * 冷启动三阶段门禁编排：import → 规则 enrichment 全量 → embed/LLM 尽力。
+ * 冷启动三阶段门禁编排：library align → 规则 enrichment 全量 → embed/LLM 尽力。
+ * 书签 bulk 用户主进度在 Getting Started；本 pipeline 的 import 阶段仅为等待/幂等对齐。
  * Getting Started 可跳过；本 pipeline 是 Side Panel 全屏进度的工程门禁。
  */
 
@@ -13,6 +14,7 @@ import {
   scheduleSilentMemoryEmbeddingMaintenance
 } from '@/application/memory/ensure-memory-embedding-maintenance'
 import { scheduleAsyncMemoryLlmEnrichment } from '@/application/memory/schedule-async-memory-llm-enrichment'
+import { beginColdStartEnrichmentBatch } from '@/application/onboarding/cold-start-enrichment-batch-store'
 import { shouldRequestLlmMemoryEnrichment } from '@/core/memory/should-request-llm-memory-enrichment'
 import {
   COLD_START_PIPELINE_STORAGE_KEY,
@@ -161,6 +163,11 @@ function stopImportProgressPolling(): void {
   }
 }
 
+/**
+ * Import 阶段：非二次授权课。
+ * - ingest 关：跳过（外层已直接进 rules；此处兜底）
+ * - ingest 开：幂等 `ensureChromeBookmarksImported`（已 completed 则立刻返回）= 对齐/等待已有导入终态
+ */
 async function runImportStage(): Promise<{ failed: boolean; error?: string }> {
   const settings = await getUserSettings()
   if (!settings.chromeBookmarkIngestEnabled) {
@@ -199,6 +206,7 @@ async function runImportStage(): Promise<{ failed: boolean; error?: string }> {
   }, 300)
 
   try {
+    // 幂等：Settings/GS 已启动的 bulk 会续跑；已完成则立刻返回
     const result = await ensureChromeBookmarksImported()
     stopImportProgressPolling()
     await patchState({
@@ -246,19 +254,33 @@ async function runRulesStage(): Promise<void> {
  */
 async function enqueueColdStartLlmEnrichment(): Promise<number> {
   const items = await memoryItemRepository.listByOwner({ limit: COLD_START_LLM_SCAN_LIMIT })
-  let enqueued = 0
+  const toEnqueue: string[] = []
   for (const item of items) {
-    if (enqueued >= COLD_START_LLM_ENQUEUE_LIMIT) {
+    if (toEnqueue.length >= COLD_START_LLM_ENQUEUE_LIMIT) {
       break
     }
     if (!shouldRequestLlmMemoryEnrichment(item)) {
       continue
     }
-    scheduleAsyncMemoryLlmEnrichment(item.id)
-    enqueued += 1
+    toEnqueue.push(item.id)
   }
-  logger.info('ColdStart', 'LLM 尽力入队', { scanned: items.length, enqueued })
-  return enqueued
+
+  if (toEnqueue.length === 0) {
+    logger.info('ColdStart', 'LLM 尽力入队', { scanned: items.length, enqueued: 0 })
+    return 0
+  }
+
+  const batchId = `cold-start-llm-${Date.now()}`
+  await beginColdStartEnrichmentBatch({ batchId, total: toEnqueue.length })
+  for (const itemId of toEnqueue) {
+    scheduleAsyncMemoryLlmEnrichment(itemId, { coldStartBatchId: batchId })
+  }
+  logger.info('ColdStart', 'LLM 尽力入队', {
+    scanned: items.length,
+    enqueued: toEnqueue.length,
+    batchId
+  })
+  return toEnqueue.length
 }
 
 async function runAiBestEffortStage(): Promise<ColdStartReleaseReason> {

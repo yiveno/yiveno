@@ -3,10 +3,11 @@
  */
 
 import type { ClueFlowTrace } from '@/core/recall/understand/clue-flow-trace'
+import type { LogScope } from '@/infrastructure/logging/log-scopes'
 import { logger } from '@/infrastructure/logging/logger'
 
 /** 默认 scope：过滤控制台时可搜 Yiveno:RecallFlow */
-export function createRecallFlowTrace(scope = 'RecallFlow'): ClueFlowTrace {
+export function createRecallFlowTrace(scope: LogScope = 'RecallFlow'): ClueFlowTrace {
   return (level, step, data) => {
     if (data === undefined) {
       logger[level](scope, step)
