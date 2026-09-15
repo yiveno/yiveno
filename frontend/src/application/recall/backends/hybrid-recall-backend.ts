@@ -493,7 +493,16 @@ async function attachComposerNarrowExamplesIfNeeded(
   }
 }
 
-async function fuseHybridMatches(input: {
+/**
+ * Hybrid 纯函数融合：关键词池 + 语义近邻 → ADR-011 时间筛 → RRF → 词面保护 → 佐证门 → 时间 soft 回退。
+ *
+ * 公开暴露：Hybrid eval (`run-hybrid-eval`) 直接复用，避免在测试里复刻整段 RRF 逻辑。
+ * 不依赖 Chrome / IndexedDB；唯一外部 IO 是 `requestWorkerEmbeddings`（CI 用 vi.mock 替身）。
+ *
+ * @returns null 表示任一路（关键词 / 语义）佐证后都空，回退到关键词主路径；
+ *          非 null 时 `effectiveParsed` 可能因时间 soft 回退而与入参 `parsed` 不同。
+ */
+export async function fuseHybridMatches(input: {
   displayClue: string
   /** 与会话 Outcome 对指纹对齐（通常为 merge.effectiveRaw） */
   pairClue: string
