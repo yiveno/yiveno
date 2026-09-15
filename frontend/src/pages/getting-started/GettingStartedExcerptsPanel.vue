@@ -74,8 +74,8 @@ async function handleTrySidePanel(clue: string): Promise<void> {
   }
   try {
     await writeRecallPrefill(trimmed)
-    await markInstallOnboardingDone()
     await openRecallSidePanelFromExtensionPage()
+    await markInstallOnboardingDone()
     logger.info('Onboarding', 'GS 摘录 Try it 已开 Side Panel 并预填', {
       cluePreview: trimmed.slice(0, 48)
     })

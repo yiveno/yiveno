@@ -111,13 +111,7 @@ export async function generateGettingStartedClueSamples(input: {
   const settings = await getUserSettings()
   if (!settings.aiFeaturesEnabled) {
     const clues = templateCluesFromNodes(input.nodes, input.fallbackClue)
-    await writeGsClueSamplesCache({
-      cacheKey,
-      title: source.title,
-      ...(source.url ? { url: source.url } : {}),
-      clues,
-      origin: 'template'
-    })
+    // 关 AI 不写缓存：同会话开 AI 后仍可走一次 LLM（§5.8 一次）
     flowOk('Onboarding', 'GS 示意 clue 生成', startedAt, {
       origin: 'template',
       aiDisabled: true,
@@ -134,11 +128,10 @@ export async function generateGettingStartedClueSamples(input: {
   }
 
   try {
-    const description = source.note?.trim() || undefined
+    // 仅 title/url；不上传附注（clues.note）或网页正文
     const result = await requestGettingStartedClueSamples({
       title: source.title.trim(),
-      ...(source.url ? { url: source.url } : {}),
-      ...(description ? { description } : {})
+      ...(source.url ? { url: source.url } : {})
     })
     await writeGsClueSamplesCache({
       cacheKey,
@@ -166,9 +159,18 @@ export async function generateGettingStartedClueSamples(input: {
       chromeId: source.chromeId
     })
     const clues = templateCluesFromNodes(input.nodes, input.fallbackClue)
+    // 失败也写缓存，避免 tab 重挂 / 再进 GS 二次烧配额
+    await writeGsClueSamplesCache({
+      cacheKey,
+      title: source.title,
+      ...(source.url ? { url: source.url } : {}),
+      clues,
+      origin: 'template'
+    })
     flowFail('Onboarding', 'GS 示意 clue 生成', startedAt, error, {
       fallback: 'template',
-      clueCount: clues.length
+      clueCount: clues.length,
+      cachedFallback: true
     })
     return {
       clues,

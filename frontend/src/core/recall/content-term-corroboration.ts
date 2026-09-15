@@ -2,6 +2,7 @@
  * 内容佐证门（Normative · 2026-09-11）：
  * `contentTerms` 非空时，邻域候选须对至少一个内容词有库内词面佐证；
  * 禁止仅靠弱 embedding / RRF / outcome 对交卷。
+ * 佐证与 Filter 同源：剥掉弱偏好残留后再判。
  */
 
 import type { MemoryItem } from '@/core/memory/memory-item'
@@ -18,22 +19,72 @@ import {
 } from '@/core/recall/keyword-filter'
 import { timeConfidenceForRelativeLabel } from '@/core/recall/parse-recall-clue'
 
+/**
+ * 弱偏好/发令残留：可进 contentTerms，但不得当 Filter 词面，也不得单独撑过佐证门。
+ * 与 orchestrate.effectiveContentTermsForRecall 同源。
+ */
+const WEAK_PREFERENCE_RESIDUAL_TERMS = new Set([
+  'play',
+  'put',
+  'like',
+  'love',
+  'want',
+  'some',
+  'from',
+  'feel',
+  'bored',
+  'please',
+  'me',
+  'pick',
+  'something',
+  'fun',
+  'for',
+  'recommend',
+  'suggest',
+  'good',
+  'should',
+  'tonight',
+  'watch',
+  'watching'
+])
+
+/**
+ * 检索/佐证用内容词：剥掉弱偏好残留。
+ * Filter 与佐证门必须同源，禁止 `like`/`good` 等放行弱 embedding。
+ */
+export function effectiveContentTermsForRecall(parsed: ParsedRecallClue): string[] {
+  return parsed.contentTerms.filter(term => {
+    const normalized = normalizeRecallText(term)
+    if (!normalized) {
+      return false
+    }
+    return !WEAK_PREFERENCE_RESIDUAL_TERMS.has(normalized)
+  })
+}
+
 /** 与 orchestrate.resolveEffectiveTimeConfidence 对齐（避免循环依赖）。 */
 function effectiveTimeConfidenceForReopen(parsed: ParsedRecallClue): 'high' | 'low' | undefined {
-  const range = parsed.timeRange
-  if (!range) {
+  const hasRecentSaved = Boolean(parsed.behaviorHints?.includes('recently_saved'))
+  if (!parsed.timeRange && !hasRecentSaved) {
     return undefined
   }
   if (parsed.timeConfidence) {
     return parsed.timeConfidence
   }
-  if (parsed.behaviorHints?.includes('recently_saved') && range.label === 'recent') {
+  if (parsed.timeRange) {
+    if (hasRecentSaved && parsed.timeRange.label === 'recent') {
+      return 'high'
+    }
+    return timeConfidenceForRelativeLabel(parsed.timeRange.label)
+  }
+  // 无显式 timeRange、仅刚存 → 合成 recent 按 high（ADR-011）
+  if (hasRecentSaved) {
     return 'high'
   }
-  return timeConfidenceForRelativeLabel(range.label)
+  return undefined
 }
 
-/** 归一化后可用于佐证的 contentTerms（去空、去重）。 */
+/** 归一化后可用于佐证的 contentTerms（去空、去重、剥弱残留）。 */
 export function normalizeContentTermsForCorroboration(
   contentTerms: readonly string[] | undefined
 ): string[] {
@@ -45,6 +96,9 @@ export function normalizeContentTermsForCorroboration(
   for (const term of contentTerms) {
     const normalized = normalizeRecallText(term)
     if (!normalized || seen.has(normalized)) {
+      continue
+    }
+    if (WEAK_PREFERENCE_RESIDUAL_TERMS.has(normalized)) {
       continue
     }
     seen.add(normalized)
@@ -108,7 +162,7 @@ export function itemCorroboratesContentTerms(
 }
 
 /**
- * 有 contentTerms 时只保留有佐证的命中；terms 空则原样返回。
+ * 有有效 contentTerms 时只保留有佐证的命中；有效词空则原样返回。
  */
 export function filterMatchesByContentTermCorroboration(
   matches: RecallMatch[],
@@ -122,7 +176,7 @@ export function filterMatchesByContentTermCorroboration(
 }
 
 /**
- * high 时间硬筛 + 非空 contentTerms + 佐证后 0 条 → 应尝试一次时间 soft 回退。
+ * high 时间硬筛（含刚存合成）+ 非空有效 contentTerms + 佐证后 0 条 → 应尝试一次时间 soft 回退。
  */
 export function shouldAttemptTimeSoftReopen(
   parsed: ParsedRecallClue,
@@ -134,7 +188,9 @@ export function shouldAttemptTimeSoftReopen(
   if (normalizeContentTermsForCorroboration(parsed.contentTerms).length === 0) {
     return false
   }
-  if (!parsed.timeRange) {
+  const hasTimeConstraint =
+    Boolean(parsed.timeRange) || Boolean(parsed.behaviorHints?.includes('recently_saved'))
+  if (!hasTimeConstraint) {
     return false
   }
   return effectiveTimeConfidenceForReopen(parsed) === 'high'
@@ -142,11 +198,9 @@ export function shouldAttemptTimeSoftReopen(
 
 /**
  * 构造时间 soft 回退用的 Parsed：保留槽位，强制 timeConfidence=low（不硬切窗外）。
+ * 无显式 timeRange 的刚存也可 soft（confidence 降为 low）。
  */
 export function parsedClueForTimeSoftReopen(parsed: ParsedRecallClue): ParsedRecallClue {
-  if (!parsed.timeRange) {
-    return parsed
-  }
   return {
     ...parsed,
     timeConfidence: 'low'

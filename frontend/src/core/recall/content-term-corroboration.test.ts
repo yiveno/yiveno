@@ -108,10 +108,44 @@ describe('content-term-corroboration', () => {
     expect(filtered[0]?.item.id).toBe(retentionArticle.id)
   })
 
+  it('仅弱残留 → 佐证门关闭（与 Filter 有效词空同源）', () => {
+    expect(normalizeContentTermsForCorroboration(['like', 'good', 'fun'])).toEqual([])
+    // 有效词空：不误伤（门关闭）
+    expect(itemCorroboratesContentTerms(standupScrap, ['like', 'good', 'fun'])).toBe(true)
+  })
+
+  it('有效内容词 + 弱残留：仅有效词可佐证', () => {
+    expect(itemCorroboratesContentTerms(standupScrap, ['like', 'retention'])).toBe(false)
+    expect(itemCorroboratesContentTerms(retentionArticle, ['like', 'retention'])).toBe(true)
+    expect(normalizeContentTermsForCorroboration(['Like', 'retention'])).toEqual(['retention'])
+  })
+
+  it('弱 embedding 命中仅含 like 时，有有效词 retention 则剔除', () => {
+    const filtered = filterMatchesByContentTermCorroboration(
+      [
+        { item: standupScrap, score: 91, matchedFields: ['embedding'] },
+        { item: retentionArticle, score: 40, matchedFields: ['title'] }
+      ],
+      ['like', 'retention']
+    )
+    expect(filtered).toHaveLength(1)
+    expect(filtered[0]?.item.id).toBe(retentionArticle.id)
+  })
+
   it('shouldAttemptTimeSoftReopen：high + 有 contentTerms + 0 佐证 → true', () => {
     expect(shouldAttemptTimeSoftReopen(yesterdayHighParsed, 0)).toBe(true)
     expect(shouldAttemptTimeSoftReopen(yesterdayHighParsed, 1)).toBe(false)
     expect(shouldAttemptTimeSoftReopen({ ...yesterdayHighParsed, contentTerms: [] }, 0)).toBe(false)
+  })
+
+  it('shouldAttemptTimeSoftReopen：刚存无 timeRange 仍可 soft', () => {
+    const justSaved: ParsedRecallClue = {
+      raw: 'just saved something about retention',
+      behaviorHints: ['recently_saved'],
+      contentTerms: ['retention'],
+      confidence: 'medium'
+    }
+    expect(shouldAttemptTimeSoftReopen(justSaved, 0)).toBe(true)
   })
 
   it('parsedClueForTimeSoftReopen 强制 timeConfidence=low', () => {

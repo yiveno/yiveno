@@ -14,10 +14,13 @@ import {
 import { collapseRecallMatches } from '@/core/recall/collapse-recall-duplicates'
 import { normalizeRecallText, RECALL_TOP_PICK_MIN_SCORE } from '@/core/recall/keyword-filter'
 import {
+  effectiveContentTermsForRecall,
   filterMatchesByContentTermCorroboration,
   parsedClueForTimeSoftReopen,
   shouldAttemptTimeSoftReopen
 } from '@/core/recall/content-term-corroboration'
+
+export { effectiveContentTermsForRecall } from '@/core/recall/content-term-corroboration'
 import {
   parseRecallClue,
   resolveRelativeTimeRange,
@@ -79,35 +82,6 @@ const OBJECT_TYPE_SURFACES = (() => {
   }
   return map
 })()
-
-/**
- * 助手发令 / 偏好残留词：有对象类型时不当内容锚（否则「play songs I like」会扫库编造命中）。
- * 闭合产品词表，非内容别名灰名单。
- */
-const WEAK_PREFERENCE_RESIDUAL_TERMS = new Set([
-  'play',
-  'put',
-  'like',
-  'love',
-  'want',
-  'some',
-  'from',
-  'feel',
-  'bored',
-  'please',
-  'me',
-  'pick',
-  'something',
-  'fun',
-  'for',
-  'recommend',
-  'suggest',
-  'good',
-  'should',
-  'tonight',
-  'watch',
-  'watching'
-])
 
 /**
  * 零锚点助手发令词面（闭合产品枚举）：无真实记忆锚时须诚实 no_match，禁止当推荐引擎。
@@ -236,13 +210,6 @@ export function looksLikeNonRecallLifeRequest(clue: string): boolean {
 }
 
 /**
- * 检索用内容词：剥掉弱偏好残留；若剥完为空且有类型/时间约束，走约束邻域或诚实空。
- */
-export function effectiveContentTermsForRecall(parsed: ParsedRecallClue): string[] {
-  return parsed.contentTerms.filter(term => !WEAK_PREFERENCE_RESIDUAL_TERMS.has(term))
-}
-
-/**
  * 零锚点 / 非找回：生活助手意图，或无有效内容词时的助手发令/无约束 → 不扫库。
  */
 export function shouldSkipRecallAsZeroAnchor(clue: string, parsed: ParsedRecallClue): boolean {
@@ -347,20 +314,21 @@ export function shouldHardFilterByTime(
 }
 
 /**
- * 有 timeRange 且 high 置信时硬排除窗外命中。
+ * high 置信时硬排除窗外命中（含刚存合成的 recent 窗）。
  * low 置信不硬切（软加分见 applyParsedClueScoreBoosts）。
  */
 export function filterMatchesByParsedTimeRange(
   matches: RecallMatch[],
-  parsed: ParsedRecallClue
+  parsed: ParsedRecallClue,
+  nowMs: number = Date.now()
 ): RecallMatch[] {
-  if (!parsed.timeRange) {
+  const range = effectiveParsedTimeRange(parsed, nowMs)
+  if (!range) {
     return matches
   }
-  if (!shouldHardFilterByTime(parsed, parsed.timeRange)) {
+  if (!shouldHardFilterByTime(parsed, range)) {
     return matches
   }
-  const range = parsed.timeRange
   return matches.filter(match => memoryItemInTimeRange(match.item, range))
 }
 
@@ -586,20 +554,22 @@ export function applyParsedClueScoreBoosts(
  */
 export function applyTimeFilterThenContentCorroborationWithSoftReopen(
   scoredMatches: RecallMatch[],
-  parsed: ParsedRecallClue
+  parsed: ParsedRecallClue,
+  nowMs: number = Date.now()
 ): {
   matches: RecallMatch[]
   effectiveParsed: ParsedRecallClue
   timeSoftReopen: boolean
 } {
-  const hardTimed = filterMatchesByParsedTimeRange(scoredMatches, parsed)
-  let corroborated = filterMatchesByContentTermCorroboration(hardTimed, parsed.contentTerms)
+  const hardTimed = filterMatchesByParsedTimeRange(scoredMatches, parsed, nowMs)
+  const corroborationTerms = effectiveContentTermsForRecall(parsed)
+  let corroborated = filterMatchesByContentTermCorroboration(hardTimed, corroborationTerms)
   if (!shouldAttemptTimeSoftReopen(parsed, corroborated.length)) {
     return { matches: corroborated, effectiveParsed: parsed, timeSoftReopen: false }
   }
   const softParsed = parsedClueForTimeSoftReopen(parsed)
-  const softTimed = filterMatchesByParsedTimeRange(scoredMatches, softParsed)
-  corroborated = filterMatchesByContentTermCorroboration(softTimed, parsed.contentTerms)
+  const softTimed = filterMatchesByParsedTimeRange(scoredMatches, softParsed, nowMs)
+  corroborated = filterMatchesByContentTermCorroboration(softTimed, corroborationTerms)
   return {
     matches: corroborated,
     effectiveParsed: softParsed,
@@ -664,7 +634,7 @@ export function recallByKeywordWithParsedClue(
     applyParsedClueScoreBoosts(match, parsed, nowMs)
   )
   const { matches, effectiveParsed, timeSoftReopen } =
-    applyTimeFilterThenContentCorroborationWithSoftReopen(scored, parsed)
+    applyTimeFilterThenContentCorroborationWithSoftReopen(scored, parsed, nowMs)
 
   // soft 回退时用 softParsed 再叠一次时间软加分（窗内 +12）
   const rescored = timeSoftReopen
@@ -682,7 +652,7 @@ export function recallByKeywordWithParsedClue(
     limit: poolLimit + RECALL_COLLAPSE_BACKFILL_EXTRA
   })
   const result = buildRecallResult(raw, collapsed, {
-    contentTerms: parsed.contentTerms
+    contentTerms: effectiveContentTermsForRecall(parsed)
   })
   if (!timeSoftReopen) {
     return result

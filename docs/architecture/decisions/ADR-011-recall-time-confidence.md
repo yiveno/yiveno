@@ -28,11 +28,11 @@
 
 **优先级：** 禁止甩无关 **>** 日历硬筛 **>** 弱语义填屏。
 
-当 `ParsedRecallClue.contentTerms` 非空时：
+当 `ParsedRecallClue` 经剥弱偏好残留后的**有效** `contentTerms` 非空时：
 
-1. **内容佐证门：** 邻域候选须对至少一个 contentTerm 在条目索引字段（title / 摘录 / 附注 / keywords 等，见产品文档）上有**词面佐证**；禁止仅靠弱 embedding / RRF / outcome 对交卷。
-2. **high 仍先硬筛**（本 ADR 决定 2 不变）。
-3. **内容优先回退一次：** 硬筛 + 佐证门后池空 → **同一 clue** 再检索一轮，时间按 **soft**（不硬切窗外）；Framing 用 Around + 诚实提示时间可能不准；仍只接受有佐证的命中。仍空 → 诚实 `no_match`。
+1. **内容佐证门：** 邻域候选须对至少一个有效 contentTerm 在条目索引字段（title / 摘录 / 附注 / keywords 等，见产品文档）上有**词面佐证**；禁止仅靠弱 embedding / RRF / outcome 对交卷；弱残留（`like`/`good` 等）不得单独撑门。
+2. **high 仍先硬筛**（本 ADR 决定 2 不变；含 `recently_saved` 合成 `recent`，关键词/Hybrid 内容路径同样适用）。
+3. **内容优先回退一次：** 硬筛 + 佐证门后池空 → **同一 clue** 再检索一轮，时间按 **soft**（不硬切窗外）；Framing 用 Around + 诚实提示时间可能不准；仍只接受有佐证的命中。Hybrid 池内仍空 → 降级全库关键词；仍空 → 诚实 `no_match`。
 4. **禁止：** 无限扩窗；内容别名灰名单；用窗内无佐证弱条填 `top_pick`。
 
 改本例外 → 同批改产品文档相对时间段 / §7.2 Outcome 护栏 / must。

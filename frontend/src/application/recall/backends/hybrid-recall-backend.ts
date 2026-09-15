@@ -48,6 +48,7 @@ import {
   shouldSkipRecallAsZeroAnchor
 } from '@/core/recall/orchestrate-keyword-recall'
 import {
+  effectiveContentTermsForRecall,
   filterMatchesByContentTermCorroboration,
   parsedClueForTimeSoftReopen,
   shouldAttemptTimeSoftReopen
@@ -118,8 +119,10 @@ async function finalizeKeywordResult(
   const effectiveParsed = base.parsed ?? parsed
   const timeSoftReopen =
     effectiveParsed.timeConfidence === 'low' &&
-    parsed.timeConfidence === 'high' &&
-    Boolean(parsed.contentTerms?.length)
+    (parsed.timeConfidence === 'high' ||
+      (Boolean(parsed.behaviorHints?.includes('recently_saved')) &&
+        parsed.timeConfidence !== 'low')) &&
+    effectiveContentTermsForRecall(parsed).length > 0
   const matches = applyCurrentTabDomainBoost(
     [...(base.topPick ? [base.topPick] : []), ...base.alsoPossible],
     currentTabDomain
@@ -131,16 +134,14 @@ async function finalizeKeywordResult(
     return b.item.updatedAt.localeCompare(a.item.updatedAt)
   })
   // §7.2 P3：本机 Outcome 对软调整（正例须内容佐证）
+  const corroborationTerms = effectiveContentTermsForRecall(effectiveParsed)
   const withPairs = await applyStoredOutcomePairsToMatches(matches, pairClue, {
-    contentTerms: effectiveParsed.contentTerms
+    contentTerms: corroborationTerms
   })
-  const corroborated = filterMatchesByContentTermCorroboration(
-    withPairs,
-    effectiveParsed.contentTerms
-  )
+  const corroborated = filterMatchesByContentTermCorroboration(withPairs, corroborationTerms)
   return {
     result: buildRecallResult(displayClue, corroborated, {
-      contentTerms: effectiveParsed.contentTerms
+      contentTerms: corroborationTerms
     }),
     effectiveParsed,
     timeSoftReopen
@@ -583,7 +584,8 @@ async function fuseHybridMatches(input: {
     })
 
   let fused = fuseWithParsed(input.parsed)
-  let corroborated = filterMatchesByContentTermCorroboration(fused, input.parsed.contentTerms)
+  const corroborationTerms = effectiveContentTermsForRecall(input.parsed)
+  let corroborated = filterMatchesByContentTermCorroboration(fused, corroborationTerms)
   let effectiveParsed = input.parsed
   let timeSoftReopen = false
 
@@ -591,28 +593,26 @@ async function fuseHybridMatches(input: {
     timeSoftReopen = true
     effectiveParsed = parsedClueForTimeSoftReopen(input.parsed)
     fused = fuseWithParsed(effectiveParsed)
-    corroborated = filterMatchesByContentTermCorroboration(fused, input.parsed.contentTerms)
+    corroborated = filterMatchesByContentTermCorroboration(fused, corroborationTerms)
     input.trace('info', 'Hybrid：内容佐证空窗，已做一次时间 soft 回退', {
       afterCount: corroborated.length
     })
   }
 
-  // 无语义硬筛池且佐证后仍空：让调用方走纯关键词（含 soft 回退）
-  if (
-    filterMatchesByParsedTimeRange(semanticScored, input.parsed).length === 0 &&
-    corroborated.length === 0 &&
-    !timeSoftReopen
-  ) {
-    input.trace('info', 'Hybrid：无过阈值语义近邻，降级关键词', {
-      keywordCount: keywordScored.length
+  // 佐证后仍空（含 soft 回退后）：降级全库关键词，避免 HYBRID_KEYWORD_POOL 假空
+  if (corroborated.length === 0) {
+    input.trace('info', 'Hybrid：佐证后仍空，降级关键词', {
+      keywordCount: keywordScored.length,
+      semanticCount: semanticScored.length,
+      timeSoftReopen
     })
     return null
   }
 
   const withPairs = await applyStoredOutcomePairsToMatches(corroborated, input.pairClue, {
-    contentTerms: input.parsed.contentTerms
+    contentTerms: corroborationTerms
   })
-  const afterPairs = filterMatchesByContentTermCorroboration(withPairs, input.parsed.contentTerms)
+  const afterPairs = filterMatchesByContentTermCorroboration(withPairs, corroborationTerms)
 
   const collapsed = collapseRecallMatches(afterPairs, {
     limit: RECALL_RESULT_POOL_LIMIT + RECALL_COLLAPSE_BACKFILL_EXTRA
@@ -625,7 +625,7 @@ async function fuseHybridMatches(input: {
   })
   return {
     result: buildRecallResult(input.displayClue, collapsed, {
-      contentTerms: input.parsed.contentTerms
+      contentTerms: corroborationTerms
     }),
     effectiveParsed,
     timeSoftReopen

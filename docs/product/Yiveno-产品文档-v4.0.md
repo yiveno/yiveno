@@ -688,9 +688,9 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 **内容佐证门 × 硬筛空/弱窗（Normative · 2026-09-11 · ADR-011 例外）：**  
 优先级：**禁止甩无关**（见上节空结果）**>** 日历硬筛 **>** 弱语义填屏。当 `contentTerms` 非空时：
 
-1. 邻域候选必须对至少一个 contentTerm 在条目索引字段（title / textExcerpt / excerptContext / pageTitle / summary / domain / url / keywords / tags / **note**）上有**词面佐证**（与 keyword-filter 归一/折叠同规；**禁止**内容别名表）。不得仅靠弱 embedding / `hybridRrf` / `outcomePair` / 类型·时间加成交付邻域。
-2. **high 仍先硬筛**。硬筛 + 佐证门后池空 → **同一 clue 内容优先回退一次**：时间按 soft（不硬切窗外；窗内仍可软加分），Framing 用 **Around** 并诚实提示时间可能不准；只接受有佐证的命中。仍空 → 诚实 `no_match`。
-3. **无 contentTerms**（纯类型/时间/刚存）：不启用本门，避免误伤约束邻域。
+1. 邻域候选必须对至少一个**有效** contentTerm（与 Filter 同源：剥掉 `like`/`good` 等弱偏好残留后再判）在条目索引字段（title / textExcerpt / excerptContext / pageTitle / summary / domain / url / keywords / tags / **note**）上有**词面佐证**（与 keyword-filter 归一/折叠同规；**禁止**内容别名表）。不得仅靠弱 embedding / `hybridRrf` / `outcomePair` / 类型·时间加成交付邻域。
+2. **high 仍先硬筛**（含 `recently_saved` 合成 `recent` 窗；有 contentTerms 的关键词/Hybrid 路径同样适用）。硬筛 + 佐证门后池空 → **同一 clue 内容优先回退一次**：时间按 soft（不硬切窗外；窗内仍可软加分），Framing 用 **Around** 并诚实提示时间可能不准；只接受有佐证的命中。Hybrid 池内仍空 → **降级全库关键词**再试；仍空 → 诚实 `no_match`。
+3. **无有效 contentTerms**（纯类型/时间/刚存，或仅剩弱残留）：不启用本门，避免误伤约束邻域。
 4. 回退最多 **1** 次；禁止无限扩窗。
 
 NA 分立：`a while ago` / `some time ago` → 数周；`a while back` → `few_months_ago`（常偏数月）。改窗宽、confidence 表、佐证门或回退 → 同批改 lexicon + LLM enum + 本表 + ADR-011 + must。
@@ -1192,7 +1192,7 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 - **页面定位（Normative）：** Getting Started = **首次启动设置页**（first-run setup），**不是**产品演示/导览页。类比 App 开机须先完成必要决定，再进入真正产品（Side Panel Recall）。
 - **双源 tab（Normative）：** 默认 **Bookmarks**；同级 **Excerpts**。同意只在 Bookmarks tab 内；Excerpts 永远可进。页眉叙事：_Give Yiveno something to remember_（非终态 Recall 口号）；Tab 随时可切换（非逐步锁定）。页底软出口 _Continue to Yiveno_ / 未导入时 _Continue without importing_（`markInstallOnboardingDone` + 开 Side Panel）；主 Magic Moment 仍靠书签 _Try it_ 或摘录定稿 clue _Try it_。关页签亦可离场（未授权则灌库保持关）。
-- **Bookmarks tab：** 未授权时 framing _Bring in what you've already saved_ + 标题 _Import your Chrome bookmarks_、主按钮 _Import my bookmarks_（非 Settings 式 toggle / 无额外 checkbox / **无** sync 脚注以免 Import≠Sync 混淆）；一点即写入 `chromeBookmarkIngestEnabled=true` 并 bulk + 持续 sync；文案讲清价值（自然语言找回）。**用户可见主进度 UI 仅在此**（`AppLinearProgress` + imported/total）；完成后 _Your bookmarks are ready_ + LLM 示意 clue + _Try it_。**示意 clue（Normative）：** 库 ready 后自动一次 LLM（`GENERATE_GETTING_STARTED_CLUE_SAMPLES` / Worker `POST /api/ai/gs-clue-samples/complete`）对**一条**真实书签生成 **4** 条英文口语 clue；UI 只展示当前 1 条 + 随机切换图标 + _Try it_（`writeRecallPrefill` + 扩展页直调 Side Panel → 自动提交 + 结束引导）。**书签 tab 不展示页内 composer / Find it**（与 Try it 开壳重复）。输入仅 title/url/可选 description（**不抓网页正文**）；关 AI / 配额 / 失败 → 标题模板 1–3 条回退。关灌库仅 Settings。Chrome 无书签时诚实 empty。
+- **Bookmarks tab：** 未授权时 framing _Bring in what you've already saved_ + 标题 _Import your Chrome bookmarks_、主按钮 _Import my bookmarks_（非 Settings 式 toggle / 无额外 checkbox / **无** sync 脚注以免 Import≠Sync 混淆）；一点即写入 `chromeBookmarkIngestEnabled=true` 并 bulk + 持续 sync；文案讲清价值（自然语言找回）。**用户可见主进度 UI 仅在此**（`AppLinearProgress` + imported/total）；完成后 _Your bookmarks are ready_ + LLM 示意 clue + _Try it_。**示意 clue（Normative）：** 库 ready 后自动一次 LLM（`GENERATE_GETTING_STARTED_CLUE_SAMPLES` / Worker `POST /api/ai/gs-clue-samples/complete`）对**一条**真实书签生成 **4** 条英文口语 clue；UI 只展示当前 1 条 + 随机切换图标 + _Try it_（`writeRecallPrefill` + 扩展页直调 Side Panel → 自动提交 + 结束引导）。**书签 tab 不展示页内 composer / Find it**（与 Try it 开壳重复）。输入仅 title/url/可选公开 description（**不抓网页正文**；**不得**上传 `clues.note` 附注）；关 AI → 模板回退且不写 session 缓存（同会话开 AI 仍可一次 LLM）；配额 / 失败 → 标题模板回退并写 session 缓存，避免重复烧配额。关灌库仅 Settings。Chrome 无书签时诚实 empty。
 - **Excerpts tab（Normative · 移植预书签定稿流程）：** framing _Save what you want to remember_；无摘录时 _Nothing here yet_（生命周期空态，非错误）+ 固定文学微段 **Things we miss**（`getting_started_passage_line_*`）→ **Select this passage** → 真划词浮层 Save（`captureEntry: getting_started`）。存后展示**定稿示意 clue**（`getting_started_sample_clue`：意义/感觉印象，非细节拼盘）+ _Try it_（`writeRecallPrefill` + 扩展页直调 Side Panel → 自动提交 + 结束引导）。**不**用 LLM / 不从用户其它摘录动态生成样句；**不**展示页内 composer / Find it。禁止种假摘录。
 - **两种来源：** 书签与摘录对召回引擎等价；差别在时间与资产，见 §0.1.1。
 - **完成：** 书签或摘录 _Try it_、或页底 _Continue…_ → 引导结束（`installOnboardingDone` / `firstRecallOpenDone`）；尽量关 GS 页签。

@@ -629,4 +629,40 @@ describe('recallByKeywordWithParsedClue', () => {
     expect(savedNews.outcome).not.toBe('no_match')
     expect(savedNews.topPick?.item.id ?? savedNews.alsoPossible[0]?.item.id).toBe(newsClip.id)
   })
+
+  it('just saved + contentTerms：旧库同词命中被 high 硬窗排除', () => {
+    const recentI18n = createTextExcerptMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      now: () => '2026-07-27T18:00:00.000Z',
+      payload: {
+        selectedText: 'i18n plural rules for ICU messages',
+        sourceUrl: 'https://docs.example/i18n-recent',
+        pageTitle: 'i18n recent'
+      }
+    })
+    const oldI18n = createTextExcerptMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      now: () => '2025-01-01T12:00:00.000Z',
+      payload: {
+        selectedText: 'i18n plural rules archived notes',
+        sourceUrl: 'https://docs.example/i18n-old',
+        pageTitle: 'i18n old'
+      }
+    })
+
+    const result = recallByKeywordWithParsedClue(
+      [oldI18n, recentI18n],
+      'just saved something about i18n',
+      { nowMs: NOW_MS }
+    )
+
+    const ids = [
+      ...(result.topPick ? [result.topPick.item.id] : []),
+      ...result.alsoPossible.map(m => m.item.id)
+    ]
+    expect(ids).toContain(recentI18n.id)
+    expect(ids).not.toContain(oldI18n.id)
+  })
 })

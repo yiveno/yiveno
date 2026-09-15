@@ -78,7 +78,7 @@ describe('generateGettingStartedClueSamples', () => {
     expect(requestGettingStartedClueSamplesMock).not.toHaveBeenCalled()
   })
 
-  it('关 AI → 模板回退且不打网', async () => {
+  it('关 AI → 模板回退且不打网、不写缓存（开 AI 后仍可一次 LLM）', async () => {
     getUserSettingsMock.mockResolvedValue({ aiFeaturesEnabled: false })
     const result = await generateGettingStartedClueSamples({
       nodes: [
@@ -94,10 +94,10 @@ describe('generateGettingStartedClueSamples', () => {
     expect(requestGettingStartedClueSamplesMock).not.toHaveBeenCalled()
     expect(result?.origin).toBe('template')
     expect(result?.clues[0]).toContain('Cloud retention policy')
-    expect(writeGsClueSamplesCacheMock).toHaveBeenCalled()
+    expect(writeGsClueSamplesCacheMock).not.toHaveBeenCalled()
   })
 
-  it('LLM 失败 → 模板回退', async () => {
+  it('LLM 失败 → 模板回退并写缓存（防二次烧配额）', async () => {
     requestGettingStartedClueSamplesMock.mockRejectedValue(new Error('quota_exceeded'))
     const result = await generateGettingStartedClueSamples({
       nodes: [
@@ -112,5 +112,29 @@ describe('generateGettingStartedClueSamples', () => {
     })
     expect(result?.origin).toBe('template')
     expect(result?.clues.length).toBeGreaterThan(0)
+    expect(writeGsClueSamplesCacheMock).toHaveBeenCalled()
+  })
+
+  it('不上传附注作 description', async () => {
+    requestGettingStartedClueSamplesMock.mockResolvedValue({
+      clues: ['a long enough oral clue one', 'two', 'three', 'four'],
+      model: 'test'
+    })
+    await generateGettingStartedClueSamples({
+      nodes: [
+        bookmark({
+          chromeId: 'c1',
+          title: 'Hello',
+          url: 'https://x.test',
+          note: 'private note must not leave device',
+          savedAt: '2026-09-14T00:00:00.000Z'
+        })
+      ],
+      fallbackClue: 'fallback'
+    })
+    expect(requestGettingStartedClueSamplesMock).toHaveBeenCalledWith({
+      title: 'Hello',
+      url: 'https://x.test'
+    })
   })
 })

@@ -287,6 +287,10 @@ const coldStartPostReleaseDismissedReadyAt = ref<string | null>(null)
 /** 驱动轻条 TTL 到期重算。 */
 const coldStartBannerNowMs = ref(Date.now())
 let coldStartBannerExpiryTimer: ReturnType<typeof setTimeout> | null = null
+/**
+ * Getting Started Try it 预填：门禁未放行时挂起，ready 后再自动提交（§5.8.1 首召质量）。
+ */
+const pendingGsPrefillRecall = ref<string | null>(null)
 const libraryState = ref<RecallShellLibraryState>('unknown')
 const excerptCaptureCount = ref(0)
 const installOnboardingDone = ref(true)
@@ -623,6 +627,26 @@ const showColdStartGate = computed(() => {
   // pipeline 尚未落盘时：导入已在跑则仍挡主壳
   const importStatus = importState.value?.status
   return coldStartState.value === null && (importStatus === 'running' || importStatus === 'pending')
+})
+
+/** 门禁已放行时冲刷 GS 预填自动 Recall。 */
+function tryFlushPendingGsPrefillRecall(): void {
+  if (showColdStartGate.value) {
+    return
+  }
+  const pending = pendingGsPrefillRecall.value
+  if (!pending) {
+    return
+  }
+  pendingGsPrefillRecall.value = null
+  clue.value = pending
+  void handleSendTurn(pending, { skipPivotCheck: true })
+}
+
+watch(showColdStartGate, (blocked, wasBlocked) => {
+  if (wasBlocked && !blocked) {
+    tryFlushPendingGsPrefillRecall()
+  }
 })
 
 /** 门禁展示用状态：优先 pipeline；否则用 import / 首装占位。 */
@@ -1208,6 +1232,7 @@ async function refreshColdStartStatus() {
   coldStartState.value = response.state
   coldStartEnrichmentBatch.value = response.enrichmentBatch
   scheduleColdStartPostReleaseBannerExpiry()
+  tryFlushPendingGsPrefillRecall()
   const batchActive =
     response.enrichmentBatch?.status === 'running' &&
     response.enrichmentBatch.settled < response.enrichmentBatch.total
@@ -1742,7 +1767,9 @@ onMounted(() => {
         return
       }
       clue.value = prefill
-      await handleSendTurn()
+      // 门禁未放行则挂起；ready 后由 tryFlushPendingGsPrefillRecall 自动提交
+      pendingGsPrefillRecall.value = prefill
+      tryFlushPendingGsPrefillRecall()
     } catch {
       // 忽略：无预填不阻塞 Side Panel
     }

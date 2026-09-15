@@ -1,6 +1,7 @@
 /**
  * Getting Started 示意 clue：扩展侧调用的结构化生成代理（key 仅在 Worker）。
  * IP 日配额；未登录可用；与 enrichment 同档心智。
+ * 配额仅在成功 parse 后扣减，避免模型垃圾 JSON 白烧额度。
  */
 
 import type { Env } from '../types/env'
@@ -32,15 +33,20 @@ function utcDayKey(date = new Date()): string {
   return `${year}-${month}-${day}`
 }
 
-async function consumeGsClueSamplesDailyQuota(
+function resolveDailyLimit(env: Env): number {
+  const limit = Number.parseInt(env.AI_GS_CLUE_SAMPLES_DAILY_LIMIT ?? '', 10)
+  return Number.isFinite(limit) && limit > 0 ? limit : DEFAULT_DAILY_LIMIT
+}
+
+/** 只读探额：超限则拒绝；不写 KV。 */
+async function peekGsClueSamplesDailyQuota(
   env: Env,
   ip: string
 ): Promise<
   | { allowed: true; used: number; limit: number }
   | { allowed: false; used: number; limit: number; reason: 'quota_exceeded' | 'kv_not_configured' }
 > {
-  const limit = Number.parseInt(env.AI_GS_CLUE_SAMPLES_DAILY_LIMIT ?? '', 10)
-  const dailyLimit = Number.isFinite(limit) && limit > 0 ? limit : DEFAULT_DAILY_LIMIT
+  const dailyLimit = resolveDailyLimit(env)
   const kv = env.AI_USAGE_KV
   if (!kv) {
     return { allowed: false, used: 0, limit: dailyLimit, reason: 'kv_not_configured' }
@@ -52,9 +58,23 @@ async function consumeGsClueSamplesDailyQuota(
   if (used >= dailyLimit) {
     return { allowed: false, used, limit: dailyLimit, reason: 'quota_exceeded' }
   }
+  return { allowed: true, used, limit: dailyLimit }
+}
 
-  await kv.put(key, String(used + 1), { expirationTtl: 60 * 60 * 48 })
-  return { allowed: true, used: used + 1, limit: dailyLimit }
+/** 成功生成后再扣 1 次。 */
+async function commitGsClueSamplesDailyQuota(
+  env: Env,
+  ip: string,
+  peeked: { used: number; limit: number }
+): Promise<{ used: number; limit: number }> {
+  const kv = env.AI_USAGE_KV
+  if (!kv) {
+    return peeked
+  }
+  const key = `gs_clue_samples_ai:${ip}:${utcDayKey()}`
+  const nextUsed = peeked.used + 1
+  await kv.put(key, String(nextUsed), { expirationTtl: 60 * 60 * 48 })
+  return { used: nextUsed, limit: peeked.limit }
 }
 
 /**
@@ -110,22 +130,22 @@ export async function handleGsClueSamplesComplete(request: Request, env: Env): P
     viaAiGateway
   })
 
-  const quota = await consumeGsClueSamplesDailyQuota(env, ip)
-  if (!quota.allowed) {
-    if (quota.reason === 'kv_not_configured') {
+  const peek = await peekGsClueSamplesDailyQuota(env, ip)
+  if (!peek.allowed) {
+    if (peek.reason === 'kv_not_configured') {
       logInfo('gs_clue_samples_rejected', { reason: 'kv_not_configured', ip })
       return errorJson({ error: 'kv_not_configured' }, 503, origin)
     }
     logInfo('gs_clue_samples_quota_exceeded', {
       ip,
-      used: quota.used,
-      limit: quota.limit
+      used: peek.used,
+      limit: peek.limit
     })
     return errorJson(
       {
         error: 'quota_exceeded',
-        used: quota.used,
-        limit: quota.limit
+        used: peek.used,
+        limit: peek.limit
       },
       429,
       origin
@@ -155,6 +175,8 @@ export async function handleGsClueSamplesComplete(request: Request, env: Env): P
       })
       return errorJson({ error: 'gs_clue_samples_parse_failed' }, 502, origin)
     }
+
+    const quota = await commitGsClueSamplesDailyQuota(env, ip, peek)
 
     logInfo('gs_clue_samples_ok', {
       ip,

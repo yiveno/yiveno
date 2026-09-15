@@ -238,6 +238,9 @@ async function refreshInventory(): Promise<void> {
 
 /** 库 ready 后请求一次示意 clue（session 缓存命中则不烧配额）。 */
 async function loadOralCluesIfNeeded(): Promise<void> {
+  if (oralCluesGenerating.value) {
+    return
+  }
   if (lastOralCluesPhase === 'ready' && oralClues.value.length > 0) {
     return
   }
@@ -284,8 +287,9 @@ async function handleTrySidePanel(clue: string): Promise<void> {
   }
   try {
     await writeRecallPrefill(trimmed)
-    await markInstallOnboardingDone()
+    // 先开壳再 mark：开壳失败时引导仍可重试
     await openRecallSidePanelFromExtensionPage()
+    await markInstallOnboardingDone()
     logger.info('Onboarding', 'GS Try it 已开 Side Panel 并预填', {
       cluePreview: trimmed.slice(0, 48)
     })
