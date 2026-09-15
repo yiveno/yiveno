@@ -36,9 +36,6 @@ export type RecallVisibleProgressMessage = {
   }
 }
 
-/** SW → UI 推送联合。 */
-export type UiPushMessage = ChromeBookmarkTreeChangedMessage | RecallVisibleProgressMessage
-
 const chromeBookmarkTreeChangedSchema = z.object({
   scope: z.literal(UI_MESSAGE_SCOPE),
   type: z.literal('CHROME_BOOKMARK_TREE_CHANGED')

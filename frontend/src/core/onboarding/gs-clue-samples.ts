@@ -19,8 +19,6 @@ export const GsClueSamplesListSchema = z.object({
   clues: z.array(z.string().trim().min(1).max(280)).min(1).max(4)
 })
 
-export type GsClueSamplesList = z.infer<typeof GsClueSamplesListSchema>
-
 /** 来源：LLM 或标题模板回退。 */
 export type GsClueSamplesOrigin = 'llm' | 'template'
 

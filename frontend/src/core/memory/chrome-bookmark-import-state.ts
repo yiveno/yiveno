@@ -8,8 +8,6 @@ export const ChromeBookmarkImportErrorCodeSchema = z.enum([
   'BOOKMARK_IMPORT_FAILED' // 书签导入失败
 ])
 
-export type ChromeBookmarkImportErrorCode = z.infer<typeof ChromeBookmarkImportErrorCodeSchema>
-
 export const ChromeBookmarkImportStateSchema = z.object({
   status: z.enum([
     'pending', // 待开始

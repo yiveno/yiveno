@@ -4,7 +4,6 @@
 import { z } from 'zod'
 import {
   readChromeStorageSession,
-  removeChromeStorageSession,
   writeChromeStorageSession
 } from '@/infrastructure/storage/chrome-storage-session'
 
@@ -29,9 +28,4 @@ export async function writeColdStartPostReleaseBannerDismissedReadyAt(
   readyAt: string
 ): Promise<void> {
   await writeChromeStorageSession(COLD_START_POST_RELEASE_BANNER_DISMISS_KEY, { readyAt })
-}
-
-/** 测试 / 新放行前清理。 */
-export async function clearColdStartPostReleaseBannerDismiss(): Promise<void> {
-  await removeChromeStorageSession(COLD_START_POST_RELEASE_BANNER_DISMISS_KEY)
 }

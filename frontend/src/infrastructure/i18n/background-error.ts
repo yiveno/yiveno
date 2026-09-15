@@ -1,7 +1,6 @@
 import type { AccountSyncErrorCode } from '@/core/messaging/account-sync-messages'
 import type { CommandsErrorCode } from '@/core/messaging/commands-messages'
 import type { ImportErrorCode } from '@/core/messaging/import-messages'
-import type { ChromeBookmarkImportErrorCode } from '@/core/memory/chrome-bookmark-import-state'
 import type { ThirdPartyCorpusImportErrorCode } from '@/core/memory/third-party-corpus-import-state'
 import type { RecallErrorCode } from '@/core/messaging/recall-messages'
 import type { SettingsErrorCode } from '@/core/messaging/settings-messages'
@@ -61,10 +60,6 @@ const COMMANDS_ERROR_MESSAGE_KEYS: Record<CommandsErrorCode, MessageKey> = {
   NAVIGATE_TAB_FAILED: 'popup_navigate_tab_failed'
 }
 
-const IMPORT_STATE_ERROR_MESSAGE_KEYS: Record<ChromeBookmarkImportErrorCode, MessageKey> = {
-  BOOKMARK_IMPORT_FAILED: 'popup_import_failed_fallback'
-}
-
 const THIRD_PARTY_IMPORT_ERROR_MESSAGE_KEYS: Record<ThirdPartyCorpusImportErrorCode, MessageKey> = {
   THIRD_PARTY_IMPORT_INVALID_FORMAT: 'error_third_party_import_invalid_format',
   THIRD_PARTY_IMPORT_EMPTY: 'error_third_party_import_empty',
@@ -96,11 +91,6 @@ export function tImportError(errorCode: ImportErrorCode): string {
 /** Commands errorCode → 用户文案。 */
 export function tCommandsError(errorCode: CommandsErrorCode): string {
   return t(COMMANDS_ERROR_MESSAGE_KEYS[errorCode])
-}
-
-/** 书签导入状态 errorCode → 用户文案。 */
-export function tImportStateError(errorCode: ChromeBookmarkImportErrorCode): string {
-  return t(IMPORT_STATE_ERROR_MESSAGE_KEYS[errorCode])
 }
 
 /** 第三方语料导入 errorCode → 用户文案。 */

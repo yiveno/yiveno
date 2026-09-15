@@ -20,8 +20,6 @@ export const GsClueSamplesCompleteRequestSchema = z.object({
   bookmark: GsClueSamplesBookmarkSchema
 })
 
-export type GsClueSamplesCompleteRequest = z.infer<typeof GsClueSamplesCompleteRequestSchema>
-
 const GsClueSampleItemSchema = z.object({
   text: z
     .string()

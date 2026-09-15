@@ -19,8 +19,6 @@ export const ColdStartEnrichmentBatchStatusSchema = z.enum([
   'cleared' // 队列被清空（非配额）
 ])
 
-export type ColdStartEnrichmentBatchStatus = z.infer<typeof ColdStartEnrichmentBatchStatusSchema>
-
 export const ColdStartEnrichmentBatchSchema = z.object({
   batchId: z.string().min(1),
   total: z.number().int().nonnegative(),
