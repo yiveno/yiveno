@@ -7,7 +7,7 @@
 1. `.cursor/rules/session-boot.mdc` — **alwaysApply** 当下 + 冻结（**当下**由 `CURRENT` + `sync:ide-boot` 生成）
 2. 任务需要时再 `@`：术语表 · 产品文档 §0 · ADR
 3. **每会话首条：** [`AGENT-TASK-BRIEF.template.md`](./product/AGENT-TASK-BRIEF.template.md)
-4. **Claude Code / Gemini：** 根目录 [`CLAUDE.md`](../CLAUDE.md) · [`GEMINI.md`](../GEMINI.md) 薄指针
+4. **仓库根薄指针：** [`AGENTS.md`](../AGENTS.md)（当前 AI 工具 = Cursor；未来扩展见 ADR-013 §7）
 
 **开发者阅读顺序：**
 

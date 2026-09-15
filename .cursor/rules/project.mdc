@@ -1,5 +1,5 @@
 ---
-description: Yiveno v4 AI 行为与架构硬规则（与产品文档 / AGENTS.md 对齐）
+description: Yiveno v4 AI 行为与架构硬规则（单一权威；产品文档冲突时以产品文档为准）
 alwaysApply: true
 ---
 
@@ -10,7 +10,7 @@ alwaysApply: true
 **仓库归属（勿误判）：** GitHub **Org** `yiveno` · 主仓 [`yiveno/yiveno`](https://github.com/yiveno/yiveno)；对应品牌 [`yiveno.com`](https://yiveno.com)，**不是**维护者个人名下的实验仓。
 
 **权威优先级（冲突时）：**
-**Agent 开机层** `.cursor/rules/session-boot.mdc`（alwaysApply · 当下+冻结）> **术语定义** `docs/product/Yiveno-术语表.md`（Glossary · 唯一权威）> **当下详版** `docs/product/CURRENT.md`（**只改本文** → `bun run sync:ide-boot`）> `docs/product/Yiveno-产品文档-v4.0.md`（Normative §0–§7 · 行为/契约）> **架构决策** `docs/architecture/decisions/` > **视觉/品牌** `docs/design/Yiveno-设计标准-v1.md`（≈ 根目录 `DESIGN.md`）> 本文件 ≈ `AGENTS.md` > 其它 steering。  
+**Agent 开机层** `.cursor/rules/session-boot.mdc`（alwaysApply · 当下+冻结）> **术语定义** `docs/product/Yiveno-术语表.md`（Glossary · 唯一权威）> **当下详版** `docs/product/CURRENT.md`（**只改本文** → `bun run sync:ide-boot`）> `docs/product/Yiveno-产品文档-v4.0.md`（Normative §0–§7 · 行为/契约）> **架构决策** `docs/architecture/decisions/` > **视觉/品牌** `docs/design/Yiveno-设计标准-v1.md`（≈ 根目录 `DESIGN.md`）> **本文件**（Yiveno AI 协作脚手架的**单一权威**；`AGENTS.md` 为跨 IDE 薄指针）> 其它 steering。  
 改术语/概念叫法 → **先改术语表**再同步产品文档、设计标准、`.cursor/rules/terminology.mdc`、代码与 i18n。  
 改架构/消息协议/UI 硬约束 → **先改产品文档再改代码与本文件**；不可逆决策 → **补 ADR** 并更新 `CURRENT.md` + `bun run sync:ide-boot`；改品牌色/字体/物料气质 → **先改设计标准再改官网 CSS / MD token / logo**。附录 A 非实现范围。
 
@@ -169,6 +169,33 @@ Agent 指令（原文）：
 - **大范围改动或用户要求时**：`bun run typecheck:force`；frontend 用 `cd frontend && bun run lint:check`（根目录无 `lint:check:force` / `stylelint:force`）。
 - 有错误 → 修到通过再报完成；不确定 → 说明并等待指示。
 - Recall / Capture 用户可感变更：合入前补 `recall-eval` **must** 或产品文档 §5 手动步骤（§1.1）；E2E 仅薄冒烟，不上大 Playwright。
+
+#### 质量门禁三层职责
+
+| 层级           | 触发时机     | 职责                                                                                                                         | 命令                                                                                                                                                                                                   |
+| -------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **pre-commit** | `git commit` | 暂存区快修：ESLint fix + Stylelint + Prettier（含 `.vue`）                                                                   | `lint-staged`（`max-warnings 0`；忽略 `backend/worker-configuration.d.ts`）                                                                                                                            |
+| **pre-push**   | `git push`   | 按变更：FE 构建 + **test:run** / BE typecheck+test / **doc:check**（`docs/`·`.cursor/rules/`·`scripts/`）/ 分 workspace Knip | `build:fe` + `cd frontend && bun run test:run`（frontend/共享包）；`typecheck:be` + `bun test`（backend）；`bun run doc:check`（文档/开机层/script）；`knip:fe` / `knip:be` / `knip:web`（按变更目录） |
+| **CI**         | PR / push    | 权威只读门禁：typecheck、lint、i18n、test、build                                                                             | 见下表                                                                                                                                                                                                 |
+
+pre-push **不跑** ESLint、全仓 typecheck；FE 变更时跑 **build + test:run**（含 recall-eval must）；`docs/` / `.cursor/rules/` / `scripts/` 变更时跑 **doc:check**（含 `sync:ide-boot --check`）。`.vue` lint 由 pre-commit 与 CI 覆盖。`knip.json` / 根 `package.json` 变更时 pre-push 跑全仓 `knip`。
+
+#### CI 检查矩阵
+
+| 场景          | TypeScript                             | Lint         | i18n                       | Knip                | 前端测试                    | Lighthouse      |
+| ------------- | -------------------------------------- | ------------ | -------------------------- | ------------------- | --------------------------- | --------------- |
+| **PR**        | `typecheck:ci` + build 内 `vue-tsc -b` | `lint:check` | `i18n:check` + `doc:check` | `knip`              | `test:run` + backend `test` | 不跑（v4 下线） |
+| **push main** | 同上                                   | 同上         | `i18n:check` + `doc:check` | `knip`              | `test:run` + backend `test` | 不跑（v4 下线） |
+| **每周一**    | —                                      | —            | —                          | `knip.yml` 定时复检 | —                           | —               |
+
+#### 本地命令
+
+- 日常：`bun run typecheck`（快，含 `packages/*`）、`bun run lint:check`、`bun run i18n:check`、目标单测
+- 三端并行：`bun run watch` / `bun run dev`（mprocs）或 `bun run watch:stream`（混流）；扩展重建后需 `chrome://extensions` 刷新
+- 合并前 / 发布前：`bun run typecheck:force`、`bun run lint:check`、`bun run i18n:check`、`bun run doc:check`、`bun run test:run`、`bun run knip`
+- 品牌视觉发版：改 `docs/design/brand-assets/` → `bun run sync:brand-assets`（见 `docs/design/brand-asset-release-checklist.md`）；母本走 Git LFS，clone 后 `bun run setup:git-lfs`（ADR-006）
+- Knip 分 workspace：`knip:fe` / `knip:be` / `knip:web`；仅结构项：`knip:fast`；全量报告：`knip:report`
+- Knip 版本写在根 `package.json` → `yiveno.knip`；`scripts/knip-runner.mjs` 在 `.cache/knip-runner` 隔离安装（规避 monorepo `zod@3` 与 knip `zod/mini`）。根目录勿直接 `bunx knip`；待 `bunx knip -D .` 不再报 `./mini` 后再打回根依赖。
 
 ### MCP 真机实测（硬规则）
 
@@ -366,3 +393,13 @@ cd frontend && bun run test:run
 bun run knip:fe                # frontend 未使用代码（勿给死文件加假 entry）
 cd frontend && bun run build
 ```
+
+---
+
+## 环境变量
+
+- 规则文档：`docs/ENVIRONMENT.md`
+- 只维护：`.env.shared.local`、`.env.development.local`、`.env.production.local`。
+- **禁止**手改生成物：`.env.runtime/*`、`backend/.dev.vars`、`website/.env`。
+- 修改环境变量后运行：`bun run env:sync:dev && bun run env:check:dev`。
+- 发布前运行：`bun run env:sync:prod && bun run env:check:prod`。
