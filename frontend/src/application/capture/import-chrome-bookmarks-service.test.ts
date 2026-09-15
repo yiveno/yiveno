@@ -7,6 +7,7 @@ import * as bulkImport from '@/application/capture/chrome-bookmark-bulk-import'
 import { resetPendingChromeBookmarkSyncForTests } from '@/application/capture/chrome-bookmark-sync-service'
 import { CHROME_BOOKMARK_IMPORT_STORAGE_KEY } from '@/core/memory/chrome-bookmark-import-state'
 import { LOCAL_PROFILE_STORAGE_KEY, type LocalProfile } from '@/core/identity/local-profile'
+import { DEFAULT_USER_SETTINGS, USER_SETTINGS_STORAGE_KEY } from '@/core/settings/user-settings'
 import { memoryItemRepository } from '@/infrastructure/indexeddb/memory-item-repository'
 import { resetMemoryDatabaseInitializationForTests } from '@/infrastructure/indexeddb/memory-db'
 
@@ -103,7 +104,11 @@ describe('import-chrome-bookmarks-service', () => {
     vi.stubGlobal(
       'chrome',
       createChromeMock({
-        [LOCAL_PROFILE_STORAGE_KEY]: localProfile
+        [LOCAL_PROFILE_STORAGE_KEY]: localProfile,
+        [USER_SETTINGS_STORAGE_KEY]: {
+          ...DEFAULT_USER_SETTINGS,
+          chromeBookmarkIngestEnabled: true
+        }
       })
     )
 
@@ -175,6 +180,10 @@ describe('import-chrome-bookmarks-service', () => {
           importedCount: 0,
           startedAt: '2026-07-22T05:00:00.000Z',
           error: 'previous failure'
+        },
+        [USER_SETTINGS_STORAGE_KEY]: {
+          ...DEFAULT_USER_SETTINGS,
+          chromeBookmarkIngestEnabled: true
         }
       })
     )
@@ -198,6 +207,10 @@ describe('import-chrome-bookmarks-service', () => {
             totalCount: 2,
             startedAt: '2026-07-22T05:00:00.000Z',
             error: 'interrupted'
+          },
+          [USER_SETTINGS_STORAGE_KEY]: {
+            ...DEFAULT_USER_SETTINGS,
+            chromeBookmarkIngestEnabled: true
           }
         }),
         bookmarks: {

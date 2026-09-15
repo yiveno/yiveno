@@ -3,6 +3,7 @@ import 'fake-indexeddb/auto'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { LOCAL_PROFILE_STORAGE_KEY, type LocalProfile } from '@/core/identity/local-profile'
+import { DEFAULT_USER_SETTINGS, USER_SETTINGS_STORAGE_KEY } from '@/core/settings/user-settings'
 import {
   handleCaptureBookmark,
   handleCaptureTextExcerpt,
@@ -65,7 +66,11 @@ describe('memory-handler', () => {
     vi.stubGlobal(
       'chrome',
       createChromeStorageMock({
-        [LOCAL_PROFILE_STORAGE_KEY]: localProfile
+        [LOCAL_PROFILE_STORAGE_KEY]: localProfile,
+        [USER_SETTINGS_STORAGE_KEY]: {
+          ...DEFAULT_USER_SETTINGS,
+          chromeBookmarkIngestEnabled: true
+        }
       })
     )
 

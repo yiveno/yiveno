@@ -18,7 +18,7 @@ describe('commands-handler', () => {
     vi.stubGlobal('chrome', {
       commands: { getAll },
       tabs: { create: tabsCreate },
-      windows: { getCurrent: windowsGetCurrent },
+      windows: { getCurrent: windowsGetCurrent, WINDOW_ID_CURRENT: -2 },
       sidePanel: {
         setPanelBehavior: vi.fn(async () => undefined),
         open: sidePanelOpen
@@ -57,11 +57,11 @@ describe('commands-handler', () => {
     expect(tabsCreate).toHaveBeenCalledWith({ url: CHROME_EXTENSION_SHORTCUTS_URL })
   })
 
-  it('handleOpenRecallShell 打开 Side Panel（windowId）', async () => {
+  it('handleOpenRecallShell 打开 Side Panel（WINDOW_ID_CURRENT）', async () => {
     const response = await handleOpenRecallShell()
     expect(response).toEqual({ ok: true })
-    expect(windowsGetCurrent).toHaveBeenCalled()
-    expect(sidePanelOpen).toHaveBeenCalledWith({ windowId: 42 })
+    expect(windowsGetCurrent).not.toHaveBeenCalled()
+    expect(sidePanelOpen).toHaveBeenCalledWith({ windowId: -2 })
   })
 
   it('handleOpenRecallShell 优先使用 tabId', async () => {

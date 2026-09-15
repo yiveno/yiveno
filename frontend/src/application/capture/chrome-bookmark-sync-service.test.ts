@@ -32,6 +32,7 @@ import { logger } from '@/infrastructure/logging/logger'
 import { CHROME_BOOKMARK_IMPORT_STORAGE_KEY } from '@/core/memory/chrome-bookmark-import-state'
 import { CHROME_BOOKMARK_SYNC_PENDING_STORAGE_KEY } from '@/core/memory/chrome-bookmark-sync-pending'
 import { LOCAL_PROFILE_STORAGE_KEY, type LocalProfile } from '@/core/identity/local-profile'
+import { DEFAULT_USER_SETTINGS, USER_SETTINGS_STORAGE_KEY } from '@/core/settings/user-settings'
 import { memoryItemRepository } from '@/infrastructure/indexeddb/memory-item-repository'
 import { resetMemoryDatabaseInitializationForTests } from '@/infrastructure/indexeddb/memory-db'
 
@@ -149,7 +150,11 @@ describe('chrome-bookmark-sync-service', () => {
       'chrome',
       createChromeMock({
         [LOCAL_PROFILE_STORAGE_KEY]: localProfile,
-        [CHROME_BOOKMARK_IMPORT_STORAGE_KEY]: completedImportState
+        [CHROME_BOOKMARK_IMPORT_STORAGE_KEY]: completedImportState,
+        [USER_SETTINGS_STORAGE_KEY]: {
+          ...DEFAULT_USER_SETTINGS,
+          chromeBookmarkIngestEnabled: true
+        }
       })
     )
 
@@ -252,6 +257,10 @@ describe('chrome-bookmark-sync-service', () => {
         importedCount: 0,
         totalCount: 1,
         startedAt: '2026-07-22T05:00:00.000Z'
+      },
+      [USER_SETTINGS_STORAGE_KEY]: {
+        ...DEFAULT_USER_SETTINGS,
+        chromeBookmarkIngestEnabled: true
       }
     })
     vi.stubGlobal('chrome', chromeMock)
@@ -307,6 +316,10 @@ describe('chrome-bookmark-sync-service', () => {
         importedCount: 0,
         totalCount: 1,
         startedAt: '2026-07-22T05:00:00.000Z'
+      },
+      [USER_SETTINGS_STORAGE_KEY]: {
+        ...DEFAULT_USER_SETTINGS,
+        chromeBookmarkIngestEnabled: true
       }
     })
     vi.stubGlobal('chrome', chromeMock)
@@ -337,7 +350,11 @@ describe('chrome-bookmark-sync-service', () => {
   it('reconcile 补写 Chrome 有、Memory 无的书签', async () => {
     const chromeMock = createChromeMock({
       [LOCAL_PROFILE_STORAGE_KEY]: localProfile,
-      [CHROME_BOOKMARK_IMPORT_STORAGE_KEY]: completedImportState
+      [CHROME_BOOKMARK_IMPORT_STORAGE_KEY]: completedImportState,
+      [USER_SETTINGS_STORAGE_KEY]: {
+        ...DEFAULT_USER_SETTINGS,
+        chromeBookmarkIngestEnabled: true
+      }
     })
     chromeMock.__bookmarks.set('20', {
       id: '20',
@@ -365,7 +382,11 @@ describe('chrome-bookmark-sync-service', () => {
   it('reconcile 配额耗尽时只记一次并中止后续 upsert', async () => {
     const chromeMock = createChromeMock({
       [LOCAL_PROFILE_STORAGE_KEY]: localProfile,
-      [CHROME_BOOKMARK_IMPORT_STORAGE_KEY]: completedImportState
+      [CHROME_BOOKMARK_IMPORT_STORAGE_KEY]: completedImportState,
+      [USER_SETTINGS_STORAGE_KEY]: {
+        ...DEFAULT_USER_SETTINGS,
+        chromeBookmarkIngestEnabled: true
+      }
     })
     for (let index = 30; index < 35; index += 1) {
       chromeMock.__bookmarks.set(String(index), {
