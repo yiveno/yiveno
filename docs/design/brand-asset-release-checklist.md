@@ -2,7 +2,6 @@
 
 > **用途：** 品牌视觉变更时，从**仓内母本**同步到扩展/官网运行时，再验证构建与对外触点。  
 > **权威母本：** [`brand-assets/`](./brand-assets/README.md)（`docs/design/brand-assets/`）  
-> **归档只读：** [`yiveno-brand-kit/`](../../yiveno-brand-kit/README.md)（设计师原始交付；**发版不直接改此处**）  
 > **治理 Issue：** [yiveno/yiveno#30](https://github.com/yiveno/yiveno/issues/30)  
 > **视觉规范：** [`Yiveno-设计标准-v1.md`](./Yiveno-设计标准-v1.md)
 
@@ -21,7 +20,6 @@ Yiveno-设计标准-v1.md + packages/design-tokens
 | 目录                                  | 角色                   | 发版时                                          |
 | ------------------------------------- | ---------------------- | ----------------------------------------------- |
 | `docs/design/brand-assets/`           | **唯一手写母本**       | ✅ 先改                                         |
-| `yiveno-brand-kit/`                   | 历史交付归档           | ❌ 不直接改；新交付可导入到 `brand-assets/`     |
 | `frontend/public/`、`website/public/` | 运行时                 | ⚙️ 脚本或按表复制，禁止只在运行时手改不同步母本 |
 | `yiveno_research/`                    | 市场研究 Non-normative | ❌ 与品牌发版无关                               |
 
@@ -96,14 +94,13 @@ bun run sync:brand-assets --check
 ## 5. PR / 合入
 
 - [ ] 母本与 `public/` **同 PR**（或先母本 + `sync:brand-assets` 再提交运行时产物）
-- [ ] 未单独改 `yiveno-brand-kit/` 冒充发版（若新交付包导入，说明来源并更新 `brand-assets/`）
 - [ ] 产品面文案未引入中文或「Search」等禁用词
 
 ---
 
 ## 6. Git LFS（Issue #30 · 工程轨道 · ADR-006）
 
-品牌母本与 `yiveno-brand-kit/` 归档中的 **PNG/JPG/SVG/ICO/WebP** 走 **Git LFS**（见根目录 `.gitattributes`）。**本 Checklist 流程不变**；运行时 `frontend/public/`、`website/public/` 仍为普通 Git。
+品牌母本 `docs/design/brand-assets/` 中的 **PNG/JPG/SVG/ICO/WebP** 走 **Git LFS**（见根目录 `.gitattributes`）。**本 Checklist 流程不变**；运行时 `frontend/public/`、`website/public/` 仍为普通 Git。
 
 **首次 clone / 换机：**
 

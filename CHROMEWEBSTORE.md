@@ -58,7 +58,7 @@ English
 | Marquee Promo Tile             | 1400×560            | ✅ Verified           | `docs/design/brand-assets/chrome-web-store/chrome-web-store-marquee-1400x560.png`            |
 
 **母本目录：** `docs/design/brand-assets/chrome-web-store/`（不进扩展包；契约见 `extension-cws-graphics-contract.ts`）。  
-**Interim：** Screenshot 1–2 当前为品牌 hero（自 `yiveno-brand-kit` 整理）；公开发布前建议替换为真实产品 UI（见该目录 `README.md`）。
+**Interim：** Screenshot 1–2 当前为品牌 hero（自 `docs/design/brand-assets` 整理）；公开发布前建议替换为真实产品 UI（见该目录 `README.md`）。
 
 ### Screenshot Notes
 

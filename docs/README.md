@@ -33,7 +33,7 @@
 **设计 / 品牌（发版）：**
 
 - [`design/brand-asset-release-checklist.md`](./design/brand-asset-release-checklist.md) — 母本 → `public/` → 商店/官网；`bun run sync:brand-assets`
-- [`design/brand-assets/README.md`](./design/brand-assets/README.md) — 仓内母本；`yiveno-brand-kit/` 为归档
+- [`design/brand-assets/README.md`](./design/brand-assets/README.md) — 仓内母本；`yiveno-brand-kit/` 已移除（独有文件已备份至仓外）
 
 `frontend/docs/` 已清空；i18n 方案定稿前不在此目录维护占位文档。
 

@@ -25,16 +25,6 @@
 
 完整文件级映射见 Checklist §3；默认用 `bun run sync:brand-assets` 执行 §2 映射。
 
-## 与 `yiveno-brand-kit/` 的分工
-
-|           | `docs/design/brand-assets/` | `yiveno-brand-kit/`       |
-| --------- | --------------------------- | ------------------------- |
-| **角色**  | **发版母本**（改这里）      | 设计师原始交付 **归档**   |
-| **体积**  | 已整理、与运行时对齐        | ~42MB，含概念稿与冗余导出 |
-| **Agent** | 品牌发版时读                | 仅溯源；勿当运行时入口    |
-
-新设计交付：导入/整理进本目录 → `sync:brand-assets` → 按 Checklist 验收。`yiveno-brand-kit/` 可保留只读副本，不必每次双写。
-
 ## 规范引用
 
 - 视觉 Normative：[`Yiveno-设计标准-v1.md`](../Yiveno-设计标准-v1.md)

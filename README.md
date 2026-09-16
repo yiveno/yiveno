@@ -134,7 +134,6 @@ bun run build:fe:prod
 - 设计摘要：`DESIGN.md`
 - **品牌发版母本：** `docs/design/brand-assets/` → [`brand-asset-release-checklist.md`](docs/design/brand-asset-release-checklist.md)（`bun run sync:brand-assets`）
 - 项目内正式品牌资产目录：`docs/design/brand-assets/README.md`
-- 历史交付归档：`yiveno-brand-kit/`（只读；勿直接发版）
 - 历史导出流程参考：`docs/design/Yiveno-logo-asset-generation-prompt.md`
 
 运行时使用中的资产位置：
@@ -195,7 +194,6 @@ Yiveno/                             # Monorepo 根目录
 │
 ├── research/                       # TTE Beta 等可复用研究模板（非 Normative）
 ├── yiveno_research/                # 市场/竞品研究归档（背景材料，已部分写入 docs/product）
-├── yiveno-brand-kit/               # 品牌大图/商店图导出包（运行时见 frontend/public、docs/design）
 │
 ├── supabase/                       # 数据库迁移 (Supabase CLI)
 │
@@ -218,7 +216,7 @@ Yiveno/                             # Monorepo 根目录
 └── bun.lock                        # 依赖锁文件
 ```
 
-**本地可删、会再生成：** `dist/`、`artifacts/`、`.cache/`、`.astro/`、`.env.runtime/`（见 `docs/ENVIRONMENT.md`）。**不进构建主链路：** `yiveno_research/`、`research/`（研究归档）；`yiveno-brand-kit/`（设计交付归档，发版走 [`brand-asset-release-checklist.md`](docs/design/brand-asset-release-checklist.md) · [#30](https://github.com/yiveno/yiveno/issues/30)）。
+**本地可删、会再生成：** `dist/`、`artifacts/`、`.cache/`、`.astro/`、`.env.runtime/`（见 `docs/ENVIRONMENT.md`）。**不进构建主链路：** `yiveno_research/`、`research/`（研究归档）；`yiveno-brand-kit/` 已移除（独有文件已备份至仓外）。
 
 ### 架构分层 (Frontend)
 
