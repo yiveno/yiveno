@@ -23,10 +23,9 @@ jobs:
           set -euo pipefail
           URL="${{ vars.SUPABASE_URL }}"
           KEY="${{ secrets.SUPABASE_ANON_KEY }}"
-          echo "Pinging auth service: $URL"
           CODE="$(curl -fsS -o /dev/null -w '%{http_code}' \
-            -H "apikey: $KEY" \
-            "$URL/auth/v1/health")"
+            -G "$URL/auth/v1/health" \
+            -H "apikey: $KEY")"
           echo "Auth health → HTTP $CODE"
           test "$CODE" -lt 500 || exit 1
 
@@ -35,11 +34,13 @@ jobs:
           set -euo pipefail
           URL="${{ vars.SUPABASE_URL }}"
           KEY="${{ secrets.SUPABASE_ANON_KEY }}"
-          echo "Pinging REST API: $URL/rest/v1/"
+          # -G 把 query params 隔离，彻底避免 * 被 shell glob 扩展
           CODE="$(curl -fsS -o /dev/null -w '%{http_code}' \
+            -G "$URL/rest/v1/" \
             -H "apikey: $KEY" \
             -H "Authorization: Bearer $KEY" \
-            "$URL/rest/v1/?select=*&limit=1")"
+            --data-urlencode "select=*" \
+            --data-urlencode "limit=1")"
           echo "REST API → HTTP $CODE"
           # 200=正常，404=表不存在但连接 ok，any 5xx 才失败
           echo "$CODE" | grep -qvE '^[5]' || exit 1
