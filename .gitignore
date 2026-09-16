@@ -7,6 +7,8 @@ dist/
 **/.DS_Store
 artifacts/
 .lighthouseci/
+# 项目根目录临时区（截图、demo 草稿等不入仓）
+tmp/
 # Cursor 本地状态忽略；项目规则需入库共享
 .cursor/*
 !.cursor/rules/
