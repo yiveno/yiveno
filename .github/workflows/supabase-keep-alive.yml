@@ -1,0 +1,45 @@
+# Supabase 项目保活：免费计划 7 天无活动自动暂停，此处定期 ping 防止之
+# 依赖 workflow_dispatch 便于手动测试
+
+name: Supabase Keep Alive
+
+on:
+  schedule:
+    # 每 12 小时（UTC）— 免费计划 7 天 threshold，12h 足够保险
+    - cron: '0 */12 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  keep-alive:
+    name: Keep Supabase alive
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check auth service
+        run: |
+          set -euo pipefail
+          URL="${{ vars.SUPABASE_URL }}"
+          KEY="${{ secrets.SUPABASE_ANON_KEY }}"
+          echo "Pinging auth service: $URL"
+          CODE="$(curl -fsS -o /dev/null -w '%{http_code}' \
+            -H "apikey: $KEY" \
+            "$URL/auth/v1/health")"
+          echo "Auth health → HTTP $CODE"
+          test "$CODE" -lt 500 || exit 1
+
+      - name: Check REST API
+        run: |
+          set -euo pipefail
+          URL="${{ vars.SUPABASE_URL }}"
+          KEY="${{ secrets.SUPABASE_ANON_KEY }}"
+          echo "Pinging REST API: $URL/rest/v1/"
+          CODE="$(curl -fsS -o /dev/null -w '%{http_code}' \
+            -H "apikey: $KEY" \
+            -H "Authorization: Bearer $KEY" \
+            "$URL/rest/v1/?select=*&limit=1")"
+          echo "REST API → HTTP $CODE"
+          # 200=正常，404=表不存在但连接 ok，any 5xx 才失败
+          echo "$CODE" | grep -qvE '^[5]' || exit 1
