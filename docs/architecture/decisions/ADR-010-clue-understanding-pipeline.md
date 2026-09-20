@@ -4,7 +4,7 @@
 - **日期：** 2026-09-08
 - **决策者：** 维护者（2026-09-08 明示接受）
 - **前置：** ADR-004（LLM 不碰数据平面）· ADR-005（禁止灰名单通解）· 产品文档 §0.1.0 / M1
-- **诊断输入：** [`research/na-clue-morphology/schema-gap-analysis.md`](../../research/na-clue-morphology/schema-gap-analysis.md)
+- **诊断输入（已归档）：** [`docs/archive/research/na-clue-morphology/schema-gap-analysis.md`](../archive/research/na-clue-morphology/schema-gap-analysis.md)
 
 ## 背景
 
@@ -60,7 +60,7 @@ clue
 
 ### 5. 与离线口语研究的边界
 
-- `research/na-clue-morphology/`：校准 eval / TTE / placeholder（验尺子）。
+- [`docs/archive/research/na-clue-morphology/`](../archive/research/na-clue-morphology/README.md)：校准 eval / TTE / placeholder（验尺子；Non-normative）。
 - Runtime：**不**依赖海量口语人工表；变体由 Stage 1 LLM 吸收。
 - 禁止把 morphology 例句复制成生产灰名单。
 
@@ -91,5 +91,5 @@ clue
 
 - 产品文档 §0.1.0、§0.1.1、M1、§2 理解层
 - `frontend/src/core/recall/understand/understand-recall-clue.ts`
-- `research/na-clue-morphology/`（形态 + schema-gap）
+- [`docs/archive/research/na-clue-morphology/`](../archive/research/na-clue-morphology/README.md)（形态 + schema-gap）
 - ADR-004 · ADR-005

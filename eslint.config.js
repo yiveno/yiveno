@@ -374,8 +374,6 @@ export default [
       '**/*.sh',
       '**/*.bash',
       '**/*.py',
-      scopePath('frontend/test-puppeteer.js'),
-      '**/test-puppeteer.js',
       // wrangler types 生成物：体积大且会被 types:gen 覆盖（与 lint-staged 一致）
       scopePath('backend/worker-configuration.d.ts'),
       '**/worker-configuration.d.ts'
@@ -390,7 +388,6 @@ export default [
 
   {
     files: ['**/*.js'],
-    ignores: [scopePath('frontend/test-puppeteer.js')],
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
@@ -560,6 +557,43 @@ export default [
     }
   },
 
+  // DDD：core 禁止使用 Chrome API（仅允许注释/类型描述出现 chrome.*）
+  // 实际调用 chrome.* 必须由 infrastructure/browser adapter / background / offscreen 承担
+  {
+    files: eslintScopePaths('frontend/src/core/**/*.ts'),
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "CallExpression[callee.object.name='chrome']",
+          message:
+            'core 层禁止调用 chrome.*，请通过 infrastructure/browser adapter 或 background handler。'
+        },
+        {
+          selector: "MemberExpression[object.name='chrome'][property.name='i18n']",
+          message: 'core 层禁止访问 chrome.i18n，请通过注入的 t() 或 infrastructure/i18n 模块。'
+        },
+        {
+          selector: "CallExpression[callee.object.name='localStorage']",
+          message: 'core 层禁止使用 localStorage，请使用 chrome.storage.local 经 infrastructure。'
+        },
+        {
+          selector: "CallExpression[callee.object.name='sessionStorage']",
+          message:
+            'core 层禁止使用 sessionStorage，请使用 chrome.storage.session 经 infrastructure。'
+        },
+        {
+          selector: "MemberExpression[object.name='window'][property.name='localStorage']",
+          message: 'core 层禁止访问 window.localStorage，service worker 无 window。'
+        },
+        {
+          selector: "MemberExpression[object.name='window'][property.name='sessionStorage']",
+          message: 'core 层禁止访问 window.sessionStorage，service worker 无 window。'
+        }
+      ]
+    }
+  },
+
   // DDD：core 不得依赖 UI / 应用层（含 v4 目标层路径）
   {
     files: eslintScopePaths('frontend/src/core/**/*.ts'),
@@ -607,9 +641,62 @@ export default [
     }
   },
 
-  // DDD：UI 层禁止直连 IndexedDB manager（须经 application / background）
+  // DDD：infrastructure 除 ui/ 外禁止依赖 Vue 组件（防止 UI 逻辑扩散到非视觉子目录）
+  // - 例外：infrastructure/ui/** 与 infrastructure/ui/icons/** 本身可互相引用
+  // - 其它子目录（identity/storage/ai/...）应保持纯逻辑，禁止 .vue 依赖
   {
     files: eslintScopePaths(
+      'frontend/src/infrastructure/identity/**/*.ts',
+      'frontend/src/infrastructure/identity/**/*.vue',
+      'frontend/src/infrastructure/storage/**/*.ts',
+      'frontend/src/infrastructure/storage/**/*.vue',
+      'frontend/src/infrastructure/ai/**/*.ts',
+      'frontend/src/infrastructure/ai/**/*.vue',
+      'frontend/src/infrastructure/auth/**/*.ts',
+      'frontend/src/infrastructure/auth/**/*.vue',
+      'frontend/src/infrastructure/browser/**/*.ts',
+      'frontend/src/infrastructure/browser/**/*.vue',
+      'frontend/src/infrastructure/logging/**/*.ts',
+      'frontend/src/infrastructure/logging/**/*.vue',
+      'frontend/src/infrastructure/analytics/**/*.ts',
+      'frontend/src/infrastructure/analytics/**/*.vue',
+      'frontend/src/infrastructure/indexeddb/**/*.ts',
+      'frontend/src/infrastructure/indexeddb/**/*.vue',
+      'frontend/src/infrastructure/messaging/**/*.ts',
+      'frontend/src/infrastructure/messaging/**/*.vue',
+      'frontend/src/infrastructure/i18n/**/*.ts',
+      'frontend/src/infrastructure/i18n/**/*.vue',
+      'frontend/src/infrastructure/debug/**/*.ts',
+      'frontend/src/infrastructure/debug/**/*.vue',
+      'frontend/src/infrastructure/recall/**/*.ts',
+      'frontend/src/infrastructure/recall/**/*.vue',
+      'frontend/src/infrastructure/sync/**/*.ts',
+      'frontend/src/infrastructure/sync/**/*.vue',
+      'frontend/src/infrastructure/mcp/**/*.ts',
+      'frontend/src/infrastructure/mcp/**/*.vue'
+    ),
+    rules: {
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              group: ['**/*.vue'],
+              message:
+                'infrastructure 子目录（除 ui/）禁止依赖 Vue 组件；UI 组件仅允许位于 infrastructure/ui/**。'
+            }
+          ]
+        }
+      ]
+    }
+  },
+
+  // DDD：core / UI 层禁止直连 IndexedDB（须经 application / background）
+  // - core 不能直接调用 memoryItemRepository / keywordIndexRepository；只允许通过 application service
+  // - UI / store 进一步禁止 indexedDBManager（兼容历史规则描述）
+  {
+    files: eslintScopePaths(
+      'frontend/src/core/**/*.ts',
       'frontend/src/pages/**/*.{ts,vue}',
       'frontend/src/components/**/*.{ts,vue}',
       'frontend/src/composables/**/*.ts',
@@ -626,10 +713,30 @@ export default [
                 '@/infrastructure/indexeddb/manager',
                 '@/infrastructure/indexeddb/manager.ts',
                 '**/infrastructure/indexeddb/manager',
-                '**/infrastructure/indexeddb/manager.ts'
+                '**/infrastructure/indexeddb/manager.ts',
+                '@/infrastructure/indexeddb/memory-item-repository',
+                '@/infrastructure/indexeddb/memory-item-repository.ts',
+                '@/infrastructure/indexeddb/keyword-index-repository',
+                '@/infrastructure/indexeddb/keyword-index-repository.ts',
+                '@/infrastructure/indexeddb/memory-db',
+                '@/infrastructure/indexeddb/memory-db.ts',
+                '@/infrastructure/indexeddb/memory-db-definition',
+                '@/infrastructure/indexeddb/memory-db-definition.ts',
+                '@/infrastructure/indexeddb/keyword-index-types',
+                '@/infrastructure/indexeddb/keyword-index-types.ts',
+                '**/infrastructure/indexeddb/memory-item-repository',
+                '**/infrastructure/indexeddb/memory-item-repository.ts',
+                '**/infrastructure/indexeddb/keyword-index-repository',
+                '**/infrastructure/indexeddb/keyword-index-repository.ts',
+                '**/infrastructure/indexeddb/memory-db',
+                '**/infrastructure/indexeddb/memory-db.ts',
+                '**/infrastructure/indexeddb/memory-db-definition',
+                '**/infrastructure/indexeddb/memory-db-definition.ts',
+                '**/infrastructure/indexeddb/keyword-index-types',
+                '**/infrastructure/indexeddb/keyword-index-types.ts'
               ],
               message:
-                'UI / store 层禁止直连 indexedDBManager，请通过 application 层或 chrome.runtime.sendMessage。'
+                'core / UI / store 层禁止直连 IndexedDB，请通过 application 层或 chrome.runtime.sendMessage。'
             }
           ]
         }

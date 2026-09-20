@@ -246,13 +246,13 @@ await yiveno.backdateMemorySavedAt({
 
 ## 6. 相关专题文档
 
-| 主题                                           | 文档                                                                     |
-| ---------------------------------------------- | ------------------------------------------------------------------------ |
-| Omnibox 手测复制块 / 负例                      | [Omnibox-手测步骤](./Omnibox-手测步骤.md)                                |
-| 探针语料 Normative（量级、压力轮）             | 产品文档 §5.11.1a                                                        |
-| TTE 埋点与验收                                 | [R4-Phase-E-验收与eval](./R4-Phase-E-验收与eval.md)                      |
-| `recall-eval` / `omnibox-eval`（CI，非探针库） | `frontend/src/core/recall/eval/`                                         |
-| Background 全量 message type                   | [background-message-types.registry](./background-message-types.registry) |
+| 主题                                           | 文档                                                                               |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------- |
+| Omnibox 手测复制块 / 负例                      | [Omnibox-手测步骤](./Omnibox-手测步骤.md)                                          |
+| 探针语料 Normative（量级、压力轮）             | 产品文档 §5.11.1a                                                                  |
+| TTE 埋点与验收                                 | [R4-Phase-E-验收与eval](../archive/engineering/R4-Phase-E-验收与eval.md)（已归档） |
+| `recall-eval` / `omnibox-eval`（CI，非探针库） | `frontend/src/core/recall/eval/`                                                   |
+| Background 全量 message type                   | [background-message-types.registry](./background-message-types.registry)           |
 
 ---
 

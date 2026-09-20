@@ -131,10 +131,9 @@ bun run build:fe:prod
 后续找品牌规范、logo 母本、favicon、商店宣传图，优先看这 4 个入口：
 
 - 视觉规范：`docs/design/Yiveno-设计标准-v1.md`
-- 设计摘要：`DESIGN.md`
+- 设计摘要：`docs/design/DESIGN.md`
 - **品牌发版母本：** `docs/design/brand-assets/` → [`brand-asset-release-checklist.md`](docs/design/brand-asset-release-checklist.md)（`bun run sync:brand-assets`）
 - 项目内正式品牌资产目录：`docs/design/brand-assets/README.md`
-- 历史导出流程参考：`docs/design/Yiveno-logo-asset-generation-prompt.md`
 
 运行时使用中的资产位置：
 

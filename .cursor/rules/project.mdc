@@ -98,6 +98,10 @@ alwaysApply: true
 ❌ 禁止：主动写总结文档、CHANGELOG、Spec（除非用户明确要求）
 ❌ 禁止：代码与权威文档脱节仍报完成（见上「文档 ↔ 代码同步」铁律）
 ❌ 禁止：用硬编码别名/灰名单冒充全量用户通解（见上「全量用户能力」）
+❌ 禁止：把"面向持久查阅的交付物"写到 `/tmp`（Cursor 会话级沙箱跨会话清空 → 产物随即丢失；2026-09-17 Reality Map 丢失事件教训）
+❌ 禁止：审计/报告/设计稿的标题仅用英文；面向开发者的报告/审计文档的**文件名与标题**均须以中文描述（命名规范：`YYYY-MM-<主题>.md` 或 `Phase<n>-<主题>.md`；中文文件名需在 Markdown frontmatter 顶部保留标题行便于 IDE 排序；不要为了路径英文而失去可读性）
+❌ 禁止：报告/审计/设计稿正文不带 YAML frontmatter 元数据；正文必须以 YAML frontmatter 起头，含 `created` / `updated` / `author` / `scope` / `status` / `upstream` / `downstream`（Yiveno 内：作者固定为 `agent:cursor`，不要写维护者真人姓名）
+❌ 禁止：编造 `created` / `updated` 时间戳；`created` = agent **第一次落盘该文件** 的真实时间（落盘时立即记下，不可事后回填或推测）；`updated` = 每次内容修改的真实时间（修改时立即刷新）；agent **不得**凭"我大约几点写的"等记忆/猜测写时间，必须以文件系统时间或当时记录的笔记为准
 ✅ bug / 小需求：直接改代码，不写新 Spec；若行为相对文档有差异 → **同批改权威文档**
 ✅ 允许：改代码 + 对话内简述改动（文档同步仍必选）
 ✅ 用户要求 commit 时：message **必须中文**（可用 Conventional 前缀如 `feat:` / `fix:`，说明正文用中文）
@@ -106,6 +110,7 @@ alwaysApply: true
 ✅ 扩展用户可感改动：相关单测通过后 **必须 MCP 真机实测**（见下「MCP 真机实测」），再报完成
 ✅ 排查问题：**优先 MCP Chrome 真机**还原复现场景、拿够证据，再读码/改码（见下「MCP 排查优先」）
 ✅ 扩展改动：维护根目录 `CHROMEWEBSTORE.md`（manifest 权限/上架/审核）；格式见 `chrome-extensions` skill
+✅ 长篇交付（审计报告 / 设计稿 / 大型方案 / 跨多文件 dump）：写到**工作区根**或专项目录（如 `docs/audit/`），由用户后续决定 commit；写入后**在对话内明确告诉用户落盘路径**，避免静默丢失
 ```
 
 ### Chrome 扩展 Agent Skills（Modern Web Guidance）
@@ -288,6 +293,7 @@ UI 消息 shape（必须）：
 - `chrome.bookmarks.*` / `chrome.tabs.*` / `contextMenus` 等：仅 `frontend/src/background/**`（及 SW 调用的 `infrastructure/browser/*`）。
 - UI：`frontend/src/infrastructure/messaging/background-client.ts`，禁止直连 IndexedDB / 原生 Chrome 数据 API。
 - **禁止发明**新 message `type`：先改 `frontend/src/core/messaging/*` 再接线。
+- **DDD 边界机器强制**（`eslint.config.js` 现状，2026-09 补齐）：`core/` 无 chrome.* / window.localStorage 调用；`core/` 与 UI 直连 IndexedDB 阻断；`infrastructure/{非 ui}/**` 禁依赖 .vue；message type ↔ handler ↔ schema ↔ 产品文档 §4 ↔ `docs/engineering/background-message-types.registry` 由 `bun run doc:check` 校验。AI agent 改动违反上述会被 lint / doc:check 拦下。
 
 ### 2. DDD 分层
 
@@ -373,6 +379,7 @@ Background **无** `window` / `document` / `localStorage`。用全局 `setTimeou
 
 - [ ] 分层是否正确？Chrome API 是否只在 background / browser 封装？
 - [ ] IndexedDB 是否只经 `indexedDBManager`？
+- [ ] 长篇交付（审计 / 报告 / 设计 / 跨多文件 dump）是否写到工作区根或专项目录（**非 `/tmp`**）？是否在对话里告知用户落盘路径？
 - [ ] 新消息 type 是否已先改 messaging schema？
 - [ ] UI 文案是否无 `Search`、是否均为英文且经 `t()` / `_locales/en`？可图标化操作是否用通识图标 + `title`/`aria-label`？交互态是否无几何变换？
 - [ ] 是否误加中文产品文案 / 非 en locale / 把中文线索当产品必测？

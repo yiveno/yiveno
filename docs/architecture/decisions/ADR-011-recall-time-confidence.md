@@ -39,4 +39,4 @@
 
 ## 参考
 
-- [`research/tte-beta-2026-09/time-confidence-plan.md`](../../research/tte-beta-2026-09/time-confidence-plan.md)
+- [`docs/archive/research/tte-beta-2026-09/time-confidence-plan.md`](../archive/research/tte-beta-2026-09/time-confidence-plan.md)（Non-normative；归档）

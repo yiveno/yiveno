@@ -1,222 +1,132 @@
 # 认证系统使用指南
 
+> **最后更新：** 2026-09-17  
+> **状态：** Yiveno 使用**自定义 JWT + OAuth**（Google / Microsoft）；**不使用 Supabase Auth** 前端 composable。
+
 ## 🎯 概述
 
-Yiveno 使用 **OAuth 登录**（Google、Microsoft），不支持邮箱密码登录。
+Yiveno 认证流程：
 
-## 🚀 快速开始
+1. **扩展/官网** → `/api/auth/start?provider=google|microsoft` → OAuth Provider 授权页
+2. **OAuth Provider** → 回调 `/api/auth/callback` → Worker 签发 **自定义 JWT**
+3. **前端** 存储 JWT → 后续请求携带 `Authorization: Bearer <token>`
 
-### 用户登录
+**不使用** Supabase 前端 SDK `useSupabaseAuth`。
+
+---
+
+## 🔐 认证架构
+
+### Backend（Worker）
+
+| 端点                      | 职责                                           |
+| ------------------------- | ---------------------------------------------- |
+| `GET /api/auth/start`     | 生成 OAuth 授权 URL，重定向到 Google/Microsoft |
+| `GET /api/auth/callback`  | 接收 OAuth code，换 token，签发 JWT            |
+| `GET /api/auth/providers` | 返回可用的 OAuth 提供商列表                    |
+
+**JWT Claims：**
 
 ```typescript
-import { useSupabaseAuth } from '@/composables'
-
-const { signInWithOAuth, isAuthenticated, user } = useSupabaseAuth()
-
-// Google 登录
-await signInWithOAuth('google')
-
-// Microsoft 登录
-await signInWithOAuth('microsoft')
-```
-
-### 检查登录状态
-
-```typescript
-const { isAuthenticated, user } = useSupabaseAuth()
-
-if (isAuthenticated.value) {
-  console.log('用户已登录:', user.value.email)
+interface YivenoJWT {
+  sub: string // `${provider}:${oauthSubject}`（唯一用户 ID）
+  email: string
+  tier: 'free' | 'pro'
+  features: Record<string, boolean>
+  exp: number // 7 天过期
 }
 ```
 
-### 登出
+### Frontend
 
-```typescript
-const { signOut } = useSupabaseAuth()
+| 模块                | 路径                                              | 职责                  |
+| ------------------- | ------------------------------------------------- | --------------------- |
+| **Extension OAuth** | `infrastructure/auth/extension-oauth.ts`          | 扩展内启动 OAuth 流程 |
+| **Session Service** | `infrastructure/identity/auth-session-service.ts` | JWT 存储与读取        |
+| **Identity Core**   | `core/identity/auth-session.ts`                   | Session 类型定义      |
+| **Profile**         | `core/identity/auth-user-profile.ts`              | 用户 Profile 类型     |
 
-await signOut()
-```
+---
 
-## 📋 API 参考
-
-### `useSupabaseAuth()`
-
-返回认证相关的状态和方法。
-
-#### 状态
-
-- `user: ComputedRef<User | null>` - 当前用户信息
-- `session: ComputedRef<Session | null>` - 当前会话
-- `loading: ComputedRef<boolean>` - 加载状态
-- `error: ComputedRef<string | null>` - 错误信息
-- `isAuthenticated: ComputedRef<boolean>` - 是否已登录
-
-#### 方法
-
-- `signInWithOAuth(provider: 'google' | 'microsoft'): Promise<{ success: boolean }>` - OAuth 登录
-- `signOut(): Promise<void>` - 登出
-- `initialize(): Promise<void>` - 初始化（自动调用）
-- `unsubscribe(): void` - 取消订阅（组件卸载时调用）
-
-## 🔧 配置
-
-### Supabase Dashboard
-
-1. **启用 OAuth Providers**
-   - Authentication → Providers → Google (Enabled)
-   - Authentication → Providers → Microsoft (Enabled)
-
-2. **配置 Redirect URLs**
-   - 添加: `https://<extension-id>.chromiumapp.org/`
-
-3. **禁用邮箱注册**
-   - Authentication → Providers → Email → Disable sign ups
-
-## 💡 最佳实践
-
-### 1. 错误处理
-
-```typescript
-try {
-  await signInWithOAuth('google')
-} catch (error) {
-  if (error.message.includes('取消')) {
-    // 用户取消授权，不显示错误
-  } else {
-    // 显示错误信息
-    console.error('登录失败:', error)
-  }
-}
-```
-
-### 2. 加载状态
-
-```vue
-<template>
-  <Button :loading="loading" :disabled="loading" @click="handleLogin"> 登录 </Button>
-</template>
-
-<script setup>
-const { signInWithOAuth, loading } = useSupabaseAuth()
-
-const handleLogin = async () => {
-  await signInWithOAuth('google')
-}
-</script>
-```
-
-### 3. 路由守卫
-
-```typescript
-// router/index.ts
-router.beforeEach((to, from, next) => {
-  const { isAuthenticated } = useSupabaseAuth()
-
-  if (to.meta.requiresAuth && !isAuthenticated.value) {
-    next('/auth')
-  } else {
-    next()
-  }
-})
-```
-
-## 🔍 调试
+## 🚀 开发调试
 
 ### 查看认证状态
 
 ```typescript
-const { user, session } = useSupabaseAuth()
+import { useAuthSession } from '@/infrastructure/identity/auth-session-service'
 
-console.log('User:', user.value)
-console.log('Session:', session.value)
-```
-
-### 查看本地存储
-
-```javascript
-// 在 DevTools Console 中执行
-chrome.storage.local.get(null, items => {
-  console.log('Storage:', items)
-})
+const session = useAuthSession()
+console.log('User:', session.profile.value)
+console.log('Tier:', session.tier.value)
+console.log('Is Pro:', session.isPro.value)
 ```
 
 ### 清除认证数据
 
 ```javascript
-// 清除 Supabase session
-chrome.storage.local.get(null, items => {
-  const supabaseKeys = Object.keys(items).filter(
-    key => key.startsWith('sb-') || key.includes('supabase')
-  )
-  chrome.storage.local.remove(supabaseKeys, () => {
-    console.log('已清除认证数据')
-    location.reload()
-  })
+// 在 DevTools Console 中执行
+chrome.storage.local.remove(['yiveno_auth_token', 'yiveno_auth_profile'], () => {
+  console.log('已清除认证数据')
+  location.reload()
 })
 ```
 
-## 🎨 UI 示例
+### 查看 JWT
 
-### 登录按钮
-
-```vue
-<template>
-  <div class="login-buttons">
-    <Button @click="signInWithOAuth('google')" :loading="loading">
-      <GoogleIcon />
-      使用 Google 登录
-    </Button>
-
-    <Button @click="signInWithOAuth('microsoft')" :loading="loading">
-      <MicrosoftIcon />
-      使用 Microsoft 登录
-    </Button>
-  </div>
-</template>
+```javascript
+chrome.storage.local.get('yiveno_auth_token', items => {
+  const token = items['yiveno_auth_token']
+  if (token) {
+    // 解码 JWT payload
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    console.log('JWT payload:', payload)
+  }
+})
 ```
 
-### 用户信息显示
+---
 
-```vue
-<template>
-  <div v-if="isAuthenticated" class="user-info">
-    <Avatar :src="user.user_metadata?.picture" />
-    <span>{{ user.user_metadata?.full_name || user.email }}</span>
-    <Button @click="signOut">登出</Button>
-  </div>
-</template>
+## 🔧 环境变量
+
+```bash
+# .env.shared.local
+AUTH_GOOGLE_CLIENT_ID=
+AUTH_GOOGLE_CLIENT_SECRET=
+AUTH_MICROSOFT_CLIENT_ID=
+AUTH_MICROSOFT_CLIENT_SECRET=
+JWT_SECRET=                     # JWT 签名密钥（生产必须随机）
+REDIRECT_URI_ALLOWLIST=        # 允许的回调域名（逗号分隔）
 ```
+
+**本地开发回调：**
+
+- 扩展：`https://<extension-id>.chromiumapp.org/`
+- 官网：`http://localhost:3001`
+
+---
 
 ## 📚 相关文档
 
-- [Supabase Auth 文档](https://supabase.com/docs/guides/auth)
 - [Chrome Extension OAuth](https://developer.chrome.com/docs/extensions/reference/identity/)
+- [JWT 标准](https://jwt.io/)
 - [Yiveno 术语表](../product/Yiveno-术语表.md)（术语唯一权威）
 - [Yiveno 产品文档 v4.0](../product/Yiveno-产品文档-v4.0.md)（产品/架构行为契约）
+- [环境变量](../ENVIRONMENT.md)
 
 ## ❓ 常见问题
 
-### Q: 为什么不支持邮箱密码登录？
+### Q: 为什么不使用 Supabase Auth 前端 SDK？
 
-A: OAuth 登录提供更好的安全性和用户体验：
-
-- 不需要存储密码
-- 一键登录，无需记密码
-- 减少开发和维护成本
+A: Yiveno 使用**自定义 JWT + OAuth**（Worker 签发），不依赖 Supabase 前端 SDK。Supabase 仅用于服务端数据存储。
 
 ### Q: 用户首次登录需要注册吗？
 
 A: 不需要。首次 OAuth 登录时会自动创建账号。
 
-### Q: 如何处理账号合并？
+### Q: JWT 过期了怎么办？
 
-A: 如果用户使用不同的 OAuth 提供商但邮箱相同，Supabase 会自动关联到同一账号。
+A: JWT 有效期 7 天。过期后需要重新登录。
 
 ### Q: 中国用户如何登录？
 
-A: 需要使用 VPN 访问 Google。未来可以考虑添加其他登录方式（如微信、支付宝）。
-
----
-
-**最后更新**: 2026-04-05
+A: 需要使用 VPN 访问 Google/Microsoft。未来可以考虑添加其他登录方式。

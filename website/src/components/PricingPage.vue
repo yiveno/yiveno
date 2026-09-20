@@ -172,7 +172,7 @@ onMounted(async () => {
 
     <div class="plans">
       <section class="plan" aria-labelledby="plan-free">
-        <p class="plan__tier" id="plan-free">Free</p>
+        <p id="plan-free" class="plan__tier">Free</p>
         <p class="plan__price">$0</p>
         <p class="plan__desc">Find from what you saved — on your device. No cloud sync.</p>
         <ul class="plan__features">
@@ -187,7 +187,7 @@ onMounted(async () => {
       </section>
 
       <section class="plan plan--pro" aria-labelledby="plan-pro">
-        <p class="plan__tier" id="plan-pro">Pro</p>
+        <p id="plan-pro" class="plan__tier">Pro</p>
         <p class="plan__price">
           {{ proDisplayTotal() }}<span class="plan__interval">{{ intervalLabel }}</span>
         </p>
@@ -297,7 +297,7 @@ onMounted(async () => {
 }
 
 .plan--pro .plan__tier {
-  color: rgba(196, 224, 210, 0.7);
+  color: rgb(196 224 210 / 70%);
 }
 
 .plan__price {
@@ -322,7 +322,7 @@ onMounted(async () => {
 }
 
 .plan--pro .plan__interval {
-  color: rgba(196, 224, 210, 0.65);
+  color: rgb(196 224 210 / 65%);
 }
 
 .plan__desc {
@@ -334,7 +334,7 @@ onMounted(async () => {
 }
 
 .plan--pro .plan__desc {
-  color: rgba(196, 224, 210, 0.75);
+  color: rgb(196 224 210 / 75%);
 }
 
 .plan__features {
@@ -356,7 +356,7 @@ onMounted(async () => {
 }
 
 .plan--pro .plan__features li {
-  color: rgba(196, 224, 210, 0.85);
+  color: rgb(196 224 210 / 85%);
 }
 
 .plan__cta {
@@ -364,25 +364,25 @@ onMounted(async () => {
 }
 
 .plan--pro :deep(.ui-btn:not(.ui-btn--primary)) {
-  border-color: rgba(220, 232, 222, 0.25);
-  background: rgba(220, 232, 222, 0.09);
-  color: rgba(220, 232, 222, 0.9);
+  border-color: rgb(220 232 222 / 25%);
+  background: rgb(220 232 222 / 9%);
+  color: rgb(220 232 222 / 90%);
 }
 
 .plan--pro :deep(.ui-btn:not(.ui-btn--primary):hover),
 .plan--pro :deep(.ui-btn:not(.ui-btn--primary):focus-visible) {
-  background: rgba(220, 232, 222, 0.15);
+  background: rgb(220 232 222 / 15%);
 }
 
 .plan--pro :deep(.ui-btn--primary) {
-  background: rgba(220, 232, 222, 0.14);
-  border-color: rgba(220, 232, 222, 0.3);
+  background: rgb(220 232 222 / 14%);
+  border-color: rgb(220 232 222 / 30%);
   color: #dce8de;
 }
 
 .plan--pro :deep(.ui-btn--primary):hover,
 .plan--pro :deep(.ui-btn--primary):focus-visible {
-  background: rgba(220, 232, 222, 0.22);
+  background: rgb(220 232 222 / 22%);
 }
 
 .pricing-page__footnote {

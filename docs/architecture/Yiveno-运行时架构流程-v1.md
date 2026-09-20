@@ -135,6 +135,24 @@ flowchart LR
 - 禁：直连 IndexedDB / chrome.bookmarks / chrome.tabs 等。
 - 必须：通过 `frontend/src/infrastructure/messaging/background-client.ts` 发消息给 background。
 
+**例外（chrome.storage.onChanged 监听 · 2026-09-17 审计确认）：**
+
+下列场景允许 pages 直接使用 `chrome.storage.onChanged.addListener`（仅**读取** storage 变化触发本地状态刷新，非写入）：
+
+| 场景                     | 文件                                                | 原因                                                                |
+| ------------------------ | --------------------------------------------------- | ------------------------------------------------------------------- |
+| 登录态变化同步           | `infrastructure/auth/watch-auth-session-storage.ts` | 已有统一封装；UI 复用即可                                           |
+| 订阅/订阅快照变化        | `infrastructure/ui/AppPageHeader.vue`               | 顶栏需即时响应 Pro/Free 切换                                        |
+| Getting Started 进度刷新 | `pages/getting-started/*.vue`                       | GS 独立扩展页，需监听 settings/excerpt 计数变化以更新 Continue 文案 |
+| 划词工具栏状态变化       | `content/selection-toolbar/main.ts`                 | content script 与 background 的轻量同步                             |
+
+**约束：**
+
+- 仅监听（`addListener`/`removeListener`），**禁止** `chrome.storage.local.set/remove`。
+- key 列表必须经白名单函数过滤（参见 `shouldRefreshGettingStartedProgress` / `watchAuthSessionStorage`）。
+- onUnmounted 必须 `removeListener` 防泄漏。
+- 跨页同步请优先考虑已有封装（`watchAuthSessionStorage`）；新增场景若跨 ≥3 页可加新的 `watch*Storage` 封装。
+
 #### 2.4.7 最小依赖方向（建议长期固定）
 
 - `pages/content` 只能依赖 `infrastructure`（通过 background-client），不依赖 core/infrastructure 的“底层 IO 实现细节”。

@@ -1,6 +1,22 @@
 # Scripts 目录
 
-> 本目录包含 Yiveno 仓库的自动化脚本，分为**门禁脚本**（CI 强制）和**工具脚本**（按需使用）。
+> 本目录包含 Yiveno 仓库的自动化脚本，分为**门禁脚本**（CI / git hook 强制）和**工具脚本**（按需使用）。
+
+---
+
+## 总览
+
+| 脚本                             | 触发                       | 类别     |
+| -------------------------------- | -------------------------- | -------- |
+| `check-doc-drift.mjs`            | `doc:check`                | CI 门禁  |
+| `check-doc-code-consistency.mjs` | `doc:check:consistency`    | CI 门禁  |
+| `check-commit-message.mjs`       | `.husky/commit-msg`        | git 门禁 |
+| `knip-runner.mjs`                | `knip*`                    | CI 门禁  |
+| `dev-env.mjs`                    | `env:sync*` / `env:check*` | 工具     |
+| `sync-ide-boot.mjs`              | `sync:ide-boot`            | 工具     |
+| `sync-brand-assets.mjs`          | `sync:brand-assets`        | 工具     |
+| `setup-git-lfs.sh`               | `setup:git-lfs`            | 工具     |
+| `tte-summarize-telemetry.mjs`    | `tte:summarize`            | 研究工具 |
 
 ---
 
@@ -200,6 +216,30 @@ cat export.json | bun run tte:summarize
 ```
 
 **注意：** 本工具为研究用，**非** Beta 宣称或生产监控。详见 `docs/archive/research/`。
+
+---
+
+## Git 门禁脚本（commit 时执行）
+
+### `check-commit-message.mjs` + `.husky/commit-msg`
+
+**作用：** 强制 commit message 双层校验——
+
+1. **第一层（commitlint）**：首行必须为 `<type>(<scope>): <中文>`
+2. **第二层（本脚本）**：body 中必须包含 git 已暂存文件的方括号索引（如 `[frontend/src/.../foo.ts] 修改:`），一个文件不少
+
+**背景：** AI 自动生成 message 容易遗漏改动文件索引，导致后续 `git log -p -- <path>` 难以定位历史。本门禁确保每次提交都有一份「按文件索引、分门别类」的归档。
+
+**运行：**
+
+```bash
+git commit -m "feat(xxx): ..."   # 自动触发，无需手动调用
+bun run check:commit-message -- .git/COMMIT_EDITMSG  # 手动调试
+```
+
+**CI：** 通过 `.husky/commit-msg` 在本地 commit 时强制执行；pre-push 不重复执行（已 commit 即通过）。
+
+**格式参考：** `.cursor/rules/commit-message.mdc`
 
 ---
 

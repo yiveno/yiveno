@@ -3,7 +3,6 @@
   "treatConfigHintsAsErrors": true,
   "ignore": ["**/*.d.ts"],
   "ignoreExportsUsedInFile": true,
-  "ignoreDependencies": ["puppeteer-core"],
   "ignoreBinaries": ["run", "mprocs"],
   "tags": ["-lintignore"],
   "rules": {

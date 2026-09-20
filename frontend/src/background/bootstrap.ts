@@ -16,10 +16,26 @@ import {
   getCurrentOwnerId,
   getOrCreateLocalProfile
 } from '@/infrastructure/identity/local-profile-service'
+import {
+  onSubscriptionChanged,
+  type SubscriptionChangedEvent
+} from '@/infrastructure/identity/subscription-service'
 import { initializeMemoryDatabase } from '@/infrastructure/indexeddb/memory-db'
 import { logger } from '@/infrastructure/logging/logger'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logChromeStorageQuotaSample } from '@/infrastructure/storage/chrome-storage-quota'
+
+/**
+ * 订阅变更时刷新线索 LLM completer（Background 层处理事件，符合分层架构）。
+ */
+function handleSubscriptionChanged(event: SubscriptionChangedEvent): void {
+  void refreshClueLlmCompleterFromDevConfig().catch(error => {
+    logger.warn('Background', '订阅变更后线索 LLM 重挂失败', {
+      reason: event.reason,
+      error: error instanceof Error ? error.message : String(error)
+    })
+  })
+}
 
 /**
  * Background 启动时初始化本地身份、Memory DB，并调度冷启动三阶段门禁。
@@ -43,6 +59,8 @@ async function bootstrapBackground(): Promise<void> {
     registerCommandListeners()
     registerSelectionToolbarKeepaliveListener()
     registerMemoryCloudSyncAlarmListener()
+    // 订阅变更 → 线索 LLM 重挂（通过事件机制，避免 infrastructure → application 跨层依赖）
+    const unsubscribe = onSubscriptionChanged(handleSubscriptionChanged)
 
     await refreshClueLlmCompleterFromDevConfig().catch(error => {
       logger.warn('Background', '线索 LLM 开发配置加载失败，将仅用规则理解', error)

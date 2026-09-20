@@ -1,8 +1,8 @@
 /**
  * 本机订阅快照读写 + 刷新（Background 唯一写入口）。
+ * 订阅变更事件由 Background 层监听并处理（避免 infrastructure → application 跨层依赖）。
  */
 
-import { refreshClueLlmCompleterFromDevConfig } from '@/application/recall/refresh-clue-llm-completer'
 import {
   SUBSCRIPTION_SNAPSHOT_STORAGE_KEY,
   SubscriptionRefreshError,
@@ -22,6 +22,39 @@ import {
 } from '@/infrastructure/storage/chrome-storage-local'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
+
+/**
+ * 订阅变更事件：基础设施层发出，Background 层处理。
+ * 避免 infrastructure → application 跨层依赖（Phase 1 审计 P0-1 修复）。
+ */
+export interface SubscriptionChangedEvent {
+  /** 刷新后的快照。 */
+  snapshot: SubscriptionSnapshot
+  /** 触发原因。 */
+  reason: 'signed_out' | 'refreshed' | 'forced'
+}
+
+/** 订阅变更事件监听器。 */
+export type SubscriptionChangedListener = (event: SubscriptionChangedEvent) => void | Promise<void>
+
+const listeners = new Set<SubscriptionChangedListener>()
+
+/** 注册订阅变更监听器（Background 唯一合法消费者）。 */
+export function onSubscriptionChanged(listener: SubscriptionChangedListener): () => void {
+  listeners.add(listener)
+  return () => listeners.delete(listener)
+}
+
+/** 触发订阅变更事件（由 subscription-service 在刷新成功后调用）。 */
+function emitSubscriptionChanged(event: SubscriptionChangedEvent): void {
+  for (const listener of listeners) {
+    try {
+      void listener(event)
+    } catch {
+      // 静默，不阻塞其他监听器
+    }
+  }
+}
 
 /** 读本地缓存；损坏则 null。 */
 export async function getSubscriptionSnapshot(): Promise<SubscriptionSnapshot | null> {
@@ -77,7 +110,7 @@ export async function enforceSyncRequiresPro(): Promise<void> {
 /**
  * 从 Worker 刷新订阅快照。
  * 未登录 → 写 Free；网络失败 → 保留旧快照（若有），否则抛错（不写 Free）。
- * 成功后若非 Pro 则关闭同步，并触发线索 LLM 重挂（由调用方或本函数动态 import）。
+ * 订阅变更通过事件机制通知 Background 层（避免 infrastructure → application 跨层）。
  * 并发调用合并为一次网络请求。
  */
 let refreshSubscriptionInflight: Promise<SubscriptionSnapshot> | null = null
@@ -109,7 +142,8 @@ async function doRefreshSubscriptionSnapshot(options?: {
     await setSubscriptionSnapshot(free)
     await enforceSyncRequiresPro()
     flowOk('Subscription', '刷新订阅快照', startedAt, { reason: 'signed_out', isPro: false })
-    void refreshClueLlmCompleterFromDevConfig().catch(() => undefined)
+    // 通过事件通知 Background 层（由其调用 refreshClueLlmCompleterFromDevConfig）
+    emitSubscriptionChanged({ snapshot: free, reason: 'signed_out' })
     return free
   }
 
@@ -126,7 +160,8 @@ async function doRefreshSubscriptionSnapshot(options?: {
       tier: snapshot.tier,
       force: Boolean(options?.force)
     })
-    void refreshClueLlmCompleterFromDevConfig().catch(() => undefined)
+    // 通过事件通知 Background 层（由其调用 refreshClueLlmCompleterFromDevConfig）
+    emitSubscriptionChanged({ snapshot, reason: options?.force ? 'forced' : 'refreshed' })
     return snapshot
   } catch (error) {
     flowFail('Subscription', '刷新订阅快照', startedAt, error)

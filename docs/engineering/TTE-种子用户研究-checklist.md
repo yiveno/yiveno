@@ -3,16 +3,16 @@
 > **性质：** 可打印/可勾选的**操作流程**（Non-normative 细节；**门禁阈值以产品文档 Normative 为准**）。  
 > **术语：** [`Yiveno-术语表.md`](../product/Yiveno-术语表.md)（clue · 附注 · 邻域；遥测事件见 §10.1）。  
 > **Normative：** [`Yiveno-产品文档-v4.0.md`](../product/Yiveno-产品文档-v4.0.md) **§5.9**、**§5.10.3**、§0.1.1「首发用户与种子验证」。  
-> **协议原文：** `yiveno_research/TTE_指标框架与测试协议.md`。  
-> **R4 工程：** [`R4-Phase-E-验收与eval.md`](./R4-Phase-E-验收与eval.md)
+> **TTE 协议：** 详见 §5.9 的 Normative 指标定义；执行细则见本文 checklist；完整研究包模板见 [`docs/archive/research/tte-beta-2026-09/`](../archive/research/tte-beta-2026-09/)。  
+> **R4 工程（已归档）：** [`R4-Phase-E-验收与eval.md`](../archive/engineering/R4-Phase-E-验收与eval.md)
 
 ---
 
 ## 0. 这份 checklist 解决什么
 
 - **不**替代产品文档；只把 §5.9 的 90 天验证 + TTE 协议落成**可执行步骤**。
-- **单人维护者：** 见 [`research/tte-beta-2026-09/solo-researcher-sop.md`](../../research/tte-beta-2026-09/solo-researcher-sop.md)（真实库 · 无团队精简流程）。  
-  **自然 clue 采样（决策 must / 优先级）：** [`research/tte-beta-2026-09/natural-clue-sampling.md`](../../research/tte-beta-2026-09/natural-clue-sampling.md)。
+- **单人维护者（已归档 · Non-normative）：** [`docs/archive/research/tte-beta-2026-09/solo-researcher-sop.md`](../archive/research/tte-beta-2026-09/solo-researcher-sop.md)（真实库 · 无团队精简流程）。  
+  **自然 clue 采样（决策 must / 优先级 · 已归档）：** [`docs/archive/research/tte-beta-2026-09/natural-clue-sampling.md`](../archive/research/tte-beta-2026-09/natural-clue-sampling.md)。
 - **不测**竞品公开秒数排行榜（研究禁止）；只测 **Yiveno vs 用户现有拼装方案**（浏览器 书签/Raindrop/搜索 等）在**同一语料、同一模糊任务**下的 TTE。
 - **成功定义：** 用户更快拿到**可自验的原始证据**（ECS 五要素齐全），而不只是「AI 说找到了」。
 
@@ -166,7 +166,7 @@
 
 **禁止作 clue：** 完整标题、完整 URL、连续 10+ 字原文粘贴。
 
-**口语习惯（与单人 SOP 对齐 · 2026-09-08）：** clue 须像真人随口找东西——约 **6–18 词**、**最多两锚**、日常含糊说法；禁止刊名+术语+附注原词堆叠、禁止为抬 Top1 逆向写 clue。分档 Easy/Medium/Hard 默认混搭 **2/2/1**。细则见 [`research/tte-beta-2026-09/solo-researcher-sop.md`](../../research/tte-beta-2026-09/solo-researcher-sop.md) **§2.1**。
+**口语习惯（与单人 SOP 对齐 · 2026-09-08）：** clue 须像真人随口找东西——约 **6–18 词**、**最多两锚**、日常含糊说法；禁止刊名+术语+附注原词堆叠、禁止为抬 Top1 逆向写 clue。分档 Easy/Medium/Hard 默认混搭 **2/2/1**。细则见 [`docs/archive/research/tte-beta-2026-09/solo-researcher-sop.md`](../archive/research/tte-beta-2026-09/solo-researcher-sop.md) **§2.1**。
 
 ---
 
@@ -240,7 +240,7 @@
 ## 11. 研究包文件清单（建议目录）
 
 ```text
-research/tte-beta-{YYYY-MM}/     ← 从模板复制：research/tte-beta-template/
+research/tte-beta-{YYYY-MM}/     ← 从模板复制：docs/archive/research/tte-beta-template/
   consent-template.md
   screener.md
   gold-cards/
@@ -253,7 +253,7 @@ research/tte-beta-{YYYY-MM}/     ← 从模板复制：research/tte-beta-templat
   report-vX.Y-beta.md
 ```
 
-**模板目录（可提交 git）：** [`research/tte-beta-template/`](../../research/tte-beta-template/README.md)
+**模板目录（已归档 · 可提交 git 历史）：** [`docs/archive/research/tte-beta-template/`](../archive/research/tte-beta-template/README.md)
 
 ---
 
@@ -271,7 +271,8 @@ research/tte-beta-{YYYY-MM}/     ← 从模板复制：research/tte-beta-templat
 
 ## 修订记录
 
-| 日期       | 变更                                              |
-| ---------- | ------------------------------------------------- |
-| 2026-08-24 | 初版：四周计划、SOP、gold/ECS 模板、90 天决策门   |
-| 2026-08-24 | 链至 `research/tte-beta-template/` 可复制目录骨架 |
+| 日期       | 变更                                                                                                     |
+| ---------- | -------------------------------------------------------------------------------------------------------- |
+| 2026-09-17 | `research/` 已归档到 `docs/archive/research/`；本文链接统一指向归档路径                                  |
+| 2026-08-24 | 初版：四周计划、SOP、gold/ECS 模板、90 天决策门                                                          |
+| 2026-08-24 | 链至 `research/tte-beta-template/` 可复制目录骨架（现归档于 `docs/archive/research/tte-beta-template/`） |

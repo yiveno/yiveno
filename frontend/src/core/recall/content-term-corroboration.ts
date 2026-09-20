@@ -21,7 +21,8 @@ import { timeConfidenceForRelativeLabel } from '@/core/recall/parse-recall-clue'
 
 /**
  * 弱偏好/发令残留：可进 contentTerms，但不得当 Filter 词面，也不得单独撑过佐证门。
- * 与 orchestrate.effectiveContentTermsForRecall 同源。
+ * `effectiveContentTermsForRecall` 是本模块唯一导出源；调用方统一从此处 import，避免
+ * 多文件 re-export 让 reviewer 误判为「同源多路径」（历史上曾如此，现已收敛）。
  */
 const WEAK_PREFERENCE_RESIDUAL_TERMS = new Set([
   'play',

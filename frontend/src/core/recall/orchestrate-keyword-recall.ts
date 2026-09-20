@@ -20,7 +20,6 @@ import {
   shouldAttemptTimeSoftReopen
 } from '@/core/recall/content-term-corroboration'
 
-export { effectiveContentTermsForRecall } from '@/core/recall/content-term-corroboration'
 import {
   parseRecallClue,
   resolveRelativeTimeRange,

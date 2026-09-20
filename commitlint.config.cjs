@@ -28,6 +28,6 @@ module.exports = {
     'header-max-length': [2, 'always', 72],
     'body-leading-blank': [2, 'always']
   },
-  // 允许中文 subject —— 关掉 commitlint 默认的「全大写/全小写」提示
-  ignores: [(message) => !/^(feat|fix|refactor|docs|test|chore|ci|perf|style)/.test(message)]
+  // 允许的「非提交」自动 message：merge / revert / initial —— 这些跳过整校验
+  ignores: [(message) => /^(Merge |Revert |Initial commit)/i.test(message)]
 }

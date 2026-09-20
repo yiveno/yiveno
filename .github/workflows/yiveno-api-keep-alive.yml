@@ -1,0 +1,72 @@
+# Yiveno API 依赖保活（Supabase + Cloudflare Workers）
+#
+# 用途：
+#   1. Supabase（backend JWT 校验 / auth）：免费计划 7 天无活动自动暂停，
+#      此处定期 ping 防止之。
+#   2. Cloudflare Workers API（主要数据平面）：保持连接池热身（待接入）。
+#
+# 依赖：
+#   - REPO VARIABLES: SUPABASE_URL
+#   - REPO SECRETS: SUPABASE_ANON_KEY
+#
+# 注意：前端 IndexedDB 为本机存储，与 Supabase 解耦；Supabase 仅用于 backend auth。
+#
+# 调度：每 12 小时（UTC）；免费计划 7 天 threshold，12h 足够保险。
+#       workflow_dispatch 用于手动测试。
+
+name: Yiveno API Keep Alive
+
+on:
+  schedule:
+    # 每 12 小时（UTC）— 免费计划 7 天 threshold，12h 足够保险
+    - cron: '0 */12 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  keep-alive:
+    name: Keep API dependencies alive
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check Supabase auth service
+        run: |
+          set -euo pipefail
+          URL="${{ vars.SUPABASE_URL }}"
+          KEY="${{ secrets.SUPABASE_ANON_KEY }}"
+          CODE="$(curl -fsS -o /dev/null -w '%{http_code}' \
+            -G "$URL/auth/v1/health" \
+            -H "apikey: $KEY")"
+          echo "Supabase Auth health → HTTP $CODE"
+          test "$CODE" -lt 500 || exit 1
+
+      - name: Check Supabase REST API
+        run: |
+          set -euo pipefail
+          URL="${{ vars.SUPABASE_URL }}"
+          KEY="${{ secrets.SUPABASE_ANON_KEY }}"
+          # -G 把 query params 隔离，避免 * 被 shell glob 扩展
+          # 注意：/rest/v1/ 需要 service_role 权限才不受 RLS 限制，anon key 会 401
+          CODE="$(curl -fsS -o /dev/null -w '%{http_code}' \
+            -G "$URL/rest/v1/" \
+            -H "apikey: $KEY" \
+            -H "Authorization: Bearer $KEY" \
+            --data-urlencode "select=*" \
+            --data-urlencode "limit=1")"
+          echo "Supabase REST API → HTTP $CODE"
+          # 200=正常，404=表不存在但连接 ok，any 5xx 才失败
+          echo "$CODE" | grep -qvE '^[5]' || exit 1
+
+      # Cloudflare Workers health check（待接入：需先在 repo variables 添加 API_BASE_URL）
+      # - name: Check Cloudflare Workers API
+      #   run: |
+      #     set -euo pipefail
+      #     URL="${{ vars.API_BASE_URL }}"
+      #     CODE="$(curl -fsS -o /dev/null -w '%{http_code}' \
+      #       -G "$URL/health" \
+      #       -H "x-yiveno-probe: keep-alive")"
+      #     echo "Cloudflare Workers health → HTTP $CODE"
+      #     # 只要不是 5xx 就 OK
+      #     echo "$CODE" | grep -qvE '^[5]' || exit 1

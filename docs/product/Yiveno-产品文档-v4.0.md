@@ -4,7 +4,7 @@
 > **Normative（必须遵守）**= §0–§7。**Non-normative（背景，勿当实现范围）**= 附录 A。  
 > **术语唯一权威：** `Yiveno-术语表.md`（同目录）——所有概念叫法与边界以术语表为准；本文写行为/契约时可引用词条，**不得**与术语表异义重复定义。  
 > 工程细则可旁挂 `.cursor/rules/project.mdc` / `AGENTS.md`；**术语冲突**以术语表为准，**行为/契约冲突**以本文 Normative 为准，并回写 rules。  
-> **市场研究：** 竞品与 TTE 一手研究见 `yiveno_research/`；**已吸收进 Normative 的章节**见 §0.1、§0.1.1、§5.9、§8 Phase E / R4、附录 A.6。
+> **市场研究（已归档 · Non-normative）：** 竞品与 TTE 一手研究见 `docs/archive/research/`；**已吸收进 Normative 的章节**见 §0.1、§0.1.1、§5.9、§8 Phase E / R4、附录 A.6。
 
 ---
 
@@ -18,7 +18,7 @@
 看到好东西，划一下、存一下，**扔进你的仓库**；过阵子只记得一点点，**找 Yiveno 要就行**。  
 （工程口径仍称「个人信息寻回系统」；对外心智优先 **「那个找东西的」** / **find things** / 「帮你在仓库找东西」。早期履约句可用 _Find what you saved_。**「记忆硬盘」仅作对内隐喻**，不得当作对外主 slogan，也不得暗示每次替用户做终审、零失误神谕。）
 
-**工程/市场等价表述（对内 · Normative）：** 与竞品、投资人沟通时可等价称为 **Personal Knowledge Retrieval（个人知识召回）**——用户**主动 Capture** 的个人痕迹，经口语线索被**可靠找回并带可验证来源**，不是 AI 书签管理器、不是 PKM 编辑器、不是生活助理。长期平台形态（仅在本品命题与留存验证后）可演进为 **User-authorized Context Layer for AI（用户授权的 AI 上下文层）**；**当前不得**当作对外主 slogan 或 sprint 范围。竞争与市场的一手研究见仓库 **`yiveno_research/`**（证据与坐标为 Non-normative；**已吸收进本文 Normative 的结论以本文为准**）。
+**工程/市场等价表述（对内 · Normative）：** 与竞品、投资人沟通时可等价称为 **Personal Knowledge Retrieval（个人知识召回）**——用户**主动 Capture** 的个人痕迹，经口语线索被**可靠找回并带可验证来源**，不是 AI 书签管理器、不是 PKM 编辑器、不是生活助理。长期平台形态（仅在本品命题与留存验证后）可演进为 **User-authorized Context Layer for AI（用户授权的 AI 上下文层）**；**当前不得**当作对外主 slogan 或 sprint 范围。竞争与市场的一手研究（已归档 · Non-normative）见 `docs/archive/research/`；**已吸收进本文 Normative 的结论以本文为准**。
 
 **对外最短印象（Normative · 防跑题）：** 用户心里只应留下一句——**「那个找东西的」**（英：_the one that finds things_ / _Find what you saved_）。  
 不是个人助理、不是整理器、不是第二大脑全能壳、不是「好像啥都做」、不是「永远押中那一条的 AI」。做产品最忌写跑题：印象一散，用户既记不住你，也不再信任找回承诺。  
@@ -232,7 +232,7 @@ Yiveno 解决的**不是**「某一类内容找不到」的单点痛点，而是
 
 #### 竞争边界与市场坐标（Normative · 2026-08 市场对齐）
 
-> 背景证据与竞品坐标见 `yiveno_research/`；本节为**产品边界**，不是功能清单。
+> 背景证据与竞品坐标见 `docs/archive/research/`；本节为**产品边界**，不是功能清单。
 
 个人信息再利用市场可粗分为五层；Yiveno **不抢** L1/L5 默认入口，**必须兼容** L1，在 **L2–L4 之间的「可靠 retrieval → 可授权复用」** 桥梁上立身：
 
@@ -859,7 +859,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 | ------------------------------ | ------------------------------------------------------------------------------------- |
 | **R4 Phase E 验收与 eval**     | `docs/engineering/R4-Phase-E-验收与eval.md`；Normative 摘要 §5.10 / §5.11             |
 | **TTE 种子用户研究 checklist** | `docs/engineering/TTE-种子用户研究-checklist.md`；Normative 门槛 §5.9                 |
-| **TTE 研究包模板**             | `research/tte-beta-template/`；复制后本地填数据，勿 commit PII                        |
+| **TTE 研究包模板**             | `docs/archive/research/tte-beta-template/`；复制后本地填数据，勿 commit PII（已归档） |
 | MemoryItem / clues / payload   | `frontend/src/core/memory/`                                                           |
 | 语料适配器契约（R2）           | `docs/engineering/语料适配器契约.md` + `core/memory/corpus-adapter-contract.ts`       |
 | 关键词倒排 Phase 1             | `docs/engineering/关键词倒排索引-Phase1.md` + `keyword-index-repository.ts`           |
@@ -1279,7 +1279,7 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 ### 5.9 体验质量指标（Normative · 2026-08 市场对齐）
 
-> **协议细则**（ECS 打分表、任务模板、四周实验流程）见 `yiveno_research/TTE_指标框架与测试协议.md`（Non-normative）；**可执行 checklist** 见 [`docs/engineering/TTE-种子用户研究-checklist.md`](../engineering/TTE-种子用户研究-checklist.md)；**本文指标名为 Normative 门禁**。
+> **协议细则**（ECS 打分表、任务模板、四周实验流程）见 `docs/archive/research/tte-beta-2026-09/`（Non-normative；已归档）；**可执行 checklist** 见 [`docs/engineering/TTE-种子用户研究-checklist.md`](../engineering/TTE-种子用户研究-checklist.md)；**本文指标名为 Normative 门禁**。
 
 #### 北极星与共指标
 
@@ -2313,9 +2313,9 @@ RecallOutcomeEvent {
 
 ### A.6 市场与竞品研究（背景 · 方向决策输入）
 
-**一手竞品与市场研究（2026-08-23）：** 仓库 **`yiveno_research/`**（Manus AI；证据 log + 战略分析 + TTE 协议 + 建议）。**Normative 结论已回写本文 §0.1 / §0.1.1 / §5.9 / §8 R4**；细节坐标、定价锚点、竞品秒数**不得**从研究文档直接抄作已测性能。
+**一手竞品与市场研究（2026-08-23 · 已归档）：** 仓库 [`docs/archive/research/`](../archive/research/README.md)（Manus AI；证据 log + 战略分析 + TTE 协议 + 建议；Non-normative）。**Normative 结论已回写本文 §0.1 / §0.1.1 / §5.9 / §8 R4**；细节坐标、定价锚点、竞品秒数**不得**从研究文档直接抄作已测性能。
 
-**早期调研 v1：** [`Yiveno-市场调研-v1.md`](./Yiveno-市场调研-v1.md)（2026-07-29；二手综合 + 待验证假设）。**竞品格局、五层栈、TTE、种子用户分群** 以 `yiveno_research/` 为准；v1 的「继续开发前门槛」中与本文冲突者，**以本文 Normative 为准**。
+**早期调研 v1（已归档）：** [`Yiveno-市场调研-v1.md`](../archive/product/Yiveno-市场调研-v1.md)（2026-07-29；二手综合 + 待验证假设）。**竞品格局、五层栈、TTE、种子用户分群** 以 `docs/archive/research/` 为准；v1 的「继续开发前门槛」中与本文冲突者，**以本文 Normative 为准**。
 
 - **语言与区域：** 以 §0.1.1「市场语言策略」为准（当前 American English only P0）。
 - **暂缓（除非 §5.9 门槛已过）：** 扩大非英语 parser、自主 Agent、默认 history 抓取、知识图谱首发、多连接器 Logo 墙。
@@ -2430,6 +2430,7 @@ RecallOutcomeEvent {
 | 2026-08-24 | **R4 验收：** §5.10 Phase E 手工步骤；§5.11 recall-eval must 清单；§1.1 Phase E 归属行；工程旁挂 `R4-Phase-E-验收与eval.md`                                                                                                                            |
 | 2026-08-24 | **TTE 种子 study：** 工程 checklist `TTE-种子用户研究-checklist.md`；§5.9/§5.10.3 回链                                                                                                                                                                 |
 | 2026-08-24 | **市场对齐：** 吸收 `yiveno_research/`——§0.1 工程/市场等价表述 + Verified Retrievals/TTE 共指标；§0.1.1 五层竞争边界、首发用户、可信召回闭环、ECS Explain；§0.3 禁 Agent/history/图谱优先；§1 Phase E 目标；§5.9 体验质量指标；§8 R4；A.6 研究权威指向 |
+| 2026-09-17 | **`yiveno_research/` 已迁至 `docs/archive/research/`**（与 docs 重构同步）；§0 / §A.6 / §5.9 链接同步；归档文档继续指向历史路径作为变更说明                                                                                                            |
 | 2026-08-21 | 改版计划增 R-shell-chat：Side Panel 对话壳能力清单（已有/明确不做/薄维护）；默认排期回算法                                                                                                                                                             |
 | 2026-08-21 | §7.0：`no_match` 废「缩短再试」CTA——诚实终局不暗示换查询仍可救                                                                                                                                                                                         |
 | 2026-08-21 | §7.0：Side Panel 线程默认 refine；New find 显式新会话；助手 session status；不自动猜会话结束                                                                                                                                                           |

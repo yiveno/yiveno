@@ -18,7 +18,6 @@
 - [`product/Yiveno-产品文档-v4.0.md`](./product/Yiveno-产品文档-v4.0.md) — AI 先读 **§0 Quick Contract**；附录 A 为背景非规范
 - [`product/CURRENT.md`](./product/CURRENT.md) — **当下焦点唯一手写源** → `bun run sync:ide-boot`
 - [`product/Yiveno-改版计划-v1.md`](./product/Yiveno-改版计划-v1.md) — 执行计划（R0–R∞）；与正文冲突时先改产品文档
-- [`product/Yiveno-市场调研-v1.md`](./product/Yiveno-市场调研-v1.md) — **Non-normative**；语言/区域/竞品/待验证假设；重大方向调整前先读 §8–§11
 
 **运维 / 工程（非规格，与正文冲突时以正文为准）**：
 
@@ -32,8 +31,14 @@
 
 **设计 / 品牌（发版）：**
 
-- [`design/brand-asset-release-checklist.md`](./design/brand-asset-release-checklist.md) — 母本 → `public/` → 商店/官网；`bun run sync:brand-assets`
-- [`design/brand-assets/README.md`](./design/brand-assets/README.md) — 仓内母本；`yiveno-brand-kit/` 已移除（独有文件已备份至仓外）
+- [`design/Yiveno-设计标准-v1.md`](./design/Yiveno-设计标准-v1.md) — 视觉规范 Normative（含 §9 品牌核 + Roles）
+- [`design/DESIGN.md`](./design/DESIGN.md) — 设计系统机器可读摘要（YAML tokens）
+- [`design/brand-assets/README.md`](./design/brand-assets/README.md) — 仓内母本
+- [`design/brand-asset-release-checklist.md`](./design/brand-asset-release-checklist.md) — 母本 → `public/` → 商店/官网
+
+**归档（参考）：**
+
+- [`archive/README.md`](./archive/README.md) — 历史文档入口（TTE 研究、市场调研、过时工程文档等）
 
 `frontend/docs/` 已清空；i18n 方案定稿前不在此目录维护占位文档。
 
@@ -42,3 +47,4 @@
 - [`.github/pull_request_template.md`](../.github/pull_request_template.md) — PR 勾选清单（§1.1 验收归属）
 - [`.cursor/hooks.json`](../.cursor/hooks.json) — Agent `sessionStart` / 破坏性 git 拦截（见 [`.cursor/hooks/README.md`](../.cursor/hooks/README.md)）
 - [`engineering/background-message-types.registry`](./engineering/background-message-types.registry) + `bun run doc:check` — message type / CURRENT 漂移门禁
+- `bun run doc:check:consistency` — 代码 ↔ 文档一致性门禁（验证 ADR-001/004/005/007/012 等关键架构约束在代码中可被验证）

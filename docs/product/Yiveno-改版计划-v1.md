@@ -212,17 +212,17 @@ Side Panel Chat 壳（R-shell-chat 基线）→ 冻大改，只薄维护
 
 **目标：** 把「找对了」变成**可测量、可验证、可交给任意 AI**——补全 Capture→Reuse 闭环的后半段；并用 **§7.2 Outcome Labeling** 高概率知道「本次答案是哪条 / 都不是」；**不**借 R4 开 Agent 或 history 抓取。
 
-**来源：** 仓库 `yiveno_research/` 结论已回写产品文档；本波为执行计划。能力真相以产品文档 **§1** 为准；当下焦点见 [`CURRENT.md`](./CURRENT.md)。
+**来源：** 已归档研究 `docs/archive/research/` 的结论已回写产品文档；本波为执行计划。能力真相以产品文档 **§1** 为准；当下焦点见 [`CURRENT.md`](./CURRENT.md)。
 
-| 交付                                    | 验收                                         | 落地                                        |
-| --------------------------------------- | -------------------------------------------- | ------------------------------------------- |
-| Explain 全要素 UI（ECS 五要素上结果卡） | §5.10.1–2 手工绿                             | ✓ Side Panel + Omnibox 卡面                 |
-| TTE / Verified Retrieval 最小埋点       | §5.10.3；§5.9 七事件                         | ✓ 本机 P0；**未**达 §5.9 Beta 对外宣称门槛  |
-| **Outcome Labeling（§7.2 P0+）**        | 会话标签结算；open≠settled；Mark/出口条按 P1 | 进行中 · `R4-Outcome-Labeling-P2-校准.md`   |
-| detail export（多选 → Markdown/JSON）   | §5.10.4                                      | ✓                                           |
-| 只读 MCP beta                           | §5.10.5                                      | ✓ Settings 开关；**未**达 §5.9 不对外主宣传 |
-| Raindrop / Pocket 导入适配器            | §5.10.6 + R2 准入                            | ✓                                           |
-| recall-eval 扩展                        | §5.11.2 全部 must 绿                         | ✓ 基线 must 已绿；新增 case 随 R4 项合入    |
+| 交付                                    | 验收                                         | 落地                                                                                                                                                  |
+| --------------------------------------- | -------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Explain 全要素 UI（ECS 五要素上结果卡） | §5.10.1–2 手工绿                             | ✓ Side Panel + Omnibox 卡面                                                                                                                           |
+| TTE / Verified Retrieval 最小埋点       | §5.10.3；§5.9 七事件                         | ✓ 本机 P0；**未**达 §5.9 Beta 对外宣称门槛                                                                                                            |
+| **Outcome Labeling（§7.2 P0+）**        | 会话标签结算；open≠settled；Mark/出口条按 P1 | 进行中 · [`docs/archive/engineering/R4-Outcome-Labeling-P2-校准.md`](../archive/engineering/R4-Outcome-Labeling-P2-校准.md)（已归档 · Non-normative） |
+| detail export（多选 → Markdown/JSON）   | §5.10.4                                      | ✓                                                                                                                                                     |
+| 只读 MCP beta                           | §5.10.5                                      | ✓ Settings 开关；**未**达 §5.9 不对外主宣传                                                                                                           |
+| Raindrop / Pocket 导入适配器            | §5.10.6 + R2 准入                            | ✓                                                                                                                                                     |
+| recall-eval 扩展                        | §5.11.2 全部 must 绿                         | ✓ 基线 must 已绿；新增 case 随 R4 项合入                                                                                                              |
 
 **明确不做（R4 内）：** 自主 Agent 行动；默认 history；知识图谱 UI；全文 archive + content hash（可单列 E+ backlog）；Researcher 定价档。
 
@@ -260,25 +260,25 @@ R-shell / R-shell-session / R-shell-chat 基线（已）
 
 ## 6. 修订记录
 
-| 日期       | 变更                                                                                                                              |
-| ---------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| 2026-09-11 | Recall **可见进展**升为体验高优（对齐产品 §7.0）；R-shell-chat 例外；禁 Agent CoT 式 pending                                      |
-| 2026-08-28 | **CURRENT + ADR：** 新增 `CURRENT.md` 与 `architecture/decisions/`；R4 状态对齐产品文档 §1（核心已落地，Outcome Labeling 进行中） |
-| 2026-08-24 | **§7.2 Outcome Labeling：** 改版计划 R4 交付表增加提问↔答案对照（对齐产品文档）                                                   |
-| 2026-08-24 | **R4 验收规格：** 产品文档 §5.10/§5.11；工程旁挂 `R4-Phase-E-验收与eval.md`                                                       |
-| 2026-08-24 | **R4 证据与复用：** 对齐 `yiveno_research/`；Normative 写入产品文档 §5.9/Phase E；默认下一主线含 Explain·TTE·detail export        |
-| 2026-08-21 | 增 R-shell-chat：对话壳能力清单（已有/不做/薄维护）；默认下一主线=算法                                                            |
-| 2026-08-21 | 增 R-shell-session：New find + session status（§7.0）                                                                             |
-| 2026-08-21 | R-shell 落地：Recall 主壳 Side Panel；拆除 popup；`OPEN_RECALL_SHELL`                                                             |
-| 2026-08-21 | 增 R-shell：Recall 主壳 → Side Panel；四点拍板；实现待启动                                                                        |
-| 2026-08-15 | 对齐产品文档定位纠偏：邻域非神谕；Top1=建议；AI 不作宣传招牌；差异表补行                                                          |
-| 2026-08-11 | 初版：差异表 + R0–R∞ + 近周顺序                                                                                                   |
-| 2026-08-11 | R0 落地：must eval / 空库 / 反助理门禁与文案；进入 R1                                                                             |
-| 2026-08-11 | R1 落地：§5.8 冷启动脚本；空库先存文案；进入 R2                                                                                   |
-| 2026-08-11 | R2 落地：语料适配器工程契约 + G1–G7 + 准入清单；R3 有条件                                                                         |
-| 2026-08-11 | R3 切片：G3 弱锚点召回降权；倒排/外部源仍待                                                                                       |
-| 2026-08-11 | R3：倒排 Phase 1 预过滤落地；外部源仍待                                                                                           |
-| 2026-08-11 | 倒排：单条 put 健康索引下增量维护 posting                                                                                         |
-| 2026-08-11 | 倒排：putMany ≤500 健康索引批内增量 posting                                                                                       |
-| 2026-08-11 | 倒排：候选 cap 按 posting 稀有度加权截断                                                                                          |
-| 2026-08-11 | 交互：废除缺槽问卷；miss 终局；仅候选追问；主次分列                                                                               |
+| 日期       | 变更                                                                                                                                                     |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-09-11 | Recall **可见进展**升为体验高优（对齐产品 §7.0）；R-shell-chat 例外；禁 Agent CoT 式 pending                                                             |
+| 2026-08-28 | **CURRENT + ADR：** 新增 `CURRENT.md` 与 `architecture/decisions/`；R4 状态对齐产品文档 §1（核心已落地，Outcome Labeling 进行中）                        |
+| 2026-08-24 | **§7.2 Outcome Labeling：** 改版计划 R4 交付表增加提问↔答案对照（对齐产品文档）                                                                          |
+| 2026-08-24 | **R4 验收规格：** 产品文档 §5.10/§5.11；工程旁挂 [`R4-Phase-E-验收与eval.md`](../archive/engineering/R4-Phase-E-验收与eval.md)（已归档 · Non-normative） |
+| 2026-08-24 | **R4 证据与复用：** 对齐已归档研究 `docs/archive/research/`；Normative 写入产品文档 §5.9/Phase E；默认下一主线含 Explain·TTE·detail export               |
+| 2026-08-21 | 增 R-shell-chat：对话壳能力清单（已有/不做/薄维护）；默认下一主线=算法                                                                                   |
+| 2026-08-21 | 增 R-shell-session：New find + session status（§7.0）                                                                                                    |
+| 2026-08-21 | R-shell 落地：Recall 主壳 Side Panel；拆除 popup；`OPEN_RECALL_SHELL`                                                                                    |
+| 2026-08-21 | 增 R-shell：Recall 主壳 → Side Panel；四点拍板；实现待启动                                                                                               |
+| 2026-08-15 | 对齐产品文档定位纠偏：邻域非神谕；Top1=建议；AI 不作宣传招牌；差异表补行                                                                                 |
+| 2026-08-11 | 初版：差异表 + R0–R∞ + 近周顺序                                                                                                                          |
+| 2026-08-11 | R0 落地：must eval / 空库 / 反助理门禁与文案；进入 R1                                                                                                    |
+| 2026-08-11 | R1 落地：§5.8 冷启动脚本；空库先存文案；进入 R2                                                                                                          |
+| 2026-08-11 | R2 落地：语料适配器工程契约 + G1–G7 + 准入清单；R3 有条件                                                                                                |
+| 2026-08-11 | R3 切片：G3 弱锚点召回降权；倒排/外部源仍待                                                                                                              |
+| 2026-08-11 | R3：倒排 Phase 1 预过滤落地；外部源仍待                                                                                                                  |
+| 2026-08-11 | 倒排：单条 put 健康索引下增量维护 posting                                                                                                                |
+| 2026-08-11 | 倒排：putMany ≤500 健康索引批内增量 posting                                                                                                              |
+| 2026-08-11 | 倒排：候选 cap 按 posting 稀有度加权截断                                                                                                                 |
+| 2026-08-11 | 交互：废除缺槽问卷；miss 终局；仅候选追问；主次分列                                                                                                      |

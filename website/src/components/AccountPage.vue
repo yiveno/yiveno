@@ -500,6 +500,7 @@ async function handleSignOut() {
   100% {
     opacity: 0.55;
   }
+
   50% {
     opacity: 0.95;
   }
@@ -511,7 +512,7 @@ async function handleSignOut() {
   }
 }
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
   .account__identity {
     flex-direction: column;
     align-items: stretch;

@@ -17,11 +17,11 @@ Yiveno-设计标准-v1.md + packages/design-tokens
   → Chrome Web Store 上传         ← chrome-web-store/ 母本
 ```
 
-| 目录                                  | 角色                   | 发版时                                          |
-| ------------------------------------- | ---------------------- | ----------------------------------------------- |
-| `docs/design/brand-assets/`           | **唯一手写母本**       | ✅ 先改                                         |
-| `frontend/public/`、`website/public/` | 运行时                 | ⚙️ 脚本或按表复制，禁止只在运行时手改不同步母本 |
-| `yiveno_research/`                    | 市场研究 Non-normative | ❌ 与品牌发版无关                               |
+| 目录                                  | 角色                             | 发版时                                          |
+| ------------------------------------- | -------------------------------- | ----------------------------------------------- |
+| `docs/design/brand-assets/`           | **唯一手写母本**                 | ✅ 先改                                         |
+| `frontend/public/`、`website/public/` | 运行时                           | ⚙️ 脚本或按表复制，禁止只在运行时手改不同步母本 |
+| `docs/archive/research/`              | 市场研究 Non-normative（已归档） | ❌ 与品牌发版无关                               |
 
 ---
 
@@ -111,4 +111,4 @@ bun run setup:git-lfs         # 配置本仓 LFS filter + git lfs pull（勿 git
 
 **注意：** 勿对母本路径只提交 LFS 指针却未 `git push` 上传 LFS 对象；Husky `pre-push` 会调用 `git lfs pre-push`。
 
-`yiveno_research/` 保持归档；Normative 结论只进 `docs/product/`。
+`docs/archive/research/` 保持归档；Normative 结论只进 `docs/product/`。
