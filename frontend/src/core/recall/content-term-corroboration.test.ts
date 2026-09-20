@@ -3,10 +3,12 @@ import { describe, expect, it } from 'vitest'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import {
   filterMatchesByContentTermCorroboration,
+  HYBRID_CORROBORATION_SOFT_PENALTY,
   itemCorroboratesContentTerms,
   normalizeContentTermsForCorroboration,
   parsedClueForTimeSoftReopen,
-  shouldAttemptTimeSoftReopen
+  shouldAttemptTimeSoftReopen,
+  softPenalizeMatchesByContentTermCorroboration
 } from '@/core/recall/content-term-corroboration'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import type { RecallMatch } from '@/core/recall/recall-result'
@@ -153,5 +155,77 @@ describe('content-term-corroboration', () => {
     expect(soft.timeConfidence).toBe('low')
     expect(soft.contentTerms).toEqual(['retention'])
     expect(soft.timeRange?.label).toBe('yesterday')
+  })
+
+  /**
+   * 实验三修复（2026-09-20）：hybrid 路径佐证改为 soft penalty。
+   * 未佐证候选 score 扣 HYBRID_CORROBORATION_SOFT_PENALTY，但保留在候选池。
+   * 这是 hybrid-mode bypass 设计的关键：embedding 已独立验证，contentTerms 错误
+   * 不应 hard-filter 正确候选。
+   */
+  it('softPenalize：未佐证项 score 扣 penalty 但保留在池中', () => {
+    const matches: RecallMatch[] = [
+      { item: standupScrap, score: 91, matchedFields: ['embedding', 'hybridRrf'] },
+      { item: retentionArticle, score: 40, matchedFields: ['title'] }
+    ]
+    const penalized = softPenalizeMatchesByContentTermCorroboration(matches, ['retention'])
+    // 关键：两个候选都在（不像 hard filter 会删 standupScrap）
+    expect(penalized).toHaveLength(2)
+    // retentionArticle 已佐证 → 原 score 不变
+    const retention = penalized.find(p => p.item.id === retentionArticle.id)
+    expect(retention?.score).toBe(40)
+    // standupScrap 未佐证 → score 扣 penalty
+    const standup = penalized.find(p => p.item.id === standupScrap.id)
+    expect(standup?.score).toBe(91 - HYBRID_CORROBORATION_SOFT_PENALTY)
+  })
+
+  it('softPenalize：contentTerms 空 → 视为通过（不误伤）', () => {
+    const matches: RecallMatch[] = [{ item: standupScrap, score: 50, matchedFields: ['title'] }]
+    const penalized = softPenalizeMatchesByContentTermCorroboration(matches, [])
+    expect(penalized).toHaveLength(1)
+    expect(penalized[0]?.score).toBe(50) // penalty 不应用
+  })
+
+  it('softPenalize：score 已很低（≤ penalty）→ 扣后保持 ≥ 1（与 minScore 对齐）', () => {
+    const item = { ...standupScrap, id: 'low-score-item' }
+    const matches: RecallMatch[] = [{ item, score: 3, matchedFields: ['embedding'] }]
+    const penalized = softPenalizeMatchesByContentTermCorroboration(matches, ['retention'])
+    expect(penalized[0]?.score).toBe(1) // max(1, 3-8) = 1
+  })
+
+  it('softPenalize：所有候选均已佐证 → score 不变', () => {
+    const matches: RecallMatch[] = [
+      { item: retentionArticle, score: 50, matchedFields: ['title'] },
+      { item: retentionArticle, score: 30, matchedFields: ['embedding'] } // 复用做"另一条"
+    ]
+    // 构造两个不同的佐证项：复用 retentionArticle 仅用于测 score 不变
+    const penalized = softPenalizeMatchesByContentTermCorroboration(matches, ['retention'])
+    expect(penalized.every(p => p.score === p.score)).toBe(true)
+    expect(penalized[0]?.score).toBe(50)
+    expect(penalized[1]?.score).toBe(30)
+  })
+
+  /**
+   * 实验三验证：soft penalty 保留正确候选，hard filter 会丢失。
+   * 对比测试：filterMatchesByContentTermCorroboration 与 softPenalize 的行为差异。
+   */
+  it('对比：hard filter 删错项 / soft penalty 保留（实验三 fix）', () => {
+    const matches: RecallMatch[] = [
+      // standupScrap 是语义相关但 contentTerms=["retention"] 不匹配的项
+      { item: standupScrap, score: 91, matchedFields: ['embedding'] },
+      { item: retentionArticle, score: 40, matchedFields: ['title'] }
+    ]
+
+    // Hard filter：contentTerms=["retention"]，standup 字段无 retention → 被删除
+    const hardFiltered = filterMatchesByContentTermCorroboration(matches, ['retention'])
+    expect(hardFiltered).toHaveLength(1)
+    expect(hardFiltered[0]?.item.id).toBe(retentionArticle.id)
+
+    // Soft penalty：保留两项，standup score 扣 penalty
+    const softPenalized = softPenalizeMatchesByContentTermCorroboration(matches, ['retention'])
+    expect(softPenalized).toHaveLength(2)
+    const standup = softPenalized.find(p => p.item.id === standupScrap.id)
+    expect(standup?.score).toBe(91 - HYBRID_CORROBORATION_SOFT_PENALTY)
+    expect(standup?.score).toBeGreaterThan(retentionArticle.clues.openCount ?? 0) // 软排序而非硬删
   })
 })

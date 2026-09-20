@@ -11,6 +11,7 @@ import {
   isUsableRecallToken,
   latinInflectionVariants,
   normalizeRecallText,
+  splitHyphenUnderscoreVariants,
   tokenizeRecallClueDetailed
 } from '@/core/recall/keyword-filter'
 
@@ -39,6 +40,27 @@ export function addDocumentIndexTokensFromText(text: string, sink: Set<string>):
       sink.add(token)
       for (const variant of latinInflectionVariants(token)) {
         sink.add(variant)
+      }
+    }
+  }
+
+  // Hyphen / underscore 形态变体：让查询「react-native」对齐条目「reactnative」「react native」。
+  // 仅 ASCII 词字符之间的连接符；host（含点的段）/CJK 不动。
+  for (const match of normalized.match(/[a-z0-9][a-z0-9._:+-]{1,47}/gi) ?? []) {
+    const token = match.toLowerCase()
+    if (token.length < 2) {
+      continue
+    }
+    for (const variant of splitHyphenUnderscoreVariants(token)) {
+      // 「react native」折出 "react" 和 "native" 子串
+      for (const part of variant.split(/\s+/)) {
+        if (isUsableRecallToken(part)) {
+          sink.add(part)
+        }
+      }
+      const compact = compactRecallText(variant)
+      if (isUsableRecallToken(compact)) {
+        sink.add(compact)
       }
     }
   }

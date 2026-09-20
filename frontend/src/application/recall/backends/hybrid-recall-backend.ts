@@ -51,7 +51,8 @@ import {
   effectiveContentTermsForRecall,
   filterMatchesByContentTermCorroboration,
   parsedClueForTimeSoftReopen,
-  shouldAttemptTimeSoftReopen
+  shouldAttemptTimeSoftReopen,
+  softPenalizeMatchesByContentTermCorroboration
 } from '@/core/recall/content-term-corroboration'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
@@ -72,6 +73,15 @@ import { t } from '@/infrastructure/i18n/t'
 
 /** Hybrid 关键词召回池（再与向量融合）。 */
 const HYBRID_KEYWORD_POOL = 100
+
+/**
+ * 实验二修复（2026-09-20）：keyword miss 时扩大的 semantic 候选 K。
+ * 默认 24 在 keyword miss 场景下会导致 rank > 24 的正确项永远无法进入 RRF fusion。
+ * 仅当 keyword pool 完全空时启用更大 K，覆盖「仅靠 embedding 召回」的窄场景。
+ * cos 计算本就全量；扩 limit 仅多取尾部几个候选，无新增计算成本。
+ */
+const HYBRID_SEMANTIC_NEIGHBOR_LIMIT_EXPANDED = 100
+const HYBRID_SEMANTIC_NEIGHBOR_LIMIT = 24
 
 function attachDialogMeta(
   result: RecallResult,
@@ -560,24 +570,31 @@ export async function fuseHybridMatches(input: {
   }
 
   const itemsById = new Map(input.items.map(item => [item.id, item]))
-  const semanticScored = rankIdsByCosineToQuery(queryVector, embeddedCandidates).flatMap(
-    neighbor => {
-      const item = itemsById.get(neighbor.id)
-      if (!item) {
-        return []
-      }
-      return [
-        applyParsedClueScoreBoosts(
-          {
-            item,
-            score: scoreFromCosineSimilarity(neighbor.similarity),
-            matchedFields: ['embedding']
-          },
-          input.parsed
-        )
-      ]
+  // 实验二修复（2026-09-20）：keyword miss 时扩大 semantic 候选 K，避免 rank > 24 假空。
+  // hybrid 路径的极端 case 保护：keyword miss + semantic rank > 24 → 永远不进入 RRF。
+  // 仅扩大 limit；cos 计算本就对全部 embeddedCandidates 全量计算，无新增性能成本。
+  const semanticLimit =
+    keywordScored.length === 0
+      ? HYBRID_SEMANTIC_NEIGHBOR_LIMIT_EXPANDED
+      : HYBRID_SEMANTIC_NEIGHBOR_LIMIT
+  const semanticScored = rankIdsByCosineToQuery(queryVector, embeddedCandidates, {
+    limit: semanticLimit
+  }).flatMap(neighbor => {
+    const item = itemsById.get(neighbor.id)
+    if (!item) {
+      return []
     }
-  )
+    return [
+      applyParsedClueScoreBoosts(
+        {
+          item,
+          score: scoreFromCosineSimilarity(neighbor.similarity),
+          matchedFields: ['embedding']
+        },
+        input.parsed
+      )
+    ]
+  })
 
   if (semanticScored.length === 0 && keywordScored.length === 0) {
     input.trace('info', 'Hybrid：无关键词与语义候选，降级关键词路径')
@@ -594,7 +611,12 @@ export async function fuseHybridMatches(input: {
 
   let fused = fuseWithParsed(input.parsed)
   const corroborationTerms = effectiveContentTermsForRecall(input.parsed)
-  let corroborated = filterMatchesByContentTermCorroboration(fused, corroborationTerms)
+  // 实验三修复（2026-09-20）：hybrid 路径改为 soft penalty 而非 hard filter。
+  // 原因：hybrid 已有 embedding 独立验证，contentTerms 错误不应 hard veto 正确候选。
+  // soft penalty 保留候选项在排序池中，未佐证项 score 扣 HYBRID_CORROBORATION_SOFT_PENALTY。
+  // 副作用：fused 是空时也无法触发 timeSoftReopen（因为软佐证永不空），但 fused 空在
+  // 上方 keyword/semantic 双空检查已覆盖，所以无需 timeSoftReopen 兜底（hybrid 路径）。
+  let corroborated = softPenalizeMatchesByContentTermCorroboration(fused, corroborationTerms)
   let effectiveParsed = input.parsed
   let timeSoftReopen = false
 
@@ -602,7 +624,7 @@ export async function fuseHybridMatches(input: {
     timeSoftReopen = true
     effectiveParsed = parsedClueForTimeSoftReopen(input.parsed)
     fused = fuseWithParsed(effectiveParsed)
-    corroborated = filterMatchesByContentTermCorroboration(fused, corroborationTerms)
+    corroborated = softPenalizeMatchesByContentTermCorroboration(fused, corroborationTerms)
     input.trace('info', 'Hybrid：内容佐证空窗，已做一次时间 soft 回退', {
       afterCount: corroborated.length
     })
@@ -621,7 +643,8 @@ export async function fuseHybridMatches(input: {
   const withPairs = await applyStoredOutcomePairsToMatches(corroborated, input.pairClue, {
     contentTerms: corroborationTerms
   })
-  const afterPairs = filterMatchesByContentTermCorroboration(withPairs, corroborationTerms)
+  // 实验三修复（2026-09-20）：hybrid 路径改为 soft penalty，与上一步同源（佐证永不硬切）。
+  const afterPairs = softPenalizeMatchesByContentTermCorroboration(withPairs, corroborationTerms)
 
   const collapsed = collapseRecallMatches(afterPairs, {
     limit: RECALL_RESULT_POOL_LIMIT + RECALL_COLLAPSE_BACKFILL_EXTRA

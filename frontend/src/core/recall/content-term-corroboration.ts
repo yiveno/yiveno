@@ -177,6 +177,39 @@ export function filterMatchesByContentTermCorroboration(
 }
 
 /**
+ * Hybrid-mode 软佐证 penalty（实验三修复 · 2026-09-20）：
+ * Hybrid 路径已有 embedding 独立验证，不应被 understanding 层的 contentTerms 错误 hard-filter。
+ * 改为：未佐证项 score 扣 penalty，候选项降序排序，但保留命中。
+ * penalty 大小：参照 `RECALL_ORCHESTRATION_*` 加成（3–12），取中段 8 避免压过 keyword hit。
+ * 保证 score ∈ [1, +∞)：避免和 filterKeywordMatchesBeforeCollapse 的 minScore 冲突。
+ *
+ * @param matches 已打分候选（含 matchedFields 标记 embedding/title 等）
+ * @param contentTerms understanding 层解析的 contentTerms
+ * @returns 已应用佐证 penalty 的候选（未佐证得分降；佐证项原样）
+ */
+export const HYBRID_CORROBORATION_SOFT_PENALTY = 8
+
+export function softPenalizeMatchesByContentTermCorroboration(
+  matches: RecallMatch[],
+  contentTerms: readonly string[] | undefined
+): RecallMatch[] {
+  const terms = normalizeContentTermsForCorroboration(contentTerms)
+  if (terms.length === 0 || matches.length === 0) {
+    return matches
+  }
+  return matches.map(match => {
+    if (itemCorroboratesContentTerms(match.item, terms)) {
+      return match
+    }
+    const penalizedScore = Math.max(1, match.score - HYBRID_CORROBORATION_SOFT_PENALTY)
+    return {
+      ...match,
+      score: penalizedScore
+    }
+  })
+}
+
+/**
  * high 时间硬筛（含刚存合成）+ 非空有效 contentTerms + 佐证后 0 条 → 应尝试一次时间 soft 回退。
  */
 export function shouldAttemptTimeSoftReopen(

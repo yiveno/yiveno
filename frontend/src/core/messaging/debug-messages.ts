@@ -244,6 +244,74 @@ export type DevListProbeFixturesResponse =
       error?: string
     }
 
+/**
+ * DEV：Cold Memory 影响量化报告（实验一·阶段五 · 2026-09-21）。
+ * 读库盘点 > RECALL_SCAN_LIMIT 的条目比例与倒排覆盖。
+ */
+export type DevColdMemoryImpactMessage = {
+  scope: BackgroundMessageScope
+  type: 'DEV_COLD_MEMORY_IMPACT'
+}
+
+export interface DevColdMemoryImpactBreakdown {
+  bookmark: number
+  text_excerpt: number
+  other: number
+}
+
+export interface DevColdMemoryImpactLayer {
+  probe_noise_or_diversity: number
+  other: number
+}
+
+export type DevColdMemoryImpactResponse =
+  | {
+      ok: true
+      totalCount: number
+      probeTruncated: boolean
+      beyondLimitCount: number
+      beyondLimitRate: number
+      indexedCount: number
+      indexedRate: number
+      beyondLimitIndexedCount: number
+      beyondLimitIndexedRate: number
+      oldestBeyondLimitIso: string | null
+      newestBeyondLimitIso: string | null
+      byType: DevColdMemoryImpactBreakdown
+      byLayer: DevColdMemoryImpactLayer
+      scanLimit: number
+    }
+  | {
+      ok: false
+      errorCode: 'DEV_ONLY' | 'DEV_COLD_MEMORY_FAILED'
+      error?: string
+    }
+
+/**
+ * DEV：Cold Memory Latency 测量（阶段六 D · 2026-09-21）。
+ * 假定库已 seed；测单次 listForKeywordRecall fallback 路径耗时。
+ */
+export type DevColdMemoryLatencyMessage = {
+  scope: BackgroundMessageScope
+  type: 'DEV_COLD_MEMORY_LATENCY'
+  payload?: { clue?: string }
+}
+
+export type DevColdMemoryLatencyResponse =
+  | {
+      ok: true
+      seedSize: number
+      recallLatencyMs: number
+      itemsReturned: number
+      recallSource: 'inverted' | 'scan'
+      clue: string
+    }
+  | {
+      ok: false
+      errorCode: 'DEV_ONLY' | 'DEV_COLD_MEMORY_LATENCY_FAILED'
+      error?: string
+    }
+
 export type DebugBackgroundMessage =
   | DevSeedRecallProbeMessage
   | DevPurgeProbeNoiseMessage
@@ -251,6 +319,8 @@ export type DebugBackgroundMessage =
   | DevBackdateMemorySavedAtMessage
   | DevProbeLibrarySnapshotMessage
   | DevListProbeFixturesMessage
+  | DevColdMemoryImpactMessage
+  | DevColdMemoryLatencyMessage
 export type DebugBackgroundResponse =
   | DevSeedRecallProbeResponse
   | DevPurgeProbeNoiseResponse
@@ -258,6 +328,8 @@ export type DebugBackgroundResponse =
   | DevBackdateMemorySavedAtResponse
   | DevProbeLibrarySnapshotResponse
   | DevListProbeFixturesResponse
+  | DevColdMemoryImpactResponse
+  | DevColdMemoryLatencyResponse
 
 export function parseSeedRecallProbePayload(value: unknown): SeedRecallProbePayload {
   return seedRecallProbePayloadSchema.parse(value ?? {})

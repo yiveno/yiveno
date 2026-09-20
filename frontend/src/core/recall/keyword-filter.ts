@@ -81,6 +81,53 @@ export const RECALL_DISMISS_PENALTY_CAP = 10
  */
 export const RECALL_ORTHOGRAPHIC_ACRONYM_MAX_LEN = 3
 
+/**
+ * 将 hyphen / underscore 折成空格（仅在 ASCII 词字符之间）。
+ * 用于对齐「react-native」与「react native」/「reactnative」。
+ * 不动非 ASCII 字符、不动 host 形式（含点的段）、不折首尾。
+ *
+ * `compactRecallText` 仅抹空白；若 token 是「react-native」（连字符保留），
+ * 与条目 compact 后的「reactnative」或「react native」互不 substring 命中（AF-14）。
+ * 本函数产出空白替换与无空白两种 variant，让查询侧召回非连字符形态条目。
+ */
+export function splitHyphenUnderscoreVariants(text: string): string[] {
+  if (!text || !/[-_]/.test(text)) {
+    return []
+  }
+  const isAsciiAlnum = (ch: string | undefined): boolean => {
+    if (!ch) {
+      return false
+    }
+    const code = ch.charCodeAt(0)
+    return (
+      (code >= 0x30 && code <= 0x39) ||
+      (code >= 0x41 && code <= 0x5a) ||
+      (code >= 0x61 && code <= 0x7a)
+    )
+  }
+  const chars = text.split('')
+  const lastIndex = chars.length - 1
+  const spacedChars = chars.map((ch, i) => {
+    if ((ch !== '-' && ch !== '_') || i === 0 || i === lastIndex) {
+      return ch
+    }
+    // host 含点的段：不折（避免破坏 URL 解析路径）
+    if (chars[i - 1] === '.' || chars[i + 1] === '.') {
+      return ch
+    }
+    if (isAsciiAlnum(chars[i - 1]) && isAsciiAlnum(chars[i + 1])) {
+      return ' '
+    }
+    return ch
+  })
+  const spaced = spacedChars.join('')
+  const noSep = spaced.replace(/\s+/g, '')
+  if (noSep !== text && isUsableRecallToken(noSep)) {
+    return [spaced, noSep]
+  }
+  return spaced !== text ? [spaced] : []
+}
+
 const DAY_MS = 24 * 60 * 60 * 1000
 
 const PRIMARY_CONTENT_FIELDS = new Set(['title', 'textExcerpt', 'note'])
@@ -366,6 +413,19 @@ export function tokenizeRecallClueDetailed(clue: string): RecallToken[] {
     const token = match.toLowerCase()
     if (token.length >= 2) {
       byToken.set(token, byToken.get(token) === 'phrase' ? 'phrase' : 'term')
+      // Hyphen / underscore 之间折：让查询侧「react-native」同时对齐「react native」「reactnative」。
+      for (const variant of splitHyphenUnderscoreVariants(token)) {
+        if (!isUsableRecallToken(variant) || byToken.has(variant)) {
+          continue
+        }
+        byToken.set(variant, 'term')
+        // 「react native」折出 "react" 和 "native" 子串，后续 split 会再处理
+        for (const part of variant.split(/\s+/)) {
+          if (isUsableRecallToken(part) && !byToken.has(part)) {
+            byToken.set(part, 'term')
+          }
+        }
+      }
     }
   }
 

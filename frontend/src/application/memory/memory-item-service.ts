@@ -5,7 +5,10 @@
 
 import { scheduleAsyncMemoryEmbedding } from '@/application/memory/schedule-async-memory-embedding'
 import { scheduleAsyncMemoryLlmEnrichment } from '@/application/memory/schedule-async-memory-llm-enrichment'
-import { RECALL_SCAN_LIMIT } from '@/application/recall/backends/recall-scan-limit'
+import {
+  RECALL_FALLBACK_SCAN_LIMIT,
+  RECALL_SCAN_LIMIT
+} from '@/application/recall/backends/recall-scan-limit'
 import type { CreateBookmarkInput, CreateTextExcerptInput } from '@/core/memory/create-memory-item'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import {
@@ -135,10 +138,16 @@ export class MemoryItemService {
     }
 
     const items = await this.mergeExcerptsIntoCandidates(
-      await this.repository.listByOwner({ limit })
+      // 阶段六 D：cold memory 修复 — fallback 从 20K 提到 100K。
+      // 倒排失败/无命中时全表扫，老条目不再被截断。
+      await this.repository.listByOwner({ limit: RECALL_FALLBACK_SCAN_LIMIT })
     )
-    logger.info('Memory', 'Recall 候选：全表扫描', { candidateCount: items.length })
-    return { items: items.slice(0, limit), source: 'scan' }
+    const truncated = items.length >= RECALL_FALLBACK_SCAN_LIMIT
+    logger.info('Memory', 'Recall 候选：全表扫描', {
+      candidateCount: items.length,
+      truncated
+    })
+    return { items: items.slice(0, RECALL_FALLBACK_SCAN_LIMIT), source: 'scan' }
   }
 
   /** 按 id 读取当前用户的 MemoryItem。 */

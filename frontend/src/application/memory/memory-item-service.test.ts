@@ -393,4 +393,88 @@ describe('MemoryItemService listForKeywordRecall', () => {
       bookmarks[2]?.id
     ])
   })
+
+  /**
+   * 阶段六 D：cold memory 修复。
+   * 倒排无命中 + 全表 fallback → 即使库内 30K 条，老条目仍能进入候选。
+   *
+   * 阶段一实验一曾确认 RECALL_SCAN_LIMIT = 20000 会让 rank 20001+ 不可见；
+   * 现在 RECALL_FALLBACK_SCAN_LIMIT = 100000。
+   */
+  it('倒排 fallback：库内 30K 时仍能召回老条目（cold memory 修复）', async () => {
+    const oldBookmark = createBookmarkMemoryItem({
+      ownerId: 'o',
+      sourceLocalProfileId: 'p',
+      payload: {
+        title: 'Gregory Peck Million Pound Note 1954',
+        url: 'https://en.wikipedia.org/wiki/The_Million_Pound_Note'
+      }
+    })
+
+    // 模拟库内 30K 条；老条目在 updatedAt DESC 排序的末尾
+    const bigLibrary = Array.from({ length: 30000 }, (_, i) =>
+      createBookmarkMemoryItem({
+        id: `filler-${i}`,
+        ownerId: 'o',
+        sourceLocalProfileId: 'p',
+        payload: { title: `Filler ${i}`, url: `https://example.com/${i}` }
+      })
+    )
+    // 把老条目放在排序末尾（updatedAt 最早）
+    bigLibrary.push(oldBookmark)
+
+    vi.mocked(keywordIndexRepository.lookupCandidateIds).mockResolvedValue({
+      ids: [],
+      rebuilt: false
+    })
+    vi.mocked(memoryItemRepository.listByOwner).mockImplementation(async options => {
+      if (options?.type === 'text_excerpt') {
+        return []
+      }
+      return bigLibrary
+    })
+    const service = new MemoryItemService(memoryItemRepository)
+    const parsed = parseRecallClue('Gregory Peck million pound')
+
+    const result = await service.listForKeywordRecall({ rawClue: '', parsed })
+
+    expect(result.source).toBe('scan')
+    // 关键断言：老条目（updatedAt 排序末尾）必须出现在候选中
+    expect(result.items.map(item => item.id)).toContain(oldBookmark.id)
+  })
+
+  /**
+   * 阶段六 D：fallback 上限是 OOM 安全阀，不是产品承诺。
+   * 若真实库 > 100K → 超出部分截断（与之前 RECALL_SCAN_LIMIT 同样的语义但更宽松）。
+   */
+  it('fallback：库内 > 100K 时按 RECALL_FALLBACK_SCAN_LIMIT 截断', async () => {
+    const bigLibrary = Array.from({ length: 100500 }, (_, i) =>
+      createBookmarkMemoryItem({
+        id: `filler-${i}`,
+        ownerId: 'o',
+        sourceLocalProfileId: 'p',
+        payload: { title: `Filler ${i}`, url: `https://example.com/${i}` }
+      })
+    )
+
+    vi.mocked(keywordIndexRepository.lookupCandidateIds).mockResolvedValue({
+      ids: [],
+      rebuilt: false
+    })
+    vi.mocked(memoryItemRepository.listByOwner).mockImplementation(async options => {
+      if (options?.type === 'text_excerpt') {
+        return []
+      }
+      // 模拟 repository 按 limit 截断
+      const limit = options?.limit ?? 100
+      return bigLibrary.slice(0, limit)
+    })
+    const service = new MemoryItemService(memoryItemRepository)
+    const parsed = parseRecallClue('foo')
+
+    const result = await service.listForKeywordRecall({ rawClue: '', parsed })
+
+    // 截断到 100K（OOM 安全阀）
+    expect(result.items.length).toBeLessThanOrEqual(100000)
+  })
 })

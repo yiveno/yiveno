@@ -12,6 +12,8 @@ import {
   parseSeedRecallProbePayload,
   type DebugBackgroundResponse,
   type DevBackdateMemorySavedAtResponse,
+  type DevColdMemoryImpactResponse,
+  type DevColdMemoryLatencyResponse,
   type DevListProbeFixturesResponse,
   type DevProbeCleanupResponse,
   type DevProbeLibrarySnapshotResponse,
@@ -21,6 +23,11 @@ import {
 import { backdateMemorySavedAt } from '@/infrastructure/debug/memory-dev-backdate-saved-at'
 import type { BackdateMemorySavedAtInput } from '@/infrastructure/debug/memory-dev-backdate-saved-at'
 import { listProbeFixtureCatalog } from '@/dev/probe/probe-fixture-catalog'
+import { buildColdMemoryImpactReport } from '@/dev/probe/probe-cold-memory-impact'
+import {
+  PROBE_COLD_MEMORY_CLUE,
+  measureRecallFallbackLatency
+} from '@/dev/probe/probe-cold-memory-latency'
 import { buildProbeLibrarySnapshot } from '@/dev/probe/probe-library-snapshot'
 import { cleanupProbeLibrary } from '@/dev/probe/recall-probe-cleanup-service'
 import { purgeProbeNoiseFromLibrary } from '@/dev/probe/recall-probe-purge-service'
@@ -136,6 +143,58 @@ export async function handleDebugBackgroundMessage(
         const failed: DevListProbeFixturesResponse = {
           ok: false,
           errorCode: 'DEV_FIXTURES_FAILED',
+          ...(error instanceof Error ? { error: error.message } : {})
+        }
+        return failed
+      }
+    }
+    case 'DEV_COLD_MEMORY_IMPACT': {
+      try {
+        const report = await buildColdMemoryImpactReport()
+        const ok: DevColdMemoryImpactResponse = {
+          ok: true,
+          totalCount: report.totalCount,
+          probeTruncated: report.probeTruncated,
+          beyondLimitCount: report.beyondLimitCount,
+          beyondLimitRate: report.beyondLimitRate,
+          indexedCount: report.indexedCount,
+          indexedRate: report.indexedRate,
+          beyondLimitIndexedCount: report.beyondLimitIndexedCount,
+          beyondLimitIndexedRate: report.beyondLimitIndexedRate,
+          oldestBeyondLimitIso: report.oldestBeyondLimitIso,
+          newestBeyondLimitIso: report.newestBeyondLimitIso,
+          byType: report.byType,
+          byLayer: report.byLayer,
+          scanLimit: report.scanLimit
+        }
+        return ok
+      } catch (error) {
+        const failed: DevColdMemoryImpactResponse = {
+          ok: false,
+          errorCode: 'DEV_COLD_MEMORY_FAILED',
+          ...(error instanceof Error ? { error: error.message } : {})
+        }
+        return failed
+      }
+    }
+    case 'DEV_COLD_MEMORY_LATENCY': {
+      try {
+        const clue =
+          (message.payload as { clue?: string } | undefined)?.clue ?? PROBE_COLD_MEMORY_CLUE
+        const result = await measureRecallFallbackLatency(clue)
+        const ok: DevColdMemoryLatencyResponse = {
+          ok: true,
+          seedSize: result.seedSize,
+          recallLatencyMs: result.recallLatencyMs,
+          itemsReturned: result.itemsReturned,
+          recallSource: result.recallSource,
+          clue: result.clue
+        }
+        return ok
+      } catch (error) {
+        const failed: DevColdMemoryLatencyResponse = {
+          ok: false,
+          errorCode: 'DEV_COLD_MEMORY_LATENCY_FAILED',
           ...(error instanceof Error ? { error: error.message } : {})
         }
         return failed

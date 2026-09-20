@@ -201,7 +201,9 @@ async function dispatchBackgroundMessage(
     case 'DEV_PROBE_CLEANUP':
     case 'DEV_BACKDATE_MEMORY_SAVED_AT':
     case 'DEV_PROBE_LIBRARY_SNAPSHOT':
-    case 'DEV_LIST_PROBE_FIXTURES': {
+    case 'DEV_LIST_PROBE_FIXTURES':
+    case 'DEV_COLD_MEMORY_IMPACT':
+    case 'DEV_COLD_MEMORY_LATENCY': {
       // 扩展 SW 禁止动态 import()（HTML 规范）；须静态 import + prod stub。
       if (!import.meta.env.DEV) {
         return {
