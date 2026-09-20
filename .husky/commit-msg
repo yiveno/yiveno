@@ -1,0 +1,34 @@
+#!/usr/bin/env sh
+# Commit message 强制校验（双层防御）
+# 1. commitlint：保证第一行 <type>(<scope>): 中文 合法
+# 2. check-commit-message.mjs：保证 body 覆盖 git diff --cached 每个被改文件
+#
+# 任一不通过即拒绝，修复后重试。
+set -e
+
+MSG_FILE="$1"
+
+echo "🔍 commit-msg: 校验 message 格式..."
+
+# 1) commitlint 校验（第一行 prefix/scope）
+echo "📐 commitlint..."
+if ! bunx commitlint --edit "$MSG_FILE"; then
+  echo ""
+  echo "💡 格式参考："
+  echo "   feat(<scope>): <中文一句话 ≤ 50 字>"
+  echo "   fix: <中文一句话>"
+  echo "   📋 详见 .cursor/rules/commit-message.mdc"
+  exit 1
+fi
+
+# 2) body 文件覆盖校验
+echo "📂 文件覆盖校验..."
+if ! bun run check:commit-message -- "$MSG_FILE"; then
+  echo ""
+  echo "💡 每个 git diff --cached 文件必须在 body 出现:"
+  echo "   [<完整路径>] 动作: 说明"
+  echo "   📋 详见 .cursor/rules/commit-message.mdc"
+  exit 1
+fi
+
+echo "✅ commit-msg: 通过"
