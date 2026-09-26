@@ -418,6 +418,120 @@ export function shouldRecallByConstraintNeighborhood(parsed: ParsedRecallClue): 
   return hasRecentSaved || hasTime || hasType
 }
 
+/**
+ * 无主题泛词：可进 contentTerms，但单独出现时不构成主题锚（H-topic）。
+ * 与 WEAK_PREFERENCE_RESIDUAL_TERMS 分工不同：那里管"弱偏好残留不过佐证门"，
+ * 这里管"泛词撑不起一次检索"。命中库内词面也不算主题（如满库都有 word）。
+ */
+const GENERIC_NON_TOPIC_TERMS = new Set([
+  'word',
+  'words',
+  'thing',
+  'things',
+  'stuff',
+  'item',
+  'items',
+  'anything',
+  'everything',
+  'one',
+  'ones',
+  'time',
+  'times',
+  'before',
+  'after',
+  'ago',
+  'back',
+  'then',
+  'when',
+  'ever',
+  'learn',
+  'learns',
+  'learned',
+  'learnt',
+  'learning',
+  'studied',
+  'studying',
+  'remember',
+  'remembered',
+  'forgot',
+  'forgotten',
+  'found',
+  'seen',
+  'saw',
+  'looked',
+  'looking',
+  'came',
+  // 规则 parser 透传的停用词（无主题贡献）
+  'was',
+  'is',
+  'are',
+  'were',
+  'be',
+  'been',
+  'being',
+  'am',
+  'that',
+  'this',
+  'these',
+  'those',
+  'the',
+  'a',
+  'an',
+  'it',
+  'its',
+  'of',
+  'on',
+  'in',
+  'at',
+  'to',
+  'and',
+  'or',
+  'with',
+  'about',
+  'as',
+  'by',
+  'into',
+  'over',
+  'up',
+  'out',
+  'off',
+  'any',
+  'my',
+  'your',
+  'his',
+  'her',
+  'their',
+  'our',
+  'once',
+  // 中文泛指（规则 parser 透传；英文 parser 同理）
+  '东西',
+  '单词',
+  '以前',
+  '之前',
+  '那个',
+  '这个',
+  '什么'
+])
+
+/**
+ * 主题锚判定（H-topic · 主题必填）。
+ * 有主题 = 有效内容词中至少一个非泛词（C/G），或附注指向（G），
+ * 或时间·刚存·类型约束邻域（弱主题 S/T）。
+ * 无主题（仅感受 F / 细节 D / 关系 R / 泛词等）不得进检索：候选集无法缩小，返回什么都是错的。
+ */
+export function hasRecallTopicAnchor(parsed: ParsedRecallClue): boolean {
+  const topical = effectiveContentTermsForRecall(parsed).some(
+    term => !GENERIC_NON_TOPIC_TERMS.has(normalizeRecallText(term))
+  )
+  if (topical) {
+    return true
+  }
+  if (parsed.noteHint === true) {
+    return true
+  }
+  return shouldRecallByConstraintNeighborhood(parsed)
+}
+
 /** recently_saved 且无线性时间词时，视为 recent 窗。 */
 export function effectiveParsedTimeRange(
   parsed: ParsedRecallClue,
@@ -607,7 +721,23 @@ export function recallByKeywordWithParsedClue(
       topPick: null,
       alsoPossible: [],
       totalRankedCount: 0,
-      clue: raw
+      clue: raw,
+      // H-topic：零锚点即无主题锚（约束邻域已在 gate 内放行），标缺主题。
+      ...(hasRecallTopicAnchor(parsed) ? {} : { emptyKind: 'missing_topic' as const })
+    }
+  }
+
+  // H-topic 主题必填：无主题锚不进检索（约束邻域已在 hasRecallTopicAnchor 内放行）。
+  // 泛词撑不起一次检索（如 "A word that was learned before"）：返回什么都是错的。
+  if (!hasRecallTopicAnchor(parsed)) {
+    return {
+      outcome: 'no_match',
+      topPick: null,
+      alsoPossible: [],
+      totalRankedCount: 0,
+      clue: raw,
+      emptyKind: 'missing_topic',
+      relatedGuess: null
     }
   }
 

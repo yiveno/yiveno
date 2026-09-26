@@ -216,6 +216,9 @@ export function buildRecallFramingFacts(
   const understood = buildUnderstood(parsed)
 
   if (result.outcome === 'no_match') {
+    if (result.emptyKind === 'missing_topic') {
+      return { kind: 'missing_topic' }
+    }
     if (!result.relatedGuess) {
       return null
     }

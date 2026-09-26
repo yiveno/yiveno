@@ -15,7 +15,9 @@ const translate = (key: string, subs?: string | string[]) => {
     framing_p2_constraint: 'These match the kind you pointed at.',
     framing_p4_weak: 'Nothing here is strong enough to pin down yet.',
     framing_p6_partial: '$1 related · showing $2–$3:',
-    framing_object_video: 'video'
+    framing_object_video: 'video',
+    framing_guess_missing_topic: 'Tell me what topic it is about, and I will look.',
+    framing_guess_disclaimer: 'The item below is only a guess — not the answer.'
   }
   let text = table[key] ?? key
   const values = subs === undefined ? [] : Array.isArray(subs) ? subs : [subs]
@@ -113,5 +115,11 @@ describe('renderRecallFraming', () => {
     expect(text).not.toContain('Looking for')
     expect(text).toContain('These match the kind you pointed at.')
     expect(text).toContain('12 related')
+  })
+
+  it('missing_topic 只问一问缺主题，不带猜测免责句', () => {
+    const text = renderRecallFraming({ kind: 'missing_topic' }, translate)
+    expect(text).toBe('Tell me what topic it is about, and I will look.')
+    expect(text).not.toContain('only a guess')
   })
 })

@@ -78,9 +78,15 @@ export const RecallFramingGuessFactsSchema = z.object({
   emptyKind: z.enum(['constrained_none', 'unconstrained']).optional()
 })
 
+/** no_match · 缺主题（H-topic）：未检索，只问一问。 */
+export const RecallFramingMissingTopicFactsSchema = z.object({
+  kind: z.literal('missing_topic')
+})
+
 export const RecallFramingFactsSchema = z.discriminatedUnion('kind', [
   RecallFramingCandidateFactsSchema,
-  RecallFramingGuessFactsSchema
+  RecallFramingGuessFactsSchema,
+  RecallFramingMissingTopicFactsSchema
 ])
 
 export type RecallFramingFacts = z.infer<typeof RecallFramingFactsSchema>

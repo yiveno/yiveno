@@ -135,4 +135,28 @@ describe('buildRecallFramingFacts', () => {
     expect(facts.understood.objectTypes).toContain('video')
     expect(facts.retrievalPath).toBe('constraint_neighborhood')
   })
+
+  it('no_match · missing_topic：产出 missing_topic 事实（无猜测）', () => {
+    const result: RecallResult = {
+      outcome: 'no_match',
+      topPick: null,
+      alsoPossible: [],
+      totalRankedCount: 0,
+      clue: 'A word that was learned before',
+      emptyKind: 'missing_topic',
+      relatedGuess: null
+    }
+    expect(buildRecallFramingFacts(result)).toEqual({ kind: 'missing_topic' })
+  })
+
+  it('no_match · 无猜测且非缺主题：返回 null', () => {
+    const result: RecallResult = {
+      outcome: 'no_match',
+      topPick: null,
+      alsoPossible: [],
+      totalRankedCount: 0,
+      clue: 'totally unrelated quantum physics'
+    }
+    expect(buildRecallFramingFacts(result)).toBeNull()
+  })
 })

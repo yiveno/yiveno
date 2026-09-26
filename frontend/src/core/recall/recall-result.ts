@@ -38,10 +38,12 @@ export type RecallOutcome =
  * no_match 细分（产品文档 §7.0）。
  * - constrained_none：时间+类型等强约束下库内无痕迹（事实空）
  * - unconstrained：约束不足或无法判定约束空
+ * - missing_topic：无主题锚（H-topic 必填；未进检索，直接追问主题）
  */
 export type RecallEmptyKind =
   | 'constrained_none' // 强约束下库空
   | 'unconstrained' // 模糊空 / 仍需线索
+  | 'missing_topic' // 缺主题，未检索
 
 /** 关键词 Filter 召回结果。 */
 export interface RecallResult {

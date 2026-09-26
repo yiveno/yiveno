@@ -2285,6 +2285,9 @@
   "framing_guess_disclaimer": {
     "message": "The item below is only a guess — not the answer."
   },
+  "framing_guess_missing_topic": {
+    "message": "Tell me what topic it is about, and I will look."
+  },
   "framing_object_poem": {
     "message": "poem"
   },

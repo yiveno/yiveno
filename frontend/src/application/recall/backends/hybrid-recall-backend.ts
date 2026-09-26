@@ -43,6 +43,7 @@ import {
   applyParsedClueScoreBoosts,
   buildFilterClueFromParsed,
   filterMatchesByParsedTimeRange,
+  hasRecallTopicAnchor,
   recallByKeywordWithParsedClue,
   shouldRecallByConstraintNeighborhood,
   shouldSkipRecallAsZeroAnchor
@@ -739,6 +740,35 @@ export class HybridRecallBackend implements RecallBackend {
       priorUserUtterances,
       currentUtterance: normalizedClue
     })
+
+    // H-topic 主题必填：无主题锚不进候选加载 / 检索 / embedding，直接缺主题空。
+    // 多轮 accumulated 的主题由 merge.merged 自然承接；误判时用户补一句即可继续。
+    if (!hasRecallTopicAnchor(merge.merged)) {
+      const pipelineTiming: RecallPipelineTiming = {
+        understandMs,
+        candidateLoadMs: 0,
+        retrieveMs: 0,
+        totalMs: Date.now() - pipelineStartedAt,
+        understandSource: understood.source
+      }
+      trace('info', 'Hybrid Recall：缺主题锚，未进检索', {
+        entry,
+        clue: normalizedClue
+      })
+      return {
+        outcome: 'no_match',
+        topPick: null,
+        alsoPossible: [],
+        totalRankedCount: 0,
+        clue: normalizedClue,
+        parsed: merge.merged,
+        effectiveClue: merge.effectiveRaw,
+        emptyKind: 'missing_topic',
+        relatedGuess: null,
+        pipelineTiming,
+        visibleProgressStages: [...visibleProgressStages]
+      }
+    }
 
     reportProgress('narrowing')
     const candidateLoadStartedAt = Date.now()

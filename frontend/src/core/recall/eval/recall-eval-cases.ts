@@ -1,4 +1,5 @@
 import { RECALL_EVAL_IDS, type RecallEvalItemId } from '@/core/recall/eval/recall-eval-ids'
+import type { RecallEmptyKind } from '@/core/recall/recall-result'
 
 /** 线索画像档位：具体 / 半模糊 / 很糊 / 负例。 */
 export type RecallEvalClueClass =
@@ -12,13 +13,13 @@ export type RecallEvalClueClass =
  * - top1：Top Pick 必须是 expectedId
  * - in_topk：期望项须出现在候选前 k（含 Top Pick）
  * - need_a_clue：弱命中追问；无 Top Pick，expectedId 须在 alsoPossible
- * - no_match：应无 Top Pick
+ * - no_match：应无 Top Pick；可指定 emptyKind 锁细分（如 missing_topic）
  */
 export type RecallEvalExpectation =
   | { kind: 'top1'; expectedId: RecallEvalItemId } // Top Pick 命中
   | { kind: 'in_topk'; expectedId: RecallEvalItemId; k?: number } // 前 k 含期望项
   | { kind: 'need_a_clue'; expectedId: RecallEvalItemId } // 弱命中追问
-  | { kind: 'no_match' } // 无命中
+  | { kind: 'no_match'; emptyKind?: RecallEmptyKind } // 无命中
 
 /**
  * 门禁级别。
@@ -453,6 +454,14 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
     gate: 'must',
     expectation: { kind: 'no_match' },
     note: '内容佐证：窗内仅无关 standup 摘录且库无 standupscrapnoise → 禁止弱邻域交卷'
+  },
+  {
+    id: 'missing-topic-no-retrieval',
+    clue: 'A word that was learned before',
+    clueClass: 'negative',
+    gate: 'must',
+    expectation: { kind: 'no_match', emptyKind: 'missing_topic' },
+    note: 'H-topic 主题必填：无主题锚不得进检索；emptyKind 须为 missing_topic 且禁挂猜测'
   },
 
   // —— stretch：仍需同义/语义层 ——

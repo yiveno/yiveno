@@ -5,6 +5,7 @@
 
 import type { MemoryItem } from '@/core/memory/memory-item'
 import {
+  hasRecallTopicAnchor,
   memoryItemInTimeRange,
   memoryItemMatchesObjectType
 } from '@/core/recall/orchestrate-keyword-recall'
@@ -91,6 +92,15 @@ export function enrichEmptyRecallResult(
 ): RecallResult {
   if (result.outcome !== 'no_match') {
     return result
+  }
+
+  // H-topic 主题必填：无主题锚直接标缺主题，不进约束判定，不挂猜测。
+  if (!hasRecallTopicAnchor(parsed)) {
+    return {
+      ...result,
+      emptyKind: 'missing_topic',
+      relatedGuess: null
+    }
   }
 
   if (!hasStrongRecallConstraints(parsed)) {

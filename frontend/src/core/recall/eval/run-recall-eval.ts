@@ -47,12 +47,16 @@ export function judgeRecallEvalCase(
   const { expectation } = evalCase
 
   if (expectation.kind === 'no_match') {
-    const passed = result.outcome === 'no_match' && result.topPick === null
+    const emptyKindOk =
+      expectation.emptyKind === undefined || result.emptyKind === expectation.emptyKind
+    const guessOk = expectation.emptyKind === 'missing_topic' ? result.relatedGuess == null : true
+    const passed =
+      result.outcome === 'no_match' && result.topPick === null && emptyKindOk && guessOk
     return {
       passed,
       detail: passed
         ? '正确 no_match'
-        : `期望 no_match，实际 outcome=${result.outcome} topPick=${result.topPick?.item.id ?? 'null'}`
+        : `期望 no_match，实际 outcome=${result.outcome} topPick=${result.topPick?.item.id ?? 'null'} emptyKind=${result.emptyKind ?? 'null'}`
     }
   }
 

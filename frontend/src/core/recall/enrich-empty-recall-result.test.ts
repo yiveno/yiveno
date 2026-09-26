@@ -6,6 +6,7 @@ import {
   findRelatedGuessMatch,
   hasStrongRecallConstraints
 } from '@/core/recall/enrich-empty-recall-result'
+import { hasRecallTopicAnchor } from '@/core/recall/orchestrate-keyword-recall'
 import { parseRecallClue } from '@/core/recall/parse-recall-clue'
 import type { MemoryItem } from '@/core/memory/memory-item'
 
@@ -79,5 +80,29 @@ describe('enrichEmptyRecallResult', () => {
   it('无同类条目时 relatedGuess 为 null', () => {
     const parsed = parseRecallClue('the movie I watched yesterday', { nowMs: NOW_MS })
     expect(findRelatedGuessMatch([], parsed)).toBeNull()
+  })
+
+  it('H-topic：无主题锚 → missing_topic 且禁挂猜测', () => {
+    const parsed = parseRecallClue('A word that was learned before', { nowMs: NOW_MS })
+    expect(hasRecallTopicAnchor(parsed)).toBe(false)
+    const older = videoBookmark('2026-07-01T10:00:00.000Z', 'Old film notes')
+    const result = enrichEmptyRecallResult(
+      {
+        outcome: 'no_match',
+        topPick: null,
+        alsoPossible: [],
+        totalRankedCount: 0,
+        clue: parsed.raw
+      },
+      [older],
+      parsed
+    )
+    expect(result.emptyKind).toBe('missing_topic')
+    expect(result.relatedGuess).toBeNull()
+  })
+
+  it('H-topic：有内容词即有主题锚', () => {
+    const parsed = parseRecallClue('the movie I watched yesterday', { nowMs: NOW_MS })
+    expect(hasRecallTopicAnchor(parsed)).toBe(true)
   })
 })

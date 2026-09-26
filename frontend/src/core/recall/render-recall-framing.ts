@@ -156,6 +156,10 @@ export function renderRecallFramingRulesBody(
 ): string {
   const includeUnderstood = options.omitUnderstood !== true
 
+  if (facts.kind === 'missing_topic') {
+    return translate('framing_guess_missing_topic')
+  }
+
   if (facts.kind === 'guess') {
     const parts = [
       ...(includeUnderstood ? [renderUnderstood(facts.understood, translate)] : []),
@@ -189,7 +193,7 @@ export function renderRecallFraming(
   translate: TranslateFn,
   options: RenderRecallFramingOptions = {}
 ): string {
-  if (facts.kind === 'guess') {
+  if (facts.kind === 'guess' || facts.kind === 'missing_topic') {
     return renderRecallFramingRulesBody(facts, translate, options)
   }
 
