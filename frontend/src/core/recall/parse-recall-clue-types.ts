@@ -68,6 +68,21 @@ export const RecallTimeConfidenceSchema = z.enum([
 
 export type RecallTimeConfidence = z.infer<typeof RecallTimeConfidenceSchema>
 
+/**
+ * Recall 主题锚（H-topic · 根节点）——Recall 的必要条件，决定候选空间。
+ * - source=content：内容大意（C）的非泛词
+ * - source=goal：当时目标/附注指向（G）
+ * - strength=strong：≥1 具体内容词；weak：仅附注指向
+ * 来源/时间/行为/感受不构成主题（它们是 clue / preference，不是 topic）。
+ */
+export const RecallTopicSchema = z.object({
+  terms: z.array(z.string()),
+  source: z.enum(['content', 'goal']),
+  strength: z.enum(['strong', 'weak'])
+})
+
+export type RecallTopic = z.infer<typeof RecallTopicSchema>
+
 /** 相对时间窗（ISO 8601），闭区间 [from, to]。 */
 export const RecallTimeRangeSchema = z.object({
   from: z.string().datetime(),
@@ -84,6 +99,12 @@ export type RecallTimeRange = z.infer<typeof RecallTimeRangeSchema>
  */
 export const ParsedRecallClueSchema = z.object({
   raw: z.string(),
+  /**
+   * Recall 主题锚（H-topic · 根节点）；Recall 的必要条件。
+   * 仅内容大意（C · content）/ 当时目标（G · goal）构成；来源/时间/行为/感受不构成。
+   * 缺省时由 `deriveRecallTopic` 从 contentTerms / noteHint 派生。
+   */
+  topic: RecallTopicSchema.optional(),
   timeRange: RecallTimeRangeSchema.optional(),
   /** 有 timeRange 时必有；high=硬筛，low=软排（ADR-011）。 */
   timeConfidence: RecallTimeConfidenceSchema.optional(),

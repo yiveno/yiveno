@@ -6,7 +6,8 @@ import {
   findRelatedGuessMatch,
   hasStrongRecallConstraints
 } from '@/core/recall/enrich-empty-recall-result'
-import { hasRecallTopicAnchor } from '@/core/recall/orchestrate-keyword-recall'
+import { shouldRecallByConstraintNeighborhood } from '@/core/recall/orchestrate-keyword-recall'
+import { hasRecallTopicAnchor } from '@/core/recall/recall-topic'
 import { parseRecallClue } from '@/core/recall/parse-recall-clue'
 import type { MemoryItem } from '@/core/memory/memory-item'
 
@@ -102,7 +103,13 @@ describe('enrichEmptyRecallResult', () => {
   })
 
   it('H-topic：有内容词即有主题锚', () => {
-    const parsed = parseRecallClue('the movie I watched yesterday', { nowMs: NOW_MS })
+    const parsed = parseRecallClue('that privacy article I read', { nowMs: NOW_MS })
     expect(hasRecallTopicAnchor(parsed)).toBe(true)
+  })
+
+  it('H-topic：仅类型+时间（无内容词）不算主题锚，但走约束邻域仍可检索', () => {
+    const parsed = parseRecallClue('the movie I watched yesterday', { nowMs: NOW_MS })
+    expect(hasRecallTopicAnchor(parsed)).toBe(false)
+    expect(shouldRecallByConstraintNeighborhood(parsed)).toBe(true)
   })
 })

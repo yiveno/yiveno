@@ -1182,7 +1182,7 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 8. **Recall Framing · 宽 `top_pick`：** 输入 `javascript`（或等价 ≥6 互异组线索）→ 助手气泡含邻域说明（听懂 + 为何有列表 + 计数 `N · showing 1–5`）；**非**纯计数句；与首卡 Explain 不矛盾。
 9. **Recall Framing · `need_a_clue`：** 输入弱命中线索（例：`movie review I saved`）→ 气泡含把握度（弱命中）+ **至多一问**澄清；可有 LLM 芯片；禁止类型问卷 / 偏好建档。
 10. **Recall Framing · `no_match`+guess：** 输入强约束但库空线索（例：`poem I saved yesterday`）→ 诚实无命中 + 若有猜测卡则气泡说明猜测性质；**无**追问芯片。
-11. **主题必填（H-topic · Normative）：** clue 无主题锚（无内容大意/目标/来源时间约束，如 `A word that was learned before`）→ **不进检索**，`emptyKind=missing_topic`，气泡明示缺主题并只问一问："这是关于什么的？"；**无** Top Pick / 猜测卡 / 幻觉邻域。有主题才开查；误判时用户补一句即继续（多轮 accumulated 自动承接）。
+11. **主题必填（H-topic · Normative）：** clue 无主题锚（无内容大意 C / 目标 G，且非时间·类型约束邻域，如 `A word that was learned before`）→ **不进检索**，`emptyKind=missing_topic`，气泡明示缺主题并只问一问："这是关于什么的？"；**无** Top Pick / 猜测卡 / 幻觉邻域。有主题（或时间·类型约束邻域）才开查；误判时用户补一句即继续（多轮 accumulated 自动承接）。
 
 ### 5.8 冷启动手工验收（R1 · Normative）
 
@@ -1986,7 +1986,7 @@ Chrome API / 选区
   → 网关对本轮（硬噪音仍拒）
   → understand(本轮) → ParsedRecallClue_current
   → merge(accumulated, current) → ParsedRecallClue_merged
-  → 本轮无主题锚（H-topic）→ 未进检索，emptyKind=missing_topic（明示缺主题 + 只问一问）
+  → 本轮无主题锚且非约束邻域（H-topic）→ 未进检索，emptyKind=missing_topic（明示缺主题 + 只问一问）
   → 排除 dismissedIds → keyword Filter + 软加权；有 timeRange 则硬过滤
   → 若 no_match：判定 emptyKind；可选 relatedGuess（真实条目）；不附追问
   → 有候选：build RecallFramingFacts → 规则模板气泡；宽邻域 top_pick / need_a_clue 可 LLM 润色 P1–P5（同 clue 配额桶）+ 规则 P6 计数；芯片仍仅 need_a_clue

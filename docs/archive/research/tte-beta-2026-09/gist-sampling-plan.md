@@ -77,6 +77,7 @@
 | NS04 | C     | `no`                              | `gist_mismatch` + `literal_hijack`                                           |
 | NS05 | C     | `miss`                            | `weak_index`（中文标题 vs 英文 clue）+ `hybrid_drift`                        |
 | NS06 | C     | `miss`                            | 英文 Kyodo：字面 gist 鸿沟 + **缺 embedding** → `hybrid_drift`（非语言边界） |
+| NS07 | 无    | `no`（无主题 · H-topic 忽略）     | `missing_topic`（首句+追问均无主题；未检索、不幻觉、只问一问）               |
 
 **有效履约分子（截至写本页）：** NS02 `yes` ×1 · NS05/NS06 `miss` ×2 — **未达 Phase B 门槛。**
 
@@ -91,6 +92,7 @@
 - 进 must 的口语用例硬性要求带真实主题短语；无主题合成 clue 不写。
 - 边界：触发场景省略主题时（"刚才看到的那个"），隐式主题锚 = 当前 Tab/对话主题；
 - 现状：NS01–NS06 主锚 C×5、S+G+T×1，与假设一致。
+- NS07（真机）：首句 "A word that was learned before" + 追问后仍无主题 → 正确判 `missing_topic`（未检索）。H-topic 首条真人证据。
 
 ## 决定（Phase B 后填写）
 

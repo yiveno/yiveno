@@ -30,38 +30,44 @@ A word that was learned before
 ## 2. clue₁ = 首句（最小清洗后）
 
 ```text
-
+A word that was learned before
 ```
 
-| 项              | 结果     |
-| --------------- | -------- |
-| TTE-V₁ (s)      |          |
-| 邻域含 gold/alt | yes / no |
-| no_match / 空   | yes / no |
-| Framing 摘录    |          |
-| Top1 粗记       |          |
+| 项              | 结果                                                         |
+| --------------- | ------------------------------------------------------------ |
+| TTE-V₁ (s)      | —（未检索）                                                  |
+| 邻域含 gold/alt | —（无检索，无邻域）                                          |
+| no_match / 空   | **yes**（`emptyKind=missing_topic`，未进检索）               |
+| Framing 摘录    | Tell me what topic it is about, and I will look.（只问一问） |
+| Top1 粗记       | 无（不挂猜测）                                               |
+
+> 规则解析：contentTerms = `word/was/learned/before`（全泛词）→ 无主题锚 → `missing_topic`。
 
 ## 3. clue₂ = 补充句（「还能想起别的吗？」）
 
 ```text
-
+A word that was learned before
 ```
 
-| 项              | 结果     |
-| --------------- | -------- |
-| TTE-V₂ (s)      |          |
-| 邻域含 gold/alt | yes / no |
-| no_match / 空   | yes / no |
-| Framing 摘录    |          |
-| Top1 粗记       |          |
+| 项              | 结果                        |
+| --------------- | --------------------------- |
+| TTE-V₂ (s)      | —                           |
+| 邻域含 gold/alt | —                           |
+| no_match / 空   | **yes**（同首轮，仍无主题） |
+| Framing 摘录    | 同 clue₁                    |
+| Top1 粗记       | 无                          |
+
+> 维护者补充提示后仍未能给出任何主题（单词含义 / 来源 / 场景均无）→ 确认无主题锚。
 
 ## 4. 确认
 
 - [ ] `yes` — 目标对且认得出
 - [ ] `miss` — 目标对但产品没找回
-- [ ] `no` — 目标/口语不合格作废
+- [x] `no` — 目标/口语不合格作废（无主题 · H-topic 判"无意义请求"忽略）
 
-**taxonomy（可多）：** `gist_mismatch` · `literal_hijack` · `weak_index` · `rank_ok_below_fold` · `hybrid_drift` · `other:`
+**taxonomy（可多）：** `missing_topic`（H-topic 新增码）；旧码不适用
+
+**结论（H-topic 首条真人证据）：** 真实人类首句 + 追问后仍无主题 → Yiveno 正确判 `missing_topic`（未检索、不幻觉、只问一问）。符合"无主题即无意义请求、可忽略"的判定；本条不计入 Phase B 履约分子。
 
 ## 5. Outcome 配对（§7.2 P2 · 每条自动攒一个）
 

@@ -5,10 +5,11 @@
 
 import type { MemoryItem } from '@/core/memory/memory-item'
 import {
-  hasRecallTopicAnchor,
   memoryItemInTimeRange,
-  memoryItemMatchesObjectType
+  memoryItemMatchesObjectType,
+  shouldRecallByConstraintNeighborhood
 } from '@/core/recall/orchestrate-keyword-recall'
+import { hasRecallTopicAnchor } from '@/core/recall/recall-topic'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
 
@@ -94,8 +95,8 @@ export function enrichEmptyRecallResult(
     return result
   }
 
-  // H-topic 主题必填：无主题锚直接标缺主题，不进约束判定，不挂猜测。
-  if (!hasRecallTopicAnchor(parsed)) {
+  // H-topic 主题必填：无主题锚且非约束邻域直接标缺主题，不进约束判定，不挂猜测。
+  if (!hasRecallTopicAnchor(parsed) && !shouldRecallByConstraintNeighborhood(parsed)) {
     return {
       ...result,
       emptyKind: 'missing_topic',

@@ -43,11 +43,11 @@ import {
   applyParsedClueScoreBoosts,
   buildFilterClueFromParsed,
   filterMatchesByParsedTimeRange,
-  hasRecallTopicAnchor,
   recallByKeywordWithParsedClue,
   shouldRecallByConstraintNeighborhood,
   shouldSkipRecallAsZeroAnchor
 } from '@/core/recall/orchestrate-keyword-recall'
+import { hasRecallTopicAnchor, withRecallTopic } from '@/core/recall/recall-topic'
 import {
   effectiveContentTermsForRecall,
   filterMatchesByContentTermCorroboration,
@@ -740,10 +740,14 @@ export class HybridRecallBackend implements RecallBackend {
       priorUserUtterances,
       currentUtterance: normalizedClue
     })
+    merge.merged = withRecallTopic(merge.merged)
 
-    // H-topic 主题必填：无主题锚不进候选加载 / 检索 / embedding，直接缺主题空。
+    // H-topic 主题必填：无主题锚且非约束邻域不进候选加载 / 检索 / embedding，直接缺主题空。
     // 多轮 accumulated 的主题由 merge.merged 自然承接；误判时用户补一句即可继续。
-    if (!hasRecallTopicAnchor(merge.merged)) {
+    if (
+      !hasRecallTopicAnchor(merge.merged) &&
+      !shouldRecallByConstraintNeighborhood(merge.merged)
+    ) {
       const pipelineTiming: RecallPipelineTiming = {
         understandMs,
         candidateLoadMs: 0,
