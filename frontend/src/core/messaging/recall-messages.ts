@@ -18,14 +18,42 @@ export const recallDialogContextSchema = z.object({
 
 export type RecallDialogContext = z.infer<typeof recallDialogContextSchema>
 
+/** Recall 来源（用于 activeRecallId 命名空间隔离）。 */
+export const RECALL_SOURCE = {
+  sidepanel: 'sidepanel',
+  omnibox: 'omnibox',
+  extensionPage: 'extension-page'
+} as const
+
+export type RecallSource = (typeof RECALL_SOURCE)[keyof typeof RECALL_SOURCE]
+
 const recallWithCluePayloadSchema = z.object({
   clue: z.string().min(1).max(2000),
   context: recallDialogContextSchema.optional(),
+  /**
+   * 来源标记（用于 active recall 命名空间隔离，避免 Side Panel cancel Omnibox）。
+   * Side Panel / Omnibox / 扩展页各自独立追踪；UI 层填。
+   */
+  source: z.enum([RECALL_SOURCE.sidepanel, RECALL_SOURCE.omnibox, RECALL_SOURCE.extensionPage]),
+  /**
+   * 本轮请求 id。SW 用它做 in-flight 追踪：
+   * - 同 source 收到新 RECALL_WITH_CLUE 自动覆盖 activeRecallId
+   * - 收到 RECALL_CANCEL{ recallId } 时清除
+   * - handler 入口若 recallId !== activeRecallId → 直接早退（不调 LLM / 不写 telemetry）
+   * 必填；UI 层生成（递增数字或 UUID）。
+   */
+  recallId: z.string().min(1).max(64),
   /**
    * Side Panel 可见进展：本轮请求 id，SW 经 RECALL_VISIBLE_PROGRESS 回推阶段。
    * Omnibox / 无 UI 监听时可省略。
    */
   progressRequestId: z.string().min(1).max(128).optional()
+})
+
+/** Recall 主动取消信号。Side Panel 提交新 clue 时同步发出，旧 in-flight 早退。 */
+const recallCancelPayloadSchema = z.object({
+  source: z.enum([RECALL_SOURCE.sidepanel, RECALL_SOURCE.omnibox, RECALL_SOURCE.extensionPage]),
+  recallId: z.string().min(1).max(64)
 })
 
 /** Recall 面向 UI 的稳定错误码。 */
@@ -42,7 +70,14 @@ export type RecallWithClueMessage = {
   payload: z.infer<typeof recallWithCluePayloadSchema>
 }
 
-export type RecallBackgroundMessage = RecallWithClueMessage
+/** Recall 主动取消（Side Panel → SW）。 */
+export type RecallCancelMessage = {
+  scope: BackgroundMessageScope
+  type: 'RECALL_CANCEL'
+  payload: z.infer<typeof recallCancelPayloadSchema>
+}
+
+export type RecallBackgroundMessage = RecallWithClueMessage | RecallCancelMessage
 
 export type RecallSuccessResponse = {
   ok: true
@@ -57,6 +92,16 @@ export type RecallErrorResponse = {
 
 export type RecallBackgroundResponse = RecallSuccessResponse | RecallErrorResponse
 
+/** Recall 取消响应（Side Panel → SW → Side Panel；Side Panel 通常不再消费）。 */
+export type RecallCancelResponse = {
+  ok: true
+  cleared: boolean
+}
+
 export function parseRecallWithCluePayload(value: unknown) {
   return recallWithCluePayloadSchema.parse(value)
+}
+
+export function parseRecallCancelPayload(value: unknown) {
+  return recallCancelPayloadSchema.parse(value)
 }

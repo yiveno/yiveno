@@ -57,7 +57,7 @@ import {
   handleRecordRecallSettle,
   handleUpdateMemoryNote
 } from '@/background/handlers/memory-handler'
-import { handleRecallWithClue } from '@/background/handlers/recall-handler'
+import { handleRecallCancel, handleRecallWithClue } from '@/background/handlers/recall-handler'
 import {
   handleGetAiHostedQuota,
   handleGetUserSettings,
@@ -165,6 +165,8 @@ async function dispatchBackgroundMessage(
       return handleExportDetailExport(message.payload)
     case 'RECALL_WITH_CLUE':
       return handleRecallWithClue(message.payload)
+    case 'RECALL_CANCEL':
+      return handleRecallCancel(message.payload)
     case 'MCP_RECALL_EVIDENCE':
       return handleMcpRecallEvidence(message.payload)
     case 'GET_CHROME_BOOKMARK_IMPORT_STATUS':

@@ -5,7 +5,13 @@ import { parseRecallClue } from '@/core/recall/parse-recall-clue'
 
 describe('parseRecallWithCluePayload', () => {
   it('接受单句 clue', () => {
-    expect(parseRecallWithCluePayload({ clue: 'retention' })).toEqual({ clue: 'retention' })
+    expect(
+      parseRecallWithCluePayload({
+        clue: 'retention',
+        source: 'sidepanel',
+        recallId: 't1'
+      })
+    ).toEqual({ clue: 'retention', source: 'sidepanel', recallId: 't1' })
   })
 
   it('接受多轮 context', () => {
@@ -14,6 +20,8 @@ describe('parseRecallWithCluePayload', () => {
     })
     const payload = parseRecallWithCluePayload({
       clue: 'yesterday',
+      source: 'sidepanel',
+      recallId: 't2',
       context: {
         priorUserUtterances: ['poem Li Bai'],
         accumulated,
@@ -30,8 +38,15 @@ describe('parseRecallWithCluePayload', () => {
     expect(() =>
       parseRecallWithCluePayload({
         clue: 'x',
+        source: 'sidepanel',
+        recallId: 't3',
         context: { dismissedIds: ['not-a-uuid'] }
       })
     ).toThrow()
+  })
+
+  it('拒绝缺 recallId 或 source', () => {
+    expect(() => parseRecallWithCluePayload({ clue: 'x', source: 'sidepanel' })).toThrow()
+    expect(() => parseRecallWithCluePayload({ clue: 'x', recallId: 'r1' })).toThrow()
   })
 })

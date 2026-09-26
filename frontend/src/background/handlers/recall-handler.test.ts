@@ -83,7 +83,11 @@ describe('recall-handler', () => {
       url: 'https://example.com/retention'
     })
 
-    const response = await handleRecallWithClue({ clue: 'retention' })
+    const response = await handleRecallWithClue({
+      clue: 'retention',
+      source: 'sidepanel',
+      recallId: 'test-r1'
+    })
     expect(response.ok).toBe(true)
     if (!response.ok) {
       return
@@ -96,7 +100,11 @@ describe('recall-handler', () => {
   })
 
   it('handleRecallWithClue 无数据时 no_match', async () => {
-    const response = await handleRecallWithClue({ clue: 'missing content' })
+    const response = await handleRecallWithClue({
+      clue: 'missing content',
+      source: 'sidepanel',
+      recallId: 'test-r2'
+    })
     expect(response.ok).toBe(true)
     if (!response.ok) {
       return
@@ -122,7 +130,11 @@ describe('recall-handler', () => {
     const opened = await handleRecordMemoryOpen({ id: preferred.item.id })
     expect(opened.ok).toBe(true)
 
-    const before = await handleRecallWithClue({ clue: 'Yiveno' })
+    const before = await handleRecallWithClue({
+      clue: 'Yiveno',
+      source: 'sidepanel',
+      recallId: 'test-before'
+    })
     expect(before.ok).toBe(true)
     if (!before.ok) {
       return
@@ -134,7 +146,11 @@ describe('recall-handler', () => {
       expect(dismissed.ok).toBe(true)
     }
 
-    const after = await handleRecallWithClue({ clue: 'Yiveno' })
+    const after = await handleRecallWithClue({
+      clue: 'Yiveno',
+      source: 'sidepanel',
+      recallId: 'test-after'
+    })
     expect(after.ok).toBe(true)
     if (!after.ok) {
       return
@@ -158,7 +174,11 @@ describe('recall-handler', () => {
 
       vi.setSystemTime(recallNowMs)
 
-      const first = await handleRecallWithClue({ clue: 'poem about Li Bai' })
+      const first = await handleRecallWithClue({
+        clue: 'poem about Li Bai',
+        source: 'sidepanel',
+        recallId: 'test-first'
+      })
       expect(first.ok).toBe(true)
       if (!first.ok) {
         return
@@ -167,6 +187,8 @@ describe('recall-handler', () => {
 
       const second = await handleRecallWithClue({
         clue: 'yesterday',
+        source: 'sidepanel',
+        recallId: 'test-second',
         context: {
           priorUserUtterances: ['poem about Li Bai'],
           ...(first.result.parsed ? { accumulated: first.result.parsed } : {})
@@ -205,6 +227,8 @@ describe('recall-handler', () => {
 
     const withDismiss = await handleRecallWithClue({
       clue: 'Yiveno',
+      source: 'sidepanel',
+      recallId: 'test-with-dismiss',
       context: { dismissedIds: [preferred.item.id] }
     })
     expect(withDismiss.ok).toBe(true)

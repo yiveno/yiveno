@@ -1,6 +1,7 @@
 import { buildLlmParseClueMessages } from '@/core/recall/understand/build-llm-parse-prompt'
 import { type ClueFlowTrace, noopClueFlowTrace } from '@/core/recall/understand/clue-flow-trace'
 import { parseJsonObjectFromLlmText } from '@/core/recall/understand/extract-llm-json'
+import { getCachedLlmParse, setCachedLlmParse } from '@/core/recall/understand/llm-parse-cache'
 import { LlmParsedClueProposalSchema } from '@/core/recall/understand/llm-parsed-clue-proposal'
 import { mapLlmProposalToParsedClue } from '@/core/recall/understand/map-llm-proposal-to-parsed'
 import {
@@ -24,6 +25,9 @@ export interface ParseRecallClueWithLlmOptions {
 /**
  * LLM 口语 → ParsedRecallClue。
  * 流程：LLM prompt → 文本 → JSON → Zod 提议 → 确定性映射。不碰数据平面。
+ *
+ * 缓存策略：同 clue 5min 内复用 LLM proposal（时间相关字段仍按调用方 nowMs 重算）。
+ * 见 `llm-parse-cache.ts`。
  */
 export async function parseRecallClueWithLlm(
   clue: string,
@@ -32,6 +36,16 @@ export async function parseRecallClueWithLlm(
   const nowMs = options.nowMs ?? PARSE_GOLD_NOW_MS
   const trace = options.trace ?? noopClueFlowTrace
   const messages = buildLlmParseClueMessages(clue)
+
+  // 1) cache 命中：跳过 LLM，直接用 proposal + 当前 nowMs 重算 timeRange
+  const cached = getCachedLlmParse(clue, { nowMs })
+  if (cached) {
+    trace('info', 'LLM 解析：cache 命中，跳过 completer', {
+      clue,
+      contentTerms: cached.contentTerms
+    })
+    return mapLlmProposalToParsedClue(clue, cached, nowMs)
+  }
 
   trace('info', 'LLM 解析：已构造 messages', {
     messageCount: messages.length,
@@ -57,6 +71,8 @@ export async function parseRecallClueWithLlm(
   })
 
   const proposal = LlmParsedClueProposalSchema.parse(rawJson)
+  // 2) 写入 cache（不含时间戳；下次复用）
+  setCachedLlmParse(clue, proposal, { nowMs: Date.now() })
   trace('info', 'LLM 解析：Zod 提议通过', {
     timeLabel: proposal.timeLabel ?? null,
     objectTypes: proposal.objectTypes ?? null,

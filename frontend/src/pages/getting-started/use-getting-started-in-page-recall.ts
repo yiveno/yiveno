@@ -66,7 +66,11 @@ export function useGettingStartedInPageRecall(options: {
     })
 
     try {
-      const response = await recallWithClue({ clue })
+      const response = await recallWithClue({
+        clue,
+        source: 'extension-page',
+        recallId: `gs-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
+      })
       if (!response.ok) {
         recallError.value = t('getting_started_recall_failed')
         logger.warn('Onboarding', `${options.logLabel} 页内 Recall 失败`, {

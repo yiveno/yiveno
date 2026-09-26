@@ -62,6 +62,7 @@ import {
   writeColdStartPostReleaseBannerDismissedReadyAt
 } from '@/infrastructure/storage/cold-start-post-release-banner-storage'
 import {
+  cancelRecall,
   fetchAuthState,
   fetchChromeBookmarkImportStatus,
   fetchColdStartStatus,
@@ -1336,7 +1337,15 @@ async function runRecall(trimmedClue: string): Promise<void> {
   }
 
   const requestId = ++recallRequestId
+  // recallId 用于 SW 端 activeRecallId 追踪；同 source 新 recall 自动覆盖，旧 in-flight 早退。
+  // 与 requestId 共用同一递增计数器（语义一致：UI 端「当前 recall」= SW 端「活动 recall」）。
+  const recallId = `sp-${requestId}`
   const progressRequestId = `sp-${requestId}-${Date.now()}`
+  // 显式 cancel 旧 in-flight（同 clue 重复 Enter / 改 clue 提交 / Side Panel 关闭）。
+  // SW 端 setActiveRecall 已覆盖，但主动 cancel 让旧 LLM 在 guard 处更早返回。
+  if (requestId > 1) {
+    void cancelRecall({ source: 'sidepanel', recallId: `sp-${requestId - 1}` }).catch(() => {})
+  }
   errorMessage.value = ''
   isRecallRefreshing.value = true
   startRecallVisibleProgressUi(progressRequestId)
@@ -1360,6 +1369,8 @@ async function runRecall(trimmedClue: string): Promise<void> {
   try {
     const response = await recallWithClue({
       clue: trimmed,
+      source: 'sidepanel',
+      recallId,
       progressRequestId,
       ...(priorUserUtterances.length > 0 || accumulated || dismissedIds.length > 0
         ? {

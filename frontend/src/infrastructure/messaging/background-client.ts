@@ -59,6 +59,7 @@ import type {
 } from '@/core/messaging/memory-messages'
 import type {
   RecallBackgroundResponse,
+  RecallCancelResponse,
   RecallWithClueMessage
 } from '@/core/messaging/recall-messages'
 import type {
@@ -101,6 +102,18 @@ export async function recallWithClue(
     payload
   }
   return sendBackgroundMessage<RecallBackgroundResponse>(message)
+}
+
+/** 显式取消 in-flight recall（Side Panel 提交新 clue 时同步发出）。 */
+export async function cancelRecall(payload: {
+  source: RecallWithClueMessage['payload']['source']
+  recallId: string
+}): Promise<RecallCancelResponse> {
+  return sendBackgroundMessage<RecallCancelResponse>({
+    scope: 'background',
+    type: 'RECALL_CANCEL',
+    payload
+  })
 }
 
 /** 列出 MemoryItem（探活可用 limit: 1）。 */

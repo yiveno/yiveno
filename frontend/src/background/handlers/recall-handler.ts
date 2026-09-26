@@ -1,9 +1,19 @@
 import { recallService } from '@/application/recall/recall-service'
+import {
+  clearActiveRecall,
+  getActiveRecall,
+  setActiveRecall
+} from '@/background/handlers/active-recall-registry'
 import type {
   RecallBackgroundResponse,
-  RecallDialogContext
+  RecallCancelResponse,
+  RecallDialogContext,
+  RecallSource
 } from '@/core/messaging/recall-messages'
-import { parseRecallWithCluePayload } from '@/core/messaging/recall-messages'
+import {
+  parseRecallCancelPayload,
+  parseRecallWithCluePayload
+} from '@/core/messaging/recall-messages'
 import { extractDomainFromUrl } from '@/core/memory/payload'
 import { notifyRecallVisibleProgress } from '@/infrastructure/messaging/notify-recall-visible-progress'
 import { logger } from '@/infrastructure/logging/logger'
@@ -54,6 +64,15 @@ export async function handleRecallWithClue(payload: unknown): Promise<RecallBack
   const startedAt = Date.now()
   try {
     const input = parseRecallWithCluePayload(payload)
+    const source: RecallSource = input.source
+    const previousRecallId = setActiveRecall(source, input.recallId)
+    if (previousRecallId && previousRecallId !== input.recallId) {
+      logger.info('Recall', '同源新 recall 覆盖旧 activeRecallId（旧 in-flight 将早退）', {
+        source,
+        previousRecallId,
+        newRecallId: input.recallId
+      })
+    }
     const tabDomain = input.context?.currentTabDomain ?? (await resolveCurrentTabDomain())
     const context: RecallDialogContext | undefined =
       input.context || tabDomain
@@ -64,6 +83,8 @@ export async function handleRecallWithClue(payload: unknown): Promise<RecallBack
         : undefined
 
     logger.info('Recall', '收到 RECALL_WITH_CLUE', {
+      source,
+      recallId: input.recallId,
       clue: input.clue,
       clueLength: input.clue.trim().length,
       priorCount: context?.priorUserUtterances?.length ?? 0,
@@ -73,18 +94,38 @@ export async function handleRecallWithClue(payload: unknown): Promise<RecallBack
       progressRequestId: input.progressRequestId ?? null
     })
 
+    // active recall 守卫：进入 recallService 前最后一道闸。
+    // 若此期间被覆盖（同 source 新 recall / 显式 CANCEL），主动早退避免无效 LLM 调用 + 无效 telemetry。
+    if (getActiveRecall(source) !== input.recallId) {
+      logger.info('Recall', 'activeRecallId 已变（被覆盖或取消），早退', {
+        source,
+        requestedRecallId: input.recallId,
+        currentActiveRecallId: getActiveRecall(source) ?? null
+      })
+      return {
+        ok: false,
+        errorCode: 'RECALL_FAILED',
+        error: 'recall superseded'
+      }
+    }
+
     const progressRequestId = input.progressRequestId
     const result = await recallService.recallWithClue(input.clue, {
       ...(context ? { context } : {}),
       ...(progressRequestId
         ? {
             onVisibleProgress: stage => {
-              notifyRecallVisibleProgress({ progressRequestId, stage })
+              // 进展阶段也校验守卫：若中途被覆盖，不再 push UI
+              if (getActiveRecall(source) === input.recallId) {
+                notifyRecallVisibleProgress({ progressRequestId, stage })
+              }
             }
           }
         : {})
     })
     logger.info('Recall', 'RECALL_WITH_CLUE 完成', {
+      source,
+      recallId: input.recallId,
       durationMs: Date.now() - startedAt,
       outcome: result.outcome,
       topPickId: result.topPick?.item.id ?? null,
@@ -103,4 +144,16 @@ export async function handleRecallWithClue(payload: unknown): Promise<RecallBack
       ...(error instanceof Error ? { error: error.message } : {})
     }
   }
+}
+
+/** 显式取消 in-flight recall。Side Panel 提交新 clue 时同步发出。 */
+export function handleRecallCancel(payload: unknown): RecallCancelResponse {
+  const input = parseRecallCancelPayload(payload)
+  const cleared = clearActiveRecall(input.source, input.recallId)
+  logger.info('Recall', '收到 RECALL_CANCEL', {
+    source: input.source,
+    recallId: input.recallId,
+    cleared
+  })
+  return { ok: true, cleared }
 }
