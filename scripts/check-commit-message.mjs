@@ -69,7 +69,8 @@ function isMergeOrAuto(message) {
 
 /** 运行 git 子命令拿字符串数组；失败返回 [] */
 function gitLines(args) {
-  const proc = Bun.spawnSync(['git', ...args], {
+  // -c core.quotepath=false：CJK 路径不转义为 \xxx，方能与 message 索引匹配
+  const proc = Bun.spawnSync(['git', '-c', 'core.quotepath=false', ...args], {
     cwd: repoRoot,
     stdout: 'pipe',
     stderr: 'pipe'
