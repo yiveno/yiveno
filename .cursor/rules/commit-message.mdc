@@ -78,26 +78,33 @@ alwaysApply: true
 
 ### 示例（基于本仓真实改动）
 
+> ⚠️ **`subject-case` 强约束（commitlint 默认黑名单 sentence-case / start-case / pascal-case / upper-case）：**
+> - 主题里的英文词必须**全小写**（`getting started` / `try it`），不可首字母大写
+> - ADR-XXX 形式**允许**（数字+大写字母+连字符作为技术标识符不被黑名单识别）
+> - 中英混排时，把英文短语改成小写或纯中文
+> - 反例：`Getting Started 书签首召` / `Omnibox 入口` / `ADR-011 启动` — 触发 sentence-case 拦截
+> - 正例：`getting started 书签首召` / `omnibox 入口` / `ADR-011 启动`
+
 #### ✅ 好（feat）
 
 ```text
-feat(sidepanel): Getting Started 书签首召 + 自然 clue 采样
+feat(sidepanel): getting started 书签首召 + 自然 clue 采样
 
 [frontend/src/pages/getting-started/GettingStarted.vue] 新增:
-- 双源 tab（Bookmarks / Excerpts）含主进度条与 LLM 示意 clue
+- 双源 tab（bookmarks / excerpts）含主进度条与 LLM 示意 clue
 
 [frontend/src/pages/getting-started/BookmarksTab.vue] 新增:
-- Import→主进度→Try it 三段流
+- import→主进度→try it 三段流
 
 [frontend/src/pages/getting-started/ExcerptsTab.vue] 新增:
-- Things we miss 划存 + 定稿 clue + Try it
+- things we miss 划存 + 定稿 clue + try it
 
 [frontend/src/pages/getting-started/ContinueFooter.vue] 新增:
-- 页底 Continue 软出口（无 Start using / Skip 双按钮）
+- 页底 continue 软出口（无 start using / skip 双按钮）
 
 [docs/product/CURRENT.md] 修改:
-- 「本周做」增列 Getting Started 启动设置（§5.8）
-- 「本周不做」明确不动 Side Panel 顶栏条
+- 「本周做」增列 getting started 启动设置（§5.8）
+- 「本周不做」明确不动 side panel 顶栏条
 
 [.cursor/rules/session-boot.mdc] 自动同步:
 - bun run sync:ide-boot 重写「当下」块
@@ -116,10 +123,10 @@ feat(sidepanel): Getting Started 书签首召 + 自然 clue 采样
 #### ✅ 好（fix）
 
 ```text
-fix(recall): ADR-011 时间置信度回归 + Omnibox 入口漏 tag
+fix(recall): 时间置信度回归（ADR-011） + omnibox 入口漏 tag
 
 [frontend/src/core/recall/content-term-corroboration.ts] 修改:
-- high 硬筛 + low 软排；Framing Around 改为解释文案
+- high 硬筛 + low 软排；framing around 改为解释文案
 
 [frontend/src/core/recall/orchestrate-keyword-recall.ts] 修改:
 - 硬筛命中 0 条时 soft fallback 到字面候选而非空结果
@@ -147,7 +154,7 @@ fix(recall): ADR-011 时间置信度回归 + Omnibox 入口漏 tag
 chore(scripts): 清理废弃脚本与 ESLint/Knip 残留引用
 
 [scripts/keep-supabase-alive.mjs] 删除:
-- 历史 Supabase 保活（CI workflow 已接管，详 commit body）
+- 历史 supabase 保活（CI workflow 已接管，详 commit body）
 
 [scripts/e2e-management.mjs] 删除:
 - puppeteer 依赖未装、product.mdc 不再允许大 E2E
@@ -164,6 +171,29 @@ chore(scripts): 清理废弃脚本与 ESLint/Knip 残留引用
 ## 引用
 
 - scripts/README.md §门禁脚本
+```
+
+#### ✅ 好（docs ADR 落地）
+
+```text
+docs(adr): 落档 recall request topic 两种来源（D1-B 退化弱 topic 模型化）
+
+[docs/architecture/decisions/ADR-014-recall-request-topic-two-sources.md] 新增:
+- 决策落档：D1-B 退化弱 topic（topic-driven 强 + preference-driven 弱）
+- topic 定位为 recall 必要条件判定器（主语=问题边界，非产品功能）
+- 含上游 ADR-001/003/005/010/011 + 下游草案/§7.05/代码/eval
+- 含拒绝的替代方案（D1-A 严格 / D1-C 不建模）
+
+[docs/architecture/decisions/README.md] 修改:
+- 索引表加 ADR-014 一行
+
+[docs/README.md] 修改:
+- 规格正文段：草案块下补 ADR-014 链接（决策 ↔ 正文可对照）
+
+## 引用
+
+- ADR-001 / ADR-003 / ADR-005 / ADR-010 / ADR-011
+- §7.05 / Recall-Request 草案
 ```
 
 #### ❌ 反例（禁止）
@@ -195,6 +225,7 @@ chore(scripts): 清理废弃脚本与 ESLint/Knip 残留引用
 
 - [ ] 第一行匹配 `^(feat|fix|refactor|docs|test|chore|ci|perf)(\([\w\-/]+\))?!: ` + 中文
 - [ ] 首行 ≤ 50 字符
+- [ ] **subject 不含 sentence-case / start-case / pascal-case / upper-case 英文短语**（commitlint 黑名单，详见上方 `subject-case` 警告）
 - [ ] `git diff --cached --name-only` 每个路径在 body 的方括号中至少出现 1 次
 - [ ] 没引用未跑的验证命令
 - [ ] 产品面用语经 `terminology.mdc`（clue / Recall / 附注）
@@ -206,4 +237,5 @@ chore(scripts): 清理废弃脚本与 ESLint/Knip 残留引用
 commit 触发 `.husky/commit-msg` 时如被拒绝，AI 应：
 1. **报告**：哪些路径缺失、哪行格式不合规
 2. **不反复重试同一份 message**——读错误信息，针对性修
-3. **修到完全合规后再 commit**
+3. **常见 sentence-case 触发词**（历史高频拦截）：`Getting Started` / `Side Panel` / `Omnibox` / `Bookmarks` / `Excerpts` / `Continue` / `Try it` / `Start using` / `Skip` / `Heard as` / `Framing Around` —— 改为小写或中文
+4. **修到完全合规后再 commit**
