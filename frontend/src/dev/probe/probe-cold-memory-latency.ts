@@ -96,12 +96,5 @@ export async function measureRecallFallbackLatency(clue: string): Promise<ColdMe
  */
 export const PROBE_COLD_MEMORY_CLUE = '__yiveno_probe_latency_marker__'
 
-/**
- * 便捷封装：用默认 probe clue 测 latency。
- */
-export async function measureDefaultRecallFallbackLatency(): Promise<ColdMemoryLatencyProbe> {
-  return measureRecallFallbackLatency(PROBE_COLD_MEMORY_CLUE)
-}
-
 // 引用 keywordIndexRepository 仅用于编译时类型确认；实际无副作用
 void keywordIndexRepository
