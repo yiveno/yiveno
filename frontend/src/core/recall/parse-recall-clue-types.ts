@@ -78,7 +78,12 @@ export type RecallTimeConfidence = z.infer<typeof RecallTimeConfidenceSchema>
 export const RecallTopicSchema = z.object({
   terms: z.array(z.string()),
   source: z.enum(['content', 'goal']),
-  strength: z.enum(['strong', 'weak'])
+  strength: z.enum(['strong', 'weak']),
+  /**
+   * Topic embedding 向量（Gap 5 · D3-C 语义化）。
+   * 由 `deriveTopicEmbedding` 产出；undefined 时 topicLookup 走词法路径。
+   */
+  embedding: z.instanceof(Float32Array).optional()
 })
 
 export type RecallTopic = z.infer<typeof RecallTopicSchema>
@@ -92,6 +97,28 @@ export const RecallTimeRangeSchema = z.object({
 })
 
 export type RecallTimeRange = z.infer<typeof RecallTimeRangeSchema>
+
+/**
+ * RecallResult 中携带的 Topic 信息（窄子集）。
+ *
+ * 仅含 Gap 3/5 落地所需的最小字段。
+ * - displayName + tokens：Gap 3 落地（供 UI / Debug 展示）。
+ * - embedding：Gap 5 落地（供 topicLookup embedding 路径调用）。
+ * 不含完整 parsed.topic（source / strength 供管线内部使用，不对外暴露）。
+ */
+export const TopicDescriptorSchema = z.object({
+  /** Topic 词面的规范化表示（供 UI / Debug 展示）。 */
+  displayName: z.string(),
+  /** Topic 检索词（terms 的子集，用于候选加载先验约束 · Gap 1）。 */
+  tokens: z.array(z.string()),
+  /**
+   * Topic embedding 向量（Gap 5 · D3-C 语义化）。
+   * 由 `deriveTopicEmbedding` 产出；undefined 时 topicLookup 走词法路径。
+   */
+  embedding: z.instanceof(Float32Array).optional()
+})
+
+export type TopicDescriptor = z.infer<typeof TopicDescriptorSchema>
 
 /**
  * 口语线索解析结果（P0）。

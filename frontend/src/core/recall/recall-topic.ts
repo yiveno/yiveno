@@ -5,13 +5,14 @@
  *   「Recall Request 模型 + Discovery 边界」），不进检索、返回 `missing_topic`。
  * - Topic 只由**内容大意（C）**或**当时目标 / 附注（G）**构成；来源 / 时间 / 行为 / 感受是
  *   clue / preference，**不构成**主题。
- * - 判定基于解析结果的词法表示（非泛词内容词）；这与「Topic 是语义表示」的终态仍有距离，
- *   属已知演进项。
+ * - 判定基于解析结果的词法表示（非泛词内容词）；embedding 由 `deriveTopicEmbedding` 产出（Gap 5）。
+ * - `withRecallTopic` 是幂等回填（同步，不改已有 topic）；`withRecallTopicAsync` 异步补 embedding（Gap 5）。
  */
 
 import { effectiveContentTermsForRecall } from '@/core/recall/content-term-corroboration'
 import { normalizeRecallText } from '@/core/recall/keyword-filter'
 import type { ParsedRecallClue, RecallTopic } from '@/core/recall/parse-recall-clue-types'
+import { TopicDescriptorSchema, type TopicDescriptor } from '@/core/recall/parse-recall-clue-types'
 
 /**
  * 无主题泛词：可进 contentTerms，但单独出现时不构成主题锚（H-topic）。
@@ -146,4 +147,84 @@ export function withRecallTopic(parsed: ParsedRecallClue): ParsedRecallClue {
   }
   const topic = deriveRecallTopic(parsed)
   return topic ? { ...parsed, topic } : parsed
+}
+
+/**
+ * 由 parsed.topic 构造 TopicDescriptor（含 Gap 3 displayName + tokens，
+ * Gap 5 可选 embedding）。
+ */
+export function buildTopicDescriptorFromRecallTopic(
+  topic: NonNullable<ParsedRecallClue['topic']>,
+  embedding?: Float32Array
+): TopicDescriptor {
+  const displayName = topic.terms.length > 0 ? topic.terms.join(' ') : '(weak topic)'
+  return TopicDescriptorSchema.parse({
+    displayName,
+    tokens: topic.terms,
+    ...(embedding ? { embedding } : {})
+  })
+}
+
+/**
+ * 异步幂等回填 Topic 到 parsed，含 embedding 产出（Gap 5 · D3-C 语义化）。
+ *
+ * - 若 parsed.topic 已存在：幂等返回（不重复派生）
+ * - 若 parsed.topic 不存在：先派生，再补 embedding
+ * - embedClueText 注入现有 embedding 通道；null 或失败时降级词法（embedding 字段省略）
+ *
+ * 注意：embedding 降级时仍保留 tokens（词法 fallback 由 topicLookup 接管）。
+ *
+ * @param parsed 解析结果
+ * @param embedClueText embedding 请求函数（注入）；null 表示不可用 → 降级词法
+ * @returns 含完整 TopicDescriptor 的 ParsedRecallClue（含 embedding 或无 embedding 字段）
+ */
+export async function withRecallTopicAsync(
+  parsed: ParsedRecallClue,
+  embedClueText: ((text: string) => Promise<Float32Array | null> | null) | null
+): Promise<ParsedRecallClue> {
+  // Step 1：幂等回填（与 withRecallTopic 相同逻辑）
+  if (!parsed.topic) {
+    const topic = deriveRecallTopic(parsed)
+    if (!topic) {
+      // 无 topic（缺失主题锚）：直接返回
+      return parsed
+    }
+    parsed = { ...parsed, topic }
+  }
+
+  // 此处 parsed.topic 必为 RecallTopic（TypeScript 不会跨 reassign 保留 narrowing，需重读）
+  const currentTopic = parsed.topic!
+
+  // Step 2：检查是否已有 embedding（幂等）
+  if (currentTopic.embedding !== undefined) {
+    return parsed
+  }
+
+  // Step 3：构造 TopicDescriptor（用于 deriveTopicEmbedding）
+  const topicDescriptor = buildTopicDescriptorFromRecallTopic(currentTopic)
+
+  // Step 4：若 embedClueText 不可用，直接降级词法
+  if (!embedClueText) {
+    return parsed
+  }
+
+  // Step 5：动态导入 avoid circular dependency
+  const { deriveTopicEmbedding } = await import('@/core/recall/topic-embedding')
+
+  const result = await deriveTopicEmbedding(topicDescriptor, embedClueText)
+  if (!result.semantic || !result.embedding) {
+    // 降级词法：embedding 字段不填；topicLookup 会走词法路径
+    return parsed
+  }
+
+  // Step 6：填 embedding 到 parsed.topic（保留原 terms/source/strength）
+  return {
+    ...parsed,
+    topic: {
+      terms: currentTopic.terms,
+      source: currentTopic.source,
+      strength: currentTopic.strength,
+      embedding: result.embedding
+    }
+  }
 }

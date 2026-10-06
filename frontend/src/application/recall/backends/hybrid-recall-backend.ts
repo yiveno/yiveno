@@ -42,12 +42,18 @@ import { enrichEmptyRecallResult } from '@/core/recall/enrich-empty-recall-resul
 import {
   applyParsedClueScoreBoosts,
   buildFilterClueFromParsed,
+  filterItemsByTopicTokens,
   filterMatchesByParsedTimeRange,
+  injectTopic,
   recallByKeywordWithParsedClue,
   shouldRecallByConstraintNeighborhood,
   shouldSkipRecallAsZeroAnchor
 } from '@/core/recall/orchestrate-keyword-recall'
-import { hasRecallTopicAnchor, withRecallTopic } from '@/core/recall/recall-topic'
+import {
+  hasRecallTopicAnchor,
+  withRecallTopic,
+  withRecallTopicAsync
+} from '@/core/recall/recall-topic'
 import {
   effectiveContentTermsForRecall,
   filterMatchesByContentTermCorroboration,
@@ -151,9 +157,20 @@ async function finalizeKeywordResult(
   })
   const corroborated = filterMatchesByContentTermCorroboration(withPairs, corroborationTerms)
   return {
-    result: buildRecallResult(displayClue, corroborated, {
-      contentTerms: corroborationTerms
-    }),
+    result: injectTopic(
+      buildRecallResult(displayClue, corroborated, {
+        contentTerms: corroborationTerms,
+        ...(base.topic
+          ? {
+              topic: {
+                displayName: base.topic.displayName,
+                tokens: base.topic.tokens
+              }
+            }
+          : {})
+      }),
+      effectiveParsed
+    ),
     effectiveParsed,
     timeSoftReopen
   }
@@ -422,11 +439,14 @@ function matchToNarrowExampleSource(match: RecallMatch): NarrowExampleSource {
 /**
  * 宽邻域且无芯片时：抽取 grounded Narrow 举例；有 completer 则仅润色展示形态。
  * 失败静默回退原词；有芯片让位时跳过（placeholder 走 Neutral）。
+ * Gap 2：topicTerms 存在时，Narrow 举例末尾追加独立 topic 示例。
  */
 async function attachComposerNarrowExamplesIfNeeded(
   result: RecallResult,
   input: {
     clue: string
+    /** 解析结果（含 topic），用于注入 topicTerms 独立示例（Gap 2）。 */
+    parsed: ParsedRecallClue
     complete?: NonNullable<ReturnType<typeof getClueLlmCompleter>>
     trace: ReturnType<typeof createRecallFlowTrace>
   }
@@ -450,7 +470,9 @@ async function attachComposerNarrowExamplesIfNeeded(
   const sources = collectPoolMatches(result).map(matchToNarrowExampleSource)
   const selected = extractComposerNarrowExamples({
     candidates: sources,
-    clueText: input.clue
+    clueText: input.clue,
+    // Gap 2：注入 topicTerms 使函数返回末尾追加独立 topic 示例
+    ...(input.parsed.topic?.terms ? { topicTerms: input.parsed.topic.terms } : {})
   })
   if (selected.length === 0) {
     input.trace('info', 'Narrow 举例：抽不出合格词')
@@ -740,16 +762,34 @@ export class HybridRecallBackend implements RecallBackend {
       priorUserUtterances,
       currentUtterance: normalizedClue
     })
-    merge.merged = withRecallTopic(merge.merged)
+
+    // D3-C Gap 5：补 Topic embedding（与 withRecallTopic 幂等回填并行）。
+    // 注入 embedClueText 句柄：使用现有 embedding 通道（requestWorkerEmbeddings）。
+    // 无登录态或 embedding 失败时降级词法（embedding 字段不填；topicLookup 走词法路径）。
+    let merged = withRecallTopic(merge.merged)
+    const session = await getAuthSession()
+    if (session?.accessToken) {
+      const accessToken = session.accessToken
+      // Gap 5：注入 embedding 句柄（仅在登录态可用时）
+      merged = await withRecallTopicAsync(merged, async (text: string) => {
+        try {
+          const embed = await requestWorkerEmbeddings(accessToken, [text])
+          const vector = embed.embeddings[0]
+          if (!vector || vector.length === 0) {
+            return null
+          }
+          return new Float32Array(vector)
+        } catch {
+          return null
+        }
+      })
+    }
 
     // H-topic 主题必填（ADR-014 · D1-B 退化弱 Topic，2026-10-06 裁决）：
     // - 完全无锚点（既无 C/G，也无强约束）→ `missing_topic`，未进检索
     // - 约束邻域（仅时间 high + 类型 / 刚存）→ 进下方 `shouldRecallByConstraintNeighborhood` 分支
-    // 多轮 accumulated 的主题由 merge.merged 自然承接；误判时用户补一句即可继续。
-    if (
-      !hasRecallTopicAnchor(merge.merged) &&
-      !shouldRecallByConstraintNeighborhood(merge.merged)
-    ) {
+    // 多轮 accumulated 的主题由 merged 自然承接；误判时用户补一句即可继续。
+    if (!hasRecallTopicAnchor(merged) && !shouldRecallByConstraintNeighborhood(merged)) {
       const pipelineTiming: RecallPipelineTiming = {
         understandMs,
         candidateLoadMs: 0,
@@ -767,7 +807,7 @@ export class HybridRecallBackend implements RecallBackend {
         alsoPossible: [],
         totalRankedCount: 0,
         clue: normalizedClue,
-        parsed: merge.merged,
+        parsed: merged,
         effectiveClue: merge.effectiveRaw,
         emptyKind: 'missing_topic',
         relatedGuess: null,
@@ -780,16 +820,16 @@ export class HybridRecallBackend implements RecallBackend {
     const candidateLoadStartedAt = Date.now()
     const listedResult = await memoryItemService.listForKeywordRecall({
       rawClue: normalizedClue,
-      parsed: merge.merged,
+      parsed: merged,
       limit: RECALL_SCAN_LIMIT
     })
     const candidateLoadMs = Date.now() - candidateLoadStartedAt
-    const listed = listedResult.items
-    const items = excludeDismissedMemoryItems(listed, dismissedIds)
+    const listedItems = listedResult.items
+    let items = excludeDismissedMemoryItems(listedItems, dismissedIds)
 
     const clueEmbeddingText = buildClueEmbeddingText({
       effectiveClue: merge.effectiveRaw,
-      parsed: merge.merged,
+      parsed: merged,
       rawClue: normalizedClue
     })
 
@@ -798,17 +838,34 @@ export class HybridRecallBackend implements RecallBackend {
       candidateCount: items.length
     })
 
+    // Gap 1：Topic 先验预筛（仅在 parsed.topic 存在时启用；与 contentTerms 候选取并集）
+    const topicPreFilterEnabled = Boolean(merged.topic?.terms?.length)
+    if (topicPreFilterEnabled) {
+      const topicTermCount = merged.topic!.terms.length
+      const preFilterCount = items.length
+      // Topic 预筛：与现有候选取并集（不是交集，不删 contentTerms 已有候选）
+      const topicFiltered = filterItemsByTopicTokens(items, merged.topic!)
+      const postFilterCount = topicFiltered.length
+      items = topicFiltered
+      trace('info', 'Hybrid Recall：Topic 先验预筛已完成', {
+        topicTermCount,
+        preFilterCount,
+        postFilterCount,
+        extraFromTopic: postFilterCount - preFilterCount
+      })
+    }
+
     reportProgress('checking')
     let usedHybrid = false
     let result: RecallResult
     const retrieveStartedAt = Date.now()
 
     const pairClue = merge.effectiveRaw
-    let effectiveParsedForFraming = merge.merged
+    let effectiveParsedForFraming = merged
     let timeSoftReopen = false
 
     // 零锚点助手发令 / 无内容且无约束：诚实空，禁止 raw 整句或类型邻域冒充推荐
-    if (shouldSkipRecallAsZeroAnchor(normalizedClue, merge.merged)) {
+    if (shouldSkipRecallAsZeroAnchor(normalizedClue, merged)) {
       result = {
         outcome: 'no_match',
         topPick: null,
@@ -816,13 +873,13 @@ export class HybridRecallBackend implements RecallBackend {
         totalRankedCount: 0,
         clue: normalizedClue
       }
-    } else if (shouldRecallByConstraintNeighborhood(merge.merged)) {
+    } else if (shouldRecallByConstraintNeighborhood(merged)) {
       // 无内容词的时间+类型（如 recently collected bookmark）：Preference-driven 弱 Topic（ADR-014 · D1-B），
       // 走近因邻域 `finalizeKeywordResult`；不走关键词 / 向量扫虚词。
       const finalized = await finalizeKeywordResult(
         normalizedClue,
         items,
-        merge.merged,
+        merged,
         currentTabDomain,
         pairClue
       )
@@ -835,8 +892,8 @@ export class HybridRecallBackend implements RecallBackend {
           displayClue: normalizedClue,
           pairClue,
           items,
-          filterClue: buildFilterClueFromParsed(merge.merged),
-          parsed: merge.merged,
+          filterClue: buildFilterClueFromParsed(merged),
+          parsed: merged,
           clueEmbeddingText,
           ...(currentTabDomain !== undefined ? { currentTabDomain } : {}),
           trace
@@ -851,7 +908,7 @@ export class HybridRecallBackend implements RecallBackend {
         const finalized = await finalizeKeywordResult(
           normalizedClue,
           items,
-          merge.merged,
+          merged,
           currentTabDomain,
           pairClue
         )
@@ -898,6 +955,7 @@ export class HybridRecallBackend implements RecallBackend {
 
     const withNarrowExamples = await attachComposerNarrowExamplesIfNeeded(enriched, {
       clue: normalizedClue,
+      parsed: effectiveParsedForFraming,
       trace,
       ...(complete ? { complete } : {})
     })
