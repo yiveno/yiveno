@@ -194,11 +194,31 @@ Clues:  前几天 · 设计不合理 · 文章
 - D2-A：维持扁平 `contentTerms`（现状），把"人物/地点"当普通内容词。
 - D2-B：引入结构化 Clue 槽（人物/地点/情境），支撑未来邻域与解释。
 
-### D3（未裁决）：Topic 的表示演进（词法 → 语义）？
+### D3（已裁决 · D3-C）：Topic 的表示演进（词法 → 语义）
 
-- 现状：`RecallTopic.terms: string[]`（词法，非泛词内容词）。
-- 终态主张：Topic 是**语义表示**（嵌入/实体），能真正"先验收窄"。
-- 需裁决：演进路径与触发条件（何时从词法升级语义）。
+**D3-C 裁决（2026-10-06）：Topic 终态 = 语义表示（embedding / entity）；直接语义化。**
+
+**理由：**
+
+1. **语义化是正确的终态方向**：Topic 作为"先验收窄"的边界判定器，词法表示（terms）只是中间占位；embedding/entity 才是能真正支撑语义邻域的形态。
+2. **直接语义化路径**：不采用「词法逐步升级」的演进路径；一步到位接入 embedding 产出 Topic 嵌入。
+3. **与 Gap 4 的关系**：Gap 4（Topic 语义角色重建）是 D3-C 的第一步——架构上建立 Topic 独立检索路径（`topicLookup`）；本轮 `topicEmbedding` 参数预留，embedding 产出可用时上拨接入。
+
+**现状（Gap 4 + Gap 5 落地后）：**
+
+- `RecallTopic.terms: string[]`（词法）仍是当前实现（tokens 作为可读表示）
+- `RecallTopic.embedding?: Float32Array`（Gap 5）：真实 embedding 由 `deriveTopicEmbedding` 产出
+- `topicLookup` 独立检索路径已建立（embedding 路径真实接入 + 词法 fallback 保留）
+- `withRecallTopicAsync`：幂等回填 + embedding 填充（仅登录态）
+- `buildTopicDescriptor`：embedding 透传到 TopicDescriptor
+
+**演进路径（Gap 5 已落地）：**
+
+- `deriveTopicEmbedding`：调用现有 embedding 通道，产出 Topic embedding
+- `topicLookup` 内 `topicEmbedding !== undefined` 时，调用 `cosineSimilarity` 计算近邻
+- 全库无 embedding 条目时降级词法路径
+- entity index 可用时，调用 entity match
+- 词法路径作为 fallback 保留
 
 ### D4（未裁决）：Discovery 分支的归宿？
 
@@ -210,12 +230,12 @@ Clues:  前几天 · 设计不合理 · 文章
 
 ## 7. 若采纳的分阶段落地（示意 · 待 D1 定后细化）
 
-| 阶段   | 目标                                   | 触碰面                                                         |
-| ------ | -------------------------------------- | -------------------------------------------------------------- |
-| **P0** | 文档化本模型 + 必要条件门              | ✅ 已落地（§5.2.1 / §5.11.2 / 术语表）；本草案晋升 §7.x        |
-| **P1** | Topic 作为**先验空间缩减**出现在管线中 | `understand` 层 + 候选加载顺序；`recall-topic.ts` 语义化       |
-| **P2** | Clues / Preferences **分层**           | `ParsedRecallClue` 结构拆分；Framing / Explain 对齐            |
-| **P3** | **Discovery 出口**                     | Framing 分支（`missing_topic` 之外的归宿）；可能的新 `outcome` |
+| 阶段   | 目标                                   | 触碰面                                                                             |
+| ------ | -------------------------------------- | ---------------------------------------------------------------------------------- |
+| **P0** | 文档化本模型 + 必要条件门              | ✅ 已落地（§5.2.1 / §5.11.2 / 术语表）；本草案晋升 §7.x                            |
+| **P1** | Topic 作为**先验空间缩减**出现在管线中 | `understand` 层 + 候选加载顺序；`recall-topic.ts` 语义化；**Gap 5 已落地（D3-C）** |
+| **P2** | Clues / Preferences **分层**           | `ParsedRecallClue` 结构拆分；Framing / Explain 对齐                                |
+| **P3** | **Discovery 出口**                     | Framing 分支（`missing_topic` 之外的归宿）；可能的新 `outcome`                     |
 
 **硬约束（沿用 ADR-005）：** 禁止内容别名 / 开放同义表冒充通解；单次 miss 不得改排序主路径。
 
@@ -239,3 +259,58 @@ Clues:  前几天 · 设计不合理 · 文章
 - 术语表「主题锚」「`missing_topic`」「clue」
 - ADR-005 / ADR-010 / ADR-011
 - 代码：`core/recall/recall-topic.ts` · `core/recall/parse-recall-clue-types.ts` · `core/recall/orchestrate-keyword-recall.ts` · `application/recall/backends/hybrid-recall-backend.ts`
+
+---
+
+## 主线现状与差距摘要（2026-10 对齐轮）
+
+> 本节由 2026-10 对齐轮补充（`docs/audit/Recall-主线与文档对齐-2026-10.md`）。仅做事实陈述，不修改草案原文。
+
+### 1. 现状
+
+当前 Recall 主线**不是**"基于 topical 展开"——`parsed.topic` 字段存在（`deriveRecallTopic` 派生），也出现在 Topic Gate 和 Framing 事实中，但它**没有参与候选加载的空间缩减**，也没有作为独立语义角色贯穿到最终结果。草案 §2 主张的「Topic → Memory Neighborhood → Candidate Items → Re-ranking」架构中，后两步**未实现**。
+
+### 2. 草案 §2 主张架构 vs 实际
+
+| 草案 §2 主张                                               | 代码实际                                                                          | 状态       |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------- | ---------- |
+| Topic → Memory Neighborhood → Candidate Items → Re-ranking | Topic 出现在 Gate 层与 contentTerms 中；候选加载全量；无 Memory Neighborhood 概念 | **未落地** |
+
+### 3. 5 个 gap（与产品文档/草案对比后的差距）
+
+1. **候选加载不依赖 Topic 先验**（严重度高，工作量中）——全量 MemoryItem 加载，无 Topic 先验缩减
+2. **Framing 层无 Topic 独立表述**（严重度中，工作量小）——RecallResult 和 Framing fact 均无独立 topic 字段
+3. **RecallResult 无 topic 字段**（严重度中，工作量小）——`parsed.topic` 存在于 ParsedRecallClue 内，但 RecallResult 接口无独立 topic 字段
+4. **Topic 作为 contentTerms 并入，语义角色丢失**（严重度中，工作量大，依赖 D3 决策）——`buildFilterClueFromParsed` 直接把 Topic terms 并入 filterClue，Topic 降级为普通内容词
+   → **✅ Gap 4 已修复（2026-10）：** D3-C 裁决后，`topicLookup` 独立检索路径已加；Topic 走独立路径（`topicLookup`），contentTerms 走关键词检索（`buildFilterClueFromParsed`）；两路结果并集·去重；本轮占位词法路径；`topicEmbedding` 参数预留
+5. **D3 Topic 语义化缺失**（严重度中-低，工作量大，依赖 D3 决策）——当前 `RecallTopic.terms: string[]` 为词法；终态为语义表示（embedding/entity）
+   → **✅ Gap 5 已修复（2026-10）：** D3-C 裁决后，`deriveTopicEmbedding` + `withRecallTopicAsync` + topicLookup embedding 路径真实接入；仅登录态可用；降级词法保留
+
+### 4. 推荐修复顺序（gap 间依赖）
+
+#### P0（主流程骨架修复，不依赖 D2/D3/D4）
+
+- **gap 1**（候选加载 Topic 先验）——词法先验可独立推进；影响 §5.9 TTE，须配套 eval
+- **gap 2**（Framing Topic 独立表述）——仅 Framing fact 新增字段 + 模板调整
+- **gap 3**（RecallResult topic 字段）——接口加字段；调用处填充
+
+#### P1（语义表示层修复，D3-C 已裁决）
+
+- **gap 4（Topic 语义角色重建）**——✅ 已修复（2026-10）；D3-C 裁决后，`topicLookup` 独立检索路径已加
+- **gap 5（Topic 语义化）**——✅ 已修复（2026-10）；D3-C 裁决后，`deriveTopicEmbedding` + `withRecallTopicAsync` + topicLookup embedding 路径真实接入；仅登录态可用；降级词法保留
+
+#### P0 可并行，P1 串行等待 D3
+
+- gap 1/2/3 可**同时推进**，相互独立
+- gap 4 在 gap 1（词法先验）之后能更顺畅
+- gap 5 须等 D3 决策落地
+
+### 5. 与 D2/D3/D4 决策的关系
+
+- **D2/D3/D4 决策搁置**（2026-10-06）
+- **D3 决策**（Topic 词法/语义演进路径）是 gap 4/5 的前置
+- **主流程骨架修复（P0：gap 1/2/3）不依赖 D2/D3/D4**，可独立推进
+
+### 6. 下一步
+
+由维护者拍板：是否启动 P0 修复（gap 1/2/3）；或者先拍 D3 方向后再动。
