@@ -406,6 +406,12 @@ export function memoryItemMatchesObjectType(
 /**
  * 无内容词 + 时间/刚存/类型约束：按近因列邻域，禁止把虚词当关键词扫库。
  * 产品：用户忘了标题才开口；「just saved」「recently collected bookmark」均须出邻域。
+ *
+ * **模型语义（§7.05 · ADR-014 · D1-B 退化弱 Topic，2026-10-06 裁决）：**
+ * 本函数是 Recall Request 模型中 **Preference-driven 路径** 的入口判定器——
+ * 当请求无内容词、但存在强类型 / 时间（high 置信）/ 刚存约束时，认为请求携带一个退化弱 Topic，
+ * 仍属 Recall 范畴（区别于 `missing_topic` → Discovery 边界）。
+ * 不可与「零锚点助手发令」混淆；后者走 `shouldSkipRecallAsZeroAnchor`。
  */
 export function shouldRecallByConstraintNeighborhood(parsed: ParsedRecallClue): boolean {
   // 用检索有效内容词：play/like 等弱残留不得挡约束邻域（R0 助手发令）

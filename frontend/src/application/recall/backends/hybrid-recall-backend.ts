@@ -742,7 +742,9 @@ export class HybridRecallBackend implements RecallBackend {
     })
     merge.merged = withRecallTopic(merge.merged)
 
-    // H-topic 主题必填：无主题锚且非约束邻域不进候选加载 / 检索 / embedding，直接缺主题空。
+    // H-topic 主题必填（ADR-014 · D1-B 退化弱 Topic，2026-10-06 裁决）：
+    // - 完全无锚点（既无 C/G，也无强约束）→ `missing_topic`，未进检索
+    // - 约束邻域（仅时间 high + 类型 / 刚存）→ 进下方 `shouldRecallByConstraintNeighborhood` 分支
     // 多轮 accumulated 的主题由 merge.merged 自然承接；误判时用户补一句即可继续。
     if (
       !hasRecallTopicAnchor(merge.merged) &&
@@ -815,7 +817,8 @@ export class HybridRecallBackend implements RecallBackend {
         clue: normalizedClue
       }
     } else if (shouldRecallByConstraintNeighborhood(merge.merged)) {
-      // 无内容词的时间+类型（如 recently collected bookmark）：近因邻域，不走关键词/向量扫虚词
+      // 无内容词的时间+类型（如 recently collected bookmark）：Preference-driven 弱 Topic（ADR-014 · D1-B），
+      // 走近因邻域 `finalizeKeywordResult`；不走关键词 / 向量扫虚词。
       const finalized = await finalizeKeywordResult(
         normalizedClue,
         items,
