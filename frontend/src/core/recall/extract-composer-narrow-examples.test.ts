@@ -231,4 +231,92 @@ describe('extractComposerNarrowExamples', () => {
     expect(examples.join(' ')).not.toMatch(/npaopcapgknadgooegpkondgfhphkjld/)
     expect(examples.some(e => e === 'eloquent' || e === 'developer' || e === 'history')).toBe(true)
   })
+
+  // Gap 2：topicTerms 独立 topic 示例
+  it('topicTerms 存在 → 末尾追加独立 topic 示例（不参与切割力排序）', () => {
+    // 用「几乎全覆盖」候选制造：无 token 达到 df<全覆盖，从而 topicTerms 作为兜底追加
+    const candidates = [
+      {
+        itemKind: 'text_excerpt',
+        title: 'A',
+        subtitle: '',
+        url: 'https://a.example/1',
+        excerpt: 'Shared content one'
+      },
+      {
+        itemKind: 'text_excerpt',
+        title: 'B',
+        subtitle: '',
+        url: 'https://b.example/2',
+        excerpt: 'Shared content two'
+      },
+      {
+        itemKind: 'text_excerpt',
+        title: 'C',
+        subtitle: '',
+        url: 'https://c.example/3',
+        excerpt: 'Shared content three'
+      }
+    ]
+    // 无合格 token（shared 长度 6 但 df=3 = 全覆盖）；topicTerms['Model 3'] 追加
+    const examples = extractComposerNarrowExamples({
+      candidates,
+      clueText: 'shared content',
+      topicTerms: ['Model 3']
+    })
+    expect(examples).toContain('Model 3')
+  })
+
+  it('topicTerms 与 clueText 重复词不重复追加', () => {
+    const candidates = [
+      {
+        itemKind: 'text_excerpt',
+        title: 'Kubernetes',
+        subtitle: '',
+        url: 'https://k8s.example/1',
+        excerpt: 'Kubernetes notes'
+      },
+      {
+        itemKind: 'text_excerpt',
+        title: 'Kubernetes',
+        subtitle: '',
+        url: 'https://k8s.example/2',
+        excerpt: 'Kubernetes guide'
+      }
+    ]
+    // kubernetes 在候选 df>=2，且 clueText 已含 → 不追加（blocked by clueTokenSet）
+    const examples = extractComposerNarrowExamples({
+      candidates,
+      clueText: 'kubernetes notes',
+      topicTerms: ['kubernetes']
+    })
+    // kubernetes 已由 clue 阻塞；topicTerms 不追加（push 逻辑已做去重）
+    expect(examples).toHaveLength(0)
+  })
+
+  it('topicTerms 为空数组 → 不追加（与无 topicTerms 等价）', () => {
+    // 至少 2 条候选使 df>=2，unique 才有资格被选入
+    const candidates = [
+      {
+        itemKind: 'text_excerpt',
+        title: 'A',
+        subtitle: '',
+        url: 'https://a.example/1',
+        excerpt: 'unique token here'
+      },
+      {
+        itemKind: 'text_excerpt',
+        title: 'B',
+        subtitle: '',
+        url: 'https://b.example/2',
+        excerpt: 'unique token also'
+      }
+    ]
+    const examples = extractComposerNarrowExamples({
+      candidates,
+      topicTerms: []
+    })
+    // 空数组 topicTerms 等价于不传；unique 有 df=2，应被选入
+    expect(examples).toContain('unique')
+  })
 })

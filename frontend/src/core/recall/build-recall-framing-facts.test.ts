@@ -159,4 +159,38 @@ describe('buildRecallFramingFacts', () => {
     }
     expect(buildRecallFramingFacts(result)).toBeNull()
   })
+
+  // Gap 2：Framing Topic 独立表述
+  it('topic 存在 → understood 含独立 topicTerms（独立于 contentTerms）', () => {
+    const pool = [match(excerpt('x'), ['title'], 22), match(excerpt('y'), ['textExcerpt'], 18)]
+    const result = candidateResult('top_pick', pool, {
+      raw: 'Model 3 review',
+      topic: { terms: ['Model 3'], source: 'content', strength: 'strong' },
+      contentTerms: ['review'],
+      confidence: 'high'
+    })
+
+    const facts = buildRecallFramingFacts(result)
+    expect(facts?.kind).toBe('candidates')
+    if (facts?.kind !== 'candidates') return
+    // topicTerms 独立于 contentTerms
+    expect(facts.understood.topicTerms).toEqual(['Model 3'])
+    // contentTerms 保持独立
+    expect(facts.understood.contentTerms).toEqual(['review'])
+  })
+
+  it('topic 不存在 → understood 无 topicTerms 字段', () => {
+    const pool = [match(excerpt('a'), ['title'], 20)]
+    const result = candidateResult('top_pick', pool, {
+      raw: 'something I read',
+      contentTerms: ['something'],
+      confidence: 'medium'
+    })
+
+    const facts = buildRecallFramingFacts(result)
+    expect(facts?.kind).toBe('candidates')
+    if (facts?.kind !== 'candidates') return
+    expect(facts.understood.topicTerms).toBeUndefined()
+    expect(facts.understood.contentTerms).toEqual(['something'])
+  })
 })

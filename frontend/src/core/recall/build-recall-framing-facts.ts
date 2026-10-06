@@ -26,14 +26,22 @@ function collectPoolMatches(result: RecallResult): RecallMatch[] {
   return [...(result.topPick ? [result.topPick] : []), ...result.alsoPossible]
 }
 
+/**
+ * 从 parsed 构建「听懂了什么」事实（Framing P1）。
+ * topicTerms 来自 parsed.topic（独立于 contentTerms 的根节点语义角色）。
+ * Gap 2：Topic 作为独立维度出现，不埋在 contentTerms 里。
+ */
 function buildUnderstood(parsed: ParsedRecallClue | undefined): RecallFramingUnderstood {
+  // Gap 2：topicTerms 独立表述（与 contentTerms 分工不同：Topic=找什么的，contentTerms=基于什么线索）
+  const topicTerms = parsed?.topic?.terms ?? []
   return {
     objectTypes: parsed?.objectTypes ?? [],
     ...(parsed?.timeRange?.label ? { timeLabel: parsed.timeRange.label } : {}),
     ...(parsed?.timeConfidence ? { timeConfidence: parsed.timeConfidence } : {}),
     contentTerms: parsed?.contentTerms ?? [],
     behaviorHints: parsed?.behaviorHints ?? [],
-    noteHint: parsed?.noteHint === true
+    noteHint: parsed?.noteHint === true,
+    ...(topicTerms.length > 0 ? { topicTerms } : {})
   }
 }
 

@@ -98,6 +98,12 @@ export type ExtractComposerNarrowExamplesInput = {
   candidates: readonly NarrowExampleSource[]
   /** 用户已说线索（小写比对，避免重复举）。 */
   clueText?: string
+  /**
+   * Topic 独立词面（Gap 2）。
+   * 来自 parsed.topic.terms（独立于 contentTerms）；用于 Narrow 举例时生成独立 topic 示例提示。
+   * 有 topicTerms 时，函数返回中会额外生成一条 topic 示例。
+   */
+  topicTerms?: readonly string[]
 }
 
 function normalizeHost(urlOrHost: string): string | null {
@@ -248,6 +254,7 @@ function rankByCuttingPower(
 /**
  * 从候选抽 0～NARROW_EXAMPLE_MAX 个英文举例词。
  * 每个返回值必须能在某条候选的 title/excerpt/note/url/类型信号中核验。
+ * Gap 2：topicTerms 存在时，额外生成一条独立 topic 示例提示（不参与切割力排序，固定追加到末尾）。
  */
 export function extractComposerNarrowExamples(input: ExtractComposerNarrowExamplesInput): string[] {
   const candidates = input.candidates
@@ -362,6 +369,18 @@ export function extractComposerNarrowExamples(input: ExtractComposerNarrowExampl
         break
       }
       push(entry.label)
+    }
+  }
+
+  // Gap 2：topicTerms 独立 topic 示例提示（不参与切割力排序；固定追加到末尾）
+  // topicTerms 与 contentTerms 语义角色不同：Topic=找什么的，contentTerms=基于什么线索
+  const topicTerms = input.topicTerms ?? []
+  if (topicTerms.length > 0) {
+    for (const term of topicTerms) {
+      if (picked.length >= NARROW_EXAMPLE_MAX) {
+        break
+      }
+      push(term)
     }
   }
 

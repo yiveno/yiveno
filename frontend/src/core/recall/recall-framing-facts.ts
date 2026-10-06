@@ -47,7 +47,13 @@ export const RecallFramingUnderstoodSchema = z.object({
   timeConfidence: z.enum(['high', 'low']).optional(),
   contentTerms: z.array(z.string()),
   behaviorHints: z.array(z.string()),
-  noteHint: z.boolean()
+  noteHint: z.boolean(),
+  /**
+   * Topic 独立表述（Gap 2 · Framing Topic 独立表述）。
+   * 仅当 parsed.topic 存在时出现；在 contentTerms 之外另列。
+   * 语义角色：Topic 是「找什么的」根节点，与 contentTerms（「基于什么线索」）不同。
+   */
+  topicTerms: z.array(z.string()).optional()
 })
 
 export type RecallFramingUnderstood = z.infer<typeof RecallFramingUnderstoodSchema>
