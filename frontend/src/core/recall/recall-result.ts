@@ -1,6 +1,8 @@
+import { z } from 'zod'
 import type { TranslateFn } from '@/core/i18n/translate'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import { explainRecallMatch, getRecallMatchFieldLabel } from '@/core/recall/explain-recall-match'
+import { TopicDescriptorSchema } from '@/core/recall/parse-recall-clue-types'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import type { RecallFramingFacts } from '@/core/recall/recall-framing-facts'
 import type { RecallPipelineTiming } from '@/core/recall/recall-telemetry'
@@ -61,6 +63,11 @@ export interface RecallResult {
   totalRankedCount: number
   /** 本轮 clue（对话气泡展示）。 */
   clue: string
+  /**
+   * 解析后的 Topic 信息（Gap 3 落地）。
+   * 仅当 parsed.topic 存在时填充；不含 source/strength 等管线内部字段。
+   */
+  topic?: z.infer<typeof TopicDescriptorSchema>
   /** 合并后（或单轮）解析结果；供追问模板；噪音拒绝时可能缺省。 */
   parsed?: ParsedRecallClue
   /** 合并后的有效原文（高亮 / 调试）；单轮时约等于 clue。 */

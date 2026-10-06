@@ -12,7 +12,11 @@ import {
   filterKeywordMatchesBeforeCollapse
 } from '@/core/recall/build-recall-result'
 import { collapseRecallMatches } from '@/core/recall/collapse-recall-duplicates'
-import { normalizeRecallText, RECALL_TOP_PICK_MIN_SCORE } from '@/core/recall/keyword-filter'
+import {
+  filterMemoryItemsByKeyword,
+  normalizeRecallText,
+  RECALL_TOP_PICK_MIN_SCORE
+} from '@/core/recall/keyword-filter'
 import {
   effectiveContentTermsForRecall,
   filterMatchesByContentTermCorroboration,
@@ -20,6 +24,9 @@ import {
   shouldAttemptTimeSoftReopen
 } from '@/core/recall/content-term-corroboration'
 import { hasRecallTopicAnchor, withRecallTopic } from '@/core/recall/recall-topic'
+import { mergeTopicLookupWithKeywordMatches, topicLookup } from '@/core/recall/topic-lookup'
+import type { TopicDescriptor } from '@/core/recall/parse-recall-clue-types'
+import { TopicDescriptorSchema } from '@/core/recall/parse-recall-clue-types'
 
 import {
   parseRecallClue,
@@ -82,6 +89,78 @@ const OBJECT_TYPE_SURFACES = (() => {
   }
   return map
 })()
+
+/**
+ * Topic 先验预筛（Gap 1 · P0 候选加载阶段）。
+ *
+ * 当 parsed.topic 存在时，用 Topic terms（检索词面）对候选池做第一轮预筛，
+ * 将命中 Topic 词面的条目加入候选集（与 contentTerms 候选取并集）。
+ *
+ * 机制：复用现有倒排 Phase 1 同 mechanism（`filterMemoryItemsByKeyword`）。
+ * - 仅在 Topic 存在时启用；Topic 未提供时返回原池（不变）
+ * - 仅做扩池（并集，不是交集），不让 Topic 删掉现有命中
+ * - 不做重排、不做门限——预筛产生的候选池变大，供后续 contentTerms / Hybrid 正常打分
+ *
+ * @param items 原始候选池（全量或倒排预过滤后）
+ * @param topic Topic terms（检索词面）；由 parsed.topic.terms 传入
+ * @returns 含 Topic 词面命中的候选集（与原池取并集）
+ */
+export function filterItemsByTopicTokens(
+  items: MemoryItem[],
+  topic: { terms: readonly string[] }
+): MemoryItem[] {
+  const topicTerms = topic.terms
+  if (!topicTerms || topicTerms.length === 0) {
+    return items
+  }
+
+  const filterText = topicTerms.join(' ')
+  // 复用现有 keyword-filter 机制，不引入新倒排实现
+  const matched = filterMemoryItemsByKeyword(items, filterText, { limit: items.length })
+  if (matched.length === 0) {
+    return items
+  }
+
+  // 取并集：Topic 命中的 + 原池已有的（不删除 contentTerms 已有候选）
+  const existingIds = new Set(items.map(item => item.id))
+  const extraCandidates = matched.filter(m => !existingIds.has(m.item.id)).map(m => m.item)
+  const union = [...items, ...extraCandidates]
+
+  return union
+}
+
+/**
+ * 由 parsed.topic 构造 RecallResult.topic 字段（窄子集）。
+ * 仅在 parsed.topic 存在时填充；Gap 3/5 落地。
+ *
+ * 注意：不传完整 parsed，只传其 topic 子集——source/strength 等管线内部字段
+ * 不对外暴露；tokens 取自 RecallTopic.terms（检索词）。
+ * Gap 5：embedding 字段从 parsed.topic.embedding 透传。
+ */
+function buildTopicDescriptor(topic: NonNullable<ParsedRecallClue['topic']>): TopicDescriptor {
+  // displayName = terms 拼接（供 UI Debug 展示）；若无 terms 则用 raw clue 摘要
+  const displayName = topic.terms.length > 0 ? topic.terms.join(' ') : '(weak topic)'
+  return TopicDescriptorSchema.parse({
+    displayName,
+    tokens: topic.terms,
+    ...(topic.embedding ? { embedding: topic.embedding } : {})
+  })
+}
+
+/**
+ * 给 RecallResult 注入 topic（parsed.topic → TopicDescriptor）。
+ * 仅当 parsed.topic 存在时填充；Gap 3 落地。
+ */
+export function injectTopic(result: RecallResult, parsed: ParsedRecallClue): RecallResult {
+  if (!parsed.topic) {
+    // 无 topic：topic 字段不出现（严格保持现状不依赖 Topic）
+    return result
+  }
+  return {
+    ...result,
+    topic: buildTopicDescriptor(parsed.topic)
+  }
+}
 
 /**
  * 零锚点助手发令词面（闭合产品枚举）：无真实记忆锚时须诚实 no_match，禁止当推荐引擎。
@@ -225,7 +304,14 @@ export function shouldSkipRecallAsZeroAnchor(clue: string, parsed: ParsedRecallC
   return !shouldRecallByConstraintNeighborhood(parsed)
 }
 
-/** 由解析结果拼 Filter 检索词面（`filterClue`）。不做内容别名扩词。 */
+/**
+ * 由解析结果拼 Filter 检索词面（`filterClue`）。不做内容别名扩词。
+ *
+ * Gap 4（D3-C）变更：filterClue 仅含 contentTerms，不含 Topic terms。
+ * - Topic 走独立检索路径（`topicLookup` → 语义邻域）
+ * - contentTerms 走关键词检索（本函数）
+ * - 两者结果在 recallByKeywordWithParsedClue 中取并集 · 去重
+ */
 export function buildFilterClueFromParsed(parsed: ParsedRecallClue): string {
   const contentTerms = effectiveContentTermsForRecall(parsed)
   if (contentTerms.length > 0) {
@@ -444,6 +530,36 @@ function itemCreatedMs(item: MemoryItem): number {
 }
 
 /**
+ * 获取约束邻域过滤后的 item 池（时间/类型硬筛）。
+ *
+ * 用途：Gap 4 TopicLookup 须在约束过滤后的池中运行，而非全量 items，
+ * 避免 TopicLookup 绕过时间/类型过滤。
+ *
+ * @param items 全量候选池
+ * @param parsed 解析结果
+ * @param nowMs 当前时间戳
+ * @returns 约束过滤后的 MemoryItem[]（时间/类型硬筛后）
+ */
+function getConstraintFilteredPool(
+  items: MemoryItem[],
+  parsed: ParsedRecallClue,
+  nowMs: number
+): MemoryItem[] {
+  const range = effectiveParsedTimeRange(parsed, nowMs)
+  const types = parsed.objectTypes
+  const timeConfidence = resolveEffectiveTimeConfidence(parsed, range)
+
+  let pool = items
+  if (types && types.length > 0) {
+    pool = pool.filter(item => types.some(type => memoryItemMatchesObjectType(item, type)))
+  }
+  if (range && timeConfidence === 'high') {
+    pool = pool.filter(item => memoryItemInTimeRange(item, range))
+  }
+  return pool
+}
+
+/**
  * 约束邻域：时间按置信硬筛或软排 + 可选类型过滤，按 createdAt 近因打分。
  * 最新一条须达 Top Pick 阈值（建议，非神谕）。
  */
@@ -609,37 +725,75 @@ export function recallByKeywordWithParsedClue(
   const poolLimit = options.candidateLimit ?? RECALL_RESULT_POOL_LIMIT
 
   if (shouldSkipRecallAsZeroAnchor(raw, parsed)) {
-    return {
-      outcome: 'no_match',
-      topPick: null,
-      alsoPossible: [],
-      totalRankedCount: 0,
-      clue: raw,
-      parsed,
-      // H-topic：零锚点即无主题锚，标缺主题。
-      ...(hasRecallTopicAnchor(parsed) ? {} : { emptyKind: 'missing_topic' as const })
-    }
+    return injectTopic(
+      {
+        outcome: 'no_match',
+        topPick: null,
+        alsoPossible: [],
+        totalRankedCount: 0,
+        clue: raw,
+        parsed,
+        // H-topic：零锚点即无主题锚，标缺主题。
+        ...(hasRecallTopicAnchor(parsed) ? {} : { emptyKind: 'missing_topic' as const })
+      },
+      parsed
+    )
   }
 
   // H-topic 主题必填：无主题锚（无 C/G）且非时间/类型约束邻域 → 不进检索。
   // 泛词撑不起一次检索（如 "A word that was learned before"）：返回什么都是错的。
   if (!hasRecallTopicAnchor(parsed) && !shouldRecallByConstraintNeighborhood(parsed)) {
-    return {
-      outcome: 'no_match',
-      topPick: null,
-      alsoPossible: [],
-      totalRankedCount: 0,
-      clue: raw,
-      parsed,
-      emptyKind: 'missing_topic',
-      relatedGuess: null
-    }
+    return injectTopic(
+      {
+        outcome: 'no_match',
+        topPick: null,
+        alsoPossible: [],
+        totalRankedCount: 0,
+        clue: raw,
+        parsed,
+        emptyKind: 'missing_topic',
+        relatedGuess: null
+      },
+      parsed
+    )
   }
 
   if (shouldRecallByConstraintNeighborhood(parsed)) {
+    // 约束邻域分支：时间/类型过滤后，补充 TopicLookup（独立语义路径）。
+    // 注意：约束邻域本身无 contentTerms，Topic terms 来自 parsed.topic（独立来源）。
+
+    // 获取约束过滤后的 item 池（时间/类型硬筛后的条目，供 TopicLookup 用）。
+    // 注意：这里直接复用 recallMatchesByConstraintNeighborhood 内部的过滤逻辑。
+    // 为避免重复计算，先用约束邻域获取过滤后的 pool。
+    const constraintPool = getConstraintFilteredPool(items, parsed, nowMs)
+
     const constraintMatches = recallMatchesByConstraintNeighborhood(items, parsed, nowMs).map(
       match => applyParsedClueScoreBoosts(match, parsed, nowMs)
     )
+
+    // TopicLookup：约束邻域池中补充 topic 相关条目（并集 · 不删现有）。
+    // 注意：用过滤后的 constraintPool 而非全量 items，避免 TopicLookup 绕过时间过滤。
+    // D3-C：Gap 5 Topic 语义化——topicEmbedding 从 parsed.topic 透传；有则走 embedding 路径，无则走词法路径。
+    if (parsed.topic && constraintPool.length < items.length) {
+      // 仅在约束邻域有实质过滤时调用 TopicLookup（全量池无需补充）。
+      const topicDescriptor: TopicDescriptor = {
+        displayName: parsed.topic.terms.length > 0 ? parsed.topic.terms.join(' ') : '(weak topic)',
+        tokens: parsed.topic.terms,
+        ...(parsed.topic.embedding ? { embedding: parsed.topic.embedding } : {})
+      }
+      const topicResult = topicLookup(constraintPool, topicDescriptor, parsed.topic.embedding)
+      if (!topicResult.topicSkipped && topicResult.topicMatches.length > 0) {
+        const merged = mergeTopicLookupWithKeywordMatches(constraintMatches, topicResult)
+        const sorted = merged.sort((left, right) => {
+          if (right.score !== left.score) return right.score - left.score
+          return right.item.updatedAt.localeCompare(left.item.updatedAt)
+        })
+        const collapsed = collapseRecallMatches(sorted, {
+          limit: poolLimit + RECALL_COLLAPSE_BACKFILL_EXTRA
+        })
+        return injectTopic(buildRecallResult(raw, collapsed), parsed)
+      }
+    }
     constraintMatches.sort((left, right) => {
       if (right.score !== left.score) {
         return right.score - left.score
@@ -649,7 +803,7 @@ export function recallByKeywordWithParsedClue(
     const collapsed = collapseRecallMatches(constraintMatches, {
       limit: poolLimit + RECALL_COLLAPSE_BACKFILL_EXTRA
     })
-    return buildRecallResult(raw, collapsed)
+    return injectTopic(buildRecallResult(raw, collapsed), parsed)
   }
 
   const filterClue = buildFilterClueFromParsed(parsed)
@@ -678,11 +832,12 @@ export function recallByKeywordWithParsedClue(
   const result = buildRecallResult(raw, collapsed, {
     contentTerms: effectiveContentTermsForRecall(parsed)
   })
+  const withTopic = injectTopic(result, parsed)
   if (!timeSoftReopen) {
-    return result
+    return withTopic
   }
   return {
-    ...result,
+    ...withTopic,
     parsed: effectiveParsed
   }
 }

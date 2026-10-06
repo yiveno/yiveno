@@ -4,11 +4,13 @@ import {
   RECALL_ORCHESTRATION_OBJECT_TYPE_BOOST,
   applyParsedClueScoreBoosts,
   buildFilterClueFromParsed,
+  injectTopic,
   memoryItemInTimeRange,
   memoryItemMatchesObjectType,
   recallByKeywordWithParsedClue
 } from '@/core/recall/orchestrate-keyword-recall'
 import { parseRecallClue } from '@/core/recall/parse-recall-clue'
+import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import { recallByKeyword } from '@/core/recall/build-recall-result'
 import {
   createBookmarkMemoryItem,
@@ -664,5 +666,94 @@ describe('recallByKeywordWithParsedClue', () => {
     ]
     expect(ids).toContain(recentI18n.id)
     expect(ids).not.toContain(oldI18n.id)
+  })
+})
+
+describe('RecallResult.topic 字段（Gap 3）', () => {
+  it('parsed.topic 存在 → RecallResult.topic 填充 TopicDescriptor（含 displayName + tokens）', () => {
+    const items = [
+      createBookmarkMemoryItem({
+        ownerId: OWNER,
+        sourceLocalProfileId: PROFILE,
+        payload: { title: 'Model 3 review', url: 'https://example.com/model3' }
+      })
+    ]
+    const result = recallByKeywordWithParsedClue(items, 'Model 3 review', { nowMs: NOW_MS })
+    expect(result.topic).toBeDefined()
+    // displayName = terms.join(' ')，取自 effectiveContentTermsForRecall（经泛词过滤）
+    expect(result.topic!.displayName).toBeTruthy()
+    expect(typeof result.topic!.displayName).toBe('string')
+    expect(result.topic!.tokens.length).toBeGreaterThan(0)
+    // TopicDescriptor 是窄子集：不含 source / strength 等管线内部字段
+    expect(result.topic!['source']).toBeUndefined()
+    expect(result.topic!['strength']).toBeUndefined()
+  })
+
+  it('parsed.topic 不存在 → RecallResult.topic 不出现（无 undefined）', () => {
+    const items = [
+      createBookmarkMemoryItem({
+        ownerId: OWNER,
+        sourceLocalProfileId: PROFILE,
+        payload: { title: 'article', url: 'https://example.com/a' }
+      })
+    ]
+    // 无内容词的 clue（泛词）：无 topic
+    const result = recallByKeywordWithParsedClue(items, 'a thing I saved before', { nowMs: NOW_MS })
+    expect('topic' in result).toBe(false)
+    expect(result.topic).toBeUndefined()
+  })
+
+  it('空白 items 库 → RecallResult.topic 仍填充（当 parsed.topic 存在时）', () => {
+    const items: ReturnType<typeof createBookmarkMemoryItem>[] = []
+    const result = recallByKeywordWithParsedClue(items, 'something about Model 3', {
+      nowMs: NOW_MS
+    })
+    // 空白库走 constraint neighborhood 或关键词路径 → outcome=no_match，但 topic 字段存在
+    expect(result.topic).toBeDefined()
+    expect(result.topic!.tokens.length).toBeGreaterThan(0)
+  })
+
+  it('noteHint only（weak topic）→ topic.displayName 为弱主题占位符', () => {
+    const result = recallByKeywordWithParsedClue([], 'page I left a note on', { nowMs: NOW_MS })
+    // noteHint only → terms=[] → weak topic 占位符
+    expect(result.topic?.displayName).toBe('(weak topic)')
+    expect(result.topic?.tokens).toEqual([])
+  })
+
+  it('injectTopic：topic 字段仅含 displayName + tokens（TopicDescriptor 窄子集）', () => {
+    const parsedWithTopic: ParsedRecallClue = {
+      raw: 'model 3',
+      topic: { terms: ['model', '3'], source: 'content', strength: 'strong' },
+      contentTerms: ['model', '3'],
+      confidence: 'high'
+    }
+    const mockResult = {
+      outcome: 'top_pick' as const,
+      topPick: null,
+      alsoPossible: [],
+      totalRankedCount: 0,
+      clue: 'model 3'
+    }
+    const result = injectTopic(mockResult, parsedWithTopic)
+    expect(Object.keys(result.topic!).sort()).toEqual(['displayName', 'tokens'])
+    expect(result.topic!.displayName).toBe('model 3')
+    expect(result.topic!.tokens).toEqual(['model', '3'])
+  })
+
+  it('injectTopic：parsed.topic 不存在时不输出 topic 字段', () => {
+    const parsedNoTopic: ParsedRecallClue = {
+      raw: 'thing',
+      contentTerms: [],
+      confidence: 'low'
+    }
+    const mockResult = {
+      outcome: 'no_match' as const,
+      topPick: null,
+      alsoPossible: [],
+      totalRankedCount: 0,
+      clue: 'thing'
+    }
+    const result = injectTopic(mockResult, parsedNoTopic)
+    expect('topic' in result).toBe(false)
   })
 })

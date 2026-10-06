@@ -8,6 +8,7 @@ import {
   recallMatchConflictsWithTopPick
 } from '@/core/recall/collapse-recall-duplicates'
 import { itemCorroboratesContentTerms } from '@/core/recall/content-term-corroboration'
+import type { TopicDescriptor } from '@/core/recall/parse-recall-clue-types'
 import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
 import type { MemoryItem } from '@/core/memory/memory-item'
 
@@ -51,13 +52,14 @@ export function filterKeywordMatchesBeforeCollapse(
 }
 
 /** 组装空结果。 */
-function emptyRecallResult(clue: string): RecallResult {
+function emptyRecallResult(clue: string, topic?: TopicDescriptor): RecallResult {
   return {
     outcome: 'no_match',
     topPick: null,
     alsoPossible: [],
     totalRankedCount: 0,
-    clue
+    clue,
+    ...(topic ? { topic } : {})
   }
 }
 
@@ -100,21 +102,22 @@ export function buildRankedRecallPool(
 export function buildRecallResult(
   clue: string,
   collapsedGroups: RecallMatch[],
-  options?: { contentTerms?: readonly string[] }
+  options?: { contentTerms?: readonly string[]; topic?: TopicDescriptor }
 ): RecallResult {
   const contentTerms = options?.contentTerms
+  const topic = options?.topic
   const groups =
     contentTerms && contentTerms.length > 0
       ? collapsedGroups.filter(match => itemCorroboratesContentTerms(match.item, contentTerms))
       : collapsedGroups
 
   if (groups.length === 0) {
-    return emptyRecallResult(clue)
+    return emptyRecallResult(clue, topic)
   }
 
   const best = groups[0]
   if (!best) {
-    return emptyRecallResult(clue)
+    return emptyRecallResult(clue, topic)
   }
 
   // 安全带：有 contentTerms 却无佐证（漏网）→ 诚实空
@@ -123,7 +126,7 @@ export function buildRecallResult(
     contentTerms.length > 0 &&
     !itemCorroboratesContentTerms(best.item, contentTerms)
   ) {
-    return emptyRecallResult(clue)
+    return emptyRecallResult(clue, topic)
   }
 
   // 有词面命中但未达 Top Pick：Need A Clue（弱候选池，请用户再补线索）
@@ -134,7 +137,8 @@ export function buildRecallResult(
       topPick: null,
       alsoPossible: pool,
       totalRankedCount: pool.length,
-      clue
+      clue,
+      ...(topic ? { topic } : {})
     }
   }
 
@@ -146,7 +150,8 @@ export function buildRecallResult(
       topPick: null,
       alsoPossible: pool,
       totalRankedCount: pool.length,
-      clue
+      clue,
+      ...(topic ? { topic } : {})
     }
   }
 
@@ -157,7 +162,8 @@ export function buildRecallResult(
     topPick: head,
     alsoPossible: pool.slice(1),
     totalRankedCount: pool.length,
-    clue
+    clue,
+    ...(topic ? { topic } : {})
   }
 }
 
