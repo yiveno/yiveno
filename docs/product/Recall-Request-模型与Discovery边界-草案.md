@@ -1,21 +1,32 @@
-# Recall Request 模型 + Discovery 边界（草案 · Non-normative）
+# Recall Request 模型 + Discovery 边界（Normative · 晋升自草案 · D1 已裁决）
 
-> **状态：** **草案（Draft）**，含**待裁决项**；**非** Normative，不得据此对外宣称能力。
-> **目标：** 裁决后晋升为产品文档 §7.x（`Yiveno-产品文档-v4.0.md`）；晋升前正文以本页为讨论稿。
+> **状态：** **Normative**（2026-10-06 晋升 · D1 裁决）；与 `docs/product/Yiveno-产品文档-v4.0.md` §7.05 一体。
+> **目标：** 本文件保留为**完整正文**；晋升后产品文档 §7.05 为摘要引用（防止正文过长臃肿产品文档主文件）。
 > **由来：** H-topic「主题必填」落地后暴露的更底层问题——**如何把无限开放的自然语言 Recall 压缩成有限问题空间**。
-> **权威链：** 术语表 → 本草案（讨论）→ 产品文档 §7.x（裁决后）。
+> **D1 裁决（2026-10-06）：** 选 **D1-B 退化弱 Topic**（见 §6 D1）。
+> **权威链：** 术语表 → 本文件（Normative）→ 产品文档 §7.05（摘要）
 
 ---
 
 ## 0. 要解决的问题
 
+**主语不是 Topic，是"Recall 的问题边界"。**
+
 自然语言不像传统输入可以做 `正则 → Schema → Validation`：用户可以用任意句式表达任意意图。若不设边界，`understand → filter → rank` 面对的是一个**无限输入空间**，每次"再多理解一点"都只是把边界往后推，问题定义始终不收敛。
 
-**本草案的主张：** 与其继续堆 NLP 能力，不如先给 Recall 划一个**必要条件**，把无限空间压成有限问题空间：
+**本文件的主张：** 与其继续堆 NLP 能力，不如**先给 Recall 划一条问题边界**，把无限空间压成有限问题空间。
+
+**Topic 不是"产品核心基线"——它是这条边界的"必要条件判定器"。** 当且仅当用户请求能落成一个**可识别的 Topic representation**，该请求才进入 Recall 问题域；否则它**不属于 Recall 范畴**（详见 §4 Discovery 边界）。
+
+> ⚠️ **常见误读纠正：**
+>
+> - ❌ "Topic 是产品核心 → 一系列 Clues/Preferences 是 Topic 的业务辅助" → 把 Topic 当成"功能模块"
+> - ✅ **"Recall 有问题边界 → Topic 是边界判定器 → Clues/Preferences/Discovery 都是这条边界的不同侧面"** → Topic 是必要条件，不是核心功能
+> - ✅ 产品核心仍是 **Recall 找东西**本身；Topic 解决的是"什么算 Recall 什么问题不算"的前置判定
 
 ```text
 ∞ 自然语言
-    ↓  边界判定（必须能落成 Topic）
+    ↓  边界判定（Topic 必要条件：能识别则进，不能则不进）
 有限 Memory 域
     ↓
 Recall Pipeline（understand → filter → rank）
@@ -156,31 +167,40 @@ Clues:  前几天 · 设计不合理 · 文章
 
 ---
 
-## 6. 待裁决项（DECISION NEEDED）
+## 6. D1 已裁决 + 其余待定项（2026-10-06）
 
-### D1（关键）：无 Topic 但"仅类型+时间"的请求，算不算 Recall？
+### D1（已裁决）：无 Topic 但"仅类型+时间"的请求 → D1-B 退化弱 Topic ✅
 
-现状：`recallMatchesByConstraintNeighborhood` 是**一等的可检索路径**（如 "the video I watched yesterday"：无内容词，但有 `objectTypes=video` + `timeRange`）。这与"Topic 必填"的**严格读法冲突**。
+**裁决结论：选 D1-B。**
 
-| 选项                                         | 含义                                                            | 影响面                                                          |
-| -------------------------------------------- | --------------------------------------------------------------- | --------------------------------------------------------------- |
-| **D1-A 严格**：不算 Recall → `missing_topic` | "只有类型+时间"视为无 Topic；符合"Topic 严格必要条件"           | 回退约束邻域检索；需改 13 处测试 + eval + `memory-item-service` |
-| **D1-B 退化弱 Topic**（当前实现倾向）：算    | 承认两类入口：`Topic-driven` 与 `Preference-driven`（弱 Topic） | 模型需显式写明"Topic 有两种来源"；保留现有约束邻域路径          |
+**理由：**
 
-> **备注：** 现状实现 = D1-B（上一轮已选）。**若采纳 D1-A，需一并回退该路径。** 本草案**不预设结论**。
+1. **"the video I watched yesterday" 实际上有隐式 Topic**：用户已经隐含说了"那个"——"我看过"的行为 + "video" 的内容类型，构成了一个弱但确实存在的根节点。它不是"无主题"，只是**没有内容词主题，只有类型+时间约束**。
+2. **强语义一致性 ≠ 强产品体验**：选 D1-A，这整类查询就变成 `missing_topic`——对真实用户的真实召回意图是明显伤害。
+3. **模型自洽**：承认两类入口——`Topic-driven`（强 Topic）与 `Preference-driven`（弱 Topic，即 `objectTypes` + `timeRange` 共同构成退化 Topic）。
+4. **路径完整性**：保留 `recallMatchesByConstraintNeighborhood` 作为一等路径，与现有用户习惯和已有测试保持一致。
 
-### D2：Clues 是否要扩槽（人物/地点/情境）？
+**最终模型：Topic 有两种来源**
+
+| 来源类型                          | 触发条件                                        | 例子                                                 |
+| --------------------------------- | ----------------------------------------------- | ---------------------------------------------------- |
+| **Topic-driven（强 Topic）**      | 有内容词（名词实体/专有名词等）                 | "Model 3 那个" / "上次看到讲限速的文章"              |
+| **Preference-driven（弱 Topic）** | 无内容词，但有 `objectTypes` + `timeRange` 约束 | "the video I watched yesterday" / "上周读的那篇文章" |
+
+> **注意**：时间置信度 `timeConfidence=high` 是 Preference-driven 路径的必要条件（ADR-011）。
+
+### D2（未裁决）：Clues 是否要扩槽（人物/地点/情境）？
 
 - D2-A：维持扁平 `contentTerms`（现状），把"人物/地点"当普通内容词。
 - D2-B：引入结构化 Clue 槽（人物/地点/情境），支撑未来邻域与解释。
 
-### D3：Topic 的表示演进（词法 → 语义）？
+### D3（未裁决）：Topic 的表示演进（词法 → 语义）？
 
 - 现状：`RecallTopic.terms: string[]`（词法，非泛词内容词）。
 - 终态主张：Topic 是**语义表示**（嵌入/实体），能真正"先验收窄"。
 - 需裁决：演进路径与触发条件（何时从词法升级语义）。
 
-### D4：Discovery 分支的归宿？
+### D4（未裁决）：Discovery 分支的归宿？
 
 - D4-A：**暂不处理**（保持 `missing_topic` + 问主题）。
 - D4-B：给**明确出口文案**（"这更像探索，不是找回"）+ 不重复问主题。

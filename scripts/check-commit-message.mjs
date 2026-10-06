@@ -106,7 +106,7 @@ function extractIndexedPaths(message) {
     const raw = m[1].trim().replace(/\\/g, '/')
     // 仅接受仓库根或绝对路径；过滤误报
     if (
-      /^[A-Za-z0-9_./\-]+$/u.test(raw) &&
+      /^[A-Za-z0-9_./\-\u4e00-\u9fff]+$/u.test(raw) &&
       !raw.includes('..') &&
       (raw.includes('/') || /\.[\w]+$/u.test(raw))
     ) {
