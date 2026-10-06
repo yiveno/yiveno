@@ -18,7 +18,8 @@
 - [`product/Yiveno-产品文档-v4.0.md`](./product/Yiveno-产品文档-v4.0.md) — AI 先读 **§0 Quick Contract**；附录 A 为背景非规范
 - [`product/CURRENT.md`](./product/CURRENT.md) — **当下焦点唯一手写源** → `bun run sync:ide-boot`
 - [`product/Yiveno-改版计划-v1.md`](./product/Yiveno-改版计划-v1.md) — 执行计划（R0–R∞）；与正文冲突时先改产品文档
-- [`product/Recall-Request-模型与Discovery边界-草案.md`](./product/Recall-Request-模型与Discovery边界-草案.md) — **草案（Non-normative）**：Recall 必要条件 / Topic 根节点 / Discovery 边界；待裁决后晋升 §7.x
+- [`product/Recall-Request-模型与Discovery边界-草案.md`](./product/Recall-Request-模型与Discovery边界-草案.md) — **Normative（2026-10-06 晋升 · D1 已裁决）**：Recall 必要条件 / Topic 两种来源 / Discovery 边界；完整正文在本文件；产品文档 §7.05 为摘要引用
+- [`architecture/decisions/ADR-014-recall-request-topic-two-sources.md`](./architecture/decisions/ADR-014-recall-request-topic-two-sources.md) — 上述草案的 ADR 落档（D1-B 退化弱 Topic 模型化）
 
 **运维 / 工程（非规格，与正文冲突时以正文为准）**：
 
