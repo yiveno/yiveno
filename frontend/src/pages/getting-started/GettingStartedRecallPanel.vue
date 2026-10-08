@@ -478,7 +478,7 @@ defineExpose({
 
 .gs-recall__card-hit {
   display: grid;
-  gap: 4px;
+  gap: var(--space-2xs);
   width: 100%;
   padding: var(--space-md);
   border: none;

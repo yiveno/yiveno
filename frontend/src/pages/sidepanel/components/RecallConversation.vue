@@ -422,7 +422,7 @@ function handleToggleDetailExportSelection(id: string): void {
   display: grid;
 
   /* turn 间节奏：对话区个性化间距 */
-  gap: 22px;
+  gap: var(--space-lg);
   min-width: 0;
   padding: var(--space-2xs) 0 var(--space-md);
 }
@@ -444,8 +444,8 @@ function handleToggleDetailExportSelection(id: string): void {
 
 .conversation-bubble {
   max-width: 88%;
-  padding: 11px 15px;
-  border-radius: 20px;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-xl);
   font-size: 15px;
   line-height: 1.5;
   white-space: pre-wrap;
@@ -472,7 +472,7 @@ function handleToggleDetailExportSelection(id: string): void {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-xs);
   min-width: 0;
 }
 
@@ -480,7 +480,7 @@ function handleToggleDetailExportSelection(id: string): void {
   display: inline-flex;
   flex: 0 0 auto;
   align-items: center;
-  gap: 5px;
+  gap: var(--space-2xs);
 }
 
 .pending-dot {
@@ -510,7 +510,7 @@ function handleToggleDetailExportSelection(id: string): void {
 
 .pending-steps-done {
   display: grid;
-  gap: 4px;
+  gap: var(--space-2xs);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -519,7 +519,7 @@ function handleToggleDetailExportSelection(id: string): void {
 .pending-step {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: var(--space-xs);
   margin: 0;
   font-size: 12px;
   line-height: 1.4;
@@ -561,7 +561,7 @@ function handleToggleDetailExportSelection(id: string): void {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 6px 8px;
+  gap: var(--space-2xs) var(--space-xs);
   min-width: 0;
   max-width: 100%;
   margin: 0;
@@ -580,14 +580,14 @@ function handleToggleDetailExportSelection(id: string): void {
   display: inline-flex;
   flex-wrap: wrap;
   align-items: baseline;
-  gap: 4px 6px;
+  gap: var(--space-2xs) var(--space-2xs);
   min-width: 0;
 }
 
 .assistant-turn-echo-item {
   display: inline-flex;
   align-items: baseline;
-  gap: 4px 6px;
+  gap: var(--space-2xs) var(--space-2xs);
   min-width: 0;
 }
 

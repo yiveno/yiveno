@@ -204,19 +204,17 @@ export default {
       }
     ],
 
-    // 禁止硬编码数值（警告级别，逐步迁移）
+    // 间距/圆角：必须用 brand 既有 --space-* / --radius-*（见设计标准 §3.3）
+    // 字号：规范尚未定 type scale，暂不门禁 font-size（禁止为过 lint 新造 --text-*）
+    // 1–2px：允许发丝光学微调；≥3px 的裸 px 应收束到阶梯
     'declaration-property-value-disallowed-list': [
       {
-        // 间距属性禁止使用像素值（应使用 var(--spacing-*)）
-        '/^(padding|margin|gap)/': ['/^\\d+px$/'],
-        // 字号禁止使用像素值（应使用 var(--text-*) 或 var(--font-size-*)）
-        'font-size': ['/^\\d+px$/'],
-        // 圆角禁止使用像素值（应使用 var(--radius-*)）
-        'border-radius': ['/^\\d+px$/']
+        '/^(padding|margin|gap)/': ['/^([3-9]|\\d{2,})px$/'],
+        'border-radius': ['/^([3-9]|\\d{2,})px$/']
       },
       {
         severity: 'warning',
-        message: '建议使用 CSS 变量，如 var(--spacing-4)、var(--text-base)、var(--radius-md)'
+        message: '间距/圆角请用 var(--space-*) / var(--radius-*)（packages/design-tokens）；1–2px 发丝除外'
       }
     ],
 

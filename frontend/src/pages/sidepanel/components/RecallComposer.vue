@@ -161,7 +161,7 @@ defineExpose({ focus })
   display: flex;
   flex: 1 1 auto;
   align-items: baseline;
-  gap: 6px;
+  gap: var(--space-2xs);
   min-width: 0;
   margin: 0;
   padding: 2px 0;
@@ -191,9 +191,9 @@ defineExpose({ focus })
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
-  gap: 4px;
+  gap: var(--space-2xs);
   margin: 0;
-  padding: 5px var(--space-sm);
+  padding: var(--space-2xs) var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius-full);
   font-size: 12px;
@@ -237,7 +237,7 @@ defineExpose({ focus })
   min-height: 76px;
   padding: var(--space-sm) var(--space-sm) var(--space-sm) var(--space-md);
   border: 1px solid var(--border);
-  border-radius: 28px;
+  border-radius: var(--radius-full);
   background: var(--surface-white);
   box-shadow:
     0 1px 2px color-mix(in srgb, var(--ink) 8%, transparent),

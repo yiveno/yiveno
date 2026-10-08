@@ -18,7 +18,7 @@ defineProps<{
 <style scoped>
 .recall-hit {
   padding: 0 1px;
-  border-radius: 2px;
+  border-radius: var(--radius-xs);
   font-weight: 650;
   color: var(--accent);
   background: color-mix(in srgb, var(--accent) 18%, transparent);

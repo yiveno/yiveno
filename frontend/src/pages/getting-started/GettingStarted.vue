@@ -195,12 +195,12 @@ onUnmounted(() => {
 }
 
 .getting-started__tabs :deep(.app-section-tabs) {
-  padding: 3px;
+  padding: var(--space-2xs);
   background: color-mix(in srgb, var(--surface-raised) 70%, transparent);
 }
 
 .getting-started__tabs :deep(.app-section-tabs__tab) {
-  padding: 6px var(--space-sm);
+  padding: var(--space-2xs) var(--space-sm);
   font-size: 13px;
   font-weight: 500;
 }

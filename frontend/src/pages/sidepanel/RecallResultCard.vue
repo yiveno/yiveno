@@ -598,7 +598,7 @@ function handleMoreClick(event: MouseEvent): void {
   width: 14px;
   height: 14px;
   object-fit: contain;
-  border-radius: 2px;
+  border-radius: var(--radius-xs);
 }
 
 .recall-type-chip--excerpt {
@@ -609,11 +609,11 @@ function handleMoreClick(event: MouseEvent): void {
 
 /* 主卡 / sibling 为角标让出左侧，避免压住标题首字 */
 .recall-card-shell:has(> .recall-type-chip--corner) > .recall-card {
-  padding-left: 40px;
+  padding-left: calc(var(--space-xl) + var(--space-xs));
 }
 
 .recall-sibling-item:has(> .recall-type-chip--corner) > .recall-card {
-  padding-left: 38px;
+  padding-left: var(--space-xl);
 }
 
 .recall-card-title {
@@ -630,7 +630,7 @@ function handleMoreClick(event: MouseEvent): void {
 
 .recall-card-body {
   display: -webkit-box;
-  margin: 0 0 6px;
+  margin: 0 0 var(--space-2xs);
   font-size: 15px;
   line-height: 1.5;
   color: var(--on-surface);
@@ -736,7 +736,7 @@ function handleMoreClick(event: MouseEvent): void {
   gap: 1px;
   min-width: 1.75rem;
   margin: 0;
-  padding: 4px 6px;
+  padding: var(--space-2xs) var(--space-2xs);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font-family: inherit;
