@@ -12,7 +12,9 @@ import {
   formatOmniboxNoMatchSuggestionDescription,
   formatOmniboxPrimaryMatch,
   getOmniboxTypePrefix,
+  OMNIBOX_MEMORY_SUGGEST_LIMIT,
   OMNIBOX_SUGGEST_LIMIT,
+  formatOmniboxSwitchTrackSuggestionDescription,
   recallMatchToOmniboxSuggest,
   recallResultToOmniboxSuggests,
   truncateOmniboxText,
@@ -38,21 +40,27 @@ describe('omnibox-suggest', () => {
     expect(tryParseOmniboxHandoffClue('jh')).toBeNull()
   })
 
-  it('default / no_match 文案：有真实快捷键才括号展示，禁止写死建议键', () => {
+  it('default / no_match / switch_track 文案：有真实快捷键才括号展示，禁止写死建议键', () => {
     expect(formatOmniboxDefaultSuggestionDescription('Alt+Shift+Y', testTranslateEn)).toBe(
-      'Tip: Best with a title, site, or note keyword. Fuzzy clues → Side Panel (Alt+Shift+Y)'
+      'Tip: Title, site, or note keyword. Fuzzy → Side Panel (Alt+Shift+Y)'
     )
     expect(formatOmniboxDefaultSuggestionDescription('', testTranslateEn)).toBe(
-      'Tip: Best with a title, site, or note keyword. Fuzzy clues → Side Panel'
+      'Tip: Title, site, or note keyword. Fuzzy → Side Panel'
     )
     expect(formatOmniboxDefaultSuggestionDescription(null, testTranslateEn)).toBe(
-      'Tip: Best with a title, site, or note keyword. Fuzzy clues → Side Panel'
+      'Tip: Title, site, or note keyword. Fuzzy → Side Panel'
     )
     expect(formatOmniboxNoMatchSuggestionDescription('Ctrl+Shift+Y', testTranslateEn)).toBe(
-      'No quick match — click to recall this in Side Panel (Ctrl+Shift+Y)'
+      'No quick match — open Side Panel to recall this (Ctrl+Shift+Y)'
     )
     expect(formatOmniboxNoMatchSuggestionDescription('  ', testTranslateEn)).toBe(
-      'No quick match — click to recall this in Side Panel'
+      'No quick match — open Side Panel to recall this'
+    )
+    expect(formatOmniboxSwitchTrackSuggestionDescription('Alt+Shift+Y', testTranslateEn)).toBe(
+      'Not what you wanted? Open Side Panel (Alt+Shift+Y)'
+    )
+    expect(formatOmniboxSwitchTrackSuggestionDescription('', testTranslateEn)).toBe(
+      'Not what you wanted? Open Side Panel'
     )
   })
 
@@ -181,16 +189,21 @@ describe('omnibox-suggest', () => {
       clue: 'retention'
     }
 
-    const suggests = recallResultToOmniboxSuggests(result, suggestOptions)
-    expect(suggests).toHaveLength(2)
+    const suggests = recallResultToOmniboxSuggests(result, {
+      ...suggestOptions,
+      clue: 'retention'
+    })
+    expect(suggests).toHaveLength(3)
     expect(suggests[0]?.content).toContain('/omnibox-open.html?id=')
     expect(suggests[0]?.content).toContain(result.topPick!.item.id)
     expect(suggests[0]?.description).toContain('Bookmark')
     expect(suggests[1]?.content).toContain('/omnibox-open.html?id=')
     expect(suggests[1]?.content).toContain(result.alsoPossible[0]!.item.id)
+    expect(suggests[2]?.content).toMatch(/^yiveno-omnibox-handoff:/)
+    expect(suggests[2]?.description).toContain('Not what you wanted')
   })
 
-  it('相同 URL 去重', () => {
+  it('相同 URL 去重；末行仍可换赛道', () => {
     const item = createBookmarkMemoryItem({
       ...baseContext,
       payload: { title: 'Same page', url: 'https://example.com/same' }
@@ -203,10 +216,16 @@ describe('omnibox-suggest', () => {
       clue: 'same'
     }
 
-    expect(recallResultToOmniboxSuggests(result, suggestOptions)).toHaveLength(1)
+    const suggests = recallResultToOmniboxSuggests(result, {
+      ...suggestOptions,
+      clue: 'same'
+    })
+    expect(suggests).toHaveLength(2)
+    expect(suggests[0]?.content).toContain('/omnibox-open.html?id=')
+    expect(suggests[1]?.content).toMatch(/^yiveno-omnibox-handoff:/)
   })
 
-  it(`建议条数不超过 OMNIBOX_SUGGEST_LIMIT（${OMNIBOX_SUGGEST_LIMIT}），且与 Side Panel 首屏页长解耦`, () => {
+  it(`总条数 ≤ OMNIBOX_SUGGEST_LIMIT（${OMNIBOX_SUGGEST_LIMIT}）：Memory ≤${OMNIBOX_MEMORY_SUGGEST_LIMIT} + 末行换赛道`, () => {
     const overLimit = OMNIBOX_SUGGEST_LIMIT + 2
     const matches: RecallMatch[] = Array.from({ length: overLimit }, (_, i) => ({
       item: createBookmarkMemoryItem({
@@ -227,10 +246,16 @@ describe('omnibox-suggest', () => {
       clue: 'match'
     }
 
-    const suggests = recallResultToOmniboxSuggests(result, suggestOptions)
+    const suggests = recallResultToOmniboxSuggests(result, {
+      ...suggestOptions,
+      clue: 'match'
+    })
     expect(suggests).toHaveLength(OMNIBOX_SUGGEST_LIMIT)
-    // 当前 Normative：一次性下拉预算 6；Side Panel 首屏仍为 RECALL_RESULT_PAGE_SIZE=5
+    expect(OMNIBOX_MEMORY_SUGGEST_LIMIT).toBe(5)
     expect(OMNIBOX_SUGGEST_LIMIT).toBe(6)
+    const memoryRows = suggests.filter(s => !s.content.startsWith('yiveno-omnibox-handoff:'))
+    expect(memoryRows).toHaveLength(OMNIBOX_MEMORY_SUGGEST_LIMIT)
+    expect(suggests[suggests.length - 1]?.content).toMatch(/^yiveno-omnibox-handoff:/)
   })
 
   it('折叠组在 description 中带 similar 计数', () => {

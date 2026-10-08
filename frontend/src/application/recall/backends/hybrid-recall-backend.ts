@@ -129,12 +129,18 @@ async function finalizeKeywordResult(
   parsed: ParsedRecallClue,
   currentTabDomain: string | undefined,
   pairClue: string,
-  options?: { skipOutcomePairs?: boolean; fuzzyExpandTokens?: readonly string[] }
+  options?: {
+    skipOutcomePairs?: boolean
+    fuzzyExpandTokens?: readonly string[]
+    /** Omnibox 快跳：略抬 open / 近因 / settled（ADR-007） */
+    behaviorProfile?: 'omnibox'
+  }
 ): Promise<{ result: RecallResult; effectiveParsed: ParsedRecallClue; timeSoftReopen: boolean }> {
   const base = recallByKeywordWithParsedClue(items, displayClue, {
     candidateLimit: RECALL_RESULT_POOL_LIMIT,
     parsed,
-    ...(options?.fuzzyExpandTokens ? { fuzzyExpandTokens: options.fuzzyExpandTokens } : {})
+    ...(options?.fuzzyExpandTokens ? { fuzzyExpandTokens: options.fuzzyExpandTokens } : {}),
+    ...(options?.behaviorProfile ? { behaviorProfile: options.behaviorProfile } : {})
   })
   const effectiveParsed = base.parsed ?? parsed
   const timeSoftReopen =
@@ -905,6 +911,7 @@ export class HybridRecallBackend implements RecallBackend {
         pairClue,
         {
           skipOutcomePairs: true,
+          behaviorProfile: 'omnibox',
           // fuzzyTokens[0] === normalizedClue（归一化后），其余为展开变体
           ...(fuzzyTokens.length > 1 ? { fuzzyExpandTokens: fuzzyTokens.slice(1) } : {})
         }

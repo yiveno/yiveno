@@ -9,10 +9,10 @@
     "message": "Save to Yiveno"
   },
   "omnibox_default_suggestion": {
-    "message": "Tip: Best with a title, site, or note keyword. Fuzzy clues → Side Panel"
+    "message": "Tip: Title, site, or note keyword. Fuzzy → Side Panel"
   },
   "omnibox_default_suggestion_with_shortcut": {
-    "message": "Tip: Best with a title, site, or note keyword. Fuzzy clues → Side Panel ($1)",
+    "message": "Tip: Title, site, or note keyword. Fuzzy → Side Panel ($1)",
     "placeholders": {
       "shortcut": {
         "content": "$1",
@@ -21,10 +21,22 @@
     }
   },
   "omnibox_no_match": {
-    "message": "No quick match — click to recall this in Side Panel"
+    "message": "No quick match — open Side Panel to recall this"
   },
   "omnibox_no_match_with_shortcut": {
-    "message": "No quick match — click to recall this in Side Panel ($1)",
+    "message": "No quick match — open Side Panel to recall this ($1)",
+    "placeholders": {
+      "shortcut": {
+        "content": "$1",
+        "example": "Alt+Shift+Y"
+      }
+    }
+  },
+  "omnibox_switch_track": {
+    "message": "Not what you wanted? Open Side Panel"
+  },
+  "omnibox_switch_track_with_shortcut": {
+    "message": "Not what you wanted? Open Side Panel ($1)",
     "placeholders": {
       "shortcut": {
         "content": "$1",

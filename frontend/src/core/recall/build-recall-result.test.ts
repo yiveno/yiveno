@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest'
 
 import { createBookmarkMemoryItem } from '@/core/memory/create-memory-item'
-import { buildRecallResult, recallByKeyword } from '@/core/recall/build-recall-result'
+import {
+  FUZZY_VARIANT_SCORE_FACTOR,
+  OMNIBOX_FUZZY_SKIP_IF_PRIMARY_COUNT,
+  buildRecallResult,
+  filterKeywordMatchesBeforeCollapse,
+  recallByKeyword
+} from '@/core/recall/build-recall-result'
 import {
   getRecallDuplicateKey,
   serializeRecallDuplicateKey
@@ -185,5 +191,79 @@ describe('build-recall-result Top/Also 互斥', () => {
       m => m.item.type === 'bookmark' && m.item.payload.title === 'js-cookie - npm'
     )
     expect(cookie?.duplicateGroup?.totalCount).toBe(520)
+  })
+
+  it('Indexed Fuzzy：主路径已满额且头名够强时跳过变体扫（短路径）', () => {
+    // recat≠react 子串/形态，避免主路径误命中 canon 标题
+    const shortItems = Array.from({ length: OMNIBOX_FUZZY_SKIP_IF_PRIMARY_COUNT }, (_, i) =>
+      createBookmarkMemoryItem({
+        ...baseContext,
+        payload: {
+          title: `recat notes ${i}`,
+          url: `https://example.com/recat-${i}`
+        }
+      })
+    )
+    const fuzzyOnly = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: {
+        title: 'React handbook deep dive',
+        url: 'https://example.com/react-handbook'
+      }
+    })
+
+    const sparse = filterKeywordMatchesBeforeCollapse(
+      [...shortItems.slice(0, 2), fuzzyOnly],
+      'recat',
+      {
+        minScore: 1,
+        fuzzyExpandTokens: ['react'],
+        behaviorProfile: 'omnibox'
+      }
+    )
+    expect(sparse.some(m => m.item.id === fuzzyOnly.id)).toBe(true)
+
+    const skipped = filterKeywordMatchesBeforeCollapse([...shortItems, fuzzyOnly], 'recat', {
+      minScore: 1,
+      fuzzyExpandTokens: ['react'],
+      behaviorProfile: 'omnibox'
+    })
+    expect(skipped).toHaveLength(OMNIBOX_FUZZY_SKIP_IF_PRIMARY_COUNT)
+    expect(skipped.every(m => shortItems.some(s => s.id === m.item.id))).toBe(true)
+    expect(skipped.some(m => m.item.id === fuzzyOnly.id)).toBe(false)
+  })
+
+  it('Indexed Fuzzy：变体分折扣，精确标题不被扩词满分冲掉', () => {
+    const exactJs = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: { title: 'js cheat sheet', url: 'https://example.com/js-cheat' }
+    })
+    const longCanon = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: {
+        title: 'JavaScript language handbook deep dive',
+        url: 'https://example.com/javascript-handbook'
+      }
+    })
+
+    const merged = filterKeywordMatchesBeforeCollapse([exactJs, longCanon], 'js', {
+      minScore: 1,
+      fuzzyExpandTokens: ['javascript'],
+      behaviorProfile: 'omnibox'
+    })
+    merged.sort((a, b) => b.score - a.score)
+    expect(merged[0]?.item.id).toBe(exactJs.id)
+
+    const fuzzyOnly = merged.find(m => m.item.id === longCanon.id)
+    expect(fuzzyOnly).toBeDefined()
+    // 变体路径须带折扣（相对未折扣主路径满分）
+    const undiscounted = filterKeywordMatchesBeforeCollapse([longCanon], 'javascript', {
+      minScore: 1,
+      behaviorProfile: 'omnibox'
+    })[0]
+    expect(undiscounted).toBeDefined()
+    expect(fuzzyOnly!.score).toBeLessThanOrEqual(
+      Math.floor(undiscounted!.score * FUZZY_VARIANT_SCORE_FACTOR)
+    )
   })
 })

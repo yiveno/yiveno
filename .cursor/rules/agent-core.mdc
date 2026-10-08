@@ -269,6 +269,8 @@ code
 
 in a consistent state, according to existing project rules.
 
+When a solution is already decided and code is being changed: **sync authoritative docs in the same delivery without asking**. Partial sync that leaves stale Normative sentences on the same topic counts as incomplete. Do not treat documentation updates as optional or as a follow-up question to the user.
+
 ---
 
 ## 11. Failure Handling

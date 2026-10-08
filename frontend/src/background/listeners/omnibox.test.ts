@@ -87,16 +87,22 @@ describe('omnibox listeners', () => {
                 ? (substitutions[0] ?? '')
                 : substitutions
           if (key === 'omnibox_default_suggestion') {
-            return 'Tip: Best with a title, site, or note keyword. Fuzzy clues → Side Panel'
+            return 'Tip: Title, site, or note keyword. Fuzzy → Side Panel'
           }
           if (key === 'omnibox_default_suggestion_with_shortcut') {
-            return `Tip: Best with a title, site, or note keyword. Fuzzy clues → Side Panel (${sub})`
+            return `Tip: Title, site, or note keyword. Fuzzy → Side Panel (${sub})`
           }
           if (key === 'omnibox_no_match') {
-            return 'No quick match — click to recall this in Side Panel'
+            return 'No quick match — open Side Panel to recall this'
           }
           if (key === 'omnibox_no_match_with_shortcut') {
-            return `No quick match — click to recall this in Side Panel (${sub})`
+            return `No quick match — open Side Panel to recall this (${sub})`
+          }
+          if (key === 'omnibox_switch_track') {
+            return 'Not what you wanted? Open Side Panel'
+          }
+          if (key === 'omnibox_switch_track_with_shortcut') {
+            return `Not what you wanted? Open Side Panel (${sub})`
           }
           if (key === 'omnibox_type_bookmark') {
             return 'Bookmark'
@@ -144,8 +150,7 @@ describe('omnibox listeners', () => {
       expect(setDefaultSuggestion).toHaveBeenCalledTimes(1)
     })
     expect(setDefaultSuggestion).toHaveBeenCalledWith({
-      description:
-        'Tip: Best with a title, site, or note keyword. Fuzzy clues → Side Panel (Alt+Shift+Y)'
+      description: 'Tip: Title, site, or note keyword. Fuzzy → Side Panel (Alt+Shift+Y)'
     })
   })
 
@@ -154,8 +159,7 @@ describe('omnibox listeners', () => {
     registerOmniboxListeners()
     await vi.waitFor(() => {
       expect(setDefaultSuggestion).toHaveBeenCalledWith({
-        description:
-          'Tip: Best with a title, site, or note keyword. Fuzzy clues → Side Panel (Ctrl+Shift+Y)'
+        description: 'Tip: Title, site, or note keyword. Fuzzy → Side Panel (Ctrl+Shift+Y)'
       })
     })
 
@@ -165,7 +169,7 @@ describe('omnibox listeners', () => {
     registerOmniboxListeners()
     await vi.waitFor(() => {
       expect(setDefaultSuggestion).toHaveBeenCalledWith({
-        description: 'Tip: Best with a title, site, or note keyword. Fuzzy clues → Side Panel'
+        description: 'Tip: Title, site, or note keyword. Fuzzy → Side Panel'
       })
     })
   })
@@ -198,9 +202,11 @@ describe('omnibox listeners', () => {
 
     // suggest 只应调用一次（禁止异步前 suggest([]) 吃掉 one-shot 回调）
     expect(suggest).toHaveBeenCalledTimes(1)
-    expect(suggest.mock.calls[0]?.[0]?.[0]?.content).toBe(
-      `chrome-extension://testid/omnibox-open.html?id=${BOOKMARK_ID}`
-    )
+    const rows = suggest.mock.calls[0]?.[0] as chrome.omnibox.SuggestResult[]
+    expect(rows).toHaveLength(2)
+    expect(rows[0]?.content).toBe(`chrome-extension://testid/omnibox-open.html?id=${BOOKMARK_ID}`)
+    expect(rows[1]?.content).toMatch(/^yiveno-omnibox-handoff:/)
+    expect(rows[1]?.description).toContain('Not what you wanted')
   })
 
   it('慢请求过期后不得回写旧结果（suggest 不抢先清空）', async () => {

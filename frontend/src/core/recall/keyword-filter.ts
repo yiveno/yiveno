@@ -24,6 +24,22 @@ const FIELD_WEIGHTS: Record<string, number> = {
   note: 26
 }
 
+/**
+ * Omnibox / 短锚点快跳：抬标题·域名·附注·URL，压长正文与前后文。
+ * 减轻 `d`/`gi` 类短 token 在正文里的噪声命中（ADR-007 soft rank 同档）。
+ */
+const OMNIBOX_FIELD_WEIGHTS: Record<string, number> = {
+  ...FIELD_WEIGHTS,
+  title: 28,
+  note: 30,
+  domain: 18,
+  url: 14,
+  pageTitle: 22,
+  textExcerpt: 12,
+  excerptContext: 4,
+  summary: 12
+}
+
 /** 中文/无空格脚本 ngram 命中相对字段权重的系数。 */
 const NGRAM_SCORE_FACTOR = 0.5
 
@@ -195,9 +211,17 @@ interface RecallToken {
   kind: TokenKind
 }
 
-/** 打分可选时钟（eval 固定 now，避免近因漂移）。 */
+/**
+ * 行为加权档位。
+ * - default：Side Panel / 通用（裸 open 偏低，防连环排查污染）
+ * - omnibox：快跳略抬 open / 近因 / settled（仍受 {@link RECALL_BEHAVIOR_BOOST_CAP}）
+ */
+export type RecallBehaviorProfile = 'default' | 'omnibox'
+
+/** 打分可选时钟（eval 固定 now，避免近因漂移）与行为档。 */
 export interface RecallScoreOptions {
   nowMs?: number
+  behaviorProfile?: RecallBehaviorProfile
 }
 
 /** 归一化筛选文本。 */
@@ -508,8 +532,9 @@ export function collectFilterIndexFields(item: MemoryItem): FilterIndexField[] {
   return fields
 }
 
-function fieldWeight(field: string): number {
-  return FIELD_WEIGHTS[field] ?? 8
+function fieldWeight(field: string, profile: RecallBehaviorProfile = 'default'): number {
+  const table = profile === 'omnibox' ? OMNIBOX_FIELD_WEIGHTS : FIELD_WEIGHTS
+  return table[field] ?? 8
 }
 
 /**
@@ -667,13 +692,27 @@ function scoreFactorForKind(kind: TokenKind): number {
 
 /**
  * 行为加权：仅在已有词面命中时使用。
- * openCount = explore「看过」（§7.2 P0 暂降权，系数 1.5；often_opened 走 settledCount）。
- * 近 7/30 天打开给近因分；总和封顶。
+ * - openCount：explore「看过」（默认偏低；omnibox 略抬）
+ * - settledCount：§7.2 履约正例（常开/确认过的记忆；此前未进本函数）
+ * - 近 7/30 天 lastOpenedAt：近因
+ * 总和封顶 {@link RECALL_BEHAVIOR_BOOST_CAP}，不得压过强词面差。
  */
 export function computeBehaviorBoost(item: MemoryItem, options: RecallScoreOptions = {}): number {
-  const openCount = item.clues.openCount
-  // §7.2：裸 open 易被连环排查污染；P0 暂降权，正例以 settledCount 为准
-  const openBoost = openCount > 0 ? Math.min(4, Math.floor(Math.log2(openCount + 1) * 1.5)) : 0
+  const omnibox = options.behaviorProfile === 'omnibox'
+  const openCount = item.clues.openCount ?? 0
+  const settledCount = item.clues.settledCount ?? 0
+
+  // §7.2：裸 open 易被连环排查污染；默认仍偏低。Omnibox 快跳略抬（常开的应更靠前）。
+  const openBoost =
+    openCount > 0
+      ? Math.min(omnibox ? 6 : 4, Math.floor(Math.log2(openCount + 1) * (omnibox ? 2.2 : 1.5)))
+      : 0
+
+  // settled = 用户确认过的「就是这条」信号，须明显大于同量级裸 open（防词面微差盖过）
+  const settledBoost =
+    settledCount > 0
+      ? Math.min(omnibox ? 8 : 5, Math.floor(Math.log2(settledCount + 1) * (omnibox ? 3 : 2)))
+      : 0
 
   let recencyBoost = 0
   const lastOpenedAt = item.clues.lastOpenedAt
@@ -682,14 +721,14 @@ export function computeBehaviorBoost(item: MemoryItem, options: RecallScoreOptio
     if (!Number.isNaN(openedMs)) {
       const ageMs = (options.nowMs ?? Date.now()) - openedMs
       if (ageMs >= 0 && ageMs <= 7 * DAY_MS) {
-        recencyBoost = 4
+        recencyBoost = omnibox ? 5 : 4
       } else if (ageMs >= 0 && ageMs <= 30 * DAY_MS) {
-        recencyBoost = 2
+        recencyBoost = omnibox ? 3 : 2
       }
     }
   }
 
-  return Math.min(RECALL_BEHAVIOR_BOOST_CAP, openBoost + recencyBoost)
+  return Math.min(RECALL_BEHAVIOR_BOOST_CAP, openBoost + settledBoost + recencyBoost)
 }
 
 /**
@@ -862,6 +901,7 @@ function scoreMemoryItemWithTokens(
     compactToken: compactRecallText(entry.token)
   }))
 
+  const behaviorProfile = options.behaviorProfile ?? 'default'
   const fields = collectFilterIndexFields(item).map(entry => ({
     field: entry.field,
     /** 规范化后用于忽略大小写命中 */
@@ -869,7 +909,7 @@ function scoreMemoryItemWithTokens(
     compact: compactRecallText(entry.text),
     /** 原文：大小写贴合加权 */
     original: entry.text,
-    weight: fieldWeight(entry.field)
+    weight: fieldWeight(entry.field, behaviorProfile)
   }))
 
   let exactScore = 0
@@ -1110,12 +1150,18 @@ export function isGenericOnlyHitAgainstSpecificClue(clue: string, item: MemoryIt
 export function filterMemoryItemsByKeyword(
   items: MemoryItem[],
   clue: string,
-  options: { limit?: number; minScore?: number; nowMs?: number } = {}
+  options: {
+    limit?: number
+    minScore?: number
+    nowMs?: number
+    behaviorProfile?: RecallBehaviorProfile
+  } = {}
 ): RecallMatch[] {
   const limit = options.limit ?? 6
   const minScore = options.minScore ?? RECALL_MIN_MATCH_SCORE
   const scoreOptions: RecallScoreOptions = {
-    ...(options.nowMs === undefined ? {} : { nowMs: options.nowMs })
+    ...(options.nowMs === undefined ? {} : { nowMs: options.nowMs }),
+    ...(options.behaviorProfile === undefined ? {} : { behaviorProfile: options.behaviorProfile })
   }
   // 整表只分词一次，避免 N 次重复 tokenize
   const tokens = tokenizeRecallClueDetailed(clue)

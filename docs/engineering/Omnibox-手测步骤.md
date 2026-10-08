@@ -162,8 +162,11 @@ that chrome extension migration guide I bookmarked
 
 ## 6. 回归检查表
 
-- [ ] 默认行 = Tip（title/site/note keyword · 模糊→Side Panel）；快捷键与 shortcuts 一致（未绑定则无括号）；非 CTA
-- [ ] 无命中 = `omnibox_no_match`（同上：真实快捷键或省略）；回车接力 Side Panel + 自动提交
+- [ ] 默认行 = Tip（`Title, site, or note keyword. Fuzzy → Side Panel`）；快捷键与 shortcuts 一致（未绑定则无括号）；非 CTA
+- [ ] 无命中 = CTA 行 `No quick match — open Side Panel to recall this`（点该行接力；非 Tip）；自动提交完整 Recall
+- [ ] **有命中** = Memory 行 ≤5，**末行** `Not what you wanted? Open Side Panel`（点末行接力同 clue；点 Memory 仍打开条目）
+- [ ] 常开 / 高 settled 条目在同词面下更靠前（个人 soft rank）
+- [ ] `cf Workers`（或库内等价模糊锚）能经 Indexed Fuzzy 命中 Cloudflare 类书签
 - [ ] §4.1 具体锚点 **3/3**（从上表 8 条里任选 3 条）
 - [ ] §4.3 负例 **2/2**（N1 + N2 最少）
 - [ ] §4.4 Side Panel 对照 **1 组**（具体锚点）

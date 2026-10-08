@@ -28,6 +28,13 @@ describe('fuzzy-lexicon', () => {
       expect(variants).toContain('react tutorial')
     })
 
+    it('cf → cloudflare 展开（Omnibox must 锚）；原词恒首位', () => {
+      const variants = getFuzzyVariants('cf Workers', 8)
+      expect(variants[0]).toBe('cf workers')
+      expect(variants).toContain('cloudflare workers')
+      expect(variants.indexOf('cloudflare workers')).toBeGreaterThan(0)
+    })
+
     it('大小写归一化：React Hooks → JS 展开', () => {
       const variants = getFuzzyVariants('JS FRAMEWORK', 8)
       expect(variants).toContain('javascript framework')

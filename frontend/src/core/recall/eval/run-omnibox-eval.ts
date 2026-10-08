@@ -64,6 +64,7 @@ export async function runOmniboxEval(
       result = recallByKeywordWithParsedClue(items, clue, {
         nowMs: RECALL_EVAL_NOW_MS,
         parsed: understood.parsed,
+        behaviorProfile: 'omnibox',
         ...(fuzzyTokens.length > 1 ? { fuzzyExpandTokens: fuzzyTokens.slice(1) } : {})
       })
       result = {

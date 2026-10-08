@@ -25,6 +25,13 @@ let listenersRegistered = false
 let inputChangedRequestId = 0
 
 /**
+ * `_execute_action` 快捷键缓存（Tip/CTA 文案用）。
+ * 避免每键 `commands.getAll`；用户改绑后最多 TTL 内仍显示旧键（可接受）。
+ */
+const OPEN_RECALL_SHORTCUT_CACHE_TTL_MS = 60_000
+let openRecallShortcutCache: { value: string; atMs: number } | null = null
+
+/**
  * 最近一次 inputChanged 的快跳结果（同 clue 回车可跳过二次 Recall，尽早开 Panel 保手势）。
  * SW 休眠后为空，则回车路径再跑一轮 Offline lookup。
  */
@@ -53,12 +60,22 @@ function getDetailPageUrl(): string {
  * 失败或未绑定时返回空串 → 文案省略快捷键，禁止回退到 manifest 建议键。
  */
 async function getOpenRecallActionShortcut(): Promise<string> {
+  const now = Date.now()
+  if (
+    openRecallShortcutCache &&
+    now - openRecallShortcutCache.atMs < OPEN_RECALL_SHORTCUT_CACHE_TTL_MS
+  ) {
+    return openRecallShortcutCache.value
+  }
   try {
     const commands = await chrome.commands.getAll()
     const command = commands.find(item => item.name === OPEN_RECALL_ACTION_COMMAND)
-    return command?.shortcut?.trim() ?? ''
+    const value = command?.shortcut?.trim() ?? ''
+    openRecallShortcutCache = { value, atMs: now }
+    return value
   } catch (error) {
     logger.warn('Omnibox', '读取 Side Panel 快捷键失败，文案省略快捷键', error)
+    openRecallShortcutCache = { value: '', atMs: now }
     return ''
   }
 }
@@ -146,9 +163,12 @@ async function handleOmniboxInputChanged(
     return
   }
 
-  // 等待期间只更新 default 文案；禁止在此 suggest([])（见函数 JSDoc）。
-  chrome.omnibox.setDefaultSuggestion({
-    description: await getDefaultSuggestionDescription()
+  // Tip 与 lookup 并行：禁止先 await Tip 再开 Recall（短路径优先；仍禁止提前 suggest([])）。
+  const tipUpdate = getDefaultSuggestionDescription().then(description => {
+    if (isStaleOmniboxInputChangedRequest(requestId)) {
+      return
+    }
+    chrome.omnibox.setDefaultSuggestion({ description })
   })
 
   await ensureReady()
@@ -162,6 +182,7 @@ async function handleOmniboxInputChanged(
     clueLength: clue.length
   })
   const result = await recallService.recallWithClue(clue, { entry: 'omnibox' })
+  await tipUpdate.catch(() => undefined)
 
   if (isStaleOmniboxInputChangedRequest(requestId)) {
     logger.info('Omnibox', 'inputChanged：结果已过期，丢弃', { requestId })
@@ -183,10 +204,12 @@ async function handleOmniboxInputChanged(
     hasNavigableTopPick
   })
 
+  const openRecallShortcut = await getOpenRecallActionShortcut()
   const suggests = recallResultToOmniboxSuggests(result, {
     detailPageUrl,
     translate: t,
-    clue: result.effectiveClue ?? clue
+    clue: result.effectiveClue ?? clue,
+    openRecallShortcut
   })
   if (suggests.length === 0) {
     // 第 1 行 = default（常驻 Tip，非 CTA）；
@@ -329,4 +352,5 @@ export function resetOmniboxListenersForTests(): void {
   listenersRegistered = false
   inputChangedRequestId = 0
   lastOmniboxLookup = null
+  openRecallShortcutCache = null
 }

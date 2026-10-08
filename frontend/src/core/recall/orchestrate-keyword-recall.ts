@@ -15,7 +15,8 @@ import { collapseRecallMatches } from '@/core/recall/collapse-recall-duplicates'
 import {
   filterMemoryItemsByKeyword,
   normalizeRecallText,
-  RECALL_TOP_PICK_MIN_SCORE
+  RECALL_TOP_PICK_MIN_SCORE,
+  type RecallBehaviorProfile
 } from '@/core/recall/keyword-filter'
 import {
   effectiveContentTermsForRecall,
@@ -81,6 +82,11 @@ export interface OrchestrateKeywordRecallOptions {
    * 传递到 filterKeywordMatchesBeforeCollapse 做多路合并。
    */
   fuzzyExpandTokens?: readonly string[]
+  /**
+   * 行为加权档（Omnibox 传 `omnibox`：略抬 open/近因/settled）。
+   * Side Panel / 默认不传。
+   */
+  behaviorProfile?: RecallBehaviorProfile
 }
 
 /** 对象类型 → 条目证据词面（跳过 clueOnly；用于 MemoryItem 类型弱匹配）。 */
@@ -817,7 +823,8 @@ export function recallByKeywordWithParsedClue(
 
   const scored = filterKeywordMatchesBeforeCollapse(items, filterClue, {
     nowMs,
-    ...(options.fuzzyExpandTokens ? { fuzzyExpandTokens: options.fuzzyExpandTokens } : {})
+    ...(options.fuzzyExpandTokens ? { fuzzyExpandTokens: options.fuzzyExpandTokens } : {}),
+    ...(options.behaviorProfile ? { behaviorProfile: options.behaviorProfile } : {})
   }).map(match => applyParsedClueScoreBoosts(match, parsed, nowMs))
   const { matches, effectiveParsed, timeSoftReopen } =
     applyTimeFilterThenContentCorroborationWithSoftReopen(scored, parsed, nowMs)

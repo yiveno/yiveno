@@ -205,15 +205,22 @@ const FUZZY_MAP = buildFuzzyMap(FUZZY_ENTRIES)
 
 /**
  * 对单个 token 做 fuzzy 展开。
- * @returns 规范形式列表（包含原始 token，若无映射则仅含原始）。
+ * @returns 规范形式列表（**原始 token 始终首位**；有映射时再附 canonical）。
  */
 function expandToken(token: string): string[] {
   const normalized = normalizeRecallText(token)
   const mapped = FUZZY_MAP.get(normalized)
-  if (mapped) {
-    return [...mapped]
+  if (!mapped || mapped.length === 0) {
+    return [normalized]
   }
-  return [token]
+  const out = [normalized]
+  for (const canonical of mapped) {
+    const c = normalizeRecallText(canonical)
+    if (c && !out.includes(c)) {
+      out.push(c)
+    }
+  }
+  return out
 }
 
 /**
@@ -269,16 +276,17 @@ function cartesianProduct<T>(arrays: T[][]): T[][] {
  */
 export function getFuzzyVariants(query: string, maxExpand = 8): string[] {
   const normalized = normalizeRecallText(query)
-  const variants = fuzzyExpandQuery(normalized, maxExpand + 1)
-  // 去重并保留原 query（归一化后）在首位
-  const seen = new Set<string>()
-  const result: string[] = []
-  for (const v of variants) {
-    if (!seen.has(v)) {
-      seen.add(v)
-      result.push(v)
-      if (result.length > maxExpand + 1) break
-    }
+  if (!normalized) {
+    return []
+  }
+  // 硬保证：原 clue（归一化）恒为 [0]；hybrid/omnibox 用 slice(1) 作展开
+  const seen = new Set<string>([normalized])
+  const result: string[] = [normalized]
+  for (const v of fuzzyExpandQuery(normalized, maxExpand + 1)) {
+    if (seen.has(v)) continue
+    seen.add(v)
+    result.push(v)
+    if (result.length > maxExpand + 1) break
   }
   return result
 }

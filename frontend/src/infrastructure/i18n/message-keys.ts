@@ -10,6 +10,8 @@ export const MESSAGE_KEYS = [
   'omnibox_default_suggestion_with_shortcut',
   'omnibox_no_match',
   'omnibox_no_match_with_shortcut',
+  'omnibox_switch_track',
+  'omnibox_switch_track_with_shortcut',
   'command_open_recall',
   'command_open_library',
   'command_open_settings',

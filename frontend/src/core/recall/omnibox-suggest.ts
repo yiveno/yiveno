@@ -14,8 +14,13 @@ import {
  * Omnibox 无 Show more：这一屏是唯一机会。Chrome 官方未钉死扩展 SuggestResult 条数；
  * MDN 常写「前 6 条」、桌面整栏 autocomplete 约 8（含 default 行）。本常量取 6 为自限预算，
  * 禁止复用 Panel 首屏页长。
+ *
+ * **有 Memory 命中时：** 末行固定「换赛道」CTA（handoff），Memory 行 ≤ {@link OMNIBOX_MEMORY_SUGGEST_LIMIT}。
  */
 export const OMNIBOX_SUGGEST_LIMIT = 6
+
+/** 有换赛道 CTA 时 Memory 建议上限（总预算 − 1）。 */
+export const OMNIBOX_MEMORY_SUGGEST_LIMIT = OMNIBOX_SUGGEST_LIMIT - 1
 
 /**
  * Omnibox **default 行**（平台强制 C 位）：友情提示，非 CTA、无命中接力。
@@ -46,6 +51,21 @@ export function formatOmniboxNoMatchSuggestionDescription(
     return translate('omnibox_no_match_with_shortcut', shortcut)
   }
   return translate('omnibox_no_match')
+}
+
+/**
+ * 有快跳命中时末行「换赛道」CTA：不满意当前邻域 → Side Panel 完整 Recall。
+ * 规则同无命中 CTA（有真实快捷键才括号展示）。
+ */
+export function formatOmniboxSwitchTrackSuggestionDescription(
+  openRecallShortcut: string | null | undefined,
+  translate: TranslateFn
+): string {
+  const shortcut = openRecallShortcut?.trim() ?? ''
+  if (shortcut.length > 0) {
+    return translate('omnibox_switch_track_with_shortcut', shortcut)
+  }
+  return translate('omnibox_switch_track')
 }
 
 /**
@@ -83,8 +103,15 @@ export interface OmniboxSuggestItem {
 export interface OmniboxSuggestOptions {
   detailPageUrl: string
   translate: TranslateFn
-  /** 用户线索（用于命中字段短标签；缺省则省略理由尾缀）。 */
+  /** 用户线索（用于命中字段短标签；缺省则省略理由尾缀；换赛道 CTA 必填）。 */
   clue?: string
+  /** `_execute_action` 当前绑定；仅用于换赛道 CTA 文案括号。 */
+  openRecallShortcut?: string | null
+  /**
+   * 有 Memory 建议时末行追加换赛道 CTA（默认 true）。
+   * 无命中空列表仍由 listener 单独 suggest 无命中 CTA。
+   */
+  includeSwitchTrackCta?: boolean
 }
 
 /** Omnibox 主文最大字符（书签标题 / 摘录锚点）。 */
@@ -231,7 +258,8 @@ export function recallMatchToOmniboxSuggest(
 
 /**
  * 将 Recall 结果映射为 Omnibox 建议列表。
- * 条数自限 `OMNIBOX_SUGGEST_LIMIT`（一次性下拉，无分页）；content 须与 clue 不同才会显示。
+ * 总条数自限 `OMNIBOX_SUGGEST_LIMIT`（一次性下拉，无分页）。
+ * 有命中且开启换赛道时：Memory ≤ {@link OMNIBOX_MEMORY_SUGGEST_LIMIT}，末行 handoff CTA。
  */
 export function recallResultToOmniboxSuggests(
   result: RecallResult,
@@ -243,19 +271,41 @@ export function recallResultToOmniboxSuggests(
   }
   matches.push(...result.alsoPossible)
 
+  const clue = options.clue?.trim() ?? ''
+  const appendSwitchTrack = options.includeSwitchTrackCta !== false && clue.length > 0
+  const memoryLimit = appendSwitchTrack ? OMNIBOX_MEMORY_SUGGEST_LIMIT : OMNIBOX_SUGGEST_LIMIT
+
   const seenContents = new Set<string>()
   const suggests: OmniboxSuggestItem[] = []
 
-  for (const match of matches.slice(0, OMNIBOX_SUGGEST_LIMIT)) {
+  for (const match of matches.slice(0, memoryLimit)) {
     const suggest = recallMatchToOmniboxSuggest(match, options)
     if (!suggest || seenContents.has(suggest.content)) {
       continue
     }
     seenContents.add(suggest.content)
     suggests.push(suggest)
+    if (suggests.length >= memoryLimit) {
+      break
+    }
   }
 
-  return suggests
+  if (appendSwitchTrack && suggests.length > 0) {
+    const handoffContent = buildOmniboxHandoffContent(clue)
+    if (!seenContents.has(handoffContent)) {
+      suggests.push({
+        content: handoffContent,
+        description: escapeOmniboxXml(
+          formatOmniboxSwitchTrackSuggestionDescription(
+            options.openRecallShortcut,
+            options.translate
+          )
+        )
+      })
+    }
+  }
+
+  return suggests.slice(0, OMNIBOX_SUGGEST_LIMIT)
 }
 
 /** 若文本为 http(s) URL 则返回规范化 href，否则 null。 */

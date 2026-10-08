@@ -71,12 +71,13 @@ const EN: Record<string, string> = {
   explain_matched_prefix: 'Found in: $1',
   type_label_bookmark: 'Bookmark',
   type_label_excerpt: 'Excerpt',
-  omnibox_default_suggestion:
-    'Tip: Best with a title, site, or note keyword. Fuzzy clues → Side Panel',
+  omnibox_default_suggestion: 'Tip: Title, site, or note keyword. Fuzzy → Side Panel',
   omnibox_default_suggestion_with_shortcut:
-    'Tip: Best with a title, site, or note keyword. Fuzzy clues → Side Panel ($1)',
-  omnibox_no_match: 'No quick match — click to recall this in Side Panel',
-  omnibox_no_match_with_shortcut: 'No quick match — click to recall this in Side Panel ($1)',
+    'Tip: Title, site, or note keyword. Fuzzy → Side Panel ($1)',
+  omnibox_no_match: 'No quick match — open Side Panel to recall this',
+  omnibox_no_match_with_shortcut: 'No quick match — open Side Panel to recall this ($1)',
+  omnibox_switch_track: 'Not what you wanted? Open Side Panel',
+  omnibox_switch_track_with_shortcut: 'Not what you wanted? Open Side Panel ($1)',
   omnibox_type_bookmark: 'Bookmark',
   omnibox_type_excerpt: 'Excerpt',
   omnibox_duplicate_count: '$1 similar',

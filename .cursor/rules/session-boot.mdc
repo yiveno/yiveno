@@ -57,5 +57,5 @@ alwaysApply: true
 - **用户首条应含 Task Brief**（模板 `docs/product/AGENT-TASK-BRIEF.template.md`）：In/Out/验收/禁止；**以 Brief 的 scope 为准**
 - **长会话收尾：** 模板内「会话收尾 · Handoff」→ 新会话首条粘贴 Handoff 块；不默认 commit/push
 - **默认小 scope**；用户未声明范围不得跨模块大改
-- 行为/契约变更 → 同批改 Normative 文档 +（Recall/Capture 用户可感）must eval 或 §5 步骤
+- 行为/契约变更 → **同批**改 Normative 文档（**不过问**；同主题旧表述一并扫掉）+（Recall/Capture 用户可感）must eval 或 §5 步骤；详 `.cursor/rules/project.mdc`「方案已定 → 改码即同步」
 - **报完成 =** 代码 + 文档 + 相关单测/`doc:check` + 扩展用户可感路径 **MCP UI 抽测 ≥1**

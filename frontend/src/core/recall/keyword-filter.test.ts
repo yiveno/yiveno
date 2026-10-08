@@ -100,6 +100,68 @@ describe('keyword-filter', () => {
     expect(scoreMemoryItem(hot, 'totally unrelated', { nowMs }).score).toBe(0)
   })
 
+  it('omnibox 档：标题命中压过仅长正文沾边', () => {
+    const titled = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: { title: 'React docs home', url: 'https://react.dev/learn' }
+    })
+    const bodyOnly = createTextExcerptMemoryItem({
+      ...baseContext,
+      payload: {
+        selectedText: `${'lorem '.repeat(40)}react ${'ipsum '.repeat(40)}`,
+        sourceUrl: 'https://example.com/noise',
+        pageTitle: 'Unrelated host page'
+      }
+    })
+
+    const omniboxRanked = filterMemoryItemsByKeyword([bodyOnly, titled], 'react', {
+      minScore: 1,
+      behaviorProfile: 'omnibox'
+    })
+
+    expect(omniboxRanked[0]?.item.id).toBe(titled.id)
+    const titledOmni = scoreMemoryItem(titled, 'react', { behaviorProfile: 'omnibox' }).score
+    const bodyOmni = scoreMemoryItem(bodyOnly, 'react', { behaviorProfile: 'omnibox' }).score
+    expect(titledOmni).toBeGreaterThan(bodyOmni)
+  })
+
+  it('settledCount 进入行为加权；omnibox 档高于 default', () => {
+    // 同标题：隔离行为分，避免词面微差盖过 soft rank
+    const title = 'Yiveno Product Doc'
+    const settled = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: { title, url: 'https://docs.yiveno.com/settled' },
+      clues: { settledCount: 8, openCount: 0 }
+    })
+    const openedOnly = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: { title, url: 'https://docs.yiveno.com/opened' },
+      clues: { openCount: 8, settledCount: 0 }
+    })
+    const cold = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: { title, url: 'https://docs.yiveno.com/cold' }
+    })
+
+    expect(computeBehaviorBoost(settled)).toBeGreaterThan(0)
+    expect(computeBehaviorBoost(settled)).toBeGreaterThan(computeBehaviorBoost(openedOnly))
+    expect(computeBehaviorBoost(settled, { behaviorProfile: 'omnibox' })).toBeGreaterThan(
+      computeBehaviorBoost(settled)
+    )
+    expect(computeBehaviorBoost(openedOnly, { behaviorProfile: 'omnibox' })).toBeGreaterThan(
+      computeBehaviorBoost(openedOnly)
+    )
+
+    const nowMs = Date.parse('2026-07-25T12:00:00.000Z')
+    const ranked = filterMemoryItemsByKeyword([cold, openedOnly, settled], 'Yiveno', {
+      minScore: 1,
+      nowMs,
+      behaviorProfile: 'omnibox'
+    })
+    expect(ranked[0]?.item.id).toBe(settled.id)
+    expect(ranked.map(m => m.item.id)).toEqual([settled.id, openedOnly.id, cold.id])
+  })
+
   it('extractOrthographicAcronyms：CamelCase 与多词首字母（无词典）', () => {
     expect(extractOrthographicAcronyms('现代 JavaScript 教程')).toEqual(
       expect.arrayContaining(['js'])

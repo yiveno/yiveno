@@ -1,7 +1,8 @@
 import {
   RECALL_TOP_PICK_MIN_SCORE,
   filterMemoryItemsByKeyword,
-  recallTopPickBlockedByGenericPageTitleGate
+  recallTopPickBlockedByGenericPageTitleGate,
+  type RecallBehaviorProfile
 } from '@/core/recall/keyword-filter'
 import {
   collapseRecallMatches,
@@ -35,27 +36,47 @@ export const RECALL_RESULT_POOL_LIMIT = 50
 export const RECALL_COLLAPSE_BACKFILL_EXTRA = 24
 
 /**
+ * Indexed Fuzzy 变体路径相对主 clue 的分折扣（质>量）。
+ * 扩词可补召回，但不得以「变体满分」冲掉原词精确 Top1。
+ */
+export const FUZZY_VARIANT_SCORE_FACTOR = 0.82
+
+/**
+ * Omnibox 短路径：主 clue 已有 ≥ 此数且头名 ≥ Top Pick 阈值时，跳过 fuzzy 多路扫。
+ * 与 `OMNIBOX_SUGGEST_LIMIT` 对齐（一次下拉满额）；one-shot suggest 下用时间换质量。
+ */
+export const OMNIBOX_FUZZY_SKIP_IF_PRIMARY_COUNT = 6
+
+/**
  * 折叠前关键词打分：候选已由倒排/扫窗口裁过，此处**全量**保留 ≥minScore 命中。
  * 若先按条数截断，同 URL 重复书签会占满名额（例：js-cookie×499 挡住「现代 JavaScript 教程」）。
  *
  * **Indexed Fuzzy（2026-10-07）：**
  * Omnibox 模式支持 `fuzzyExpandTokens`——用预计算的 typo/abbreviation 字典展开的
  * 额外检索词，对每个变体独立打分后合并（去重，保留最高分）。
- * - 主路径：原始 clue（不变）
- * - 展开路径：fuzzy 变体（js→javascript；recat→react）
+ * - 主路径：原始 clue（不变，满分）
+ * - 展开路径：fuzzy 变体（js→javascript；recat→react），分 × {@link FUZZY_VARIANT_SCORE_FACTOR}
  * - 合并策略：按 item.id 去重，保留最高 score
  */
 export function filterKeywordMatchesBeforeCollapse(
   items: MemoryItem[],
   clue: string,
-  options: { nowMs?: number; minScore?: number; fuzzyExpandTokens?: readonly string[] } = {}
+  options: {
+    nowMs?: number
+    minScore?: number
+    fuzzyExpandTokens?: readonly string[]
+    behaviorProfile?: RecallBehaviorProfile
+  } = {}
 ): RecallMatch[] {
-  // 主查询（原始 clue）
-  const primary = filterMemoryItemsByKeyword(items, clue, {
+  const scoreOpts = {
     limit: Math.max(items.length, 1),
     ...(options.nowMs === undefined ? {} : { nowMs: options.nowMs }),
-    ...(options.minScore === undefined ? {} : { minScore: options.minScore })
-  })
+    ...(options.minScore === undefined ? {} : { minScore: options.minScore }),
+    ...(options.behaviorProfile === undefined ? {} : { behaviorProfile: options.behaviorProfile })
+  }
+
+  // 主查询（原始 clue）——短路径优先：先打字面分
+  const primary = filterMemoryItemsByKeyword(items, clue, scoreOpts)
 
   // Indexed Fuzzy：fuzzy 变体合并（Omnibox 专享）
   const fuzzyTokens = options.fuzzyExpandTokens
@@ -63,23 +84,32 @@ export function filterKeywordMatchesBeforeCollapse(
     return primary
   }
 
-  // 按 item.id 去重，保留最高 score
+  // one-shot suggest：主路径已满额且头名够强 → 跳过变体扫（时间换质量）
+  const primaryHead = primary[0]
+  if (
+    primary.length >= OMNIBOX_FUZZY_SKIP_IF_PRIMARY_COUNT &&
+    primaryHead !== undefined &&
+    primaryHead.score >= RECALL_TOP_PICK_MIN_SCORE
+  ) {
+    return primary
+  }
+
+  // 按 item.id 去重，保留最高 score（主路径优先于未折扣的变体满分）
   const byId = new Map<string, RecallMatch>()
   for (const match of primary) {
     byId.set(match.item.id, match)
   }
 
+  const normalizedClue = clue.trim().toLowerCase()
   for (const variant of fuzzyTokens) {
-    if (variant === clue) continue // 跳过与主查询相同的变体
-    const variantMatches = filterMemoryItemsByKeyword(items, variant, {
-      limit: Math.max(items.length, 1),
-      ...(options.nowMs === undefined ? {} : { nowMs: options.nowMs }),
-      ...(options.minScore === undefined ? {} : { minScore: options.minScore })
-    })
+    if (variant === clue || variant === normalizedClue) continue
+    const variantMatches = filterMemoryItemsByKeyword(items, variant, scoreOpts)
     for (const match of variantMatches) {
+      const discountedScore = Math.max(1, Math.floor(match.score * FUZZY_VARIANT_SCORE_FACTOR))
+      const discounted: RecallMatch = { ...match, score: discountedScore }
       const existing = byId.get(match.item.id)
-      if (!existing || match.score > existing.score) {
-        byId.set(match.item.id, match)
+      if (!existing || discounted.score > existing.score) {
+        byId.set(match.item.id, discounted)
       }
     }
   }

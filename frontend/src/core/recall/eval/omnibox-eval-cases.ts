@@ -56,6 +56,13 @@ export const OMNIBOX_EVAL_CASES: OmniboxEvalCase[] = [
     note: '书签标题词面'
   },
   {
+    id: 'omnibox-fuzzy-cf-workers',
+    clue: 'cf Workers',
+    clueClass: 'concrete',
+    expectation: { kind: 'top1', expectedId: RECALL_EVAL_IDS.cloudflareWorkersGuide },
+    note: 'Indexed Fuzzy：cf→cloudflare；变体分折扣后仍须压过噪声 Top1'
+  },
+  {
     id: 'omnibox-concrete-retention-title',
     clue: 'retention analysis',
     clueClass: 'concrete',
