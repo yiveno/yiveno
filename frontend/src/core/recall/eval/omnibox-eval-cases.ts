@@ -77,6 +77,20 @@ export const OMNIBOX_EVAL_CASES: OmniboxEvalCase[] = [
     note: '摘录正文锚点'
   },
   {
+    id: 'omnibox-prefix-github',
+    clue: 'gi',
+    clueClass: 'concrete',
+    expectation: { kind: 'in_topk', expectedId: RECALL_EVAL_IDS.githubRepo, k: 5 },
+    note: '2 字符域名前缀；地址栏每键即候选用例（最小 token 长度）'
+  },
+  {
+    id: 'omnibox-prefix-rottentomatoes',
+    clue: 'rotte',
+    clueClass: 'concrete',
+    expectation: { kind: 'in_topk', expectedId: RECALL_EVAL_IDS.oppenheimerRtExcerpt, k: 5 },
+    note: '域名前缀 rotte → rottentomatoes 摘录'
+  },
+  {
     id: 'omnibox-semi-note-deploy',
     clue: 'page where I left a note about deploy',
     clueClass: 'semi_fuzzy',

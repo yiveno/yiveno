@@ -1,4 +1,10 @@
 /**
+ * Chrome 保留命令：工具栏 action / 建议键打开 Side Panel。
+ * 不在 `EXTENSION_COMMAND_IDS` 内（不走 `onCommand`）；读真实绑定时用此名查 `chrome.commands.getAll()`。
+ */
+export const OPEN_RECALL_ACTION_COMMAND = '_execute_action' as const
+
+/**
  * 自定义命令 ID 白名单（须与 manifest.json `commands` 键名一致）。
  * 不含保留命令 `_execute_action`（由 Chrome 打开 action；无 default_popup 时经
  * `sidePanel.setPanelBehavior({ openPanelOnActionClick: true })` 开 Side Panel）。

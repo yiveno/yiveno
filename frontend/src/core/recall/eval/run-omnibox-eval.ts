@@ -6,6 +6,7 @@ import type { OmniboxEvalCase } from '@/core/recall/eval/omnibox-eval-cases'
 import { toRecallEvalMustCase } from '@/core/recall/eval/omnibox-eval-cases'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import { excludeDismissedMemoryItems } from '@/core/recall/merge-recall-dialog-turn'
+import { getFuzzyVariants } from '@/core/recall/fuzzy-lexicon'
 import {
   recallByKeywordWithParsedClue,
   shouldSkipRecallAsZeroAnchor
@@ -37,7 +38,7 @@ function emptyNoMatch(clue: string): RecallResult {
  * 跑 Omnibox 离线快跳轨 eval（对齐 ADR-007）：
  * - `understandRecallClue` + `forceMode: lexical`（无 LLM completer）
  * - 单轮、无 context / framing
- * - 关键词 Filter（与 `run-recall-eval` 同 corpus）
+ * - 关键词 Filter + Indexed Fuzzy（与 HybridRecallBackend Omnibox 分支同契约）
  */
 export async function runOmniboxEval(
   cases: OmniboxEvalCase[],
@@ -59,9 +60,11 @@ export async function runOmniboxEval(
       result = emptyNoMatch(clue)
     } else {
       const items = excludeDismissedMemoryItems(corpus, undefined)
+      const fuzzyTokens = getFuzzyVariants(clue, 8)
       result = recallByKeywordWithParsedClue(items, clue, {
         nowMs: RECALL_EVAL_NOW_MS,
-        parsed: understood.parsed
+        parsed: understood.parsed,
+        ...(fuzzyTokens.length > 1 ? { fuzzyExpandTokens: fuzzyTokens.slice(1) } : {})
       })
       result = {
         ...result,

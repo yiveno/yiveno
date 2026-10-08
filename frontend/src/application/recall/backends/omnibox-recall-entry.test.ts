@@ -1,9 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { understandRecallClueMock, getClueLlmCompleterMock } = vi.hoisted(() => ({
-  understandRecallClueMock: vi.fn(),
-  getClueLlmCompleterMock: vi.fn()
-}))
+const { understandRecallClueMock, getClueLlmCompleterMock, requestWorkerEmbeddingsMock } =
+  vi.hoisted(() => ({
+    understandRecallClueMock: vi.fn(),
+    getClueLlmCompleterMock: vi.fn(),
+    requestWorkerEmbeddingsMock: vi.fn()
+  }))
 
 vi.mock('@/core/recall/understand/understand-recall-clue', () => ({
   understandRecallClue: understandRecallClueMock
@@ -25,6 +27,10 @@ vi.mock('@/infrastructure/identity/auth-session-service', () => ({
 
 vi.mock('@/application/recall/apply-stored-outcome-pairs', () => ({
   applyStoredOutcomePairsToMatches: vi.fn(async (matches: unknown[]) => matches)
+}))
+
+vi.mock('@/infrastructure/ai/embed-api-client', () => ({
+  requestWorkerEmbeddings: requestWorkerEmbeddingsMock
 }))
 
 import { HybridRecallBackend } from '@/application/recall/backends/hybrid-recall-backend'
@@ -76,5 +82,14 @@ describe('HybridRecallBackend · entry omnibox', () => {
     )
     const call = understandRecallClueMock.mock.calls[0]?.[1] as Record<string, unknown>
     expect(call.forceMode).toBeUndefined()
+  })
+
+  // ADR-007：Omnibox = 已知锚点快跳，禁止向量融合（clue embed / Topic embed）。
+  // 防止未来有人误在 Omnibox 入口接回 requestWorkerEmbeddings。
+  it('Omnibox 入口：不调向量嵌入（requestWorkerEmbeddings 调用次数为 0）', async () => {
+    const backend = new HybridRecallBackend()
+    await backend.recallWithClue('Manifest V3', { entry: 'omnibox' })
+
+    expect(requestWorkerEmbeddingsMock).not.toHaveBeenCalled()
   })
 })

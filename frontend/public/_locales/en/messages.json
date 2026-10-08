@@ -9,10 +9,28 @@
     "message": "Save to Yiveno"
   },
   "omnibox_default_suggestion": {
-    "message": "Quick jump — type a keyword you remember (title, site, or a phrase you saved). For fuzzier finds, open Side Panel (Alt+Shift+Y)."
+    "message": "Tip: Best with a title, site, or note keyword. Fuzzy clues → Side Panel"
+  },
+  "omnibox_default_suggestion_with_shortcut": {
+    "message": "Tip: Best with a title, site, or note keyword. Fuzzy clues → Side Panel ($1)",
+    "placeholders": {
+      "shortcut": {
+        "content": "$1",
+        "example": "Alt+Shift+Y"
+      }
+    }
   },
   "omnibox_no_match": {
-    "message": "No quick match — try another keyword, or open Side Panel (Alt+Shift+Y) for a fuller find"
+    "message": "No quick match — click to recall this in Side Panel"
+  },
+  "omnibox_no_match_with_shortcut": {
+    "message": "No quick match — click to recall this in Side Panel ($1)",
+    "placeholders": {
+      "shortcut": {
+        "content": "$1",
+        "example": "Alt+Shift+Y"
+      }
+    }
   },
   "command_open_recall": {
     "message": "Open Yiveno Recall (side panel)"
@@ -2334,10 +2352,10 @@
     "message": "Text excerpt"
   },
   "omnibox_type_bookmark": {
-    "message": "Y·Bookmark"
+    "message": "Bookmark"
   },
   "omnibox_type_excerpt": {
-    "message": "Y·Excerpt"
+    "message": "Excerpt"
   },
   "command_title_open_recall": {
     "message": "Open Recall (side panel)"

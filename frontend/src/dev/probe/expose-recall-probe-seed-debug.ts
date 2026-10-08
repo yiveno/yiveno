@@ -22,6 +22,11 @@ import {
 } from '@/dev/probe/recall-probe-omnibox-smoke'
 import { purgeProbeNoiseFromLibrary } from '@/dev/probe/recall-probe-purge-service'
 import { seedRecallProbeCorpus } from '@/dev/probe/recall-probe-seed-service'
+import {
+  inspectMemoryByUrlOrTitle,
+  listMemoryIndexStatus,
+  recallProbe
+} from '@/dev/probe/inspect-memory-debug'
 
 type ProbeDebugHost = {
   yiveno?: {
@@ -35,6 +40,19 @@ type ProbeDebugHost = {
     runProbeOmniboxSmoke?: () => Promise<Awaited<ReturnType<typeof runProbeOmniboxSmoke>>>
     /** 手测文档 §4 复制块（含 `yi ` 前缀） */
     probeOmniboxCopyPaste?: readonly string[]
+    /**
+     * 真机 Recall 探针（2026-10-07）：SW 端直接调 recallService。
+     * 用法：`await yiveno.recallProbe({ clue: 'unit', entry: 'omnibox' })`
+     *  返回与 Side Panel 相同的 RecallResult 完整结构。
+     */
+    recallProbe?: (input: { clue: string; entry?: 'omnibox' | 'sidepanel' }) => Promise<unknown>
+    /**
+     * 真机 Memory 探针（2026-10-07）：按 url 片段 / title 片段查可搜索字段全量。
+     * 用法：`await yiveno.inspectMemory({ needle: 'yivenoProbe' })`
+     */
+    inspectMemory?: (input: { needle: string }) => Promise<unknown>
+    /** 列出倒排索引状态（owner × posting 数量），验证索引是否齐全。 */
+    listMemoryIndexStatus?: () => Promise<unknown>
   }
 }
 
@@ -81,9 +99,12 @@ export function exposeRecallProbeSeedDebug(): void {
       }
       return report
     },
-    probeOmniboxCopyPaste: PROBE_OMNIBOX_COPY_PASTE_LINES
+    probeOmniboxCopyPaste: PROBE_OMNIBOX_COPY_PASTE_LINES,
+    recallProbe: async input => recallProbe(input),
+    inspectMemory: async input => inspectMemoryByUrlOrTitle(input),
+    listMemoryIndexStatus: async () => listMemoryIndexStatus()
   }
   console.info(
-    '[yiveno] DEV：优先打开 Probe Console；SW 可用 yiveno.seedRecallProbe · cleanupProbe · purgeProbeNoise · runProbeOmniboxSmoke()'
+    '[yiveno] DEV：优先打开 Probe Console；SW 可用 yiveno.seedRecallProbe · cleanupProbe · purgeProbeNoise · runProbeOmniboxSmoke() · recallProbe({clue,entry}) · inspectMemory({needle}) · listMemoryIndexStatus()'
   )
 }

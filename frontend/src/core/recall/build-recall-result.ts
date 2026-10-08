@@ -37,18 +37,54 @@ export const RECALL_COLLAPSE_BACKFILL_EXTRA = 24
 /**
  * 折叠前关键词打分：候选已由倒排/扫窗口裁过，此处**全量**保留 ≥minScore 命中。
  * 若先按条数截断，同 URL 重复书签会占满名额（例：js-cookie×499 挡住「现代 JavaScript 教程」）。
+ *
+ * **Indexed Fuzzy（2026-10-07）：**
+ * Omnibox 模式支持 `fuzzyExpandTokens`——用预计算的 typo/abbreviation 字典展开的
+ * 额外检索词，对每个变体独立打分后合并（去重，保留最高分）。
+ * - 主路径：原始 clue（不变）
+ * - 展开路径：fuzzy 变体（js→javascript；recat→react）
+ * - 合并策略：按 item.id 去重，保留最高 score
  */
 export function filterKeywordMatchesBeforeCollapse(
   items: MemoryItem[],
   clue: string,
-  options: { nowMs?: number; minScore?: number } = {}
+  options: { nowMs?: number; minScore?: number; fuzzyExpandTokens?: readonly string[] } = {}
 ): RecallMatch[] {
-  return filterMemoryItemsByKeyword(items, clue, {
-    // 至少 1，避免空数组时 limit 默认 6 的误导；有候选则全收
+  // 主查询（原始 clue）
+  const primary = filterMemoryItemsByKeyword(items, clue, {
     limit: Math.max(items.length, 1),
     ...(options.nowMs === undefined ? {} : { nowMs: options.nowMs }),
     ...(options.minScore === undefined ? {} : { minScore: options.minScore })
   })
+
+  // Indexed Fuzzy：fuzzy 变体合并（Omnibox 专享）
+  const fuzzyTokens = options.fuzzyExpandTokens
+  if (!fuzzyTokens || fuzzyTokens.length === 0) {
+    return primary
+  }
+
+  // 按 item.id 去重，保留最高 score
+  const byId = new Map<string, RecallMatch>()
+  for (const match of primary) {
+    byId.set(match.item.id, match)
+  }
+
+  for (const variant of fuzzyTokens) {
+    if (variant === clue) continue // 跳过与主查询相同的变体
+    const variantMatches = filterMemoryItemsByKeyword(items, variant, {
+      limit: Math.max(items.length, 1),
+      ...(options.nowMs === undefined ? {} : { nowMs: options.nowMs }),
+      ...(options.minScore === undefined ? {} : { minScore: options.minScore })
+    })
+    for (const match of variantMatches) {
+      const existing = byId.get(match.item.id)
+      if (!existing || match.score > existing.score) {
+        byId.set(match.item.id, match)
+      }
+    }
+  }
+
+  return Array.from(byId.values())
 }
 
 /** 组装空结果。 */

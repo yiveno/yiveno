@@ -1,7 +1,7 @@
 /**
- * production 构建替身：SW 不挂 DEV globalThis.yiveno.* 探针面。
+ * production：recall / inspect DEV expose 替身。
+ * 仅暴露空函数，调用方在 dev 条件分支下注册；prod 构建不会把真实实现拉进来。
  */
-
 export function exposeRecallProbeSeedDebug(): void {
   // no-op
 }

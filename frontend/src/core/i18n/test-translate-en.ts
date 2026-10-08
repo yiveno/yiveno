@@ -71,9 +71,15 @@ const EN: Record<string, string> = {
   explain_matched_prefix: 'Found in: $1',
   type_label_bookmark: 'Bookmark',
   type_label_excerpt: 'Excerpt',
-  omnibox_type_bookmark: 'Y·Bookmark',
-  omnibox_type_excerpt: 'Y·Excerpt',
-  omnibox_duplicate_count: '$1 total',
+  omnibox_default_suggestion:
+    'Tip: Best with a title, site, or note keyword. Fuzzy clues → Side Panel',
+  omnibox_default_suggestion_with_shortcut:
+    'Tip: Best with a title, site, or note keyword. Fuzzy clues → Side Panel ($1)',
+  omnibox_no_match: 'No quick match — click to recall this in Side Panel',
+  omnibox_no_match_with_shortcut: 'No quick match — click to recall this in Side Panel ($1)',
+  omnibox_type_bookmark: 'Bookmark',
+  omnibox_type_excerpt: 'Excerpt',
+  omnibox_duplicate_count: '$1 similar',
   recall_card_saved: 'Saved $1',
   recall_card_saved_just_now: 'Just saved',
   recall_card_match_reason_aria: 'Why this fits: $1',

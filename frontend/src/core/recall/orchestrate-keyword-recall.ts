@@ -74,6 +74,13 @@ export interface OrchestrateKeywordRecallOptions {
   nowMs?: number
   /** 预解析结果；提供则跳过内部 parseRecallClue（供理解层注入）。 */
   parsed?: ParsedRecallClue
+  /**
+   * Indexed Fuzzy 展开词（2026-10-07）。
+   * 由 fuzzy-lexicon.ts 预计算字典展开的额外检索词（js→javascript；recat→react）。
+   * 仅 Omnibox 模式注入；Side Panel 不使用。
+   * 传递到 filterKeywordMatchesBeforeCollapse 做多路合并。
+   */
+  fuzzyExpandTokens?: readonly string[]
 }
 
 /** 对象类型 → 条目证据词面（跳过 clueOnly；用于 MemoryItem 类型弱匹配）。 */
@@ -808,9 +815,10 @@ export function recallByKeywordWithParsedClue(
 
   const filterClue = buildFilterClueFromParsed(parsed)
 
-  const scored = filterKeywordMatchesBeforeCollapse(items, filterClue, { nowMs }).map(match =>
-    applyParsedClueScoreBoosts(match, parsed, nowMs)
-  )
+  const scored = filterKeywordMatchesBeforeCollapse(items, filterClue, {
+    nowMs,
+    ...(options.fuzzyExpandTokens ? { fuzzyExpandTokens: options.fuzzyExpandTokens } : {})
+  }).map(match => applyParsedClueScoreBoosts(match, parsed, nowMs))
   const { matches, effectiveParsed, timeSoftReopen } =
     applyTimeFilterThenContentCorroborationWithSoftReopen(scored, parsed, nowMs)
 

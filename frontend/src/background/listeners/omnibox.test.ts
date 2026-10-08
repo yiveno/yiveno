@@ -27,6 +27,19 @@ vi.mock('@/infrastructure/browser/navigate-tab', () => ({
   navigateTabToUrl: vi.fn(async () => undefined)
 }))
 
+const { writeRecallPrefillMock, openRecallSidePanelMock } = vi.hoisted(() => ({
+  writeRecallPrefillMock: vi.fn(async () => undefined),
+  openRecallSidePanelMock: vi.fn(async () => undefined)
+}))
+
+vi.mock('@/infrastructure/storage/first-recall-onboarding-storage', () => ({
+  writeRecallPrefill: writeRecallPrefillMock
+}))
+
+vi.mock('@/infrastructure/browser/side-panel', () => ({
+  openRecallSidePanel: openRecallSidePanelMock
+}))
+
 import { ensureBackgroundBootstrapped } from '@/background/bootstrap-ready'
 import { navigateTabToUrl } from '@/infrastructure/browser/navigate-tab'
 import {
@@ -56,23 +69,37 @@ describe('omnibox listeners', () => {
   const onInputChangedAddListener = vi.fn()
   const onInputEnteredAddListener = vi.fn()
   const tabsCreate = vi.fn(async () => undefined)
+  const commandsGetAll = vi.fn(async () => [{ name: '_execute_action', shortcut: 'Alt+Shift+Y' }])
 
   beforeEach(() => {
     resetOmniboxListenersForTests()
     vi.clearAllMocks()
     getByIdMock.mockResolvedValue(bookmarkItem)
+    commandsGetAll.mockResolvedValue([{ name: '_execute_action', shortcut: 'Alt+Shift+Y' }])
 
     vi.stubGlobal('chrome', {
       i18n: {
-        getMessage: vi.fn((key: string, ...args: string[]) => {
+        getMessage: vi.fn((key: string, substitutions?: string | string[]) => {
+          const sub =
+            substitutions === undefined
+              ? ''
+              : Array.isArray(substitutions)
+                ? (substitutions[0] ?? '')
+                : substitutions
           if (key === 'omnibox_default_suggestion') {
-            return 'Recall with Yiveno...'
+            return 'Tip: Best with a title, site, or note keyword. Fuzzy clues → Side Panel'
+          }
+          if (key === 'omnibox_default_suggestion_with_shortcut') {
+            return `Tip: Best with a title, site, or note keyword. Fuzzy clues → Side Panel (${sub})`
           }
           if (key === 'omnibox_no_match') {
-            return 'No matching memory found'
+            return 'No quick match — click to recall this in Side Panel'
+          }
+          if (key === 'omnibox_no_match_with_shortcut') {
+            return `No quick match — click to recall this in Side Panel (${sub})`
           }
           if (key === 'omnibox_type_bookmark') {
-            return 'Y·Bookmark'
+            return 'Bookmark'
           }
           if (key === 'type_label_bookmark') {
             return 'Bookmark'
@@ -84,13 +111,17 @@ describe('omnibox listeners', () => {
             return 'Just saved'
           }
           if (key === 'recall_card_saved') {
-            return `Saved ${String(args?.[0] ?? '')}`
+            const arg = Array.isArray(substitutions) ? substitutions[0] : substitutions
+            return `Saved ${String(arg ?? '')}`
           }
           return ''
         })
       },
       runtime: {
         getURL: vi.fn((path: string) => `chrome-extension://testid/${path}`)
+      },
+      commands: {
+        getAll: commandsGetAll
       },
       omnibox: {
         setDefaultSuggestion,
@@ -103,13 +134,40 @@ describe('omnibox listeners', () => {
     })
   })
 
-  it('registerOmniboxListeners 只注册一次', () => {
+  it('registerOmniboxListeners 只注册一次', async () => {
     registerOmniboxListeners()
     registerOmniboxListeners()
 
-    expect(setDefaultSuggestion).toHaveBeenCalledTimes(1)
     expect(onInputChangedAddListener).toHaveBeenCalledTimes(1)
     expect(onInputEnteredAddListener).toHaveBeenCalledTimes(1)
+    await vi.waitFor(() => {
+      expect(setDefaultSuggestion).toHaveBeenCalledTimes(1)
+    })
+    expect(setDefaultSuggestion).toHaveBeenCalledWith({
+      description:
+        'Tip: Best with a title, site, or note keyword. Fuzzy clues → Side Panel (Alt+Shift+Y)'
+    })
+  })
+
+  it('default suggestion 使用 commands.getAll 真实快捷键；未绑定则省略', async () => {
+    commandsGetAll.mockResolvedValue([{ name: '_execute_action', shortcut: 'Ctrl+Shift+Y' }])
+    registerOmniboxListeners()
+    await vi.waitFor(() => {
+      expect(setDefaultSuggestion).toHaveBeenCalledWith({
+        description:
+          'Tip: Best with a title, site, or note keyword. Fuzzy clues → Side Panel (Ctrl+Shift+Y)'
+      })
+    })
+
+    resetOmniboxListenersForTests()
+    setDefaultSuggestion.mockClear()
+    commandsGetAll.mockResolvedValue([{ name: '_execute_action', shortcut: '' }])
+    registerOmniboxListeners()
+    await vi.waitFor(() => {
+      expect(setDefaultSuggestion).toHaveBeenCalledWith({
+        description: 'Tip: Best with a title, site, or note keyword. Fuzzy clues → Side Panel'
+      })
+    })
   })
 
   it('输入变化时用 recallService 提供建议', async () => {
@@ -138,13 +196,14 @@ describe('omnibox listeners', () => {
       expect(recallWithClueMock).toHaveBeenCalledWith('retention', { entry: 'omnibox' })
     })
 
-    expect(suggest.mock.calls[0]?.[0]).toEqual([])
-    expect(suggest.mock.calls.at(-1)?.[0]?.[0]?.content).toBe(
+    // suggest 只应调用一次（禁止异步前 suggest([]) 吃掉 one-shot 回调）
+    expect(suggest).toHaveBeenCalledTimes(1)
+    expect(suggest.mock.calls[0]?.[0]?.[0]?.content).toBe(
       `chrome-extension://testid/omnibox-open.html?id=${BOOKMARK_ID}`
     )
   })
 
-  it('新线索到达时先清空上一轮建议，且慢请求过期后不得回写旧结果', async () => {
+  it('慢请求过期后不得回写旧结果（suggest 不抢先清空）', async () => {
     const chromeItem = {
       ...bookmarkItem,
       id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb',
@@ -199,7 +258,6 @@ describe('omnibox listeners', () => {
     onChanged('chrome extension migration', chromeSuggest)
 
     await vi.waitFor(() => {
-      expect(chromeSuggest).toHaveBeenCalledWith([])
       expect(recallWithClueMock).toHaveBeenCalledWith('chrome extension migration', {
         entry: 'omnibox'
       })
@@ -209,7 +267,9 @@ describe('omnibox listeners', () => {
     onChanged('font pairing editorial', fontSuggest)
 
     await vi.waitFor(() => {
-      expect(fontSuggest).toHaveBeenCalledWith([])
+      expect(recallWithClueMock).toHaveBeenCalledWith('font pairing editorial', {
+        entry: 'omnibox'
+      })
     })
 
     resolveFont?.({
@@ -225,7 +285,8 @@ describe('omnibox listeners', () => {
     })
 
     await vi.waitFor(() => {
-      expect(fontSuggest.mock.calls.at(-1)?.[0]?.[0]?.content).toBe(
+      expect(fontSuggest).toHaveBeenCalledTimes(1)
+      expect(fontSuggest.mock.calls[0]?.[0]?.[0]?.content).toBe(
         `chrome-extension://testid/omnibox-open.html?id=${fontItem.id}`
       )
     })
@@ -244,9 +305,10 @@ describe('omnibox listeners', () => {
 
     await new Promise(resolve => setTimeout(resolve, 0))
 
-    expect(chromeSuggest).toHaveBeenCalledTimes(1)
-    expect(chromeSuggest).toHaveBeenCalledWith([])
-    expect(fontSuggest.mock.calls.at(-1)?.[0]?.[0]?.content).toBe(
+    // 过期请求不得再 suggest（含不得抢先 suggest([])）
+    expect(chromeSuggest).toHaveBeenCalledTimes(0)
+    expect(fontSuggest).toHaveBeenCalledTimes(1)
+    expect(fontSuggest.mock.calls[0]?.[0]?.[0]?.content).toBe(
       `chrome-extension://testid/omnibox-open.html?id=${fontItem.id}`
     )
   })
@@ -306,9 +368,10 @@ describe('omnibox listeners', () => {
 
     await new Promise(resolve => setTimeout(resolve, 0))
 
-    expect(chromeSuggest).toHaveBeenCalledTimes(1)
-    expect(chromeSuggest).toHaveBeenCalledWith([])
-    expect(fontSuggest.mock.calls.at(-1)?.[0]?.[0]?.content).toBe(
+    // 过期失败不得 suggest([])，以免吃掉 / 干扰当前键位的建议回调语义
+    expect(chromeSuggest).toHaveBeenCalledTimes(0)
+    expect(fontSuggest).toHaveBeenCalledTimes(1)
+    expect(fontSuggest.mock.calls[0]?.[0]?.[0]?.content).toBe(
       `chrome-extension://testid/omnibox-open.html?id=${BOOKMARK_ID}`
     )
   })
@@ -373,9 +436,82 @@ describe('omnibox listeners', () => {
     })
     expect(recallWithClueMock).toHaveBeenCalledWith('retention', { entry: 'omnibox' })
     expect(recordOpenMock).toHaveBeenCalledWith(BOOKMARK_ID)
+    expect(writeRecallPrefillMock).not.toHaveBeenCalled()
+    expect(openRecallSidePanelMock).not.toHaveBeenCalled()
   })
 
-  it('inputEntered 前先 await bootstrap', async () => {
+  it('无快跳命中时回车：写 prefill 并打开 Side Panel', async () => {
+    recallWithClueMock.mockResolvedValue({
+      outcome: 'no_match',
+      topPick: null,
+      alsoPossible: [],
+      totalRankedCount: 0,
+      clue: 'zzzz-no-match'
+    })
+
+    registerOmniboxListeners()
+    const onChanged = onInputChangedAddListener.mock.calls[0]?.[0] as (
+      text: string,
+      suggest: (suggestResults: chrome.omnibox.SuggestResult[]) => void
+    ) => void
+    const suggest = vi.fn()
+    onChanged('zzzz-no-match', suggest)
+    await vi.waitFor(() => {
+      expect(suggest).toHaveBeenCalled()
+    })
+    const handoffSuggest = suggest.mock.calls[0]?.[0] as chrome.omnibox.SuggestResult[]
+    expect(handoffSuggest).toHaveLength(1)
+    expect(handoffSuggest[0]?.content).toMatch(/^yiveno-omnibox-handoff:/)
+
+    const onEntered = onInputEnteredAddListener.mock.calls[0]?.[0] as (
+      text: string,
+      disposition: chrome.omnibox.OnInputEnteredDisposition
+    ) => void
+    const recallCallsBeforeEnter = recallWithClueMock.mock.calls.length
+    // 点可选行：content 为 handoff token（比仅 default 行更稳）
+    onEntered(handoffSuggest[0]!.content, 'currentTab')
+
+    await vi.waitFor(() => {
+      expect(writeRecallPrefillMock).toHaveBeenCalledWith('zzzz-no-match')
+      expect(openRecallSidePanelMock).toHaveBeenCalled()
+    })
+    // handoff content 路径不二次 Offline lookup
+    expect(recallWithClueMock.mock.calls.length).toBe(recallCallsBeforeEnter)
+    expect(navigateTabToUrl).not.toHaveBeenCalled()
+  })
+
+  it('无命中时默认行回车（线索字面）不接力，须点 CTA 行', async () => {
+    recallWithClueMock.mockResolvedValue({
+      outcome: 'no_match',
+      topPick: null,
+      alsoPossible: [],
+      totalRankedCount: 0,
+      clue: 'plain-clue'
+    })
+
+    registerOmniboxListeners()
+    const onChanged = onInputChangedAddListener.mock.calls[0]?.[0] as (
+      text: string,
+      suggest: (suggestResults: chrome.omnibox.SuggestResult[]) => void
+    ) => void
+    onChanged('plain-clue', vi.fn())
+    await vi.waitFor(() => {
+      expect(recallWithClueMock).toHaveBeenCalled()
+    })
+
+    const onEntered = onInputEnteredAddListener.mock.calls[0]?.[0] as (
+      text: string,
+      disposition: chrome.omnibox.OnInputEnteredDisposition
+    ) => void
+    onEntered('plain-clue', 'currentTab')
+
+    await new Promise(resolve => setTimeout(resolve, 20))
+    expect(writeRecallPrefillMock).not.toHaveBeenCalled()
+    expect(openRecallSidePanelMock).not.toHaveBeenCalled()
+    expect(navigateTabToUrl).not.toHaveBeenCalled()
+  })
+
+  it('inputEntered http 直链不强制 bootstrap（无 Memory 解析）', async () => {
     registerOmniboxListeners()
     const onEntered = onInputEnteredAddListener.mock.calls[0]?.[0] as (
       text: string,
@@ -385,7 +521,7 @@ describe('omnibox listeners', () => {
     onEntered('https://example.com/retention', 'currentTab')
 
     await vi.waitFor(() => {
-      expect(ensureBackgroundBootstrapped).toHaveBeenCalledTimes(1)
+      expect(navigateTabToUrl).toHaveBeenCalledWith('https://example.com/retention', 'currentTab')
     })
   })
 })

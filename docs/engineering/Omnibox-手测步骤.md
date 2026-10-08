@@ -9,12 +9,12 @@
 
 ## 1. 测什么 / 不测什么
 
-| 测                                                               | 不测                                       |
-| ---------------------------------------------------------------- | ------------------------------------------ |
-| 地址栏 `yi` + **具体关键字** → 建议列表 → 回车打开               | Omnibox 口语模糊找回（归 Side Panel）      |
-| 建议 description **ECS 五要素**（与 §5.10.1 一致）               | MCP 地址栏自动化（MCP 不可靠触发 omnibox） |
-| **无 match** 时默认文案引导 Side Panel                           | Omnibox 多轮 / framing / need_a_clue 追问  |
-| SW 日志：`entry: omnibox`、`understandSource: rules`、无 framing | 与 Side Panel 同 clue 结果必须一致         |
+| 测                                                                            | 不测                                       |
+| ----------------------------------------------------------------------------- | ------------------------------------------ |
+| 地址栏 `yi` + **具体关键字** → 建议列表 → 回车打开                            | Omnibox 口语模糊找回（归 Side Panel）      |
+| 建议 description **ECS 五要素**（紧凑布局：标题 — host · 类型 · 时间 · 字段） | MCP 地址栏自动化（MCP 不可靠触发 omnibox） |
+| **无 match** 时默认文案引导 Side Panel                                        | Omnibox 多轮 / framing / need_a_clue 追问  |
+| SW 日志：`entry: omnibox`、`understandSource: rules`、无 framing              | 与 Side Panel 同 clue 结果必须一致         |
 
 **预计耗时：** 10–15 分钟（含 1 条 Side Panel 对照）。
 
@@ -30,12 +30,14 @@
 
 ### 2.1 种库后全无命中？（常见误用）
 
-| 现象                                                                       | 原因                                                          | 处理                                                                                       |
-| -------------------------------------------------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| 输入 `yi i18n:check` / `yi Cloudflare Workers` 无结果                      | **旧版手测**对齐的是 `recall-eval` 内存夹具，**不是**探针种库 | 改用下文 §4.1 复制块；勿混用 eval 专用 token                                               |
-| 库里有 **Migrate to Manifest V3**，但 clue 是 `chrome extension migration` | 正常：靠 **URL / 标题碎片 / 附注** 匹配，不是标题逐字相同     | 仍应 Top1；在 SW 跑 `await yiveno.runProbeOmniboxSmoke()` 验 11 条                         |
-| `seedRecallProbe` 后立刻测，全空                                           | 种库未 `await` 完或 `indexRebuilt: false`                     | `await yiveno.seedRecallProbe({ replace: true })` 看返回；`chrome://extensions` 重载后再测 |
-| 压力 ~20k 库部分线索被顶掉                                                 | 无关干扰条目挤排序                                            | 用默认质量种库（约千条完整测试库）即可；或改测 §4.1 的 1–4                                 |
+| 现象                                                                       | 原因                                                                           | 处理                                                                                       |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ |
+| 输入 `yi i18n:check` / `yi Cloudflare Workers` 无结果                      | **旧版手测**对齐的是 `recall-eval` 内存夹具，**不是**探针种库                  | 改用下文 §4.1 复制块；勿混用 eval 专用 token                                               |
+| 库里有 **Migrate to Manifest V3**，但 clue 是 `chrome extension migration` | 正常：靠 **URL / 标题碎片 / 附注** 匹配，不是标题逐字相同                      | 仍应 Top1；在 SW 跑 `await yiveno.runProbeOmniboxSmoke()` 验 11 条                         |
+| `seedRecallProbe` 后立刻测，全空                                           | 种库未 `await` 完或 `indexRebuilt: false`                                      | `await yiveno.seedRecallProbe({ replace: true })` 看返回；`chrome://extensions` 重载后再测 |
+| 压力 ~20k 库部分线索被顶掉                                                 | 无关干扰条目挤排序                                                             | 用默认质量种库（约千条完整测试库）即可；或改测 §4.1 的 1–4                                 |
+| 只见浏览器历史（如 ChatGPT 链接）、从不见 Bookmark/Excerpt 前缀建议        | 曾对同一次 `onInputChanged` 先 `suggest([])` 再异步回写；Chrome 丢弃第二次建议 | 已修（2026-10）：只在结果就绪后 `suggest` 一次；重载扩展后再测 `yi github`                 |
+| `yi chat` 只有历史、Side Panel 也空                                        | **库内没有**含 chat 的 Memory；历史 ≠ IndexedDB                                | 用 Side Panel 先确认库内有的锚点（如 `github`），再回 Omnibox 测同 clue                    |
 
 **SW 一键验库（种库后）：**
 
@@ -111,11 +113,11 @@ yi hug contents
 
 普通人会把地址栏当「问一句」——Omnibox 须诚实空，并引导 Side Panel。
 
-| #   | 地址栏整行（复制）                    | 通过标准                                 |
-| --- | ------------------------------------- | ---------------------------------------- |
-| N1  | `yi play some songs I like`           | 无假装命中；默认 `omnibox_no_match` 文案 |
-| N2  | `yi summarize the latest news for me` | 同上                                     |
-| N3  | `yi recommend a movie tonight`        | 同上（推荐≠找回）                        |
+| #   | 地址栏整行（复制）                    | 通过标准                                                                                                |
+| --- | ------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| N1  | `yi play some songs I like`           | 第1行 Tip（关键字 vs 模糊；点/回车**不**接力）；第2行 CTA；**仅点第2行** → Side Panel 预填并自动 Recall |
+| N2  | `yi summarize the latest news for me` | 同上                                                                                                    |
+| N3  | `yi recommend a movie tonight`        | 同上（推荐≠找回）                                                                                       |
 
 ```text
 yi play some songs I like
@@ -160,8 +162,8 @@ that chrome extension migration guide I bookmarked
 
 ## 6. 回归检查表
 
-- [ ] 默认占位 = `omnibox_default_suggestion`（Quick jump + Side Panel 引导）
-- [ ] 无命中 = `omnibox_no_match`
+- [ ] 默认行 = Tip（title/site/note keyword · 模糊→Side Panel）；快捷键与 shortcuts 一致（未绑定则无括号）；非 CTA
+- [ ] 无命中 = `omnibox_no_match`（同上：真实快捷键或省略）；回车接力 Side Panel + 自动提交
 - [ ] §4.1 具体锚点 **3/3**（从上表 8 条里任选 3 条）
 - [ ] §4.3 负例 **2/2**（N1 + N2 最少）
 - [ ] §4.4 Side Panel 对照 **1 组**（具体锚点）
@@ -171,12 +173,12 @@ that chrome extension migration guide I bookmarked
 
 ## 7. 实现锚点
 
-| 模块                     | 路径                                                                |
-| ------------------------ | ------------------------------------------------------------------- |
-| **DEV API 总索引**       | [`DEV-调试API.md`](./DEV-调试API.md)                                |
-| 探针语料（手写精选条目） | `@yiveno/probe`（`packages/yiveno-probe/src/corpus/`）              |
-| Omnibox 监听             | `frontend/src/background/listeners/omnibox.ts`                      |
-| `entry: 'omnibox'` 分支  | `frontend/src/application/recall/backends/hybrid-recall-backend.ts` |
-| suggest 文案 / ECS       | `frontend/src/core/recall/omnibox-suggest.ts`                       |
-| i18n                     | `omnibox_default_suggestion` · `omnibox_no_match`                   |
-| `omnibox_must`           | `omnibox-eval-cases.ts` · `run-omnibox-eval.ts`                     |
+| 模块                     | 路径                                                                                                              |
+| ------------------------ | ----------------------------------------------------------------------------------------------------------------- |
+| **DEV API 总索引**       | [`DEV-调试API.md`](./DEV-调试API.md)                                                                              |
+| 探针语料（手写精选条目） | `@yiveno/probe`（`packages/yiveno-probe/src/corpus/`）                                                            |
+| Omnibox 监听             | `frontend/src/background/listeners/omnibox.ts`                                                                    |
+| `entry: 'omnibox'` 分支  | `frontend/src/application/recall/backends/hybrid-recall-backend.ts`                                               |
+| suggest 文案 / ECS       | `frontend/src/core/recall/omnibox-suggest.ts`（`OMNIBOX_SUGGEST_LIMIT=6`，与 Panel 首屏解耦）                     |
+| i18n                     | `omnibox_default_suggestion[_with_shortcut]` · `omnibox_no_match[_with_shortcut]`（快捷键来自 `commands.getAll`） |
+| `omnibox_must`           | `omnibox-eval-cases.ts` · `run-omnibox-eval.ts`                                                                   |

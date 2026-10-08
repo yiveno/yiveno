@@ -73,9 +73,11 @@ import {
   recordRecallDismiss
 } from '@/infrastructure/messaging/background-client'
 import {
+  consumeRecallPrefill,
   consumeRecallPrefillWithRetry,
   markFirstRecallOpenDone,
-  readExcerptCaptureCount
+  readExcerptCaptureCount,
+  RECALL_PREFILL_SESSION_KEY
 } from '@/infrastructure/storage/first-recall-onboarding-storage'
 import {
   markInstallOnboardingDone,
@@ -630,7 +632,7 @@ const showColdStartGate = computed(() => {
   return coldStartState.value === null && (importStatus === 'running' || importStatus === 'pending')
 })
 
-/** 门禁已放行时冲刷 GS 预填自动 Recall。 */
+/** 门禁已放行时冲刷 GS / Omnibox 预填自动 Recall。 */
 function tryFlushPendingGsPrefillRecall(): void {
   if (showColdStartGate.value) {
     return
@@ -642,6 +644,44 @@ function tryFlushPendingGsPrefillRecall(): void {
   pendingGsPrefillRecall.value = null
   clue.value = pending
   void handleSendTurn(pending, { skipPivotCheck: true })
+}
+
+/** 挂起预填并在门禁放行后自动提交（GS Try it / Omnibox 无命中接力）。 */
+function applyRecallPrefillClue(prefill: string): void {
+  clue.value = prefill
+  pendingGsPrefillRecall.value = prefill
+  tryFlushPendingGsPrefillRecall()
+}
+
+/**
+ * Panel 已开时仍接收新的 `yiveno.recallPrefill`（Omnibox → Side Panel 接力）。
+ * 只消费 session 写入；清除 / 空串忽略。
+ */
+function handleRecallPrefillStorageChanged(
+  changes: Record<string, chrome.storage.StorageChange>,
+  areaName: string
+): void {
+  if (areaName !== 'session') {
+    return
+  }
+  const change = changes[RECALL_PREFILL_SESSION_KEY]
+  if (!change || typeof change.newValue !== 'string') {
+    return
+  }
+  if (!change.newValue.trim()) {
+    return
+  }
+  void (async () => {
+    try {
+      const prefill = await consumeRecallPrefill()
+      if (!prefill) {
+        return
+      }
+      applyRecallPrefillClue(prefill)
+    } catch {
+      // 忽略：预填消费失败不挡主壳
+    }
+  })()
 }
 
 watch(showColdStartGate, (blocked, wasBlocked) => {
@@ -1200,9 +1240,14 @@ async function refreshImportStatus() {
   }
   importState.value = response.state
 
-  if (response.state?.status === 'completed' || response.state?.status === 'failed') {
+  // 无持久化记录视为终态：从未启动过导入 / 外部清掉 storage 都不该让 Side Panel 持续敲
+  if (
+    !response.state ||
+    response.state.status === 'completed' ||
+    response.state.status === 'failed'
+  ) {
     stopImportPolling()
-    if (response.state.status === 'completed') {
+    if (response.state?.status === 'completed') {
       void probeMemoryLibrary()
     }
   }
@@ -1762,6 +1807,7 @@ function handleRecallVisibleProgressPush(message: unknown): void {
 
 onMounted(() => {
   chrome.runtime.onMessage.addListener(handleRecallVisibleProgressPush)
+  chrome.storage.onChanged.addListener(handleRecallPrefillStorageChanged)
   void nextTick(() => {
     clueInputRef.value?.focus()
   })
@@ -1772,15 +1818,12 @@ onMounted(() => {
   })
   void (async () => {
     try {
-      // Getting Started 等：写 prefill 与开壳可能竞态，短窗重试
+      // Getting Started / Omnibox 接力：写 prefill 与开壳可能竞态，短窗重试
       const prefill = await consumeRecallPrefillWithRetry()
       if (!prefill) {
         return
       }
-      clue.value = prefill
-      // 门禁未放行则挂起；ready 后由 tryFlushPendingGsPrefillRecall 自动提交
-      pendingGsPrefillRecall.value = prefill
-      tryFlushPendingGsPrefillRecall()
+      applyRecallPrefillClue(prefill)
     } catch {
       // 忽略：无预填不阻塞 Side Panel
     }
@@ -1801,6 +1844,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   chrome.runtime.onMessage.removeListener(handleRecallVisibleProgressPush)
+  chrome.storage.onChanged.removeListener(handleRecallPrefillStorageChanged)
   clearRecallVisibleProgressUi()
   clearColdStartPostReleaseBannerExpiry()
   void handlePanelCloseOutcome()

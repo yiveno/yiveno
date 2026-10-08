@@ -33,6 +33,7 @@ import {
   scoreFromCosineSimilarity,
   sortIdsByRrf
 } from '@/core/recall/hybrid-fusion'
+import { getFuzzyVariants } from '@/core/recall/fuzzy-lexicon'
 import { isGenericOnlyHitAgainstSpecificClue } from '@/core/recall/keyword-filter'
 import {
   excludeDismissedMemoryItems,
@@ -127,11 +128,13 @@ async function finalizeKeywordResult(
   items: Awaited<ReturnType<typeof memoryItemService.list>>,
   parsed: ParsedRecallClue,
   currentTabDomain: string | undefined,
-  pairClue: string
+  pairClue: string,
+  options?: { skipOutcomePairs?: boolean; fuzzyExpandTokens?: readonly string[] }
 ): Promise<{ result: RecallResult; effectiveParsed: ParsedRecallClue; timeSoftReopen: boolean }> {
   const base = recallByKeywordWithParsedClue(items, displayClue, {
     candidateLimit: RECALL_RESULT_POOL_LIMIT,
-    parsed
+    parsed,
+    ...(options?.fuzzyExpandTokens ? { fuzzyExpandTokens: options.fuzzyExpandTokens } : {})
   })
   const effectiveParsed = base.parsed ?? parsed
   const timeSoftReopen =
@@ -150,11 +153,14 @@ async function finalizeKeywordResult(
     }
     return b.item.updatedAt.localeCompare(a.item.updatedAt)
   })
-  // §7.2 P3：本机 Outcome 对软调整（正例须内容佐证）
+  // §7.2 P3：本机 Outcome 对软调整（正例须内容佐证）。
+  // Omnibox 模式（ADR-007）：单次命中即走，无多轮 Outcome 历史，跳过以省内存 + IDB 读。
   const corroborationTerms = effectiveContentTermsForRecall(effectiveParsed)
-  const withPairs = await applyStoredOutcomePairsToMatches(matches, pairClue, {
-    contentTerms: corroborationTerms
-  })
+  const withPairs = options?.skipOutcomePairs
+    ? matches
+    : await applyStoredOutcomePairsToMatches(matches, pairClue, {
+        contentTerms: corroborationTerms
+      })
   const corroborated = filterMatchesByContentTermCorroboration(withPairs, corroborationTerms)
   return {
     result: injectTopic(
@@ -175,6 +181,8 @@ async function finalizeKeywordResult(
     timeSoftReopen
   }
 }
+
+// Omnibox 路径：无联网向量兜底（ADR-007 · 完全本地）
 
 /** 对已打分的 keyword / semantic 池做时间筛 → RRF → 域加成。 */
 function fuseScoredPools(input: {
@@ -763,13 +771,12 @@ export class HybridRecallBackend implements RecallBackend {
       currentUtterance: normalizedClue
     })
 
-    // D3-C Gap 5：补 Topic embedding（与 withRecallTopic 幂等回填并行）。
-    // 注入 embedClueText 句柄：使用现有 embedding 通道（requestWorkerEmbeddings）。
-    // 无登录态或 embedding 失败时降级词法（embedding 字段不填；topicLookup 走词法路径）。
+    // D3-C Gap 5：Topic embedding 注入（仅 Side Panel / 完整 Recall 轨）。
+    // Omnibox（ADR-007）：完全本地——不注入 Topic embed，miss 也不联网兜底。
     let merged = withRecallTopic(merge.merged)
     const session = await getAuthSession()
-    if (session?.accessToken) {
-      const accessToken = session.accessToken
+    const accessToken = session?.accessToken
+    if (accessToken && !isOmniboxEntry) {
       // Gap 5：注入 embedding 句柄（仅在登录态可用时）
       merged = await withRecallTopicAsync(merged, async (text: string) => {
         try {
@@ -883,6 +890,30 @@ export class HybridRecallBackend implements RecallBackend {
         currentTabDomain,
         pairClue
       )
+      result = finalized.result
+      effectiveParsedForFraming = finalized.effectiveParsed
+      timeSoftReopen = finalized.timeSoftReopen
+    } else if (isOmniboxEntry) {
+      // Omnibox 离线快跳（ADR-007）：已知锚点 → 纯本地关键词路径（无 Hybrid / 无向量 / 无 Outcome）。
+      // Indexed Fuzzy：预计算字典展开（js→javascript；recat→react）；仅 Omnibox；Side Panel 不用。
+      const fuzzyTokens = getFuzzyVariants(normalizedClue, 8)
+      const finalized = await finalizeKeywordResult(
+        normalizedClue,
+        items,
+        merged,
+        currentTabDomain,
+        pairClue,
+        {
+          skipOutcomePairs: true,
+          // fuzzyTokens[0] === normalizedClue（归一化后），其余为展开变体
+          ...(fuzzyTokens.length > 1 ? { fuzzyExpandTokens: fuzzyTokens.slice(1) } : {})
+        }
+      )
+      trace('info', 'Omnibox Indexed Fuzzy：变体数', {
+        totalVariants: fuzzyTokens.length,
+        expandedVariants: fuzzyTokens.length - 1,
+        primaryClue: normalizedClue
+      })
       result = finalized.result
       effectiveParsedForFraming = finalized.effectiveParsed
       timeSoftReopen = finalized.timeSoftReopen

@@ -1,9 +1,5 @@
 import type { TranslateFn } from '@/core/i18n/translate'
-import { RECALL_RESULT_PAGE_SIZE } from '@/core/recall/build-recall-result'
-import {
-  explainRecallMatch,
-  getRecallMatchFieldShortLabel
-} from '@/core/recall/explain-recall-match'
+import { getRecallMatchFieldShortLabel } from '@/core/recall/explain-recall-match'
 import { formatRecallSavedTime } from '@/core/recall/format-recall-saved-time'
 import { getMemoryItemOpenHref, getOmniboxSuggestContent } from '@/core/recall/memory-open-href'
 import {
@@ -11,6 +7,71 @@ import {
   type RecallMatch,
   type RecallResult
 } from '@/core/recall/recall-result'
+
+/**
+ * Omnibox 下拉建议条数上限（Normative · 与 Side Panel `RECALL_RESULT_PAGE_SIZE` 解耦）。
+ *
+ * Omnibox 无 Show more：这一屏是唯一机会。Chrome 官方未钉死扩展 SuggestResult 条数；
+ * MDN 常写「前 6 条」、桌面整栏 autocomplete 约 8（含 default 行）。本常量取 6 为自限预算，
+ * 禁止复用 Panel 首屏页长。
+ */
+export const OMNIBOX_SUGGEST_LIMIT = 6
+
+/**
+ * Omnibox **default 行**（平台强制 C 位）：友情提示，非 CTA、无命中接力。
+ * 价值：教用户「快跳要关键字 / 模糊去 Side Panel」——出镜率最高故须一句顶用。
+ * 有真实快捷键才括号展示，禁止写死 manifest 建议键。
+ */
+export function formatOmniboxDefaultSuggestionDescription(
+  openRecallShortcut: string | null | undefined,
+  translate: TranslateFn
+): string {
+  const shortcut = openRecallShortcut?.trim() ?? ''
+  if (shortcut.length > 0) {
+    return translate('omnibox_default_suggestion_with_shortcut', shortcut)
+  }
+  return translate('omnibox_default_suggestion')
+}
+
+/**
+ * 无命中时可点 SuggestResult 文案（CTA 行；与 default 友情提示分工）。
+ * 规则同 `formatOmniboxDefaultSuggestionDescription`（有真实快捷键才括号展示）。
+ */
+export function formatOmniboxNoMatchSuggestionDescription(
+  openRecallShortcut: string | null | undefined,
+  translate: TranslateFn
+): string {
+  const shortcut = openRecallShortcut?.trim() ?? ''
+  if (shortcut.length > 0) {
+    return translate('omnibox_no_match_with_shortcut', shortcut)
+  }
+  return translate('omnibox_no_match')
+}
+
+/**
+ * 无命中可点建议的 content 前缀（≠ 用户输入，避免被 Chrome 吞掉）。
+ * onInputEntered 解析后接力 Side Panel。
+ */
+export const OMNIBOX_HANDOFF_CONTENT_PREFIX = 'yiveno-omnibox-handoff:' as const
+
+/** 构造无命中接力 content（须与线索字面不同）。 */
+export function buildOmniboxHandoffContent(clue: string): string {
+  return `${OMNIBOX_HANDOFF_CONTENT_PREFIX}${encodeURIComponent(clue.trim())}`
+}
+
+/** 若为无命中接力 content 则返回线索，否则 null。 */
+export function tryParseOmniboxHandoffClue(text: string): string | null {
+  const raw = text.trim()
+  if (!raw.startsWith(OMNIBOX_HANDOFF_CONTENT_PREFIX)) {
+    return null
+  }
+  try {
+    const decoded = decodeURIComponent(raw.slice(OMNIBOX_HANDOFF_CONTENT_PREFIX.length)).trim()
+    return decoded.length > 0 ? decoded : null
+  } catch {
+    return null
+  }
+}
 
 /** Omnibox SuggestResult 的纯数据形态（无 Chrome 依赖）。 */
 export interface OmniboxSuggestItem {
@@ -22,12 +83,15 @@ export interface OmniboxSuggestItem {
 export interface OmniboxSuggestOptions {
   detailPageUrl: string
   translate: TranslateFn
-  /** 用户线索（Explain 命中理由；缺省则降级字段短标签）。 */
+  /** 用户线索（用于命中字段短标签；缺省则省略理由尾缀）。 */
   clue?: string
 }
 
-/** Omnibox 摘录预览最大字符数。 */
-const EXCERPT_PREVIEW_MAX = 40
+/** Omnibox 主文最大字符（书签标题 / 摘录锚点）。 */
+const PRIMARY_MAX = 52
+
+/** Omnibox 域名 / 出处最大字符。 */
+const URL_DISPLAY_MAX = 36
 
 /** 转义 Omnibox description 中的 XML 预定义实体。 */
 export function escapeOmniboxXml(text: string): string {
@@ -70,8 +134,29 @@ export function formatOmniboxPrimaryMatch(
   return getRecallMatchFieldShortLabel(primary, translate)
 }
 
+/** 展示用 host：优先 payload.domain，否则从 URL 解析；去 www。 */
+function displayHostForOmnibox(match: RecallMatch, fallbackSubtitle: string): string {
+  const fromPayload =
+    match.item.type === 'bookmark'
+      ? match.item.payload.domain.trim()
+      : match.item.payload.domain.trim()
+  if (fromPayload) {
+    return fromPayload.replace(/^www\./i, '')
+  }
+  const rawUrl =
+    match.item.type === 'bookmark' ? match.item.payload.url : match.item.payload.sourceUrl
+  try {
+    return new URL(rawUrl).hostname.replace(/^www\./i, '')
+  } catch {
+    return fallbackSubtitle.trim()
+  }
+}
+
 /**
  * 将单条命中转为 Omnibox 建议。
+ *
+ * 布局对齐 Chrome 历史行的可读骨架：`<match>主文</match> — <url>host</url>`，
+ * ECS 其余要素收成尾部 dim（类型 · 相对时间 · 命中字段）；禁止长句 Explain。
  * content：摘录为 detail.html?id=；书签为 omnibox-open.html?id=（便于写回打开）。
  */
 export function recallMatchToOmniboxSuggest(
@@ -93,55 +178,49 @@ export function recallMatchToOmniboxSuggest(
     return null
   }
 
-  const typePrefix = escapeOmniboxXml(getOmniboxTypePrefix(match.item.type, translate))
+  // 主文：书签=标题；摘录优先页名（可扫如 Chrome），无页名再退正文锚点
   const primaryText =
     match.item.type === 'text_excerpt'
-      ? display.excerpt || display.subtitle || display.url || openHref
+      ? match.item.payload.pageTitle.trim() ||
+        display.excerpt?.trim() ||
+        display.subtitle ||
+        display.url ||
+        openHref
       : display.title || display.subtitle || display.url || openHref
-  const primaryMax = match.item.type === 'text_excerpt' ? EXCERPT_PREVIEW_MAX : 48
-  const primary = escapeOmniboxXml(truncateOmniboxText(primaryText, primaryMax))
-  const provenance = display.subtitle.trim()
-    ? escapeOmniboxXml(truncateOmniboxText(display.subtitle, 28))
-    : ''
+  const primary = escapeOmniboxXml(truncateOmniboxText(primaryText, PRIMARY_MAX))
+  const host = escapeOmniboxXml(
+    truncateOmniboxText(displayHostForOmnibox(match, display.subtitle), URL_DISPLAY_MAX)
+  )
+  const typePrefix = escapeOmniboxXml(getOmniboxTypePrefix(match.item.type, translate))
 
-  const parts: string[] = [`<dim>${typePrefix}</dim>`, `<match>${primary}</match>`]
-
-  if (provenance) {
-    parts.push('<dim>·</dim>', `<url>${provenance}</url>`)
+  // Chrome 式主轴：标题 — host
+  const parts: string[] = [`<match>${primary}</match>`]
+  if (host) {
+    parts.push('<dim>—</dim>', `<url>${host}</url>`)
   }
+
+  // ECS 尾缀：类型 · 时间 · 短命中字段（布局差异；五要素仍齐）
+  const meta: string[] = [typePrefix]
 
   const savedLabels = formatRecallSavedTime(match.item.createdAt, {
     justSavedLabel: translate('recall_card_saved_just_now')
   })
   if (savedLabels) {
-    parts.push(
-      '<dim>·</dim>',
-      `<dim>${escapeOmniboxXml(translate('recall_card_saved', savedLabels.relative))}</dim>`
-    )
+    meta.push(escapeOmniboxXml(savedLabels.relative))
   }
 
-  const clue = options.clue?.trim() ?? ''
-  const reasonLine = clue
-    ? explainRecallMatch({ clue, matchedFields: match.matchedFields, item: match.item }, translate)
-        .reasonLine
-    : null
-  if (reasonLine) {
-    parts.push(
-      '<dim>·</dim>',
-      `<dim>${escapeOmniboxXml(truncateOmniboxText(reasonLine, 36))}</dim>`
-    )
-  } else if (match.item.type !== 'text_excerpt') {
-    const primaryMatch = formatOmniboxPrimaryMatch(match.matchedFields, translate)
-    if (primaryMatch) {
-      parts.push(`<dim>· ${escapeOmniboxXml(primaryMatch)}</dim>`)
-    }
+  const fieldLabel = formatOmniboxPrimaryMatch(match.matchedFields, translate)
+  if (fieldLabel) {
+    meta.push(escapeOmniboxXml(fieldLabel))
   }
 
   const duplicateCount = match.duplicateGroup?.totalCount
   if (duplicateCount !== undefined && duplicateCount >= 2) {
-    parts.push(
-      `<dim>· ${escapeOmniboxXml(translate('omnibox_duplicate_count', String(duplicateCount)))}</dim>`
-    )
+    meta.push(escapeOmniboxXml(translate('omnibox_duplicate_count', String(duplicateCount))))
+  }
+
+  if (meta.length > 0) {
+    parts.push(`<dim>· ${meta.join(' · ')}</dim>`)
   }
 
   return {
@@ -152,7 +231,7 @@ export function recallMatchToOmniboxSuggest(
 
 /**
  * 将 Recall 结果映射为 Omnibox 建议列表。
- * 仅首屏 PAGE_SIZE（避免宽 clue 把 omnibox 刷满）；content 须与 clue 不同才会显示。
+ * 条数自限 `OMNIBOX_SUGGEST_LIMIT`（一次性下拉，无分页）；content 须与 clue 不同才会显示。
  */
 export function recallResultToOmniboxSuggests(
   result: RecallResult,
@@ -167,7 +246,7 @@ export function recallResultToOmniboxSuggests(
   const seenContents = new Set<string>()
   const suggests: OmniboxSuggestItem[] = []
 
-  for (const match of matches.slice(0, RECALL_RESULT_PAGE_SIZE)) {
+  for (const match of matches.slice(0, OMNIBOX_SUGGEST_LIMIT)) {
     const suggest = recallMatchToOmniboxSuggest(match, options)
     if (!suggest || seenContents.has(suggest.content)) {
       continue
