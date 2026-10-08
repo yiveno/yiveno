@@ -46,6 +46,7 @@ function createChromeMock(initial: StorageMap = {}) {
       '10',
       {
         id: '10',
+        syncing: false,
         title: 'Retention analysis',
         url: 'https://example.com/retention',
         parentId: '1'
@@ -106,10 +107,12 @@ function createChromeMock(initial: StorageMap = {}) {
       getTree: vi.fn(async () => [
         {
           id: '0',
+          syncing: false,
           title: '',
           children: [
             {
               id: '1',
+              syncing: false,
               title: 'Bookmarks bar',
               children: [...bookmarks.values()]
             }
@@ -168,6 +171,7 @@ describe('chrome-bookmark-sync-service', () => {
   it('handleChromeBookmarkCreated upsert 新书签', async () => {
     const result = await handleChromeBookmarkCreated({
       id: '10',
+      syncing: false,
       title: 'Retention analysis',
       url: 'https://example.com/retention',
       parentId: '1'
@@ -191,6 +195,7 @@ describe('chrome-bookmark-sync-service', () => {
     vi.mocked(scheduleSilentMemoryEmbeddingMaintenance).mockClear()
     const result = await handleChromeBookmarkCreated({
       id: 'folder-1',
+      syncing: false,
       title: 'Work',
       parentId: '1'
     })
@@ -201,14 +206,16 @@ describe('chrome-bookmark-sync-service', () => {
   it('handleChromeBookmarkChanged 更新已有书签', async () => {
     await handleChromeBookmarkCreated({
       id: '10',
+      syncing: false,
       title: 'Old title',
       url: 'https://example.com/retention',
       parentId: '1'
     })
 
-    const chromeMock = chrome as ReturnType<typeof createChromeMock>
+    const chromeMock = chrome as unknown as ReturnType<typeof createChromeMock>
     chromeMock.__bookmarks.set('10', {
       id: '10',
+      syncing: false,
       title: 'New title',
       url: 'https://example.com/retention',
       parentId: '1'
@@ -231,6 +238,7 @@ describe('chrome-bookmark-sync-service', () => {
   it('handleChromeBookmarkRemoved 软删除 MemoryItem', async () => {
     await handleChromeBookmarkCreated({
       id: '10',
+      syncing: false,
       title: 'Retention analysis',
       url: 'https://example.com/retention',
       parentId: '1'
@@ -267,6 +275,7 @@ describe('chrome-bookmark-sync-service', () => {
 
     await handleChromeBookmarkCreated({
       id: '10',
+      syncing: false,
       title: 'Retention analysis',
       url: 'https://example.com/retention',
       parentId: '1'
@@ -299,6 +308,7 @@ describe('chrome-bookmark-sync-service', () => {
 
     const result = await handleChromeBookmarkCreated({
       id: '10',
+      syncing: false,
       title: 'Retention analysis',
       url: 'https://example.com/retention',
       parentId: '1'
@@ -326,6 +336,7 @@ describe('chrome-bookmark-sync-service', () => {
 
     await handleChromeBookmarkCreated({
       id: '10',
+      syncing: false,
       title: 'Retention analysis',
       url: 'https://example.com/retention',
       parentId: '1'
@@ -358,6 +369,7 @@ describe('chrome-bookmark-sync-service', () => {
     })
     chromeMock.__bookmarks.set('20', {
       id: '20',
+      syncing: false,
       title: 'Source video roundup',
       url: 'https://www.youtube.com/watch?v=dQAmmIdSRSY',
       parentId: '1'
@@ -393,7 +405,8 @@ describe('chrome-bookmark-sync-service', () => {
         id: String(index),
         title: `Quota leaf ${index}`,
         url: `https://example.com/${index}`,
-        parentId: '1'
+        parentId: '1',
+        syncing: false
       })
     }
     vi.stubGlobal('chrome', chromeMock)

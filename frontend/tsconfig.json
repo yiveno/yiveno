@@ -1,8 +1,8 @@
 {
-  // Frontend workspace主配置
-  // 作用：整合应用代码和构建工具的TypeScript配置
-  // 说明：使用Project References分离应用代码和构建工具配置
-  // 注意：vue-tsc -b 需要此文件（build mode）
+  // Frontend workspace 主配置（vue-tsc -b 入口 + IDE 工程图）
+  // references：app + node + vitest（vitest 必须挂上，否则 Cursor/TS 打开 *.test.ts 时
+  // 找不到含 paths 的工程 → 误报「找不到模块 @/…」；CLI 用 -p 显式指定则无此问题）
+  // vitest 仅 include 测试文件，不会整棵 src 双扫
   // paths：供工具解析 `@/`（scripts 经 Vite SSR 入口加载）
   "compilerOptions": {
     "baseUrl": ".",
@@ -11,5 +11,9 @@
     }
   },
   "files": [],
-  "references": [{ "path": "./tsconfig.app.json" }, { "path": "./tsconfig.node.json" }]
+  "references": [
+    { "path": "./tsconfig.app.json" },
+    { "path": "./tsconfig.node.json" },
+    { "path": "./tsconfig.vitest.json" }
+  ]
 }

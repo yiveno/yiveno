@@ -12,7 +12,6 @@ vi.mock('@/application/memory/schedule-async-memory-embedding', () => ({
 
 import { captureTextExcerptFromContextMenu } from '@/application/capture/capture-text-excerpt-service'
 import { LOCAL_PROFILE_STORAGE_KEY, type LocalProfile } from '@/core/identity/local-profile'
-import { memoryItemRepository } from '@/infrastructure/indexeddb/memory-item-repository'
 import { resetMemoryDatabaseInitializationForTests } from '@/infrastructure/indexeddb/memory-db'
 
 type StorageMap = Record<string, unknown>

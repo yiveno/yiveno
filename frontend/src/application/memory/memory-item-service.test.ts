@@ -75,8 +75,6 @@ describe('MemoryItemService LLM enrichment 调度', () => {
 
     const service = new MemoryItemService(memoryItemRepository)
     await service.upsertBookmarkFromChrome({
-      ownerId: 'o',
-      sourceLocalProfileId: 'p',
       payload: {
         title: 'A long enough new bookmark title',
         url: 'https://example.com/n',
@@ -412,14 +410,14 @@ describe('MemoryItemService listForKeywordRecall', () => {
     })
 
     // 模拟库内 30K 条；老条目在 updatedAt DESC 排序的末尾
-    const bigLibrary = Array.from({ length: 30000 }, (_, i) =>
-      createBookmarkMemoryItem({
-        id: `filler-${i}`,
+    const bigLibrary = Array.from({ length: 30000 }, (_, i) => ({
+      ...createBookmarkMemoryItem({
         ownerId: 'o',
         sourceLocalProfileId: 'p',
         payload: { title: `Filler ${i}`, url: `https://example.com/${i}` }
-      })
-    )
+      }),
+      id: `filler-${i}`
+    }))
     // 把老条目放在排序末尾（updatedAt 最早）
     bigLibrary.push(oldBookmark)
 
@@ -448,14 +446,14 @@ describe('MemoryItemService listForKeywordRecall', () => {
    * 若真实库 > 100K → 超出部分截断（与之前 RECALL_SCAN_LIMIT 同样的语义但更宽松）。
    */
   it('fallback：库内 > 100K 时按 RECALL_FALLBACK_SCAN_LIMIT 截断', async () => {
-    const bigLibrary = Array.from({ length: 100500 }, (_, i) =>
-      createBookmarkMemoryItem({
-        id: `filler-${i}`,
+    const bigLibrary = Array.from({ length: 100500 }, (_, i) => ({
+      ...createBookmarkMemoryItem({
         ownerId: 'o',
         sourceLocalProfileId: 'p',
         payload: { title: `Filler ${i}`, url: `https://example.com/${i}` }
-      })
-    )
+      }),
+      id: `filler-${i}`
+    }))
 
     vi.mocked(keywordIndexRepository.lookupCandidateIds).mockResolvedValue({
       ids: [],

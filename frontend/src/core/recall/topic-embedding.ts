@@ -56,7 +56,7 @@ export interface DeriveTopicEmbeddingResult {
  */
 export async function deriveTopicEmbedding(
   topic: TopicDescriptor,
-  embedClueText: (text: string) => Promise<Float32Array | null> | null
+  embedClueText: ((text: string) => Promise<Float32Array | null>) | null
 ): Promise<DeriveTopicEmbeddingResult> {
   // Step 1：检查 tokens 是否可用
   const tokens = topic.tokens
@@ -126,7 +126,7 @@ export async function deriveTopicEmbedding(
  */
 export function deriveTopicEmbeddingSync(
   topic: TopicDescriptor,
-  embedClueText: (text: string) => Float32Array | null | null
+  embedClueText: ((text: string) => Float32Array | null) | null
 ): DeriveTopicEmbeddingResult {
   // 同步处理 tokens 检查
   const tokens = topic.tokens

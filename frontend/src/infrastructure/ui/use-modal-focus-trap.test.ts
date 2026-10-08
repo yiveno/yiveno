@@ -4,8 +4,7 @@ import {
   bindModalFocusTrap,
   getFocusableElements,
   handleTabTrap,
-  resetModalFocusStateForTest,
-  restoreFocus
+  resetModalFocusStateForTest
 } from '@/infrastructure/ui/use-modal-focus-trap'
 
 describe('use-modal-focus-trap', () => {

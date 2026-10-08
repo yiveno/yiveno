@@ -101,8 +101,8 @@ describe('ensureMemoryEnrichmentBackfilled', () => {
 
     expect(result.status).toBe('completed')
     expect(result.updated).toBe(1)
-    const written = putManyMock.mock.calls[0]?.[0] as (typeof polluted)[]
-    expect(written[0]?.clues.entities).toEqual([])
-    expect(written[0]?.clues.keywords).not.toEqual(expect.arrayContaining(['wwii', 'Hitler']))
+    const written = (putManyMock.mock.calls as unknown as [(typeof polluted)[]][])[0]?.[0]
+    expect(written?.[0]?.clues.entities).toEqual([])
+    expect(written?.[0]?.clues.keywords).not.toEqual(expect.arrayContaining(['wwii', 'Hitler']))
   })
 })

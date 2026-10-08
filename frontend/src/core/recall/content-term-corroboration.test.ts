@@ -42,6 +42,7 @@ function excerptItem(input: {
       entities: [],
       tags: [],
       openCount: 0,
+      settledCount: 0,
       dismissCount: 0,
       ...(input.note ? { note: input.note } : {}),
       ...(input.sourceUrl ? { sourceUrl: input.sourceUrl } : {})

@@ -98,8 +98,8 @@ describe('toRecallMatchCard', () => {
     expect(card.duplicateTotalCount).toBe(2)
     expect(card.duplicateLabel).toBe('popup_duplicate_group_excerpt:2')
     expect(card.siblings).toHaveLength(1)
-    expect(card.siblings![0].id).toBe(sibling.item.id)
-    expect(card.siblings![0].siblings).toBeUndefined()
+    expect(card.siblings?.[0]?.id).toBe(sibling.item.id)
+    expect(card.siblings?.[0]?.siblings).toBeUndefined()
   })
 
   it('书签 duplicate 用 bookmark 集合文案', () => {

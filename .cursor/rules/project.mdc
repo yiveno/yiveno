@@ -198,24 +198,32 @@ Agent 指令（原文）：
 | 层级           | 触发时机     | 职责                                                                                                                         | 命令                                                                                                                                                                                                   |
 | -------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **pre-commit** | `git commit` | 暂存区快修：ESLint fix + Stylelint + Prettier（含 `.vue`）                                                                   | `lint-staged`（`max-warnings 0`；忽略 `backend/worker-configuration.d.ts`）                                                                                                                            |
-| **pre-push**   | `git push`   | 按变更：FE 构建 + **test:run** / BE typecheck+test / **doc:check**（`docs/`·`.cursor/rules/`·`scripts/`）/ 分 workspace Knip | `build:fe` + `cd frontend && bun run test:run`（frontend/共享包）；`typecheck:be` + `bun test`（backend）；`bun run doc:check`（文档/开机层/script）；`knip:fe` / `knip:be` / `knip:web`（按变更目录） |
+| **pre-push**   | `git push`   | 按变更：FE 构建 + **test:run** / BE typecheck+test / website·packages typecheck / **doc:check** / Knip | `build:fe`（`vue-tsc -b`：app+node+vitest）+ `test:run`；`typecheck:be` + `bun test`；`typecheck:web`；packages `typecheck`；`doc:check`；`knip:*` |
 | **CI**         | PR / push    | 权威只读门禁：typecheck、lint、i18n、test、build                                                                             | 见下表                                                                                                                                                                                                 |
 
-pre-push **不跑** ESLint、全仓 typecheck；FE 变更时跑 **build + test:run**（含 recall-eval must）；`docs/` / `.cursor/rules/` / `scripts/` 变更时跑 **doc:check**（含 `sync:ide-boot --check`）。`.vue` lint 由 pre-commit 与 CI 覆盖。`knip.json` / 根 `package.json` 变更时 pre-push 跑全仓 `knip`。
+pre-push **不跑** ESLint、全仓 typecheck；FE 变更时跑 **build + test:run**（build 内 `vue-tsc -b` = app+node+vitest，与 IDE solution 同图）；backend / website / `packages/*` 分别跑对应 typecheck；`docs/` / `.cursor/rules/` / `scripts/` 变更时跑 **doc:check**。`.vue` lint 由 pre-commit 与 CI 覆盖。`knip.json` / 根 `package.json` 变更时 pre-push 跑全仓 `knip`。
+
+#### FE TypeScript 工程图（IDE ↔ CLI 必须同图）
+
+- **一张图：** `frontend/tsconfig.json` references → `tsconfig.app`（生产源）+ `tsconfig.node`（Vite/Vitest 配置）+ `tsconfig.vitest`（`*.test/spec`）。
+- **CLI：** `vue-tsc -b` / `build` 走该图；**Cursor Problems 里的 TS** 也必须能解析到同一图——故 vitest **必须**挂在 references（禁止「只给 CLI `-p`、不给 IDE」）。
+- **Problems ≠ typecheck：** 面板混有 ESLint；`bun run typecheck` **不**跑 ESLint。类型看 typecheck；阴影/未用等看 `lint:check`。
+- **改 tsconfig 后：** IDE 执行 TypeScript: Restart TS Server（或 Reload Window）。
+- **新增文件面自检：** 该 glob 在哪个 tsconfig `include`？那个 tsconfig 是否在 `references`？两问无答案 → IDE/CLI 必再分叉。
 
 #### CI 检查矩阵
 
 | 场景          | TypeScript                             | Lint         | i18n                       | Knip                | 前端测试                    | Lighthouse      |
 | ------------- | -------------------------------------- | ------------ | -------------------------- | ------------------- | --------------------------- | --------------- |
-| **PR**        | `typecheck:ci` + build 内 `vue-tsc -b` | `lint:check` | `i18n:check` + `doc:check` | `knip`              | `test:run` + backend `test` | 不跑（v4 下线） |
-| **push main** | 同上                                   | 同上         | `i18n:check` + `doc:check` | `knip`              | `test:run` + backend `test` | 不跑（v4 下线） |
+| **PR**        | `typecheck:ci` + build 内 `vue-tsc -b`（app+node+vitest） | `lint:check` | `i18n:check` + `doc:check` | `knip`              | FE `test:run` + backend `test` | 不跑（v4 下线） |
+| **push main** | 同上                                   | 同上         | `i18n:check` + `doc:check` | `knip`              | 同上                        | 不跑（v4 下线） |
 | **每周一**    | —                                      | —            | —                          | `knip.yml` 定时复检 | —                           | —               |
 
 #### 本地命令
 
-- 日常：`bun run typecheck`（快，含 `packages/*`）、`bun run lint:check`、`bun run i18n:check`、目标单测
+- 日常：`bun run typecheck`（workspaces 并行；FE=`vue-tsc -b` 整图 app+node+vitest）、`bun run lint:check`、`bun run i18n:check`、目标单测
 - 三端并行：`bun run watch` / `bun run dev`（mprocs）或 `bun run watch:stream`（混流）；扩展重建后需 `chrome://extensions` 刷新
-- 合并前 / 发布前：`bun run typecheck:force`、`bun run lint:check`、`bun run i18n:check`、`bun run doc:check`、`bun run test:run`、`bun run knip`
+- 合并前 / 发布前：`bun run typecheck:force`、`bun run lint:check`、`bun run i18n:check`、`bun run doc:check`、`bun run test:run`（FE+BE）、`bun run knip`
 - 品牌视觉发版：改 `docs/design/brand-assets/` → `bun run sync:brand-assets`（见 `docs/design/brand-asset-release-checklist.md`）；母本走 Git LFS，clone 后 `bun run setup:git-lfs`（ADR-006）
 - Knip 分 workspace：`knip:fe` / `knip:be` / `knip:web`；仅结构项：`knip:fast`；全量报告：`knip:report`
 - Knip 版本写在根 `package.json` → `yiveno.knip`；`scripts/knip-runner.mjs` 在 `.cache/knip-runner` 隔离安装（规避 monorepo `zod@3` 与 knip `zod/mini`）。根目录勿直接 `bunx knip`；待 `bunx knip -D .` 不再报 `./mini` 后再打回根依赖。
@@ -410,14 +418,15 @@ Background **无** `window` / `document` / `localStorage`。用全局 `setTimeou
 ## 常用命令（真实存在）
 
 ```bash
-bun run typecheck              # 快（workspaces 并行，含 packages/*）
-bun run typecheck:force        # 全量子项目强制
+bun run typecheck              # workspaces 并行（FE=vue-tsc -b 整图；其余各入口）
+bun run typecheck:force        # 全量子项目；FE 强制重建增量缓存
 bun run i18n:check             # en messages ↔ MESSAGE_KEYS 对称
-cd frontend && bun run lint:check
-cd frontend && bun run test:run
+cd frontend && bun run lint:check   # ESLint+Stylelint（Problems 里非 TS 项看这里）
+bun run test:run               # FE test:run + BE test
 bun run knip:fe                # frontend 未使用代码（勿给死文件加假 entry）
-cd frontend && bun run build
+cd frontend && bun run build   # 含 vue-tsc -b（与 typecheck / IDE 同图）
 ```
+
 
 ---
 

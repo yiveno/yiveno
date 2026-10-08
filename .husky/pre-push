@@ -33,7 +33,7 @@ run_knip() {
 }
 
 # frontend / 共享包：构建（内含 vue-tsc -b）
-FRONTEND_BUILD_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^frontend/|^packages/(design-tokens|types|auth-core)/|tsconfig|package\.json' || true)
+FRONTEND_BUILD_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^frontend/|^packages/(design-tokens|types)/|tsconfig|package\.json' || true)
 
 if [ -n "$FRONTEND_BUILD_TRIGGER" ]; then
   echo "🏗️  frontend 构建验证..."
@@ -48,6 +48,7 @@ if [ -n "$FRONTEND_BUILD_TRIGGER" ]; then
   fi
 
   if [ "$BUILD_STATUS" -eq 0 ]; then
+    # build 内 vue-tsc -b 已覆盖 app + node + vitest（与 IDE solution 同图）
     echo "🧪 frontend test:run（含 recall-eval must）..."
     FE_TEST_OUTPUT=$(cd frontend && bun run test:run 2>&1)
     FE_TEST_STATUS=$?
@@ -87,6 +88,40 @@ if [ -n "$BACKEND_TRIGGER" ]; then
   fi
 else
   echo "⏭️  无 backend 变更，跳过 typecheck / test"
+fi
+
+# website：astro check（CI typecheck:ci 已覆盖；push 前按变更补一层）
+WEBSITE_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^website/' || true)
+
+if [ -n "$WEBSITE_TRIGGER" ]; then
+  echo "🧪 website typecheck..."
+  WEB_TC_OUTPUT=$(bun run typecheck:web 2>&1)
+  WEB_TC_STATUS=$?
+  if [ "$WEB_TC_STATUS" -eq 0 ]; then
+    echo "✅ website typecheck 通过"
+  else
+    echo "❌ website typecheck 失败"
+    ERRORS="${ERRORS}\n❌ website typecheck 失败:\n${WEB_TC_OUTPUT}\n\n"
+  fi
+else
+  echo "⏭️  无 website 变更，跳过 typecheck"
+fi
+
+# packages/*：独立 tsc（design-tokens/types 已可间接触发 FE build；mcp/probe 等仍需本层）
+PACKAGES_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^packages/' || true)
+
+if [ -n "$PACKAGES_TRIGGER" ]; then
+  echo "🧪 packages typecheck..."
+  PKG_TC_OUTPUT=$(bun run --filter './packages/*' typecheck 2>&1)
+  PKG_TC_STATUS=$?
+  if [ "$PKG_TC_STATUS" -eq 0 ]; then
+    echo "✅ packages typecheck 通过"
+  else
+    echo "❌ packages typecheck 失败"
+    ERRORS="${ERRORS}\n❌ packages typecheck 失败:\n${PKG_TC_OUTPUT}\n\n"
+  fi
+else
+  echo "⏭️  无 packages 变更，跳过 typecheck"
 fi
 
 # 文档 / 开机层 / 漂移脚本：doc:check（CURRENT ↔ session-boot、message registry）
@@ -162,9 +197,11 @@ if [ -n "$ERRORS" ]; then
   echo "💡 请修复以上问题后再推送。"
   echo ""
   echo "🛠️  可用的修复命令："
-  echo "   bun run build:fe          # frontend 构建验证"
+  echo "   bun run build:fe          # frontend 构建（vue-tsc -b：app+node+vitest）"
   echo "   cd frontend && bun run test:run  # frontend 单测（含 recall-eval must）"
   echo "   bun run typecheck:be      # backend 类型检查"
+  echo "   bun run typecheck:web     # website 类型检查（astro check）"
+  echo "   bun run --filter './packages/*' typecheck  # packages 类型检查"
   echo "   cd backend && bun test    # backend 单测"
   echo "   bun run knip              # 全仓 Knip"
   echo "   bun run knip:fe           # 仅 frontend Knip"

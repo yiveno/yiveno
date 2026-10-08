@@ -299,8 +299,9 @@ bun run build:fe:prod         # 仅构建扩展 (production)
 bun run build:web:prod        # 仅构建官网 (production)
 
 # 🧪 类型检查
-bun run typecheck             # 全 workspace 类型检查
-bun run typecheck:force       # 强制重建 TS 缓存后检查
+bun run typecheck             # 全 workspace（FE=vue-tsc -b：app+node+vitest，与 IDE 同图）
+bun run typecheck:force       # 强制重建 TS 增量缓存后检查（主要影响 FE）
+bun run typecheck:ci          # CI：packages + backend + website（FE 整图由 build 内 vue-tsc -b 覆盖）
 
 # 🔍 代码质量
 bun run lint:check            # ESLint + Stylelint 只读检查
@@ -396,13 +397,14 @@ bun run db:reset              # 重置本地数据库
 
 ### Git Hooks (Husky)
 
-提交前自动运行 (`.husky/pre-commit`):
+提交前自动运行 (`.husky/pre-commit` → lint-staged)：
 
 1. ✅ Prettier 格式化
 2. ✅ Stylelint 增强修复
 3. ✅ ESLint 增强修复
-4. ✅ TypeScript 类型检查 (仅暂存的TS/Vue文件)
-5. ✅ 自动重新暂存修复后的文件
+4. ✅ 自动重新暂存修复后的文件
+
+类型检查不在 pre-commit：日常用 `bun run typecheck`（FE=`vue-tsc -b` 整图 app+node+vitest，与 Cursor TS 语言服务同图）。推送时 FE 经 `build:fe`（含同图 vue-tsc），BE / website / `packages/*` 按变更跑对应 typecheck。根 `build` / `build:prod` 先全量 `env:sync` 一次再走各端 `*:compile`。Cursor Problems 里的 ESLint 项不属于 typecheck，看 `bun run lint:check`。改 `frontend/tsconfig*.json` 后请 Restart TS Server。CI 见 `.github/workflows/ci.yml`。
 
 **注意**: 只有无法自动修复的问题才会阻止提交。
 

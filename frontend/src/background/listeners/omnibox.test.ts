@@ -40,7 +40,6 @@ vi.mock('@/infrastructure/browser/side-panel', () => ({
   openRecallSidePanel: openRecallSidePanelMock
 }))
 
-import { ensureBackgroundBootstrapped } from '@/background/bootstrap-ready'
 import { navigateTabToUrl } from '@/infrastructure/browser/navigate-tab'
 import {
   registerOmniboxListeners,
@@ -365,7 +364,7 @@ describe('omnibox listeners', () => {
     })
 
     await vi.waitFor(() => {
-      expect(fontSuggest.mock.calls.at(-1)?.[0]?.[0]?.content).toBe(
+      expect(fontSuggest.mock.calls[fontSuggest.mock.calls.length - 1]?.[0]?.[0]?.content).toBe(
         `chrome-extension://testid/omnibox-open.html?id=${BOOKMARK_ID}`
       )
     })
@@ -386,7 +385,7 @@ describe('omnibox listeners', () => {
     registerOmniboxListeners()
     const onEntered = onInputEnteredAddListener.mock.calls[0]?.[0] as (
       text: string,
-      disposition: chrome.omnibox.OnInputEnteredDisposition
+      disposition: `${chrome.omnibox.OnInputEnteredDisposition}`
     ) => void
 
     onEntered(`chrome-extension://testid/omnibox-open.html?id=${BOOKMARK_ID}`, 'currentTab')
@@ -402,7 +401,7 @@ describe('omnibox listeners', () => {
     registerOmniboxListeners()
     const onEntered = onInputEnteredAddListener.mock.calls[0]?.[0] as (
       text: string,
-      disposition: chrome.omnibox.OnInputEnteredDisposition
+      disposition: `${chrome.omnibox.OnInputEnteredDisposition}`
     ) => void
 
     onEntered('https://example.com/retention', 'currentTab')
@@ -429,7 +428,7 @@ describe('omnibox listeners', () => {
     registerOmniboxListeners()
     const onEntered = onInputEnteredAddListener.mock.calls[0]?.[0] as (
       text: string,
-      disposition: chrome.omnibox.OnInputEnteredDisposition
+      disposition: `${chrome.omnibox.OnInputEnteredDisposition}`
     ) => void
 
     onEntered('retention', 'newForegroundTab')
@@ -471,7 +470,7 @@ describe('omnibox listeners', () => {
 
     const onEntered = onInputEnteredAddListener.mock.calls[0]?.[0] as (
       text: string,
-      disposition: chrome.omnibox.OnInputEnteredDisposition
+      disposition: `${chrome.omnibox.OnInputEnteredDisposition}`
     ) => void
     const recallCallsBeforeEnter = recallWithClueMock.mock.calls.length
     // 点可选行：content 为 handoff token（比仅 default 行更稳）
@@ -507,7 +506,7 @@ describe('omnibox listeners', () => {
 
     const onEntered = onInputEnteredAddListener.mock.calls[0]?.[0] as (
       text: string,
-      disposition: chrome.omnibox.OnInputEnteredDisposition
+      disposition: `${chrome.omnibox.OnInputEnteredDisposition}`
     ) => void
     onEntered('plain-clue', 'currentTab')
 
@@ -521,7 +520,7 @@ describe('omnibox listeners', () => {
     registerOmniboxListeners()
     const onEntered = onInputEnteredAddListener.mock.calls[0]?.[0] as (
       text: string,
-      disposition: chrome.omnibox.OnInputEnteredDisposition
+      disposition: `${chrome.omnibox.OnInputEnteredDisposition}`
     ) => void
 
     onEntered('https://example.com/retention', 'currentTab')

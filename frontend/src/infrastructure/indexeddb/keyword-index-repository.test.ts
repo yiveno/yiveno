@@ -103,7 +103,7 @@ describe('keyword-index-repository', () => {
         ...created.clues,
         textExcerpt: 'second draft switches to banana'
       }
-    }
+    } as typeof created
 
     const applied = await keywordIndexRepository.applyItemTokenDiff({
       ownerId: created.ownerId,
@@ -167,12 +167,12 @@ describe('keyword-index-repository', () => {
       ...first,
       payload: { ...first.payload, selectedText: 'batch alpha switches to mango' },
       clues: { ...first.clues, textExcerpt: 'batch alpha switches to mango' }
-    }
+    } as typeof first
     const nextSecond = {
       ...second,
       payload: { ...second.payload, selectedText: 'batch beta switches to lychee' },
       clues: { ...second.clues, textExcerpt: 'batch beta switches to lychee' }
-    }
+    } as typeof second
 
     const applied = await keywordIndexRepository.applyItemTokenDiffs({
       ownerId: first.ownerId,
@@ -221,7 +221,7 @@ describe('keyword-index-repository', () => {
         ...created.clues,
         textExcerpt: 'after putMany switches to orange'
       }
-    }
+    } as typeof created
     await memoryItemRepository.putMany([updated])
 
     expect(await keywordIndexRepository.isHealthy(created.ownerId)).toBe(true)

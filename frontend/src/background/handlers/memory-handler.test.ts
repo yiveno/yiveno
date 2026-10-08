@@ -88,11 +88,14 @@ describe('memory-handler', () => {
     })
 
     expect(response.ok).toBe(true)
-    if (!response.ok) {
+    if (!response.ok || !('item' in response)) {
       return
     }
 
     expect(response.item.type).toBe('bookmark')
+    if (response.item.type !== 'bookmark') {
+      return
+    }
     expect(response.item.payload.title).toBe('Yiveno')
   })
 
@@ -104,7 +107,7 @@ describe('memory-handler', () => {
 
     const response = await handleListMemoryItems({ limit: 10 })
     expect(response.ok).toBe(true)
-    if (!response.ok) {
+    if (!response.ok || !('items' in response)) {
       return
     }
 

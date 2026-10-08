@@ -22,6 +22,7 @@ function item(id: string, updatedAt: string): MemoryItem {
       entities: [],
       tags: [],
       openCount: 0,
+      settledCount: 0,
       dismissCount: 0
     },
     createdAt: '2026-01-01T00:00:00.000Z',

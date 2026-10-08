@@ -19,7 +19,16 @@ const excerpt: MemoryItem = {
     pageTitle: 'Example',
     domain: 'example.com'
   },
-  clues: {}
+  clues: {
+    keywords: [],
+    entities: [],
+    tags: [],
+    openCount: 0,
+    settledCount: 0,
+    dismissCount: 0
+  },
+  ownerId: '00000000-0000-4000-8000-000000000099',
+  sourceLocalProfileId: '00000000-0000-4000-8000-000000000098'
 }
 
 describe('detail-export', () => {

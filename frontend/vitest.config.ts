@@ -24,8 +24,8 @@ export default defineConfig({
       exclude: ['node_modules/', '**/*.d.ts', '**/*.config.*']
     },
 
-    // 并行测试
-    threads: true,
+    // 并行测试（Vitest 4：原 threads:true → pool:'threads'）
+    pool: 'threads',
 
     // 测试超时
     testTimeout: 10000

@@ -7,14 +7,17 @@ describe('chrome-bookmark-reader', () => {
     const leaves = flattenChromeBookmarkTree([
       {
         id: '0',
+        syncing: false,
         title: '',
         children: [
           {
             id: '1',
+            syncing: false,
             title: '书签栏',
             children: [
               {
                 id: '10',
+                syncing: false,
                 title: 'Example',
                 url: 'https://example.com',
                 parentId: '1',
@@ -22,16 +25,19 @@ describe('chrome-bookmark-reader', () => {
               },
               {
                 id: '11',
+                syncing: false,
                 title: '扩展页',
                 url: 'chrome://extensions',
                 parentId: '1'
               },
               {
                 id: '12',
+                syncing: false,
                 title: '文件夹',
                 children: [
                   {
                     id: '120',
+                    syncing: false,
                     title: 'Nested',
                     url: 'http://nested.example.com',
                     parentId: '12'
@@ -57,6 +63,7 @@ describe('chrome-bookmark-reader', () => {
     const leaves = flattenChromeBookmarkTree([
       {
         id: '1',
+        syncing: false,
         title: '',
         url: 'https://untitled.example.com'
       }

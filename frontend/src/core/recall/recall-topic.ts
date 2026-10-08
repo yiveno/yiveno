@@ -180,7 +180,7 @@ export function buildTopicDescriptorFromRecallTopic(
  */
 export async function withRecallTopicAsync(
   parsed: ParsedRecallClue,
-  embedClueText: ((text: string) => Promise<Float32Array | null> | null) | null
+  embedClueText: ((text: string) => Promise<Float32Array | null>) | null
 ): Promise<ParsedRecallClue> {
   // Step 1：幂等回填（与 withRecallTopic 相同逻辑）
   if (!parsed.topic) {

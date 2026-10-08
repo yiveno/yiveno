@@ -2,13 +2,8 @@
  * deriveTopicEmbedding 单元测试（Gap 5 · D3-C 语义化）。
  */
 
-import { describe, expect, it, vi } from 'vitest'
-import {
-  deriveTopicEmbedding,
-  deriveTopicEmbeddingSync,
-  type DeriveTopicEmbeddingResult,
-  type TopicEmbeddingFallbackReason
-} from '@/core/recall/topic-embedding'
+import { describe, expect, it } from 'vitest'
+import { deriveTopicEmbedding, deriveTopicEmbeddingSync } from '@/core/recall/topic-embedding'
 import type { TopicDescriptor } from '@/core/recall/parse-recall-clue-types'
 
 // ============================================================

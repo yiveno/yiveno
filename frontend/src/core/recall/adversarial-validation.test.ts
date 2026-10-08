@@ -10,27 +10,10 @@
  */
 import { describe, expect, it } from 'vitest'
 import { rankIdsByCosineToQuery } from '@/core/recall/hybrid-fusion'
-import { collapseRecallMatches } from '@/core/recall/collapse-recall-duplicates'
-import {
-  effectiveContentTermsForRecall,
-  filterMatchesByContentTermCorroboration
-} from '@/core/recall/content-term-corroboration'
-import {
-  filterMemoryItemsByKeyword,
-  RECALL_TOP_PICK_MIN_SCORE,
-  tokenizeRecallClue
-} from '@/core/recall/keyword-filter'
+import { effectiveContentTermsForRecall } from '@/core/recall/content-term-corroboration'
 import { parseRecallClue } from '@/core/recall/parse-recall-clue'
 import { buildFilterClueFromParsed } from '@/core/recall/orchestrate-keyword-recall'
-import { createTextExcerptMemoryItem } from '@/core/memory/create-memory-item'
-import type { RecallMatch } from '@/core/recall/recall-result'
-
 const FIXED_NOW = '2026-07-22T06:00:00.000Z'
-const makeBase = () => ({
-  ownerId: '11111111-1111-4111-8111-111111111111',
-  sourceLocalProfileId: '22222222-2222-4222-8222-222222222222',
-  now: () => FIXED_NOW
-})
 
 // ============================================================
 // EXPERIMENT 1: Cold Memory — RECALL_SCAN_LIMIT = 20000
@@ -144,7 +127,7 @@ describe('EXPERIMENT 2: Semantic Neighbor Limit = 24', () => {
     const candidates = Array.from({ length: 100 }, (_, i) => ({
       id: `item-${i}`,
       // 与 query 的 cos 随 i 单调下降；i=25 起 cos < 0.28 → 被 threshold 过滤
-      embedding: Array.from({ length: 128 }, (_, j) => ((j + 1) % 2) * (1 - i * 0.001))
+      embedding: Array.from({ length: 128 }, (_j, j) => ((j + 1) % 2) * (1 - i * 0.001))
     }))
 
     const ranked = rankIdsByCosineToQuery(queryVector, candidates)
@@ -203,7 +186,7 @@ describe('EXPERIMENT 2: Semantic Neighbor Limit = 24', () => {
       'target-id', // rank 25 (index 24)
       ...Array.from({ length: 5 }, (_, i) => `item-semantic-extra-${i}`)
     ]
-    const keywordList: string[] = [] // keyword miss
+    // keyword miss：不向 scores 追加 keyword 贡献
 
     // RRF fusion with k=60
     const scores = new Map<string, number>()
@@ -235,7 +218,7 @@ describe('EXPERIMENT 2: Semantic Neighbor Limit = 24', () => {
     // 模拟 keyword miss + adaptive K=100
     const candidates = Array.from({ length: 100 }, (_, i) => ({
       id: `item-${i}`,
-      embedding: Array.from({ length: 128 }, (_, i2) => Math.sin(i + i2))
+      embedding: Array.from({ length: 128 }, (_dim, i2) => Math.sin(i + i2))
     }))
     const queryVector = Array.from({ length: 128 }, (_, i) => Math.cos(i))
 
@@ -289,18 +272,7 @@ describe('EXPERIMENT 3: Content Term Corroboration', () => {
    * 无时间约束时，corroboration 空 → 降级关键词 → target 丢失。
    */
   it('CONFIRMED: corroboration hard-filter correct semantic candidate when contentTerms mismatch', () => {
-    // 构造 target：语义相关（semantic rank 10），但 contentTerms 不匹配
-    // 用 text excerpt 避免 URL 解析
-    const target = createTextExcerptMemoryItem({
-      ...makeBase(),
-      payload: {
-        selectedText: 'AI Agent Memory Architecture is about...',
-        pageTitle: 'AI Agent Memory Architecture',
-        sourceUrl: 'https://example.com/ai-agent-memory'
-      },
-      clues: { title: 'AI Agent Memory Architecture' }
-    })
-
+    // 构造场景：语义相关（semantic rank 10），但 contentTerms 不匹配
     // 模拟 LLM 解析错误：["library", "30"]（原文不含这些词）
     const parsed = parseRecallClue('AI agent memory', { nowMs: Date.parse(FIXED_NOW) })
     // 正常解析：contentTerms = ['ai', 'agent', 'memory'] → 命中
@@ -428,40 +400,9 @@ describe('EXPERIMENT 4: Object Type Boost', () => {
     expect(parsedWithType.objectTypes).toContain('bookmark')
     expect(parsedWithoutType.objectTypes ?? []).toHaveLength(0)
 
-    // bookmark item A（用 text excerpt 避免 URL 解析 happy-dom 问题）
-    const bookmarkA = createTextExcerptMemoryItem({
-      ...makeBase(),
-      payload: {
-        selectedText: 'Deployment is the process of...',
-        pageTitle: 'Deployment Pipeline Guide',
-        sourceUrl: 'https://example.com/deploy'
-      },
-      clues: {
-        title: 'Deployment Pipeline Guide'
-      }
-    })
-
-    // capture item B
-    const captureB = createTextExcerptMemoryItem({
-      ...makeBase(),
-      payload: {
-        selectedText: 'Deployment is the process of...',
-        pageTitle: 'Deployment Guide',
-        sourceUrl: 'https://example.com/guide'
-      },
-      clues: {
-        title: 'Deployment Guide'
-      }
-    })
-
-    // query 无 objectType → boost = 0 for both
-    const resultA_noType = filterMemoryItemsByKeyword([bookmarkA, captureB], 'deployment', {
-      minScore: 1
-    })
-
     // query 有 objectType → bookmark +8
     // boost 在 orchestrate 层叠加，不在 filter 层
-    // 所以 filterMemoryItemsByKeyword 结果不包含 boost
+    // filterMemoryItemsByKeyword 结果不包含 boost
     // boost 在 recallByKeywordWithParsedClue 中通过 applyParsedClueScoreBoosts 叠加
     expect(parsedWithType.objectTypes).toContain('bookmark')
   })

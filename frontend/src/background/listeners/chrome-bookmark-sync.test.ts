@@ -96,7 +96,8 @@ describe('chrome-bookmark-sync listener', () => {
     createdHandler('10', {
       id: '10',
       title: 'Retention',
-      url: 'https://example.com'
+      url: 'https://example.com',
+      syncing: false
     })
 
     await vi.waitFor(() => {
@@ -123,7 +124,8 @@ describe('chrome-bookmark-sync listener', () => {
     createdHandler('10', {
       id: '10',
       title: 'Retention',
-      url: 'https://example.com'
+      url: 'https://example.com',
+      syncing: false
     })
 
     await vi.waitFor(() => {

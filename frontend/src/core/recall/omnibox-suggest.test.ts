@@ -186,6 +186,7 @@ describe('omnibox-suggest', () => {
       outcome: 'top_pick',
       topPick: top,
       alsoPossible: [also],
+      totalRankedCount: 2,
       clue: 'retention'
     }
 
@@ -213,6 +214,7 @@ describe('omnibox-suggest', () => {
       outcome: 'top_pick',
       topPick: match,
       alsoPossible: [{ ...match, score: 10 }],
+      totalRankedCount: 2,
       clue: 'same'
     }
 
@@ -241,8 +243,9 @@ describe('omnibox-suggest', () => {
     const [topPick, ...alsoPossible] = matches
     const result: RecallResult = {
       outcome: 'top_pick',
-      topPick,
+      topPick: topPick ?? null,
       alsoPossible,
+      totalRankedCount: matches.length,
       clue: 'match'
     }
 

@@ -3,7 +3,8 @@ import { describe, expect, it } from 'vitest'
 import {
   extractComposerNarrowExamples,
   NARROW_EXAMPLE_TYPE_DOMINANCE_MAX,
-  scoreNarrowExampleDocFreq
+  scoreNarrowExampleDocFreq,
+  type NarrowExampleSource
 } from '@/core/recall/extract-composer-narrow-examples'
 
 describe('scoreNarrowExampleDocFreq', () => {
@@ -235,7 +236,7 @@ describe('extractComposerNarrowExamples', () => {
   // Gap 2：topicTerms 独立 topic 示例
   it('topicTerms 存在 → 末尾追加独立 topic 示例（不参与切割力排序）', () => {
     // 用「几乎全覆盖」候选制造：无 token 达到 df<全覆盖，从而 topicTerms 作为兜底追加
-    const candidates = [
+    const candidates: NarrowExampleSource[] = [
       {
         itemKind: 'text_excerpt',
         title: 'A',
@@ -268,7 +269,7 @@ describe('extractComposerNarrowExamples', () => {
   })
 
   it('topicTerms 与 clueText 重复词不重复追加', () => {
-    const candidates = [
+    const candidates: NarrowExampleSource[] = [
       {
         itemKind: 'text_excerpt',
         title: 'Kubernetes',
@@ -296,7 +297,7 @@ describe('extractComposerNarrowExamples', () => {
 
   it('topicTerms 为空数组 → 不追加（与无 topicTerms 等价）', () => {
     // 至少 2 条候选使 df>=2，unique 才有资格被选入
-    const candidates = [
+    const candidates: NarrowExampleSource[] = [
       {
         itemKind: 'text_excerpt',
         title: 'A',

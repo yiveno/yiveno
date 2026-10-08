@@ -31,8 +31,8 @@ describe('recall-shell-scroll', () => {
     Object.defineProperty(element, 'scrollTop', { value: 450 })
     Object.defineProperty(element, 'clientHeight', { value: 100 })
 
-    listener({ target: element } as Event)
-    listener({ target: element } as Event)
+    listener({ target: element } as unknown as Event)
+    listener({ target: element } as unknown as Event)
 
     expect(callbacks).toHaveLength(1)
     callbacks[0]?.(0)

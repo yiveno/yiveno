@@ -13,7 +13,15 @@ function excerpt(partial: { sourceUrl: string; selectedText: string; note?: stri
     ownerId: '00000000-0000-4000-8000-000000000099',
     sourceLocalProfileId: '00000000-0000-4000-8000-000000000098',
     type: 'text_excerpt',
-    clues: partial.note ? { note: partial.note } : {},
+    clues: {
+      keywords: [],
+      entities: [],
+      tags: [],
+      openCount: 0,
+      settledCount: 0,
+      dismissCount: 0,
+      ...(partial.note ? { note: partial.note } : {})
+    },
     createdAt: '2026-08-01T12:00:00.000Z',
     updatedAt: '2026-08-01T12:00:00.000Z',
     deletedAt: null,
@@ -32,7 +40,15 @@ function bookmark(partial: { url: string; title: string; note?: string }): Memor
     ownerId: '00000000-0000-4000-8000-000000000099',
     sourceLocalProfileId: '00000000-0000-4000-8000-000000000098',
     type: 'bookmark',
-    clues: partial.note ? { note: partial.note } : {},
+    clues: {
+      keywords: [],
+      entities: [],
+      tags: [],
+      openCount: 0,
+      settledCount: 0,
+      dismissCount: 0,
+      ...(partial.note ? { note: partial.note } : {})
+    },
     createdAt: '2026-08-01T12:00:00.000Z',
     updatedAt: '2026-08-01T12:00:00.000Z',
     deletedAt: null,

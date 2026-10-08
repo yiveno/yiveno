@@ -685,8 +685,8 @@ describe('RecallResult.topic 字段（Gap 3）', () => {
     expect(typeof result.topic!.displayName).toBe('string')
     expect(result.topic!.tokens.length).toBeGreaterThan(0)
     // TopicDescriptor 是窄子集：不含 source / strength 等管线内部字段
-    expect(result.topic!['source']).toBeUndefined()
-    expect(result.topic!['strength']).toBeUndefined()
+    expect('source' in (result.topic as object)).toBe(false)
+    expect('strength' in (result.topic as object)).toBe(false)
   })
 
   it('parsed.topic 不存在 → RecallResult.topic 不出现（无 undefined）', () => {

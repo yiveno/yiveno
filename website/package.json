@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "./dev.sh --host --port 3001",
-    "build:dev": "bun ../scripts/dev-env.mjs sync --profile=development --target=website --quiet && astro build",
-    "build": "bun run build:prod",
-    "build:prod": "bun ../scripts/dev-env.mjs sync --profile=production --target=website --quiet && bun ../scripts/dev-env.mjs check --profile=production --target=website --quiet && astro build",
+    "build:dev:compile": "astro build",
+    "build:prod:compile": "astro build",
+    "build:dev": "bun ../scripts/dev-env.mjs sync --profile=development --target=website --quiet && bun run build:dev:compile",
+    "build:prod": "bun ../scripts/dev-env.mjs sync --profile=production --target=website --quiet && bun ../scripts/dev-env.mjs check --profile=production --target=website --quiet && bun run build:prod:compile",
+    "build": "bun run build:dev",
     "typecheck": "astro check",
     "typecheck:force": "astro check",
     "lint": "bun run eslint",
@@ -16,7 +18,7 @@
     "stylelint": "stylelint \"src/**/*.vue\" --no-cache --fix && echo '✅ Stylelint: 所有问题已修复'",
     "stylelint:check": "stylelint \"src/**/*.vue\" --no-cache",
     "preview": "astro preview",
-    "deploy": "bun run build && bunx wrangler pages deploy dist --project-name yiveno-website --branch main --commit-dirty=true"
+    "deploy": "bun run build:prod && bunx wrangler pages deploy dist --project-name yiveno-website --branch main --commit-dirty=true"
   },
   "dependencies": {
     "@astrojs/vue": "^7.0.2",

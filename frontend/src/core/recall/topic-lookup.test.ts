@@ -4,16 +4,9 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import {
-  mergeTopicLookupWithKeywordMatches,
-  topicLookup,
-  type TopicLookupMatch
-} from '@/core/recall/topic-lookup'
+import { mergeTopicLookupWithKeywordMatches, topicLookup } from '@/core/recall/topic-lookup'
 import type { RecallMatch } from '@/core/recall/recall-result'
-import {
-  createBookmarkMemoryItem,
-  createTextExcerptMemoryItem
-} from '@/core/memory/create-memory-item'
+import { createBookmarkMemoryItem } from '@/core/memory/create-memory-item'
 import { parseRecallClue } from '@/core/recall/parse-recall-clue'
 import {
   buildFilterClueFromParsed,
@@ -45,26 +38,6 @@ function makeItem(
     payload: {
       title: overrides.title ?? 'Test Page',
       url: overrides.url ?? 'https://example.com/test'
-    },
-    ...(overrides.id ? { id: overrides.id } : {})
-  }) as import('@/core/memory/memory-item').MemoryItem
-}
-
-function makeExcerpt(
-  overrides: Partial<{
-    id: string
-    selectedText: string
-    pageTitle: string
-    sourceUrl: string
-  }> = {}
-) {
-  return createTextExcerptMemoryItem({
-    ownerId: OWNER,
-    sourceLocalProfileId: PROFILE,
-    payload: {
-      selectedText: overrides.selectedText ?? 'Test excerpt text',
-      pageTitle: overrides.pageTitle ?? 'Test Page',
-      sourceUrl: overrides.sourceUrl ?? 'https://example.com/test'
     },
     ...(overrides.id ? { id: overrides.id } : {})
   }) as import('@/core/memory/memory-item').MemoryItem
@@ -146,7 +119,7 @@ describe('topicLookup 占位实现：Topic 词面匹配', () => {
 
     const scores = result.topicMatches.map(m => m.topicScore)
     for (let i = 0; i < scores.length - 1; i++) {
-      expect(scores[i]).toBeGreaterThanOrEqual(scores[i + 1])
+      expect(scores[i]!).toBeGreaterThanOrEqual(scores[i + 1]!)
     }
   })
 
@@ -247,7 +220,7 @@ describe('mergeTopicLookupWithKeywordMatches：并集去重', () => {
     return {
       topicMatches: titles.map((title, i) => ({
         item: makeTopicMatchItem(title),
-        topicScore: topicScores[i]
+        topicScore: topicScores[i] ?? 0
       })),
       topicSkipped: false
     }
@@ -271,8 +244,6 @@ describe('mergeTopicLookupWithKeywordMatches：并集去重', () => {
   it('相同 itemId：keyword 结果优先（去重）', () => {
     const kwMatch = makeKeywordMatch('shared', 80)
     const sharedId = kwMatch.item.id
-    const topicItem = makeItem({ title: 'shared title' })
-    // 确保 topic item id 与 keyword item id 相同（通过修改 item id）
     const result = mergeTopicLookupWithKeywordMatches([kwMatch], {
       topicMatches: [{ item: { ...kwMatch.item }, topicScore: 90 }],
       topicSkipped: false
@@ -280,7 +251,7 @@ describe('mergeTopicLookupWithKeywordMatches：并集去重', () => {
     // 只保留一条（keyword 版本）
     const matches = result.filter(m => m.item.id === sharedId)
     expect(matches.length).toBe(1)
-    expect(matches[0].score).toBe(80) // keyword score 优先
+    expect(matches[0]!.score).toBe(80) // keyword score 优先
   })
 
   it('topicSkipped=true → 直接返回 keyword 结果', () => {
@@ -318,7 +289,7 @@ describe('mergeTopicLookupWithKeywordMatches：并集去重', () => {
       makeTopicMatchResult(['topic-only'], [80])
     )
     expect(result.length).toBe(1)
-    expect(result[0].score).toBe(4) // topicScore=80 → (80/100)*5=4
+    expect(result[0]!.score).toBe(4) // topicScore=80 → (80/100)*5=4
   })
 })
 

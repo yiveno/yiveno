@@ -47,14 +47,18 @@ describe('runAsyncMemoryLlmEnrichment', () => {
     vi.mocked(buildMergedMemoryEnrichment).mockReset()
     vi.mocked(getUserSettings).mockResolvedValue({
       selectionToolbarEnabled: true,
-      aiFeaturesEnabled: true
+      aiFeaturesEnabled: true,
+      chromeBookmarkIngestEnabled: true,
+      mcpReadOnlyEnabled: false
     })
   })
 
   it('用户关闭 AI 时跳过', async () => {
     vi.mocked(getUserSettings).mockResolvedValue({
       selectionToolbarEnabled: true,
-      aiFeaturesEnabled: false
+      aiFeaturesEnabled: false,
+      chromeBookmarkIngestEnabled: true,
+      mcpReadOnlyEnabled: false
     })
     const item = createBookmarkMemoryItem({
       ownerId: 'o',
@@ -109,10 +113,12 @@ describe('runAsyncMemoryLlmEnrichment', () => {
 
     await expect(runAsyncMemoryLlmEnrichment(item.id, repo)).resolves.toBe('written')
     expect(putEnrichmentClues).toHaveBeenCalledTimes(1)
-    const written = putEnrichmentClues.mock.calls[0]?.[0] as MemoryItem
-    expect(written.updatedAt).toBe(item.updatedAt)
-    expect(written.clues.summary).toBe('BBC WWII video about Hitler')
-    expect(written.clues.keywords).toEqual(expect.arrayContaining(['war', 'documentary', 'Hitler']))
+    const written = (putEnrichmentClues.mock.calls as unknown as MemoryItem[][])[0]?.[0]
+    expect(written?.updatedAt).toBe(item.updatedAt)
+    expect(written?.clues.summary).toBe('BBC WWII video about Hitler')
+    expect(written?.clues.keywords).toEqual(
+      expect.arrayContaining(['war', 'documentary', 'Hitler'])
+    )
   })
 
   it('LLM 降级时不写回', async () => {
@@ -150,9 +156,9 @@ describe('runAsyncMemoryLlmEnrichment', () => {
     await expect(runAsyncMemoryLlmEnrichment(item.id, repo)).resolves.toBe('written')
     expect(buildMergedMemoryEnrichment).not.toHaveBeenCalled()
     expect(putEnrichmentClues).toHaveBeenCalledTimes(1)
-    const written = putEnrichmentClues.mock.calls[0]?.[0] as MemoryItem
-    expect(written.clues.keywords).toEqual(expect.arrayContaining(['cached-kw']))
-    expect(written.clues.summary).toBeUndefined()
+    const written = (putEnrichmentClues.mock.calls as unknown as MemoryItem[][])[0]?.[0]
+    expect(written?.clues.keywords).toEqual(expect.arrayContaining(['cached-kw']))
+    expect(written?.clues.summary).toBeUndefined()
   })
 
   it('同域名不同 path：注入域名基座后仍请求页面 LLM', async () => {

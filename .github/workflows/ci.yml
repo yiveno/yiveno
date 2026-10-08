@@ -34,7 +34,7 @@ jobs:
       - name: Install
         run: bun install --frozen-lockfile
 
-      # packages + backend + website；frontend 类型由 build-test 内 vue-tsc -b 覆盖
+      # packages + backend + website；FE 整图（app+node+vitest）由 build-test 内 vue-tsc -b 覆盖
       - name: Typecheck (ci)
         run: bun run typecheck:ci
 

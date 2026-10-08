@@ -138,7 +138,7 @@ describe('context-menu listener', () => {
   })
 
   it('registerContextMenuItems 已存在时 update 而不 create', async () => {
-    const chromeMock = chrome as ReturnType<typeof createChromeMock>
+    const chromeMock = chrome as unknown as ReturnType<typeof createChromeMock>
     chromeMock.__setMenuExists(true)
 
     await registerContextMenuItems()
@@ -159,8 +159,8 @@ describe('context-menu listener', () => {
         menuItemId: CONTEXT_MENU_SAVE_SELECTION_ID,
         selectionText: 'retention analysis',
         pageUrl: 'https://example.com/post'
-      },
-      { id: 1, title: 'Growth notes', url: 'https://example.com/post' }
+      } as chrome.contextMenus.OnClickData,
+      { id: 1, title: 'Growth notes', url: 'https://example.com/post' } as chrome.tabs.Tab
     )
 
     const items = await memoryItemRepository.listByOwner({ type: 'text_excerpt' })
@@ -179,7 +179,9 @@ describe('context-menu listener', () => {
 
   it('onClicked 回调先 await bootstrap', async () => {
     registerContextMenuListeners()
-    const handler = (chrome as ReturnType<typeof createChromeMock>).__getOnClickedHandler()
+    const handler = (
+      chrome as unknown as ReturnType<typeof createChromeMock>
+    ).__getOnClickedHandler()
     expect(handler).not.toBeNull()
 
     handler?.(
@@ -187,8 +189,8 @@ describe('context-menu listener', () => {
         menuItemId: CONTEXT_MENU_SAVE_SELECTION_ID,
         selectionText: 'retention analysis',
         pageUrl: 'https://example.com/post'
-      },
-      { id: 1, title: 'Growth notes', url: 'https://example.com/post' }
+      } as chrome.contextMenus.OnClickData,
+      { id: 1, title: 'Growth notes', url: 'https://example.com/post' } as chrome.tabs.Tab
     )
 
     await vi.waitFor(() => {
@@ -202,7 +204,7 @@ describe('context-menu listener', () => {
         menuItemId: CONTEXT_MENU_SAVE_SELECTION_ID,
         selectionText: 'secret',
         pageUrl: 'chrome://extensions'
-      })
+      } as chrome.contextMenus.OnClickData)
     ).rejects.toMatchObject({ errorCode: 'CAPTURE_UNSAVABLE_PAGE' })
   })
 })
