@@ -136,8 +136,8 @@ const detailLine = computed(() => {
   inset: 0;
   z-index: 40;
   display: flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   padding: var(--space-lg);
   background: color-mix(in srgb, var(--surface) 92%, var(--on-surface));
 }
@@ -153,8 +153,8 @@ const detailLine = computed(() => {
   margin: 0;
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.06em;
   text-transform: uppercase;
+  letter-spacing: 0.06em;
   color: var(--on-surface-muted);
 }
 
@@ -212,7 +212,7 @@ const detailLine = computed(() => {
 }
 
 .cold-start-gate__step--done {
-  opacity: 0.85;
   color: var(--on-surface);
+  opacity: 0.85;
 }
 </style>

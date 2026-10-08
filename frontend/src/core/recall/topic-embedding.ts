@@ -110,7 +110,7 @@ export async function deriveTopicEmbedding(
       embedding: rawEmbedding,
       semantic: true
     }
-  } catch (error) {
+  } catch {
     // embedding 请求失败：降级词法
     return {
       embedding: null,

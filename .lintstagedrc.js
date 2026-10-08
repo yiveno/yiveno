@@ -135,5 +135,8 @@ export default {
 
   '**/*.{css,scss}': filenames => [...stylelintByWorkspace(filenames), ...prettierWrite(filenames)],
 
-  '**/*.{json,md}': filenames => prettierWrite(filenames)
+  '**/*.{json,md}': filenames => prettierWrite(filenames),
+
+  // website：根 format 含 .astro；提交时也走同一 Prettier + prettier-plugin-astro
+  '**/*.astro': filenames => prettierWrite(filenames)
 }

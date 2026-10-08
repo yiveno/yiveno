@@ -159,10 +159,10 @@ onUnmounted(() => {
   padding: var(--space-md);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
+  outline: none;
   background: var(--surface-white);
   overflow: auto;
   box-shadow: var(--shadow-ink-md);
-  outline: none;
 }
 
 .app-modal--md {

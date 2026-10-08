@@ -197,10 +197,12 @@ function handleBookmarkActivate(event: MouseEvent | KeyboardEvent) {
 <style scoped>
 .tree-row {
   --library-tree-indent-step: 12px;
+
   box-sizing: border-box;
+  padding-bottom: var(--library-list-row-gap, var(--space-xs));
+
   /* 嵌套缩进：展示布局归 CSS；depth 仅作数据注入 */
   padding-left: calc(var(--tree-depth, 0) * var(--library-tree-indent-step));
-  padding-bottom: var(--library-list-row-gap, var(--space-xs));
   overflow: visible;
   content-visibility: auto;
   contain-intrinsic-size: auto 80px;

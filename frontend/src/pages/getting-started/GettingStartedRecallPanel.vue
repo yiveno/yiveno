@@ -10,12 +10,6 @@ import type { GettingStartedLibraryPhase } from '@/pages/getting-started/getting
 
 defineOptions({ name: 'GettingStartedRecallPanel' })
 
-/** 口语建议最小 shape（摘录 tab 芯片列表）。 */
-export type GettingStartedSuggestion = {
-  title: string
-  clue: string
-}
-
 const props = withDefaults(
   defineProps<{
     libraryPhase: GettingStartedLibraryPhase
@@ -50,6 +44,12 @@ const emit = defineEmits<{
   foundYes: []
   trySidePanel: [clue: string]
 }>()
+
+/** 口语建议最小 shape（摘录 tab 芯片列表）。 */
+export type GettingStartedSuggestion = {
+  title: string
+  clue: string
+}
 
 const clueDraft = defineModel<string>('clue', { required: true })
 
@@ -334,10 +334,10 @@ defineExpose({
   padding: var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: var(--surface-white);
-  color: var(--on-surface);
-  font: inherit;
   line-height: 1.45;
+  color: var(--on-surface);
+  background: var(--surface-white);
+  font: inherit;
   resize: vertical;
 }
 
@@ -349,8 +349,8 @@ defineExpose({
 .gs-recall__composer-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-sm);
   align-items: center;
+  gap: var(--space-sm);
 }
 
 .gs-recall__oral,
@@ -369,8 +369,8 @@ defineExpose({
 
 .gs-recall__oral-row {
   display: flex;
-  gap: var(--space-xs);
   align-items: flex-start;
+  gap: var(--space-xs);
   min-width: 0;
   padding: var(--space-sm);
   border: 1px solid var(--border);
@@ -380,8 +380,8 @@ defineExpose({
 
 .gs-recall__oral-text {
   flex: 1;
-  margin: 0;
   min-width: 0;
+  margin: 0;
   font-size: 13px;
   line-height: 1.45;
   color: var(--on-surface);
@@ -391,26 +391,26 @@ defineExpose({
 .gs-recall__oral-shuffle {
   display: inline-flex;
   flex-shrink: 0;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   width: 40px;
   height: 40px;
   padding: 0;
   border: none;
   border-radius: var(--radius-full);
-  background: transparent;
   color: var(--on-surface-muted);
+  background: transparent;
   cursor: pointer;
 }
 
 .gs-recall__oral-shuffle:hover:not(:disabled),
 .gs-recall__oral-shuffle:focus-visible:not(:disabled) {
+  color: var(--on-surface);
   background: color-mix(
     in srgb,
     var(--on-surface) calc(var(--state-hover-opacity) * 100%),
     transparent
   );
-  color: var(--on-surface);
 }
 
 .gs-recall__oral-shuffle:focus-visible {
@@ -440,13 +440,13 @@ defineExpose({
   padding: var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: color-mix(in srgb, var(--on-surface) 4%, var(--surface-white));
-  color: var(--on-surface);
-  font: inherit;
   font-size: 13px;
   line-height: 1.45;
   text-align: start;
+  color: var(--on-surface);
+  background: color-mix(in srgb, var(--on-surface) 4%, var(--surface-white));
   cursor: pointer;
+  font: inherit;
   overflow-wrap: anywhere;
 }
 
@@ -482,11 +482,11 @@ defineExpose({
   width: 100%;
   padding: var(--space-md);
   border: none;
-  background: transparent;
-  color: inherit;
-  font: inherit;
   text-align: start;
+  color: inherit;
+  background: transparent;
   cursor: pointer;
+  font: inherit;
 }
 
 .gs-recall__card-hit:hover,
@@ -520,8 +520,8 @@ defineExpose({
 .gs-recall__found {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-sm);
   align-items: center;
+  gap: var(--space-sm);
 }
 
 .gs-recall__found-label {

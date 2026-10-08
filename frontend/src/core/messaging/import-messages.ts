@@ -4,10 +4,8 @@ import type { BookmarkLibraryIndex } from '@/core/memory/bookmark-library-index'
 import type { ChromeBookmarkImportState } from '@/core/memory/chrome-bookmark-import-state'
 import type { ColdStartEnrichmentBatch } from '@/core/memory/cold-start-enrichment-batch'
 import type { ColdStartPipelineState } from '@/core/memory/cold-start-pipeline-state'
-import {
-  ThirdPartyCorpusImportErrorCodeSchema,
-  type ThirdPartyCorpusImportState
-} from '@/core/memory/third-party-corpus-import-state'
+import type { ThirdPartyCorpusImportErrorCodeSchema } from '@/core/memory/third-party-corpus-import-state'
+import { type ThirdPartyCorpusImportState } from '@/core/memory/third-party-corpus-import-state'
 import { ThirdPartyCorpusSourceSchema } from '@/core/memory/third-party-corpus-source'
 import type { BackgroundMessageScope } from '@/core/messaging/constants'
 

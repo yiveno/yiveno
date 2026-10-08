@@ -32,11 +32,11 @@ defineProps<{
 
 <style scoped>
 .app-linear-progress {
-  overflow: hidden;
   width: 100%;
   height: 4px;
   border-radius: var(--radius-full);
   background: color-mix(in srgb, var(--accent) 18%, var(--surface));
+  overflow: hidden;
 }
 
 .app-linear-progress__bar {
@@ -53,18 +53,18 @@ defineProps<{
 
 @keyframes app-linear-indeterminate {
   0% {
-    margin-left: 0;
     width: 30%;
+    margin-left: 0;
   }
 
   50% {
-    margin-left: 40%;
     width: 40%;
+    margin-left: 40%;
   }
 
   100% {
-    margin-left: 100%;
     width: 20%;
+    margin-left: 100%;
   }
 }
 </style>

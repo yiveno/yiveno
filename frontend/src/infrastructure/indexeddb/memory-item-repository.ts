@@ -445,7 +445,9 @@ export class MemoryItemRepository {
       return existing
     }
 
-    const { chromeBookmarkId: _removed, parentFolderId: _parent, ...payloadRest } = existing.payload
+    const payloadRest = { ...existing.payload }
+    delete payloadRest.chromeBookmarkId
+    delete payloadRest.parentFolderId
     const updated: MemoryItem = {
       ...existing,
       payload: payloadRest,

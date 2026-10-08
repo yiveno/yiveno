@@ -60,8 +60,8 @@ const {
       <AppButton
         type="button"
         :disabled="signingOut"
-        @click="confirmSignOut('keep_local')"
         variant="filled"
+        @click="confirmSignOut('keep_local')"
       >
         {{ t('settings_sign_out_keep_local') }}
       </AppButton>
@@ -71,8 +71,8 @@ const {
         <AppButton
           type="button"
           :disabled="signingOut"
-          @click="confirmSignOut('clear_local')"
           variant="outlined"
+          @click="confirmSignOut('clear_local')"
         >
           {{ t('settings_sign_out_clear_local') }}
         </AppButton>
@@ -83,8 +83,8 @@ const {
         <AppButton
           type="button"
           :disabled="signingOut"
-          @click="confirmSignOut('sync_then_clear_local')"
           variant="outlined"
+          @click="confirmSignOut('sync_then_clear_local')"
         >
           {{ t('settings_sign_out_sync_then_clear') }}
         </AppButton>
@@ -97,7 +97,7 @@ const {
     <template v-if="signOutError" #error>{{ signOutError }}</template>
 
     <template #actions>
-      <AppButton type="button" :disabled="signingOut" @click="closeSignOutDialog" variant="text">
+      <AppButton type="button" :disabled="signingOut" variant="text" @click="closeSignOutDialog">
         {{ t('settings_sign_out_cancel') }}
       </AppButton>
     </template>

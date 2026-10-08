@@ -127,8 +127,8 @@ function onTabKeyDown(event: KeyboardEvent, index: number): void {
 }
 
 .app-section-tabs--top {
-  grid-auto-flow: column;
   grid-auto-columns: 1fr;
+  grid-auto-flow: column;
 }
 
 .app-section-tabs__tab {
@@ -172,8 +172,8 @@ function onTabKeyDown(event: KeyboardEvent, index: number): void {
 
 @media (width <= 640px) {
   .app-section-tabs--responsive {
-    grid-auto-flow: column;
     grid-auto-columns: 1fr;
+    grid-auto-flow: column;
   }
 
   .app-section-tabs--responsive .app-section-tabs__tab {

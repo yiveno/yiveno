@@ -513,11 +513,11 @@ function handleMoreClick(event: MouseEvent): void {
 /* 书签：标题 / URL 单行省略；完整内容靠原生 title */
 .recall-card--bookmark .recall-card-title {
   margin: 0 0 var(--space-2xs);
-  overflow: hidden;
   font-weight: 700;
   letter-spacing: -0.015em;
-  text-overflow: ellipsis;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .recall-card--bookmark .recall-card-subtitle {
@@ -528,9 +528,9 @@ function handleMoreClick(event: MouseEvent): void {
 
 .recall-card--bookmark .recall-card-subtitle-text {
   min-width: 0;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .recall-card--has-more {
@@ -569,8 +569,8 @@ function handleMoreClick(event: MouseEvent): void {
 
 .recall-type-chip {
   display: inline-flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   width: 24px;
   height: 24px;
   padding: 0;

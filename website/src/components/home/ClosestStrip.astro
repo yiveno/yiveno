@@ -22,13 +22,11 @@ const rest = [
     <p class="closest-strip__note">{top.note}</p>
   </div>
   <ul class="closest-strip__nearby">
-    {
-      rest.map((r) => (
-        <li class="closest-strip__row">
-          <span class="closest-strip__row-title">{r.title}</span>
-          <span class="closest-strip__row-meta">{r.meta}</span>
-        </li>
-      ))
-    }
+    {rest.map(r => (
+      <li class="closest-strip__row">
+        <span class="closest-strip__row-title">{r.title}</span>
+        <span class="closest-strip__row-meta">{r.meta}</span>
+      </li>
+    ))}
   </ul>
 </div>

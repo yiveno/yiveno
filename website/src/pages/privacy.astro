@@ -23,42 +23,46 @@ const contactEmail = 'privacy@yiveno.com'
     <section class="page__prose" lang="en">
       <h2>1. Who we are</h2>
       <p>
-        This Privacy Policy describes how <strong>Yiveno</strong> (“we”, “us”) handles information when you use
-        the Yiveno Chrome extension, the website at yiveno.com, and related backend services (Cloudflare Workers).
-        Yiveno helps you <strong>find what you saved</strong>: Capture with low friction, then Recall into a short list
-        of closest fits — you choose. It is not a bookmark manager, note-taking app, chat bot, or “AI organizer” as a
-        primary promise.
+        This Privacy Policy describes how <strong>Yiveno</strong> (“we”, “us”) handles information
+        when you use the Yiveno Chrome extension, the website at yiveno.com, and related backend
+        services (Cloudflare Workers). Yiveno helps you <strong>find what you saved</strong>:
+        Capture with low friction, then Recall into a short list of closest fits — you choose. It is
+        not a bookmark manager, note-taking app, chat bot, or “AI organizer” as a primary promise.
       </p>
 
       <h2>2. What we collect</h2>
       <h3>2.1 On your device (default)</h3>
       <p>
-        By default, memories you Capture (for example text excerpts, related page metadata you choose to save, and your
-        notes) are stored in the extension’s local IndexedDB on your browser profile. Uninstalling the extension
-        typically removes this local store.
+        By default, memories you Capture (for example text excerpts, related page metadata you
+        choose to save, and your notes) are stored in the extension’s local IndexedDB on your
+        browser profile. Uninstalling the extension typically removes this local store.
       </p>
       <h3>2.2 Account (optional sign-in)</h3>
       <p>
-        If you sign in via the website (for example Google or Microsoft through our auth provider), we process account
-        identifiers such as user id, email, and profile fields the provider shares (for example display name or avatar
-        URL). <strong>Signing in does not by itself upload your memories.</strong>
+        If you sign in via the website (for example Google or Microsoft through our auth provider),
+        we process account identifiers such as user id, email, and profile fields the provider
+        shares (for example display name or avatar URL).{' '}
+        <strong>Signing in does not by itself upload your memories.</strong>
       </p>
       <h3>2.3 Cloud memory (opt-in sync)</h3>
       <p>
-        Only after you explicitly enable cloud sync in the extension do we store Memory items and sync backups in our
-        cloud database (currently Supabase), scoped to your account. Turning sync off does <strong>not</strong>
-        automatically delete cloud copies; you can delete cloud memories or delete your account from Settings → Data.
+        Only after you explicitly enable cloud sync in the extension do we store Memory items and
+        sync backups in our cloud database (currently Supabase), scoped to your account. Turning
+        sync off does <strong>not</strong>
+        automatically delete cloud copies; you can delete cloud memories or delete your account from
+        Settings → Data.
       </p>
       <h3>2.4 AI / language features</h3>
       <p>
-        Some features (for example understanding what you typed) may send limited requests through our servers to a model
-        provider. The model does not directly create, change, or delete what you saved.
-        We do not default to sending your entire library to a model.
+        Some features (for example understanding what you typed) may send limited requests through
+        our servers to a model provider. The model does not directly create, change, or delete what
+        you saved. We do not default to sending your entire library to a model.
       </p>
       <h3>2.5 Waitlist (optional)</h3>
       <p>
-        If you leave an email on yiveno.com to be notified when the extension is ready to install, we store that
-        email so we can send that notice. We do not add waitlist addresses to a marketing list.
+        If you leave an email on yiveno.com to be notified when the extension is ready to install,
+        we store that email so we can send that notice. We do not add waitlist addresses to a
+        marketing list.
       </p>
       <h3>2.6 What we do not collect by default</h3>
       <ul>
@@ -69,77 +73,116 @@ const contactEmail = 'privacy@yiveno.com'
       </ul>
       <h3>2.7 Usage signals on your library</h3>
       <p>
-        To improve Recall ordering on <strong>your</strong> device, Yiveno may store how you interact with saved
-        items — for example how often you open a result, or when you dismiss “none of these.” These signals describe
-        your relationship with <strong>your</strong> library; they are not sold as a separate product asset.
+        To improve Recall ordering on <strong>your</strong> device, Yiveno may store how you
+        interact with saved items — for example how often you open a result, or when you dismiss
+        “none of these.” These signals describe your relationship with <strong>your</strong>{' '}
+        library; they are not sold as a separate product asset.
       </p>
       <h3>2.8 Per-item derived recall helpers</h3>
       <p>
-        Yiveno may compute recall helpers bound to a specific saved item — for example tags or keywords inferred from
-        its title or excerpt, or math helpers stored with the item so fuzzy finding works better. These stay with the item in your
-        local library (and in your cloud copy if sync is on). They help retrieve <strong>your</strong> content; we
-        do not treat them as Yiveno-owned secrets you cannot export.
+        Yiveno may compute recall helpers bound to a specific saved item — for example tags or
+        keywords inferred from its title or excerpt, or math helpers stored with the item so fuzzy
+        finding works better. These stay with the item in your local library (and in your cloud copy
+        if sync is on). They help retrieve <strong>your</strong> content; we do not treat them as
+        Yiveno-owned secrets you cannot export.
       </p>
 
       <h2>3. How we use information</h2>
       <ul>
         <li>Provide Capture and Recall on your device</li>
         <li>Authenticate you and optional cloud sync when you enable it</li>
-        <li>Operate, secure, and debug the service (including Worker logs with limited previews where needed)</li>
-        <li>Process subscriptions or payments if you purchase paid plans (billing records may be retained as required by law)</li>
+        <li>
+          Operate, secure, and debug the service (including Worker logs with limited previews where
+          needed)
+        </li>
+        <li>
+          Process subscriptions or payments if you purchase paid plans (billing records may be
+          retained as required by law)
+        </li>
         <li>Email you if you joined the install waitlist, when a spot is available</li>
       </ul>
 
       <h2>4. Processors and subprocessors</h2>
       <p>Depending on features you use, data may be processed by:</p>
       <ul>
-        <li><strong>Supabase</strong> — authentication, (when sync is on) cloud Memory storage, and waitlist emails if you join</li>
-        <li><strong>Cloudflare</strong> — Workers API, hosting, and related infrastructure</li>
-        <li><strong>Google / Microsoft</strong> — if you choose their OAuth sign-in</li>
-        <li><strong>Model providers</strong> — only when an AI feature you use is routed through our Worker</li>
-        <li><strong>Payment providers</strong> (Dodo Payments) — if you purchase a subscription</li>
+        <li>
+          <strong>Supabase</strong> — authentication, (when sync is on) cloud Memory storage, and
+          waitlist emails if you join
+        </li>
+        <li>
+          <strong>Cloudflare</strong> — Workers API, hosting, and related infrastructure
+        </li>
+        <li>
+          <strong>Google / Microsoft</strong> — if you choose their OAuth sign-in
+        </li>
+        <li>
+          <strong>Model providers</strong> — only when an AI feature you use is routed through our
+          Worker
+        </li>
+        <li>
+          <strong>Payment providers</strong> (Dodo Payments) — if you purchase a subscription
+        </li>
       </ul>
 
       <h2>5. Retention and deletion</h2>
       <ul>
-        <li><strong>Local memories</strong> remain until you delete them, clear leftover account data, or remove the extension.</li>
-        <li><strong>Cloud memories</strong> remain while your account exists and sync data has not been deleted; you can delete all cloud memories without deleting the account.</li>
         <li>
-          To manage storage redundancy, we may periodically prune certain cloud-related data, such as sync backups and soft-deleted billing records.
-          For example, sync backups keep only the most recent snapshots (currently up to 5 per account), and soft-deleted subscription/payment history is removed after 180 days.
+          <strong>Local memories</strong> remain until you delete them, clear leftover account data,
+          or remove the extension.
         </li>
-        <li><strong>Waitlist emails</strong> are kept until we have notified you, you ask us to remove the address, or we no longer need the list.</li>
-        <li><strong>Delete account</strong> (Settings → Data) removes cloud Memory and backups, closes the auth user, clears this account’s local Memory bucket on that device, and signs you out. Billing records may be retained in anonymized or legally required form and are not a recoverable login.</li>
+        <li>
+          <strong>Cloud memories</strong> remain while your account exists and sync data has not
+          been deleted; you can delete all cloud memories without deleting the account.
+        </li>
+        <li>
+          To manage storage redundancy, we may periodically prune certain cloud-related data, such
+          as sync backups and soft-deleted billing records. For example, sync backups keep only the
+          most recent snapshots (currently up to 5 per account), and soft-deleted
+          subscription/payment history is removed after 180 days.
+        </li>
+        <li>
+          <strong>Waitlist emails</strong> are kept until we have notified you, you ask us to remove
+          the address, or we no longer need the list.
+        </li>
+        <li>
+          <strong>Delete account</strong> (Settings → Data) removes cloud Memory and backups, closes
+          the auth user, clears this account’s local Memory bucket on that device, and signs you
+          out. Billing records may be retained in anonymized or legally required form and are not a
+          recoverable login.
+        </li>
       </ul>
 
       <h2>6. Data ownership and export</h2>
       <p>
-        Yiveno is local-first: you should be able to <strong>take, clear, and leave</strong> with your library.
-        Export is a product responsibility, not a paid perk.
+        Yiveno is local-first: you should be able to <strong>take, clear, and leave</strong> with
+        your library. Export is a product responsibility, not a paid perk.
       </p>
       <ul>
         <li>
-          <strong>Your content</strong> — excerpts, notes, URLs, and bookmark traces you chose to save — belongs to
-          you.
+          <strong>Your content</strong> — excerpts, notes, URLs, and bookmark traces you chose to
+          save — belongs to you.
         </li>
         <li>
-          <strong>Your in-library usage</strong> — open/dismiss signals and timestamps on your items — belongs to you
-          as part of your library history.
+          <strong>Your in-library usage</strong> — open/dismiss signals and timestamps on your items
+          — belongs to you as part of your library history.
         </li>
         <li>
-          <strong>Per-item recall helpers</strong> — inferred tags/keywords and matching helpers stored on an item —
-          stay with that item in your backup; they are not withheld as separate Yiveno property.
+          <strong>Per-item recall helpers</strong> — inferred tags/keywords and matching helpers
+          stored on an item — stay with that item in your backup; they are not withheld as separate
+          Yiveno property.
         </li>
         <li>
-          <strong>Yiveno service layer</strong> — de-identified aggregate statistics or non-individualized models used
-          to improve the product for everyone — is not included in your personal export and is cut off from you when you
-          delete your account, to the extent we store individual links.
+          <strong>Yiveno service layer</strong> — de-identified aggregate statistics or
+          non-individualized models used to improve the product for everyone — is not included in
+          your personal export and is cut off from you when you delete your account, to the extent
+          we store individual links.
         </li>
       </ul>
       <p>
-        <strong>Full backup export</strong> (Settings → Data) downloads your current identity’s local Memory as JSON,
-        including soft-deleted items and the fields above. A lighter “portable” export for moving to other tools may be
-        added later; it would not replace full backup.
+        <strong>Full backup export</strong> (Settings → Data) downloads your current identity’s
+        local Memory as JSON, including soft-deleted items and the fields above. A lighter
+        “portable” export for moving to other tools may be added later; it would not replace full
+        backup.
       </p>
 
       <h2>7. Your choices</h2>
@@ -147,37 +190,41 @@ const contactEmail = 'privacy@yiveno.com'
         <li>Use Yiveno without signing in (local profile)</li>
         <li>Sign in without enabling cloud sync</li>
         <li>Enable or disable cloud sync</li>
-        <li>Export a full backup, delete cloud memories, or delete your account from Settings → Data</li>
+        <li>
+          Export a full backup, delete cloud memories, or delete your account from Settings → Data
+        </li>
         <li>Review a short privacy notice in Settings → Privacy before enabling sync</li>
       </ul>
 
       <h2>8. Children</h2>
       <p>
-        Yiveno is not directed to children under 13 (or the minimum age required in your jurisdiction). Do not use the
-        service if you are under that age.
+        Yiveno is not directed to children under 13 (or the minimum age required in your
+        jurisdiction). Do not use the service if you are under that age.
       </p>
 
       <h2>9. International users</h2>
       <p>
-        We may process data in regions where our providers operate (including the United States and other locations).
-        If you enable cloud sync or sign in, you understand your account and synced data may be stored outside your
-        country of residence.
+        We may process data in regions where our providers operate (including the United States and
+        other locations). If you enable cloud sync or sign in, you understand your account and
+        synced data may be stored outside your country of residence.
       </p>
 
       <h2>10. Changes</h2>
       <p>
-        We may update this Policy as the product changes. We will update the effective date on this page. Material
-        changes to the in-extension sync notice may require you to re-confirm before turning sync on again.
+        We may update this Policy as the product changes. We will update the effective date on this
+        page. Material changes to the in-extension sync notice may require you to re-confirm before
+        turning sync on again.
       </p>
 
       <h2>11. Contact</h2>
       <p>
-        Privacy questions: <a href={`mailto:${contactEmail}`}>{contactEmail}</a>. Product help and complaints:
+        Privacy questions: <a href={`mailto:${contactEmail}`}>{contactEmail}</a>. Product help and
+        complaints:
         <a href="/support">Support</a>.
       </p>
       <p class="page__note">
-        This page reflects how Yiveno works today. It is not legal advice. Features not marked available in the product
-        are not claimed here as shipped.
+        This page reflects how Yiveno works today. It is not legal advice. Features not marked
+        available in the product are not claimed here as shipped.
       </p>
     </section>
   </article>

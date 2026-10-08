@@ -243,8 +243,8 @@ onMounted(() => {
       <AppButton
         type="button"
         :title="t('detail_open_library')"
-        @click="handleOpenLibrary"
         variant="outlined"
+        @click="handleOpenLibrary"
       >
         <AppIcon name="library_books" size="18px" />
         {{ t('detail_open_library') }}
@@ -496,8 +496,8 @@ onMounted(() => {
 
 .detail-note-head {
   display: flex;
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   gap: var(--space-xs);
   min-width: 0;
 }
@@ -527,8 +527,8 @@ onMounted(() => {
 .detail-note-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-xs);
   justify-content: flex-end;
+  gap: var(--space-xs);
 }
 
 .detail-actions {

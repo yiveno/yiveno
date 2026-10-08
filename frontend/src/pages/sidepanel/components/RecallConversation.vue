@@ -13,13 +13,9 @@ import {
 import type { ConversationTurn, AssistantTurn } from '@/pages/sidepanel/recall-conversation-types'
 import type { RecallCardModel } from '@/pages/sidepanel/RecallResultCard.vue'
 import RecallResultCard from '@/pages/sidepanel/RecallResultCard.vue'
-import { recallResultCardMemoDeps } from '@/pages/sidepanel/recall-result-card-memo'
 import { t } from '@/infrastructure/i18n/t'
 
 defineOptions({ name: 'RecallConversation' })
-
-/** Show more 续展模式：再展一页 / 展开剩余全部。 */
-export type ShowMoreMode = 'page' | 'all'
 
 const props = defineProps<{
   turns: ConversationTurn[]
@@ -54,6 +50,9 @@ const emit = defineEmits<{
   useSuggestion: [value: string]
   toggleDetailExportSelection: [memoryItemId: string]
 }>()
+
+/** Show more 续展模式：再展一页 / 展开剩余全部。 */
+export type ShowMoreMode = 'page' | 'all'
 
 /** a11y：优先当前阶段 / 步骤，否则通用 pending。 */
 const pendingAriaLabel = computed(() => {
@@ -208,26 +207,6 @@ function isDetailExportSelectionDisabled(_id: string): boolean {
 function handleToggleDetailExportSelection(id: string): void {
   emit('toggleDetailExportSelection', id)
 }
-
-function cardMemoDeps(
-  card: RecallCardModel,
-  options: {
-    expanded: boolean
-    topPick?: boolean
-    compact?: boolean
-    keyboardSelected: boolean
-  }
-): unknown[] {
-  return recallResultCardMemoDeps({
-    card,
-    expanded: options.expanded,
-    detailExportSelectionActive: props.detailExportSelectionActive === true,
-    detailExportSelected: isDetailExportSelected(card.id),
-    keyboardSelected: options.keyboardSelected,
-    ...(options.topPick !== undefined ? { topPick: options.topPick } : {}),
-    ...(options.compact !== undefined ? { compact: options.compact } : {})
-  })
-}
 </script>
 
 <template>
@@ -267,15 +246,16 @@ function cardMemoDeps(
           >
             <span class="assistant-turn-echo-prefix">{{ t('popup_recall_heard_as') }}</span>
             <span class="assistant-turn-echo-chips">
-              <template
+              <span
                 v-for="(chip, echoIndex) in turn.understandingEcho"
                 :key="`${turn.id}-echo-${echoIndex}`"
+                class="assistant-turn-echo-item"
               >
                 <span v-if="echoIndex > 0" class="assistant-turn-echo-sep" aria-hidden="true"
                   >·</span
                 >
                 <span class="assistant-turn-echo-chip">{{ chip }}</span>
-              </template>
+              </span>
             </span>
           </p>
           <p
@@ -287,13 +267,6 @@ function cardMemoDeps(
 
           <div v-if="turn.primaryCard" class="assistant-turn-primary">
             <RecallResultCard
-              v-memo="
-                cardMemoDeps(turn.primaryCard, {
-                  expanded: expandedDuplicateGroupId === turn.primaryCard.id,
-                  topPick: true,
-                  keyboardSelected: false
-                })
-              "
               :card="turn.primaryCard"
               result-dom-id="conversation-primary-card"
               :keyboard-selected="false"
@@ -315,13 +288,6 @@ function cardMemoDeps(
           <div v-if="turn.relatedGuessCard" class="assistant-turn-related-guess">
             <p class="assistant-turn-related-guess-label">{{ turn.relatedGuessLabel }}</p>
             <RecallResultCard
-              v-memo="
-                cardMemoDeps(turn.relatedGuessCard, {
-                  expanded: expandedDuplicateGroupId === turn.relatedGuessCard.id,
-                  compact: true,
-                  keyboardSelected: false
-                })
-              "
               :card="turn.relatedGuessCard"
               result-dom-id="conversation-related-guess-card"
               :keyboard-selected="false"
@@ -348,18 +314,7 @@ function cardMemoDeps(
               {{ turn.candidateSectionLabel }}
             </p>
             <ol class="assistant-turn-candidates">
-              <li
-                v-for="(item, index) in visibleCardsFor(turn)"
-                :key="item.id"
-                v-memo="
-                  cardMemoDeps(item, {
-                    expanded: expandedDuplicateGroupId === item.id,
-                    topPick: turn.tone === 'confident' && index === 0,
-                    compact: !(turn.tone === 'confident' && index === 0),
-                    keyboardSelected: false
-                  })
-                "
-              >
+              <li v-for="(item, index) in visibleCardsFor(turn)" :key="item.id">
                 <RecallResultCard
                   :card="item"
                   :result-dom-id="`conversation-candidate-${turn.id}-${index}`"
@@ -399,7 +354,7 @@ function cardMemoDeps(
             v-if="turn.allowDismiss && latestDismissibleAssistantId === turn.id"
             class="recall-feedback-actions"
           >
-            <AppButton type="button" @click="onDismissClick" variant="text">
+            <AppButton type="button" variant="text" @click="onDismissClick">
               {{ t('popup_dismiss_candidates') }}
             </AppButton>
           </div>
@@ -458,13 +413,14 @@ function cardMemoDeps(
 .conversation-show-earlier {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-xs) var(--space-sm);
   justify-content: center;
+  gap: var(--space-xs) var(--space-sm);
   padding-bottom: var(--space-2xs);
 }
 
 .conversation-list {
   display: grid;
+
   /* turn 间节奏：对话区个性化间距 */
   gap: 22px;
   min-width: 0;
@@ -515,16 +471,16 @@ function cardMemoDeps(
 .pending-status-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
   align-items: center;
+  gap: 10px;
   min-width: 0;
 }
 
 .pending-indicator {
   display: inline-flex;
   flex: 0 0 auto;
-  gap: 5px;
   align-items: center;
+  gap: 5px;
 }
 
 .pending-dot {
@@ -545,8 +501,8 @@ function cardMemoDeps(
 }
 
 .pending-label {
-  margin: 0;
   min-width: 0;
+  margin: 0;
   font-size: 13px;
   line-height: 1.4;
   color: var(--on-surface);
@@ -562,8 +518,8 @@ function cardMemoDeps(
 
 .pending-step {
   display: flex;
-  gap: 8px;
   align-items: flex-start;
+  gap: 8px;
   margin: 0;
   font-size: 12px;
   line-height: 1.4;
@@ -591,9 +547,9 @@ function cardMemoDeps(
 }
 
 .assistant-turn-status {
-  margin: 0;
-  max-width: 100%;
   min-width: 0;
+  max-width: 100%;
+  margin: 0;
   font-size: 12px;
   line-height: 1.4;
   color: var(--on-surface-muted);
@@ -604,10 +560,10 @@ function cardMemoDeps(
 .assistant-turn-echo {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px 8px;
   align-items: baseline;
-  max-width: 100%;
+  gap: 6px 8px;
   min-width: 0;
+  max-width: 100%;
   margin: 0;
   font-size: 12px;
   line-height: 1.4;
@@ -623,8 +579,15 @@ function cardMemoDeps(
 .assistant-turn-echo-chips {
   display: inline-flex;
   flex-wrap: wrap;
-  gap: 4px 6px;
   align-items: baseline;
+  gap: 4px 6px;
+  min-width: 0;
+}
+
+.assistant-turn-echo-item {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px 6px;
   min-width: 0;
 }
 
@@ -741,8 +704,8 @@ function cardMemoDeps(
 .assistant-turn-show-more {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-xs) var(--space-sm);
   justify-content: flex-start;
+  gap: var(--space-xs) var(--space-sm);
   padding-top: var(--space-2xs);
 }
 

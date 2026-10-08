@@ -170,20 +170,20 @@ defineExpose({ focus })
 
 .recall-thread-heading__label {
   flex-shrink: 0;
-  color: var(--on-surface-muted);
   font-size: 12px;
   font-weight: 500;
+  color: var(--on-surface-muted);
 }
 
 .recall-thread-heading__title {
   /* 吃满标题区剩余宽度；窄栏 CSS 省略，宽栏自动多露字 */
   flex: 1 1 auto;
   min-width: 0;
-  overflow: hidden;
-  color: var(--on-surface);
   font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
+  color: var(--on-surface);
+  overflow: hidden;
   text-overflow: ellipsis;
 }
 
@@ -196,18 +196,18 @@ defineExpose({ focus })
   padding: 5px var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius-full);
-  color: var(--on-surface);
-  background: var(--surface-white);
-  font: inherit;
   font-size: 12px;
   font-weight: 500;
   line-height: 1.3;
   white-space: nowrap;
+  color: var(--on-surface);
+  background: var(--surface-white);
   cursor: pointer;
   transition:
     background-color 140ms ease-out,
     border-color 140ms ease-out,
     color 140ms ease-out;
+  font: inherit;
 }
 
 .recall-thread-new-find:hover:not(:disabled) {
@@ -232,6 +232,7 @@ defineExpose({ focus })
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
+
   /* 固定下限：约两行线索 + 内边距，空/有字/是否 prominent 一致 */
   min-height: 76px;
   padding: var(--space-sm) var(--space-sm) var(--space-sm) var(--space-md);
@@ -285,9 +286,9 @@ defineExpose({ focus })
 
 .recall-send-button {
   display: inline-flex;
+  flex-shrink: 0;
   justify-content: center;
   align-items: center;
-  flex-shrink: 0;
   width: 36px;
   height: 36px;
   margin: 0;

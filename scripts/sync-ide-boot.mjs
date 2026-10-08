@@ -24,15 +24,12 @@ function parseCurrent(md) {
 
   const wave = md.match(/## 当前波次[\s\S]*?(?=\n## )/)?.[0] ?? ''
   const pickRow = label => {
-    const m = wave.match(
-      new RegExp(`\\|\\s*\\*\\*${label}\\*\\*\\s*\\|\\s*([^|\\n]+?)\\s*\\|`)
-    )
+    const m = wave.match(new RegExp(`\\|\\s*\\*\\*${label}\\*\\*\\s*\\|\\s*([^|\\n]+?)\\s*\\|`))
     return m?.[1]?.trim() ?? ''
   }
 
   const scope = md.match(/## 本周做 \/ 不做[\s\S]*?(?=\n## )/)?.[0] ?? ''
-  const listItems = block =>
-    [...block.matchAll(/^- (.+)$/gm)].map(m => m[1].trim()).filter(Boolean)
+  const listItems = block => [...block.matchAll(/^- (.+)$/gm)].map(m => m[1].trim()).filter(Boolean)
 
   const doPart = scope.split('**不做：**')[0] ?? ''
   const dontPart = scope.split('**不做：**')[1] ?? ''
@@ -48,10 +45,8 @@ function parseCurrent(md) {
     .replace(/^已上线[^：]*：/, '')
     .replace(/——.*$/, '')
     .trim()
-  const notReady =
-    cap.match(/\*\*未达对外门槛：\*\*([^\n]+)/)?.[1]?.trim() ?? ''
-  const inProgress =
-    cap.match(/\*\*进行中：\*\*([^\n]+)/)?.[1]?.trim() ?? ''
+  const notReady = cap.match(/\*\*未达对外门槛：\*\*([^\n]+)/)?.[1]?.trim() ?? ''
+  const inProgress = cap.match(/\*\*进行中：\*\*([^\n]+)/)?.[1]?.trim() ?? ''
 
   const abilityParts = []
   if (shipped) abilityParts.push(`${shipped}（详表 \`产品文档 §1\`）`)

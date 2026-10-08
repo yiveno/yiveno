@@ -56,12 +56,14 @@ function eslintScopePaths(...paths) {
   return paths.map(eslintScopePath)
 }
 
-const frontendVueFiles = isFrontendCwd ? ['**/*.vue'] : ['frontend/src/**/*.vue']
-const frontendTsFiles = isFrontendCwd ? ['src/**/*.{ts,tsx}'] : ['frontend/src/**/*.{ts,tsx}']
-const frontendScriptTsFiles = eslintScopePaths('frontend/scripts/**/*.ts')
-const backendTsFiles = eslintScopePaths('backend/src/**/*.ts')
-const websiteTsFiles = isWebsiteCwd ? ['**/*.{ts,tsx}'] : ['website/src/**/*.{ts,tsx}']
-const websiteVueFiles = isWebsiteCwd ? ['**/*.vue'] : ['website/src/**/*.vue']
+// files/ignores 相对 eslint.config.js 所在目录（仓库根），与 process.cwd 无关。
+// 从 frontend/ 子目录跑 eslint 时若写成 src/**，会匹配不到 frontend/src/**。
+const frontendVueFiles = ['frontend/src/**/*.vue']
+const frontendTsFiles = ['frontend/src/**/*.{ts,tsx}']
+const frontendScriptTsFiles = ['frontend/scripts/**/*.ts']
+const backendTsFiles = ['backend/src/**/*.ts']
+const websiteTsFiles = ['website/src/**/*.{ts,tsx}']
+const websiteVueFiles = ['website/src/**/*.vue']
 /** @yiveno/probe：DEV Console Vue（根目录 lint / lint-staged 须能解析 SFC + import type） */
 const probeVueFiles = ['packages/yiveno-probe/src/**/*.vue']
 const testFiles = eslintScopePaths(
@@ -220,7 +222,8 @@ const typescriptCommonRules = {
   '@typescript-eslint/ban-ts-comment': 'warn',
   '@typescript-eslint/no-empty-object-type': 'off',
   '@typescript-eslint/no-require-imports': 'off',
-  '@typescript-eslint/consistent-type-imports': 'warn',
+  // 允许 import('pkg').Type（动态 import 取类型）；仍偏好 type-only 静态 import
+  '@typescript-eslint/consistent-type-imports': ['warn', { disallowTypeAnnotations: false }],
   '@typescript-eslint/no-floating-promises': 'warn',
   'no-async-promise-executor': 'error',
   'require-atomic-updates': 'off', // Vue ref 跨 await 赋值易误报；真实竞态靠代码审查 / 测试
@@ -863,6 +866,19 @@ export default [
       'unused-imports/no-unused-vars': 'off',
       '@typescript-eslint/no-floating-promises': 'off',
       'require-atomic-updates': 'off'
+    }
+  },
+
+  // logger / DEV expose：console 是刻意出口（非业务路径散落 log）
+  {
+    files: [
+      'frontend/src/infrastructure/logging/logger.ts',
+      'frontend/src/infrastructure/debug/**/*.ts',
+      'frontend/src/dev/probe/**/*.ts',
+      'frontend/src/background/main.ts'
+    ],
+    rules: {
+      'no-console': 'off'
     }
   },
 

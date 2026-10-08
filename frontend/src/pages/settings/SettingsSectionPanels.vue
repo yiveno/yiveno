@@ -186,8 +186,8 @@ const {
             type="button"
             :disabled="openingShortcuts"
             :title="t('settings_open_shortcuts')"
-            @click="handleOpenShortcutsPage"
             variant="outlined"
+            @click="handleOpenShortcutsPage"
           >
             {{
               openingShortcuts
@@ -253,8 +253,8 @@ const {
           type="button"
           :disabled="runningIncrementalSync || savingSync || signingOut || orphanWorking"
           :title="t('settings_sync_now')"
-          @click="handleRunIncrementalSync"
           variant="outlined"
+          @click="handleRunIncrementalSync"
         >
           {{ runningIncrementalSync ? t('settings_sync_now_working') : t('settings_sync_now') }}
         </AppButton>
@@ -273,8 +273,8 @@ const {
             v-if="!subscriptionIsPro && subscriptionUpgradeUrl"
             type="button"
             :title="t('settings_subscription_upgrade')"
-            @click="openExternalUrl(subscriptionUpgradeUrl)"
             variant="outlined"
+            @click="openExternalUrl(subscriptionUpgradeUrl)"
           >
             {{ t('settings_subscription_upgrade') }}
           </AppButton>
@@ -282,8 +282,8 @@ const {
             v-else-if="subscriptionIsPro && subscriptionManageUrl"
             type="button"
             :title="t('settings_subscription_manage')"
-            @click="openExternalUrl(subscriptionManageUrl)"
             variant="outlined"
+            @click="openExternalUrl(subscriptionManageUrl)"
           >
             {{ t('settings_subscription_manage') }}
           </AppButton>
@@ -313,8 +313,8 @@ const {
                 runningIncrementalSync
               "
               :title="t('settings_sync_restore_backup')"
-              @click="handleRestoreLatestSyncBackup"
               variant="outlined"
+              @click="handleRestoreLatestSyncBackup"
             >
               {{
                 restoringSyncBackup
@@ -336,8 +336,8 @@ const {
                 type="button"
                 :disabled="orphanWorking || signingOut || savingSync"
                 :title="t('settings_orphan_export')"
-                @click="handleExportOrphans"
                 variant="outlined"
+                @click="handleExportOrphans"
               >
                 {{ orphanWorking ? t('settings_orphan_working') : t('settings_orphan_export') }}
               </AppButton>
@@ -345,8 +345,8 @@ const {
                 type="button"
                 :disabled="orphanWorking || signingOut || savingSync"
                 :title="t('settings_orphan_clear')"
-                @click="handleClearOrphans"
                 variant="outlined"
+                @click="handleClearOrphans"
               >
                 {{ orphanWorking ? t('settings_orphan_working') : t('settings_orphan_clear') }}
               </AppButton>
@@ -360,8 +360,8 @@ const {
           type="button"
           :disabled="signingOut || savingSync || orphanWorking"
           :title="t('settings_account_sign_out')"
-          @click="openSignOutDialog"
           variant="outlined"
+          @click="openSignOutDialog"
         >
           {{ signingOut ? t('settings_account_signing_out') : t('settings_account_sign_out') }}
         </AppButton>
@@ -387,8 +387,8 @@ const {
             type="button"
             :disabled="exportWorking || dataWorking || thirdPartyImportWorking || signingOut"
             :title="t('settings_privacy_export')"
-            @click="handleExportLocalMemory"
             variant="outlined"
+            @click="handleExportLocalMemory"
           >
             {{
               exportWorking ? t('settings_privacy_working') : t('settings_privacy_export_action')
@@ -412,8 +412,8 @@ const {
             type="button"
             :disabled="thirdPartyImportWorking || dataWorking || exportWorking || signingOut"
             :title="t('settings_data_import_raindrop')"
-            @click="handlePickRaindropImportFile"
             variant="outlined"
+            @click="handlePickRaindropImportFile"
           >
             {{
               thirdPartyImportWorking
@@ -439,8 +439,8 @@ const {
             type="button"
             :disabled="thirdPartyImportWorking || dataWorking || exportWorking || signingOut"
             :title="t('settings_data_import_pocket')"
-            @click="handlePickPocketImportFile"
             variant="outlined"
+            @click="handlePickPocketImportFile"
           >
             {{
               thirdPartyImportWorking
@@ -458,8 +458,8 @@ const {
             type="button"
             :disabled="dataWorking || exportWorking || thirdPartyImportWorking || signingOut"
             :title="t('settings_data_clear_local')"
-            @click="handleClearLocalMemory"
             variant="outlined"
+            @click="handleClearLocalMemory"
           >
             {{
               dataWorking ? t('settings_privacy_working') : t('settings_data_clear_local_action')
@@ -477,9 +477,9 @@ const {
               type="button"
               :disabled="dataWorking || signingOut || savingSync"
               :title="t('settings_privacy_delete_cloud')"
-              @click="handleDeleteCloudMemory"
               variant="outlined"
               tone="danger"
+              @click="handleDeleteCloudMemory"
             >
               {{
                 dataWorking
@@ -499,8 +499,8 @@ const {
               tone="danger"
               :disabled="dataWorking || signingOut || savingSync"
               :title="t('settings_privacy_delete_account')"
-              @click="openDeleteAccountDialog"
               variant="outlined"
+              @click="openDeleteAccountDialog"
             >
               {{
                 dataWorking

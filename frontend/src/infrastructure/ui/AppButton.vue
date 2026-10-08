@@ -55,14 +55,13 @@ withDefaults(
 <style scoped>
 .app-button {
   display: inline-flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   gap: var(--space-2xs);
   min-height: 40px;
   padding: 0 var(--space-md);
   border: 1px solid transparent;
   border-radius: var(--radius-full);
-  font: inherit;
   font-size: 0.875rem;
   font-weight: 500;
   line-height: 1.25;
@@ -73,11 +72,12 @@ withDefaults(
     color var(--motion-duration-fast) var(--motion-easing-standard),
     border-color var(--motion-duration-fast) var(--motion-easing-standard),
     opacity var(--motion-duration-fast) var(--motion-easing-standard);
+  font: inherit;
 }
 
 .app-button:disabled {
-  cursor: not-allowed;
   opacity: var(--disabled-opacity);
+  cursor: not-allowed;
 }
 
 .app-button:focus-visible {
@@ -86,8 +86,8 @@ withDefaults(
 }
 
 .app-button--filled {
-  background: var(--accent);
   color: var(--on-accent);
+  background: var(--accent);
 }
 
 .app-button--filled:hover:not(:disabled) {
@@ -99,8 +99,8 @@ withDefaults(
 }
 
 .app-button--tonal {
-  background: color-mix(in srgb, var(--accent) 16%, var(--surface-raised));
   color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 16%, var(--surface-raised));
 }
 
 .app-button--tonal:hover:not(:disabled) {
@@ -113,8 +113,8 @@ withDefaults(
 
 .app-button--outlined {
   border-color: var(--border-strong);
-  background: transparent;
   color: var(--accent);
+  background: transparent;
 }
 
 .app-button--outlined:hover:not(:disabled) {
@@ -136,8 +136,8 @@ withDefaults(
 .app-button--text {
   min-height: 36px;
   padding: 0 var(--space-sm);
-  background: transparent;
   color: var(--accent);
+  background: transparent;
 }
 
 .app-button--text:hover:not(:disabled) {

@@ -6,11 +6,7 @@ import MainLayout from '../layouts/MainLayout.astro'
 import '../styles/pages.css'
 ---
 
-<MainLayout
-  noindex
-  title="Welcome · Yiveno"
-  description="Thanks for subscribing to Yiveno."
->
+<MainLayout noindex title="Welcome · Yiveno" description="Thanks for subscribing to Yiveno.">
   <article class="page page--narrow">
     <h1 class="page__title">Welcome</h1>
     <p class="page__lede">
@@ -19,8 +15,12 @@ import '../styles/pages.css'
       <a href="/account">account</a> to refresh.
     </p>
     <p class="page__actions">
-      <a class="ui-btn ui-btn--primary" href="/account">Go to account</a>
-      <a class="ui-btn ui-btn--ghost" href="/pricing">Back to pricing</a>
+      <a class="ui-btn ui-btn--primary" href="/account">
+        Go to account
+      </a>
+      <a class="ui-btn ui-btn--ghost" href="/pricing">
+        Back to pricing
+      </a>
     </p>
   </article>
 </MainLayout>

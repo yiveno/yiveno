@@ -269,12 +269,13 @@ describe('import-chrome-bookmarks-service', () => {
   })
 
   it('用户关闭书签灌库时跳过 bulk 导入', async () => {
-    const { USER_SETTINGS_STORAGE_KEY } = await import('@/core/settings/user-settings')
+    const { USER_SETTINGS_STORAGE_KEY: userSettingsStorageKey } =
+      await import('@/core/settings/user-settings')
     vi.stubGlobal(
       'chrome',
       createChromeMock({
         [LOCAL_PROFILE_STORAGE_KEY]: localProfile,
-        [USER_SETTINGS_STORAGE_KEY]: {
+        [userSettingsStorageKey]: {
           selectionToolbarEnabled: true,
           aiFeaturesEnabled: true,
           chromeBookmarkIngestEnabled: false

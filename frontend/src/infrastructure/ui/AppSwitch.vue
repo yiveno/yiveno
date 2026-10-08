@@ -54,8 +54,8 @@ function onToggle() {
 }
 
 .app-switch:disabled {
-  cursor: not-allowed;
   opacity: var(--disabled-opacity);
+  cursor: not-allowed;
 }
 
 .app-switch:focus-visible .app-switch__track {

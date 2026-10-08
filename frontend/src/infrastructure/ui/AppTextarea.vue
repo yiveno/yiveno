@@ -38,9 +38,9 @@ function onInput(event: Event) {
 
 <template>
   <textarea
+    :id="id"
     class="app-textarea"
     :class="{ 'app-textarea--resize-none': resize === 'none' }"
-    :id="id"
     :value="modelValue"
     :rows="rows"
     :maxlength="maxlength"
@@ -53,19 +53,19 @@ function onInput(event: Event) {
 
 <style scoped>
 .app-textarea {
-  box-sizing: border-box;
   display: block;
+  box-sizing: border-box;
   width: 100%;
   margin: 0;
   padding: var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  resize: vertical;
-  font: inherit;
   font-size: 14px;
   line-height: 1.45;
   color: var(--on-surface);
   background: var(--surface-white);
+  resize: vertical;
+  font: inherit;
 }
 
 .app-textarea--resize-none {
@@ -82,7 +82,7 @@ function onInput(event: Event) {
 }
 
 .app-textarea:disabled {
-  cursor: not-allowed;
   opacity: var(--disabled-opacity);
+  cursor: not-allowed;
 }
 </style>

@@ -37,15 +37,15 @@ withDefaults(
 <style scoped>
 .app-icon-button {
   display: inline-flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   width: 40px;
   height: 40px;
   padding: 0;
   border: none;
   border-radius: var(--radius-full);
-  background: transparent;
   color: var(--on-surface-muted);
+  background: transparent;
   cursor: pointer;
   transition:
     background-color var(--motion-duration-fast) var(--motion-easing-standard),
@@ -54,12 +54,12 @@ withDefaults(
 }
 
 .app-icon-button:hover:not(:disabled) {
+  color: var(--on-surface);
   background: color-mix(
     in srgb,
     var(--on-surface) calc(var(--state-hover-opacity) * 100%),
     transparent
   );
-  color: var(--on-surface);
 }
 
 .app-icon-button:active:not(:disabled) {
@@ -76,8 +76,8 @@ withDefaults(
 }
 
 .app-icon-button:disabled {
-  cursor: not-allowed;
   opacity: var(--disabled-opacity);
+  cursor: not-allowed;
 }
 
 .app-icon-button--danger {

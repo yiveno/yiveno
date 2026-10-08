@@ -337,8 +337,8 @@ onUnmounted(() => {
 
 .app-page-header__avatar-wrap {
   display: inline-flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   border-radius: 50%;
   line-height: 0;
 }

@@ -84,7 +84,6 @@ const proofSteps = [
     focus: true
   }
 ]
-
 ---
 
 <MainLayout
@@ -110,10 +109,14 @@ const proofSteps = [
     <div class="hero__layout">
       <div class="hero__copy">
         <p class="hero__epithet">The one that finds things</p>
-        <h1 class="hero__title">Find what<br />you saved.</h1>
+        <h1 class="hero__title">
+          Find what
+          <br />
+          you saved.
+        </h1>
         <p class="hero__sub">
-          You don't need the title. Say what you remember — closest fits, you pick. We're
-          building it; the waitlist gets first access.
+          You don't need the title. Say what you remember — closest fits, you pick. We're building
+          it; the waitlist gets first access.
         </p>
         <WaitlistForm tone="dark" />
       </div>
@@ -131,8 +134,8 @@ const proofSteps = [
           Saved it. <em class="home-kicker-em">Forgot the exact words.</em>
         </h2>
         <p>
-          Later, ask in plain language. Yiveno leads with what fits best, with a few nearby — so
-          you can choose.
+          Later, ask in plain language. Yiveno leads with what fits best, with a few nearby — so you
+          can choose.
         </p>
       </div>
       <div class="demo-panel reveal d1">
@@ -146,7 +149,8 @@ const proofSteps = [
     <div class="home-wrap home-col">
       <div class="reveal">
         <h2>
-          You remember the feeling.<br />
+          You remember the feeling.
+          <br />
           <em class="home-kicker-em">Not where you saved it.</em>
         </h2>
       </div>
@@ -182,7 +186,11 @@ const proofSteps = [
       <div class="capture-visual reveal d1">
         <div class="capture-mock" aria-hidden="true">
           <div class="capture-mock__bar">
-            <div class="capture-mock__dots"><span></span><span></span><span></span></div>
+            <div class="capture-mock__dots">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
             <div class="capture-mock__url"></div>
             <div class="capture-mock__ext">
               <YMark size={12} />
@@ -191,7 +199,9 @@ const proofSteps = [
           <div class="capture-mock__page">
             <div class="capture-mock__line"></div>
             <div class="capture-mock__highlight">
-              <span></span><span></span><span></span>
+              <span></span>
+              <span></span>
+              <span></span>
             </div>
             <div class="capture-mock__line capture-mock__line--dim"></div>
             <div class="capture-toast">
@@ -203,7 +213,8 @@ const proofSteps = [
                       stroke="currentColor"
                       stroke-width="1.5"
                       stroke-linecap="round"
-                      stroke-linejoin="round"></path>
+                      stroke-linejoin="round"
+                    ></path>
                   </svg>
                 </div>
                 Saved to Yiveno
@@ -226,7 +237,11 @@ const proofSteps = [
   <section class="home-sec home-sec--ink org">
     <div class="home-wrap">
       <div class="reveal">
-        <h2>You don't have to<br />organize everything.</h2>
+        <h2>
+          You don't have to
+          <br />
+          organize everything.
+        </h2>
       </div>
       <div class="org-layout">
         <div class="reveal">
@@ -258,20 +273,22 @@ const proofSteps = [
   <section class="home-sec home-sec--paper types">
     <div class="home-wrap">
       <div class="reveal">
-        <h2>Different things. <em class="home-kicker-em">One personal memory.</em></h2>
+        <h2>
+          Different things. <em class="home-kicker-em">One personal memory.</em>
+        </h2>
         <p class="types__lede">
           Pages, passages, notes — whatever shape your saved things take. Yiveno keeps them
           together.
         </p>
       </div>
       <div class="types__mosaic reveal d2">
-        {
-          contentTypes.map(({ label, size, op }) => (
-            <span style={`font-size:${size}px;opacity:${op};font-style:${size > 15 ? 'italic' : 'normal'}`}>
-              {label}
-            </span>
-          ))
-        }
+        {contentTypes.map(({ label, size, op }) => (
+          <span
+            style={`font-size:${size}px;opacity:${op};font-style:${size > 15 ? 'italic' : 'normal'}`}
+          >
+            {label}
+          </span>
+        ))}
       </div>
     </div>
   </section>
@@ -281,7 +298,8 @@ const proofSteps = [
     <div class="home-wrap">
       <div class="examples__intro reveal">
         <h2>
-          Remember the idea.<br />
+          Remember the idea.
+          <br />
           <em class="home-kicker-em">That's enough.</em>
         </h2>
         <p>
@@ -290,17 +308,15 @@ const proofSteps = [
         </p>
       </div>
       <ul class="examples__list">
-        {
-          recallExamples.map((ex, i) => (
-            <li class:list={['examples__row', 'reveal', `d${Math.min(i, 4)}`]}>
-              <p class="examples__q">"{ex.clue}"</p>
-              <div>
-                <p class="examples__a-title">{ex.result}</p>
-                <p class="examples__a-meta">{ex.meta}</p>
-              </div>
-            </li>
-          ))
-        }
+        {recallExamples.map((ex, i) => (
+          <li class:list={['examples__row', 'reveal', `d${Math.min(i, 4)}`]}>
+            <p class="examples__q">"{ex.clue}"</p>
+            <div>
+              <p class="examples__a-title">{ex.result}</p>
+              <p class="examples__a-meta">{ex.meta}</p>
+            </div>
+          </li>
+        ))}
       </ul>
     </div>
   </section>
@@ -310,13 +326,14 @@ const proofSteps = [
     <div class="home-wrap compounds">
       <div class="reveal">
         <h2>
-          The more you keep,<br />
+          The more you keep,
+          <br />
           <em class="home-kicker-em">the easier it is to find.</em>
         </h2>
       </div>
       <p class="reveal d1">
-        Your collection becomes a personal memory. The richer it gets, the more naturally
-        everyday language connects to what you chose to keep.
+        Your collection becomes a personal memory. The richer it gets, the more naturally everyday
+        language connects to what you chose to keep.
       </p>
     </div>
   </section>
@@ -326,23 +343,22 @@ const proofSteps = [
     <div class="home-wrap">
       <div class="proof__intro reveal">
         <h2>
-          Capture. Forget. Recall.<br />
+          Capture. Forget. Recall.
+          <br />
           <em class="home-kicker-em">Rediscover.</em>
         </h2>
       </div>
       <div class="proof-grid">
-        {
-          proofSteps.map((s, i) => (
-            <div class:list={['proof-step', 'reveal', `d${i}`, { 'proof-step--focus': s.focus }]}>
-              <p class="proof-step__label">
-                <span>{s.n}</span>
-                <span>{s.label}</span>
-              </p>
-              <h3>{s.head}</h3>
-              <p>{s.body}</p>
-            </div>
-          ))
-        }
+        {proofSteps.map((s, i) => (
+          <div class:list={['proof-step', 'reveal', `d${i}`, { 'proof-step--focus': s.focus }]}>
+            <p class="proof-step__label">
+              <span>{s.n}</span>
+              <span>{s.label}</span>
+            </p>
+            <h3>{s.head}</h3>
+            <p>{s.body}</p>
+          </div>
+        ))}
       </div>
     </div>
   </section>
@@ -352,11 +368,15 @@ const proofSteps = [
     <div class="home-wrap privacy-layout">
       <div class="reveal">
         <h2>
-          Your memories<br />are yours.
+          Your memories
+          <br />
+          are yours.
         </h2>
       </div>
       <ul class="privacy-list reveal d1">
-        {trustPoints.map((p) => <li>{p}</li>)}
+        {trustPoints.map(p => (
+          <li>{p}</li>
+        ))}
       </ul>
     </div>
   </section>
@@ -366,7 +386,8 @@ const proofSteps = [
     <div class="home-wrap geo__layout">
       <div class="reveal">
         <h2 id="geo-heading">
-          Yiveno is the thing<br />
+          Yiveno is the thing
+          <br />
           <em class="home-kicker-em">that finds what you saved.</em>
         </h2>
         <p class="geo__lede">
@@ -402,7 +423,8 @@ const proofSteps = [
     <div class="final__inner">
       <div class="reveal">
         <h2>
-          Be first<br />
+          Be first
+          <br />
           <em class="home-kicker-em">when it's ready.</em>
         </h2>
         <p class="final__lede">

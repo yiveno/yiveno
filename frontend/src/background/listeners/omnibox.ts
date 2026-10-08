@@ -156,7 +156,7 @@ async function handleOmniboxInputChanged(
 
   if (!clue) {
     lastOmniboxLookup = null
-    chrome.omnibox.setDefaultSuggestion({
+    void chrome.omnibox.setDefaultSuggestion({
       description: await getDefaultSuggestionDescription()
     })
     suggest([])
@@ -168,7 +168,7 @@ async function handleOmniboxInputChanged(
     if (isStaleOmniboxInputChangedRequest(requestId)) {
       return
     }
-    chrome.omnibox.setDefaultSuggestion({ description })
+    void chrome.omnibox.setDefaultSuggestion({ description })
   })
 
   await ensureReady()
@@ -214,7 +214,7 @@ async function handleOmniboxInputChanged(
   if (suggests.length === 0) {
     // 第 1 行 = default（常驻 Tip，非 CTA）；
     // 第 2 行 = 可点 SuggestResult（无命中 CTA → handoff）；content ≠ 输入字面。
-    chrome.omnibox.setDefaultSuggestion({
+    void chrome.omnibox.setDefaultSuggestion({
       description: await getDefaultSuggestionDescription()
     })
     suggest([
@@ -226,7 +226,7 @@ async function handleOmniboxInputChanged(
     return
   }
 
-  chrome.omnibox.setDefaultSuggestion({
+  void chrome.omnibox.setDefaultSuggestion({
     description: await getDefaultSuggestionDescription()
   })
   suggest(suggests)
@@ -318,7 +318,7 @@ export function registerOmniboxListeners(): void {
 
   void getDefaultSuggestionDescription()
     .then(description => {
-      chrome.omnibox.setDefaultSuggestion({ description })
+      void chrome.omnibox.setDefaultSuggestion({ description })
     })
     .catch(error => {
       logger.warn('Omnibox', '注册时设置 default suggestion 失败', error)

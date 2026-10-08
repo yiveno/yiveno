@@ -94,16 +94,16 @@ function handleDownloadSelect(id: string): void {
 .detail-export-bar {
   display: flex;
   flex-wrap: var(--detail-export-bar-wrap, wrap);
-  align-items: center;
   justify-content: space-between;
+  align-items: center;
   gap: var(--space-sm);
   box-sizing: border-box;
   height: var(--detail-export-bar-height, auto);
   min-height: var(--detail-export-bar-height, 0);
   max-height: var(--detail-export-bar-height, none);
   padding: var(--space-sm) var(--space-md);
-  overflow: visible;
   background: var(--surface-white);
+  overflow: visible;
 }
 
 .detail-export-bar__lead {
@@ -115,19 +115,19 @@ function handleDownloadSelect(id: string): void {
   margin: 0;
   font-size: 13px;
   line-height: 1.4;
+  white-space: nowrap;
   color: var(--on-surface-muted);
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .detail-export-bar__actions {
   display: flex;
-  flex-shrink: 0;
   flex-wrap: wrap;
-  gap: var(--space-xs) var(--space-sm);
-  align-items: center;
+  flex-shrink: 0;
   justify-content: flex-end;
+  align-items: center;
+  gap: var(--space-xs) var(--space-sm);
   margin-left: auto;
 }
 </style>

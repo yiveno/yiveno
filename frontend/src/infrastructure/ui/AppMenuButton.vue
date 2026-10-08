@@ -13,13 +13,6 @@ import {
 
 defineOptions({ name: 'AppMenuButton' })
 
-export type AppMenuPlacement = 'top' | 'bottom'
-
-export type AppMenuButtonItem = {
-  id: string
-  label: string
-}
-
 const props = withDefaults(
   defineProps<{
     label: string
@@ -42,6 +35,13 @@ const props = withDefaults(
 const emit = defineEmits<{
   select: [id: string]
 }>()
+
+export type AppMenuPlacement = 'top' | 'bottom'
+
+export type AppMenuButtonItem = {
+  id: string
+  label: string
+}
 
 const open = ref(false)
 const rootRef = ref<HTMLElement | null>(null)
@@ -203,14 +203,13 @@ onBeforeUnmount(() => {
 
 .app-menu-button__trigger {
   display: inline-flex;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   gap: var(--space-2xs);
   min-height: 40px;
   padding: 0 var(--space-md);
   border: 1px solid transparent;
   border-radius: var(--radius-full);
-  font: inherit;
   font-size: 0.875rem;
   font-weight: 500;
   line-height: 1.25;
@@ -220,17 +219,18 @@ onBeforeUnmount(() => {
     color var(--motion-duration-fast) var(--motion-easing-standard),
     border-color var(--motion-duration-fast) var(--motion-easing-standard),
     opacity var(--motion-duration-fast) var(--motion-easing-standard);
+  font: inherit;
 }
 
 .app-menu-button__trigger:disabled {
-  cursor: not-allowed;
   opacity: var(--disabled-opacity);
+  cursor: not-allowed;
 }
 
 .app-menu-button__trigger--outlined {
   border-color: var(--border);
-  background: var(--surface-white);
   color: var(--on-surface);
+  background: var(--surface-white);
 }
 
 .app-menu-button__trigger--outlined:hover:not(:disabled),
@@ -244,14 +244,14 @@ onBeforeUnmount(() => {
 
 .app-menu-button__trigger--filled {
   border-color: var(--accent);
-  background: var(--accent);
   color: var(--on-accent);
+  background: var(--accent);
 }
 
 .app-menu-button__trigger--filled:hover:not(:disabled),
 .app-menu-button__trigger--filled.app-menu-button__trigger--open:not(:disabled) {
-  background: var(--accent-hover);
   border-color: var(--accent-hover);
+  background: var(--accent-hover);
 }
 
 .app-menu-button__trigger:focus-visible {
@@ -313,14 +313,14 @@ onBeforeUnmount(() => {
   padding: 0 var(--space-sm);
   border: none;
   border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--on-surface);
-  font: inherit;
   font-size: 0.875rem;
   line-height: 1.25;
   text-align: left;
+  color: var(--on-surface);
+  background: transparent;
   cursor: pointer;
   transition: background-color var(--motion-duration-fast) var(--motion-easing-standard);
+  font: inherit;
 }
 
 .app-menu-button__item:hover {

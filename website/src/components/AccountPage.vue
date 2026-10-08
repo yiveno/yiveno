@@ -355,7 +355,7 @@ async function handleSignOut() {
   font-weight: 300;
   line-height: 1.4;
   color: var(--sage-muted);
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 .account__dot {

@@ -703,12 +703,12 @@ onUnmounted(() => {
         <AppButton
           type="button"
           :disabled="noteEditorSaving"
-          @click="closeNoteEditor"
           variant="outlined"
+          @click="closeNoteEditor"
         >
           {{ t('selection_toolbar_note_cancel') }}
         </AppButton>
-        <AppButton type="button" :disabled="noteEditorSaving" @click="saveNote" variant="filled">
+        <AppButton type="button" :disabled="noteEditorSaving" variant="filled" @click="saveNote">
           {{ t('selection_toolbar_note_save') }}
         </AppButton>
       </template>
@@ -754,11 +754,12 @@ onUnmounted(() => {
   height: 100vh;
   min-height: 100vh;
   padding: var(--page-shell-padding-top) 0 0;
-  overflow: hidden;
   color: var(--on-surface);
+  overflow: hidden;
 }
 
 .library-detail-export-slot {
+  z-index: 2;
   display: flex;
   flex-shrink: 0;
   align-items: stretch;
@@ -766,10 +767,9 @@ onUnmounted(() => {
   height: var(--library-detail-export-slot-height);
   min-height: var(--library-detail-export-slot-height);
   max-height: var(--library-detail-export-slot-height);
-  overflow: hidden;
-  z-index: 2;
   border-top: 1px solid var(--border);
   background: var(--surface-white);
+  overflow: hidden;
 }
 
 .library-detail-export-bar {
@@ -807,13 +807,15 @@ onUnmounted(() => {
   display: grid;
   flex: 1;
   align-items: stretch;
-  min-height: 0;
   grid-template-columns: minmax(10.5rem, 12rem) minmax(0, 1fr);
+  min-height: 0;
   border-top: 1px solid var(--border);
 }
 
 .library-tabs {
   align-self: stretch;
+  align-content: start;
+  grid-auto-flow: row;
   width: 100%;
   min-height: 0;
   padding: var(--space-sm);
@@ -821,8 +823,6 @@ onUnmounted(() => {
   border-right: 1px solid var(--border);
   border-radius: 0;
   background: var(--surface);
-  grid-auto-flow: row;
-  align-content: start;
   overflow-y: auto;
 }
 
@@ -861,9 +861,10 @@ onUnmounted(() => {
 
 .library-panel-body {
   --library-list-row-gap: var(--space-xs);
+
   display: flex;
-  flex: 1;
   flex-direction: column;
+  flex: 1;
   min-height: 0;
   padding: var(--space-md);
   overflow-y: auto;
@@ -876,8 +877,8 @@ onUnmounted(() => {
 .library-bookmark-tree-host,
 .library-list-scroll-host {
   display: flex;
-  flex: 1;
   flex-direction: column;
+  flex: 1;
   min-height: 0;
 }
 

@@ -326,7 +326,11 @@ function buildWebsiteEnvFile(profile, env) {
   for (const [targetKey, sourceKey] of WEBSITE_KEYS) {
     if (env[sourceKey]) websiteEnv[targetKey] = env[sourceKey]
   }
-  return renderEnvFile(`Website Runtime (${profile})`, WEBSITE_KEYS.map(([key]) => key), websiteEnv)
+  return renderEnvFile(
+    `Website Runtime (${profile})`,
+    WEBSITE_KEYS.map(([key]) => key),
+    websiteEnv
+  )
 }
 
 async function writeFileIfChanged(filePath, content) {
@@ -350,9 +354,12 @@ function isRemoteHttps(url) {
 
 function getMissing(env) {
   return {
-    required: ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'JWT_SECRET'].filter(
-      key => !env[key]
-    ),
+    required: [
+      'SUPABASE_URL',
+      'SUPABASE_ANON_KEY',
+      'SUPABASE_SERVICE_ROLE_KEY',
+      'JWT_SECRET'
+    ].filter(key => !env[key]),
     oauth: [
       'AUTH_GOOGLE_CLIENT_ID',
       'AUTH_GOOGLE_CLIENT_SECRET',

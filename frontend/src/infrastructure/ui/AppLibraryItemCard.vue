@@ -107,6 +107,62 @@ function handleSurfaceKeydown(event: KeyboardEvent): void {
 </template>
 
 <style scoped>
+/* 指针设备：操作钮默认隐藏，悬停或键盘聚焦条目时显示 */
+@media (hover: hover) {
+  .app-library-item-card__body > .lib-item-row--split:first-of-type {
+    position: relative;
+  }
+
+  .lib-item-actions {
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 1;
+    margin: 0;
+    padding-left: var(--space-sm);
+    background: linear-gradient(
+      270deg,
+      var(--surface) 55%,
+      color-mix(in srgb, var(--surface) 88%, transparent) 100%
+    );
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--motion-duration-short) var(--motion-easing-standard);
+  }
+
+  .app-library-item-card:hover .lib-item-actions,
+  .app-library-item-card:focus-within .lib-item-actions {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .app-library-item-card:hover .lib-item-actions {
+    background: linear-gradient(
+      270deg,
+      var(--surface-chrome) 55%,
+      color-mix(in srgb, var(--surface-chrome) 88%, transparent) 100%
+    );
+  }
+
+  .app-library-item-card--detail-export.app-library-item-card--selected .lib-item-actions {
+    background: linear-gradient(
+      270deg,
+      var(--surface-accent-soft) 55%,
+      color-mix(in srgb, var(--surface-accent-soft) 88%, transparent) 100%
+    );
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-library-item-card__body {
+    transition: none;
+  }
+
+  .lib-item-actions {
+    transition: none;
+  }
+}
+
 .app-library-item-card {
   position: relative;
   min-width: 0;
@@ -119,10 +175,10 @@ function handleSurfaceKeydown(event: KeyboardEvent): void {
 
 .app-library-item-card__body {
   position: relative;
-  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: var(--space-xs);
+  box-sizing: border-box;
   width: 100%;
   padding: var(--space-sm);
   border: 1px solid var(--border);
@@ -190,61 +246,5 @@ function handleSurfaceKeydown(event: KeyboardEvent): void {
   gap: var(--space-2xs);
   margin-top: -2px;
   margin-right: -2px;
-}
-
-/* 指针设备：操作钮默认隐藏，悬停或键盘聚焦条目时显示 */
-@media (hover: hover) {
-  .app-library-item-card__body > .lib-item-row--split:first-of-type {
-    position: relative;
-  }
-
-  .lib-item-actions {
-    position: absolute;
-    top: 0;
-    right: 0;
-    z-index: 1;
-    margin: 0;
-    padding-left: var(--space-sm);
-    opacity: 0;
-    pointer-events: none;
-    background: linear-gradient(
-      270deg,
-      var(--surface) 55%,
-      color-mix(in srgb, var(--surface) 88%, transparent) 100%
-    );
-    transition: opacity var(--motion-duration-short) var(--motion-easing-standard);
-  }
-
-  .app-library-item-card:hover .lib-item-actions,
-  .app-library-item-card:focus-within .lib-item-actions {
-    opacity: 1;
-    pointer-events: auto;
-  }
-
-  .app-library-item-card:hover .lib-item-actions {
-    background: linear-gradient(
-      270deg,
-      var(--surface-chrome) 55%,
-      color-mix(in srgb, var(--surface-chrome) 88%, transparent) 100%
-    );
-  }
-
-  .app-library-item-card--detail-export.app-library-item-card--selected .lib-item-actions {
-    background: linear-gradient(
-      270deg,
-      var(--surface-accent-soft) 55%,
-      color-mix(in srgb, var(--surface-accent-soft) 88%, transparent) 100%
-    );
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .app-library-item-card__body {
-    transition: none;
-  }
-
-  .lib-item-actions {
-    transition: none;
-  }
 }
 </style>

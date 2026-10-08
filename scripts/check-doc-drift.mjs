@@ -141,7 +141,9 @@ if (errors.length > 0) {
   for (const line of errors) {
     console.error(`  - ${line}`)
   }
-  console.error('\n修复：新增 message type 时同步 registry、core/messaging/*、message-handler、产品文档 §4（若属核心表）。')
+  console.error(
+    '\n修复：新增 message type 时同步 registry、core/messaging/*、message-handler、产品文档 §4（若属核心表）。'
+  )
   process.exit(1)
 }
 

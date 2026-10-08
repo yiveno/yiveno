@@ -55,8 +55,7 @@ if (forbiddenViolations.length > 0) {
     .slice(0, 8)
     .map(v => `${v.key} (${v.matched})`)
     .join(', ')
-  const suffix =
-    forbiddenViolations.length > 8 ? ` …共 ${forbiddenViolations.length} 条` : ''
+  const suffix = forbiddenViolations.length > 8 ? ` …共 ${forbiddenViolations.length} 条` : ''
   errors.push(`产品面禁用词 Search: ${preview}${suffix}`)
 }
 

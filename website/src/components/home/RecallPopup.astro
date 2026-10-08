@@ -27,7 +27,9 @@ const results = [
 <div class="recall-popup" aria-hidden="true">
   <div class="recall-popup__chrome">
     <div class="recall-popup__dots" aria-hidden="true">
-      <span></span><span></span><span></span>
+      <span></span>
+      <span></span>
+      <span></span>
     </div>
     <div class="recall-popup__brand">
       <YMark size={17} />
@@ -37,22 +39,31 @@ const results = [
   <div class="recall-popup__body">
     <p class="recall-popup__prompt">What do you remember?</p>
     <div class="recall-popup__clue">
-      <span class="recall-popup__clue-text"
-        >that quiet novel with the lighthouse<span class="recall-popup__cursor"></span
-      ></span>
-      <svg class="recall-popup__return" width="13" height="13" viewBox="0 0 13 13" fill="none" aria-hidden="true">
+      <span class="recall-popup__clue-text">
+        that quiet novel with the lighthouse<span class="recall-popup__cursor"></span>
+      </span>
+      <svg
+        class="recall-popup__return"
+        width="13"
+        height="13"
+        viewBox="0 0 13 13"
+        fill="none"
+        aria-hidden="true"
+      >
         <path
           d="M11 2v4a2 2 0 0 1-2 2H2"
           stroke="currentColor"
           stroke-width="1.4"
           stroke-linecap="round"
-          stroke-linejoin="round"></path>
+          stroke-linejoin="round"
+        ></path>
         <path
           d="M4.5 5.5L2 8l2.5 2.5"
           stroke="currentColor"
           stroke-width="1.4"
           stroke-linecap="round"
-          stroke-linejoin="round"></path>
+          stroke-linejoin="round"
+        ></path>
       </svg>
     </div>
   </div>
@@ -60,15 +71,13 @@ const results = [
     <span>A few that might be it</span>
   </div>
   <ol class="recall-popup__list">
-    {
-      results.map((r) => (
-        <li class:list={['recall-popup__item', { 'recall-popup__item--closest': r.closest }]}>
-          {r.closest && <p class="recall-popup__badge">Closest</p>}
-          <p class="recall-popup__title">{r.title}</p>
-          <p class="recall-popup__meta">{r.meta}</p>
-          {'note' in r && r.note ? <p class="recall-popup__note">{r.note}</p> : null}
-        </li>
-      ))
-    }
+    {results.map(r => (
+      <li class:list={['recall-popup__item', { 'recall-popup__item--closest': r.closest }]}>
+        {r.closest && <p class="recall-popup__badge">Closest</p>}
+        <p class="recall-popup__title">{r.title}</p>
+        <p class="recall-popup__meta">{r.meta}</p>
+        {'note' in r && r.note ? <p class="recall-popup__note">{r.note}</p> : null}
+      </li>
+    ))}
   </ol>
 </div>

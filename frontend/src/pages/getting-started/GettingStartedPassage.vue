@@ -69,11 +69,11 @@ async function selectPassage(): Promise<void> {
 }
 
 .gs-passage__lead {
+  max-width: 42ch;
   margin: 0;
   font-size: 14px;
   line-height: 1.5;
   color: var(--on-surface-muted);
-  max-width: 42ch;
 }
 
 .gs-passage__body {
@@ -81,9 +81,9 @@ async function selectPassage(): Promise<void> {
   padding: var(--space-md);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  background: var(--surface-white);
   font-size: 16px;
   line-height: 1.6;
+  background: var(--surface-white);
   text-wrap: pretty;
 }
 
@@ -110,10 +110,10 @@ async function selectPassage(): Promise<void> {
 }
 
 .gs-passage__hint {
+  max-width: 40ch;
   margin: 0;
   font-size: 13px;
   line-height: 1.45;
   color: var(--on-surface-muted);
-  max-width: 40ch;
 }
 </style>

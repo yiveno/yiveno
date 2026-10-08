@@ -307,7 +307,8 @@ export function getAppIconNodes(name: AppIconName): readonly AppIconNode[] {
   return APP_ICON_NODES[name]
 }
 
-/** Lucide 统一 viewBox。 */
-export function getAppIconViewBox(_name?: AppIconName): string {
+/** Lucide 统一 viewBox（参数保留：调用方按图标名查询，便于以后按名差异化）。 */
+export function getAppIconViewBox(name?: AppIconName): string {
+  void name
   return APP_ICON_VIEW_BOX
 }

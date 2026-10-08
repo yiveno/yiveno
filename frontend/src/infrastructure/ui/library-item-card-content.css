@@ -13,8 +13,8 @@
 
 .lib-item-row--split {
   display: flex;
-  align-items: flex-start;
   justify-content: space-between;
+  align-items: flex-start;
   gap: var(--space-sm);
 }
 
@@ -49,9 +49,9 @@
 
 .lib-item-title--single-line {
   min-width: 0;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .lib-item-note {
@@ -72,22 +72,22 @@
 }
 
 .lib-item-subtitle {
-  margin: 0;
   min-width: 0;
+  margin: 0;
   font-size: 12px;
+  white-space: nowrap;
   color: var(--on-surface-muted);
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .lib-item-time {
   margin: 0;
   font-size: 12px;
   line-height: 1.35;
-  color: var(--border-strong);
   text-align: right;
   white-space: nowrap;
+  color: var(--border-strong);
 }
 
 .lib-item-flag {

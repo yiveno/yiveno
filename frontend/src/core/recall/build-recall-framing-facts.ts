@@ -60,7 +60,6 @@ function inferRetrievalPath(pool: RecallMatch[]): RecallFramingRetrievalPath {
 
   let neighborhoodCount = 0
   let hybridCount = 0
-  let literalCount = 0
 
   for (const match of sample) {
     const primary = pickPrimaryMatchedField(match.matchedFields)
@@ -68,8 +67,6 @@ function inferRetrievalPath(pool: RecallMatch[]): RecallFramingRetrievalPath {
       neighborhoodCount += 1
     } else if (primary === 'embedding' || primary === 'hybridRrf') {
       hybridCount += 1
-    } else {
-      literalCount += 1
     }
   }
 

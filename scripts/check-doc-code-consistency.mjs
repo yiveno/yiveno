@@ -95,11 +95,15 @@ function stripComments(source) {
 /** C1: core/ 中无 chrome.* / indexedDB.* 直接调用 */
 check('C1', 'core/ 无 Chrome/IndexedDB 直接调用（ADR-004 / 架构铁律）', () => {
   const coreDir = join(root, 'frontend/src/core')
-  const files = walkFiles(coreDir, n => n.endsWith('.ts') && !n.endsWith('.d.ts') && !n.endsWith('.test.ts'))
+  const files = walkFiles(
+    coreDir,
+    n => n.endsWith('.ts') && !n.endsWith('.d.ts') && !n.endsWith('.test.ts')
+  )
   const violations = []
   // 允许 chrome.* 作为字符串或类型引用，但禁止实际 API 调用形式：chrome.xxx.yyy(...)
   // 简化：扫描 `chrome.<api>` 后是否跟标识符 + ( 或 . （即链式属性）
-  const re = /\bchrome\.(storage|tabs|bookmarks|runtime|windows|i18n)\.(?:[a-z][A-Za-z]*\s*\(|\s*[a-z][A-Za-z]*\s*\.)/g
+  const re =
+    /\bchrome\.(storage|tabs|bookmarks|runtime|windows|i18n)\.(?:[a-z][A-Za-z]*\s*\(|\s*[a-z][A-Za-z]*\s*\.)/g
   const indexedDBRe = /\bindexedDB\.(open|deleteDatabase)\s*\(/g
 
   for (const file of files) {
@@ -175,7 +179,9 @@ check('C5', '闭集产品槽位词典存在（RECALL_OBJECT_TYPE_LEXICON 等；A
   const source = readFileSync(file, 'utf8')
   const required = ['RECALL_OBJECT_TYPE_LEXICON', 'RECALL_BEHAVIOR_LEXICON', 'RECALL_TIME_LEXICON']
   const missing = required.filter(name => !source.includes(`export const ${name}`))
-  return missing.length === 0 ? null : missing.map(name => `  ${file.replace(root + '/', '')}: 缺少 export const ${name}`)
+  return missing.length === 0
+    ? null
+    : missing.map(name => `  ${file.replace(root + '/', '')}: 缺少 export const ${name}`)
 })
 
 /** C6: 翻牌句不在代码中出现 */
@@ -219,7 +225,9 @@ if (errors.length > 0) {
     for (const v of violations) console.error(v)
     console.error('')
   }
-  console.error('修复：以上违规说明文档承诺与代码实现不一致；同步调整代码或更新对应文档（产品文档 §0/§4 或 ADR）。')
+  console.error(
+    '修复：以上违规说明文档承诺与代码实现不一致；同步调整代码或更新对应文档（产品文档 §0/§4 或 ADR）。'
+  )
   process.exit(1)
 }
 

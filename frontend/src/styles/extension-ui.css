@@ -12,6 +12,12 @@
 }
 
 :root {
+  /* 扩展页面壳 composite（由 spacing 阶梯 calc，避免魔法数散落） */
+  --page-shell-padding-top: calc(var(--space-lg) + var(--space-2xs));
+  --page-shell-padding-x: var(--space-lg);
+  --page-shell-padding-bottom: calc(var(--space-xl) + var(--space-xs));
+  --page-shell-padding-bottom-compact: var(--space-lg);
+
   color-scheme: light;
   font-family:
     ui-sans-serif,
@@ -22,12 +28,6 @@
     sans-serif;
   color: var(--on-surface);
   background: var(--surface);
-
-  /* 扩展页面壳 composite（由 spacing 阶梯 calc，避免魔法数散落） */
-  --page-shell-padding-top: calc(var(--space-lg) + var(--space-2xs));
-  --page-shell-padding-x: var(--space-lg);
-  --page-shell-padding-bottom: calc(var(--space-xl) + var(--space-xs));
-  --page-shell-padding-bottom-compact: var(--space-lg);
 }
 
 body {

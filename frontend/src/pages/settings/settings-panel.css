@@ -41,12 +41,12 @@
   position: absolute;
   width: 1px;
   height: 1px;
-  padding: 0;
   margin: -1px;
+  padding: 0;
+  border: 0;
+  white-space: nowrap;
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
 }
 
 .settings-card-stack--spaced {
@@ -225,8 +225,8 @@
 .settings-details__chevrons {
   display: inline-flex;
   flex-shrink: 0;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   color: var(--on-surface-muted);
 }
 
@@ -243,9 +243,9 @@
 }
 
 .settings-details__summary:focus-visible {
+  border-radius: var(--radius-sm);
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
-  border-radius: var(--radius-sm);
 }
 
 .settings-details__lead {

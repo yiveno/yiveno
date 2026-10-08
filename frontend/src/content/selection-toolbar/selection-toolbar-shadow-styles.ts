@@ -98,7 +98,7 @@ export const SELECTION_TOOLBAR_COMPONENT_CSS = `
     -webkit-line-clamp: 2;
     -webkit-box-orient: vertical;
     overflow: hidden;
-    word-break: break-word;
+    overflow-wrap: anywhere;
   }
   .saved-hint {
     margin: 0;

@@ -69,13 +69,11 @@ const softwareJsonLd = {
     <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalUrl} />
-    {
-      noindex ? (
-        <meta name="robots" content="noindex, nofollow" />
-      ) : (
-        <meta name="robots" content="index, follow" />
-      )
-    }
+    {noindex ? (
+      <meta name="robots" content="noindex, nofollow" />
+    ) : (
+      <meta name="robots" content="index, follow" />
+    )}
     <link rel="icon" href="/favicon.ico" sizes="any" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
@@ -91,11 +89,7 @@ const softwareJsonLd = {
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
-    {
-      jsonLd && (
-        <script type="application/ld+json" set:html={JSON.stringify(softwareJsonLd)} />
-      )
-    }
+    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(softwareJsonLd)} />}
     <link
       rel="preload"
       href="/fonts/fraunces-normal.woff2"
@@ -134,7 +128,9 @@ const softwareJsonLd = {
     <slot name="head" />
   </head>
   <body data-chrome={chrome} data-nav-over-hero={waitlistNav ? 'true' : undefined}>
-    <a class="skip-link" href="#main">Skip to content</a>
+    <a class="skip-link" href="#main">
+      Skip to content
+    </a>
     {/* 默认营销 Nav；账号域页面用 slot="nav" 注入 AppNav，避免首页打进 AuthNav CSS */}
     <slot name="nav">
       <MarketingNav waitlist={waitlistNav} />
@@ -149,9 +145,15 @@ const softwareJsonLd = {
         <span class="site-footer__meta">· © 2026</span>
       </a>
       <ul class="site-footer__links">
-        <li><a href="/support">Support</a></li>
-        <li><a href="/privacy">Privacy</a></li>
-        <li><a href="/terms">Terms</a></li>
+        <li>
+          <a href="/support">Support</a>
+        </li>
+        <li>
+          <a href="/privacy">Privacy</a>
+        </li>
+        <li>
+          <a href="/terms">Terms</a>
+        </li>
       </ul>
     </footer>
   </body>

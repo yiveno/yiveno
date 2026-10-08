@@ -74,8 +74,8 @@ const emit = defineEmits<{
         type="button"
         :disabled="loading"
         :title="cancelLabel"
-        @click="emit('close')"
         :variant="cancelVariant"
+        @click="emit('close')"
       >
         {{ cancelLabel }}
       </AppButton>
@@ -84,8 +84,8 @@ const emit = defineEmits<{
         :tone="confirmTone"
         :disabled="loading"
         :title="confirmLabel"
-        @click="emit('confirm')"
         :variant="confirmVariant"
+        @click="emit('confirm')"
       >
         {{ loading && confirmLoadingLabel ? confirmLoadingLabel : confirmLabel }}
       </AppButton>

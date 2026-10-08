@@ -194,6 +194,7 @@ function bookmarkRowMemoDeps(row: (typeof renderedRows.value)[number]): unknown[
 <style scoped>
 .bookmark-tree-scroll {
   --library-list-row-gap: var(--space-xs);
+
   flex: 1;
   min-height: 0;
   overflow: auto;

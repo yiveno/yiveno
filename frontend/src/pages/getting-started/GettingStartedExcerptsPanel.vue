@@ -183,8 +183,8 @@ onUnmounted(() => {
 }
 
 .gs-excerpts__empty-body {
-  margin: 0;
   max-width: 42ch;
+  margin: 0;
   font-size: 14px;
   line-height: 1.5;
   color: var(--on-surface-muted);

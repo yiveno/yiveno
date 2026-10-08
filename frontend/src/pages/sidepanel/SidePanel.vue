@@ -1938,14 +1938,14 @@ onUnmounted(() => {
             </div>
           </div>
           <div v-if="captureFirstMode" class="recall-empty-actions">
-            <AppButton type="button" @click="handleOpenGettingStarted" variant="tonal">
+            <AppButton type="button" variant="tonal" @click="handleOpenGettingStarted">
               {{ t('popup_open_getting_started') }}
             </AppButton>
             <AppButton
               type="button"
               :disabled="skipOnboardingBusy"
-              @click="handleSkipOnboarding"
               variant="text"
+              @click="handleSkipOnboarding"
             >
               {{ t('popup_skip_onboarding') }}
             </AppButton>
@@ -2059,10 +2059,22 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-/*
- * Side Panel：随侧栏宽度伸缩；竖向占满可视高度以承载持续对话。
- * 勿再锁 360px（那是旧 Action Popup 约束）。
- */
+@keyframes recall-greeting-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recall-greeting {
+    animation: none;
+  }
+}
+
 :global(html),
 :global(body) {
   width: 100%;
@@ -2087,6 +2099,7 @@ onUnmounted(() => {
   height: 100%;
   min-height: 100%;
   max-height: none;
+
   /* 顶栏非对称内边距：略紧于标准 page shell */
   padding: var(--space-sm) var(--space-md) var(--space-md);
   color: var(--on-surface);
@@ -2095,8 +2108,8 @@ onUnmounted(() => {
 }
 
 .recall-detail-export-entry {
-  flex-shrink: 0;
   display: flex;
+  flex-shrink: 0;
   justify-content: flex-end;
   margin-top: calc(-1 * var(--space-2xs));
   margin-bottom: var(--space-xs);
@@ -2107,15 +2120,15 @@ onUnmounted(() => {
   flex-shrink: 0;
   margin-top: var(--space-xs);
   margin-bottom: var(--space-xs);
-  overflow: visible;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
+  overflow: visible;
 }
 
 .recall-outcome-exit {
   display: grid;
-  gap: var(--space-xs);
   flex-shrink: 0;
+  gap: var(--space-xs);
   margin-top: var(--space-xs);
   margin-bottom: var(--space-sm);
   padding: var(--space-sm);
@@ -2126,8 +2139,8 @@ onUnmounted(() => {
 
 .recall-thread-pivot {
   display: grid;
-  gap: var(--space-xs);
   flex-shrink: 0;
+  gap: var(--space-xs);
   margin-top: var(--space-xs);
   margin-bottom: var(--space-sm);
   padding: var(--space-sm);
@@ -2137,8 +2150,8 @@ onUnmounted(() => {
 }
 
 .recall-thread-pivot__prompt {
-  margin: 0;
   min-width: 0;
+  margin: 0;
   font-size: 13px;
   line-height: 1.4;
   color: var(--on-surface);
@@ -2197,9 +2210,9 @@ onUnmounted(() => {
 
 .recall-post-release {
   display: flex;
-  gap: var(--space-sm);
-  align-items: flex-start;
   justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-sm);
   margin-top: var(--space-xs);
   margin-bottom: 0;
   padding: var(--space-sm);
@@ -2216,8 +2229,8 @@ onUnmounted(() => {
 }
 
 .recall-post-release-label {
-  margin: 0;
   min-width: 0;
+  margin: 0;
   font-size: 12px;
   line-height: 1.4;
   color: var(--on-surface-muted);
@@ -2264,22 +2277,22 @@ onUnmounted(() => {
 /* 占满中间空白，问候垂直居中，成为空态主视觉 */
 .recall-greeting-slot {
   display: flex;
-  align-items: center;
   flex: 1 1 auto;
+  align-items: center;
   min-height: 120px;
   padding: var(--space-xs) 0;
 }
 
 .recall-greeting {
-  margin: 0;
   max-width: 18ch;
+  margin: 0;
   font-size: clamp(28px, 7vw, 36px);
   font-weight: 600;
   line-height: 1.2;
   letter-spacing: -0.03em;
   color: var(--on-surface);
-  text-wrap: balance;
   animation: recall-greeting-in var(--motion-duration-medium) var(--motion-easing-emphasized) both;
+  text-wrap: balance;
 }
 
 .recall-empty-main {
@@ -2338,13 +2351,13 @@ onUnmounted(() => {
   padding: 0 var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius-full);
-  font: inherit;
   font-size: 13px;
   line-height: 1.3;
+  text-align: left;
   color: var(--on-surface);
   background: var(--surface-white);
   cursor: pointer;
-  text-align: left;
+  font: inherit;
   text-wrap: pretty;
 }
 
@@ -2360,25 +2373,9 @@ onUnmounted(() => {
 .recall-empty-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2xs) var(--space-xs);
   justify-content: flex-start;
+  gap: var(--space-2xs) var(--space-xs);
   margin-top: var(--space-2xs);
-}
-
-@keyframes recall-greeting-in {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .recall-greeting {
-    animation: none;
-  }
 }
 
 .recall-results {
@@ -2461,4 +2458,9 @@ onUnmounted(() => {
   min-width: 0;
   max-width: 100%;
 }
+
+/*
+ * Side Panel：随侧栏宽度伸缩；竖向占满可视高度以承载持续对话。
+ * 勿再锁 360px（那是旧 Action Popup 约束）。
+ */
 </style>

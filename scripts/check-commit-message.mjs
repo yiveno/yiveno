@@ -86,12 +86,7 @@ function gitLines(args) {
 /** 当前工作区所有变更（优先 staged，回退到 unstaged） */
 function listChangedFiles() {
   // 注意：直接 get staged - 包括 additions、deletions、renames
-  const staged = gitLines([
-    'diff',
-    '--cached',
-    '--name-only',
-    '--diff-filter=ACDMRT'
-  ])
+  const staged = gitLines(['diff', '--cached', '--name-only', '--diff-filter=ACDMRT'])
   if (staged.length > 0) return staged
   return gitLines(['diff', '--name-only', '--diff-filter=ACDMRT'])
 }
@@ -142,20 +137,13 @@ function main() {
     process.exit(0)
   }
 
-  const staged = gitLines([
-    'diff',
-    '--cached',
-    '--name-only',
-    '--diff-filter=ACDMRT'
-  ])
+  const staged = gitLines(['diff', '--cached', '--name-only', '--diff-filter=ACDMRT'])
   const unstaged = gitLines(['diff', '--name-only', '--diff-filter=ACDMRT'])
 
   if (staged.length === 0) {
     if (unstaged.length > 0) {
       console.error('❌ 无已暂存文件（staged 为空），但 working tree 有改动：')
-      console.error(
-        `   💡 请先 \`git add <path>\` 或 \`git add -A\` 暂存要提交的文件，再 commit。`
-      )
+      console.error(`   💡 请先 \`git add <path>\` 或 \`git add -A\` 暂存要提交的文件，再 commit。`)
       console.error(`   当前未暂存文件数: ${unstaged.length}`)
     } else {
       console.log('ℹ️  无 staged / unstaged 改动，跳过校验')

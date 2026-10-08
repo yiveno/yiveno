@@ -13,31 +13,13 @@ interface Props {
 const { size = 22, class: className, adaptiveNav = false } = Astro.props
 ---
 
-{
-  adaptiveNav ? (
-    <span class:list={['y-mark', 'y-mark--adaptive-nav', className]} style={`width:${size}px;height:${size}px`}>
-      <img
-        class="y-mark__img y-mark__img--on-light-bg"
-        src="/images/logo-mark.svg"
-        alt=""
-        width={size}
-        height={size}
-        decoding="async"
-        aria-hidden="true"
-      />
-      <img
-        class="y-mark__img y-mark__img--on-dark-bg"
-        src="/images/logo-mark-on-dark.svg"
-        alt=""
-        width={size}
-        height={size}
-        decoding="async"
-        aria-hidden="true"
-      />
-    </span>
-  ) : (
+{adaptiveNav ? (
+  <span
+    class:list={['y-mark', 'y-mark--adaptive-nav', className]}
+    style={`width:${size}px;height:${size}px`}
+  >
     <img
-      class={className}
+      class="y-mark__img y-mark__img--on-light-bg"
       src="/images/logo-mark.svg"
       alt=""
       width={size}
@@ -45,8 +27,27 @@ const { size = 22, class: className, adaptiveNav = false } = Astro.props
       decoding="async"
       aria-hidden="true"
     />
-  )
-}
+    <img
+      class="y-mark__img y-mark__img--on-dark-bg"
+      src="/images/logo-mark-on-dark.svg"
+      alt=""
+      width={size}
+      height={size}
+      decoding="async"
+      aria-hidden="true"
+    />
+  </span>
+) : (
+  <img
+    class={className}
+    src="/images/logo-mark.svg"
+    alt=""
+    width={size}
+    height={size}
+    decoding="async"
+    aria-hidden="true"
+  />
+)}
 
 <style>
   img,
@@ -74,11 +75,15 @@ const { size = 22, class: className, adaptiveNav = false } = Astro.props
   }
 
   /* Hero 深底 Nav：浅色 logo */
-  :global(body[data-chrome='home'][data-nav-over-hero='true']) .y-mark--adaptive-nav .y-mark__img--on-light-bg {
+  :global(body[data-chrome='home'][data-nav-over-hero='true'])
+    .y-mark--adaptive-nav
+    .y-mark__img--on-light-bg {
     display: none;
   }
 
-  :global(body[data-chrome='home'][data-nav-over-hero='true']) .y-mark--adaptive-nav .y-mark__img--on-dark-bg {
+  :global(body[data-chrome='home'][data-nav-over-hero='true'])
+    .y-mark--adaptive-nav
+    .y-mark__img--on-dark-bg {
     display: block;
   }
 </style>

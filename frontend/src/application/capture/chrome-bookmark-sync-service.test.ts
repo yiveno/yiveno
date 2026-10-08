@@ -292,13 +292,14 @@ describe('chrome-bookmark-sync-service', () => {
   })
 
   it('关闭书签灌库时跳过 created（不入队）', async () => {
-    const { USER_SETTINGS_STORAGE_KEY } = await import('@/core/settings/user-settings')
+    const { USER_SETTINGS_STORAGE_KEY: userSettingsStorageKey } =
+      await import('@/core/settings/user-settings')
     vi.stubGlobal(
       'chrome',
       createChromeMock({
         [LOCAL_PROFILE_STORAGE_KEY]: localProfile,
         [CHROME_BOOKMARK_IMPORT_STORAGE_KEY]: completedImportState,
-        [USER_SETTINGS_STORAGE_KEY]: {
+        [userSettingsStorageKey]: {
           selectionToolbarEnabled: true,
           aiFeaturesEnabled: true,
           chromeBookmarkIngestEnabled: false

@@ -163,8 +163,8 @@ onUnmounted(() => {
   margin: 0;
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.08em;
   text-transform: uppercase;
+  letter-spacing: 0.08em;
   color: color-mix(in srgb, var(--on-surface-muted) 85%, transparent);
 }
 
@@ -177,8 +177,8 @@ onUnmounted(() => {
 }
 
 .getting-started__lead {
-  margin: 0;
   max-width: 42ch;
+  margin: 0;
   font-size: 16px;
   line-height: 1.55;
   color: var(--on-surface-muted);

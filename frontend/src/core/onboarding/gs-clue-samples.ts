@@ -58,7 +58,7 @@ export function pickNextDistinctClueIndex(
     return 0
   }
   const start = ((currentIndex % length) + length) % length
-  let next = randomIndex(start, length)
+  const next = randomIndex(start, length)
   if (clues[next] !== clues[start]) {
     return next
   }

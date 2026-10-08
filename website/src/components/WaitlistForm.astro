@@ -24,7 +24,9 @@ const uid = `wl-${Math.random().toString(36).slice(2, 9)}`
   </p>
   <div data-waitlist-form-wrap>
     <form class="waitlist__form" novalidate data-waitlist-form>
-      <label class="waitlist__label" for={`${uid}-email`}>Email</label>
+      <label class="waitlist__label" for={`${uid}-email`}>
+        Email
+      </label>
       <input
         id={`${uid}-email`}
         class="waitlist__input"
@@ -47,7 +49,9 @@ const uid = `wl-${Math.random().toString(36).slice(2, 9)}`
           data-waitlist-company
         />
       </div>
-      <button class="waitlist__submit" type="submit" data-waitlist-submit>Notify me</button>
+      <button class="waitlist__submit" type="submit" data-waitlist-submit>
+        Notify me
+      </button>
     </form>
     <p class="waitlist__err" role="alert" hidden data-waitlist-err></p>
     <p class="waitlist__note">

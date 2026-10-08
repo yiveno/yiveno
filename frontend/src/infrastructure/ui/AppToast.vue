@@ -73,7 +73,7 @@ const iconByTone: Record<AppToastTone, AppIconName> = {
   font-size: 0.875rem;
   line-height: 1.45;
   color: var(--on-surface);
-  word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 @keyframes app-toast-enter {
