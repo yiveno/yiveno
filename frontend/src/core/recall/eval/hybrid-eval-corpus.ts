@@ -20,7 +20,6 @@ import {
 } from '@/core/memory/create-memory-item'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import {
-  HYBRID_FAKE_EMBEDDING_DIM,
   makeFakeEmbedding,
   makeOrthogonalVector,
   makeOrthogonalVectorForPair
