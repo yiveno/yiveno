@@ -58,7 +58,7 @@
     
     // 配置文件（由 tsconfig.node.json 处理）
     "vite.config.ts",
-    "vitest.config.ts",
+    "vitest.config.mts",
 
     // 生成的类型文件
     ".vue-global-types"

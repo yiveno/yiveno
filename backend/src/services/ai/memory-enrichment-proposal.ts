@@ -18,14 +18,11 @@ const OBJECT_TYPES = [
 ] as const
 
 function cappedTokenList(max: number) {
+  // Zod 4 + exactOptionalPropertyTypes：先 transform 再 optional，键才保持可缺省
   return z
     .array(z.string())
     .max(max * 2)
-    .optional()
     .transform(list => {
-      if (!list) {
-        return undefined
-      }
       const seen = new Set<string>()
       const out: string[] = []
       for (const raw of list) {
@@ -45,6 +42,7 @@ function cappedTokenList(max: number) {
       }
       return out.length > 0 ? out : undefined
     })
+    .optional()
 }
 
 /** Worker 侧提议 schema（与 frontend memory-enrichment-proposal 对齐）。 */
@@ -57,14 +55,11 @@ export const MemoryEnrichmentProposalSchema = z
       .string()
       .trim()
       .max(280)
-      .optional()
       .transform(value => {
-        if (!value) {
-          return undefined
-        }
         const trimmed = value.trim().slice(0, 280)
         return trimmed.length > 0 ? trimmed : undefined
-      }),
+      })
+      .optional(),
     objectType: z.enum(OBJECT_TYPES).optional()
   })
   .strict()

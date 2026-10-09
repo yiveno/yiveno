@@ -23,6 +23,18 @@ export const UserSettingsSchema = z.object({
   mcpReadOnlyEnabled: z.boolean().default(false)
 })
 
+/**
+ * 局部更新 patch（无 .default）。
+ * Zod 4：`Schema.partial()` 仍会套用字段 default，会把「未传字段」填成默认值；
+ * patch 必须用不带 default 的 schema，避免误写整表。
+ */
+export const UserSettingsPatchSchema = z.object({
+  selectionToolbarEnabled: z.boolean().optional(),
+  aiFeaturesEnabled: z.boolean().optional(),
+  chromeBookmarkIngestEnabled: z.boolean().optional(),
+  mcpReadOnlyEnabled: z.boolean().optional()
+})
+
 export type UserSettings = z.infer<typeof UserSettingsSchema>
 
 /** 默认用户设置。 */

@@ -16,7 +16,7 @@
  */
 
 import type { MemoryItem } from '@/core/memory/memory-item'
-import type { TopicDescriptor } from '@/core/recall/parse-recall-clue-types'
+import type { EmbeddingVector, TopicDescriptor } from '@/core/recall/parse-recall-clue-types'
 import { cosineSimilarity } from '@/core/recall/hybrid-fusion'
 
 /**
@@ -136,7 +136,7 @@ function topicEmbeddingTopicScore(similarity: number): number {
 export function topicLookup(
   items: MemoryItem[],
   topic: TopicDescriptor,
-  topicEmbedding?: Float32Array,
+  topicEmbedding?: EmbeddingVector,
   options: { limit?: number } = {}
 ): TopicLookupResult {
   const limit = options.limit ?? 50

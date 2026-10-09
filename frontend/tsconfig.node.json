@@ -13,5 +13,5 @@
     "noUnusedParameters": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["vite.config.ts", "vite/**/*.ts", "vitest.config.ts"]
+  "include": ["vite.config.ts", "vite/**/*.ts", "vitest.config.mts"]
 }

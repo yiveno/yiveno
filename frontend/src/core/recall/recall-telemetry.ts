@@ -28,9 +28,9 @@ export const RecallPipelineTimingSchema = z.object({
 export type RecallPipelineTiming = z.infer<typeof RecallPipelineTimingSchema>
 
 const telemetryBaseSchema = z.object({
-  taskId: z.string().uuid(),
-  traceId: z.string().uuid(),
-  at: z.string().datetime()
+  taskId: z.uuid(),
+  traceId: z.uuid(),
+  at: z.iso.datetime()
 })
 
 /** TTE 七事件 discriminated union（§5.9 最小埋点）。 */
@@ -52,7 +52,7 @@ export const RecallTelemetryEventSchema = z.discriminatedUnion('type', [
   }),
   telemetryBaseSchema.extend({
     type: z.literal('evidence_visible'),
-    memoryItemId: z.string().uuid(),
+    memoryItemId: z.uuid(),
     rank: z.number().int().nonnegative(),
     ecs: z.number().int().min(0).max(5),
     reasonCodes: z.array(z.string()).optional(),
@@ -60,7 +60,7 @@ export const RecallTelemetryEventSchema = z.discriminatedUnion('type', [
   }),
   telemetryBaseSchema.extend({
     type: z.literal('source_opened'),
-    memoryItemId: z.string().uuid(),
+    memoryItemId: z.uuid(),
     rank: z.number().int().nonnegative().optional()
   }),
   telemetryBaseSchema.extend({
@@ -77,7 +77,7 @@ export const RecallTelemetryEventSchema = z.discriminatedUnion('type', [
       'copy',
       'unresolved'
     ]),
-    memoryItemId: z.string().uuid().optional()
+    memoryItemId: z.uuid().optional()
   }),
   telemetryBaseSchema.extend({
     type: z.literal('task_timeout'),

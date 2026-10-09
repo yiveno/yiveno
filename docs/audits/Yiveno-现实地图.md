@@ -807,7 +807,7 @@ RecallResult
 13. **MCP 只读门禁**：服务端 `requireMcpGate` 与客户端 `settings.mcpReadOnlyEnabled` 双层门禁；服务端最终手段，但客户端默认开启状态由 Settings 决定。变更同步是 fire-and-forget `setMcpReadOnly` → `mcp-api-client`。
 14. **`enrichEmptyRecallResult`**：仅在 no_match 时挂 `relatedGuess`；实现路径未在本审计深读，**建议第二阶段审**。
 15. **`buildMcpDetailExport` / `renderDetailExportMarkdown`**：MCP evidence 形态独立于 Side Panel result card；这是"export-friendly" schema，不是 UI render。
-16. **Tooling**：Bun workspaces + Bun 自带 TS 缓存；`bun run typecheck` 已覆盖 packages/\*。Knip 通过 `scripts/knip-runner.mjs` 在隔离 `.cache/knip-runner` 跑（解决 monorepo zod@3 与 knip zod/mini 冲突）。`knip.json` / `package.json` 锁版本。
+16. **Tooling**：Bun workspaces + Bun 自带 TS 缓存；`bun run typecheck` 已覆盖 packages/\*。Knip 装在根 `devDependencies`，`bun run knip` → `bunx knip -D .`（zod 4 起与 knip `zod/mini` 兼容，已取消隔离安装）。`knip.json` / `package.json` 锁版本。
 17. **`getAuthSession` 路径**：扩展不直连 `@supabase/supabase-js`（GoTrue 初始化碰 `window`），改用裸 fetch（`infrastructure/auth/auth-session-revalidate.ts`、`extension-oauth.ts`）。这是 SW 环境必要，但 token 管理是分散的。
 18. **i18n 与 en locale**：`infrastructure/i18n/message-keys.ts`（19.2KB）键定义全集；`_locales/en/messages.json`（本审计未读）只有 en 目录；`product-surface-label-policy.ts` 强制产品面仅 en + `t()`。
 19. **测试规模**：

@@ -37,10 +37,10 @@
     "vue": "^3.5.0"
   },
   "devDependencies": {
-    "@types/chrome": "^0.1.4",
-    "typescript": "~5.8.3",
-    "vitest": "^4.0.17",
-    "vue": "^3.5.18"
+    "@types/chrome": "^0.3.4",
+    "typescript": "~5.9.3",
+    "vitest": "^5.0.3",
+    "vue": "^3.5.43"
   },
   "engines": {
     "bun": ">=1.0.0"

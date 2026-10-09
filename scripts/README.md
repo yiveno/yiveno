@@ -11,7 +11,7 @@
 | `check-doc-drift.mjs`            | `doc:check`                | CI 门禁  |
 | `check-doc-code-consistency.mjs` | `doc:check:consistency`    | CI 门禁  |
 | `check-commit-message.mjs`       | `.husky/commit-msg`        | git 门禁 |
-| `knip-runner.mjs`                | `knip*`                    | CI 门禁  |
+| （根 `bunx knip`）               | `knip*`                    | CI 门禁  |
 | `dev-env.mjs`                    | `env:sync*` / `env:check*` | 工具     |
 | `sync-ide-boot.mjs`              | `sync:ide-boot`            | 工具     |
 | `sync-brand-assets.mjs`          | `sync:brand-assets`        | 工具     |
@@ -72,11 +72,11 @@ bun run doc:check:all               # = doc:check + doc:check:consistency
 
 ---
 
-### `knip` → `knip-runner.mjs`
+### `knip`（根 `devDependencies`）
 
 **作用：** 未使用代码检测（死文件、未引用导出、未声明依赖等）。
 
-**特殊说明：** 根 monorepo 通过 `resolutions` 锁定 `zod@3`，与 knip 依赖的 `zod/mini` 不兼容。因此在 `.cache/knip-runner` 内独立安装 knip，不污染根 `node_modules`。
+**说明：** zod 4 起与 knip `zod/mini` 兼容，直接 `bunx knip -D .`（历史隔离脚本 `knip-runner.mjs` 已删除）。
 
 **运行：**
 
@@ -89,8 +89,6 @@ bun run knip:report       # 全量报告，不 exit 1
 ```
 
 **CI：** push / PR 时执行（`.github/workflows/ci.yml`）。
-
-**解除隔离条件：** 根目录 `bunx knip -D .` 不再报 `Package subpath './mini' is not defined` 后，可删除本脚本并改回根依赖。
 
 ---
 

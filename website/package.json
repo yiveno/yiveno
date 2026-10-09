@@ -21,15 +21,15 @@
     "deploy": "bun run build:prod && bunx wrangler pages deploy dist --project-name yiveno-website --branch main --commit-dirty=true"
   },
   "dependencies": {
-    "@astrojs/vue": "^7.0.2",
-    "@supabase/supabase-js": "^2.49.4",
+    "@astrojs/vue": "^7.0.3",
+    "@supabase/supabase-js": "^2.117.3",
     "@yiveno/design-tokens": "workspace:*",
-    "astro": "^7.1.0",
-    "vue": "^3.5.35"
+    "astro": "^7.3.8",
+    "vue": "^3.5.43"
   },
   "devDependencies": {
-    "@astrojs/check": "^0.9.9",
+    "@astrojs/check": "^0.9.10",
     "esbuild": "^0.28.2",
-    "vitest": "^4.0.17"
+    "vitest": "^5.0.3"
   }
 }

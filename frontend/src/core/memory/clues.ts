@@ -14,20 +14,20 @@ export const MemoryCluesSchema = z.object({
   embeddingModel: z.string().optional(),
   /** embedding 维度 */
   embeddingDim: z.number().int().positive().optional(),
-  sourceUrl: z.string().url().optional(),
+  sourceUrl: z.url().optional(),
   domain: z.string().optional(),
   captureEntry: CaptureEntrySchema.optional(),
   openCount: z.number().int().nonnegative().default(0),
-  lastOpenedAt: z.string().datetime().nullable().optional(),
+  lastOpenedAt: z.iso.datetime().nullable().optional(),
   /**
    * 会话 settled / Mark 等正例次数（§7.2）。
    * `often_opened` 软加权只读本字段，不读裸 openCount。
    */
   settledCount: z.number().int().nonnegative().default(0),
-  lastSettledAt: z.string().datetime().nullable().optional(),
+  lastSettledAt: z.iso.datetime().nullable().optional(),
   /** 用户否定「都不是这些」次数；参与排序降权。 */
   dismissCount: z.number().int().nonnegative().default(0),
-  lastDismissedAt: z.string().datetime().nullable().optional(),
+  lastDismissedAt: z.iso.datetime().nullable().optional(),
   tags: z.array(z.string()).default([]),
   note: z.string().optional()
 })

@@ -365,8 +365,10 @@ export default [
       '**/docs/**',
       '**/scripts/**/*.cjs',
       '**/*.md',
+      // flat config 自检时 unused-imports 会把模块顶层 const 误报为 type-only（eslint 10）
+      'eslint.config.js',
       'vite.config.ts',
-      'vitest.config.ts',
+      'vitest.config.mts',
       '**/.vue-global-types/**',
       '**/vite-env.d.ts',
       '**/.venv/**',

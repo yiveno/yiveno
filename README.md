@@ -183,7 +183,7 @@ Yiveno/                             # Monorepo 根目录
 │   ├── check-doc-drift.mjs        # doc:check（registry、CURRENT、session-boot）
 │   ├── sync-ide-boot.mjs          # CURRENT → session-boot 当下块
 │   ├── e2e-management.mjs         # E2E 测试
-│   └── knip-runner.mjs            # Dead code 检测
+│   └── （knip：根 bunx knip）      # Dead code 检测
 │
 ├── docs/                           # 权威文档（规格 / ADR / 工程）
 │   ├── product/                   # 产品文档、CURRENT、术语表

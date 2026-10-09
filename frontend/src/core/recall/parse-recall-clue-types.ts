@@ -1,6 +1,17 @@
 import { z } from 'zod'
 
 /**
+ * Topic / clue embedding 向量。
+ * TS 5.7+ 起 `Float32Array` 默认 buffer 为 `ArrayBuffer`；embedding 通道与
+ * `new Float32Array(...)` 在部分 lib 下仍产出 `ArrayBufferLike`，用此别名贯通赋值。
+ */
+export type EmbeddingVector = Float32Array<ArrayBufferLike>
+
+const EmbeddingVectorSchema = z.custom<EmbeddingVector>(
+  (v): v is EmbeddingVector => v instanceof Float32Array
+)
+
+/**
  * P0 可识别的对象类型（与 enrichment tags 对齐用英文 slug）。
  * - poem：诗
  * - article：文章
@@ -83,7 +94,7 @@ export const RecallTopicSchema = z.object({
    * Topic embedding 向量（Gap 5 · D3-C 语义化）。
    * 由 `deriveTopicEmbedding` 产出；undefined 时 topicLookup 走词法路径。
    */
-  embedding: z.instanceof(Float32Array).optional()
+  embedding: EmbeddingVectorSchema.optional()
 })
 
 export type RecallTopic = z.infer<typeof RecallTopicSchema>
@@ -115,7 +126,7 @@ export const TopicDescriptorSchema = z.object({
    * Topic embedding 向量（Gap 5 · D3-C 语义化）。
    * 由 `deriveTopicEmbedding` 产出；undefined 时 topicLookup 走词法路径。
    */
-  embedding: z.instanceof(Float32Array).optional()
+  embedding: EmbeddingVectorSchema.optional()
 })
 
 export type TopicDescriptor = z.infer<typeof TopicDescriptorSchema>

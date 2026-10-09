@@ -221,8 +221,9 @@ export default {
     // ⚠️ 警告但不修复：可能需要人工判断的规则
     'declaration-no-important': null, // 允许 !important（有时需要）
     'selector-max-specificity': ['0,4,0', { severity: 'warning' }], // 选择器复杂度警告（仅警告，不阻止提交）
-    // 历史组件选择器/font 简写债：先降为 warning，避免根 lint 被结构性债拦死
-    'no-descending-specificity': [true, { severity: 'warning' }],
+    // 选择器源码顺序 vs 特异度：不挡行为、也不换性能；关掉以免噪声
+    'no-descending-specificity': null,
+    // 历史 font 简写债：降为 warning，避免根 lint 被结构性债拦死
     'declaration-block-no-shorthand-property-overrides': [true, { severity: 'warning' }],
     'rule-selector-property-disallowed-list': null, // 不限制特定属性
 

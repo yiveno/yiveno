@@ -46,7 +46,9 @@
   border: 0;
   white-space: nowrap;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+
+  /* sr-only：clip 已弃用，改用 clip-path */
+  clip-path: inset(50%);
 }
 
 .settings-card-stack--spaced {

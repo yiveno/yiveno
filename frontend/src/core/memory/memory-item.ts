@@ -4,13 +4,13 @@ import { MemoryCluesSchema } from '@/core/memory/clues'
 import { BookmarkPayloadSchema, TextExcerptPayloadSchema } from '@/core/memory/payload'
 
 const memoryItemBaseSchema = z.object({
-  id: z.string().uuid(),
-  ownerId: z.string().uuid(),
-  sourceLocalProfileId: z.string().uuid(),
+  id: z.uuid(),
+  ownerId: z.uuid(),
+  sourceLocalProfileId: z.uuid(),
   clues: MemoryCluesSchema,
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
-  deletedAt: z.string().datetime().nullable().optional()
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+  deletedAt: z.iso.datetime().nullable().optional()
 })
 
 /** Bookmark 类型 MemoryItem。 */

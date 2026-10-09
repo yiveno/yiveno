@@ -25,37 +25,37 @@ const MemoryCluesSchema = z.object({
   embedding: z.array(z.number()).optional(),
   embeddingModel: z.string().optional(),
   embeddingDim: z.number().int().positive().optional(),
-  sourceUrl: z.string().url().optional(),
+  sourceUrl: z.url().optional(),
   domain: z.string().optional(),
   captureEntry: CaptureEntrySchema.optional(),
   openCount: z.number().int().nonnegative().default(0),
-  lastOpenedAt: z.string().datetime().nullable().optional(),
+  lastOpenedAt: z.iso.datetime().nullable().optional(),
   /** §7.2 settled 正例次数；often_opened 只读此字段 */
   settledCount: z.number().int().nonnegative().default(0),
-  lastSettledAt: z.string().datetime().nullable().optional(),
+  lastSettledAt: z.iso.datetime().nullable().optional(),
   dismissCount: z.number().int().nonnegative().default(0),
-  lastDismissedAt: z.string().datetime().nullable().optional(),
+  lastDismissedAt: z.iso.datetime().nullable().optional(),
   tags: z.array(z.string()).default([]),
   note: z.string().optional()
 })
 
 const BookmarkPayloadSchema = z.object({
   title: z.string().min(1),
-  url: z.string().url(),
+  url: z.url(),
   domain: z.string().min(1),
-  faviconUrl: z.string().url().optional(),
+  faviconUrl: z.url().optional(),
   chromeBookmarkId: z.string().optional(),
   parentFolderId: z.string().optional(),
-  chromeCreatedAt: z.string().datetime().optional(),
+  chromeCreatedAt: z.iso.datetime().optional(),
   /** 第三方语料源（与扩展 payload 对齐） */
   corpusSource: z.enum(['raindrop', 'pocket']).optional(),
   remoteId: z.string().min(1).optional(),
-  sourceCreatedAt: z.string().datetime().optional()
+  sourceCreatedAt: z.iso.datetime().optional()
 })
 
 const TextExcerptPayloadSchema = z.object({
   selectedText: z.string().min(1),
-  sourceUrl: z.string().url(),
+  sourceUrl: z.url(),
   pageTitle: z.string(),
   domain: z.string().min(1),
   contextBefore: z.string().optional(),
@@ -63,13 +63,13 @@ const TextExcerptPayloadSchema = z.object({
 })
 
 const memoryItemBaseSchema = z.object({
-  id: z.string().uuid(),
-  ownerId: z.string().uuid(),
-  sourceLocalProfileId: z.string().uuid(),
+  id: z.uuid(),
+  ownerId: z.uuid(),
+  sourceLocalProfileId: z.uuid(),
   clues: MemoryCluesSchema,
-  createdAt: z.string().datetime(),
-  updatedAt: z.string().datetime(),
-  deletedAt: z.string().datetime().nullable().optional()
+  createdAt: z.iso.datetime(),
+  updatedAt: z.iso.datetime(),
+  deletedAt: z.iso.datetime().nullable().optional()
 })
 
 export const BookmarkMemoryItemSchema = memoryItemBaseSchema.extend({

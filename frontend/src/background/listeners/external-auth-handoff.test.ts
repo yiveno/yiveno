@@ -61,6 +61,9 @@ describe('external auth handoff', () => {
   beforeEach(() => {
     resetExternalAuthHandoffListenerForTests()
     ensureBackgroundBootstrappedMock.mockClear()
+    vi.mocked(absorbLocalProfileIntoAccount).mockReset()
+    vi.mocked(absorbLocalProfileIntoAccount).mockResolvedValue(0)
+    vi.mocked(scheduleSilentMemoryEmbeddingMaintenance).mockClear()
     vi.stubGlobal('chrome', createChromeStorageMock())
   })
 
@@ -114,11 +117,16 @@ describe('external auth handoff', () => {
 
     expect(result).toEqual({ ok: true })
     expect(resolveAbsorb).toBeTypeOf('function')
+    // 归并未完成前不得调度 embedding；Vitest 5 不再靠上一条用例的 mock 残留误过
     await vi.waitFor(() => {
       expect(ensureBackgroundBootstrappedMock).toHaveBeenCalled()
-      expect(scheduleSilentMemoryEmbeddingMaintenance).toHaveBeenCalled()
+      expect(absorbLocalProfileIntoAccount).toHaveBeenCalled()
     })
+    expect(scheduleSilentMemoryEmbeddingMaintenance).not.toHaveBeenCalled()
     resolveAbsorb?.(1)
+    await vi.waitFor(() => {
+      expect(scheduleSilentMemoryEmbeddingMaintenance).toHaveBeenCalledWith('auth_handoff', 800)
+    })
   })
 
   it('sign-out handoff 清登录态', async () => {

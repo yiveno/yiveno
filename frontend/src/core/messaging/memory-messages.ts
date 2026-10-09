@@ -7,19 +7,19 @@ import type { DetailExport } from '@/core/recall/detail-export'
 import type { BackgroundMessageScope } from '@/core/messaging/constants'
 
 const exportDetailExportPayloadSchema = z.object({
-  ids: z.array(z.string().uuid()).min(1)
+  ids: z.array(z.uuid()).min(1)
 })
 
 const captureBookmarkPayloadSchema = z.object({
   title: z.string().min(1),
-  url: z.string().url(),
-  faviconUrl: z.string().url().optional(),
+  url: z.url(),
+  faviconUrl: z.url().optional(),
   captureEntry: CaptureEntrySchema.optional()
 })
 
 const captureTextExcerptPayloadSchema = z.object({
   selectedText: z.string().min(1),
-  sourceUrl: z.string().url(),
+  sourceUrl: z.url(),
   pageTitle: z.string(),
   contextBefore: z.string().optional(),
   contextAfter: z.string().optional(),
@@ -36,30 +36,30 @@ const listMemoryItemsPayloadSchema = z
   .optional()
 
 const getMemoryItemPayloadSchema = z.object({
-  id: z.string().uuid()
+  id: z.uuid()
 })
 
 const deleteMemoryItemPayloadSchema = z.object({
-  id: z.string().uuid()
+  id: z.uuid()
 })
 
 const updateMemoryNotePayloadSchema = z.object({
-  id: z.string().uuid(),
+  id: z.uuid(),
   /** 空字符串表示清除附注。 */
   note: z.string().trim().max(500)
 })
 
 const recordMemoryOpenPayloadSchema = z.object({
-  id: z.string().uuid()
+  id: z.uuid()
 })
 
 const recordRecallDismissPayloadSchema = z.object({
-  ids: z.array(z.string().uuid()).min(1).max(20)
+  ids: z.array(z.uuid()).min(1).max(20)
 })
 
 /** §7.2：写入 settledCount（Mark / 经校准的 medium target），非裸 open。 */
 const recordRecallSettlePayloadSchema = z.object({
-  id: z.string().uuid()
+  id: z.uuid()
 })
 
 /** Memory 操作面向 UI 的稳定错误码。 */

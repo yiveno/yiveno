@@ -55,9 +55,10 @@ function webhookSecretBytes(secret: string): Uint8Array {
 }
 
 async function hmacSha256(secretBytes: Uint8Array, payload: string): Promise<Uint8Array> {
+  // TS 5.7+：importKey 要求 BufferSource（ArrayBuffer）；slice() 得到 ArrayBuffer 视图
   const key = await crypto.subtle.importKey(
     'raw',
-    secretBytes,
+    secretBytes.slice(),
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     ['sign']

@@ -11,7 +11,11 @@
 
 import { effectiveContentTermsForRecall } from '@/core/recall/content-term-corroboration'
 import { normalizeRecallText } from '@/core/recall/keyword-filter'
-import type { ParsedRecallClue, RecallTopic } from '@/core/recall/parse-recall-clue-types'
+import type {
+  EmbeddingVector,
+  ParsedRecallClue,
+  RecallTopic
+} from '@/core/recall/parse-recall-clue-types'
 import { TopicDescriptorSchema, type TopicDescriptor } from '@/core/recall/parse-recall-clue-types'
 
 /**
@@ -155,7 +159,7 @@ export function withRecallTopic(parsed: ParsedRecallClue): ParsedRecallClue {
  */
 export function buildTopicDescriptorFromRecallTopic(
   topic: NonNullable<ParsedRecallClue['topic']>,
-  embedding?: Float32Array
+  embedding?: EmbeddingVector
 ): TopicDescriptor {
   const displayName = topic.terms.length > 0 ? topic.terms.join(' ') : '(weak topic)'
   return TopicDescriptorSchema.parse({
@@ -180,7 +184,7 @@ export function buildTopicDescriptorFromRecallTopic(
  */
 export async function withRecallTopicAsync(
   parsed: ParsedRecallClue,
-  embedClueText: ((text: string) => Promise<Float32Array | null>) | null
+  embedClueText: ((text: string) => Promise<EmbeddingVector | null>) | null
 ): Promise<ParsedRecallClue> {
   // Step 1：幂等回填（与 withRecallTopic 相同逻辑）
   if (!parsed.topic) {

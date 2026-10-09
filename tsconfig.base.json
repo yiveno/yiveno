@@ -1,6 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
+    /* TS 5.9+：Zod 等重泛型 schema 的实例化缓存会加速 vue-tsc（无需额外开关）。
+       IDE：Expandable Hover 可用 +/− 展开深类型；扩展 SW 勿启用 import defer（运行时未普及）。 */
     /* 基础选项 */
     "esModuleInterop": true,
     "skipLibCheck": true,

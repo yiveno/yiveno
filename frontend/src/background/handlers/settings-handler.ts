@@ -3,7 +3,7 @@ import type {
   GetUserSettingsResponse,
   UpdateUserSettingsResponse
 } from '@/core/messaging/settings-messages'
-import { UserSettingsSchema, type UserSettings } from '@/core/settings/user-settings'
+import { UserSettingsPatchSchema, type UserSettings } from '@/core/settings/user-settings'
 import { ensureChromeBookmarksImported } from '@/application/capture/import-chrome-bookmarks-service'
 import { resumeAsyncMemoryEmbeddingAfterAuth } from '@/application/memory/schedule-async-memory-embedding'
 import { resumeAsyncMemoryLlmEnrichmentAfterQuota } from '@/application/memory/schedule-async-memory-llm-enrichment'
@@ -50,7 +50,7 @@ export async function handleUpdateUserSettings(
 ): Promise<UpdateUserSettingsResponse> {
   const startedAt = flowStart('Settings', '更新用户设置')
   try {
-    const parsed = UserSettingsSchema.partial().parse(payload)
+    const parsed = UserSettingsPatchSchema.parse(payload)
     const patch: Partial<UserSettings> = {}
     if (typeof parsed.selectionToolbarEnabled === 'boolean') {
       patch.selectionToolbarEnabled = parsed.selectionToolbarEnabled

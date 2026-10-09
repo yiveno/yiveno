@@ -75,7 +75,12 @@ describe('memory-cloud-sync-alarm listener', () => {
     const onAlarm = (chrome.alarms.onAlarm.addListener as ReturnType<typeof vi.fn>).mock
       .calls[0]?.[0] as (alarm: chrome.alarms.Alarm) => void
 
-    onAlarm({ name: MEMORY_CLOUD_SYNC_ALARM_NAME, scheduledTime: Date.now(), periodInMinutes: 15 })
+    onAlarm({
+      name: MEMORY_CLOUD_SYNC_ALARM_NAME,
+      scheduledTime: Date.now(),
+      periodInMinutes: 15,
+      persistAcrossSessions: true
+    })
 
     await vi.waitFor(() => {
       expect(ensureBackgroundBootstrappedMock).toHaveBeenCalledTimes(1)
@@ -89,7 +94,7 @@ describe('memory-cloud-sync-alarm listener', () => {
     const onAlarm = (chrome.alarms.onAlarm.addListener as ReturnType<typeof vi.fn>).mock
       .calls[0]?.[0] as (alarm: chrome.alarms.Alarm) => void
 
-    onAlarm({ name: 'other.alarm', scheduledTime: Date.now() })
+    onAlarm({ name: 'other.alarm', scheduledTime: Date.now(), persistAcrossSessions: true })
 
     await Promise.resolve()
     await Promise.resolve()

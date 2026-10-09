@@ -4,13 +4,13 @@
 
 import { describe, expect, it } from 'vitest'
 import { deriveTopicEmbedding, deriveTopicEmbeddingSync } from '@/core/recall/topic-embedding'
-import type { TopicDescriptor } from '@/core/recall/parse-recall-clue-types'
+import type { EmbeddingVector, TopicDescriptor } from '@/core/recall/parse-recall-clue-types'
 
 // ============================================================
 // 辅助构造
 // ============================================================
 
-function makeTopicDescriptor(tokens: string[], embedding?: Float32Array): TopicDescriptor {
+function makeTopicDescriptor(tokens: string[], embedding?: EmbeddingVector): TopicDescriptor {
   return {
     displayName: tokens.join(' '),
     tokens,
@@ -22,7 +22,7 @@ function makeTopicDescriptor(tokens: string[], embedding?: Float32Array): TopicD
 function makeFakeEmbedFn(
   dimension: number = 4,
   value: number = 0.5
-): (text: string) => Promise<Float32Array | null> {
+): (text: string) => Promise<EmbeddingVector | null> {
   return async () => Promise.resolve(new Float32Array(Array(dimension).fill(value)))
 }
 
@@ -200,7 +200,7 @@ describe('deriveTopicEmbeddingSync：同步版', () => {
 describe('deriveTopicEmbedding：embedClueText 接口签名兼容', () => {
   it('embedFn 返回 Float32Array | null（null 场景）', async () => {
     const topic = makeTopicDescriptor(['model', '3'])
-    const embedFn = async (): Promise<Float32Array | null> => null
+    const embedFn = async (): Promise<EmbeddingVector | null> => null
     const result = await deriveTopicEmbedding(topic, embedFn)
     expect(result.semantic).toBe(false)
     expect(result.fallbackReason).toBe('embedding_empty')
@@ -208,7 +208,7 @@ describe('deriveTopicEmbedding：embedClueText 接口签名兼容', () => {
 
   it('embedFn 同步返回 Float32Array | null', () => {
     const topic = makeTopicDescriptor(['model', '3'])
-    const embedFn = (): Float32Array | null => new Float32Array(4)
+    const embedFn = (): EmbeddingVector | null => new Float32Array(4)
     const result = deriveTopicEmbeddingSync(topic, embedFn)
     expect(result.semantic).toBe(true)
   })

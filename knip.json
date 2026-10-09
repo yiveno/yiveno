@@ -3,7 +3,7 @@
   "treatConfigHintsAsErrors": true,
   "ignore": ["**/*.d.ts"],
   "ignoreExportsUsedInFile": true,
-  "ignoreBinaries": ["run", "mprocs"],
+  "ignoreBinaries": ["mprocs"],
   "tags": ["-lintignore"],
   "rules": {
     "files": "error",
@@ -28,7 +28,6 @@
     "frontend": {
       "entry": [
         "src/pages/*/main.ts",
-        "src/dev/probe-console/main.ts",
         "src/dev/probe/debug-dev-handler.ts",
         "src/dev/probe/debug-dev-handler.prod-stub.ts",
         "src/dev/probe/expose-recall-probe-seed-debug.ts",
@@ -36,9 +35,7 @@
         "src/infrastructure/debug/expose-clue-gateway-debug.prod-stub.ts",
         "src/infrastructure/debug/expose-memory-dev-debug.prod-stub.ts",
         "src/infrastructure/debug/expose-recall-telemetry-debug.prod-stub.ts",
-        "src/background/main.ts",
         "src/content/**/main.ts",
-        "src/offscreen/main.ts",
         "vite/build-options.ts",
         "scripts/**/*.{js,ts,cjs}"
       ],

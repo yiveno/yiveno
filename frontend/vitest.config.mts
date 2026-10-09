@@ -1,6 +1,9 @@
 import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
-import { resolve } from 'path'
+import { resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const rootDir = fileURLToPath(new URL('.', import.meta.url))
 
 export default defineConfig({
   plugins: [vue()],
@@ -24,8 +27,14 @@ export default defineConfig({
       exclude: ['node_modules/', '**/*.d.ts', '**/*.config.*']
     },
 
-    // 并行测试（Vitest 4：原 threads:true → pool:'threads'）
+    // 并行测试
     pool: 'threads',
+
+    /**
+     * 保持 isolate:true（默认）：本仓大量测依赖 happy-dom IndexedDB / chrome stub，
+     * isolate:false 会出现 `indexedDB is not defined` 跨文件串扰。
+     * Vitest 5 的 ESM 配置已用 .mts 接 native configLoader。
+     */
 
     // 测试超时
     testTimeout: 10000
@@ -33,7 +42,7 @@ export default defineConfig({
 
   resolve: {
     alias: {
-      '@': resolve(__dirname, './src')
+      '@': resolve(rootDir, './src')
     }
   }
 })

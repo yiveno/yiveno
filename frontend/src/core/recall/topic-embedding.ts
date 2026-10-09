@@ -14,7 +14,7 @@
  * D3-C（2026-10-06）：Topic 终态 = 语义表示；直接语义化。
  */
 
-import type { TopicDescriptor } from '@/core/recall/parse-recall-clue-types'
+import type { EmbeddingVector, TopicDescriptor } from '@/core/recall/parse-recall-clue-types'
 
 /**
  * deriveTopicEmbedding 的降级原因标记（供调用方 log）。
@@ -26,8 +26,8 @@ export type TopicEmbeddingFallbackReason =
   | 'embedding_empty' // embedding 返回空向量
 
 export interface DeriveTopicEmbeddingResult {
-  /** Topic embedding 向量（Float32Array）。 */
-  embedding: Float32Array | null
+  /** Topic embedding 向量。 */
+  embedding: EmbeddingVector | null
   /** true = 本轮实际产出了真实 embedding；false = 返回 null 并降级词法。 */
   semantic: boolean
   /** 降级原因（仅 semantic=false 时有效）。 */
@@ -56,7 +56,7 @@ export interface DeriveTopicEmbeddingResult {
  */
 export async function deriveTopicEmbedding(
   topic: TopicDescriptor,
-  embedClueText: ((text: string) => Promise<Float32Array | null>) | null
+  embedClueText: ((text: string) => Promise<EmbeddingVector | null>) | null
 ): Promise<DeriveTopicEmbeddingResult> {
   // Step 1：检查 tokens 是否可用
   const tokens = topic.tokens
@@ -126,7 +126,7 @@ export async function deriveTopicEmbedding(
  */
 export function deriveTopicEmbeddingSync(
   topic: TopicDescriptor,
-  embedClueText: ((text: string) => Float32Array | null) | null
+  embedClueText: ((text: string) => EmbeddingVector | null) | null
 ): DeriveTopicEmbeddingResult {
   // 同步处理 tokens 检查
   const tokens = topic.tokens

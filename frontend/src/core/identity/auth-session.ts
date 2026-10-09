@@ -5,10 +5,10 @@ export const AuthSessionSchema = z.object({
   accessToken: z.string().min(1),
   refreshToken: z.string().min(1),
   expiresAt: z.number().int().nonnegative().optional(),
-  userId: z.string().uuid(),
-  email: z.string().email().optional(),
+  userId: z.uuid(),
+  email: z.email().optional(),
   /** 用户头像 URL（OAuth user_metadata.avatar_url / picture） */
-  avatarUrl: z.string().url().optional(),
+  avatarUrl: z.url().optional(),
   /** 展示名（user_metadata.name / full_name） */
   displayName: z.string().optional()
 })
