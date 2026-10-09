@@ -6,11 +6,10 @@
 import {
   listProbeFixtureCatalog as listFromProbe,
   type ProbeFixtureCatalog,
-  type ProbeFixtureClueRow,
   type RecallProbePersonaId
 } from '@yiveno/probe'
 
-export type { ProbeFixtureCatalog, ProbeFixtureClueRow }
+export type { ProbeFixtureCatalog }
 
 /** 展开全部（或指定）画像的精选 suggestedClues。 */
 export function listProbeFixtureCatalog(

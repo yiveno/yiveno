@@ -4,8 +4,6 @@
  */
 import { EXTENSION_CWS_HOST_PERMISSIONS_DEVELOPMENT } from '@/core/extension/extension-manifest-profile'
 
-export { EXTENSION_CWS_HOST_PERMISSIONS_PRODUCTION } from '@/core/extension/extension-manifest-profile'
-
 export const EXTENSION_CWS_PERMISSIONS = [
   'storage',
   'alarms',

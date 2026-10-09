@@ -297,6 +297,3 @@ export function buildHybridEvalCorpus(): MemoryItem[] {
 
 /** 与 `RECALL_EVAL_NOW_MS` 对齐（2026-07-25 12:00 UTC）。 */
 export const HYBRID_EVAL_NOW_MS = new Date(HYBRID_EVAL_NOW).getTime()
-
-// 暴露 dim 供 runner / test 同步使用，避免魔法数字分裂。
-export { HYBRID_FAKE_EMBEDDING_DIM }

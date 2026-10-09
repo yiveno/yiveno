@@ -1,9 +1,7 @@
 import type { TranslateFn } from '@/core/i18n/translate'
 import { logger } from '@/infrastructure/logging/logger'
 
-export type { MessageKey } from '@/infrastructure/i18n/message-keys'
 export type { TranslateFn } from '@/core/i18n/translate'
-export { MESSAGE_KEYS } from '@/infrastructure/i18n/message-keys'
 
 /**
  * 读取扩展文案（`chrome.i18n.getMessage`）。

@@ -3,10 +3,7 @@
  * AppIconButton 已 fallback `ariaLabel ?? title`；父组件可用此辅助显式配对。
  */
 
-export {
-  assertProductSurfaceLabelAllowed,
-  findProductSurfaceLabelViolation
-} from '@/infrastructure/i18n/product-surface-label-policy'
+export { assertProductSurfaceLabelAllowed } from '@/infrastructure/i18n/product-surface-label-policy'
 
 export function resolveIconOnlyControlLabels(label: string): {
   title: string

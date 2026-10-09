@@ -36,6 +36,8 @@
         "src/infrastructure/debug/expose-memory-dev-debug.prod-stub.ts",
         "src/infrastructure/debug/expose-recall-telemetry-debug.prod-stub.ts",
         "src/content/**/main.ts",
+        "src/**/*.{test,spec}.ts",
+        "src/tests/**/*.ts",
         "vite/build-options.ts",
         "scripts/**/*.{js,ts,cjs}"
       ],

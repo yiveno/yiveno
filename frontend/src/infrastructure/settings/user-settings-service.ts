@@ -1,5 +1,4 @@
 import {
-  DEFAULT_USER_SETTINGS,
   mergeUserSettings,
   parseUserSettings,
   USER_SETTINGS_STORAGE_KEY,
@@ -21,4 +20,4 @@ export async function updateUserSettings(patch: Partial<UserSettings>): Promise<
   return next
 }
 
-export { parseUserSettings, USER_SETTINGS_STORAGE_KEY, DEFAULT_USER_SETTINGS }
+export { parseUserSettings, USER_SETTINGS_STORAGE_KEY }

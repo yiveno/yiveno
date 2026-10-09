@@ -7,7 +7,5 @@ export {
   listGettingStartedBookmarkSuggestions,
   pickGettingStartedBookmarkSample,
   resolveGettingStartedSampleClue,
-  resolveGettingStartedSampleSuggestions,
-  type GettingStartedBookmarkSample,
-  type GettingStartedBookmarkSampleSource
+  resolveGettingStartedSampleSuggestions
 } from '@/core/onboarding/pick-getting-started-bookmark-sample'
