@@ -141,6 +141,19 @@ Do not ask for permission merely because a task is non-trivial.
 
 Do not make a high-impact product decision merely because one implementation is convenient.
 
+### Prioritized lists (no false choices)
+
+When you have already ranked multiple **non-conflicting** actions (cleanup items, engineering waves, optional-but-valuable follow-ups):
+
+```text
+❌ Do not ask “A or B?” / “which direction first?” after publishing a priority order
+✅ Default: execute in priority order until the list is done or the user stops you
+✅ Allowed question: scope cut — “how far down the priority list?” (not a fork between peers)
+✅ Stop and ask only when items truly conflict (mutually exclusive, irreversible, high-stakes product fork)
+```
+
+Do **not** proactively ask whether to `git commit` or `git push`. The user requests those explicitly; completion reports state results only.
+
 ---
 
 ## 5. Scope Discipline
@@ -314,6 +327,8 @@ Verified:
 Remaining risk / uncertainty:
 - ...
 ```
+
+Do not end with “want me to commit / push?” — report results only; the user initiates git publish.
 
 Do not produce unsolicited summaries, changelogs, specs, or architectural documents beyond the existing project documentation rules.
 
