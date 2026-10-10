@@ -15,6 +15,7 @@ import {
   parseRecallFailureAttribution,
   suggestFailureStageFromDetailCodes
 } from '@/core/recall/dual-thread'
+import { getAdaptationKnob } from '@/core/recall/dual-thread/recall-adaptation-config'
 
 describe('dual-thread failure attribution', () => {
   it('细码 miss_neighborhood → 建议 candidate_miss', () => {
@@ -90,6 +91,8 @@ describe('dual-thread adaptation config', () => {
     const forbidden = listOmniboxForbiddenAdaptationKnobIds()
     expect(forbidden).toContain('outcome_pair_soft_adjust')
     expect(forbidden).toContain('hybrid_fusion')
+    expect(getAdaptationKnob('hybrid_fusion')?.omniboxForbidden).toBe(true)
+    expect(getAdaptationKnob('not_a_real_knob')).toBeNull()
   })
 })
 

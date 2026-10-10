@@ -34,6 +34,7 @@
         "src/infrastructure/debug/expose-clue-gateway-debug.prod-stub.ts",
         "src/infrastructure/debug/expose-memory-dev-debug.prod-stub.ts",
         "src/infrastructure/debug/expose-recall-telemetry-debug.prod-stub.ts",
+        "src/infrastructure/debug/expose-dual-thread-debug.prod-stub.ts",
         "src/content/**/main.ts",
         "src/**/*.{test,spec}.ts",
         "src/tests/**/*.ts",

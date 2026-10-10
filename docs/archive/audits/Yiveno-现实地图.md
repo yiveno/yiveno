@@ -1,9 +1,9 @@
 ---
 created: 2026-09-17T14:02:23+08:00
-updated: 2026-09-17T15:05:00+08:00
+updated: 2026-10-10T19:05:00+08:00
 author: agent:cursor
 scope: Yiveno 真实代码与文档的第一阶段摸底（只读审计）
-status: final
+status: archived
 upstream:
   - Yiveno 仓库代码（frontend/ backend/ website/ packages/）
   - .cursor/rules/project.mdc
@@ -18,12 +18,14 @@ downstream:
 
 # Yiveno — 现实地图（Reality Map · 只读第 1 阶段审计）
 
+> **ARCHIVED（2026-10-10）：** 迁入 `docs/archive/audits/`。**非**现行产品/架构真相；树与 UNKNOWN 可能已过期。现行权威：`docs/product/` · ADR · `CURRENT.md`。
+
 > 维护者提示：本报告**完全只读**，未修改、未创建、未删除任何文件，未提出修复建议。  
 > 一切结论以仓库内可验证代码/配置为依据；标注 `UNKNOWN` 处为无法在不进一步实验或的情况下确认。
 >
-> 恢复说明（2026-09-17）：本文件由上一会话丢失的 `/tmp/yiveno-reality-map.md` 恢复而来——`/tmp` 在 Cursor 会话级沙箱间会被清空，因此原始版本在会话结束后随即不可见。现已落盘到仓库根 `Yiveno-Reality-Map.md`，供后续第二阶段审计对照。
+> 恢复说明（2026-09-17）：本文件由上一会话丢失的 `/tmp/yiveno-reality-map.md` 恢复而来——`/tmp` 在 Cursor 会话级沙箱间会被清空。曾落盘于 `docs/audits/`，现归档于此。
 >
-> **教训（AI Agent 自查）：** 把"面向持久查阅的产物"写到 `/tmp` 是错误的选择。下次同体量审计 / 报告 / 长篇交付，**默认写到工作区根**或专门的 `docs/audit/` 目录，避免会话结束即丢。
+> **教训（AI Agent 自查）：** 把"面向持久查阅的产物"写到 `/tmp` 是错误的选择。下次同体量审计 / 报告 / 长篇交付，**默认写到工作区**专项目录（如 `docs/audits/` 再决定是否归档），避免会话结束即丢。
 >
 > 恢复渠道：从 `~/.cursor/projects/.../agent-transcripts/<uuid>.jsonl` 的 Write `contents` 字段回捞（每个 jsonl event 即一条结构化记录，单文件可能含 GB 级历史）。
 

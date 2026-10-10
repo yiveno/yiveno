@@ -1,9 +1,9 @@
 ---
 created: 2026-09-17T14:46:37+08:00
-updated: 2026-09-17T15:05:00+08:00
+updated: 2026-10-10T19:05:00+08:00
 author: agent:cursor
 scope: 在 Phase 0/1 基础上，盘点 Recall Intelligence 相关能力落点与差距
-status: final
+status: archived
 upstream:
   - Yiveno-现实地图.md
   - Phase1-架构完整性审计.md
@@ -13,6 +13,8 @@ downstream:
 ---
 
 # Yiveno Phase 2 — Recall Intelligence 升级：现状与差距分析
+
+> **ARCHIVED（2026-10-10）：** 迁入 `docs/archive/audits/`。**非**现行权威；能力表可能已落后于代码。现行以产品文档 §1 / §5.9 / ADR 为准。
 
 > 纯分析，不修改代码。基准：Phase 0 Reality Map + Phase 1 架构完整性审计。
 > 对应英文口径：Recall Intelligence Upgrade — Gap Analysis & Implementation Plan。

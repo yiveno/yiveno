@@ -36,6 +36,11 @@ archive/
 │   ├── Yiveno-logo-asset-generation-prompt.md  # Logo 生成 prompt
 │   └── snap-css-to-space-radius.mjs  # 一次性 CSS space/radius 对齐（按需）
 │
+├── audits/                            # 过期只读审计快照（2026-09；非权威）
+│   ├── Yiveno-现实地图.md
+│   ├── Phase1-架构完整性审计.md
+│   └── Phase2-Recall-Intelligence升级-现状与差距分析.md
+│
 └── packages/                         # 过时包说明
     ├── README.md                      # 包说明汇总
     ├── types/                        # @yiveno/types 包
@@ -80,6 +85,7 @@ archive/
 | TTE Beta 研究详情 | `archive/research/tte-beta-2026-09/`       |
 | 市场背景研究      | `archive/product/Yiveno-市场调研-v1.md`    |
 | Skills 复查记录   | `archive/engineering/Skills-复查路线图.md` |
+| 2026-09 审计快照  | `archive/audits/`（过期；勿当现行真相）    |
 | 设计决策历史      | `docs/architecture/decisions/`（活跃 ADR） |
 
 ---

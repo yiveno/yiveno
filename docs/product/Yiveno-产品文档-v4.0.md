@@ -1678,15 +1678,15 @@ Settings「隐私」摘要与官网 `/privacy` 须与本节 L1–L3 口径一致
 
 ### 5.6 扩展入口
 
-| 入口             | 现状                                                                                                                         |
-| ---------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| `sidepanel.html` | **找回主壳**；权限 `sidePanel`；无 `action.default_popup`；点图标 / `_execute_action` 开 Panel                               |
-| `background.js`  | 活跃；`setPanelBehavior({ openPanelOnActionClick: true })`                                                                   |
-| `settings.html`  | 已进 `options_ui`（`open_in_tab: true`）                                                                                     |
-| content script   | 已注册；`content-selection-toolbar.js`（http/https）；「试试找回」→ `OPEN_RECALL_SHELL` + prefill                            |
-| offscreen 源码   | 占位；未注册 permission；embedding 接入前不启用                                                                              |
-| Omnibox          | 已注册；keyword `yi`；`entry: omnibox` 离线快跳；单次无会话（ADR-007）                                                       |
-| `commands`       | 已注册；找回 `Alt+Shift+Y`；记忆库 `Alt+Shift+L`；划词保存 `Alt+Shift+E`；划词附注 `Alt+Shift+N`；设置无默认建议键（均可改） |
+| 入口             | 现状                                                                                                                                                                             |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sidepanel.html` | **找回主壳**；权限 `sidePanel`；无 `action.default_popup`；点图标 / `_execute_action` 开 Panel                                                                                   |
+| `background.js`  | 活跃；`setPanelBehavior({ openPanelOnActionClick: true })`                                                                                                                       |
+| `settings.html`  | 已进 `options_ui`（`open_in_tab: true`）                                                                                                                                         |
+| content script   | 已注册；`content-selection-toolbar.js`（http/https）；「试试找回」→ `OPEN_RECALL_SHELL` + prefill                                                                                |
+| offscreen 源码   | **刻意占位**（`frontend/src/offscreen/` + vite 入口 + `public/offscreen.html`）；manifest **未**注册 `offscreen` permission；embedding / 无 DOM 任务接入前不启用；勿当已上线能力 |
+| Omnibox          | 已注册；keyword `yi`；`entry: omnibox` 离线快跳；单次无会话（ADR-007）                                                                                                           |
+| `commands`       | 已注册；找回 `Alt+Shift+Y`；记忆库 `Alt+Shift+L`；划词保存 `Alt+Shift+E`；划词附注 `Alt+Shift+N`；设置无默认建议键（均可改）                                                     |
 
 ### 5.7 Dodo Pro 订阅全流程验收（手动 · Normative）
 
@@ -2467,6 +2467,7 @@ RecallOutcomeEvent {
 
 | 日期       | 变更                                                                                                                                                                                                                                                                                                       |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-10 | **清理跟进：** offscreen 钉死为刻意占位（未注册 permission）；`docs/audits` → `docs/archive/audits`                                                                                                                                                                                                        |
 | 2026-10-10 | **§1.1 验收归属：** 退役 CDP E2E（`e2e-management`）；表列 **MCP** 真机 UI 抽测 + Vitest/`must`；禁再暗示 Playwright/大 E2E                                                                                                                                                                                |
 | 2026-10-09 | **§0.1.2 双线程权威：** 短锚指向 `Yiveno-双线程发展原则.md`；五问（方案必过/回归 N/A）；`dual-thread-notes`；环境反馈文档降工程子集；ADR-016 同步                                                                                                                                                          |
 | 2026-10-09 | **§0.1.2 / ADR-016 升格：** 懂人类暗线（人脑记忆机制）+ 设计滤镜 + 环境反馈进化约束；全文原则文档；改版 **R5**；**不**改变 §5.9 / 明线定位                                                                                                                                                                 |

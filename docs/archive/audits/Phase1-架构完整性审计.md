@@ -1,9 +1,9 @@
 ---
 created: 2026-09-17T14:05:44+08:00
-updated: 2026-09-17T15:05:00+08:00
+updated: 2026-10-10T19:05:00+08:00
 author: agent:cursor
 scope: 在 Reality Map 基础上验证架构铁律与文档一致性（只读审计）
-status: final
+status: archived
 upstream:
   - Yiveno-现实地图.md
 downstream:
@@ -12,6 +12,8 @@ downstream:
 ---
 
 # Yiveno Phase 1 — 架构完整性审计（Architecture Integrity Audit）
+
+> **ARCHIVED（2026-10-10）：** 迁入 `docs/archive/audits/`。**非**现行权威；对照结论以产品文档 / ADR / 代码为准。
 
 > 纯审计，不修改任何文件。基准：Phase 0 Reality Map。
 > **重新生成版（2026-09-17）**：上一版 `/tmp/yiveno-phase1-architecture-audit.md` 文件丢失，本次按同口径重新生成，并把"向用户提问的问题"附在末尾便于日后翻阅整理。

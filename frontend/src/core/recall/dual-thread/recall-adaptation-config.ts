@@ -15,8 +15,6 @@ export const RecallAdaptationLayerSchema = z.enum([
   'strategy' // 策略层：路径选择 / 预算（登记预留；当前多为人工常量）
 ])
 
-export type RecallAdaptationLayer = z.infer<typeof RecallAdaptationLayerSchema>
-
 export const RecallAdaptationKnobSchema = z.object({
   /** 稳定 id */
   id: z.string().min(1).max(64),
