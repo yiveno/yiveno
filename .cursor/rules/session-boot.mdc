@@ -8,7 +8,7 @@ alwaysApply: true
 > **本文件 = Cursor 每会话自动注入的「当下事实」。** 「当下」块由 `docs/product/CURRENT.md` 生成；改焦点时 **只改 CURRENT**，再 `bun run sync:ide-boot`（`doc:check` 会校验）。
 
 <!-- SYNC:IDE_BOOT:START -->
-**最后更新：** 2026-09-14
+**最后更新：** 2026-10-10
 
 > **每会话首条：** 用户应粘贴 [`AGENT-TASK-BRIEF.template.md`](../../docs/product/AGENT-TASK-BRIEF.template.md)（In/Out/验收/禁止）。
 
@@ -18,13 +18,14 @@ alwaysApply: true
 | --- | --- |
 | **主线** | **§5.9 种子验证 + Recall 质量闭环**（自然 clue 采样决策 + `recall-eval` / TTE / Outcome §7.2） |
 | **并行** | **Getting Started 书签首召（§5.8 · 已接线）**；**Recall 可见进展（体验高优）**；Idle 口语范式；ADR-011 时间置信度；CWS 软上架包装；Side Panel / Capture **其余仅 bug fix**（本项为例外） |
+| **长期** | **双线程**（权威 `Yiveno-双线程发展原则.md` · §0.1.2 / ADR-016）——五问门禁；`dual-thread/` 归因·适应登记·匿名草图脚手架；笔记 `dual-thread-notes/`；**不**抢 §5.9；无在线自进化 |
 | **本周做** | **Getting Started 启动设置（体验 / 冷启动）** — §5.8 **已接线**：**双源 tab**；页眉 _Give Yiveno something to remember_；Bookmarks = Import→主进度→LLM 示意 clue + Try it；Excerpts = Things we miss 划存 + 定稿 clue + Try it；页底 Continue 软出口；**无** Start using / Skip 双按钮；Side Panel **无**书签导入顶栏条；冷启动 Import=等待/对齐；**自然 clue 采样协议**（真实目标 · 「还记得什么都行」· 首句标注 · 1/2 clue TTE）— 决策 must 扩面；见 [`docs/archive/research/tte-beta-2026-09/`](../archive/research/tte-beta-2026-09/README.md)（已归档）；**Recall 可见进展（体验高优）** — §7.0 **已接线**；先 A/B 度量；勿当召回质量已验证；**理解回声（体验）** — §7.0 **已接线**：结果态 `Heard as` 槽位芯片；与可见进展同属体验面、与 §5.9 **分计**；**Idle 口语范式（体验）** — §7.0 **已接线**：库 ready 空态「Try saying it like…」2–3 条可点样句（填入不自动发）；chat 心智、不强制；与 §5.9 **分计**；**冷启动放行后轻条（体验）** — §5.8.1 **已接线**：门禁 ready 后顶栏非阻挡提示；Dismiss + 5min TTL；不挡 Recall；**ADR-011 时间置信度**落地与回归（high 硬筛 / low 软排；Framing Around；must + MCP）；**内容佐证门 + 硬筛空窗 soft 回退 + Outcome 护栏**（禁止弱 embedding 甩无关；真机 retention/yesterday 金标 → must）；**`recall-eval` must** 增补与校准——失败 case 驱动可复用机制，禁止内容别名灰名单；**Outcome Labeling §7.2** P0→P1（含正例须佐证 / None 撤脏 pair）；TTE 种子研究按 checklist 开跑；行为变更同批：文档↔代码、`must` 或 §5 手动步骤、MCP UI 抽测；（低优并行）CWS 产品 UI 截图 3–5；Recall 壳空态 / onboarding 薄维护 |
 | **本周不做** | 把 Skills 复查当主任务（已结案）；新连接器 / Agent / history 抓取 / 知识图谱 UI；未达 §5.9 门槛前扩 MCP 对外宣传；内容别名灰名单冒充全库通解；为糊时间堆开放同义词表；Side Panel 持久多会话 / 分支 /tokenize 等 Chat 产品化；**可见进展 ≠** Agent「思考 / 工具轨迹」秀；用 CWS 上架或功能堆砌替代命题验收（§0.1 命题先验）；用体验反馈（放弃率↓）冒充 §5.9 / 真实库 TTE 质量达标；工程探针与种子 TTE **分计**；**用「先造摘录再召回」冒充 Getting Started 主证明**（与书签首召口径冲突） |
 
 **能力速查：** Side Panel Recall、Hybrid、倒排 Phase 1、ECS 卡面、detail export、只读 MCP beta、Raindrop/Pocket 导入、TTE 本机埋点、Dodo Pro 门禁等（详表 `产品文档 §1`）。§5.9 **Beta**（种子用户真实库：TTE-V P50≤12s / Success@180≥75% / ECS≥92% 等）；**无种子 study 数据前不得对外宣称 Beta 达标**；MCP **不对用户主宣传**。进行中：自然 clue 采样；**Getting Started 书签首召**（§5.8 · 已接线）；**Recall 可见进展**（§7.0 · A/B）；**理解回声**（§7.0）；**Idle 口语范式**（§7.0）；**内容佐证门 / 硬筛空窗回退**（ADR-011）；ADR-011 时间置信度；`recall-eval` must；Outcome Labeling §7.2；TTE 种子研究。
 <!-- SYNC:IDE_BOOT:END -->
 
-## 冻结（勿重议 · ADR-001–005 · ADR-010–012）
+## 冻结（勿重议 · ADR-001–005 · ADR-010–012 · ADR-016）
 
 - **GitHub Org `yiveno`** · 主仓 `yiveno/yiveno`（品牌产品交付仓，非个人实验项目）；对外站点 `yiveno.com`
 - Recall **主壳 = Side Panel**；`pages/popup` 已退役；关 Panel 丢会话；**New find** 清线程
@@ -34,6 +35,7 @@ alwaysApply: true
 - **相对时间** high 硬筛 / low 软排（ADR-011）；禁止糊时间单独硬空
 - **禁止**内容别名灰名单冒充全用户通解；残差留给字面/Hybrid
 - **find things（ADR-012）：** 定位句不变；双关/翻牌为**后手（视发展再定，可以≠必须）**；终局壁垒=私有增量+习惯+信任；翻牌句**未启用**；禁止用终局叙事放松召回验收
+- **双线程（ADR-016）：** 明线=找回体验；暗线=记忆探索；方案五问必过、回归可 N/A；行为≠脑规律；研究笔记在 `dual-thread-notes/`；**禁止**为研究损体验或放松 §5.9；不得把未实现能力写成已上线
 
 ## 架构铁律（开机必记）
 

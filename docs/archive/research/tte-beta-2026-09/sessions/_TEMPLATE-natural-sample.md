@@ -38,9 +38,14 @@
 
 ## 3. clue₂ = 补充句（「还能想起别的吗？」）
 
+> **硬规则（暗线 H2 / 2026-10）：** clue₁ 为正式 **`miss`** 时本节**必填**；勾选相对 clue₁ 的**新增**维度。yes / no 可省略 clue₂。
+
 ```text
 
 ```
+
+**维度勾选（可多）：** T□ S□ G□ C□ D□ R□ F□  
+**相对 clue₁ 新增码：** （无新增则写「无」）
 
 | 项              | 结果     |
 | --------------- | -------- |
@@ -56,7 +61,9 @@
 - [ ] `miss` — 目标对但产品没找回
 - [ ] `no` — 目标/口语不合格作废
 
-**taxonomy（可多）：** `parse_fail` · `rank_wrong` · `type_hard_empty` · `time_soft_ok` · `no_signal` · `ux_friction` · `other:`
+**失败归因 stage（单选 · 暗线基建）：** `not_captured` · `index_gap` · `candidate_miss` · `understand_skew` · `rank_wrong` · `clue_insufficient` · `absent_honest` · `ux_friction` · `unknown`  
+**detailCodes（可多）：** `parse_fail` · `rank_wrong` · `type_hard_empty` · `time_soft_ok` · `no_signal` · `miss_neighborhood` · `weak_index` · `gist_mismatch` · `missing_topic` · `hybrid_drift` · `ux_friction` · `other:`  
+（映射见 `frontend/src/core/recall/dual-thread/recall-failure-attribution.ts`）
 
 ## 5. 备注
 

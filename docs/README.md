@@ -17,9 +17,14 @@
 
 - [`product/Yiveno-产品文档-v4.0.md`](./product/Yiveno-产品文档-v4.0.md) — AI 先读 **§0 Quick Contract**；附录 A 为背景非规范
 - [`product/CURRENT.md`](./product/CURRENT.md) — **当下焦点唯一手写源** → `bun run sync:ide-boot`
-- [`product/Yiveno-改版计划-v1.md`](./product/Yiveno-改版计划-v1.md) — 执行计划（R0–R∞）；与正文冲突时先改产品文档
+- [`product/Yiveno-改版计划-v1.md`](./product/Yiveno-改版计划-v1.md) — 执行计划（R0–R∞ / R5）；与正文冲突时先改产品文档
+- [`product/Yiveno-双线程发展原则.md`](./product/Yiveno-双线程发展原则.md) — **长期权威**：明线找回 + 暗线记忆探索；五问 / 四边界 / 研究记录；产品文档 §0.1.2 短锚；ADR-016
+- [`product/Yiveno-环境反馈驱动进化-原则.md`](./product/Yiveno-环境反馈驱动进化-原则.md) — **工程子集**：证据 → 受控手段适应与 R5 分期（服从双线程正文）
+- [`archive/research/dual-thread-notes/`](./archive/research/dual-thread-notes/) — 暗线研究笔记（模板；私人数据不入仓）
+- [`engineering/暗线基建-失败归因与受控适应.md`](./engineering/暗线基建-失败归因与受控适应.md) — 失败归因 / 适应旋钮登记 / 匿名草图 / 门禁（脚手架）
 - [`product/Recall-Request-模型与Discovery边界-草案.md`](./product/Recall-Request-模型与Discovery边界-草案.md) — **Normative（2026-10-06 晋升 · D1 已裁决）**：Recall 必要条件 / Topic 两种来源 / Discovery 边界；完整正文在本文件；产品文档 §7.05 为摘要引用
 - [`architecture/decisions/ADR-014-recall-request-topic-two-sources.md`](./architecture/decisions/ADR-014-recall-request-topic-two-sources.md) — 上述草案的 ADR 落档（D1-B 退化弱 Topic 模型化）
+- [`architecture/decisions/ADR-016-environment-feedback-evolution.md`](./architecture/decisions/ADR-016-environment-feedback-evolution.md) — 环境反馈驱动进化：目标稳定、手段适应、反馈非真理
 
 **运维 / 工程（非规格，与正文冲突时以正文为准）**：
 

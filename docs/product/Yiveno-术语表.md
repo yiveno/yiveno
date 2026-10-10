@@ -41,9 +41,13 @@
 | **内容语义 vs 记忆语义**     | content vs memory sense   | 内容语义 / 记忆语义         | 内容=「图里有什么」（可商品化）；记忆=「对你意味着什么」。禁止用前者冒充后者；记忆赛道本身仍会被巨头/Agent 挤压                                        |
 | **终局壁垒**                 | private increment + habit | 私有增量 + 习惯 + 信任      | 不是「Search→Memory」品类跳跃；记忆层若出现只是资产的产品表达；后手永不启用仍可成立（ADR-012）                                                         |
 | **双关后手**                 | optional brand option     | 双关/翻牌后手               | _Why should things just be things?_ 等为预留；**可以 ≠ 必须**；无交付只作对内战略语言                                                                  |
+| **明线**                     | user-value thread         | 用户价值线程                | 持续改善找回体验；用户无需感知研究。权威：`Yiveno-双线程发展原则.md`                                                                                   |
+| **暗线**                     | memory-exploration thread | 记忆探索线程                | 借助真实使用逼近记忆/遗忘/提取机制；研究笔记载体；**≠** 对外品类、**≠** 人脑定律。行为数据只是证据                                                     |
+| **双线程**                   | dual-thread development   | 双线程发展                  | 明线与暗线并存、相互促进、不互相替代；方案五问必过、纯修可 N/A；见 §0.1.2 / ADR-016                                                                    |
 
 **禁止对外承诺：** 「每次押中那一条」「永远唯一正确答案」「全知助理」。  
-**禁止过早摊牌 / 预支路线：** 无痕迹厚度时主打「人生记忆产品」；未达门槛启用翻牌句；把后手写成对外必达 Phase（ADR-012）。
+**禁止过早摊牌 / 预支路线：** 无痕迹厚度时主打「人生记忆产品」；未达门槛启用翻牌句；把后手写成对外必达 Phase（ADR-012）。  
+**禁止：** 把暗线写成对外 slogan，或用「懂人类 / 研究大脑」合理化破体验。
 
 **当前履约句（产品面）：** _Find what you saved._ ——与 find things 同根；强调「你存过的」，不把 things 说死成文件搜索。
 
@@ -352,7 +356,9 @@ MemoryItem.clues.note      →  附注 · 存时写的私有提示
 | `docs/architecture/Yiveno-运行时架构流程-v1.md` | 运行时流程；术语服从本文                        |
 | `docs/engineering/DEV-调试API.md`               | DEV 工作台 / 种库 API；§8.1 探针词权威文案      |
 | `docs/architecture/decisions/ADR-012-*.md`      | find things 双关为后手；终局壁垒=私有增量与习惯 |
+| `Yiveno-双线程发展原则.md`                      | 明线/暗线权威；五问与四边界                     |
+| `docs/architecture/decisions/ADR-016-*.md`      | 双线程不可逆约束摘要                            |
 
 ---
 
-_最后更新：2026-09-11 · §1 双关后手 / 终局壁垒斧正（ADR-012）_
+_最后更新：2026-10-09 · §1 增补明线/暗线/双线程（ADR-016）_

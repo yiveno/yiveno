@@ -1,9 +1,9 @@
 # docs/archive/ — 历史文档归档
 
-> **状态：** 所有文件均为 **ARCHIVED**
-> **不是当前事实来源**
+> **默认状态：** **ARCHIVED** — 不是当前产品事实来源。  
+> **例外（工作中研究）：** `research/dual-thread-notes/`、未结案的 `research/tte-beta-*` 研究包 — 可继续写入；权威仍以 `docs/product/` Normative 为准。私人遥测/完整库**禁止**入仓。
 
-本目录包含 Yiveno 项目历史上积累的文档，这些文档具有参考价值但已不再维护。
+本目录包含 Yiveno 项目历史上积累的文档，以及仍在进行的研究笔记包。
 
 ---
 
@@ -22,7 +22,8 @@ archive/
 │   ├── tte-beta-template/            # TTE 研究模板
 │   │   ├── sessions/                 # 会话模板
 │   │   └── gold-cards/               # Gold card 模板
-│   └── na-clue-morphology/           # 北美 clue 形态学研究
+│   ├── na-clue-morphology/           # 北美 clue 形态学研究
+│   └── dual-thread-notes/            # 双线程暗线研究笔记（工作中；模板+个案；私人数据不入仓）
 │
 ├── product/                           # 过时产品文档
 │   └── Yiveno-市场调研-v1.md        # 市场调研（Non-normative）

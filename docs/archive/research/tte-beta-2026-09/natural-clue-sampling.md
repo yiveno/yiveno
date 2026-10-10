@@ -30,7 +30,9 @@
 [4 测 1]   用**首句原样**（或最小清洗：去口头禅）作 clue₁ → Side Panel UI 提交
            记：TTE-V、首屏邻域是否含目标、是否 no_match、Framing 时间措辞
 [5 测 2]   请再补一句「还能想起别的吗？」→ clue₂（可与 clue₁ 合并或第二轮）
-           同样记 TTE / 邻域 / no_match
+           同样记 TTE / 邻域 / no_match；**勾选 clue₂ 维度**
+           **（2026-10 暗线 H2）** clue₁ 正式 `miss` 时 clue₂ **必做**，并记相对 clue₁ 的新增维度码
+           进度清单：`docs/archive/research/dual-thread-notes/2026-10-10-补采检查清单-NS至10.md`
 [6 确认]   维护者/研究员：yes / miss / no（目标是否就是那条；首句是否像人话）
 [7 落盘]   填 sessions/natural-sample-*.md；失败勾 taxonomy
 ```

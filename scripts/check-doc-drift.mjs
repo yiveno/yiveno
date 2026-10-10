@@ -136,6 +136,23 @@ if (!existsSync(REGISTRY_PATH)) {
 
 errors.push(...checkCurrent(CURRENT_PATH))
 
+/** 双线程暗线基建：权威文件 + core 脚手架必须存在（口子门禁）。 */
+const DUAL_THREAD_REQUIRED_PATHS = [
+  'docs/product/Yiveno-双线程发展原则.md',
+  'docs/engineering/暗线基建-失败归因与受控适应.md',
+  'docs/archive/research/dual-thread-notes/_TEMPLATE.md',
+  'docs/archive/research/dual-thread-notes/README.md',
+  'frontend/src/core/recall/dual-thread/recall-failure-attribution.ts',
+  'frontend/src/core/recall/dual-thread/recall-adaptation-config.ts',
+  'frontend/src/core/recall/dual-thread/dual-thread-aggregate.ts'
+]
+for (const rel of DUAL_THREAD_REQUIRED_PATHS) {
+  const abs = join(root, rel)
+  if (!existsSync(abs)) {
+    errors.push(`暗线基建缺失: ${rel}`)
+  }
+}
+
 if (errors.length > 0) {
   console.error('❌ doc-drift 校验失败:')
   for (const line of errors) {

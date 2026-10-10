@@ -57,6 +57,8 @@ function parseCurrent(md) {
     date,
     mainline: pickRow('主线'),
     parallel: pickRow('并行'),
+    /** 可选：长期原则行（如 ADR-016 / R5）；缺省则不同步该行 */
+    longTerm: pickRow('长期'),
     weekDo: compress(weekDo),
     weekDont: compress(weekDont),
     ability: abilityParts.join('。').replace(/。。/g, '。')
@@ -64,6 +66,9 @@ function parseCurrent(md) {
 }
 
 function buildSyncBlock(parsed) {
+  const longTermRow = parsed.longTerm
+    ? `\n| **长期** | ${parsed.longTerm} |`
+    : ''
   return `${START}
 **最后更新：** ${parsed.date}
 
@@ -74,7 +79,7 @@ function buildSyncBlock(parsed) {
 | 项 | 内容 |
 | --- | --- |
 | **主线** | ${parsed.mainline} |
-| **并行** | ${parsed.parallel} |
+| **并行** | ${parsed.parallel} |${longTermRow}
 | **本周做** | ${parsed.weekDo} |
 | **本周不做** | ${parsed.weekDont} |
 

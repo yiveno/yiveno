@@ -18,6 +18,7 @@ import { registerSelectionToolbarKeepaliveListener } from '@/background/listener
 import { exposeClueGatewayDebug } from '@/infrastructure/debug/expose-clue-gateway-debug'
 import { exposeMemoryDevDebug } from '@/infrastructure/debug/expose-memory-dev-debug'
 import { exposeRecallTelemetryDebug } from '@/infrastructure/debug/expose-recall-telemetry-debug'
+import { exposeDualThreadDebug } from '@/infrastructure/debug/expose-dual-thread-debug'
 import { exposeRecallProbeSeedDebug } from '@/dev/probe/expose-recall-probe-seed-debug'
 import { logger } from '@/infrastructure/logging/logger'
 
@@ -34,6 +35,7 @@ if (import.meta.env.DEV) {
   exposeMemoryDevDebug()
   exposeRecallProbeSeedDebug()
   exposeRecallTelemetryDebug()
+  exposeDualThreadDebug()
   const id = chrome.runtime.id
   console.info(
     `[yiveno] DEV Probe Console → chrome-extension://${id}/probe-console.html（权威 UI；SW yiveno.* 为辅）`

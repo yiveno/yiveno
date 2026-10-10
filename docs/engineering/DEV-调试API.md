@@ -68,17 +68,19 @@
 
 ## 3. `globalThis.yiveno` API 总表
 
-| API                                   | 类型                | 干什么            | 实现                                                             | 专题文档                                                        |
-| ------------------------------------- | ------------------- | ----------------- | ---------------------------------------------------------------- | --------------------------------------------------------------- |
-| `yiveno.seedRecallProbe(payload?)`    | `async`             | 种入召回探针语料  | `src/dev/probe/expose-recall-probe-seed-debug.ts` → seed-service | 产品文档 §5.11.1a；[Omnibox-手测步骤](./Omnibox-手测步骤.md) §2 |
-| `yiveno.cleanupProbe(payload)`        | `async`             | 按选项批量清理    | 同上 → cleanup-service                                           | 本文 §0                                                         |
-| `yiveno.purgeProbeNoise()`            | `async`             | 清除噪声/多样性层 | 同上 → purge-service                                             | [TTE checklist](./TTE-种子用户研究-checklist.md)                |
-| `yiveno.backdateMemorySavedAt(input)` | `async`             | 回溯保存时刻      | `infrastructure/debug/expose-memory-dev-debug.ts`                | 冷却手测；禁冒充 Beta                                           |
-| `yiveno.runProbeOmniboxSmoke()`       | `async`             | Omnibox 11 条冒烟 | `src/dev/probe/recall-probe-omnibox-smoke.ts`                    | Omnibox 手测 §2.1                                               |
-| `yiveno.probeOmniboxCopyPaste`        | `readonly string[]` | 地址栏复制块      | 同上                                                             | 同上 §4.1–4.2                                                   |
-| `yiveno.listRecallTelemetryEvents()`  | `async`             | TTE 七事件缓冲    | `expose-recall-telemetry-debug.ts`                               | R4-Phase-E；产品文档 §5.9                                       |
-| `yiveno.checkClueGateway(clue)`       | sync                | 噪音网关试跑      | `expose-clue-gateway-debug.ts`                                   | —                                                               |
-| `checkClueGateway(clue)`              | sync                | 同上（历史兼容）  | 同上                                                             | —                                                               |
+| API                                        | 类型                | 干什么            | 实现                                                             | 专题文档                                                        |
+| ------------------------------------------ | ------------------- | ----------------- | ---------------------------------------------------------------- | --------------------------------------------------------------- |
+| `yiveno.seedRecallProbe(payload?)`         | `async`             | 种入召回探针语料  | `src/dev/probe/expose-recall-probe-seed-debug.ts` → seed-service | 产品文档 §5.11.1a；[Omnibox-手测步骤](./Omnibox-手测步骤.md) §2 |
+| `yiveno.cleanupProbe(payload)`             | `async`             | 按选项批量清理    | 同上 → cleanup-service                                           | 本文 §0                                                         |
+| `yiveno.purgeProbeNoise()`                 | `async`             | 清除噪声/多样性层 | 同上 → purge-service                                             | [TTE checklist](./TTE-种子用户研究-checklist.md)                |
+| `yiveno.backdateMemorySavedAt(input)`      | `async`             | 回溯保存时刻      | `infrastructure/debug/expose-memory-dev-debug.ts`                | 冷却手测；禁冒充 Beta                                           |
+| `yiveno.runProbeOmniboxSmoke()`            | `async`             | Omnibox 11 条冒烟 | `src/dev/probe/recall-probe-omnibox-smoke.ts`                    | Omnibox 手测 §2.1                                               |
+| `yiveno.probeOmniboxCopyPaste`             | `readonly string[]` | 地址栏复制块      | 同上                                                             | 同上 §4.1–4.2                                                   |
+| `yiveno.listRecallTelemetryEvents()`       | `async`             | TTE 七事件缓冲    | `expose-recall-telemetry-debug.ts`                               | R4-Phase-E；产品文档 §5.9                                       |
+| `yiveno.exportDualThreadAggregateSketch()` | `async`             | 暗线匿名汇总草图  | `expose-dual-thread-debug.ts`                                    | [暗线基建](./暗线基建-失败归因与受控适应.md)；无 clue/原文      |
+| `yiveno.assessKnownGoldRecallGap(input)`   | sync                | 已知金标漏召阶段  | 同上                                                             | 区分未存/候选漏/排序；研究用                                    |
+| `yiveno.checkClueGateway(clue)`            | sync                | 噪音网关试跑      | `expose-clue-gateway-debug.ts`                                   | —                                                               |
+| `checkClueGateway(clue)`                   | sync                | 同上（历史兼容）  | 同上                                                             | —                                                               |
 
 **门禁：** 上表全部仅 DEV；`vite build --mode production` 不挂载、不产出 Probe Console。
 
@@ -180,6 +182,24 @@ const events = await yiveno.listRecallTelemetryEvents()
 Side Panel 走一条 Recall 后应含 `clue_submitted`、`result_rendered`（含 `pipelineTiming`）等。详见 [TTE-种子用户研究-checklist](./TTE-种子用户研究-checklist.md) §2.2。
 
 ---
+
+### 4.3b `yiveno.exportDualThreadAggregateSketch`
+
+**作用：** 读取本机 TTE 缓冲，生成**匿名**暗线汇总草图（outcome / confirm 计数、`pipelineTiming` 分位草图）；**不含** clue 原文、memoryItemId、URL。
+
+```js
+const sketch = await yiveno.exportDualThreadAggregateSketch()
+// 可粘贴进 dual-thread-notes「数据来源」；不得宣称人脑定律
+
+const gap = yiveno.assessKnownGoldRecallGap({
+  goldId: '…',
+  goldInLibrary: true,
+  candidateIds: ['…'], // 可选
+  neighborhoodIds: ['…'],
+  firstScreenSize: 5
+})
+// gap.stage → not_captured | candidate_miss | rank_wrong | unknown
+```
 
 ### 4.4 `yiveno.checkClueGateway` / `checkClueGateway`
 

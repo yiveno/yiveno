@@ -44,6 +44,10 @@ export default defineConfig(({ mode }) => {
           '@/infrastructure/debug/expose-recall-telemetry-debug': resolve(
             SRC_DIR,
             'infrastructure/debug/expose-recall-telemetry-debug.prod-stub.ts'
+          ),
+          '@/infrastructure/debug/expose-dual-thread-debug': resolve(
+            SRC_DIR,
+            'infrastructure/debug/expose-dual-thread-debug.prod-stub.ts'
           )
         }
       : {}
