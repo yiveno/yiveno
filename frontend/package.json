@@ -37,7 +37,6 @@
     "@types/node": "^24.19.1",
     "@vitejs/plugin-basic-ssl": "^2.3.0",
     "@vitejs/plugin-vue": "^6.0.9",
-    "@vitest/coverage-v8": "^5.0.3",
     "@vue/tsconfig": "^0.9.1",
     "fake-indexeddb": "^6.2.5",
     "happy-dom": "^20.14.6",

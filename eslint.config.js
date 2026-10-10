@@ -360,7 +360,6 @@ export default [
       '**/*.tsbuildinfo',
       '**/*.log',
       '**/coverage/**',
-      '**/.lighthouseci/**',
       '**/.astro/**',
       '**/docs/**',
       '**/scripts/**/*.cjs',

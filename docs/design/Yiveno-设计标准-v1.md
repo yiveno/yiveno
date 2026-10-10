@@ -5,7 +5,7 @@
 | 状态                    | **Normative（规范）**                                                                                                          |
 | 生效                    | 2026-08-15（v1.5：2026-08-20）                                                                                                 |
 | 品牌色 / Roles 权威实现 | [`packages/design-tokens/css/brand.css`](../../packages/design-tokens/css/brand.css)（官网已接入；`site-critical.css` 仅壳层） |
-| 机器可读摘要            | 仓库根目录 [`DESIGN.md`](../../DESIGN.md)                                                                                      |
+| 机器可读摘要            | [`docs/design/DESIGN.md`](./DESIGN.md)                                                                                         |
 | 产品定位权威            | [`docs/product/Yiveno-产品文档-v4.0.md`](../product/Yiveno-产品文档-v4.0.md) §0                                                |
 | 冲突时                  | **产品文档 §0 > 本标准 > 旧实验色 / 历史 logo 备注色**                                                                         |
 
@@ -133,7 +133,7 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 ### 3.2 外推流程（Normative）
 
 1. **权威实现：** [`packages/design-tokens/css/brand.css`](../../packages/design-tokens/css/brand.css)（TS：`src/brand.ts`）。
-2. 增补角色：先在官网组件验证 → 写入本标准 §3.3、`DESIGN.md`、`brand.css` → 再外推。
+2. 增补角色：先在官网组件验证 → 写入本标准 §3.3、`docs/design/DESIGN.md`、`brand.css` → 再外推。
 3. **已完成：** Brand 进包；官网/扩展业务 CSS 写 Roles + `--space-*` / `--radius-*`；扩展自研控件 + Lucide 内联图标；语义色直连 Roles。
 4. **维护：** 增补 token 先写 `brand.css` + §3.3，再外推。
 5. Logo / OG / 邮件跟 Brand Core。
@@ -477,7 +477,7 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 
 **变更规则：**
 
-- 改 Brand Core hex = **品牌变更**，须显式评审，并同步：`DESIGN.md`、官网 CSS、Logo/OG 指引；外推面随后跟进。
+- 改 Brand Core hex = **品牌变更**，须显式评审，并同步：`docs/design/DESIGN.md`、官网 CSS、Logo/OG 指引；外推面随后跟进。
 - 增补产品角色别名 / 阴影 / 透明度 = 先在官网验证，再写入 §3.3，升补丁说明。
 - 与产品文档冲突时，先改产品文档再改本标准。
 
@@ -487,7 +487,7 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 
 | 文件                                                 | 角色                                                |
 | ---------------------------------------------------- | --------------------------------------------------- |
-| [`DESIGN.md`](../../DESIGN.md)                       | Agent / 工具可读摘要 + YAML tokens                  |
+| [`DESIGN.md`](./DESIGN.md)                           | Agent / 工具可读摘要 + YAML tokens                  |
 | `packages/design-tokens/css/brand.css`               | **Brand Core + Product Roles 权威实现（:root）**    |
 | `packages/design-tokens/css/motion.css`              | 扩展：精简 `--motion-*` 时长/缓动                   |
 | `packages/design-tokens/src/brand.ts`                | Brand Core hex（TS）                                |
@@ -495,6 +495,6 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 | `website/src/styles/site.css`                        | 兼容入口（brand + critical + deferred）             |
 | `frontend/src/styles/extension-ui.css`               | 扩展入口：brand + variables + semantic              |
 | `docs/design/Yiveno-logo-asset-generation-prompt.md` | Logo 导出流程（色值须服从本标准）                   |
-| `PRODUCT.md`                                         | 产品性格（Impeccable）                              |
+| `docs/product/Yiveno-产品文档-v4.0.md` §0            | 产品定位 / 性格（Normative）                        |
 | `docs/product/Yiveno-术语表.md`                      | 术语唯一权威（Glossary）                            |
 | 产品文档 v4.0 §0                                     | 产品行为/契约 Normative                             |

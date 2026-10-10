@@ -1,6 +1,6 @@
 # Yiveno CI（对齐 AGENTS.md 质量门禁矩阵）
 # PR / push main：typecheck:ci + lint + i18n + knip + FE/BE test + FE build
-# 不在此跑：bun audit、Lighthouse、全仓 typecheck:force、E2E（本地 CDP 冒烟）
+# 不在此跑：bun audit、全仓 typecheck:force；扩展 UI 验收走 MCP 真机（非 CI）
 
 name: CI
 

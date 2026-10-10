@@ -948,16 +948,17 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 
 ### 1.1 「已上线」验证归属（Normative）
 
-口径：**单测** = Vitest（含 handler/application/core）；**eval** = `frontend/src/core/recall/eval` 的 `must`/`stretch`；**E2E** = `scripts/e2e-management.mjs` 薄冒烟；**手动** = 真机/扩展清单（发版或改到才验）。一项可多列并存。`缺口` = 尚无自动归属、仅靠偶然手测。
+口径：**单测** = Vitest（含 handler/application/core）；**eval** = `frontend/src/core/recall/eval` 的 `must`/`stretch`；**MCP** = Chrome DevTools MCP 真机 UI 抽测（扩展用户可感路径）；**手动** = 真机/扩展清单（发版或改到才验）。一项可多列并存。`缺口` = 尚无自动归属、仅靠偶然手测。  
+（历史曾用 `scripts/e2e-management.mjs` CDP 薄冒烟；**已退役**，不得再当作合入归属。）
 
-| 能力                                      | 单测 | eval | E2E | 手动 | 说明                                                                                        |
+| 能力                                      | 单测 | eval | MCP | 手动 | 说明                                                                                        |
 | ----------------------------------------- | ---- | ---- | --- | ---- | ------------------------------------------------------------------------------------------- |
 | 右键保存选区                              | ✓    | —    | —   | ✓    | `context-menu` / capture 服务；真机右键需手动                                               |
 | 划词保存浮层                              | ✓    | —    | —   | ✓    | `selection-toolbar-*`；页面浮层需手动                                                       |
 | 书签/摘录事后附注                         | ✓    | ✓    | —   | ✓    | eval：`semi-fuzzy-type-b-note`；树编辑手测                                                  |
 | Chrome 书签导入 + 增量 sync               | ✓    | —    | —   | ✓    | import/sync 服务单测；真机 sync 手测                                                        |
 | LocalProfile / ownerId                    | ✓    | —    | —   | —    | `local-profile*`                                                                            |
-| Settings（最小）                          | ✓    | —    | ✓   | ✓    | E2E：打开 `settings.html`                                                                   |
+| Settings（最小）                          | ✓    | —    | ✓   | ✓    | MCP：打开 `settings.html`                                                                   |
 | Omnibox 找回                              | ✓    | ✓    | —   | ✓    | ADR-007 离线快跳（无向量融合）；§5.10.8 手测 + `omnibox_must` + `omnibox-recall-entry` 单测 |
 | 快捷键找回（开 Side Panel）               | ✓    | —    | —   | ✓    | 真机按键/点图标开 Panel                                                                     |
 | 快捷键打开记忆库                          | ✓    | —    | —   | ✓    | 同上                                                                                        |
@@ -971,9 +972,9 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 | 记忆库轻浏览                              | ✓    | —    | —   | ✓    | library tree/tabs；页手测                                                                   |
 | 摘录删除                                  | ✓    | —    | —   | ✓    | delete handler；库/详情手测                                                                 |
 | Need A Clue / 否定反馈                    | ✓    | ✓    | —   | ✓    | eval：`need-a-clue-*`；dismiss 单测；对话手测                                               |
-| 关键词 Recall 主路径（Filter + 口语解析） | ✓    | ✓    | ✓   | ✓    | eval=`must` 门禁；E2E=找回壳固定线索→结果卡                                                 |
+| 关键词 Recall 主路径（Filter + 口语解析） | ✓    | ✓    | ✓   | ✓    | eval=`must` 门禁；MCP=Side Panel 提交固定 clue→结果卡                                       |
 | 关键词倒排 Phase 1                        | ✓    | ✓    | —   | ✓    | `keyword-index-repository*`；extract-tokens；真机大库                                       |
-| Side Panel 对话式壳（多轮 UI）            | ✓    | ✓    | 薄  | ✓    | merge + eval；E2E `sidepanel.html`；芯片/dismiss 手测                                       |
+| Side Panel 对话式壳（多轮 UI）            | ✓    | ✓    | ✓   | ✓    | merge + eval；MCP `sidepanel.html`；芯片/dismiss 手测                                       |
 | Composer 双通道（§7.0 Placeholder×芯片）  | ✓    | —    | —   | ✓    | `compute-composer-placeholder*`；§5.2.1；旁挂工程文档                                       |
 | 多轮槽位 merge（§7.0）                    | ✓    | ✓    | —   | ✓    | `merge-recall-dialog-turn`；eval `dialog-*` must                                            |
 | Dodo Pro / 同步·托管门禁                  | ✓    | —    | —   | ✓    | webhook/account/sync Pro 拒绝；§5.7 手动付费全流程                                          |
@@ -990,8 +991,8 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
    - 在 `recall-eval` 增加或更新 **`must` case**，且相关单测/CI 绿；或
    - 在 §5 验收清单写明 **可复现的手动步骤**（含期望结果）。
 2. 禁止「只改代码、无验收归属」。合并后应能在本表或 §5 找到覆盖方式。
-3. **E2E 边界：** 仅薄冒烟——装载扩展 → 找回主壳（Side Panel 页或对等入口）发固定线索 → 断言出现结果卡；可保留打开 settings。**不上**全量可视化回归、大型 Playwright 套件、逐 UI 状态 E2E。
-4. 未标「已上线」的能力不得用 E2E/文案暗示可用。
+3. **MCP 真机边界：** 扩展用户可感路径须 UI 抽测（装载 `dist/` → Side Panel 等入口 → `fill`/`click` 提交 clue → 断言结果卡）。**不上**全量可视化回归、大型 Playwright/Puppeteer 套件、逐 UI 状态自动化 E2E。
+4. 未标「已上线」的能力不得用 MCP 抽测记录或文案暗示可用。
 
 ---
 
@@ -2466,6 +2467,7 @@ RecallOutcomeEvent {
 
 | 日期       | 变更                                                                                                                                                                                                                                                                                                       |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-10 | **§1.1 验收归属：** 退役 CDP E2E（`e2e-management`）；表列 **MCP** 真机 UI 抽测 + Vitest/`must`；禁再暗示 Playwright/大 E2E                                                                                                                                                                                |
 | 2026-10-09 | **§0.1.2 双线程权威：** 短锚指向 `Yiveno-双线程发展原则.md`；五问（方案必过/回归 N/A）；`dual-thread-notes`；环境反馈文档降工程子集；ADR-016 同步                                                                                                                                                          |
 | 2026-10-09 | **§0.1.2 / ADR-016 升格：** 懂人类暗线（人脑记忆机制）+ 设计滤镜 + 环境反馈进化约束；全文原则文档；改版 **R5**；**不**改变 §5.9 / 明线定位                                                                                                                                                                 |
 | 2026-10-09 | **§0.1.2 / ADR-016 初落：** 环境反馈驱动持续进化原则锚；全文 `Yiveno-环境反馈驱动进化-原则.md`；改版 R5；禁把愿景写成已上线自适应                                                                                                                                                                          |

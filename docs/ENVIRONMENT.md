@@ -10,9 +10,9 @@
 
 只维护以下 3 个源文件：
 
-- `/Users/cqw/Documents/github/Yiveno/.env.shared.local`
-- `/Users/cqw/Documents/github/Yiveno/.env.development.local`
-- `/Users/cqw/Documents/github/Yiveno/.env.production.local`
+- `.env.shared.local`（仓库根）
+- `.env.development.local`
+- `.env.production.local`
 
 ### 1. `.env.shared.local`
 
@@ -74,14 +74,14 @@
 
 以下文件为运行时产物，不手改：
 
-- `/Users/cqw/Documents/github/Yiveno/.env.runtime/.env.development`
-- `/Users/cqw/Documents/github/Yiveno/.env.runtime/.env.production`
-- `/Users/cqw/Documents/github/Yiveno/backend/.dev.vars`
-- `/Users/cqw/Documents/github/Yiveno/website/.env`
+- `.env.runtime/.env.development`
+- `.env.runtime/.env.production`
+- `backend/.dev.vars`
+- `website/.env`
 
 生成脚本：
 
-- `/Users/cqw/Documents/github/Yiveno/scripts/dev-env.mjs`
+- `scripts/dev-env.mjs`
 
 ## 命令
 

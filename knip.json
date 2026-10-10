@@ -17,7 +17,6 @@
     "enumMembers": "error"
   },
   "ignoreIssues": {
-    "backend/src/trpc-router.ts": ["types", "exports"],
     "frontend/src/background/commands/registry.ts": ["exports"]
   },
   "workspaces": {

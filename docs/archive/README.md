@@ -28,12 +28,13 @@ archive/
 ├── product/                           # 过时产品文档
 │   └── Yiveno-市场调研-v1.md        # 市场调研（Non-normative）
 │
-├── engineering/                       # 过时工程文档
+├── engineering/                       # 过时工程文档 / 一次性脚本
 │   ├── Skills-复查路线图.md          # Skills 复查记录（已结案）
 │   ├── Skills-复查-Issues.md         # Skills 复查 Issues（已结案）
 │   ├── R4-Phase-E-验收与eval.md     # R4 验收文档（已落地）
 │   ├── R4-Outcome-Labeling-P2-校准.md  # Outcome Labeling 校准（已合并）
-│   └── Yiveno-logo-asset-generation-prompt.md  # Logo 生成 prompt
+│   ├── Yiveno-logo-asset-generation-prompt.md  # Logo 生成 prompt
+│   └── snap-css-to-space-radius.mjs  # 一次性 CSS space/radius 对齐（按需）
 │
 └── packages/                         # 过时包说明
     ├── README.md                      # 包说明汇总

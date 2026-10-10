@@ -6,7 +6,8 @@ import { readdir, readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../frontend/src')
+/** 归档：一次性 spacing/radius 对齐脚本（原 `scripts/snap-css-to-space-radius.mjs`）。按需：`bun docs/archive/engineering/snap-css-to-space-radius.mjs` */
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../frontend/src')
 
 const SPACE_SCALE = [4, 8, 12, 16, 24, 32, 48, 64]
 const SPACE = {

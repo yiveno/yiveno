@@ -17,15 +17,8 @@ export default defineConfig({
     // 无测试文件时失败，避免空跑被当成通过
     passWithNoTests: false,
 
-    // 本配置只跑 src 旁挂单测；不含浏览器 E2E
+    // 本配置只跑 src 旁挂单测；扩展 UI 验收走 MCP 真机，不上 Playwright E2E
     exclude: ['**/node_modules/**', '**/dist/**'],
-
-    // 覆盖率配置
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
-      exclude: ['node_modules/', '**/*.d.ts', '**/*.config.*']
-    },
 
     // 并行测试
     pool: 'threads',

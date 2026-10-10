@@ -10,7 +10,7 @@ alwaysApply: true
 **仓库归属（勿误判）：** GitHub **Org** `yiveno` · 主仓 [`yiveno/yiveno`](https://github.com/yiveno/yiveno)；对应品牌 [`yiveno.com`](https://yiveno.com)，**不是**维护者个人名下的实验仓。
 
 **权威优先级（冲突时）：**
-**Agent 开机层** `.cursor/rules/session-boot.mdc`（alwaysApply · 当下+冻结）> **术语定义** `docs/product/Yiveno-术语表.md`（Glossary · 唯一权威）> **当下详版** `docs/product/CURRENT.md`（**只改本文** → `bun run sync:ide-boot`）> `docs/product/Yiveno-产品文档-v4.0.md`（Normative §0–§7 · 行为/契约）> **架构决策** `docs/architecture/decisions/` > **视觉/品牌** `docs/design/Yiveno-设计标准-v1.md`（≈ 根目录 `DESIGN.md`）> **本文件**（Yiveno AI 协作脚手架的**单一权威**；`AGENTS.md` 为跨 IDE 薄指针）> 其它 steering。  
+**Agent 开机层** `.cursor/rules/session-boot.mdc`（alwaysApply · 当下+冻结）> **术语定义** `docs/product/Yiveno-术语表.md`（Glossary · 唯一权威）> **当下详版** `docs/product/CURRENT.md`（**只改本文** → `bun run sync:ide-boot`）> `docs/product/Yiveno-产品文档-v4.0.md`（Normative §0–§7 · 行为/契约）> **架构决策** `docs/architecture/decisions/` > **视觉/品牌** `docs/design/Yiveno-设计标准-v1.md`（≈ `docs/design/DESIGN.md`）> **本文件**（Yiveno AI 协作脚手架的**单一权威**；`AGENTS.md` 为跨 IDE 薄指针）> 其它 steering。  
 改术语/概念叫法 → **先改术语表**再同步产品文档、设计标准、`.cursor/rules/terminology.mdc`、代码与 i18n。  
 改架构/消息协议/UI 硬约束 → **先改产品文档再改代码与本文件**；不可逆决策 → **补 ADR** 并更新 `CURRENT.md` + `bun run sync:ide-boot`；改品牌色/字体/物料气质 → **先改设计标准再改官网 CSS / MD token / logo**。附录 A 非实现范围。
 
@@ -41,7 +41,7 @@ alwaysApply: true
 | **换波次 / 本周焦点** | `docs/product/CURRENT.md` → `bun run sync:ide-boot` |
 | **不可逆架构/产品分叉** | `docs/architecture/decisions/`（ADR）+ 产品文档 |
 | 产品行为 / Recall / Capture / 配额 / 折叠键 / 消息协议 / 分层边界 | `docs/product/Yiveno-产品文档-v4.0.md`（Normative） |
-| 视觉 / 品牌 / token / 控件气质 | `docs/design/Yiveno-设计标准-v1.md`（及根 `DESIGN.md` 摘要若受影响） |
+| 视觉 / 品牌 / token / 控件气质 | `docs/design/Yiveno-设计标准-v1.md`（及 `docs/design/DESIGN.md` 摘要若受影响） |
 | 环境变量 / 部署 / Worker 绑定 | `docs/ENVIRONMENT.md` 等既有工程文档 |
 | 工程约定（日志、倒排、语料适配器等） | 对应 `docs/engineering/*` |
 | 新增 Background `message type` | `docs/engineering/background-message-types.registry` + `core/messaging/*` + handler +（核心表）产品文档 §4 |
@@ -191,7 +191,7 @@ Agent 指令（原文）：
 - **禁止**：每次小改都自动跑全仓 `typecheck:force` / 全仓 lint / format。
 - **大范围改动或用户要求时**：`bun run typecheck:force`；frontend 用 `cd frontend && bun run lint:check`（根目录无 `lint:check:force` / `stylelint:force`）。
 - 有错误 → 修到通过再报完成；不确定 → 说明并等待指示。
-- Recall / Capture 用户可感变更：合入前补 `recall-eval` **must** 或产品文档 §5 手动步骤（§1.1）；E2E 仅薄冒烟，不上大 Playwright。
+- Recall / Capture 用户可感变更：合入前补 `recall-eval` **must** 或产品文档 §5 手动步骤（§1.1）；扩展用户可感路径再加 **MCP 真机** UI 抽测；不上大型 Playwright/Puppeteer E2E。
 
 #### 质量门禁三层职责
 
@@ -213,11 +213,11 @@ pre-push **不跑** ESLint、全仓 typecheck；FE 变更时跑 **build + test:r
 
 #### CI 检查矩阵
 
-| 场景          | TypeScript                             | Lint         | i18n                       | Knip                | 前端测试                    | Lighthouse      |
-| ------------- | -------------------------------------- | ------------ | -------------------------- | ------------------- | --------------------------- | --------------- |
-| **PR**        | `typecheck:ci` + build 内 `vue-tsc -b`（app+node+vitest） | `lint:check` | `i18n:check` + `doc:check` | `knip`              | FE `test:run` + backend `test` | 不跑（v4 下线） |
-| **push main** | 同上                                   | 同上         | `i18n:check` + `doc:check` | `knip`              | 同上                        | 不跑（v4 下线） |
-| **每周一**    | —                                      | —            | —                          | `knip.yml` 定时复检 | —                           | —               |
+| 场景          | TypeScript                             | Lint         | i18n                       | Knip                | 前端测试                    |
+| ------------- | -------------------------------------- | ------------ | -------------------------- | ------------------- | --------------------------- |
+| **PR**        | `typecheck:ci` + build 内 `vue-tsc -b`（app+node+vitest） | `lint:check` | `i18n:check` + `doc:check` | `knip`              | FE `test:run` + backend `test` |
+| **push main** | 同上                                   | 同上         | `i18n:check` + `doc:check` | `knip`              | 同上                        |
+| **每周一**    | —                                      | —            | —                          | `knip.yml` 定时复检 | —                           |
 
 #### 本地命令
 
@@ -382,7 +382,7 @@ Background **无** `window` / `document` / `localStorage`。用全局 `setTimeou
 | **Agent 开机层（alwaysApply）** | `.cursor/rules/session-boot.mdc` |
 | **当下焦点（源）** | `docs/product/CURRENT.md` → `bun run sync:ide-boot` |
 | **架构决策 ADR** | `docs/architecture/decisions/` |
-| 视觉/品牌标准 | `docs/design/Yiveno-设计标准-v1.md` + 根目录 `DESIGN.md` |
+| 视觉/品牌标准 | `docs/design/Yiveno-设计标准-v1.md` + `docs/design/DESIGN.md` |
 | Memory / clues | `frontend/src/core/memory/` |
 | 消息联合类型 | `frontend/src/core/messaging/background-messages.ts` |
 | UI → SW | `frontend/src/infrastructure/messaging/background-client.ts` |

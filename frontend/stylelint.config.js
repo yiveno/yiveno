@@ -21,8 +21,7 @@ export default {
     '**/*.test.vue',
     '**/*.spec.vue',
     '**/coverage/**',
-    '**/.lighthouseci/**',
-    
+
     // 文档和脚本
     '**/docs/**',
     '**/scripts/**',

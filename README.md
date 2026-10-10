@@ -145,95 +145,71 @@ bun run build:fe:prod
 ## 📂 项目结构
 
 ```
-Yiveno/                             # Monorepo 根目录
+yiveno/                             # Monorepo 根目录
 ├── frontend/                       # Chrome 扩展 (Vue 3 + Vite)
 │   ├── src/
-│   │   ├── background/            # Service Worker 入口
-│   │   ├── core/                  # 领域模型
-│   │   ├── infrastructure/        # IndexedDB、事件总线、日志等
-│   │   ├── offscreen/             # Offscreen Document
-│   │   ├── pages/                 # popup / settings 页面
+│   │   ├── background/            # Service Worker
+│   │   ├── application/           # 应用服务（Recall / Capture 等）
+│   │   ├── core/                  # 领域模型与消息契约
+│   │   ├── infrastructure/        # IndexedDB、browser、messaging client
+│   │   ├── pages/                 # sidepanel / settings / library / detail / getting-started
+│   │   ├── content/               # content scripts（划词浮层等）
+│   │   ├── offscreen/             # Offscreen 占位（manifest 未注册 permission）
 │   │   └── styles/
 │   ├── public/                    # manifest、静态资源
 │   ├── vite/                      # 构建配置
-│   ├── scripts/                   # workspace 级脚本
 │   └── package.json
 │
 ├── backend/                        # Cloudflare Worker API
-│   ├── src/
-│   │   ├── handlers/              # 请求处理器
-│   │   ├── routes/                # HTTP 路由
-│   │   ├── services/              # 业务服务
-│   │   ├── middleware/          # 中间件
-│   │   └── data-access/           # Supabase 数据访问
-│   ├── wrangler.toml
-│   └── package.json
-│
 ├── website/                        # Astro 营销站
-│   ├── src/
-│   └── package.json
+├── packages/
+│   ├── design-tokens/             # @yiveno/design-tokens
+│   ├── types/                     # @yiveno/types
+│   ├── yiveno-mcp/                # 只读 MCP stdio 桥（beta）
+│   └── yiveno-probe/              # DEV 探针语料 / Probe Console
 │
-├── packages/                       # 共享包
-│   ├── design-tokens/             # 品牌/设计令牌 (@yiveno/design-tokens)
-│   ├── types/                     # 跨 workspace 类型 (@yiveno/types)
-│   └── yiveno-mcp/                # MCP 相关共享代码
+├── scripts/                        # 跨 workspace 脚本（见 scripts/README.md）
+├── docs/
+│   ├── product/                   # CURRENT、术语表、产品文档
+│   ├── design/                    # 设计标准 + DESIGN.md 摘要
+│   ├── architecture/              # ADR
+│   ├── engineering/               # 工程约定
+│   └── archive/                   # 已归档研究 / 历史工程材料
 │
-├── scripts/                        # 跨 workspace 脚本
-│   ├── dev-env.mjs                # 环境变量同步/校验
-│   ├── check-doc-drift.mjs        # doc:check（registry、CURRENT、session-boot）
-│   ├── sync-ide-boot.mjs          # CURRENT → session-boot 当下块
-│   ├── e2e-management.mjs         # E2E 测试
-│   └── （knip：根 bunx knip）      # Dead code 检测
-│
-├── docs/                           # 权威文档（规格 / ADR / 工程）
-│   ├── product/                   # 产品文档、CURRENT、术语表
-│   ├── design/                    # 设计规范与品牌资产索引
-│   ├── architecture/              # 运行时架构、ADR
-│   └── engineering/               # 工程约定、message registry
-│
-├── research/                       # TTE Beta 等可复用研究模板（非 Normative）
-├── yiveno_research/                # 市场/竞品研究归档（背景材料，已部分写入 docs/product）
-│
-├── supabase/                       # 数据库迁移 (Supabase CLI)
-│
-├── .cursor/rules/                  # Cursor Agent 规则（session-boot alwaysApply）
+├── supabase/                       # 数据库迁移
+├── .cursor/rules/                  # Cursor Agent 规则（唯一激活 IDE 入口）
 ├── .github/                        # CI、PR 模板
-├── .husky/                         # pre-commit / pre-push 门禁
-├── .kiro/                          # Kiro hooks/skills（规则权威仍指向 .cursor/rules）
-├── .claude/                        # Claude Code 薄指针（根 CLAUDE.md 为入口）
-├── .codex/                         # Codex 环境配置
+├── .husky/                         # pre-commit / pre-push
+├── .agents/skills/                 # 本地 Agent Skills（gitignore）
 │
-├── dist/                           # 扩展构建产物 (gitignore，由 frontend build 生成)
-├── node_modules/                   # 依赖 (gitignore)
-├── artifacts/                      # 本地调试日志/截图 (gitignore)
-│
-├── AGENTS.md / CLAUDE.md / GEMINI.md  # 各 AI IDE 开机索引
-├── eslint.config.js                # 统一 ESLint 配置
-├── tsconfig.base.json              # 共享 TypeScript 配置
-├── knip.json                       # Dead code 检测配置
-├── package.json                    # Workspaces 根配置
-└── bun.lock                        # 依赖锁文件
+├── AGENTS.md                       # 跨 IDE 薄指针
+├── CHROMEWEBSTORE.md               # CWS 上架元数据
+├── eslint.config.js
+├── knip.json
+├── mprocs.yaml
+├── package.json
+└── bun.lock
 ```
 
-**本地可删、会再生成：** `dist/`、`artifacts/`、`.cache/`、`.astro/`、`.env.runtime/`（见 `docs/ENVIRONMENT.md`）。**不进构建主链路：** `yiveno_research/`、`research/`（研究归档）；`yiveno-brand-kit/` 已移除（独有文件已备份至仓外）。
+**本地可删、会再生成：** `dist/`、`artifacts/`、`.cache/`、`.astro/`、`.env.runtime/`（见 `docs/ENVIRONMENT.md`）。研究材料在 `docs/archive/`；历史 `yiveno-brand-kit/` 已移除。
 
 ### 架构分层 (Frontend)
 
-目标架构基于 **DDD**，v4 baseline 正在重建各层，完整约定见 [产品文档 v4.0](docs/product/Yiveno-产品文档-v4.0.md)：
+DDD 分层（约定见 [产品文档 v4.0](docs/product/Yiveno-产品文档-v4.0.md)）：
 
 ```
 ┌─────────────────────────────────────────┐
-│       Presentation Layer (UI)           │  ← Vue 组件, Pinia Stores（重建中）
+│  pages/（Vue UI · Side Panel 主壳）     │
 ├─────────────────────────────────────────┤
-│       Application Layer                 │  ← App Services（重建中）
+│  application/                           │  ← Recall / Capture 等服务
 ├─────────────────────────────────────────┤
-│       Core/Domain Layer                 │  ← 核心业务逻辑, 领域模型
+│  core/                                  │  ← 领域模型、消息 Zod
 ├─────────────────────────────────────────┤
-│       Infrastructure Layer              │  ← Chrome APIs, IndexedDB
+│  infrastructure/ + background/          │  ← IndexedDB、Chrome API、SW
 └─────────────────────────────────────────┘
 ```
 
-当前 baseline 已有 `core/`、`infrastructure/`、`pages/`；`presentation/` / `application/` 将随 v4 功能恢复逐步补齐。
+UI → `background-client` → SW handler → application → core。未引入 Pinia；会话态以组件状态为主（关 Side Panel 即丢）。
 
 ---
 
@@ -246,7 +222,7 @@ Yiveno/                             # Monorepo 根目录
 | **框架**       | Vue 3       | 3.5.18 | Composition API  |
 | **语言**       | TypeScript  | 5.8.3  | 严格模式         |
 | **构建工具**   | Vite        | 8.0.x  | 扩展打包         |
-| **校验**       | Zod         | 3.25.x | 领域/消息 schema |
+| **校验**       | Zod         | 4.x    | 领域/消息 schema |
 | **Chrome API** | Manifest V3 | -      | 最新标准         |
 
 ### Backend (Cloudflare Worker)
@@ -256,7 +232,7 @@ Yiveno/                             # Monorepo 根目录
 | **运行时** | Cloudflare Worker | -      | 全球边缘计算       |
 | **语言**   | TypeScript (ESM)  | 5.8.x  | Bun + Wrangler     |
 | **数据库** | Supabase          | 2.79.x | PostgreSQL + Auth  |
-| **验证**   | Zod               | 3.25.x | 类型安全的数据验证 |
+| **验证**   | Zod               | 4.x    | 类型安全的数据验证 |
 
 ### Website (营销站)
 
@@ -312,8 +288,6 @@ bun run knip                  # Dead code 检测
 bun run deploy:be             # 部署后端到 Cloudflare
 bun run deploy:web            # 构建官网
 
-# 🧪 E2E 冒烟（popup + settings，需 Chrome 远程调试 + 已加载 dist/）
-bun run e2e                   # CDP 薄冒烟：popup/settings + 固定线索→结果卡
 # 🗄️ 数据库
 bun run db:start              # 启动本地 Supabase
 bun run db:reset              # 重置本地数据库
@@ -412,20 +386,14 @@ bun run db:reset              # 重置本地数据库
 
 ## 🧪 测试
 
-### E2E 冒烟（v4）
-
 ```bash
-# 前置：Chrome 开启远程调试，加载 dist/ 后执行
-bun run e2e
+bun run test:run              # FE Vitest + BE bun test（含 recall-eval must）
+cd frontend && bun run test   # 交互式 Vitest
 ```
 
-打开 `sidepanel.html` / `settings.html`，再 seed 一条摘录、发固定线索并断言出现结果卡；截图到 `artifacts/`。详见 `scripts/e2e-management.mjs` 与产品文档 §1.1（不上大 Playwright）。
+扩展用户可感路径：相关单测通过后，用 **Chrome DevTools MCP** 真机 UI 抽测（产品文档 §1.1）。不上大型 Playwright/Puppeteer E2E；历史 CDP 脚本 `e2e-management.mjs` 已退役。
 
-环境变量快照（v3 `management.html` 桥接）已下线；请用 `.env.*.local` + `bun run env:sync:dev`。
-
-### Lighthouse CI
-
-v4 baseline 暂缺 `lighthouserc.json`；Lighthouse workflow 与相关汇总脚本已移除。恢复审计前需补配置再接线。
+环境变量：`.env.*.local` + `bun run env:sync:dev`（见 `docs/ENVIRONMENT.md`）。
 
 ---
 
@@ -435,7 +403,7 @@ v4 baseline 暂缺 `lighthouserc.json`；Lighthouse workflow 与相关汇总脚�
 
 - ✅ **IndexedDB 缓存** - 本地持久化存储
 - ✅ **Tree Shaking** - Vite 自动移除未使用代码
-- ✅ **代码分割** - 按入口异步加载 (popup, settings, background)
+- ✅ **代码分割** - 按入口异步加载（sidepanel / settings / background 等）
 - ✅ **CSS 优化** - Stylelint 自动排序属性
 
 ### Backend 优化

@@ -153,16 +153,16 @@ fix(recall): 时间置信度回归（ADR-011） + omnibox 入口漏 tag
 ```text
 chore(scripts): 清理废弃脚本与 ESLint/Knip 残留引用
 
-[scripts/keep-supabase-alive.mjs] 删除:
-- 历史 supabase 保活（CI workflow 已接管，详 commit body）
+[scripts/keep-supabase-alive.mjs] 删除:（历史示例 · 文件已不在树）
+- 历史 supabase 保活（CI workflow 已接管）
 
-[scripts/e2e-management.mjs] 删除:
-- puppeteer 依赖未装、product.mdc 不再允许大 E2E
+[scripts/e2e-management.mjs] 删除:（历史示例 · 文件已不在树）
+- CDP 薄冒烟已退役；验收改 MCP 真机 + Vitest/must
 
-[eslint.config.js] 修改:
+[eslint.config.js] 修改:（历史示例）
 - 移除 scopePath('frontend/test-puppeteer.js') ignore
 
-[knip.json] 修改:
+[knip.json] 修改:（历史示例）
 - 移除 ignoreDependencies: ["puppeteer-core"]
 
 [scripts/README.md] 新增:

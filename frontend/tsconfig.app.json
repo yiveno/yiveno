@@ -50,8 +50,7 @@
     "**/*.spec.ts",
     "**/*.spec.tsx",
     "coverage",
-    ".lighthouseci",
-    
+
     // 文档和脚本
     "docs",
     "scripts",

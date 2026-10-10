@@ -12,7 +12,7 @@ const isWatchBuild = process.argv.includes('--watch')
  */
 export const WATCH_BUILD_DELAY_MS = 400
 
-/** 创建扩展打包构建配置（popup / settings / background / offscreen）。 */
+/** 创建扩展打包构建配置（sidepanel / settings / background / offscreen 占位等）。 */
 export function createBuildConfig(mode: string): BuildOptions {
   const includeProbeConsole = mode !== 'production'
   return {
