@@ -78,14 +78,16 @@ jobs:
       - name: Build extension
         run: cd frontend && bun run build
 
+      # 扩展产物在仓库根 dist/（frontend/vite OUT_DIR），不是 frontend/dist
       - name: Verify dist
         run: |
-          cd frontend
           test -d dist || { echo "dist missing"; exit 1; }
           test -f dist/manifest.json || { echo "manifest.json missing"; exit 1; }
           test -f dist/background.js || { echo "background.js missing"; exit 1; }
           TOTAL_SIZE_KB=$(du -sk dist | cut -f1)
           echo "dist size: ${TOTAL_SIZE_KB}KB"
+          echo "top js:"
+          du -h dist/*.js 2>/dev/null | sort -hr | head -15 || true
           if [ "$TOTAL_SIZE_KB" -gt 20480 ]; then
             echo "exceeds Chrome Web Store 20MB limit"
             exit 1
@@ -95,5 +97,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: chrome-extension-${{ github.sha }}
-          path: frontend/dist/
+          path: dist/
           retention-days: 7

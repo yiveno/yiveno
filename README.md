@@ -70,7 +70,7 @@ brew install mprocs
 # 或：https://github.com/pvolok/mprocs/releases （darwin-aarch64 等）
 ```
 
-> **扩展热更新**：`watch:fe` / `watch` 的 fe 进程是 `vite build --watch`，不是浏览器 HMR。每次日志出现「dist 已更新」后，到 `chrome://extensions` 点本扩展的刷新按钮再验。
+> **扩展热更新**：`watch:fe` / `watch` 的 fe 进程是 `vite build --watch`，不是浏览器 HMR。content IIFE **按需**重打（仅触及 `content` / `core` / `infrastructure` 时）；收尾日志含 `content=` / `finalize=` ms。每次「dist 已更新」后到 `chrome://extensions` 刷新本扩展再验。
 
 ### 环境变量
 
@@ -387,11 +387,12 @@ bun run db:reset              # 重置本地数据库
 ## 🧪 测试
 
 ```bash
-bun run test:run              # FE Vitest + BE bun test（含 recall-eval must）
+bun run test:must             # 召回 eval 快轨（src/core/recall/eval；本地迭代用）
+bun run test:run              # FE Vitest + BE bun test 全量（合入 / CI / pre-push）
 cd frontend && bun run test   # 交互式 Vitest
 ```
 
-扩展用户可感路径：相关单测通过后，用 **Chrome DevTools MCP** 真机 UI 抽测（产品文档 §1.1）。不上大型 Playwright/Puppeteer E2E；历史 CDP 脚本 `e2e-management.mjs` 已退役。
+日常改 Recall 可先 `bun run test:must`；合入前仍跑全量 `test:run`。扩展用户可感路径：相关单测通过后用 **Chrome DevTools MCP** 真机 UI 抽测（产品文档 §1.1）。不上大型 Playwright/Puppeteer E2E；历史 CDP 脚本 `e2e-management.mjs` 已退役。
 
 环境变量：`.env.*.local` + `bun run env:sync:dev`（见 `docs/ENVIRONMENT.md`）。
 

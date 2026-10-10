@@ -2,7 +2,7 @@
  * 扩展构建收尾：
  * 1. watch 互斥：上一轮收尾结束前不开始下一轮（防 HTML/CSS 哈希错位）
  * 2. content script IIFE 与平铺 HTML 串行
- * 3. watch 下主包每次 closeBundle 都重打 content（shared core/infra 变更也会进 IIFE）
+ * 3. watch 下按需重打 content（仅 content/core/infra 等会使 IIFE 过期的路径；见 paths 契约）
  * 4. content/ 不在主包 module graph：addWatchFile 纳入监听；仅改划词时也能触发重建
  */
 import type { Plugin } from 'vite'
@@ -11,6 +11,7 @@ import { readdirSync, statSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { SRC_DIR } from './constants'
 import { buildContentScriptIifes, CONTENT_SCRIPT_ENTRIES } from './content-scripts-iife'
+import { isContentScriptPath, pathInvalidatesContentScript } from './extension-post-build-paths'
 
 const require = createRequire(import.meta.url)
 const { finalizeExtensionDist, syncExtensionPublicAssets } =
@@ -28,7 +29,10 @@ const frontendPublicDir = resolve(SRC_DIR, '..', 'public')
 let buildGate: Promise<void> = Promise.resolve()
 let releaseBuildGate: (() => void) | null = null
 
-/** 是否需要重打 content script。 */
+/**
+ * 是否需要重打 content script。
+ * 初值 true：首轮 / 非 watch 必打；watch 后续由 watchChange 置脏，buildStart 不再强制。
+ */
 let contentScriptsDirty = true
 
 /** 仅 content 变更时的防抖重打包定时器。 */
@@ -58,11 +62,6 @@ function schedulePublicAssetSync(reason: string): void {
       '[extension-post-build] _locales 已同步 → chrome://extensions 刷新本扩展后生效（MV3 无热替换）'
     )
   }, PUBLIC_SYNC_DEBOUNCE_MS)
-}
-
-function isContentScriptPath(id: string): boolean {
-  const normalized = id.replace(/\\/g, '/')
-  return normalized.includes('/src/content/') || normalized.includes('/content/selection-toolbar/')
 }
 
 function listSourceFilesRecursive(dir: string, out: string[] = []): string[] {
@@ -102,9 +101,11 @@ async function rebuildContentScriptsNow(reason: string): Promise<void> {
     if (!contentScriptsDirty) {
       return
     }
+    const started = Date.now()
     console.log(`[extension-post-build] 重打 content script（${reason}）`)
     await buildContentScriptIifes()
     contentScriptsDirty = false
+    console.log(`[extension-post-build] content script 完成 ${Date.now() - started}ms`)
   } finally {
     contentOnlyRebuildRunning = false
     if (contentScriptsDirty && isWatchBuild) {
@@ -141,7 +142,10 @@ export function extensionPostBuildPlugin(): Plugin {
         releaseBuildGate = resolve
       })
 
-      contentScriptsDirty = true
+      // 一次性 build 必打 content；watch 后续轮次靠 watchChange 置脏（首轮模块初值已 dirty）
+      if (!isWatchBuild) {
+        contentScriptsDirty = true
+      }
 
       if (isWatchBuild) {
         // 划词入口不在主包 graph：显式加入 watch，否则改 content/ 不会触发重建
@@ -157,9 +161,12 @@ export function extensionPostBuildPlugin(): Plugin {
       }
     },
     watchChange(id) {
-      if (isContentScriptPath(id)) {
-        // 主包未纳入 content 时，仅改划词不会走到完整依赖图；防抖直接重打 IIFE
-        scheduleContentOnlyRebuild('watchChange')
+      if (pathInvalidatesContentScript(id)) {
+        contentScriptsDirty = true
+        if (isContentScriptPath(id)) {
+          // 主包未纳入 content 时，仅改划词不会走到完整依赖图；防抖直接重打 IIFE
+          scheduleContentOnlyRebuild('watchChange')
+        }
       }
       if (isPublicExtensionAssetPath(id)) {
         schedulePublicAssetSync('watchChange')
@@ -172,24 +179,34 @@ export function extensionPostBuildPlugin(): Plugin {
       }
     },
     async closeBundle() {
+      const closeStarted = Date.now()
+      let contentMs = 0
       try {
         if (contentOnlyRebuildTimer !== null) {
           clearTimeout(contentOnlyRebuildTimer)
           contentOnlyRebuildTimer = null
         }
-        // watch：每次主包收尾都重打 content，避免只改了 core/infra 而 IIFE 仍是旧的
-        if (contentScriptsDirty || isWatchBuild) {
+        if (contentScriptsDirty) {
+          const contentStarted = Date.now()
           console.log(
             `[extension-post-build] 重打 content script（closeBundle${isWatchBuild ? '/watch' : ''}）`
           )
           await buildContentScriptIifes()
           contentScriptsDirty = false
+          contentMs = Date.now() - contentStarted
+        } else if (isWatchBuild) {
+          console.log('[extension-post-build] 跳过 content script（本轮未触及 content/core/infra）')
         }
+        const finalizeStarted = Date.now()
         finalizeExtensionDist()
+        const finalizeMs = Date.now() - finalizeStarted
+        console.log(
+          `[extension-post-build] 收尾耗时 content=${contentMs}ms finalize=${finalizeMs}ms total=${Date.now() - closeStarted}ms`
+        )
         // MV3 无真 HMR：watch 重建后需在 chrome://extensions 点刷新（或重新加载 unpacked）
         if (isWatchBuild) {
           console.log(
-            '[extension-post-build] dist 已更新 → chrome://extensions 刷新本扩展后验证（MV3 无热替换）'
+            '[extension-post-build] dist 已更新 → chrome://extensions 刷新本扩展后验证（MV3 无热替换；content 按需重打）'
           )
         }
       } finally {
