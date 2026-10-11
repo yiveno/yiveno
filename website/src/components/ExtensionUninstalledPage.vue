@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { t, type WebsiteMessageKey } from '../i18n/t'
+import { getSession } from '../services/auth'
+import { extractProfileFromUserMetadata } from '../services/extension-auth-handoff'
 
 defineOptions({ name: 'ExtensionUninstalledPage' })
 
@@ -67,6 +69,37 @@ function buildNotePayload(): string | undefined {
   const extra = note.value.trim()
   if (extra) parts.push(extra)
   return parts.length > 0 ? parts.join('\n\n') : undefined
+}
+
+/** 运营统计 / 复现用；ip 与 UA 由 Worker 从请求头取，不信任客户端伪造 */
+async function collectClientContext(): Promise<Record<string, string>> {
+  const ctx: Record<string, string> = {}
+  try {
+    const session = await getSession()
+    if (session?.user) {
+      const profile = extractProfileFromUserMetadata(
+        session.user.user_metadata as Record<string, unknown> | undefined
+      )
+      const displayName = profile.displayName?.trim()
+      if (displayName) ctx.displayName = displayName.slice(0, 120)
+      const email = session.user.email?.trim()
+      if (email) ctx.email = email.slice(0, 254)
+    }
+  } catch {
+    /* 未登录 / Supabase 不可用：跳过账号字段 */
+  }
+  try {
+    const language = navigator.language?.trim()
+    if (language) ctx.language = language.slice(0, 32)
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone?.trim()
+    if (timezone) ctx.timezone = timezone.slice(0, 64)
+    if (typeof screen !== 'undefined' && screen.width > 0 && screen.height > 0) {
+      ctx.screen = `${screen.width}x${screen.height}`.slice(0, 32)
+    }
+  } catch {
+    /* 隐私模式等 */
+  }
+  return ctx
 }
 
 /** 防止 Vue remount / 连点导致重复 POST；同 tab 记住已成功以免刷新重复打 */
@@ -168,12 +201,14 @@ async function submitFeedback(): Promise<void> {
       if (id !== 'other') return true
       return customReason.value.trim().length > 0
     })
+    const context = await collectClientContext()
     const res = await fetch(`${API_BASE}/api/website/uninstall-feedback`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
         ...(reasons.length > 0 ? { reasons } : {}),
         note: buildNotePayload(),
+        ...(Object.keys(context).length > 0 ? { context } : {}),
         website: honeypot.value
       })
     })

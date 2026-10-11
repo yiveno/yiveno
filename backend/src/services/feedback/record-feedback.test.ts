@@ -130,4 +130,51 @@ describe('recordFeedback', () => {
     expect(result.sinks.kv).toBe(true)
     expect(result.sinks.email).toBe(false)
   })
+
+  test('context 写入 KV；邮件正文含运营字段且无 support@ 引导', async () => {
+    const kv = createKvMock()
+    let sentText = ''
+    let sentHtml = ''
+    const env = {
+      AI_USAGE_KV: kv,
+      EMAIL: {
+        send: async (msg: { text: string; html: string }) => {
+          sentText = msg.text
+          sentHtml = msg.html
+          return { messageId: 'msg-ctx' }
+        }
+      }
+    } as unknown as Env
+    const result = await recordFeedback(env, {
+      source: 'uninstall',
+      reasons: ['bugs_or_slow'],
+      note: 'slow on open',
+      context: {
+        displayName: 'Ada',
+        email: 'ada@example.com',
+        ip: '203.0.113.9',
+        userAgent: 'Mozilla/5.0 (test) Chrome/154.0.0.0',
+        language: 'en-US',
+        timezone: 'Asia/Shanghai',
+        screen: '1440x900'
+      }
+    })
+    expect(result.ok).toBe(true)
+    const keys = [...kv.store.keys()].filter(k => k.startsWith('feedback:'))
+    const row = JSON.parse(kv.store.get(keys[0]!)!) as {
+      context: { displayName: string; ip: string }
+    }
+    expect(row.context.displayName).toBe('Ada')
+    expect(row.context.ip).toBe('203.0.113.9')
+    expect(sentText).toContain('Name:       Ada')
+    expect(sentText).toContain('IP:         203.0.113.9')
+    expect(sentText).toContain('Chrome 154.0.0.0')
+    expect(sentText).toContain('Internal feedback (ops)')
+    expect(sentText).not.toContain('support@yiveno.com')
+    expect(sentHtml).toContain('<table')
+    expect(sentHtml).toContain('Uninstall feedback')
+    expect(sentHtml).toContain('Bugs or slow')
+    expect(sentHtml).toContain('mailto:ada@example.com')
+    expect(sentHtml).not.toContain('support@yiveno.com')
+  })
 })

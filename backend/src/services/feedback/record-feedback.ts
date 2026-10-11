@@ -7,6 +7,7 @@ import type { Env } from '../../types/env'
 import { info } from '../../utils/logger'
 import {
   createFeedbackEvent,
+  type FeedbackContext,
   type FeedbackSource,
   type UninstallFeedbackReason
 } from './feedback-event'
@@ -19,6 +20,7 @@ export type RecordFeedbackInput = {
   /** @deprecated 单因；有则并入 reasons */
   reason?: UninstallFeedbackReason
   note?: string
+  context?: FeedbackContext
 }
 
 export type RecordFeedbackOptions = {

@@ -97,14 +97,21 @@ describe('POST /api/website/waitlist', () => {
   })
 })
 
-function postUninstallFeedback(body: unknown, env: Env = baseEnv): Promise<Response> {
+function postUninstallFeedback(
+  body: unknown,
+  env: Env = baseEnv,
+  extraHeaders?: Record<string, string>
+): Promise<Response> {
   const app = createApp()
   return Promise.resolve(
     app.request(
       '/api/website/uninstall-feedback',
       {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: {
+          'content-type': 'application/json',
+          ...(extraHeaders ?? {})
+        },
         body: JSON.stringify(body)
       },
       env
@@ -203,6 +210,50 @@ describe('POST /api/website/uninstall-feedback', () => {
       note: 'x'.repeat(501)
     })
     expect(response.status).toBe(400)
+  })
+
+  test('context：服务端 IP/UA 覆盖客户端伪造，并保留昵称等', async () => {
+    const kv = createKvMock()
+    const env = { ...baseEnv, AI_USAGE_KV: kv } as unknown as Env
+    const response = await postUninstallFeedback(
+      {
+        reasons: ['just_trying'],
+        context: {
+          displayName: 'Ada',
+          email: 'ada@example.com',
+          language: 'en-US',
+          timezone: 'Asia/Shanghai',
+          screen: '1440x900',
+          ip: '1.2.3.4',
+          userAgent: 'spoofed'
+        }
+      },
+      env,
+      {
+        'cf-connecting-ip': '203.0.113.9',
+        'user-agent': 'Mozilla/5.0 (test)'
+      }
+    )
+    expect(response.status).toBe(200)
+    const keys = [...kv.store.keys()].filter(k => k.startsWith('feedback:'))
+    const row = JSON.parse(kv.store.get(keys[0]!)!) as {
+      context: {
+        displayName?: string
+        email?: string
+        ip?: string
+        userAgent?: string
+        language?: string
+        timezone?: string
+        screen?: string
+      }
+    }
+    expect(row.context.displayName).toBe('Ada')
+    expect(row.context.email).toBe('ada@example.com')
+    expect(row.context.language).toBe('en-US')
+    expect(row.context.timezone).toBe('Asia/Shanghai')
+    expect(row.context.screen).toBe('1440x900')
+    expect(row.context.ip).toBe('203.0.113.9')
+    expect(row.context.userAgent).toBe('Mozilla/5.0 (test)')
   })
 })
 

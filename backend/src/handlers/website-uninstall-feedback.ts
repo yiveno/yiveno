@@ -6,11 +6,19 @@
 import { z } from 'zod'
 import type { Env } from '../types/env'
 import {
+  FeedbackContextSchema,
   normalizeUninstallReasons,
-  UNINSTALL_FEEDBACK_REASONS
+  UNINSTALL_FEEDBACK_REASONS,
+  type FeedbackContext
 } from '../services/feedback/feedback-event'
 import { recordFeedback } from '../services/feedback/record-feedback'
 import { info, warn } from '../utils/logger'
+
+/** 客户端可报；ip / userAgent 由服务端覆盖，防伪造 */
+const ClientContextSchema = FeedbackContextSchema.omit({
+  ip: true,
+  userAgent: true
+}).partial()
 
 const UninstallFeedbackBodySchema = z
   .object({
@@ -24,6 +32,8 @@ const UninstallFeedbackBodySchema = z
       .max(500)
       .optional()
       .transform(v => (v && v.length > 0 ? v : undefined)),
+    /** 浏览器侧上下文（昵称 / 时区等）；不含可信 IP */
+    context: ClientContextSchema.optional(),
     /** 蜜罐：机器人会填；真人应为空 */
     website: z.string().max(200).optional()
   })
@@ -120,12 +130,19 @@ export async function handleWebsiteUninstallFeedback(
   }
 
   const reasons = normalizeUninstallReasons(parsed.data.reasons, parsed.data.reason)
+  const userAgent = request.headers.get('user-agent')?.trim().slice(0, 512)
+  const context: FeedbackContext = {
+    ...(parsed.data.context ?? {}),
+    ...(ip !== 'unknown' ? { ip } : {}),
+    ...(userAgent ? { userAgent } : {})
+  }
   const result = await recordFeedback(
     env,
     {
       source: 'uninstall',
       ...(reasons.length > 0 ? { reasons } : {}),
-      ...(parsed.data.note ? { note: parsed.data.note } : {})
+      ...(parsed.data.note ? { note: parsed.data.note } : {}),
+      ...(Object.keys(context).length > 0 ? { context } : {})
     },
     schedule?.scheduleEmail ? { scheduleEmail: schedule.scheduleEmail } : undefined
   )

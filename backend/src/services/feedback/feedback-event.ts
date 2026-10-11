@@ -43,6 +43,19 @@ export function normalizeUninstallReasons(
   return out
 }
 
+/** 运营侧上下文：统计 / 复现；非用户可见文案 */
+export const FeedbackContextSchema = z.object({
+  ip: z.string().trim().max(64).optional(),
+  userAgent: z.string().trim().max(512).optional(),
+  displayName: z.string().trim().max(120).optional(),
+  email: z.string().trim().email().max(254).optional(),
+  language: z.string().trim().max(32).optional(),
+  timezone: z.string().trim().max(64).optional(),
+  screen: z.string().trim().max(32).optional()
+})
+
+export type FeedbackContext = z.infer<typeof FeedbackContextSchema>
+
 export const FeedbackEventSchema = z.object({
   id: z.string().uuid(),
   source: z.enum(FEEDBACK_SOURCES),
@@ -51,23 +64,37 @@ export const FeedbackEventSchema = z.object({
   /** 首因（reasons[0]）；邮件 subject 简写 */
   reason: z.enum(UNINSTALL_FEEDBACK_REASONS).optional(),
   note: z.string().trim().max(500).optional(),
+  context: FeedbackContextSchema.optional(),
   createdAt: z.iso.datetime()
 })
 
 export type FeedbackEvent = z.infer<typeof FeedbackEventSchema>
+
+function compactContext(raw?: FeedbackContext): FeedbackContext | undefined {
+  if (!raw) return undefined
+  const parsed = FeedbackContextSchema.safeParse(raw)
+  if (!parsed.success) return undefined
+  const ctx = parsed.data
+  const entries = Object.entries(ctx).filter(([, v]) => typeof v === 'string' && v.length > 0)
+  if (entries.length === 0) return undefined
+  return Object.fromEntries(entries) as FeedbackContext
+}
 
 export function createFeedbackEvent(input: {
   source: FeedbackSource
   reasons?: UninstallFeedbackReason[]
   reason?: UninstallFeedbackReason
   note?: string
+  context?: FeedbackContext
 }): FeedbackEvent {
   const reasons = normalizeUninstallReasons(input.reasons, input.reason)
+  const context = compactContext(input.context)
   return FeedbackEventSchema.parse({
     id: crypto.randomUUID(),
     source: input.source,
     ...(reasons.length > 0 ? { reasons, reason: reasons[0] } : {}),
     ...(input.note && input.note.trim() ? { note: input.note.trim() } : {}),
+    ...(context ? { context } : {}),
     createdAt: new Date().toISOString()
   })
 }
