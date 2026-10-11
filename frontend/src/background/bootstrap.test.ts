@@ -70,6 +70,10 @@ vi.mock('@/background/listeners/memory-cloud-sync-alarm', () => ({
   registerMemoryCloudSyncAlarmListener: vi.fn()
 }))
 
+vi.mock('@/background/listeners/auth-session-lease-alarm', () => ({
+  registerAuthSessionLeaseAlarmListener: vi.fn()
+}))
+
 vi.mock('@/application/recall/refresh-clue-llm-completer', () => ({
   refreshClueLlmCompleterFromDevConfig: vi.fn(async () => undefined)
 }))

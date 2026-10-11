@@ -68,6 +68,9 @@ function mockMintSuccess(access: string): void {
   mock.module('./revoke-auth-session', () => ({
     revokeAuthSessionById: async () => true
   }))
+  mock.module('./revoke-other-auth-sessions', () => ({
+    revokeOtherAuthSessions: async () => ({ ok: true, revokedCount: 1, listed: true })
+  }))
 }
 
 afterEach(() => {
@@ -145,7 +148,7 @@ describe('mintExtensionSession', () => {
     expect(result.session.sessionId).toBe('new-session')
   })
 
-  test('已有租约 + confirmDisplace 但 revoke 失败 → displace_revoke_failed', async () => {
+  test('已有租约 + confirmDisplace 但 revokeOther 失败 → displace_revoke_failed', async () => {
     const store: Record<string, string> = {
       [`ext_auth_session:${userId}`]: JSON.stringify({
         sessionId: 'old-session',
@@ -155,13 +158,14 @@ describe('mintExtensionSession', () => {
     }
     const access = fakeAccessToken('new-session')
     mockMintSuccess(access)
-    mock.module('./revoke-auth-session', () => ({
-      revokeAuthSessionById: async () => false
+    mock.module('./revoke-other-auth-sessions', () => ({
+      revokeOtherAuthSessions: async () => ({ ok: false, reason: 'list_failed' as const })
     }))
     const { mintExtensionSession } = await import('./mint-extension-session')
     const result = await mintExtensionSession(baseEnv(createKv(store)), userId, 'a@example.com', {
       extensionId: 'ext-a',
-      confirmDisplace: true
+      confirmDisplace: true,
+      keepWebsiteSessionId: 'web-session'
     })
     expect(result.ok).toBe(false)
     if (result.ok) return

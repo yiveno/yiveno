@@ -25,6 +25,8 @@ import {
   markAuthValidatedNow,
   clearAuthValidationTimestamp
 } from '@/infrastructure/auth/auth-session-revalidate'
+import { ensureAuthSessionLeaseAlarm } from '@/infrastructure/auth/auth-session-lease-alarm'
+import { clearExtensionDisplacedNotice } from '@/infrastructure/storage/extension-displaced-notice-storage'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
 
@@ -60,6 +62,16 @@ export async function applyExternalAuthSessionHandoff(
     await registerExtensionUninstallRevoke(uninstallRevokeToken)
     // 刚写入的 token 视为有效，避免立刻 refresh 与官网抢 refresh_token 被踢成未登录
     await markAuthValidatedNow()
+    try {
+      await clearExtensionDisplacedNotice()
+    } catch (error) {
+      logger.warn('Auth', 'handoff 后清除被挤掉软条标记失败', error)
+    }
+    try {
+      await ensureAuthSessionLeaseAlarm(true)
+    } catch (error) {
+      logger.warn('Auth', 'handoff 后挂载租约探测闹钟失败', error)
+    }
     // 归并不阻塞官网 sendMessage：全库 remap 可能很慢，否则「Connecting to the extension…」会卡住。
     void ensureBootstrapReady()
       .then(() => absorbLocalProfileIntoAccount(session.userId))
@@ -110,6 +122,11 @@ export async function applyExternalAuthSignOutHandoff(
     await clearAccountBinding()
     await patchSyncPrefs({ enabled: false })
     await clearAuthValidationTimestamp()
+    try {
+      await ensureAuthSessionLeaseAlarm(false)
+    } catch (error) {
+      logger.warn('Auth', '官网退出后清除租约探测闹钟失败', error)
+    }
     flowOk('Auth', '官网 sign-out handoff', startedAt, {
       reason: parsed.data.payload?.reason ?? 'website_sign_out'
     })

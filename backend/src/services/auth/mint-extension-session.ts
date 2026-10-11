@@ -5,7 +5,8 @@
  * - **互斥维度 = 账号下的扩展登录会话（KV 租约 / sessionId）**，不是 `chrome.runtime.id`。
  *   CWS 分配的 extensionId 全机相同，只作租约元数据 / 卸载 token 附属，**不**决定是否弹确认。
  * - KV 已有租约且未 `confirmDisplace` → `needs_displace_confirm`（家里登录挤掉上班那台）。
- * - 确认后：铸造新 session → 撤销旧 auth.sessions 行 → 写新租约。
+ * - 确认后：铸造新 session → 撤销该用户其它 Auth session（含前序扩展与官网）→ 写新租约。
+ *   保留：新扩展 session + 本次 mint 的官网 Bearer session。
  * - KV 不可用 / 读不到租约：不弹确认，照常 mint（降级）。
  */
 
@@ -25,6 +26,7 @@ import {
 } from './extension-uninstall-revoke-kv'
 import { readJwtSessionId } from './read-jwt-session-id'
 import { revokeAuthSessionById } from './revoke-auth-session'
+import { revokeOtherAuthSessions } from './revoke-other-auth-sessions'
 
 export type MintedExtensionSession = {
   accessToken: string
@@ -45,6 +47,11 @@ export type MintExtensionSessionOptions = {
    * 仅写入租约与卸载 revoke 元数据，**不**用于跳过挤掉确认。
    */
   extensionId?: string
+  /**
+   * 本次 mint 请求的官网 access JWT 的 session_id。
+   * 挤掉时保留该官网会话，避免把后者官网一并踢掉。
+   */
+  keepWebsiteSessionId?: string
 }
 
 export type MintExtensionSessionResult =
@@ -207,17 +214,21 @@ export async function mintExtensionSession(
     const sessionId = readJwtSessionId(accessToken)
     let displacedSessionId: string | null = null
 
-    // 有前序租约：必须先作废旧 session，禁止「mint 成功但前者仍可 refresh」
+    // 有前序租约：作废该用户其它会话（含前序扩展 + 前者官网），保留新扩展与本次官网 Bearer
     if (existingLease && existingLease.sessionId !== sessionId) {
       if (existingLease.uninstallRevokeToken) {
         await deleteExtensionUninstallRevokeToken(env, existingLease.uninstallRevokeToken)
       }
-      const revoked = await revokeAuthSessionById(env, userId, existingLease.sessionId)
-      if (!revoked) {
-        warn('[Auth] 挤掉前序扩展会话失败，回滚本次新 session', {
+      const keepIds = [sessionId, options.keepWebsiteSessionId?.trim() || null].filter(
+        (id): id is string => typeof id === 'string' && id.length > 0
+      )
+      const others = await revokeOtherAuthSessions(env, userId, keepIds)
+      if (!others.ok) {
+        warn('[Auth] 挤掉其它会话失败，回滚本次新 session', {
           userId,
           previousSessionId: existingLease.sessionId,
-          newSessionId: sessionId
+          newSessionId: sessionId,
+          reason: others.reason
         })
         if (sessionId) {
           await revokeAuthSessionById(env, userId, sessionId)
@@ -225,9 +236,10 @@ export async function mintExtensionSession(
         return { ok: false, error: 'displace_revoke_failed' }
       }
       displacedSessionId = existingLease.sessionId
-      info('[Auth] 已挤掉前序扩展会话', {
+      info('[Auth] 已挤掉前序扩展及其它会话', {
         userId,
-        previousSessionId: existingLease.sessionId
+        previousSessionId: existingLease.sessionId,
+        revokedCount: others.revokedCount
       })
     }
 

@@ -13,6 +13,7 @@ import { supabaseAuth } from '../middleware/supabase-auth'
 import { consumeExtensionUninstallRevoke } from '../services/auth/consume-extension-uninstall-revoke'
 import { mintExtensionSession } from '../services/auth/mint-extension-session'
 import { probeExtensionSessionLease } from '../services/auth/probe-extension-session-lease'
+import { readJwtSessionId } from '../services/auth/read-jwt-session-id'
 import { error as logErrorMessage, info } from '../utils/logger'
 
 type AuthVars = {
@@ -93,9 +94,11 @@ authRouter.post('/extension-session', supabaseAuth(), async c => {
   }
 
   try {
+    const websiteSessionId = readJwtSessionId(c.get('supabaseAccessToken'))
     const result = await mintExtensionSession(c.env, userId, email, {
       confirmDisplace,
-      ...(extensionId ? { extensionId } : {})
+      ...(extensionId ? { extensionId } : {}),
+      ...(websiteSessionId ? { keepWebsiteSessionId: websiteSessionId } : {})
     })
     if (!result.ok) {
       if (result.error === 'needs_displace_confirm') {

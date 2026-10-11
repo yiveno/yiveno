@@ -18,6 +18,10 @@ import {
   primeExtensionHandoffTarget
 } from '../services/extension-auth-handoff'
 import { createCheckoutSession, createPortalSession } from '../services/billing'
+import {
+  startWebsiteAuthLiveness,
+  type WebsiteAuthLivenessStop
+} from '../services/auth-session-liveness'
 import { clearNavIsProCache, writeNavIsProCacheOnVerified } from '../services/nav-pro-badge-cache'
 
 defineOptions({ name: 'AccountPage' })
@@ -155,6 +159,8 @@ async function syncSessionToExtensionIfConnecting(session: {
   }
 }
 
+let stopAuthLiveness: WebsiteAuthLivenessStop | null = null
+
 onMounted(async () => {
   captureExtensionConnectParamsFromUrl()
   const params = new URLSearchParams(window.location.search)
@@ -180,10 +186,17 @@ onMounted(async () => {
   document.addEventListener('visibilitychange', refreshSubscriptionOnVisible)
   void loadSubscription()
   void syncSessionToExtensionIfConnecting(data.session)
+  // 被他端挤掉后会话撤销：尽快回登录页，无需用户点 Sign out
+  stopAuthLiveness = await startWebsiteAuthLiveness(() => {
+    clearNavIsProCache()
+    window.location.replace('/login')
+  })
 })
 
 onUnmounted(() => {
   document.removeEventListener('visibilitychange', refreshSubscriptionOnVisible)
+  stopAuthLiveness?.()
+  stopAuthLiveness = null
 })
 
 async function handleSignOut() {

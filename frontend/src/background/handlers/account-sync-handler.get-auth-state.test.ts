@@ -11,7 +11,8 @@ const {
   revalidateAuthSessionMock,
   clearAuthValidationTimestampMock,
   clearExtensionUninstallRevokeMock,
-  openWebsiteLoginPageMock
+  openWebsiteLoginPageMock,
+  writeExtensionDisplacedNoticeMock
 } = vi.hoisted(() => ({
   clearAuthSessionMock: vi.fn(),
   getAccountBindingMock: vi.fn(),
@@ -23,7 +24,8 @@ const {
   revalidateAuthSessionMock: vi.fn(),
   clearAuthValidationTimestampMock: vi.fn(),
   clearExtensionUninstallRevokeMock: vi.fn(),
-  openWebsiteLoginPageMock: vi.fn()
+  openWebsiteLoginPageMock: vi.fn(),
+  writeExtensionDisplacedNoticeMock: vi.fn()
 }))
 
 vi.mock('@/infrastructure/identity/auth-session-service', () => ({
@@ -92,6 +94,14 @@ vi.mock('@/infrastructure/auth/extension-uninstall-url', () => ({
   registerExtensionUninstallRevoke: vi.fn(async () => undefined)
 }))
 
+vi.mock('@/infrastructure/storage/extension-displaced-notice-storage', () => ({
+  writeExtensionDisplacedNotice: writeExtensionDisplacedNoticeMock
+}))
+
+vi.mock('@/infrastructure/auth/auth-session-lease-alarm', () => ({
+  ensureAuthSessionLeaseAlarm: vi.fn(async () => undefined)
+}))
+
 vi.mock('@/infrastructure/logging/flow-log', () => ({
   flowStart: () => 0,
   flowOk: vi.fn(),
@@ -124,9 +134,10 @@ describe('handleGetAuthState · 被挤掉 / refresh 作废', () => {
     clearAuthValidationTimestampMock.mockResolvedValue(undefined)
     clearExtensionUninstallRevokeMock.mockResolvedValue(undefined)
     openWebsiteLoginPageMock.mockResolvedValue(undefined)
+    writeExtensionDisplacedNoticeMock.mockResolvedValue(undefined)
   })
 
-  it('revalidate invalid → 清登录态并打开官网 login（connect_extension）', async () => {
+  it('revalidate invalid → 清登录态、写 displaced 软条标记、不打开 login', async () => {
     revalidateAuthSessionMock.mockResolvedValue({
       status: 'invalid',
       reason: 'session_revoked'
@@ -143,9 +154,8 @@ describe('handleGetAuthState · 被挤掉 / refresh 作废', () => {
     expect(clearAuthSessionMock).toHaveBeenCalled()
     expect(clearAccountBindingMock).toHaveBeenCalled()
     expect(clearExtensionUninstallRevokeMock).toHaveBeenCalledWith({ revokeRemote: false })
-    expect(openWebsiteLoginPageMock).toHaveBeenCalledWith(
-      'https://yiveno.com/login?connect_extension=1&extension_id=ext-under-test'
-    )
+    expect(writeExtensionDisplacedNoticeMock).toHaveBeenCalled()
+    expect(openWebsiteLoginPageMock).not.toHaveBeenCalled()
   })
 
   it('revalidate uncertain → 保留登录态，不打开 login', async () => {
@@ -161,5 +171,6 @@ describe('handleGetAuthState · 被挤掉 / refresh 作废', () => {
     expect(result.signedIn).toBe(true)
     expect(clearAuthSessionMock).not.toHaveBeenCalled()
     expect(openWebsiteLoginPageMock).not.toHaveBeenCalled()
+    expect(writeExtensionDisplacedNoticeMock).not.toHaveBeenCalled()
   })
 })

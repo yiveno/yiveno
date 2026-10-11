@@ -43,6 +43,8 @@ import {
 } from '@/infrastructure/auth/auth-session-revalidate'
 import { clearExtensionUninstallRevoke } from '@/infrastructure/auth/extension-uninstall-url'
 import { probeWebsiteSignedIn } from '@/infrastructure/auth/website-auth-probe'
+import { ensureAuthSessionLeaseAlarm } from '@/infrastructure/auth/auth-session-lease-alarm'
+import { writeExtensionDisplacedNotice } from '@/infrastructure/storage/extension-displaced-notice-storage'
 import { refreshAuthProfileFields, refreshAuthSession } from '@/infrastructure/auth/extension-oauth'
 import {
   clearAuthSession,
@@ -214,6 +216,11 @@ async function finishSignOutSession(): Promise<void> {
   await patchSyncPrefs({ enabled: false })
   await ensureMemoryCloudSyncAlarm(false)
   await clearAuthValidationTimestamp()
+  try {
+    await ensureAuthSessionLeaseAlarm(false)
+  } catch (error) {
+    logger.warn('Auth', '退出后清除租约探测闹钟失败', error)
+  }
   // 对称清官网 session；失败不回滚扩展已退出
   try {
     await openWebsiteLogoutFromExtension()
@@ -321,7 +328,7 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
         }
         session = revalidated.session
       } else if (revalidated.status === 'invalid') {
-        // 被挤掉 / refresh 明确作废：回到登录前（清本机登录态 + 打开官网 login 重连）
+        // 被挤掉 / refresh 明确作废：keep_local 退登；不自动开 login（避免官网仍登录时立刻再弹挤掉确认）
         await clearAuthSession()
         await clearAccountBinding()
         await clearSubscriptionSnapshot()
@@ -333,20 +340,22 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
         } catch (error) {
           logger.warn('Auth', '挤掉后退登清卸载 URL 失败', error)
         }
-        session = null
         try {
-          const loginUrl = new URL('/login', getWebsiteBaseUrl())
-          loginUrl.searchParams.set('connect_extension', '1')
-          loginUrl.searchParams.set('extension_id', chrome.runtime.id)
-          await openWebsiteLoginPage(loginUrl.toString())
+          await writeExtensionDisplacedNotice()
         } catch (error) {
-          logger.warn('Auth', '挤掉后退登打开官网 login 失败', error)
+          logger.warn('Auth', '挤掉后退登写软条标记失败', error)
         }
+        try {
+          await ensureAuthSessionLeaseAlarm(false)
+        } catch (error) {
+          logger.warn('Auth', '挤掉后退登清除租约探测闹钟失败', error)
+        }
+        session = null
         flowOk('Auth', 'GET_AUTH_STATE', startedAt, {
           signedIn: false,
           reason: 'revalidate_invalid',
           detail: revalidated.reason,
-          openedLogin: true
+          openedLogin: false
         })
         return {
           ok: true,
@@ -376,14 +385,21 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
       await clearSubscriptionSnapshot()
     }
 
+    const signedIn = Boolean(stillBound && session)
+    try {
+      await ensureAuthSessionLeaseAlarm(signedIn)
+    } catch (error) {
+      logger.warn('Auth', '对齐租约探测闹钟失败', error)
+    }
+
     flowOk('Auth', 'GET_AUTH_STATE', startedAt, {
-      signedIn: Boolean(stillBound && session),
+      signedIn,
       syncEnabled: syncPrefs.enabled,
       hasAvatar: Boolean(session?.avatarUrl)
     })
     return {
       ok: true,
-      signedIn: Boolean(stillBound && session),
+      signedIn,
       binding: stillBound,
       syncPrefs: stillBound ? syncPrefs : await getSyncPrefs(),
       ...(session?.email ? { email: session.email } : {}),

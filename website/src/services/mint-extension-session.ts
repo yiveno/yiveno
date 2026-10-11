@@ -112,6 +112,6 @@ export async function mintExtensionSession(
   }
 }
 
-/** 挤掉其它扩展会话前的确认文案（美式英语）。 */
+/** 挤掉其它扩展会话前的确认文案（美式英语；用户主动 Connect 后出现）。 */
 export const DISPLACE_EXTENSION_SESSION_CONFIRM =
-  'This account is already signed in on another device. Continue and sign out the other session?'
+  'This account is signed in on another device. Connect here and sign out that session?'

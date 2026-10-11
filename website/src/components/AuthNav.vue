@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
 import { getSession } from '../services/auth'
+import {
+  startWebsiteAuthLiveness,
+  type WebsiteAuthLivenessStop
+} from '../services/auth-session-liveness'
 import { extractProfileFromUserMetadata } from '../services/extension-auth-handoff'
-import { readNavIsProCache } from '../services/nav-pro-badge-cache'
+import { clearNavIsProCache, readNavIsProCache } from '../services/nav-pro-badge-cache'
 
 defineOptions({ name: 'AuthNav' })
 
@@ -10,6 +14,7 @@ const user = ref<{ email?: string; avatarUrl?: string; name?: string } | null>(n
 /** Pro 时顶栏头像 1px Sage 环；优先读会话缓存，不对账堵导航。 */
 const isPro = ref(false)
 const loading = ref(true)
+let stopLiveness: WebsiteAuthLivenessStop | null = null
 
 function applyProFromCache(): void {
   const cached = readNavIsProCache()
@@ -35,21 +40,21 @@ async function loadAuthNav(): Promise<void> {
   loading.value = false
 }
 
-function onVisibilityChange(): void {
-  if (document.visibilityState !== 'visible' || !user.value) {
-    return
-  }
-  // 从账户/定价回焦后缓存可能已更新
-  applyProFromCache()
-}
-
 onMounted(() => {
   void loadAuthNav()
-  document.addEventListener('visibilitychange', onVisibilityChange)
+  void startWebsiteAuthLiveness(() => {
+    user.value = null
+    isPro.value = false
+    clearNavIsProCache()
+    void loadAuthNav()
+  }).then(stop => {
+    stopLiveness = stop
+  })
 })
 
 onUnmounted(() => {
-  document.removeEventListener('visibilitychange', onVisibilityChange)
+  stopLiveness?.()
+  stopLiveness = null
 })
 </script>
 

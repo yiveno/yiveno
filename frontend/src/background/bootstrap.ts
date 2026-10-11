@@ -8,6 +8,7 @@ import {
 import { syncChromeBookmarkSyncListenersWithIngestSetting } from '@/background/listeners/chrome-bookmark-sync'
 import { registerCommandListeners } from '@/background/listeners/commands'
 import { registerContextMenuListeners } from '@/background/listeners/context-menu'
+import { registerAuthSessionLeaseAlarmListener } from '@/background/listeners/auth-session-lease-alarm'
 import { registerMemoryCloudSyncAlarmListener } from '@/background/listeners/memory-cloud-sync-alarm'
 import { registerOmniboxListeners } from '@/background/listeners/omnibox'
 import { registerSelectionToolbarKeepaliveListener } from '@/background/listeners/selection-toolbar-keepalive'
@@ -59,6 +60,7 @@ async function bootstrapBackground(): Promise<void> {
     registerCommandListeners()
     registerSelectionToolbarKeepaliveListener()
     registerMemoryCloudSyncAlarmListener()
+    registerAuthSessionLeaseAlarmListener()
     // 订阅变更 → 线索 LLM 重挂（通过事件机制，避免 infrastructure → application 跨层依赖）
     // Set-based listener，不会重复注册（SW 重启不会累积）
     onSubscriptionChanged(handleSubscriptionChanged)

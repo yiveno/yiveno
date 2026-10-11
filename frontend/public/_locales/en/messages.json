@@ -302,6 +302,9 @@
   "sidepanel_website_connect_banner": {
     "message": "Signed in on the website"
   },
+  "sidepanel_extension_displaced_banner": {
+    "message": "Signed out here — this account signed in elsewhere"
+  },
   "sidepanel_website_connect_cta": {
     "message": "Connect"
   },
@@ -310,6 +313,9 @@
   },
   "sidepanel_website_connect_dismiss_aria": {
     "message": "Dismiss website connect notice"
+  },
+  "sidepanel_extension_displaced_dismiss_aria": {
+    "message": "Dismiss signed-out notice"
   },
   "popup_welcome_title": {
     "message": "What do you want to recall?"
