@@ -1,24 +1,13 @@
 /**
- * 扩展卸载落地页可选反馈：闭集原因 + 可选短留言；按 IP 限流后写入 AI_USAGE_KV。
- * 不绑定账号、不清 Memory、不踢官网登录；无分析后台。
+ * 扩展卸载落地页可选反馈 HTTP 入口。
+ * 校验 / 限流后交给 recordFeedback（KV 底账 + 尽力邮件）。
  */
 
 import { z } from 'zod'
 import type { Env } from '../types/env'
-import { info, warn, error as logErrorMessage, toLogError } from '../utils/logger'
-
-/** 闭集卸载原因（与官网落地页选项同步） */
-export const UNINSTALL_FEEDBACK_REASONS = [
-  'didnt_find', // 没找到保存的东西
-  'too_hard', // 难用 / 困惑
-  'missing_feature', // 缺功能
-  'privacy', // 隐私或权限顾虑
-  'bugs_or_slow', // 卡顿 / bug
-  'just_trying', // 只是试试
-  'other' // 其它
-] as const
-
-export type UninstallFeedbackReason = (typeof UNINSTALL_FEEDBACK_REASONS)[number]
+import { UNINSTALL_FEEDBACK_REASONS } from '../services/feedback/feedback-event'
+import { recordFeedback } from '../services/feedback/record-feedback'
+import { info, warn } from '../utils/logger'
 
 const UninstallFeedbackBodySchema = z.object({
   reason: z.enum(UNINSTALL_FEEDBACK_REASONS),
@@ -34,10 +23,6 @@ const UninstallFeedbackBodySchema = z.object({
 
 const MAX_PER_IP_PER_DAY = 6
 const RATE_LIMIT_PREFIX = 'uninstall-fb-rl:'
-/** 反馈条目 KV 前缀 */
-const FEEDBACK_KEY_PREFIX = 'uninstall_fb:'
-/** 保留约 180 天（与隐私披露一致） */
-const FEEDBACK_TTL_SECONDS = 180 * 24 * 60 * 60
 
 function clientIp(request: Request): string {
   return (
@@ -95,39 +80,28 @@ export async function handleWebsiteUninstallFeedback(
     return json({ ok: true })
   }
 
-  if (!env.AI_USAGE_KV) {
-    logErrorMessage('[UninstallFeedback] AI_USAGE_KV 未绑定', {})
-    return json({ error: 'unavailable' }, 503)
-  }
-
   const ip = clientIp(request)
   if (await isRateLimited(env, ip)) {
     warn('[UninstallFeedback] IP 日限流', { ip })
     return json({ error: 'rate_limited' }, 429)
   }
 
-  const id = crypto.randomUUID()
-  const record = {
-    id,
+  const result = await recordFeedback(env, {
+    source: 'uninstall',
     reason: parsed.data.reason,
-    note: parsed.data.note ?? null,
-    createdAt: new Date().toISOString()
-  }
-
-  info('[UninstallFeedback] 写入开始', {
-    reason: record.reason,
-    hasNote: Boolean(record.note)
+    ...(parsed.data.note ? { note: parsed.data.note } : {})
   })
 
-  try {
-    await env.AI_USAGE_KV.put(`${FEEDBACK_KEY_PREFIX}${id}`, JSON.stringify(record), {
-      expirationTtl: FEEDBACK_TTL_SECONDS
-    })
-  } catch (err) {
-    logErrorMessage('[UninstallFeedback] KV 写入失败', { detail: toLogError(err) })
+  if (!result.ok) {
     return json({ error: 'unavailable' }, 503)
   }
 
-  info('[UninstallFeedback] 写入成功', { reason: record.reason, id })
-  return json({ ok: true })
+  info('[UninstallFeedback] 已记录', {
+    id: result.id,
+    email: result.sinks.email
+  })
+  return json({ ok: true, id: result.id })
 }
+
+/** 供测试与官网选项同步 */
+export { UNINSTALL_FEEDBACK_REASONS }

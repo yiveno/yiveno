@@ -1,28 +1,41 @@
 ---
 /**
- * 预约阶段 Support：产品未公开发售；邮箱为主，不引导计费/账号自助。
- * 不做工单系统。
+ * Support：要回复的问题走 support@（轨道 3 · 轻量工单 = 邮件线程）。
+ * 产品意见走 feedback@；不做自建工单系统。
  */
 import MainLayout from '../layouts/MainLayout.astro'
 import '../styles/pages.css'
 
 const supportEmail = 'support@yiveno.com'
+const feedbackEmail = 'feedback@yiveno.com'
 const privacyEmail = 'privacy@yiveno.com'
 ---
 
 <MainLayout
   title="Support · Yiveno"
-  description="Yiveno is in active development. Questions about the waitlist or the product — email us."
+  description="Get help with Yiveno — bugs, account, and waitlist questions by email. We reply at support@yiveno.com."
 >
   <article class="page">
     <header>
       <h1 class="page__title">Support</h1>
       <p class="page__lede">
-        Yiveno is the Chrome extension that finds what you saved — closest fits from your own
-        captures, you pick. The product isn't publicly available yet; we're building it and taking
-        waitlist signups. Questions below go to email.
+        Need a reply? Email us. For product ideas that don’t need a reply, use
+        <a href={`mailto:${feedbackEmail}`}>{feedbackEmail}</a>
+        or the optional form if you remove the extension.
       </p>
     </header>
+
+    <section class="page__section">
+      <h2>Bugs &amp; account help</h2>
+      <p>
+        Something broken, can’t sign in, sync issues, or billing questions:
+        <a href={`mailto:${supportEmail}?subject=Yiveno%20support`}>{supportEmail}</a>
+      </p>
+      <p class="page__hint">
+        Include what you tried, your Chrome version, and the extension version if you can — one
+        clear note helps us reply once.
+      </p>
+    </section>
 
     <section class="page__section">
       <h2>Waitlist</h2>
@@ -34,12 +47,11 @@ const privacyEmail = 'privacy@yiveno.com'
     </section>
 
     <section class="page__section">
-      <h2>Product</h2>
+      <h2>Product ideas</h2>
       <p>
-        Questions about what Yiveno is (or isn't), privacy, or the roadmap:
-        <a href={`mailto:${supportEmail}?subject=Yiveno%20support`}>{supportEmail}</a>
+        Feature ideas or “why I left” style notes (no reply expected):
+        <a href={`mailto:${feedbackEmail}?subject=Yiveno%20feedback`}>{feedbackEmail}</a>
       </p>
-      <p class="page__hint">Email works best — include a bit of context so we can reply once.</p>
     </section>
 
     <section class="page__section">

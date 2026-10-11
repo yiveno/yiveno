@@ -63,9 +63,11 @@ binding = "AI"
 # Workers AI 无本地模拟；`wrangler dev` 默认走远程（勿配合 `--local`）
 remote = true
 
-# 产品欢迎信（§A.3）；不限制 destination，以便发给付款用户
+# 产品欢迎信 / 结构化反馈（§A.3 · 用户触点三轨）；不限制 destination
+# remote=true：本地 wrangler dev 走真实 Email Sending（域未 onboard 时 send 失败只打日志）
 [[send_email]]
 name = "EMAIL"
+remote = true
 
 # Custom Domain 仅挂 production（`bun run deploy` → wrangler deploy --env production）。
 # 顶层不声明 routes，避免默认/其它 env 误继承抢占域名。

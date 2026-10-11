@@ -70,6 +70,8 @@ export type Env = Cloudflare.Env & {
   DODO_PRODUCT_ID_FOUNDING_ANNUAL?: string
   /** "true" 时开放 Founding 套餐 */
   BILLING_FOUNDING_ENABLED?: string
+  /** 结构化反馈邮件收件人；默认 feedback@yiveno.com */
+  FEEDBACK_TO_EMAIL?: string
   /** 订阅定时对账开关；"false" 关闭 */
   SUBSCRIPTION_RECONCILE_SCHEDULED_ENABLED?: string
   /**

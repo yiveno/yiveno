@@ -149,6 +149,15 @@ onMounted(async () => {
       <p class="page__lede uninstall__lede">
         {{ t('uninstall.feedback.lede') }}
       </p>
+      <p class="uninstall__support-hint">
+        {{ t('uninstall.feedback.supportHintBefore') }}
+        <a
+          class="uninstall__support-link"
+          href="mailto:support@yiveno.com?subject=Yiveno%20support"
+          >{{ t('uninstall.feedback.supportHintLink') }}</a
+        >
+        {{ t('uninstall.feedback.supportHintAfter') }}
+      </p>
       <p v-if="revokeHint" class="uninstall__hint uninstall__hint--warn" role="status">
         {{ revokeHint }}
       </p>
@@ -233,6 +242,26 @@ onMounted(async () => {
 
 .uninstall__lede {
   margin-bottom: 0;
+}
+
+.uninstall__support-hint {
+  margin: 12px 0 0;
+  font-size: 13.5px;
+  font-weight: 300;
+  line-height: 1.55;
+  color: var(--sage-muted);
+}
+
+.uninstall__support-link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--accent) 35%, transparent);
+  text-underline-offset: 2px;
+}
+
+.uninstall__support-link:hover,
+.uninstall__support-link:focus-visible {
+  color: var(--accent-hover);
 }
 
 /** 感谢态最轻提示：低于 lede，不抢「Thanks」 */

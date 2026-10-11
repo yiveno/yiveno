@@ -70,8 +70,10 @@ const contactEmail = 'privacy@yiveno.com'
         yiveno.com. That page first clears the <strong>extension</strong> remote session (not your
         website login, and not your local or cloud Memory). You may optionally pick a closed-set
         reason and leave a short note. Feedback is optional and not tied to reinstalling. We store
-        the reason and note to improve the product. We do not use this form to delete your library
-        or sign you out of the website.
+        the reason and note (short retention) to improve the product, and may email a copy to our
+        feedback inbox. We do not use this form to delete your library or sign you out of the
+        website. Bugs or account issues that need a reply should go to
+        <a href="mailto:support@yiveno.com">support@yiveno.com</a>, not the optional uninstall form.
       </p>
       <h3>2.7 What we do not collect by default</h3>
       <ul>
@@ -124,7 +126,7 @@ const contactEmail = 'privacy@yiveno.com'
         </li>
         <li>
           <strong>Cloudflare</strong> — Workers API, hosting, KV for optional uninstall feedback,
-          and related infrastructure
+          Email Sending when enabled, and related infrastructure
         </li>
         <li>
           <strong>Google / Microsoft</strong> — if you choose their OAuth sign-in
@@ -159,9 +161,9 @@ const contactEmail = 'privacy@yiveno.com'
           the address, or we no longer need the list.
         </li>
         <li>
-          <strong>Uninstall feedback</strong> (reason and optional note) is kept only as long as
-          useful for product improvement, then discarded or aggregated without tying it back to your
-          account.
+          <strong>Uninstall feedback</strong> (reason and optional note) is kept in short-lived
+          storage for product improvement, and may also appear in our feedback email inbox. It is
+          not tied to your account login.
         </li>
         <li>
           <strong>Delete account</strong> (Settings → Data) removes cloud Memory and backups, closes

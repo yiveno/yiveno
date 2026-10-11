@@ -135,7 +135,7 @@ describe('POST /api/website/uninstall-feedback', () => {
       env
     )
     expect(response.status).toBe(200)
-    expect([...kv.store.keys()].filter(k => k.startsWith('uninstall_fb:'))).toHaveLength(0)
+    expect([...kv.store.keys()].filter(k => k.startsWith('feedback:'))).toHaveLength(0)
   })
 
   test('合法 reason → 200 并写入 KV', async () => {
@@ -149,12 +149,14 @@ describe('POST /api/website/uninstall-feedback', () => {
       env
     )
     expect(response.status).toBe(200)
-    const keys = [...kv.store.keys()].filter(k => k.startsWith('uninstall_fb:'))
+    const keys = [...kv.store.keys()].filter(k => k.startsWith('feedback:'))
     expect(keys).toHaveLength(1)
     const row = JSON.parse(kv.store.get(keys[0]!)!) as {
+      source: string
       reason: string
-      note: string | null
+      note: string
     }
+    expect(row.source).toBe('uninstall')
     expect(row.reason).toBe('didnt_find')
     expect(row.note).toBe('hard to recall')
   })

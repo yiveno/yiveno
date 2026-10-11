@@ -143,7 +143,7 @@ bun run env:check:prod
 - **权益投影**在 Supabase `subscriptions`（非第二账本）；对账与门禁见产品文档 **§A.3.2**（TTL 24h / grace 48h；Dodo 非 `active` 立刻降级；`on_hold` 非 Pro）。
 - 扩展升级入口：官网 `/pricing`；管理入口：官网 `/account`（Dodo Customer Portal）。扩展**不**嵌 checkout SDK。
 - 官网：`POST /api/billing/checkout-session` `{ plan }` → Dodo hosted `checkout_url`（Worker 写入 `metadata.yiveno_user_id`）。
-- 官网→扩展登录：`POST /api/auth/extension-session`（Bearer；body `{ extensionId, confirmDisplace? }`）→ 铸造扩展独立 session + `uninstallRevokeToken`；KV `ext_auth_session:{userId}` 含 `sessionId`+`extensionId`+可选 revoke token；同扩展重连不确认，跨扩展才 409 挤掉。卸载：`POST /api/auth/extension-uninstall-revoke` `{ token }`（公开一次性）+ 官网 `/auth/extension-uninstalled`；revoke token 的 KV `expirationTtl` ≤365 天（CF 上限）。落地页可选反馈 `POST /api/website/uninstall-feedback`（闭集 reason + 可选 note；IP 限流；写入 `AI_USAGE_KV` `uninstall_fb:*`，TTL≈180d）。见产品文档 §账户与同步「登录态对齐」。
+- 官网→扩展登录：`POST /api/auth/extension-session`（Bearer；body `{ extensionId, confirmDisplace? }`）→ 铸造扩展独立 session + `uninstallRevokeToken`；KV `ext_auth_session:{userId}` 含 `sessionId`+`extensionId`+可选 revoke token；同扩展重连不确认，跨扩展才 409 挤掉。卸载：`POST /api/auth/extension-uninstall-revoke` `{ token }`（公开一次性）+ 官网 `/auth/extension-uninstalled`；revoke token 的 KV `expirationTtl` ≤365 天（CF 上限）。落地页可选反馈 `POST /api/website/uninstall-feedback` → `recordFeedback`（闭集 reason + 可选 note；IP 限流；KV 底账 `feedback:{id}` TTL≈180d；尽力 Email Sending→`feedback@yiveno.com`，可用 `FEEDBACK_TO_EMAIL` 覆盖；Sending 未开通时邮件 sink 跳过、不 5xx）。**Email Routing（入站转发 Gmail）≠ Email Sending（Worker 外发）**——未 onboard Sending 时 Thanks 只代表 KV 成功，Gmail 不会收到。本地 `wrangler.toml` `[[send_email]] remote = true` 才走真实外发。见产品文档 §账户与同步「用户触点三轨」。
 - Webhook：`POST /api/webhooks/dodo`，校验 Standard Webhooks（`DODO_PAYMENTS_WEBHOOK_KEY`）。产品欢迎信已接线但 **未上线**（须 Workers Paid + Email Sending onboard `yiveno.com`；发件 `hello@yiveno.com`）。未开通时发信失败只打日志，不 5xx。
 - 对账：`DODO_PAYMENTS_API_KEY` → `GET /subscriptions/{id}`；未配时门禁退化为投影+硬门槛（生产必须配齐）。
 - 对外档位：Free + **仅 Pro**（Power User / Team / `premium` 预留不售）
@@ -157,7 +157,7 @@ bun run env:check:prod
 3. [ ] `bun run env:sync:prod && bun run env:check:prod`；Worker Secrets 含 API key / webhook secret / Product ID
 4. [ ] 测试购买：webhook 写库（`verified`）→ 回扩展 Settings / 官网账户页自动对账 → `isPro` → 同步可用
 5. [ ] Dodo `cancelled`（立即）/ `on_hold` / 全额退当前周期 → Refresh 或 Cron 后立刻收回；库内 `test-` 行不得为 Pro
-6. [ ] （上线前）Workers Paid + Email Sending enable `yiveno.com`；手测欢迎信（失败不得 5xx webhook）
+6. [ ] （上线前）Workers Paid + Email Sending enable `yiveno.com`（Dashboard 或 `wrangler email sending enable yiveno.com`；API Token 须含 Email Sending 写权限）；手测欢迎信 + 卸载反馈进 `feedback@`→Gmail（失败不得 5xx）；生产须 `bun run deploy:be` 后 `POST /api/website/uninstall-feedback` 非 404
 
 ## 禁止事项
 

@@ -10,6 +10,9 @@ export const en = {
   'uninstall.feedback.title': 'What made you leave Yiveno?',
   'uninstall.feedback.lede':
     'Optional — a quick note helps us improve. Website login and your library stay as they are.',
+  'uninstall.feedback.supportHintBefore': 'Need help with a bug or account issue?',
+  'uninstall.feedback.supportHintLink': 'Email support@yiveno.com',
+  'uninstall.feedback.supportHintAfter': '— we reply there.',
   'uninstall.feedback.reasonsLegend': 'Reason for leaving',
   'uninstall.feedback.reasonsAria': 'Reason for leaving',
   'uninstall.feedback.noteLabel': 'Anything else?',
