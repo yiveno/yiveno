@@ -143,6 +143,7 @@ bun run env:check:prod
 - **权益投影**在 Supabase `subscriptions`（非第二账本）；对账与门禁见产品文档 **§A.3.2**（TTL 24h / grace 48h；Dodo 非 `active` 立刻降级；`on_hold` 非 Pro）。
 - 扩展升级入口：官网 `/pricing`；管理入口：官网 `/account`（Dodo Customer Portal）。扩展**不**嵌 checkout SDK。
 - 官网：`POST /api/billing/checkout-session` `{ plan }` → Dodo hosted `checkout_url`（Worker 写入 `metadata.yiveno_user_id`）。
+- 官网→扩展登录：`POST /api/auth/extension-session`（Bearer；body `{ extensionId, confirmDisplace? }`）→ 铸造扩展独立 session + `uninstallRevokeToken`；KV `ext_auth_session:{userId}` 含 `sessionId`+`extensionId`+可选 revoke token；同扩展重连不确认，跨扩展才 409 挤掉。卸载：`POST /api/auth/extension-uninstall-revoke` `{ token }`（公开一次性）+ 官网 `/auth/extension-uninstalled`；revoke token 的 KV `expirationTtl` ≤365 天（CF 上限）。落地页可选反馈 `POST /api/website/uninstall-feedback`（闭集 reason + 可选 note；IP 限流；写入 `AI_USAGE_KV` `uninstall_fb:*`，TTL≈180d）。见产品文档 §账户与同步「登录态对齐」。
 - Webhook：`POST /api/webhooks/dodo`，校验 Standard Webhooks（`DODO_PAYMENTS_WEBHOOK_KEY`）。产品欢迎信已接线但 **未上线**（须 Workers Paid + Email Sending onboard `yiveno.com`；发件 `hello@yiveno.com`）。未开通时发信失败只打日志，不 5xx。
 - 对账：`DODO_PAYMENTS_API_KEY` → `GET /subscriptions/{id}`；未配时门禁退化为投影+硬门槛（生产必须配齐）。
 - 对外档位：Free + **仅 Pro**（Power User / Team / `premium` 预留不售）

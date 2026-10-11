@@ -2,13 +2,14 @@
  * 官网 API（Pages → Worker）
  *
  * 登录不经本路由：官网 Supabase Auth 直连。
- * 预约名单 POST 公开；订阅查询须 Bearer，且只能查当前用户。
+ * 预约名单 / 卸载反馈 POST 公开；订阅查询须 Bearer，且只能查当前用户。
  */
 
 import { Hono } from 'hono'
 import type { Env } from '../types/env'
 import { getSubscriptionStatusOrThrow } from '../handlers/subscription'
 import { handleWebsiteWaitlist } from '../handlers/website-waitlist'
+import { handleWebsiteUninstallFeedback } from '../handlers/website-uninstall-feedback'
 import { supabaseAuth } from '../middleware/supabase-auth'
 import { error as logErrorMessage, toLogError } from '../utils/logger'
 
@@ -30,6 +31,9 @@ export function normalizeWebsiteSubscriptionTier(tier: string | null | undefined
 
 /** POST /api/website/waitlist — 官网预约邮箱（无需登录） */
 websiteRouter.post('/waitlist', c => handleWebsiteWaitlist(c.req.raw, c.env))
+
+/** POST /api/website/uninstall-feedback — 扩展卸载可选反馈（无需登录） */
+websiteRouter.post('/uninstall-feedback', c => handleWebsiteUninstallFeedback(c.req.raw, c.env))
 
 /** GET /api/website/subscription — 当前登录用户订阅状态（强制对账） */
 websiteRouter.get('/subscription', supabaseAuth(), async c => {

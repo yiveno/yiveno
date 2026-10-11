@@ -12,10 +12,14 @@ export async function getSession(): Promise<Session | null> {
   return data.session
 }
 
-/** 清除本地 Supabase 会话（换账号前调用） */
+/**
+ * 清除**本浏览器** Supabase 会话。
+ * 使用 `local`：不撤销其它设备 / 扩展已铸造的独立 refresh（多点登录）。
+ * 需通知本机扩展时由调用方另发 `SIGN_OUT_HANDOFF`。
+ */
 export async function signOut(): Promise<void> {
   const supabase = await getSupabase()
-  const { error } = await supabase.auth.signOut()
+  const { error } = await supabase.auth.signOut({ scope: 'local' })
   if (error) throw error
 }
 

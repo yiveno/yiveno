@@ -102,6 +102,11 @@ vi.mock('@/infrastructure/browser/website-page', () => ({
   openWebsiteLogoutFromExtension: openWebsiteLogoutFromExtensionMock
 }))
 
+vi.mock('@/infrastructure/auth/extension-uninstall-url', () => ({
+  clearExtensionUninstallRevoke: vi.fn(async () => undefined),
+  registerExtensionUninstallRevoke: vi.fn(async () => undefined)
+}))
+
 vi.mock('@/infrastructure/logging/flow-log', () => ({
   flowStart: () => 0,
   flowOk: vi.fn(),

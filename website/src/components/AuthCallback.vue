@@ -11,7 +11,7 @@ import {
   captureExtensionConnectParamsFromUrl,
   extractProfileFromUserMetadata,
   getPendingExtensionId,
-  handoffSessionToExtension,
+  mintAndHandoffSessionToExtension,
   resolveExtensionHandoffTargetId
 } from '../services/extension-auth-handoff'
 
@@ -31,34 +31,32 @@ function redirectLoginError(code: string, detail?: string | null): void {
   window.location.href = `/login?${params.toString()}`
 }
 
-function sessionHandoffPayload(session: Session) {
+/** 用官网 session 铸造扩展独立会话并 handoff（失败不共享官网 refresh） */
+async function tryMintHandoff(session: Session): Promise<boolean> {
   const profile = extractProfileFromUserMetadata(
     session.user.user_metadata as Record<string, unknown> | undefined
   )
-  return {
-    accessToken: session.access_token,
-    refreshToken: session.refresh_token,
+  return mintAndHandoffSessionToExtension({
+    websiteAccessToken: session.access_token,
     userId: session.user.id,
     ...(session.user.email ? { email: session.user.email } : {}),
-    ...(session.expires_at != null ? { expiresAt: session.expires_at } : {}),
     ...profile
-  }
+  })
 }
 
 /**
  * 登录成功收尾优先级：
- * 1) 本次从扩展打开（connect_extension）→ handoff + /account
- * 2) 有 next（如续付）→ 回跳；扩展仅静默同步，不抢导航
- * 3) 默认 /account；有上次扩展 id 则顺带同步
+ * 1) 本次从扩展打开（connect_extension）→ mint+handoff + /account
+ * 2) 有 next（如续付）→ 回跳；扩展仅静默 mint+handoff，不抢导航
+ * 3) 默认 /account；有上次扩展 id 则顺带 mint+handoff
  */
 async function finishWithSession(session: Session): Promise<void> {
-  const payload = sessionHandoffPayload(session)
   const pendingConnect = getPendingExtensionId()
   const authReturn = peekAuthReturn()
 
   if (pendingConnect) {
     status.value = 'Connecting to the extension…'
-    const ok = await handoffSessionToExtension(payload)
+    const ok = await tryMintHandoff(session)
     if (ok) {
       window.location.href = '/account?extension_connected=1'
       return
@@ -73,8 +71,8 @@ async function finishWithSession(session: Session): Promise<void> {
 
   if (authReturn.next) {
     if (resolveExtensionHandoffTargetId()) {
-      // 不阻塞回跳：上次装过扩展则尽力同步
-      void handoffSessionToExtension(payload)
+      // 不阻塞回跳：上次装过扩展则尽力铸造并同步
+      void tryMintHandoff(session)
     }
     const href = buildPostAuthHref('/account')
     console.warn('[AuthCallback] 登录成功，回跳续意图', { href })
@@ -84,7 +82,7 @@ async function finishWithSession(session: Session): Promise<void> {
 
   if (resolveExtensionHandoffTargetId()) {
     status.value = 'Connecting to the extension…'
-    const ok = await handoffSessionToExtension(payload)
+    const ok = await tryMintHandoff(session)
     window.location.href = ok ? '/account?extension_connected=1' : '/account'
     return
   }

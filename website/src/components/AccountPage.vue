@@ -11,10 +11,10 @@ import { formatDate } from '../services/date'
 import {
   captureExtensionConnectParamsFromUrl,
   extractProfileFromUserMetadata,
-  handoffSessionToExtension,
+  getPendingExtensionId,
   handoffSignOutToExtension,
-  primeExtensionHandoffTarget,
-  resolveExtensionHandoffTargetId
+  mintAndHandoffSessionToExtension,
+  primeExtensionHandoffTarget
 } from '../services/extension-auth-handoff'
 import { createCheckoutSession, createPortalSession } from '../services/billing'
 import { clearNavIsProCache, writeNavIsProCacheOnVerified } from '../services/nav-pro-badge-cache'
@@ -124,26 +124,25 @@ async function openPortal(): Promise<void> {
   if (url) window.location.assign(url)
 }
 
-/** 后台回传扩展；失败只打日志，本页不展示扩展状态。 */
-async function syncSessionToExtension(session: {
+/**
+ * 仅在「本次从扩展打开 / URL 带 extension_id」时铸造并回传。
+ * 禁止每次进账户页把官网 refresh 推给扩展（会共 refresh 互踢、并堆积无用会话）。
+ */
+async function syncSessionToExtensionIfConnecting(session: {
   access_token: string
-  refresh_token: string
   user: User
-  expires_at?: number
 }): Promise<void> {
-  if (!resolveExtensionHandoffTargetId() || !session.refresh_token) {
+  if (!getPendingExtensionId()) {
     return
   }
   const profile = extractProfileFromUserMetadata(
     session.user.user_metadata as Record<string, unknown> | undefined
   )
   try {
-    await handoffSessionToExtension({
-      accessToken: session.access_token,
-      refreshToken: session.refresh_token,
+    await mintAndHandoffSessionToExtension({
+      websiteAccessToken: session.access_token,
       userId: session.user.id,
       ...(session.user.email ? { email: session.user.email } : {}),
-      ...(session.expires_at != null ? { expiresAt: session.expires_at } : {}),
       ...profile
     })
   } catch (error) {
@@ -175,7 +174,7 @@ onMounted(async () => {
   pageLoading.value = false
   document.addEventListener('visibilitychange', refreshSubscriptionOnVisible)
   void loadSubscription()
-  void syncSessionToExtension(data.session)
+  void syncSessionToExtensionIfConnecting(data.session)
 })
 
 onUnmounted(() => {
@@ -184,7 +183,8 @@ onUnmounted(() => {
 
 async function handleSignOut() {
   const supabase = await getSupabase()
-  await supabase.auth.signOut()
+  // local：不踢其它电脑上的扩展独立 session；本机扩展靠 SIGN_OUT_HANDOFF
+  await supabase.auth.signOut({ scope: 'local' })
   clearNavIsProCache()
   try {
     await handoffSignOutToExtension()

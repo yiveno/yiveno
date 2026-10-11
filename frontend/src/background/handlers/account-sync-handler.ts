@@ -23,6 +23,7 @@ import type {
   ExportLocalMemoryResponse,
   ExportOrphanOwnersResponse,
   GetAuthStateResponse,
+  ProbeWebsiteSignedInResponse,
   GetSubscriptionStatusResponse,
   GetSyncStatusResponse,
   RefreshAuthProfileResponse,
@@ -40,6 +41,8 @@ import {
   clearAuthValidationTimestamp,
   revalidateAuthSession
 } from '@/infrastructure/auth/auth-session-revalidate'
+import { clearExtensionUninstallRevoke } from '@/infrastructure/auth/extension-uninstall-url'
+import { probeWebsiteSignedIn } from '@/infrastructure/auth/website-auth-probe'
 import { refreshAuthProfileFields, refreshAuthSession } from '@/infrastructure/auth/extension-oauth'
 import {
   clearAuthSession,
@@ -176,10 +179,35 @@ export async function handleAuthSignIn(): Promise<AuthSignInResponse> {
 }
 
 /**
+ * PROBE_WEBSITE_SIGNED_IN — 后台打开官网 probe 页，探测是否已有网站会话。
+ */
+export async function handleProbeWebsiteSignedIn(): Promise<ProbeWebsiteSignedInResponse> {
+  const startedAt = flowStart('Auth', 'PROBE_WEBSITE_SIGNED_IN')
+  try {
+    const websiteSignedIn = await probeWebsiteSignedIn()
+    flowOk('Auth', 'PROBE_WEBSITE_SIGNED_IN', startedAt, { websiteSignedIn })
+    return { ok: true, websiteSignedIn }
+  } catch (error) {
+    flowFail('Auth', 'PROBE_WEBSITE_SIGNED_IN', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'WEBSITE_AUTH_PROBE_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/**
  * 结束登录态：清 session / binding，并关闭同步开关。
  * 不修改 IndexedDB（由调用方按 mode 先行处理）。
  */
 async function finishSignOutSession(): Promise<void> {
+  // 先销远程扩展会话并清卸载 URL，再清本机（失败不阻断退出）
+  try {
+    await clearExtensionUninstallRevoke({ revokeRemote: true })
+  } catch (error) {
+    logger.warn('Auth', '退出时卸载 revoke / 清 URL 失败', error)
+  }
   await clearAuthSession()
   await clearAccountBinding()
   await clearSubscriptionSnapshot()
@@ -279,7 +307,9 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
     let authRevalidateStatus: 'skipped' | 'valid' | 'invalid' | 'uncertain' | 'none' = 'none'
 
     if (binding && session) {
-      const revalidated = await revalidateAuthSession(session)
+      // 强制 refresh：扩展单活跃被挤掉后须尽快探测 session 撤销（access JWT 可能未过期）。
+      // 官网与扩展已分 refresh 族，不再为避网站 autoRefresh 而长时间跳过。
+      const revalidated = await revalidateAuthSession(session, { force: true })
       authRevalidateStatus = revalidated.status
       if (revalidated.status === 'valid') {
         if (
@@ -291,16 +321,32 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
         }
         session = revalidated.session
       } else if (revalidated.status === 'invalid') {
+        // 被挤掉 / refresh 明确作废：回到登录前（清本机登录态 + 打开官网 login 重连）
         await clearAuthSession()
         await clearAccountBinding()
         await clearSubscriptionSnapshot()
         await patchSyncPrefs({ enabled: false })
         await ensureMemoryCloudSyncAlarm(false)
+        await clearAuthValidationTimestamp()
+        try {
+          await clearExtensionUninstallRevoke({ revokeRemote: false })
+        } catch (error) {
+          logger.warn('Auth', '挤掉后退登清卸载 URL 失败', error)
+        }
         session = null
+        try {
+          const loginUrl = new URL('/login', getWebsiteBaseUrl())
+          loginUrl.searchParams.set('connect_extension', '1')
+          loginUrl.searchParams.set('extension_id', chrome.runtime.id)
+          await openWebsiteLoginPage(loginUrl.toString())
+        } catch (error) {
+          logger.warn('Auth', '挤掉后退登打开官网 login 失败', error)
+        }
         flowOk('Auth', 'GET_AUTH_STATE', startedAt, {
           signedIn: false,
           reason: 'revalidate_invalid',
-          detail: revalidated.reason
+          detail: revalidated.reason,
+          openedLogin: true
         })
         return {
           ok: true,

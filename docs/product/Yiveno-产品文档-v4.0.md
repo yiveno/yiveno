@@ -1732,21 +1732,25 @@ Chrome API / 选区
   - 不再向用户展示「保留本机 / 保留云端」整侧二选一（退出「先同步再清」仍可整侧盖云）。
 - **空本机不得盖云（Normative）**：`SYNC_REPLACE_WITH_LOCAL` / Worker `POST /replace` 在本机条目数为 0 且云端有数时必须拒绝（`SYNC_REPLACE_LOCAL_EMPTY` / `empty_local_replace_denied`）；退出「先同步再清」在本机无数据时跳过写云。
 - **登录态对齐（Normative）**：
-  - 登录：官网 → `YIVENO_AUTH_SESSION_HANDOFF` → 扩展（并记住 `extension_id`）；handoff 写入 `avatarUrl` / `displayName`（`avatar_url`|`picture`）。
-  - 官网退出：`YIVENO_AUTH_SIGN_OUT_HANDOFF` → 扩展按 **keep_local** 清 session/binding（保留 Memory）；无 extension_id 时不阻塞官网退出。
-  - 扩展打开时：`GET_AUTH_STATE` **节流 refresh** 探测 refresh_token；**仅明确作废**（如 `invalid_grant`）才 keep_local 退登；网络/5xx 等瞬时失败保留本地登录态并下次再试（避免官网仍登录、扩展被误踢）。
+  - 登录：官网 OAuth 成功后 → Worker `POST /api/auth/extension-session`（Bearer=官网 access）铸造**扩展专用** Supabase session（独立 refresh 族）→ `YIVENO_AUTH_SESSION_HANDOFF` 回传扩展（并记住 `extension_id`）；handoff 写入 `avatarUrl` / `displayName`（`avatar_url`|`picture`）与一次性 `uninstallRevokeToken`。**禁止**把官网会话的 refresh_token 直接递给扩展。mint 失败则本次不 handoff，提示用户从扩展 Settings 再试。
+  - **扩展单活跃（Normative）**：同一账号同时只允许**一台**扩展保持登录。Worker 用 `AI_USAGE_KV` 登记 `{ session_id, extensionId, uninstallRevokeToken? }` 租约。mint 须带 `extensionId`：**同一 extension id 重连**不弹确认；**不同 extension id** 只要 KV 仍有租约 → **一律 409 `needs_displace_confirm`**（不得因 `auth.sessions` 探测失败/空结果清租约放行）。无 `extensionId` 的旧租约 → 清后放行一次。确认后 `confirmDisplace` 撤销前序 session。读不到租约则直接 mint。官网与当前活跃扩展可并存；**不**承诺双扩展同时在线。
+  - **扩展卸载清远程（Normative）**：登录成功后扩展 `chrome.runtime.setUninstallURL` 指向官网 `/auth/extension-uninstalled?token=…`。卸载时（扩展代码不再运行）落地页**先**调 Worker `POST /api/auth/extension-uninstall-revoke` 消费一次性 token → 撤销该扩展 Auth session + 清 KV 租约。**不**清官网浏览器 session、**不**删本机/云端 Memory。主动退出（设置页 / 官网 `SIGN_OUT_HANDOFF`）须先同接口 revoke（或等价）并清空 uninstall URL。Chrome 拦截卸载 URL / 落地页重复打开（token 已消费 → 404）时为 best-effort；落地页须幂等、避免重复 POST 把成功文案盖成失败。revoke token KV TTL ≤365 天（CF 上限）。
+  - **卸载可选反馈（Normative）**：同一落地页在 revoke 收尾后提供**可选**闭集原因 + 可选短留言；**不**做关标签按钮（网页也无法关掉 `setUninstallURL` 打开的标签）。提交成功后可有**低权重**一句提示（如 You can close this tab now）——非催促、非按钮。提交走公开 `POST /api/website/uninstall-feedback`（限流；无账号绑定；写入 Worker `AI_USAGE_KV`，TTL≈180 天）。**禁止**把反馈绑成必须重装；**禁止**用反馈清 Memory / 踢官网登录；文案轻量美式英语，禁止内疚营销长卷。无复杂分析后台；仅短留存供产品改进。
+  - 官网退出：本浏览器 `signOut({ scope: 'local' })` + `YIVENO_AUTH_SIGN_OUT_HANDOFF` → **本机**扩展 keep_local 清 session/binding，并尽力 revoke 扩展远程会话；无 extension_id 时不阻塞官网退出。
+  - 扩展打开时：`GET_AUTH_STATE` **强制 refresh** 探测本扩展 refresh_token（便于发现被其它设备挤掉）；**仅明确作废**才 keep_local 退登并**打开官网 `/login?connect_extension=1`**（回到登录前，便于重连；官网浏览器会话可仍登录，禁止为挤掉误 `signOut` 官网）；网络/5xx 保留本地登录态。官网扩展 connect 若已有官网会话：**禁止**先 `signOut` 再 OAuth（避免确认挤掉未完成时官网已掉登录）。
+  - **重装 / 扩展未登录 + 官网已登录（Normative）**：**不**静默 mint。Side Panel 经 `PROBE_WEBSITE_SIGNED_IN`（后台打开 `/auth/extension-session-probe`，官网回传 `YIVENO_WEBSITE_AUTH_PROBE`，不带 token）若探测到官网已登录 → 顶栏软条「Signed in on the website — Connect」；**Connect** = 既有 `AUTH_SIGN_IN`（`connect_extension=1`）；**Dismiss** 后本机不再显示（`yiveno:website_connect_banner_dismissed`；卸扩展后存储清空可再出现）。探测失败 / 超时视为未登录，不弹条。
   - **头像资料（Normative）**：handoff / refresh 保留 `avatarUrl`；顶栏已登录但本地无头像时自动 `REFRESH_AUTH_PROFILE`（`getUser`）补拉，**不向用户暴露手动刷新入口**。
-  - 扩展设置页退出（任一 mode）：结束后导航/打开官网 `/logout?from_extension=1` 清网站 Supabase session。
+  - 扩展设置页退出（任一 mode）：先 revoke 扩展远程会话并清 uninstall URL；再打开官网 `/logout?from_extension=1` 清**该浏览器**网站 session（`scope: local`）。
 - **登录后本地档归并（Normative）**：官网 handoff 成功或已登录时读 `GET_AUTH_STATE`，将 `localProfileId` 桶 Memory **remap** 到当前 `accountId`（仅本机、不上云）。解决「登录后旧本地数据 Recall 隐身」；幂等。
 - **多 owner 孤儿桶（Normative）**：保留集 = `localProfileId` ∪ 当前 `AccountBinding.accountId`（未登录则仅本地档）。保留集外的 `ownerId` 为换号残留：Recall/同步不计、不静默删除。设置页展示桶数/条数；可 **导出 JSON** 备份后 **显式清除**（`EXPORT_ORPHAN_OWNERS` / `CLEAR_ORPHAN_OWNERS`）。退出登录只动当前账号桶，不自动清孤儿。
 - **退出登录（Normative）**：设置页按本机数据状态分流（均清扩展登录态并打开官网 `/logout`）。
   - **本机无当前账号/本地档数据**：不弹窗，直接仅退出。
   - **本机有数据**：弹窗固定三按钮——仅退出 / 清除本机该账号桶再退出 / 先同步到云端再清本机（方案 B，不做「已同步」启发式，避免同步后又 Capture 误判）。
-  - 官网账户页「退出」结束网站会话并 `SIGN_OUT_HANDOFF`（keep_local）；页内轻提示：扩展本机记忆仍保留，清除请到扩展设置。
+  - 官网账户页「退出」：本浏览器 `signOut({ scope: local })` + `SIGN_OUT_HANDOFF`（keep_local）；页内轻提示：扩展本机记忆仍保留，清除请到扩展设置。其它扩展会话仅在「后者确认挤掉」时被服务端撤销。
 - **隐私 P0（Normative）**：
   - Settings「隐私」展示数据说明摘要（本机 Memory / 可选云同步 / 账号 Auth / AI 经 Worker；不收集 History、未 Capture 全文、默认不上云）。
   - **开同步前**须确认当前隐私说明版本（`privacyNoticeVersion` ack）；未确认不得开启同步。关同步 ≠ 自动删云端。
-  - **官网隐私政策（Normative）**：`https://yiveno.com/privacy`（及同源部署的 `/privacy`）提供与当前实现对齐的**美式英语**正文；官网页脚与登录页、扩展 Settings「隐私」须外链至此。正文重大变更时更新日期；扩展内同步确认文案重大变更时递增 `privacyNoticeVersion`。本页**不是**律师意见书；未上线能力不得写入为已提供。
+  - **官网隐私政策（Normative）**：`https://yiveno.com/privacy`（及同源部署的 `/privacy`）提供与当前实现对齐的**美式英语**正文；官网页脚与登录页、扩展 Settings「隐私」须外链至此。正文重大变更时更新日期；扩展内同步确认文案重大变更时递增 `privacyNoticeVersion`。本页**不是**律师意见书；未上线能力不得写入为已提供。卸载落地页可选反馈（闭集原因 + 可选短留言）须在 `/privacy` 披露；**不**计入同步 ack 重大变更（不因此递增 `privacyNoticeVersion`），除非 Settings 同步确认文案本身改写。
   - **关 AI + 模型说明（Normative）**：Settings「AI」提供 `aiFeaturesEnabled`（默认开）；关闭后线索 LLM completer 清空、Capture LLM enrichment 跳过；页内说明 Worker 路径与数据平面边界。
   - **服务条款（Normative）**：官网 `/terms`（美式英语）；页脚 / 登录 / Settings 可外链。
   - **书签灌库开关（Normative）**：Settings「保存」与 Getting Started 共用 `chromeBookmarkIngestEnabled`（**默认关**；须用户明示打开）。**用户可见 bulk 主进度 = GS Bookmarks tab**；Settings 打开开关仍触发 `ensureChromeBookmarksImported`（Skip GS 后的后路），**不**在 Side Panel 顶栏展示导入细条。关闭后**卸载** `bookmarks.on*` 监听、跳过 bulk 导入与增量写入，并拒绝 `CAPTURE_BOOKMARK`；**不删除**已灌入的书签 Memory；重新开启后重新挂监听并补跑 / 续跑 bulk（含 reconcile 补洞）。
@@ -2467,6 +2471,11 @@ RecallOutcomeEvent {
 
 | 日期       | 变更                                                                                                                                                                                                                                                                                                       |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-11 | **官网已登录 Connect 软条：** 扩展未登录时 `PROBE_WEBSITE_SIGNED_IN` + Side Panel 顶栏一键 Connect；Dismiss 本机仅一次；不静默 mint                                                                                                                                                                        |
+| 2026-10-10 | **被挤掉回登录前：** `GET_AUTH_STATE` refresh 明确作废 → keep_local 清扩展登录态并打开 `/login?connect_extension=1`；官网浏览器会话可保留                                                                                                                                                                  |
+| 2026-10-10 | **扩展卸载清远程 + 可选反馈：** mint 下发 `uninstallRevokeToken`；`setUninstallURL` → `/auth/extension-uninstalled` → 先 `POST /extension-uninstall-revoke`，再可选闭集反馈（`POST /website/uninstall-feedback`）；无关标签按钮/催关文案；不动官网 session / Memory；禁内疚营销与反馈绑重装                |
+| 2026-10-10 | **扩展单活跃：** `extension-session` mint + KV 租约；已有会话 → 409 确认后 `confirmDisplace` 撤销前序 session；官网与扩展 refresh 隔离；`signOut({ scope: local })`                                                                                                                                        |
+| 2026-10-10 | **登录会话隔离：** Worker `POST /api/auth/extension-session` 为扩展铸造独立 refresh；官网 handoff 禁止共享官网 refresh；官网/`/logout` `signOut({ scope: local })` + 本机 `SIGN_OUT_HANDOFF`（嗣后改为扩展单活跃，见上行）                                                                                 |
 | 2026-10-10 | **清理跟进：** offscreen 钉死为刻意占位（未注册 permission）；`docs/audits` → `docs/archive/audits`                                                                                                                                                                                                        |
 | 2026-10-10 | **§1.1 验收归属：** 退役 CDP E2E（`e2e-management`）；表列 **MCP** 真机 UI 抽测 + Vitest/`must`；禁再暗示 Playwright/大 E2E                                                                                                                                                                                |
 | 2026-10-09 | **§0.1.2 双线程权威：** 短锚指向 `Yiveno-双线程发展原则.md`；五问（方案必过/回归 N/A）；`dual-thread-notes`；环境反馈文档降工程子集；ADR-016 同步                                                                                                                                                          |

@@ -61,6 +61,28 @@ function sleep(ms: number): Promise<void> {
   })
 }
 
+/** 阶段耗时包装：打中文 log，供 SW 控制台对照冷启动瓶颈。 */
+async function timedColdStartStage<T>(
+  stage: string,
+  run: () => Promise<T>
+): Promise<{ result: T; ms: number }> {
+  const started = Date.now()
+  logger.info('ColdStart', `阶段 ${stage}：开始`)
+  try {
+    const result = await run()
+    const ms = Date.now() - started
+    logger.info('ColdStart', `阶段 ${stage}：完成`, { durationMs: ms })
+    return { result, ms }
+  } catch (error) {
+    const ms = Date.now() - started
+    logger.warn('ColdStart', `阶段 ${stage}：异常`, {
+      durationMs: ms,
+      error: error instanceof Error ? error.message : String(error)
+    })
+    throw error
+  }
+}
+
 function createPendingState(): ColdStartPipelineState {
   return {
     version: COLD_START_PIPELINE_VERSION,
@@ -403,24 +425,30 @@ export async function runColdStartPipeline(): Promise<ColdStartPipelineState> {
           version: COLD_START_PIPELINE_VERSION,
           startedAt: new Date().toISOString()
         })
-        await runRulesStage()
-        await runAiBestEffortStage()
+        const { ms: rulesMs } = await timedColdStartStage('rules', () => runRulesStage())
+        const { ms: aiMs } = await timedColdStartStage('ai', () => runAiBestEffortStage())
         const ready = await markReady('ingest_disabled')
         flowOk('ColdStart', '冷启动 pipeline', startedAt, {
           releaseReason: ready.releaseReason,
-          ingestDisabled: true
+          ingestDisabled: true,
+          stageMs: { rules: rulesMs, ai: aiMs }
         })
         return ready
       }
 
-      const importOutcome = await runImportStage()
+      const { result: importOutcome, ms: importMs } = await timedColdStartStage('import', () =>
+        runImportStage()
+      )
       if (importOutcome.failed) {
         logger.warn('ColdStart', '导入失败，仍尝试规则/AI 后放行', {
-          error: importOutcome.error ?? null
+          error: importOutcome.error ?? null,
+          importMs
         })
+        let rulesMs = 0
+        let aiMs = 0
         try {
-          await runRulesStage()
-          await runAiBestEffortStage()
+          ;({ ms: rulesMs } = await timedColdStartStage('rules', () => runRulesStage()))
+          ;({ ms: aiMs } = await timedColdStartStage('ai', () => runAiBestEffortStage()))
         } catch (innerError) {
           logger.warn('ColdStart', '导入失败后的规则/AI 补救异常', {
             error: innerError instanceof Error ? innerError.message : String(innerError)
@@ -429,17 +457,23 @@ export async function runColdStartPipeline(): Promise<ColdStartPipelineState> {
         const ready = await markReady('import_failed', {
           ...(importOutcome.error ? { error: importOutcome.error } : {})
         })
-        flowOk('ColdStart', '冷启动 pipeline', startedAt, { releaseReason: 'import_failed' })
+        flowOk('ColdStart', '冷启动 pipeline', startedAt, {
+          releaseReason: 'import_failed',
+          stageMs: { import: importMs, rules: rulesMs, ai: aiMs }
+        })
         return ready
       }
 
-      await runRulesStage()
-      const aiReason = await runAiBestEffortStage()
+      const { ms: rulesMs } = await timedColdStartStage('rules', () => runRulesStage())
+      const { result: aiReason, ms: aiMs } = await timedColdStartStage('ai', () =>
+        runAiBestEffortStage()
+      )
       const ready = await markReady(aiReason)
       flowOk('ColdStart', '冷启动 pipeline', startedAt, {
         releaseReason: ready.releaseReason,
         aiEmbedWritten: ready.aiEmbedWritten,
-        aiLlmEnqueued: ready.aiLlmEnqueued
+        aiLlmEnqueued: ready.aiLlmEnqueued,
+        stageMs: { import: importMs, rules: rulesMs, ai: aiMs }
       })
       return ready
     } catch (error) {

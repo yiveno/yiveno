@@ -389,10 +389,11 @@ bun run db:reset              # 重置本地数据库
 ```bash
 bun run test:must             # 召回 eval 快轨（src/core/recall/eval；本地迭代用）
 bun run test:run              # FE Vitest + BE bun test 全量（合入 / CI / pre-push）
+bun run dev:check             # 本地绿检：typecheck:fe + knip:fe + test:must + doc:check
 cd frontend && bun run test   # 交互式 Vitest
 ```
 
-日常改 Recall 可先 `bun run test:must`；合入前仍跑全量 `test:run`。扩展用户可感路径：相关单测通过后用 **Chrome DevTools MCP** 真机 UI 抽测（产品文档 §1.1）。不上大型 Playwright/Puppeteer E2E；历史 CDP 脚本 `e2e-management.mjs` 已退役。
+日常改 Recall 可先 `bun run test:must`；改完一轮可 `bun run dev:check`；合入前仍跑全量 `test:run` / pre-push。扩展用户可感路径：相关单测通过后用 **Chrome DevTools MCP** 真机 UI 抽测（产品文档 §1.1）。不上大型 Playwright/Puppeteer E2E；历史 CDP 脚本 `e2e-management.mjs` 已退役。
 
 环境变量：`.env.*.local` + `bun run env:sync:dev`（见 `docs/ENVIRONMENT.md`）。
 

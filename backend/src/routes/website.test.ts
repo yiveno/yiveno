@@ -7,8 +7,9 @@ import * as supabase from '../data-access/supabase'
 function createKvMock(initial: Record<string, string> = {}) {
   const store = new Map(Object.entries(initial))
   return {
+    store,
     get: async (key: string) => store.get(key) ?? null,
-    put: async (key: string, value: string) => {
+    put: async (key: string, value: string, _opts?: { expirationTtl?: number }) => {
       store.set(key, value)
     }
   }
@@ -93,6 +94,77 @@ describe('POST /api/website/waitlist', () => {
 
     const response = await postWaitlist({ email: 'alex@example.com' })
     expect(response.status).toBe(200)
+  })
+})
+
+function postUninstallFeedback(body: unknown, env: Env = baseEnv): Promise<Response> {
+  const app = createApp()
+  return Promise.resolve(
+    app.request(
+      '/api/website/uninstall-feedback',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(body)
+      },
+      env
+    )
+  )
+}
+
+describe('POST /api/website/uninstall-feedback', () => {
+  afterEach(() => {
+    jest.restoreAllMocks()
+  })
+
+  test('非法 reason → 400', async () => {
+    const response = await postUninstallFeedback({ reason: 'not_a_reason' })
+    expect(response.status).toBe(400)
+    const data = (await response.json()) as { error: string }
+    expect(data.error).toBe('invalid_body')
+  })
+
+  test('蜜罐字段有值 → 静默 200 且不写 KV', async () => {
+    const kv = createKvMock()
+    const env = { ...baseEnv, AI_USAGE_KV: kv } as unknown as Env
+    const response = await postUninstallFeedback(
+      {
+        reason: 'other',
+        website: 'bot'
+      },
+      env
+    )
+    expect(response.status).toBe(200)
+    expect([...kv.store.keys()].filter(k => k.startsWith('uninstall_fb:'))).toHaveLength(0)
+  })
+
+  test('合法 reason → 200 并写入 KV', async () => {
+    const kv = createKvMock()
+    const env = { ...baseEnv, AI_USAGE_KV: kv } as unknown as Env
+    const response = await postUninstallFeedback(
+      {
+        reason: 'didnt_find',
+        note: '  hard to recall  '
+      },
+      env
+    )
+    expect(response.status).toBe(200)
+    const keys = [...kv.store.keys()].filter(k => k.startsWith('uninstall_fb:'))
+    expect(keys).toHaveLength(1)
+    const row = JSON.parse(kv.store.get(keys[0]!)!) as {
+      reason: string
+      note: string | null
+    }
+    expect(row.reason).toBe('didnt_find')
+    expect(row.note).toBe('hard to recall')
+  })
+
+  test('过长 note → 400', async () => {
+    const response = await postUninstallFeedback({
+      reason: 'other',
+      note: 'x'.repeat(501)
+    })
+    expect(response.status).toBe(400)
   })
 })
 

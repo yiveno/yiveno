@@ -10,6 +10,11 @@ import {
   ExternalAuthHandoffMessageSchema,
   type ExternalAuthHandoffResponse
 } from '@/core/identity/external-auth-handoff'
+import {
+  clearExtensionUninstallRevoke,
+  registerExtensionUninstallRevoke
+} from '@/infrastructure/auth/extension-uninstall-url'
+import { resolveWebsiteAuthProbeFromExternal } from '@/infrastructure/auth/website-auth-probe'
 import { setAuthSession, clearAuthSession } from '@/infrastructure/identity/auth-session-service'
 import {
   setAccountBinding,
@@ -45,12 +50,14 @@ export async function applyExternalAuthSessionHandoff(
   }
 
   try {
-    const session = parsed.data.payload
+    const { uninstallRevokeToken, ...session } = parsed.data.payload
     await setAuthSession(session)
     await setAccountBinding({
       accountId: session.userId,
       boundAt: new Date().toISOString()
     })
+    // 登记卸载 URL（best-effort；失败不阻断登录）
+    await registerExtensionUninstallRevoke(uninstallRevokeToken)
     // 刚写入的 token 视为有效，避免立刻 refresh 与官网抢 refresh_token 被踢成未登录
     await markAuthValidatedNow()
     // 归并不阻塞官网 sendMessage：全库 remap 可能很慢，否则「Connecting to the extension…」会卡住。
@@ -97,6 +104,8 @@ export async function applyExternalAuthSignOutHandoff(
   }
 
   try {
+    // 官网退出：扩展 keep_local；仍须销本扩展远程会话并清卸载 URL
+    await clearExtensionUninstallRevoke({ revokeRemote: true })
     await clearAuthSession()
     await clearAccountBinding()
     await patchSyncPrefs({ enabled: false })
@@ -121,6 +130,10 @@ export async function applyExternalAuthHandoff(
   const parsed = ExternalAuthHandoffMessageSchema.safeParse(message)
   if (!parsed.success) {
     return { ok: false, error: 'invalid_handoff_payload' }
+  }
+  if (parsed.data.type === 'YIVENO_WEBSITE_AUTH_PROBE') {
+    const handled = resolveWebsiteAuthProbeFromExternal(message)
+    return handled ? { ok: true } : { ok: false, error: 'probe_not_waiting' }
   }
   if (parsed.data.type === 'YIVENO_AUTH_SIGN_OUT_HANDOFF') {
     return applyExternalAuthSignOutHandoff(message)

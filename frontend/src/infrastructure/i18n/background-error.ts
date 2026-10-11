@@ -20,6 +20,8 @@ const ACCOUNT_SYNC_ERROR_MESSAGE_KEYS: Record<AccountSyncErrorCode, MessageKey> 
   AUTH_SIGN_OUT_FAILED: 'settings_error_auth_sign_out',
   AUTH_STATE_READ_FAILED: 'settings_error_auth_state',
   AUTH_PROFILE_REFRESH_FAILED: 'settings_error_auth_profile_refresh',
+  /** 探测失败对用户静默；映射仅满足 Record 完备 */
+  WEBSITE_AUTH_PROBE_FAILED: 'settings_error_auth_state',
   SYNC_NOT_AUTHENTICATED: 'settings_error_sync_not_authenticated',
   SYNC_PRO_REQUIRED: 'settings_error_sync_pro_required',
   SYNC_STATUS_FAILED: 'settings_error_sync_status',

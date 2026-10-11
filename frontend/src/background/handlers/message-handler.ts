@@ -18,6 +18,7 @@ import {
   handleExportLocalMemory,
   handleExportOrphanOwners,
   handleGetAuthState,
+  handleProbeWebsiteSignedIn,
   handleGetSubscriptionStatus,
   handleGetSyncStatus,
   handleRefreshAuthProfile,
@@ -109,6 +110,8 @@ async function dispatchBackgroundMessage(
       return handleAuthSignOut(message.payload.mode)
     case 'GET_AUTH_STATE':
       return handleGetAuthState()
+    case 'PROBE_WEBSITE_SIGNED_IN':
+      return handleProbeWebsiteSignedIn()
     case 'GET_SUBSCRIPTION_STATUS':
       return handleGetSubscriptionStatus(message.payload)
     case 'REFRESH_AUTH_PROFILE':

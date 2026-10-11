@@ -6,7 +6,7 @@
 import MainLayout from '../layouts/MainLayout.astro'
 import '../styles/pages.css'
 
-const effectiveDate = '2026-08-24'
+const effectiveDate = '2026-10-10'
 const contactEmail = 'privacy@yiveno.com'
 ---
 
@@ -64,21 +64,30 @@ const contactEmail = 'privacy@yiveno.com'
         we store that email so we can send that notice. We do not add waitlist addresses to a
         marketing list.
       </p>
-      <h3>2.6 What we do not collect by default</h3>
+      <h3>2.6 Extension uninstall feedback (optional)</h3>
+      <p>
+        If you remove the Chrome extension while signed in, Chrome may open a short page on
+        yiveno.com. That page first clears the <strong>extension</strong> remote session (not your
+        website login, and not your local or cloud Memory). You may optionally pick a closed-set
+        reason and leave a short note. Feedback is optional and not tied to reinstalling. We store
+        the reason and note to improve the product. We do not use this form to delete your library
+        or sign you out of the website.
+      </p>
+      <h3>2.7 What we do not collect by default</h3>
       <ul>
         <li>Your full browsing History</li>
         <li>Always-on clipboard reading</li>
         <li>Full webpage content you did not actively Capture</li>
         <li>Uploading memories to the cloud without enabling sync</li>
       </ul>
-      <h3>2.7 Usage signals on your library</h3>
+      <h3>2.8 Usage signals on your library</h3>
       <p>
         To improve Recall ordering on <strong>your</strong> device, Yiveno may store how you
         interact with saved items — for example how often you open a result, or when you dismiss
         “none of these.” These signals describe your relationship with <strong>your</strong>{' '}
         library; they are not sold as a separate product asset.
       </p>
-      <h3>2.8 Per-item derived recall helpers</h3>
+      <h3>2.9 Per-item derived recall helpers</h3>
       <p>
         Yiveno may compute recall helpers bound to a specific saved item — for example tags or
         keywords inferred from its title or excerpt, or math helpers stored with the item so fuzzy
@@ -100,6 +109,10 @@ const contactEmail = 'privacy@yiveno.com'
           retained as required by law)
         </li>
         <li>Email you if you joined the install waitlist, when a spot is available</li>
+        <li>
+          Review optional uninstall feedback (closed-set reason and short note) if you choose to
+          send it
+        </li>
       </ul>
 
       <h2>4. Processors and subprocessors</h2>
@@ -110,7 +123,8 @@ const contactEmail = 'privacy@yiveno.com'
           waitlist emails if you join
         </li>
         <li>
-          <strong>Cloudflare</strong> — Workers API, hosting, and related infrastructure
+          <strong>Cloudflare</strong> — Workers API, hosting, KV for optional uninstall feedback,
+          and related infrastructure
         </li>
         <li>
           <strong>Google / Microsoft</strong> — if you choose their OAuth sign-in
@@ -143,6 +157,11 @@ const contactEmail = 'privacy@yiveno.com'
         <li>
           <strong>Waitlist emails</strong> are kept until we have notified you, you ask us to remove
           the address, or we no longer need the list.
+        </li>
+        <li>
+          <strong>Uninstall feedback</strong> (reason and optional note) is kept only as long as
+          useful for product improvement, then discarded or aggregated without tying it back to your
+          account.
         </li>
         <li>
           <strong>Delete account</strong> (Settings → Data) removes cloud Memory and backups, closes
@@ -194,6 +213,7 @@ const contactEmail = 'privacy@yiveno.com'
           Export a full backup, delete cloud memories, or delete your account from Settings → Data
         </li>
         <li>Review a short privacy notice in Settings → Privacy before enabling sync</li>
+        <li>Send optional uninstall feedback after removing the extension</li>
       </ul>
 
       <h2>8. Children</h2>

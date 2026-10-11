@@ -21,6 +21,51 @@ afterEach(() => {
 })
 
 describe('auth routes', () => {
+  test('POST /api/auth/extension-session 缺少 Authorization → 401', async () => {
+    const app = createApp()
+    const response = await app.request('/api/auth/extension-session', { method: 'POST' }, baseEnv)
+    expect(response.status).toBe(401)
+  })
+
+  test('POST /api/auth/extension-uninstall-revoke 缺 token → 400', async () => {
+    const app = createApp()
+    const response = await app.request(
+      '/api/auth/extension-uninstall-revoke',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({})
+      },
+      baseEnv
+    )
+    expect(response.status).toBe(400)
+    const data = (await response.json()) as { error: string }
+    expect(data.error).toBe('empty_token')
+  })
+
+  test('POST /api/auth/extension-uninstall-revoke 未知 token → 404', async () => {
+    const app = createApp()
+    const response = await app.request(
+      '/api/auth/extension-uninstall-revoke',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ token: 'a'.repeat(64) })
+      },
+      {
+        ...baseEnv,
+        AI_USAGE_KV: {
+          get: async () => null,
+          put: async () => undefined,
+          delete: async () => undefined
+        }
+      } as unknown as Env
+    )
+    expect(response.status).toBe(404)
+    const data = (await response.json()) as { error: string }
+    expect(data.error).toBe('invalid_token')
+  })
+
   test('GET /api/auth/providers returns configured provider status', async () => {
     const app = createApp()
     const response = await app.request('/api/auth/providers', {}, {

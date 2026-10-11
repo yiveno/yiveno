@@ -17,6 +17,7 @@
 | `sync-brand-assets.mjs`          | `sync:brand-assets`        | 工具     |
 | `setup-git-lfs.sh`               | `setup:git-lfs`            | 工具     |
 | `tte-summarize-telemetry.mjs`    | `tte:summarize`            | 研究工具 |
+| `dev-green-check.mjs`            | `dev:check`                | 本地绿检 |
 
 ---
 
@@ -214,6 +215,22 @@ cat export.json | bun run tte:summarize
 ```
 
 **注意：** 本工具为研究用，**非** Beta 宣称或生产监控。详见 `docs/archive/research/`。
+
+---
+
+## 本地绿检（开发自检，非 CI 替代）
+
+### `dev:check` → `dev-green-check.mjs`
+
+**作用：** 改完一轮后的本地快检：`typecheck:fe` → `knip:fe` → `test:must` → `doc:check`。任一步失败即 exit 1。
+
+**注意：** 非 CI / pre-push 全量替代；合入前仍须跑 `test:run` 与 pre-push。
+
+**运行：**
+
+```bash
+bun run dev:check
+```
 
 ---
 

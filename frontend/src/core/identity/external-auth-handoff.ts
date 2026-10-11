@@ -8,7 +8,10 @@ import { AuthSessionSchema } from '@/core/identity/auth-session'
  */
 export const ExternalAuthSessionHandoffSchema = z.object({
   type: z.literal('YIVENO_AUTH_SESSION_HANDOFF'), // 官网登录成功后回传
-  payload: AuthSessionSchema
+  payload: AuthSessionSchema.extend({
+    /** 卸载时官网落地页销远程会话用（不写入 AuthSession 本体） */
+    uninstallRevokeToken: z.string().min(32).optional()
+  })
 })
 
 /**
@@ -23,9 +26,20 @@ export const ExternalAuthSignOutHandoffSchema = z.object({
     .optional()
 })
 
+/**
+ * 官网 → 扩展：仅探测官网是否已登录（Side Panel Connect 软条用；不带 token）。
+ */
+export const WebsiteAuthProbeHandoffSchema = z.object({
+  type: z.literal('YIVENO_WEBSITE_AUTH_PROBE'), // 官网 session 探测回传
+  payload: z.object({
+    signedIn: z.boolean() // 官网当前是否有 Supabase session
+  })
+})
+
 export const ExternalAuthHandoffMessageSchema = z.union([
   ExternalAuthSessionHandoffSchema,
-  ExternalAuthSignOutHandoffSchema
+  ExternalAuthSignOutHandoffSchema,
+  WebsiteAuthProbeHandoffSchema
 ])
 
 /** 扩展处理 handoff 后的响应（ok / 错误码）。 */

@@ -1,7 +1,11 @@
 /**
  * 官网 → Chrome 扩展登录 / 退出会话回传。
  * 依赖扩展 manifest externally_connectable；页面通过 chrome.runtime.sendMessage(extensionId, …)。
+ *
+ * 登录 handoff：必须先 Worker mint 扩展独立 session，再回传；禁止把官网 refresh 直接递给扩展。
  */
+
+import { DISPLACE_EXTENSION_SESSION_CONFIRM, mintExtensionSession } from './mint-extension-session'
 
 /** 本次从扩展打开登录时的临时 connect（OAuth 跳转用 sessionStorage）。 */
 const STORAGE_EXTENSION_ID = 'yiveno_connect_extension_id'
@@ -18,6 +22,8 @@ export interface ExtensionHandoffSession {
   expiresAt?: number
   avatarUrl?: string
   displayName?: string
+  /** Worker 下发的卸载一次性 revoke token */
+  uninstallRevokeToken?: string
 }
 
 /** 读取非空字符串。 */
@@ -170,7 +176,7 @@ function sendToExtension(extensionId: string, message: unknown): Promise<boolean
 }
 
 /**
- * 将当前 Supabase session 回传扩展。
+ * 将已铸造的扩展 session 回传扩展。
  * 目标 id：本次 connect pending → 上次成功连接的扩展。
  * @returns true 表示扩展确认 ok
  */
@@ -189,7 +195,10 @@ export function handoffSessionToExtension(session: ExtensionHandoffSession): Pro
       ...(session.email ? { email: session.email } : {}),
       ...(session.expiresAt != null ? { expiresAt: session.expiresAt } : {}),
       ...(session.avatarUrl ? { avatarUrl: session.avatarUrl } : {}),
-      ...(session.displayName ? { displayName: session.displayName } : {})
+      ...(session.displayName ? { displayName: session.displayName } : {}),
+      ...(session.uninstallRevokeToken
+        ? { uninstallRevokeToken: session.uninstallRevokeToken }
+        : {})
     }
   }
 
@@ -199,6 +208,62 @@ export function handoffSessionToExtension(session: ExtensionHandoffSession): Pro
       clearExtensionConnectParams()
     }
     return ok
+  })
+}
+
+/**
+ * 用官网 access token 铸造扩展独立会话并 handoff。
+ * 若账号已有其它扩展会话：先确认再挤掉（撤销旧 Auth session ≈ 前者登出）。
+ * mint 失败不回退为共享官网 refresh。
+ */
+export async function mintAndHandoffSessionToExtension(input: {
+  websiteAccessToken: string
+  userId: string
+  email?: string
+  avatarUrl?: string
+  displayName?: string
+}): Promise<boolean> {
+  const extensionId = resolveExtensionHandoffTargetId()
+  if (!extensionId) {
+    return false
+  }
+
+  let minted = await mintExtensionSession(input.websiteAccessToken, { extensionId })
+  if (minted.status === 'needs_displace_confirm') {
+    const ok = window.confirm(DISPLACE_EXTENSION_SESSION_CONFIRM)
+    if (!ok) {
+      console.warn('[ExtensionHandoff] 用户取消挤掉其它扩展会话')
+      return false
+    }
+    minted = await mintExtensionSession(input.websiteAccessToken, {
+      confirmDisplace: true,
+      extensionId
+    })
+  }
+
+  if (minted.status !== 'ok') {
+    console.warn('[ExtensionHandoff] mint 失败，跳过 handoff（不共享官网 refresh）')
+    return false
+  }
+  if (minted.session.userId !== input.userId) {
+    console.warn('[ExtensionHandoff] mint userId 与官网不一致，跳过 handoff')
+    return false
+  }
+  return handoffSessionToExtension({
+    accessToken: minted.session.accessToken,
+    refreshToken: minted.session.refreshToken,
+    userId: minted.session.userId,
+    ...(minted.session.email
+      ? { email: minted.session.email }
+      : input.email
+        ? { email: input.email }
+        : {}),
+    ...(minted.session.expiresAt != null ? { expiresAt: minted.session.expiresAt } : {}),
+    ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {}),
+    ...(input.displayName ? { displayName: input.displayName } : {}),
+    ...(minted.session.uninstallRevokeToken
+      ? { uninstallRevokeToken: minted.session.uninstallRevokeToken }
+      : {})
   })
 }
 

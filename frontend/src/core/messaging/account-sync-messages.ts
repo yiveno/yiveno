@@ -13,6 +13,7 @@ export const AccountSyncErrorCodeSchema = z.enum([
   'AUTH_SIGN_OUT_FAILED', // 登出失败
   'AUTH_STATE_READ_FAILED', // 读取登录态失败
   'AUTH_PROFILE_REFRESH_FAILED', // 刷新头像/资料失败
+  'WEBSITE_AUTH_PROBE_FAILED', // 探测官网登录态失败
   'SYNC_NOT_AUTHENTICATED', // 未登录无法同步
   'SYNC_PRO_REQUIRED', // 云同步需有效 Pro
   'SYNC_STATUS_FAILED', // 同步状态失败
@@ -93,6 +94,23 @@ export type GetAuthStateMessage = {
   scope: BackgroundMessageScope
   type: 'GET_AUTH_STATE'
 }
+
+/** 探测官网是否已登录（开后台 probe 页；不写入扩展 session）。 */
+export type ProbeWebsiteSignedInMessage = {
+  scope: BackgroundMessageScope
+  type: 'PROBE_WEBSITE_SIGNED_IN'
+}
+
+export type ProbeWebsiteSignedInResponse =
+  | {
+      ok: true
+      websiteSignedIn: boolean
+    }
+  | {
+      ok: false
+      errorCode: AccountSyncErrorCode
+      error?: string
+    }
 
 export type GetAuthStateResponse =
   | {
@@ -444,6 +462,7 @@ export type AccountSyncBackgroundMessage =
   | AuthSignInMessage
   | AuthSignOutMessage
   | GetAuthStateMessage
+  | ProbeWebsiteSignedInMessage
   | RefreshAuthProfileMessage
   | GetSyncStatusMessage
   | SetSyncEnabledMessage
@@ -465,6 +484,7 @@ export type AccountSyncBackgroundResponse =
   | AuthSignInResponse
   | AuthSignOutResponse
   | GetAuthStateResponse
+  | ProbeWebsiteSignedInResponse
   | RefreshAuthProfileResponse
   | GetSyncStatusResponse
   | SetSyncEnabledResponse

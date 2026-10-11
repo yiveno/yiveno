@@ -62,16 +62,22 @@ import {
   writeColdStartPostReleaseBannerDismissedReadyAt
 } from '@/infrastructure/storage/cold-start-post-release-banner-storage'
 import {
+  authSignIn,
   cancelRecall,
   fetchAuthState,
   fetchChromeBookmarkImportStatus,
   fetchColdStartStatus,
   listMemoryItems,
   navigateActiveTab,
+  probeWebsiteSignedIn,
   recallWithClue,
   recordMemoryOpen,
   recordRecallDismiss
 } from '@/infrastructure/messaging/background-client'
+import {
+  readWebsiteConnectBannerDismissed,
+  writeWebsiteConnectBannerDismissed
+} from '@/infrastructure/storage/website-connect-banner-storage'
 import {
   consumeRecallPrefill,
   consumeRecallPrefillWithRetry,
@@ -287,6 +293,9 @@ const coldStartState = ref<ColdStartPipelineState | null>(null)
 const coldStartEnrichmentBatch = ref<ColdStartEnrichmentBatch | null>(null)
 /** 本会话关闭放行后轻条时绑定的 readyAt。 */
 const coldStartPostReleaseDismissedReadyAt = ref<string | null>(null)
+/** 官网已登录、扩展未登录时的 Connect 软条（Dismiss 后本机仅一次） */
+const showWebsiteConnectBanner = ref(false)
+const websiteConnectBusy = ref(false)
 /** 驱动轻条 TTL 到期重算。 */
 const coldStartBannerNowMs = ref(Date.now())
 let coldStartBannerExpiryTimer: ReturnType<typeof setTimeout> | null = null
@@ -1188,8 +1197,10 @@ async function loadGreetingIdentity(): Promise<void> {
     const response = await fetchAuthState()
     if (!response.ok) {
       accountDisplayName.value = ''
+      void refreshWebsiteConnectBanner(false)
       return
     }
+    void refreshWebsiteConnectBanner(response.signedIn)
     const fromProfile = response.displayName?.trim() ?? ''
     if (fromProfile) {
       accountDisplayName.value = fromProfile
@@ -1200,6 +1211,48 @@ async function loadGreetingIdentity(): Promise<void> {
     accountDisplayName.value = localPart
   } catch {
     accountDisplayName.value = ''
+  }
+}
+
+/**
+ * 扩展未登录时探测官网会话；已 Dismiss 或探测失败则不展示软条。
+ * @param forceProbe 为 true 时跳过「已隐藏」短路（一般不需要）
+ */
+async function refreshWebsiteConnectBanner(extensionSignedIn: boolean): Promise<void> {
+  if (extensionSignedIn) {
+    showWebsiteConnectBanner.value = false
+    return
+  }
+  try {
+    if (await readWebsiteConnectBannerDismissed()) {
+      showWebsiteConnectBanner.value = false
+      return
+    }
+    const probe = await probeWebsiteSignedIn()
+    showWebsiteConnectBanner.value = probe.ok && probe.websiteSignedIn
+  } catch {
+    showWebsiteConnectBanner.value = false
+  }
+}
+
+async function connectWebsiteSessionFromBanner(): Promise<void> {
+  if (websiteConnectBusy.value) {
+    return
+  }
+  websiteConnectBusy.value = true
+  try {
+    await authSignIn()
+  } finally {
+    websiteConnectBusy.value = false
+  }
+}
+
+async function dismissWebsiteConnectBanner(): Promise<void> {
+  showWebsiteConnectBanner.value = false
+  try {
+    await writeWebsiteConnectBannerDismissed()
+  } catch {
+    // 忽略：本地已隐藏
   }
 }
 
@@ -1872,6 +1925,38 @@ onUnmounted(() => {
       />
 
       <section
+        v-if="showWebsiteConnectBanner"
+        class="recall-website-connect"
+        role="status"
+        aria-live="polite"
+      >
+        <p class="recall-website-connect-label">{{ t('sidepanel_website_connect_banner') }}</p>
+        <div class="recall-website-connect-actions">
+          <AppButton
+            type="button"
+            variant="text"
+            class="recall-website-connect-cta"
+            :disabled="websiteConnectBusy"
+            :title="t('sidepanel_website_connect_cta')"
+            :aria-label="t('sidepanel_website_connect_cta_aria')"
+            @click="connectWebsiteSessionFromBanner"
+          >
+            {{ t('sidepanel_website_connect_cta') }}
+          </AppButton>
+          <AppButton
+            type="button"
+            variant="text"
+            class="recall-website-connect-dismiss"
+            :title="t('sidepanel_website_connect_dismiss')"
+            :aria-label="t('sidepanel_website_connect_dismiss_aria')"
+            @click="dismissWebsiteConnectBanner"
+          >
+            {{ t('sidepanel_website_connect_dismiss') }}
+          </AppButton>
+        </div>
+      </section>
+
+      <section
         v-if="showColdStartPostReleaseBanner"
         class="recall-post-release"
         role="status"
@@ -2206,6 +2291,42 @@ onUnmounted(() => {
 
 .recall-header-top:deep(.app-icon-button) {
   color: var(--on-surface-muted);
+}
+
+.recall-website-connect {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  margin-top: var(--space-xs);
+  margin-bottom: 0;
+  padding: var(--space-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-white);
+}
+
+.recall-website-connect-label {
+  min-width: 0;
+  flex: 1 1 auto;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--on-surface-muted);
+  overflow-wrap: anywhere;
+  text-wrap: pretty;
+}
+
+.recall-website-connect-actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 2px;
+}
+
+.recall-website-connect-cta,
+.recall-website-connect-dismiss {
+  margin: -2px 0 0;
 }
 
 .recall-post-release {

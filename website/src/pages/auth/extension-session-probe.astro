@@ -1,0 +1,13 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro'
+import ExtensionSessionProbe from '../../components/ExtensionSessionProbe.vue'
+import '../../styles/pages.css'
+---
+
+<MainLayout
+  noindex
+  title="Connecting · Yiveno"
+  description="Checking whether you are signed in on the Yiveno website."
+>
+  <ExtensionSessionProbe client:load />
+</MainLayout>

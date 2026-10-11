@@ -54,7 +54,16 @@ function createChromeStorageMock(initial: StorageMap = {}) {
     set: vi.fn(async () => undefined),
     remove: vi.fn(async () => undefined)
   }
-  return { storage: { local, session }, store }
+  return {
+    storage: { local, session },
+    runtime: {
+      setUninstallURL: vi.fn((_url: string, cb?: () => void) => {
+        cb?.()
+      }),
+      lastError: undefined as { message?: string } | undefined
+    },
+    store
+  }
 }
 
 describe('external auth handoff', () => {
@@ -68,17 +77,23 @@ describe('external auth handoff', () => {
   })
 
   it('合法 session handoff 写入 session 与 AccountBinding', async () => {
+    const revokeToken = 'r'.repeat(64)
     const result = await applyExternalAuthSessionHandoff({
       type: 'YIVENO_AUTH_SESSION_HANDOFF',
       payload: {
         accessToken: 'at',
         refreshToken: 'rt',
         userId: '22222222-2222-4222-8222-222222222222',
-        email: 'u@example.com'
+        email: 'u@example.com',
+        uninstallRevokeToken: revokeToken
       }
     })
     expect(result).toEqual({ ok: true })
     expect(chrome.storage.local.set).toHaveBeenCalled()
+    expect(chrome.runtime.setUninstallURL).toHaveBeenCalledWith(
+      expect.stringContaining('/auth/extension-uninstalled'),
+      expect.any(Function)
+    )
 
     const setCalls = vi.mocked(chrome.storage.local.set).mock.calls
     const flattened = Object.assign({}, ...setCalls.map(call => call[0] as StorageMap))
@@ -86,6 +101,7 @@ describe('external auth handoff', () => {
       accessToken: 'at',
       userId: '22222222-2222-4222-8222-222222222222'
     })
+    expect(flattened[AUTH_SESSION_STORAGE_KEY]).not.toHaveProperty('uninstallRevokeToken')
     expect(flattened[ACCOUNT_BINDING_STORAGE_KEY]).toMatchObject({
       accountId: '22222222-2222-4222-8222-222222222222'
     })

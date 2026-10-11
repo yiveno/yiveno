@@ -1,0 +1,12 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro'
+import AppNav from '../../components/AppNav.astro'
+import ExtensionUninstalledPage from '../../components/ExtensionUninstalledPage.vue'
+import { t } from '../../i18n/t'
+import '../../styles/pages.css'
+---
+
+<MainLayout noindex title={t('uninstall.meta.title')} description={t('uninstall.meta.description')}>
+  <AppNav slot="nav" />
+  <ExtensionUninstalledPage client:load />
+</MainLayout>

@@ -9,7 +9,8 @@ const status = ref('Signing out…')
 onMounted(async () => {
   try {
     const supabase = await getSupabase()
-    await supabase.auth.signOut()
+    // 仅清本页会话；其它设备 / 扩展独立 session 不因本机 /logout 被 global 撤销
+    await supabase.auth.signOut({ scope: 'local' })
   } catch (error) {
     console.warn('[LogoutPage] signOut failed', error)
   }

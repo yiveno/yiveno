@@ -13,6 +13,7 @@ import type {
   ExportLocalMemoryResponse,
   ExportOrphanOwnersResponse,
   GetAuthStateResponse,
+  ProbeWebsiteSignedInResponse,
   GetSubscriptionStatusResponse,
   GetSyncStatusResponse,
   RefreshAuthProfileResponse,
@@ -349,6 +350,14 @@ export async function fetchAuthState(): Promise<GetAuthStateResponse> {
   return sendBackgroundMessage<GetAuthStateResponse>({
     scope: 'background',
     type: 'GET_AUTH_STATE'
+  })
+}
+
+/** 探测官网是否已登录（不写入扩展 session）。 */
+export async function probeWebsiteSignedIn(): Promise<ProbeWebsiteSignedInResponse> {
+  return sendBackgroundMessage<ProbeWebsiteSignedInResponse>({
+    scope: 'background',
+    type: 'PROBE_WEBSITE_SIGNED_IN'
   })
 }
 
