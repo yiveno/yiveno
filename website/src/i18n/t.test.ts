@@ -6,6 +6,8 @@ describe('website i18n t()', () => {
   test('已知键返回 en 文案', () => {
     expect(t('uninstall.done.closeHint')).toBe('You can close this tab now.')
     expect(t('uninstall.done.closeHint')).toBe(en['uninstall.done.closeHint'])
+    expect(t('uninstall.feedback.title')).toBe('What made you leave?')
+    expect(t('uninstall.done.title')).toBe('Thanks — that helps')
   })
 
   test('卸载原因键齐全', () => {

@@ -174,7 +174,7 @@ onMounted(async () => {
 <template>
   <div class="page uninstall">
     <header v-if="phase !== 'done'" class="uninstall__header">
-      <h1 class="page__title">{{ t('uninstall.feedback.title') }}</h1>
+      <h1 class="page__title uninstall__title">{{ t('uninstall.feedback.title') }}</h1>
       <p class="page__lede uninstall__lede">
         {{ t('uninstall.feedback.lede') }}
       </p>
@@ -193,7 +193,7 @@ onMounted(async () => {
     </header>
 
     <header v-else class="uninstall__header" role="status">
-      <h1 class="page__title">{{ doneTitle }}</h1>
+      <h1 class="page__title uninstall__title">{{ doneTitle }}</h1>
       <p class="page__lede uninstall__lede">{{ doneLede }}</p>
       <p class="uninstall__soft-hint">{{ t('uninstall.done.closeHint') }}</p>
     </header>
@@ -263,6 +263,12 @@ onMounted(async () => {
 <style scoped>
 .uninstall {
   padding-top: clamp(40px, 7vw, 72px);
+}
+
+/** 标题单行：略收字号 + nowrap，避免 Fraunces 大号折到「Yiveno?」 */
+.uninstall__title {
+  white-space: nowrap;
+  font-size: clamp(28px, 4.2vw, 40px);
 }
 
 .uninstall__header {
