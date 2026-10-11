@@ -1,17 +1,17 @@
 /**
  * 反馈邮件 sink：Worker send_email → 运营已验证目标（Gmail）。
  *
- * 注意：未 onboard 开放式 Email Sending 时，TO 必须是 Email Routing
- * **已验证 destination**（如 hi.yiveno@gmail.com），不能是 feedback@ 等别名
- * （别名只用于外人写信；Worker 直发别名会报 destination not verified）。
- * 可用 FEEDBACK_TO_EMAIL 覆盖。发送失败不抛，不挡用户 Thanks。
+ * - From = `feedback@`（轨道 1 产品意见；与欢迎信 `hello@` 分开）
+ * - To = Email Routing **已验证 destination**（默认运营 Gmail；`FEEDBACK_TO_EMAIL` 可覆盖）
+ *   勿把 `feedback@` 当 TO（会 destination not verified）
+ * 发送失败不抛，不挡用户 Thanks。
  */
 
 import type { Env } from '../../../types/env'
 import { error as logErrorMessage, info, warn, toLogError } from '../../../utils/logger'
 import type { FeedbackEvent } from '../feedback-event'
 
-const FROM_EMAIL = 'hello@yiveno.com'
+const FROM_EMAIL = 'feedback@yiveno.com'
 const FROM_NAME = 'Yiveno'
 /** 与 Dashboard → Email Routing → Destination addresses 一致 */
 const DEFAULT_TO = 'hi.yiveno@gmail.com'
@@ -65,7 +65,7 @@ function escapeHtml(value: string): string {
 }
 
 /**
- * 尽力发到 feedback@；失败只打日志。
+ * 尽力外发（From=feedback@ → 已验证 destination）；失败只打日志。
  */
 export async function sendFeedbackEmail(
   env: Env,
@@ -95,14 +95,9 @@ export async function sendFeedbackEmail(
     })
     return { ok: true, messageId: response.messageId }
   } catch (err) {
-    const code =
-      err && typeof err === 'object' && 'code' in err && typeof err.code === 'string'
-        ? err.code
-        : null
     logErrorMessage('[Feedback] 邮件发送失败', {
       id: event.id,
       to,
-      code,
       detail: toLogError(err)
     })
     return { ok: false, reason: 'send_failed' }
