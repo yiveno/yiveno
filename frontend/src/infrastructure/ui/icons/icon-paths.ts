@@ -13,6 +13,7 @@ export const APP_ICON_NAMES = [
   'bookmark_add',
   'celebration',
   'check_circle',
+  'close',
   'chevron_right',
   'chevron_up',
   'circle_alert',
@@ -53,6 +54,7 @@ export const APP_ICON_LUCIDE_SOURCE: Record<AppIconName, string> = {
   bookmark_add: 'BookmarkPlus',
   celebration: 'PartyPopper',
   check_circle: 'CircleCheck',
+  close: 'X',
   chevron_right: 'ChevronRight',
   chevron_up: 'ChevronUp',
   circle_alert: 'CircleAlert',
@@ -136,6 +138,10 @@ export const APP_ICON_NODES: Record<AppIconName, readonly AppIconNode[]> = {
   check_circle: [
     ['circle', { cx: '12', cy: '12', r: '10' }],
     ['path', { d: 'm9 12 2 2 4-4' }]
+  ] as const,
+  close: [
+    ['path', { d: 'M18 6 6 18' }],
+    ['path', { d: 'm6 6 12 12' }]
   ] as const,
   chevron_right: [['path', { d: 'm9 18 6-6-6-6' }]] as const,
   chevron_up: [['path', { d: 'm18 15-6-6-6 6' }]] as const,

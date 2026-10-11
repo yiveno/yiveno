@@ -5,7 +5,14 @@
  * 登录 handoff：必须先 Worker mint 扩展独立 session，再回传；禁止把官网 refresh 直接递给扩展。
  */
 
+import { signOut } from './auth'
 import { DISPLACE_EXTENSION_SESSION_CONFIRM, mintExtensionSession } from './mint-extension-session'
+
+/** mint + handoff 结果（取消挤掉与失败需分流） */
+export type MintAndHandoffResult =
+  | { status: 'ok' }
+  | { status: 'cancelled_displace' } // 用户点取消：不应留下「已登录官网」假完成
+  | { status: 'failed' }
 
 /** 本次从扩展打开登录时的临时 connect（OAuth 跳转用 sessionStorage）。 */
 const STORAGE_EXTENSION_ID = 'yiveno_connect_extension_id'
@@ -212,6 +219,26 @@ export function handoffSessionToExtension(session: ExtensionHandoffSession): Pro
 }
 
 /**
+ * 用户取消挤掉确认：清掉本机刚建的官网会话，回到登录页（可带 connect 参数重试）。
+ * 不触碰其它设备上的扩展 / 官网。
+ */
+export async function abortWebsiteLoginAfterDisplaceCancel(): Promise<void> {
+  const extensionId = getPendingExtensionId()
+  try {
+    await signOut()
+  } catch (error) {
+    console.warn('[ExtensionHandoff] 取消挤掉后清官网会话失败', error)
+  }
+  const params = new URLSearchParams()
+  params.set('error', 'displace_cancelled')
+  if (extensionId) {
+    params.set('connect_extension', '1')
+    params.set('extension_id', extensionId)
+  }
+  window.location.replace(`/login?${params.toString()}`)
+}
+
+/**
  * 用官网 access token 铸造扩展独立会话并 handoff。
  * 若账号已有其它扩展会话：先确认再挤掉（撤销旧 Auth session ≈ 前者登出）。
  * mint 失败不回退为共享官网 refresh。
@@ -222,20 +249,20 @@ export async function mintAndHandoffSessionToExtension(input: {
   email?: string
   avatarUrl?: string
   displayName?: string
-}): Promise<boolean> {
+}): Promise<MintAndHandoffResult> {
   const extensionId = resolveExtensionHandoffTargetId()
   if (!extensionId) {
-    return false
+    return { status: 'failed' }
   }
 
   let minted = await mintExtensionSession(input.websiteAccessToken, { extensionId })
   if (minted.status === 'needs_displace_confirm') {
-    // 跨扩展挤掉确认：暂无自建 modal，沿用浏览器 confirm（CI no-alert）
-    // eslint-disable-next-line no-alert -- 产品：单活跃扩展需显式确认 displace
+    // 账号已有其它扩展登录会话：暂无自建 modal，沿用浏览器 confirm（CI no-alert）
+    // eslint-disable-next-line no-alert -- 产品：单活跃扩展会话需显式确认 displace
     const ok = window.confirm(DISPLACE_EXTENSION_SESSION_CONFIRM)
     if (!ok) {
       console.warn('[ExtensionHandoff] 用户取消挤掉其它扩展会话')
-      return false
+      return { status: 'cancelled_displace' }
     }
     minted = await mintExtensionSession(input.websiteAccessToken, {
       confirmDisplace: true,
@@ -245,13 +272,13 @@ export async function mintAndHandoffSessionToExtension(input: {
 
   if (minted.status !== 'ok') {
     console.warn('[ExtensionHandoff] mint 失败，跳过 handoff（不共享官网 refresh）')
-    return false
+    return { status: 'failed' }
   }
   if (minted.session.userId !== input.userId) {
     console.warn('[ExtensionHandoff] mint userId 与官网不一致，跳过 handoff')
-    return false
+    return { status: 'failed' }
   }
-  return handoffSessionToExtension({
+  const handed = await handoffSessionToExtension({
     accessToken: minted.session.accessToken,
     refreshToken: minted.session.refreshToken,
     userId: minted.session.userId,
@@ -267,6 +294,7 @@ export async function mintAndHandoffSessionToExtension(input: {
       ? { uninstallRevokeToken: minted.session.uninstallRevokeToken }
       : {})
   })
+  return handed ? { status: 'ok' } : { status: 'failed' }
 }
 
 /**

@@ -8,11 +8,13 @@ import {
 } from '../services/auth-return'
 import { getSupabase } from '../services/supabase'
 import {
+  abortWebsiteLoginAfterDisplaceCancel,
   captureExtensionConnectParamsFromUrl,
   extractProfileFromUserMetadata,
   getPendingExtensionId,
   mintAndHandoffSessionToExtension,
-  resolveExtensionHandoffTargetId
+  resolveExtensionHandoffTargetId,
+  type MintAndHandoffResult
 } from '../services/extension-auth-handoff'
 
 const status = ref('Signing in…')
@@ -32,7 +34,7 @@ function redirectLoginError(code: string, detail?: string | null): void {
 }
 
 /** 用官网 session 铸造扩展独立会话并 handoff（失败不共享官网 refresh） */
-async function tryMintHandoff(session: Session): Promise<boolean> {
+async function tryMintHandoff(session: Session): Promise<MintAndHandoffResult> {
   const profile = extractProfileFromUserMetadata(
     session.user.user_metadata as Record<string, unknown> | undefined
   )
@@ -56,9 +58,14 @@ async function finishWithSession(session: Session): Promise<void> {
 
   if (pendingConnect) {
     status.value = 'Connecting to the extension…'
-    const ok = await tryMintHandoff(session)
-    if (ok) {
+    const handoff = await tryMintHandoff(session)
+    if (handoff.status === 'ok') {
       window.location.href = '/account?extension_connected=1'
+      return
+    }
+    if (handoff.status === 'cancelled_displace') {
+      status.value = 'Sign-in cancelled…'
+      await abortWebsiteLoginAfterDisplaceCancel()
       return
     }
     status.value =
@@ -71,8 +78,13 @@ async function finishWithSession(session: Session): Promise<void> {
 
   if (authReturn.next) {
     if (resolveExtensionHandoffTargetId()) {
-      // 不阻塞回跳：上次装过扩展则尽力铸造并同步
-      void tryMintHandoff(session)
+      // 不阻塞回跳：上次装过扩展则尽力铸造并同步（取消挤掉不挡续付）
+      void tryMintHandoff(session).then(async result => {
+        if (result.status === 'cancelled_displace') {
+          // 续付优先：取消挤掉只跳过扩展，保留官网会话
+          console.warn('[AuthCallback] 续付回跳中取消挤掉，跳过扩展 handoff')
+        }
+      })
     }
     const href = buildPostAuthHref('/account')
     console.warn('[AuthCallback] 登录成功，回跳续意图', { href })
@@ -82,8 +94,13 @@ async function finishWithSession(session: Session): Promise<void> {
 
   if (resolveExtensionHandoffTargetId()) {
     status.value = 'Connecting to the extension…'
-    const ok = await tryMintHandoff(session)
-    window.location.href = ok ? '/account?extension_connected=1' : '/account'
+    const handoff = await tryMintHandoff(session)
+    if (handoff.status === 'cancelled_displace') {
+      status.value = 'Sign-in cancelled…'
+      await abortWebsiteLoginAfterDisplaceCancel()
+      return
+    }
+    window.location.href = handoff.status === 'ok' ? '/account?extension_connected=1' : '/account'
     return
   }
 

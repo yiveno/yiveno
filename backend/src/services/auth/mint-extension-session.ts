@@ -2,8 +2,9 @@
  * 为 Chrome 扩展另开一条 Supabase Auth 会话（独立 refresh 族）+ 单活跃租约。
  *
  * - 官网 OAuth 会话不得直接 handoff 共用 refresh。
- * - 扩展侧同时只允许一台：KV 有既有租约且 Auth 侧 session 仍存活、未 confirmDisplace → needs_displace_confirm。
- * - KV 租约在、但 auth.sessions 已无（重装扩展 / 已退登僵死）→ 清租约，不弹确认。
+ * - **互斥维度 = 账号下的扩展登录会话（KV 租约 / sessionId）**，不是 `chrome.runtime.id`。
+ *   CWS 分配的 extensionId 全机相同，只作租约元数据 / 卸载 token 附属，**不**决定是否弹确认。
+ * - KV 已有租约且未 `confirmDisplace` → `needs_displace_confirm`（家里登录挤掉上班那台）。
  * - 确认后：铸造新 session → 撤销旧 auth.sessions 行 → 写新租约。
  * - KV 不可用 / 读不到租约：不弹确认，照常 mint（降级）。
  */
@@ -12,7 +13,6 @@ import { createClient } from '@supabase/supabase-js'
 import { createSupabaseClient } from '../../data-access/supabase'
 import type { Env } from '../../types/env'
 import { error as logErrorMessage, info, toLogError, warn } from '../../utils/logger'
-import { authSessionExists } from './auth-session-exists'
 import {
   clearExtensionSessionLease,
   getExtensionSessionLease,
@@ -38,9 +38,12 @@ export type MintedExtensionSession = {
 }
 
 export type MintExtensionSessionOptions = {
-  /** 用户已确认挤掉其它扩展会话 */
+  /** 用户已确认挤掉其它已登录的扩展会话 */
   confirmDisplace?: boolean
-  /** 本次 handoff 目标 Chrome 扩展 id（同 id 重连不弹确认） */
+  /**
+   * Chrome 扩展包 id（CWS / 未打包路径派生；各安装副本通常相同）。
+   * 仅写入租约与卸载 revoke 元数据，**不**用于跳过挤掉确认。
+   */
   extensionId?: string
 }
 
@@ -59,6 +62,7 @@ export type MintExtensionSessionResult =
         | 'verify_otp_failed'
         | 'user_mismatch'
         | 'needs_displace_confirm'
+        | 'displace_revoke_failed' // 确认挤掉后未能作废前序 session
       /** 仅 needs_displace_confirm */
       existingMintedAt?: string
     }
@@ -98,42 +102,19 @@ export async function mintExtensionSession(
     existingLease = null
   }
 
+  // 已有扩展登录会话租约 → 须用户确认后再挤掉（与 extensionId 是否相同无关）
   if (existingLease && options.confirmDisplace !== true) {
-    const sameExtension =
-      Boolean(requestExtensionId) &&
-      Boolean(existingLease.extensionId) &&
-      requestExtensionId === existingLease.extensionId
-
-    if (sameExtension) {
-      // 同扩展重连：不弹确认。仅在能确认 Auth 行已无时清僵死租约标记（仍继续 mint）
-      const alive = await authSessionExists(env, userId, existingLease.sessionId)
-      if (alive.status === 'missing') {
-        info('[Auth] 同扩展重连且旧 session 已不在，清租约后换发', {
-          userId,
-          extensionId: requestExtensionId
-        })
-        await clearLeaseAndUninstallToken(env, userId, existingLease)
-        existingLease = null
-      } else {
-        info('[Auth] 同扩展重连，跳过挤掉确认', {
-          userId,
-          extensionId: requestExtensionId
-        })
-      }
-    } else {
-      // 不同 extension id（或未带 id）：一律确认。禁止用 auth.sessions「missing」清租约放行
-      // （PostgREST 读不到 auth schema 时会误判 missing，导致互斥失效）
-      info('[Auth] 其它扩展会话租约仍在，需确认挤掉', {
-        userId,
-        mintedAt: existingLease.mintedAt,
-        leaseExtensionId: existingLease.extensionId ?? null,
-        requestExtensionId
-      })
-      return {
-        ok: false,
-        error: 'needs_displace_confirm',
-        existingMintedAt: existingLease.mintedAt
-      }
+    info('[Auth] 账号已有扩展登录会话租约，需确认挤掉', {
+      userId,
+      mintedAt: existingLease.mintedAt,
+      leaseSessionId: existingLease.sessionId,
+      leaseExtensionId: existingLease.extensionId ?? null,
+      requestExtensionId
+    })
+    return {
+      ok: false,
+      error: 'needs_displace_confirm',
+      existingMintedAt: existingLease.mintedAt
     }
   }
 
@@ -226,16 +207,27 @@ export async function mintExtensionSession(
     const sessionId = readJwtSessionId(accessToken)
     let displacedSessionId: string | null = null
 
+    // 有前序租约：必须先作废旧 session，禁止「mint 成功但前者仍可 refresh」
     if (existingLease && existingLease.sessionId !== sessionId) {
       if (existingLease.uninstallRevokeToken) {
         await deleteExtensionUninstallRevokeToken(env, existingLease.uninstallRevokeToken)
       }
       const revoked = await revokeAuthSessionById(env, userId, existingLease.sessionId)
+      if (!revoked) {
+        warn('[Auth] 挤掉前序扩展会话失败，回滚本次新 session', {
+          userId,
+          previousSessionId: existingLease.sessionId,
+          newSessionId: sessionId
+        })
+        if (sessionId) {
+          await revokeAuthSessionById(env, userId, sessionId)
+        }
+        return { ok: false, error: 'displace_revoke_failed' }
+      }
       displacedSessionId = existingLease.sessionId
       info('[Auth] 已挤掉前序扩展会话', {
         userId,
-        previousSessionId: existingLease.sessionId,
-        revoked
+        previousSessionId: existingLease.sessionId
       })
     }
 

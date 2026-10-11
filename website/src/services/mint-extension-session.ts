@@ -35,7 +35,7 @@ type MintApiData = {
 
 /**
  * 用官网当前 access token 换取扩展独立会话。
- * `extensionId`：同扩展重连不弹挤掉确认；`confirmDisplace`：确认挤掉其它扩展。
+ * `extensionId`：扩展包 id（元数据）；互斥看服务端会话租约。`confirmDisplace`：确认挤掉其它已登录扩展会话。
  */
 export async function mintExtensionSession(
   websiteAccessToken: string,

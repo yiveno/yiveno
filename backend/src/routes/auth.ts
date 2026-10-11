@@ -67,9 +67,9 @@ authRouter.get('/callback', async c => {
 /**
  * POST /api/auth/extension-session
  *
- * 为 Chrome 扩展铸造独立 session；扩展侧单活跃。
- * Body（可选）：`{ confirmDisplace?: boolean }` — 确认挤掉其它扩展会话。
- * 409 `needs_displace_confirm`：KV 登记已有扩展会话且未确认。
+ * 为 Chrome 扩展铸造独立 session；账号下扩展登录会话单活跃（按 session 租约，不按 extensionId）。
+ * Body（可选）：`{ extensionId?, confirmDisplace? }` — 确认挤掉其它已登录扩展会话。
+ * 409 `needs_displace_confirm`：KV 已有扩展会话租约且未确认。
  */
 authRouter.post('/extension-session', supabaseAuth(), async c => {
   const userId = c.get('supabaseUserId')

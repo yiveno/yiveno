@@ -76,7 +76,6 @@ export const MESSAGE_KEYS = [
   'sidepanel_website_connect_banner',
   'sidepanel_website_connect_cta',
   'sidepanel_website_connect_cta_aria',
-  'sidepanel_website_connect_dismiss',
   'sidepanel_website_connect_dismiss_aria',
   'popup_welcome_title',
   'popup_welcome_body',

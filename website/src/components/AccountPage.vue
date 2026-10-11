@@ -9,6 +9,7 @@ import {
 } from '../services/subscription'
 import { formatDate } from '../services/date'
 import {
+  abortWebsiteLoginAfterDisplaceCancel,
   captureExtensionConnectParamsFromUrl,
   extractProfileFromUserMetadata,
   getPendingExtensionId,
@@ -139,12 +140,16 @@ async function syncSessionToExtensionIfConnecting(session: {
     session.user.user_metadata as Record<string, unknown> | undefined
   )
   try {
-    await mintAndHandoffSessionToExtension({
+    const result = await mintAndHandoffSessionToExtension({
       websiteAccessToken: session.access_token,
       userId: session.user.id,
       ...(session.user.email ? { email: session.user.email } : {}),
       ...profile
     })
+    // 扩展 connect 入口取消挤掉 = 放弃本次登录，清官网会话回 /login
+    if (result.status === 'cancelled_displace') {
+      await abortWebsiteLoginAfterDisplaceCancel()
+    }
   } catch (error) {
     console.warn('[AccountPage] extension session handoff failed', error)
   }
@@ -215,9 +220,9 @@ async function handleSignOut() {
         <div class="account__who-text">
           <h1 class="account__name">{{ profileDisplayName || user.email }}</h1>
           <p class="account__meta">
-            <span>{{ user.email }}</span>
+            <span class="account__meta-email">{{ user.email }}</span>
             <span class="account__dot" aria-hidden="true">·</span>
-            <span>{{ signInProvider }}</span>
+            <span class="account__meta-provider">{{ signInProvider }}</span>
           </p>
         </div>
       </div>
@@ -297,14 +302,14 @@ async function handleSignOut() {
 
 <style scoped>
 .account {
-  max-width: 560px;
+  max-width: 720px;
 }
 
 .account__identity {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: 24px;
   margin-bottom: clamp(28px, 4vw, 40px);
   padding-bottom: clamp(24px, 3vw, 32px);
   border-bottom: 1px solid var(--border);
@@ -313,6 +318,7 @@ async function handleSignOut() {
 .account__who {
   display: flex;
   align-items: center;
+  flex: 1;
   gap: 14px;
   min-width: 0;
 }
@@ -350,16 +356,31 @@ async function handleSignOut() {
 }
 
 .account__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.35em;
+  row-gap: 2px;
   margin: 6px 0 0;
   font-size: 14px;
   font-weight: 300;
   line-height: 1.4;
   color: var(--sage-muted);
-  overflow-wrap: anywhere;
+}
+
+.account__meta-email {
+  min-width: 0;
+  /* 仅邮箱可断；勿用 anywhere，避免把 Google 拆成 Googl / e */
+  overflow-wrap: break-word;
+}
+
+.account__meta-provider {
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .account__dot {
-  margin: 0 0.35em;
+  flex-shrink: 0;
   opacity: 0.7;
 }
 

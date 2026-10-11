@@ -2,6 +2,8 @@
  * 撤销指定 Supabase Auth session（等价于该端被登出：refresh 失效）。
  * 1) GoTrue Admin `DELETE …/admin/users/{id}/sessions/{session_id}`（若部署支持）
  * 2) 回退 PostgREST `Content-Profile: auth` 删 `auth.sessions`
+ *
+ * 404 / 已不存在视为成功（目标会话已废即可）。
  */
 
 import type { Env } from '../../types/env'
@@ -15,9 +17,13 @@ function serviceHeaders(serviceKey: string, extra: Record<string, string> = {}):
   }
 }
 
+function isGoneStatus(status: number): boolean {
+  return status === 404 || status === 410
+}
+
 /**
  * 删除属于该 user 的一条 session。
- * @returns true 表示至少一种路径 HTTP 成功
+ * @returns true 表示目标会话已不存在或已成功删除
  */
 export async function revokeAuthSessionById(
   env: Env,
@@ -41,11 +47,11 @@ export async function revokeAuthSessionById(
       method: 'DELETE',
       headers: serviceHeaders(key)
     })
-    if (adminRes.ok || adminRes.status === 204) {
+    if (adminRes.ok || adminRes.status === 204 || isGoneStatus(adminRes.status)) {
       return true
     }
-    // 404/405：旧 GoTrue 无此路由 → 试 PostgREST
-    if (adminRes.status !== 404 && adminRes.status !== 405) {
+    // 405：旧 GoTrue 无此路由 → 试 PostgREST
+    if (adminRes.status !== 405) {
       warn('[Auth] Admin 撤销 session 非预期状态', {
         userId: uid,
         sessionId: id,
@@ -72,15 +78,15 @@ export async function revokeAuthSessionById(
         Prefer: 'return=minimal'
       })
     })
-    if (!res.ok && res.status !== 204) {
-      warn('[Auth] PostgREST 撤销 auth.sessions 失败', {
-        userId: uid,
-        sessionId: id,
-        status: res.status
-      })
-      return false
+    if (res.ok || res.status === 204 || isGoneStatus(res.status)) {
+      return true
     }
-    return true
+    warn('[Auth] PostgREST 撤销 auth.sessions 失败', {
+      userId: uid,
+      sessionId: id,
+      status: res.status
+    })
+    return false
   } catch (err) {
     warn('[Auth] PostgREST 撤销 auth.sessions 异常', {
       userId: uid,

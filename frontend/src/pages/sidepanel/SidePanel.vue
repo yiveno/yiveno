@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 import AppButton from '@/infrastructure/ui/AppButton.vue'
+import AppIconButton from '@/infrastructure/ui/AppIconButton.vue'
 import AppLinearProgress from '@/infrastructure/ui/AppLinearProgress.vue'
+import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
 
 import { watchAuthSessionStorage } from '@/infrastructure/auth/watch-auth-session-storage'
 import type { ChromeBookmarkImportState } from '@/core/memory/chrome-bookmark-import-state'
@@ -1930,30 +1932,27 @@ onUnmounted(() => {
         role="status"
         aria-live="polite"
       >
+        <AppIconButton
+          class="recall-website-connect-close"
+          type="button"
+          :title="t('sidepanel_website_connect_dismiss_aria')"
+          :aria-label="t('sidepanel_website_connect_dismiss_aria')"
+          @click="dismissWebsiteConnectBanner"
+        >
+          <AppIcon name="close" size="16px" />
+        </AppIconButton>
         <p class="recall-website-connect-label">{{ t('sidepanel_website_connect_banner') }}</p>
-        <div class="recall-website-connect-actions">
-          <AppButton
-            type="button"
-            variant="text"
-            class="recall-website-connect-cta"
-            :disabled="websiteConnectBusy"
-            :title="t('sidepanel_website_connect_cta')"
-            :aria-label="t('sidepanel_website_connect_cta_aria')"
-            @click="connectWebsiteSessionFromBanner"
-          >
-            {{ t('sidepanel_website_connect_cta') }}
-          </AppButton>
-          <AppButton
-            type="button"
-            variant="text"
-            class="recall-website-connect-dismiss"
-            :title="t('sidepanel_website_connect_dismiss')"
-            :aria-label="t('sidepanel_website_connect_dismiss_aria')"
-            @click="dismissWebsiteConnectBanner"
-          >
-            {{ t('sidepanel_website_connect_dismiss') }}
-          </AppButton>
-        </div>
+        <AppButton
+          type="button"
+          variant="text"
+          class="recall-website-connect-cta"
+          :disabled="websiteConnectBusy"
+          :title="t('sidepanel_website_connect_cta')"
+          :aria-label="t('sidepanel_website_connect_cta_aria')"
+          @click="connectWebsiteSessionFromBanner"
+        >
+          {{ t('sidepanel_website_connect_cta') }}
+        </AppButton>
       </section>
 
       <section
@@ -2294,13 +2293,13 @@ onUnmounted(() => {
 }
 
 .recall-website-connect {
+  position: relative;
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   gap: var(--space-sm);
   margin-top: var(--space-xs);
   margin-bottom: 0;
-  padding: var(--space-sm);
+  padding: var(--space-sm) 2rem var(--space-sm) var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface-white);
@@ -2311,22 +2310,24 @@ onUnmounted(() => {
   flex: 1 1 auto;
   margin: 0;
   font-size: 12px;
-  line-height: 1.4;
+  line-height: 1.35;
   color: var(--on-surface-muted);
-  overflow-wrap: anywhere;
-  text-wrap: pretty;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.recall-website-connect-actions {
-  display: flex;
+.recall-website-connect-cta {
   flex: 0 0 auto;
-  align-items: center;
-  gap: 2px;
+  margin: 0;
 }
 
-.recall-website-connect-cta,
-.recall-website-connect-dismiss {
-  margin: -2px 0 0;
+.recall-website-connect-close {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 28px;
+  height: 28px;
 }
 
 .recall-post-release {

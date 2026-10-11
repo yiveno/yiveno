@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onBeforeUnmount, onMounted, ref } from 'vue'
 import { getSession, signInWithOAuth, signOut } from '../services/auth'
 import {
   buildPostAuthHref,
@@ -7,6 +7,7 @@ import {
   peekAuthReturn
 } from '../services/auth-return'
 import {
+  abortWebsiteLoginAfterDisplaceCancel,
   captureExtensionConnectParamsFromUrl,
   extractProfileFromUserMetadata,
   getPendingExtensionId,
@@ -16,7 +17,8 @@ import {
 
 defineOptions({ name: 'LoginForm' })
 
-const loading = ref(false)
+/** 正在发起 OAuth 的提供商；两钮互斥，互不共用同一 loading 文案 */
+const loadingProvider = ref<'google' | 'microsoft' | null>(null)
 const error = ref('')
 const connectingExtension = ref(false)
 const extensionConnected = ref(false)
@@ -26,27 +28,39 @@ const fromSubscribe = ref(false)
 /** 已登录且正在跳转账户页时，避免闪一下登录按钮 */
 const redirecting = ref(false)
 
-async function tryHandoffCurrentSession(): Promise<boolean> {
+/**
+ * OAuth 跳到 Google/Microsoft 后用户点后退：页面常从 bfcache 恢复，
+ * loading 仍停在 Redirecting… 且按钮 disabled。pageshow 时清掉。
+ */
+function onPageShow(): void {
+  if (loadingProvider.value != null) {
+    loadingProvider.value = null
+  }
+}
+
+async function tryHandoffCurrentSession(): Promise<'ok' | 'cancelled_displace' | 'failed'> {
   if (!resolveExtensionHandoffTargetId()) {
-    return false
+    return 'failed'
   }
   const session = await getSession()
   if (!session?.access_token || !session.user?.id) {
-    return false
+    return 'failed'
   }
   connectingExtension.value = true
   try {
     const profile = extractProfileFromUserMetadata(
       session.user.user_metadata as Record<string, unknown> | undefined
     )
-    const ok = await mintAndHandoffSessionToExtension({
+    const result = await mintAndHandoffSessionToExtension({
       websiteAccessToken: session.access_token,
       userId: session.user.id,
       ...(session.user.email ? { email: session.user.email } : {}),
       ...profile
     })
-    extensionConnected.value = ok
-    return ok
+    if (result.status === 'ok') {
+      extensionConnected.value = true
+    }
+    return result.status
   } finally {
     connectingExtension.value = false
   }
@@ -64,7 +78,10 @@ function applyLoginErrorFromUrl(): void {
     no_token: "Sign-in didn't finish. Please try again.",
     session_error: 'Could not save your sign-in session',
     auth_error: 'Sign-in failed unexpectedly',
-    oauth_error: "We couldn't finish sign-in with that provider. Try again or use the other option."
+    oauth_error:
+      "We couldn't finish sign-in with that provider. Try again or use the other option.",
+    displace_cancelled:
+      'Sign-in cancelled. Your other device is unchanged—try again when you want to switch.'
   }
   const label = labels[code] || 'Sign-in failed. Please try again.'
   if (detail) {
@@ -77,6 +94,8 @@ function applyLoginErrorFromUrl(): void {
  * 已登录：扩展 handoff / 续付 next 优先；否则直接进账户页。
  */
 onMounted(async () => {
+  window.addEventListener('pageshow', onPageShow)
+
   captureExtensionConnectParamsFromUrl()
   captureAuthReturnFromUrl()
   fromExtension.value = Boolean(getPendingExtensionId())
@@ -89,13 +108,17 @@ onMounted(async () => {
     }
     // 仅 sessionStorage 的 connect_extension，不用 lastConnected（否则会抢走续付回跳）
     if (getPendingExtensionId()) {
-      const ok = await tryHandoffCurrentSession()
-      if (ok) {
+      const handoff = await tryHandoffCurrentSession()
+      if (handoff === 'ok') {
         redirecting.value = true
         window.location.replace('/account?extension_connected=1')
         return
       }
-      // 含：取消挤掉确认 / mint 失败 / 扩展未响应；勿误导成「装不上扩展」
+      if (handoff === 'cancelled_displace') {
+        await abortWebsiteLoginAfterDisplaceCancel()
+        return
+      }
+      // mint 失败 / 扩展未响应；勿误导成「装不上扩展」
       error.value =
         'Could not connect the extension. If another device is signed in, confirm to sign it out—or install Yiveno and try again.'
       return
@@ -118,8 +141,15 @@ onMounted(async () => {
   }
 })
 
+onBeforeUnmount(() => {
+  window.removeEventListener('pageshow', onPageShow)
+})
+
 async function login(provider: 'google' | 'microsoft') {
-  loading.value = true
+  if (loadingProvider.value || connectingExtension.value) {
+    return
+  }
+  loadingProvider.value = provider
   error.value = ''
   try {
     captureExtensionConnectParamsFromUrl()
@@ -132,18 +162,24 @@ async function login(provider: 'google' | 'microsoft') {
     if (getPendingExtensionId()) {
       const session = await getSession()
       if (session?.access_token && session.user?.id) {
-        const ok = await tryHandoffCurrentSession()
-        if (ok) {
+        const handoff = await tryHandoffCurrentSession()
+        if (handoff === 'ok') {
           redirecting.value = true
           window.location.replace('/account?extension_connected=1')
           return
         }
+        if (handoff === 'cancelled_displace') {
+          await abortWebsiteLoginAfterDisplaceCancel()
+          return
+        }
         error.value =
-          'Could not connect the extension. If another device is signed in, confirm to sign it out—or try again.'
-        loading.value = false
+          'Could not connect the extension. Confirm signing out the other device if asked—or try again.'
+        loadingProvider.value = null
         return
       }
       await signInWithOAuth(provider)
+      // 正常会离开本页；未跳走或用户立刻后退时由 pageshow 复位，这里再兜底
+      scheduleClearLoadingIfStillHere()
       return
     }
 
@@ -152,15 +188,28 @@ async function login(provider: 'google' | 'microsoft') {
       await signOut()
     }
     await signInWithOAuth(provider)
+    scheduleClearLoadingIfStillHere()
   } catch (e: unknown) {
     error.value = (e instanceof Error ? e.message : String(e)) || 'Sign-in failed'
-    loading.value = false
+    loadingProvider.value = null
   }
+}
+
+/** OAuth 已发起但仍停在登录页时，避免 Redirecting… 永久卡住 */
+function scheduleClearLoadingIfStillHere(): void {
+  window.setTimeout(() => {
+    if (loadingProvider.value == null) {
+      return
+    }
+    if (document.visibilityState === 'visible') {
+      loadingProvider.value = null
+    }
+  }, 2500)
 }
 </script>
 
 <template>
-  <div class="login-form page page--narrow page--center">
+  <div class="login-form page page--center">
     <img
       class="login-form__logo"
       src="/images/logo-mark.svg"
@@ -173,15 +222,13 @@ async function login(provider: 'google' | 'microsoft') {
     <p v-if="redirecting" class="hint">Taking you to your account…</p>
     <template v-else>
       <p v-if="fromSubscribe" class="hint">
-        Sign in to continue checkout. We'll bring you back to pricing to finish payment.
+        Sign in to continue checkout. We'll bring you back to pricing to finish.
       </p>
       <p v-else-if="fromExtension" class="hint">
-        Sign in to connect the extension. What you've saved stays on this device unless you turn
-        sync on later.
+        Connect the extension to your account. What you've saved stays on this device.
       </p>
       <p v-else class="hint">
-        For your account and billing. What you've saved stays on this device unless you turn sync on
-        later.
+        Your account for Pro and billing. What you've saved stays on this device.
       </p>
       <p v-if="connectingExtension" class="hint">Connecting to the extension…</p>
       <p v-if="extensionConnected" class="ok">Extension connected</p>
@@ -189,7 +236,7 @@ async function login(provider: 'google' | 'microsoft') {
       <div class="login-form__oauth-stack">
         <button
           type="button"
-          :disabled="loading || connectingExtension"
+          :disabled="loadingProvider !== null || connectingExtension"
           class="ui-btn login-form__oauth"
           @click="login('google')"
         >
@@ -217,11 +264,25 @@ async function login(provider: 'google' | 'microsoft') {
               d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58Z"
             />
           </svg>
-          <span>{{ loading ? 'Redirecting…' : 'Sign in with Google' }}</span>
+          <span class="login-form__label">
+            <span
+              class="login-form__label-idle"
+              :class="{ 'login-form__label-idle--hidden': loadingProvider === 'google' }"
+            >
+              Sign in with Google
+            </span>
+            <span
+              class="login-form__label-busy"
+              :class="{ 'login-form__label-busy--visible': loadingProvider === 'google' }"
+              aria-live="polite"
+            >
+              Redirecting…
+            </span>
+          </span>
         </button>
         <button
           type="button"
-          :disabled="loading || connectingExtension"
+          :disabled="loadingProvider !== null || connectingExtension"
           class="ui-btn login-form__oauth"
           @click="login('microsoft')"
         >
@@ -237,7 +298,21 @@ async function login(provider: 'google' | 'microsoft') {
             <path fill="#00A4EF" d="M0 9.5h8.5V18H0z" />
             <path fill="#FFB900" d="M9.5 9.5H18V18H9.5z" />
           </svg>
-          <span>{{ loading ? 'Redirecting…' : 'Sign in with Microsoft' }}</span>
+          <span class="login-form__label">
+            <span
+              class="login-form__label-idle"
+              :class="{ 'login-form__label-idle--hidden': loadingProvider === 'microsoft' }"
+            >
+              Sign in with Microsoft
+            </span>
+            <span
+              class="login-form__label-busy"
+              :class="{ 'login-form__label-busy--visible': loadingProvider === 'microsoft' }"
+              aria-live="polite"
+            >
+              Redirecting…
+            </span>
+          </span>
         </button>
       </div>
     </template>
@@ -245,9 +320,20 @@ async function login(provider: 'google' | 'microsoft') {
 </template>
 
 <style scoped>
+.login-form {
+  max-width: 28rem;
+}
+
 .login-form .page__title {
   font-size: clamp(28px, 4vw, 36px);
   margin-bottom: 12px;
+  white-space: nowrap;
+}
+
+@media (width <= 360px) {
+  .login-form .page__title {
+    white-space: normal;
+  }
 }
 
 .login-form__logo {
@@ -263,14 +349,16 @@ async function login(provider: 'google' | 'microsoft') {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  width: max-content;
-  max-width: 100%;
+  /* 与主体同宽；叠层文案避免 Redirecting… 时收缩 */
+  width: 100%;
+  max-width: 20rem;
   margin: 0.25rem auto 0;
   gap: 0.5rem;
 }
 
 .login-form__oauth {
   justify-content: flex-start;
+  box-sizing: border-box;
   width: 100%;
   gap: 10px;
   padding-inline: 14px 18px;
@@ -280,6 +368,30 @@ async function login(provider: 'google' | 'microsoft') {
   flex-shrink: 0;
   width: 18px;
   height: 18px;
+}
+
+.login-form__label {
+  position: relative;
+  display: inline-grid;
+  justify-items: start;
+  min-width: 0;
+}
+
+.login-form__label-idle,
+.login-form__label-busy {
+  grid-area: 1 / 1;
+}
+
+.login-form__label-busy {
+  visibility: hidden;
+}
+
+.login-form__label-idle--hidden {
+  visibility: hidden;
+}
+
+.login-form__label-busy--visible {
+  visibility: visible;
 }
 
 .hint {
