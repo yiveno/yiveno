@@ -3,7 +3,10 @@
  * 被挤掉时不依赖 Supabase refresh（避免 rate limit 挡住退登）。
  */
 
-import { logger } from '@/infrastructure/logging/logger'
+import { logger, tagExternalServiceMessage } from '@/infrastructure/logging/logger'
+
+/** Yiveno Worker HTTP API */
+const YIVENO_API_SERVICE = 'yiveno_api' as const
 
 function getApiBaseUrl(): string {
   const fromEnv = import.meta.env.VITE_API_BASE_URL?.trim()
@@ -45,7 +48,10 @@ export async function probeExtensionSessionLease(
       }
     })
   } catch (error) {
-    const reason = error instanceof Error ? error.message : 'lease_probe_network_error'
+    const reason = tagExternalServiceMessage(
+      YIVENO_API_SERVICE,
+      error instanceof Error ? error.message : 'lease_probe_network_error'
+    )
     logger.warn('Auth', 'lease 探测网络失败', { reason })
     return { status: 'uncertain', reason }
   }
@@ -56,8 +62,11 @@ export async function probeExtensionSessionLease(
   }
 
   if (!response.ok) {
-    const reason = `lease_probe_http_${response.status}`
-    logger.warn('Auth', 'lease 探测非成功', { status: response.status })
+    const reason = tagExternalServiceMessage(
+      YIVENO_API_SERVICE,
+      `lease_probe_http_${response.status}`
+    )
+    logger.warn('Auth', 'lease 探测非成功', { reason })
     return { status: 'uncertain', reason }
   }
 

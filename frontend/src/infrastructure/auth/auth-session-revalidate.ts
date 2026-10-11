@@ -149,7 +149,9 @@ async function runRevalidateAuthSession(
     if (isRateLimitReason(reason)) {
       logger.warn('Auth', 'revalidate session：限流，保留登录态', { reason })
     } else {
-      flowFail('Auth', 'revalidate session', startedAt, error, { outcome: 'uncertain' })
+      flowFail('Auth', 'revalidate session', startedAt, new Error(reason), {
+        outcome: 'uncertain'
+      })
     }
     return { status: 'uncertain', reason }
   }

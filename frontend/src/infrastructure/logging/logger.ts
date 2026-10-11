@@ -24,6 +24,23 @@ export function formatLogTimestamp(now = new Date()): string {
 }
 
 /**
+ * 外部服务原文进日志时加来源标识，避免误判为 Yiveno 自身报错。
+ * 例：`[supabase_auth] Request rate limit reached`
+ */
+export function tagExternalServiceMessage(service: string, detail: string): string {
+  const src = service.trim()
+  const msg = detail.trim() || 'unknown'
+  if (!src) {
+    return msg
+  }
+  const prefix = `[${src}]`
+  if (msg.startsWith(prefix)) {
+    return msg
+  }
+  return `${prefix} ${msg}`
+}
+
+/**
  * 从第二参数提取可读错误摘要。
  * chrome://extensions 错误页只展示 console 首行字符串；对象第二参会变成 [object Object]。
  */
@@ -42,6 +59,10 @@ export function summarizeLogError(data: unknown): string | undefined {
   const record = data as Record<string, unknown>
   if (typeof record.message === 'string' && record.message.trim()) {
     return record.message.trim()
+  }
+  // Auth / API 路径常用 reason 承载外部服务原文（可已带 [supabase_auth] 等前缀）
+  if (typeof record.reason === 'string' && record.reason.trim()) {
+    return record.reason.trim()
   }
   const nested = record.error
   if (nested instanceof Error) {
@@ -76,13 +97,18 @@ function write(
     return
   }
   let line = message
-  if (level === 'error' && data !== undefined) {
+  if ((level === 'error' || level === 'warn') && data !== undefined) {
     const detail = summarizeLogError(data)
     if (detail) {
       line = `${message} — ${detail}`
     }
   }
   const prefix = `[${formatLogTimestamp()}] [Yiveno:${scope}] ${line}`
+  // error：只打一行字符串。第二参对象在 chrome://extensions 错误页会变成「… [object Object]」
+  if (level === 'error') {
+    console.error(prefix)
+    return
+  }
   if (data === undefined) {
     console[level](prefix)
     return

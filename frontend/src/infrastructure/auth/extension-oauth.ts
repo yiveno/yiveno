@@ -4,7 +4,10 @@ import {
   extractDisplayNameFromUserMetadata
 } from '@/core/identity/auth-user-profile'
 import { getSupabasePublicConfig } from '@/infrastructure/auth/supabase-client'
-import { logger } from '@/infrastructure/logging/logger'
+import { logger, tagExternalServiceMessage } from '@/infrastructure/logging/logger'
+
+/** Supabase Auth（GoTrue）原文错误前缀 */
+const SUPABASE_AUTH_SERVICE = 'supabase_auth' as const
 
 type SupabaseAuthSessionLike = {
   access_token: string
@@ -182,16 +185,17 @@ async function refreshSessionViaFetch(
       body: JSON.stringify({ refresh_token: refreshToken })
     })
   } catch (error) {
+    const raw = error instanceof Error ? error.message : 'refresh_network_error'
     return {
       ok: false,
       kind: 'transient',
-      reason: error instanceof Error ? error.message : 'refresh_network_error'
+      reason: tagExternalServiceMessage(SUPABASE_AUTH_SERVICE, raw)
     }
   }
 
   const payload = (await response.json().catch(() => ({}))) as RefreshTokenApiResponse
   if (!response.ok) {
-    const reason =
+    const raw =
       payload.error_description ||
       payload.msg ||
       payload.message ||
@@ -199,10 +203,14 @@ async function refreshSessionViaFetch(
       `http_${response.status}`
     const kind = classifyAuthRefreshFailure({
       status: response.status,
-      message: reason,
+      message: raw,
       code: payload.error_code ?? payload.error
     })
-    return { ok: false, kind, reason }
+    return {
+      ok: false,
+      kind,
+      reason: tagExternalServiceMessage(SUPABASE_AUTH_SERVICE, raw)
+    }
   }
 
   const accessToken = payload.access_token?.trim()
