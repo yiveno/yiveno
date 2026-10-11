@@ -74,6 +74,19 @@ function isFeedbackDoneRemembered(): boolean {
   }
 }
 
+/** 手测口子：`?feedback=fresh` 清掉 Thanks 记忆，重新出表单（勿写进产品 UI） */
+function clearFeedbackDoneForTest(): void {
+  try {
+    sessionStorage.removeItem(feedbackDoneStorageKey())
+  } catch {
+    /* ignore */
+  }
+}
+
+function wantsFreshFeedbackForm(): boolean {
+  return new URLSearchParams(window.location.search).get('feedback') === 'fresh'
+}
+
 async function runRevoke(): Promise<void> {
   if (revokeInflight) {
     return revokeInflight
@@ -160,8 +173,11 @@ async function submitFeedback(): Promise<void> {
 }
 
 onMounted(async () => {
+  if (wantsFreshFeedbackForm()) {
+    clearFeedbackDoneForTest()
+  }
   await runRevoke()
-  if (isFeedbackDoneRemembered()) {
+  if (!wantsFreshFeedbackForm() && isFeedbackDoneRemembered()) {
     doneTitle.value = t('uninstall.done.title')
     doneLede.value = t('uninstall.done.lede')
     phase.value = 'done'
