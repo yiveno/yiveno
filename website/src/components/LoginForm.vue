@@ -78,10 +78,7 @@ function applyLoginErrorFromUrl(): void {
     no_token: "Sign-in didn't finish. Please try again.",
     session_error: 'Could not save your sign-in session',
     auth_error: 'Sign-in failed unexpectedly',
-    oauth_error:
-      "We couldn't finish sign-in with that provider. Try again or use the other option.",
-    displace_cancelled:
-      'Sign-in cancelled. Your other device is unchanged—try again when you want to switch.'
+    oauth_error: "We couldn't finish sign-in with that provider. Try again or use the other option."
   }
   const label = labels[code] || 'Sign-in failed. Please try again.'
   if (detail) {

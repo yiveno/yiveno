@@ -12,6 +12,7 @@ import { handleAuthProviders, handleAuthStart, handleAuthCallback } from '../han
 import { supabaseAuth } from '../middleware/supabase-auth'
 import { consumeExtensionUninstallRevoke } from '../services/auth/consume-extension-uninstall-revoke'
 import { mintExtensionSession } from '../services/auth/mint-extension-session'
+import { probeExtensionSessionLease } from '../services/auth/probe-extension-session-lease'
 import { error as logErrorMessage, info } from '../utils/logger'
 
 type AuthVars = {
@@ -139,6 +140,32 @@ authRouter.post('/extension-session', supabaseAuth(), async c => {
     const msg = err instanceof Error ? err.message : String(err)
     logErrorMessage('[Auth] extension-session 异常', { userId, detail: msg })
     return c.json({ error: 'extension_session_failed' }, 500)
+  }
+})
+
+/**
+ * GET /api/auth/extension-session-lease
+ *
+ * 扩展探测本 Bearer 是否仍为账号下活跃扩展租约（对照 KV sessionId）。
+ * 被挤掉 → `{ active: false, reason: 'displaced' }`；供 GET_AUTH_STATE 在 Supabase refresh 限流时仍能退登。
+ */
+authRouter.get('/extension-session-lease', supabaseAuth(), async c => {
+  const userId = c.get('supabaseUserId')
+  const accessToken = c.get('supabaseAccessToken')
+  try {
+    const result = await probeExtensionSessionLease(c.env, userId, accessToken)
+    if (result.status === 'displaced') {
+      info('[Auth] extension-session-lease 探测到被挤掉', { userId })
+      return c.json({ success: true, data: { active: false, reason: 'displaced' as const } })
+    }
+    if (result.status === 'unknown') {
+      return c.json({ success: true, data: { active: true, reason: 'unknown' as const } })
+    }
+    return c.json({ success: true, data: { active: true, reason: 'lease_match' as const } })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    logErrorMessage('[Auth] extension-session-lease 异常', { userId, detail: msg })
+    return c.json({ error: 'lease_probe_failed' }, 500)
   }
 })
 

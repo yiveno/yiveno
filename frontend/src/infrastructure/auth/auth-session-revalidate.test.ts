@@ -1,15 +1,23 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { refreshAuthSessionDetailedMock, getAuthSessionMock, setAuthSessionMock } = vi.hoisted(
-  () => ({
-    refreshAuthSessionDetailedMock: vi.fn(),
-    getAuthSessionMock: vi.fn(),
-    setAuthSessionMock: vi.fn()
-  })
-)
+const {
+  refreshAuthSessionDetailedMock,
+  getAuthSessionMock,
+  setAuthSessionMock,
+  probeExtensionSessionLeaseMock
+} = vi.hoisted(() => ({
+  refreshAuthSessionDetailedMock: vi.fn(),
+  getAuthSessionMock: vi.fn(),
+  setAuthSessionMock: vi.fn(),
+  probeExtensionSessionLeaseMock: vi.fn()
+}))
 
 vi.mock('@/infrastructure/auth/extension-oauth', () => ({
   refreshAuthSessionDetailed: refreshAuthSessionDetailedMock
+}))
+
+vi.mock('@/infrastructure/auth/extension-session-lease-probe', () => ({
+  probeExtensionSessionLease: probeExtensionSessionLeaseMock
 }))
 
 vi.mock('@/infrastructure/identity/auth-session-service', () => ({
@@ -21,6 +29,10 @@ vi.mock('@/infrastructure/logging/flow-log', () => ({
   flowStart: () => 0,
   flowOk: vi.fn(),
   flowFail: vi.fn()
+}))
+
+vi.mock('@/infrastructure/logging/logger', () => ({
+  logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn() }
 }))
 
 import {
@@ -40,6 +52,7 @@ describe('auth-session-revalidate', () => {
     vi.clearAllMocks()
     getAuthSessionMock.mockResolvedValue(null)
     setAuthSessionMock.mockResolvedValue(undefined)
+    probeExtensionSessionLeaseMock.mockResolvedValue({ status: 'active' })
     const sessionStore: Record<string, unknown> = {}
     vi.stubGlobal('chrome', {
       storage: {
@@ -48,8 +61,11 @@ describe('auth-session-revalidate', () => {
           set: vi.fn(async (items: Record<string, unknown>) => {
             Object.assign(sessionStore, items)
           }),
-          remove: vi.fn(async (key: string) => {
-            delete sessionStore[key]
+          remove: vi.fn(async (key: string | string[]) => {
+            const keys = Array.isArray(key) ? key : [key]
+            for (const k of keys) {
+              delete sessionStore[k]
+            }
           })
         }
       }
@@ -58,6 +74,16 @@ describe('auth-session-revalidate', () => {
 
   it('无时间戳时应校验', async () => {
     await expect(shouldRevalidateAuthSession()).resolves.toBe(true)
+  })
+
+  it('租约 displaced → invalid，不打 refresh', async () => {
+    probeExtensionSessionLeaseMock.mockResolvedValue({ status: 'displaced' })
+    const result = await revalidateAuthSession(baseSession, { force: true })
+    expect(result).toEqual({
+      status: 'invalid',
+      reason: 'extension_session_displaced'
+    })
+    expect(refreshAuthSessionDetailedMock).not.toHaveBeenCalled()
   })
 
   it('refresh 成功返回 valid 并标记校验时间', async () => {
@@ -138,7 +164,9 @@ describe('auth-session-revalidate', () => {
     )
     const p1 = revalidateAuthSession(baseSession, { force: true })
     const p2 = revalidateAuthSession(baseSession, { force: true })
-    expect(refreshAuthSessionDetailedMock).toHaveBeenCalledTimes(1)
+    await vi.waitFor(() => {
+      expect(refreshAuthSessionDetailedMock).toHaveBeenCalledTimes(1)
+    })
     resolveRefresh({
       status: 'ok',
       session: { ...baseSession, accessToken: 'at2', refreshToken: 'rt2' }
@@ -154,5 +182,6 @@ describe('auth-session-revalidate', () => {
     const result = await revalidateAuthSession(baseSession)
     expect(result).toEqual({ status: 'skipped' })
     expect(refreshAuthSessionDetailedMock).not.toHaveBeenCalled()
+    expect(probeExtensionSessionLeaseMock).not.toHaveBeenCalled()
   })
 })

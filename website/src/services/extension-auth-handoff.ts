@@ -229,13 +229,14 @@ export async function abortWebsiteLoginAfterDisplaceCancel(): Promise<void> {
   } catch (error) {
     console.warn('[ExtensionHandoff] 取消挤掉后清官网会话失败', error)
   }
-  const params = new URLSearchParams()
-  params.set('error', 'displace_cancelled')
   if (extensionId) {
+    const params = new URLSearchParams()
     params.set('connect_extension', '1')
     params.set('extension_id', extensionId)
+    window.location.replace(`/login?${params.toString()}`)
+    return
   }
-  window.location.replace(`/login?${params.toString()}`)
+  window.location.replace('/login')
 }
 
 /**

@@ -307,8 +307,8 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
     let authRevalidateStatus: 'skipped' | 'valid' | 'invalid' | 'uncertain' | 'none' = 'none'
 
     if (binding && session) {
-      // 强制 refresh：扩展单活跃被挤掉后须尽快探测 session 撤销（access JWT 可能未过期）。
-      // 官网与扩展已分 refresh 族，不再为避网站 autoRefresh 而长时间跳过。
+      // force：每次打开都做租约探测（Worker KV）；refresh 仍短节流，避免 Supabase rate limit。
+      // 被挤掉优先靠 lease，不依赖 token 端是否限流。
       const revalidated = await revalidateAuthSession(session, { force: true })
       authRevalidateStatus = revalidated.status
       if (revalidated.status === 'valid') {
