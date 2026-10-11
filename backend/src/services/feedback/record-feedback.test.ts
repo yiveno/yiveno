@@ -30,12 +30,32 @@ describe('recordFeedback', () => {
     expect(keys).toHaveLength(1)
     const row = JSON.parse(kv.store.get(keys[0]!)!) as {
       source: string
+      reasons: string[]
       reason: string
       note: string
     }
     expect(row.source).toBe('uninstall')
+    expect(row.reasons).toEqual(['just_trying'])
     expect(row.reason).toBe('just_trying')
     expect(row.note).toBe('hi')
+  })
+
+  test('多选 reasons 写入', async () => {
+    const kv = createKvMock()
+    const env = { AI_USAGE_KV: kv } as unknown as Env
+    const result = await recordFeedback(env, {
+      source: 'uninstall',
+      reasons: ['didnt_find', 'bugs_or_slow']
+    })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    const keys = [...kv.store.keys()].filter(k => k.startsWith('feedback:'))
+    const row = JSON.parse(kv.store.get(keys[0]!)!) as {
+      reasons: string[]
+      reason: string
+    }
+    expect(row.reasons).toEqual(['didnt_find', 'bugs_or_slow'])
+    expect(row.reason).toBe('didnt_find')
   })
 
   test('KV 成功 + EMAIL send → email sink true', async () => {

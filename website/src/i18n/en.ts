@@ -13,8 +13,8 @@ export const en = {
   'uninstall.feedback.supportHintBefore': 'Bug or account snag?',
   'uninstall.feedback.supportHintLink': 'Email support@yiveno.com',
   'uninstall.feedback.supportHintAfter': '— we write back there.',
-  'uninstall.feedback.reasonsLegend': 'Why you left',
-  'uninstall.feedback.reasonsAria': 'Why you left',
+  'uninstall.feedback.reasonsLegend': 'Why you left (pick any that apply)',
+  'uninstall.feedback.reasonsAria': 'Why you left — pick any that apply',
   'uninstall.feedback.noteLabel': 'Anything else?',
   'uninstall.feedback.optional': '(optional)',
   'uninstall.feedback.notePlaceholder': 'A sentence is plenty.',
@@ -30,7 +30,6 @@ export const en = {
   'uninstall.feedback.reason.just_trying': 'Just trying it out',
   'uninstall.feedback.reason.other': 'Something else',
 
-  'uninstall.feedback.error.pickReason': 'Pick a reason first.',
   'uninstall.feedback.error.rateLimited':
     'Too many tries from this network. Try again a bit later.',
   'uninstall.feedback.error.sendFailed': "Couldn't send that — try once more?",

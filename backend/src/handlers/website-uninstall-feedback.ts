@@ -5,21 +5,37 @@
 
 import { z } from 'zod'
 import type { Env } from '../types/env'
-import { UNINSTALL_FEEDBACK_REASONS } from '../services/feedback/feedback-event'
+import {
+  normalizeUninstallReasons,
+  UNINSTALL_FEEDBACK_REASONS
+} from '../services/feedback/feedback-event'
 import { recordFeedback } from '../services/feedback/record-feedback'
 import { info, warn } from '../utils/logger'
 
-const UninstallFeedbackBodySchema = z.object({
-  reason: z.enum(UNINSTALL_FEEDBACK_REASONS),
-  note: z
-    .string()
-    .trim()
-    .max(500)
-    .optional()
-    .transform(v => (v && v.length > 0 ? v : undefined)),
-  /** 蜜罐：机器人会填；真人应为空 */
-  website: z.string().max(200).optional()
-})
+const UninstallFeedbackBodySchema = z
+  .object({
+    /** 多选闭集；可与 note 二选一或并存 */
+    reasons: z.array(z.enum(UNINSTALL_FEEDBACK_REASONS)).max(7).optional(),
+    /** 旧单选字段；有则并入 reasons */
+    reason: z.enum(UNINSTALL_FEEDBACK_REASONS).optional(),
+    note: z
+      .string()
+      .trim()
+      .max(500)
+      .optional()
+      .transform(v => (v && v.length > 0 ? v : undefined)),
+    /** 蜜罐：机器人会填；真人应为空 */
+    website: z.string().max(200).optional()
+  })
+  .superRefine((data, ctx) => {
+    const reasons = normalizeUninstallReasons(data.reasons, data.reason)
+    if (reasons.length === 0 && !data.note) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'reasons_or_note_required'
+      })
+    }
+  })
 
 const MAX_PER_IP_PER_DAY = 6
 const RATE_LIMIT_PREFIX = 'uninstall-fb-rl:'
@@ -96,9 +112,10 @@ export async function handleWebsiteUninstallFeedback(
     return json({ error: 'rate_limited' }, 429)
   }
 
+  const reasons = normalizeUninstallReasons(parsed.data.reasons, parsed.data.reason)
   const result = await recordFeedback(env, {
     source: 'uninstall',
-    reason: parsed.data.reason,
+    ...(reasons.length > 0 ? { reasons } : {}),
     ...(parsed.data.note ? { note: parsed.data.note } : {})
   })
 
@@ -108,7 +125,8 @@ export async function handleWebsiteUninstallFeedback(
 
   info('[UninstallFeedback] 已记录', {
     id: result.id,
-    email: result.sinks.email
+    email: result.sinks.email,
+    reasonCount: reasons.length
   })
   return json({ ok: true, id: result.id, email: result.sinks.email })
 }

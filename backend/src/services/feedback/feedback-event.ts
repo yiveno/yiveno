@@ -27,9 +27,28 @@ export const UNINSTALL_FEEDBACK_REASONS = [
 
 export type UninstallFeedbackReason = (typeof UNINSTALL_FEEDBACK_REASONS)[number]
 
+const reasonSet = new Set<string>(UNINSTALL_FEEDBACK_REASONS)
+
+export function normalizeUninstallReasons(
+  reasons?: readonly string[],
+  legacyReason?: string
+): UninstallFeedbackReason[] {
+  const out: UninstallFeedbackReason[] = []
+  const seen = new Set<string>()
+  for (const raw of [...(reasons ?? []), ...(legacyReason ? [legacyReason] : [])]) {
+    if (!reasonSet.has(raw) || seen.has(raw)) continue
+    seen.add(raw)
+    out.push(raw as UninstallFeedbackReason)
+  }
+  return out
+}
+
 export const FeedbackEventSchema = z.object({
   id: z.string().uuid(),
   source: z.enum(FEEDBACK_SOURCES),
+  /** 多选闭集原因 */
+  reasons: z.array(z.enum(UNINSTALL_FEEDBACK_REASONS)).max(7).optional(),
+  /** 首因（reasons[0]）；邮件 subject 简写 */
   reason: z.enum(UNINSTALL_FEEDBACK_REASONS).optional(),
   note: z.string().trim().max(500).optional(),
   createdAt: z.iso.datetime()
@@ -39,13 +58,15 @@ export type FeedbackEvent = z.infer<typeof FeedbackEventSchema>
 
 export function createFeedbackEvent(input: {
   source: FeedbackSource
+  reasons?: UninstallFeedbackReason[]
   reason?: UninstallFeedbackReason
   note?: string
 }): FeedbackEvent {
+  const reasons = normalizeUninstallReasons(input.reasons, input.reason)
   return FeedbackEventSchema.parse({
     id: crypto.randomUUID(),
     source: input.source,
-    ...(input.reason ? { reason: input.reason } : {}),
+    ...(reasons.length > 0 ? { reasons, reason: reasons[0] } : {}),
     ...(input.note && input.note.trim() ? { note: input.note.trim() } : {}),
     createdAt: new Date().toISOString()
   })

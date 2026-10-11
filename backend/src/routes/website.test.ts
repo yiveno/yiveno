@@ -118,7 +118,14 @@ describe('POST /api/website/uninstall-feedback', () => {
   })
 
   test('非法 reason → 400', async () => {
-    const response = await postUninstallFeedback({ reason: 'not_a_reason' })
+    const response = await postUninstallFeedback({ reasons: ['not_a_reason'] })
+    expect(response.status).toBe(400)
+    const data = (await response.json()) as { error: string }
+    expect(data.error).toBe('invalid_body')
+  })
+
+  test('空 reasons 且无 note → 400', async () => {
+    const response = await postUninstallFeedback({})
     expect(response.status).toBe(400)
     const data = (await response.json()) as { error: string }
     expect(data.error).toBe('invalid_body')
@@ -129,7 +136,7 @@ describe('POST /api/website/uninstall-feedback', () => {
     const env = { ...baseEnv, AI_USAGE_KV: kv } as unknown as Env
     const response = await postUninstallFeedback(
       {
-        reason: 'other',
+        reasons: ['other'],
         website: 'bot'
       },
       env
@@ -138,12 +145,12 @@ describe('POST /api/website/uninstall-feedback', () => {
     expect([...kv.store.keys()].filter(k => k.startsWith('feedback:'))).toHaveLength(0)
   })
 
-  test('合法 reason → 200 并写入 KV', async () => {
+  test('多选 reasons + note → 200 并写入 KV', async () => {
     const kv = createKvMock()
     const env = { ...baseEnv, AI_USAGE_KV: kv } as unknown as Env
     const response = await postUninstallFeedback(
       {
-        reason: 'didnt_find',
+        reasons: ['didnt_find', 'too_hard'],
         note: '  hard to recall  '
       },
       env
@@ -156,17 +163,42 @@ describe('POST /api/website/uninstall-feedback', () => {
     expect(keys).toHaveLength(1)
     const row = JSON.parse(kv.store.get(keys[0]!)!) as {
       source: string
+      reasons: string[]
       reason: string
       note: string
     }
     expect(row.source).toBe('uninstall')
+    expect(row.reasons).toEqual(['didnt_find', 'too_hard'])
     expect(row.reason).toBe('didnt_find')
     expect(row.note).toBe('hard to recall')
   })
 
+  test('仅 note → 200', async () => {
+    const kv = createKvMock()
+    const env = { ...baseEnv, AI_USAGE_KV: kv } as unknown as Env
+    const response = await postUninstallFeedback({ note: 'just a thought' }, env)
+    expect(response.status).toBe(200)
+    const keys = [...kv.store.keys()].filter(k => k.startsWith('feedback:'))
+    expect(keys).toHaveLength(1)
+    const row = JSON.parse(kv.store.get(keys[0]!)!) as { note: string; reasons?: string[] }
+    expect(row.note).toBe('just a thought')
+    expect(row.reasons).toBeUndefined()
+  })
+
+  test('旧单选 reason 字段仍可用', async () => {
+    const kv = createKvMock()
+    const env = { ...baseEnv, AI_USAGE_KV: kv } as unknown as Env
+    const response = await postUninstallFeedback({ reason: 'privacy' }, env)
+    expect(response.status).toBe(200)
+    const keys = [...kv.store.keys()].filter(k => k.startsWith('feedback:'))
+    const row = JSON.parse(kv.store.get(keys[0]!)!) as { reasons: string[]; reason: string }
+    expect(row.reasons).toEqual(['privacy'])
+    expect(row.reason).toBe('privacy')
+  })
+
   test('过长 note → 400', async () => {
     const response = await postUninstallFeedback({
-      reason: 'other',
+      reasons: ['other'],
       note: 'x'.repeat(501)
     })
     expect(response.status).toBe(400)

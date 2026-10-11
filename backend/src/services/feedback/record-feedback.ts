@@ -14,6 +14,8 @@ import { writeFeedbackToKv } from './sinks/kv-feedback-sink'
 
 export type RecordFeedbackInput = {
   source: FeedbackSource
+  reasons?: UninstallFeedbackReason[]
+  /** @deprecated 单因；有则并入 reasons */
   reason?: UninstallFeedbackReason
   note?: string
 }
@@ -37,6 +39,7 @@ export async function recordFeedback(
   info('[Feedback] record 开始', {
     id: event.id,
     source: event.source,
+    reasons: event.reasons ?? null,
     reason: event.reason ?? null,
     hasNote: Boolean(event.note)
   })

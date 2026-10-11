@@ -25,15 +25,19 @@ function feedbackToAddress(env: Env): string {
 }
 
 function buildCopy(event: FeedbackEvent): { subject: string; text: string; html: string } {
-  const reason = event.reason ?? '(none)'
+  const reasonsLabel =
+    event.reasons && event.reasons.length > 0
+      ? event.reasons.join(', ')
+      : (event.reason ?? '(none)')
+  const subjectTag = event.reason ?? event.reasons?.[0] ?? 'note'
   const note = event.note?.trim() || '(none)'
-  const subject = `[Yiveno feedback] ${event.source} · ${reason}`
+  const subject = `[Yiveno feedback] ${event.source} · ${subjectTag}`
   const text = [
     'Structured product feedback (no reply expected on this thread).',
     '',
     `id: ${event.id}`,
     `source: ${event.source}`,
-    `reason: ${reason}`,
+    `reasons: ${reasonsLabel}`,
     `createdAt: ${event.createdAt}`,
     '',
     'note:',
@@ -46,7 +50,7 @@ function buildCopy(event: FeedbackEvent): { subject: string; text: string; html:
     '<ul>',
     `<li><strong>id:</strong> ${event.id}</li>`,
     `<li><strong>source:</strong> ${event.source}</li>`,
-    `<li><strong>reason:</strong> ${reason}</li>`,
+    `<li><strong>reasons:</strong> ${escapeHtml(reasonsLabel)}</li>`,
     `<li><strong>createdAt:</strong> ${event.createdAt}</li>`,
     '</ul>',
     '<p><strong>note</strong></p>',

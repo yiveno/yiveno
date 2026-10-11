@@ -37,13 +37,17 @@ const reasonOptions = computed(() =>
 const phase = ref<Phase>('revoking')
 /** 仅失败时轻提示；成功/幂等不占主文案（页面主题是反馈） */
 const revokeHint = ref('')
-const selectedReason = ref<ReasonId | ''>('')
+/** 多选闭集原因 */
+const selectedReasons = ref<ReasonId[]>([])
 const note = ref('')
 const honeypot = ref('')
 const submitting = ref(false)
 const submitError = ref('')
 const doneTitle = ref(t('uninstall.done.title'))
 const doneLede = ref(t('uninstall.done.lede'))
+
+/** 至少勾一项或写一句才可提交（按钮置灰；不靠文案防空） */
+const canSubmit = computed(() => selectedReasons.value.length > 0 || note.value.trim().length > 0)
 
 /** 防止 Vue remount / 连点导致重复 POST；同 tab 记住已成功以免刷新重复打 */
 let revokeInflight: Promise<void> | null = null
@@ -137,17 +141,14 @@ async function runRevoke(): Promise<void> {
 
 async function submitFeedback(): Promise<void> {
   submitError.value = ''
-  if (!selectedReason.value) {
-    submitError.value = t('uninstall.feedback.error.pickReason')
-    return
-  }
+  if (!canSubmit.value || submitting.value) return
   submitting.value = true
   try {
     const res = await fetch(`${API_BASE}/api/website/uninstall-feedback`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        reason: selectedReason.value,
+        ...(selectedReasons.value.length > 0 ? { reasons: selectedReasons.value } : {}),
         note: note.value.trim() || undefined,
         website: honeypot.value
       })
@@ -219,19 +220,19 @@ onMounted(async () => {
         <legend class="visually-hidden">{{ t('uninstall.feedback.reasonsLegend') }}</legend>
         <div
           class="uninstall__reasons"
-          role="radiogroup"
+          role="group"
           :aria-label="t('uninstall.feedback.reasonsAria')"
         >
           <label
             v-for="opt in reasonOptions"
             :key="opt.id"
             class="uninstall__reason"
-            :class="{ 'uninstall__reason--on': selectedReason === opt.id }"
+            :class="{ 'uninstall__reason--on': selectedReasons.includes(opt.id) }"
           >
             <input
-              v-model="selectedReason"
-              class="uninstall__radio"
-              type="radio"
+              v-model="selectedReasons"
+              class="uninstall__check"
+              type="checkbox"
               name="uninstall-reason"
               :value="opt.id"
             />
@@ -268,7 +269,7 @@ onMounted(async () => {
       <p v-if="submitError" class="uninstall__err" role="alert">{{ submitError }}</p>
 
       <div class="page__actions uninstall__actions">
-        <button class="ui-btn ui-btn--primary" type="submit" :disabled="submitting">
+        <button class="ui-btn ui-btn--primary" type="submit" :disabled="!canSubmit || submitting">
           {{ submitting ? t('uninstall.feedback.submitting') : t('uninstall.feedback.submit') }}
         </button>
       </div>
@@ -390,7 +391,7 @@ onMounted(async () => {
   border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
 }
 
-.uninstall__radio {
+.uninstall__check {
   margin-top: 3px;
   accent-color: var(--accent);
 }
