@@ -82,12 +82,19 @@ function json(data: Record<string, unknown>, status = 200): Response {
   })
 }
 
+export type UninstallFeedbackSchedule = {
+  /** 邮件挂 waitUntil；单测无 executionCtx 时由调用方 fire-and-forget */
+  scheduleEmail?: (task: Promise<unknown>) => void
+}
+
 /**
  * POST /api/website/uninstall-feedback
+ * KV 写入成功即 200；邮件不挡响应。
  */
 export async function handleWebsiteUninstallFeedback(
   request: Request,
-  env: Env
+  env: Env,
+  schedule?: UninstallFeedbackSchedule
 ): Promise<Response> {
   let raw: unknown
   try {
@@ -113,11 +120,15 @@ export async function handleWebsiteUninstallFeedback(
   }
 
   const reasons = normalizeUninstallReasons(parsed.data.reasons, parsed.data.reason)
-  const result = await recordFeedback(env, {
-    source: 'uninstall',
-    ...(reasons.length > 0 ? { reasons } : {}),
-    ...(parsed.data.note ? { note: parsed.data.note } : {})
-  })
+  const result = await recordFeedback(
+    env,
+    {
+      source: 'uninstall',
+      ...(reasons.length > 0 ? { reasons } : {}),
+      ...(parsed.data.note ? { note: parsed.data.note } : {})
+    },
+    schedule?.scheduleEmail ? { scheduleEmail: schedule.scheduleEmail } : undefined
+  )
 
   if (!result.ok) {
     return json({ error: 'unavailable' }, 503)
@@ -128,7 +139,8 @@ export async function handleWebsiteUninstallFeedback(
     email: result.sinks.email,
     reasonCount: reasons.length
   })
-  return json({ ok: true, id: result.id, email: result.sinks.email })
+  // 对用户：KV 成功即反馈成功；邮件是否 defer 不暴露为成败
+  return json({ ok: true, id: result.id })
 }
 
 /** 供测试与官网选项同步 */

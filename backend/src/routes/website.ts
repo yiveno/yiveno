@@ -32,8 +32,20 @@ export function normalizeWebsiteSubscriptionTier(tier: string | null | undefined
 /** POST /api/website/waitlist — 官网预约邮箱（无需登录） */
 websiteRouter.post('/waitlist', c => handleWebsiteWaitlist(c.req.raw, c.env))
 
-/** POST /api/website/uninstall-feedback — 扩展卸载可选反馈（无需登录） */
-websiteRouter.post('/uninstall-feedback', c => handleWebsiteUninstallFeedback(c.req.raw, c.env))
+/**
+ * POST /api/website/uninstall-feedback — 扩展卸载可选反馈（无需登录）。
+ * KV 成功即 200；邮件 waitUntil（与 Pro 欢迎信同模式）。
+ */
+websiteRouter.post('/uninstall-feedback', c => {
+  const scheduleEmail = (task: Promise<unknown>) => {
+    try {
+      c.executionCtx.waitUntil(task)
+    } catch {
+      void task
+    }
+  }
+  return handleWebsiteUninstallFeedback(c.req.raw, c.env, { scheduleEmail })
+})
 
 /** GET /api/website/subscription — 当前登录用户订阅状态（强制对账） */
 websiteRouter.get('/subscription', supabaseAuth(), async c => {

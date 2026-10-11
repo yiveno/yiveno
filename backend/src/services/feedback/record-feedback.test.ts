@@ -58,6 +58,34 @@ describe('recordFeedback', () => {
     expect(row.reason).toBe('didnt_find')
   })
 
+  test('scheduleEmail → 立即 ok 且 email deferred（不等待 send）', async () => {
+    const kv = createKvMock()
+    let scheduled = false
+    let resolveSend!: (v: { messageId: string }) => void
+    const hang = new Promise<{ messageId: string }>(resolve => {
+      resolveSend = resolve
+    })
+    const env = {
+      AI_USAGE_KV: kv,
+      EMAIL: { send: async () => hang }
+    } as unknown as Env
+    const result = await recordFeedback(
+      env,
+      { source: 'uninstall', reason: 'other' },
+      {
+        scheduleEmail: task => {
+          scheduled = true
+          void task
+        }
+      }
+    )
+    expect(scheduled).toBe(true)
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.sinks.email).toBe('deferred')
+    resolveSend({ messageId: 'msg-deferred' })
+  })
+
   test('KV 成功 + EMAIL send → email sink true', async () => {
     const kv = createKvMock()
     const send = async () => ({ messageId: 'msg-1' })
