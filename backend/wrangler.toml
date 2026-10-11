@@ -50,6 +50,8 @@ CLEANUP_MEMORY_SYNC_BACKUPS_KEEP = "5"
 CLEANUP_SOFT_DELETE_RETENTION_DAYS = "180"
 DODO_PAYMENTS_ENVIRONMENT = "test_mode"
 BILLING_FOUNDING_ENABLED = "false"
+# 结构化反馈收件：须为 Email Routing 已验证 destination（非 feedback@ 别名）
+FEEDBACK_TO_EMAIL = "hi.yiveno@gmail.com"
 
 [[kv_namespaces]]
 binding = "AI_USAGE_KV"
@@ -107,6 +109,7 @@ CLEANUP_MEMORY_SYNC_BACKUPS_KEEP = "5"
 CLEANUP_SOFT_DELETE_RETENTION_DAYS = "180"
 DODO_PAYMENTS_ENVIRONMENT = "test_mode"
 BILLING_FOUNDING_ENABLED = "false"
+FEEDBACK_TO_EMAIL = "hi.yiveno@gmail.com"
 
 [[env.production.kv_namespaces]]
 binding = "AI_USAGE_KV"

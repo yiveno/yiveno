@@ -25,9 +25,19 @@ const MAX_PER_IP_PER_DAY = 6
 const RATE_LIMIT_PREFIX = 'uninstall-fb-rl:'
 
 function clientIp(request: Request): string {
-  return (
-    request.headers.get('cf-connecting-ip') || request.headers.get('x-forwarded-for') || 'unknown'
-  )
+  const forwarded = request.headers.get('x-forwarded-for')
+  const firstForwarded = forwarded?.split(',')[0]?.trim()
+  return request.headers.get('cf-connecting-ip') || firstForwarded || 'unknown'
+}
+
+/** 本机 wrangler / 单测：不吃日限流（remote KV 上的计数会把维护者探针卡死一整天） */
+function isLocalDevHost(request: Request): boolean {
+  try {
+    const host = new URL(request.url).hostname
+    return host === 'localhost' || host === '127.0.0.1' || host === '[::1]' || host === '::1'
+  } catch {
+    return false
+  }
 }
 
 function utcDayKey(): string {
@@ -81,7 +91,7 @@ export async function handleWebsiteUninstallFeedback(
   }
 
   const ip = clientIp(request)
-  if (await isRateLimited(env, ip)) {
+  if (!isLocalDevHost(request) && (await isRateLimited(env, ip))) {
     warn('[UninstallFeedback] IP 日限流', { ip })
     return json({ error: 'rate_limited' }, 429)
   }
@@ -100,7 +110,7 @@ export async function handleWebsiteUninstallFeedback(
     id: result.id,
     email: result.sinks.email
   })
-  return json({ ok: true, id: result.id })
+  return json({ ok: true, id: result.id, email: result.sinks.email })
 }
 
 /** 供测试与官网选项同步 */

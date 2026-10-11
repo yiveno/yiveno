@@ -149,6 +149,9 @@ describe('POST /api/website/uninstall-feedback', () => {
       env
     )
     expect(response.status).toBe(200)
+    const data = (await response.json()) as { ok: boolean; id: string; email: boolean }
+    expect(data.ok).toBe(true)
+    expect(data.email).toBe(false)
     const keys = [...kv.store.keys()].filter(k => k.startsWith('feedback:'))
     expect(keys).toHaveLength(1)
     const row = JSON.parse(kv.store.get(keys[0]!)!) as {

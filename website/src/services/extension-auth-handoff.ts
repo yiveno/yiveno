@@ -230,6 +230,8 @@ export async function mintAndHandoffSessionToExtension(input: {
 
   let minted = await mintExtensionSession(input.websiteAccessToken, { extensionId })
   if (minted.status === 'needs_displace_confirm') {
+    // 跨扩展挤掉确认：暂无自建 modal，沿用浏览器 confirm（CI no-alert）
+    // eslint-disable-next-line no-alert -- 产品：单活跃扩展需显式确认 displace
     const ok = window.confirm(DISPLACE_EXTENSION_SESSION_CONFIRM)
     if (!ok) {
       console.warn('[ExtensionHandoff] 用户取消挤掉其它扩展会话')
