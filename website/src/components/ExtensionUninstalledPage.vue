@@ -9,26 +9,26 @@ const API_BASE = (import.meta.env.PUBLIC_API_BASE_URL || 'https://api.yiveno.com
   ''
 )
 
-/** 与 Worker `UNINSTALL_FEEDBACK_REASONS` 对齐；文案经 i18n */
-const REASON_IDS = [
+/** 预设闭集（不含 other）；other 单独一行带自定义输入 */
+const PRESET_REASON_IDS = [
   'didnt_find',
   'too_hard',
   'missing_feature',
   'privacy',
   'bugs_or_slow',
-  'just_trying',
-  'other'
+  'just_trying'
 ] as const
 
-type ReasonId = (typeof REASON_IDS)[number]
+type PresetReasonId = (typeof PRESET_REASON_IDS)[number]
+type ReasonId = PresetReasonId | 'other'
 type Phase = 'revoking' | 'feedback' | 'done'
 
 function reasonLabelKey(id: ReasonId): WebsiteMessageKey {
   return `uninstall.feedback.reason.${id}` as WebsiteMessageKey
 }
 
-const reasonOptions = computed(() =>
-  REASON_IDS.map(id => ({
+const presetOptions = computed(() =>
+  PRESET_REASON_IDS.map(id => ({
     id,
     label: t(reasonLabelKey(id))
   }))
@@ -37,8 +37,10 @@ const reasonOptions = computed(() =>
 const phase = ref<Phase>('revoking')
 /** 仅失败时轻提示；成功/幂等不占主文案（页面主题是反馈） */
 const revokeHint = ref('')
-/** 多选闭集原因 */
+/** 多选闭集原因（含 other） */
 const selectedReasons = ref<ReasonId[]>([])
+/** other 勾选后的自填原因 */
+const customReason = ref('')
 const note = ref('')
 const honeypot = ref('')
 const submitting = ref(false)
@@ -46,8 +48,26 @@ const submitError = ref('')
 const doneTitle = ref(t('uninstall.done.title'))
 const doneLede = ref(t('uninstall.done.lede'))
 
-/** 至少勾一项或写一句才可提交（按钮置灰；不靠文案防空） */
-const canSubmit = computed(() => selectedReasons.value.length > 0 || note.value.trim().length > 0)
+const otherSelected = computed(() => selectedReasons.value.includes('other'))
+
+/** 预设已勾 / other+自填 / 底部留言 — 任一即可；仅勾 other 未填不算 */
+const canSubmit = computed(() => {
+  const hasPreset = selectedReasons.value.some(id => id !== 'other')
+  const hasCustom = otherSelected.value && customReason.value.trim().length > 0
+  const hasNote = note.value.trim().length > 0
+  return hasPreset || hasCustom || hasNote
+})
+
+function buildNotePayload(): string | undefined {
+  const parts: string[] = []
+  const custom = customReason.value.trim()
+  if (otherSelected.value && custom) {
+    parts.push(`Other: ${custom}`)
+  }
+  const extra = note.value.trim()
+  if (extra) parts.push(extra)
+  return parts.length > 0 ? parts.join('\n\n') : undefined
+}
 
 /** 防止 Vue remount / 连点导致重复 POST；同 tab 记住已成功以免刷新重复打 */
 let revokeInflight: Promise<void> | null = null
@@ -144,12 +164,16 @@ async function submitFeedback(): Promise<void> {
   if (!canSubmit.value || submitting.value) return
   submitting.value = true
   try {
+    const reasons = selectedReasons.value.filter(id => {
+      if (id !== 'other') return true
+      return customReason.value.trim().length > 0
+    })
     const res = await fetch(`${API_BASE}/api/website/uninstall-feedback`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
-        ...(selectedReasons.value.length > 0 ? { reasons: selectedReasons.value } : {}),
-        note: note.value.trim() || undefined,
+        ...(reasons.length > 0 ? { reasons } : {}),
+        note: buildNotePayload(),
         website: honeypot.value
       })
     })
@@ -224,7 +248,7 @@ onMounted(async () => {
           :aria-label="t('uninstall.feedback.reasonsAria')"
         >
           <label
-            v-for="opt in reasonOptions"
+            v-for="opt in presetOptions"
             :key="opt.id"
             class="uninstall__reason"
             :class="{ 'uninstall__reason--on': selectedReasons.includes(opt.id) }"
@@ -238,6 +262,36 @@ onMounted(async () => {
             />
             <span>{{ opt.label }}</span>
           </label>
+
+          <div
+            class="uninstall__reason uninstall__reason--custom"
+            :class="{ 'uninstall__reason--on': otherSelected }"
+          >
+            <label class="uninstall__reason-main">
+              <input
+                v-model="selectedReasons"
+                class="uninstall__check"
+                type="checkbox"
+                name="uninstall-reason"
+                value="other"
+              />
+              <span>{{ t('uninstall.feedback.reason.other') }}</span>
+            </label>
+            <div v-if="otherSelected" class="uninstall__custom">
+              <label class="visually-hidden" for="uninstall-custom">{{
+                t('uninstall.feedback.customLabel')
+              }}</label>
+              <input
+                id="uninstall-custom"
+                v-model="customReason"
+                class="uninstall__custom-input"
+                type="text"
+                maxlength="200"
+                :placeholder="t('uninstall.feedback.customPlaceholder')"
+                autocomplete="off"
+              />
+            </div>
+          </div>
         </div>
       </fieldset>
 
@@ -380,6 +434,20 @@ onMounted(async () => {
     border-color 0.15s ease;
 }
 
+.uninstall__reason--custom {
+  flex-direction: column;
+  gap: 10px;
+  cursor: default;
+}
+
+.uninstall__reason-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  cursor: pointer;
+}
+
 .uninstall__reason:hover,
 .uninstall__reason:focus-within {
   background: color-mix(in srgb, var(--accent) 10%, var(--surface));
@@ -393,7 +461,38 @@ onMounted(async () => {
 
 .uninstall__check {
   margin-top: 3px;
+  flex-shrink: 0;
   accent-color: var(--accent);
+}
+
+.uninstall__custom {
+  width: 100%;
+  padding-left: 26px;
+  box-sizing: border-box;
+}
+
+.uninstall__custom-input {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 11px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 300;
+  line-height: 1.45;
+}
+
+.uninstall__custom-input::placeholder {
+  color: var(--sage-muted);
+}
+
+.uninstall__custom-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .uninstall__note-label {

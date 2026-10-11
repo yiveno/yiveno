@@ -28,7 +28,9 @@ export const en = {
   'uninstall.feedback.reason.privacy': 'Privacy or permissions felt off',
   'uninstall.feedback.reason.bugs_or_slow': 'Bugs, or it felt slow',
   'uninstall.feedback.reason.just_trying': 'Just trying it out',
-  'uninstall.feedback.reason.other': 'Something else',
+  'uninstall.feedback.reason.other': "None of these — I'll write my own",
+  'uninstall.feedback.customLabel': 'Your reason',
+  'uninstall.feedback.customPlaceholder': 'A few words is enough.',
 
   'uninstall.feedback.error.rateLimited':
     'Too many tries from this network. Try again a bit later.',
