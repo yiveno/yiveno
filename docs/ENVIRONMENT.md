@@ -116,7 +116,14 @@ bun run env:check:prod
     - Capture enrichment：`POST /api/ai/enrichment/complete`；可选 `AI_ENRICHMENT_PROXY_ENABLED=false` 关闭；`AI_ENRICHMENT_DAILY_LIMIT`（默认 80，按 IP）
     - Getting Started 示意 clue：`POST /api/ai/gs-clue-samples/complete`；可选 `AI_GS_CLUE_SAMPLES_PROXY_ENABLED=false` 关闭；`AI_GS_CLUE_SAMPLES_DAILY_LIMIT`（默认 40，按 IP）
 - `website`
-  - 读取 `website/.env`
+  - 本地读取 `website/.env`（由 `env:sync` 生成）
+  - **Cloudflare Pages（`yiveno-website` · Git 连 `main`）**
+    - 根目录留空（monorepo 根，才能读到 `bun.lock`）；勿再设 `website` 为 root（会触发 `npm install` → `workspace:*` 失败）
+    - Build command：`bun install --frozen-lockfile && bun run --cwd website build:prod:compile`
+    - Build output：`website/dist`
+    - Env：`SKIP_DEPENDENCY_INSTALL=true`、`BUN_VERSION=1.4.0`，以及 `PUBLIC_API_BASE_URL` / `PUBLIC_SUPABASE_*` / `PUBLIC_WEBSITE_URL`
+    - Path includes：`website/*`、`packages/*`（design-tokens）
+    - 本机直推仍可用：`bun run deploy:web`
 
 ## 维护规则
 
