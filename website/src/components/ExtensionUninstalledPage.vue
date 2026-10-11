@@ -52,6 +52,28 @@ function revokeDoneStorageKey(token: string): string {
   return `yiveno:uninstall_revoke_done:${token}`
 }
 
+/** Thanks 态单向：同 tab 刷新仍停在感谢页，不回表单（减重复提交） */
+function feedbackDoneStorageKey(): string {
+  const token = new URLSearchParams(window.location.search).get('token')?.trim() || 'none'
+  return `yiveno:uninstall_feedback_done:${token}`
+}
+
+function markFeedbackDone(): void {
+  try {
+    sessionStorage.setItem(feedbackDoneStorageKey(), '1')
+  } catch {
+    /* 隐私模式等写失败：仅本会话内存态仍为 done */
+  }
+}
+
+function isFeedbackDoneRemembered(): boolean {
+  try {
+    return sessionStorage.getItem(feedbackDoneStorageKey()) === '1'
+  } catch {
+    return false
+  }
+}
+
 async function runRevoke(): Promise<void> {
   if (revokeInflight) {
     return revokeInflight
@@ -127,6 +149,7 @@ async function submitFeedback(): Promise<void> {
     }
     doneTitle.value = t('uninstall.done.title')
     doneLede.value = t('uninstall.done.lede')
+    markFeedbackDone()
     phase.value = 'done'
   } catch (error) {
     console.warn('[ExtensionUninstalled] feedback failed', error)
@@ -138,6 +161,12 @@ async function submitFeedback(): Promise<void> {
 
 onMounted(async () => {
   await runRevoke()
+  if (isFeedbackDoneRemembered()) {
+    doneTitle.value = t('uninstall.done.title')
+    doneLede.value = t('uninstall.done.lede')
+    phase.value = 'done'
+    return
+  }
   phase.value = 'feedback'
 })
 </script>
