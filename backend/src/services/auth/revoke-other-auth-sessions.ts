@@ -67,6 +67,12 @@ export type RevokeOtherAuthSessionsResult =
   | { ok: true; revokedCount: number; listed: boolean }
   | { ok: false; reason: 'list_failed' | 'revoke_failed' }
 
+/** 可注入依赖（单测避免 mock 全局 fetch，防并行污染）。 */
+export type RevokeOtherAuthSessionsDeps = {
+  listIds?: (env: Env, userId: string) => Promise<string[] | null>
+  revokeById?: (env: Env, userId: string, sessionId: string) => Promise<boolean>
+}
+
 /**
  * 撤销 user 下除 keepSessionIds 以外的全部 session。
  * keep 为空时不执行（避免误杀全部）。
@@ -74,7 +80,8 @@ export type RevokeOtherAuthSessionsResult =
 export async function revokeOtherAuthSessions(
   env: Env,
   userId: string,
-  keepSessionIds: readonly string[]
+  keepSessionIds: readonly string[],
+  deps: RevokeOtherAuthSessionsDeps = {}
 ): Promise<RevokeOtherAuthSessionsResult> {
   const keep = new Set(keepSessionIds.map(id => id.trim()).filter(id => id.length > 0))
   if (keep.size === 0) {
@@ -82,7 +89,10 @@ export async function revokeOtherAuthSessions(
     return { ok: true, revokedCount: 0, listed: false }
   }
 
-  const listed = await listAuthSessionIdsForUser(env, userId)
+  const listIds = deps.listIds ?? listAuthSessionIdsForUser
+  const revokeById = deps.revokeById ?? revokeAuthSessionById
+
+  const listed = await listIds(env, userId)
   if (listed == null) {
     return { ok: false, reason: 'list_failed' }
   }
@@ -90,7 +100,7 @@ export async function revokeOtherAuthSessions(
   const toRevoke = listed.filter(id => !keep.has(id))
   let revokedCount = 0
   for (const sessionId of toRevoke) {
-    const ok = await revokeAuthSessionById(env, userId, sessionId)
+    const ok = await revokeById(env, userId, sessionId)
     if (!ok) {
       warn('[Auth] revokeOther：单条撤销失败', { userId, sessionId })
       return { ok: false, reason: 'revoke_failed' }
