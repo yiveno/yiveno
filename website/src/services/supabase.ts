@@ -1,4 +1,4 @@
-import type { SupabaseClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 const SUPABASE_CLIENT_KEY = '__yiveno_supabase_client__'
 
@@ -6,7 +6,6 @@ type WindowWithSupabase = Window & {
   [SUPABASE_CLIENT_KEY]?: SupabaseClient
 }
 
-// 动态导入 supabase-js，避免 Astro/Vite SSR 下的初始化问题
 let supabaseClientPromise: Promise<SupabaseClient> | null = null
 
 export async function getSupabase(): Promise<SupabaseClient> {
@@ -19,7 +18,6 @@ export async function getSupabase(): Promise<SupabaseClient> {
 
   if (!supabaseClientPromise) {
     supabaseClientPromise = (async () => {
-      const mod = await import('@supabase/supabase-js')
       const SUPABASE_URL =
         import.meta.env.PUBLIC_SUPABASE_URL || 'https://ugxgxytykxblctsyulsg.supabase.co'
       const SUPABASE_ANON_KEY = import.meta.env.PUBLIC_SUPABASE_ANON_KEY
@@ -32,7 +30,7 @@ export async function getSupabase(): Promise<SupabaseClient> {
        * 官网是纯客户端 OAuth：沿用 JS 默认 implicit（回调 #access_token=）。
        * detectSessionInUrl 关闭，由 AuthCallback 显式处理，避免与手动解析竞态/误抛。
        */
-      const client = mod.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      const client = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         auth: {
           flowType: 'implicit',
           detectSessionInUrl: false,

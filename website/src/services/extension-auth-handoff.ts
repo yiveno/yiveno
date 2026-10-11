@@ -6,13 +6,11 @@
  */
 
 import { signOut } from './auth'
-import { DISPLACE_EXTENSION_SESSION_CONFIRM, mintExtensionSession } from './mint-extension-session'
+import { mintExtensionSession } from './mint-extension-session'
 
-/** mint + handoff 结果（取消挤掉与失败需分流） */
+/** mint + handoff 结果（cancelled_displace 保留类型兼容；Connect 路径不再二次弹窗） */
 export type MintAndHandoffResult =
-  | { status: 'ok' }
-  | { status: 'cancelled_displace' } // 用户点取消：不应留下「已登录官网」假完成
-  | { status: 'failed' }
+  { status: 'ok' } | { status: 'cancelled_displace' } | { status: 'failed' }
 
 /** 本次从扩展打开登录时的临时 connect（OAuth 跳转用 sessionStorage）。 */
 const STORAGE_EXTENSION_ID = 'yiveno_connect_extension_id'
@@ -219,8 +217,8 @@ export function handoffSessionToExtension(session: ExtensionHandoffSession): Pro
 }
 
 /**
- * 用户取消挤掉确认：清掉本机刚建的官网会话，回到登录页（可带 connect 参数重试）。
- * 不触碰其它设备上的扩展 / 官网。
+ * 放弃 connect 时清本机官网会话并回登录页（可带 connect 参数重试）。
+ * Connect 路径不再二次弹窗；此函数供兼容分支 / 显式 abort。
  */
 export async function abortWebsiteLoginAfterDisplaceCancel(): Promise<void> {
   const extensionId = getPendingExtensionId()
@@ -241,7 +239,7 @@ export async function abortWebsiteLoginAfterDisplaceCancel(): Promise<void> {
 
 /**
  * 用官网 access token 铸造扩展独立会话并 handoff。
- * 若账号已有其它扩展会话：先确认再挤掉（撤销旧 Auth session ≈ 前者登出）。
+ * Connect / connect_extension 本身即同意挤掉旧扩展会话（409 时自动 confirmDisplace，不再二次弹窗）。
  * mint 失败不回退为共享官网 refresh。
  */
 export async function mintAndHandoffSessionToExtension(input: {
@@ -258,13 +256,8 @@ export async function mintAndHandoffSessionToExtension(input: {
 
   let minted = await mintExtensionSession(input.websiteAccessToken, { extensionId })
   if (minted.status === 'needs_displace_confirm') {
-    // 账号已有其它扩展登录会话：暂无自建 modal，沿用浏览器 confirm（CI no-alert）
-    // eslint-disable-next-line no-alert -- 产品：单活跃扩展会话需显式确认 displace
-    const ok = window.confirm(DISPLACE_EXTENSION_SESSION_CONFIRM)
-    if (!ok) {
-      console.warn('[ExtensionHandoff] 用户取消挤掉其它扩展会话')
-      return { status: 'cancelled_displace' }
-    }
+    // 用户已点 Connect / 走 connect_extension：直接挤掉前序扩展会话（含本机重装残留租约）
+    console.info('[ExtensionHandoff] 已有扩展租约，Connect 路径自动 confirmDisplace')
     minted = await mintExtensionSession(input.websiteAccessToken, {
       confirmDisplace: true,
       extensionId

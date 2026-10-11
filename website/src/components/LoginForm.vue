@@ -116,8 +116,7 @@ onMounted(async () => {
         return
       }
       // mint 失败 / 扩展未响应；勿误导成「装不上扩展」
-      error.value =
-        'Could not connect the extension. If another device is signed in, confirm to sign it out—or install Yiveno and try again.'
+      error.value = 'Could not connect the extension. Install Yiveno and try Connect again.'
       return
     }
     const pending = peekAuthReturn()
@@ -154,8 +153,7 @@ async function login(provider: 'google' | 'microsoft') {
     fromExtension.value = Boolean(getPendingExtensionId())
     fromSubscribe.value = peekAuthReturn().intent === 'subscribe'
 
-    // 扩展 connect：已有官网会话时直接 mint+handoff，禁止先 signOut。
-    // 否则确认挤掉未点时，同 Profile 其它窗口官网已掉登录，扩展却仍显示头像。
+    // 扩展 connect：已有官网会话时直接 mint+handoff（409 自动挤掉），禁止先 signOut。
     if (getPendingExtensionId()) {
       const session = await getSession()
       if (session?.access_token && session.user?.id) {
@@ -169,8 +167,7 @@ async function login(provider: 'google' | 'microsoft') {
           await abortWebsiteLoginAfterDisplaceCancel()
           return
         }
-        error.value =
-          'Could not connect the extension. Confirm signing out the other device if asked—or try again.'
+        error.value = 'Could not connect the extension. Install Yiveno and try Connect again.'
         loadingProvider.value = null
         return
       }
