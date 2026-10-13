@@ -2,15 +2,15 @@
 # 用法：bun run watch（`bun run dev` 同义）
 # 需本机已安装 mprocs（brew install mprocs，或见 README）
 # 无 TUI 时用：bun run watch:stream
-# fe 为 vite build --watch：content IIFE 按需重打（仅 content/core/infra）；
+# extension 为 vite build --watch：content IIFE 按需重打（仅 content/core/infra）；
 # 重建后到 chrome://extensions 刷新扩展（MV3 无热替换；日志会提示）
 
 procs:
-  fe:
-    shell: bun run watch:fe
+  extension:
+    shell: bun run watch:extension
     stop: SIGTERM
-  be:
-    shell: bun run dev:be
+  worker:
+    shell: bun run dev:worker
     stop: SIGTERM
   web:
     shell: bun run dev:web

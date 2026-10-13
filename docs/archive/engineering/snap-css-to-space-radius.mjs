@@ -1,5 +1,5 @@
 /**
- * 将 frontend 样式里偏离 brand 阶梯的间距/圆角，收到**既有** --space-* / --radius-*。
+ * 将 extension 样式里偏离 brand 阶梯的间距/圆角，收到**既有** --space-* / --radius-*。
  * 不发明字号 token；1–2px 发丝光学微调保留（由 stylelint 白名单）。
  */
 import { readdir, readFile, writeFile } from 'node:fs/promises'
@@ -7,7 +7,7 @@ import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 /** 归档：一次性 spacing/radius 对齐脚本（原 `scripts/snap-css-to-space-radius.mjs`）。按需：`bun docs/archive/engineering/snap-css-to-space-radius.mjs` */
-const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../frontend/src')
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../extension/src')
 
 const SPACE_SCALE = [4, 8, 12, 16, 24, 32, 48, 64]
 const SPACE = {

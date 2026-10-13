@@ -38,5 +38,5 @@ Library / Side Panel 多选导出原称 **Evidence pack**，叙事偏重「交�
 ## 参考
 
 - 产品文档 §5.10.4 · §5.10.5
-- `frontend/src/core/recall/detail-export.ts`
+- `extension/src/core/recall/detail-export.ts`
 - ADR-004（LLM 不碰数据平面）

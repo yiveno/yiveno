@@ -20,12 +20,12 @@ artifacts/
 .stylelintcache
 
 # 已移除的配置文件路径
-backend/eslint.config.js
-frontend/eslint.config.js
-frontend/stylelint.config.js
-frontend/vite.config.ts
-frontend/tsconfig.*.json
-frontend/.env.*
+worker/eslint.config.js
+extension/eslint.config.js
+extension/stylelint.config.js
+extension/vite.config.ts
+extension/tsconfig.*.json
+extension/.env.*
 
 # 特殊文件
 _locales/*/messages.json

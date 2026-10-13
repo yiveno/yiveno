@@ -517,7 +517,7 @@ Yiveno **本质是个性化检索系统**：今天的摘录与书签是两个**�
 | **竞品边界** | **导入 Notion ≠ 做 Notion**：禁止借「接入」滑成笔记创作/知识空间/同步中台主叙事                |
 | **近端不做** | 不为平台化而先堆多连接器；无契约稳定前不对外开放框架 API                                       |
 
-**工程契约（边界 / 差距 G1–G7 / 第三方准入清单）：** [`docs/engineering/语料适配器契约.md`](../engineering/语料适配器契约.md)；类型旁挂 `frontend/src/core/memory/corpus-adapter-contract.ts`。
+**工程契约（边界 / 差距 G1–G7 / 第三方准入清单）：** [`docs/engineering/语料适配器契约.md`](../engineering/语料适配器契约.md)；类型旁挂 `extension/src/core/memory/corpus-adapter-contract.ts`。
 
 **远景（Non-normative · 见附录 A.7）：** 宿主验证成功后，内核可收成「个性化检索框架」供有限嵌入；**当前迭代主线仍是锋利的找东西产品**，不得过早平台化。
 
@@ -817,15 +817,15 @@ Yiveno 同时承载两条相互促进、**不互相替代**的线程：
 ### 0.2 MUST
 
 1. UI → 只经 `background-client` / `chrome.runtime.sendMessage`；shape：`{ scope: 'background', type, payload? }`。
-2. Chrome API（bookmarks/tabs/contextMenus/…）只在 `frontend/src/background/**`（及 SW 调用的 infrastructure browser 封装）。
-3. IndexedDB 只经 `indexedDBManager`（`frontend/src/infrastructure/indexeddb/manager.ts`）。
-4. 领域类型以 Zod 为准：`frontend/src/core/memory/*`；消息类型以 `frontend/src/core/messaging/*` 为准。**禁止发明新 message `type` 字符串**，先改 schema 再接线。
+2. Chrome API（bookmarks/tabs/contextMenus/…）只在 `extension/src/background/**`（及 SW 调用的 infrastructure browser 封装）。
+3. IndexedDB 只经 `indexedDBManager`（`extension/src/infrastructure/indexeddb/manager.ts`）。
+4. 领域类型以 Zod 为准：`extension/src/core/memory/*`；消息类型以 `extension/src/core/messaging/*` 为准。**禁止发明新 message `type` 字符串**，先改 schema 再接线。
 5. 对外文案：**筛选 / 找回**；禁止 **搜索 / Search**（各 locale 译文均遵守）。
-6. 扩展用户可见文案：仅经 **`chrome.i18n` + `_locales/en/messages.json`** 与 `t()`（`frontend/src/infrastructure/i18n/`）。**禁止**在代码中写死 UI 自然语言，也禁止 `getMessage(...) || '兜底文案'`。`core` 不直接调 `chrome.i18n`（注入 `t` 或返回 message key）。**官网 `website/`** 产品向文案为美式英语，不走扩展 messages 文件；开发者文档/注释可中文。
+6. 扩展用户可见文案：仅经 **`chrome.i18n` + `_locales/en/messages.json`** 与 `t()`（`extension/src/infrastructure/i18n/`）。**禁止**在代码中写死 UI 自然语言，也禁止 `getMessage(...) || '兜底文案'`。`core` 不直接调 `chrome.i18n`（注入 `t` 或返回 message key）。**官网 `website/`** 产品向文案为美式英语，不走扩展 messages 文件；开发者文档/注释可中文。
 7. `:hover|:focus|:active` 禁止 `translate` / `scale` / `rotate`；只用背景 / opacity / shadow / outline / state layer（浮层入场与 pop/shake 例外见 §3）。
 8. 实现范围以 **§1 状态表**为准；未标「已上线」= 不得当成已有行为，也不得在 UI 暗示已可用。
 9. 本机找回：**关键词 + Hybrid**（有 embedding 则融合；无则降级关键词）；**不分 Free/Pro**。**理解层里程碑 M1**：允许「任意线索 → 精确检索约束」；门禁后口语可走 LLM（可关；失败/配额用尽降级规则）。不得全库喂模型，不得模型返回无真实 MemoryItem id 的答案。
-10. UI 图标：**Lucide 线框按需内联**于 `frontend/src/infrastructure/ui/icons/`（`icon-paths.ts`），经 `AppIcon` / `AppIconButton` 使用。唯一图标源；禁止另引 Font Awesome 等第二套体系；禁止依赖图标字体 / Google Fonts CDN（扩展离线）。控件用自研 `AppButton` / `AppSwitch` 等，消费 Brand Roles。
+10. UI 图标：**Lucide 线框按需内联**于 `extension/src/infrastructure/ui/icons/`（`icon-paths.ts`），经 `AppIcon` / `AppIconButton` 使用。唯一图标源；禁止另引 Font Awesome 等第二套体系；禁止依赖图标字体 / Google Fonts CDN（扩展离线）。控件用自研 `AppButton` / `AppSwitch` 等，消费 Brand Roles。
 11. **图标优先于文案**：工具操作、导航、重复出现的动作尽量用通识图标代替可见文字；hover（及键盘聚焦）用 `title`（及 `aria-label`）展示完整文案，文案仍经 `t()`。不适用于主按钮 CTA、说明性正文、空状态、表单标签等必须读字的场景。
 12. **验收先于合入**：Recall / Capture 用户可感变更须先有 `recall-eval` **`must` case** 或 §5 可复现手动步骤（详见 §1.1）；禁止无归属合入。
 
@@ -882,26 +882,26 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 | **R4 Phase E 验收与 eval**     | `docs/engineering/R4-Phase-E-验收与eval.md`；Normative 摘要 §5.10 / §5.11             |
 | **TTE 种子用户研究 checklist** | `docs/engineering/TTE-种子用户研究-checklist.md`；Normative 门槛 §5.9                 |
 | **TTE 研究包模板**             | `docs/archive/research/tte-beta-template/`；复制后本地填数据，勿 commit PII（已归档） |
-| MemoryItem / clues / payload   | `frontend/src/core/memory/`                                                           |
+| MemoryItem / clues / payload   | `extension/src/core/memory/`                                                          |
 | 语料适配器契约（R2）           | `docs/engineering/语料适配器契约.md` + `core/memory/corpus-adapter-contract.ts`       |
 | 关键词倒排 Phase 1             | `docs/engineering/关键词倒排索引-Phase1.md` + `keyword-index-repository.ts`           |
-| Background 消息联合类型        | `frontend/src/core/messaging/background-messages.ts`                                  |
-| UI 发消息                      | `frontend/src/infrastructure/messaging/background-client.ts`                          |
-| SW 分发                        | `frontend/src/background/handlers/message-handler.ts`                                 |
-| Recall                         | `frontend/src/application/recall/recall-service.ts`                                   |
-| Omnibox                        | `frontend/src/background/listeners/omnibox.ts`                                        |
-| Commands（快捷键）             | `frontend/src/background/listeners/commands.ts`                                       |
-| Command ID 契约                | `frontend/src/core/commands/command-ids.ts`                                           |
-| Settings                       | `frontend/src/pages/settings/Settings.vue`                                            |
-| Settings 分区（`?section=`）   | `frontend/src/core/settings/settings-sections.ts`                                     |
-| Side Panel（Recall 主壳）      | `frontend/src/pages/sidepanel/`                                                       |
+| Background 消息联合类型        | `extension/src/core/messaging/background-messages.ts`                                 |
+| UI 发消息                      | `extension/src/infrastructure/messaging/background-client.ts`                         |
+| SW 分发                        | `extension/src/background/handlers/message-handler.ts`                                |
+| Recall                         | `extension/src/application/recall/recall-service.ts`                                  |
+| Omnibox                        | `extension/src/background/listeners/omnibox.ts`                                       |
+| Commands（快捷键）             | `extension/src/background/listeners/commands.ts`                                      |
+| Command ID 契约                | `extension/src/core/commands/command-ids.ts`                                          |
+| Settings                       | `extension/src/pages/settings/Settings.vue`                                           |
+| Settings 分区（`?section=`）   | `extension/src/core/settings/settings-sections.ts`                                    |
+| Side Panel（Recall 主壳）      | `extension/src/pages/sidepanel/`                                                      |
 | Placeholder × 追问芯片双通道   | `docs/engineering/Recall-Placeholder与追问芯片-双通道.md`（实现分期；Normative §7.0） |
-| 通用键盘意图（↑↓←→/Enter）     | `frontend/src/core/ui/keyboard-command.ts`                                            |
-| 线性列表选中下标               | `frontend/src/core/ui/list-selection.ts`                                              |
-| 摘录详情                       | `frontend/src/pages/detail/Detail.vue`                                                |
-| 记忆库                         | `frontend/src/pages/library/Library.vue`                                              |
-| UI 图标（Lucide 内联）         | `frontend/src/infrastructure/ui/icons/`                                               |
-| 扩展 i18n（`t` / locales）     | `frontend/src/infrastructure/i18n/` + `public/_locales/`                              |
+| 通用键盘意图（↑↓←→/Enter）     | `extension/src/core/ui/keyboard-command.ts`                                           |
+| 线性列表选中下标               | `extension/src/core/ui/list-selection.ts`                                             |
+| 摘录详情                       | `extension/src/pages/detail/Detail.vue`                                               |
+| 记忆库                         | `extension/src/pages/library/Library.vue`                                             |
+| UI 图标（Lucide 内联）         | `extension/src/infrastructure/ui/icons/`                                              |
+| 扩展 i18n（`t` / locales）     | `extension/src/infrastructure/i18n/` + `public/_locales/`                             |
 
 ---
 
@@ -948,7 +948,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 
 ### 1.1 「已上线」验证归属（Normative）
 
-口径：**单测** = Vitest（含 handler/application/core）；**eval** = `frontend/src/core/recall/eval` 的 `must`/`stretch`；**MCP** = Chrome DevTools MCP 真机 UI 抽测（扩展用户可感路径）；**手动** = 真机/扩展清单（发版或改到才验）。一项可多列并存。`缺口` = 尚无自动归属、仅靠偶然手测。  
+口径：**单测** = Vitest（含 handler/application/core）；**eval** = `extension/src/core/recall/eval` 的 `must`/`stretch`；**MCP** = Chrome DevTools MCP 真机 UI 抽测（扩展用户可感路径）；**手动** = 真机/扩展清单（发版或改到才验）。一项可多列并存。`缺口` = 尚无自动归属、仅靠偶然手测。  
 （历史曾用 `scripts/e2e-management.mjs` CDP 薄冒烟；**已退役**，不得再当作合入归属。）
 
 | 能力                                      | 单测 | eval | MCP | 手动 | 说明                                                                                        |
@@ -998,7 +998,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 
 ## 2. 领域契约（Normative）
 
-权威实现：`frontend/src/core/memory/*`。文档与 Zod 冲突 → **先改一方并立刻对齐另一方**。
+权威实现：`extension/src/core/memory/*`。文档与 Zod 冲突 → **先改一方并立刻对齐另一方**。
 
 ### 2.1 可写入类型（MVP）
 
@@ -1030,7 +1030,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 
 ### 2.5 身份
 
-`LocalProfile` + 可选 `AccountBinding`（`frontend/src/core/identity/`）。未登录不阻塞 Capture/Recall。
+`LocalProfile` + 可选 `AccountBinding`（`extension/src/core/identity/`）。未登录不阻塞 Capture/Recall。
 
 ---
 
@@ -1065,7 +1065,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 - **Also 名额：** 折叠后按互斥规则回填；排序池软顶 **≤50 互异组**（`RECALL_RESULT_POOL_LIMIT`）；**首屏 / 每批 Show more = 5**（`RECALL_RESULT_PAGE_SIZE`）。UI 须告知 `totalRankedCount`，并提供 **Show 5 more** 与 **Show all K**（K=剩余，一次展完）；禁止默默截断装成「只有 5 条」。
 - **折叠前打分：** 对已裁候选**全量**保留关键词命中再折叠（`filterKeywordMatchesBeforeCollapse`）。**禁止**在折叠前按固定条数截断——大量同 URL 重复书签会占满名额，挤掉其它互异组（例：`js-cookie`×N 挡住「现代 JavaScript 教程」）。
 - **Omnibox：** 静默折叠；description 可带「共 N 条」；无展开 UI。建议列表自限 **`OMNIBOX_SUGGEST_LIMIT = 6`**（`omnibox-suggest.ts`），**与** `RECALL_RESULT_PAGE_SIZE`（Side Panel 首屏 / Show more = 5）**解耦**——Omnibox 无分页、one-shot `suggest`（ADR-007）。有 Memory 命中时：**Memory ≤`OMNIBOX_MEMORY_SUGGEST_LIMIT`（5）**，末行固定换赛道 CTA（handoff → Side Panel）；无命中时仅 1 条无命中 CTA。Chrome 官方未钉死条数，6 为自限实务预算（MDN 常写前 6；桌面整栏约 8，含 default 行）。
-- **实现：** 折叠键单一真相源为 `frontend/src/core/memory/derive-memory-duplicate-key.ts`（`getMemoryFoldKey`）；Recall 模块 `collapse-recall-duplicates` 仅再导出。
+- **实现：** 折叠键单一真相源为 `extension/src/core/memory/derive-memory-duplicate-key.ts`（`getMemoryFoldKey`）；Recall 模块 `collapse-recall-duplicates` 仅再导出。
 
 ### 3.1.1 派生字段复用键（Normative · enrichment / embedding）
 
@@ -1073,8 +1073,8 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 
 **单一真相源：**
 
-- 键：`frontend/src/core/memory/derive-memory-duplicate-key.ts`
-- 域名基座：`frontend/src/core/memory/domain-enrichment-profile.ts`
+- 键：`extension/src/core/memory/derive-memory-duplicate-key.ts`
+- 域名基座：`extension/src/core/memory/domain-enrichment-profile.ts`
 - 会话 cache：`application/memory/memory-duplicate-reuse-cache.ts`
 - donor 扫描：`application/memory/find-memory-enrichment-donor.ts`
 
@@ -1130,7 +1130,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 | `GET_USER_SETTINGS`                     | 读取用户设置                                  |
 | `UPDATE_USER_SETTINGS`                  | 更新用户设置                                  |
 
-新增能力：先改 `frontend/src/core/messaging/*` + handler，再改 UI。
+新增能力：先改 `extension/src/core/messaging/*` + handler，再改 UI。
 
 **失败响应（演进契约）：** 面向用户的失败须带稳定 **`errorCode`**（英文枚举常量）；UI 经 `t()` 按 code 渲染文案。**禁止**用本地化 `error` 字符串做控制流分支（例如 `error.includes('未找到')`）。可选字段 `error` 仅供调试，不得作为 UI 主文案或分支依据。
 
@@ -1152,7 +1152,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 
 书签 bulk 导入持久状态失败时写 `errorCode: BOOKMARK_IMPORT_FAILED`（`ChromeBookmarkImportState`）。
 
-schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
+schema：`extension/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 ---
 
@@ -1481,7 +1481,7 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 ### 5.11 recall-eval must 规格（R4 · Normative）
 
-> **实现位置：** `frontend/src/core/recall/eval/`；旁挂 [`docs/engineering/R4-Phase-E-验收与eval.md`](../engineering/R4-Phase-E-验收与eval.md)
+> **实现位置：** `extension/src/core/recall/eval/`；旁挂 [`docs/engineering/R4-Phase-E-验收与eval.md`](../engineering/R4-Phase-E-验收与eval.md)
 
 #### 5.11.1 期望形态（与代码对齐）
 
@@ -1500,18 +1500,18 @@ schema：`frontend/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 > **用途：** 真机 MCP / 手工用英语口语线索压测邻域质量；**不是** `recall-eval` 替身，也**禁止**把探针词面做成 runtime 灰名单。  
 > **术语：** 探针「种库」≠ §5.9 种子验证；文案口径见术语表 §8.1 与 [`DEV-调试API.md`](../engineering/DEV-调试API.md)（手写精选 / 半仿真 / 无关干扰 / 随机种子）。
 
-| 项               | 约定                                                                                                                                                                                                                                                              |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 门禁             | 仅 `import.meta.env.DEV`；消息 `DEV_SEED_RECALL_PROBE`；生产构建拒绝                                                                                                                                                                                              |
-| 语料范围         | Chrome 书签 + Memory 摘录 + `clues.note`；**默认主题包**：研究者 → 创作者 → 开发者；**扩展（须显式 `personas`）**：学生、知识工作者                                                                                                                               |
-| 量级策略         | **先质量**：手写精选 + 半仿真 + 无关干扰，目标约 **800–2000**；**再压力**：Memory ≈ **~20k**（测耗时/倒排/邻域抽检）                                                                                                                                              |
-| 默认种库（质量） | 三主题包手写精选 + 半仿真≈350/150（`diversity*`）+ 无关干扰≈400/150（`noise*`）；`chromeBookmarkSync: 'all'`                                                                                                                                                      |
-| 压力种库         | 手写精选仍写 Chrome；半仿真/无关干扰 **直写 Memory**（`chromeBookmarkSync: 'curated_only'`）；例：半仿真 8k/4k + 干扰 5.5k/2.45k ≈ 20k；种完 `ensureReadyForOwner` 重建倒排                                                                                       |
-| 扫描上限         | `RECALL_SCAN_LIMIT` = **20000**（与压力档对齐；倒排候选仍受 posting cap）                                                                                                                                                                                         |
-| 通过口径         | 与上表一致：目标在排序邻域（含 Show more 池）即会话成功；Top1 仅 delight；压力轮另记 p50/p95 召回耗时                                                                                                                                                             |
-| 调用             | SW：`yiveno.seedRecallProbe({ replace: true })`；扩展主题包例：`personas: ['student','knowledge_worker']`；种库后 `yiveno.runProbeOmniboxSmoke()` 验 Omnibox 手测 §4.1–4.2（仅覆盖默认三主题包线索表）；或 Side Panel `sendMessage` 同 type                       |
-| 实现             | `@yiveno/probe` 语料 + `frontend/src/dev/probe/` 桥；手写精选可调度 LLM enrichment / embedding；半仿真与无关干扰不烧配额（本地过程随机，`fillerSeed`）；Chrome 写入**真实主题文件夹**（非「Yiveno Probe」沙盒夹）；**扩展主题包默认不种**，勿与质量轮退出口径混谈 |
-| 工程索引         | [`docs/engineering/DEV-调试API.md`](../engineering/DEV-调试API.md) — **Probe Console**（`probe-console.html`，DEV-only）权威 **写入测试数据** UI；SW `yiveno.*` 为辅；不进 CWS                                                                                    |
+| 项               | 约定                                                                                                                                                                                                                                                               |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 门禁             | 仅 `import.meta.env.DEV`；消息 `DEV_SEED_RECALL_PROBE`；生产构建拒绝                                                                                                                                                                                               |
+| 语料范围         | Chrome 书签 + Memory 摘录 + `clues.note`；**默认主题包**：研究者 → 创作者 → 开发者；**扩展（须显式 `personas`）**：学生、知识工作者                                                                                                                                |
+| 量级策略         | **先质量**：手写精选 + 半仿真 + 无关干扰，目标约 **800–2000**；**再压力**：Memory ≈ **~20k**（测耗时/倒排/邻域抽检）                                                                                                                                               |
+| 默认种库（质量） | 三主题包手写精选 + 半仿真≈350/150（`diversity*`）+ 无关干扰≈400/150（`noise*`）；`chromeBookmarkSync: 'all'`                                                                                                                                                       |
+| 压力种库         | 手写精选仍写 Chrome；半仿真/无关干扰 **直写 Memory**（`chromeBookmarkSync: 'curated_only'`）；例：半仿真 8k/4k + 干扰 5.5k/2.45k ≈ 20k；种完 `ensureReadyForOwner` 重建倒排                                                                                        |
+| 扫描上限         | `RECALL_SCAN_LIMIT` = **20000**（与压力档对齐；倒排候选仍受 posting cap）                                                                                                                                                                                          |
+| 通过口径         | 与上表一致：目标在排序邻域（含 Show more 池）即会话成功；Top1 仅 delight；压力轮另记 p50/p95 召回耗时                                                                                                                                                              |
+| 调用             | SW：`yiveno.seedRecallProbe({ replace: true })`；扩展主题包例：`personas: ['student','knowledge_worker']`；种库后 `yiveno.runProbeOmniboxSmoke()` 验 Omnibox 手测 §4.1–4.2（仅覆盖默认三主题包线索表）；或 Side Panel `sendMessage` 同 type                        |
+| 实现             | `@yiveno/probe` 语料 + `extension/src/dev/probe/` 桥；手写精选可调度 LLM enrichment / embedding；半仿真与无关干扰不烧配额（本地过程随机，`fillerSeed`）；Chrome 写入**真实主题文件夹**（非「Yiveno Probe」沙盒夹）；**扩展主题包默认不种**，勿与质量轮退出口径混谈 |
+| 工程索引         | [`docs/engineering/DEV-调试API.md`](../engineering/DEV-调试API.md) — **Probe Console**（`probe-console.html`，DEV-only）权威 **写入测试数据** UI；SW `yiveno.*` 为辅；不进 CWS                                                                                     |
 
 有价值的失败 case → **匿名化**写入 `recall-eval` must / corpus；不得把个人专名 alias 写进召回主路径。
 
@@ -1615,7 +1615,7 @@ Omnibox **离线快跳轨**专用 must（与 Side Panel `recall-eval` 正交）�
 | `omnibox-negative-summarize`       | `summarize the latest news for me`       | `no_match`                                       |
 | `omnibox-negative-bored-pick`      | `i feel bored pick something fun for me` | `no_match`                                       |
 
-**门禁：** `cd frontend && bun run test:run -- omnibox-eval` 须全绿；合入 Omnibox 分轨变更须同步 §5.10.8。
+**门禁：** `cd extension && bun run test:run -- omnibox-eval` 须全绿；合入 Omnibox 分轨变更须同步 §5.10.8。
 
 #### 5.11.4 Phase E 合入检查表
 
@@ -1678,15 +1678,15 @@ Settings「隐私」摘要与官网 `/privacy` 须与本节 L1–L3 口径一致
 
 ### 5.6 扩展入口
 
-| 入口             | 现状                                                                                                                                                                             |
-| ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `sidepanel.html` | **找回主壳**；权限 `sidePanel`；无 `action.default_popup`；点图标 / `_execute_action` 开 Panel                                                                                   |
-| `background.js`  | 活跃；`setPanelBehavior({ openPanelOnActionClick: true })`                                                                                                                       |
-| `settings.html`  | 已进 `options_ui`（`open_in_tab: true`）                                                                                                                                         |
-| content script   | 已注册；`content-selection-toolbar.js`（http/https）；「试试找回」→ `OPEN_RECALL_SHELL` + prefill                                                                                |
-| offscreen 源码   | **刻意占位**（`frontend/src/offscreen/` + vite 入口 + `public/offscreen.html`）；manifest **未**注册 `offscreen` permission；embedding / 无 DOM 任务接入前不启用；勿当已上线能力 |
-| Omnibox          | 已注册；keyword `yi`；`entry: omnibox` 离线快跳；单次无会话（ADR-007）                                                                                                           |
-| `commands`       | 已注册；找回 `Alt+Shift+Y`；记忆库 `Alt+Shift+L`；划词保存 `Alt+Shift+E`；划词附注 `Alt+Shift+N`；设置无默认建议键（均可改）                                                     |
+| 入口             | 现状                                                                                                                                                                              |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `sidepanel.html` | **找回主壳**；权限 `sidePanel`；无 `action.default_popup`；点图标 / `_execute_action` 开 Panel                                                                                    |
+| `background.js`  | 活跃；`setPanelBehavior({ openPanelOnActionClick: true })`                                                                                                                        |
+| `settings.html`  | 已进 `options_ui`（`open_in_tab: true`）                                                                                                                                          |
+| content script   | 已注册；`content-selection-toolbar.js`（http/https）；「试试找回」→ `OPEN_RECALL_SHELL` + prefill                                                                                 |
+| offscreen 源码   | **刻意占位**（`extension/src/offscreen/` + vite 入口 + `public/offscreen.html`）；manifest **未**注册 `offscreen` permission；embedding / 无 DOM 任务接入前不启用；勿当已上线能力 |
+| Omnibox          | 已注册；keyword `yi`；`entry: omnibox` 离线快跳；单次无会话（ADR-007）                                                                                                            |
+| `commands`       | 已注册；找回 `Alt+Shift+Y`；记忆库 `Alt+Shift+L`；划词保存 `Alt+Shift+E`；划词附注 `Alt+Shift+N`；设置无默认建议键（均可改）                                                      |
 
 ### 5.7 Dodo Pro 订阅全流程验收（手动 · Normative）
 

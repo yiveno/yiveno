@@ -15,14 +15,14 @@ const SRC = join(root, 'docs/design/brand-assets')
 
 /** 母本相对路径 → 仓库内运行时目标（相对 root） */
 const MAPPINGS = [
-  ['chrome-extension/icon-16.png', 'frontend/public/images/icon16.png'],
-  ['chrome-extension/icon-32.png', 'frontend/public/images/icon32.png'],
-  ['chrome-extension/icon-48.png', 'frontend/public/images/icon48.png'],
-  ['chrome-extension/icon-128.png', 'frontend/public/images/icon128.png'],
-  ['logo/yiveno-primary.svg', 'frontend/public/images/logo-mark.svg'],
+  ['chrome-extension/icon-16.png', 'extension/public/images/icon16.png'],
+  ['chrome-extension/icon-32.png', 'extension/public/images/icon32.png'],
+  ['chrome-extension/icon-48.png', 'extension/public/images/icon48.png'],
+  ['chrome-extension/icon-128.png', 'extension/public/images/icon128.png'],
+  ['logo/yiveno-primary.svg', 'extension/public/images/logo-mark.svg'],
   ['logo/yiveno-primary.svg', 'website/public/images/logo-mark.svg'],
-  ['logo/logo-on-light.svg', 'frontend/public/images/logo-mark-mono-light.svg'],
-  ['logo/logo-on-dark.svg', 'frontend/public/images/logo-mark-mono-dark.svg'],
+  ['logo/logo-on-light.svg', 'extension/public/images/logo-mark-mono-light.svg'],
+  ['logo/logo-on-dark.svg', 'extension/public/images/logo-mark-mono-dark.svg'],
   ['logo/logo-on-dark.svg', 'website/public/images/logo-mark-on-dark.svg'],
   ['chrome-extension/favicon.ico', 'website/public/favicon.ico'],
   ['applications/yiveno-product-hero.jpg', 'website/public/og-image.jpg']
@@ -69,7 +69,7 @@ function syncBrandAssets(checkOnly) {
       console.error('\n修复: bun run sync:brand-assets')
       process.exit(1)
     }
-    console.log('✅ brand-assets 已与 frontend/public、website/public 同步')
+    console.log('✅ brand-assets 已与 extension/public、website/public 同步')
     return
   }
 

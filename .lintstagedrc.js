@@ -13,7 +13,7 @@ const PRETTIER_CMD = 'bunx prettier --write'
 
 /** wrangler types 生成物：不进 ESLint / Prettier（体积大且会被下次 types:gen 覆盖） */
 function isGeneratedWorkerTypes(repoPath) {
-  return repoPath === 'backend/worker-configuration.d.ts'
+  return repoPath === 'worker/worker-configuration.d.ts'
 }
 
 /** 转义 shell 路径参数 */
@@ -29,8 +29,8 @@ function toRepoRelative(file) {
 /** 将暂存文件按 workspace 分组，返回各组内的 workspace 相对路径 */
 function groupByWorkspace(filenames) {
   const groups = {
-    frontend: [],
-    backend: [],
+    extension: [],
+    worker: [],
     website: [],
     root: []
   }
@@ -39,10 +39,10 @@ function groupByWorkspace(filenames) {
     const repoPath = toRepoRelative(file)
     if (isGeneratedWorkerTypes(repoPath)) continue
 
-    if (repoPath.startsWith('frontend/')) {
-      groups.frontend.push(repoPath.slice('frontend/'.length))
-    } else if (repoPath.startsWith('backend/')) {
-      groups.backend.push(repoPath.slice('backend/'.length))
+    if (repoPath.startsWith('extension/')) {
+      groups.extension.push(repoPath.slice('extension/'.length))
+    } else if (repoPath.startsWith('worker/')) {
+      groups.worker.push(repoPath.slice('worker/'.length))
     } else if (repoPath.startsWith('website/')) {
       groups.website.push(repoPath.slice('website/'.length))
     } else {
@@ -58,11 +58,11 @@ function eslintByWorkspace(filenames) {
   const groups = groupByWorkspace(filenames)
   const commands = []
 
-  if (groups.frontend.length > 0) {
-    commands.push(`cd frontend && ${ESLINT_CMD} ${groups.frontend.map(quotePath).join(' ')}`)
+  if (groups.extension.length > 0) {
+    commands.push(`cd extension && ${ESLINT_CMD} ${groups.extension.map(quotePath).join(' ')}`)
   }
-  if (groups.backend.length > 0) {
-    commands.push(`cd backend && ${ESLINT_CMD} ${groups.backend.map(quotePath).join(' ')}`)
+  if (groups.worker.length > 0) {
+    commands.push(`cd worker && ${ESLINT_CMD} ${groups.worker.map(quotePath).join(' ')}`)
   }
   if (groups.website.length > 0) {
     commands.push(`cd website && ${ESLINT_CMD} ${groups.website.map(quotePath).join(' ')}`)
@@ -92,8 +92,8 @@ function stylelintByWorkspace(filenames) {
   const groups = groupByWorkspace(lintable)
   const commands = []
 
-  if (groups.frontend.length > 0) {
-    commands.push(`cd frontend && ${STYLELINT_CMD} ${groups.frontend.map(quotePath).join(' ')}`)
+  if (groups.extension.length > 0) {
+    commands.push(`cd extension && ${STYLELINT_CMD} ${groups.extension.map(quotePath).join(' ')}`)
   }
   if (groups.website.length > 0) {
     commands.push(`cd website && ${STYLELINT_CMD} ${groups.website.map(quotePath).join(' ')}`)

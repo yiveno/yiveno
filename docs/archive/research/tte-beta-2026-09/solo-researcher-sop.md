@@ -19,7 +19,7 @@
 
 ## 1. 一次性准备（≈30 分钟）
 
-1. **构建：** `cd frontend && bun run build` → `chrome://extensions` 重新加载 Yiveno（记下扩展 ID）。
+1. **构建：** `cd extension && bun run build` → `chrome://extensions` 重新加载 Yiveno（记下扩展 ID）。
 2. **埋点自检：** Side Panel 提交一条 clue → DevTools → Application → `chrome.storage.local` → `yiveno.recallTelemetry`  
    或 SW Console：`await yiveno.listRecallTelemetryEvents()`
 3. **挑 gold 源：** 打开 `library.html`，选 **10 条** Memory（冷却 ≥14 天 ≥5 条；含 2+ 带附注；覆盖 checklist §5 五类任务至少 3 类）。  

@@ -1,0 +1,50 @@
+{
+  "name": "extension",
+  "private": true,
+  "version": "4.0.0",
+  "scripts": {
+    "build:compile": "NODE_ENV=development vue-tsc -b && NODE_ENV=development vite build --mode development",
+    "build:prod:compile": "NODE_ENV=production vue-tsc -b && NODE_ENV=production vite build --mode production",
+    "build": "bun ../scripts/dev-env.mjs sync --profile=development --target=extension --quiet && bun run build:compile",
+    "build:prod": "bun ../scripts/dev-env.mjs sync --profile=production --target=extension --quiet && bun ../scripts/dev-env.mjs check --profile=production --target=extension --quiet && bun run build:prod:compile",
+    "dev": "vite --host 0.0.0.0",
+    "build:watch": "bun ../scripts/dev-env.mjs sync --profile=development --target=extension --quiet && NODE_ENV=development vite build --watch --mode development",
+    "typecheck": "vue-tsc -b --noEmit",
+    "typecheck:force": "vue-tsc -b --force --noEmit",
+    "typecheck:vitest": "vue-tsc -b --noEmit -p tsconfig.vitest.json",
+    "typecheck:app": "vue-tsc -b --noEmit -p tsconfig.app.json",
+    "lint": "bun run format && bun run eslint && bun run stylelint",
+    "lint:check": "eslint . --no-cache --max-warnings 0 && stylelint \"src/**/*.{css,vue}\" --no-cache",
+    "eslint": "eslint . --no-cache --fix --max-warnings 0",
+    "eslint:check": "eslint . --no-cache --max-warnings 0",
+    "stylelint": "stylelint \"src/**/*.{css,vue}\" --no-cache --fix",
+    "stylelint:check": "stylelint \"src/**/*.{css,vue}\" --no-cache",
+    "format": "bunx prettier --write \"src/**/*.{ts,vue,css}\" \"vite/**/*.ts\" \"*.json\"",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:must": "vitest run src/core/recall/eval",
+    "parse-gold:llm": "bun scripts/run-parse-gold-llm.mjs",
+    "i18n:check": "bun scripts/check-i18n-keys.mjs",
+    "clean": "bun scripts/clean-dist.cjs"
+  },
+  "dependencies": {
+    "@yiveno/design-tokens": "workspace:*",
+    "@yiveno/probe": "workspace:*",
+    "vue": "^3.5.43",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.3.4",
+    "@types/node": "^24.19.1",
+    "@vitejs/plugin-basic-ssl": "^2.3.0",
+    "@vitejs/plugin-vue": "^6.0.9",
+    "@vue/tsconfig": "^0.9.1",
+    "fake-indexeddb": "^6.2.5",
+    "happy-dom": "^20.14.6",
+    "terser": "^5.51.2",
+    "typescript": "~5.9.3",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.3",
+    "vue-tsc": "^3.3.12"
+  }
+}

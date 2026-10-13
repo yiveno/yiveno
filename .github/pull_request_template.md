@@ -20,14 +20,14 @@
 ## 验收归属（§1.1 · 至少勾一项）
 
 - [ ] **无** Recall / Capture 用户可感行为变更
-- [ ] 已增/改 `recall-eval` **must** case，且 `cd frontend && bun run test:run` 绿
+- [ ] 已增/改 `recall-eval` **must** case，且 `cd extension && bun run test:run` 绿
 - [ ] 已在产品文档 **§5** 写明可复现手动步骤（含期望结果）
 - [ ] 纯重构 / bugfix，行为与 Normative 文档一致（无需新 case）
 
 ## 质量门禁
 
 - [ ] `bun run typecheck`（或 CI 等价项）通过
-- [ ] 相关 `cd frontend && bun run test:run` / `cd backend && bun test` 通过
+- [ ] 相关 `cd extension && bun run test:run` / `cd worker && bun test` 通过
 - [ ] 触达扩展 UI / i18n → `bun run i18n:check` 通过
 - [ ] 新增/变更 Background `message type` → `docs/engineering/background-message-types.registry` 已同步
 - [ ] `bun run doc:check` 通过

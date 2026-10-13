@@ -283,16 +283,16 @@ clue → 理解层（LLM 或规则）→ 候选加载（倒排预过滤）→ Hy
 
 ### 8.2 核心代码路径
 
-| 功能            | 文件                                                                |
-| --------------- | ------------------------------------------------------------------- |
-| Recall 主壳     | `frontend/src/pages/sidepanel/`                                     |
-| Recall 主逻辑   | `frontend/src/application/recall/backends/hybrid-recall-backend.ts` |
-| 关键词打分      | `frontend/src/core/recall/keyword-filter.ts`                        |
-| Hybrid 融合     | `frontend/src/core/recall/hybrid-fusion.ts`                         |
-| 结果构建        | `frontend/src/core/recall/build-recall-result.ts`                   |
-| Message schema  | `frontend/src/core/messaging/`                                      |
-| IndexedDB       | `frontend/src/infrastructure/indexeddb/`                            |
-| Message handler | `frontend/src/background/handlers/message-handler.ts`               |
+| 功能            | 文件                                                                 |
+| --------------- | -------------------------------------------------------------------- |
+| Recall 主壳     | `extension/src/pages/sidepanel/`                                     |
+| Recall 主逻辑   | `extension/src/application/recall/backends/hybrid-recall-backend.ts` |
+| 关键词打分      | `extension/src/core/recall/keyword-filter.ts`                        |
+| Hybrid 融合     | `extension/src/core/recall/hybrid-fusion.ts`                         |
+| 结果构建        | `extension/src/core/recall/build-recall-result.ts`                   |
+| Message schema  | `extension/src/core/messaging/`                                      |
+| IndexedDB       | `extension/src/infrastructure/indexeddb/`                            |
+| Message handler | `extension/src/background/handlers/message-handler.ts`               |
 
 ### 8.3 i18n
 

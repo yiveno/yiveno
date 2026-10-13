@@ -1,7 +1,7 @@
 # Yiveno API 依赖保活（Supabase + Cloudflare Workers）
 #
 # 用途：
-#   1. Supabase（backend JWT 校验 / auth）：免费计划 7 天无活动自动暂停，
+#   1. Supabase（worker JWT 校验 / auth）：免费计划 7 天无活动自动暂停，
 #      此处定期 ping 防止之。
 #   2. Cloudflare Workers API（主要数据平面）：保持连接池热身（待接入）。
 #
@@ -9,7 +9,7 @@
 #   - REPO VARIABLES: SUPABASE_URL
 #   - REPO SECRETS: SUPABASE_ANON_KEY
 #
-# 注意：前端 IndexedDB 为本机存储，与 Supabase 解耦；Supabase 仅用于 backend auth。
+# 注意：扩展 IndexedDB 为本机存储，与 Supabase 解耦；Supabase 仅用于 worker auth。
 #
 # 调度：每 12 小时（UTC）；免费计划 7 天 threshold，12h 足够保险。
 #       workflow_dispatch 用于手动测试。

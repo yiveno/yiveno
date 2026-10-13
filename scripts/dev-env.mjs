@@ -8,9 +8,9 @@ const envSharedPath = path.join(repoRoot, '.env.shared.local')
 const envLegacyDevPath = path.join(repoRoot, '.env.local')
 const envDevelopmentPath = path.join(repoRoot, '.env.development.local')
 const envProductionPath = path.join(repoRoot, '.env.production.local')
-const backendEnvPath = path.join(repoRoot, 'backend', '.dev.vars')
+const workerEnvPath = path.join(repoRoot, 'worker', '.dev.vars')
 const websiteEnvPath = path.join(repoRoot, 'website', '.env')
-const frontendRuntimeDir = path.join(repoRoot, '.env.runtime')
+const extensionRuntimeDir = path.join(repoRoot, '.env.runtime')
 
 const PROFILES = /** @type {const} */ (['development', 'production'])
 
@@ -58,7 +58,7 @@ const SHARED_OPTIONAL_KEYS = [
   'DEEPSEEK_API_KEY'
 ]
 
-const FRONTEND_KEYS = [
+const EXTENSION_KEYS = [
   'VITE_API_BASE_URL',
   'VITE_WEBSITE_URL',
   'VITE_SUPABASE_URL',
@@ -67,7 +67,7 @@ const FRONTEND_KEYS = [
   'VITE_RUNTIME_ENV'
 ]
 
-const BACKEND_KEYS = [
+const WORKER_KEYS = [
   'SUPABASE_URL',
   'SUPABASE_ANON_KEY',
   'SUPABASE_SERVICE_ROLE_KEY',
@@ -253,7 +253,7 @@ function pickEnv(env, keys) {
   return result
 }
 
-function normalizeEnv(profile, sourceEnv, backendEnv, websiteEnv) {
+function normalizeEnv(profile, sourceEnv, workerEnv, websiteEnv) {
   const normalized = { ...sourceEnv }
   const defaults = PROFILE_DEFAULTS[profile]
 
@@ -276,10 +276,10 @@ function normalizeEnv(profile, sourceEnv, backendEnv, websiteEnv) {
   )
 
   if (profile === 'development') {
-    setIfMissing(normalized, 'SUPABASE_URL', backendEnv.SUPABASE_URL)
-    setIfMissing(normalized, 'SUPABASE_ANON_KEY', backendEnv.SUPABASE_ANON_KEY)
-    setIfMissing(normalized, 'SUPABASE_SERVICE_ROLE_KEY', backendEnv.SUPABASE_SERVICE_ROLE_KEY)
-    setIfMissing(normalized, 'JWT_SECRET', backendEnv.JWT_SECRET)
+    setIfMissing(normalized, 'SUPABASE_URL', workerEnv.SUPABASE_URL)
+    setIfMissing(normalized, 'SUPABASE_ANON_KEY', workerEnv.SUPABASE_ANON_KEY)
+    setIfMissing(normalized, 'SUPABASE_SERVICE_ROLE_KEY', workerEnv.SUPABASE_SERVICE_ROLE_KEY)
+    setIfMissing(normalized, 'JWT_SECRET', workerEnv.JWT_SECRET)
   }
 
   setIfMissing(normalized, 'VITE_SUPABASE_URL', normalized.SUPABASE_URL)
@@ -288,7 +288,7 @@ function normalizeEnv(profile, sourceEnv, backendEnv, websiteEnv) {
   normalized.VITE_RUNTIME_ENV = defaults.VITE_RUNTIME_ENV
 
   for (const key of SHARED_OPTIONAL_KEYS) {
-    setIfMissing(normalized, key, backendEnv[key])
+    setIfMissing(normalized, key, workerEnv[key])
   }
 
   for (const key of SHARED_OPTIONAL_KEYS) {
@@ -308,16 +308,16 @@ function renderEnvFile(title, keys, env, includeEmpty = false) {
   return `${lines.join('\n')}\n`
 }
 
-function buildFrontendEnvFile(profile, env) {
-  return renderEnvFile(`Frontend Runtime (${profile})`, FRONTEND_KEYS, env)
+function buildExtensionEnvFile(profile, env) {
+  return renderEnvFile(`Extension Runtime (${profile})`, EXTENSION_KEYS, env)
 }
 
-function buildBackendEnvFile(env) {
+function buildWorkerEnvFile(env) {
   const output = {}
-  for (const key of BACKEND_KEYS) {
+  for (const key of WORKER_KEYS) {
     if (env[key]) output[key] = env[key]
   }
-  return renderEnvFile('Backend Runtime (development)', BACKEND_KEYS, output)
+  return renderEnvFile('Worker Runtime (development)', WORKER_KEYS, output)
 }
 
 function buildWebsiteEnvFile(profile, env) {
@@ -418,7 +418,7 @@ function printCheck(profile, env) {
   }
 
   if (missing.required.length) console.log(`ERR required missing: ${missing.required.join(', ')}`)
-  else console.log('OK required backend secrets complete')
+  else console.log('OK required worker secrets complete')
 
   if (missing.oauth.length) console.log(`WARN oauth missing: ${missing.oauth.join(', ')}`)
   else console.log('OK oauth credentials complete')
@@ -435,29 +435,29 @@ function printCheck(profile, env) {
 
 async function sync(options) {
   const sourceEnv = await loadSourceEnv(options.profile)
-  const backendEnv = await readEnvFile(backendEnvPath)
-  const normalizedEnv = normalizeEnv(options.profile, sourceEnv, backendEnv, {})
+  const workerEnv = await readEnvFile(workerEnvPath)
+  const normalizedEnv = normalizeEnv(options.profile, sourceEnv, workerEnv, {})
 
   const targets = new Set(
     options.target === 'all'
-      ? ['frontend', 'website', ...(options.profile === 'development' ? ['backend'] : [])]
+      ? ['extension', 'website', ...(options.profile === 'development' ? ['worker'] : [])]
       : [options.target]
   )
 
   const changed = []
 
-  if (targets.has('frontend')) {
-    const frontendEnvPath = path.join(frontendRuntimeDir, `.env.${options.profile}`)
+  if (targets.has('extension')) {
+    const extensionEnvPath = path.join(extensionRuntimeDir, `.env.${options.profile}`)
     const updated = await writeFileIfChanged(
-      frontendEnvPath,
-      buildFrontendEnvFile(options.profile, normalizedEnv)
+      extensionEnvPath,
+      buildExtensionEnvFile(options.profile, normalizedEnv)
     )
-    if (updated) changed.push(path.relative(repoRoot, frontendEnvPath))
+    if (updated) changed.push(path.relative(repoRoot, extensionEnvPath))
   }
 
-  if (targets.has('backend') && options.profile === 'development') {
-    const updated = await writeFileIfChanged(backendEnvPath, buildBackendEnvFile(normalizedEnv))
-    if (updated) changed.push('backend/.dev.vars')
+  if (targets.has('worker') && options.profile === 'development') {
+    const updated = await writeFileIfChanged(workerEnvPath, buildWorkerEnvFile(normalizedEnv))
+    if (updated) changed.push('worker/.dev.vars')
   }
 
   if (targets.has('website')) {

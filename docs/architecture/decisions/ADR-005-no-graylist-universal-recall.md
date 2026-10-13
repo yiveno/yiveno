@@ -31,4 +31,4 @@
 
 - `.cursor/rules/project.mdc`「全量用户能力」
 - `RECALL_OBJECT_TYPE_LEXICON` 等产品闭集枚举
-- `frontend/src/core/recall/eval/`（夹具与 must 分离）
+- `extension/src/core/recall/eval/`（夹具与 must 分离）

@@ -5,7 +5,7 @@ author: agent:cursor
 scope: Yiveno 真实代码与文档的第一阶段摸底（只读审计）
 status: archived
 upstream:
-  - Yiveno 仓库代码（frontend/ backend/ website/ packages/）
+  - Yiveno 仓库代码（extension/ worker/ website/ packages/）
   - .cursor/rules/project.mdc
   - docs/product/Yiveno-产品文档-v4.0.md
   - docs/product/Yiveno-术语表.md
@@ -34,7 +34,7 @@ downstream:
 ## 0. 阅读指南
 
 - 引用以文件路径 + 类/函数名为主，避免行号漂移。
-- "层" 概念基于 `frontend/src/{core,application,infrastructure,background,pages,content}/` 与 `backend/src/{handlers,services,data-access,schemas,routes,middleware,types,utils,config}/` 实际目录结构。
+- "层" 概念基于 `extension/src/{core,application,infrastructure,background,pages,content}/` 与 `worker/src/{handlers,services,data-access,schemas,routes,middleware,types,utils,config}/` 实际目录结构。
 - 文档 vs 代码对照请跳到 §8。
 
 ---
@@ -45,27 +45,27 @@ Yiveno 是一个 **Bun workspaces monorepo**，包含一个 **Chrome MV3 扩展*
 
 四个运行时边界各自独立，但**仅靠 HTTP/SW message 桥接**：
 
-1. **Extension (frontend)** — Vue 3 + Vite MV3 扩展。
-   - 后台是 **Service Worker**（`frontend/src/background/`）。
+1. **Extension** — Vue 3 + Vite MV3 扩展。
+   - 后台是 **Service Worker**（`extension/src/background/`）。
    - UI 是 **Side Panel**（`pages/sidepanel`），辅以 `library` / `detail` / `settings` / `getting-started` 页面。
-   - 有一个 **Content Script**：划词浮层（`frontend/src/content/selection-toolbar/`）。
-   - **Dev Probe** (`frontend/src/dev/probe/`、`packages/yiveno-probe/`) 真实库调试钩子。
-2. **Cloudflare Worker (backend)** — Hono + Supabase 数据面；与扩展通过 fetch / Bearer 鉴权；与官网 / Supabase 跨边界。
+   - 有一个 **Content Script**：划词浮层（`extension/src/content/selection-toolbar/`）。
+   - **Dev Probe** (`extension/src/dev/probe/`、`packages/yiveno-probe/`) 真实库调试钩子。
+2. **Cloudflare Worker** — Hono + Supabase 数据面；与扩展通过 fetch / Bearer 鉴权；与官网 / Supabase 跨边界。
 3. **Marketing site (website)** — Astro；登录、账单页、Dodo 集成等在这里完成；通过 extension auth handoff 把 session 写回扩展。
-4. **Shared packages** — `@yiveno/types`（跨端 Zod 类型）、 `@yiveno/design-tokens`（品牌/UI token，**仅被 frontend 真实引入**）、 `@yiveno-mcp`（扩展/外部共享 MCP 类型/工具）、 `@yiveno-probe`（已上包，但前端真实使用的是 `frontend/src/dev/probe/`，package 形态更像是"封装点"，需要确认是否在生产构建被引用 —— 见 §8 UNKNOWN）。
+4. **Shared packages** — `@yiveno/types`（跨端 Zod 类型）、 `@yiveno/design-tokens`（品牌/UI token，**仅被 extension 真实引入**）、 `@yiveno-mcp`（扩展/外部共享 MCP 类型/工具）、 `@yiveno-probe`（已上包，但前端真实使用的是 `extension/src/dev/probe/`，package 形态更像是"封装点"，需要确认是否在生产构建被引用 —— 见 §8 UNKNOWN）。
 
 ### 1.1 各运行时实际承担的职责
 
-| 运行时             | 实际职责（来自代码）                                                                                                                                                                                                                                                                                                                                                                |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Extension SW**   | 消息分发；Capture 写库（MemoryItem + 倒排 posting 增量）；Chrome 书签/右键菜单/命令/Omnibox/Storage/Side Panel；Recall 主链路；Auth/Sync 编排；MCP 本机 evidence；遥测；DEV probe。                                                                                                                                                                                                 |
-| **Extension UI**   | 仅在 Side Panel、Detail、Library、Settings、Getting Started 五个入口展示/触发消息；不直接读 IndexedDB、不直接调 Chrome API（除 `sidePanel.open` / `tabs.navigate` 这类基础设施胶水）。                                                                                                                                                                                              |
-| **Content Script** | 划词后弹 Shadow DOM 浮层；`captureTextExcerpt` + `openRecallShell` + 跨页 keepalive；与 SW 用 chrome.runtime.sendMessage + chrome.runtime.connect 通信。                                                                                                                                                                                                                            |
-| **Worker (Hono)**  | `/api/ai/*`（clue/enrichment/embed/hosted/gs-clue-samples）、`/api/memory/sync/*`（Supabase 同步）、`/api/mcp`（只读 MCP）、`/api/account`（删除/订阅/隐私）、`/api/billing`/`webhooks/dodo`（Dodo 集成）、`/api/website`（营销/回调）、`/api/admin`（JWT 守护）。                                                                                                                  |
-| **Supabase**       | PG（`memory_items` / `memory_sync_backups` 等表）；GoTrue Auth；扩展不直连 service_role key（仅匿名 `auth/v1` 用 fetch）。                                                                                                                                                                                                                                                          |
-| **Dodo**           | 订阅（Webhook `/api/webhooks/dodo`；订阅投影 → entitlements → Pro 门禁）。                                                                                                                                                                                                                                                                                                          |
-| **Website**        | 登录 UI、OAuth 流程、回写扩展 session（`/auth/callback` handoff）；订阅页面；与 SW 通过 `connect_extension=1&extension_id=...` 与 postMessage 桥接。                                                                                                                                                                                                                                |
-| **Telemetry/eval** | `frontend/src/infrastructure/ai/recall-telemetry-recorder.ts` 在主分支被引用，但**文件当前不存在**（`infrastructure/ai/` 实际只有 `clue-understand-api-client.ts`、`hosted-clue-understand-api-client.ts`、`hosted-quota-api-client.ts`、`memory-enrichment-api-client.ts`、`embed-api-client.ts`、`gs-clue-samples-api-client.ts`、`dev-clue-llm-config.ts`）—— 见 §8 UNKNOWN-A1。 |
+| 运行时             | 实际职责（来自代码）                                                                                                                                                                                                                                                                                                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Extension SW**   | 消息分发；Capture 写库（MemoryItem + 倒排 posting 增量）；Chrome 书签/右键菜单/命令/Omnibox/Storage/Side Panel；Recall 主链路；Auth/Sync 编排；MCP 本机 evidence；遥测；DEV probe。                                                                                                                                                                                                  |
+| **Extension UI**   | 仅在 Side Panel、Detail、Library、Settings、Getting Started 五个入口展示/触发消息；不直接读 IndexedDB、不直接调 Chrome API（除 `sidePanel.open` / `tabs.navigate` 这类基础设施胶水）。                                                                                                                                                                                               |
+| **Content Script** | 划词后弹 Shadow DOM 浮层；`captureTextExcerpt` + `openRecallShell` + 跨页 keepalive；与 SW 用 chrome.runtime.sendMessage + chrome.runtime.connect 通信。                                                                                                                                                                                                                             |
+| **Worker (Hono)**  | `/api/ai/*`（clue/enrichment/embed/hosted/gs-clue-samples）、`/api/memory/sync/*`（Supabase 同步）、`/api/mcp`（只读 MCP）、`/api/account`（删除/订阅/隐私）、`/api/billing`/`webhooks/dodo`（Dodo 集成）、`/api/website`（营销/回调）、`/api/admin`（JWT 守护）。                                                                                                                   |
+| **Supabase**       | PG（`memory_items` / `memory_sync_backups` 等表）；GoTrue Auth；扩展不直连 service_role key（仅匿名 `auth/v1` 用 fetch）。                                                                                                                                                                                                                                                           |
+| **Dodo**           | 订阅（Webhook `/api/webhooks/dodo`；订阅投影 → entitlements → Pro 门禁）。                                                                                                                                                                                                                                                                                                           |
+| **Website**        | 登录 UI、OAuth 流程、回写扩展 session（`/auth/callback` handoff）；订阅页面；与 SW 通过 `connect_extension=1&extension_id=...` 与 postMessage 桥接。                                                                                                                                                                                                                                 |
+| **Telemetry/eval** | `extension/src/infrastructure/ai/recall-telemetry-recorder.ts` 在主分支被引用，但**文件当前不存在**（`infrastructure/ai/` 实际只有 `clue-understand-api-client.ts`、`hosted-clue-understand-api-client.ts`、`hosted-quota-api-client.ts`、`memory-enrichment-api-client.ts`、`embed-api-client.ts`、`gs-clue-samples-api-client.ts`、`dev-clue-llm-config.ts`）—— 见 §8 UNKNOWN-A1。 |
 
 ### 1.2 协作链路（高阶）
 
@@ -130,7 +130,7 @@ background/       (SW entry; depends on application + core + infrastructure/dev 
 
 ### 2.2 Chrome Extension MV3 实际入口与编排
 
-**入口**：`frontend/src/background/main.ts`
+**入口**：`extension/src/background/main.ts`
 
 ```text
 runtime.onMessage.addListener → handleBackgroundMessage → dispatchBackgroundMessage(switch)
@@ -151,7 +151,7 @@ runtime.onInstalled → ensureSidePanelOpensOnActionClick + ensureBackgroundBoot
 
 ### 2.3 Cloudflare Worker 实际路由
 
-`backend/src/app.ts` 注册路由（按出现顺序）：
+`worker/src/app.ts` 注册路由（按出现顺序）：
 
 | 路径前缀             | 中间件               | Router              |
 | -------------------- | -------------------- | ------------------- |
@@ -181,13 +181,13 @@ runtime.onInstalled → ensureSidePanelOpensOnActionClick + ensureBackgroundBoot
 
 ### 2.4 Supabase 数据模型（实际表）
 
-`backend/src/data-access/memory-items.ts` 与 `supabase/migrations/` 共同定义（迁移目录未在本审计中细读，但被 `data-access/memory-items.ts` 实际查询所证实）：
+`worker/src/data-access/memory-items.ts` 与 `supabase/migrations/` 共同定义（迁移目录未在本审计中细读，但被 `data-access/memory-items.ts` 实际查询所证实）：
 
-- `memory_items(id, owner_id, source_local_profile_id, type, payload, clues, created_at, updated_at, deleted_at, rev)` —— Zod 校验在 `backend/src/schemas/memory-item.ts`。
+- `memory_items(id, owner_id, source_local_profile_id, type, payload, clues, created_at, updated_at, deleted_at, rev)` —— Zod 校验在 `worker/src/schemas/memory-item.ts`。
 - `memory_sync_backups(id, owner_id, item_count, snapshot, created_at)` —— 整侧 replace 前快照，用于误覆盖恢复（`restoreMemoryItemsFromLatestBackup`）。
 - 其它表（Auth.users / waitlist 等）通过 Dodo / OAuth 间接使用。
 
-`backend/src/data-access/supabase.ts` 用 `SUPABASE_SERVICE_ROLE_KEY` 创建 service client；`createSupabaseClient(env)` 按需构造 client。
+`worker/src/data-access/supabase.ts` 用 `SUPABASE_SERVICE_ROLE_KEY` 创建 service client；`createSupabaseClient(env)` 按需构造 client。
 
 ### 2.5 扩展端 IndexedDB schema（实际定义）
 
@@ -442,7 +442,7 @@ LLM **不**触碰：
    │             ├── if embeddedCandidates.length === 0 → return null → 降级关键词
    │             ├── embed = await requestWorkerEmbeddings(accessToken, [clueEmbeddingText])
    │             │     └── infra/ai/embed-api-client.ts → POST /api/ai/embed (Bearer)
-   │             │           └── backend/handlers/ai-embed.ts → env.AI.run('@cf/baai/bge-m3')
+   │             │           └── worker/handlers/ai-embed.ts → env.AI.run('@cf/baai/bge-m3')
    │             ├── semanticScored = rankIdsByCosineToQuery(queryVector, embeddedCandidates)
    │             │     └── core/recall/hybrid-fusion.ts：cosineSimilarity + filter ≥ 0.28 + 取 Top 24
    │             ├── fuseWithParsed = parsed => fuseScoredPools({ keywordTimed, semanticTimed, parsed, currentTabDomain? })
@@ -533,7 +533,7 @@ POST /api/mcp/tools/call { name: 'yiveno_recall_evidence', arguments: { clue, li
         ├── 纯关键词扫描（不 Hybrid，不 Embedding）
         ├── pullMemoryItems(env, ownerId, MCP_CLOUD_SCAN_LIMIT=2000)
         ├── 过滤 owner → MemoryItem 列表
-        ├── tokenize + 词面匹配（同 frontend core/recall/keyword-filter 思路但 server-side）
+        ├── tokenize + 词面匹配（同 extension core/recall/keyword-filter 思路但 server-side）
         ├── 返回 1-5 条 evidence item
         └── renderMcpDetailExportMarkdown
   → return { ok: true, pack, markdown, backend: 'cloud_keyword' }
@@ -706,8 +706,8 @@ RecallResult
 
 ### 7.5 Agent 实际如何被约束（基于代码可观察）
 
-- 路径 `frontend/src/infrastructure/messaging/background-client.ts` 的所有 export 都基于 `core/messaging/background-messages.ts` 类型（types 是真相源）。
-- `backend/src/app.ts` 的路由注册是 Hono 显式注册，没有"框架自动反射"。
+- 路径 `extension/src/infrastructure/messaging/background-client.ts` 的所有 export 都基于 `core/messaging/background-messages.ts` 类型（types 是真相源）。
+- `worker/src/app.ts` 的路由注册是 Hono 显式注册，没有"框架自动反射"。
 - `docs/engineering/background-message-types.registry` 是平文本（每行一个 type），由 `bun run doc:check` 校验一致性。
 - 新增 message type 的约束：先 `core/messaging/*` 加 schema → handler switch case → registry → 产品文档 §4（如属核心表）—— 这是 ADR-001 锚定的规矩。
 
@@ -717,41 +717,41 @@ RecallResult
 
 ### 8.1 Documented Architecture（基于 docs/ + ADR）
 
-| 维度        | 文档声称                                                                                                  | 文件                                                                                                    |
-| ----------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| 分层        | `pages/ → application/ → core/ → infrastructure/` + `background/`（SW）；UI 仅经 `background-client` → SW | `docs/product/Yiveno-产品文档-v4.0.md` §0.1.0/§2 + `AGENTS.md`                                          |
-| 数据        | IndexedDB 唯一入口；`memory_items` 表 + 倒排 posting/meta                                                 | `docs/engineering/关键词倒排索引-Phase1.md` + `infrastructure/indexeddb/memory-db-definition.ts`        |
-| LLM 边界    | LLM 仅 NLU/NLG；数据平面仅"提议 → 门禁 → 执行"                                                            | ADR-004 + 产品文档 §0.1.1                                                                               |
-| 理解流水线  | 默认单次 LLM；可选 Stage 2 条件触发                                                                       | ADR-010                                                                                                 |
-| 时间置信    | high 硬筛 / low 软排；Framing Within/Around                                                               | ADR-011                                                                                                 |
-| 邻域非神谕  | Top Pick 是建议；交付邻域；No match 诚实终局                                                              | ADR-003                                                                                                 |
-| 禁止灰名单  | 不允许内容别名表冒充通解                                                                                  | ADR-005 + product.mdc 全量用户能力                                                                      |
-| Find things | 定位句不变；things 双关=后手；非固定路线                                                                  | ADR-012                                                                                                 |
-| 主入口      | Side Panel；Action Popup 已退役；`pages/popup` 已删除                                                     | ADR-001 + `frontend/src/pages/sidepanel` 实际存在                                                       |
-| 召回管线    | Hybrid（关键词 + cosine + RRF）；Free/Pro 同档；LLM 仅听懂                                                | `project.mdc` + `core/recall/hybrid-fusion.ts` 实际存在                                                 |
-| 倒排        | Phase 1（owner+token posting）；fallback 全表扫                                                           | `infrastructure/indexeddb/keyword-index-repository.ts` + `docs/engineering/关键词倒排索引-Phase1.md`    |
-| MCP         | 只读 beta；本地同 Hybrid；云端纯关键词；Pro + KV 双门禁                                                   | `core/recall/mcp-tool-schema.ts` + `backend/src/services/mcp/cloud-keyword-recall.ts` + `routes/mcp.ts` |
-| Sync        | Supabase service_role；整侧 replace 前备份；防 destructive shrink                                         | `backend/src/data-access/memory-items.ts`                                                               |
+| 维度        | 文档声称                                                                                                  | 文件                                                                                                   |
+| ----------- | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| 分层        | `pages/ → application/ → core/ → infrastructure/` + `background/`（SW）；UI 仅经 `background-client` → SW | `docs/product/Yiveno-产品文档-v4.0.md` §0.1.0/§2 + `AGENTS.md`                                         |
+| 数据        | IndexedDB 唯一入口；`memory_items` 表 + 倒排 posting/meta                                                 | `docs/engineering/关键词倒排索引-Phase1.md` + `infrastructure/indexeddb/memory-db-definition.ts`       |
+| LLM 边界    | LLM 仅 NLU/NLG；数据平面仅"提议 → 门禁 → 执行"                                                            | ADR-004 + 产品文档 §0.1.1                                                                              |
+| 理解流水线  | 默认单次 LLM；可选 Stage 2 条件触发                                                                       | ADR-010                                                                                                |
+| 时间置信    | high 硬筛 / low 软排；Framing Within/Around                                                               | ADR-011                                                                                                |
+| 邻域非神谕  | Top Pick 是建议；交付邻域；No match 诚实终局                                                              | ADR-003                                                                                                |
+| 禁止灰名单  | 不允许内容别名表冒充通解                                                                                  | ADR-005 + product.mdc 全量用户能力                                                                     |
+| Find things | 定位句不变；things 双关=后手；非固定路线                                                                  | ADR-012                                                                                                |
+| 主入口      | Side Panel；Action Popup 已退役；`pages/popup` 已删除                                                     | ADR-001 + `extension/src/pages/sidepanel` 实际存在                                                     |
+| 召回管线    | Hybrid（关键词 + cosine + RRF）；Free/Pro 同档；LLM 仅听懂                                                | `project.mdc` + `core/recall/hybrid-fusion.ts` 实际存在                                                |
+| 倒排        | Phase 1（owner+token posting）；fallback 全表扫                                                           | `infrastructure/indexeddb/keyword-index-repository.ts` + `docs/engineering/关键词倒排索引-Phase1.md`   |
+| MCP         | 只读 beta；本地同 Hybrid；云端纯关键词；Pro + KV 双门禁                                                   | `core/recall/mcp-tool-schema.ts` + `worker/src/services/mcp/cloud-keyword-recall.ts` + `routes/mcp.ts` |
+| Sync        | Supabase service_role；整侧 replace 前备份；防 destructive shrink                                         | `worker/src/data-access/memory-items.ts`                                                               |
 
 ### 8.2 Actual Architecture（来自代码）
 
 **全部与文档一致**。具体证据：
 
-| 维度        | 实际确认                                                                                                                                                                                                                                           |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 分层        | import 拓扑单调；`infrastructure/indexeddb/manager.ts` 唯一 `indexedDB.open` 入口；`core/*` 无 chrome.\* 引用                                                                                                                                      |
-| 数据        | `memory-db-definition.ts` upgrade logic 与 ADR 描述一致；`keyword-index-repository.ts` 是 posting 实现                                                                                                                                             |
-| LLM 边界    | `recall-result.ts` outcome 字段由 deterministic 评分驱动；LLM 只在 understand/Polish/Narrow 出现                                                                                                                                                   |
-| 理解流水线  | `understand-recall-clue.ts` 默认 `mode='semantic'` + 有 completer；失败规则降级；**未启用** Stage 2（代码中无 Stage 2 调用）                                                                                                                       |
-| 时间置信    | `parse-recall-clue.ts` `timeConfidenceForRelativeLabel` 与 ADR-011 表一致；`filterMatchesByParsedTimeRange` 仅 high 硬切                                                                                                                           |
-| 邻域非神谕  | `buildRecallResult` outcome 计算：top_pick 需 ≥ `RECALL_TOP_PICK_MIN_SCORE` (18)                                                                                                                                                                   |
-| 禁止灰名单  | `keyword-filter.ts` 用纯算法（inflection/acronym/host-variant）；无内容别名表；`fuseHybridMatches` 还用 `isGenericOnlyHitAgainstSpecificClue` 过滤纯泛词命中                                                                                       |
-| Find things | UI 文案 `i18n/en/messages.json` 未发现 `zh_CN`；`pages/sidepanel` `t('popup_recall_pending')` 等用 en key；产品文案层一致                                                                                                                          |
-| 主入口      | `pages/popup` 不存在；`pages/sidepanel` 是 Recall 主壳                                                                                                                                                                                             |
-| 召回管线    | `hybrid-fusion.ts` cosine + RRF + leader-guard；embedding worker 调用 `requestWorkerEmbeddings`；Free/Pro 同档（`ai-embed.ts` 默认 100/500 配额）                                                                                                  |
-| 倒排        | `keyword-index-repository.applyItemTokenDiff/Diffs` 增量 posting；`lookupCandidateIds` OR；`isHealthy` → `rebuildForOwner` 重建                                                                                                                    |
-| MCP         | `core/recall/mcp-tool-schema.ts` 定义 schema；`application/recall/mcp-recall-evidence-service.ts` 走 `recallService.recallWithClue`；`backend/services/mcp/cloud-keyword-recall.ts` 纯关键词；`routes/mcp.ts` `requireMcpGate` + `isActiveProUser` |
-| Sync        | `data-access/memory-items.ts` `replaceMemoryItems` 默认拒绝缩量（`destructive_shrink_denied`）；`memory_sync_backups` 备份                                                                                                                         |
+| 维度        | 实际确认                                                                                                                                                                                                                                          |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 分层        | import 拓扑单调；`infrastructure/indexeddb/manager.ts` 唯一 `indexedDB.open` 入口；`core/*` 无 chrome.\* 引用                                                                                                                                     |
+| 数据        | `memory-db-definition.ts` upgrade logic 与 ADR 描述一致；`keyword-index-repository.ts` 是 posting 实现                                                                                                                                            |
+| LLM 边界    | `recall-result.ts` outcome 字段由 deterministic 评分驱动；LLM 只在 understand/Polish/Narrow 出现                                                                                                                                                  |
+| 理解流水线  | `understand-recall-clue.ts` 默认 `mode='semantic'` + 有 completer；失败规则降级；**未启用** Stage 2（代码中无 Stage 2 调用）                                                                                                                      |
+| 时间置信    | `parse-recall-clue.ts` `timeConfidenceForRelativeLabel` 与 ADR-011 表一致；`filterMatchesByParsedTimeRange` 仅 high 硬切                                                                                                                          |
+| 邻域非神谕  | `buildRecallResult` outcome 计算：top_pick 需 ≥ `RECALL_TOP_PICK_MIN_SCORE` (18)                                                                                                                                                                  |
+| 禁止灰名单  | `keyword-filter.ts` 用纯算法（inflection/acronym/host-variant）；无内容别名表；`fuseHybridMatches` 还用 `isGenericOnlyHitAgainstSpecificClue` 过滤纯泛词命中                                                                                      |
+| Find things | UI 文案 `i18n/en/messages.json` 未发现 `zh_CN`；`pages/sidepanel` `t('popup_recall_pending')` 等用 en key；产品文案层一致                                                                                                                         |
+| 主入口      | `pages/popup` 不存在；`pages/sidepanel` 是 Recall 主壳                                                                                                                                                                                            |
+| 召回管线    | `hybrid-fusion.ts` cosine + RRF + leader-guard；embedding worker 调用 `requestWorkerEmbeddings`；Free/Pro 同档（`ai-embed.ts` 默认 100/500 配额）                                                                                                 |
+| 倒排        | `keyword-index-repository.applyItemTokenDiff/Diffs` 增量 posting；`lookupCandidateIds` OR；`isHealthy` → `rebuildForOwner` 重建                                                                                                                   |
+| MCP         | `core/recall/mcp-tool-schema.ts` 定义 schema；`application/recall/mcp-recall-evidence-service.ts` 走 `recallService.recallWithClue`；`worker/services/mcp/cloud-keyword-recall.ts` 纯关键词；`routes/mcp.ts` `requireMcpGate` + `isActiveProUser` |
+| Sync        | `data-access/memory-items.ts` `replaceMemoryItems` 默认拒绝缩量（`destructive_shrink_denied`）；`memory_sync_backups` 备份                                                                                                                        |
 
 ### 8.3 Confirmed Alignment（值得标注的"文档与代码一致"点）
 
@@ -761,7 +761,7 @@ RecallResult
 4. **邻域非神谕**：`recall-result.ts` 中 outcome 计算与文档一致（`RECALL_TOP_PICK_MIN_SCORE` 阈值；no_match 可空）。
 5. **内容佐证门（ADR-011 Normative 例外）**：`HybridRecallBackend` 在 `fuseHybridMatches` 中明确 `filterMatchesByContentTermCorroboration` + `shouldAttemptTimeSoftReopen` + `if (corroborated.length === 0) return null` → 降级关键词。
 6. **理解流水线默认单次**：`understand-recall-clue.ts` 一次 LLM 调用，失败降级；未发现多跳 Stage 2 调用。
-7. **AI_GATEWAY / DeepSeek 默认 Provider**：`backend/src/services/ai/ai-chat-provider.ts` `resolveAiChatProvider(env)` 默认 deepseek。
+7. **AI_GATEWAY / DeepSeek 默认 Provider**：`worker/src/services/ai/ai-chat-provider.ts` `resolveAiChatProvider(env)` 默认 deepseek。
 
 ### 8.4 Confirmed Deviation
 
@@ -770,23 +770,23 @@ RecallResult
 1. **Omnibox 强制 lexical 模式**：`omnibox.ts` 调用 `recallService.recallWithClue(clue, { entry: 'omnibox' })`；`HybridRecallBackend` 内 `isOmniboxEntry` 强制 `forceMode: 'lexical'`，并把 `context` 置空、不挂 LLM completer、不走 framing/follow-up。文档（产品文档 §1、ADR-007）描述了 Omnibox 离线查找，但**强制 lexical 模式的代码层抽象**未在 ADR 中明确写出。
 2. **Keyword 倒排缺角时 merge 摘录**：`memoryItemService.listForKeywordRecall` 把摘录 `listByOwner({ type: 'text_excerpt', limit: 500 })` merge 进候选（`mergeExcerptsIntoCandidates`），防止倒排 posting 漏摘录后核心资产被 slice 截断。这是工程优化，文档（关键词倒排 Phase 1）未显式提及。
 3. **Bookmark Sync `merge Clues` 策略**：`memory-item-repository.upsertBookmarkFromChrome` 合并 tags/keywords/entities（取并集），但保留已存在的 note/openCount/settledCount/dismissCount/行为时间戳；这是局部合理推断但文档未细列。
-4. **MCP 云端是 keyword-only**：`backend/src/services/mcp/cloud-keyword-recall.ts` 不调用 LLM，不 Hybrid，纯客户端 `pullMemoryItems` + 词面扫描；本地 MCP 走 Hybrid + LLM。这与 ADR/产品文档一致，但 backend 内部不引 `keyword-filter.ts`（前端核心包不可 import 到 worker），而是自实现 server-side tokenize。
-5. **Cloud-side Recall 不复用前端 `core/recall/keyword-filter.ts`**：`backend/src/services/mcp/cloud-keyword-recall.ts` 自实现服务端关键词扫描（前/后端不能跨 import 是合理的）。这意味着算法双写，但隔离是必然。
+4. **MCP 云端是 keyword-only**：`worker/src/services/mcp/cloud-keyword-recall.ts` 不调用 LLM，不 Hybrid，纯客户端 `pullMemoryItems` + 词面扫描；本地 MCP 走 Hybrid + LLM。这与 ADR/产品文档一致，但 worker 内部不引 `keyword-filter.ts`（前端核心包不可 import 到 worker），而是自实现 server-side tokenize。
+5. **Cloud-side Recall 不复用前端 `core/recall/keyword-filter.ts`**：`worker/src/services/mcp/cloud-keyword-recall.ts` 自实现服务端关键词扫描（前/后端不能跨 import 是合理的）。这意味着算法双写，但隔离是必然。
 
 ### 8.5 Uncertain / 需要第二阶段实验或
 
-| 编号        | 不确定项                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | 原因                                                                                                                |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| UNKNOWN-A1  | `frontend/src/infrastructure/ai/recall-telemetry-recorder.ts` 与 `recall-telemetry-store.ts` 在 `ls` 时出现，但**目录真实内容只有 7 个文件**，不含 telemetry 文件。其它文件如 `core/recall/recall-telemetry.ts`、`core/recall/recall-telemetry.test.ts` 在 `core/recall/` 实际存在。意味着 telemetry 真实实现位于 `core/recall/recall-telemetry.ts`（代码读取已确认），而 `infrastructure/ai/recall-telemetry-recorder.ts` 等**当前不存在**。可能：被 git 删除或迁移到 `core/recall/`。 | 路径一致性需用 `git log --all -- infra/ai/recall-telemetry-recorder.ts` 验证；本审计未做。                          |
-| UNKNOWN-A2  | "Provider-specific coupling"：所有 AI HTTP 客户端各自读 `import.meta.env.VITE_API_BASE_URL`，没有共享单点；这是有意还是漂移？                                                                                                                                                                                                                                                                                                                                                           | 代码层一致但缺少 ADR 论述。                                                                                         |
-| UNKNOWN-A3  | `packages/yiveno-probe` 是否被 production 构建引用？`frontend/src/dev/probe/` 真实存在并由 SW dev-only 引入；packages 版本是封装还是死代码？                                                                                                                                                                                                                                                                                                                                            | 本审计未深读 package 包结构。                                                                                       |
-| UNKNOWN-A4  | `packages/yiveno-mcp` 与 `core/recall/mcp-tool-schema.ts`、`application/recall/mcp-recall-evidence-service.ts` 的关系（共享/独立）？                                                                                                                                                                                                                                                                                                                                                    | 同上。                                                                                                              |
-| UNKNOWN-A5  | `cloud-keyword-recall.ts` 服务端 tokenize 算法与前端 `keyword-filter.ts` 是否一致？                                                                                                                                                                                                                                                                                                                                                                                                     | 需 diff 两端算法（已确认实现路径不同，但语义是否一致需读完整 server 实现）。                                        |
-| UNKNOWN-A6  | `frontend/public/_locales/en/messages.json` 是否仅 en？（README 提到 `禁止新增 zh_CN 或其它非 en 产品 locale`；目录列表只有 `en/`）。                                                                                                                                                                                                                                                                                                                                                   | `ls public/_locales/` 证实只有 `en/`，但 messages.json 实际键数 / 完整性未读。                                      |
-| UNKNOWN-A7  | `supabase/migrations/` 内容、Auth schema、其余非 `memory_items` 表未在本审计读取。                                                                                                                                                                                                                                                                                                                                                                                                      | 文档未给出 schema 图；需补读迁移文件确认。                                                                          |
-| UNKNOWN-A8  | `sync:ide-boot` 与 `doc:check` 当前 CI 触发是否完整？`.husky/` 的 hook 是否启用？`.github/workflows` 的精确矩阵未细读。                                                                                                                                                                                                                                                                                                                                                                 | 项目规则文件描述了 hook/CI；实际是否对齐需读 YAML。                                                                 |
-| UNKNOWN-A9  | TTE / Outcome §7.2 / recall-eval must 的实际评估脚本是否已落入 CI？                                                                                                                                                                                                                                                                                                                                                                                                                     | `core/recall/eval/` 存在大量 `*-eval.test.ts`；但是否在 pre-push / CI 强制运行需读 `.husky/pre-push` 和 workflows。 |
-| UNKNOWN-A10 | `frontend/scripts/` + `vite/`、`packages/design-tokens/` 是否真被 production build 引用？                                                                                                                                                                                                                                                                                                                                                                                               | 已确认 frontend 依赖 `@yiveno/design-tokens` (`package.json` resolutions)；website 独立；其它 workspace 未细读。    |
+| 编号        | 不确定项                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 | 原因                                                                                                                |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| UNKNOWN-A1  | `extension/src/infrastructure/ai/recall-telemetry-recorder.ts` 与 `recall-telemetry-store.ts` 在 `ls` 时出现，但**目录真实内容只有 7 个文件**，不含 telemetry 文件。其它文件如 `core/recall/recall-telemetry.ts`、`core/recall/recall-telemetry.test.ts` 在 `core/recall/` 实际存在。意味着 telemetry 真实实现位于 `core/recall/recall-telemetry.ts`（代码读取已确认），而 `infrastructure/ai/recall-telemetry-recorder.ts` 等**当前不存在**。可能：被 git 删除或迁移到 `core/recall/`。 | 路径一致性需用 `git log --all -- infra/ai/recall-telemetry-recorder.ts` 验证；本审计未做。                          |
+| UNKNOWN-A2  | "Provider-specific coupling"：所有 AI HTTP 客户端各自读 `import.meta.env.VITE_API_BASE_URL`，没有共享单点；这是有意还是漂移？                                                                                                                                                                                                                                                                                                                                                            | 代码层一致但缺少 ADR 论述。                                                                                         |
+| UNKNOWN-A3  | `packages/yiveno-probe` 是否被 production 构建引用？`extension/src/dev/probe/` 真实存在并由 SW dev-only 引入；packages 版本是封装还是死代码？                                                                                                                                                                                                                                                                                                                                            | 本审计未深读 package 包结构。                                                                                       |
+| UNKNOWN-A4  | `packages/yiveno-mcp` 与 `core/recall/mcp-tool-schema.ts`、`application/recall/mcp-recall-evidence-service.ts` 的关系（共享/独立）？                                                                                                                                                                                                                                                                                                                                                     | 同上。                                                                                                              |
+| UNKNOWN-A5  | `cloud-keyword-recall.ts` 服务端 tokenize 算法与前端 `keyword-filter.ts` 是否一致？                                                                                                                                                                                                                                                                                                                                                                                                      | 需 diff 两端算法（已确认实现路径不同，但语义是否一致需读完整 server 实现）。                                        |
+| UNKNOWN-A6  | `extension/public/_locales/en/messages.json` 是否仅 en？（README 提到 `禁止新增 zh_CN 或其它非 en 产品 locale`；目录列表只有 `en/`）。                                                                                                                                                                                                                                                                                                                                                   | `ls public/_locales/` 证实只有 `en/`，但 messages.json 实际键数 / 完整性未读。                                      |
+| UNKNOWN-A7  | `supabase/migrations/` 内容、Auth schema、其余非 `memory_items` 表未在本审计读取。                                                                                                                                                                                                                                                                                                                                                                                                       | 文档未给出 schema 图；需补读迁移文件确认。                                                                          |
+| UNKNOWN-A8  | `sync:ide-boot` 与 `doc:check` 当前 CI 触发是否完整？`.husky/` 的 hook 是否启用？`.github/workflows` 的精确矩阵未细读。                                                                                                                                                                                                                                                                                                                                                                  | 项目规则文件描述了 hook/CI；实际是否对齐需读 YAML。                                                                 |
+| UNKNOWN-A9  | TTE / Outcome §7.2 / recall-eval must 的实际评估脚本是否已落入 CI？                                                                                                                                                                                                                                                                                                                                                                                                                      | `core/recall/eval/` 存在大量 `*-eval.test.ts`；但是否在 pre-push / CI 强制运行需读 `.husky/pre-push` 和 workflows。 |
+| UNKNOWN-A10 | `extension/scripts/` + `vite/`、`packages/design-tokens/` 是否真被 production build 引用？                                                                                                                                                                                                                                                                                                                                                                                               | 已确认 extension 依赖 `@yiveno/design-tokens` (`package.json` resolutions)；website 独立；其它 workspace 未细读。   |
 
 ---
 
@@ -813,8 +813,8 @@ RecallResult
 17. **`getAuthSession` 路径**：扩展不直连 `@supabase/supabase-js`（GoTrue 初始化碰 `window`），改用裸 fetch（`infrastructure/auth/auth-session-revalidate.ts`、`extension-oauth.ts`）。这是 SW 环境必要，但 token 管理是分散的。
 18. **i18n 与 en locale**：`infrastructure/i18n/message-keys.ts`（19.2KB）键定义全集；`_locales/en/messages.json`（本审计未读）只有 en 目录；`product-surface-label-policy.ts` 强制产品面仅 en + `t()`。
 19. **测试规模**：
-    - frontend `application/recall/*.test.ts` 多达 30+；`core/recall/*.test.ts` 100+；`infrastructure/ai/*.test.ts` 5+；
-    - backend `services/ai/*.test.ts`、`handlers/*.test.ts` 大量；
+    - extension `application/recall/*.test.ts` 多达 30+；`core/recall/*.test.ts` 100+；`infrastructure/ai/*.test.ts` 5+；
+    - worker `services/ai/*.test.ts`、`handlers/*.test.ts` 大量；
     - packages 各自有 `.test.ts`；
     - yiveno-probe 有大量 fixtures。  
       测试密度与代码量匹配（unit tests 普遍存在），未见明显缺口（仅 recall-eval must 的接入位置需查 CI）。
@@ -839,7 +839,7 @@ RecallResult
 **第二阶段前需补充的"读不到"事实（UNKNOWN §8.5）：**
 
 - UNKNOWN-A1：recall-telemetry 文件路径不一致（可能误读或已迁移）—— 需要 `git log` 确认。
-- UNKNOWN-A3 / A4：`packages/yiveno-probe`、`packages/yiveno-mcp` 与 `frontend/src/dev/probe` / `core/recall/mcp-*` 的具体关系。
+- UNKNOWN-A3 / A4：`packages/yiveno-probe`、`packages/yiveno-mcp` 与 `extension/src/dev/probe` / `core/recall/mcp-*` 的具体关系。
 - UNKNOWN-A5：`cloud-keyword-recall.ts` 与 `core/recall/keyword-filter.ts` 的算法 diff（避免双写漂移）。
 - UNKNOWN-A6：`_locales/en/messages.json` 实际键数 / 是否仅 en。
 - UNKNOWN-A7：Supabase 迁移文件内容。

@@ -43,14 +43,14 @@ downstream:
 ### Finding P0-1
 
 - **Severity:** P0
-- **Location:** `frontend/src/infrastructure/identity/subscription-service.ts`（第 3 行）
+- **Location:** `extension/src/infrastructure/identity/subscription-service.ts`（第 3 行）
 - **Problem:** `infrastructure` 层直接调用 `application/recall/refresh-clue-llm-completer.ts` 的 `refreshClueLlmCompleterFromDevConfig`
 
 ```ts
 import { refreshClueLlmCompleterFromDevConfig } from '@/application/recall/refresh-clue-llm-completer'
 ```
 
-- **Evidence:** 这是整个 frontend 中**唯一**的 `infrastructure → application` 依赖（grep 全仓仅 3 处 import 该模块：`subscription-service.ts`、`background/bootstrap.ts`、`background/handlers/settings-handler.ts`）。其中后两者属于 `background`（SW 调度层），调用 application 是正常的；**唯一违反分层的是 subscription-service**。
+- **Evidence:** 这是整个 extension 中**唯一**的 `infrastructure → application` 依赖（grep 全仓仅 3 处 import 该模块：`subscription-service.ts`、`background/bootstrap.ts`、`background/handlers/settings-handler.ts`）。其中后两者属于 `background`（SW 调度层），调用 application 是正常的；**唯一违反分层的是 subscription-service**。
 - **Root cause:** `subscription-service` 位于 `infrastructure/identity`（属于 identity 子域），负责「订阅状态变更时重新挂载 LLM completer」。将其放在 infrastructure 是合理的（它使用 chrome.storage.local、network calls），但它依赖了 application 的 `refreshClueLlmCompleterFromDevConfig`。
 - **Why it matters:** 这使得 `subscription-service`（infrastructure）隐式依赖于 `HybridRecallBackend` 的 LLM completer 注入机制。当 `refreshClueLlmCompleter` 的签名变更时，infrastructure 代码需要修改。这不是数据泄露，而是**行为编排跨越了层级**。
 - **Confidence:** High
@@ -62,7 +62,7 @@ import { refreshClueLlmCompleterFromDevConfig } from '@/application/recall/refre
 ### Finding P1-1
 
 - **Severity:** P1
-- **Location:** `frontend/src/core/recall/content-term-corroboration.ts` 与 `frontend/src/core/recall/orchestrate-keyword-recall.ts`
+- **Location:** `extension/src/core/recall/content-term-corroboration.ts` 与 `extension/src/core/recall/orchestrate-keyword-recall.ts`
 - **Problem:** `content-term-corroboration.ts` 内部 re-export 了 `effectiveContentTermsForRecall`，并在 `HybridRecallBackend` 中被调用，造成职责重叠
 - **Evidence:**
   - `orchestrate-keyword-recall.ts` 定义了 `effectiveContentTermsForRecall`（从 `content-term-corroboration` import）并在此文件内用。
@@ -310,7 +310,7 @@ const isOmniboxEntry = entry === 'omnibox'
 
 - **Severity:** P2（非问题，观察）
 
-`frontend/src/core/recall/keyword-filter.ts` 是一个 ~1080 行的**超大纯函数文件**。包含：分词、权重、拉丁屈折、CamelCase 缩写、host 对齐、模糊匹配、主文贴合度、行为加权、大小写贴合、否定降权、空壳检测。
+`extension/src/core/recall/keyword-filter.ts` 是一个 ~1080 行的**超大纯函数文件**。包含：分词、权重、拉丁屈折、CamelCase 缩写、host 对齐、模糊匹配、主文贴合度、行为加权、大小写贴合、否定降权、空壳检测。
 
 按 DDD 原则，这些应该拆分成独立的 domain service（如 `TokenizationService`、`ScoringService`、`FuzzyMatcher`），但当前实现是**有意的内聚**（所有 Recall 关键词打分逻辑集中在一个文件中，便于理解和修改）。
 

@@ -3,8 +3,8 @@
 > **权威 UI（最终形态）：** 开发构建打开  
 > `chrome-extension://<扩展id>/probe-console.html`  
 > **语料 / Console UI：** monorepo 包 `@yiveno/probe`（`packages/yiveno-probe`，见 [ADR-009](../architecture/decisions/ADR-009-yiveno-probe-package.md)）。  
-> **挂载壳：** `frontend/src/dev/probe-console/`（仅入口 + 扩展样式；**物理隔离**于产品 `pages/`；**不进** `manifest` / CWS `build:prod`）。  
-> **Chrome / IDB 桥：** `frontend/src/dev/probe/`（seed / purge / snapshot / DEV handler）。  
+> **挂载壳：** `extension/src/dev/probe-console/`（仅入口 + 扩展样式；**物理隔离**于产品 `pages/`；**不进** `manifest` / CWS `build:prod`）。  
+> **Chrome / IDB 桥：** `extension/src/dev/probe/`（seed / purge / snapshot / DEV handler）。  
 > **定位：** 测试工作台——**写入测试数据 + 清理**（预设写入 / 按选项批量删）。评审 / 对拍 UI 暂不接 Console。  
 > **辅入口：** Service Worker `globalThis.yiveno.*`（MCP / 无 UI 脚本；盘点 / 夹具仍可走消息或 SW）。  
 > **非范围：** 生产用户能力、`recall-eval` / `omnibox-eval` CI 夹具（保留 core，勿并进工作台主路径）。  
@@ -17,7 +17,7 @@
 
 ## 0. Probe Console（推荐）
 
-1. `cd frontend && bun run build`（`--mode development`；含 `probe-console.html`）
+1. `cd extension && bun run build`（`--mode development`；含 `probe-console.html`）
 2. `chrome://extensions` → 重新加载 Yiveno
 3. **入口（推荐）：** 任意产品页顶栏（Side Panel / Memory / Settings）右侧 **「Test workbench (DEV)」**（包裹盒图标）→ 打开或聚焦 `probe-console.html`  
    **辅：** 地址栏 `chrome-extension://<id>/probe-console.html`（扩展 id 见详情页；SW 启动日志也会打印完整 URL）
@@ -31,13 +31,13 @@
 
 `DEV_PURGE_PROBE_NOISE` 仍可用（等价于清除半仿真与无关干扰 + 移除 Probe 文件夹）。
 
-**隔离约定：** 见 `frontend/src/dev/README.md`。挂载壳只许 `src/dev/**`；语料 / Console Vue 落在 `@yiveno/probe`。
+**隔离约定：** 见 `extension/src/dev/README.md`。挂载壳只许 `src/dev/**`；语料 / Console Vue 落在 `@yiveno/probe`。
 
 ---
 
 ## 1. 怎么调用（SW 辅入口）
 
-1. `cd frontend && bun run build`（或 `build:watch` 已产出最新 `dist/`）
+1. `cd extension && bun run build`（或 `build:watch` 已产出最新 `dist/`）
 2. `chrome://extensions` → 重新加载 Yiveno
 3. 点 **Service Worker**「检查」→ Console
 4. 输入下文 API（多数须 `await`）
@@ -51,15 +51,15 @@
 | 层级                  | 路径                                                 | 职责                                                                           |
 | --------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------ |
 | **语料 / Console UI** | `packages/yiveno-probe`（`@yiveno/probe`）           | 画像语料、预设、配方、邻域 helpers、Probe Console（造数 UI）                   |
-| **Chrome / IDB 桥**   | `frontend/src/dev/probe/`                            | seed / purge / snapshot / 夹具 DEV 门禁 / SW expose / `DEV_*` handler          |
-| **挂载壳**            | `frontend/src/dev/probe-console/`                    | `probe-console.html` 入口 + 扩展样式；`open-probe-console-page.ts`（顶栏打开） |
-| **消息 schema**       | `frontend/src/core/messaging/debug-messages.ts`      | Zod；`DEV_*`（契约面，非语料）                                                 |
+| **Chrome / IDB 桥**   | `extension/src/dev/probe/`                           | seed / purge / snapshot / 夹具 DEV 门禁 / SW expose / `DEV_*` handler          |
+| **挂载壳**            | `extension/src/dev/probe-console/`                   | `probe-console.html` 入口 + 扩展样式；`open-probe-console-page.ts`（顶栏打开） |
+| **消息 schema**       | `extension/src/core/messaging/debug-messages.ts`     | Zod；`DEV_*`（契约面，非语料）                                                 |
 | **登记册**            | `docs/engineering/background-message-types.registry` | `bun run doc:check`                                                            |
 | **构建隔离**          | `vite/build-options.ts` + `scripts/clean-dist.cjs`   | 仅 development 产出 `probe-console.html`                                       |
 
 ### 新增能力清单（维护者）
 
-1. 纯语料 / Console UI → `@yiveno/probe`；Chrome 执行面 → `frontend/src/dev/probe/`（**禁止**再写入 `infrastructure/`）
+1. 纯语料 / Console UI → `@yiveno/probe`；Chrome 执行面 → `extension/src/dev/probe/`（**禁止**再写入 `infrastructure/`）
 2. 消息：`debug-messages.ts` → `src/dev/probe/debug-dev-handler.ts` → registry → **Probe Console 接线**
 3. 可选：仍挂 `yiveno.*`（辅）
 4. **更新本文**；产品顶栏允许 **仅 `import.meta.env.DEV`** 的「Test workbench」入口（生产 / CWS 不渲染、不打入 `probe-console.html`）；**禁止**把工作台做成 Settings 常驻区块或生产用户导航
@@ -165,7 +165,7 @@ const report = await yiveno.runProbeOmniboxSmoke()
 
 **推荐顺序：** `seedRecallProbe` → `runProbeOmniboxSmoke` → 地址栏手动测 UI。
 
-**单测：** `cd frontend && bun run test:run -- recall-probe-omnibox-smoke`
+**单测：** `cd extension && bun run test:run -- recall-probe-omnibox-smoke`
 
 **注意：** 与 `omnibox-eval`（eval 内存夹具、`Manifest V3` / `i18n:check` 等）**线索表不同**。
 
@@ -271,7 +271,7 @@ await yiveno.backdateMemorySavedAt({
 | Omnibox 手测复制块 / 负例                      | [Omnibox-手测步骤](./Omnibox-手测步骤.md)                                          |
 | 探针语料 Normative（量级、压力轮）             | 产品文档 §5.11.1a                                                                  |
 | TTE 埋点与验收                                 | [R4-Phase-E-验收与eval](../archive/engineering/R4-Phase-E-验收与eval.md)（已归档） |
-| `recall-eval` / `omnibox-eval`（CI，非探针库） | `frontend/src/core/recall/eval/`                                                   |
+| `recall-eval` / `omnibox-eval`（CI，非探针库） | `extension/src/core/recall/eval/`                                                  |
 | Background 全量 message type                   | [background-message-types.registry](./background-message-types.registry)           |
 
 ---
@@ -287,4 +287,4 @@ await yiveno.backdateMemorySavedAt({
 | `yiveno.userSettings`    | 用户设置                      | Settings UI                                     |
 | `yiveno.recallPrefill`   | Side Panel 预填 clue          | `OPEN_RECALL_SHELL` 等                          |
 
-完整行为以产品文档与 `frontend/src/infrastructure/storage/`、`core/settings/` 为准。
+完整行为以产品文档与 `extension/src/infrastructure/storage/`、`core/settings/` 为准。

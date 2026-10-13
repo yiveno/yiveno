@@ -1,6 +1,6 @@
 /**
  * Probe Console → Background（造数 / 清理相关 DEV 消息）。
- * 故意不依赖 frontend background-client；消息 type 与扩展 DEV 契约对齐。
+ * 故意不依赖 extension background-client；消息 type 与扩展 DEV 契约对齐。
  */
 
 import type { ProbeSeedPayload } from '../presets/seed-presets'

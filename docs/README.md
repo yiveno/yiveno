@@ -48,7 +48,7 @@
 - [`archive/README.md`](./archive/README.md) — 历史文档入口（TTE 研究、市场调研、过时工程文档、审计快照等）
 - [`archive/audits/`](./archive/audits/) — 2026-09 Reality Map / Phase1–2（已过期；勿当现行真相）
 
-`frontend/docs/` 已清空；i18n 方案定稿前不在此目录维护占位文档。
+`extension/docs/` 已清空；i18n 方案定稿前不在此目录维护占位文档。
 
 **合入与门禁：**
 

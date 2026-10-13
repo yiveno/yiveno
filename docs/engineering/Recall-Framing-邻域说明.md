@@ -30,11 +30,9 @@ RecallResult（outcome + pool + parsed）
 ### 2.1 新增类型（草案）
 
 ```typescript
-// frontend/src/core/recall/recall-framing-facts.ts
+// extension/src/core/recall/recall-framing-facts.ts
 type RecallFramingFacts = {
-  understood: {
-    /* parsed 摘要：objectTypes, timeLabel, contentTerms, behaviorHints */
-  }
+  understood: {/* parsed 摘要：objectTypes, timeLabel, contentTerms, behaviorHints */}
   retrievalPath: 'literal' | 'constraint_neighborhood' | 'hybrid' | 'mixed'
   buckets: Array<{ id: string; labelKey: string; count: number }> // 最多 3 簇
   stance: 'confident_neighborhood' | 'weak_candidates'

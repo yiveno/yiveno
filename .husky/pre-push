@@ -32,62 +32,62 @@ run_knip() {
   echo "✅ Knip 通过: ${label}"
 }
 
-# frontend / 共享包：构建（内含 vue-tsc -b）
-FRONTEND_BUILD_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^frontend/|^packages/(design-tokens|types)/|tsconfig|package\.json' || true)
+# extension / 共享包：构建（内含 vue-tsc -b）
+EXTENSION_BUILD_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^extension/|^packages/(design-tokens|types)/|tsconfig|package\.json' || true)
 
-if [ -n "$FRONTEND_BUILD_TRIGGER" ]; then
-  echo "🏗️  frontend 构建验证..."
+if [ -n "$EXTENSION_BUILD_TRIGGER" ]; then
+  echo "🏗️  extension 构建验证..."
   # 只跑一次：失败时复用同一份输出，避免静默失败后再全量重跑
-  BUILD_OUTPUT=$(bun run build:fe 2>&1)
+  BUILD_OUTPUT=$(bun run build:extension 2>&1)
   BUILD_STATUS=$?
   if [ "$BUILD_STATUS" -eq 0 ]; then
-    echo "✅ frontend 构建成功"
+    echo "✅ extension 构建成功"
   else
-    echo "❌ frontend 构建失败"
-    ERRORS="${ERRORS}\n❌ frontend 构建失败:\n${BUILD_OUTPUT}\n\n"
+    echo "❌ extension 构建失败"
+    ERRORS="${ERRORS}\n❌ extension 构建失败:\n${BUILD_OUTPUT}\n\n"
   fi
 
   if [ "$BUILD_STATUS" -eq 0 ]; then
     # build 内 vue-tsc -b 已覆盖 app + node + vitest（与 IDE solution 同图）
-    echo "🧪 frontend test:run（含 recall-eval must）..."
-    FE_TEST_OUTPUT=$(cd frontend && bun run test:run 2>&1)
-    FE_TEST_STATUS=$?
-    if [ "$FE_TEST_STATUS" -eq 0 ]; then
-      echo "✅ frontend test:run 通过"
+    echo "🧪 extension test:run（含 recall-eval must）..."
+    EXT_TEST_OUTPUT=$(cd extension && bun run test:run 2>&1)
+    EXT_TEST_STATUS=$?
+    if [ "$EXT_TEST_STATUS" -eq 0 ]; then
+      echo "✅ extension test:run 通过"
     else
-      echo "❌ frontend test:run 失败"
-      ERRORS="${ERRORS}\n❌ frontend test:run 失败:\n${FE_TEST_OUTPUT}\n\n"
+      echo "❌ extension test:run 失败"
+      ERRORS="${ERRORS}\n❌ extension test:run 失败:\n${EXT_TEST_OUTPUT}\n\n"
     fi
   fi
 else
-  echo "⏭️  无 frontend 构建相关变更，跳过构建验证"
+  echo "⏭️  无 extension 构建相关变更，跳过构建验证"
 fi
 
-# backend：类型检查 + 单测（对标 FE 的 push 前保障）
-BACKEND_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^backend/' || true)
+# worker：类型检查 + 单测（对标 extension 的 push 前保障）
+WORKER_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^worker/' || true)
 
-if [ -n "$BACKEND_TRIGGER" ]; then
-  echo "🧪 backend typecheck..."
-  TC_OUTPUT=$(bun run typecheck:be 2>&1)
+if [ -n "$WORKER_TRIGGER" ]; then
+  echo "🧪 worker typecheck..."
+  TC_OUTPUT=$(bun run typecheck:worker 2>&1)
   TC_STATUS=$?
   if [ "$TC_STATUS" -eq 0 ]; then
-    echo "✅ backend typecheck 通过"
+    echo "✅ worker typecheck 通过"
   else
-    echo "❌ backend typecheck 失败"
-    ERRORS="${ERRORS}\n❌ backend typecheck 失败:\n${TC_OUTPUT}\n\n"
+    echo "❌ worker typecheck 失败"
+    ERRORS="${ERRORS}\n❌ worker typecheck 失败:\n${TC_OUTPUT}\n\n"
   fi
 
-  echo "🧪 backend test..."
-  TEST_OUTPUT=$(cd backend && bun test 2>&1)
+  echo "🧪 worker test..."
+  TEST_OUTPUT=$(cd worker && bun test 2>&1)
   TEST_STATUS=$?
   if [ "$TEST_STATUS" -eq 0 ]; then
-    echo "✅ backend test 通过"
+    echo "✅ worker test 通过"
   else
-    echo "❌ backend test 失败"
-    ERRORS="${ERRORS}\n❌ backend test 失败:\n${TEST_OUTPUT}\n\n"
+    echo "❌ worker test 失败"
+    ERRORS="${ERRORS}\n❌ worker test 失败:\n${TEST_OUTPUT}\n\n"
   fi
 else
-  echo "⏭️  无 backend 变更，跳过 typecheck / test"
+  echo "⏭️  无 worker 变更，跳过 typecheck / test"
 fi
 
 # website：astro check（CI typecheck:ci 已覆盖；push 前按变更补一层）
@@ -160,19 +160,19 @@ fi
 
 # 按变更目录跑分 workspace Knip（knip.json / 根依赖变更时跑全仓）
 KNIP_FULL_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^knip\.json$|^package\.json$|^scripts/knip-runner\.mjs$' || true)
-KNIP_FE_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^frontend/' || true)
-KNIP_BE_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^backend/' || true)
+KNIP_EXTENSION_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^extension/' || true)
+KNIP_WORKER_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^worker/' || true)
 KNIP_WEB_TRIGGER=$(echo "$CHANGED_FILES" | grep -E '^website/' || true)
 KNIP_PKG_TRIGGERS=$(echo "$CHANGED_FILES" | grep '^packages/' | cut -d/ -f1-2 | sort -u || true)
 
 if [ -n "$KNIP_FULL_TRIGGER" ]; then
   run_knip "全仓" || true
 else
-  if [ -n "$KNIP_FE_TRIGGER" ]; then
-    run_knip "frontend" --workspace frontend || true
+  if [ -n "$KNIP_EXTENSION_TRIGGER" ]; then
+    run_knip "extension" --workspace extension || true
   fi
-  if [ -n "$KNIP_BE_TRIGGER" ]; then
-    run_knip "backend" --workspace backend || true
+  if [ -n "$KNIP_WORKER_TRIGGER" ]; then
+    run_knip "worker" --workspace worker || true
   fi
   if [ -n "$KNIP_WEB_TRIGGER" ]; then
     run_knip "website" --workspace website || true
@@ -182,7 +182,7 @@ else
       run_knip "$pkg" --workspace "$pkg" || true
     done
   fi
-  if [ -z "$KNIP_FE_TRIGGER$KNIP_BE_TRIGGER$KNIP_WEB_TRIGGER$KNIP_PKG_TRIGGERS" ]; then
+  if [ -z "$KNIP_EXTENSION_TRIGGER$KNIP_WORKER_TRIGGER$KNIP_WEB_TRIGGER$KNIP_PKG_TRIGGERS" ]; then
     echo "⏭️  无 Knip 相关变更，跳过 Knip"
   fi
 fi
@@ -197,20 +197,20 @@ if [ -n "$ERRORS" ]; then
   echo "💡 请修复以上问题后再推送。"
   echo ""
   echo "🛠️  可用的修复命令："
-  echo "   bun run build:fe          # frontend 构建（vue-tsc -b：app+node+vitest）"
-  echo "   cd frontend && bun run test:run  # frontend 单测（含 recall-eval must）"
-  echo "   bun run typecheck:be      # backend 类型检查"
+  echo "   bun run build:extension          # extension 构建（vue-tsc -b：app+node+vitest）"
+  echo "   cd extension && bun run test:run  # extension 单测（含 recall-eval must）"
+  echo "   bun run typecheck:worker      # worker 类型检查"
   echo "   bun run typecheck:web     # website 类型检查（astro check）"
   echo "   bun run --filter './packages/*' typecheck  # packages 类型检查"
-  echo "   cd backend && bun test    # backend 单测"
+  echo "   cd worker && bun test    # worker 单测"
   echo "   bun run knip              # 全仓 Knip"
-  echo "   bun run knip:fe           # 仅 frontend Knip"
-  echo "   bun run knip:be           # 仅 backend Knip"
+  echo "   bun run knip:extension           # 仅 extension Knip"
+  echo "   bun run knip:worker           # 仅 worker Knip"
   echo "   bun run typecheck         # 类型检查（CI 也会跑）"
   echo "   bun run lint:check        # 代码质量检查（CI 也会跑）"
   echo "   bun run doc:check         # 文档漂移 / session-boot 同步（docs·rules·scripts 变更时）"
   echo "   bun run sync:ide-boot     # CURRENT → session-boot 当下块"
-  echo "   bun run sync:brand-assets # 母本 → frontend/website public"
+  echo "   bun run sync:brand-assets # 母本 → extension/website public"
   echo ""
   exit 1
 fi

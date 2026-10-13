@@ -2,7 +2,7 @@
 
 > Last Updated: 2026-09-01
 
-<!-- 开发者向：上架草稿本，与 frontend/public/manifest.json 同步维护。商店用户向文案仅美式英语。 -->
+<!-- 开发者向：上架草稿本，与 extension/public/manifest.json 同步维护。商店用户向文案仅美式英语。 -->
 
 ## Store Listing
 
@@ -46,16 +46,16 @@ English
 
 ## Graphics & Assets
 
-| Asset                          | Dimensions          | Status                | Filename                                                                                     |
-| ------------------------------ | ------------------- | --------------------- | -------------------------------------------------------------------------------------------- |
-| Store Icon [REQUIRED]          | 128×128 PNG         | ✅ Verified           | `frontend/public/images/icon128.png` (128×128 PNG, manifest `icons` + `action.default_icon`) |
-| Screenshot 1 [REQUIRED]        | 1280×800 or 640×400 | ✅ Ready (interim)    | `docs/design/brand-assets/chrome-web-store/screenshot-01-brand-focus-1280x800.png`           |
-| Screenshot 2 [RECOMMENDED]     | 1280×800 or 640×400 | ✅ Ready (interim)    | `docs/design/brand-assets/chrome-web-store/screenshot-02-brand-connect-1280x800.png`         |
-| Screenshot 3 [RECOMMENDED]     | 1280×800 or 640×400 | ⬜ Product UI pending | Recall Side Panel — see Screenshot Notes #1                                                  |
-| Screenshot 4                   | 1280×800 or 640×400 | ⬜ Product UI pending | Capture — see Screenshot Notes #2                                                            |
-| Screenshot 5                   | 1280×800 or 640×400 | ⬜ Product UI pending | Library — see Screenshot Notes #3                                                            |
-| Small Promo Tile [RECOMMENDED] | 440×280             | ✅ Verified           | `docs/design/brand-assets/chrome-web-store/chrome-web-store-small-promo-440x280.png`         |
-| Marquee Promo Tile             | 1400×560            | ✅ Verified           | `docs/design/brand-assets/chrome-web-store/chrome-web-store-marquee-1400x560.png`            |
+| Asset                          | Dimensions          | Status                | Filename                                                                                      |
+| ------------------------------ | ------------------- | --------------------- | --------------------------------------------------------------------------------------------- |
+| Store Icon [REQUIRED]          | 128×128 PNG         | ✅ Verified           | `extension/public/images/icon128.png` (128×128 PNG, manifest `icons` + `action.default_icon`) |
+| Screenshot 1 [REQUIRED]        | 1280×800 or 640×400 | ✅ Ready (interim)    | `docs/design/brand-assets/chrome-web-store/screenshot-01-brand-focus-1280x800.png`            |
+| Screenshot 2 [RECOMMENDED]     | 1280×800 or 640×400 | ✅ Ready (interim)    | `docs/design/brand-assets/chrome-web-store/screenshot-02-brand-connect-1280x800.png`          |
+| Screenshot 3 [RECOMMENDED]     | 1280×800 or 640×400 | ⬜ Product UI pending | Recall Side Panel — see Screenshot Notes #1                                                   |
+| Screenshot 4                   | 1280×800 or 640×400 | ⬜ Product UI pending | Capture — see Screenshot Notes #2                                                             |
+| Screenshot 5                   | 1280×800 or 640×400 | ⬜ Product UI pending | Library — see Screenshot Notes #3                                                             |
+| Small Promo Tile [RECOMMENDED] | 440×280             | ✅ Verified           | `docs/design/brand-assets/chrome-web-store/chrome-web-store-small-promo-440x280.png`          |
+| Marquee Promo Tile             | 1400×560            | ✅ Verified           | `docs/design/brand-assets/chrome-web-store/chrome-web-store-marquee-1400x560.png`             |
 
 **母本目录：** `docs/design/brand-assets/chrome-web-store/`（不进扩展包；契约见 `extension-cws-graphics-contract.ts`）。  
 **Interim：** Screenshot 1–2 当前为品牌 hero（自 `docs/design/brand-assets` 整理）；公开发布前建议替换为真实产品 UI（见该目录 `README.md`）。
@@ -84,7 +84,7 @@ English
 | `sidePanel`                | permissions      | Hosts the main Recall experience where users submit clues and review matched items from their library.                                                                                                          |
 | `favicon`                  | permissions      | Shows recognizable site icons next to saved items in the Library using Chrome’s built-in favicon service (`/_favicon/`), so users can scan results faster.                                                      |
 | `https://*.supabase.co/*`  | host_permissions | Connects to Supabase only when the user signs in or enables optional cloud memory sync (auth tokens and encrypted sync payloads). Not contacted for anonymous/local-only use.                                   |
-| `https://api.yiveno.com/*` | host_permissions | Calls Yiveno’s backend for optional features the user invokes: clue understanding, embeddings, sync API, quota checks, and MCP beta endpoints. No full-library upload by default.                               |
+| `https://api.yiveno.com/*` | host_permissions | Calls Yiveno’s API (Cloudflare Worker) for optional features the user invokes: clue understanding, embeddings, sync API, quota checks, and MCP beta endpoints. No full-library upload by default.               |
 | `http://localhost:8787/*`  | host_permissions | **Development only:** local Cloudflare Worker API during unpacked/dev builds. Remove or exclude from the store submission package if reviewers require production-only host permissions.                        |
 
 ### Content scripts (manifest, not a permission row)
@@ -109,7 +109,7 @@ English
 
 | Data Type                    | Collected?           | Transmitted Off-Device?                 | Purpose                                                                                                                                                                                                                                                                     | Shared with Third Parties?                                  |
 | ---------------------------- | -------------------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| Personally identifiable info | Yes (if sign-in)     | Yes, when signed in                     | Account id, email, display name/avatar from OAuth provider                                                                                                                                                                                                                  | No (processed via auth provider + our backend)              |
+| Personally identifiable info | Yes (if sign-in)     | Yes, when signed in                     | Account id, email, display name/avatar from OAuth provider                                                                                                                                                                                                                  | No (processed via auth provider + our API)                  |
 | Health info                  | No                   | No                                      | —                                                                                                                                                                                                                                                                           | No                                                          |
 | Financial info               | No                   | No                                      | —                                                                                                                                                                                                                                                                           | No                                                          |
 | Authentication info          | Yes (if sign-in)     | Yes, when signed in                     | Session tokens for account and optional cloud sync; `setUninstallURL` always opens the uninstall feedback page; when signed in, a one-time revoke token is attached so removing the extension can clear the remote extension session (website login and memories unchanged) | No                                                          |
@@ -172,7 +172,7 @@ https://yiveno.com
 - **Local-first:** Memories stay in IndexedDB until the user enables cloud sync.
 - **Not a bookmark manager primary pitch:** Bookmark import is optional; core value is Capture + Recall from personal traces.
 - **Recall delivers a neighborhood, not a single oracle answer:** Store copy must not promise “always picks the right one.”
-- **`localhost:8787` host permission:** Present in dev `public/manifest.json` only. **`bun run build:fe:prod`** (`NODE_ENV=production`) strips it from `dist/manifest.json` via `clean-dist` before store upload.
+- **`localhost:8787` host permission:** Present in dev `public/manifest.json` only. **`bun run build:extension:prod`** (`NODE_ENV=production`) strips it from `dist/manifest.json` via `clean-dist` before store upload.
 - **Store screenshots / promo tiles:** Not yet produced (see Graphics table).
 - **MCP beta:** Read-only MCP exists; not marketed as a primary user feature in the listing.
 

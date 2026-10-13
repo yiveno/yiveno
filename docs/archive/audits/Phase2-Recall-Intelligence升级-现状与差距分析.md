@@ -23,7 +23,7 @@ downstream:
 
 ## 0. 摸底结论：Phase 2 大部分目标已实现
 
-经过对 `frontend/src/core/recall/` 和 `eval/` 的逐文件审查，**Phase 2 目标中的大部分能力已在代码中实现**。下表是精确对照：
+经过对 `extension/src/core/recall/` 和 `eval/` 的逐文件审查，**Phase 2 目标中的大部分能力已在代码中实现**。下表是精确对照：
 
 | Phase 2 目标                        | 代码证据                                               | 状态   |
 | ----------------------------------- | ------------------------------------------------------ | ------ |
@@ -142,7 +142,7 @@ Why this result?
 **文件：**
 
 - 新增 `scripts/recall-eval-real.mjs`
-- （可选）新增 `frontend/src/core/recall/eval/real-corpus-helpers.ts`
+- （可选）新增 `extension/src/core/recall/eval/real-corpus-helpers.ts`
 
 ### P0-B：Outcome Labeling UI 通道确认
 
@@ -156,8 +156,8 @@ Why this result?
 
 **文件：**
 
-- 修改 `frontend/src/pages/sidepanel/components/RecallConversation.vue`（如有缺口）
-- 修改 `frontend/src/application/recall/commit-recall-outcome.ts`（如有缺口）
+- 修改 `extension/src/pages/sidepanel/components/RecallConversation.vue`（如有缺口）
+- 修改 `extension/src/application/recall/commit-recall-outcome.ts`（如有缺口）
 
 ### P1-A：Recall eval 接入 CI
 
@@ -165,14 +165,14 @@ Why this result?
 
 **做法：**
 
-1. 在 `frontend/src/core/recall/eval/` 确认 `runRecallEval()` 可独立运行
-2. 在 `frontend/package.json` 的 `test:run` 脚本中加入 eval runner
+1. 在 `extension/src/core/recall/eval/` 确认 `runRecallEval()` 可独立运行
+2. 在 `extension/package.json` 的 `test:run` 脚本中加入 eval runner
 3. 确认 `run-hybrid-eval.test.ts` 已通过
 
 **文件：**
 
-- 修改 `frontend/package.json`
-- （如有）新增 `frontend/src/core/recall/eval/recall-eval-cli.ts`
+- 修改 `extension/package.json`
+- （如有）新增 `extension/src/core/recall/eval/recall-eval-cli.ts`
 
 ### P1-B：Parse Quality 对比报告
 
@@ -186,7 +186,7 @@ Why this result?
 
 **文件：**
 
-- 新增 `frontend/src/core/recall/eval/run-parse-comparison.ts`
+- 新增 `extension/src/core/recall/eval/run-parse-comparison.ts`
 
 ### P1-C：Explanation UI ✓ 分条
 
@@ -200,9 +200,9 @@ Why this result?
 
 **文件：**
 
-- 修改 `frontend/src/core/recall/explain-recall-match.ts`
-- 修改 `frontend/src/pages/sidepanel/recall-conversation-types.ts`
-- 修改 `frontend/src/pages/sidepanel/RecallResultCard.vue`
+- 修改 `extension/src/core/recall/explain-recall-match.ts`
+- 修改 `extension/src/pages/sidepanel/recall-conversation-types.ts`
+- 修改 `extension/src/pages/sidepanel/RecallResultCard.vue`
 
 ---
 

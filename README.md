@@ -51,16 +51,16 @@ bun install
 ### 开发模式
 
 ```bash
-# 启动所有服务 (插件前端构建 + 后端 + 官网)
-bun run watch                 # mprocs TUI：上下键切换 fe/be/web（需本机安装 mprocs）
+# 启动所有服务 (扩展构建 + Worker + 官网)
+bun run watch                 # mprocs TUI：上下键切换 extension/worker/web（需本机安装 mprocs）
 bun run dev                   # 同 watch
 bun run watch:stream          # concurrently 混流日志（无 TUI 时用）
 
 # 或者单独启动
-bun run dev:be              # 后端 (Cloudflare Worker - 端口 8787)
+bun run dev:worker              # Worker (Cloudflare - 端口 8787)
 bun run dev:web             # 官网 (Astro - 端口 3001)
-bun run watch:fe            # 扩展 vite build --watch（改完后 chrome://extensions 刷新）
-bun run dev:fe              # 扩展 Vite 开发服务器（页面级调试；MV3 仍以 dist watch 为准）
+bun run watch:extension            # 扩展 vite build --watch（改完后 chrome://extensions 刷新）
+bun run dev:extension              # 扩展 Vite 开发服务器（页面级调试；MV3 仍以 dist watch 为准）
 ```
 
 本机安装 mprocs（任选其一）：
@@ -70,7 +70,7 @@ brew install mprocs
 # 或：https://github.com/pvolok/mprocs/releases （darwin-aarch64 等）
 ```
 
-> **扩展热更新**：`watch:fe` / `watch` 的 fe 进程是 `vite build --watch`，不是浏览器 HMR。content IIFE **按需**重打（仅触及 `content` / `core` / `infrastructure` 时）；收尾日志含 `content=` / `finalize=` ms。每次「dist 已更新」后到 `chrome://extensions` 刷新本扩展再验。
+> **扩展热更新**：`watch:extension` / `watch` 的 extension 进程是 `vite build --watch`，不是浏览器 HMR。content IIFE **按需**重打（仅触及 `content` / `core` / `infrastructure` 时）；收尾日志含 `content=` / `finalize=` ms。每次「dist 已更新」后到 `chrome://extensions` 刷新本扩展再验。
 
 ### 环境变量
 
@@ -84,7 +84,7 @@ brew install mprocs
 
 - `.env.runtime/.env.development`
 - `.env.runtime/.env.production`
-- `backend/.dev.vars`
+- `worker/.dev.vars`
 - `website/.env`
 
 常用命令：
@@ -111,7 +111,7 @@ bun run env:check:prod
 bun run build:prod
 
 # 仅构建扩展
-bun run build:fe:prod
+bun run build:extension:prod
 
 # 构建产物位置: ./dist/（扩展）
 # 官网产物: ./website/dist/
@@ -137,7 +137,7 @@ bun run build:fe:prod
 
 运行时使用中的资产位置：
 
-- 扩展：`frontend/public/images/`
+- 扩展：`extension/public/images/`
 - 官网：`website/public/`
 
 ---
@@ -146,7 +146,7 @@ bun run build:fe:prod
 
 ```
 yiveno/                             # Monorepo 根目录
-├── frontend/                       # Chrome 扩展 (Vue 3 + Vite)
+├── extension/                       # Chrome 扩展 (Vue 3 + Vite)
 │   ├── src/
 │   │   ├── background/            # Service Worker
 │   │   ├── application/           # 应用服务（Recall / Capture 等）
@@ -160,7 +160,7 @@ yiveno/                             # Monorepo 根目录
 │   ├── vite/                      # 构建配置
 │   └── package.json
 │
-├── backend/                        # Cloudflare Worker API
+├── worker/                        # Cloudflare Worker API
 ├── website/                        # Astro 营销站
 ├── packages/
 │   ├── design-tokens/             # @yiveno/design-tokens
@@ -193,7 +193,7 @@ yiveno/                             # Monorepo 根目录
 
 **本地可删、会再生成：** `dist/`、`artifacts/`、`.cache/`、`.astro/`、`.env.runtime/`（见 `docs/ENVIRONMENT.md`）。研究材料在 `docs/archive/`；历史 `yiveno-brand-kit/` 已移除。
 
-### 架构分层 (Frontend)
+### 架构分层（Extension）
 
 DDD 分层（约定见 [产品文档 v4.0](docs/product/Yiveno-产品文档-v4.0.md)）：
 
@@ -215,7 +215,7 @@ UI → `background-client` → SW handler → application → core。未引入 P
 
 ## 🛠️ 技术栈
 
-### Frontend (Chrome Extension)
+### Extension（Chrome Extension）
 
 | 类别           | 技术        | 版本   | 说明             |
 | -------------- | ----------- | ------ | ---------------- |
@@ -225,7 +225,7 @@ UI → `background-client` → SW handler → application → core。未引入 P
 | **校验**       | Zod         | 4.x    | 领域/消息 schema |
 | **Chrome API** | Manifest V3 | -      | 最新标准         |
 
-### Backend (Cloudflare Worker)
+### Worker（Cloudflare）
 
 | 类别       | 技术              | 版本   | 说明               |
 | ---------- | ----------------- | ------ | ------------------ |
@@ -260,32 +260,32 @@ UI → `background-client` → SW handler → application → core。未引入 P
 
 ```bash
 # 🚀 开发
-bun run watch                 # 扩展 watch + 后端 + 官网（mprocs 分栏）
+bun run watch                 # 扩展 watch + Worker + 官网（mprocs 分栏）
 bun run dev                   # 同 watch
 bun run watch:stream          # 同上，concurrently 混流
-bun run watch:fe              # 仅扩展 build --watch（重建后 chrome://extensions 刷新）
-bun run dev:fe                # 仅扩展 Vite 开发服务器
-bun run dev:be                # 仅后端 (Worker - 端口 8787)
+bun run watch:extension              # 仅扩展 build --watch（重建后 chrome://extensions 刷新）
+bun run dev:extension                # 仅扩展 Vite 开发服务器
+bun run dev:worker                # 仅 Worker - 端口 8787)
 bun run dev:web               # 仅官网 (Astro - 端口 3001)
 # 🏗️ 构建
 bun run build                 # 开发 profile 全量构建
 bun run build:prod            # 生产 profile 全量构建
-bun run build:fe              # 仅构建扩展 (development)
-bun run build:fe:prod         # 仅构建扩展 (production)
+bun run build:extension              # 仅构建扩展 (development)
+bun run build:extension:prod         # 仅构建扩展 (production)
 bun run build:web:prod        # 仅构建官网 (production)
 
 # 🧪 类型检查
-bun run typecheck             # 全 workspace（FE=vue-tsc -b：app+node+vitest，与 IDE 同图）
-bun run typecheck:force       # 强制重建 TS 增量缓存后检查（主要影响 FE）
-bun run typecheck:ci          # CI：packages + backend + website（FE 整图由 build 内 vue-tsc -b 覆盖）
+bun run typecheck             # 全 workspace（extension=vue-tsc -b：app+node+vitest，与 IDE 同图）
+bun run typecheck:force       # 强制重建 TS 增量缓存后检查（主要影响 extension）
+bun run typecheck:ci          # CI：packages + worker + website（extension 整图由 build 内 vue-tsc -b 覆盖）
 
 # 🔍 代码质量
-bun run lint:check            # ESLint + Stylelint 只读检查
-bun run lint                  # 格式化 + ESLint + Stylelint 修复
+bun run lint:check            # ESLint + Stylelint 只读检查（各包跑完再汇总；不含 typecheck）
+bun run lint                  # Prettier 格式化 + ESLint + Stylelint 修复（各包跑完再汇总；不含 typecheck）
 bun run knip                  # Dead code 检测
 
 # 🚀 部署
-bun run deploy:be             # 部署后端到 Cloudflare
+bun run deploy:worker             # 部署 Worker 到 Cloudflare
 bun run deploy:web            # 构建官网
 
 # 🗄️ 数据库
@@ -297,25 +297,25 @@ bun run clean                 # 清理各 workspace 缓存
 bun run clean:deps            # 清理所有依赖后重装
 ```
 
-### Frontend独立命令
+### Extension 独立命令
 
 ```bash
-cd frontend
+cd extension
 
 bun run dev                   # Vite 开发服务器
 bun run build                 # 开发 profile 构建
 bun run build:prod            # 生产 profile 构建
 bun run build:watch           # Watch 模式构建
 bun run typecheck             # TypeScript 类型检查
-bun run lint:check            # ESLint + Stylelint 只读检查
+bun run lint:check            # ESLint + Stylelint 只读检查（不含 typecheck）
 bun run test                  # Vitest 单元测试
 bun run clean                 # 清理 dist/
 ```
 
-### Backend独立命令
+### Worker 独立命令
 
 ```bash
-cd backend
+cd worker
 
 bun run dev                   # Wrangler 本地开发
 bun run deploy                # 部署到 Cloudflare Worker
@@ -378,7 +378,7 @@ bun run db:reset              # 重置本地数据库
 3. ✅ ESLint 增强修复
 4. ✅ 自动重新暂存修复后的文件
 
-类型检查不在 pre-commit：日常用 `bun run typecheck`（FE=`vue-tsc -b` 整图 app+node+vitest，与 Cursor TS 语言服务同图）。推送时 FE 经 `build:fe`（含同图 vue-tsc），BE / website / `packages/*` 按变更跑对应 typecheck。根 `build` / `build:prod` 先全量 `env:sync` 一次再走各端 `*:compile`。Cursor Problems 里的 ESLint 项不属于 typecheck，看 `bun run lint:check`。改 `frontend/tsconfig*.json` 后请 Restart TS Server。CI 见 `.github/workflows/ci.yml`。
+类型检查不在 pre-commit：日常用 `bun run typecheck`（extension=`vue-tsc -b` 整图 app+node+vitest，与 Cursor TS 语言服务同图）。推送时 extension 经 `build:extension`（含同图 vue-tsc），worker / website / `packages/*` 按变更跑对应 typecheck。根 `build` / `build:prod` 先全量 `env:sync` 一次再走各端 `*:compile`。Cursor Problems 里的 ESLint 项不属于 typecheck，看 `bun run lint:check`。改 `extension/tsconfig*.json` 后请 Restart TS Server。CI 见 `.github/workflows/ci.yml`。
 
 **注意**: 只有无法自动修复的问题才会阻止提交。
 
@@ -388,9 +388,9 @@ bun run db:reset              # 重置本地数据库
 
 ```bash
 bun run test:must             # 召回 eval 快轨（src/core/recall/eval；本地迭代用）
-bun run test:run              # FE Vitest + BE bun test 全量（合入 / CI / pre-push）
-bun run dev:check             # 本地绿检：typecheck:fe + knip:fe + test:must + doc:check
-cd frontend && bun run test   # 交互式 Vitest
+bun run test:run              # extension Vitest + worker bun test 全量（合入 / CI / pre-push）
+bun run dev:check             # 本地绿检：typecheck:extension + knip:extension + test:must + doc:check
+cd extension && bun run test   # 交互式 Vitest
 ```
 
 日常改 Recall 可先 `bun run test:must`；改完一轮可 `bun run dev:check`；合入前仍跑全量 `test:run` / pre-push。扩展用户可感路径：相关单测通过后用 **Chrome DevTools MCP** 真机 UI 抽测（产品文档 §1.1）。不上大型 Playwright/Puppeteer E2E；历史 CDP 脚本 `e2e-management.mjs` 已退役。
@@ -401,14 +401,14 @@ cd frontend && bun run test   # 交互式 Vitest
 
 ## 📊 性能优化
 
-### Frontend 优化
+### Extension 优化
 
 - ✅ **IndexedDB 缓存** - 本地持久化存储
 - ✅ **Tree Shaking** - Vite 自动移除未使用代码
 - ✅ **代码分割** - 按入口异步加载（sidepanel / settings / background 等）
 - ✅ **CSS 优化** - Stylelint 自动排序属性
 
-### Backend 优化
+### Worker 优化
 
 - ✅ **边缘计算** - Cloudflare Worker全球部署，低延迟
 - ✅ **无服务器** - 按需执行，零冷启动
@@ -418,11 +418,11 @@ cd frontend && bun run test   # 交互式 Vitest
 
 ## 🚀 部署
 
-### Frontend (Chrome扩展)
+### Extension（Chrome 扩展）
 
 ```bash
 # 1. 生产构建
-bun run build:fe:prod
+bun run build:extension:prod
 
 # 2. 打包扩展 (手动)
 cd dist
@@ -432,11 +432,11 @@ zip -r ../yiveno-v1.0.0.zip .
 # https://chrome.google.com/webstore/devconsole
 ```
 
-### Backend (Cloudflare Worker)
+### Worker（Cloudflare）
 
 ```bash
 # 1. 配置 Wrangler (首次)
-cd backend
+cd worker
 bunx wrangler login
 
 # 2. 部署到生产环境
@@ -454,7 +454,7 @@ bunx wrangler deployments list
 
 ### 提交PR前
 
-1. ✅ 确保测试通过: `bun run test:fe && bun run test:be`
+1. ✅ 确保测试通过: `bun run test:extension && bun run test:worker`
 2. ✅ 确保代码检查通过: `bun run lint:check`
 3. ✅ 确保类型检查通过: `bun run typecheck:force`
 4. ✅ 确保构建成功: `bun run build:prod`
@@ -480,7 +480,7 @@ chore: 升级依赖版本
 - ✅ 遵循 **ESLint** 和 **Stylelint** 规则
 - ✅ 使用 **Prettier** 格式化代码
 - ✅ 编写清晰的注释 (复杂逻辑必须注释)
-- ✅ 遵循 **DDD分层架构** (Frontend)
+- ✅ 遵循 **DDD 分层架构**（Extension）
 
 ---
 

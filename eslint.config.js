@@ -11,24 +11,24 @@ import prettierConfig from 'eslint-config-prettier'
 import unusedImports from 'eslint-plugin-unused-imports'
 
 const repoRoot = fileURLToPath(new URL('.', import.meta.url))
-const frontendRoot = fileURLToPath(new URL('./frontend', import.meta.url))
+const extensionRoot = fileURLToPath(new URL('./extension', import.meta.url))
 const websiteRoot = fileURLToPath(new URL('./website', import.meta.url))
 const probeRoot = fileURLToPath(new URL('./packages/yiveno-probe', import.meta.url))
-const isFrontendCwd = process.cwd().endsWith('/frontend')
-const isBackendCwd = process.cwd().endsWith('/backend')
+const isExtensionCwd = process.cwd().endsWith('/extension')
+const isWorkerCwd = process.cwd().endsWith('/worker')
 const isWebsiteCwd = process.cwd().endsWith('/website')
-const frontendTsconfigRoot = isFrontendCwd ? process.cwd() : frontendRoot
+const extensionTsconfigRoot = isExtensionCwd ? process.cwd() : extensionRoot
 
 /**
  * 将仓库相对路径转换为当前工作目录下的 ESLint glob。
  * 支持从 monorepo 根目录或各 workspace 子目录运行 lint。
  */
 function scopePath(repoRelativePath) {
-  if (isFrontendCwd && repoRelativePath.startsWith('frontend/')) {
-    return repoRelativePath.slice('frontend/'.length)
+  if (isExtensionCwd && repoRelativePath.startsWith('extension/')) {
+    return repoRelativePath.slice('extension/'.length)
   }
-  if (isBackendCwd && repoRelativePath.startsWith('backend/')) {
-    return repoRelativePath.slice('backend/'.length)
+  if (isWorkerCwd && repoRelativePath.startsWith('worker/')) {
+    return repoRelativePath.slice('worker/'.length)
   }
   if (isWebsiteCwd && repoRelativePath.startsWith('website/')) {
     return repoRelativePath.slice('website/'.length)
@@ -40,11 +40,11 @@ function scopePath(repoRelativePath) {
  * ESLint flat config 的 glob：在 workspace 子目录运行时，src 前缀 glob 无法匹配嵌套路径，需转为双星号前缀。
  */
 function eslintScopePath(repoRelativePath) {
-  if (isFrontendCwd && repoRelativePath.startsWith('frontend/src/')) {
-    return `**/${repoRelativePath.slice('frontend/src/'.length)}`
+  if (isExtensionCwd && repoRelativePath.startsWith('extension/src/')) {
+    return `**/${repoRelativePath.slice('extension/src/'.length)}`
   }
-  if (isBackendCwd && repoRelativePath.startsWith('backend/src/')) {
-    return `**/${repoRelativePath.slice('backend/src/'.length)}`
+  if (isWorkerCwd && repoRelativePath.startsWith('worker/src/')) {
+    return `**/${repoRelativePath.slice('worker/src/'.length)}`
   }
   if (isWebsiteCwd && repoRelativePath.startsWith('website/src/')) {
     return `**/${repoRelativePath.slice('website/src/'.length)}`
@@ -57,22 +57,22 @@ function eslintScopePaths(...paths) {
 }
 
 // files/ignores 相对 eslint.config.js 所在目录（仓库根），与 process.cwd 无关。
-// 从 frontend/ 子目录跑 eslint 时若写成 src/**，会匹配不到 frontend/src/**。
-const frontendVueFiles = ['frontend/src/**/*.vue']
-const frontendTsFiles = ['frontend/src/**/*.{ts,tsx}']
-const frontendScriptTsFiles = ['frontend/scripts/**/*.ts']
-const backendTsFiles = ['backend/src/**/*.ts']
+// 从 extension/ 子目录跑 eslint 时若写成 src/**，会匹配不到 extension/src/**。
+const extensionVueFiles = ['extension/src/**/*.vue']
+const extensionTsFiles = ['extension/src/**/*.{ts,tsx}']
+const extensionScriptTsFiles = ['extension/scripts/**/*.ts']
+const workerTsFiles = ['worker/src/**/*.ts']
 const websiteTsFiles = ['website/src/**/*.{ts,tsx}']
 const websiteVueFiles = ['website/src/**/*.vue']
 /** @yiveno/probe：DEV Console Vue（根目录 lint / lint-staged 须能解析 SFC + import type） */
 const probeVueFiles = ['packages/yiveno-probe/src/**/*.vue']
 const testFiles = eslintScopePaths(
-  'frontend/src/tests/**/*.{ts,tsx,js}',
-  'frontend/src/**/*.test.{ts,tsx,js}',
-  'frontend/src/**/*.spec.{ts,tsx,js}',
-  'frontend/src/**/__tests__/**/*.{ts,tsx,js}',
-  'backend/src/**/*.test.{ts,tsx,js}',
-  'backend/src/**/*.spec.{ts,tsx,js}'
+  'extension/src/tests/**/*.{ts,tsx,js}',
+  'extension/src/**/*.test.{ts,tsx,js}',
+  'extension/src/**/*.spec.{ts,tsx,js}',
+  'extension/src/**/__tests__/**/*.{ts,tsx,js}',
+  'worker/src/**/*.test.{ts,tsx,js}',
+  'worker/src/**/*.spec.{ts,tsx,js}'
 )
 
 const vueParser = pluginVue.configs['flat/recommended'][1].languageOptions.parser
@@ -366,6 +366,7 @@ export default [
       '**/*.md',
       // flat config 自检时 unused-imports 会把模块顶层 const 误报为 type-only（eslint 10）
       'eslint.config.js',
+      '.lintstagedrc.js',
       'vite.config.ts',
       'vitest.config.mts',
       '**/.vue-global-types/**',
@@ -379,7 +380,7 @@ export default [
       '**/*.bash',
       '**/*.py',
       // wrangler types 生成物：体积大且会被 types:gen 覆盖（与 lint-staged 一致）
-      scopePath('backend/worker-configuration.d.ts'),
+      scopePath('worker/worker-configuration.d.ts'),
       '**/worker-configuration.d.ts'
     ]
   },
@@ -429,7 +430,7 @@ export default [
   })),
 
   {
-    files: frontendVueFiles,
+    files: extensionVueFiles,
     plugins: {
       'unused-imports': unusedImports,
       '@typescript-eslint': tseslint.plugin
@@ -468,14 +469,14 @@ export default [
   },
 
   {
-    files: frontendTsFiles,
+    files: extensionTsFiles,
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
         projectService: true,
-        tsconfigRootDir: frontendTsconfigRoot
+        tsconfigRootDir: extensionTsconfigRoot
       }
     },
     plugins: {
@@ -489,7 +490,7 @@ export default [
   },
 
   {
-    files: frontendScriptTsFiles,
+    files: extensionScriptTsFiles,
     rules: {
       '@typescript-eslint/no-unused-vars': [
         'error',
@@ -504,7 +505,7 @@ export default [
   },
 
   {
-    files: backendTsFiles,
+    files: workerTsFiles,
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
@@ -548,13 +549,13 @@ export default [
   // DDD v4：非 background/offscreen 层禁止导入 background
   {
     files: eslintScopePaths(
-      'frontend/src/infrastructure/**/*.ts',
-      'frontend/src/core/**/*.ts',
-      'frontend/src/pages/**/*.{ts,vue}',
-      'frontend/src/application/**/*.ts',
-      'frontend/src/components/**/*.{ts,vue}',
-      'frontend/src/composables/**/*.ts',
-      'frontend/src/stores/**/*.ts'
+      'extension/src/infrastructure/**/*.ts',
+      'extension/src/core/**/*.ts',
+      'extension/src/pages/**/*.{ts,vue}',
+      'extension/src/application/**/*.ts',
+      'extension/src/components/**/*.{ts,vue}',
+      'extension/src/composables/**/*.ts',
+      'extension/src/stores/**/*.ts'
     ),
     rules: {
       'no-restricted-imports': ['error', { patterns: backgroundImportPatterns }]
@@ -564,7 +565,7 @@ export default [
   // DDD：core 禁止使用 Chrome API（仅允许注释/类型描述出现 chrome.*）
   // 实际调用 chrome.* 必须由 infrastructure/browser adapter / background / offscreen 承担
   {
-    files: eslintScopePaths('frontend/src/core/**/*.ts'),
+    files: eslintScopePaths('extension/src/core/**/*.ts'),
     rules: {
       'no-restricted-syntax': [
         'error',
@@ -600,7 +601,7 @@ export default [
 
   // DDD：core 不得依赖 UI / 应用层（含 v4 目标层路径）
   {
-    files: eslintScopePaths('frontend/src/core/**/*.ts'),
+    files: eslintScopePaths('extension/src/core/**/*.ts'),
     rules: {
       'no-restricted-imports': [
         'error',
@@ -628,7 +629,7 @@ export default [
 
   // DDD：application 不得依赖 UI 组件/页面（v4 恢复 application 层后生效）
   {
-    files: eslintScopePaths('frontend/src/application/**/*.ts'),
+    files: eslintScopePaths('extension/src/application/**/*.ts'),
     rules: {
       'no-restricted-imports': [
         'error',
@@ -650,34 +651,34 @@ export default [
   // - 其它子目录（identity/storage/ai/...）应保持纯逻辑，禁止 .vue 依赖
   {
     files: eslintScopePaths(
-      'frontend/src/infrastructure/identity/**/*.ts',
-      'frontend/src/infrastructure/identity/**/*.vue',
-      'frontend/src/infrastructure/storage/**/*.ts',
-      'frontend/src/infrastructure/storage/**/*.vue',
-      'frontend/src/infrastructure/ai/**/*.ts',
-      'frontend/src/infrastructure/ai/**/*.vue',
-      'frontend/src/infrastructure/auth/**/*.ts',
-      'frontend/src/infrastructure/auth/**/*.vue',
-      'frontend/src/infrastructure/browser/**/*.ts',
-      'frontend/src/infrastructure/browser/**/*.vue',
-      'frontend/src/infrastructure/logging/**/*.ts',
-      'frontend/src/infrastructure/logging/**/*.vue',
-      'frontend/src/infrastructure/analytics/**/*.ts',
-      'frontend/src/infrastructure/analytics/**/*.vue',
-      'frontend/src/infrastructure/indexeddb/**/*.ts',
-      'frontend/src/infrastructure/indexeddb/**/*.vue',
-      'frontend/src/infrastructure/messaging/**/*.ts',
-      'frontend/src/infrastructure/messaging/**/*.vue',
-      'frontend/src/infrastructure/i18n/**/*.ts',
-      'frontend/src/infrastructure/i18n/**/*.vue',
-      'frontend/src/infrastructure/debug/**/*.ts',
-      'frontend/src/infrastructure/debug/**/*.vue',
-      'frontend/src/infrastructure/recall/**/*.ts',
-      'frontend/src/infrastructure/recall/**/*.vue',
-      'frontend/src/infrastructure/sync/**/*.ts',
-      'frontend/src/infrastructure/sync/**/*.vue',
-      'frontend/src/infrastructure/mcp/**/*.ts',
-      'frontend/src/infrastructure/mcp/**/*.vue'
+      'extension/src/infrastructure/identity/**/*.ts',
+      'extension/src/infrastructure/identity/**/*.vue',
+      'extension/src/infrastructure/storage/**/*.ts',
+      'extension/src/infrastructure/storage/**/*.vue',
+      'extension/src/infrastructure/ai/**/*.ts',
+      'extension/src/infrastructure/ai/**/*.vue',
+      'extension/src/infrastructure/auth/**/*.ts',
+      'extension/src/infrastructure/auth/**/*.vue',
+      'extension/src/infrastructure/browser/**/*.ts',
+      'extension/src/infrastructure/browser/**/*.vue',
+      'extension/src/infrastructure/logging/**/*.ts',
+      'extension/src/infrastructure/logging/**/*.vue',
+      'extension/src/infrastructure/analytics/**/*.ts',
+      'extension/src/infrastructure/analytics/**/*.vue',
+      'extension/src/infrastructure/indexeddb/**/*.ts',
+      'extension/src/infrastructure/indexeddb/**/*.vue',
+      'extension/src/infrastructure/messaging/**/*.ts',
+      'extension/src/infrastructure/messaging/**/*.vue',
+      'extension/src/infrastructure/i18n/**/*.ts',
+      'extension/src/infrastructure/i18n/**/*.vue',
+      'extension/src/infrastructure/debug/**/*.ts',
+      'extension/src/infrastructure/debug/**/*.vue',
+      'extension/src/infrastructure/recall/**/*.ts',
+      'extension/src/infrastructure/recall/**/*.vue',
+      'extension/src/infrastructure/sync/**/*.ts',
+      'extension/src/infrastructure/sync/**/*.vue',
+      'extension/src/infrastructure/mcp/**/*.ts',
+      'extension/src/infrastructure/mcp/**/*.vue'
     ),
     rules: {
       'no-restricted-imports': [
@@ -700,11 +701,11 @@ export default [
   // - UI / store 进一步禁止 indexedDBManager（兼容历史规则描述）
   {
     files: eslintScopePaths(
-      'frontend/src/core/**/*.ts',
-      'frontend/src/pages/**/*.{ts,vue}',
-      'frontend/src/components/**/*.{ts,vue}',
-      'frontend/src/composables/**/*.ts',
-      'frontend/src/stores/**/*.ts'
+      'extension/src/core/**/*.ts',
+      'extension/src/pages/**/*.{ts,vue}',
+      'extension/src/components/**/*.{ts,vue}',
+      'extension/src/composables/**/*.ts',
+      'extension/src/stores/**/*.ts'
     ),
     rules: {
       'no-restricted-imports': [
@@ -750,11 +751,11 @@ export default [
 
   // 架构铁律：chrome.bookmarks.* 仅允许 background / offscreen / infrastructure browser adapter
   {
-    files: isFrontendCwd ? ['src/**/*.{ts,tsx,vue,js}'] : ['frontend/src/**/*.{ts,tsx,vue,js}'],
+    files: isExtensionCwd ? ['src/**/*.{ts,tsx,vue,js}'] : ['extension/src/**/*.{ts,tsx,vue,js}'],
     ignores: eslintScopePaths(
-      'frontend/src/background/**',
-      'frontend/src/offscreen/**',
-      'frontend/src/infrastructure/browser/**'
+      'extension/src/background/**',
+      'extension/src/offscreen/**',
+      'extension/src/infrastructure/browser/**'
     ),
     rules: {
       'no-restricted-syntax': [
@@ -768,20 +769,20 @@ export default [
 
   // 架构铁律：UI 层禁止直连 chrome.tabs.*
   {
-    files: eslintScopePaths('frontend/src/pages/**/*.{ts,tsx,vue,js}'),
+    files: eslintScopePaths('extension/src/pages/**/*.{ts,tsx,vue,js}'),
     rules: {
       'no-restricted-syntax': ['error', ...chromeTabsCallSelectors]
     }
   },
 
-  // frontend 禁止直连 Supabase SDK（后端 / 官网 adapter 除外）
+  // extension 禁止直连 Supabase SDK（worker / 官网 adapter 除外）
   {
-    files: isFrontendCwd ? ['src/**/*.{ts,tsx,vue,js}'] : ['frontend/src/**/*.{ts,tsx,vue,js}'],
+    files: isExtensionCwd ? ['src/**/*.{ts,tsx,vue,js}'] : ['extension/src/**/*.{ts,tsx,vue,js}'],
     rules: supabaseImportRestriction
   },
 
   {
-    files: eslintScopePaths('backend/**/*.js'),
+    files: eslintScopePaths('worker/**/*.js'),
     languageOptions: {
       globals: {
         ...workerGlobals,
@@ -803,7 +804,7 @@ export default [
   },
 
   {
-    files: eslintScopePaths('backend/**/*.ts'),
+    files: eslintScopePaths('worker/**/*.ts'),
     rules: {
       '@typescript-eslint/no-explicit-any': 'off',
       '@typescript-eslint/no-unsafe-member-access': 'off',
@@ -873,10 +874,10 @@ export default [
   // logger / DEV expose：console 是刻意出口（非业务路径散落 log）
   {
     files: [
-      'frontend/src/infrastructure/logging/logger.ts',
-      'frontend/src/infrastructure/debug/**/*.ts',
-      'frontend/src/dev/probe/**/*.ts',
-      'frontend/src/background/main.ts'
+      'extension/src/infrastructure/logging/logger.ts',
+      'extension/src/infrastructure/debug/**/*.ts',
+      'extension/src/dev/probe/**/*.ts',
+      'extension/src/background/main.ts'
     ],
     rules: {
       'no-console': 'off'
@@ -885,8 +886,8 @@ export default [
 
   // Vue SFC 解析（必须位于 architecture 规则之后，防止 parserOptions 被覆盖）
   {
-    files: frontendVueFiles,
-    languageOptions: createVueLanguageOptions(frontendTsconfigRoot)
+    files: extensionVueFiles,
+    languageOptions: createVueLanguageOptions(extensionTsconfigRoot)
   },
   {
     files: websiteVueFiles,

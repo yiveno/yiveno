@@ -63,7 +63,7 @@
 
 **失败归因 stage（单选 · 暗线基建）：** `not_captured` · `index_gap` · `candidate_miss` · `understand_skew` · `rank_wrong` · `clue_insufficient` · `absent_honest` · `ux_friction` · `unknown`  
 **detailCodes（可多）：** `parse_fail` · `rank_wrong` · `type_hard_empty` · `time_soft_ok` · `no_signal` · `miss_neighborhood` · `weak_index` · `gist_mismatch` · `missing_topic` · `hybrid_drift` · `ux_friction` · `other:`  
-（映射见 `frontend/src/core/recall/dual-thread/recall-failure-attribution.ts`）
+（映射见 `extension/src/core/recall/dual-thread/recall-failure-attribution.ts`）
 
 ## 5. 备注
 

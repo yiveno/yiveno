@@ -46,9 +46,9 @@ archive/
     ├── types/                        # @yiveno/types 包
     ├── design-tokens/                # @yiveno/design-tokens 包
     ├── yiveno-probe/                 # @yiveno/probe 包
-    ├── backend/                      # Backend 说明
+    ├── worker/                      # Worker 说明
     ├── supabase/                     # Supabase 说明
-    └── frontend/src/dev/             # Frontend DEV 调试说明
+    └── extension/src/dev/             # Extension DEV 调试说明
 ```
 
 ---

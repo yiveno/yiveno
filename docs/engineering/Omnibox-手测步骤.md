@@ -2,7 +2,7 @@
 
 > **Normative 摘要：** [`Yiveno-产品文档-v4.0.md`](../product/Yiveno-产品文档-v4.0.md) **§5.10.8**。  
 > **架构：** [`ADR-007`](../architecture/decisions/ADR-007-omnibox-offline-lookup.md)。  
-> **自动化 must：** `frontend/src/core/recall/eval/omnibox-eval.test.ts`（`omnibox_must`）。  
+> **自动化 must：** `extension/src/core/recall/eval/omnibox-eval.test.ts`（`omnibox_must`）。  
 > **DEV API 总索引：** [`DEV-调试API.md`](./DEV-调试API.md)（`yiveno.seedRecallProbe` · `yiveno.runProbeOmniboxSmoke` 等）。
 
 ---
@@ -22,7 +22,7 @@
 
 ## 2. 前置
 
-1. `cd frontend && bun run build` → `chrome://extensions` 重新加载 Yiveno。
+1. `cd extension && bun run build` → `chrome://extensions` 重新加载 Yiveno。
 2. **库来源（你本地多为探针种库）：** 若曾跑过 `yiveno.seedRecallProbe({ replace: true })` 或默认三主题包种库，**手写精选**条目来自 `@yiveno/probe` 的 researcher / creator / developer 语料（Manifest V3、Stripe 幂等、远程办公、字体配对等）。**压力 ~20k 库**时部分线索可能被**无关干扰**顶掉——下文「压力库备注」有说明。  
    （「种库」= 写入测试数据，≠ §5.9 种子验证；见术语表 §8.1。）
 3. 可选：Side Panel 已打开（`Alt+Shift+Y`），便于对照。
@@ -46,7 +46,7 @@ await yiveno.runProbeOmniboxSmoke()
 // passed === total → 与 §4.1–4.2 对齐；失败项见 console.warn
 ```
 
-**说明：** `cd frontend && bun run test:run -- omnibox-eval` 测的是 **eval 内存语料**（`Manifest V3` / `i18n:check` 等），与探针种库手测 **相互独立**；两者都应绿，但线索表不同。
+**说明：** `cd extension && bun run test:run -- omnibox-eval` 测的是 **eval 内存语料**（`Manifest V3` / `i18n:check` 等），与探针种库手测 **相互独立**；两者都应绿，但线索表不同。
 
 ---
 
@@ -170,7 +170,7 @@ that chrome extension migration guide I bookmarked
 - [ ] §4.1 具体锚点 **3/3**（从上表 8 条里任选 3 条）
 - [ ] §4.3 负例 **2/2**（N1 + N2 最少）
 - [ ] §4.4 Side Panel 对照 **1 组**（具体锚点）
-- [ ] `cd frontend && bun run test:run -- omnibox-eval` 绿
+- [ ] `cd extension && bun run test:run -- omnibox-eval` 绿
 
 ---
 
@@ -180,8 +180,8 @@ that chrome extension migration guide I bookmarked
 | ------------------------ | ----------------------------------------------------------------------------------------------------------------- |
 | **DEV API 总索引**       | [`DEV-调试API.md`](./DEV-调试API.md)                                                                              |
 | 探针语料（手写精选条目） | `@yiveno/probe`（`packages/yiveno-probe/src/corpus/`）                                                            |
-| Omnibox 监听             | `frontend/src/background/listeners/omnibox.ts`                                                                    |
-| `entry: 'omnibox'` 分支  | `frontend/src/application/recall/backends/hybrid-recall-backend.ts`                                               |
-| suggest 文案 / ECS       | `frontend/src/core/recall/omnibox-suggest.ts`（`OMNIBOX_SUGGEST_LIMIT=6`，与 Panel 首屏解耦）                     |
+| Omnibox 监听             | `extension/src/background/listeners/omnibox.ts`                                                                   |
+| `entry: 'omnibox'` 分支  | `extension/src/application/recall/backends/hybrid-recall-backend.ts`                                              |
+| suggest 文案 / ECS       | `extension/src/core/recall/omnibox-suggest.ts`（`OMNIBOX_SUGGEST_LIMIT=6`，与 Panel 首屏解耦）                    |
 | i18n                     | `omnibox_default_suggestion[_with_shortcut]` · `omnibox_no_match[_with_shortcut]`（快捷键来自 `commands.getAll`） |
 | `omnibox_must`           | `omnibox-eval-cases.ts` · `run-omnibox-eval.ts`                                                                   |

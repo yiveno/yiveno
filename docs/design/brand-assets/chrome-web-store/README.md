@@ -1,7 +1,7 @@
 # Chrome Web Store 图形母本
 
 > **用途：** 仅上传 [Chrome Web Store 开发者后台](https://chrome.google.com/webstore/devconsole)，**不进**扩展 `dist/` 包。  
-> **契约：** `frontend/src/core/extension/extension-cws-graphics-contract.ts` + `chromewebstore-graphics-contract.test.ts`  
+> **契约：** `extension/src/core/extension/extension-cws-graphics-contract.ts` + `chromewebstore-graphics-contract.test.ts`  
 > **上架清单：** 仓库根 [`CHROMEWEBSTORE.md`](../../../../CHROMEWEBSTORE.md)
 
 ## 可上传文件
@@ -23,7 +23,7 @@
 4. **Omnibox**（可选）— `yi` 快捷跳转
 5. **Settings**（可选）— 隐私 / 同步开关
 
-**抓取建议：** `cd frontend && bun run build` → `chrome://extensions` 重新加载 → 打开 `sidepanel.html` / `library.html` / `settings.html` → 视口 1280×800 截图 → 以 `screenshot-0N-{scene}-1280x800.png` 命名落盘本目录 → 同批更新 `extension-cws-graphics-contract.ts` 与 `CHROMEWEBSTORE.md`。
+**抓取建议：** `cd extension && bun run build` → `chrome://extensions` 重新加载 → 打开 `sidepanel.html` / `library.html` / `settings.html` → 视口 1280×800 截图 → 以 `screenshot-0N-{scene}-1280x800.png` 命名落盘本目录 → 同批更新 `extension-cws-graphics-contract.ts` 与 `CHROMEWEBSTORE.md`。
 
 ## 非上传文件（设计稿导出）
 

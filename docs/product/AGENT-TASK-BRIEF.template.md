@@ -10,8 +10,8 @@
 ## Task Brief
 
 ### Scope
-- **In：**（本任务只改哪些路径/能力，例：`frontend/src/core/recall/`）
-- **Out：**（明确不做，例：不改 backend、不加 message type、不碰 i18n 全量）
+- **In：**（本任务只改哪些路径/能力，例：`extension/src/core/recall/`）
+- **Out：**（明确不做，例：不改 worker、不加 message type、不碰 i18n 全量）
 
 ### 双线程五问（权威：`Yiveno-双线程发展原则.md` · §0.1.2 / ADR-016）
 - **适用：** 方案/新能力 → **必填**；纯修回归 → 写 **N/A** 即可
@@ -82,14 +82,14 @@
 ## Task Brief
 
 ### Scope
-- **In：**`frontend/src/core/recall/recall-shell-empty-copy.ts` + 相关单测 + 必要 i18n key
-- **Out：**不改 Recall 排序/理解层；不加 message type；不动 backend
+- **In：**`extension/src/core/recall/recall-shell-empty-copy.ts` + 相关单测 + 必要 i18n key
+- **Out：**不改 Recall 排序/理解层；不加 message type；不动 worker
 
 ### 必读
 - @docs/product/Yiveno-术语表.md（clue / 邻域 / 附注）
 
 ### 验收
-- `cd frontend && bun run test:run -- recall-shell-empty-copy cold-start-shell-contract`
+- `cd extension && bun run test:run -- recall-shell-empty-copy cold-start-shell-contract`
 - 扩展空态 MCP：空库 Side Panel 一眼扫文案无助理口吻
 
 ### 禁止

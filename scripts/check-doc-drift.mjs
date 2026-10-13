@@ -14,21 +14,21 @@ import { fileURLToPath } from 'node:url'
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
 const REGISTRY_PATH = join(root, 'docs/engineering/background-message-types.registry')
-const HANDLER_PATH = join(root, 'frontend/src/background/handlers/message-handler.ts')
+const HANDLER_PATH = join(root, 'extension/src/background/handlers/message-handler.ts')
 const PRODUCT_DOC_PATH = join(root, 'docs/product/Yiveno-产品文档-v4.0.md')
 const CURRENT_PATH = join(root, 'docs/product/CURRENT.md')
 const SYNC_SCRIPT = join(root, 'scripts/sync-ide-boot.mjs')
 
 const MESSAGING_SCHEMA_FILES = [
-  'frontend/src/core/messaging/background-messages.ts',
-  'frontend/src/core/messaging/memory-messages.ts',
-  'frontend/src/core/messaging/recall-messages.ts',
-  'frontend/src/core/messaging/import-messages.ts',
-  'frontend/src/core/messaging/settings-messages.ts',
-  'frontend/src/core/messaging/commands-messages.ts',
-  'frontend/src/core/messaging/account-sync-messages.ts',
-  'frontend/src/core/messaging/mcp-messages.ts',
-  'frontend/src/core/messaging/debug-messages.ts'
+  'extension/src/core/messaging/background-messages.ts',
+  'extension/src/core/messaging/memory-messages.ts',
+  'extension/src/core/messaging/recall-messages.ts',
+  'extension/src/core/messaging/import-messages.ts',
+  'extension/src/core/messaging/settings-messages.ts',
+  'extension/src/core/messaging/commands-messages.ts',
+  'extension/src/core/messaging/account-sync-messages.ts',
+  'extension/src/core/messaging/mcp-messages.ts',
+  'extension/src/core/messaging/debug-messages.ts'
 ].map(p => join(root, p))
 
 function read(path) {
@@ -142,9 +142,9 @@ const DUAL_THREAD_REQUIRED_PATHS = [
   'docs/engineering/暗线基建-失败归因与受控适应.md',
   'docs/archive/research/dual-thread-notes/_TEMPLATE.md',
   'docs/archive/research/dual-thread-notes/README.md',
-  'frontend/src/core/recall/dual-thread/recall-failure-attribution.ts',
-  'frontend/src/core/recall/dual-thread/recall-adaptation-config.ts',
-  'frontend/src/core/recall/dual-thread/dual-thread-aggregate.ts'
+  'extension/src/core/recall/dual-thread/recall-failure-attribution.ts',
+  'extension/src/core/recall/dual-thread/recall-adaptation-config.ts',
+  'extension/src/core/recall/dual-thread/dual-thread-aggregate.ts'
 ]
 for (const rel of DUAL_THREAD_REQUIRED_PATHS) {
   const abs = join(root, rel)

@@ -30,4 +30,4 @@
 ## 相关
 
 - `docs/product/Yiveno-术语表.md`、`.cursor/rules/terminology.mdc`
-- 消息：`RECALL_WITH_CLUE`；`frontend/src/core/messaging/`
+- 消息：`RECALL_WITH_CLUE`；`extension/src/core/messaging/`

@@ -1,7 +1,7 @@
 # 认证系统使用指南
 
 > **最后更新：** 2026-09-17  
-> **状态：** Yiveno 使用**自定义 JWT + OAuth**（Google / Microsoft）；**不使用 Supabase Auth** 前端 composable。
+> **状态：** Yiveno 使用**自定义 JWT + OAuth**（Google / Microsoft）；**不使用 Supabase Auth** 客户端 composable。
 
 ## 🎯 概述
 
@@ -9,15 +9,15 @@ Yiveno 认证流程：
 
 1. **扩展/官网** → `/api/auth/start?provider=google|microsoft` → OAuth Provider 授权页
 2. **OAuth Provider** → 回调 `/api/auth/callback` → Worker 签发 **自定义 JWT**
-3. **前端** 存储 JWT → 后续请求携带 `Authorization: Bearer <token>`
+3. **扩展 / 官网** 存储 JWT → 后续请求携带 `Authorization: Bearer <token>`
 
-**不使用** Supabase 前端 SDK `useSupabaseAuth`。
+**不使用** Supabase 客户端 SDK `useSupabaseAuth`。
 
 ---
 
 ## 🔐 认证架构
 
-### Backend（Worker）
+### Worker
 
 | 端点                      | 职责                                           |
 | ------------------------- | ---------------------------------------------- |
@@ -37,7 +37,7 @@ interface YivenoJWT {
 }
 ```
 
-### Frontend
+### Extension
 
 | 模块                | 路径                                              | 职责                  |
 | ------------------- | ------------------------------------------------- | --------------------- |
@@ -115,9 +115,9 @@ REDIRECT_URI_ALLOWLIST=        # 允许的回调域名（逗号分隔）
 
 ## ❓ 常见问题
 
-### Q: 为什么不使用 Supabase Auth 前端 SDK？
+### Q: 为什么不使用 Supabase Auth 客户端 SDK？
 
-A: Yiveno 使用**自定义 JWT + OAuth**（Worker 签发），不依赖 Supabase 前端 SDK。Supabase 仅用于服务端数据存储。
+A: Yiveno 使用**自定义 JWT + OAuth**（Worker 签发），不依赖 Supabase 客户端 SDK。Supabase 仅用于服务端数据存储。
 
 ### Q: 用户首次登录需要注册吗？
 

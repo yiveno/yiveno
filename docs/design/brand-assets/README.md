@@ -20,7 +20,7 @@
 
 | 运行时 | 路径                                        |
 | ------ | ------------------------------------------- |
-| 扩展   | `frontend/public/images/`                   |
+| 扩展   | `extension/public/images/`                  |
 | 官网   | `website/public/`、`website/public/images/` |
 
 完整文件级映射见 Checklist §3；默认用 `bun run sync:brand-assets` 执行 §2 映射。

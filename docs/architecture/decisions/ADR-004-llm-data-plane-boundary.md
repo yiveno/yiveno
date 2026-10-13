@@ -30,4 +30,4 @@
 ## 相关
 
 - 产品文档 §0.1.0、§0.1.1、§0.3、§2
-- `frontend/src/core/recall/understand/`、`application/recall/`
+- `extension/src/core/recall/understand/`、`application/recall/`

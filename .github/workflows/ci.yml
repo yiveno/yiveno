@@ -1,5 +1,5 @@
 # Yiveno CI（对齐 AGENTS.md 质量门禁矩阵）
-# PR / push main：typecheck:ci + lint + i18n + knip + FE/BE test + FE build
+# PR / push main：typecheck:ci + lint + i18n + knip + extension/worker test + extension build
 # 不在此跑：bun audit、全仓 typecheck:force；扩展 UI 验收走 MCP 真机（非 CI）
 
 name: CI
@@ -34,7 +34,7 @@ jobs:
       - name: Install
         run: bun install --frozen-lockfile
 
-      # packages + backend + website；FE 整图（app+node+vitest）由 build-test 内 vue-tsc -b 覆盖
+      # packages + worker + website；extension 整图（app+node+vitest）由 build-test 内 vue-tsc -b 覆盖
       - name: Typecheck (ci)
         run: bun run typecheck:ci
 
@@ -50,14 +50,14 @@ jobs:
       - name: Knip
         run: bun run knip
 
-      - name: Frontend tests
-        run: cd frontend && bun run test:run
+      - name: Extension tests
+        run: cd extension && bun run test:run
 
-      - name: Backend tests
-        run: cd backend && bun run test
+      - name: Worker tests
+        run: cd worker && bun run test
 
   build-test:
-    name: Frontend build
+    name: Extension build
     runs-on: ubuntu-latest
     needs: quality-check
     steps:
@@ -74,11 +74,11 @@ jobs:
       - name: Install
         run: bun install --frozen-lockfile
 
-      # CI 用 development build（含 vue-tsc -b）；发版用本地/手动 build:fe:prod
+      # CI 用 development build（含 vue-tsc -b）；发版用本地/手动 build:extension:prod
       - name: Build extension
-        run: cd frontend && bun run build
+        run: cd extension && bun run build
 
-      # 扩展产物在仓库根 dist/（frontend/vite OUT_DIR），不是 frontend/dist
+      # 扩展产物在仓库根 dist/（extension/vite OUT_DIR），不是 extension/dist
       - name: Verify dist
         run: |
           test -d dist || { echo "dist missing"; exit 1; }

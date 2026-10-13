@@ -12,16 +12,16 @@
 ```
 Yiveno-设计标准-v1.md + packages/design-tokens
   → docs/design/brand-assets/     ← 仓内母本（改这里）
-  → frontend/public/images/       ← 扩展运行时
+  → extension/public/images/       ← 扩展运行时
   → website/public/               ← 官网运行时
   → Chrome Web Store 上传         ← chrome-web-store/ 母本
 ```
 
-| 目录                                  | 角色                             | 发版时                                          |
-| ------------------------------------- | -------------------------------- | ----------------------------------------------- |
-| `docs/design/brand-assets/`           | **唯一手写母本**                 | ✅ 先改                                         |
-| `frontend/public/`、`website/public/` | 运行时                           | ⚙️ 脚本或按表复制，禁止只在运行时手改不同步母本 |
-| `docs/archive/research/`              | 市场研究 Non-normative（已归档） | ❌ 与品牌发版无关                               |
+| 目录                                   | 角色                             | 发版时                                          |
+| -------------------------------------- | -------------------------------- | ----------------------------------------------- |
+| `docs/design/brand-assets/`            | **唯一手写母本**                 | ✅ 先改                                         |
+| `extension/public/`、`website/public/` | 运行时                           | ⚙️ 脚本或按表复制，禁止只在运行时手改不同步母本 |
+| `docs/archive/research/`               | 市场研究 Non-normative（已归档） | ❌ 与品牌发版无关                               |
 
 ---
 
@@ -30,8 +30,8 @@ Yiveno-设计标准-v1.md + packages/design-tokens
 母本改完后：
 
 ```bash
-bun run sync:brand-assets        # 母本 → frontend/public + website/public
-cd frontend && bun run build     # 或 bun run build:fe
+bun run sync:brand-assets        # 母本 → extension/public + website/public
+cd extension && bun run build     # 或 bun run build:extension
 cd website && bun run build:dev  # 官网抽检
 ```
 
@@ -45,20 +45,20 @@ bun run sync:brand-assets --check
 
 ## 3. 手动映射表（脚本未覆盖时）
 
-| 母本 `brand-assets/`                   | 运行时目标                                                                                    |
-| -------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `chrome-extension/icon-16.png`         | `frontend/public/images/icon16.png`                                                           |
-| `chrome-extension/icon-32.png`         | `frontend/public/images/icon32.png`                                                           |
-| `chrome-extension/icon-48.png`         | `frontend/public/images/icon48.png`                                                           |
-| `chrome-extension/icon-128.png`        | `frontend/public/images/icon128.png`                                                          |
-| `logo/yiveno-primary.svg`              | `frontend/public/images/logo-mark.svg`、`website/public/images/logo-mark.svg`                 |
-| `logo/logo-on-light.svg`               | `frontend/public/images/logo-mark-mono-light.svg`                                             |
-| `logo/logo-on-dark.svg`                | `frontend/public/images/logo-mark-on-dark.svg`、`website/public/images/logo-mark-on-dark.svg` |
-| `chrome-extension/favicon.ico`         | `website/public/favicon.ico`                                                                  |
-| `applications/yiveno-product-hero.jpg` | `website/public/og-image.jpg`                                                                 |
-| `chrome-web-store/*`                   | Chrome Web Store 开发者后台上传（不进扩展包）                                                 |
+| 母本 `brand-assets/`                   | 运行时目标                                                                                     |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `chrome-extension/icon-16.png`         | `extension/public/images/icon16.png`                                                           |
+| `chrome-extension/icon-32.png`         | `extension/public/images/icon32.png`                                                           |
+| `chrome-extension/icon-48.png`         | `extension/public/images/icon48.png`                                                           |
+| `chrome-extension/icon-128.png`        | `extension/public/images/icon128.png`                                                          |
+| `logo/yiveno-primary.svg`              | `extension/public/images/logo-mark.svg`、`website/public/images/logo-mark.svg`                 |
+| `logo/logo-on-light.svg`               | `extension/public/images/logo-mark-mono-light.svg`                                             |
+| `logo/logo-on-dark.svg`                | `extension/public/images/logo-mark-on-dark.svg`、`website/public/images/logo-mark-on-dark.svg` |
+| `chrome-extension/favicon.ico`         | `website/public/favicon.ico`                                                                   |
+| `applications/yiveno-product-hero.jpg` | `website/public/og-image.jpg`                                                                  |
+| `chrome-web-store/*`                   | Chrome Web Store 开发者后台上传（不进扩展包）                                                  |
 
-**扩展 manifest：** `frontend/public/manifest.json` → `icons` 指向 `images/icon16.png` 等（无连字符命名）。
+**扩展 manifest：** `extension/public/manifest.json` → `icons` 指向 `images/icon16.png` 等（无连字符命名）。
 
 **官网 OG：** 确认 `website` 布局引用 `/og-image.jpg`；社交预览以 1200×630 为准（见 `Yiveno-logo-asset-generation-prompt.md`）。
 
@@ -68,7 +68,7 @@ bun run sync:brand-assets --check
 
 ### 4.1 构建
 
-- [ ] `cd frontend && bun run build` 成功
+- [ ] `cd extension && bun run build` 成功
 - [ ] `dist/manifest.json` 中 `icons` 路径存在
 - [ ] `cd website && bun run build:dev`（或 `build:prod`）成功
 
@@ -100,7 +100,7 @@ bun run sync:brand-assets --check
 
 ## 6. Git LFS（Issue #30 · 工程轨道 · ADR-006）
 
-品牌母本 `docs/design/brand-assets/` 中的 **PNG/JPG/SVG/ICO/WebP** 走 **Git LFS**（见根目录 `.gitattributes`）。**本 Checklist 流程不变**；运行时 `frontend/public/`、`website/public/` 仍为普通 Git。
+品牌母本 `docs/design/brand-assets/` 中的 **PNG/JPG/SVG/ICO/WebP** 走 **Git LFS**（见根目录 `.gitattributes`）。**本 Checklist 流程不变**；运行时 `extension/public/`、`website/public/` 仍为普通 Git。
 
 **首次 clone / 换机：**
 

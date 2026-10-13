@@ -150,7 +150,7 @@ Yiveno 同时承载两条**相互促进、但不互相替代**的发展线程：
 
 | 口子             | 代码                                                                        | 状态                              |
 | ---------------- | --------------------------------------------------------------------------- | --------------------------------- |
-| 失败环节归因枚举 | `frontend/src/core/recall/dual-thread/recall-failure-attribution.ts`        | schema + 填卡；**不**自动判因     |
+| 失败环节归因枚举 | `extension/src/core/recall/dual-thread/recall-failure-attribution.ts`       | schema + 填卡；**不**自动判因     |
 | 已知金标漏召检测 | 同文件 `assessKnownGoldRecallGap`                                           | 区分未存/候选漏/首屏外；须自备 id |
 | 受控适应旋钮登记 | `…/recall-adaptation-config.ts`                                             | 索引 + 回退/评估门；**不**自改值  |
 | 匿名汇总草图     | `…/dual-thread-aggregate.ts` + DEV `yiveno.exportDualThreadAggregateSketch` | 观测口子                          |

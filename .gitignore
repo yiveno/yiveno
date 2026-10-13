@@ -1,7 +1,7 @@
-backend/node_modules/
+worker/node_modules/
 node_modules/
-backend/.cache/
-backend/.wrangler/
+worker/.cache/
+worker/.wrangler/
 dist/
 .DS_Store
 **/.DS_Store
@@ -32,7 +32,7 @@ website/.env
 !*-ca.pem
 
 # Cloudflare Worker 本地开发变量
-backend/.dev.vars
+worker/.dev.vars
 
 # 历史备份文件
 *-legacy.*
@@ -100,7 +100,7 @@ htmlcov/
 .vitepress/dist
 
 # Cloudflare workers local development variables
-backend/.dev.vars
+worker/.dev.vars
 
 # 测试覆盖率
 coverage/
@@ -146,8 +146,8 @@ $RECYCLE.BIN/
 website/.astro/
 
 # 本地 embedding 模型缓存（v4 下载链已移除；保留规则以防残留目录）
-frontend/public/models/Xenova/
-frontend/public/models/**/.model-ready.json
+extension/public/models/Xenova/
+extension/public/models/**/.model-ready.json
 tmp/yiveno-make-preview-1.png
 tmp/yiveno-make-preview-2.png
 tmp/*

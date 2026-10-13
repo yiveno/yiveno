@@ -1,7 +1,7 @@
 #!/usr/bin/env bun
 /**
  * 本地一键绿检（开发自检，非 CI 替代）。
- * 顺序：typecheck:fe → knip:fe → test:must → doc:check
+ * 顺序：typecheck:extension → knip:extension → test:must → doc:check
  * 任一步失败即 exit 1；合入前仍须 pre-push / CI 全量。
  *
  * 用法：bun run dev:check
@@ -13,8 +13,8 @@ import { fileURLToPath } from 'node:url'
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 
 const steps = [
-  { name: 'typecheck:fe', cmd: ['bun', 'run', 'typecheck:fe'] },
-  { name: 'knip:fe', cmd: ['bun', 'run', 'knip:fe'] },
+  { name: 'typecheck:extension', cmd: ['bun', 'run', 'typecheck:extension'] },
+  { name: 'knip:extension', cmd: ['bun', 'run', 'knip:extension'] },
   { name: 'test:must', cmd: ['bun', 'run', 'test:must'] },
   { name: 'doc:check', cmd: ['bun', 'run', 'doc:check'] }
 ]

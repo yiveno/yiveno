@@ -91,7 +91,7 @@ function listChangedFiles() {
   return gitLines(['diff', '--name-only', '--diff-filter=ACDMRT'])
 }
 
-/** 把所有方括号索引段提到一个集合：「frontend/src/x.ts」、「docs/...」 */
+/** 把所有方括号索引段提到一个集合：「extension/src/x.ts」、「docs/...」 */
 function extractIndexedPaths(message) {
   const set = new Set()
   // 匹配：[path...] —— path 不能包含换行、不允许 [ 字符

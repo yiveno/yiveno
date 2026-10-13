@@ -82,11 +82,11 @@ flowchart LR
 ### 2.2 3 条“硬禁止”清单（务必记住）
 
 1. **UI 不得直连 IndexedDB / `chrome.bookmarks.*` / `chrome.tabs.*` 等**  
-   UI 只能通过 `frontend/src/infrastructure/messaging/background-client.ts` 发消息给 Background。
+   UI 只能通过 `extension/src/infrastructure/messaging/background-client.ts` 发消息给 Background。
 2. **Background 必须是唯一 Chrome API 监听者**  
-   Chrome 事件监听/处理（例如 omnibox、commands、import 监听、badge、同步）都在 `frontend/src/background/*`。
+   Chrome 事件监听/处理（例如 omnibox、commands、import 监听、badge、同步）都在 `extension/src/background/*`。
 3. **IndexedDB 唯一入口**  
-   所有 IndexedDB 操作必须走 `frontend/src/infrastructure/indexeddb/manager.ts` 的 `indexedDBManager`（或其封装的 repository）。
+   所有 IndexedDB 操作必须走 `extension/src/infrastructure/indexeddb/manager.ts` 的 `indexedDBManager`（或其封装的 repository）。
 
 ### 2.3 4 条“改动顺序”规则（最容易走弯路的地方）
 
@@ -99,7 +99,7 @@ flowchart LR
 
 ### 2.4 目录职责与依赖禁区（新代码放哪里）
 
-为了“后续源源不断新增功能”仍能稳定演进，这里把 `frontend/src` 的关键目录职责写成可执行规则。
+为了“后续源源不断新增功能”仍能稳定演进，这里把 `extension/src` 的关键目录职责写成可执行规则。
 
 #### 2.4.1 `core/`（领域规则与契约）
 
@@ -133,7 +133,7 @@ flowchart LR
 
 - 放：Vue 页面与 content script 的 UI/交互状态机。
 - 禁：直连 IndexedDB / chrome.bookmarks / chrome.tabs 等。
-- 必须：通过 `frontend/src/infrastructure/messaging/background-client.ts` 发消息给 background。
+- 必须：通过 `extension/src/infrastructure/messaging/background-client.ts` 发消息给 background。
 
 **例外（chrome.storage.onChanged 监听 · 2026-09-17 审计确认）：**
 
@@ -188,15 +188,15 @@ flowchart LR
 
 为避免未来接入 Hybrid/embedding/索引时在主链路到处写分支，本项目在 `application/recall` 引入“完整 RecallBackend”扩展缝：
 
-- 新接口：`frontend/src/application/recall/recall-backend.ts`
+- 新接口：`extension/src/application/recall/recall-backend.ts`
   - 契约：`recallWithClue(clue: string): Promise<RecallResult>`
-- 当前主实现：`frontend/src/application/recall/backends/keyword-recall-backend.ts`
+- 当前主实现：`extension/src/application/recall/backends/keyword-recall-backend.ts`
   - 保证与旧版行为一致（关键词 Filter + 结果态构建 + `Need A Clue` / top/also/no_match 逻辑）
-- 未来骨架（未启用）：`frontend/src/application/recall/backends/hybrid-recall-backend.ts`
+- 未来骨架（未启用）：`extension/src/application/recall/backends/hybrid-recall-backend.ts`
 
 入口在哪里接管？
 
-- `frontend/src/application/recall/recall-service.ts`
+- `extension/src/application/recall/recall-service.ts`
   - `RecallService` 只做委托：`return backend.recallWithClue(clue)`
   - 当前工厂 `createRecallBackend()` 固定返回 `KeywordRecallBackend`
 
@@ -205,7 +205,7 @@ flowchart LR
 1. 新建 backend 实现文件，实现 `RecallBackend`。
 2. 不改 UI/handlers/core 结果态构建代码。
 3. 只改 `createRecallBackend()`（或未来用设置开关切换）。
-4. 如 Recall 的 outcome/排序规则有变化：补 eval case（`frontend/src/core/recall/eval/`）并确保 `must` 全绿。
+4. 如 Recall 的 outcome/排序规则有变化：补 eval case（`extension/src/core/recall/eval/`）并确保 `must` 全绿。
 5. 如候选集来源改变但结果构建仍一致：优先补“候选集→top/also/need/no_match”相关的领域单测。
 
 ## 3. 产品主流程（端到端）标准化描述
@@ -366,7 +366,7 @@ Omnibox 是“单次命中”入口：输入变化只生成原生建议，不做
 
 **代码链路（Background listener 内部直跑，无 UI messaging）**
 
-- `frontend/src/background/listeners/omnibox.ts`
+- `extension/src/background/listeners/omnibox.ts`
   - `registerOmniboxListeners()`
     - `onInputChanged`：`recallService.recallWithClue(clue)` → `recallResultToOmniboxSuggests(...)` → `chrome.omnibox.suggest(...)`
   - `onInputEntered`
@@ -385,14 +385,14 @@ Omnibox 是“单次命中”入口：输入变化只生成原生建议，不做
 
 **代码链路**
 
-- `frontend/src/background/listeners/commands.ts`
+- `extension/src/background/listeners/commands.ts`
   - `registerCommandListeners()`
     - `open_library` → `focusOrOpenLibraryTab()`
     - `open_settings` → `focusOrOpenSettingsTab()`
     - `save_selection` / `save_selection_with_note`
       - 通过 `dispatchSelectionToolbarCommand(...)` 让划词脚本执行保存/写附注
 
-- `frontend/src/core/ui/keyboard-command.ts`
+- `extension/src/core/ui/keyboard-command.ts`
   - 只负责“解释键盘意图”（上/下/Enter confirm 等）
   - 具体页面把意图映射到自己的状态机（比如 Side Panel 的结果列表键盘导航）
 
@@ -402,14 +402,14 @@ Omnibox 是“单次命中”入口：输入变化只生成原生建议，不做
 
 **Library：**
 
-- `frontend/src/pages/library/Library.vue`
+- `extension/src/pages/library/Library.vue`
   - 加载摘录列表：`background-client.listMemoryItems({ type: 'text_excerpt', limit: ... })`
   - 加载书签树：`background-client.fetchBookmarkLibraryTree()`
   - 打开书签（含 `memoryItemId`）时会先写 `recordMemoryOpen({id})`，再执行 `window.open(url, ...)`
 
 **Detail：**
 
-- `frontend/src/pages/detail/Detail.vue`
+- `extension/src/pages/detail/Detail.vue`
   - 读取 `id`：`background-client.getMemoryItem({id})`
   - 若 `item.type === 'text_excerpt'`：
     - `viewState = 'ready'`
@@ -423,16 +423,16 @@ Omnibox 是“单次命中”入口：输入变化只生成原生建议，不做
 
 ### 4.1 消息契约（Message Schema）
 
-- `frontend/src/core/messaging/background-messages.ts`  
+- `extension/src/core/messaging/background-messages.ts`  
   统一导出 Background scope 消息 union（只做类型/契约，不做业务）。
-- `frontend/src/core/messaging/memory-messages.ts`  
+- `extension/src/core/messaging/memory-messages.ts`  
   `CAPTURE_BOOKMARK` / `CAPTURE_TEXT_EXCERPT` / `LIST_MEMORY_ITEMS` / `GET_MEMORY_ITEM` / `DELETE_MEMORY_ITEM` / `UPDATE_MEMORY_NOTE` / `RECORD_MEMORY_OPEN` / `RECORD_RECALL_DISMISS`
-- `frontend/src/core/messaging/recall-messages.ts`  
+- `extension/src/core/messaging/recall-messages.ts`  
   `RECALL_WITH_CLUE`
 
 ### 4.2 Background 分发（switch）
 
-- `frontend/src/background/handlers/message-handler.ts`
+- `extension/src/background/handlers/message-handler.ts`
   - `dispatchBackgroundMessage(message)`：按 `message.type` 调具体 handler
 
 你要新增 message type 时，**先更新 core messaging 契约**，再把 switch 分发补齐。
@@ -440,10 +440,10 @@ Omnibox 是“单次命中”入口：输入变化只生成原生建议，不做
 ### 4.3 Background handlers（业务入口）
 
 - Recall：
-  - `frontend/src/background/handlers/recall-handler.ts`
+  - `extension/src/background/handlers/recall-handler.ts`
     - `handleRecallWithClue(payload)` → 调用 `recallService.recallWithClue`
 - Memory：
-  - `frontend/src/background/handlers/memory-handler.ts`
+  - `extension/src/background/handlers/memory-handler.ts`
     - `handleCaptureBookmark`
     - `handleCaptureTextExcerpt`
     - `handleListMemoryItems`
@@ -455,12 +455,12 @@ Omnibox 是“单次命中”入口：输入变化只生成原生建议，不做
 
 ### 4.4 application：业务服务（编排）
 
-- `frontend/src/application/recall/recall-service.ts`
+- `extension/src/application/recall/recall-service.ts`
   - `RECALL_SCAN_LIMIT ≈ 10000`
   - `memoryItemService.list({limit})`
   - `recallByKeyword(items, clue, { candidateLimit: 6 })`
 
-- `frontend/src/application/memory/memory-item-service.ts`
+- `extension/src/application/memory/memory-item-service.ts`
   - 写 openCount/lastOpenedAt
   - 写 dismissCount/lastDismissedAt
   - 通过 repository 实现持久化
@@ -468,22 +468,22 @@ Omnibox 是“单次命中”入口：输入变化只生成原生建议，不做
 ### 4.5 core：领域规则（可测试、可评测）
 
 - Recall 结果构建：
-  - `frontend/src/core/recall/build-recall-result.ts`
+  - `extension/src/core/recall/build-recall-result.ts`
     - `best.score < RECALL_TOP_PICK_MIN_SCORE` → `need_a_clue`
     - `outcome` 的分支逻辑与弱候选规则都在这里
 - 关键词 Filter：
-  - `frontend/src/core/recall/keyword-filter.ts`
+  - `extension/src/core/recall/keyword-filter.ts`
     - `filterMemoryItemsByKeyword`
     - `scoreMemoryItem`
     - `computeDismissPenalty`
 - duplicates 折叠互斥：
-  - `frontend/src/core/recall/collapse-recall-duplicates.ts`
+  - `extension/src/core/recall/collapse-recall-duplicates.ts`
 
 ### 4.6 infrastructure：IndexedDB 与外部桥接
 
-- `frontend/src/infrastructure/indexeddb/manager.ts`
+- `extension/src/infrastructure/indexeddb/manager.ts`
   - `indexedDBManager`：唯一 IndexedDB 初始化/事务入口
-- `frontend/src/infrastructure/indexeddb/memory-item-repository.ts`
+- `extension/src/infrastructure/indexeddb/memory-item-repository.ts`
   - `recordDismiss(ids)`：递增 `dismissCount`，写 `lastDismissedAt`，不改 `updatedAt`
   - create/list/get/update/softDelete 等持久化
 
@@ -503,7 +503,7 @@ Omnibox 是“单次命中”入口：输入变化只生成原生建议，不做
 | 捕获（书签）          | `CAPTURE_BOOKMARK`           | `handleCaptureBookmark()`     | `memoryItemService.captureBookmark()`                | 写 MemoryItem                             |
 | 删除摘录              | `deleteMemoryItem()`         | `handleDeleteMemoryItem()`    | `memoryItemService.softDelete()`                     | 软删 `text_excerpt`                       |
 
-> background-client 的函数定义在：`frontend/src/infrastructure/messaging/background-client.ts`
+> background-client 的函数定义在：`extension/src/infrastructure/messaging/background-client.ts`
 
 ## 6. Recall 产品不变量（修改算法时必看）
 
@@ -511,7 +511,7 @@ Omnibox 是“单次命中”入口：输入变化只生成原生建议，不做
 
 ### 6.1 Top Pick vs Need A Clue
 
-- `frontend/src/core/recall/build-recall-result.ts`
+- `extension/src/core/recall/build-recall-result.ts`
   - 若 best.score < `RECALL_TOP_PICK_MIN_SCORE (18)`：`outcome = 'need_a_clue'`
   - `topPick = null`
   - `alsoPossible` 只放弱候选
@@ -523,7 +523,7 @@ Omnibox 是“单次命中”入口：输入变化只生成原生建议，不做
 
 ### 6.3 探活扫描上限
 
-- `frontend/src/application/recall/recall-service.ts`
+- `extension/src/application/recall/recall-service.ts`
   - `RECALL_SCAN_LIMIT = 10000`
 
 当前阶段不要在 UI 或 core 随意改扫描策略；如需改，必须同步：
@@ -535,7 +535,7 @@ Omnibox 是“单次命中”入口：输入变化只生成原生建议，不做
 
 ### 7.1 必保门禁（CI）
 
-- `frontend/src/core/recall/eval/recall-eval.test.ts`
+- `extension/src/core/recall/eval/recall-eval.test.ts`
   - `must 门禁必须全通过`
   - `stretch 用例给进度，不挡门禁`
 
@@ -547,8 +547,8 @@ Omnibox 是“单次命中”入口：输入变化只生成原生建议，不做
 
 ### 7.3 message/handler 集成
 
-- `frontend/src/background/handlers/memory-handler.test.ts`
-- `frontend/src/background/handlers/recall-handler.test.ts`
+- `extension/src/background/handlers/memory-handler.test.ts`
+- `extension/src/background/handlers/recall-handler.test.ts`
 
 ### 7.4 新能力新增测试的最低标准（建议）
 
@@ -593,28 +593,28 @@ Omnibox 是“单次命中”入口：输入变化只生成原生建议，不做
 ## 附录 A：关键路径快速索引（方便你在实现时直达）
 
 - 消息契约：
-  - `frontend/src/core/messaging/memory-messages.ts`
-  - `frontend/src/core/messaging/recall-messages.ts`
-  - `frontend/src/core/messaging/background-messages.ts`
+  - `extension/src/core/messaging/memory-messages.ts`
+  - `extension/src/core/messaging/recall-messages.ts`
+  - `extension/src/core/messaging/background-messages.ts`
 - Background 分发：
-  - `frontend/src/background/handlers/message-handler.ts`
+  - `extension/src/background/handlers/message-handler.ts`
 - Background handlers：
-  - `frontend/src/background/handlers/memory-handler.ts`
-  - `frontend/src/background/handlers/recall-handler.ts`
+  - `extension/src/background/handlers/memory-handler.ts`
+  - `extension/src/background/handlers/recall-handler.ts`
 - application：
-  - `frontend/src/application/memory/memory-item-service.ts`
-  - `frontend/src/application/recall/recall-service.ts`
+  - `extension/src/application/memory/memory-item-service.ts`
+  - `extension/src/application/recall/recall-service.ts`
 - core：
-  - `frontend/src/core/recall/build-recall-result.ts`
-  - `frontend/src/core/recall/keyword-filter.ts`
-  - `frontend/src/core/recall/collapse-recall-duplicates.ts`
+  - `extension/src/core/recall/build-recall-result.ts`
+  - `extension/src/core/recall/keyword-filter.ts`
+  - `extension/src/core/recall/collapse-recall-duplicates.ts`
 - infrastructure：
-  - `frontend/src/infrastructure/indexeddb/manager.ts`
-  - `frontend/src/infrastructure/indexeddb/memory-item-repository.ts`
+  - `extension/src/infrastructure/indexeddb/manager.ts`
+  - `extension/src/infrastructure/indexeddb/memory-item-repository.ts`
 - UI 消息客户端：
-  - `frontend/src/infrastructure/messaging/background-client.ts`
+  - `extension/src/infrastructure/messaging/background-client.ts`
 - UI 主入口：
-  - `frontend/src/pages/sidepanel/SidePanel.vue`
-  - `frontend/src/pages/library/Library.vue`
-  - `frontend/src/pages/detail/Detail.vue`
-  - `frontend/src/content/selection-toolbar/main.ts`
+  - `extension/src/pages/sidepanel/SidePanel.vue`
+  - `extension/src/pages/library/Library.vue`
+  - `extension/src/pages/detail/Detail.vue`
+  - `extension/src/content/selection-toolbar/main.ts`

@@ -88,11 +88,11 @@ clue
 
 ## 相关代码锚点
 
-| 文件                                                                | 角色                   |
-| ------------------------------------------------------------------- | ---------------------- |
-| `frontend/src/core/recall/parse-recall-clue-types.ts`               | `ParsedRecallClue`     |
-| `frontend/src/core/recall/understand/llm-parsed-clue-proposal.ts`   | LLM 提议 Zod           |
-| `frontend/src/core/recall/understand/build-llm-parse-prompt.ts`     | system prompt          |
-| `frontend/src/core/recall/understand/map-llm-proposal-to-parsed.ts` | 提议→门禁→结构         |
-| `frontend/src/core/recall/understand/understand-recall-clue.ts`     | 网关 + 单次 LLM / 降级 |
-| `frontend/src/core/recall/parse-recall-clue-lexicon.ts`             | 时间/类型/行为闭集词面 |
+| 文件                                                                 | 角色                   |
+| -------------------------------------------------------------------- | ---------------------- |
+| `extension/src/core/recall/parse-recall-clue-types.ts`               | `ParsedRecallClue`     |
+| `extension/src/core/recall/understand/llm-parsed-clue-proposal.ts`   | LLM 提议 Zod           |
+| `extension/src/core/recall/understand/build-llm-parse-prompt.ts`     | system prompt          |
+| `extension/src/core/recall/understand/map-llm-proposal-to-parsed.ts` | 提议→门禁→结构         |
+| `extension/src/core/recall/understand/understand-recall-clue.ts`     | 网关 + 单次 LLM / 降级 |
+| `extension/src/core/recall/parse-recall-clue-lexicon.ts`             | 时间/类型/行为闭集词面 |

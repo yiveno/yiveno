@@ -1,18 +1,18 @@
-# Skills 复查路线图（frontend 优先）
+# Skills 复查路线图（extension 优先）
 
-> **目的：** 用 `chrome-extensions` + `modern-web-guidance` 分阶段复查 frontend，慢速不漏项。  
+> **目的：** 用 `chrome-extensions` + `modern-web-guidance` 分阶段复查 extension，慢速不漏项。  
 > **纪律：** 每批先只读 Issue 表 → 再小 scope 实现 P0；冲突时 Yiveno 产品文档 / `AGENTS.md` > skill 通用方案。  
 > **Issue 台账（逐条状态）：** [`Skills-复查-Issues.md`](./Skills-复查-Issues.md) — 审计表与 **已修 / 延后 / 不采纳** 以该文件为准。
 
-## 扫描范围（frontend）
+## 扫描范围（extension）
 
 | Skill                 | 路径                                                                                                                                       |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | `chrome-extensions`   | `public/manifest.json`、`src/background/**`、`src/content/**`、`src/infrastructure/browser/**`、扩展页 `src/pages/**`、`CHROMEWEBSTORE.md` |
 | `modern-web-guidance` | `src/pages/**`、`src/infrastructure/ui/**`、`src/content/**`（UI 部分）                                                                    |
-| 一般不扫              | `src/core/**`（无 Chrome/DOM）、`backend/**`                                                                                               |
+| 一般不扫              | `src/core/**`（无 Chrome/DOM）、`worker/**`                                                                                                |
 
-官网 `website/**` 属 `modern-web-guidance` 可选批次，不在本表 frontend 阶段。
+官网 `website/**` 属 `modern-web-guidance` 可选批次，不在本表 extension 阶段。
 
 ## 进度
 
@@ -100,7 +100,7 @@
 - **A11 externally_connectable**（2026-08-30）：仅官网 OAuth handoff（session/sign-out Zod）；`core/extension/externally-connectable-origins` 权威表 ↔ manifest matches 契约；P0：`onMessageExternal` origin 拒绝 + 幂等注册；session 写 storage 立即 ok，IDB 归并/embedding 前 await bootstrap；CHROMEWEBSTORE 已披露；P1：listener 无 remove（仅 SW 生命周期一次）
 - **A12 Icons / CSP**（2026-08-30）：16/32/48/128 PNG 存在且尺寸正确；`icons`↔`action.default_icon` 权威表；无自定义放宽 CSP / 无 sandbox；扩展页仅 `type=module` 外链脚本；content_scripts 无远程/内联 CSS；P1：HTML favicon 链 icon16/32（`extension-page-favicon-contract.test.ts`）
 - **A13 Options UI**（2026-08-30）：`options_ui`→`settings.html`+`open_in_tab`；分区 `?section=` 深链 + `settings-sections` 单测；设置走 `background-client`；程序内打开用 `focusOrOpenSettingsTab`（非 `openOptionsPage`）；`open_settings` 无默认快捷键；P1：无 `popstate` 回退同步（仅 replaceState）
-- **A14 CWS 合规全文**（2026-08-30）：`extension-cws-contract` 权威 permissions/host；`chromewebstore-manifest-contract` + `chromewebstore-graphics-contract` 单测；短描述↔`app_description`；icon128 已验；母本截图/promo 落盘 `brand-assets/chrome-web-store/`（2026-09-01）；产品 UI 截图 3–5 待补；`build:fe:prod` 经 `clean-dist` 剔除 `localhost:8787` host_permissions
+- **A14 CWS 合规全文**（2026-08-30）：`extension-cws-contract` 权威 permissions/host；`chromewebstore-manifest-contract` + `chromewebstore-graphics-contract` 单测；短描述↔`app_description`；icon128 已验；母本截图/promo 落盘 `brand-assets/chrome-web-store/`（2026-09-01）；产品 UI 截图 3–5 待补；`build:extension:prod` 经 `clean-dist` 剔除 `localhost:8787` host_permissions
 - **B2 Side Panel Recall**（2026-08-30）：单层 flex 滚动；`background-client` 合规；空态/黏底/composer a11y OK；P0：`recall-shell-scroll` rAF 黏底检测+滚底；`content-visibility` on turns；P1：长线程未虚拟化（会话通常短）；P2：Show more 仍全量 DOM
 - **B3 Recall 结果卡**（2026-08-30）：摘录/书签双形态+favicon fallback+duplicate sibling+detail export 合规；hover 无几何变换；P0：`resolveRecallCardClickAction`/`buildRecallEvidencePayload`/`scheduleRecallEvidenceWhenVisible` 单测；TTE evidence 改 IO 可见后再发；`v-memo` on 列表卡；`content-visibility` on card group；P1：长 Show more 列表仍全量 DOM；P2：`toMatchCard` 仍在 SidePanel 未抽测
 - **B4 Capture / 划词**（2026-08-30）：Shadow DOM 浮层+快照选区+background-client 合规；keepalive/bfcache 完善；P0：`selection-toolbar-guards` 接入 scroll（附注模式滚动不收起）；`selection-toolbar-scroll` rAF 合并；`SELECTION_TOOLBAR_SHOW_DELAY_MS` 单常量；`role=toolbar`+aria-label；P1：滚动不重锚仅收起；P2：Shadow 样式走 `brand.css`/`semantic-colors` token（`selection-toolbar-shadow-styles.ts`）

@@ -62,10 +62,10 @@
 
 **本波关键路径：**
 
-- `frontend/src/core/recall/eval/*`
-- `frontend/src/core/recall/understand/build-llm-follow-up-prompt.ts`
-- `frontend/src/core/recall/understand/map-llm-follow-up-proposal.ts`
-- `frontend/public/_locales/en/messages.json`（空结果 / miss 追问；当时路径曾含 `zh_CN`，已下线）
+- `extension/src/core/recall/eval/*`
+- `extension/src/core/recall/understand/build-llm-follow-up-prompt.ts`
+- `extension/src/core/recall/understand/map-llm-follow-up-proposal.ts`
+- `extension/public/_locales/en/messages.json`（空结果 / miss 追问；当时路径曾含 `zh_CN`，已下线）
 
 **下一步：** 进入 **R1**（冷启动闭环手工脚本 + Recall 壳空态审题；当时主壳为 Action Popup）。→ **R1 已落地，见下节。**
 
@@ -130,7 +130,7 @@
 1. 点工具栏图标与 `_execute_action`（`Alt+Shift+Y`）一律开 Side Panel；去掉 `default_popup`。
 2. P0：关闭 Side Panel 即丢会话（不持久化）。
 3. Omnibox P0 仍单次无会话。
-4. 新目录 `frontend/src/pages/sidepanel/`；废 Popup 作主壳。
+4. 新目录 `extension/src/pages/sidepanel/`；废 Popup 作主壳。
 
 | 交付                                                            | 验收 |
 | --------------------------------------------------------------- | ---- |
@@ -162,7 +162,7 @@
 
 **定位一句：** Chat = Personal Recall 的交互语法，**不是**通用助理 / ChatGPT clone。差异化预算留给检索、线索理解、embedding、eval。
 
-**代码锚点：** `frontend/src/pages/sidepanel/`（`SidePanel.vue`、`RecallConversation`、`RecallComposer`、`recall-conversation-types`）；会话事实在组件内 `dialogState`（非气泡本身）。
+**代码锚点：** `extension/src/pages/sidepanel/`（`SidePanel.vue`、`RecallConversation`、`RecallComposer`、`recall-conversation-types`）；会话事实在组件内 `dialogState`（非气泡本身）。
 
 #### 已有（可当真）
 

@@ -19,7 +19,7 @@
 ## 快速开始
 
 ```bash
-cd frontend && bun run build
+cd extension && bun run build
 # chrome://extensions 重新加载 Yiveno
 
 # 跑完任务后导出遥测 → sessions/P001-telemetry-export.json（勿 commit）

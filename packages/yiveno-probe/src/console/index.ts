@@ -1,5 +1,5 @@
 /**
- * Probe Console Vue 入口（由 frontend DEV 页挂载）。
+ * Probe Console Vue 入口（由 extension DEV 页挂载）。
  */
 
 export { default as ProbeConsole } from './ProbeConsole.vue'

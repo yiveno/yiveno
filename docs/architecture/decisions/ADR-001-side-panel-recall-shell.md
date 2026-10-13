@@ -10,7 +10,7 @@ Action Popup 失焦即关，不适合持续对话式 Recall。Chrome Side Panel 
 
 ## 决定
 
-1. **Recall 主壳**迁至 `frontend/src/pages/sidepanel/`。
+1. **Recall 主壳**迁至 `extension/src/pages/sidepanel/`。
 2. 移除 `default_popup`；工具栏图标与 `_execute_action`（`Alt+Shift+Y`）一律打开 Side Panel。
 3. **`pages/popup` 已删除**；不得恢复 Popup 作对话主壳。
 4. P0：关 Side Panel 即丢会话；**New find** 显式清线程。
@@ -31,4 +31,4 @@ Action Popup 失焦即关，不适合持续对话式 Recall。Chrome Side Panel 
 ## 相关
 
 - 产品文档 §0.4、§7.0；改版计划 R-shell / R-shell-session / R-shell-chat
-- 代码：`frontend/src/pages/sidepanel/`、`frontend/public/manifest.json`
+- 代码：`extension/src/pages/sidepanel/`、`extension/public/manifest.json`

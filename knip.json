@@ -17,14 +17,14 @@
     "enumMembers": "error"
   },
   "ignoreIssues": {
-    "frontend/src/background/commands/registry.ts": ["exports"]
+    "extension/src/background/commands/registry.ts": ["exports"]
   },
   "workspaces": {
     ".": {
       "entry": ["scripts/**/*.{js,mjs,ts}"],
       "project": ["scripts/**/*.{js,mjs,ts}"]
     },
-    "frontend": {
+    "extension": {
       "entry": [
         "src/pages/*/main.ts",
         "src/dev/probe/debug-dev-handler.ts",
@@ -47,7 +47,7 @@
       "entry": ["src/**/*.test.ts"],
       "project": ["src/**/*.{ts,vue}"]
     },
-    "backend": {
+    "worker": {
       "entry": ["src/**/*.test.ts"],
       "project": ["src/**/*.ts"]
     },

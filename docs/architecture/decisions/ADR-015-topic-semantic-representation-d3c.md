@@ -5,7 +5,7 @@ author: agent:cursor
 scope: docs/architecture/decisions
 status: 已接受
 upstream: ADR-001（Side Panel 主壳）, ADR-003（邻域非神谕）, ADR-005（禁止灰名单）, ADR-010（理解流水线）, ADR-011（时间置信度）, ADR-014（Topic 两种来源 · D1-B 退化弱 Topic）
-downstream: docs/product/Yiveno-产品文档-v4.0.md §7.05, docs/product/Recall-Request-模型与Discovery边界-草案.md §6 D3-C, docs/audit/Recall-主线与文档对齐-2026-10.md, frontend/src/core/recall/topic-embedding.ts, frontend/src/core/recall/topic-embedding.test.ts, frontend/src/core/recall/recall-topic.ts, frontend/src/core/recall/topic-lookup.ts, frontend/src/core/recall/topic-lookup.test.ts, frontend/src/core/recall/parse-recall-clue-types.ts, frontend/src/core/recall/orchestrate-keyword-recall.ts, frontend/src/application/recall/backends/hybrid-recall-backend.ts, recall-eval must
+downstream: docs/product/Yiveno-产品文档-v4.0.md §7.05, docs/product/Recall-Request-模型与Discovery边界-草案.md §6 D3-C, docs/audit/Recall-主线与文档对齐-2026-10.md, extension/src/core/recall/topic-embedding.ts, extension/src/core/recall/topic-embedding.test.ts, extension/src/core/recall/recall-topic.ts, extension/src/core/recall/topic-lookup.ts, extension/src/core/recall/topic-lookup.test.ts, extension/src/core/recall/parse-recall-clue-types.ts, extension/src/core/recall/orchestrate-keyword-recall.ts, extension/src/application/recall/backends/hybrid-recall-backend.ts, recall-eval must
 ---
 
 # ADR-015: Topic 终态 = 语义表示（D3-C 裁决 + Gap 4/5 落地）
@@ -114,7 +114,7 @@ ADR-014 落地后，Topic 已是 Recall 的**必要条件判定器**，并允许
 - ✅ `hybrid-recall-backend.ts` 全文件 `merge.merged` → `merged` 字段名规范
 - ✅ 产品文档 §7.05 Gap 5 段（完整 15 条）已同步
 - ✅ 草案 §6 D3-C「现状」+「演进路径」+ §7 P1 + §3 gap 5 + P1 序列 全部同步为"已修复"
-- ✅ `bun run typecheck:force` · `cd frontend && bun run test:run`（207 files / 1060 tests）· `bun run doc:check` · `bun run i18n:check` 全过
+- ✅ `bun run typecheck:force` · `cd extension && bun run test:run`（207 files / 1060 tests）· `bun run doc:check` · `bun run i18n:check` 全过
 - ✅ MCP 真机抽测（Side Panel）：Step 1 duckdb no_match + Heard as 槽位；Step 2 caching from last week 命中 2 items + 时间过滤 + 邻域交付 UI；未登录态降级词法路径生效；SW 无活跃错误
 
 ### 同步义务

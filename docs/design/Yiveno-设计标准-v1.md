@@ -295,7 +295,7 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 
 **禁止：** `window.confirm` / `window.alert` 作为用户面向确认；遮罩用 slate 等非 `--ink` 色；hover/focus 几何变换。
 
-**实现：** `frontend/src/infrastructure/ui/AppModal.vue`；业务页只填 slot，不复制 overlay CSS。
+**实现：** `extension/src/infrastructure/ui/AppModal.vue`；业务页只填 slot，不复制 overlay CSS。
 
 **确认类（`AppConfirmModal`）：** Cancel + Confirm 双按钮的薄封装；`confirmTone="danger"` 用于删除等不可逆操作。正文用 `body` prop 或 default slot；多按钮/表单仍直接用 `AppModal`。
 
@@ -311,7 +311,7 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 
 **选中态：** 轨道 `--surface-raised`；当前项 `--surface-accent-soft` + `--on-surface`。禁止纯 `#fff` 块（与纸色底反差过强）；右侧面板仍用 `--surface-white`。
 
-**实现：** `frontend/src/infrastructure/ui/AppSectionTabs.vue`；`items[].label` 由页面经 `t()` 解析；`panelId` + `idPrefix`（`useId()`）关联右侧 `role="tabpanel"`。
+**实现：** `extension/src/infrastructure/ui/AppSectionTabs.vue`；`items[].label` 由页面经 `t()` 解析；`panelId` + `idPrefix`（`useId()`）关联右侧 `role="tabpanel"`。
 
 #### 6.2.3 轻提示 Toast（`AppToast` / `AppToastHost`）
 
@@ -493,7 +493,7 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 | `packages/design-tokens/src/brand.ts`                | Brand Core hex（TS）                                |
 | `website/src/styles/site-critical.css`               | 官网壳：字体 / 布局 / Nav（消费 brand，无重复 hex） |
 | `website/src/styles/site.css`                        | 兼容入口（brand + critical + deferred）             |
-| `frontend/src/styles/extension-ui.css`               | 扩展入口：brand + variables + semantic              |
+| `extension/src/styles/extension-ui.css`              | 扩展入口：brand + variables + semantic              |
 | `docs/design/Yiveno-logo-asset-generation-prompt.md` | Logo 导出流程（色值须服从本标准）                   |
 | `docs/product/Yiveno-产品文档-v4.0.md` §0            | 产品定位 / 性格（Normative）                        |
 | `docs/product/Yiveno-术语表.md`                      | 术语唯一权威（Glossary）                            |

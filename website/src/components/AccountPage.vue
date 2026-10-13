@@ -372,8 +372,7 @@ async function handleSignOut() {
   display: flex;
   flex-wrap: wrap;
   align-items: baseline;
-  column-gap: 0.35em;
-  row-gap: 2px;
+  gap: 2px 0.35em;
   margin: 6px 0 0;
   font-size: 14px;
   font-weight: 300;
@@ -383,6 +382,7 @@ async function handleSignOut() {
 
 .account__meta-email {
   min-width: 0;
+
   /* 仅邮箱可断；勿用 anywhere，避免把 Google 拆成 Googl / e */
   overflow-wrap: break-word;
 }

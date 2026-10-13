@@ -7,7 +7,7 @@
  *
  * 当前校验项（2026-09-17 初始版）：
  *   C1. core/ 中无 `chrome.*` / `indexedDB.*` 直接调用（ADR-004 / 项目架构铁律）
- *   C2. frontend/src/infrastructure/indexeddb/manager.ts 是唯一持有 `indexedDB.open` 的文件
+ *   C2. extension/src/infrastructure/indexeddb/manager.ts 是唯一持有 `indexedDB.open` 的文件
  *   C3. Omnibox 入口分轨：omnibox listener 调用 `recallWithClue(..., { entry: 'omnibox' })`（ADR-007）
  *   C4. Side Panel manifest：无 `default_popup`，`side_panel.default_path = "sidepanel.html"`（ADR-001）
  *   C5. 闭集产品槽位词典：RECALL_OBJECT_TYPE_LEXICON / RECALL_BEHAVIOR_LEXICON / RECALL_TIME_LEXICON 存在
@@ -94,7 +94,7 @@ function stripComments(source) {
 
 /** C1: core/ 中无 chrome.* / indexedDB.* 直接调用 */
 check('C1', 'core/ 无 Chrome/IndexedDB 直接调用（ADR-004 / 架构铁律）', () => {
-  const coreDir = join(root, 'frontend/src/core')
+  const coreDir = join(root, 'extension/src/core')
   const files = walkFiles(
     coreDir,
     n => n.endsWith('.ts') && !n.endsWith('.d.ts') && !n.endsWith('.test.ts')
@@ -126,7 +126,7 @@ check('C1', 'core/ 无 Chrome/IndexedDB 直接调用（ADR-004 / 架构铁律）
 check('C2', 'indexedDB.open 仅在 infrastructure/indexeddb/manager.ts', () => {
   const violations = []
   const re = /indexedDB\.open\(/g
-  const searchDirs = ['frontend/src']
+  const searchDirs = ['extension/src']
   for (const dir of searchDirs) {
     const dirAbs = join(root, dir)
     const files = walkFiles(dirAbs, n => n.endsWith('.ts') && !n.endsWith('.test.ts'))
@@ -147,7 +147,7 @@ check('C2', 'indexedDB.open 仅在 infrastructure/indexeddb/manager.ts', () => {
 
 /** C3: Omnibox listener 必须带 entry: 'omnibox' */
 check('C3', 'Omnibox listener 调用 recallWithClue 时必须带 entry: omnibox（ADR-007）', () => {
-  const file = join(root, 'frontend/src/background/listeners/omnibox.ts')
+  const file = join(root, 'extension/src/background/listeners/omnibox.ts')
   const source = readFileSync(file, 'utf8')
   const hasEntryFlag = /recallWithClue\([^)]*\{\s*[^}]*entry:\s*['"]omnibox['"]/s.test(source)
   return hasEntryFlag ? null : [`  ${file.replace(root + '/', '')} 缺少 entry: 'omnibox'`]
@@ -155,7 +155,7 @@ check('C3', 'Omnibox listener 调用 recallWithClue 时必须带 entry: omnibox�
 
 /** C4: manifest.json 配置 */
 check('C4', 'Side Panel manifest 配置正确（ADR-001）', () => {
-  const file = join(root, 'frontend/public/manifest.json')
+  const file = join(root, 'extension/public/manifest.json')
   const manifest = JSON.parse(readFileSync(file, 'utf8'))
   const errors = []
   if (manifest.default_popup) {
@@ -172,7 +172,7 @@ check('C4', 'Side Panel manifest 配置正确（ADR-001）', () => {
 
 /** C5: 闭集产品槽位词典存在 */
 check('C5', '闭集产品槽位词典存在（RECALL_OBJECT_TYPE_LEXICON 等；ADR-005）', () => {
-  const file = join(root, 'frontend/src/core/recall/parse-recall-clue-lexicon.ts')
+  const file = join(root, 'extension/src/core/recall/parse-recall-clue-lexicon.ts')
   if (!existsSync(file)) {
     return [`  ${file.replace(root + '/', '')}: 不存在`]
   }
@@ -186,7 +186,7 @@ check('C5', '闭集产品槽位词典存在（RECALL_OBJECT_TYPE_LEXICON 等；A
 
 /** C6: 翻牌句不在代码中出现 */
 check('C6', 'ADR-012 翻牌句未出现在产品代码（仅文档预留）', () => {
-  const codeDirs = ['frontend/src', 'website/src', 'packages']
+  const codeDirs = ['extension/src', 'website/src', 'packages']
   const violations = []
   for (const dir of codeDirs) {
     const dirAbs = join(root, dir)

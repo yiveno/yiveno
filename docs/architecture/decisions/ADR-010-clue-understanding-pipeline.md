@@ -90,6 +90,6 @@ clue
 ## 相关
 
 - 产品文档 §0.1.0、§0.1.1、M1、§2 理解层
-- `frontend/src/core/recall/understand/understand-recall-clue.ts`
+- `extension/src/core/recall/understand/understand-recall-clue.ts`
 - [`docs/archive/research/na-clue-morphology/`](../archive/research/na-clue-morphology/README.md)（形态 + schema-gap）
 - ADR-004 · ADR-005

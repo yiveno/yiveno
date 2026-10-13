@@ -66,9 +66,7 @@ function parseCurrent(md) {
 }
 
 function buildSyncBlock(parsed) {
-  const longTermRow = parsed.longTerm
-    ? `\n| **长期** | ${parsed.longTerm} |`
-    : ''
+  const longTermRow = parsed.longTerm ? `\n| **长期** | ${parsed.longTerm} |` : ''
   return `${START}
 **最后更新：** ${parsed.date}
 

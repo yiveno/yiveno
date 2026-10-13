@@ -142,7 +142,7 @@ alwaysApply: true
 
 ### `CHROMEWEBSTORE.md`（上架元数据 · 硬规则）
 
-创建或改动 Chrome 扩展时（含 `frontend/public/manifest.json` 权限、`host_permissions`、准备上架、审核被拒、隐私披露），**创建并维护**根目录 `CHROMEWEBSTORE.md`。模板：`chrome-extensions` skill → `references/webstore/chromewebstore-template.md`。
+创建或改动 Chrome 扩展时（含 `extension/public/manifest.json` 权限、`host_permissions`、准备上架、审核被拒、隐私披露），**创建并维护**根目录 `CHROMEWEBSTORE.md`。模板：`chrome-extensions` skill → `references/webstore/chromewebstore-template.md`。
 
 Agent 指令（原文）：
 
@@ -200,9 +200,9 @@ Agent 指令（原文）：
 
 ### 验证（与 AGENTS.md 一致）
 
-- **默认**：只跑与本次改动相关的最小检查（如 `cd frontend && bun run typecheck`、相关 `test:run`）。
+- **默认**：只跑与本次改动相关的最小检查（如 `cd extension && bun run typecheck`、相关 `test:run`）。
 - **禁止**：每次小改都自动跑全仓 `typecheck:force` / 全仓 lint / format。
-- **大范围改动或用户要求时**：`bun run typecheck:force`；frontend 用 `cd frontend && bun run lint:check`（根目录无 `lint:check:force` / `stylelint:force`）。
+- **大范围改动或用户要求时**：`bun run typecheck:force`；extension 用 `cd extension && bun run lint:check`（根目录无 `lint:check:force` / `stylelint:force`）。
 - 有错误 → 修到通过再报完成；不确定 → 说明并等待指示。
 - Recall / Capture 用户可感变更：合入前补 `recall-eval` **must** 或产品文档 §5 手动步骤（§1.1）；扩展用户可感路径再加 **MCP 真机** UI 抽测；不上大型 Playwright/Puppeteer E2E。
 
@@ -210,15 +210,15 @@ Agent 指令（原文）：
 
 | 层级           | 触发时机     | 职责                                                                                                                         | 命令                                                                                                                                                                                                   |
 | -------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **pre-commit** | `git commit` | 暂存区快修：ESLint fix + Stylelint + Prettier（含 `.vue`）                                                                   | `lint-staged`（`max-warnings 0`；忽略 `backend/worker-configuration.d.ts`）                                                                                                                            |
-| **pre-push**   | `git push`   | 按变更：FE 构建 + **test:run** / BE typecheck+test / website·packages typecheck / **doc:check** / Knip | `build:fe`（`vue-tsc -b`：app+node+vitest）+ `test:run`；`typecheck:be` + `bun test`；`typecheck:web`；packages `typecheck`；`doc:check`；`knip:*` |
+| **pre-commit** | `git commit` | 暂存区快修：ESLint fix + Stylelint + Prettier（含 `.vue`）                                                                   | `lint-staged`（`max-warnings 0`；忽略 `worker/worker-configuration.d.ts`）                                                                                                                            |
+| **pre-push**   | `git push`   | 按变更：extension 构建 + **test:run** / worker typecheck+test / website·packages typecheck / **doc:check** / Knip | `build:extension`（`vue-tsc -b`：app+node+vitest）+ `test:run`；`typecheck:worker` + `bun test`；`typecheck:web`；packages `typecheck`；`doc:check`；`knip:*` |
 | **CI**         | PR / push    | 权威只读门禁：typecheck、lint、i18n、test、build                                                                             | 见下表                                                                                                                                                                                                 |
 
-pre-push **不跑** ESLint、全仓 typecheck；FE 变更时跑 **build + test:run**（build 内 `vue-tsc -b` = app+node+vitest，与 IDE solution 同图）；backend / website / `packages/*` 分别跑对应 typecheck；`docs/` / `.cursor/rules/` / `scripts/` 变更时跑 **doc:check**。`.vue` lint 由 pre-commit 与 CI 覆盖。`knip.json` / 根 `package.json` 变更时 pre-push 跑全仓 `knip`。
+pre-push **不跑** ESLint、全仓 typecheck；extension 变更时跑 **build + test:run**（build 内 `vue-tsc -b` = app+node+vitest，与 IDE solution 同图）；worker / website / `packages/*` 分别跑对应 typecheck；`docs/` / `.cursor/rules/` / `scripts/` 变更时跑 **doc:check**。`.vue` lint 由 pre-commit 与 CI 覆盖。`knip.json` / 根 `package.json` 变更时 pre-push 跑全仓 `knip`。
 
-#### FE TypeScript 工程图（IDE ↔ CLI 必须同图）
+#### Extension TypeScript 工程图（IDE ↔ CLI 必须同图）
 
-- **一张图：** `frontend/tsconfig.json` references → `tsconfig.app`（生产源）+ `tsconfig.node`（Vite/Vitest 配置）+ `tsconfig.vitest`（`*.test/spec`）。
+- **一张图：** `extension/tsconfig.json` references → `tsconfig.app`（生产源）+ `tsconfig.node`（Vite/Vitest 配置）+ `tsconfig.vitest`（`*.test/spec`）。
 - **CLI：** `vue-tsc -b` / `build` 走该图；**Cursor Problems 里的 TS** 也必须能解析到同一图——故 vitest **必须**挂在 references（禁止「只给 CLI `-p`、不给 IDE」）。
 - **Problems ≠ typecheck：** 面板混有 ESLint；`bun run typecheck` **不**跑 ESLint。类型看 typecheck；阴影/未用等看 `lint:check`。
 - **改 tsconfig 后：** IDE 执行 TypeScript: Restart TS Server（或 Reload Window）。
@@ -228,17 +228,17 @@ pre-push **不跑** ESLint、全仓 typecheck；FE 变更时跑 **build + test:r
 
 | 场景          | TypeScript                             | Lint         | i18n                       | Knip                | 前端测试                    |
 | ------------- | -------------------------------------- | ------------ | -------------------------- | ------------------- | --------------------------- |
-| **PR**        | `typecheck:ci` + build 内 `vue-tsc -b`（app+node+vitest） | `lint:check` | `i18n:check` + `doc:check` | `knip`              | FE `test:run` + backend `test` |
+| **PR**        | `typecheck:ci` + build 内 `vue-tsc -b`（app+node+vitest） | `lint:check` | `i18n:check` + `doc:check` | `knip`              | extension `test:run` + worker `test` |
 | **push main** | 同上                                   | 同上         | `i18n:check` + `doc:check` | `knip`              | 同上                        |
 | **每周一**    | —                                      | —            | —                          | `knip.yml` 定时复检 | —                           |
 
 #### 本地命令
 
-- 日常：`bun run typecheck`（workspaces 并行；FE=`vue-tsc -b` 整图 app+node+vitest）、`bun run lint:check`、`bun run i18n:check`、目标单测
+- 日常：`bun run typecheck`（workspaces 并行；extension=`vue-tsc -b` 整图 app+node+vitest）、`bun run lint:check`、`bun run i18n:check`、目标单测
 - 三端并行：`bun run watch` / `bun run dev`（mprocs）或 `bun run watch:stream`（混流）；扩展重建后需 `chrome://extensions` 刷新
-- 合并前 / 发布前：`bun run typecheck:force`、`bun run lint:check`、`bun run i18n:check`、`bun run doc:check`、`bun run test:run`（FE+BE）、`bun run knip`
+- 合并前 / 发布前：`bun run typecheck:force`、`bun run lint:check`、`bun run i18n:check`、`bun run doc:check`、`bun run test:run`（extension+worker）、`bun run knip`
 - 品牌视觉发版：改 `docs/design/brand-assets/` → `bun run sync:brand-assets`（见 `docs/design/brand-asset-release-checklist.md`）；母本走 Git LFS，clone 后 `bun run setup:git-lfs`（ADR-006）
-- Knip 分 workspace：`knip:fe` / `knip:be` / `knip:web`；仅结构项：`knip:fast`；全量报告：`knip:report`
+- Knip 分 workspace：`knip:extension` / `knip:worker` / `knip:web`；仅结构项：`knip:fast`；全量报告：`knip:report`
 - Knip 装在根 `devDependencies`（`bun run knip` → `bunx knip -D .`）。zod 4 起与 knip `zod/mini` 兼容，已不再用 `.cache/knip-runner` 隔离安装。
 
 ### MCP 真机实测（硬规则）
@@ -247,13 +247,13 @@ pre-push **不跑** ESLint、全仓 typecheck；FE 变更时跑 **build + test:r
 
 | 范围 | MCP |
 | --- | --- |
-| **必选** | `frontend/**`（pages / background / i18n / Recall / Capture / 扩展 UI）、`public/_locales/**`、manifest / post-build 同步 |
-| **可跳过** | 纯 `backend/**`、纯 `core` 且无 UI/SW 接线、仅文档 / 注释 |
+| **必选** | `extension/**`（pages / background / i18n / Recall / Capture / 扩展 UI）、`public/_locales/**`、manifest / post-build 同步 |
+| **可跳过** | 纯 `worker/**`、纯 `core` 且无 UI/SW 接线、仅文档 / 注释 |
 
 **流程（扩展改动）：**
 
 1. 相关单测 + 必要 `typecheck` 通过。
-2. `cd frontend && bun run build`（或确认 `build:watch` 已产出最新 `dist/`；改 `_locales` / manifest 须确认 post-build 已同步）。
+2. `cd extension && bun run build`（或确认 `build:watch` 已产出最新 `dist/`；改 `_locales` / manifest 须确认 post-build 已同步）。
 3. MCP：`chrome://extensions` → 重新加载 Yiveno → 打开 Side Panel（`chrome-extension://<id>/sidepanel.html` 或真实 Side Panel 入口）。
 4. **UI 路径**复现：用 `fill` / `click` / `wait_for` / `take_snapshot`；**禁止**用 `evaluate_script` 直调 `RECALL_WITH_CLUE` 等消息冒充 UI 测试。
 5. 报完成时简述 MCP 结论（测了什么、通过/失败、若失败是否已修并重测）。
@@ -329,9 +329,9 @@ UI 消息 shape（必须）：
 { scope: 'background', type: 'RECALL_WITH_CLUE', payload: { clue: '…' } }
 ```
 
-- `chrome.bookmarks.*` / `chrome.tabs.*` / `contextMenus` 等：仅 `frontend/src/background/**`（及 SW 调用的 `infrastructure/browser/*`）。
-- UI：`frontend/src/infrastructure/messaging/background-client.ts`，禁止直连 IndexedDB / 原生 Chrome 数据 API。
-- **禁止发明**新 message `type`：先改 `frontend/src/core/messaging/*` 再接线。
+- `chrome.bookmarks.*` / `chrome.tabs.*` / `contextMenus` 等：仅 `extension/src/background/**`（及 SW 调用的 `infrastructure/browser/*`）。
+- UI：`extension/src/infrastructure/messaging/background-client.ts`，禁止直连 IndexedDB / 原生 Chrome 数据 API。
+- **禁止发明**新 message `type`：先改 `extension/src/core/messaging/*` 再接线。
 - **DDD 边界机器强制**（`eslint.config.js` 现状，2026-09 补齐）：`core/` 无 chrome.* / window.localStorage 调用；`core/` 与 UI 直连 IndexedDB 阻断；`infrastructure/{非 ui}/**` 禁依赖 .vue；message type ↔ handler ↔ schema ↔ 产品文档 §4 ↔ `docs/engineering/background-message-types.registry` 由 `bun run doc:check` 校验。AI agent 改动违反上述会被 lint / doc:check 拦下。
 
 ### 2. DDD 分层
@@ -371,7 +371,7 @@ Background **无** `window` / `document` / `localStorage`。用全局 `setTimeou
 ## 术语与 UI
 
 - 对外英文心智：**Filter** / **Recall**；UI **禁止** `Search`（对内注释可用 search/filter；中文「筛选/找回」仅开发者沟通）。
-- 扩展用户文案：仅 `chrome.i18n` + **`_locales/en/messages.json`**（美式英语），经 `t()`（`frontend/src/infrastructure/i18n/`）。禁止写死 UI 自然语言与 `getMessage(...) || 'fallback'`。`core` 不直接调 `chrome.i18n`（注入 `t` 或返回 key）。官网不走本方案，文案同样仅英文。
+- 扩展用户文案：仅 `chrome.i18n` + **`_locales/en/messages.json`**（美式英语），经 `t()`（`extension/src/infrastructure/i18n/`）。禁止写死 UI 自然语言与 `getMessage(...) || 'fallback'`。`core` 不直接调 `chrome.i18n`（注入 `t` 或返回 key）。官网不走本方案，文案同样仅英文。
 - **禁止**新增 `zh_CN` 或其它非 en 产品 locale。
 - **图标优先于文案**（产品文档 §0.2 / §3）：工具操作/导航尽量用通识 Lucide 图标（内联）；省略可见文字时必须有 `title` + `aria-label`（同源 `t()`）。主 CTA、说明正文、空状态、表单标签仍用文案。
 - 面向用户的失败：演进为稳定 `errorCode` + UI `t()`；禁止用本地化 error 字符串做分支。
@@ -385,7 +385,7 @@ Background **无** `window` / `document` / `localStorage`。用全局 `setTimeou
 - **CSS / JS 展示分工：** 可见截断、自适应宽度、行数 clamp → **CSS**；JS/`core` → 业务与数据。禁止固定字符数硬截 UI 标题/标签/reason/preview 冒充布局省略。允许病态安全上限与真业务/协议限（omnibox、embedding、表单 max、预填短线索、telemetry）。详见 `AGENTS.md`「代码约定」。
 - **业务可观测性**：新增/改动业务路径必须有中文注释 + 关键步骤 log（开始/分支/成功失败）；失败禁止静默。扩展优先 `infrastructure/logging/flow-log.ts`；**scope 闭集** `log-scopes.ts`（`LogScope`）；Recall 理解层用注入 `trace`。长文本用 preview。详见 `docs/engineering/业务日志与注释约定.md`。
 - Vue：`defineOptions({ name: 'ComponentName' })`。
-- 依赖：当前 frontend 核心为 Vue + Zod；**不要**为约定空挂 mitt / Immer / VueUse / Pinia（需要时再引入）。
+- 依赖：当前 extension 核心为 Vue + Zod；**不要**为约定空挂 mitt / Immer / VueUse / Pinia（需要时再引入）。
 - 锁文件：跟踪根目录 **`bun.lock`**（勿再忽略）；忽略旧 `bun.lockb`。
 
 ### 权威路径（改功能前先看）
@@ -396,19 +396,19 @@ Background **无** `window` / `document` / `localStorage`。用全局 `setTimeou
 | **当下焦点（源）** | `docs/product/CURRENT.md` → `bun run sync:ide-boot` |
 | **架构决策 ADR** | `docs/architecture/decisions/` |
 | 视觉/品牌标准 | `docs/design/Yiveno-设计标准-v1.md` + `docs/design/DESIGN.md` |
-| Memory / clues | `frontend/src/core/memory/` |
-| 消息联合类型 | `frontend/src/core/messaging/background-messages.ts` |
-| UI → SW | `frontend/src/infrastructure/messaging/background-client.ts` |
-| SW 分发 | `frontend/src/background/handlers/message-handler.ts` |
-| Recall | `frontend/src/application/recall/recall-service.ts` |
-| Omnibox | `frontend/src/background/listeners/omnibox.ts` |
-| Commands | `frontend/src/core/commands/command-ids.ts` + `background/listeners/commands.ts` |
-| Settings | `frontend/src/pages/settings/Settings.vue` |
+| Memory / clues | `extension/src/core/memory/` |
+| 消息联合类型 | `extension/src/core/messaging/background-messages.ts` |
+| UI → SW | `extension/src/infrastructure/messaging/background-client.ts` |
+| SW 分发 | `extension/src/background/handlers/message-handler.ts` |
+| Recall | `extension/src/application/recall/recall-service.ts` |
+| Omnibox | `extension/src/background/listeners/omnibox.ts` |
+| Commands | `extension/src/core/commands/command-ids.ts` + `background/listeners/commands.ts` |
+| Settings | `extension/src/pages/settings/Settings.vue` |
 | Action Popup | **已退役**（原对话主壳；`pages/popup` 已删除） |
-| Side Panel | `frontend/src/pages/sidepanel/`（Recall 主壳） |
-| Recall 壳空态 | `frontend/src/core/recall/recall-shell-empty-copy.ts` |
-| 扩展 i18n | `frontend/src/infrastructure/i18n/` + `public/_locales/` |
-| 扩展 manifest | `frontend/public/manifest.json` |
+| Side Panel | `extension/src/pages/sidepanel/`（Recall 主壳） |
+| Recall 壳空态 | `extension/src/core/recall/recall-shell-empty-copy.ts` |
+| 扩展 i18n | `extension/src/infrastructure/i18n/` + `public/_locales/` |
+| 扩展 manifest | `extension/public/manifest.json` |
 | CWS 上架元数据 | 根目录 `CHROMEWEBSTORE.md` |
 | Chrome 扩展 Agent Skills | `.agents/skills/`（`skills-lock.json`） |
 
@@ -431,13 +431,13 @@ Background **无** `window` / `document` / `localStorage`。用全局 `setTimeou
 ## 常用命令（真实存在）
 
 ```bash
-bun run typecheck              # workspaces 并行（FE=vue-tsc -b 整图；其余各入口）
-bun run typecheck:force        # 全量子项目；FE 强制重建增量缓存
+bun run typecheck              # workspaces 并行（extension=vue-tsc -b 整图；其余各入口）
+bun run typecheck:force        # 全量子项目；extension 强制重建增量缓存
 bun run i18n:check             # en messages ↔ MESSAGE_KEYS 对称
-cd frontend && bun run lint:check   # ESLint+Stylelint（Problems 里非 TS 项看这里）
-bun run test:run               # FE test:run + BE test
-bun run knip:fe                # frontend 未使用代码（勿给死文件加假 entry）
-cd frontend && bun run build   # 含 vue-tsc -b（与 typecheck / IDE 同图）
+cd extension && bun run lint:check   # ESLint+Stylelint（Problems 里非 TS 项看这里）
+bun run test:run               # extension test:run + worker test
+bun run knip:extension                # extension 未使用代码（勿给死文件加假 entry）
+cd extension && bun run build   # 含 vue-tsc -b（与 typecheck / IDE 同图）
 ```
 
 
@@ -447,6 +447,6 @@ cd frontend && bun run build   # 含 vue-tsc -b（与 typecheck / IDE 同图）
 
 - 规则文档：`docs/ENVIRONMENT.md`
 - 只维护：`.env.shared.local`、`.env.development.local`、`.env.production.local`。
-- **禁止**手改生成物：`.env.runtime/*`、`backend/.dev.vars`、`website/.env`。
+- **禁止**手改生成物：`.env.runtime/*`、`worker/.dev.vars`、`website/.env`。
 - 修改环境变量后运行：`bun run env:sync:dev && bun run env:check:dev`。
 - 发布前运行：`bun run env:sync:prod && bun run env:check:prod`。

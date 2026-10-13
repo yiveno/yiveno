@@ -76,7 +76,7 @@
 
 - `.env.runtime/.env.development`
 - `.env.runtime/.env.production`
-- `backend/.dev.vars`
+- `worker/.dev.vars`
 - `website/.env`
 
 生成脚本：
@@ -99,13 +99,13 @@ bun run env:check:prod
 
 ## 子项目读取方式
 
-- `frontend`
+- `extension`
   - 从 `.env.runtime/.env.development` 或 `.env.runtime/.env.production` 读取
   - `vite.config.ts` 已指向根目录 `.env.runtime`
-- `backend`
-  - 本地开发读取 `backend/.dev.vars`
+- `worker`
+  - 本地开发读取 `worker/.dev.vars`
   - Cloudflare 线上环境变量在 Worker Dashboard / Wrangler 环境中维护
-  - **AI Gateway（非 Secret，写在 `backend/wrangler.toml` `[vars]`）**
+  - **AI Gateway（非 Secret，写在 `worker/wrangler.toml` `[vars]`）**
     - `AI_PROVIDER`（可选）：聊天补全实现，默认 `deepseek`；换厂商时加 Worker adapter + 改此变量
     - `AI_GATEWAY_ACCOUNT_ID`：Cloudflare Account ID
     - `AI_GATEWAY_ID`：Gateway 名称（当前 `yiveno`）；Dashboard 需先创建同名 Gateway
@@ -146,7 +146,7 @@ bun run env:check:prod
 
 ## 当前 Dodo 规则
 
-- **结账价权威在 Dodo Product**；Yiveno 只维护 plan id → Product ID 与展示锚点（`backend/src/services/billing/plans.ts`）。标准展示价 **$7.99/月 · $59.99/年**。详见 `docs/pricing.md`。
+- **结账价权威在 Dodo Product**；Yiveno 只维护 plan id → Product ID 与展示锚点（`worker/src/services/billing/plans.ts`）。标准展示价 **$7.99/月 · $59.99/年**。详见 `docs/pricing.md`。
 - **权益投影**在 Supabase `subscriptions`（非第二账本）；对账与门禁见产品文档 **§A.3.2**（TTL 24h / grace 48h；Dodo 非 `active` 立刻降级；`on_hold` 非 Pro）。
 - 扩展升级入口：官网 `/pricing`；管理入口：官网 `/account`（Dodo Customer Portal）。扩展**不**嵌 checkout SDK。
 - 官网：`POST /api/billing/checkout-session` `{ plan }` → Dodo hosted `checkout_url`（Worker 写入 `metadata.yiveno_user_id`）。
@@ -164,11 +164,11 @@ bun run env:check:prod
 3. [ ] `bun run env:sync:prod && bun run env:check:prod`；Worker Secrets 含 API key / webhook secret / Product ID
 4. [ ] 测试购买：webhook 写库（`verified`）→ 回扩展 Settings / 官网账户页自动对账 → `isPro` → 同步可用
 5. [ ] Dodo `cancelled`（立即）/ `on_hold` / 全额退当前周期 → Refresh 或 Cron 后立刻收回；库内 `test-` 行不得为 Pro
-6. [ ] （上线前）Workers Paid + Email Sending enable `yiveno.com`（Dashboard 或 `wrangler email sending enable yiveno.com`；API Token 须含 Email Sending 写权限）；手测欢迎信 + 卸载反馈进 `feedback@`→Gmail（失败不得 5xx）；生产须 `bun run deploy:be` 后 `POST /api/website/uninstall-feedback` 非 404
+6. [ ] （上线前）Workers Paid + Email Sending enable `yiveno.com`（Dashboard 或 `wrangler email sending enable yiveno.com`；API Token 须含 Email Sending 写权限）；手测欢迎信 + 卸载反馈进 `feedback@`→Gmail（失败不得 5xx）；生产须 `bun run deploy:worker` 后 `POST /api/website/uninstall-feedback` 非 404
 
 ## 禁止事项
 
-- 禁止手改 `backend/.dev.vars`
+- 禁止手改 `worker/.dev.vars`
 - 禁止手改 `website/.env`
 - 禁止把生产域名写进 `.env.development.local`
 - 禁止把 `localhost` 写进 `.env.production.local`

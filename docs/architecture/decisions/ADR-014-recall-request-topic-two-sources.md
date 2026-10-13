@@ -5,7 +5,7 @@ author: agent:cursor
 scope: docs/architecture/decisions
 status: 已接受
 upstream: ADR-001（Side Panel 主壳）, ADR-003（邻域非神谕）, ADR-005（禁止灰名单）, ADR-010（理解流水线）, ADR-011（时间置信度）
-downstream: docs/product/Yiveno-产品文档-v4.0.md §7.05, docs/product/Recall-Request-模型与Discovery边界-草案.md（Normative 正文）, frontend/src/core/recall/recall-topic.ts, frontend/src/core/recall/parse-recall-clue-types.ts, frontend/src/core/recall/orchestrate-keyword-recall.ts, frontend/src/core/recall/enrich-empty-recall-result.ts, frontend/src/application/recall/backends/hybrid-recall-backend.ts, frontend/src/core/recall/eval/recall-eval-cases.ts
+downstream: docs/product/Yiveno-产品文档-v4.0.md §7.05, docs/product/Recall-Request-模型与Discovery边界-草案.md（Normative 正文）, extension/src/core/recall/recall-topic.ts, extension/src/core/recall/parse-recall-clue-types.ts, extension/src/core/recall/orchestrate-keyword-recall.ts, extension/src/core/recall/enrich-empty-recall-result.ts, extension/src/application/recall/backends/hybrid-recall-backend.ts, extension/src/core/recall/eval/recall-eval-cases.ts
 ---
 
 # ADR-014: Recall Request · Topic 两种来源（退化弱 Topic 模型化 · D1 裁决）

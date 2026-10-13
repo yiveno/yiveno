@@ -343,6 +343,7 @@ function scheduleClearLoadingIfStillHere(): void {
   display: flex;
   flex-direction: column;
   align-items: stretch;
+
   /* 与主体同宽；叠层文案避免 Redirecting… 时收缩 */
   width: 100%;
   max-width: 20rem;

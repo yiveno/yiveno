@@ -83,8 +83,8 @@ bun run doc:check:all               # = doc:check + doc:check:consistency
 
 ```bash
 bun run knip              # 分 workspace
-bun run knip:fe           # 仅 frontend
-bun run knip:be           # 仅 backend
+bun run knip:extension           # 仅 extension
+bun run knip:worker           # 仅 worker
 bun run knip:web          # 仅 website
 bun run knip:report       # 全量报告，不 exit 1
 ```
@@ -106,8 +106,8 @@ bun run knip:report       # 全量报告，不 exit 1
 
 **目标文件（自动生成，勿手动编辑）：**
 
-- `.env.runtime/.env.development` → `frontend/vite` 构建时读取
-- `backend/.dev.vars` → Wrangler 本地开发
+- `.env.runtime/.env.development` → `extension/vite` 构建时读取
+- `worker/.dev.vars` → Wrangler 本地开发
 - `website/.env` → Astro 构建
 
 **运行：**
@@ -149,14 +149,14 @@ bun run sync:ide-boot --check  # 仅校验，不同步
 
 ```
 docs/design/brand-assets/chrome-extension/icon-{16,32,48,128}.png
-  → frontend/public/images/icon-{16,32,48,128}.png
+  → extension/public/images/icon-{16,32,48,128}.png
 
 docs/design/brand-assets/logo/yiveno-primary.svg
-  → frontend/public/images/logo-mark.svg
+  → extension/public/images/logo-mark.svg
   → website/public/images/logo-mark.svg
 
 docs/design/brand-assets/logo/logo-on-{light,dark}.svg
-  → frontend/public/images/logo-mark-mono-{light,dark}.svg
+  → extension/public/images/logo-mark-mono-{light,dark}.svg
   → website/public/images/logo-mark-on-dark.svg
 
 docs/design/brand-assets/applications/yiveno-product-hero.jpg
@@ -222,7 +222,7 @@ cat export.json | bun run tte:summarize
 
 ### `dev:check` → `dev-green-check.mjs`
 
-**作用：** 改完一轮后的本地快检：`typecheck:fe` → `knip:fe` → `test:must` → `doc:check`。任一步失败即 exit 1。
+**作用：** 改完一轮后的本地快检：`typecheck:extension` → `knip:extension` → `test:must` → `doc:check`。任一步失败即 exit 1。
 
 **注意：** 非 CI / pre-push 全量替代；合入前仍须跑 `test:run` 与 pre-push。
 
@@ -241,7 +241,7 @@ bun run dev:check
 **作用：** 强制 commit message 双层校验——
 
 1. **第一层（commitlint）**：首行必须为 `<type>(<scope>): <中文>`
-2. **第二层（本脚本）**：body 中必须包含 git 已暂存文件的方括号索引（如 `[frontend/src/.../foo.ts] 修改:`），一个文件不少
+2. **第二层（本脚本）**：body 中必须包含 git 已暂存文件的方括号索引（如 `[extension/src/.../foo.ts] 修改:`），一个文件不少
 
 **背景：** AI 自动生成 message 容易遗漏改动文件索引，导致后续 `git log -p -- <path>` 难以定位历史。本门禁确保每次提交都有一份「按文件索引、分门别类」的归档。
 
@@ -262,7 +262,7 @@ bun run check:commit-message -- .git/COMMIT_EDITMSG  # 手动调试
 
 ### `yiveno-api-keep-alive.yml`
 
-**作用：** 定期 ping Supabase（backend JWT 校验依赖），防止免费计划 7 天无活动自动暂停。
+**作用：** 定期 ping Supabase（worker JWT 校验依赖），防止免费计划 7 天无活动自动暂停。
 
 **调度：** 每 12 小时（UTC）+ `workflow_dispatch` 手动触发。
 
@@ -271,7 +271,7 @@ bun run check:commit-message -- .git/COMMIT_EDITMSG  # 手动调试
 - `REPO VARIABLES`: `SUPABASE_URL`
 - `REPO SECRETS`: `SUPABASE_ANON_KEY`
 
-**注意：** 前端 IndexedDB 为本机存储，与 Supabase 解耦；Supabase 仅用于 backend auth。
+**注意：** 扩展 IndexedDB 为本机存储，与 Supabase 解耦；Supabase 仅用于 worker auth。
 
 ---
 

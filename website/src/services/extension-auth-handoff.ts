@@ -283,9 +283,9 @@ export async function mintAndHandoffSessionToExtension(input: {
     return { status: 'failed' }
   }
 
-  let minted = await mintExtensionSession(input.websiteAccessToken, { extensionId })
+  const minted = await mintExtensionSession(input.websiteAccessToken, { extensionId })
   if (minted.status === 'needs_displace_confirm') {
-    console.info('[ExtensionHandoff] 已有扩展租约，打开自定义挤掉确认')
+    console.warn('[ExtensionHandoff] 已有扩展租约，打开自定义挤掉确认')
     const confirmed = await confirmDisplaceExtensionSession(async () => {
       const displaced = await mintExtensionSession(input.websiteAccessToken, {
         confirmDisplace: true,

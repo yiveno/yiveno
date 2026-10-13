@@ -32,7 +32,7 @@ Normative case id 见产品文档 §5.11.2。实现时：
 1. 在 `recall-eval-ids.ts` 增加 corpus id（若缺）。
 2. 在 `recall-eval-corpus.ts` 增加 `MemoryItem`（含 note / openCount / 日期跨度）。
 3. 在 `recall-eval-cases.ts` 增加 case；`gate: 'must'`。
-4. 跑 `cd frontend && bun run test:run -- recall-eval`。
+4. 跑 `cd extension && bun run test:run -- recall-eval`。
 
 ### 2.1 建议 corpus 增补（实现参考）
 
@@ -67,8 +67,8 @@ Normative case id 见产品文档 §5.11.2。实现时：
 ## 3. Explain 单测（已有 + R4 须保持）
 
 ```text
-frontend/src/core/recall/explain-recall-match.test.ts
-frontend/src/core/recall/recall-result.test.ts  # formatMatchedFields
+extension/src/core/recall/explain-recall-match.test.ts
+extension/src/core/recall/recall-result.test.ts  # formatMatchedFields
 ```
 
 R4 UI 合入后**不强制** snapshot 测 Vue；§5.10.1 手工 + `RecallResultCard` / Omnibox suggest 五要素为门禁。
@@ -81,12 +81,12 @@ R4 UI 合入后**不强制** snapshot 测 Vue；§5.10.1 手工 + `RecallResultC
 
 与 §5.9 / `yiveno_research/TTE_指标框架与测试协议.md` 对齐。权威实现：
 
-| 模块                                           | 路径                                                                                                |
-| ---------------------------------------------- | --------------------------------------------------------------------------------------------------- |
-| Zod 七事件 + `RecallPipelineTiming` + ECS 打分 | `frontend/src/core/recall/recall-telemetry.ts`                                                      |
-| 本机环形缓冲                                   | `frontend/src/infrastructure/analytics/recall-telemetry-store.ts`                                   |
-| Side Panel 录制器                              | `frontend/src/infrastructure/analytics/recall-telemetry-recorder.ts`                                |
-| 流水线分段计时                                 | `frontend/src/application/recall/backends/hybrid-recall-backend.ts` → `RecallResult.pipelineTiming` |
+| 模块                                           | 路径                                                                                                 |
+| ---------------------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Zod 七事件 + `RecallPipelineTiming` + ECS 打分 | `extension/src/core/recall/recall-telemetry.ts`                                                      |
+| 本机环形缓冲                                   | `extension/src/infrastructure/analytics/recall-telemetry-store.ts`                                   |
+| Side Panel 录制器                              | `extension/src/infrastructure/analytics/recall-telemetry-recorder.ts`                                |
+| 流水线分段计时                                 | `extension/src/application/recall/backends/hybrid-recall-backend.ts` → `RecallResult.pipelineTiming` |
 
 ```typescript
 // 示意；合入时放在 core/recall/ 或 infrastructure/analytics/
@@ -112,7 +112,7 @@ RecallTelemetryEventSchema = z.discriminatedUnion('type', [
 
 **存储：** P0 `chrome.storage.local` 键 `yiveno.recallTelemetry`（最多 500 条）；dev 可读 `yiveno.listRecallTelemetryEvents()`（见 [`DEV-调试API.md`](./DEV-调试API.md) §4.3）；不上云除非隐私文档更新。
 
-**单测：** `frontend/src/core/recall/recall-telemetry.test.ts`（七事件 parse + ECS 0–5）。
+**单测：** `extension/src/core/recall/recall-telemetry.test.ts`（七事件 parse + ECS 0–5）。
 
 ---
 
@@ -139,11 +139,11 @@ RecallTelemetryEventSchema = z.discriminatedUnion('type', [
 
 合入时须 Zod 校验；Markdown 为人类可读视图，与 JSON **同源**生成。
 
-**实现：** `frontend/src/core/recall/detail-export.ts` · `export-detail-export-service.ts` · `EXPORT_DETAIL_EXPORT` · `AppMenuButton` · Library / Side Panel 底栏（Copy / Download 菜单 → Markdown / JSON）。
+**实现：** `extension/src/core/recall/detail-export.ts` · `export-detail-export-service.ts` · `EXPORT_DETAIL_EXPORT` · `AppMenuButton` · Library / Side Panel 底栏（Copy / Download 菜单 → Markdown / JSON）。
 
 ### 5.1 多选手测（条目即选择器）
 
-**前置：** `cd frontend && bun run build` → `chrome://extensions` 重新加载 Yiveno。
+**前置：** `cd extension && bun run build` → `chrome://extensions` 重新加载 Yiveno。
 
 | 步骤 | Library 摘录                                       | Library 书签树       | Side Panel Recall                            |
 | ---- | -------------------------------------------------- | -------------------- | -------------------------------------------- |

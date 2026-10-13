@@ -3,7 +3,7 @@
 > **色彩权威：** 服从 [`Yiveno-设计标准-v1.md`](./Yiveno-设计标准-v1.md) Brand Core（Ink `#192420` / Paper `#f0f3ee` / Sage `#4b6054`）。旧蓝紫实验色已废止。  
 > **当前正式素材入口：** 优先看 [`brand-assets/README.md`](./brand-assets/README.md)；项目内常驻品牌母本位于 `docs/design/brand-assets/`。  
 > **用法：** 将下方「--- PROMPT START ---」到「--- PROMPT END ---」整段复制给 AI（或 Figma/Export 自动化），并在同一条消息中 **附上你的 SVG 源文件**（`logo-mark.svg` 及可选的 `logo-full.svg`）。  
-> **产物目标：** 可直接替换本仓库 `frontend/public/images/` 与 `website/public/` 中的对应文件。
+> **产物目标：** 可直接替换本仓库 `extension/public/images/` 与 `website/public/` 中的对应文件。
 
 ---
 
@@ -70,7 +70,7 @@
 
 ### 交付清单 A — Chrome 扩展（必做）
 
-> 目标目录：`frontend/public/images/`  
+> 目标目录：`extension/public/images/`  
 > 用途：`manifest.json` 的 `icons` / `action.default_icon`；Side Panel / Settings 顶栏。
 
 | #   | 文件名                     | 尺寸 (px)                    | 格式 | 背景 | 源           | 说明                                               |
@@ -145,7 +145,7 @@ Getting Started（扩展内）若嵌入，优先 **D2 短循环**，不要用 60
 ```
 yiveno-brand-assets/
 ├── README.txt                 # 列出全部文件、是否 simplified、色值
-├── extension/                 → 对应 frontend/public/images/
+├── extension/                 → 对应 extension/public/images/
 │   ├── icon16.png
 │   ├── icon32.png
 │   ├── icon48.png
@@ -219,7 +219,7 @@ done
 
 ```bash
 # 扩展
-cp yiveno-brand-assets/extension/* frontend/public/images/
+cp yiveno-brand-assets/extension/* extension/public/images/
 
 # 官网
 cp yiveno-brand-assets/website/favicon.* website/public/
@@ -228,7 +228,7 @@ cp yiveno-brand-assets/website/og-image.png website/public/
 cp yiveno-brand-assets/website/images/logo-mark.svg website/public/images/
 
 # 验证
-cd frontend && bun run build
+cd extension && bun run build
 cd website && bun run build
 # chrome://extensions 刷新扩展
 ```
