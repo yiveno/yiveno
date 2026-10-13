@@ -153,7 +153,7 @@ async function login(provider: 'google' | 'microsoft') {
     fromExtension.value = Boolean(getPendingExtensionId())
     fromSubscribe.value = peekAuthReturn().intent === 'subscribe'
 
-    // 扩展 connect：已有官网会话时直接 mint+handoff（409 自动挤掉），禁止先 signOut。
+    // 扩展 connect：已有官网会话时直接 mint+handoff（409 → 自定义弹窗确认挤掉），禁止先 signOut。
     if (getPendingExtensionId()) {
       const session = await getSession()
       if (session?.access_token && session.user?.id) {

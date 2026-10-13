@@ -6,6 +6,13 @@ import { extractProfileFromUserMetadata } from '../services/extension-auth-hando
 
 defineOptions({ name: 'ExtensionUninstalledPage' })
 
+/**
+ * 卸载落地页定位：与扩展卸载强绑定（Chrome setUninstallURL 必开本页）。
+ * - 反馈：始终可选；不强制登录；水合后立刻出表单（不挡在 revoke 上）
+ * - 远程清理：有 token 时后台 POST revoke；失败只轻提示；无 token 跳过
+ * - 官网 session 经 getSession 仅作反馈 context
+ */
+
 const API_BASE = (import.meta.env.PUBLIC_API_BASE_URL || 'https://api.yiveno.com').replace(
   /\/$/,
   ''
@@ -23,7 +30,7 @@ const PRESET_REASON_IDS = [
 
 type PresetReasonId = (typeof PRESET_REASON_IDS)[number]
 type ReasonId = PresetReasonId | 'other'
-type Phase = 'revoking' | 'feedback' | 'done'
+type Phase = 'feedback' | 'done'
 
 function reasonLabelKey(id: ReasonId): WebsiteMessageKey {
   return `uninstall.feedback.reason.${id}` as WebsiteMessageKey
@@ -36,7 +43,6 @@ const presetOptions = computed(() =>
   }))
 )
 
-const phase = ref<Phase>('revoking')
 /** 仅失败时轻提示；成功/幂等不占主文案（页面主题是反馈） */
 const revokeHint = ref('')
 /** 多选闭集原因（含 other） */
@@ -144,6 +150,18 @@ function wantsFreshFeedbackForm(): boolean {
   return new URLSearchParams(window.location.search).get('feedback') === 'fresh'
 }
 
+/** Thanks 记忆同步解析，避免先闪表单再切 done */
+function resolveInitialPhase(): Phase {
+  if (typeof window === 'undefined') return 'feedback'
+  if (wantsFreshFeedbackForm()) {
+    clearFeedbackDoneForTest()
+    return 'feedback'
+  }
+  return isFeedbackDoneRemembered() ? 'done' : 'feedback'
+}
+
+const phase = ref<Phase>(resolveInitialPhase())
+
 async function runRevoke(): Promise<void> {
   if (revokeInflight) {
     return revokeInflight
@@ -232,18 +250,15 @@ async function submitFeedback(): Promise<void> {
   }
 }
 
-onMounted(async () => {
-  if (wantsFreshFeedbackForm()) {
-    clearFeedbackDoneForTest()
-  }
-  await runRevoke()
-  if (!wantsFreshFeedbackForm() && isFeedbackDoneRemembered()) {
+onMounted(() => {
+  // 表单先出；revoke 后台尽力，失败只写 revokeHint
+  if (phase.value === 'done') {
     doneTitle.value = t('uninstall.done.title')
     doneLede.value = t('uninstall.done.lede')
-    phase.value = 'done'
-    return
+  } else if (wantsFreshFeedbackForm()) {
+    clearFeedbackDoneForTest()
   }
-  phase.value = 'feedback'
+  void runRevoke()
 })
 </script>
 

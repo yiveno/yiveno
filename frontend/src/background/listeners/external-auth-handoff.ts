@@ -116,7 +116,7 @@ export async function applyExternalAuthSignOutHandoff(
   }
 
   try {
-    // 官网退出：扩展 keep_local；仍须销本扩展远程会话并清卸载 URL
+    // 官网退出：扩展 keep_local；销远程会话并清 revoke token（保留无 token 反馈 URL）
     await clearExtensionUninstallRevoke({ revokeRemote: true })
     await clearAuthSession()
     await clearAccountBinding()

@@ -31,7 +31,7 @@ function baseEnv(kv: ReturnType<typeof createKv>): Env {
   } as unknown as Env
 }
 
-function mockMintSuccess(access: string): void {
+function mockMintSuccess(access: string, revokeOk = true): void {
   mock.module('../../data-access/supabase', () => ({
     createSupabaseClient: () => ({
       auth: {
@@ -66,10 +66,7 @@ function mockMintSuccess(access: string): void {
     })
   }))
   mock.module('./revoke-auth-session', () => ({
-    revokeAuthSessionById: async () => true
-  }))
-  mock.module('./revoke-other-auth-sessions', () => ({
-    revokeOtherAuthSessions: async () => ({ ok: true, revokedCount: 1, listed: true })
+    revokeAuthSessionById: async () => revokeOk
   }))
 }
 
@@ -127,7 +124,7 @@ describe('mintExtensionSession', () => {
     expect(store[`ext_auth_session:${userId}`]).toContain('old-session')
   })
 
-  test('已有租约 + confirmDisplace → 铸造并挤掉旧 session', async () => {
+  test('已有租约 + confirmDisplace → 铸造并挤掉旧扩展 session', async () => {
     const store: Record<string, string> = {
       [`ext_auth_session:${userId}`]: JSON.stringify({
         sessionId: 'old-session',
@@ -148,7 +145,7 @@ describe('mintExtensionSession', () => {
     expect(result.session.sessionId).toBe('new-session')
   })
 
-  test('已有租约 + confirmDisplace 但 revokeOther 失败 → displace_revoke_failed', async () => {
+  test('confirmDisplace 时 Auth 撤销失败 → 中止铸造（不写新租约）', async () => {
     const store: Record<string, string> = {
       [`ext_auth_session:${userId}`]: JSON.stringify({
         sessionId: 'old-session',
@@ -157,18 +154,15 @@ describe('mintExtensionSession', () => {
       })
     }
     const access = fakeAccessToken('new-session')
-    mockMintSuccess(access)
-    mock.module('./revoke-other-auth-sessions', () => ({
-      revokeOtherAuthSessions: async () => ({ ok: false, reason: 'list_failed' as const })
-    }))
+    mockMintSuccess(access, false)
     const { mintExtensionSession } = await import('./mint-extension-session')
     const result = await mintExtensionSession(baseEnv(createKv(store)), userId, 'a@example.com', {
       extensionId: 'ext-a',
-      confirmDisplace: true,
-      keepWebsiteSessionId: 'web-session'
+      confirmDisplace: true
     })
     expect(result.ok).toBe(false)
     if (result.ok) return
     expect(result.error).toBe('displace_revoke_failed')
+    expect(store[`ext_auth_session:${userId}`]).toContain('old-session')
   })
 })

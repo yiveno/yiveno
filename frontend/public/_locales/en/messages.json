@@ -303,7 +303,7 @@
     "message": "Signed in on the website"
   },
   "sidepanel_extension_displaced_banner": {
-    "message": "Signed out here — this account signed in elsewhere"
+    "message": "This account signed in elsewhere"
   },
   "sidepanel_website_connect_cta": {
     "message": "Connect"

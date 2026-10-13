@@ -114,21 +114,33 @@ img {
   height: auto;
 }
 
+/* 键盘 skip link：平时藏在视口外；Tab 聚焦时顶栏居中，避开左右品牌/头像 */
 .skip-link {
-  position: absolute;
-  left: 0.75rem;
-  top: 0.75rem;
-  z-index: 80;
-  padding: 0.4rem 0.7rem;
-  background: var(--accent);
-  color: var(--on-accent);
-  border-radius: 6px;
+  position: fixed;
+  left: 50%;
+  top: 0.85rem;
+  z-index: calc(var(--z-nav) + 10);
+  padding: 0.35rem 0.75rem;
+  font-family: var(--font-sans);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  color: var(--on-surface);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
   text-decoration: none;
-  transform: translateY(-200%);
+  box-shadow: 0 1px 2px color-mix(in srgb, var(--on-surface) 10%, transparent);
+  transform: translate(-50%, calc(-100% - 1.5rem));
+  pointer-events: none;
 }
 
 .skip-link:focus {
-  transform: none;
+  transform: translate(-50%, 0);
+  pointer-events: auto;
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 /* ── Nav ── */

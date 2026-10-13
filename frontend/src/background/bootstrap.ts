@@ -12,6 +12,7 @@ import { registerAuthSessionLeaseAlarmListener } from '@/background/listeners/au
 import { registerMemoryCloudSyncAlarmListener } from '@/background/listeners/memory-cloud-sync-alarm'
 import { registerOmniboxListeners } from '@/background/listeners/omnibox'
 import { registerSelectionToolbarKeepaliveListener } from '@/background/listeners/selection-toolbar-keepalive'
+import { ensureExtensionUninstallFeedbackUrl } from '@/infrastructure/auth/extension-uninstall-url'
 import { ensureSidePanelOpensOnActionClick } from '@/infrastructure/browser/side-panel'
 import {
   getCurrentOwnerId,
@@ -47,6 +48,11 @@ async function bootstrapBackground(): Promise<void> {
   try {
     // Recall 主壳：点图标开 Side Panel（须无 default_popup）
     await ensureSidePanelOpensOnActionClick()
+
+    // 卸载必开反馈页（与登录解耦；有 token 时 URL 顺带挂 revoke）
+    await ensureExtensionUninstallFeedbackUrl().catch(error => {
+      logger.warn('Background', '登记卸载反馈 URL 失败', error)
+    })
 
     const [profile, ownerId] = await Promise.all([getOrCreateLocalProfile(), getCurrentOwnerId()])
 

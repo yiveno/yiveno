@@ -186,7 +186,7 @@ onMounted(async () => {
   document.addEventListener('visibilitychange', refreshSubscriptionOnVisible)
   void loadSubscription()
   void syncSessionToExtensionIfConnecting(data.session)
-  // 被他端挤掉后会话撤销：尽快回登录页，无需用户点 Sign out
+  // 本浏览器官网会话作废时尽快回登录页（扩展挤掉不踢官网）
   stopAuthLiveness = await startWebsiteAuthLiveness(() => {
     clearNavIsProCache()
     window.location.replace('/login')

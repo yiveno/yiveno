@@ -15,7 +15,7 @@ export type ExtensionSessionLease = {
   sessionId: string
   /** ISO 铸造时间 */
   mintedAt: string
-  /** Chrome 扩展 id；同 id 重连（重装后 id 不变）不弹挤掉确认 */
+  /** Chrome 扩展包 id（元数据；互斥不看此字段，仍须 confirmDisplace） */
   extensionId?: string
   /** 对应该活跃会话的卸载 revoke token（换发时作废） */
   uninstallRevokeToken?: string

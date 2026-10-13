@@ -204,11 +204,11 @@ export async function handleProbeWebsiteSignedIn(): Promise<ProbeWebsiteSignedIn
  * 不修改 IndexedDB（由调用方按 mode 先行处理）。
  */
 async function finishSignOutSession(): Promise<void> {
-  // 先销远程扩展会话并清卸载 URL，再清本机（失败不阻断退出）
+  // 先销远程扩展会话并清 revoke token（保留反馈 URL），再清本机（失败不阻断退出）
   try {
     await clearExtensionUninstallRevoke({ revokeRemote: true })
   } catch (error) {
-    logger.warn('Auth', '退出时卸载 revoke / 清 URL 失败', error)
+    logger.warn('Auth', '退出时卸载 revoke / 清 token 失败', error)
   }
   await clearAuthSession()
   await clearAccountBinding()
@@ -338,7 +338,7 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
         try {
           await clearExtensionUninstallRevoke({ revokeRemote: false })
         } catch (error) {
-          logger.warn('Auth', '挤掉后退登清卸载 URL 失败', error)
+          logger.warn('Auth', '挤掉后退登清卸载 revoke token 失败', error)
         }
         try {
           await writeExtensionDisplacedNotice()

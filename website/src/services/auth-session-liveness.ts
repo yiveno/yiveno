@@ -1,6 +1,6 @@
 /**
- * 官网会话存活探测：被他端挤掉后 Auth session 已撤，本地 JWT 可能仍未过期。
- * 用 getUser / onAuthStateChange 尽快反映未登录，无需用户点操作。
+ * 官网会话存活探测：本浏览器官网 session 作废时（非「扩展挤掉」——官网可多端同登），
+ * 本地 JWT 可能仍未过期。用 getUser / onAuthStateChange 尽快反映未登录，无需用户点操作。
  */
 
 import { getSupabase } from './supabase'

@@ -14,7 +14,7 @@ export type MintedExtensionSession = {
   email?: string
   expiresAt?: number
   displaced?: boolean
-  /** 扩展 setUninstallURL；缺省则扩展无法在卸载时销远程会话 */
+  /** 扩展登录后挂进卸载 URL；缺省则卸载页仍开、但不销远程会话 */
   uninstallRevokeToken?: string
 }
 
@@ -35,7 +35,7 @@ type MintApiData = {
 
 /**
  * 用官网当前 access token 换取扩展独立会话。
- * `extensionId`：扩展包 id（元数据）；互斥看服务端会话租约。`confirmDisplace`：确认挤掉其它已登录扩展会话。
+ * `extensionId`：扩展包 id（元数据）；互斥看服务端扩展租约。`confirmDisplace`：确认挤掉其它已登录扩展（不触及官网会话）。
  */
 export async function mintExtensionSession(
   websiteAccessToken: string,

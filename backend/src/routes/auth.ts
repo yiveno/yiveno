@@ -13,7 +13,6 @@ import { supabaseAuth } from '../middleware/supabase-auth'
 import { consumeExtensionUninstallRevoke } from '../services/auth/consume-extension-uninstall-revoke'
 import { mintExtensionSession } from '../services/auth/mint-extension-session'
 import { probeExtensionSessionLease } from '../services/auth/probe-extension-session-lease'
-import { readJwtSessionId } from '../services/auth/read-jwt-session-id'
 import { error as logErrorMessage, info } from '../utils/logger'
 
 type AuthVars = {
@@ -72,6 +71,7 @@ authRouter.get('/callback', async c => {
  * 为 Chrome 扩展铸造独立 session；账号下扩展登录会话单活跃（按 session 租约，不按 extensionId）。
  * Body（可选）：`{ extensionId?, confirmDisplace? }` — 确认挤掉其它已登录扩展会话。
  * 409 `needs_displace_confirm`：KV 已有扩展会话租约且未确认。
+ * 502 `displace_revoke_failed`：确认挤掉但前序扩展 Auth session 硬撤失败（不铸造新会话）。
  */
 authRouter.post('/extension-session', supabaseAuth(), async c => {
   const userId = c.get('supabaseUserId')
@@ -94,11 +94,9 @@ authRouter.post('/extension-session', supabaseAuth(), async c => {
   }
 
   try {
-    const websiteSessionId = readJwtSessionId(c.get('supabaseAccessToken'))
     const result = await mintExtensionSession(c.env, userId, email, {
       confirmDisplace,
-      ...(extensionId ? { extensionId } : {}),
-      ...(websiteSessionId ? { keepWebsiteSessionId: websiteSessionId } : {})
+      ...(extensionId ? { extensionId } : {})
     })
     if (!result.ok) {
       if (result.error === 'needs_displace_confirm') {

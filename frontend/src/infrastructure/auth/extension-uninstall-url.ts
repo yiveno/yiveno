@@ -1,6 +1,7 @@
 /**
- * 扩展卸载清远程登录：登录后 setUninstallURL；退出时清 URL 并尽力消费 revoke token。
- * Chrome 卸载时 SW 不再运行，只能靠卸载 URL 打开官网落地页。
+ * 扩展卸载落地页：与登录解耦——安装后始终 setUninstallURL 开反馈页；
+ * 仅登录态才把一次性 revoke token 挂进 URL，卸载时落地页再清远程扩展会话。
+ * Chrome 卸载时 SW 不再运行，只能靠卸载 URL 打开官网。
  */
 
 import { z } from 'zod'
@@ -25,10 +26,16 @@ function getApiBaseUrl(): string {
   return fromEnv ? fromEnv.replace(/\/$/, '') : 'http://localhost:8787'
 }
 
-/** 组装卸载落地页 URL（含一次性 token）。 */
-export function buildExtensionUninstallPageUrl(token: string): string {
+/**
+ * 组装卸载落地页 URL。
+ * @param token 有值时落地页会先 revoke 扩展远程会话；无值则仅反馈
+ */
+export function buildExtensionUninstallPageUrl(token?: string | null): string {
   const url = new URL('/auth/extension-uninstalled', `${getWebsiteBaseUrl()}/`)
-  url.searchParams.set('token', token.trim())
+  const trimmed = typeof token === 'string' ? token.trim() : ''
+  if (trimmed) {
+    url.searchParams.set('token', trimmed)
+  }
   return url.toString()
 }
 
@@ -50,8 +57,22 @@ function setChromeUninstallUrl(url: string): Promise<void> {
 }
 
 /**
- * 登录 handoff 成功后：持久化 token 并登记卸载 URL。
- * token 为空则仅尽力清空旧卸载 URL（避免沿用上一会话）。
+ * 安装/启动幂等：确保卸载必开反馈页。
+ * storage 若仍有 revoke token（已登录），URL 带上 token。
+ */
+export async function ensureExtensionUninstallFeedbackUrl(): Promise<void> {
+  const stored = await readChromeStorageLocal(
+    UNINSTALL_REVOKE_TOKEN_STORAGE_KEY,
+    UninstallRevokeTokenRecordSchema
+  )
+  const token = stored?.token?.trim() || null
+  await setChromeUninstallUrl(buildExtensionUninstallPageUrl(token))
+  logger.info('Auth', '已确保扩展卸载反馈 URL', { hasRevokeToken: Boolean(token) })
+}
+
+/**
+ * 登录 handoff 成功后：持久化 token 并登记带 token 的卸载 URL。
+ * token 为空则清旧 token，仍保留无 token 反馈 URL（不整段清空）。
  */
 export async function registerExtensionUninstallRevoke(
   token: string | null | undefined
@@ -93,12 +114,13 @@ export async function postExtensionUninstallRevoke(token: string): Promise<boole
 }
 
 export type ClearExtensionUninstallRevokeOptions = {
-  /** 是否先调 Worker 销远程（主动退出时应 true；仅换 token 时 false） */
+  /** 是否先调 Worker 销远程（主动退出时应 true；仅换 token / 被挤掉时 false） */
   revokeRemote?: boolean
 }
 
 /**
- * 退出 / 换发前：可选远程 revoke → 清 storage → 清空 setUninstallURL。
+ * 退出 / 换发 / 被挤掉：可选远程 revoke → 清 storage 中的 token →
+ * **仍保留**无 token 的卸载反馈 URL（卸载与反馈强绑定，不因退登而关掉）。
  */
 export async function clearExtensionUninstallRevoke(
   options: ClearExtensionUninstallRevokeOptions = {}
@@ -112,5 +134,6 @@ export async function clearExtensionUninstallRevoke(
     await postExtensionUninstallRevoke(stored.token)
   }
   await removeChromeStorageLocal(UNINSTALL_REVOKE_TOKEN_STORAGE_KEY)
-  await setChromeUninstallUrl('')
+  await setChromeUninstallUrl(buildExtensionUninstallPageUrl(null))
+  logger.info('Auth', '已清卸载 revoke token，保留反馈 URL')
 }

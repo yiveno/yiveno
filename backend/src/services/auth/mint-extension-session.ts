@@ -1,12 +1,12 @@
 /**
  * 为 Chrome 扩展另开一条 Supabase Auth 会话（独立 refresh 族）+ 单活跃租约。
  *
- * - 官网 OAuth 会话不得直接 handoff 共用 refresh。
- * - **互斥维度 = 账号下的扩展登录会话（KV 租约 / sessionId）**，不是 `chrome.runtime.id`。
- *   CWS 分配的 extensionId 全机相同，只作租约元数据 / 卸载 token 附属，**不**决定是否弹确认。
- * - KV 已有租约且未 `confirmDisplace` → `needs_displace_confirm`（家里登录挤掉上班那台）。
- * - 确认后：铸造新 session → 撤销该用户其它 Auth session（含前序扩展与官网）→ 写新租约。
- *   保留：新扩展 session + 本次 mint 的官网 Bearer session。
+ * - 官网 OAuth 会话不得直接 handoff 共用 refresh；官网可多端同登，**不**因挤掉扩展而撤销。
+ * - **互斥铁律仅针对扩展**：同一账号同时只允许一条扩展登录（本机库/书签等不可多机共存）。
+ *   互斥维度 = Auth `session` / KV 租约，不是 `chrome.runtime.id`。
+ * - KV 已有租约且未 `confirmDisplace` → `needs_displace_confirm`（家里登录挤掉上班那台扩展）。
+ * - 确认后：**先**硬撤前序扩展 Auth session（可重试）；成功后才铸造新 session 并写 KV。
+ *   撤销失败 → `displace_revoke_failed`，**不**发新会话（防双端短暂同登污染本机库/云同步）。
  * - KV 不可用 / 读不到租约：不弹确认，照常 mint（降级）。
  */
 
@@ -26,7 +26,6 @@ import {
 } from './extension-uninstall-revoke-kv'
 import { readJwtSessionId } from './read-jwt-session-id'
 import { revokeAuthSessionById } from './revoke-auth-session'
-import { revokeOtherAuthSessions } from './revoke-other-auth-sessions'
 
 export type MintedExtensionSession = {
   accessToken: string
@@ -40,18 +39,13 @@ export type MintedExtensionSession = {
 }
 
 export type MintExtensionSessionOptions = {
-  /** 用户已确认挤掉其它已登录的扩展会话 */
+  /** 用户已确认挤掉其它已登录的扩展会话（不触及官网会话） */
   confirmDisplace?: boolean
   /**
    * Chrome 扩展包 id（CWS / 未打包路径派生；各安装副本通常相同）。
    * 仅写入租约与卸载 revoke 元数据，**不**用于跳过挤掉确认。
    */
   extensionId?: string
-  /**
-   * 本次 mint 请求的官网 access JWT 的 session_id。
-   * 挤掉时保留该官网会话，避免把后者官网一并踢掉。
-   */
-  keepWebsiteSessionId?: string
 }
 
 export type MintExtensionSessionResult =
@@ -69,10 +63,12 @@ export type MintExtensionSessionResult =
         | 'verify_otp_failed'
         | 'user_mismatch'
         | 'needs_displace_confirm'
-        | 'displace_revoke_failed' // 确认挤掉后未能作废前序 session
+        | 'displace_revoke_failed'
       /** 仅 needs_displace_confirm */
       existingMintedAt?: string
     }
+
+const DISPLACE_REVOKE_ATTEMPTS = 3 as const
 
 /** 清租约并作废其上挂的卸载 revoke token（若有）。 */
 async function clearLeaseAndUninstallToken(
@@ -86,8 +82,41 @@ async function clearLeaseAndUninstallToken(
   await clearExtensionSessionLease(env, userId)
 }
 
+function sleepMs(ms: number): Promise<void> {
+  return new Promise(resolve => {
+    setTimeout(resolve, ms)
+  })
+}
+
 /**
- * 为已认证用户铸造扩展专用 session（单活跃）。
+ * 硬撤前序扩展 Auth session（带短重试）。
+ * 成功后前者 refresh 失效，云同步无法再以该会话写库。
+ */
+async function revokePreviousExtensionSession(
+  env: Env,
+  userId: string,
+  sessionId: string
+): Promise<boolean> {
+  for (let attempt = 1; attempt <= DISPLACE_REVOKE_ATTEMPTS; attempt++) {
+    const ok = await revokeAuthSessionById(env, userId, sessionId)
+    if (ok) {
+      return true
+    }
+    warn('[Auth] 前序扩展 Auth session 撤销未确认，重试', {
+      userId,
+      sessionId,
+      attempt,
+      maxAttempts: DISPLACE_REVOKE_ATTEMPTS
+    })
+    if (attempt < DISPLACE_REVOKE_ATTEMPTS) {
+      await sleepMs(150 * attempt)
+    }
+  }
+  return false
+}
+
+/**
+ * 为已认证用户铸造扩展专用 session（扩展单活跃）。
  */
 export async function mintExtensionSession(
   env: Env,
@@ -123,6 +152,27 @@ export async function mintExtensionSession(
       error: 'needs_displace_confirm',
       existingMintedAt: existingLease.mintedAt
     }
+  }
+
+  // 确认挤掉：先硬撤前序扩展 session，成功后才铸造（可靠性优先于速度）
+  let displacedSessionId: string | null = null
+  if (existingLease && options.confirmDisplace === true) {
+    if (existingLease.uninstallRevokeToken) {
+      await deleteExtensionUninstallRevokeToken(env, existingLease.uninstallRevokeToken)
+    }
+    const leaseRevoked = await revokePreviousExtensionSession(env, userId, existingLease.sessionId)
+    if (!leaseRevoked) {
+      logErrorMessage('[Auth] 前序扩展 Auth session 撤销失败，中止铸造（防双端污染）', {
+        userId,
+        previousSessionId: existingLease.sessionId
+      })
+      return { ok: false, error: 'displace_revoke_failed' }
+    }
+    info('[Auth] 已撤销前序扩展 Auth session，开始铸造新扩展会话', {
+      userId,
+      previousSessionId: existingLease.sessionId
+    })
+    displacedSessionId = existingLease.sessionId
   }
 
   const admin = createSupabaseClient(env)
@@ -212,36 +262,6 @@ export async function mintExtensionSession(
 
     const accessToken = otpData.session.access_token
     const sessionId = readJwtSessionId(accessToken)
-    let displacedSessionId: string | null = null
-
-    // 有前序租约：作废该用户其它会话（含前序扩展 + 前者官网），保留新扩展与本次官网 Bearer
-    if (existingLease && existingLease.sessionId !== sessionId) {
-      if (existingLease.uninstallRevokeToken) {
-        await deleteExtensionUninstallRevokeToken(env, existingLease.uninstallRevokeToken)
-      }
-      const keepIds = [sessionId, options.keepWebsiteSessionId?.trim() || null].filter(
-        (id): id is string => typeof id === 'string' && id.length > 0
-      )
-      const others = await revokeOtherAuthSessions(env, userId, keepIds)
-      if (!others.ok) {
-        warn('[Auth] 挤掉其它会话失败，回滚本次新 session', {
-          userId,
-          previousSessionId: existingLease.sessionId,
-          newSessionId: sessionId,
-          reason: others.reason
-        })
-        if (sessionId) {
-          await revokeAuthSessionById(env, userId, sessionId)
-        }
-        return { ok: false, error: 'displace_revoke_failed' }
-      }
-      displacedSessionId = existingLease.sessionId
-      info('[Auth] 已挤掉前序扩展及其它会话', {
-        userId,
-        previousSessionId: existingLease.sessionId,
-        revokedCount: others.revokedCount
-      })
-    }
 
     let uninstallRevokeToken: string | null = null
     if (sessionId) {

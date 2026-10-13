@@ -78,6 +78,10 @@ vi.mock('@/application/recall/refresh-clue-llm-completer', () => ({
   refreshClueLlmCompleterFromDevConfig: vi.fn(async () => undefined)
 }))
 
+vi.mock('@/infrastructure/auth/extension-uninstall-url', () => ({
+  ensureExtensionUninstallFeedbackUrl: vi.fn(async () => undefined)
+}))
+
 import {
   ensureBackgroundBootstrapped,
   resetBackgroundBootstrapForTests

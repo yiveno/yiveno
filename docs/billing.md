@@ -28,6 +28,8 @@ Refresh / 账户页 / Cron 用 `DODO_PAYMENTS_API_KEY` 拉 `GET /subscriptions/{
 
 `billing_events` 唯一 `(provider, provider_event_id)`。`provider_event_id` 取 webhook 头 `webhook-id`。先占位再投影；重复 event → skip；投影失败删占位，便于 Dodo 重试。
 
+访问面：仅 Worker `service_role` 读写（RLS 已开、无 `anon`/`authenticated` policy；并对二者 `REVOKE`）。扩展 / 官网客户端不得直连此表。
+
 ## 官方事件（已接线）
 
 `subscription.active|updated|renewed|plan_changed|cancelled|on_hold|failed|expired`  

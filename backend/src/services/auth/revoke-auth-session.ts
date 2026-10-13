@@ -1,7 +1,7 @@
 /**
  * 撤销指定 Supabase Auth session（等价于该端被登出：refresh 失效）。
  * 1) GoTrue Admin `DELETE …/admin/users/{id}/sessions/{session_id}`（若部署支持）
- * 2) 回退 PostgREST `Content-Profile: auth` 删 `auth.sessions`
+ * 2) 回退 PostgREST `Accept-Profile` + `Content-Profile: auth` 删 `auth.sessions`
  *
  * 404 / 已不存在视为成功（目标会话已废即可）。
  */
@@ -74,6 +74,7 @@ export async function revokeAuthSessionById(
     const res = await fetch(url.toString(), {
       method: 'DELETE',
       headers: serviceHeaders(key, {
+        'Accept-Profile': 'auth',
         'Content-Profile': 'auth',
         Prefer: 'return=minimal'
       })

@@ -6,9 +6,10 @@
  */
 
 import { signOut } from './auth'
-import { mintExtensionSession } from './mint-extension-session'
+import { confirmDisplaceExtensionSession } from './confirm-displace-extension-session'
+import { mintExtensionSession, type MintedExtensionSession } from './mint-extension-session'
 
-/** mint + handoff 结果（cancelled_displace 保留类型兼容；Connect 路径不再二次弹窗） */
+/** mint + handoff 结果（取消挤掉弹窗 → cancelled_displace） */
 export type MintAndHandoffResult =
   { status: 'ok' } | { status: 'cancelled_displace' } | { status: 'failed' }
 
@@ -238,8 +239,36 @@ export async function abortWebsiteLoginAfterDisplaceCancel(): Promise<void> {
 }
 
 /**
+ * 将已铸造的扩展 session handoff 到扩展（禁止共享官网 refresh）。
+ */
+async function handoffMintedSession(
+  input: {
+    userId: string
+    email?: string
+    avatarUrl?: string
+    displayName?: string
+  },
+  session: MintedExtensionSession
+): Promise<boolean> {
+  if (session.userId !== input.userId) {
+    console.warn('[ExtensionHandoff] mint userId 与官网不一致，跳过 handoff')
+    return false
+  }
+  return handoffSessionToExtension({
+    accessToken: session.accessToken,
+    refreshToken: session.refreshToken,
+    userId: session.userId,
+    ...(session.email ? { email: session.email } : input.email ? { email: input.email } : {}),
+    ...(session.expiresAt != null ? { expiresAt: session.expiresAt } : {}),
+    ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {}),
+    ...(input.displayName ? { displayName: input.displayName } : {}),
+    ...(session.uninstallRevokeToken ? { uninstallRevokeToken: session.uninstallRevokeToken } : {})
+  })
+}
+
+/**
  * 用官网 access token 铸造扩展独立会话并 handoff。
- * Connect / connect_extension 本身即同意挤掉旧扩展会话（409 时自动 confirmDisplace，不再二次弹窗）。
+ * 已有扩展租约 → 自定义弹窗确认后 `confirmDisplace`（先硬撤前者 Auth session，再铸造；失败可重试）。
  * mint 失败不回退为共享官网 refresh。
  */
 export async function mintAndHandoffSessionToExtension(input: {
@@ -256,38 +285,31 @@ export async function mintAndHandoffSessionToExtension(input: {
 
   let minted = await mintExtensionSession(input.websiteAccessToken, { extensionId })
   if (minted.status === 'needs_displace_confirm') {
-    // 用户已点 Connect / 走 connect_extension：直接挤掉前序扩展会话（含本机重装残留租约）
-    console.info('[ExtensionHandoff] 已有扩展租约，Connect 路径自动 confirmDisplace')
-    minted = await mintExtensionSession(input.websiteAccessToken, {
-      confirmDisplace: true,
-      extensionId
+    console.info('[ExtensionHandoff] 已有扩展租约，打开自定义挤掉确认')
+    const confirmed = await confirmDisplaceExtensionSession(async () => {
+      const displaced = await mintExtensionSession(input.websiteAccessToken, {
+        confirmDisplace: true,
+        extensionId
+      })
+      if (displaced.status !== 'ok') {
+        console.warn('[ExtensionHandoff] confirmDisplace mint 失败', displaced.status)
+        return false
+      }
+      const handed = await handoffMintedSession(input, displaced.session)
+      if (!handed) {
+        console.warn('[ExtensionHandoff] confirmDisplace 后 handoff 失败')
+        return false
+      }
+      return true
     })
+    return confirmed ? { status: 'ok' } : { status: 'cancelled_displace' }
   }
 
   if (minted.status !== 'ok') {
     console.warn('[ExtensionHandoff] mint 失败，跳过 handoff（不共享官网 refresh）')
     return { status: 'failed' }
   }
-  if (minted.session.userId !== input.userId) {
-    console.warn('[ExtensionHandoff] mint userId 与官网不一致，跳过 handoff')
-    return { status: 'failed' }
-  }
-  const handed = await handoffSessionToExtension({
-    accessToken: minted.session.accessToken,
-    refreshToken: minted.session.refreshToken,
-    userId: minted.session.userId,
-    ...(minted.session.email
-      ? { email: minted.session.email }
-      : input.email
-        ? { email: input.email }
-        : {}),
-    ...(minted.session.expiresAt != null ? { expiresAt: minted.session.expiresAt } : {}),
-    ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {}),
-    ...(input.displayName ? { displayName: input.displayName } : {}),
-    ...(minted.session.uninstallRevokeToken
-      ? { uninstallRevokeToken: minted.session.uninstallRevokeToken }
-      : {})
-  })
+  const handed = await handoffMintedSession(input, minted.session)
   return handed ? { status: 'ok' } : { status: 'failed' }
 }
 

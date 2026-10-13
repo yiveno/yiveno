@@ -299,23 +299,11 @@ const coldStartState = ref<ColdStartPipelineState | null>(null)
 const coldStartEnrichmentBatch = ref<ColdStartEnrichmentBatch | null>(null)
 /** 本会话关闭放行后轻条时绑定的 readyAt。 */
 const coldStartPostReleaseDismissedReadyAt = ref<string | null>(null)
-/** 官网已登录 / 被别处挤掉：Connect 软条（Dismiss 后本机仅一次） */
+/** 官网已登录 → 是否同步连到本扩展（仅此用途；与被挤掉说明分开） */
 const showWebsiteConnectBanner = ref(false)
-/** 软条文案走 displaced 还是「Signed in on the website」 */
-const websiteConnectBannerDisplaced = ref(false)
 const websiteConnectBusy = ref(false)
-
-const websiteConnectBannerLabel = computed(() =>
-  websiteConnectBannerDisplaced.value
-    ? t('sidepanel_extension_displaced_banner')
-    : t('sidepanel_website_connect_banner')
-)
-
-const websiteConnectBannerDismissAria = computed(() =>
-  websiteConnectBannerDisplaced.value
-    ? t('sidepanel_extension_displaced_dismiss_aria')
-    : t('sidepanel_website_connect_dismiss_aria')
-)
+/** 被别处挤掉后的原因说明（无 Connect；Dismiss 只清 displaced 标记） */
+const showExtensionDisplacedBanner = ref(false)
 /** 驱动轻条 TTL 到期重算。 */
 const coldStartBannerNowMs = ref(Date.now())
 let coldStartBannerExpiryTimer: ReturnType<typeof setTimeout> | null = null
@@ -1235,14 +1223,14 @@ async function loadGreetingIdentity(): Promise<void> {
 }
 
 /**
- * 扩展未登录时的 Connect 软条：
- * - 被别处挤掉（session 标记）→ 优先展示 displaced 文案（不依赖官网探测 / 旧 dismiss）
- * - 否则探测官网已登录 → 「Signed in on the website」
+ * 扩展未登录时的两条独立软条（互不混用文案 / CTA）：
+ * - displaced：说明为何本机扩展登录失效（被别处挤掉）
+ * - website connect：官网已登录时询问是否 Connect 到本扩展
  */
 async function refreshWebsiteConnectBanner(extensionSignedIn: boolean): Promise<void> {
   if (extensionSignedIn) {
     showWebsiteConnectBanner.value = false
-    websiteConnectBannerDisplaced.value = false
+    showExtensionDisplacedBanner.value = false
     try {
       await clearExtensionDisplacedNotice()
     } catch {
@@ -1251,12 +1239,11 @@ async function refreshWebsiteConnectBanner(extensionSignedIn: boolean): Promise<
     return
   }
   try {
-    if (await readExtensionDisplacedNotice()) {
-      websiteConnectBannerDisplaced.value = true
-      showWebsiteConnectBanner.value = true
-      return
-    }
-    websiteConnectBannerDisplaced.value = false
+    showExtensionDisplacedBanner.value = await readExtensionDisplacedNotice()
+  } catch {
+    showExtensionDisplacedBanner.value = false
+  }
+  try {
     if (await readWebsiteConnectBannerDismissed()) {
       showWebsiteConnectBanner.value = false
       return
@@ -1265,7 +1252,6 @@ async function refreshWebsiteConnectBanner(extensionSignedIn: boolean): Promise<
     showWebsiteConnectBanner.value = probe.ok && probe.websiteSignedIn
   } catch {
     showWebsiteConnectBanner.value = false
-    websiteConnectBannerDisplaced.value = false
   }
 }
 
@@ -1283,14 +1269,17 @@ async function connectWebsiteSessionFromBanner(): Promise<void> {
 
 async function dismissWebsiteConnectBanner(): Promise<void> {
   showWebsiteConnectBanner.value = false
-  const wasDisplaced = websiteConnectBannerDisplaced.value
-  websiteConnectBannerDisplaced.value = false
   try {
-    if (wasDisplaced) {
-      await clearExtensionDisplacedNotice()
-    }
-    // 关闭后本机不再出「官网已登录」条（含刚关 displaced 后避免立刻换成官网条）
     await writeWebsiteConnectBannerDismissed()
+  } catch {
+    // 忽略：本地已隐藏
+  }
+}
+
+async function dismissExtensionDisplacedBanner(): Promise<void> {
+  showExtensionDisplacedBanner.value = false
+  try {
+    await clearExtensionDisplacedNotice()
   } catch {
     // 忽略：本地已隐藏
   }
@@ -1965,6 +1954,24 @@ onUnmounted(() => {
       />
 
       <section
+        v-if="showExtensionDisplacedBanner"
+        class="recall-website-connect recall-website-connect--displaced"
+        role="status"
+        aria-live="polite"
+      >
+        <AppIconButton
+          class="recall-website-connect-close"
+          type="button"
+          :title="t('sidepanel_extension_displaced_dismiss_aria')"
+          :aria-label="t('sidepanel_extension_displaced_dismiss_aria')"
+          @click="dismissExtensionDisplacedBanner"
+        >
+          <AppIcon name="close" size="16px" />
+        </AppIconButton>
+        <p class="recall-website-connect-label">{{ t('sidepanel_extension_displaced_banner') }}</p>
+      </section>
+
+      <section
         v-if="showWebsiteConnectBanner"
         class="recall-website-connect"
         role="status"
@@ -1973,13 +1980,13 @@ onUnmounted(() => {
         <AppIconButton
           class="recall-website-connect-close"
           type="button"
-          :title="websiteConnectBannerDismissAria"
-          :aria-label="websiteConnectBannerDismissAria"
+          :title="t('sidepanel_website_connect_dismiss_aria')"
+          :aria-label="t('sidepanel_website_connect_dismiss_aria')"
           @click="dismissWebsiteConnectBanner"
         >
           <AppIcon name="close" size="16px" />
         </AppIconButton>
-        <p class="recall-website-connect-label">{{ websiteConnectBannerLabel }}</p>
+        <p class="recall-website-connect-label">{{ t('sidepanel_website_connect_banner') }}</p>
         <AppButton
           type="button"
           variant="text"
@@ -2353,6 +2360,12 @@ onUnmounted(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.recall-website-connect--displaced .recall-website-connect-label {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
 }
 
 .recall-website-connect-cta {
