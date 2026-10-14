@@ -7,6 +7,10 @@ import { memoryItemService } from '@/application/memory/memory-item-service'
 import { applyStoredOutcomePairsToMatches } from '@/application/recall/apply-stored-outcome-pairs'
 import { createRecallFlowTrace } from '@/application/recall/create-recall-flow-trace'
 import { getClueLlmCompleter } from '@/application/recall/clue-llm-completer-registry'
+import {
+  readBrowserOnline,
+  shouldOmitClueLlmCompleterWhenOffline
+} from '@/infrastructure/browser/browser-online'
 import type { RecallBackend, RecallWithClueOptions } from '@/application/recall/recall-backend'
 import type { RecallVisibleProgressStage } from '@/core/recall/visible-progress'
 import { applyCurrentTabDomainBoost } from '@/application/recall/apply-current-tab-domain-boost'
@@ -732,7 +736,15 @@ export class HybridRecallBackend implements RecallBackend {
       currentTabDomain: currentTabDomain ?? null
     })
 
-    const complete = isOmniboxEntry ? undefined : (getClueLlmCompleter() ?? undefined)
+    // Omnibox 本就本地；离线时 Side Panel 也省略 LLM（本机规则），避免空等云端
+    const browserOnline = readBrowserOnline()
+    const omitClueLlmForOffline =
+      !isOmniboxEntry && shouldOmitClueLlmCompleterWhenOffline(browserOnline)
+    if (omitClueLlmForOffline) {
+      trace('info', '离线：跳过线索 LLM，走规则理解', { entry, browserOnline: false })
+    }
+    const complete =
+      isOmniboxEntry || omitClueLlmForOffline ? undefined : (getClueLlmCompleter() ?? undefined)
     const visibleProgressStages: RecallVisibleProgressStage[] = []
     const reportProgress = (stage: RecallVisibleProgressStage) => {
       if (isOmniboxEntry) {

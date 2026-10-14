@@ -23,6 +23,10 @@ import { timeConfidenceForRelativeLabel } from '@/core/recall/parse-recall-clue'
  * 弱偏好/发令残留：可进 contentTerms，但不得当 Filter 词面，也不得单独撑过佐证门。
  * `effectiveContentTermsForRecall` 是本模块唯一导出源；调用方统一从此处 import，避免
  * 多文件 re-export 让 reviewer 误判为「同源多路径」（历史上曾如此，现已收敛）。
+ *
+ * 注意：**不要**把 `bored` 放进本表——它常是真实主题词（如标题 The joy of being bored）。
+ * 「i feel bored / pick something fun」类助手发令由 `shouldSkipRecallAsZeroAnchor` +
+ * `ASSISTANT_IMPERATIVE_SURFACES` 拦截，不得靠剥掉 bored 误伤内容找回。
  */
 const WEAK_PREFERENCE_RESIDUAL_TERMS = new Set([
   'play',
@@ -33,7 +37,6 @@ const WEAK_PREFERENCE_RESIDUAL_TERMS = new Set([
   'some',
   'from',
   'feel',
-  'bored',
   'please',
   'me',
   'pick',

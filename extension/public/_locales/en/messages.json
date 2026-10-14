@@ -317,6 +317,21 @@
   "sidepanel_extension_displaced_dismiss_aria": {
     "message": "Dismiss signed-out notice"
   },
+  "sidepanel_offline_banner": {
+    "message": "You're offline — finding in what you saved on this device."
+  },
+  "sidepanel_offline_banner_aria": {
+    "message": "Offline. Finding in what you saved on this device. On-device only."
+  },
+  "sidepanel_offline_mode_chip": {
+    "message": "On-device only"
+  },
+  "sidepanel_offline_composer_hint": {
+    "message": "Cloud reading unavailable — finding on this device."
+  },
+  "sidepanel_offline_composer_placeholder": {
+    "message": "Say a clue — finding on this device…"
+  },
   "popup_welcome_title": {
     "message": "What do you want to recall?"
   },
@@ -936,7 +951,7 @@
     "message": "Full backup export (Data section) is always available — a product responsibility, not a paid feature."
   },
   "settings_privacy_bullet_cloud": {
-    "message": "Cloud (optional): uploaded only after you turn sync on."
+    "message": "Cloud (optional): after you turn sync on, excerpts sync with your account. Bookmarks stay on this device from Chrome import."
   },
   "settings_privacy_bullet_account": {
     "message": "Account: sign-in for identity and optional sync."
@@ -960,7 +975,7 @@
     "message": "Current notice version: not confirmed yet (required before turning sync on)"
   },
   "settings_privacy_sync_confirm": {
-    "message": "Turning on cloud sync aligns this device with the cloud (and may upload). Confirm you have read the privacy notice in Settings. Continue?"
+    "message": "Turning on cloud sync aligns excerpts on this device with your account (and may upload). Bookmarks stay local from Chrome. Confirm you have read the privacy notice in Settings. Continue?"
   },
   "settings_privacy_open_sync": {
     "message": "Open Account & Sync"

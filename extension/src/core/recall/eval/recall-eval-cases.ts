@@ -206,7 +206,18 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
     clueClass: 'negative',
     gate: 'must',
     expectation: { kind: 'no_match' },
-    note: 'R0：无聊助手发令 → 诚实空，禁扫库编造'
+    note: 'R0：无聊助手发令 → 诚实空，禁扫库编造（即使 corpus 有 boredom 标题）'
+  },
+  {
+    id: 'r1-being-bored-title',
+    clue: 'being bored',
+    clueClass: 'semi_fuzzy',
+    gate: 'must',
+    expectation: {
+      kind: 'top1',
+      expectedId: RECALL_EVAL_IDS.noteSharedWordNewsletterRival
+    },
+    note: 'R1：内容线索 being bored → 标题 The joy of being bored；bored 不得当弱偏好剥光'
   },
   {
     id: 'r0-zero-anchor-recommend-movie',

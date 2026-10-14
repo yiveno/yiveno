@@ -531,6 +531,48 @@ describe('recallByKeywordWithParsedClue', () => {
     ).toBe('no_match')
   })
 
+  it('being bored：标题含同词的书签须命中（bored 不得当弱偏好剥光主题）', () => {
+    const target = createBookmarkMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      payload: {
+        title: 'The joy of being bored',
+        url: 'https://aeon.co/essays/the-joy-of-being-bored',
+        domain: 'aeon.co'
+      }
+    })
+    const noise = createBookmarkMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      payload: {
+        title: 'Font pairing ideas for editorial sites',
+        url: 'https://www.typewolf.com/tips/font-pairing-editorial'
+      }
+    })
+    const result = recallByKeywordWithParsedClue([noise, target], 'being bored', {
+      nowMs: NOW_MS
+    })
+    expect(result.outcome).toBe('top_pick')
+    expect(result.topPick?.item.id).toBe(target.id)
+  })
+
+  it('i feel bored 发令：即使库有 boredom 标题仍诚实 no_match', () => {
+    const boredom = createBookmarkMemoryItem({
+      ownerId: OWNER,
+      sourceLocalProfileId: PROFILE,
+      payload: {
+        title: 'The joy of being bored',
+        url: 'https://aeon.co/essays/the-joy-of-being-bored',
+        domain: 'aeon.co'
+      }
+    })
+    expect(
+      recallByKeywordWithParsedClue([boredom], 'i feel bored pick something fun for me', {
+        nowMs: NOW_MS
+      }).outcome
+    ).toBe('no_match')
+  })
+
   it('非找回生活助手：天气 / 点餐 → no_match；有记忆锚的 weather 线索仍可扫', () => {
     const attention = createBookmarkMemoryItem({
       ownerId: OWNER,

@@ -928,6 +928,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 | 结果线索解释强化                 | 已上线（core + Side Panel / Omnibox 卡面 ECS） | 主因字段 + token + 次要字段；五要素卡面 §5.10.1                                                                                                                                                                                                        |
 | 找回壳空状态分层                 | 已上线（壳迁移中）                             | 空库 / 有库 idle 与 no_match 分文案；`no_match` 诚实终局、不附缩短再试；迁 Side Panel 后文案归属随壳走                                                                                                                                                 |
 | Recall 可见进展（等待态）        | **已上线**（体验 · A/B 度量进行中）            | §7.0：真实 pipeline 三阶段；&lt;500ms 不展示；禁 Thinking/CoT/假进度；与 §5.9 TTE **分计**                                                                                                                                                             |
+| Side Panel 壳级离线态            | **已上线**（体验）                             | §7.0：顶栏 soft accent + _On-device only_；composer 轻句 / 离线 idle placeholder；跳过线索 LLM；禁整壳换肤与在线「AI on」灯；与 §5.9 **分计**                                                                                                          |
 | 理解回声（结果态）               | **已上线**（体验）                             | §7.0：`Heard as` + 真实 Parsed 槽位芯片；有芯片时省略 Framing P1 / 泛化 Mainly based on；禁 CoT                                                                                                                                                        |
 | 摘录详情落地页                   | 已上线                                         | `detail.html?id=`；摘录打开详情；书签仍直开 URL；`GET_MEMORY_ITEM`                                                                                                                                                                                     |
 | 记忆库轻浏览                     | 已上线                                         | `library.html`；**默认摘录**；书签=Chrome 目录只读树；摘录/书签列表均展示**保存时间**（`createdAt` / `chromeCreatedAt`）；`?type=` 刷新保留                                                                                                            |
@@ -937,7 +938,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 | Hybrid Filter                    | 已上线                                         | 本机 Hybrid（RRF）；**不分 Free/Pro**；无向量时降级关键词；云同步剥离 embedding；**embedding 无感维护**（启动/登录/书签 sync 后：同步补摘录 + 限量异步补缺向量书签；**增量新建/改书签**另单条入队；**无** Settings Rebuild UI）                        |
 | 关键词倒排 Phase 1               | 已上线                                         | IDB v4 posting 预过滤；**形态缩写入倒排**（CamelCase/多词首字母，无硬编码别名表；schemaVersion=2）+ 精排同算法；折叠前全量打分                                                                                                                         |
 | Dodo Pro / 订阅快照              | 已上线                                         | Free+**仅 Pro**；投影+对账（§A.3.2）；`GET /api/account/subscription`；Settings/官网升级；**sync + hosted 大配额**门禁；embed 登录即可（日配额分档）                                                                                                   |
-| 云同步 / 账号 UI                 | 已上线（Phase C + Pro）                        | Supabase `memory_items`；Worker `/api/memory/sync/*` **需有效 Pro**；开同步并集 + **15 分钟增量**；登录≠自动上传                                                                                                                                       |
+| 云同步 / 账号 UI                 | 已上线（Phase C + Pro）                        | Supabase `memory_items`；Worker `/api/memory/sync/*` **需有效 Pro**；**同步面仅 `text_excerpt`（ADR-017）**；开同步并集 + **15 分钟增量**；登录≠自动上传；书签 Memory 本机灌库、不上云                                                                 |
 | 分享                             | 目标 · Phase C                                 |                                                                                                                                                                                                                                                        |
 | 证据卡 Explain 全要素（ECS）     | 已上线（Side Panel + Omnibox）                 | 来源 + 保存时间 + 锚点 + 命中理由；见 §5.10.1                                                                                                                                                                                                          |
 | Detail export / copy-for-AI      | 已上线（Library + Side Panel）                 | Library / Recall 多选 ≥1 条 → 复制或下载 JSON + Markdown；§5.10.4 · ADR-008                                                                                                                                                                            |
@@ -1160,11 +1161,11 @@ schema：`extension/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 ### 5.1 能力分层
 
-| 层    | 召回 / 权益                                                                                       | 阶段                                    |
-| ----- | ------------------------------------------------------------------------------------------------- | --------------------------------------- |
-| Free  | 本机召回不限（关键词 + Hybrid）；登录后托管口语 LLM **小月配额**；本机 Capture/导出；**无**云同步 | 已上线                                  |
-| Pro   | 同档本机召回质量；托管口语 LLM **大月配额**；云同步；更高 embedding 日配额                        | 已上线（Dodo；`tier=pro`）              |
-| Tier+ | 更深云寻回 / 多模态 / 团队等（对外名待定）                                                        | **预留不售**（schema `premium` 仅占位） |
+| 层    | 召回 / 权益                                                                                        | 阶段                                    |
+| ----- | -------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| Free  | 本机召回不限（关键词 + Hybrid）；登录后托管口语 LLM **小月配额**；本机 Capture/导出；**无**云同步  | 已上线                                  |
+| Pro   | 同档本机召回质量；托管口语 LLM **大月配额**；云同步（**仅摘录** · ADR-017）；更高 embedding 日配额 | 已上线（Dodo；`tier=pro`）              |
+| Tier+ | 更深云寻回 / 多模态 / 团队等（对外名待定）                                                         | **预留不售**（schema `premium` 仅占位） |
 
 冲突时以本表为准：**召回质量不分 Free/Pro**；云同步与 LLM 配额分档。对外只讲 Free 与 Pro。
 
@@ -1635,7 +1636,7 @@ Omnibox **离线快跳轨**专用 must（与 Side Panel `recall-eval` 正交）�
 | ------------ | -------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | 保存         | `capture`      | 已上线          | 划词浮层开关（默认开）；**Chrome 书签灌库**开关（**默认关**；GS/Settings 明示开；关后卸监听/停 bulk，不删已有）                         |
 | 快捷键       | `shortcuts`    | 已上线          | 展示绑定；改键跳转 `chrome://extensions/shortcuts`                                                                                      |
-| 账户与同步   | `account_sync` | 已上线          | 顶栏头像登录；**同步 = Pro+登录+开关**；订阅升级（回焦自动对账）；禁止缩量盖云；孤儿桶；退出三选一；默认同步关                          |
+| 账户与同步   | `account_sync` | 已上线          | 顶栏头像登录；**同步 = Pro+登录+开关**（面仅摘录 · ADR-017）；订阅升级（回焦自动对账）；禁止缩量盖云；孤儿桶；退出三选一；默认同步关    |
 | 数据         | `data`         | 已上线          | **Backup 整库导出**（§5.5.1）；**清除本机记忆**（不动 Chrome 原生书签；并关书签灌库；若同步开着则关同步）；**删云端记忆**；**删除账号** |
 | 隐私         | `privacy`      | 已上线（P0+P1） | 数据说明摘要；开同步前确认；链到 `/privacy` 与 `/terms`（操作型入口在「数据」）                                                         |
 | AI           | `ai`           | 已上线          | **关 AI**；模型路径说明（线索理解 + enrichment；不碰数据平面）                                                                          |
@@ -1722,15 +1723,22 @@ Chrome API / 选区
 - 长期：Cloud Memory DB（当前实现为 **Supabase `memory_items`**）为云端事实源；本地 IndexedDB 变缓存——**不提前重写本地日常读写链路**。
 - Phase C 切片：扩展经 Supabase Auth 登录写入 `AccountBinding`；同步默认关；经 Worker `/api/memory/sync/*` push/pull/replace。
 - **同步 = Pro + 登录 + 开关（Normative）**：三者同时满足才可开启或维持云同步。Worker `/api/memory/sync/*`（除只读 `status` 外的写/拉路径）须 `isActiveProUser`；扩展开同步前查本机 Pro 快照；订阅失效时关闭同步并清定时闹钟。登录 ≠ 自动上传；Free 可登录但不可开同步。
+- **云同步类型范围（Normative · ADR-017）**：
+  - **上云 / 拉回工作集 = 仅 `text_excerpt`**（含条目 `clues.*`、软删等；embedding 仍按既有规则剥离或不入载荷）。
+  - **`bookmark` MemoryItem 不上云**；增量 pull **忽略**远程 bookmark；各设备书签壳仅来自该机 Chrome 灌库 / 本机第三方导入，**禁止**用云并集整合多设备书签林。
+  - 书签 `clues.note` 随 bookmark 本机存；本版**不**单独上云（日后若要跨设备附注须另开 URL 附着方案，禁止整棵书签上云偷渡）。
+  - 出站 replace / 开同步合并盖云时，出站集按上范围过滤；允许因此相对「含历史 bookmark 的云端」缩量（`allowDestructiveShrink`），以摘除遗留云端 bookmark；**不得**因此硬删本机书签。
+  - **Backup 整库导出**仍含当前 owner 全部类型（含书签）——本机主权 ≠ 云同步面。
 - **开同步对齐（Normative）**：
-  - 本机有、云空 → 本机盖云（整侧 replace）。
-  - 本空、云有 → 云盖本机。
-  - **两边都有 → 按 `id` 并集**写入本机与云端，使两侧一致；同 `id` 取 `updatedAt` 较新胜，相等保留云端。盖云前仍走云侧 backup。孤儿桶不参与。
-  - **增量 / 定时 sync（Normative）**：同步开启后挂 `chrome.alarms`（约每 15 分钟）；路径为 `pull(since=lastPulledAt)` → LWW 写入本机 → `push` 水位后变更（**不**整侧 replace）。设置页可「立即同步」。关闭同步、退出登录或 Pro 失效清除闹钟。
-  - **禁止缩量盖云（Normative）**：`POST /replace` 在入站条数 < 云端现有条数时默认 409（`destructive_shrink_denied`），除非显式 `allowDestructiveShrink`（仅退出「先同步再清」等刻意路径）。合并时若 status 有数但 pull/解析为空或丢条，必须中止且不得写云。
-  - **误盖自救**：设置页可 `RESTORE_LATEST_SYNC_BACKUP` / `POST /restore-latest-backup`，在该账号备份中取 **条数最多** 的快照恢复云端并拉回本机（避免误盖后再 replace 一次时「最新=已缩量」救不回）。
-  - 不再向用户展示「保留本机 / 保留云端」整侧二选一（退出「先同步再清」仍可整侧盖云）。
-- **空本机不得盖云（Normative）**：`SYNC_REPLACE_WITH_LOCAL` / Worker `POST /replace` 在本机条目数为 0 且云端有数时必须拒绝（`SYNC_REPLACE_LOCAL_EMPTY` / `empty_local_replace_denied`）；退出「先同步再清」在本机无数据时跳过写云。
+  - 对齐与并集计算的**云侧工作集**仅 `text_excerpt`（见上条）；本机 bookmark 不参与出站、不被远程 bookmark 覆盖写入。
+  - 本机有同步面数据、云空 → 本机盖云（整侧 replace，出站仅摘录）。
+  - 本空（同步面）、云有摘录 → 云盖本机（仅写入摘录；本机既有书签保留）。
+  - **两边都有 → 按 `id` 并集**（仅同步面）写入云端，并使本机摘录与云一致；同 `id` 取 `updatedAt` 较新胜，相等保留云端。盖云前仍走云侧 backup。孤儿桶不参与。
+  - **增量 / 定时 sync（Normative）**：同步开启后挂 `chrome.alarms`（约每 15 分钟）；路径为 `pull(since=lastPulledAt)` → 过滤为摘录 → LWW 写入本机 → `push` 水位后变更的摘录（**不**整侧 replace）。设置页可「立即同步」。关闭同步、退出登录或 Pro 失效清除闹钟。
+  - **禁止缩量盖云（Normative）**：`POST /replace` 在入站条数 < 云端现有条数时默认 409（`destructive_shrink_denied`），除非显式 `allowDestructiveShrink`（退出「先同步再清」、**以及 ADR-017 出站摘除历史 bookmark** 等刻意路径）。合并时若 status 有数但 pull/**Zod 解析**为空或丢条，必须中止且不得写云（**类型策略过滤**导致的「远程仅剩 bookmark」不算解析失败）。
+  - **误盖自救**：设置页可 `RESTORE_LATEST_SYNC_BACKUP` / `POST /restore-latest-backup`，在该账号备份中取 **条数最多** 的快照恢复云端并拉回本机（避免误盖后再 replace 一次时「最新=已缩量」救不回）；拉回本机时仍只应用 `text_excerpt`。
+  - 不再向用户展示「保留本机 / 保留云端」整侧二选一（退出「先同步再清」仍可整侧盖云，出站仅摘录）。
+- **空本机不得盖云（Normative）**：`SYNC_REPLACE_WITH_LOCAL` / Worker `POST /replace` 在本机**同步面**条目数为 0 且云端有数时必须拒绝（`SYNC_REPLACE_LOCAL_EMPTY` / `empty_local_replace_denied`）；退出「先同步再清」在本机无同步面数据时跳过写云。
 - **登录态对齐（Normative）**：
   - 登录：官网 OAuth 成功后 → Worker `POST /api/auth/extension-session`（Bearer=官网 access）铸造**扩展专用** Supabase session（独立 refresh 族）→ `YIVENO_AUTH_SESSION_HANDOFF` 回传扩展（并记住 `extension_id`）；handoff 写入 `avatarUrl` / `displayName`（`avatar_url`|`picture`）与一次性 `uninstallRevokeToken`。**禁止**把官网会话的 refresh_token 直接递给扩展。mint 失败则本次不 handoff，提示用户从扩展 Settings 再试。
   - **扩展单活跃（Normative）**：同一账号同时只允许**一条**扩展登录会话保持有效（互斥维度 = Auth `session` / KV 租约，**不是** `chrome.runtime.id`）。CWS 分配的 extensionId 在各安装副本上通常相同，仅作租约元数据与卸载 revoke 附属，**不得**用来跳过挤掉确认。Worker 用 `AI_USAGE_KV` 登记 `{ session_id, extensionId?, uninstallRevokeToken? }`。mint 时 KV **已有租约**且未带 `confirmDisplace` → **先用 PostgREST 高置信探测**该 `session_id` 是否仍在 `auth.sessions`：**仅** 200+空数组视为 **gone**（僵死租约）→ 清租约后直接 mint；**alive / unknown**（含探测失败、非空失败）→ **一律 409 `needs_displace_confirm`**（互斥优先；禁止把 Admin GET 404 当成 gone）。含家里电脑登录挤掉上班电脑；两 Profile 同扩展包 id 同理。无 `extensionId` 字段的旧租约 → 清后放行一次（迁移）。官网 **Connect** / `connect_extension` / OAuth 收尾 mint：收到 409 时弹出**自定义确认弹窗**（非 `window.confirm`）；用户确认后带 `confirmDisplace` 再 mint；取消 → 放弃本次扩展连接（connect 入口可清本浏览器官网会话回登录）。续付等非 connect 回跳若 mint 失败 / 取消挤掉仅跳过扩展 handoff、保留官网会话。`confirmDisplace` 时：只挤**扩展**——**先**硬撤前序扩展租约 Auth session（可短重试），成功后才铸造新 session 并写 KV；撤销失败 → `displace_revoke_failed`，**不**发新会话（防双 Profile / 双设备短暂同登污染本机库与云同步；弹窗内可重试）。**官网可多端同登**，挤掉扩展**不得**撤销官网会话。铁律：同一账号扩展登录不可多机共存（本机库/书签等会乱）；交接以数据隔离可靠性优先于速度。前者扩展：已登录时 `chrome.alarms` 约每 1 分钟跑 `GET_AUTH_STATE`（lease 探测优先），**无需**用户打开 Side Panel 即可 keep_local 退登；**不**自动打开 `/login`；退登后 Side Panel 可出 displaced 软条 + **Connect**。租约探测不依赖 Supabase token 限流。读不到租约则直接 mint。**不**承诺两台扩展同时在线；官网多端与扩展登录解耦。
@@ -1755,7 +1763,7 @@ Chrome API / 选区
   - **本机有数据**：弹窗固定三按钮——仅退出 / 清除本机该账号桶再退出 / 先同步到云端再清本机（方案 B，不做「已同步」启发式，避免同步后又 Capture 误判）。
   - 官网账户页「退出」：本浏览器 `signOut({ scope: local })` + `SIGN_OUT_HANDOFF`（keep_local）；页内轻提示：扩展本机记忆仍保留，清除请到扩展设置。其它扩展会话仅在「后者确认挤掉」时被服务端撤销。
 - **隐私 P0（Normative）**：
-  - Settings「隐私」展示数据说明摘要（本机 Memory / 可选云同步 / 账号 Auth / AI 经 Worker；不收集 History、未 Capture 全文、默认不上云）。
+  - Settings「隐私」展示数据说明摘要（本机 Memory / 可选云同步**仅摘录** / 账号 Auth / AI 经 Worker；不收集 History、未 Capture 全文、默认不上云；书签本机灌库不上云）。
   - **开同步前**须确认当前隐私说明版本（`privacyNoticeVersion` ack）；未确认不得开启同步。关同步 ≠ 自动删云端。
   - **官网隐私政策（Normative）**：`https://yiveno.com/privacy`（及同源部署的 `/privacy`）提供与当前实现对齐的**美式英语**正文；官网页脚与登录页、扩展 Settings「隐私」须外链至此。正文重大变更时更新日期；扩展内同步确认文案重大变更时递增 `privacyNoticeVersion`。本页**不是**律师意见书；未上线能力不得写入为已提供。卸载落地页可选反馈（闭集原因 + 可选短留言）须在 `/privacy` 披露；**不**计入同步 ack 重大变更（不因此递增 `privacyNoticeVersion`），除非 Settings 同步确认文案本身改写。
   - **关 AI + 模型说明（Normative）**：Settings「AI」提供 `aiFeaturesEnabled`（默认开）；关闭后线索 LLM completer 清空、Capture LLM enrichment 跳过；页内说明 Worker 路径与数据平面边界。
@@ -1854,6 +1862,31 @@ Chrome API / 选区
 6. **禁止**用自动话题检测 / 打开结果 / `no_match` **静默**清线程代替「新会话」（避免误清 refine；成败不做会话边界裁判）。允许上表 **软岔路口确认条**（用户点选后才清或续）。
 7. **「都不是这些」之后：** 保留线程约束；**不得**再挂 site/quote/note/type 等固定追问芯片银行；composer 用中性 placeholder，由用户自由续打。
 8. **会话标题（Normative · 2026-08-26；宽度自适应 · 2026-09-08）：** 有 `priorUserUtterances` / `accumulated` 时 composer **上方**展示本场找回**标题**（首轮用户句优先，否则 `contentTerms`）。标题是**身份标签**（类 ChatGPT 会话名），不是过程说明；**禁止**前缀 `Narrowing:`；P0 **禁止** LLM 开放摘要造题（日后可选润色须 fold/字面门禁）。**可见截断**用 CSS ellipsis，随 Side Panel / 壳宽度增减多露或少露字；**禁止**固定字符数硬截成短标题再展示（病态超长串可另设安全上限）。旁路 **可见「New find」文案**（可配与 Header 同款图标），与 Header New find **同路径**（含出口条）。**禁止**仅用 ✕ 表示开新找。有标题时 Narrow/Neutral placeholder **须点名标题**（`Add detail to “…”`），避免听起来像全新搜索框。
+
+#### Side Panel 壳级离线态（Normative · 2026-10-14 · 体验 · 已接线）
+
+**为何做：** 离线时云端线索理解（hosted / clue LLM）不可用，本机规则 / IndexedDB 找回仍可用。用户应在**打开 Side Panel 时**就知道当前是本机模式，而不是发 clue 后空等或误以为产品坏了。
+
+**信号：** 挂载读 `navigator.onLine`；监听 `online` / `offline`。仅 **`onLine === false`** 时展示。
+
+**用户可见（仅 en）：**
+
+| 元素                                                 | Normative 意向                                                                                                                                                      |
+| ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 顶栏 status 条（`AppPageHeader` 下、账号类软条之上） | wifi-off + 正文 _You're offline — finding in what you saved on this device._ + 次行 _On-device only_；条用加强边框 / soft accent 底（**非**故障红、**非**整壳换肤） |
+| Composer 上方轻句                                    | _Cloud reading unavailable — finding on this device._                                                                                                               |
+| 空闲 placeholder                                     | _Say a clue — finding on this device…_（仅离线 idle；有线程仍走 §7.0 双通道）                                                                                       |
+| a11y                                                 | _Offline. Finding in what you saved on this device. On-device only._                                                                                                |
+
+**交互边界：**
+
+- **不可 Dismiss**（模式事实）；恢复在线后自动消失。
+- **禁止**在线时展示互补「Online / AI available」灯（在线 ≠ Worker / 配额可用）。
+- **禁止**整壳换主题 / 暗色「离线皮」冒充模式感。
+- **禁止**用「无法连接，请稍后再试」终结本可完成本机 Recall 的一轮。
+- 离线发 clue：Background **省略**线索 LLM completer，直接规则理解（不空等云端）；Omnibox 本就本地，行为不变。
+- 范围：**仅 Side Panel Recall 壳**（本切片不扩 Settings / Library / Getting Started）。
+- 与 §5.9 TTE / 召回质量 **分计**。
 
 #### Recall 可见进展（等待态 · Normative · 2026-09-11 · 体验高优 · 已接线）
 
@@ -2365,10 +2398,10 @@ RecallOutcomeEvent {
 
 **价格：** 结账权威在 **Dodo Payments**（改价改 Dodo Product + `services/billing/plans.ts` 展示锚点）。标准价 **$7.99/月 · $59.99/年**；Founding 为实验价，不得写成标准价。Yiveno **不**把金额写进多处业务逻辑；客户端只传 plan id。
 
-卖点主因 = **云同步 / 换机恢复**；配角 = 更大托管口语 LLM 配额。**不作**「更好找回才给 Pro」——本机召回质量 Free/Pro 同档。托管口语 LLM 为加速器（配额见 §5.1 表），不作 AI 助手叙事。
+卖点主因 = **云同步摘录 / 换机恢复摘录**（ADR-017；书签不随云并集）；配角 = 更大托管口语 LLM 配额。**不作**「更好找回才给 Pro」——本机召回质量 Free/Pro 同档。托管口语 LLM 为加速器（配额见 §5.1 表），不作 AI 助手叙事。
 
 - Free：本机完整召回（关键词 + Hybrid）、基础捕获、书签导入、可登录；登录后小额托管 LLM；无云同步。
-- Pro（在售）：同档召回 + 云同步 + 大额托管口语 LLM + 更高 embedding 日配额。
+- Pro（在售）：同档召回 + 云同步（**仅 `text_excerpt`**）+ 大额托管口语 LLM + 更高 embedding 日配额。
 - Power User / Team（路线图）：更高配额、云端深寻回、多模态、团队等——**有硬权益前不上架**。
 - 官网：`/pricing` 权益对照 + 展示锚点价 + 账户页升级/管理 CTA；checkout 由 Worker 写入 `metadata.yiveno_user_id`。
 
@@ -2478,10 +2511,13 @@ RecallOutcomeEvent {
 
 | 日期       | 变更                                                                                                                                                                                                                                                                                                       |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-15 | **离线模式感加深（不换肤）：** 顶栏 soft accent + _On-device only_；composer 轻句 + 离线 idle placeholder；禁整壳换主题；§7.0                                                                                                                                                                              |
+| 2026-10-14 | **Side Panel 壳级离线态：** 顶栏 wifi-off + 本机找回文案；挂载/`online`·`offline`；离线跳过线索 LLM；禁在线 AI 灯与硬失败终局；§7.0 / §1                                                                                                                                                                   |
 | 2026-10-13 | **挤掉前租约存活探测（收紧）：** 仅 PostgREST 200+空数组才清僵死租约；禁止 Admin GET 404 当 gone（会绕过互斥）；alive/unknown 仍 409；弹窗文案 active extension session                                                                                                                                    |
 | 2026-10-13 | **挤掉说明与 Connect 分流：** displaced 软条仅解释被挤掉；官网已登录 Connect 条独立；二者不混 CTA                                                                                                                                                                                                          |
 | 2026-10-13 | **挤掉确认 + 硬撤优先：** 自定义弹窗确认；confirmDisplace 先硬撤前序扩展 Auth session（可重试）成功后才 mint；失败不发新会话                                                                                                                                                                               |
 | 2026-10-12 | **互斥仅扩展：** confirmDisplace 只撤前序扩展租约 session；官网可多端同登；（撤失败策略见 2026-10-13 修订）                                                                                                                                                                                                |
+| 2026-10-14 | **云同步仅摘录（ADR-017）：** 上云/拉回工作集 = `text_excerpt`；`bookmark` 本机灌库不上云、pull 忽略；出站可缩量摘除云端历史 bookmark；Backup 仍含全书签                                                                                                                                                   |
 | 2026-10-12 | **挤掉 revoke 降级（已修订）：** PostgREST 用 Accept-Profile；2026-10-13 起撤失败阻断 mint                                                                                                                                                                                                                 |
 | 2026-10-11 | **Connect 即挤掉：** mint 409 自动 confirmDisplace，去掉 another device 二次 confirm（含重装残留租约）                                                                                                                                                                                                     |
 | 2026-10-11 | **挤掉踢前者官网+扩展（已修订）：** 原撤其它 Auth（含官网）；2026-10-12 起互斥仅扩展，见上行                                                                                                                                                                                                               |

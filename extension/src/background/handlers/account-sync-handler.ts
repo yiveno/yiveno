@@ -9,6 +9,7 @@ import {
   exportOrphanOwnerBuckets,
   summarizeOrphanOwnerBuckets
 } from '@/application/identity/orphan-owner-buckets'
+import { filterCloudSyncableMemoryItems } from '@/core/memory/cloud-syncable-memory-item'
 import { mergeMemoryItemsByUpdatedAt } from '@/core/memory/merge-memory-items-by-updated-at'
 import { selectMemoryItemsToPush } from '@/core/memory/select-memory-items-to-push'
 import type {
@@ -254,14 +255,16 @@ export async function handleAuthSignOut(mode: AuthSignOutMode): Promise<AuthSign
       const items = await memoryItemRepository.listAllByOwnerId(binding.accountId, {
         includeDeleted: true
       })
-      if (items.length > 0) {
+      const outbound = filterCloudSyncableMemoryItems(items)
+      if (outbound.length > 0) {
         const token = await requireAccessToken()
         if (!token) {
           flowFail('Auth', 'AUTH_SIGN_OUT', startedAt, new Error('SYNC_NOT_AUTHENTICATED'))
           return { ok: false, errorCode: 'SYNC_NOT_AUTHENTICATED' }
         }
         try {
-          const result = await replaceRemoteWithLocalItems(token.accessToken, items, {
+          // ADR-017：出站仅摘录；允许缩量摘除云端历史 bookmark
+          const result = await replaceRemoteWithLocalItems(token.accessToken, outbound, {
             allowDestructiveShrink: true
           })
           syncedCount = result.written
@@ -718,10 +721,10 @@ export async function handleSyncMergeLocalAndRemote(): Promise<
       includeDeleted: true
     })
     const remoteRaw = await pullRemoteMemoryItems(token.accessToken)
-    const remoteItems = parseCloudItems(remoteRaw)
+    const remoteParsed = parseCloudItems(remoteRaw)
 
-    // status 显示有云端数据，但 pull/解析后为空 → 禁止继续（否则会用本机 5 条盖掉云）
-    if (remoteStatus.remoteCount > 0 && remoteItems.length === 0) {
+    // status 显示有云端数据，但 pull/Zod 解析后为空 → 禁止继续（否则会用本机 5 条盖掉云）
+    if (remoteStatus.remoteCount > 0 && remoteParsed.length === 0) {
       flowFail('MemorySync', 'SYNC_MERGE_LOCAL_REMOTE', startedAt, new Error('pull_empty_mismatch'))
       return {
         ok: false,
@@ -729,23 +732,28 @@ export async function handleSyncMergeLocalAndRemote(): Promise<
         error: 'pull_empty_mismatch'
       }
     }
-    if (remoteRaw.length > 0 && remoteItems.length < remoteRaw.length) {
+    if (remoteRaw.length > 0 && remoteParsed.length < remoteRaw.length) {
       flowFail('MemorySync', 'SYNC_MERGE_LOCAL_REMOTE', startedAt, new Error('pull_parse_dropped'))
       return {
         ok: false,
         errorCode: 'SYNC_MERGE_FAILED',
-        error: `pull_parse_dropped:${remoteRaw.length - remoteItems.length}`
+        error: `pull_parse_dropped:${remoteRaw.length - remoteParsed.length}`
       }
     }
 
+    // ADR-017：仅摘录参与云侧并集；本机 bookmark 保留在 merged 内但不出站
+    const remoteItems = filterCloudSyncableMemoryItems(remoteParsed)
     const merged = mergeMemoryItemsByUpdatedAt(localItems, remoteItems, binding.accountId)
     if (merged.length < remoteItems.length || merged.length < localItems.length) {
       flowFail('MemorySync', 'SYNC_MERGE_LOCAL_REMOTE', startedAt, new Error('merge_shrunk'))
       return { ok: false, errorCode: 'SYNC_MERGE_FAILED', error: 'merge_shrunk' }
     }
 
-    // 先盖云（服务端还会拒绝缩量），成功后再写本机
-    const result = await replaceRemoteWithLocalItems(token.accessToken, merged)
+    const outbound = filterCloudSyncableMemoryItems(merged)
+    // 先盖云（ADR-017 允许相对历史 bookmark 缩量），成功后再写本机全集
+    const result = await replaceRemoteWithLocalItems(token.accessToken, outbound, {
+      allowDestructiveShrink: true
+    })
     await memoryItemRepository.replaceOwnerItems(binding.accountId, merged)
     const now = new Date().toISOString()
     await patchSyncPrefs({
@@ -817,12 +825,12 @@ async function runIncrementalMemorySync(): Promise<RunIncrementalMemorySyncRespo
     const remoteRaw = await pullRemoteMemoryItems(token.accessToken, {
       ...(since ? { since } : {})
     })
-    const remoteItems = parseCloudItems(remoteRaw)
+    const remoteParsed = parseCloudItems(remoteRaw)
 
-    // 全量 pull：status 有数但解析为空 → 中止（防再演 454→5）
+    // 全量 pull：status 有数但 Zod 解析为空 → 中止（防再演 454→5）；类型策略过滤不算解析失败
     if (!since) {
       const remoteStatus = await fetchRemoteSyncStatus(token.accessToken)
-      if (remoteStatus.remoteCount > 0 && remoteItems.length === 0) {
+      if (remoteStatus.remoteCount > 0 && remoteParsed.length === 0) {
         flowFail('MemorySync', 'INCREMENTAL_SYNC', startedAt, new Error('pull_empty_mismatch'))
         return {
           ok: false,
@@ -831,15 +839,16 @@ async function runIncrementalMemorySync(): Promise<RunIncrementalMemorySyncRespo
         }
       }
     }
-    if (remoteRaw.length > 0 && remoteItems.length < remoteRaw.length) {
+    if (remoteRaw.length > 0 && remoteParsed.length < remoteRaw.length) {
       flowFail('MemorySync', 'INCREMENTAL_SYNC', startedAt, new Error('pull_parse_dropped'))
       return {
         ok: false,
         errorCode: 'SYNC_INCREMENTAL_FAILED',
-        error: `pull_parse_dropped:${remoteRaw.length - remoteItems.length}`
+        error: `pull_parse_dropped:${remoteRaw.length - remoteParsed.length}`
       }
     }
 
+    const remoteItems = filterCloudSyncableMemoryItems(remoteParsed)
     const merged = mergeMemoryItemsByUpdatedAt(localBefore, remoteItems, binding.accountId)
     // 增量：只写回相对本机有变化的条目（含软删）
     const localById = new Map(localBefore.map(item => [item.id, item]))
@@ -920,9 +929,10 @@ export async function handleSyncReplaceWithLocal(): Promise<SyncReplaceWithLocal
     const items = await memoryItemRepository.listAllByOwnerId(binding.accountId, {
       includeDeleted: true
     })
+    const outbound = filterCloudSyncableMemoryItems(items)
 
-    // 本机无任何条目（含软删）时：云端有数 → 拒；两边皆空 → 跳过写云（无备份）
-    if (items.length === 0) {
+    // 本机同步面为空时：云端有数 → 拒；两边皆空 → 跳过写云（无备份）
+    if (outbound.length === 0) {
       const remote = await fetchRemoteSyncStatus(token.accessToken)
       if (remote.remoteCount > 0) {
         flowFail(
@@ -941,7 +951,10 @@ export async function handleSyncReplaceWithLocal(): Promise<SyncReplaceWithLocal
       return { ok: true, written: 0, backupId: '' }
     }
 
-    const result = await replaceRemoteWithLocalItems(token.accessToken, items)
+    // ADR-017：出站仅摘录；允许缩量摘除云端历史 bookmark
+    const result = await replaceRemoteWithLocalItems(token.accessToken, outbound, {
+      allowDestructiveShrink: true
+    })
     await patchSyncPrefs({
       enabled: true,
       lastPushedAt: new Date().toISOString()
@@ -973,21 +986,31 @@ export async function handleSyncReplaceWithRemote(): Promise<SyncReplaceWithRemo
       return { ok: false, errorCode: 'SYNC_NOT_AUTHENTICATED' }
     }
 
+    await memoryItemRepository.remapOwnerId(profile.localProfileId, binding.accountId)
+    const localItems = await memoryItemRepository.listAllByOwnerId(binding.accountId, {
+      includeDeleted: true
+    })
     const remoteRaw = await pullRemoteMemoryItems(token.accessToken)
-    const remoteItems = parseCloudItems(remoteRaw).map(item => ({
+    const remoteParsed = parseCloudItems(remoteRaw).map(item => ({
       ...item,
       ownerId: binding.accountId
     }))
+    // ADR-017：只应用远程摘录；与本机并集以保留本机书签
+    const remoteItems = filterCloudSyncableMemoryItems(remoteParsed)
+    const merged = mergeMemoryItemsByUpdatedAt(localItems, remoteItems, binding.accountId)
 
-    // 清掉本机 localProfile 残留与账号库，再写入云端全集
     await memoryItemRepository.replaceOwnerItems(profile.localProfileId, [])
-    const written = await memoryItemRepository.replaceOwnerItems(binding.accountId, remoteItems)
+    const written = await memoryItemRepository.replaceOwnerItems(binding.accountId, merged)
     await patchSyncPrefs({
       enabled: true,
       lastPulledAt: new Date().toISOString()
     })
 
-    flowOk('MemorySync', 'SYNC_REPLACE_WITH_REMOTE', startedAt, { written })
+    flowOk('MemorySync', 'SYNC_REPLACE_WITH_REMOTE', startedAt, {
+      written,
+      remoteSyncable: remoteItems.length,
+      remoteParsed: remoteParsed.length
+    })
     return { ok: true, written }
   } catch (error) {
     flowFail('MemorySync', 'SYNC_REPLACE_WITH_REMOTE', startedAt, error)

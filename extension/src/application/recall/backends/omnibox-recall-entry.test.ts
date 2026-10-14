@@ -1,11 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-const { understandRecallClueMock, getClueLlmCompleterMock, requestWorkerEmbeddingsMock } =
-  vi.hoisted(() => ({
-    understandRecallClueMock: vi.fn(),
-    getClueLlmCompleterMock: vi.fn(),
-    requestWorkerEmbeddingsMock: vi.fn()
-  }))
+const {
+  understandRecallClueMock,
+  getClueLlmCompleterMock,
+  requestWorkerEmbeddingsMock,
+  readBrowserOnlineMock
+} = vi.hoisted(() => ({
+  understandRecallClueMock: vi.fn(),
+  getClueLlmCompleterMock: vi.fn(),
+  requestWorkerEmbeddingsMock: vi.fn(),
+  readBrowserOnlineMock: vi.fn(() => true)
+}))
 
 vi.mock('@/core/recall/understand/understand-recall-clue', () => ({
   understandRecallClue: understandRecallClueMock
@@ -14,6 +19,14 @@ vi.mock('@/core/recall/understand/understand-recall-clue', () => ({
 vi.mock('@/application/recall/clue-llm-completer-registry', () => ({
   getClueLlmCompleter: getClueLlmCompleterMock
 }))
+
+vi.mock('@/infrastructure/browser/browser-online', async importOriginal => {
+  const actual = await importOriginal<typeof import('@/infrastructure/browser/browser-online')>()
+  return {
+    ...actual,
+    readBrowserOnline: readBrowserOnlineMock
+  }
+})
 
 vi.mock('@/application/memory/memory-item-service', () => ({
   memoryItemService: {
@@ -38,6 +51,7 @@ import { HybridRecallBackend } from '@/application/recall/backends/hybrid-recall
 describe('HybridRecallBackend · entry omnibox', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    readBrowserOnlineMock.mockReturnValue(true)
     getClueLlmCompleterMock.mockReturnValue(vi.fn())
     understandRecallClueMock.mockResolvedValue({
       disposition: 'proceed',
@@ -91,5 +105,18 @@ describe('HybridRecallBackend · entry omnibox', () => {
     await backend.recallWithClue('Manifest V3', { entry: 'omnibox' })
 
     expect(requestWorkerEmbeddingsMock).not.toHaveBeenCalled()
+  })
+
+  it('Side Panel 离线：有 completer 也不注入理解层', async () => {
+    readBrowserOnlineMock.mockReturnValue(false)
+    const completer = vi.fn()
+    getClueLlmCompleterMock.mockReturnValue(completer)
+
+    const backend = new HybridRecallBackend()
+    await backend.recallWithClue('Manifest V3', { entry: 'sidepanel' })
+
+    const call = understandRecallClueMock.mock.calls[0]?.[1] as Record<string, unknown>
+    expect(call.complete).toBeUndefined()
+    expect(call.forceMode).toBeUndefined()
   })
 })

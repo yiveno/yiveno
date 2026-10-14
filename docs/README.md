@@ -25,6 +25,7 @@
 - [`product/Recall-Request-模型与Discovery边界-草案.md`](./product/Recall-Request-模型与Discovery边界-草案.md) — **Normative（2026-10-06 晋升 · D1 已裁决）**：Recall 必要条件 / Topic 两种来源 / Discovery 边界；完整正文在本文件；产品文档 §7.05 为摘要引用
 - [`architecture/decisions/ADR-014-recall-request-topic-two-sources.md`](./architecture/decisions/ADR-014-recall-request-topic-two-sources.md) — 上述草案的 ADR 落档（D1-B 退化弱 Topic 模型化）
 - [`architecture/decisions/ADR-016-environment-feedback-evolution.md`](./architecture/decisions/ADR-016-environment-feedback-evolution.md) — 环境反馈驱动进化：目标稳定、手段适应、反馈非真理
+- [`architecture/decisions/ADR-017-cloud-sync-excerpt-only.md`](./architecture/decisions/ADR-017-cloud-sync-excerpt-only.md) — 云同步仅摘录；书签 Memory 本机化
 
 **运维 / 工程（非规格，与正文冲突时以正文为准）**：
 

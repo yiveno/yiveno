@@ -4,7 +4,8 @@ import { z } from 'zod'
  * 隐私说明确认水位。
  * 说明文案重大变更时递增 PRIVACY_NOTICE_VERSION，迫使重新确认后再开同步。
  */
-export const PRIVACY_NOTICE_VERSION = 2 as const
+/** v3：云同步面改为仅摘录（ADR-017），须重新确认后再开同步。 */
+export const PRIVACY_NOTICE_VERSION = 3 as const
 
 /** chrome.storage.local 键。 */
 export const PRIVACY_PREFS_STORAGE_KEY = 'yiveno:privacy_prefs' as const

@@ -25,7 +25,7 @@ alwaysApply: true
 **能力速查：** Side Panel Recall、Hybrid、倒排 Phase 1、ECS 卡面、detail export、只读 MCP beta、Raindrop/Pocket 导入、TTE 本机埋点、Dodo Pro 门禁等（详表 `产品文档 §1`）。§5.9 **Beta**（种子用户真实库：TTE-V P50≤12s / Success@180≥75% / ECS≥92% 等）；**无种子 study 数据前不得对外宣称 Beta 达标**；MCP **不对用户主宣传**。进行中：自然 clue 采样；**Getting Started 书签首召**（§5.8 · 已接线）；**Recall 可见进展**（§7.0 · A/B）；**理解回声**（§7.0）；**Idle 口语范式**（§7.0）；**内容佐证门 / 硬筛空窗回退**（ADR-011）；ADR-011 时间置信度；`recall-eval` must；Outcome Labeling §7.2；TTE 种子研究。
 <!-- SYNC:IDE_BOOT:END -->
 
-## 冻结（勿重议 · ADR-001–005 · ADR-010–012 · ADR-016）
+## 冻结（勿重议 · ADR-001–005 · ADR-010–012 · ADR-016–017）
 
 - **GitHub Org `yiveno`** · 主仓 `yiveno/yiveno`（品牌产品交付仓，非个人实验项目）；对外站点 `yiveno.com`
 - Recall **主壳 = Side Panel**；`pages/popup` 已退役；关 Panel 丢会话；**New find** 清线程
@@ -36,6 +36,7 @@ alwaysApply: true
 - **禁止**内容别名灰名单冒充全用户通解；残差留给字面/Hybrid
 - **find things（ADR-012）：** 定位句不变；双关/翻牌为**后手（视发展再定，可以≠必须）**；终局壁垒=私有增量+习惯+信任；翻牌句**未启用**；禁止用终局叙事放松召回验收
 - **双线程（ADR-016）：** 明线=找回体验；暗线=记忆探索；方案五问必过、回归可 N/A；行为≠脑规律；研究笔记在 `dual-thread-notes/`；**禁止**为研究损体验或放松 §5.9；不得把未实现能力写成已上线
+- **云同步面（ADR-017）：** 上云/拉回仅 `text_excerpt`；书签 Memory 本机灌库、不上云、不经云并书签林；Backup 仍含全书签
 
 ## 架构铁律（开机必记）
 

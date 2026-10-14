@@ -103,15 +103,34 @@ describe('handleSyncReplaceWithLocal', () => {
     remapOwnerIdMock.mockResolvedValue(0)
   })
 
-  it('本机有数据时覆盖云端', async () => {
-    const items = [{ id: 'a', ownerId: accountId }]
+  it('本机有摘录时覆盖云端（出站仅摘录 · ADR-017）', async () => {
+    const items = [
+      { id: 'a', ownerId: accountId, type: 'text_excerpt' },
+      { id: 'b', ownerId: accountId, type: 'bookmark' }
+    ]
     listAllByOwnerIdMock.mockResolvedValue(items)
     replaceRemoteWithLocalItemsMock.mockResolvedValue({ written: 1, backupId: 'bak' })
 
     const result = await handleSyncReplaceWithLocal()
     expect(result).toEqual({ ok: true, written: 1, backupId: 'bak' })
-    expect(replaceRemoteWithLocalItemsMock).toHaveBeenCalledWith('at', items)
+    expect(replaceRemoteWithLocalItemsMock).toHaveBeenCalledWith(
+      'at',
+      [{ id: 'a', ownerId: accountId, type: 'text_excerpt' }],
+      { allowDestructiveShrink: true }
+    )
     expect(fetchRemoteSyncStatusMock).not.toHaveBeenCalled()
+  })
+
+  it('本机仅书签（无同步面）且云端有数 → SYNC_REPLACE_LOCAL_EMPTY', async () => {
+    listAllByOwnerIdMock.mockResolvedValue([{ id: 'b', ownerId: accountId, type: 'bookmark' }])
+    fetchRemoteSyncStatusMock.mockResolvedValue({ remoteCount: 3, latestUpdatedAt: null })
+
+    const result = await handleSyncReplaceWithLocal()
+    expect(result.ok).toBe(false)
+    if (!result.ok) {
+      expect(result.errorCode).toBe('SYNC_REPLACE_LOCAL_EMPTY')
+    }
+    expect(replaceRemoteWithLocalItemsMock).not.toHaveBeenCalled()
   })
 
   it('本机空且云端有数 → SYNC_REPLACE_LOCAL_EMPTY', async () => {
@@ -137,7 +156,7 @@ describe('handleSyncReplaceWithLocal', () => {
   })
 
   it('Worker 返回 empty_local_replace_denied → 映射为空库错误码', async () => {
-    listAllByOwnerIdMock.mockResolvedValue([{ id: 'race' }])
+    listAllByOwnerIdMock.mockResolvedValue([{ id: 'race', type: 'text_excerpt' }])
     replaceRemoteWithLocalItemsMock.mockRejectedValue(new Error('empty_local_replace_denied'))
 
     const result = await handleSyncReplaceWithLocal()

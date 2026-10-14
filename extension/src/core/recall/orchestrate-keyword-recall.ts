@@ -302,17 +302,30 @@ export function looksLikeNonRecallLifeRequest(clue: string): boolean {
 }
 
 /**
- * 零锚点 / 非找回：生活助手意图，或无有效内容词时的助手发令/无约束 → 不扫库。
+ * 助手发令里可残留、但仍视为「无强记忆锚」的词（如 bored）。
+ * 与弱偏好表分工：bored 须能进 Filter 找回「being bored」类标题；发令句另拦。
+ */
+const ASSISTANT_MOOD_ONLY_CONTENT_TERMS = new Set(['bored'])
+
+/**
+ * 零锚点 / 非找回：生活助手意图，或助手发令且无强内容锚，或无有效内容词且无约束 → 不扫库。
  */
 export function shouldSkipRecallAsZeroAnchor(clue: string, parsed: ParsedRecallClue): boolean {
   if (looksLikeNonRecallLifeRequest(clue)) {
     return true
   }
-  if (effectiveContentTermsForRecall(parsed).length > 0) {
-    return false
-  }
+  const effectiveTerms = effectiveContentTermsForRecall(parsed)
+  // 助手发令（i feel bored / recommend…）优先：仅 mood 残留词（bored）不得放行扫库
   if (looksLikeAssistantImperativeClue(clue)) {
-    return true
+    const strongTerms = effectiveTerms.filter(
+      term => !ASSISTANT_MOOD_ONLY_CONTENT_TERMS.has(normalizeRecallText(term))
+    )
+    if (strongTerms.length === 0) {
+      return true
+    }
+  }
+  if (effectiveTerms.length > 0) {
+    return false
   }
   return !shouldRecallByConstraintNeighborhood(parsed)
 }

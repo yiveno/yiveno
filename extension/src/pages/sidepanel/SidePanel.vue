@@ -95,6 +95,7 @@ import {
   markInstallOnboardingDone,
   readInstallOnboardingDone
 } from '@/infrastructure/storage/install-onboarding-storage'
+import { readBrowserOnline, subscribeBrowserOnline } from '@/infrastructure/browser/browser-online'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import DetailExportBar from '@/infrastructure/ui/DetailExportBar.vue'
 import DetailExportBarDock from '@/infrastructure/ui/DetailExportBarDock.vue'
@@ -304,6 +305,9 @@ const showWebsiteConnectBanner = ref(false)
 const websiteConnectBusy = ref(false)
 /** 被别处挤掉后的原因说明（无 Connect；Dismiss 只清 displaced 标记） */
 const showExtensionDisplacedBanner = ref(false)
+/** 壳级离线：本机找回可用、云端理解不可用（不可 dismiss；恢复在线自动隐） */
+const isBrowserOnline = ref(readBrowserOnline())
+const showOfflineBanner = computed(() => !isBrowserOnline.value)
 /** 驱动轻条 TTL 到期重算。 */
 const coldStartBannerNowMs = ref(Date.now())
 let coldStartBannerExpiryTimer: ReturnType<typeof setTimeout> | null = null
@@ -390,6 +394,11 @@ const composerPlaceholder = computed(() => {
   }
 
   const isIdle = latestAssistant === null
+  // 离线空闲：本机模式 placeholder，加深「云端读法不可用」印象（非换肤）
+  if (showOfflineBanner.value && isIdle) {
+    return t('sidepanel_offline_composer_placeholder')
+  }
+
   const chipsPresent = Boolean(
     latestAssistant?.suggestions && latestAssistant.suggestions.length > 0
   )
@@ -1875,6 +1884,8 @@ async function handlePanelCloseOutcome(): Promise<void> {
 
 /** 取消登录态 storage 订阅。 */
 let stopWatchAuthSession: (() => void) | null = null
+/** 取消浏览器 online/offline 订阅。 */
+let stopBrowserOnline: (() => void) | null = null
 
 function handleRecallVisibleProgressPush(message: unknown): void {
   const parsed = parseRecallVisibleProgressMessage(message)
@@ -1890,6 +1901,10 @@ function handleRecallVisibleProgressPush(message: unknown): void {
 onMounted(() => {
   chrome.runtime.onMessage.addListener(handleRecallVisibleProgressPush)
   chrome.storage.onChanged.addListener(handleRecallPrefillStorageChanged)
+  isBrowserOnline.value = readBrowserOnline()
+  stopBrowserOnline = subscribeBrowserOnline(online => {
+    isBrowserOnline.value = online
+  })
   void nextTick(() => {
     clueInputRef.value?.focus()
   })
@@ -1936,6 +1951,8 @@ onUnmounted(() => {
   stopColdStartPolling()
   stopWatchAuthSession?.()
   stopWatchAuthSession = null
+  stopBrowserOnline?.()
+  stopBrowserOnline = null
 })
 </script>
 
@@ -1952,6 +1969,20 @@ onUnmounted(() => {
         @navigate-error="handleNavigateError"
         @new-find="startNewFindSession"
       />
+
+      <section
+        v-if="showOfflineBanner"
+        class="recall-website-connect recall-website-connect--offline"
+        role="status"
+        aria-live="polite"
+        :aria-label="t('sidepanel_offline_banner_aria')"
+      >
+        <AppIcon class="recall-offline-icon" name="wifi_off" size="18px" aria-hidden="true" />
+        <div class="recall-offline-copy">
+          <p class="recall-website-connect-label">{{ t('sidepanel_offline_banner') }}</p>
+          <p class="recall-offline-mode-chip">{{ t('sidepanel_offline_mode_chip') }}</p>
+        </div>
+      </section>
 
       <section
         v-if="showExtensionDisplacedBanner"
@@ -2169,6 +2200,9 @@ onUnmounted(() => {
       />
     </DetailExportBarDock>
 
+    <p v-if="showOfflineBanner" class="recall-offline-composer-hint" role="status">
+      {{ t('sidepanel_offline_composer_hint') }}
+    </p>
     <RecallComposer
       ref="clueInputRef"
       v-model="clue"
@@ -2348,6 +2382,52 @@ onUnmounted(() => {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface-white);
+}
+
+/* 离线条：本机模式加强（非故障红、非整壳换肤） */
+.recall-website-connect--offline {
+  align-items: flex-start;
+  padding-right: var(--space-sm);
+  border-color: var(--border-strong);
+  background: var(--surface-accent-soft);
+}
+
+.recall-offline-icon {
+  flex: 0 0 auto;
+  margin-top: 1px;
+  color: var(--on-surface);
+}
+
+.recall-offline-copy {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.recall-website-connect--offline .recall-website-connect-label {
+  white-space: normal;
+  color: var(--on-surface);
+  overflow: visible;
+  text-overflow: unset;
+}
+
+.recall-offline-mode-chip {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.3;
+  color: var(--on-surface-muted);
+}
+
+.recall-offline-composer-hint {
+  flex-shrink: 0;
+  margin: var(--space-xs) var(--space-2xs) 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--on-surface-muted);
 }
 
 .recall-website-connect-label {
