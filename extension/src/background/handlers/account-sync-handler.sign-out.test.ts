@@ -164,8 +164,11 @@ describe('handleAuthSignOut', () => {
     expect(remapOwnerIdMock).not.toHaveBeenCalled()
   })
 
-  it('sync_then_clear_local 本机有数据时覆盖云端再清', async () => {
-    const items = [{ id: 'a', ownerId: accountId }]
+  it('sync_then_clear_local 本机有摘录时覆盖云端再清', async () => {
+    const items = [
+      { id: 'a', ownerId: accountId, type: 'text_excerpt' },
+      { id: 'b', ownerId: accountId, type: 'bookmark' }
+    ]
     listAllByOwnerIdMock.mockResolvedValue(items)
     replaceRemoteWithLocalItemsMock.mockResolvedValue({ written: 1, backupId: 'bak' })
 
@@ -173,11 +176,15 @@ describe('handleAuthSignOut', () => {
     expect(result).toMatchObject({
       ok: true,
       mode: 'sync_then_clear_local',
-      clearedCount: 1,
+      clearedCount: 2,
       syncedCount: 1
     })
     expect(remapOwnerIdMock).toHaveBeenCalledWith(localProfileId, accountId)
-    expect(replaceRemoteWithLocalItemsMock).toHaveBeenCalled()
+    expect(replaceRemoteWithLocalItemsMock).toHaveBeenCalledWith(
+      'at',
+      [{ id: 'a', ownerId: accountId, type: 'text_excerpt' }],
+      { allowDestructiveShrink: true }
+    )
     expect(replaceOwnerItemsMock).toHaveBeenCalledWith(accountId, [])
   })
 
@@ -189,8 +196,21 @@ describe('handleAuthSignOut', () => {
     expect(replaceOwnerItemsMock).toHaveBeenCalledWith(accountId, [])
   })
 
+  it('sync_then_clear_local 本机仅书签时不写云仍清本地', async () => {
+    listAllByOwnerIdMock.mockResolvedValue([{ id: 'b', ownerId: accountId, type: 'bookmark' }])
+    const result = await handleAuthSignOut('sync_then_clear_local')
+    expect(result).toMatchObject({
+      ok: true,
+      mode: 'sync_then_clear_local',
+      syncedCount: 0,
+      clearedCount: 1
+    })
+    expect(replaceRemoteWithLocalItemsMock).not.toHaveBeenCalled()
+    expect(replaceOwnerItemsMock).toHaveBeenCalledWith(accountId, [])
+  })
+
   it('sync_then_clear_local 云端失败时不退出', async () => {
-    listAllByOwnerIdMock.mockResolvedValue([{ id: 'a' }])
+    listAllByOwnerIdMock.mockResolvedValue([{ id: 'a', type: 'text_excerpt' }])
     replaceRemoteWithLocalItemsMock.mockRejectedValue(new Error('network'))
     const result = await handleAuthSignOut('sync_then_clear_local')
     expect(result.ok).toBe(false)
