@@ -729,25 +729,43 @@ export class MemoryItemRepository {
 
   /**
    * 将 fromOwnerId 下全部条目的 ownerId 改为 toOwnerId（保留 sourceLocalProfileId）。
-   * 用于：登录后归并未登录本地档；以及「本机覆盖云端」前的归属迁移。
+   * 用于：退出释放账号库回本地档；「本机覆盖云端」前的归属迁移。
    */
   async remapOwnerId(fromOwnerId: string, toOwnerId: string): Promise<number> {
+    return this.remapOwnerIdByType(fromOwnerId, toOwnerId)
+  }
+
+  /**
+   * 按类型将 fromOwnerId → toOwnerId（含软删）。
+   * `type` 省略则迁全部。登录迁移 Import 用：摘录 / 本地档书签分型迁移。
+   */
+  async remapOwnerIdByType(
+    fromOwnerId: string,
+    toOwnerId: string,
+    type?: SupportedMemoryItemType
+  ): Promise<number> {
     if (fromOwnerId === toOwnerId) {
       return 0
     }
 
     const items = await this.listAllByOwnerId(fromOwnerId, { includeDeleted: true })
-    if (items.length === 0) {
+    const selected = type ? items.filter(item => item.type === type) : items
+    if (selected.length === 0) {
       return 0
     }
 
-    const remapped = items.map(item => ({
+    const remapped = selected.map(item => ({
       ...item,
       ownerId: toOwnerId
     }))
     await this.putMany(remapped)
-    // 旧 owner 的 posting 失效；目标 owner 已由 putMany 标 dirty
-    await keywordIndexRepository.clearOwnerIndex(fromOwnerId)
+    // 若该 owner 已无剩余行，清整桶倒排；否则标 dirty 由后续 ensureReady 重建
+    const remaining = await this.listAllByOwnerId(fromOwnerId, { includeDeleted: true })
+    if (remaining.length === 0) {
+      await keywordIndexRepository.clearOwnerIndex(fromOwnerId)
+    } else {
+      await keywordIndexRepository.markDirty(fromOwnerId)
+    }
     return remapped.length
   }
 

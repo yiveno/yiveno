@@ -23,6 +23,7 @@
 | [ADR-015](./ADR-015-topic-semantic-representation-d3c.md) | Topic 语义表示（D3-C）                                           | 已接受   |
 | [ADR-016](./ADR-016-environment-feedback-evolution.md)    | 双线程：明线用户价值 · 暗线记忆探索 · 反馈非真理                 | 已接受   |
 | [ADR-017](./ADR-017-cloud-sync-excerpt-only.md)           | 云同步范围 = 摘录；书签 Memory 本机化（不跨设备并书签林）        | 已接受   |
+| [ADR-018](./ADR-018-account-profile-data-isolation.md)    | Account vs Profile 隔离 · 权益两档 · 登录迁移门闸                | 已接受   |
 
 **新增 ADR：** 先写本文目录 + 文件，再在产品文档 / `CURRENT.md` 引用。
 

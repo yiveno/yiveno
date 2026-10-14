@@ -101,6 +101,8 @@ import DetailExportBar from '@/infrastructure/ui/DetailExportBar.vue'
 import DetailExportBarDock from '@/infrastructure/ui/DetailExportBarDock.vue'
 import AppToastHost from '@/infrastructure/ui/AppToastHost.vue'
 import { useAppToast } from '@/infrastructure/ui/use-app-toast'
+import LoginMigrationDialog from '@/pages/shared/LoginMigrationDialog.vue'
+import { useLoginMigrationDialog } from '@/pages/shared/use-login-migration-dialog'
 import {
   copyDetailExportToClipboard,
   downloadDetailExport
@@ -129,6 +131,20 @@ import { createRecallTelemetryRecorder } from '@/infrastructure/analytics/recall
 import { toRecallMatchCard } from '@/pages/sidepanel/recall-match-card'
 
 defineOptions({ name: 'SidePanelPage' })
+
+const {
+  dismissDeleteAfterExport,
+  loginMigrationBookmarkCount,
+  loginMigrationDeleteAfterExportOpen,
+  loginMigrationError,
+  loginMigrationExcerptCount,
+  loginMigrationLoading,
+  loginMigrationOpen,
+  refreshLoginMigrationGate,
+  runLoginMigrationDelete,
+  runLoginMigrationExport,
+  runLoginMigrationImport
+} = useLoginMigrationDialog()
 
 const recallDetailPageUrl = chrome.runtime.getURL('detail.html')
 
@@ -1218,6 +1234,9 @@ async function loadGreetingIdentity(): Promise<void> {
       return
     }
     void refreshWebsiteConnectBanner(response.signedIn)
+    if (response.signedIn) {
+      void refreshLoginMigrationGate()
+    }
     const fromProfile = response.displayName?.trim() ?? ''
     if (fromProfile) {
       accountDisplayName.value = fromProfile
@@ -1958,6 +1977,19 @@ onUnmounted(() => {
 
 <template>
   <AppToastHost />
+  <LoginMigrationDialog
+    :open="loginMigrationOpen"
+    :loading="loginMigrationLoading"
+    :error="loginMigrationError"
+    :excerpt-count="loginMigrationExcerptCount"
+    :bookmark-count="loginMigrationBookmarkCount"
+    :delete-after-export-open="loginMigrationDeleteAfterExportOpen"
+    @import="runLoginMigrationImport"
+    @export="runLoginMigrationExport"
+    @delete="runLoginMigrationDelete"
+    @dismiss-delete-after-export="dismissDeleteAfterExport"
+    @confirm-delete-after-export="runLoginMigrationDelete"
+  />
   <main class="recall-shell">
     <ColdStartGate v-if="showColdStartGate && coldStartGateState" :state="coldStartGateState" />
 

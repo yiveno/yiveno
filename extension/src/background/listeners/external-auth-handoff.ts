@@ -1,9 +1,10 @@
 /**
- * 接收官网回传的登录 / 退出，写入或清理本地 binding（退出默认保留 Memory）。
+ * 接收官网回传的登录 / 退出，写入或清理本地 binding。
+ * 登录：不静默 absorb（ADR-018 门闸由 UI 处理）；退出：释放账号库回本地档。
  */
 
-import { absorbLocalProfileIntoAccount } from '@/application/identity/absorb-local-profile-into-account'
 import { scheduleSilentMemoryEmbeddingMaintenance } from '@/application/memory/ensure-memory-embedding-maintenance'
+import { releaseAccountLibraryToLocalProfile } from '@/application/identity/release-account-library-to-local'
 import { ensureBackgroundBootstrapped } from '@/background/bootstrap-ready'
 import { isExternallyConnectableOrigin } from '@/core/extension/externally-connectable-origins'
 import {
@@ -18,7 +19,8 @@ import { resolveWebsiteAuthProbeFromExternal } from '@/infrastructure/auth/websi
 import { setAuthSession, clearAuthSession } from '@/infrastructure/identity/auth-session-service'
 import {
   setAccountBinding,
-  clearAccountBinding
+  clearAccountBinding,
+  getAccountBinding
 } from '@/infrastructure/identity/local-profile-service'
 import { patchSyncPrefs } from '@/infrastructure/identity/sync-prefs-service'
 import {
@@ -32,14 +34,14 @@ import { logger } from '@/infrastructure/logging/logger'
 
 let listenerRegistered = false
 
-/** IDB 归并 / embedding 维护前须等 bootstrap（SW 禁止动态 import）。 */
+/** IDB / embedding 维护前须等 bootstrap（SW 禁止动态 import）。 */
 async function ensureBootstrapReady(): Promise<void> {
   await ensureBackgroundBootstrapped()
 }
 
 /**
  * 应用官网登录 handoff 的 session。
- * 成功后写入 chrome.storage.local；UI 经 watchAuthSessionStorage 即时刷新。
+ * 成功后写入 chrome.storage.local；UI 经 watchAuthSessionStorage 即时刷新并弹迁移门闸。
  */
 export async function applyExternalAuthSessionHandoff(
   message: unknown
@@ -72,24 +74,23 @@ export async function applyExternalAuthSessionHandoff(
     } catch (error) {
       logger.warn('Auth', 'handoff 后挂载租约探测闹钟失败', error)
     }
-    // 归并不阻塞官网 sendMessage：全库 remap 可能很慢，否则「Connecting to the extension…」会卡住。
+    // ADR-018：禁止静默 absorb；仅调度 embedding 维护（门闸由 Settings / Side Panel 弹）
     void ensureBootstrapReady()
-      .then(() => absorbLocalProfileIntoAccount(session.userId))
-      .then(remapped => {
+      .then(() => {
         scheduleSilentMemoryEmbeddingMaintenance('auth_handoff', 800)
-        flowOk('Auth', '官网 session handoff 本地档归并', startedAt, {
-          userId: session.userId,
-          remappedLocalProfileItems: remapped
+        flowOk('Auth', '官网 session handoff embedding 调度', startedAt, {
+          userId: session.userId
         })
       })
       .catch(error => {
-        flowFail('Auth', '官网 session handoff 本地档归并', startedAt, error, {
+        flowFail('Auth', '官网 session handoff embedding 调度', startedAt, error, {
           userId: session.userId
         })
       })
     flowOk('Auth', '官网 session handoff', startedAt, {
       userId: session.userId,
-      absorbDeferred: true,
+      absorbDeferred: false,
+      loginMigrationPendingUi: true,
       embeddingMaintenanceScheduled: true
     })
     return { ok: true }
@@ -103,7 +104,7 @@ export async function applyExternalAuthSessionHandoff(
 }
 
 /**
- * 官网已退出：扩展清 session/binding，关同步开关，保留本地 Memory（等同 keep_local）。
+ * 官网已退出：扩展清 session/binding，释放账号库回本地档，关同步开关。
  */
 export async function applyExternalAuthSignOutHandoff(
   message: unknown
@@ -116,6 +117,15 @@ export async function applyExternalAuthSignOutHandoff(
   }
 
   try {
+    const binding = await getAccountBinding()
+    if (binding) {
+      try {
+        await ensureBootstrapReady()
+        await releaseAccountLibraryToLocalProfile(binding.accountId)
+      } catch (error) {
+        logger.warn('Auth', '官网退出 handoff 释放账号库失败', error)
+      }
+    }
     // 官网退出：扩展 keep_local；销远程会话并清 revoke token（保留无 token 反馈 URL）
     await clearExtensionUninstallRevoke({ revokeRemote: true })
     await clearAuthSession()
@@ -128,7 +138,8 @@ export async function applyExternalAuthSignOutHandoff(
       logger.warn('Auth', '官网退出后清除租约探测闹钟失败', error)
     }
     flowOk('Auth', '官网 sign-out handoff', startedAt, {
-      reason: parsed.data.payload?.reason ?? 'website_sign_out'
+      reason: parsed.data.payload?.reason ?? 'website_sign_out',
+      releasedLibrary: Boolean(binding)
     })
     return { ok: true }
   } catch (error) {

@@ -57,10 +57,6 @@ vi.mock('@/infrastructure/auth/auth-session-revalidate', () => ({
   revalidateAuthSession: vi.fn()
 }))
 
-vi.mock('@/application/identity/absorb-local-profile-into-account', () => ({
-  absorbLocalProfileIntoAccount: vi.fn(async () => 0)
-}))
-
 vi.mock('@/application/identity/orphan-owner-buckets', () => ({
   clearOrphanOwnerBuckets: vi.fn(),
   exportOrphanOwnerBuckets: vi.fn(),

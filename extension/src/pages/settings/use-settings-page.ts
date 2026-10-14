@@ -35,6 +35,7 @@ import {
   importThirdPartyCorpus
 } from '@/infrastructure/messaging/background-client'
 import { watchAuthSessionStorage } from '@/infrastructure/auth/watch-auth-session-storage'
+import { useLoginMigrationDialog } from '@/pages/shared/use-login-migration-dialog'
 import {
   tAccountSyncError,
   tCommandsError,
@@ -139,6 +140,20 @@ export function useSettingsPage() {
   const signingOut = ref(false)
   const signOutError = ref('')
 
+  const {
+    dismissDeleteAfterExport,
+    loginMigrationBookmarkCount,
+    loginMigrationDeleteAfterExportOpen,
+    loginMigrationError,
+    loginMigrationExcerptCount,
+    loginMigrationLoading,
+    loginMigrationOpen,
+    refreshLoginMigrationGate,
+    runLoginMigrationDelete,
+    runLoginMigrationExport,
+    runLoginMigrationImport
+  } = useLoginMigrationDialog()
+
   /** 退出相关：本机当前账号桶 + 未 remap 的本地档。 */
   const signOutLocalCount = computed(
     () => syncAccountOwnerCount.value + syncLocalProfileOwnerCount.value
@@ -146,11 +161,13 @@ export function useSettingsPage() {
 
   const hasOrphanOwners = computed(() => orphanBucketCount.value > 0)
 
-  /**
-   * 方案 B：本机有数即弹窗并始终三按钮（含先同步再清），避免启发式误判。
-   * 本机无数则不弹窗、直接仅退出。
-   */
-  const showSignOutDataActions = computed(() => signOutLocalCount.value > 0)
+  /** Pro 且同步曾开启：主按钮先 flush 再留库 */
+  const showSignOutFlushAction = computed(
+    () => subscriptionIsPro.value && syncEnabled.value && signOutLocalCount.value > 0
+  )
+
+  /** 可选：退出时清除本机账号桶（强确认路径） */
+  const showSignOutClearAction = computed(() => signOutLocalCount.value > 0)
 
   const commandRows = computed(() =>
     commands.value.map(command => ({
@@ -438,6 +455,9 @@ export function useSettingsPage() {
       // 未登录也要盘点孤儿桶（换号退出后残留仍可见）
       await refreshSyncStatus()
       await loadSubscriptionStatus()
+      if (response.signedIn) {
+        await refreshLoginMigrationGate()
+      }
       if (activeSection.value === 'ai') {
         await loadHostedQuota()
       }
@@ -1029,7 +1049,7 @@ export function useSettingsPage() {
       return
     }
     await loadSyncContext()
-    // 规则 1：本机当前账号与本地档皆空 → 不弹窗，直接仅退出（并清官网态）
+    // 本机无数 → 直接 keep_local 退出
     if (signOutLocalCount.value === 0) {
       await confirmSignOut('keep_local')
       return
@@ -1049,11 +1069,10 @@ export function useSettingsPage() {
     if (signingOut.value) {
       return
     }
-    if (mode === 'sync_then_clear_local' && !showSignOutDataActions.value) {
-      signOutError.value = t('settings_sign_out_sync_then_clear_disabled')
+    if (mode === 'flush_then_keep' && !showSignOutFlushAction.value) {
       return
     }
-    if (mode === 'clear_local' && !showSignOutDataActions.value) {
+    if (mode === 'clear_local' && !showSignOutClearAction.value) {
       return
     }
 
@@ -1062,7 +1081,11 @@ export function useSettingsPage() {
     try {
       const response = await authSignOut(mode)
       if (!response.ok) {
-        signOutError.value = tAccountSyncError(response.errorCode)
+        if (mode === 'flush_then_keep') {
+          signOutError.value = `${tAccountSyncError(response.errorCode)} ${t('settings_sign_out_flush_failed_keep_anyway')}`
+        } else {
+          signOutError.value = tAccountSyncError(response.errorCode)
+        }
         return
       }
       signOutDialogOpen.value = false
@@ -1200,7 +1223,18 @@ export function useSettingsPage() {
     settingsSectionTabItems,
     settingsSectionTabsId,
     settingsState,
-    showSignOutDataActions,
+    dismissDeleteAfterExport,
+    loginMigrationBookmarkCount,
+    loginMigrationDeleteAfterExportOpen,
+    loginMigrationError,
+    loginMigrationExcerptCount,
+    loginMigrationLoading,
+    loginMigrationOpen,
+    runLoginMigrationDelete,
+    runLoginMigrationExport,
+    runLoginMigrationImport,
+    showSignOutClearAction,
+    showSignOutFlushAction,
     signOutDialogOpen,
     signOutError,
     signOutLocalCount,

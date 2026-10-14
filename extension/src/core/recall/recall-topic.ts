@@ -17,6 +17,7 @@ import type {
   RecallTopic
 } from '@/core/recall/parse-recall-clue-types'
 import { TopicDescriptorSchema, type TopicDescriptor } from '@/core/recall/parse-recall-clue-types'
+import { deriveTopicEmbedding } from '@/core/recall/topic-embedding'
 
 /**
  * 无主题泛词：可进 contentTerms，但单独出现时不构成主题锚（H-topic）。
@@ -212,9 +213,7 @@ export async function withRecallTopicAsync(
     return parsed
   }
 
-  // Step 5：动态导入 avoid circular dependency
-  const { deriveTopicEmbedding } = await import('@/core/recall/topic-embedding')
-
+  // Step 5：静态导入（扩展 SW 禁止动态 import()）
   const result = await deriveTopicEmbedding(topicDescriptor, embedClueText)
   if (!result.semantic || !result.embedding) {
     // 降级词法：embedding 字段不填；topicLookup 会走词法路径

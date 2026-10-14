@@ -33,8 +33,6 @@ withDefaults(
     loading?: boolean
     /** 错误文案（显示在 actions 上方） */
     error?: string | undefined
-    /** 点遮罩关闭 */
-    closeOnBackdrop?: boolean
     /** Esc 关闭 */
     closeOnEscape?: boolean
   }>(),
@@ -43,7 +41,6 @@ withDefaults(
     confirmVariant: 'outlined',
     cancelVariant: 'outlined',
     loading: false,
-    closeOnBackdrop: false,
     closeOnEscape: true
   }
 )
@@ -60,7 +57,6 @@ const emit = defineEmits<{
     :title="title"
     :description="description"
     :loading="loading"
-    :close-on-backdrop="closeOnBackdrop"
     :close-on-escape="closeOnEscape"
     @close="emit('close')"
   >

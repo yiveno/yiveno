@@ -49,9 +49,13 @@ vi.mock('@/infrastructure/identity/sync-prefs-service', () => ({
 vi.mock('@/infrastructure/indexeddb/memory-item-repository', () => ({
   memoryItemRepository: {
     remapOwnerId: vi.fn(),
-    listAllByOwnerId: vi.fn(),
+    listAllByOwnerId: vi.fn(async () => []),
     replaceOwnerItems: vi.fn()
   }
+}))
+
+vi.mock('@/application/identity/release-account-library-to-local', () => ({
+  releaseAccountLibraryToLocalProfile: vi.fn(async () => 0)
 }))
 
 vi.mock('@/infrastructure/identity/subscription-service', () => ({
@@ -77,10 +81,6 @@ vi.mock('@/infrastructure/auth/extension-oauth', () => ({
 vi.mock('@/infrastructure/auth/auth-session-revalidate', () => ({
   clearAuthValidationTimestamp: clearAuthValidationTimestampMock,
   revalidateAuthSession: revalidateAuthSessionMock
-}))
-
-vi.mock('@/application/identity/absorb-local-profile-into-account', () => ({
-  absorbLocalProfileIntoAccount: vi.fn(async () => 0)
 }))
 
 vi.mock('@/infrastructure/browser/website-page', () => ({

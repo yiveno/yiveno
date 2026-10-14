@@ -3,12 +3,18 @@
  * 登录主路径：打开官网 → external handoff 写入 session（扩展不做 OAuth）。
  */
 
-import { absorbLocalProfileIntoAccount } from '@/application/identity/absorb-local-profile-into-account'
+import {
+  deleteLoginMigrationExcerpts,
+  exportLoginMigrationExcerpts,
+  importLoginMigration,
+  summarizeLoginMigrationForCurrentBinding
+} from '@/application/identity/login-migration'
 import {
   clearOrphanOwnerBuckets,
   exportOrphanOwnerBuckets,
   summarizeOrphanOwnerBuckets
 } from '@/application/identity/orphan-owner-buckets'
+import { releaseAccountLibraryToLocalProfile } from '@/application/identity/release-account-library-to-local'
 import { filterCloudSyncableMemoryItems } from '@/core/memory/cloud-syncable-memory-item'
 import { mergeMemoryItemsByUpdatedAt } from '@/core/memory/merge-memory-items-by-updated-at'
 import { selectMemoryItemsToPush } from '@/core/memory/select-memory-items-to-push'
@@ -24,7 +30,10 @@ import type {
   ExportLocalMemoryResponse,
   ExportOrphanOwnersResponse,
   GetAuthStateResponse,
+  GetLoginMigrationStatusResponse,
+  LoginMigrationAction,
   ProbeWebsiteSignedInResponse,
+  ResolveLoginMigrationResponse,
   GetSubscriptionStatusResponse,
   GetSyncStatusResponse,
   RefreshAuthProfileResponse,
@@ -231,10 +240,37 @@ async function finishSignOutSession(): Promise<void> {
 }
 
 /**
- * AUTH_SIGN_OUT — 按 mode 决定是否清理本机当前账号 Memory。
- * - keep_local：仅退登录，保留 accountId 桶（默认）
- * - clear_local：删除本机当前 accountId 桶后退出（不动 localProfileId）
- * - sync_then_clear_local：remap 后若有数据则覆盖云端，再清账号桶并退出；本机无数据则不写空云端
+ * 将当前账号桶摘录 flush 到云端（ADR-017 面）。
+ * 失败抛错；调用方决定是否仍退出。
+ */
+async function flushAccountExcerptsToCloud(accountId: string): Promise<number> {
+  const items = await memoryItemRepository.listAllByOwnerId(accountId, {
+    includeDeleted: true
+  })
+  const outbound = filterCloudSyncableMemoryItems(items)
+  if (outbound.length === 0) {
+    return 0
+  }
+  const token = await requireAccessToken()
+  if (!token) {
+    throw new Error('SYNC_NOT_AUTHENTICATED')
+  }
+  const result = await replaceRemoteWithLocalItems(token.accessToken, outbound, {
+    allowDestructiveShrink: true
+  })
+  await patchSyncPrefs({
+    enabled: true,
+    lastPushedAt: new Date().toISOString()
+  })
+  return result.written
+}
+
+/**
+ * AUTH_SIGN_OUT（ADR-018）
+ * - keep_local：账号库 remap 回本地档后退出（默认；未登录可继续 Recall）
+ * - flush_then_keep：先 flush 摘录上云，失败则不退出；成功后再同 keep_local
+ * - clear_local：删除本机当前 accountId 桶后退出
+ * - sync_then_clear_local：遗留路径——先覆盖云端再清账号桶
  */
 export async function handleAuthSignOut(mode: AuthSignOutMode): Promise<AuthSignOutResponse> {
   const startedAt = flowStart('Auth', 'AUTH_SIGN_OUT', { mode })
@@ -242,14 +278,45 @@ export async function handleAuthSignOut(mode: AuthSignOutMode): Promise<AuthSign
     const binding = await getAccountBinding()
     if (!binding) {
       await finishSignOutSession()
-      flowOk('Auth', 'AUTH_SIGN_OUT', startedAt, { mode, clearedCount: 0, signedIn: false })
-      return { ok: true, mode, clearedCount: 0, syncedCount: 0 }
+      flowOk('Auth', 'AUTH_SIGN_OUT', startedAt, {
+        mode,
+        clearedCount: 0,
+        syncedCount: 0,
+        releasedToLocalCount: 0,
+        signedIn: false
+      })
+      return {
+        ok: true,
+        mode,
+        clearedCount: 0,
+        syncedCount: 0,
+        releasedToLocalCount: 0
+      }
     }
 
     let clearedCount = 0
     let syncedCount = 0
+    let releasedToLocalCount = 0
 
-    if (mode === 'sync_then_clear_local') {
+    if (mode === 'flush_then_keep') {
+      try {
+        syncedCount = await flushAccountExcerptsToCloud(binding.accountId)
+      } catch (error) {
+        const code =
+          error instanceof Error && error.message === 'SYNC_NOT_AUTHENTICATED'
+            ? 'SYNC_NOT_AUTHENTICATED'
+            : 'SYNC_REPLACE_LOCAL_FAILED'
+        flowFail('Auth', 'AUTH_SIGN_OUT', startedAt, error)
+        return {
+          ok: false,
+          errorCode: code,
+          ...(error instanceof Error ? { error: error.message } : {})
+        }
+      }
+      releasedToLocalCount = await releaseAccountLibraryToLocalProfile(binding.accountId)
+    } else if (mode === 'keep_local') {
+      releasedToLocalCount = await releaseAccountLibraryToLocalProfile(binding.accountId)
+    } else if (mode === 'sync_then_clear_local') {
       const profile = await getOrCreateLocalProfile()
       await memoryItemRepository.remapOwnerId(profile.localProfileId, binding.accountId)
       const items = await memoryItemRepository.listAllByOwnerId(binding.accountId, {
@@ -257,26 +324,17 @@ export async function handleAuthSignOut(mode: AuthSignOutMode): Promise<AuthSign
       })
       const outbound = filterCloudSyncableMemoryItems(items)
       if (outbound.length > 0) {
-        const token = await requireAccessToken()
-        if (!token) {
-          flowFail('Auth', 'AUTH_SIGN_OUT', startedAt, new Error('SYNC_NOT_AUTHENTICATED'))
-          return { ok: false, errorCode: 'SYNC_NOT_AUTHENTICATED' }
-        }
         try {
-          // ADR-017：出站仅摘录；允许缩量摘除云端历史 bookmark
-          const result = await replaceRemoteWithLocalItems(token.accessToken, outbound, {
-            allowDestructiveShrink: true
-          })
-          syncedCount = result.written
-          await patchSyncPrefs({
-            enabled: true,
-            lastPushedAt: new Date().toISOString()
-          })
+          syncedCount = await flushAccountExcerptsToCloud(binding.accountId)
         } catch (error) {
+          const code =
+            error instanceof Error && error.message === 'SYNC_NOT_AUTHENTICATED'
+              ? 'SYNC_NOT_AUTHENTICATED'
+              : 'SYNC_REPLACE_LOCAL_FAILED'
           flowFail('Auth', 'AUTH_SIGN_OUT', startedAt, error)
           return {
             ok: false,
-            errorCode: 'SYNC_REPLACE_LOCAL_FAILED',
+            errorCode: code,
             ...(error instanceof Error ? { error: error.message } : {})
           }
         }
@@ -292,8 +350,13 @@ export async function handleAuthSignOut(mode: AuthSignOutMode): Promise<AuthSign
     }
 
     await finishSignOutSession()
-    flowOk('Auth', 'AUTH_SIGN_OUT', startedAt, { mode, clearedCount, syncedCount })
-    return { ok: true, mode, clearedCount, syncedCount }
+    flowOk('Auth', 'AUTH_SIGN_OUT', startedAt, {
+      mode,
+      clearedCount,
+      syncedCount,
+      releasedToLocalCount
+    })
+    return { ok: true, mode, clearedCount, syncedCount, releasedToLocalCount }
   } catch (error) {
     flowFail('Auth', 'AUTH_SIGN_OUT', startedAt, error)
     return {
@@ -331,7 +394,18 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
         }
         session = revalidated.session
       } else if (revalidated.status === 'invalid') {
-        // 被挤掉 / refresh 明确作废：keep_local 退登；不自动开 login（避免官网仍登录时立刻再弹挤掉确认）
+        // 被挤掉 / refresh 明确作废：尽力 flush + 释放账号库回本地档后 keep_local 退登
+        const displacedAccountId = binding.accountId
+        try {
+          await flushAccountExcerptsToCloud(displacedAccountId)
+        } catch (error) {
+          logger.warn('Auth', '挤掉后退登前 flush 失败（仍释放本机库）', error)
+        }
+        try {
+          await releaseAccountLibraryToLocalProfile(displacedAccountId)
+        } catch (error) {
+          logger.warn('Auth', '挤掉后退登释放账号库失败', error)
+        }
         await clearAuthSession()
         await clearAccountBinding()
         await clearSubscriptionSnapshot()
@@ -358,7 +432,8 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
           signedIn: false,
           reason: 'revalidate_invalid',
           detail: revalidated.reason,
-          openedLogin: false
+          openedLogin: false,
+          releasedLibrary: true
         })
         return {
           ok: true,
@@ -371,15 +446,8 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
     }
 
     const stillBound = await getAccountBinding()
-    // 已登录会话兜底：历史登录若未归并，读状态时补一次（幂等）。
-    // 归并不阻塞 / 不抛穿 GET_AUTH_STATE：全库 remap 遇 IDB 配额失败时，
-    // 若 await 会导致 AUTH_STATE_READ_FAILED，Header 误判为未登录。
+    // ADR-018：禁止静默 absorb；未归属摘录由登录迁移门闸处理
     if (stillBound && session) {
-      void absorbLocalProfileIntoAccount(stillBound.accountId).catch(error => {
-        flowFail('Auth', 'GET_AUTH_STATE 本地档归并', startedAt, error, {
-          accountId: stillBound.accountId
-        })
-      })
       // 仅 token 可信时后台刷新订阅，避免 uncertain 用旧 access 刷 invalid_token
       if (authRevalidateStatus === 'valid' || authRevalidateStatus === 'skipped') {
         void refreshSubscriptionSnapshot().catch(() => undefined)
@@ -1017,6 +1085,70 @@ export async function handleSyncReplaceWithRemote(): Promise<SyncReplaceWithRemo
     return {
       ok: false,
       errorCode: 'SYNC_REPLACE_REMOTE_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/** GET_LOGIN_MIGRATION_STATUS — 登录后是否须弹迁移门闸（ADR-018）。 */
+export async function handleGetLoginMigrationStatus(): Promise<GetLoginMigrationStatusResponse> {
+  const startedAt = flowStart('Identity', 'GET_LOGIN_MIGRATION_STATUS')
+  try {
+    const summary = await summarizeLoginMigrationForCurrentBinding()
+    flowOk('Identity', 'GET_LOGIN_MIGRATION_STATUS', startedAt, {
+      pending: summary.pending,
+      excerptCount: summary.excerptCount
+    })
+    return {
+      ok: true,
+      pending: summary.pending,
+      excerptCount: summary.excerptCount,
+      sourceOwnerIds: summary.sourceOwnerIds,
+      localBookmarkCount: summary.localBookmarkCount
+    }
+  } catch (error) {
+    flowFail('Identity', 'GET_LOGIN_MIGRATION_STATUS', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'LOGIN_MIGRATION_STATUS_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/** RESOLVE_LOGIN_MIGRATION — Import / Export / Delete 三选一。 */
+export async function handleResolveLoginMigration(
+  action: LoginMigrationAction
+): Promise<ResolveLoginMigrationResponse> {
+  const startedAt = flowStart('Identity', 'RESOLVE_LOGIN_MIGRATION', { action })
+  try {
+    const binding = await getAccountBinding()
+    if (!binding) {
+      return { ok: false, errorCode: 'SYNC_NOT_AUTHENTICATED' }
+    }
+    const accountId = binding.accountId
+
+    if (action === 'import') {
+      const result = await importLoginMigration(accountId)
+      flowOk('Identity', 'RESOLVE_LOGIN_MIGRATION', startedAt, { action, ...result })
+      return { ok: true, action: 'import', ...result }
+    }
+    if (action === 'export') {
+      const items = await exportLoginMigrationExcerpts(accountId)
+      flowOk('Identity', 'RESOLVE_LOGIN_MIGRATION', startedAt, {
+        action,
+        itemCount: items.length
+      })
+      return { ok: true, action: 'export', items }
+    }
+    const deleted = await deleteLoginMigrationExcerpts(accountId)
+    flowOk('Identity', 'RESOLVE_LOGIN_MIGRATION', startedAt, { action, ...deleted })
+    return { ok: true, action: 'delete', ...deleted }
+  } catch (error) {
+    flowFail('Identity', 'RESOLVE_LOGIN_MIGRATION', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'LOGIN_MIGRATION_FAILED',
       ...(error instanceof Error ? { error: error.message } : {})
     }
   }

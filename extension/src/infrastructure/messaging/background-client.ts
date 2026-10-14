@@ -13,7 +13,10 @@ import type {
   ExportLocalMemoryResponse,
   ExportOrphanOwnersResponse,
   GetAuthStateResponse,
+  GetLoginMigrationStatusResponse,
+  LoginMigrationAction,
   ProbeWebsiteSignedInResponse,
+  ResolveLoginMigrationResponse,
   GetSubscriptionStatusResponse,
   GetSyncStatusResponse,
   RefreshAuthProfileResponse,
@@ -391,6 +394,25 @@ export async function fetchSyncStatus(): Promise<GetSyncStatusResponse> {
   return sendBackgroundMessage<GetSyncStatusResponse>({
     scope: 'background',
     type: 'GET_SYNC_STATUS'
+  })
+}
+
+/** 登录迁移门闸状态（ADR-018）。 */
+export async function fetchLoginMigrationStatus(): Promise<GetLoginMigrationStatusResponse> {
+  return sendBackgroundMessage<GetLoginMigrationStatusResponse>({
+    scope: 'background',
+    type: 'GET_LOGIN_MIGRATION_STATUS'
+  })
+}
+
+/** 执行登录迁移：Import / Export / Delete。 */
+export async function resolveLoginMigration(
+  action: LoginMigrationAction
+): Promise<ResolveLoginMigrationResponse> {
+  return sendBackgroundMessage<ResolveLoginMigrationResponse>({
+    scope: 'background',
+    type: 'RESOLVE_LOGIN_MIGRATION',
+    payload: { action }
   })
 }
 

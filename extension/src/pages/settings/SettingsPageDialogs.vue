@@ -3,6 +3,7 @@ import { inject } from 'vue'
 import AppButton from '@/infrastructure/ui/AppButton.vue'
 import AppConfirmModal from '@/infrastructure/ui/AppConfirmModal.vue'
 import AppModal from '@/infrastructure/ui/AppModal.vue'
+import LoginMigrationDialog from '@/pages/shared/LoginMigrationDialog.vue'
 import type { SettingsPageController } from '@/pages/settings/use-settings-page'
 
 defineOptions({ name: 'SettingsPageDialogs' })
@@ -23,8 +24,19 @@ const {
   dataError,
   dataWorking,
   deleteAccountDialogOpen,
+  dismissDeleteAfterExport,
+  loginMigrationBookmarkCount,
+  loginMigrationDeleteAfterExportOpen,
+  loginMigrationError,
+  loginMigrationExcerptCount,
+  loginMigrationLoading,
+  loginMigrationOpen,
   runConfirmDialog,
-  showSignOutDataActions,
+  runLoginMigrationDelete,
+  runLoginMigrationExport,
+  runLoginMigrationImport,
+  showSignOutClearAction,
+  showSignOutFlushAction,
   signOutDialogOpen,
   signOutError,
   signingOut,
@@ -36,11 +48,24 @@ const {
 </script>
 
 <template>
+  <LoginMigrationDialog
+    :open="loginMigrationOpen"
+    :loading="loginMigrationLoading"
+    :error="loginMigrationError"
+    :excerpt-count="loginMigrationExcerptCount"
+    :bookmark-count="loginMigrationBookmarkCount"
+    :delete-after-export-open="loginMigrationDeleteAfterExportOpen"
+    @import="runLoginMigrationImport"
+    @export="runLoginMigrationExport"
+    @delete="runLoginMigrationDelete"
+    @dismiss-delete-after-export="dismissDeleteAfterExport"
+    @confirm-delete-after-export="runLoginMigrationDelete"
+  />
+
   <AppModal
     :open="signOutDialogOpen"
     :title="t('settings_sign_out_dialog_title')"
     :loading="signingOut"
-    close-on-backdrop
     size="md"
     @close="closeSignOutDialog"
   >
@@ -58,16 +83,29 @@ const {
 
     <div class="settings-sign-out-options">
       <AppButton
+        v-if="showSignOutFlushAction"
         type="button"
         :disabled="signingOut"
         variant="filled"
+        @click="confirmSignOut('flush_then_keep')"
+      >
+        {{ t('settings_sign_out_flush_then_keep') }}
+      </AppButton>
+      <p v-if="showSignOutFlushAction" class="settings-sign-out-option-hint">
+        {{ t('settings_sign_out_flush_then_keep_hint') }}
+      </p>
+
+      <AppButton
+        type="button"
+        :disabled="signingOut"
+        :variant="showSignOutFlushAction ? 'outlined' : 'filled'"
         @click="confirmSignOut('keep_local')"
       >
         {{ t('settings_sign_out_keep_local') }}
       </AppButton>
       <p class="settings-sign-out-option-hint">{{ t('settings_sign_out_keep_local_hint') }}</p>
 
-      <template v-if="showSignOutDataActions">
+      <template v-if="showSignOutClearAction">
         <AppButton
           type="button"
           :disabled="signingOut"
@@ -78,18 +116,6 @@ const {
         </AppButton>
         <p class="settings-sign-out-option-hint">
           {{ t('settings_sign_out_clear_local_hint') }}
-        </p>
-
-        <AppButton
-          type="button"
-          :disabled="signingOut"
-          variant="outlined"
-          @click="confirmSignOut('sync_then_clear_local')"
-        >
-          {{ t('settings_sign_out_sync_then_clear') }}
-        </AppButton>
-        <p class="settings-sign-out-option-hint">
-          {{ t('settings_sign_out_sync_then_clear_hint') }}
         </p>
       </template>
     </div>

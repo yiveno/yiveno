@@ -285,13 +285,13 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 
 **交互（必须）：**
 
-| 行为           | 默认                                                 |
-| -------------- | ---------------------------------------------------- |
-| Esc 关闭       | ✅（`loading` 时禁用）                               |
-| Tab 焦点陷阱   | ✅                                                   |
-| 关闭后焦点还原 | ✅                                                   |
-| 点遮罩关闭     | ❌（表单/危险操作）；Sign out 等可 `closeOnBackdrop` |
-| 危险主操作     | `AppButton tone="danger"` + outlined                 |
+| 行为           | 默认                                             |
+| -------------- | ------------------------------------------------ |
+| Esc 关闭       | ✅（`loading` 时禁用）                           |
+| Tab 焦点陷阱   | ✅                                               |
+| 关闭后焦点还原 | ✅                                               |
+| 点遮罩关闭     | ❌（全部 Modal；须显式 Cancel / 操作按钮 / Esc） |
+| 危险主操作     | `AppButton tone="danger"` + outlined             |
 
 **禁止：** `window.confirm` / `window.alert` 作为用户面向确认；遮罩用 slate 等非 `--ink` 色；hover/focus 几何变换。
 
@@ -472,6 +472,7 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 | v1.3   | 2026-08-20 | 扩展接入 Brand Roles；停用多预设色板运行时                                    |
 | v1.4   | 2026-08-20 | 扩展业务 CSS 改写 Roles；删除旧 presets / theme 运行时                        |
 | v1.5   | 2026-08-20 | `--space-*` / `--radius-*` 进 brand；semantic 直连 Roles；variables 瘦身      |
+| v1.8   | 2026-10-15 | Modal 一律禁止点遮罩关闭（移除 `closeOnBackdrop`；须显式按钮 / Esc）          |
 | v1.7   | 2026-08-23 | 扩展 `AppModal` Modal Dialog 规范（§6.2.1）；禁止 `window.confirm` 作用户确认 |
 | v1.6   | 2026-08-22 | 扩展自研 App\* 控件；图标统一 Lucide 按需内联                                 |
 

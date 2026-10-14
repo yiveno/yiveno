@@ -32,6 +32,8 @@ export const AccountSyncErrorCodeSchema = z.enum([
   'ORPHAN_EXPORT_FAILED', // 导出孤儿桶失败
   'ORPHAN_CLEAR_FAILED', // 清除孤儿桶失败
   'LOCAL_CLEAR_FAILED', // 清除本机记忆失败
+  'LOGIN_MIGRATION_STATUS_FAILED', // 读取登录迁移门闸失败
+  'LOGIN_MIGRATION_FAILED', // 执行登录迁移（导入/导出/删除）失败
   'SUBSCRIPTION_STATUS_FAILED', // 拉取订阅状态失败
   'MCP_REMOTE_UPDATE_FAILED' // 同步 MCP 开关到云端失败
 ])
@@ -39,13 +41,14 @@ export const AccountSyncErrorCodeSchema = z.enum([
 export type AccountSyncErrorCode = z.infer<typeof AccountSyncErrorCodeSchema>
 
 /**
- * 退出登录对本机 Memory 的处理策略。
- * 默认 keep_local：不清库；clear / sync_then_clear 须经设置页确认框。
+ * 退出登录对本机 Memory 的处理策略（ADR-018）。
+ * 默认 keep_local：账号桶 remap 回本地档后退出；Pro 可先 flush_then_keep。
  */
 export const AuthSignOutModeSchema = z.enum([
-  'keep_local', // 仅退出，保留本机当前账号 Memory
-  'clear_local', // 退出并删除本机当前 accountId 桶（不动 localProfileId）
-  'sync_then_clear_local' // 先将本机（含 remap）覆盖云端，再清本机账号桶并退出
+  'keep_local', // 账号库释放回本地档后退出（默认；未登录可继续 Recall）
+  'flush_then_keep', // 先 flush 摘录上云，再同 keep_local（失败不退出，UI 可改点 keep_local）
+  'clear_local', // 退出并删除本机当前 accountId 桶（不动 localProfileId；强确认）
+  'sync_then_clear_local' // 遗留：先覆盖云端再清账号桶；设置页主路径不再主推
 ])
 
 export type AuthSignOutMode = z.infer<typeof AuthSignOutModeSchema>
@@ -79,10 +82,71 @@ export type AuthSignOutResponse =
   | {
       ok: true
       mode: AuthSignOutMode
-      /** 本机被删除的当前账号条目数（keep_local 为 0） */
+      /** 本机被删除的当前账号条目数（keep / flush_then_keep 为 0） */
       clearedCount: number
-      /** sync_then_clear 时写入云端的条数；其它模式为 0 */
+      /** flush / sync_then_clear 时写入云端的条数；其它模式为 0 */
       syncedCount: number
+      /** keep / flush_then_keep：释放回本地档的条数 */
+      releasedToLocalCount: number
+    }
+  | {
+      ok: false
+      errorCode: AccountSyncErrorCode
+      error?: string
+    }
+
+/** 登录迁移门闸动作。 */
+export const LoginMigrationActionSchema = z.enum([
+  'import', // 导入摘录（+ 本地档书签本机归属）到当前账号
+  'export', // 导出未归属摘录 JSON
+  'delete' // 删除未归属摘录
+])
+
+export type LoginMigrationAction = z.infer<typeof LoginMigrationActionSchema>
+
+export type GetLoginMigrationStatusMessage = {
+  scope: BackgroundMessageScope
+  type: 'GET_LOGIN_MIGRATION_STATUS'
+}
+
+export type GetLoginMigrationStatusResponse =
+  | {
+      ok: true
+      pending: boolean
+      excerptCount: number
+      sourceOwnerIds: string[]
+      localBookmarkCount: number
+    }
+  | {
+      ok: false
+      errorCode: AccountSyncErrorCode
+      error?: string
+    }
+
+export type ResolveLoginMigrationMessage = {
+  scope: BackgroundMessageScope
+  type: 'RESOLVE_LOGIN_MIGRATION'
+  payload: {
+    action: LoginMigrationAction
+  }
+}
+
+export type ResolveLoginMigrationResponse =
+  | {
+      ok: true
+      action: 'import'
+      importedExcerpts: number
+      remappedLocalBookmarks: number
+    }
+  | {
+      ok: true
+      action: 'export'
+      items: MemoryItem[]
+    }
+  | {
+      ok: true
+      action: 'delete'
+      deletedCount: number
     }
   | {
       ok: false
@@ -465,6 +529,8 @@ export type AccountSyncBackgroundMessage =
   | ProbeWebsiteSignedInMessage
   | RefreshAuthProfileMessage
   | GetSyncStatusMessage
+  | GetLoginMigrationStatusMessage
+  | ResolveLoginMigrationMessage
   | SetSyncEnabledMessage
   | SetMcpReadOnlyMessage
   | RunIncrementalMemorySyncMessage
@@ -487,6 +553,8 @@ export type AccountSyncBackgroundResponse =
   | ProbeWebsiteSignedInResponse
   | RefreshAuthProfileResponse
   | GetSyncStatusResponse
+  | GetLoginMigrationStatusResponse
+  | ResolveLoginMigrationResponse
   | SetSyncEnabledResponse
   | SetMcpReadOnlyResponse
   | RunIncrementalMemorySyncResponse

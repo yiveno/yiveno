@@ -1196,7 +1196,7 @@
     "message": "Sign out"
   },
   "settings_sign_out_dialog_copy": {
-    "message": "By default, this account’s memories stay on this device after sign-out; Recall won’t show them while signed out. Confirm cloud backup before clearing the device copy."
+    "message": "Your library stays on this device so you can keep finding things while signed out. Clearing the device copy is optional and needs a second confirmation."
   },
   "settings_sign_out_dialog_counts": {
     "message": "This account on device: $ACCOUNT$. Other local saves: $LOCAL$. Cloud: $REMOTE$.",
@@ -1213,22 +1213,31 @@
     }
   },
   "settings_sign_out_keep_local": {
-    "message": "Sign out only"
+    "message": "Sign out and keep library"
   },
   "settings_sign_out_keep_local_hint": {
-    "message": "Keep this account’s data on this device (recommended)"
+    "message": "Recommended — keep bookmarks and excerpts on this device"
+  },
+  "settings_sign_out_flush_then_keep": {
+    "message": "Sync excerpts, then sign out"
+  },
+  "settings_sign_out_flush_then_keep_hint": {
+    "message": "Upload excerpts to the cloud first, then keep the library on this device"
+  },
+  "settings_sign_out_flush_failed_keep_anyway": {
+    "message": "Cloud sync failed. Sign out anyway? The cloud copy may be behind."
   },
   "settings_sign_out_clear_local": {
     "message": "Sign out and clear this account on device"
   },
   "settings_sign_out_clear_local_hint": {
-    "message": "Cannot recover if never synced; does not delete data from before you signed in"
+    "message": "Removes this account’s copy on this device; cannot recover if it was never synced"
   },
   "settings_sign_out_sync_then_clear": {
     "message": "Sync to cloud, then sign out and clear device"
   },
   "settings_sign_out_sync_then_clear_hint": {
-    "message": "Replace cloud with this device (including pre-login saves), then clear the device; stays signed in if sync fails"
+    "message": "Advanced — replace cloud with this device, then clear the device copy"
   },
   "settings_sign_out_sync_then_clear_disabled": {
     "message": "Nothing on this device to upload"
@@ -1236,6 +1245,87 @@
   "settings_sign_out_cancel": {
     "message": "Cancel"
   },
+  "settings_login_migration_title": {
+    "message": "Bring local saves into this account?"
+  },
+  "settings_login_migration_copy": {
+    "message": "This device has excerpts that aren’t tied to the account you just signed in with. Choose what to do — we won’t merge them quietly."
+  },
+  "settings_login_migration_counts": {
+    "message": "Excerpts to decide: $EXCERPTS$. Local bookmarks that Import will keep with your library: $BOOKMARKS$.",
+    "placeholders": {
+      "EXCERPTS": {
+        "content": "$1"
+      },
+      "BOOKMARKS": {
+        "content": "$2"
+      }
+    }
+  },
+  "settings_login_migration_import": {
+    "message": "Import into this account"
+  },
+  "settings_login_migration_import_hint": {
+    "message": "Move excerpts into this account on this device. Bookmarks stay local; cloud sync still needs Pro."
+  },
+  "settings_login_migration_export": {
+    "message": "Export backup"
+  },
+  "settings_login_migration_export_hint": {
+    "message": "Download a JSON backup, then choose whether to delete the unimported copies"
+  },
+  "settings_login_migration_delete": {
+    "message": "Delete"
+  },
+  "settings_login_migration_delete_hint": {
+    "message": "Discard these excerpts on this device; bookmarks are left alone"
+  },
+  "settings_login_migration_import_done": {
+    "message": "Imported $1 excerpts and kept $2 local bookmarks with your library",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      },
+      "2": {
+        "content": "$2"
+      }
+    }
+  },
+  "settings_login_migration_export_done": {
+    "message": "Exported $1 excerpts",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_login_migration_delete_done": {
+    "message": "Deleted $1 excerpts",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_login_migration_must_choose": {
+    "message": "Pick Import, Export, or Delete to continue"
+  },
+  "settings_login_migration_delete_after_export_title": {
+    "message": "Delete the unimported copies?"
+  },
+  "settings_login_migration_delete_after_export_body": {
+    "message": "Your backup downloaded. Remove the excerpts that still aren’t in this account?"
+  },
+  "settings_login_migration_keep_copies": {
+    "message": "Keep copies"
+  },
+  "settings_error_login_migration": {
+    "message": "Couldn’t finish that library choice"
+  },
+  "settings_error_login_migration_status": {
+    "message": "Couldn’t check for local saves to import"
+  },
+
   "settings_section_sync": {
     "message": "Sync"
   },

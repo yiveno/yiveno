@@ -1161,13 +1161,13 @@ schema：`extension/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 ### 5.1 能力分层
 
-| 层    | 召回 / 权益                                                                                        | 阶段                                    |
-| ----- | -------------------------------------------------------------------------------------------------- | --------------------------------------- |
-| Free  | 本机召回不限（关键词 + Hybrid）；登录后托管口语 LLM **小月配额**；本机 Capture/导出；**无**云同步  | 已上线                                  |
-| Pro   | 同档本机召回质量；托管口语 LLM **大月配额**；云同步（**仅摘录** · ADR-017）；更高 embedding 日配额 | 已上线（Dodo；`tier=pro`）              |
-| Tier+ | 更深云寻回 / 多模态 / 团队等（对外名待定）                                                         | **预留不售**（schema `premium` 仅占位） |
+| 层    | 召回 / 权益                                                                                                                                                                 | 阶段                                          |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
+| Free  | **本机档**（**未登录 ≟ 登录 Free** · ADR-018）：书签灌库 + **摘录 Capture** + 本机召回不限；导出；**无**云同步。登录 Free = **凭证**（订阅记录/升 Pro），不额外解锁本机能力 | **已上线**（登录迁移门闸 + 退出释放回本地档） |
+| Pro   | 同档本机召回质量；托管口语 LLM **大月配额**；云同步（**仅摘录** · ADR-017）使摘录换机可见；更高 embedding 日配额                                                            | 已上线（Dodo；`tier=pro`）                    |
+| Tier+ | 更深云寻回 / 多模态 / 团队等（对外名待定）                                                                                                                                  | **预留不售**（schema `premium` 仅占位）       |
 
-冲突时以本表为准：**召回质量不分 Free/Pro**；云同步与 LLM 配额分档。对外只讲 Free 与 Pro。
+冲突时以本表为准：**召回质量不分 Free/Pro**；**Pro 相对本机档的差异化主轴 = 摘录云同步/换机**（ADR-017/018）；托管 LLM 配额仍可分档。对外只讲 Free 与 Pro。
 
 **价值锚点（Normative · 2026-08 市场对齐）：** 出售 **更快、更可信地找回与再利用个人痕迹**（含 detail export / MCP），**不是**不限量 AI token 或「更聪明的聊天」。定价须与 Raindrop（~$29/年）、深度阅读工具（~$80–120/年）形成可解释阶梯；详见 `docs/pricing.md` 与 Dodo 实际结账价。
 
@@ -1756,12 +1756,13 @@ Chrome API / 选区
   - **被挤掉后自动未登录（Normative）**：仅前者**扩展**被挤：前序 Auth session 已硬撤后，前者扩展靠 refresh 失败 / 租约闹钟 / 打开 Panel 的 `GET_AUTH_STATE`（lease 探测）自动 keep_local；**不**因此踢前者官网。退登后 Side Panel 出**独立** displaced 说明软条（写 `yiveno:extension_displaced_notice`；文案说明本机因别处登录而退出；**仅** Dismiss，**不**挂 Connect——与「官网已登录 → Connect」条分流）。若需在本机重连：走设置/账号入口或官网 Connect；遇他端仍占租约 → **自定义弹窗**确认后再 `confirmDisplace`。Dismiss / 登录成功后清 displaced 标记（**不**连带 dismiss 官网 Connect 条）。官网存活探测仍可用于本会话作废等其它原因，**不**承担「扩展挤掉 → 踢官网」。
   - **头像资料（Normative）**：handoff / refresh 保留 `avatarUrl`；顶栏已登录但本地无头像时自动 `REFRESH_AUTH_PROFILE`（`getUser`）补拉，**不向用户暴露手动刷新入口**。
   - 扩展设置页退出（任一 mode）：先 revoke 扩展远程会话并清 revoke token（保留无 token 卸载反馈 URL）；再打开官网 `/logout?from_extension=1` 清**该浏览器**网站 session（`scope: local`）。
-- **登录后本地档归并（Normative）**：官网 handoff 成功或已登录时读 `GET_AUTH_STATE`，将 `localProfileId` 桶 Memory **remap** 到当前 `accountId`（仅本机、不上云）。解决「登录后旧本地数据 Recall 隐身」；幂等。
-- **多 owner 孤儿桶（Normative）**：保留集 = `localProfileId` ∪ 当前 `AccountBinding.accountId`（未登录则仅本地档）。保留集外的 `ownerId` 为换号残留：Recall/同步不计、不静默删除。设置页展示桶数/条数；可 **导出 JSON** 备份后 **显式清除**（`EXPORT_ORPHAN_OWNERS` / `CLEAR_ORPHAN_OWNERS`）。退出登录只动当前账号桶，不自动清孤儿。
-- **退出登录（Normative）**：设置页按本机数据状态分流（均清扩展登录态并打开官网 `/logout`）。
-  - **本机无当前账号/本地档数据**：不弹窗，直接仅退出。
-  - **本机有数据**：弹窗固定三按钮——仅退出 / 清除本机该账号桶再退出 / 先同步到云端再清本机（方案 B，不做「已同步」启发式，避免同步后又 Capture 误判）。
-  - 官网账户页「退出」：本浏览器 `signOut({ scope: local })` + `SIGN_OUT_HANDOFF`（keep_local）；页内轻提示：扩展本机记忆仍保留，清除请到扩展设置。其它扩展会话仅在「后者确认挤掉」时被服务端撤销。
+- **登录迁移门闸（Normative · ADR-018 · 已上线）：** 登录成功后若本机存在**不属于当前 `accountId` 的摘录**，Side Panel / Settings 弹窗三选一——**Import into this account** / **Export backup** / **Delete**（`GET_LOGIN_MIGRATION_STATUS` / `RESOLVE_LOGIN_MIGRATION`）；**禁止**静默 absorb。Import 迁摘录归属，并可将本地档书签一并归属本机工作库（**不上云**，ADR-017）。无此类摘录则不弹窗。上云仍须 Pro + 同步。
+- **多 owner 孤儿桶（Normative）**：保留集 = `localProfileId` ∪ 当前 `AccountBinding.accountId`（未登录则仅本地档）。保留集外的 `ownerId` 为换号残留：Recall/同步不计、不静默删除。设置页展示桶数/条数；可 **导出 JSON** 备份后 **显式清除**（`EXPORT_ORPHAN_OWNERS` / `CLEAR_ORPHAN_OWNERS`）。普通退出不自动清孤儿。
+- **退出登录（Normative · ADR-018 · 已上线）：** 清扩展登录态并打开官网 `/logout`；**默认 `keep_local`：账号桶 remap 回 `localProfileId`**，未登录可继续 Recall 本机工作库。
+  - **Pro 且同步曾开启：** 主路径 **`flush_then_keep`**（先 flush 摘录上云再释放回本地档）；失败明示后可改点「Sign out and keep library」。
+  - **显式清除本机**（退出对话框可选 clear）与 **删除账号** 分开，须强确认；不得把「清本机」当作普通退出默认项。
+  - 官网账户页「退出」：`signOut({ scope: local })` + `SIGN_OUT_HANDOFF`（扩展侧同样释放账号库回本地档）。
+  - **被挤掉：** 尽力 flush；释放账号库回本地档；清凭证；**本机工作库保留**。
 - **隐私 P0（Normative）**：
   - Settings「隐私」展示数据说明摘要（本机 Memory / 可选云同步**仅摘录** / 账号 Auth / AI 经 Worker；不收集 History、未 Capture 全文、默认不上云；书签本机灌库不上云）。
   - **开同步前**须确认当前隐私说明版本（`privacyNoticeVersion` ack）；未确认不得开启同步。关同步 ≠ 自动删云端。
@@ -2398,10 +2399,10 @@ RecallOutcomeEvent {
 
 **价格：** 结账权威在 **Dodo Payments**（改价改 Dodo Product + `services/billing/plans.ts` 展示锚点）。标准价 **$7.99/月 · $59.99/年**；Founding 为实验价，不得写成标准价。Yiveno **不**把金额写进多处业务逻辑；客户端只传 plan id。
 
-卖点主因 = **云同步摘录 / 换机恢复摘录**（ADR-017；书签不随云并集）；配角 = 更大托管口语 LLM 配额。**不作**「更好找回才给 Pro」——本机召回质量 Free/Pro 同档。托管口语 LLM 为加速器（配额见 §5.1 表），不作 AI 助手叙事。
+卖点主因 = **云同步摘录 / 换机恢复摘录**（ADR-017/018；书签不随云并集）；配角 = 更大托管口语 LLM 配额。**不作**「更好找回才给 Pro」——本机召回质量 Free/Pro 同档。托管口语 LLM 为加速器（配额见 §5.1 表），不作 AI 助手叙事。
 
-- Free：本机完整召回（关键词 + Hybrid）、基础捕获、书签导入、可登录；登录后小额托管 LLM；无云同步。
-- Pro（在售）：同档召回 + 云同步（**仅 `text_excerpt`**）+ 大额托管口语 LLM + 更高 embedding 日配额。
+- Free（**未登录 ≟ 登录 Free** · ADR-018）：本机完整召回、摘录 Capture、书签导入；登录仅为凭证（订阅/升 Pro）；无云同步。
+- Pro（在售）：同档本机能力 + 云同步（**仅 `text_excerpt`**）换机可见 + 大额托管口语 LLM + 更高 embedding 日配额。
 - Power User / Team（路线图）：更高配额、云端深寻回、多模态、团队等——**有硬权益前不上架**。
 - 官网：`/pricing` 权益对照 + 展示锚点价 + 账户页升级/管理 CTA；checkout 由 Worker 写入 `metadata.yiveno_user_id`。
 
@@ -2517,6 +2518,8 @@ RecallOutcomeEvent {
 | 2026-10-13 | **挤掉说明与 Connect 分流：** displaced 软条仅解释被挤掉；官网已登录 Connect 条独立；二者不混 CTA                                                                                                                                                                                                          |
 | 2026-10-13 | **挤掉确认 + 硬撤优先：** 自定义弹窗确认；confirmDisplace 先硬撤前序扩展 Auth session（可重试）成功后才 mint；失败不发新会话                                                                                                                                                                               |
 | 2026-10-12 | **互斥仅扩展：** confirmDisplace 只撤前序扩展租约 session；官网可多端同登；（撤失败策略见 2026-10-13 修订）                                                                                                                                                                                                |
+| 2026-10-15 | **Account vs Profile（ADR-018）已接线：** 登录迁移门闸（Import/Export/Delete）；拆除静默 absorb；退出 `keep_local` 释放账号库回本地档；Pro `flush_then_keep`；被挤掉/官网 handoff 同释放                                                                                                                   |
+| 2026-10-15 | **Account vs Profile（ADR-018）契约：** 未登录≟Free 本机能力；Pro=摘录换机同步；登录迁移门闸禁静默 absorb；普通退出默认留本机工作库（同日接线见上行）                                                                                                                                                      |
 | 2026-10-14 | **云同步仅摘录（ADR-017）：** 上云/拉回工作集 = `text_excerpt`；`bookmark` 本机灌库不上云、pull 忽略；出站可缩量摘除云端历史 bookmark；Backup 仍含全书签                                                                                                                                                   |
 | 2026-10-12 | **挤掉 revoke 降级（已修订）：** PostgREST 用 Accept-Profile；2026-10-13 起撤失败阻断 mint                                                                                                                                                                                                                 |
 | 2026-10-11 | **Connect 即挤掉：** mint 409 自动 confirmDisplace，去掉 another device 二次 confirm（含重装残留租约）                                                                                                                                                                                                     |
@@ -2666,7 +2669,7 @@ RecallOutcomeEvent {
 | 2026-08-04 | Settings：左侧分区导航（保存 / 快捷键 / 账户与同步 / 隐私 / AI）+ `?section=`；与记忆库同构                                                                                                                                                                                                                |
 | 2026-08-04 | 多 owner 孤儿桶：设置页盘点 + 导出 JSON + 显式清除；退出不静默清历史账号                                                                                                                                                                                                                                   |
 | 2026-08-04 | 空本机不得盖非空云：扩展 `SYNC_REPLACE_LOCAL_EMPTY` + Worker `empty_local_replace_denied`（409）                                                                                                                                                                                                           |
-| 2026-08-04 | 登录后归并 localProfile→accountId（仅本机 remap，解决 Recall 隐身）                                                                                                                                                                                                                                        |
+| 2026-08-04 | 登录后归并 localProfile→accountId（仅本机 remap）（**2026-10-15 起由 ADR-018 迁移门闸取代静默 absorb；已接线**）                                                                                                                                                                                           |
 | 2026-08-05 | Phase B Pro：Worker `POST /api/ai/embed`（bge-m3）+ 本机异步 embedding；Hybrid RRF；§7.1 同域软重排 / behaviorHints / 芯片；云同步剥离向量                                                                                                                                                                 |
 | 2026-08-04 | 退出弹窗方案 B：本机有数固定三按钮；无数直接退出；不做已同步启发式                                                                                                                                                                                                                                         |
 | 2026-08-04 | 扩展退出后打开官网 `/logout?from_extension=1` 对称清网站 session                                                                                                                                                                                                                                           |

@@ -18,8 +18,6 @@ const props = withDefaults(
     description?: string | undefined
     /** sm=420px；md=520px（多选项弹层） */
     size?: 'sm' | 'md'
-    /** 点遮罩关闭；表单/危险操作默认 false */
-    closeOnBackdrop?: boolean
     /** Esc 关闭 */
     closeOnEscape?: boolean
     /** 进行中时禁止关闭 */
@@ -27,7 +25,6 @@ const props = withDefaults(
   }>(),
   {
     size: 'sm',
-    closeOnBackdrop: false,
     closeOnEscape: true,
     loading: false
   }
@@ -48,12 +45,6 @@ function requestClose(): void {
     return
   }
   emit('close')
-}
-
-function onBackdropClick(): void {
-  if (props.closeOnBackdrop) {
-    requestClose()
-  }
 }
 
 function bindEscapeListener(): void {
@@ -109,7 +100,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div v-if="open" class="app-modal-backdrop" @click.self="onBackdropClick">
+  <!-- 遮罩仅挡操作；点外部不关闭，须显式 Cancel / 操作按钮 / Esc -->
+  <div v-if="open" class="app-modal-backdrop">
     <div
       ref="panelRef"
       class="app-modal"

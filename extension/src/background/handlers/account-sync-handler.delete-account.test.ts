@@ -92,10 +92,6 @@ vi.mock('@/infrastructure/auth/auth-session-revalidate', () => ({
   revalidateAuthSession: vi.fn(async () => ({ status: 'skipped' }))
 }))
 
-vi.mock('@/application/identity/absorb-local-profile-into-account', () => ({
-  absorbLocalProfileIntoAccount: vi.fn(async () => 0)
-}))
-
 vi.mock('@/infrastructure/browser/website-page', () => ({
   getWebsiteBaseUrl: () => 'https://yiveno.com',
   openWebsiteLoginPage: vi.fn(),

@@ -157,7 +157,7 @@ Canonical CSS names in `site-critical.css`. Prefer roles over raw Brand Core in 
 - **Do not** regenerate third-party theme-builder palettes as the source of truth.
 - Authority path: `packages/design-tokens/css/brand.css` (color + space + radius).
 - Extension product CSS: Roles / `--space-*` / `--radius-*`. Self-built `App*` components (`AppButton`, `AppModal`, `AppSectionTabs`, …).
-- **Modal Dialog:** Use `AppModal` for blocking confirms/forms; Esc + focus trap required; no `window.confirm`. Binary confirms use `AppConfirmModal`. See design standard §6.2.1.
+- **Modal Dialog:** Use `AppModal` for blocking confirms/forms; Esc + focus trap required; backdrop click never dismisses; no `window.confirm`. Binary confirms use `AppConfirmModal`. See design standard §6.2.1.
 - **Section Tabs:** In-page panel switching (Settings / Library) uses `AppSectionTabs` (ARIA tabs), not Nav. Cross-page nav stays in `AppPageHeader`. See §6.2.2.
 - **Toast:** Non-blocking feedback (`copy`/`download` done, etc.) via `AppToastHost` + `useAppToast()`; see §6.2.3.
 - **Detail export selection:** Tap row/card to toggle (no checkbox column); see design standard §6.2.4.

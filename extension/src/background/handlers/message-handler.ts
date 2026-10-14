@@ -18,10 +18,12 @@ import {
   handleExportLocalMemory,
   handleExportOrphanOwners,
   handleGetAuthState,
+  handleGetLoginMigrationStatus,
   handleProbeWebsiteSignedIn,
   handleGetSubscriptionStatus,
   handleGetSyncStatus,
   handleRefreshAuthProfile,
+  handleResolveLoginMigration,
   handleRestoreLatestSyncBackup,
   handleIncrementalMemorySync,
   handleSetSyncEnabled,
@@ -118,6 +120,10 @@ async function dispatchBackgroundMessage(
       return handleRefreshAuthProfile()
     case 'GET_SYNC_STATUS':
       return handleGetSyncStatus()
+    case 'GET_LOGIN_MIGRATION_STATUS':
+      return handleGetLoginMigrationStatus()
+    case 'RESOLVE_LOGIN_MIGRATION':
+      return handleResolveLoginMigration(message.payload.action)
     case 'SET_SYNC_ENABLED':
       return handleSetSyncEnabled(message.payload.enabled)
     case 'SET_MCP_READ_ONLY':

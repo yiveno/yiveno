@@ -40,6 +40,8 @@ const ACCOUNT_SYNC_ERROR_MESSAGE_KEYS: Record<AccountSyncErrorCode, MessageKey> 
   LOCAL_CLEAR_FAILED: 'settings_error_local_clear',
   ORPHAN_EXPORT_FAILED: 'settings_error_orphan_export',
   ORPHAN_CLEAR_FAILED: 'settings_error_orphan_clear',
+  LOGIN_MIGRATION_STATUS_FAILED: 'settings_error_login_migration_status',
+  LOGIN_MIGRATION_FAILED: 'settings_error_login_migration',
   SUBSCRIPTION_STATUS_FAILED: 'settings_error_subscription_status',
   MCP_REMOTE_UPDATE_FAILED: 'settings_mcp_remote_sync_failed'
 }
