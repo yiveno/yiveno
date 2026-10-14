@@ -76,8 +76,8 @@ onUnmounted(() => {
     >
       <h2 id="displace-dialog-title" class="displace-dialog__title">Continue signing in?</h2>
       <p id="displace-dialog-desc" class="displace-dialog__body">
-        This account is already signed in to Yiveno somewhere else. If you continue, that other
-        session will be signed out. Continue?
+        This account already has an active extension session. Continuing signs that one out so this
+        install can connect. Continue?
       </p>
       <p v-if="error" class="displace-dialog__error" role="alert">{{ error }}</p>
       <div class="displace-dialog__actions">

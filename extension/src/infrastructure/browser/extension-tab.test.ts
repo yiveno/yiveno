@@ -64,7 +64,8 @@ describe('extension-tab', () => {
   it('focusOrOpenLibraryTab 首次创建并记住 tabId；再次则聚焦', async () => {
     await expect(focusOrOpenLibraryTab()).resolves.toBe(true)
     expect(tabsCreate).toHaveBeenCalledWith({
-      url: 'chrome-extension://test/library.html'
+      url: 'chrome-extension://test/library.html',
+      active: true
     })
     expect(sessionStore.get('yiveno.libraryTabId')).toBe(42)
 
@@ -115,7 +116,8 @@ describe('extension-tab', () => {
     await focusOrOpenSettingsTab()
     expect(chrome.runtime.openOptionsPage).not.toHaveBeenCalled()
     expect(tabsCreate).toHaveBeenCalledWith({
-      url: 'chrome-extension://test/settings.html'
+      url: 'chrome-extension://test/settings.html',
+      active: true
     })
     expect(sessionStore.get('yiveno.settingsTabId')).toBe(42)
   })

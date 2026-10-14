@@ -68,6 +68,15 @@ function mockMintSuccess(access: string, revokeOk = true): void {
   mock.module('./revoke-auth-session', () => ({
     revokeAuthSessionById: async () => revokeOk
   }))
+  mock.module('./auth-session-exists', () => ({
+    authSessionExistsById: async () => ({ status: 'alive' as const })
+  }))
+}
+
+function mockLeaseLiveness(status: 'alive' | 'gone' | 'unknown'): void {
+  mock.module('./auth-session-exists', () => ({
+    authSessionExistsById: async () => ({ status })
+  }))
 }
 
 afterEach(() => {
@@ -102,7 +111,7 @@ describe('mintExtensionSession', () => {
     expect(store[`ext_auth_session:${userId}`]).toContain('uninstallRevokeToken')
   })
 
-  test('已有租约 → 未确认时一律 needs_displace_confirm（与 extensionId 无关）', async () => {
+  test('已有存活租约 → 未确认时一律 needs_displace_confirm（与 extensionId 无关）', async () => {
     const store: Record<string, string> = {
       [`ext_auth_session:${userId}`]: JSON.stringify({
         sessionId: 'old-session',
@@ -113,6 +122,7 @@ describe('mintExtensionSession', () => {
     mock.module('../../data-access/supabase', () => ({
       createSupabaseClient: () => ({ auth: { admin: {} } })
     }))
+    mockLeaseLiveness('alive')
     const { mintExtensionSession } = await import('./mint-extension-session')
     // CWS 场景：家里与上班 extensionId 相同，仍须确认
     const result = await mintExtensionSession(baseEnv(createKv(store)), userId, 'a@example.com', {
@@ -122,6 +132,49 @@ describe('mintExtensionSession', () => {
     if (result.ok) return
     expect(result.error).toBe('needs_displace_confirm')
     expect(store[`ext_auth_session:${userId}`]).toContain('old-session')
+  })
+
+  test('已有租约但 Auth session 已不存在 → 清僵死租约后直接铸造', async () => {
+    const store: Record<string, string> = {
+      [`ext_auth_session:${userId}`]: JSON.stringify({
+        sessionId: 'zombie-session',
+        mintedAt: '2026-10-01T00:00:00.000Z',
+        extensionId: 'ext-a'
+      })
+    }
+    const access = fakeAccessToken('new-session')
+    mockMintSuccess(access)
+    mockLeaseLiveness('gone')
+    const { mintExtensionSession } = await import('./mint-extension-session')
+    const result = await mintExtensionSession(baseEnv(createKv(store)), userId, 'a@example.com', {
+      extensionId: 'ext-a'
+    })
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.session.sessionId).toBe('new-session')
+    expect(result.displacedSessionId).toBeNull()
+    expect(store[`ext_auth_session:${userId}`]).toContain('new-session')
+  })
+
+  test('租约存活探测 unknown → 仍 needs_displace_confirm（保守）', async () => {
+    const store: Record<string, string> = {
+      [`ext_auth_session:${userId}`]: JSON.stringify({
+        sessionId: 'old-session',
+        mintedAt: '2026-10-01T00:00:00.000Z',
+        extensionId: 'ext-a'
+      })
+    }
+    mock.module('../../data-access/supabase', () => ({
+      createSupabaseClient: () => ({ auth: { admin: {} } })
+    }))
+    mockLeaseLiveness('unknown')
+    const { mintExtensionSession } = await import('./mint-extension-session')
+    const result = await mintExtensionSession(baseEnv(createKv(store)), userId, 'a@example.com', {
+      extensionId: 'ext-a'
+    })
+    expect(result.ok).toBe(false)
+    if (result.ok) return
+    expect(result.error).toBe('needs_displace_confirm')
   })
 
   test('已有租约 + confirmDisplace → 铸造并挤掉旧扩展 session', async () => {

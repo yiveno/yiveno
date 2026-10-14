@@ -4,7 +4,9 @@
  * - 官网 OAuth 会话不得直接 handoff 共用 refresh；官网可多端同登，**不**因挤掉扩展而撤销。
  * - **互斥铁律仅针对扩展**：同一账号同时只允许一条扩展登录（本机库/书签等不可多机共存）。
  *   互斥维度 = Auth `session` / KV 租约，不是 `chrome.runtime.id`。
- * - KV 已有租约且未 `confirmDisplace` → `needs_displace_confirm`（家里登录挤掉上班那台扩展）。
+ * - KV 已有租约且未 `confirmDisplace` → 先做 **高置信** 僵死探测（见 `authSessionExistsById`）：
+ *   **gone**（仅 PostgREST 明确空行）→ 清僵死租约后直接 mint；
+ *   **alive / unknown** → `needs_displace_confirm`（互斥优先；探测失败不得放行）。
  * - 确认后：**先**硬撤前序扩展 Auth session（可重试）；成功后才铸造新 session 并写 KV。
  *   撤销失败 → `displace_revoke_failed`，**不**发新会话（防双端短暂同登污染本机库/云同步）。
  * - KV 不可用 / 读不到租约：不弹确认，照常 mint（降级）。
@@ -14,6 +16,7 @@ import { createClient } from '@supabase/supabase-js'
 import { createSupabaseClient } from '../../data-access/supabase'
 import type { Env } from '../../types/env'
 import { error as logErrorMessage, info, toLogError, warn } from '../../utils/logger'
+import { authSessionExistsById } from './auth-session-exists'
 import {
   clearExtensionSessionLease,
   getExtensionSessionLease,
@@ -139,18 +142,33 @@ export async function mintExtensionSession(
   }
 
   // 已有扩展登录会话租约 → 须用户确认后再挤掉（与 extensionId 是否相同无关）
+  // 但租约指向的 Auth session 已不存在时视为僵死：清租约后放行，避免误报「别处已登录」
   if (existingLease && options.confirmDisplace !== true) {
-    info('[Auth] 账号已有扩展登录会话租约，需确认挤掉', {
-      userId,
-      mintedAt: existingLease.mintedAt,
-      leaseSessionId: existingLease.sessionId,
-      leaseExtensionId: existingLease.extensionId ?? null,
-      requestExtensionId
-    })
-    return {
-      ok: false,
-      error: 'needs_displace_confirm',
-      existingMintedAt: existingLease.mintedAt
+    const liveness = await authSessionExistsById(env, userId, existingLease.sessionId)
+    if (liveness.status === 'gone') {
+      info('[Auth] 扩展租约 session 已不存在，清除僵死租约后继续铸造', {
+        userId,
+        mintedAt: existingLease.mintedAt,
+        leaseSessionId: existingLease.sessionId,
+        leaseExtensionId: existingLease.extensionId ?? null,
+        requestExtensionId
+      })
+      await clearLeaseAndUninstallToken(env, userId, existingLease)
+      existingLease = null
+    } else {
+      info('[Auth] 账号已有扩展登录会话租约，需确认挤掉', {
+        userId,
+        mintedAt: existingLease.mintedAt,
+        leaseSessionId: existingLease.sessionId,
+        leaseExtensionId: existingLease.extensionId ?? null,
+        requestExtensionId,
+        leaseLiveness: liveness.status
+      })
+      return {
+        ok: false,
+        error: 'needs_displace_confirm',
+        existingMintedAt: existingLease.mintedAt
+      }
     }
   }
 
