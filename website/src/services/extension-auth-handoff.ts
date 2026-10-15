@@ -101,16 +101,8 @@ export function getPendingExtensionId(): string | null {
 }
 
 /**
- * @deprecated 勿再用于账户页——会把 `extension_id` 当成 Connect 并触发 mint。
- * 请用 {@link rememberConnectedExtensionId}；Connect 只靠 `connect_extension=1`。
- */
-export function primeExtensionHandoffTarget(extensionId: string): void {
-  rememberConnectedExtensionId(extensionId)
-}
-
-/**
  * 解析 handoff 目标：优先本次 connect，其次上次成功连接。
- * 用于退出回传 / 已铸造 session 的 sendMessage 目标；
+ * 用于已铸造 session 的 sendMessage 目标；
  * **mint 新扩展会话**须走 `getPendingExtensionId()`（禁止仅凭 last id 静默 remint）。
  */
 export function resolveExtensionHandoffTargetId(): string | null {

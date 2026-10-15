@@ -15,12 +15,6 @@ export type WebsiteAuthChangedPayload = {
   userId?: string
 }
 
-export type WebsiteProfileChangedPayload = {
-  userId: string
-  displayName?: string
-  avatarUrl?: string
-}
-
 export type ExtensionAuthChangedPayload = {
   signedIn: boolean
   userId?: string
@@ -231,21 +225,6 @@ export function publishWebsiteAuthChanged(payload: WebsiteAuthChangedPayload): v
     payload: {
       signedIn: payload.signedIn,
       ...(payload.userId ? { userId: payload.userId } : {})
-    }
-  })
-}
-
-/** 推送官网资料变更（头像/昵称）；仅可见时发送。 */
-export function publishWebsiteProfileChanged(payload: WebsiteProfileChangedPayload): void {
-  if (!isDocumentVisible()) {
-    return
-  }
-  postWhenReady({
-    type: 'website_profile_changed',
-    payload: {
-      userId: payload.userId,
-      ...(payload.displayName ? { displayName: payload.displayName } : {}),
-      ...(payload.avatarUrl ? { avatarUrl: payload.avatarUrl } : {})
     }
   })
 }

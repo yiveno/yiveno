@@ -9,7 +9,6 @@ import {
 } from '@/core/identity/ui-bridge-messages'
 import {
   readChromeStorageSession,
-  removeChromeStorageSession,
   writeChromeStorageSession
 } from '@/infrastructure/storage/chrome-storage-session'
 
@@ -21,9 +20,4 @@ export async function readWebsiteAuthUiState(): Promise<WebsiteAuthUiState | nul
 /** 测试 / SW 旁路写入。 */
 export async function writeWebsiteAuthUiState(state: WebsiteAuthUiState): Promise<void> {
   await writeChromeStorageSession(WEBSITE_AUTH_UI_SESSION_KEY, state)
-}
-
-/** 官网登出或清除 UI 态。 */
-export async function clearWebsiteAuthUiState(): Promise<void> {
-  await removeChromeStorageSession(WEBSITE_AUTH_UI_SESSION_KEY)
 }
