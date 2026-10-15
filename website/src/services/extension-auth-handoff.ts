@@ -8,6 +8,7 @@
 import { signOut } from './auth'
 import { confirmDisplaceExtensionSession } from './confirm-displace-extension-session'
 import { mintExtensionSession, type MintedExtensionSession } from './mint-extension-session'
+import { rollbackMintedExtensionSession } from './rollback-minted-extension-session'
 
 /** mint + handoff 结果（取消挤掉弹窗 → cancelled_displace） */
 export type MintAndHandoffResult =
@@ -79,18 +80,10 @@ export function clearExtensionConnectParams(): void {
   sessionStorage.removeItem(STORAGE_EXTENSION_ID)
 }
 
-export function getPendingExtensionId(): string | null {
-  if (sessionStorage.getItem(STORAGE_CONNECT_FLAG) !== '1') {
-    return null
-  }
-  return sessionStorage.getItem(STORAGE_EXTENSION_ID)
-}
-
 /**
- * 写入本次/持久扩展目标，供账户页补推 session（不仅退出用）。
- * 来自 URL `extension_id` 或扩展打开的登录页。
+ * UI 桥 / 账户页 Connect：无 URL 时写入本次 pending（供 mintAndHandoff 读取）。
  */
-export function primeExtensionHandoffTarget(extensionId: string): void {
+export function primeExtensionConnectPending(extensionId: string): void {
   const trimmed = extensionId.trim()
   if (!trimmed) {
     return
@@ -100,7 +93,26 @@ export function primeExtensionHandoffTarget(extensionId: string): void {
   rememberConnectedExtensionId(trimmed)
 }
 
-/** 解析 handoff 目标：优先本次 connect，其次上次成功连接。 */
+export function getPendingExtensionId(): string | null {
+  if (sessionStorage.getItem(STORAGE_CONNECT_FLAG) !== '1') {
+    return null
+  }
+  return sessionStorage.getItem(STORAGE_EXTENSION_ID)
+}
+
+/**
+ * @deprecated 勿再用于账户页——会把 `extension_id` 当成 Connect 并触发 mint。
+ * 请用 {@link rememberConnectedExtensionId}；Connect 只靠 `connect_extension=1`。
+ */
+export function primeExtensionHandoffTarget(extensionId: string): void {
+  rememberConnectedExtensionId(extensionId)
+}
+
+/**
+ * 解析 handoff 目标：优先本次 connect，其次上次成功连接。
+ * 用于退出回传 / 已铸造 session 的 sendMessage 目标；
+ * **mint 新扩展会话**须走 `getPendingExtensionId()`（禁止仅凭 last id 静默 remint）。
+ */
 export function resolveExtensionHandoffTargetId(): string | null {
   return getPendingExtensionId() ?? getLastConnectedExtensionId()
 }
@@ -133,28 +145,32 @@ function getChromeRuntime(): ChromeRuntimeMessenger | null {
   return chromeApi?.runtime ?? null
 }
 
-/** 官网 UI 不应无限等 SW 唤醒 / 扩展内部归并。 */
-const SEND_TO_EXTENSION_TIMEOUT_MS = 2500
+/**
+ * 官网 → 扩展 sendMessage 超时。
+ * OAuth 回跳后 SW 常冷启动；2.5s 易误判失败 → 官网已登录 + 仅 ConnectBar。
+ */
+const SEND_TO_EXTENSION_TIMEOUT_MS = 8000
 
-function sendToExtension(extensionId: string, message: unknown): Promise<boolean> {
+/** sendMessage 原始响应（超时 / lastError → null）。 */
+function sendToExtensionRaw(extensionId: string, message: unknown): Promise<unknown | null> {
   const runtime = getChromeRuntime()
   if (!runtime?.sendMessage) {
-    return Promise.resolve(false)
+    return Promise.resolve(null)
   }
 
   return new Promise(resolve => {
     let settled = false
-    const finish = (ok: boolean): void => {
+    const finish = (value: unknown | null): void => {
       if (settled) {
         return
       }
       settled = true
-      resolve(ok)
+      resolve(value)
     }
 
     const timer = window.setTimeout(() => {
       console.warn('[ExtensionHandoff] sendMessage timed out', SEND_TO_EXTENSION_TIMEOUT_MS)
-      finish(false)
+      finish(null)
     }, SEND_TO_EXTENSION_TIMEOUT_MS)
 
     try {
@@ -163,22 +179,103 @@ function sendToExtension(extensionId: string, message: unknown): Promise<boolean
         const err = runtime.lastError
         if (err) {
           console.warn('[ExtensionHandoff] sendMessage lastError', err.message)
-          finish(false)
+          finish(null)
           return
         }
-        const ok =
-          typeof response === 'object' &&
-          response !== null &&
-          'ok' in response &&
-          (response as { ok: unknown }).ok === true
-        finish(ok)
+        finish(response)
       })
     } catch (error) {
       window.clearTimeout(timer)
       console.warn('[ExtensionHandoff] sendMessage failed', error)
-      finish(false)
+      finish(null)
     }
   })
+}
+
+function isExtensionOkResponse(response: unknown): boolean {
+  return (
+    typeof response === 'object' &&
+    response !== null &&
+    'ok' in response &&
+    (response as { ok: unknown }).ok === true
+  )
+}
+
+function sendToExtension(extensionId: string, message: unknown): Promise<boolean> {
+  return sendToExtensionRaw(extensionId, message).then(isExtensionOkResponse)
+}
+
+/** 先 probe 唤醒 SW，失败再短等重试一次（handoff 专用）。 */
+async function sendToExtensionWaking(extensionId: string, message: unknown): Promise<boolean> {
+  await sendToExtensionRaw(extensionId, {
+    type: 'YIVENO_EXTENSION_AUTH_STATUS_PROBE',
+    payload: {}
+  })
+  if (await sendToExtension(extensionId, message)) {
+    return true
+  }
+  console.warn('[ExtensionHandoff] 首次 handoff 未成功，400ms 后重试')
+  await new Promise<void>(resolve => {
+    window.setTimeout(resolve, 400)
+  })
+  return sendToExtension(extensionId, message)
+}
+
+/**
+ * 探测本机扩展是否已登录为指定 userId（Connect 前短路用）。
+ * 探测失败 / 未装扩展 → false（继续走 mint）。
+ */
+export async function probeExtensionAlreadySignedInAs(
+  extensionId: string,
+  userId: string
+): Promise<boolean> {
+  const expected = userId.trim()
+  if (!extensionId.trim() || !expected) {
+    return false
+  }
+  const response = await sendToExtensionRaw(extensionId, {
+    type: 'YIVENO_EXTENSION_AUTH_STATUS_PROBE',
+    payload: { expectedUserId: expected }
+  })
+  if (
+    typeof response !== 'object' ||
+    response === null ||
+    (response as { ok?: unknown }).ok !== true
+  ) {
+    return false
+  }
+  const signedIn = (response as { signedIn?: unknown }).signedIn === true
+  const responseUserId =
+    typeof (response as { userId?: unknown }).userId === 'string'
+      ? (response as { userId: string }).userId.trim()
+      : ''
+  return signedIn && responseUserId === expected
+}
+
+/**
+ * 探测本机扩展能否静默认领 409 租约（本地 lastLeaseSessionId 匹配且未登录）。
+ * 探测失败 → false（保守弹窗）。
+ */
+export async function probeExtensionLeaseReclaimable(
+  extensionId: string,
+  existingSessionId: string
+): Promise<boolean> {
+  const sid = existingSessionId.trim()
+  if (!extensionId.trim() || !sid) {
+    return false
+  }
+  const response = await sendToExtensionRaw(extensionId, {
+    type: 'YIVENO_EXTENSION_LEASE_RECLAIM_PROBE',
+    payload: { existingSessionId: sid }
+  })
+  if (
+    typeof response !== 'object' ||
+    response === null ||
+    (response as { ok?: unknown }).ok !== true
+  ) {
+    return false
+  }
+  return (response as { reclaimable?: unknown }).reclaimable === true
 }
 
 /**
@@ -208,7 +305,7 @@ export function handoffSessionToExtension(session: ExtensionHandoffSession): Pro
     }
   }
 
-  return sendToExtension(extensionId, message).then(ok => {
+  return sendToExtensionWaking(extensionId, message).then(ok => {
     if (ok) {
       rememberConnectedExtensionId(extensionId)
       clearExtensionConnectParams()
@@ -240,6 +337,7 @@ export async function abortWebsiteLoginAfterDisplaceCancel(): Promise<void> {
 
 /**
  * 将已铸造的扩展 session handoff 到扩展（禁止共享官网 refresh）。
+ * handoff 失败 → 立刻用本次 revoke token 回滚远端会话/租约（防活租约孤儿）。
  */
 async function handoffMintedSession(
   input: {
@@ -251,10 +349,11 @@ async function handoffMintedSession(
   session: MintedExtensionSession
 ): Promise<boolean> {
   if (session.userId !== input.userId) {
-    console.warn('[ExtensionHandoff] mint userId 与官网不一致，跳过 handoff')
+    console.warn('[ExtensionHandoff] mint userId 与官网不一致，跳过 handoff 并回滚')
+    await rollbackMintedExtensionSession(session.uninstallRevokeToken)
     return false
   }
-  return handoffSessionToExtension({
+  const ok = await handoffSessionToExtension({
     accessToken: session.accessToken,
     refreshToken: session.refreshToken,
     userId: session.userId,
@@ -264,11 +363,18 @@ async function handoffMintedSession(
     ...(input.displayName ? { displayName: input.displayName } : {}),
     ...(session.uninstallRevokeToken ? { uninstallRevokeToken: session.uninstallRevokeToken } : {})
   })
+  if (!ok) {
+    console.warn('[ExtensionHandoff] handoff 失败，回滚刚铸造的扩展会话')
+    await rollbackMintedExtensionSession(session.uninstallRevokeToken)
+  }
+  return ok
 }
 
 /**
  * 用官网 access token 铸造扩展独立会话并 handoff。
- * 已有扩展租约 → 自定义弹窗确认后 `confirmDisplace`（先硬撤前者 Auth session，再铸造；失败可重试）。
+ * **仅**本次 `connect_extension`（sessionStorage pending）可 mint；`last_extension_id` 不够格。
+ * 扩展已是同一 userId → 跳过 mint（避免同机已连通仍弹挤掉）。
+ * 已有扩展租约：本机 lastLease 可认领 → 静默 `confirmDisplace`；否则自定义弹窗（真·他端）。
  * mint 失败不回退为共享官网 refresh。
  */
 export async function mintAndHandoffSessionToExtension(input: {
@@ -277,16 +383,26 @@ export async function mintAndHandoffSessionToExtension(input: {
   email?: string
   avatarUrl?: string
   displayName?: string
+  /** 即将弹出挤掉确认时回调（AuthCallback 更新状态文案） */
+  onNeedsDisplaceConfirm?: () => void
 }): Promise<MintAndHandoffResult> {
-  const extensionId = resolveExtensionHandoffTargetId()
+  const extensionId = getPendingExtensionId()
   if (!extensionId) {
+    console.warn('[ExtensionHandoff] 无本次 connect_extension，跳过 mint（不静默 remint）')
     return { status: 'failed' }
+  }
+
+  // 同机已连通同一账号：零 mint、零挤掉弹窗
+  if (await probeExtensionAlreadySignedInAs(extensionId, input.userId)) {
+    console.warn('[ExtensionHandoff] 扩展已是同一账号，跳过 mint')
+    rememberConnectedExtensionId(extensionId)
+    clearExtensionConnectParams()
+    return { status: 'ok' }
   }
 
   const minted = await mintExtensionSession(input.websiteAccessToken, { extensionId })
   if (minted.status === 'needs_displace_confirm') {
-    console.warn('[ExtensionHandoff] 已有扩展租约，打开自定义挤掉确认')
-    const confirmed = await confirmDisplaceExtensionSession(async () => {
+    const runConfirmDisplace = async (): Promise<boolean> => {
       const displaced = await mintExtensionSession(input.websiteAccessToken, {
         confirmDisplace: true,
         extensionId
@@ -301,7 +417,22 @@ export async function mintAndHandoffSessionToExtension(input: {
         return false
       }
       return true
-    })
+    }
+
+    // 同机孤儿租约（本安装上次 handoff 的 session 仍占 KV）→ 静默挤掉，不弹窗
+    // 真·他端（他 Profile / 他设备）→ 弹窗确认。extensionId 不能区分 Profile。
+    const canReclaim =
+      minted.existingSessionId != null &&
+      (await probeExtensionLeaseReclaimable(extensionId, minted.existingSessionId))
+    if (canReclaim) {
+      console.warn('[ExtensionHandoff] 本机可认领孤儿租约，静默 confirmDisplace')
+      const ok = await runConfirmDisplace()
+      return ok ? { status: 'ok' } : { status: 'failed' }
+    }
+
+    console.warn('[ExtensionHandoff] 他端占租约，打开自定义挤掉确认')
+    input.onNeedsDisplaceConfirm?.()
+    const confirmed = await confirmDisplaceExtensionSession(runConfirmDisplace)
     return confirmed ? { status: 'ok' } : { status: 'cancelled_displace' }
   }
 
@@ -311,20 +442,4 @@ export async function mintAndHandoffSessionToExtension(input: {
   }
   const handed = await handoffMintedSession(input, minted.session)
   return handed ? { status: 'ok' } : { status: 'failed' }
-}
-
-/**
- * 官网退出后通知扩展清登录态（保留 Memory）。
- * 无上次 extension_id 或扩展未装时返回 false（不阻塞官网退出）。
- */
-export function handoffSignOutToExtension(): Promise<boolean> {
-  const extensionId = getLastConnectedExtensionId() ?? getPendingExtensionId()
-  if (!extensionId) {
-    return Promise.resolve(false)
-  }
-
-  return sendToExtension(extensionId, {
-    type: 'YIVENO_AUTH_SIGN_OUT_HANDOFF',
-    payload: { reason: 'website_sign_out' }
-  })
 }

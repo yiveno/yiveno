@@ -11,8 +11,7 @@ import {
   captureExtensionConnectParamsFromUrl,
   extractProfileFromUserMetadata,
   getPendingExtensionId,
-  mintAndHandoffSessionToExtension,
-  resolveExtensionHandoffTargetId
+  mintAndHandoffSessionToExtension
 } from '../services/extension-auth-handoff'
 
 defineOptions({ name: 'LoginForm' })
@@ -39,7 +38,8 @@ function onPageShow(): void {
 }
 
 async function tryHandoffCurrentSession(): Promise<'ok' | 'cancelled_displace' | 'failed'> {
-  if (!resolveExtensionHandoffTargetId()) {
+  // 仅本次 connect_extension；禁止 last_extension_id 顺带 remint
+  if (!getPendingExtensionId()) {
     return 'failed'
   }
   const session = await getSession()
@@ -121,10 +121,8 @@ onMounted(async () => {
     }
     const pending = peekAuthReturn()
     if (pending.next) {
-      if (resolveExtensionHandoffTargetId()) {
-        void tryHandoffCurrentSession()
-      }
-      console.warn('[LoginForm] 已登录，回跳续意图', pending)
+      // 续付等回跳：不 mint 扩展（无 connect_extension 时不动租约）
+      console.warn('[LoginForm] 已登录，回跳续意图（不 mint 扩展）', pending)
       redirecting.value = true
       window.location.replace(buildPostAuthHref('/account'))
       return

@@ -9,6 +9,7 @@ import { handleDebugBackgroundMessage } from '@/dev/probe/debug-dev-handler'
 import { parseNavigateActiveTabPayload } from '@/core/messaging/commands-messages'
 import {
   handleAuthSignIn,
+  handleAuthConnectWebsite,
   handleAuthSignOut,
   handleAckPrivacyNotice,
   handleClearLocalMemory,
@@ -108,6 +109,8 @@ async function dispatchBackgroundMessage(
       return handleGetLocalIdentity()
     case 'AUTH_SIGN_IN':
       return handleAuthSignIn()
+    case 'AUTH_CONNECT_WEBSITE':
+      return handleAuthConnectWebsite()
     case 'AUTH_SIGN_OUT':
       return handleAuthSignOut(message.payload.mode)
     case 'GET_AUTH_STATE':

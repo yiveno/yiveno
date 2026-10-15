@@ -6,6 +6,8 @@ import AppLinearProgress from '@/infrastructure/ui/AppLinearProgress.vue'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
 
 import { watchAuthSessionStorage } from '@/infrastructure/auth/watch-auth-session-storage'
+import { watchWebsiteAuthUiStorage } from '@/infrastructure/auth/watch-website-auth-ui-storage'
+import { readWebsiteAuthUiState } from '@/infrastructure/auth/website-auth-ui-storage'
 import type { ChromeBookmarkImportState } from '@/core/memory/chrome-bookmark-import-state'
 import {
   shouldShowColdStartGate,
@@ -49,9 +51,11 @@ import { selectRecallVisibleProgressBasisKinds } from '@/core/recall/visible-pro
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import {
   advanceRecallVisibleProgress,
+  messageKeyForUnderstandingWaitTier,
   RECALL_VISIBLE_PROGRESS_MESSAGE_KEYS,
   RECALL_VISIBLE_PROGRESS_REVEAL_MS,
   RECALL_VISIBLE_PROGRESS_STAGE_MIN_DWELL_MS,
+  selectUnderstandingWaitTier,
   shouldRevealRecallVisibleProgress,
   type RecallVisibleProgressStage
 } from '@/core/recall/visible-progress'
@@ -64,7 +68,7 @@ import {
   writeColdStartPostReleaseBannerDismissedReadyAt
 } from '@/infrastructure/storage/cold-start-post-release-banner-storage'
 import {
-  authSignIn,
+  authConnectWebsite,
   cancelRecall,
   fetchAuthState,
   fetchChromeBookmarkImportStatus,
@@ -80,10 +84,6 @@ import {
   clearExtensionDisplacedNotice,
   readExtensionDisplacedNotice
 } from '@/infrastructure/storage/extension-displaced-notice-storage'
-import {
-  readWebsiteConnectBannerDismissed,
-  writeWebsiteConnectBannerDismissed
-} from '@/infrastructure/storage/website-connect-banner-storage'
 import {
   consumeRecallPrefill,
   consumeRecallPrefillWithRetry,
@@ -158,12 +158,39 @@ const recallProgressStartedAt = ref(0)
 const recallProgressRevealed = ref(false)
 const recallProgressCurrent = ref<RecallVisibleProgressStage | null>(null)
 const recallProgressCompleted = ref<RecallVisibleProgressStage[]>([])
+/** 驱动 understanding 等待梯级文案随 elapsed 更新。 */
+const recallProgressNowMs = ref(0)
 let recallProgressRevealTimer: ReturnType<typeof setTimeout> | null = null
+let recallProgressTickTimer: ReturnType<typeof setInterval> | null = null
 /** 阶段展示队列：真实已发生，但 pacing 以免后两步一闪而过。 */
 const recallProgressStageQueue: RecallVisibleProgressStage[] = []
 let recallProgressQueueFlushing = false
 let recallProgressQueueWaiters: Array<() => void> = []
 const errorMessage = ref('')
+
+function stopRecallProgressTick(): void {
+  if (recallProgressTickTimer !== null) {
+    clearInterval(recallProgressTickTimer)
+    recallProgressTickTimer = null
+  }
+}
+
+function startRecallProgressTick(): void {
+  stopRecallProgressTick()
+  recallProgressNowMs.value = Date.now()
+  recallProgressTickTimer = setInterval(() => {
+    recallProgressNowMs.value = Date.now()
+  }, 400)
+}
+
+/** 当前 active 阶段文案 key（understanding 可升等待梯级）。 */
+function activeProgressMessageKey(stage: RecallVisibleProgressStage): string {
+  if (stage === 'understanding') {
+    const elapsed = Math.max(0, recallProgressNowMs.value - recallProgressStartedAt.value)
+    return messageKeyForUnderstandingWaitTier(selectUnderstandingWaitTier(elapsed))
+  }
+  return RECALL_VISIBLE_PROGRESS_MESSAGE_KEYS[stage]
+}
 
 function sleepMs(ms: number): Promise<void> {
   return new Promise(resolve => {
@@ -184,11 +211,13 @@ function clearRecallVisibleProgressUi(): void {
     clearTimeout(recallProgressRevealTimer)
     recallProgressRevealTimer = null
   }
+  stopRecallProgressTick()
   recallProgressStageQueue.length = 0
   recallProgressQueueFlushing = false
   settleRecallProgressQueueWaiters()
   recallProgressRequestId.value = null
   recallProgressStartedAt.value = 0
+  recallProgressNowMs.value = 0
   recallProgressRevealed.value = false
   recallProgressCurrent.value = null
   recallProgressCompleted.value = []
@@ -198,6 +227,7 @@ function startRecallVisibleProgressUi(progressRequestId: string): void {
   clearRecallVisibleProgressUi()
   recallProgressRequestId.value = progressRequestId
   recallProgressStartedAt.value = Date.now()
+  startRecallProgressTick()
   recallProgressRevealTimer = setTimeout(() => {
     if (recallProgressRequestId.value !== progressRequestId) {
       return
@@ -283,6 +313,8 @@ const recallPendingSteps = computed(() => {
   if (!isRecallRefreshing.value || !recallProgressRevealed.value) {
     return []
   }
+  // 依赖 tick，使 understanding 梯级文案随 elapsed 更新
+  void recallProgressNowMs.value
   const steps: Array<{ label: string; active: boolean }> = []
   for (const stage of recallProgressCompleted.value) {
     steps.push({
@@ -292,7 +324,7 @@ const recallPendingSteps = computed(() => {
   }
   if (recallProgressCurrent.value) {
     steps.push({
-      label: t(RECALL_VISIBLE_PROGRESS_MESSAGE_KEYS[recallProgressCurrent.value]),
+      label: t(activeProgressMessageKey(recallProgressCurrent.value)),
       active: true
     })
   }
@@ -303,8 +335,9 @@ const recallPendingLabel = computed(() => {
   if (!isRecallRefreshing.value) {
     return t('popup_recall_pending')
   }
+  void recallProgressNowMs.value
   if (recallProgressRevealed.value && recallProgressCurrent.value) {
-    return t(RECALL_VISIBLE_PROGRESS_MESSAGE_KEYS[recallProgressCurrent.value])
+    return t(activeProgressMessageKey(recallProgressCurrent.value))
   }
   // &lt;500ms：不展示阶段文案（仅脉冲）
   return ''
@@ -319,6 +352,8 @@ const coldStartPostReleaseDismissedReadyAt = ref<string | null>(null)
 /** 官网已登录 → 是否同步连到本扩展（仅此用途；与被挤掉说明分开） */
 const showWebsiteConnectBanner = ref(false)
 const websiteConnectBusy = ref(false)
+/** Connect 失败/超时短提示（成功则条消失）。 */
+const websiteConnectError = ref('')
 /** 被别处挤掉后的原因说明（无 Connect；Dismiss 只清 displaced 标记） */
 const showExtensionDisplacedBanner = ref(false)
 /** 壳级离线：本机找回可用、云端理解不可用（不可 dismiss；恢复在线自动隐） */
@@ -1271,9 +1306,11 @@ async function refreshWebsiteConnectBanner(extensionSignedIn: boolean): Promise<
   } catch {
     showExtensionDisplacedBanner.value = false
   }
+  // 优先 UI 桥 session 态；无桥行再 probe（打开 Panel 兜底）
   try {
-    if (await readWebsiteConnectBannerDismissed()) {
-      showWebsiteConnectBanner.value = false
+    const ui = await readWebsiteAuthUiState()
+    if (ui) {
+      showWebsiteConnectBanner.value = ui.signedIn
       return
     }
     const probe = await probeWebsiteSignedIn()
@@ -1288,20 +1325,31 @@ async function connectWebsiteSessionFromBanner(): Promise<void> {
     return
   }
   websiteConnectBusy.value = true
+  websiteConnectError.value = ''
   try {
-    await authSignIn()
+    // 软条出现 = 官网已登录 → Connect 专用路径（桥零导航 / 账户页），禁止砸 /login
+    const response = await authConnectWebsite()
+    if (response.ok) {
+      showWebsiteConnectBanner.value = false
+      await loadGreetingIdentity()
+      return
+    }
+    if (response.cancelled) {
+      // 用户取消挤掉：恢复 Connect，不报错
+      return
+    }
+    websiteConnectError.value = t('sidepanel_website_connect_failed')
+  } catch {
+    websiteConnectError.value = t('sidepanel_website_connect_failed')
   } finally {
     websiteConnectBusy.value = false
   }
 }
 
-async function dismissWebsiteConnectBanner(): Promise<void> {
+/** 仅隐藏当前软条；下次打开 Panel / 刷新探测仍可再出现。 */
+function closeWebsiteConnectBanner(): void {
   showWebsiteConnectBanner.value = false
-  try {
-    await writeWebsiteConnectBannerDismissed()
-  } catch {
-    // 忽略：本地已隐藏
-  }
+  websiteConnectError.value = ''
 }
 
 async function dismissExtensionDisplacedBanner(): Promise<void> {
@@ -1572,6 +1620,11 @@ async function runRecall(trimmedClue: string): Promise<void> {
 
     const highlightClue = response.result.effectiveClue ?? response.result.clue
     const resultIds = collectResultIdsFromRecall(response.result)
+    /** rules_fallback 结果轻提示；离线 omit（rules）不叠 */
+    const deeperReadingTipFields =
+      response.result.understandSource === 'rules_fallback'
+        ? { deeperReadingTip: t('sidepanel_recall_deeper_reading_unavailable') }
+        : {}
 
     if (response.result.outcome === 'top_pick' || response.result.outcome === 'need_a_clue') {
       outcomeSession.value = {
@@ -1641,6 +1694,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
           tone: 'confident',
           text: listReply.text,
           ...contextStatusFields,
+          ...deeperReadingTipFields,
           ...(understandingEcho ? { understandingEcho } : {}),
           candidateCards: rankedCards,
           visibleCount,
@@ -1682,6 +1736,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
           tone: 'uncertain',
           text: listReply.text,
           ...contextStatusFields,
+          ...deeperReadingTipFields,
           ...(understandingEcho ? { understandingEcho } : {}),
           candidateCards,
           visibleCount,
@@ -1727,6 +1782,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
           tone: 'miss',
           text: missReply.text,
           ...contextStatusFields,
+          ...deeperReadingTipFields,
           ...(understandingEcho ? { understandingEcho } : {}),
           ...(missReply.recallFramingFacts !== undefined
             ? { recallFramingFacts: missReply.recallFramingFacts }
@@ -1903,8 +1959,18 @@ async function handlePanelCloseOutcome(): Promise<void> {
 
 /** 取消登录态 storage 订阅。 */
 let stopWatchAuthSession: (() => void) | null = null
+/** 取消官网登录 UI 态（Connect）订阅。 */
+let stopWatchWebsiteAuthUi: (() => void) | null = null
 /** 取消浏览器 online/offline 订阅。 */
 let stopBrowserOnline: (() => void) | null = null
+
+/** Panel 可见时再刷 Connect / 问候身份（ADR-019 可见性门禁）。 */
+function handleSidePanelVisibilityChange(): void {
+  if (document.visibilityState !== 'visible') {
+    return
+  }
+  void loadGreetingIdentity()
+}
 
 function handleRecallVisibleProgressPush(message: unknown): void {
   const parsed = parseRecallVisibleProgressMessage(message)
@@ -1932,6 +1998,13 @@ onMounted(() => {
   stopWatchAuthSession = watchAuthSessionStorage(() => {
     void loadGreetingIdentity()
   })
+  stopWatchWebsiteAuthUi = watchWebsiteAuthUiStorage(() => {
+    if (document.visibilityState !== 'visible') {
+      return
+    }
+    void loadGreetingIdentity()
+  })
+  document.addEventListener('visibilitychange', handleSidePanelVisibilityChange)
   void (async () => {
     try {
       // Getting Started / Omnibox 接力：写 prefill 与开壳可能竞态，短窗重试
@@ -1970,6 +2043,9 @@ onUnmounted(() => {
   stopColdStartPolling()
   stopWatchAuthSession?.()
   stopWatchAuthSession = null
+  stopWatchWebsiteAuthUi?.()
+  stopWatchWebsiteAuthUi = null
+  document.removeEventListener('visibilitychange', handleSidePanelVisibilityChange)
   stopBrowserOnline?.()
   stopBrowserOnline = null
 })
@@ -2045,7 +2121,7 @@ onUnmounted(() => {
           type="button"
           :title="t('sidepanel_website_connect_dismiss_aria')"
           :aria-label="t('sidepanel_website_connect_dismiss_aria')"
-          @click="dismissWebsiteConnectBanner"
+          @click="closeWebsiteConnectBanner"
         >
           <AppIcon name="close" size="16px" />
         </AppIconButton>
@@ -2055,12 +2131,27 @@ onUnmounted(() => {
           variant="text"
           class="recall-website-connect-cta"
           :disabled="websiteConnectBusy"
-          :title="t('sidepanel_website_connect_cta')"
-          :aria-label="t('sidepanel_website_connect_cta_aria')"
+          :title="
+            websiteConnectBusy
+              ? t('sidepanel_website_connect_cta_busy')
+              : t('sidepanel_website_connect_cta')
+          "
+          :aria-label="
+            websiteConnectBusy
+              ? t('sidepanel_website_connect_cta_busy_aria')
+              : t('sidepanel_website_connect_cta_aria')
+          "
           @click="connectWebsiteSessionFromBanner"
         >
-          {{ t('sidepanel_website_connect_cta') }}
+          {{
+            websiteConnectBusy
+              ? t('sidepanel_website_connect_cta_busy')
+              : t('sidepanel_website_connect_cta')
+          }}
         </AppButton>
+        <p v-if="websiteConnectError" class="recall-website-connect-error" role="alert">
+          {{ websiteConnectError }}
+        </p>
       </section>
 
       <section
@@ -2406,6 +2497,7 @@ onUnmounted(() => {
 .recall-website-connect {
   position: relative;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--space-sm);
   margin-top: var(--space-xs);
@@ -2483,6 +2575,14 @@ onUnmounted(() => {
 .recall-website-connect-cta {
   flex: 0 0 auto;
   margin: 0;
+}
+
+.recall-website-connect-error {
+  flex: 1 1 100%;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--error, #b42318);
 }
 
 .recall-website-connect-close {

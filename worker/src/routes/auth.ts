@@ -3,7 +3,9 @@
  *
  * - 遗留：自建 OAuth → 自定义 JWT（非 Phase C 主路径）
  * - Phase C：`POST /extension-session` 为扩展铸造独立 Supabase 会话（官网 Bearer）
- * - `POST /extension-uninstall-revoke`：卸载落地页 / 主动退出用一次性 token 销扩展会话
+ * - `POST /website-session`：扩展 Bearer 为官网铸造独立会话（不写扩展租约）
+ * - `POST /extension-session-release`：扩展 Bearer 释放本会话（退出无 revoke token 兜底）
+ * - `POST /extension-uninstall-revoke`：卸载落地页 / handoff 失败回滚 / 主动退出用一次性 token
  */
 
 import { Hono } from 'hono'
@@ -12,7 +14,9 @@ import { handleAuthProviders, handleAuthStart, handleAuthCallback } from '../han
 import { supabaseAuth } from '../middleware/supabase-auth'
 import { consumeExtensionUninstallRevoke } from '../services/auth/consume-extension-uninstall-revoke'
 import { mintExtensionSession } from '../services/auth/mint-extension-session'
+import { mintWebsiteSessionFromExtension } from '../services/auth/mint-website-session'
 import { probeExtensionSessionLease } from '../services/auth/probe-extension-session-lease'
+import { releaseExtensionSessionByAccessToken } from '../services/auth/release-extension-session'
 import { error as logErrorMessage, info } from '../utils/logger'
 
 type AuthVars = {
@@ -105,7 +109,8 @@ authRouter.post('/extension-session', supabaseAuth(), async c => {
           {
             error: 'needs_displace_confirm',
             data: {
-              existingMintedAt: result.existingMintedAt ?? null
+              existingMintedAt: result.existingMintedAt ?? null,
+              existingSessionId: result.existingSessionId ?? null
             }
           },
           409
@@ -167,6 +172,72 @@ authRouter.get('/extension-session-lease', supabaseAuth(), async c => {
     const msg = err instanceof Error ? err.message : String(err)
     logErrorMessage('[Auth] extension-session-lease 异常', { userId, detail: msg })
     return c.json({ error: 'lease_probe_failed' }, 500)
+  }
+})
+
+/**
+ * POST /api/auth/website-session
+ *
+ * Bearer=扩展 access。为官网铸造独立会话（扩展→官网反向接通）；**不**改扩展租约。
+ */
+authRouter.post('/website-session', supabaseAuth(), async c => {
+  const userId = c.get('supabaseUserId')
+  const email = c.get('supabaseUserEmail')
+  try {
+    const result = await mintWebsiteSessionFromExtension(c.env, userId, email)
+    if (!result.ok) {
+      const status =
+        result.error === 'supabase_not_configured'
+          ? 500
+          : result.error === 'email_required'
+            ? 400
+            : 502
+      logErrorMessage('[Auth] website-session 铸造失败', { userId, error: result.error })
+      return c.json({ error: result.error }, status)
+    }
+    info('[Auth] website-session 已返回', { userId })
+    return c.json({
+      success: true,
+      data: {
+        accessToken: result.session.accessToken,
+        refreshToken: result.session.refreshToken,
+        userId: result.session.userId,
+        email: result.session.email,
+        expiresAt: result.session.expiresAt
+      }
+    })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    logErrorMessage('[Auth] website-session 异常', { userId, detail: msg })
+    return c.json({ error: 'website_session_failed' }, 500)
+  }
+})
+
+/**
+ * POST /api/auth/extension-session-release
+ *
+ * Bearer=扩展 access。主动退出时若本地无 uninstallRevokeToken，用本接口销本会话并清匹配租约。
+ * 租约已指向他端 session → 只撤本会话，不动租约。
+ */
+authRouter.post('/extension-session-release', supabaseAuth(), async c => {
+  const userId = c.get('supabaseUserId')
+  const accessToken = c.get('supabaseAccessToken')
+  try {
+    const result = await releaseExtensionSessionByAccessToken(c.env, userId, accessToken)
+    if (!result.ok) {
+      return c.json({ error: result.error }, 400)
+    }
+    return c.json({
+      success: true,
+      data: {
+        revoked: result.revoked,
+        clearedLease: result.clearedLease
+      }
+    })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    logErrorMessage('[Auth] extension-session-release 异常', { userId, detail: msg })
+    return c.json({ error: 'session_release_failed' }, 500)
   }
 })
 

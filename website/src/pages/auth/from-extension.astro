@@ -1,0 +1,13 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro'
+import FromExtensionAuth from '../../components/FromExtensionAuth.vue'
+import '../../styles/pages.css'
+---
+
+<MainLayout
+  noindex
+  title="Opening account · Yiveno"
+  description="Signing you into the Yiveno website from the extension."
+>
+  <FromExtensionAuth client:load />
+</MainLayout>

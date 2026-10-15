@@ -17,6 +17,7 @@ const SETTINGS_ERROR_MESSAGE_KEYS: Record<SettingsErrorCode, MessageKey> = {
 const ACCOUNT_SYNC_ERROR_MESSAGE_KEYS: Record<AccountSyncErrorCode, MessageKey> = {
   AUTH_NOT_CONFIGURED: 'settings_error_auth_not_configured',
   AUTH_SIGN_IN_FAILED: 'settings_error_auth_sign_in',
+  AUTH_CONNECT_WEBSITE_FAILED: 'sidepanel_website_connect_failed',
   AUTH_SIGN_OUT_FAILED: 'settings_error_auth_sign_out',
   AUTH_STATE_READ_FAILED: 'settings_error_auth_state',
   AUTH_PROFILE_REFRESH_FAILED: 'settings_error_auth_profile_refresh',

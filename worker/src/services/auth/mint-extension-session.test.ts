@@ -131,6 +131,7 @@ describe('mintExtensionSession', () => {
     expect(result.ok).toBe(false)
     if (result.ok) return
     expect(result.error).toBe('needs_displace_confirm')
+    expect(result.existingSessionId).toBe('old-session')
     expect(store[`ext_auth_session:${userId}`]).toContain('old-session')
   })
 

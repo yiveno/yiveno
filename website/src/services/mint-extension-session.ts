@@ -20,7 +20,12 @@ export type MintedExtensionSession = {
 
 export type MintExtensionSessionResult =
   | { status: 'ok'; session: MintedExtensionSession }
-  | { status: 'needs_displace_confirm'; existingMintedAt: string | null }
+  | {
+      status: 'needs_displace_confirm'
+      existingMintedAt: string | null
+      /** KV 当前租约 session_id；同机认领探测用 */
+      existingSessionId: string | null
+    }
   | { status: 'failed' }
 
 type MintApiData = {
@@ -62,13 +67,15 @@ export async function mintExtensionSession(
     if (res.status === 409) {
       const body = (await res.json().catch(() => null)) as {
         error?: unknown
-        data?: { existingMintedAt?: unknown }
+        data?: { existingMintedAt?: unknown; existingSessionId?: unknown }
       } | null
       if (body?.error === 'needs_displace_confirm') {
         const at = body.data?.existingMintedAt
+        const sid = body.data?.existingSessionId
         return {
           status: 'needs_displace_confirm',
-          existingMintedAt: typeof at === 'string' ? at : null
+          existingMintedAt: typeof at === 'string' ? at : null,
+          existingSessionId: typeof sid === 'string' && sid.trim() ? sid.trim() : null
         }
       }
       return { status: 'failed' }

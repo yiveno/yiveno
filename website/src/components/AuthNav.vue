@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { getSession } from '../services/auth'
 import {
   startWebsiteAuthLiveness,
@@ -7,6 +7,7 @@ import {
 } from '../services/auth-session-liveness'
 import { extractProfileFromUserMetadata } from '../services/extension-auth-handoff'
 import { clearNavIsProCache, readNavIsProCache } from '../services/nav-pro-badge-cache'
+import { subscribeExtensionAuthChanged } from '../services/ui-bridge'
 
 defineOptions({ name: 'AuthNav' })
 
@@ -14,7 +15,15 @@ const user = ref<{ email?: string; avatarUrl?: string; name?: string } | null>(n
 /** Pro 时顶栏头像 1px Sage 环；优先读会话缓存，不对账堵导航。 */
 const isPro = ref(false)
 const loading = ref(true)
+/** /login 页本身已是登录壳，顶栏不再挂 Sign in 入口 */
+const isLoginPage = computed(() => {
+  if (typeof window === 'undefined') {
+    return false
+  }
+  return window.location.pathname === '/login' || window.location.pathname.startsWith('/login/')
+})
 let stopLiveness: WebsiteAuthLivenessStop | null = null
+let stopExtensionAuth: (() => void) | null = null
 
 function applyProFromCache(): void {
   const cached = readNavIsProCache()
@@ -50,19 +59,28 @@ onMounted(() => {
   }).then(stop => {
     stopLiveness = stop
   })
+  // 扩展登出/登录时刷新 Nav（同浏览器 UI 桥；可见页才有意义）
+  stopExtensionAuth = subscribeExtensionAuthChanged(() => {
+    if (document.visibilityState !== 'visible') {
+      return
+    }
+    void loadAuthNav()
+  })
 })
 
 onUnmounted(() => {
   stopLiveness?.()
   stopLiveness = null
+  stopExtensionAuth?.()
+  stopExtensionAuth = null
 })
 </script>
 
 <template>
   <div class="auth-nav">
-    <a v-if="loading" href="/login" class="nav-link">Sign in</a>
-    <a v-else-if="!user" href="/login" class="nav-link">Sign in</a>
-    <a v-else href="/account" class="nav-link user-info">
+    <a v-if="!isLoginPage && loading" href="/login" class="nav-link">Sign in</a>
+    <a v-else-if="!isLoginPage && !user" href="/login" class="nav-link">Sign in</a>
+    <a v-else-if="user" href="/account" class="nav-link user-info">
       <img
         v-if="user.avatarUrl"
         :src="user.avatarUrl"

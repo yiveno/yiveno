@@ -13,7 +13,6 @@ import {
   extractProfileFromUserMetadata,
   getPendingExtensionId,
   mintAndHandoffSessionToExtension,
-  resolveExtensionHandoffTargetId,
   type MintAndHandoffResult
 } from '../services/extension-auth-handoff'
 
@@ -42,15 +41,19 @@ async function tryMintHandoff(session: Session): Promise<MintAndHandoffResult> {
     websiteAccessToken: session.access_token,
     userId: session.user.id,
     ...(session.user.email ? { email: session.user.email } : {}),
-    ...profile
+    ...profile,
+    onNeedsDisplaceConfirm: () => {
+      // 挤掉弹窗已打开；勿让用户以为页面卡在 Connecting
+      status.value = 'Another extension session is active — confirm in the dialog to continue…'
+    }
   })
 }
 
 /**
  * 登录成功收尾优先级：
- * 1) 本次从扩展打开（connect_extension）→ mint+handoff + /account
- * 2) 有 next（如续付）→ 回跳；扩展仅静默 mint+handoff，不抢导航
- * 3) 默认 /account；有上次扩展 id 则顺带 mint+handoff
+ * 1) 本次从扩展打开（sessionStorage `connect_extension`）→ mint+handoff + /account
+ * 2) 有 next（如续付）→ 只回跳官网意图；**不**因 last_extension_id 静默 mint
+ * 3) 默认 /account；纯官网登录**不**动扩展租约（须显式 Connect / connect_extension）
  */
 async function finishWithSession(session: Session): Promise<void> {
   const pendingConnect = getPendingExtensionId()
@@ -69,38 +72,18 @@ async function finishWithSession(session: Session): Promise<void> {
       return
     }
     status.value =
-      'Signed in, but the extension did not connect. Open Yiveno extension → Settings → Sign in again.'
+      'Signed in on the website, but the extension did not connect. Use Connect in the side panel, or Settings → Sign in.'
     window.setTimeout(() => {
       window.location.href = '/account?extension_connected=0'
-    }, 2000)
+    }, 2800)
     return
   }
 
+  // 无本次 connect：只完成官网会话。禁止用 last_extension_id 顺带 remint（会自挤同机扩展 → displaced 假象）
   if (authReturn.next) {
-    if (resolveExtensionHandoffTargetId()) {
-      // 不阻塞回跳：上次装过扩展则尽力铸造并同步（取消挤掉不挡续付）
-      void tryMintHandoff(session).then(async result => {
-        if (result.status === 'cancelled_displace') {
-          // 续付优先：取消挤掉只跳过扩展，保留官网会话
-          console.warn('[AuthCallback] 续付回跳中取消挤掉，跳过扩展 handoff')
-        }
-      })
-    }
     const href = buildPostAuthHref('/account')
-    console.warn('[AuthCallback] 登录成功，回跳续意图', { href })
+    console.warn('[AuthCallback] 登录成功，回跳续意图（不 mint 扩展）', { href })
     window.location.href = href
-    return
-  }
-
-  if (resolveExtensionHandoffTargetId()) {
-    status.value = 'Connecting to the extension…'
-    const handoff = await tryMintHandoff(session)
-    if (handoff.status === 'cancelled_displace') {
-      status.value = 'Sign-in cancelled…'
-      await abortWebsiteLoginAfterDisplaceCancel()
-      return
-    }
-    window.location.href = handoff.status === 'ok' ? '/account?extension_connected=1' : '/account'
     return
   }
 

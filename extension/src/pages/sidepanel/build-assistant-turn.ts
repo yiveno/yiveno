@@ -22,6 +22,7 @@ export function createAssistantTurn(input: {
   composerNarrowExamples?: string[]
   recallFramingFacts?: RecallFramingFacts
   understandingEcho?: string[]
+  deeperReadingTip?: string
   allowDismiss?: boolean
 }): ConversationTurn {
   return {
@@ -51,6 +52,7 @@ export function createAssistantTurn(input: {
     ...(input.understandingEcho === undefined
       ? {}
       : { understandingEcho: input.understandingEcho }),
+    ...(input.deeperReadingTip === undefined ? {} : { deeperReadingTip: input.deeperReadingTip }),
     allowDismiss: input.allowDismiss ?? false
   }
 }

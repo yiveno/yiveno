@@ -778,6 +778,7 @@ export class HybridRecallBackend implements RecallBackend {
         totalRankedCount: 0,
         clue: normalizedClue,
         pipelineTiming,
+        understandSource: understood.source,
         visibleProgressStages: [...visibleProgressStages]
       }
     }
@@ -837,6 +838,7 @@ export class HybridRecallBackend implements RecallBackend {
         emptyKind: 'missing_topic',
         relatedGuess: null,
         pipelineTiming,
+        understandSource: understood.source,
         visibleProgressStages: [...visibleProgressStages]
       }
     }
@@ -997,7 +999,8 @@ export class HybridRecallBackend implements RecallBackend {
       })
       return {
         ...withMeta,
-        pipelineTiming
+        pipelineTiming,
+        understandSource: understood.source
       }
     }
 
@@ -1060,6 +1063,7 @@ export class HybridRecallBackend implements RecallBackend {
     return {
       ...withFollowUp,
       pipelineTiming,
+      understandSource: understood.source,
       visibleProgressStages: [...visibleProgressStages]
     }
   }

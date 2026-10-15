@@ -69,6 +69,8 @@ export type MintExtensionSessionResult =
         | 'displace_revoke_failed'
       /** 仅 needs_displace_confirm */
       existingMintedAt?: string
+      /** 仅 needs_displace_confirm：当前租约 session_id（同机认领用） */
+      existingSessionId?: string
     }
 
 const DISPLACE_REVOKE_ATTEMPTS = 3 as const
@@ -141,7 +143,7 @@ export async function mintExtensionSession(
     existingLease = null
   }
 
-  // 已有扩展登录会话租约 → 须用户确认后再挤掉（与 extensionId 是否相同无关）
+  // 已有扩展登录会话租约 → 409（与 extensionId 是否相同无关；同机认领由官网 LEASE_RECLAIM_PROBE）
   // 但租约指向的 Auth session 已不存在时视为僵死：清租约后放行，避免误报「别处已登录」
   if (existingLease && options.confirmDisplace !== true) {
     const liveness = await authSessionExistsById(env, userId, existingLease.sessionId)
@@ -167,7 +169,8 @@ export async function mintExtensionSession(
       return {
         ok: false,
         error: 'needs_displace_confirm',
-        existingMintedAt: existingLease.mintedAt
+        existingMintedAt: existingLease.mintedAt,
+        existingSessionId: existingLease.sessionId
       }
     }
   }

@@ -9,20 +9,19 @@ import {
 } from '../services/subscription'
 import { formatDate } from '../services/date'
 import {
-  abortWebsiteLoginAfterDisplaceCancel,
   captureExtensionConnectParamsFromUrl,
+  clearExtensionConnectParams,
   extractProfileFromUserMetadata,
-  getPendingExtensionId,
-  handoffSignOutToExtension,
-  mintAndHandoffSessionToExtension,
-  primeExtensionHandoffTarget
+  rememberConnectedExtensionId
 } from '../services/extension-auth-handoff'
+import { runExtensionConnectFromWebsite } from '../services/run-extension-connect'
 import { createCheckoutSession, createPortalSession } from '../services/billing'
 import {
   startWebsiteAuthLiveness,
   type WebsiteAuthLivenessStop
 } from '../services/auth-session-liveness'
 import { clearNavIsProCache, writeNavIsProCacheOnVerified } from '../services/nav-pro-badge-cache'
+import { ensureUiBridgeConnected, publishWebsiteAuthChanged } from '../services/ui-bridge'
 
 defineOptions({ name: 'AccountPage' })
 
@@ -129,49 +128,33 @@ async function openPortal(): Promise<void> {
   if (url) window.location.assign(url)
 }
 
-/**
- * 仅在「本次从扩展打开 / URL 带 extension_id」时铸造并回传。
- * 禁止每次进账户页把官网 refresh 推给扩展（会共 refresh 互踢、并堆积无用会话）。
- */
-async function syncSessionToExtensionIfConnecting(session: {
-  access_token: string
-  user: User
-}): Promise<void> {
-  if (!getPendingExtensionId()) {
-    return
-  }
-  const profile = extractProfileFromUserMetadata(
-    session.user.user_metadata as Record<string, unknown> | undefined
-  )
-  try {
-    const result = await mintAndHandoffSessionToExtension({
-      websiteAccessToken: session.access_token,
-      userId: session.user.id,
-      ...(session.user.email ? { email: session.user.email } : {}),
-      ...profile
-    })
-    // 扩展 connect 入口取消挤掉 = 放弃本次登录，清官网会话回 /login
-    if (result.status === 'cancelled_displace') {
-      await abortWebsiteLoginAfterDisplaceCancel()
-    }
-  } catch (error) {
-    console.warn('[AccountPage] extension session handoff failed', error)
-  }
-}
-
 let stopAuthLiveness: WebsiteAuthLivenessStop | null = null
 
 onMounted(async () => {
   captureExtensionConnectParamsFromUrl()
   const params = new URLSearchParams(window.location.search)
   const extensionId = params.get('extension_id')?.trim()
-  if (extensionId) {
-    primeExtensionHandoffTarget(extensionId)
+  const wantConnect = params.get('connect_extension') === '1'
+  // 无 connect 意图：只记退出目标，禁止误 mint
+  if (extensionId && !wantConnect) {
+    rememberConnectedExtensionId(extensionId)
+  }
+  // URL 无 connect_extension：清残留 pending，避免误把看账户当成 Connect
+  if (!wantConnect) {
+    clearExtensionConnectParams()
   }
 
   const supabase = await getSupabase()
   const { data } = await supabase.auth.getSession()
   if (!data?.session?.user) {
+    // Connect 意图但未登录 → 带参去登录页
+    if (wantConnect && extensionId) {
+      const login = new URLSearchParams()
+      login.set('connect_extension', '1')
+      login.set('extension_id', extensionId)
+      window.location.replace(`/login?${login.toString()}`)
+      return
+    }
     window.location.replace('/login')
     return
   }
@@ -185,12 +168,23 @@ onMounted(async () => {
   pageLoading.value = false
   document.addEventListener('visibilitychange', refreshSubscriptionOnVisible)
   void loadSubscription()
-  void syncSessionToExtensionIfConnecting(data.session)
   // 本浏览器官网会话作废时尽快回登录页（扩展挤掉不踢官网）
   stopAuthLiveness = await startWebsiteAuthLiveness(() => {
     clearNavIsProCache()
     window.location.replace('/login')
   })
+
+  // Connect 回退路径：账户页原地 mint（不进登录壳）；与 UI 桥零导航共用 runExtensionConnect
+  if (wantConnect && extensionId) {
+    void runExtensionConnectFromWebsite(extensionId, { announceViaBridge: true }).then(status => {
+      if (status === 'ok' || status === 'cancelled_displace' || status === 'failed') {
+        const clean = new URL(window.location.href)
+        clean.searchParams.delete('connect_extension')
+        clean.searchParams.delete('extension_id')
+        window.history.replaceState({}, '', clean.pathname + clean.search)
+      }
+    })
+  }
 })
 
 onUnmounted(() => {
@@ -201,13 +195,15 @@ onUnmounted(() => {
 
 async function handleSignOut() {
   const supabase = await getSupabase()
-  // local：不踢其它电脑上的扩展独立 session；本机扩展靠 SIGN_OUT_HANDOFF
+  // 只清本浏览器官网会话；不踢本机扩展（与 Connect 显式接通对称）
   await supabase.auth.signOut({ scope: 'local' })
   clearNavIsProCache()
+  // UI 桥：扩展 Connect 条可消失；扩展登录态仍由扩展自己管
   try {
-    await handoffSignOutToExtension()
+    await ensureUiBridgeConnected()
+    publishWebsiteAuthChanged({ signedIn: false })
   } catch (error) {
-    console.warn('[AccountPage] extension sign-out handoff failed', error)
+    console.warn('[AccountPage] ui-bridge auth publish failed', error)
   }
   window.location.href = '/login'
 }

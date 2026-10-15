@@ -3,6 +3,7 @@ import type {
   BackgroundMessageResponse
 } from '@/core/messaging/background-messages'
 import type {
+  AuthConnectWebsiteResponse,
   AuthSignInResponse,
   AuthSignOutMode,
   AuthSignOutResponse,
@@ -377,6 +378,14 @@ export async function authSignIn(): Promise<AuthSignInResponse> {
   return sendBackgroundMessage<AuthSignInResponse>({
     scope: 'background',
     type: 'AUTH_SIGN_IN'
+  })
+}
+
+/** 官网已登录：Connect 到本扩展（桥零导航或账户页原地 mint）。 */
+export async function authConnectWebsite(): Promise<AuthConnectWebsiteResponse> {
+  return sendBackgroundMessage<AuthConnectWebsiteResponse>({
+    scope: 'background',
+    type: 'AUTH_CONNECT_WEBSITE'
   })
 }
 

@@ -1,6 +1,7 @@
 /**
  * 登录迁移门闸（ADR-018）：禁止静默 absorb。
- * 本机存在不属于当前 accountId 的摘录时，须用户显式 Import / Export / Delete。
+ * 无主摘录 = **未登录期间**写在 localProfile 桶的 text_excerpt；
+ * 退出会清账号桶，故门闸不服务「外账号残留桶」。
  */
 
 import type { MemoryItem } from '@/core/memory/memory-item'
@@ -14,52 +15,38 @@ import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 export interface LoginMigrationSummary {
   /** 是否需要弹窗 */
   pending: boolean
-  /** 未归属当前账号的摘录条数（仅未软删） */
+  /** 无主摘录条数（仅未软删） */
   excerptCount: number
-  /** 含此类摘录的 ownerId 列表 */
+  /** 含无主摘录的 ownerId（仅可能为 localProfileId） */
   sourceOwnerIds: string[]
   /**
    * 本地档上的书签条数（Import 时一并迁入本机工作库归属，不上云——ADR-017）。
-   * 仅统计 localProfileId，不含孤儿桶书签。
    */
   localBookmarkCount: number
 }
 
-/** 收集「非当前账号」且含未软删摘录的 owner。 */
-async function collectForeignExcerptOwners(accountId: string): Promise<{
+/** 仅盘点本地档无主摘录（未登录创造）。 */
+async function collectUnownedLocalExcerpts(accountId: string): Promise<{
   sourceOwnerIds: string[]
   excerptCount: number
   localBookmarkCount: number
 }> {
   const profile = await getOrCreateLocalProfile()
-  const summaries = await memoryItemRepository.listOwnerBucketSummaries()
-  const sourceOwnerIds: string[] = []
-  let excerptCount = 0
-
-  for (const row of summaries) {
-    if (row.ownerId === accountId || row.activeCount === 0) {
-      continue
-    }
-    const items = await memoryItemRepository.listAllByOwnerId(row.ownerId, {
-      includeDeleted: false
-    })
-    const excerpts = items.filter(item => item.type === 'text_excerpt')
-    if (excerpts.length === 0) {
-      continue
-    }
-    sourceOwnerIds.push(row.ownerId)
-    excerptCount += excerpts.length
+  if (profile.localProfileId === accountId) {
+    return { sourceOwnerIds: [], excerptCount: 0, localBookmarkCount: 0 }
   }
 
-  let localBookmarkCount = 0
-  if (profile.localProfileId !== accountId) {
-    const localItems = await memoryItemRepository.listAllByOwnerId(profile.localProfileId, {
-      includeDeleted: false
-    })
-    localBookmarkCount = localItems.filter(item => item.type === 'bookmark').length
-  }
+  const localItems = await memoryItemRepository.listAllByOwnerId(profile.localProfileId, {
+    includeDeleted: false
+  })
+  const excerpts = localItems.filter(item => item.type === 'text_excerpt')
+  const bookmarks = localItems.filter(item => item.type === 'bookmark')
 
-  return { sourceOwnerIds, excerptCount, localBookmarkCount }
+  return {
+    sourceOwnerIds: excerpts.length > 0 ? [profile.localProfileId] : [],
+    excerptCount: excerpts.length,
+    localBookmarkCount: bookmarks.length
+  }
 }
 
 /** 盘点登录后是否须弹迁移门闸。 */
@@ -67,7 +54,7 @@ export async function summarizeLoginMigration(accountId: string): Promise<LoginM
   const startedAt = flowStart('Identity', '盘点登录迁移门闸', { accountId })
   try {
     const { sourceOwnerIds, excerptCount, localBookmarkCount } =
-      await collectForeignExcerptOwners(accountId)
+      await collectUnownedLocalExcerpts(accountId)
     const result: LoginMigrationSummary = {
       pending: excerptCount > 0,
       excerptCount,
@@ -88,8 +75,7 @@ export async function summarizeLoginMigration(accountId: string): Promise<LoginM
 }
 
 /**
- * Import：未归属摘录 → 当前账号；本地档书签一并归属（本机连续，不上云）。
- * 孤儿桶内书签不自动导入（仍走孤儿导出/清除）。
+ * Import：本地档无主摘录 → 当前账号；本地档书签一并归属（本机连续，不上云）。
  */
 export async function importLoginMigration(accountId: string): Promise<{
   importedExcerpts: number
@@ -98,7 +84,7 @@ export async function importLoginMigration(accountId: string): Promise<{
   const startedAt = flowStart('Identity', '登录迁移 Import', { accountId })
   try {
     const profile = await getOrCreateLocalProfile()
-    const { sourceOwnerIds } = await collectForeignExcerptOwners(accountId)
+    const { sourceOwnerIds } = await collectUnownedLocalExcerpts(accountId)
 
     let importedExcerpts = 0
     for (const ownerId of sourceOwnerIds) {
@@ -130,21 +116,19 @@ export async function importLoginMigration(accountId: string): Promise<{
   }
 }
 
-/** Export：导出未归属摘录（含软删，便于完整备份）。 */
+/** Export：导出本地档无主摘录（含软删，便于完整备份）。 */
 export async function exportLoginMigrationExcerpts(accountId: string): Promise<MemoryItem[]> {
   const startedAt = flowStart('Identity', '登录迁移 Export', { accountId })
   try {
-    const summaries = await memoryItemRepository.listOwnerBucketSummaries()
-    const items: MemoryItem[] = []
-    for (const row of summaries) {
-      if (row.ownerId === accountId || row.totalCount === 0) {
-        continue
-      }
-      const bucket = await memoryItemRepository.listAllByOwnerId(row.ownerId, {
-        includeDeleted: true
-      })
-      items.push(...bucket.filter(item => item.type === 'text_excerpt'))
+    const profile = await getOrCreateLocalProfile()
+    if (profile.localProfileId === accountId) {
+      flowOk('Identity', '登录迁移 Export', startedAt, { itemCount: 0 })
+      return []
     }
+    const bucket = await memoryItemRepository.listAllByOwnerId(profile.localProfileId, {
+      includeDeleted: true
+    })
+    const items = bucket.filter(item => item.type === 'text_excerpt')
     flowOk('Identity', '登录迁移 Export', startedAt, { itemCount: items.length })
     return items
   } catch (error) {
@@ -153,14 +137,28 @@ export async function exportLoginMigrationExcerpts(accountId: string): Promise<M
   }
 }
 
-/** Delete：硬删未归属摘录（含软删行；不动书签壳）。 */
+/**
+ * Delete：硬删本地档无主摘录（含软删行；不动书签壳）。
+ * 不用 hardDeleteMany（其按当前 owner=accountId 过滤，删不到本地档）。
+ */
 export async function deleteLoginMigrationExcerpts(accountId: string): Promise<{
   deletedCount: number
 }> {
   const startedAt = flowStart('Identity', '登录迁移 Delete', { accountId })
   try {
-    const items = await exportLoginMigrationExcerpts(accountId)
-    const deletedCount = await memoryItemRepository.hardDeleteMany(items.map(item => item.id))
+    const profile = await getOrCreateLocalProfile()
+    if (profile.localProfileId === accountId) {
+      flowOk('Identity', '登录迁移 Delete', startedAt, { deletedCount: 0 })
+      return { deletedCount: 0 }
+    }
+    const localItems = await memoryItemRepository.listAllByOwnerId(profile.localProfileId, {
+      includeDeleted: true
+    })
+    const remaining = localItems.filter(item => item.type !== 'text_excerpt')
+    const deletedCount = localItems.length - remaining.length
+    if (deletedCount > 0) {
+      await memoryItemRepository.replaceOwnerItems(profile.localProfileId, remaining)
+    }
     flowOk('Identity', '登录迁移 Delete', startedAt, { deletedCount })
     return { deletedCount }
   } catch (error) {

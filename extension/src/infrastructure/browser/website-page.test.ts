@@ -1,9 +1,28 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+const getAuthSessionMock = vi.hoisted(() => vi.fn())
+const readWebsiteAuthUiStateMock = vi.hoisted(() => vi.fn())
+
+vi.mock('@/infrastructure/identity/auth-session-service', () => ({
+  getAuthSession: getAuthSessionMock
+}))
+
+vi.mock('@/infrastructure/auth/website-auth-ui-storage', () => ({
+  readWebsiteAuthUiState: readWebsiteAuthUiStateMock
+}))
+
 describe('openWebsiteAccountPage', () => {
   beforeEach(() => {
     vi.resetModules()
     vi.stubEnv('VITE_WEBSITE_URL', 'http://localhost:3001')
+    getAuthSessionMock.mockReset()
+    readWebsiteAuthUiStateMock.mockReset()
+    getAuthSessionMock.mockResolvedValue({
+      accessToken: 'at',
+      refreshToken: 'rt',
+      userId: '22222222-2222-4222-8222-222222222222'
+    })
+    readWebsiteAuthUiStateMock.mockResolvedValue(null)
   })
 
   afterEach(() => {
@@ -11,41 +30,63 @@ describe('openWebsiteAccountPage', () => {
     vi.unstubAllGlobals()
   })
 
-  it('已有 /account 标签则激活，不 create', async () => {
-    const tabsUpdate = vi.fn().mockResolvedValue({})
-    const windowsUpdate = vi.fn().mockResolvedValue({})
-    const tabsCreate = vi.fn()
+  it('官网已是同一账号 → 直接 /account', async () => {
+    readWebsiteAuthUiStateMock.mockResolvedValue({
+      signedIn: true,
+      userId: '22222222-2222-4222-8222-222222222222',
+      at: Date.now()
+    })
+    const tabsCreate = vi.fn().mockResolvedValue({ id: 1 })
     vi.stubGlobal('chrome', {
       runtime: { id: 'ext-id-1' },
       tabs: {
-        query: vi.fn().mockResolvedValue([
-          {
-            id: 9,
-            windowId: 1,
-            url: 'http://localhost:3001/account?extension_connected=1'
-          }
-        ]),
-        update: tabsUpdate,
+        query: vi.fn().mockResolvedValue([]),
+        update: vi.fn(),
         create: tabsCreate
       },
-      windows: { update: windowsUpdate }
+      windows: { update: vi.fn() }
     })
 
     const { openWebsiteAccountPage } = await import('@/infrastructure/browser/website-page')
     await openWebsiteAccountPage()
 
-    expect(tabsCreate).not.toHaveBeenCalled()
-    expect(tabsUpdate).toHaveBeenCalledWith(
-      9,
-      expect.objectContaining({
-        url: 'http://localhost:3001/account?extension_id=ext-id-1',
-        active: true
-      })
-    )
-    expect(windowsUpdate).toHaveBeenCalledWith(1, { focused: true })
+    expect(tabsCreate).toHaveBeenCalledWith({
+      url: 'http://localhost:3001/account?extension_id=ext-id-1',
+      active: true
+    })
   })
 
-  it('同 extension_id 已在 URL 时只激活不改址', async () => {
+  it('官网未登录 → /auth/from-extension 反向接通', async () => {
+    readWebsiteAuthUiStateMock.mockResolvedValue({
+      signedIn: false,
+      at: Date.now()
+    })
+    const tabsCreate = vi.fn().mockResolvedValue({ id: 1 })
+    vi.stubGlobal('chrome', {
+      runtime: { id: 'ext-id-1' },
+      tabs: {
+        query: vi.fn().mockResolvedValue([]),
+        update: vi.fn(),
+        create: tabsCreate
+      },
+      windows: { update: vi.fn() }
+    })
+
+    const { openWebsiteAccountPage } = await import('@/infrastructure/browser/website-page')
+    await openWebsiteAccountPage()
+
+    expect(tabsCreate).toHaveBeenCalledWith({
+      url: 'http://localhost:3001/auth/from-extension?extension_id=ext-id-1&next=%2Faccount',
+      active: true
+    })
+  })
+
+  it('同账号已在 /account → 只激活', async () => {
+    readWebsiteAuthUiStateMock.mockResolvedValue({
+      signedIn: true,
+      userId: '22222222-2222-4222-8222-222222222222',
+      at: Date.now()
+    })
     const tabsUpdate = vi.fn().mockResolvedValue({})
     vi.stubGlobal('chrome', {
       runtime: { id: 'ext-id-1' },
@@ -68,24 +109,35 @@ describe('openWebsiteAccountPage', () => {
 
     expect(tabsUpdate).toHaveBeenCalledWith(3, { active: true })
   })
+})
 
-  it('无账户标签则 create', async () => {
-    const tabsCreate = vi.fn().mockResolvedValue({ id: 1 })
+describe('openWebsiteAccountConnectPage', () => {
+  beforeEach(() => {
+    vi.resetModules()
+    vi.stubEnv('VITE_WEBSITE_URL', 'http://localhost:3001')
+  })
+
+  afterEach(() => {
+    vi.unstubAllEnvs()
+    vi.unstubAllGlobals()
+  })
+
+  it('打开账户页并带 connect_extension', async () => {
     vi.stubGlobal('chrome', {
-      runtime: { id: 'ext-id-1' },
+      runtime: { id: 'ext-id-1', lastError: undefined },
       tabs: {
-        query: vi.fn().mockResolvedValue([{ id: 1, url: 'http://localhost:3001/pricing' }]),
-        update: vi.fn(),
-        create: tabsCreate
+        query: vi.fn(async () => []),
+        create: vi.fn(async () => ({ id: 1 })),
+        update: vi.fn()
       },
       windows: { update: vi.fn() }
     })
 
-    const { openWebsiteAccountPage } = await import('@/infrastructure/browser/website-page')
-    await openWebsiteAccountPage()
+    const { openWebsiteAccountConnectPage } = await import('@/infrastructure/browser/website-page')
+    await openWebsiteAccountConnectPage()
 
-    expect(tabsCreate).toHaveBeenCalledWith({
-      url: 'http://localhost:3001/account?extension_id=ext-id-1',
+    expect(chrome.tabs.create).toHaveBeenCalledWith({
+      url: 'http://localhost:3001/account?connect_extension=1&extension_id=ext-id-1',
       active: true
     })
   })

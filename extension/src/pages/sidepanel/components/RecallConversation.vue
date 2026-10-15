@@ -258,6 +258,9 @@ function handleToggleDetailExportSelection(id: string): void {
               </span>
             </span>
           </p>
+          <p v-if="turn.deeperReadingTip" class="assistant-turn-deeper-tip" role="status">
+            {{ turn.deeperReadingTip }}
+          </p>
           <p
             class="assistant-turn-copy"
             :class="{ 'assistant-turn-copy--error': turn.tone === 'error' }"
@@ -600,6 +603,14 @@ function handleToggleDetailExportSelection(id: string): void {
   min-width: 0;
   color: var(--on-surface);
   overflow-wrap: anywhere;
+}
+
+.assistant-turn-deeper-tip {
+  max-width: 42ch;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--on-surface-muted);
 }
 
 .assistant-turn-copy {

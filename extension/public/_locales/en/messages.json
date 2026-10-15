@@ -308,11 +308,20 @@
   "sidepanel_website_connect_cta": {
     "message": "Connect"
   },
+  "sidepanel_website_connect_cta_busy": {
+    "message": "Connecting…"
+  },
   "sidepanel_website_connect_cta_aria": {
     "message": "Connect this extension to your website account"
   },
+  "sidepanel_website_connect_cta_busy_aria": {
+    "message": "Connecting to your website account"
+  },
+  "sidepanel_website_connect_failed": {
+    "message": "Couldn't connect. Try again."
+  },
   "sidepanel_website_connect_dismiss_aria": {
-    "message": "Dismiss website connect notice"
+    "message": "Close website connect notice"
   },
   "sidepanel_extension_displaced_dismiss_aria": {
     "message": "Dismiss signed-out notice"
@@ -542,6 +551,15 @@
   },
   "popup_recall_progress_understanding": {
     "message": "Making sense of your impression…"
+  },
+  "popup_recall_progress_understanding_slow": {
+    "message": "Still making sense of that — hanging with you…"
+  },
+  "popup_recall_progress_understanding_slower": {
+    "message": "Taking longer than usual — still working on your clue…"
+  },
+  "sidepanel_recall_deeper_reading_unavailable": {
+    "message": "Couldn't get a deeper reading — used a simpler on-device pass."
   },
   "popup_recall_progress_narrowing": {
     "message": "Narrowing down your library…"
@@ -1196,7 +1214,7 @@
     "message": "Sign out"
   },
   "settings_sign_out_dialog_copy": {
-    "message": "Your library stays on this device so you can keep finding things while signed out. Clearing the device copy is optional and needs a second confirmation."
+    "message": "Signing out removes this account’s excerpts from this device. Bookmarks stay. Anything you saved while signed out stays for the next sign-in. A full wipe of this account’s on-device library is optional and needs a second confirmation."
   },
   "settings_sign_out_dialog_counts": {
     "message": "This account on device: $ACCOUNT$. Other local saves: $LOCAL$. Cloud: $REMOTE$.",
@@ -1213,25 +1231,25 @@
     }
   },
   "settings_sign_out_keep_local": {
-    "message": "Sign out and keep library"
+    "message": "Sign out"
   },
   "settings_sign_out_keep_local_hint": {
-    "message": "Recommended — keep bookmarks and excerpts on this device"
+    "message": "Recommended — removes this account’s excerpts from this device. Bookmarks stay. Anything you saved while signed out stays for the next sign-in."
   },
   "settings_sign_out_flush_then_keep": {
     "message": "Sync excerpts, then sign out"
   },
   "settings_sign_out_flush_then_keep_hint": {
-    "message": "Upload excerpts to the cloud first, then keep the library on this device"
+    "message": "Upload excerpts to the cloud first, then remove this account’s excerpts from this device"
   },
   "settings_sign_out_flush_failed_keep_anyway": {
-    "message": "Cloud sync failed. Sign out anyway? The cloud copy may be behind."
+    "message": "Cloud sync failed. Sign out anyway? The cloud copy may be behind, and this account’s excerpts will still be removed from this device."
   },
   "settings_sign_out_clear_local": {
-    "message": "Sign out and clear this account on device"
+    "message": "Sign out and wipe this account’s library on device"
   },
   "settings_sign_out_clear_local_hint": {
-    "message": "Removes this account’s copy on this device; cannot recover if it was never synced"
+    "message": "Also removes bookmarks tied to this account on this device (not remapped). Cannot recover if never synced."
   },
   "settings_sign_out_sync_then_clear": {
     "message": "Sync to cloud, then sign out and clear device"
@@ -1249,10 +1267,10 @@
     "message": "Bring local saves into this account?"
   },
   "settings_login_migration_copy": {
-    "message": "This device has excerpts that aren’t tied to the account you just signed in with. Choose what to do — we won’t merge them quietly."
+    "message": "You saved some excerpts while signed out. Choose what to do with them for this account — we won’t merge them quietly."
   },
   "settings_login_migration_counts": {
-    "message": "Excerpts to decide: $EXCERPTS$. Local bookmarks that Import will keep with your library: $BOOKMARKS$.",
+    "message": "Signed-out excerpts to decide: $EXCERPTS$. Local bookmarks that Import will keep with your library: $BOOKMARKS$.",
     "placeholders": {
       "EXCERPTS": {
         "content": "$1"

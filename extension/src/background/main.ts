@@ -11,6 +11,7 @@ import {
   registerContextMenuListeners
 } from '@/background/listeners/context-menu'
 import { registerExternalAuthHandoffListener } from '@/background/listeners/external-auth-handoff'
+import { registerUiBridgeListener } from '@/background/listeners/ui-bridge'
 import { registerCommandListeners } from '@/background/listeners/commands'
 import { registerMemoryCloudSyncAlarmListener } from '@/background/listeners/memory-cloud-sync-alarm'
 import { registerOmniboxListeners } from '@/background/listeners/omnibox'
@@ -42,6 +43,7 @@ if (import.meta.env.DEV) {
   )
 }
 registerExternalAuthHandoffListener()
+registerUiBridgeListener()
 // 下列监听器须在 bootstrap/IDB 前同步挂上，避免 SW 冷启动丢事件（与 A2/A3/A6 同模式）
 registerSelectionToolbarKeepaliveListener()
 registerCommandListeners()

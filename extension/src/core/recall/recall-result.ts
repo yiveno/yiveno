@@ -6,6 +6,7 @@ import type { TopicDescriptorSchema } from '@/core/recall/parse-recall-clue-type
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import type { RecallFramingFacts } from '@/core/recall/recall-framing-facts'
 import type { RecallPipelineTiming } from '@/core/recall/recall-telemetry'
+import type { ClueUnderstandingSource } from '@/core/recall/understand/understand-recall-clue'
 import type { RecallVisibleProgressStage } from '@/core/recall/visible-progress'
 
 /** 单次召回命中项。 */
@@ -114,6 +115,11 @@ export interface RecallResult {
    * 供 UI 在推送与响应竞态时补全展示；Omnibox 通常不附。
    */
   visibleProgressStages?: RecallVisibleProgressStage[]
+  /**
+   * 理解层实际引擎（§7.0）。
+   * `rules_fallback` 时 Side Panel 可展示 deeper-reading 轻提示。
+   */
+  understandSource?: ClueUnderstandingSource
 }
 
 /** UI 展示用的 MemoryItem 摘要。 */

@@ -32,6 +32,40 @@ export const RECALL_VISIBLE_PROGRESS_MESSAGE_KEYS = {
   checking: 'popup_recall_progress_checking'
 } as const satisfies Record<RecallVisibleProgressStage, string>
 
+/** understanding 同阶段等待梯级 2（仍停在理解 · 毫秒）。 */
+export const UNDERSTANDING_WAIT_TIER2_MS = 4_000
+
+/** understanding 同阶段等待梯级 3（更慢 · 毫秒）。 */
+export const UNDERSTANDING_WAIT_TIER3_MS = 8_000
+
+/** 同阶段慢等梯级（仅 understanding；不改阶段枚举）。 */
+export type RecallUnderstandingWaitTier = 1 | 2 | 3
+
+/**
+ * 按本轮 elapsed 选 understanding 等待梯级文案档。
+ * 调用方须已过 500ms 揭示门控且 current===understanding。
+ */
+export function selectUnderstandingWaitTier(elapsedMs: number): RecallUnderstandingWaitTier {
+  if (elapsedMs >= UNDERSTANDING_WAIT_TIER3_MS) {
+    return 3
+  }
+  if (elapsedMs >= UNDERSTANDING_WAIT_TIER2_MS) {
+    return 2
+  }
+  return 1
+}
+
+/** understanding 梯级 → i18n message key。 */
+export function messageKeyForUnderstandingWaitTier(tier: RecallUnderstandingWaitTier): string {
+  if (tier === 3) {
+    return 'popup_recall_progress_understanding_slower'
+  }
+  if (tier === 2) {
+    return 'popup_recall_progress_understanding_slow'
+  }
+  return RECALL_VISIBLE_PROGRESS_MESSAGE_KEYS.understanding
+}
+
 /**
  * 是否已过门控、可展示阶段文案。
  * @param elapsedMs 自本轮 Recall 开始经过的毫秒

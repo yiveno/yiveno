@@ -729,7 +729,7 @@ export class MemoryItemRepository {
 
   /**
    * 将 fromOwnerId 下全部条目的 ownerId 改为 toOwnerId（保留 sourceLocalProfileId）。
-   * 用于：退出释放账号库回本地档；「本机覆盖云端」前的归属迁移。
+   * 用于：退出时书签回迁本地档 / 登录迁移 Import；「本机覆盖云端」前的归属迁移。
    */
   async remapOwnerId(fromOwnerId: string, toOwnerId: string): Promise<number> {
     return this.remapOwnerIdByType(fromOwnerId, toOwnerId)

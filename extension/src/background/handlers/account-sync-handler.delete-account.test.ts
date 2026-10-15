@@ -99,7 +99,7 @@ vi.mock('@/infrastructure/browser/website-page', () => ({
 }))
 
 vi.mock('@/infrastructure/auth/extension-uninstall-url', () => ({
-  clearExtensionUninstallRevoke: vi.fn(async () => undefined),
+  clearExtensionUninstallRevoke: vi.fn(async () => true),
   registerExtensionUninstallRevoke: vi.fn(async () => undefined)
 }))
 

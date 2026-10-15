@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest'
 
 import {
   advanceRecallVisibleProgress,
-  shouldRevealRecallVisibleProgress
+  messageKeyForUnderstandingWaitTier,
+  selectUnderstandingWaitTier,
+  shouldRevealRecallVisibleProgress,
+  UNDERSTANDING_WAIT_TIER2_MS,
+  UNDERSTANDING_WAIT_TIER3_MS
 } from '@/core/recall/visible-progress'
 import { selectRecallVisibleProgressBasisKinds } from '@/core/recall/visible-progress-basis'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
@@ -30,6 +34,20 @@ describe('visible-progress', () => {
       current: 'checking',
       completed: ['understanding', 'narrowing']
     })
+  })
+
+  it('understanding 等待梯级按 elapsed 升档', () => {
+    expect(selectUnderstandingWaitTier(500)).toBe(1)
+    expect(selectUnderstandingWaitTier(UNDERSTANDING_WAIT_TIER2_MS - 1)).toBe(1)
+    expect(selectUnderstandingWaitTier(UNDERSTANDING_WAIT_TIER2_MS)).toBe(2)
+    expect(selectUnderstandingWaitTier(UNDERSTANDING_WAIT_TIER3_MS - 1)).toBe(2)
+    expect(selectUnderstandingWaitTier(UNDERSTANDING_WAIT_TIER3_MS)).toBe(3)
+  })
+
+  it('understanding 梯级映射 i18n key', () => {
+    expect(messageKeyForUnderstandingWaitTier(1)).toBe('popup_recall_progress_understanding')
+    expect(messageKeyForUnderstandingWaitTier(2)).toBe('popup_recall_progress_understanding_slow')
+    expect(messageKeyForUnderstandingWaitTier(3)).toBe('popup_recall_progress_understanding_slower')
   })
 })
 

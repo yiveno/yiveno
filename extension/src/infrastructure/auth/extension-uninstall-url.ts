@@ -113,27 +113,66 @@ export async function postExtensionUninstallRevoke(token: string): Promise<boole
   }
 }
 
+/**
+ * 无 uninstallRevokeToken 时：用扩展 access token Bearer 释放本会话/租约。
+ * 网络失败不抛；返回是否 HTTP 成功。
+ */
+export async function postExtensionSessionRelease(accessToken: string): Promise<boolean> {
+  const trimmed = accessToken.trim()
+  if (!trimmed) {
+    return false
+  }
+  try {
+    const res = await fetch(`${getApiBaseUrl()}/api/auth/extension-session-release`, {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${trimmed}`,
+        'content-type': 'application/json'
+      }
+    })
+    if (!res.ok) {
+      logger.warn('Auth', 'extension-session-release 非成功', { status: res.status })
+      return false
+    }
+    return true
+  } catch (error) {
+    logger.warn('Auth', 'extension-session-release 请求失败', error)
+    return false
+  }
+}
+
 export type ClearExtensionUninstallRevokeOptions = {
   /** 是否先调 Worker 销远程（主动退出时应 true；仅换 token / 被挤掉时 false） */
   revokeRemote?: boolean
+  /**
+   * 无本地 revoke token 时的兜底：扩展当前 access token。
+   * 走 `POST /api/auth/extension-session-release`（仅清匹配本 session 的租约）。
+   */
+  accessTokenFallback?: string
 }
 
 /**
  * 退出 / 换发 / 被挤掉：可选远程 revoke → 清 storage 中的 token →
  * **仍保留**无 token 的卸载反馈 URL（卸载与反馈强绑定，不因退登而关掉）。
+ * @returns 远程租约是否已成功释放（调用方据此决定是否清 lastLeaseSessionId）
  */
 export async function clearExtensionUninstallRevoke(
   options: ClearExtensionUninstallRevokeOptions = {}
-): Promise<void> {
+): Promise<boolean> {
   const revokeRemote = options.revokeRemote === true
   const stored = await readChromeStorageLocal(
     UNINSTALL_REVOKE_TOKEN_STORAGE_KEY,
     UninstallRevokeTokenRecordSchema
   )
+  let remoteReleased = false
   if (revokeRemote && stored?.token) {
-    await postExtensionUninstallRevoke(stored.token)
+    remoteReleased = await postExtensionUninstallRevoke(stored.token)
+  } else if (revokeRemote && options.accessTokenFallback?.trim()) {
+    logger.info('Auth', '无 uninstall revoke token，改用 Bearer 释放扩展会话')
+    remoteReleased = await postExtensionSessionRelease(options.accessTokenFallback)
   }
   await removeChromeStorageLocal(UNINSTALL_REVOKE_TOKEN_STORAGE_KEY)
   await setChromeUninstallUrl(buildExtensionUninstallPageUrl(null))
-  logger.info('Auth', '已清卸载 revoke token，保留反馈 URL')
+  logger.info('Auth', '已清卸载 revoke token，保留反馈 URL', { remoteReleased, revokeRemote })
+  return remoteReleased
 }

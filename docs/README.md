@@ -27,6 +27,7 @@
 - [`architecture/decisions/ADR-016-environment-feedback-evolution.md`](./architecture/decisions/ADR-016-environment-feedback-evolution.md) — 环境反馈驱动进化：目标稳定、手段适应、反馈非真理
 - [`architecture/decisions/ADR-017-cloud-sync-excerpt-only.md`](./architecture/decisions/ADR-017-cloud-sync-excerpt-only.md) — 云同步仅摘录；书签 Memory 本机化
 - [`architecture/decisions/ADR-018-account-profile-data-isolation.md`](./architecture/decisions/ADR-018-account-profile-data-isolation.md) — Account vs Profile 隔离 · 未登录≟Free · 登录迁移门闸
+- [`architecture/decisions/ADR-019-website-extension-ui-bridge.md`](./architecture/decisions/ADR-019-website-extension-ui-bridge.md) — 同浏览器官网 ↔ 扩展 UI Port 桥（登录/资料；可见才刷）
 
 **运维 / 工程（非规格，与正文冲突时以正文为准）**：
 

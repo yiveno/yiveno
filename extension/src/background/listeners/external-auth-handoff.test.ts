@@ -1,14 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const ensureBackgroundBootstrappedMock = vi.hoisted(() => vi.fn(async () => undefined))
-const releaseAccountLibraryToLocalProfileMock = vi.hoisted(() => vi.fn(async () => 0))
+const clearAccountLibraryOnSignOutMock = vi.hoisted(() =>
+  vi.fn(async () => ({ clearedCount: 0, remappedBookmarks: 0 }))
+)
 
 vi.mock('@/background/bootstrap-ready', () => ({
   ensureBackgroundBootstrapped: ensureBackgroundBootstrappedMock
 }))
 
-vi.mock('@/application/identity/release-account-library-to-local', () => ({
-  releaseAccountLibraryToLocalProfile: releaseAccountLibraryToLocalProfileMock
+vi.mock('@/application/identity/clear-account-library-on-sign-out', () => ({
+  clearAccountLibraryOnSignOut: clearAccountLibraryOnSignOutMock
 }))
 
 vi.mock('@/application/memory/ensure-memory-embedding-maintenance', () => ({
@@ -73,8 +75,11 @@ describe('external auth handoff', () => {
   beforeEach(() => {
     resetExternalAuthHandoffListenerForTests()
     ensureBackgroundBootstrappedMock.mockClear()
-    releaseAccountLibraryToLocalProfileMock.mockClear()
-    releaseAccountLibraryToLocalProfileMock.mockResolvedValue(0)
+    clearAccountLibraryOnSignOutMock.mockClear()
+    clearAccountLibraryOnSignOutMock.mockResolvedValue({
+      clearedCount: 0,
+      remappedBookmarks: 0
+    })
     vi.mocked(scheduleSilentMemoryEmbeddingMaintenance).mockClear()
     vi.stubGlobal('chrome', createChromeStorageMock())
   })
@@ -112,7 +117,7 @@ describe('external auth handoff', () => {
       expect(ensureBackgroundBootstrappedMock).toHaveBeenCalled()
       expect(scheduleSilentMemoryEmbeddingMaintenance).toHaveBeenCalledWith('auth_handoff', 800)
     })
-    expect(releaseAccountLibraryToLocalProfileMock).not.toHaveBeenCalled()
+    expect(clearAccountLibraryOnSignOutMock).not.toHaveBeenCalled()
   })
 
   it('session 写入后立即 ok，embedding 在 bootstrap 后调度', async () => {
@@ -140,7 +145,95 @@ describe('external auth handoff', () => {
     })
   })
 
-  it('sign-out handoff 释放账号库后清登录态', async () => {
+  it('扩展登录态探测：未登录 → signedIn false', async () => {
+    const result = await applyExternalAuthHandoff({
+      type: 'YIVENO_EXTENSION_AUTH_STATUS_PROBE',
+      payload: { expectedUserId: '22222222-2222-4222-8222-222222222222' }
+    })
+    expect(result).toEqual({ ok: true, signedIn: false })
+  })
+
+  it('租约认领探测：本地 lastLease 匹配且未登录 → reclaimable', async () => {
+    const { LAST_EXTENSION_LEASE_SESSION_KEY } =
+      await import('@/infrastructure/storage/last-extension-lease-session-storage')
+    vi.stubGlobal(
+      'chrome',
+      createChromeStorageMock({
+        [LAST_EXTENSION_LEASE_SESSION_KEY]: { sessionId: 'lease-sess-1' }
+      })
+    )
+    const result = await applyExternalAuthHandoff({
+      type: 'YIVENO_EXTENSION_LEASE_RECLAIM_PROBE',
+      payload: { existingSessionId: 'lease-sess-1' }
+    })
+    expect(result).toEqual({ ok: true, reclaimable: true, signedIn: false })
+  })
+
+  it('租约认领探测：已登录 → 不可认领', async () => {
+    const userId = '22222222-2222-4222-8222-222222222222'
+    const { LAST_EXTENSION_LEASE_SESSION_KEY } =
+      await import('@/infrastructure/storage/last-extension-lease-session-storage')
+    vi.stubGlobal(
+      'chrome',
+      createChromeStorageMock({
+        [AUTH_SESSION_STORAGE_KEY]: {
+          accessToken: 'at',
+          refreshToken: 'rt',
+          userId
+        },
+        [LAST_EXTENSION_LEASE_SESSION_KEY]: { sessionId: 'lease-sess-1' }
+      })
+    )
+    const result = await applyExternalAuthHandoff({
+      type: 'YIVENO_EXTENSION_LEASE_RECLAIM_PROBE',
+      payload: { existingSessionId: 'lease-sess-1' }
+    })
+    expect(result).toEqual({ ok: true, reclaimable: false, signedIn: true, userId })
+  })
+
+  it('官网会话请求：扩展未登录 → 失败', async () => {
+    const result = await applyExternalAuthHandoff({
+      type: 'YIVENO_WEBSITE_SESSION_REQUEST',
+      payload: { nextPath: '/account' }
+    })
+    expect(result).toEqual({ ok: false, error: 'website_session_mint_failed' })
+  })
+
+  it('租约认领探测：session 不匹配 → 不可认领', async () => {
+    const { LAST_EXTENSION_LEASE_SESSION_KEY } =
+      await import('@/infrastructure/storage/last-extension-lease-session-storage')
+    vi.stubGlobal(
+      'chrome',
+      createChromeStorageMock({
+        [LAST_EXTENSION_LEASE_SESSION_KEY]: { sessionId: 'lease-mine' }
+      })
+    )
+    const result = await applyExternalAuthHandoff({
+      type: 'YIVENO_EXTENSION_LEASE_RECLAIM_PROBE',
+      payload: { existingSessionId: 'lease-other' }
+    })
+    expect(result).toEqual({ ok: true, reclaimable: false, signedIn: false })
+  })
+
+  it('扩展登录态探测：已登录 → 回传 userId', async () => {
+    const userId = '22222222-2222-4222-8222-222222222222'
+    vi.stubGlobal(
+      'chrome',
+      createChromeStorageMock({
+        [AUTH_SESSION_STORAGE_KEY]: {
+          accessToken: 'at',
+          refreshToken: 'rt',
+          userId
+        }
+      })
+    )
+    const result = await applyExternalAuthHandoff({
+      type: 'YIVENO_EXTENSION_AUTH_STATUS_PROBE'
+    })
+    expect(result).toEqual({ ok: true, signedIn: true, userId })
+  })
+
+  it('sign-out handoff 清账号桶后清登录态', async () => {
     const accountId = '22222222-2222-4222-8222-222222222222'
     vi.stubGlobal(
       'chrome',
@@ -157,7 +250,7 @@ describe('external auth handoff', () => {
     })
     expect(result).toEqual({ ok: true })
     await vi.waitFor(() => {
-      expect(releaseAccountLibraryToLocalProfileMock).toHaveBeenCalledWith(accountId)
+      expect(clearAccountLibraryOnSignOutMock).toHaveBeenCalledWith(accountId)
     })
   })
 

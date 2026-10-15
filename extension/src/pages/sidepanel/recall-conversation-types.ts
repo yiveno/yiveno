@@ -48,6 +48,11 @@ export type AssistantTurn = {
    * 与 Framing P1 互斥展示（有芯片则气泡省略 P1）。
    */
   understandingEcho?: string[]
+  /**
+   * LLM 失败/超时降级后的结果轻提示（已翻译）。
+   * 仅 `rules_fallback`；离线 omit（`rules`）不叠。
+   */
+  deeperReadingTip?: string
   allowDismiss: boolean
 }
 

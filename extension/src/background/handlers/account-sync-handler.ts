@@ -14,12 +14,13 @@ import {
   exportOrphanOwnerBuckets,
   summarizeOrphanOwnerBuckets
 } from '@/application/identity/orphan-owner-buckets'
-import { releaseAccountLibraryToLocalProfile } from '@/application/identity/release-account-library-to-local'
+import { clearAccountLibraryOnSignOut } from '@/application/identity/clear-account-library-on-sign-out'
 import { filterCloudSyncableMemoryItems } from '@/core/memory/cloud-syncable-memory-item'
 import { mergeMemoryItemsByUpdatedAt } from '@/core/memory/merge-memory-items-by-updated-at'
 import { selectMemoryItemsToPush } from '@/core/memory/select-memory-items-to-push'
 import type {
   AccountSyncErrorCode,
+  AuthConnectWebsiteResponse,
   AuthSignInResponse,
   AuthSignOutMode,
   AuthSignOutResponse,
@@ -52,9 +53,18 @@ import {
   revalidateAuthSession
 } from '@/infrastructure/auth/auth-session-revalidate'
 import { clearExtensionUninstallRevoke } from '@/infrastructure/auth/extension-uninstall-url'
+import { readJwtSessionId } from '@/infrastructure/auth/read-jwt-session-id'
 import { probeWebsiteSignedIn } from '@/infrastructure/auth/website-auth-probe'
 import { ensureAuthSessionLeaseAlarm } from '@/infrastructure/auth/auth-session-lease-alarm'
-import { writeExtensionDisplacedNotice } from '@/infrastructure/storage/extension-displaced-notice-storage'
+import { maybeWriteExtensionDisplacedNotice } from '@/infrastructure/storage/extension-displaced-notice-storage'
+import {
+  clearLastExtensionLeaseSessionId,
+  writeLastExtensionLeaseSessionId
+} from '@/infrastructure/storage/last-extension-lease-session-storage'
+import {
+  beginSuppressDisplacedNotice,
+  endSuppressDisplacedNotice
+} from '@/infrastructure/storage/suppress-displaced-notice-storage'
 import { refreshAuthProfileFields, refreshAuthSession } from '@/infrastructure/auth/extension-oauth'
 import {
   clearAuthSession,
@@ -87,9 +97,17 @@ import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
 import {
   getWebsiteBaseUrl,
+  openWebsiteAccountConnectPage,
   openWebsiteLoginPage,
   openWebsiteLogoutFromExtension
 } from '@/infrastructure/browser/website-page'
+import {
+  beginUiBridgeConnectWait,
+  broadcastRequestExtensionConnect,
+  clearUiBridgeConnectWait,
+  getUiBridgePortCount
+} from '@/background/listeners/ui-bridge'
+import { AUTH_SESSION_STORAGE_KEY } from '@/core/identity/auth-session'
 import {
   deleteRemoteAccount,
   deleteRemoteCloudMemory,
@@ -167,10 +185,17 @@ function parseCloudItems(rawItems: MemoryItem[]): MemoryItem[] {
 /**
  * AUTH_SIGN_IN — 打开官网登录页并带上 extension_id。
  * 真正写入 AccountBinding 由官网 handoff 完成。
+ * **未登录 / Settings Sign in** 用本入口；已登录 Connect 软条用 {@link handleAuthConnectWebsite}。
  */
 export async function handleAuthSignIn(): Promise<AuthSignInResponse> {
   const startedAt = flowStart('Auth', 'AUTH_SIGN_IN（打开官网）')
   try {
+    // 登录页 mint 可能先撤旧扩展会话再 handoff：抑制自挤误报 elsewhere
+    try {
+      await beginSuppressDisplacedNotice()
+    } catch (error) {
+      logger.warn('Auth', 'Sign in 打开 displaced 抑制窗失败', error)
+    }
     const loginUrl = new URL('/login', getWebsiteBaseUrl())
     loginUrl.searchParams.set('connect_extension', '1')
     loginUrl.searchParams.set('extension_id', chrome.runtime.id)
@@ -188,6 +213,162 @@ export async function handleAuthSignIn(): Promise<AuthSignInResponse> {
       ...(error instanceof Error ? { error: error.message } : {})
     }
   }
+}
+
+/** 等官网 ack 的最长时间；超时则打开账户页回退。 */
+const CONNECT_ACK_TIMEOUT_MS = 2000
+/** 等 mint/handoff / 挤掉确认的最长时间。 */
+const CONNECT_DONE_TIMEOUT_MS = 60_000
+
+/**
+ * AUTH_CONNECT_WEBSITE — 官网已登录时把会话接到扩展。
+ * 1) UI 桥 `request_extension_connect`（零导航）
+ * 2) 无 ack → 打开 `/account?connect_extension=1`
+ * 等到 website_connect_result / handoff 写 session / 超时。
+ */
+export async function handleAuthConnectWebsite(): Promise<AuthConnectWebsiteResponse> {
+  const startedAt = flowStart('Auth', 'AUTH_CONNECT_WEBSITE')
+  const extensionId = chrome.runtime.id
+
+  // 已是登录态：幂等成功
+  const existing = await getAuthSession()
+  if (existing?.userId) {
+    flowOk('Auth', 'AUTH_CONNECT_WEBSITE', startedAt, { alreadySignedIn: true })
+    return { ok: true, path: 'bridge' }
+  }
+
+  // 本机即将 mint：禁止把自挤误报成「别处登录」
+  try {
+    await beginSuppressDisplacedNotice()
+  } catch (error) {
+    logger.warn('Auth', 'Connect 打开 displaced 抑制窗失败', error)
+  }
+
+  let path: 'bridge' | 'account_tab' = 'bridge'
+  let settled = false
+  let ackTimer: ReturnType<typeof setTimeout> | undefined
+  let doneTimer: ReturnType<typeof setTimeout> | undefined
+
+  const outcome = await new Promise<AuthConnectWebsiteResponse>(resolve => {
+    const finish = (response: AuthConnectWebsiteResponse): void => {
+      if (settled) {
+        return
+      }
+      settled = true
+      clearUiBridgeConnectWait()
+      chrome.storage.onChanged.removeListener(onStorageChanged)
+      if (ackTimer !== undefined) {
+        clearTimeout(ackTimer)
+      }
+      if (doneTimer !== undefined) {
+        clearTimeout(doneTimer)
+      }
+      resolve(response)
+    }
+
+    const onStorageChanged = (
+      changes: Record<string, chrome.storage.StorageChange>,
+      area: string
+    ): void => {
+      if (area !== 'local' || !(AUTH_SESSION_STORAGE_KEY in changes)) {
+        return
+      }
+      const next = changes[AUTH_SESSION_STORAGE_KEY]?.newValue
+      if (next && typeof next === 'object' && next !== null && 'userId' in next) {
+        finish({ ok: true, path })
+      }
+    }
+    chrome.storage.onChanged.addListener(onStorageChanged)
+
+    beginUiBridgeConnectWait({
+      onAck: () => {
+        path = 'bridge'
+        if (ackTimer !== undefined) {
+          clearTimeout(ackTimer)
+        }
+        logger.info('Auth', 'Connect：官网已 ack（零导航）')
+      },
+      onResult: status => {
+        if (status === 'ok') {
+          finish({ ok: true, path })
+          return
+        }
+        if (status === 'cancelled_displace') {
+          finish({
+            ok: false,
+            errorCode: 'AUTH_CONNECT_WEBSITE_FAILED',
+            cancelled: true
+          })
+          return
+        }
+        finish({
+          ok: false,
+          errorCode: 'AUTH_CONNECT_WEBSITE_FAILED',
+          error: status
+        })
+      }
+    })
+
+    const portCount = broadcastRequestExtensionConnect(extensionId)
+    logger.info('Auth', 'Connect：已广播 request_extension_connect', { portCount })
+
+    ackTimer = setTimeout(() => {
+      if (settled) {
+        return
+      }
+      // 无 Port 或官网未 ack → 账户页原地 mint
+      path = 'account_tab'
+      void openWebsiteAccountConnectPage()
+        .then(() => {
+          logger.info('Auth', 'Connect：无 ack，已打开账户页回退')
+        })
+        .catch(error => {
+          logger.warn('Auth', 'Connect：打开账户页失败', error)
+          finish({
+            ok: false,
+            errorCode: 'AUTH_CONNECT_WEBSITE_FAILED',
+            ...(error instanceof Error ? { error: error.message } : {})
+          })
+        })
+    }, CONNECT_ACK_TIMEOUT_MS)
+
+    doneTimer = setTimeout(() => {
+      finish({
+        ok: false,
+        errorCode: 'AUTH_CONNECT_WEBSITE_FAILED',
+        error: 'timeout'
+      })
+    }, CONNECT_DONE_TIMEOUT_MS)
+
+    // 无任何 Port：立刻走账户页（不必干等 ack）
+    if (getUiBridgePortCount() === 0) {
+      if (ackTimer !== undefined) {
+        clearTimeout(ackTimer)
+      }
+      path = 'account_tab'
+      void openWebsiteAccountConnectPage().catch(error => {
+        logger.warn('Auth', 'Connect：无 Port 时打开账户页失败', error)
+        finish({
+          ok: false,
+          errorCode: 'AUTH_CONNECT_WEBSITE_FAILED',
+          ...(error instanceof Error ? { error: error.message } : {})
+        })
+      })
+    }
+  })
+
+  try {
+    await endSuppressDisplacedNotice()
+  } catch (error) {
+    logger.warn('Auth', 'Connect 结束 displaced 抑制窗失败', error)
+  }
+
+  if (outcome.ok) {
+    flowOk('Auth', 'AUTH_CONNECT_WEBSITE', startedAt, { path: outcome.path })
+  } else {
+    flowFail('Auth', 'AUTH_CONNECT_WEBSITE', startedAt, outcome.error ?? outcome.errorCode)
+  }
+  return outcome
 }
 
 /**
@@ -214,11 +395,26 @@ export async function handleProbeWebsiteSignedIn(): Promise<ProbeWebsiteSignedIn
  * 不修改 IndexedDB（由调用方按 mode 先行处理）。
  */
 async function finishSignOutSession(): Promise<void> {
-  // 先销远程扩展会话并清 revoke token（保留反馈 URL），再清本机（失败不阻断退出）
+  // 先读 session（清本机前）：有 revoke token 走卸载接口；否则 Bearer 释放租约
+  const sessionBeforeClear = await getAuthSession()
+  let remoteReleased = false
   try {
-    await clearExtensionUninstallRevoke({ revokeRemote: true })
+    remoteReleased = await clearExtensionUninstallRevoke({
+      revokeRemote: true,
+      ...(sessionBeforeClear?.accessToken
+        ? { accessTokenFallback: sessionBeforeClear.accessToken }
+        : {})
+    })
   } catch (error) {
     logger.warn('Auth', '退出时卸载 revoke / 清 token 失败', error)
+  }
+  // 远程租约已释放才清 lastLease；失败保留 → 同机 Connect 可静默认领
+  if (remoteReleased) {
+    try {
+      await clearLastExtensionLeaseSessionId()
+    } catch (error) {
+      logger.warn('Auth', '退出后清 lastLeaseSessionId 失败', error)
+    }
   }
   await clearAuthSession()
   await clearAccountBinding()
@@ -231,12 +427,7 @@ async function finishSignOutSession(): Promise<void> {
   } catch (error) {
     logger.warn('Auth', '退出后清除租约探测闹钟失败', error)
   }
-  // 对称清官网 session；失败不回滚扩展已退出
-  try {
-    await openWebsiteLogoutFromExtension()
-  } catch (error) {
-    logger.warn('Auth', '扩展退出后打开官网 /logout 失败', error)
-  }
+  // 扩展退出**不**清官网会话（与 Connect 显式接通对称：各自只退自己）
 }
 
 /**
@@ -266,10 +457,10 @@ async function flushAccountExcerptsToCloud(accountId: string): Promise<number> {
 }
 
 /**
- * AUTH_SIGN_OUT（ADR-018）
- * - keep_local：账号库 remap 回本地档后退出（默认；未登录可继续 Recall）
- * - flush_then_keep：先 flush 摘录上云，失败则不退出；成功后再同 keep_local
- * - clear_local：删除本机当前 accountId 桶后退出
+ * AUTH_SIGN_OUT（ADR-018 · 口径 A）
+ * - keep_local：默认——书签回本地档，删除账号桶其余 Memory（摘录等）后退出
+ * - flush_then_keep：先 flush 摘录上云，失败则不退出；成功后再同 keep_local 清账号桶
+ * - clear_local：整桶清空账号桶（含已归属书签，不回迁）后退出
  * - sync_then_clear_local：遗留路径——先覆盖云端再清账号桶
  */
 export async function handleAuthSignOut(mode: AuthSignOutMode): Promise<AuthSignOutResponse> {
@@ -313,9 +504,17 @@ export async function handleAuthSignOut(mode: AuthSignOutMode): Promise<AuthSign
           ...(error instanceof Error ? { error: error.message } : {})
         }
       }
-      releasedToLocalCount = await releaseAccountLibraryToLocalProfile(binding.accountId)
+      {
+        const cleared = await clearAccountLibraryOnSignOut(binding.accountId)
+        clearedCount = cleared.clearedCount
+        releasedToLocalCount = cleared.remappedBookmarks
+      }
     } else if (mode === 'keep_local') {
-      releasedToLocalCount = await releaseAccountLibraryToLocalProfile(binding.accountId)
+      {
+        const cleared = await clearAccountLibraryOnSignOut(binding.accountId)
+        clearedCount = cleared.clearedCount
+        releasedToLocalCount = cleared.remappedBookmarks
+      }
     } else if (mode === 'sync_then_clear_local') {
       const profile = await getOrCreateLocalProfile()
       await memoryItemRepository.remapOwnerId(profile.localProfileId, binding.accountId)
@@ -369,7 +568,7 @@ export async function handleAuthSignOut(mode: AuthSignOutMode): Promise<AuthSign
 
 /**
  * GET_AUTH_STATE — 读本地 session；节流后用 refresh 探测是否仍有效（官网退出兜底）。
- * 失效则按 keep_local 清登录态（保留 Memory）。
+ * 失效则按 keep_local 清登录态（清账号桶痕迹；本地档无主摘录保留）。
  */
 export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
   const startedAt = flowStart('Auth', 'GET_AUTH_STATE')
@@ -394,17 +593,47 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
         }
         session = revalidated.session
       } else if (revalidated.status === 'invalid') {
-        // 被挤掉 / refresh 明确作废：尽力 flush + 释放账号库回本地档后 keep_local 退登
+        // 会话作废：尽力 flush + 清账号桶后 keep_local 退登。
+        // elsewhere 软条：仅 lease displaced 且非本机 Connect 编排（立意：别处登录）。
         const displacedAccountId = binding.accountId
+        const accessBeforeClear = session.accessToken
         try {
           await flushAccountExcerptsToCloud(displacedAccountId)
         } catch (error) {
-          logger.warn('Auth', '挤掉后退登前 flush 失败（仍释放本机库）', error)
+          logger.warn('Auth', '会话作废退登前 flush 失败（仍清本机账号桶）', error)
         }
         try {
-          await releaseAccountLibraryToLocalProfile(displacedAccountId)
+          await clearAccountLibraryOnSignOut(displacedAccountId)
         } catch (error) {
-          logger.warn('Auth', '挤掉后退登释放账号库失败', error)
+          logger.warn('Auth', '会话作废退登清账号桶失败', error)
+        }
+        // 尽力释放本机扩展远程会话（防孤儿租约）。uninstall-revoke / session-release
+        // 仅当 KV 仍指向本 session 才清租约 → 他端已占不会误清。
+        // 远程失败：写 lastLease 供同机 Connect 静默认领。
+        let remoteReleased = false
+        try {
+          remoteReleased = await clearExtensionUninstallRevoke({
+            revokeRemote: true,
+            ...(accessBeforeClear.trim() ? { accessTokenFallback: accessBeforeClear } : {})
+          })
+        } catch (error) {
+          logger.warn('Auth', '会话作废退登远程释放失败', error)
+        }
+        if (remoteReleased) {
+          try {
+            await clearLastExtensionLeaseSessionId()
+          } catch (error) {
+            logger.warn('Auth', '会话作废退登清 lastLeaseSessionId 失败', error)
+          }
+        } else {
+          const leaseSid = readJwtSessionId(accessBeforeClear)
+          if (leaseSid) {
+            try {
+              await writeLastExtensionLeaseSessionId(leaseSid)
+            } catch (error) {
+              logger.warn('Auth', '会话作废退登写 lastLeaseSessionId 失败', error)
+            }
+          }
         }
         await clearAuthSession()
         await clearAccountBinding()
@@ -412,26 +641,23 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
         await patchSyncPrefs({ enabled: false })
         await ensureMemoryCloudSyncAlarm(false)
         await clearAuthValidationTimestamp()
+        let wroteDisplacedNotice = false
         try {
-          await clearExtensionUninstallRevoke({ revokeRemote: false })
+          wroteDisplacedNotice = await maybeWriteExtensionDisplacedNotice(revalidated.reason)
         } catch (error) {
-          logger.warn('Auth', '挤掉后退登清卸载 revoke token 失败', error)
-        }
-        try {
-          await writeExtensionDisplacedNotice()
-        } catch (error) {
-          logger.warn('Auth', '挤掉后退登写软条标记失败', error)
+          logger.warn('Auth', '写 elsewhere 软条标记失败', error)
         }
         try {
           await ensureAuthSessionLeaseAlarm(false)
         } catch (error) {
-          logger.warn('Auth', '挤掉后退登清除租约探测闹钟失败', error)
+          logger.warn('Auth', '会话作废退登清除租约探测闹钟失败', error)
         }
         session = null
         flowOk('Auth', 'GET_AUTH_STATE', startedAt, {
           signedIn: false,
           reason: 'revalidate_invalid',
           detail: revalidated.reason,
+          wroteDisplacedNotice,
           openedLogin: false,
           releasedLibrary: true
         })
@@ -1314,6 +1540,12 @@ export async function handleDeleteAccount(): Promise<DeleteAccountResponse> {
 
     await clearPrivacyPrefs()
     await finishSignOutSession()
+    // 注销账号：本浏览器官网会话也应清掉（与普通「只退扩展」解耦不同）
+    try {
+      await openWebsiteLogoutFromExtension()
+    } catch (error) {
+      logger.warn('Privacy', '删除账号后打开官网 /logout 失败', error)
+    }
 
     flowOk('Privacy', 'DELETE_ACCOUNT', startedAt, {
       ...remote,

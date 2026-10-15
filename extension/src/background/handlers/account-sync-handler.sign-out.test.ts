@@ -16,7 +16,8 @@ const {
   refreshAuthSessionMock,
   clearSubscriptionSnapshotMock,
   ensureMemoryCloudSyncAlarmMock,
-  releaseAccountLibraryToLocalProfileMock
+  clearAccountLibraryOnSignOutMock,
+  clearExtensionUninstallRevokeMock
 } = vi.hoisted(() => ({
   clearAuthSessionMock: vi.fn(),
   getAccountBindingMock: vi.fn(),
@@ -33,7 +34,8 @@ const {
   refreshAuthSessionMock: vi.fn(),
   clearSubscriptionSnapshotMock: vi.fn(),
   ensureMemoryCloudSyncAlarmMock: vi.fn(),
-  releaseAccountLibraryToLocalProfileMock: vi.fn()
+  clearAccountLibraryOnSignOutMock: vi.fn(),
+  clearExtensionUninstallRevokeMock: vi.fn(async () => true)
 }))
 
 vi.mock('@/infrastructure/identity/auth-session-service', () => ({
@@ -62,8 +64,8 @@ vi.mock('@/infrastructure/indexeddb/memory-item-repository', () => ({
   }
 }))
 
-vi.mock('@/application/identity/release-account-library-to-local', () => ({
-  releaseAccountLibraryToLocalProfile: releaseAccountLibraryToLocalProfileMock
+vi.mock('@/application/identity/clear-account-library-on-sign-out', () => ({
+  clearAccountLibraryOnSignOut: clearAccountLibraryOnSignOutMock
 }))
 
 vi.mock('@/infrastructure/identity/subscription-service', () => ({
@@ -98,7 +100,7 @@ vi.mock('@/infrastructure/browser/website-page', () => ({
 }))
 
 vi.mock('@/infrastructure/auth/extension-uninstall-url', () => ({
-  clearExtensionUninstallRevoke: vi.fn(async () => undefined),
+  clearExtensionUninstallRevoke: clearExtensionUninstallRevokeMock,
   registerExtensionUninstallRevoke: vi.fn(async () => undefined)
 }))
 
@@ -128,7 +130,10 @@ describe('handleAuthSignOut', () => {
     clearAccountBindingMock.mockResolvedValue(undefined)
     patchSyncPrefsMock.mockResolvedValue({ enabled: false })
     remapOwnerIdMock.mockResolvedValue(0)
-    releaseAccountLibraryToLocalProfileMock.mockResolvedValue(3)
+    clearAccountLibraryOnSignOutMock.mockResolvedValue({
+      clearedCount: 2,
+      remappedBookmarks: 3
+    })
     listAllByOwnerIdMock.mockResolvedValue([])
     replaceOwnerItemsMock.mockResolvedValue(0)
     getAuthSessionMock.mockResolvedValue({
@@ -141,22 +146,25 @@ describe('handleAuthSignOut', () => {
     ensureMemoryCloudSyncAlarmMock.mockResolvedValue(undefined)
   })
 
-  it('keep_local 释放账号库回本地档后退出，不删 Memory', async () => {
+  it('keep_local 清账号桶（书签回迁 + 删摘录）后退出', async () => {
     const result = await handleAuthSignOut('keep_local')
     expect(result).toEqual({
       ok: true,
       mode: 'keep_local',
-      clearedCount: 0,
+      clearedCount: 2,
       syncedCount: 0,
       releasedToLocalCount: 3
     })
-    expect(releaseAccountLibraryToLocalProfileMock).toHaveBeenCalledWith(accountId)
-    expect(replaceOwnerItemsMock).not.toHaveBeenCalled()
+    expect(clearAccountLibraryOnSignOutMock).toHaveBeenCalledWith(accountId)
+    expect(clearExtensionUninstallRevokeMock).toHaveBeenCalledWith({
+      revokeRemote: true,
+      accessTokenFallback: 'at'
+    })
     expect(clearAuthSessionMock).toHaveBeenCalled()
     expect(clearAccountBindingMock).toHaveBeenCalled()
   })
 
-  it('flush_then_keep 先上云再释放回本地档', async () => {
+  it('flush_then_keep 先上云再清账号桶', async () => {
     listAllByOwnerIdMock.mockResolvedValue([
       { id: 'a', ownerId: accountId, type: 'text_excerpt' },
       { id: 'b', ownerId: accountId, type: 'bookmark' }
@@ -168,11 +176,10 @@ describe('handleAuthSignOut', () => {
       mode: 'flush_then_keep',
       syncedCount: 1,
       releasedToLocalCount: 3,
-      clearedCount: 0
+      clearedCount: 2
     })
     expect(replaceRemoteWithLocalItemsMock).toHaveBeenCalled()
-    expect(releaseAccountLibraryToLocalProfileMock).toHaveBeenCalledWith(accountId)
-    expect(replaceOwnerItemsMock).not.toHaveBeenCalled()
+    expect(clearAccountLibraryOnSignOutMock).toHaveBeenCalledWith(accountId)
   })
 
   it('flush_then_keep 云端失败时不退出', async () => {
@@ -184,7 +191,7 @@ describe('handleAuthSignOut', () => {
       expect(result.errorCode).toBe('SYNC_REPLACE_LOCAL_FAILED')
     }
     expect(clearAuthSessionMock).not.toHaveBeenCalled()
-    expect(releaseAccountLibraryToLocalProfileMock).not.toHaveBeenCalled()
+    expect(clearAccountLibraryOnSignOutMock).not.toHaveBeenCalled()
   })
 
   it('clear_local 删除当前账号桶后退出', async () => {
@@ -198,7 +205,7 @@ describe('handleAuthSignOut', () => {
       releasedToLocalCount: 0
     })
     expect(replaceOwnerItemsMock).toHaveBeenCalledWith(accountId, [])
-    expect(releaseAccountLibraryToLocalProfileMock).not.toHaveBeenCalled()
+    expect(clearAccountLibraryOnSignOutMock).not.toHaveBeenCalled()
   })
 
   it('sync_then_clear_local 本机有摘录时覆盖云端再清', async () => {

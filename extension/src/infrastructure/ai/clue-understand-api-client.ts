@@ -2,6 +2,7 @@
  * Recall 线索理解：经 Cloudflare Worker 代理 DeepSeek（扩展不持有 API Key）。
  */
 
+import { CLUE_LLM_COMPLETE_TIMEOUT_MS } from '@/core/recall/understand/clue-llm-timeout'
 import type { LlmChatCompleter } from '@/core/recall/understand/parse-recall-clue-with-llm'
 import { logger } from '@/infrastructure/logging/logger'
 
@@ -53,14 +54,27 @@ export function createClueUnderstandApiCompleter(
           messages,
           maxTokens: 400,
           temperature: 0
-        })
+        }),
+        signal: AbortSignal.timeout(CLUE_LLM_COMPLETE_TIMEOUT_MS)
       })
     } catch (error) {
-      logger.error('ClueLlm', '代理请求网络失败', {
-        url,
-        durationMs: Date.now() - startedAt,
-        error: error instanceof Error ? error.message : String(error)
-      })
+      const durationMs = Date.now() - startedAt
+      const aborted =
+        (error instanceof DOMException && error.name === 'TimeoutError') ||
+        (error instanceof Error && (error.name === 'TimeoutError' || error.name === 'AbortError'))
+      if (aborted) {
+        logger.warn('ClueLlm', '代理请求超时，将降级规则理解', {
+          url,
+          durationMs,
+          timeoutMs: CLUE_LLM_COMPLETE_TIMEOUT_MS
+        })
+      } else {
+        logger.error('ClueLlm', '代理请求网络失败', {
+          url,
+          durationMs,
+          error: error instanceof Error ? error.message : String(error)
+        })
+      }
       throw error
     }
 

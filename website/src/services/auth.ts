@@ -13,9 +13,9 @@ export async function getSession(): Promise<Session | null> {
 }
 
 /**
- * 清除**本浏览器** Supabase 会话。
- * 使用 `local`：不撤销其它设备 / 扩展已铸造的独立 refresh（多点登录）。
- * 需通知本机扩展时由调用方另发 `SIGN_OUT_HANDOFF`。
+ * 清除**本浏览器**官网 Supabase 会话。
+ * 使用 `local`：不撤销其它设备 / 扩展已铸造的独立 refresh。
+ * **不**通知扩展退登（官网退出 ≠ 扩展退出；UI 桥只推 `website_auth_changed`）。
  */
 export async function signOut(): Promise<void> {
   const supabase = await getSupabase()

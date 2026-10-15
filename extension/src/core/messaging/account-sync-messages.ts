@@ -10,6 +10,7 @@ import type { BackgroundMessageScope } from '@/core/messaging/constants'
 export const AccountSyncErrorCodeSchema = z.enum([
   'AUTH_NOT_CONFIGURED', // 未配置 Supabase
   'AUTH_SIGN_IN_FAILED', // 登录失败
+  'AUTH_CONNECT_WEBSITE_FAILED', // Connect 官网会话到扩展失败
   'AUTH_SIGN_OUT_FAILED', // 登出失败
   'AUTH_STATE_READ_FAILED', // 读取登录态失败
   'AUTH_PROFILE_REFRESH_FAILED', // 刷新头像/资料失败
@@ -41,13 +42,13 @@ export const AccountSyncErrorCodeSchema = z.enum([
 export type AccountSyncErrorCode = z.infer<typeof AccountSyncErrorCodeSchema>
 
 /**
- * 退出登录对本机 Memory 的处理策略（ADR-018）。
- * 默认 keep_local：账号桶 remap 回本地档后退出；Pro 可先 flush_then_keep。
+ * 退出登录对本机 Memory 的处理策略（ADR-018 · 口径 A）。
+ * 默认 keep_local：书签回本地档 + 删除账号桶其余；Pro 可先 flush_then_keep。
  */
 export const AuthSignOutModeSchema = z.enum([
-  'keep_local', // 账号库释放回本地档后退出（默认；未登录可继续 Recall）
-  'flush_then_keep', // 先 flush 摘录上云，再同 keep_local（失败不退出，UI 可改点 keep_local）
-  'clear_local', // 退出并删除本机当前 accountId 桶（不动 localProfileId；强确认）
+  'keep_local', // 默认：书签→本地档，删账号桶摘录等后退出（本地档无主摘录保留）
+  'flush_then_keep', // 先 flush 摘录上云，再同 keep_local 清账号桶（失败不退出）
+  'clear_local', // 整桶清空账号桶（含已归属书签，不回迁；强确认）
   'sync_then_clear_local' // 遗留：先覆盖云端再清账号桶；设置页主路径不再主推
 ])
 
@@ -70,6 +71,29 @@ export type AuthSignInResponse =
       error?: string
     }
 
+/**
+ * 将本浏览器官网已登录会话接到扩展（Connect 软条）。
+ * 优先 UI 桥零导航；无 ack 则打开 `/account?connect_extension=1`。
+ */
+export type AuthConnectWebsiteMessage = {
+  scope: BackgroundMessageScope
+  type: 'AUTH_CONNECT_WEBSITE'
+}
+
+export type AuthConnectWebsiteResponse =
+  | {
+      ok: true
+      /** bridge=Port 零导航；account_tab=打开/聚焦账户页 */
+      path: 'bridge' | 'account_tab'
+    }
+  | {
+      ok: false
+      errorCode: AccountSyncErrorCode
+      /** 用户取消挤掉（非硬失败） */
+      cancelled?: boolean
+      error?: string
+    }
+
 export type AuthSignOutMessage = {
   scope: BackgroundMessageScope
   type: 'AUTH_SIGN_OUT'
@@ -82,11 +106,11 @@ export type AuthSignOutResponse =
   | {
       ok: true
       mode: AuthSignOutMode
-      /** 本机被删除的当前账号条目数（keep / flush_then_keep 为 0） */
+      /** 本机从账号桶删除的条数（keep / flush_then_keep = 清掉的摘录等） */
       clearedCount: number
       /** flush / sync_then_clear 时写入云端的条数；其它模式为 0 */
       syncedCount: number
-      /** keep / flush_then_keep：释放回本地档的条数 */
+      /** keep / flush_then_keep：书签回迁本地档条数 */
       releasedToLocalCount: number
     }
   | {
@@ -524,6 +548,7 @@ export type GetSubscriptionStatusResponse =
 
 export type AccountSyncBackgroundMessage =
   | AuthSignInMessage
+  | AuthConnectWebsiteMessage
   | AuthSignOutMessage
   | GetAuthStateMessage
   | ProbeWebsiteSignedInMessage
@@ -548,6 +573,7 @@ export type AccountSyncBackgroundMessage =
 
 export type AccountSyncBackgroundResponse =
   | AuthSignInResponse
+  | AuthConnectWebsiteResponse
   | AuthSignOutResponse
   | GetAuthStateResponse
   | ProbeWebsiteSignedInResponse

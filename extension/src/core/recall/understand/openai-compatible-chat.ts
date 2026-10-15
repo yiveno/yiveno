@@ -1,7 +1,10 @@
 /**
  * Eval 专用：OpenAI 兼容 Chat Completions（DeepSeek / OpenAI 等）。
  * 禁止接入产品主路径或数据平面。
+ * 开发直连线索理解亦复用本函数，须与 hosted/clue 同 12s 预算。
  */
+
+import { CLUE_LLM_COMPLETE_TIMEOUT_MS } from '@/core/recall/understand/clue-llm-timeout'
 
 export interface OpenAiCompatibleChatMessage {
   role: 'system' | 'user' | 'assistant'
@@ -54,7 +57,8 @@ export async function completeOpenAiCompatibleChat(
       'content-type': 'application/json',
       authorization: `Bearer ${config.apiKey}`
     },
-    body: JSON.stringify(body)
+    body: JSON.stringify(body),
+    signal: AbortSignal.timeout(CLUE_LLM_COMPLETE_TIMEOUT_MS)
   })
 
   const payload = (await response.json().catch(() => ({}))) as ChatCompletionsResponse

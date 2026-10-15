@@ -4,6 +4,9 @@
  */
 
 import { focusOrOpenTab, isSameOriginPathTabUrl } from '@/infrastructure/browser/focus-or-open-tab'
+import { readWebsiteAuthUiState } from '@/infrastructure/auth/website-auth-ui-storage'
+import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
+import { logger } from '@/infrastructure/logging/logger'
 
 /** 从官网环境读取站点根 URL。 */
 export function getWebsiteBaseUrl(): string {
@@ -12,11 +15,61 @@ export function getWebsiteBaseUrl(): string {
 }
 
 /**
- * 打开官网账户页：已有 `/account` 标签则激活并聚焦窗口，否则新建。
- * 附带 extension_id，供退出 / 补推 session 回传扩展。
+ * 打开官网账户页（扩展已登录）。
+ * - 桥态显示官网已是同一 userId → 直接 `/account`
+ * - 否则 → `/auth/from-extension` 反向接通（扩展铸官网会话）后再进账户页
  */
 export async function openWebsiteAccountPage(): Promise<void> {
+  const extensionId = chrome.runtime.id
+  const base = getWebsiteBaseUrl()
+  let useReverseHandoff = true
+  try {
+    const [session, websiteUi] = await Promise.all([getAuthSession(), readWebsiteAuthUiState()])
+    const extUserId = session?.userId?.trim()
+    if (extUserId && websiteUi?.signedIn === true && websiteUi.userId?.trim() === extUserId) {
+      useReverseHandoff = false
+    }
+  } catch (error) {
+    logger.warn('Auth', '打开账户页前读官网 UI 态失败，走反向接通', error)
+  }
+
+  if (!useReverseHandoff) {
+    const url = new URL('/account', `${base}/`)
+    url.searchParams.set('extension_id', extensionId)
+    await focusOrOpenTab({
+      targetUrl: url.toString(),
+      match: {
+        kind: 'predicate',
+        match: tabUrl => isSameOriginPathTabUrl(tabUrl, base, '/account')
+      },
+      canKeepExistingUrl: current => current.searchParams.get('extension_id') === extensionId,
+      logScope: 'Auth'
+    })
+    return
+  }
+
+  const url = new URL('/auth/from-extension', `${base}/`)
+  url.searchParams.set('extension_id', extensionId)
+  url.searchParams.set('next', '/account')
+  logger.info('Auth', '打开官网反向接通页', { next: '/account' })
+  await focusOrOpenTab({
+    targetUrl: url.toString(),
+    match: {
+      kind: 'predicate',
+      match: tabUrl => isSameOriginPathTabUrl(tabUrl, base, '/auth/from-extension')
+    },
+    canKeepExistingUrl: current => current.searchParams.get('extension_id') === extensionId,
+    logScope: 'Auth'
+  })
+}
+
+/**
+ * Connect 回退：打开/聚焦 `/account?connect_extension=1&extension_id=…` 原地 mint。
+ * **不**进 `/login`（避免已登录仍出 Google 壳）。
+ */
+export async function openWebsiteAccountConnectPage(): Promise<void> {
   const url = new URL('/account', `${getWebsiteBaseUrl()}/`)
+  url.searchParams.set('connect_extension', '1')
   url.searchParams.set('extension_id', chrome.runtime.id)
   const target = url.toString()
   const base = getWebsiteBaseUrl()
@@ -27,7 +80,9 @@ export async function openWebsiteAccountPage(): Promise<void> {
       kind: 'predicate',
       match: tabUrl => isSameOriginPathTabUrl(tabUrl, base, '/account')
     },
-    canKeepExistingUrl: current => current.searchParams.get('extension_id') === chrome.runtime.id,
+    canKeepExistingUrl: current =>
+      current.searchParams.get('connect_extension') === '1' &&
+      current.searchParams.get('extension_id') === chrome.runtime.id,
     logScope: 'Auth'
   })
 }
@@ -76,8 +131,8 @@ export async function openWebsiteLoginPage(url?: string): Promise<void> {
 }
 
 /**
- * 扩展退出后清官网 Supabase session。
- * 优先把已打开的官网标签导航到 /logout（不抢焦点）；否则后台开一页。
+ * 打开官网 `/logout` 清本浏览器官网 session。
+ * **仅**删除账号等须连带清官网的路径使用；普通扩展 Sign out **不**调用（退出解耦）。
  */
 export async function openWebsiteLogoutFromExtension(): Promise<void> {
   const logoutUrl = new URL('/logout', `${getWebsiteBaseUrl()}/`)

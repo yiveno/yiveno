@@ -103,4 +103,16 @@ describe('understandRecallClue', () => {
     expect(result.parsed.contentTerms).toEqual([])
     expect(called).toBe(0)
   })
+
+  it('completer AbortError → rules_fallback 仍 proceed', async () => {
+    const complete: LlmChatCompleter = async () => {
+      const err = new Error('The operation was aborted due to timeout')
+      err.name = 'TimeoutError'
+      throw err
+    }
+    const result = await understandRecallClue('that famous writer I saved', { complete })
+    expect(result.disposition).toBe('proceed')
+    expect(result.source).toBe('rules_fallback')
+    expect(result.filterClue.length).toBeGreaterThan(0)
+  })
 })
