@@ -63,6 +63,7 @@ import type {
   MemoryBackgroundResponse
 } from '@/core/messaging/memory-messages'
 import type {
+  GetRecallPageContextResponse,
   RecallBackgroundResponse,
   RecallCancelResponse,
   RecallWithClueMessage
@@ -118,6 +119,14 @@ export async function cancelRecall(payload: {
     scope: 'background',
     type: 'RECALL_CANCEL',
     payload
+  })
+}
+
+/** composer 页上下文：读取当前浏览页域名（展示用）。 */
+export async function getRecallPageContext(): Promise<GetRecallPageContextResponse> {
+  return sendBackgroundMessage<GetRecallPageContextResponse>({
+    scope: 'background',
+    type: 'GET_RECALL_PAGE_CONTEXT'
   })
 }
 

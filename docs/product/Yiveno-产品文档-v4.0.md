@@ -934,7 +934,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 | 记忆库轻浏览                     | 已上线                                         | `library.html`；**默认摘录**；书签=Chrome 目录只读树；摘录/书签列表均展示**保存时间**（`createdAt` / `chromeCreatedAt`）；`?type=` 刷新保留                                                                                                            |
 | 摘录删除                         | 已上线                                         | 软删 `deletedAt`；记忆库列表 / 详情页；`DELETE_MEMORY_ITEM`；书签不经此删                                                                                                                                                                              |
 | Need A Clue / 否定反馈           | 已上线（并入对话）                             | 低置信 outcome + dismiss；会话内 dismissedIds 硬排除；追问模板基于合并后 parsed                                                                                                                                                                        |
-| 多源线索与权重（§7.1）           | 已上线（首批）                                 | 同域软重排；`recently_saved`/`half_read`/`often_opened` 软加权；环境弱芯片（当前站已接线；刚存/刚打开待信号）                                                                                                                                          |
+| 多源线索与权重（§7.1）           | 已上线（首批）                                 | **页上下文开关**（composer 可折叠：Combine / Only this site → `pageContextMode` none\|boost\|restrict）；默认 none（不静默同域加成）；`recently_saved`/`half_read`/`often_opened` 软加权；环境弱芯片（刚存/刚打开有信号才挂；**当前站芯片已退役**）    |
 | Hybrid Filter                    | 已上线                                         | 本机 Hybrid（RRF）；**不分 Free/Pro**；无向量时降级关键词；云同步剥离 embedding；**embedding 无感维护**（启动/登录/书签 sync 后：同步补摘录 + 限量异步补缺向量书签；**增量新建/改书签**另单条入队；**无** Settings Rebuild UI）                        |
 | 关键词倒排 Phase 1               | 已上线                                         | IDB v4 posting 预过滤；**形态缩写入倒排**（CamelCase/多词首字母，无硬编码别名表；schemaVersion=2）+ 精排同算法；折叠前全量打分                                                                                                                         |
 | Dodo Pro / 订阅快照              | 已上线                                         | Free+**仅 Pro**；投影+对账（§A.3.2）；`GET /api/account/subscription`；Settings/官网升级；**sync + hosted 大配额**门禁；embed 登录即可（日配额分档）                                                                                                   |
@@ -1109,27 +1109,28 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 - `scope` 必须为 `'background'`（`BACKGROUND_MESSAGE_SCOPE`）。
 - **已登记 type（禁止擅自增删拼写）：**
 
-| type                                    | 用途                                          |
-| --------------------------------------- | --------------------------------------------- |
-| `PING`                                  | 探活                                          |
-| `GET_LOCAL_IDENTITY`                    | 本地身份 + ownerId                            |
-| `CAPTURE_BOOKMARK`                      | 写入书签记忆（sync/内部）                     |
-| `CAPTURE_TEXT_EXCERPT`                  | 写入摘录                                      |
-| `LIST_MEMORY_ITEMS`                     | 列表                                          |
-| `GET_MEMORY_ITEM`                       | 按 id 读取单条 MemoryItem                     |
-| `DELETE_MEMORY_ITEM`                    | 软删 MemoryItem（当前仅摘录）                 |
-| `UPDATE_MEMORY_NOTE`                    | 更新 `clues.note`（书签/摘录事后补注）        |
-| `RECALL_WITH_CLUE`                      | 线索找回                                      |
-| `GET_CHROME_BOOKMARK_IMPORT_STATUS`     | 导入进度                                      |
-| `GET_COLD_START_STATUS`                 | 冷启动三阶段门禁进度（import / rules / AI）   |
-| `GENERATE_GETTING_STARTED_CLUE_SAMPLES` | Getting Started 示意 clue（LLM×4 / 模板回退） |
-| `GET_BOOKMARK_LIBRARY_TREE`             | 记忆库书签目录树（只读）                      |
-| `GET_EXTENSION_COMMANDS`                | 读取命令与快捷键绑定                          |
-| `OPEN_CHROME_SHORTCUTS_PAGE`            | 打开 Chrome 快捷键设置页                      |
-| `OPEN_RECALL_SHELL`                     | 打开/聚焦 Recall Side Panel                   |
-| `NAVIGATE_ACTIVE_TAB`                   | 结果卡打开：默认当前活动标签；可新开          |
-| `GET_USER_SETTINGS`                     | 读取用户设置                                  |
-| `UPDATE_USER_SETTINGS`                  | 更新用户设置                                  |
+| type                                    | 用途                                                               |
+| --------------------------------------- | ------------------------------------------------------------------ |
+| `PING`                                  | 探活                                                               |
+| `GET_LOCAL_IDENTITY`                    | 本地身份 + ownerId                                                 |
+| `CAPTURE_BOOKMARK`                      | 写入书签记忆（sync/内部）                                          |
+| `CAPTURE_TEXT_EXCERPT`                  | 写入摘录                                                           |
+| `LIST_MEMORY_ITEMS`                     | 列表                                                               |
+| `GET_MEMORY_ITEM`                       | 按 id 读取单条 MemoryItem                                          |
+| `DELETE_MEMORY_ITEM`                    | 软删 MemoryItem（当前仅摘录）                                      |
+| `UPDATE_MEMORY_NOTE`                    | 更新 `clues.note`（书签/摘录事后补注）                             |
+| `RECALL_WITH_CLUE`                      | 线索找回（`context.pageContextMode` / `currentTabDomain` 见 §7.1） |
+| `GET_RECALL_PAGE_CONTEXT`               | composer 页上下文：读当前浏览页域名（展示用）                      |
+| `GET_CHROME_BOOKMARK_IMPORT_STATUS`     | 导入进度                                                           |
+| `GET_COLD_START_STATUS`                 | 冷启动三阶段门禁进度（import / rules / AI）                        |
+| `GENERATE_GETTING_STARTED_CLUE_SAMPLES` | Getting Started 示意 clue（LLM×4 / 模板回退）                      |
+| `GET_BOOKMARK_LIBRARY_TREE`             | 记忆库书签目录树（只读）                                           |
+| `GET_EXTENSION_COMMANDS`                | 读取命令与快捷键绑定                                               |
+| `OPEN_CHROME_SHORTCUTS_PAGE`            | 打开 Chrome 快捷键设置页                                           |
+| `OPEN_RECALL_SHELL`                     | 打开/聚焦 Recall Side Panel                                        |
+| `NAVIGATE_ACTIVE_TAB`                   | 结果卡打开：默认当前活动标签；可新开                               |
+| `GET_USER_SETTINGS`                     | 读取用户设置                                                       |
+| `UPDATE_USER_SETTINGS`                  | 更新用户设置                                                       |
 
 新增能力：先改 `extension/src/core/messaging/*` + handler，再改 UI。
 
@@ -1194,11 +1195,12 @@ schema：`extension/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 #### 5.2.1 Composer 双通道手工验收（Placeholder × 追问芯片 · Normative）
 
 > 与 §7.0 Composer 双通道对齐；工程旁挂 [`Recall-Placeholder与追问芯片-双通道.md`](../engineering/Recall-Placeholder与追问芯片-双通道.md)。  
-> 预计 ≤ 5 分钟。正式包 **未登录** 时 LLM 芯片不可用；可用 **当前站环境弱芯片** 验让位（窄结果 N&lt;6 或 `need_a_clue`；宽邻域 top_pick 不挂环境芯片，留给 Narrow）。
+> 预计 ≤ 5 分钟。正式包 **未登录** 时 LLM 芯片不可用；可用 **登录后 LLM 芯片** 或刚存/刚打开环境芯片验 placeholder 让位（窄结果 N&lt;6 或 `need_a_clue`；宽邻域 top_pick 不挂环境芯片，留给 Narrow）。**当前站**改走 composer **Page context**（不挂「Related to this site」追问芯片）。
 
 1. **Idle：** 新会话 / New find 后，composer placeholder 为 Idle 模板（`e.g. that article…` 类）；库 `ready` 且非 Capture-first 时空态主区展示 **2–3 条可点口语范式样句**（填入不自动发）；**无**会话标题。
 2. **宽邻域 Narrow：** 输入可召回 ≥6 互异组的线索（例：`javascript`）→ 无芯片；composer **上方**出现**会话标题**（首轮线索字面，无 `Narrowing:` 前缀）+ 可见 **New find**；placeholder **点名标题**（`Add detail to "…"`）且举例词可在结果卡字段中核验（或 generic 无举例句）。
-3. **有芯片让位：** 出现追问芯片（登录后 LLM，或窄结果下的 **Related to this site**）→ placeholder 为点名标题的中性短句，**无** `like "…"` 举例。宽邻域 top_pick **不**挂环境芯片。
+3. **有芯片让位：** 出现追问芯片（登录后 LLM，或窄结果下刚存/刚打开环境芯片）→ placeholder 为点名标题的中性短句，**无** `like "…"` 举例。宽邻域 top_pick **不**挂环境芯片。
+   3a. **页上下文（§7.1）：** 输入框**上方**出现 **Recall settings** 入口；展开为悬浮面板（不挤占输入框）并铺蒙版，其余区域不可操作；点蒙版或 Esc 收起。默认收起且双关。页上下文与来源类型分成两排，中间一条分隔线。两项与来源类型同为图标按钮，点选后整块背景标识（再点取消）；悬停或键盘焦点弹出 **Combine with this page** / **Only this site** 说明；开 Combine → 同域软抬；开 Only this site → 同域硬筛；**不**把 host 拼进 clue。入口/提示里的 host 在展开或已开启页上下文时跟活动标签走；发送瞬间再读一次。
 4. **Dismiss：** None of these 后 **无** site/quote/note/type 固定四芯片；placeholder 中性（有标题则点名）。
 5. **软岔路口：** 在 `javascript` 线程下输入明显无关长线索（例：`The movie I watched yesterday`）→ 发送前出现 Keep refining / Start new；**不**静默清线程。点 Keep → 仍带 context；点 Start new → 清空线程后以该线索首轮召回。短收窄词（例：`history`）**不**弹确认。
 6. **标题旁 New find：** 会话标题旁有**可见文案**「New find」（可配同款图标）；点之 = Header New find（可先走出口条）。**禁止**仅用 ✕ / 关闭图标冒充该动作。
@@ -1989,10 +1991,10 @@ Chrome API / 选区
 
 同一目标：帮下一轮在**本轮邻域内**收窄。Yiveno 掌控的是邻域**可切割结构**，不是用户真值答案。工程旁挂（实现分期）：[`Recall-Placeholder与追问芯片-双通道.md`](../engineering/Recall-Placeholder与追问芯片-双通道.md)。
 
-| 通道            | 硬度               | 职责                                                                                                                                                     |
-| --------------- | ------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Placeholder** | 软引导             | composer **对话承载体**；常驻有英文文案；带举例的收窄句必须 **grounded 本轮候选**（类型 / 字面 token / host）；禁止主题 seed；**有会话标题时须点名标题** |
-| **追问芯片**    | 硬输入（点击即发） | 仅白名单：① `need_a_clue` + LLM suggestions；② §7.1 环境弱芯片。**禁止**无候选缺槽问卷与 dismiss 固定芯片银行；点击**不**走软岔路口                      |
+| 通道            | 硬度               | 职责                                                                                                                                                                                                        |
+| --------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Placeholder** | 软引导             | composer **对话承载体**；常驻有英文文案；带举例的收窄句必须 **grounded 本轮候选**（类型 / 字面 token / host）；禁止主题 seed；**有会话标题时须点名标题**                                                    |
+| **追问芯片**    | 硬输入（点击即发） | 仅白名单：① `need_a_clue` + LLM suggestions；② §7.1 环境弱芯片（刚存/刚打开；**不含**当前站）。当前站走 composer **Page context** 开关。**禁止**无候选缺槽问卷与 dismiss 固定芯片银行；点击**不**走软岔路口 |
 
 **Idle 口语范式样句（Normative · 2026-09-11 · 体验）：**
 
@@ -2193,7 +2195,7 @@ Chrome API / 选区
 
 1. **收集要宽，采信要窄**：每个信号先判断「多像用户此刻的寻回意图」，再决定：进入主线索 / 仅重排软分 / 变成可选追问芯片 / 直接丢弃。
 2. **用户开口优先于环境**：用户刚输入的字、主动点的芯片、页内选区 = 强线索；Chrome 停留页、开着的标签 = 弱上下文。**不得**默认假设「当前浏览页 = 要找的东西相关」（例如正在看 YouTube 不等于要找回 YouTube 相关痕迹）。
-3. **环境信号默认不自动注入线索框**：适合低置信时的可选芯片（如「跟当前站有关」「刚才看过的」）或候选重排；自动写入 composer 主线索易放大噪声、伤害第一次模糊找回信任。
+3. **环境信号默认不自动注入线索框**：当前 Tab 走 composer **Page context** 显式开关（boost/restrict）；刚存/刚打开仍可为可选追问芯片；自动写入 composer 主线索易放大噪声、伤害第一次模糊找回信任。
 4. **不得滑成环境搜索 / History 搜索**：长尾 History、剪贴板默认读取、常驻高频站环境等属噪声或高隐私成本，默认忽略。
 
 **信号分级（实现与产品共用口径）：**
@@ -2209,8 +2211,13 @@ Chrome API / 选区
 
 1. 产品内信号（最近存 / 开 / 上次线索）— **behaviorHints 软加权已上线**；会话「最近打开」信号仍可加厚
 2. 选区预填 — 仍待
-3. 追问芯片（刚存的 / 刚打开过的 / 跟当前站有关）— **当前站：已上线**（有 `currentTabDomain` 时；挂在 `need_a_clue` 或 **窄** `top_pick`（N&lt;宽邻域门槛）；宽邻域 top_pick **不挂**，留给 Narrow placeholder）。刚存/刚打开：**有信号才挂**（信号接线渐进）。属 **弱通道**。与 LLM 芯片同屏时 **不抢主**。**禁止** dismiss 后 site/quote/note/type 固定银行（已废）。
-4. 重排软分（当前 Tab 同域）— **已上线**
+3. 追问芯片（刚存的 / 刚打开过的）— **有信号才挂**（信号接线渐进）。属 **弱通道**。与 LLM 芯片同屏时 **不抢主**。**禁止** dismiss 后 site/quote/note/type 固定银行（已废）。**禁止**再以「Related to this site」把 host 当 clue 发出。
+4. **页上下文 + 来源范围 — 已上线**：输入框上方 **Recall settings** 悬浮面板（默认收起；展开时蒙版挡住其余区域，点蒙版或 Esc 收起）。页上下文与来源类型分两排，中间分隔线。页上下文双可选归一为 `pageContextMode`：
+   - **none**（默认双关）：当前域名**不参与**检索（**不**静默同域加成）。
+   - **boost**（Combine with this page）：全库候选后同域软抬（既有 `CURRENT_TAB_DOMAIN_BOOST`）；域名**不**进 clue / embedding。
+   - **restrict**（Only this site）：硬筛 `clues.domain` 与当前 host **规范化后精确相等**（去 `www.`；子域≠父域）；空窗诚实 `no_match`，不静默放回全库。双开时 **restrict 覆盖 boost**。上面两项为图标按钮，选中用整块背景，不用开关；名称与说明在悬停或键盘焦点时弹出。
+   - 展示用 `GET_RECALL_PAGE_CONTEXT`，读 **Side Panel 所在窗口**的活动标签。是普通 http(s) 页才带 host；`chrome://`、扩展页、新标签等不是站点，**不**回退成上一个网站。此时两个页上下文图标禁用（点不了，悬停也不再提示）；入口不写域名。发送也不注入域名。切回普通网页后图标恢复，已选状态还在。展开面板或已开 Combine/Only 时监听标签切换并刷新；关闭后停听。发送瞬间再读一次。会话级不持久 Restrict；New find 重置开关。
+   - **来源范围 `sourceScope`**：默认 `all`；`text_excerpt` / `bookmark` 在候选加载后按 `MemoryItem.type` 硬筛。面板下排仅图标（All / Excerpts / Bookmarks）；悬停或键盘焦点弹出名称和用途（全库 / 仅摘录 / 仅书签；筛空不放回全库）。不用原生 `title`。选中为整块背景。New find 复位为 all。
 5. 关键词打分内：**忽略大小写命中**；线索含大写时，主文原文大小写一致给 **case-fit 软加权**（封顶小，仅微调并列；全小写线索不加）— **已上线**
 
 ### 7.2 Recall Outcome Labeling（Normative · 提问 ↔ 答案对照）
@@ -2576,6 +2583,7 @@ RecallOutcomeEvent {
 | 2026-10-12 | **卸载反馈立刻可交互：** 表单不挡在 revoke；revoke 后台尽力，失败仅轻提示                                                                                                                                                                                                                                  |
 | 2026-10-12 | **卸载反馈与登录解耦：** 安装即 `setUninstallURL` 开反馈页；登录才挂 revoke token；退登清 token 保留反馈 URL；无 token 跳过远程清理                                                                                                                                                                        |
 | 2026-10-10 | **扩展卸载清远程 + 用户触点三轨：** mint `uninstallRevokeToken`；卸载落地先 revoke 再可选反馈；`recordFeedback`（KV + 尽力邮件→`feedback@`）；工单/要回复走 `support@`；社媒不自动入库；无关标签按钮；不动官网 session / Memory                                                                            |
+| 2026-10-16 | **§7.1 页上下文 Contextual Clue：** composer 可折叠 Page context（Combine=boost / Only this site=restrict；默认 none）；废「Related to this site」追问芯片与静默同域加成；`GET_RECALL_PAGE_CONTEXT`；host 不进 clue 字符串                                                                                 |
 | 2026-10-10 | **扩展单活跃：** `extension-session` mint + KV 租约；已有会话 → 409 确认后 `confirmDisplace` 撤销前序 session；官网与扩展 refresh 隔离；`signOut({ scope: local })`                                                                                                                                        |
 | 2026-10-10 | **登录会话隔离：** Worker `POST /api/auth/extension-session` 为扩展铸造独立 refresh；官网 handoff 禁止共享官网 refresh；官网/`/logout` `signOut({ scope: local })` + 本机 `SIGN_OUT_HANDOFF`（嗣后改为扩展单活跃，见上行）                                                                                 |
 | 2026-10-10 | **清理跟进：** offscreen 钉死为刻意占位（未注册 permission）；`docs/audits` → `docs/archive/audits`                                                                                                                                                                                                        |

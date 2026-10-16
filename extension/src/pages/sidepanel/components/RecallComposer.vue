@@ -29,8 +29,8 @@ const emit = defineEmits<{
 const model = defineModel<string>({ required: true })
 const inputRef = ref<HTMLTextAreaElement | null>(null)
 
-/** 与 CSS `.recall-input` min/max-height 对齐；空/有字同一下限。 */
-const INPUT_MIN_HEIGHT_PX = 52
+/** 与 CSS `.recall-input` 单行行高对齐；多行由 scrollHeight 撑开，空态不预留第二行。 */
+const INPUT_MIN_HEIGHT_PX = 22
 const INPUT_MAX_HEIGHT_PX = 160
 
 /**
@@ -110,12 +110,13 @@ defineExpose({ focus })
         <span>{{ props.threadNewFindLabel }}</span>
       </button>
     </div>
+    <slot />
     <div class="recall-composer-shell">
       <textarea
         ref="inputRef"
         v-model="model"
         class="recall-input"
-        rows="2"
+        rows="1"
         :aria-label="props.ariaLabel"
         :placeholder="props.placeholder"
         :disabled="props.disabled"
@@ -154,7 +155,7 @@ defineExpose({ focus })
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
-  margin: 0 0 var(--space-xs) var(--space-2xs);
+  margin: 0 0 var(--space-2xs) var(--space-2xs);
 }
 
 .recall-thread-heading {
@@ -233,11 +234,11 @@ defineExpose({ focus })
   width: 100%;
   min-width: 0;
 
-  /* 固定下限：约两行线索 + 内边距，空/有字/是否 prominent 一致 */
-  min-height: 76px;
-  padding: var(--space-sm) var(--space-sm) var(--space-sm) var(--space-md);
+  /* 单行高：按钮 36px + 上下 padding；文案与发送钮垂直居中 */
+  min-height: 52px;
+  padding: var(--space-xs) var(--space-xs) var(--space-xs) var(--space-md);
   border: 1px solid var(--border);
-  border-radius: var(--radius-full);
+  border-radius: var(--radius-lg);
   background: var(--surface-white);
   box-shadow:
     0 1px 2px color-mix(in srgb, var(--ink) 8%, transparent),
@@ -260,11 +261,16 @@ defineExpose({ focus })
 
 .recall-input {
   flex: 1 1 auto;
+  align-self: center;
   box-sizing: border-box;
   width: auto;
-  min-height: 52px;
+  min-height: 1.45em;
   max-height: 160px;
-  padding: var(--space-2xs) 0;
+
+  /* 空态按 placeholder 撑高，避免单行文案贴在预留第二行的顶部 */
+  field-sizing: content;
+  margin: 0;
+  padding: 0;
   border: 0;
   outline: none;
   font-family: inherit;

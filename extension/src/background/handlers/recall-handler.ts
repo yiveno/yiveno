@@ -5,6 +5,7 @@ import {
   setActiveRecall
 } from '@/background/handlers/active-recall-registry'
 import type {
+  GetRecallPageContextResponse,
   RecallBackgroundResponse,
   RecallCancelResponse,
   RecallDialogContext,
@@ -15,41 +16,56 @@ import {
   parseRecallWithCluePayload
 } from '@/core/messaging/recall-messages'
 import { extractDomainFromUrl } from '@/core/memory/payload'
+import { normalizePageContextDomain, urlForPageContext } from '@/core/recall/page-context-mode'
 import { notifyRecallVisibleProgress } from '@/infrastructure/messaging/notify-recall-visible-progress'
 import { logger } from '@/infrastructure/logging/logger'
 
-/** 是否可作为 §7.1 当前站信号的 http(s) 页。 */
-function isHttpTabUrl(url: string | undefined): url is string {
-  if (!url) {
-    return false
-  }
-  return url.startsWith('http://') || url.startsWith('https://')
-}
-
-/** 从标签列表挑优先 http(s) 页（先 active，再任意）。 */
-function pickHttpTab(tabs: chrome.tabs.Tab[]): chrome.tabs.Tab | undefined {
-  return (
-    tabs.find(tab => tab.active && isHttpTabUrl(tab.url)) ?? tabs.find(tab => isHttpTabUrl(tab.url))
-  )
-}
-
 /**
- * §7.1：读可用浏览页域名（弱上下文；失败则省略）。
- * 跳过 chrome-extension / chrome://（检查视图打开 sidepanel.html 时常见）。
- * Service Worker 下 `currentWindow` 不可靠 → 先 lastFocusedWindow，再全窗口回退。
+ * §7.1：读 Side Panel 所在窗口的活动标签。
+ * 不用「最近聚焦窗口」：焦点在面板上时，那个窗口的活动标签不一定是旁边正在看的网页。
+ * chrome://、扩展页、新标签等不是站点 → 不回退到上一个网站。
  */
+async function resolveRecallPageWindowId(): Promise<number | undefined> {
+  const contexts = await chrome.runtime.getContexts({
+    contextTypes: [chrome.runtime.ContextType.SIDE_PANEL]
+  })
+  const windowIds = contexts
+    .map(context => context.windowId)
+    .filter((windowId): windowId is number => typeof windowId === 'number' && windowId >= 0)
+  if (windowIds.length === 0) {
+    return undefined
+  }
+  if (windowIds.length === 1) {
+    return windowIds[0]
+  }
+  const lastFocused = await chrome.windows.getLastFocused()
+  if (typeof lastFocused.id === 'number' && windowIds.includes(lastFocused.id)) {
+    return lastFocused.id
+  }
+  return windowIds[0]
+}
+
 async function resolveCurrentTabDomain(): Promise<string | undefined> {
   try {
-    const focused = await chrome.tabs.query({ lastFocusedWindow: true })
-    let preferred = pickHttpTab(focused)
-    if (!preferred) {
-      preferred = pickHttpTab(await chrome.tabs.query({}))
-    }
-    const url = preferred?.url?.trim()
-    if (!url || !isHttpTabUrl(url)) {
+    const panelWindowId = await resolveRecallPageWindowId()
+    const [active] = await chrome.tabs.query(
+      panelWindowId === undefined
+        ? { active: true, lastFocusedWindow: true }
+        : { active: true, windowId: panelWindowId }
+    )
+    const url = urlForPageContext(active)
+    if (!url) {
+      logger.info('Recall', '活动标签不是普通网页，页上下文不带域名', {
+        windowId: panelWindowId ?? -1,
+        url: active?.url ? active.url.slice(0, 48) : ''
+      })
       return undefined
     }
-    const domain = extractDomainFromUrl(url)
+    const domain = normalizePageContextDomain(extractDomainFromUrl(url))
+    logger.info('Recall', '页上下文读到活动标签域名', {
+      windowId: panelWindowId ?? -1,
+      domain: domain ?? ''
+    })
     return domain || undefined
   } catch (error) {
     logger.info('Recall', '读取当前标签域名失败（忽略）', {
@@ -73,11 +89,19 @@ export async function handleRecallWithClue(payload: unknown): Promise<RecallBack
         newRecallId: input.recallId
       })
     }
-    const tabDomain = input.context?.currentTabDomain ?? (await resolveCurrentTabDomain())
+    // §7.1：仅 boost/restrict 解析并注入当前域名；none 不静默加成。
+    const pageContextMode = input.context?.pageContextMode ?? 'none'
+    const needsPageDomain = pageContextMode === 'boost' || pageContextMode === 'restrict'
+    const tabDomain = needsPageDomain
+      ? normalizePageContextDomain(
+          input.context?.currentTabDomain ?? (await resolveCurrentTabDomain())
+        )
+      : undefined
     const context: RecallDialogContext | undefined =
       input.context || tabDomain
         ? {
             ...(input.context ?? {}),
+            pageContextMode,
             ...(tabDomain ? { currentTabDomain: tabDomain } : {})
           }
         : undefined
@@ -90,6 +114,7 @@ export async function handleRecallWithClue(payload: unknown): Promise<RecallBack
       priorCount: context?.priorUserUtterances?.length ?? 0,
       hasAccumulated: Boolean(context?.accumulated),
       dismissedCount: context?.dismissedIds?.length ?? 0,
+      pageContextMode,
       currentTabDomain: context?.currentTabDomain ?? null,
       progressRequestId: input.progressRequestId ?? null
     })
@@ -156,4 +181,20 @@ export function handleRecallCancel(payload: unknown): RecallCancelResponse {
     cleared
   })
   return { ok: true, cleared }
+}
+
+/** composer 页上下文开关：读取当前浏览页域名（展示用，不改检索）。 */
+export async function handleGetRecallPageContext(): Promise<GetRecallPageContextResponse> {
+  try {
+    const domain = normalizePageContextDomain(await resolveCurrentTabDomain()) ?? null
+    logger.info('Recall', 'GET_RECALL_PAGE_CONTEXT', { domain })
+    return { ok: true, domain }
+  } catch (error) {
+    logger.error('Recall', 'GET_RECALL_PAGE_CONTEXT 失败', { error })
+    return {
+      ok: false,
+      errorCode: 'RECALL_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
 }

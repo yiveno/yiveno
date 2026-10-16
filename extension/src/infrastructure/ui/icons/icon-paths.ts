@@ -26,6 +26,8 @@ export const APP_ICON_NAMES = [
   'folder',
   'folder_open',
   'format_quote',
+  'funnel',
+  'globe',
   'info',
   'library_books',
   'list_checks',
@@ -34,6 +36,7 @@ export const APP_ICON_NAMES = [
   'message_circle_plus',
   'open_in_new',
   'package',
+  'radio_unchecked',
   'refresh',
   'shuffle',
   'settings',
@@ -68,6 +71,8 @@ export const APP_ICON_LUCIDE_SOURCE: Record<AppIconName, string> = {
   folder: 'Folder',
   folder_open: 'FolderOpen',
   format_quote: 'Quote',
+  funnel: 'Funnel',
+  globe: 'Globe',
   info: 'Info',
   library_books: 'Library',
   list_checks: 'ListChecks',
@@ -76,6 +81,7 @@ export const APP_ICON_LUCIDE_SOURCE: Record<AppIconName, string> = {
   message_circle_plus: 'MessageCirclePlus',
   open_in_new: 'ExternalLink',
   package: 'Package',
+  radio_unchecked: 'Circle',
   refresh: 'RefreshCw',
   shuffle: 'Shuffle',
   settings: 'Settings',
@@ -217,6 +223,21 @@ export const APP_ICON_NODES: Record<AppIconName, readonly AppIconNode[]> = {
       }
     ]
   ] as const,
+  // Lucide Funnel：仅此站 / 收窄来源
+  funnel: [
+    [
+      'path',
+      {
+        d: 'M10 20a1 1 0 0 0 .553.895l2 1A1 1 0 0 0 14 21v-7a2 2 0 0 1 .517-1.341L21.74 4.67A1 1 0 0 0 21 3H3a1 1 0 0 0-.742 1.67l7.225 7.989A2 2 0 0 1 10 14z'
+      }
+    ]
+  ] as const,
+  // Lucide Globe：结合当前页
+  globe: [
+    ['circle', { cx: '12', cy: '12', r: '10' }],
+    ['path', { d: 'M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20' }],
+    ['path', { d: 'M2 12h20' }]
+  ] as const,
   info: [
     ['circle', { cx: '12', cy: '12', r: '10' }],
     ['path', { d: 'M12 16v-4' }],
@@ -271,6 +292,8 @@ export const APP_ICON_NODES: Record<AppIconName, readonly AppIconNode[]> = {
     ['path', { d: 'm3.3 7 8.7 5 8.7-5' }],
     ['path', { d: 'M7.5 4.27 16.5 9.63' }]
   ] as const,
+  // Lucide Circle：未选中勾选态
+  radio_unchecked: [['circle', { cx: '12', cy: '12', r: '10' }]] as const,
   refresh: [
     ['path', { d: 'M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8' }],
     ['path', { d: 'M21 3v5h-5' }],

@@ -528,14 +528,53 @@
   "popup_thread_pivot_new": {
     "message": "Start new"
   },
-  "popup_env_chip_current_site": {
-    "message": "Related to this site"
-  },
   "popup_env_chip_just_saved": {
     "message": "Just saved"
   },
   "popup_env_chip_just_opened": {
     "message": "Opened recently"
+  },
+  "sidepanel_page_context_toggle": {
+    "message": "Page context"
+  },
+  "sidepanel_page_context_combine": {
+    "message": "Combine with this page"
+  },
+  "sidepanel_page_context_combine_hint": {
+    "message": "current page context"
+  },
+  "sidepanel_page_context_only_site": {
+    "message": "Only this site"
+  },
+  "sidepanel_page_context_only_site_hint": {
+    "message": "When off, other sources can still appear"
+  },
+  "sidepanel_page_context_no_site_hint": {
+    "message": "This page can't be used. Switch to a normal page and this turns back on."
+  },
+  "sidepanel_recall_settings_toggle": {
+    "message": "Recall settings"
+  },
+  "sidepanel_recall_settings_dismiss": {
+    "message": "Close recall settings"
+  },
+  "sidepanel_recall_source_all": {
+    "message": "All"
+  },
+  "sidepanel_recall_source_all_hint": {
+    "message": "Bookmarks and excerpts both count. This is the usual recall."
+  },
+  "sidepanel_recall_source_excerpts": {
+    "message": "Excerpts"
+  },
+  "sidepanel_recall_source_excerpts_hint": {
+    "message": "Only passages you saved. Bookmarks stay out. If nothing is close enough, you'll see that — it won't open the rest of your library."
+  },
+  "sidepanel_recall_source_bookmarks": {
+    "message": "Bookmarks"
+  },
+  "sidepanel_recall_source_bookmarks_hint": {
+    "message": "Only bookmarks. Saved passages stay out. If nothing is close enough, you'll see that — it won't open the rest of your library."
   },
   "popup_submit": {
     "message": "Start recall"

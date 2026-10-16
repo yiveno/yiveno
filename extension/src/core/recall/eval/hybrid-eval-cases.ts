@@ -127,7 +127,7 @@ export const HYBRID_EVAL_CASES: HybridEvalCase[] = [
     currentTabDomain: 'docs.yiveno.com',
     gate: 'must',
     expectation: { kind: 'top1', expectedId: TARGET_SAME_DOMAIN },
-    note: 'currentTabDomain 与 `docs.yiveno.com` 命中同域加成；压过 design host 的语义近邻对手'
+    note: 'pageContextMode=boost + currentTabDomain 与 `docs.yiveno.com` 同域加成；压过 design host 语义近邻'
   },
 
   // —— stretch：跨语言 / 跨 host 边界（待生产 LLM 协同后再收紧）——

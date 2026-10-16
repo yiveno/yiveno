@@ -75,6 +75,7 @@ import {
   fetchColdStartStatus,
   listMemoryItems,
   navigateActiveTab,
+  getRecallPageContext,
   probeWebsiteSignedIn,
   recallWithClue,
   recordMemoryOpen,
@@ -112,7 +113,10 @@ import { tMemoryError } from '@/infrastructure/i18n/memory-error'
 import { type RecallCardModel } from '@/pages/sidepanel/RecallResultCard.vue'
 import RecallConversation from '@/pages/sidepanel/components/RecallConversation.vue'
 import RecallComposer from '@/pages/sidepanel/components/RecallComposer.vue'
+import RecallPageContextControls from '@/pages/sidepanel/components/RecallPageContextControls.vue'
 import ColdStartGate from '@/pages/sidepanel/components/ColdStartGate.vue'
+import { resolvePageContextMode } from '@/core/recall/page-context-mode'
+import type { RecallSourceScope } from '@/core/recall/recall-source-scope'
 import { createAssistantTurn } from '@/pages/sidepanel/build-assistant-turn'
 import type { ConversationTurn, AssistantTurn } from '@/pages/sidepanel/recall-conversation-types'
 import {
@@ -399,6 +403,14 @@ const pendingPivotClue = ref<string | null>(null)
 /** 上次成功提交线索的时间（冷却启发式）。 */
 const lastSubmitAtMs = ref<number | null>(null)
 
+/** §7.1 composer 页上下文（会话级；默认收起、双关 = none）。 */
+const pageContextDomain = ref<string | null>(null)
+const pageContextExpanded = ref(false)
+const pageContextCombine = ref(false)
+const pageContextOnlySite = ref(false)
+/** 来源范围：默认全部；New find 复位。 */
+const recallSourceScope = ref<RecallSourceScope>('all')
+
 const conversationTurns = ref<ConversationTurn[]>([])
 let turnSeq = 0
 
@@ -572,6 +584,10 @@ async function completeNewFindSession(reason: string): Promise<void> {
   expandedDuplicateGroupId.value = null
   clearDetailExportSelection()
   stickToBottom.value = true
+  pageContextExpanded.value = false
+  pageContextCombine.value = false
+  pageContextOnlySite.value = false
+  recallSourceScope.value = 'all'
   const pendingPrefill = pendingPrefillAfterExit.value
   pendingPrefillAfterExit.value = null
   void nextTick(() => {
@@ -582,6 +598,95 @@ async function completeNewFindSession(reason: string): Promise<void> {
     void handleSendTurn(pendingPrefill, { skipPivotCheck: true })
   }
 }
+
+/** 刷新当前浏览页域名（展示用；用户开关不因短暂无 http 页被清掉）。 */
+async function refreshPageContextDomain(): Promise<void> {
+  try {
+    const response = await getRecallPageContext()
+    pageContextDomain.value = response.ok ? response.domain : null
+  } catch {
+    pageContextDomain.value = null
+  }
+}
+
+function handlePageContextExpanded(next: boolean): void {
+  pageContextExpanded.value = next
+  if (next) {
+    void refreshPageContextDomain()
+  }
+}
+
+/** 页上下文展示或已开启时，跟活动标签走，避免入口写死过期 host。 */
+const needsLivePageContextDomain = computed(
+  () => pageContextExpanded.value || pageContextCombine.value || pageContextOnlySite.value
+)
+
+let pageContextTabListenAttached = false
+let pageContextDomainRefreshTimer: ReturnType<typeof setTimeout> | null = null
+
+function scheduleRefreshPageContextDomain(): void {
+  if (pageContextDomainRefreshTimer !== null) {
+    clearTimeout(pageContextDomainRefreshTimer)
+  }
+  pageContextDomainRefreshTimer = setTimeout(() => {
+    pageContextDomainRefreshTimer = null
+    void refreshPageContextDomain()
+  }, 120)
+}
+
+function handlePageContextTabActivated(): void {
+  scheduleRefreshPageContextDomain()
+}
+
+function handlePageContextTabUpdated(_tabId: number, changeInfo: chrome.tabs.TabChangeInfo): void {
+  if (changeInfo.url || changeInfo.status === 'complete') {
+    scheduleRefreshPageContextDomain()
+  }
+}
+
+function handlePageContextWindowFocusChanged(windowId: number): void {
+  if (windowId === chrome.windows.WINDOW_ID_NONE) {
+    return
+  }
+  scheduleRefreshPageContextDomain()
+}
+
+function attachPageContextTabListeners(): void {
+  if (pageContextTabListenAttached) {
+    return
+  }
+  chrome.tabs.onActivated.addListener(handlePageContextTabActivated)
+  chrome.tabs.onUpdated.addListener(handlePageContextTabUpdated)
+  chrome.windows.onFocusChanged.addListener(handlePageContextWindowFocusChanged)
+  pageContextTabListenAttached = true
+}
+
+function detachPageContextTabListeners(): void {
+  if (!pageContextTabListenAttached) {
+    return
+  }
+  chrome.tabs.onActivated.removeListener(handlePageContextTabActivated)
+  chrome.tabs.onUpdated.removeListener(handlePageContextTabUpdated)
+  chrome.windows.onFocusChanged.removeListener(handlePageContextWindowFocusChanged)
+  pageContextTabListenAttached = false
+  if (pageContextDomainRefreshTimer !== null) {
+    clearTimeout(pageContextDomainRefreshTimer)
+    pageContextDomainRefreshTimer = null
+  }
+}
+
+watch(
+  needsLivePageContextDomain,
+  needed => {
+    if (needed) {
+      attachPageContextTabListeners()
+      void refreshPageContextDomain()
+      return
+    }
+    detachPageContextTabListeners()
+  },
+  { immediate: true }
+)
 
 /** 出口条：Found it（默认最后一次 open）。 */
 function handleOutcomeExitFound(): void {
@@ -1569,18 +1674,38 @@ async function runRecall(trimmedClue: string): Promise<void> {
     ...(priorUserUtterances.length > 0 && priorCluePreview ? { priorCluePreview } : {})
   })
 
+  const pageContextMode = resolvePageContextMode({
+    combineWithPage: pageContextCombine.value,
+    onlyThisSite: pageContextOnlySite.value
+  })
+  if (pageContextMode !== 'none') {
+    // 发送瞬间再读当前 Tab，避免开关展示的 host 已过期
+    await refreshPageContextDomain()
+  }
+  const hasDialogContext = priorUserUtterances.length > 0 || accumulated || dismissedIds.length > 0
+  const hasPageContext = pageContextMode !== 'none'
+  const hasSourceScope = recallSourceScope.value !== 'all'
   try {
     const response = await recallWithClue({
       clue: trimmed,
       source: 'sidepanel',
       recallId,
       progressRequestId,
-      ...(priorUserUtterances.length > 0 || accumulated || dismissedIds.length > 0
+      ...(hasDialogContext || hasPageContext || hasSourceScope
         ? {
             context: {
               ...(priorUserUtterances.length > 0 ? { priorUserUtterances } : {}),
               ...(accumulated ? { accumulated } : {}),
-              ...(dismissedIds.length > 0 ? { dismissedIds } : {})
+              ...(dismissedIds.length > 0 ? { dismissedIds } : {}),
+              ...(hasPageContext
+                ? {
+                    pageContextMode,
+                    ...(pageContextDomain.value
+                      ? { currentTabDomain: pageContextDomain.value }
+                      : {})
+                  }
+                : {}),
+              ...(hasSourceScope ? { sourceScope: recallSourceScope.value } : {})
             }
           }
         : {})
@@ -1970,6 +2095,7 @@ function handleSidePanelVisibilityChange(): void {
     return
   }
   void loadGreetingIdentity()
+  void refreshPageContextDomain()
 }
 
 function handleRecallVisibleProgressPush(message: unknown): void {
@@ -2018,6 +2144,7 @@ onMounted(() => {
     }
   })()
   void probeMemoryLibrary()
+  void refreshPageContextDomain()
   startImportPolling()
   startColdStartPolling()
   void (async () => {
@@ -2046,6 +2173,7 @@ onUnmounted(() => {
   stopWatchWebsiteAuthUi?.()
   stopWatchWebsiteAuthUi = null
   document.removeEventListener('visibilitychange', handleSidePanelVisibilityChange)
+  detachPageContextTabListeners()
   stopBrowserOnline?.()
   stopBrowserOnline = null
 })
@@ -2326,21 +2454,49 @@ onUnmounted(() => {
     <p v-if="showOfflineBanner" class="recall-offline-composer-hint" role="status">
       {{ t('sidepanel_offline_composer_hint') }}
     </p>
-    <RecallComposer
-      ref="clueInputRef"
-      v-model="clue"
-      :ariaLabel="t('popup_clue_input_aria')"
-      :placeholder="composerPlaceholder"
-      :sendLabel="t('popup_submit')"
-      :disabled="isRecallRefreshing || showOutcomeExitStrip"
-      :prominent="isComposerProminent"
-      :thread-title="threadFindTitle"
-      :thread-title-label="t('popup_thread_title_label')"
-      :thread-title-aria="threadTitleAria"
-      :thread-new-find-label="t('popup_thread_anchor_clear')"
-      @send="handleSendTurn"
-      @clear-thread="startNewFindSession"
-    />
+    <div class="recall-composer-dock">
+      <RecallComposer
+        ref="clueInputRef"
+        v-model="clue"
+        :ariaLabel="t('popup_clue_input_aria')"
+        :placeholder="composerPlaceholder"
+        :sendLabel="t('popup_submit')"
+        :disabled="isRecallRefreshing || showOutcomeExitStrip"
+        :prominent="isComposerProminent"
+        :thread-title="threadFindTitle"
+        :thread-title-label="t('popup_thread_title_label')"
+        :thread-title-aria="threadTitleAria"
+        :thread-new-find-label="t('popup_thread_anchor_clear')"
+        @send="handleSendTurn"
+        @clear-thread="startNewFindSession"
+      >
+        <RecallPageContextControls
+          :domain="pageContextDomain"
+          :combine-with-page="pageContextCombine"
+          :only-this-site="pageContextOnlySite"
+          :source-scope="recallSourceScope"
+          :expanded="pageContextExpanded"
+          :disabled="isRecallRefreshing || showOutcomeExitStrip"
+          :toggle-label="t('sidepanel_recall_settings_toggle')"
+          :dismiss-label="t('sidepanel_recall_settings_dismiss')"
+          :combine-label="t('sidepanel_page_context_combine')"
+          :combine-hint="t('sidepanel_page_context_combine_hint')"
+          :only-site-label="t('sidepanel_page_context_only_site')"
+          :only-site-hint="t('sidepanel_page_context_only_site_hint')"
+          :no-site-hint="t('sidepanel_page_context_no_site_hint')"
+          :source-all-label="t('sidepanel_recall_source_all')"
+          :source-all-hint="t('sidepanel_recall_source_all_hint')"
+          :source-excerpts-label="t('sidepanel_recall_source_excerpts')"
+          :source-excerpts-hint="t('sidepanel_recall_source_excerpts_hint')"
+          :source-bookmarks-label="t('sidepanel_recall_source_bookmarks')"
+          :source-bookmarks-hint="t('sidepanel_recall_source_bookmarks_hint')"
+          @update:expanded="handlePageContextExpanded"
+          @update:combine-with-page="pageContextCombine = $event"
+          @update:only-this-site="pageContextOnlySite = $event"
+          @update:source-scope="recallSourceScope = $event"
+        />
+      </RecallComposer>
+    </div>
   </main>
 </template>
 
@@ -2552,6 +2708,12 @@ onUnmounted(() => {
   font-size: 12px;
   line-height: 1.35;
   color: var(--on-surface-muted);
+}
+
+.recall-composer-dock {
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
 }
 
 .recall-website-connect-label {

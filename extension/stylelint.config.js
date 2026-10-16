@@ -111,6 +111,7 @@ export default {
       'height',
       'min-height',
       'max-height',
+      'field-sizing',
       'margin',
       'margin-top',
       'margin-right',

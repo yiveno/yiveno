@@ -24,6 +24,7 @@ import type {
   MemoryBackgroundResponse
 } from '@/core/messaging/memory-messages'
 import type {
+  GetRecallPageContextResponse,
   RecallBackgroundMessage,
   RecallBackgroundResponse,
   RecallCancelResponse
@@ -103,6 +104,7 @@ export type BackgroundMessageResponse =
   | MemoryBackgroundResponse
   | RecallBackgroundResponse
   | RecallCancelResponse
+  | GetRecallPageContextResponse
   | McpBackgroundResponse
   | ImportBackgroundResponse
   | CommandsBackgroundResponse

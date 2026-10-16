@@ -128,7 +128,8 @@ async function runHybridPath(
     filterClue,
     parsed,
     clueEmbeddingText,
-    ...(currentTabDomain ? { currentTabDomain } : {}),
+    // eval 夹具显式带 currentTabDomain 时按 boost 验同域加成（生产默认 none）
+    ...(currentTabDomain ? { currentTabDomain, pageContextMode: 'boost' as const } : {}),
     trace: noopTrace
   })
 

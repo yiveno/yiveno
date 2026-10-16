@@ -13,7 +13,9 @@ import {
 } from '@/infrastructure/browser/browser-online'
 import type { RecallBackend, RecallWithClueOptions } from '@/application/recall/recall-backend'
 import type { RecallVisibleProgressStage } from '@/core/recall/visible-progress'
-import { applyCurrentTabDomainBoost } from '@/application/recall/apply-current-tab-domain-boost'
+import { applyPageContextToMatches } from '@/application/recall/apply-page-context-to-matches'
+import type { PageContextMode } from '@/core/recall/page-context-mode'
+import { filterMemoryItemsBySourceScope } from '@/core/recall/recall-source-scope'
 import { RECALL_SCAN_LIMIT } from '@/application/recall/backends/recall-scan-limit'
 import { buildEnvironmentRecallSuggestions } from '@/core/recall/build-environment-recall-suggestions'
 import { buildRecallFramingFacts } from '@/core/recall/build-recall-framing-facts'
@@ -131,7 +133,7 @@ async function finalizeKeywordResult(
   displayClue: string,
   items: Awaited<ReturnType<typeof memoryItemService.list>>,
   parsed: ParsedRecallClue,
-  currentTabDomain: string | undefined,
+  pageContext: { mode: PageContextMode; currentTabDomain: string | undefined },
   pairClue: string,
   options?: {
     skipOutcomePairs?: boolean
@@ -153,9 +155,12 @@ async function finalizeKeywordResult(
       (Boolean(parsed.behaviorHints?.includes('recently_saved')) &&
         parsed.timeConfidence !== 'low')) &&
     effectiveContentTermsForRecall(parsed).length > 0
-  const matches = applyCurrentTabDomainBoost(
+  const matches = applyPageContextToMatches(
     [...(base.topPick ? [base.topPick] : []), ...base.alsoPossible],
-    currentTabDomain
+    {
+      pageContextMode: pageContext.mode,
+      currentTabDomain: pageContext.currentTabDomain
+    }
   )
   matches.sort((a, b) => {
     if (b.score !== a.score) {
@@ -194,11 +199,12 @@ async function finalizeKeywordResult(
 
 // Omnibox 路径：无联网向量兜底（ADR-007 · 完全本地）
 
-/** 对已打分的 keyword / semantic 池做时间筛 → RRF → 域加成。 */
+/** 对已打分的 keyword / semantic 池做时间筛 → RRF → 页上下文（boost/restrict）。 */
 function fuseScoredPools(input: {
   keywordMatches: RecallMatch[]
   semanticMatches: RecallMatch[]
   parsed: ParsedRecallClue
+  pageContextMode?: PageContextMode
   currentTabDomain?: string
 }): RecallMatch[] {
   const keywordTimed = filterMatchesByParsedTimeRange(input.keywordMatches, input.parsed)
@@ -271,17 +277,20 @@ function fuseScoredPools(input: {
     return { ...base, score: entry.score }
   })
 
-  const boosted = applyCurrentTabDomainBoost(
+  const withPageContext = applyPageContextToMatches(
     guardedFused.map(match => applyParsedClueScoreBoosts(match, input.parsed)),
-    input.currentTabDomain
+    {
+      pageContextMode: input.pageContextMode ?? 'none',
+      currentTabDomain: input.currentTabDomain
+    }
   )
-  boosted.sort((left, right) => {
+  withPageContext.sort((left, right) => {
     if (right.score !== left.score) {
       return right.score - left.score
     }
     return right.item.updatedAt.localeCompare(left.item.updatedAt)
   })
-  return boosted
+  return withPageContext
 }
 
 function collectWeakCandidateTitles(result: RecallResult): string[] {
@@ -378,7 +387,6 @@ function attachEnvironmentFollowUpIfNeeded(
   result: RecallResult,
   input: {
     clue: string
-    currentTabDomain?: string
     trace: ReturnType<typeof createRecallFlowTrace>
   }
 ): RecallResult {
@@ -406,9 +414,9 @@ function attachEnvironmentFollowUpIfNeeded(
     return result
   }
 
+  // 当前站已迁 composer 页上下文；此处仅刚存/刚打开（有信号才挂）
   const specs = buildEnvironmentRecallSuggestions({
-    clueText: input.clue,
-    ...(input.currentTabDomain !== undefined ? { currentTabDomain: input.currentTabDomain } : {})
+    clueText: input.clue
   })
   if (specs.length === 0) {
     input.trace('info', '环境芯片：无可用信号')
@@ -423,8 +431,7 @@ function attachEnvironmentFollowUpIfNeeded(
   input.trace('info', '环境芯片：已挂弱芯片', {
     ids: suggestions.map(item => item.id),
     outcome: result.outcome,
-    rankedTotalCount: result.totalRankedCount,
-    currentTabDomain: input.currentTabDomain ?? null
+    rankedTotalCount: result.totalRankedCount
   })
 
   return {
@@ -562,6 +569,8 @@ export async function fuseHybridMatches(input: {
   parsed: ParsedRecallClue
   /** embedding 请求文本 */
   clueEmbeddingText: string
+  /** §7.1 页上下文；缺省 none（不静默同域加成） */
+  pageContextMode?: PageContextMode
   currentTabDomain?: string
   trace: ReturnType<typeof createRecallFlowTrace>
 }): Promise<{
@@ -647,6 +656,7 @@ export async function fuseHybridMatches(input: {
       keywordMatches: keywordScored,
       semanticMatches: semanticScored,
       parsed,
+      pageContextMode: input.pageContextMode ?? 'none',
       ...(input.currentTabDomain !== undefined ? { currentTabDomain: input.currentTabDomain } : {})
     })
 
@@ -716,7 +726,8 @@ export class HybridRecallBackend implements RecallBackend {
     const priorUserUtterances = context?.priorUserUtterances ?? []
     const accumulated = context?.accumulated ?? null
     const dismissedIds = context?.dismissedIds ?? []
-    const currentTabDomain = context?.currentTabDomain
+    const pageContextMode: PageContextMode = context?.pageContextMode ?? 'none'
+    const currentTabDomain = pageContextMode === 'none' ? undefined : context?.currentTabDomain
 
     if (!normalizedClue) {
       return {
@@ -733,6 +744,7 @@ export class HybridRecallBackend implements RecallBackend {
       clue: normalizedClue,
       priorCount: priorUserUtterances.length,
       dismissedCount: dismissedIds.length,
+      pageContextMode,
       currentTabDomain: currentTabDomain ?? null
     })
 
@@ -853,6 +865,16 @@ export class HybridRecallBackend implements RecallBackend {
     const candidateLoadMs = Date.now() - candidateLoadStartedAt
     const listedItems = listedResult.items
     let items = excludeDismissedMemoryItems(listedItems, dismissedIds)
+    const sourceScope = isOmniboxEntry ? 'all' : (context?.sourceScope ?? 'all')
+    if (sourceScope !== 'all') {
+      const before = items.length
+      items = filterMemoryItemsBySourceScope(items, sourceScope)
+      trace('info', 'Recall 来源范围：已按类型硬筛', {
+        sourceScope,
+        before,
+        after: items.length
+      })
+    }
 
     const clueEmbeddingText = buildClueEmbeddingText({
       effectiveClue: merge.effectiveRaw,
@@ -907,7 +929,7 @@ export class HybridRecallBackend implements RecallBackend {
         normalizedClue,
         items,
         merged,
-        currentTabDomain,
+        { mode: pageContextMode, currentTabDomain },
         pairClue
       )
       result = finalized.result
@@ -921,7 +943,7 @@ export class HybridRecallBackend implements RecallBackend {
         normalizedClue,
         items,
         merged,
-        currentTabDomain,
+        { mode: pageContextMode, currentTabDomain },
         pairClue,
         {
           skipOutcomePairs: true,
@@ -947,6 +969,7 @@ export class HybridRecallBackend implements RecallBackend {
           filterClue: buildFilterClueFromParsed(merged),
           parsed: merged,
           clueEmbeddingText,
+          pageContextMode,
           ...(currentTabDomain !== undefined ? { currentTabDomain } : {}),
           trace
         })) ?? null
@@ -961,7 +984,7 @@ export class HybridRecallBackend implements RecallBackend {
           normalizedClue,
           items,
           merged,
-          currentTabDomain,
+          { mode: pageContextMode, currentTabDomain },
           pairClue
         )
         result = finalized.result
@@ -1026,8 +1049,7 @@ export class HybridRecallBackend implements RecallBackend {
 
     const withFollowUp = attachEnvironmentFollowUpIfNeeded(withFramingLlm, {
       clue: normalizedClue,
-      trace,
-      ...(currentTabDomain !== undefined ? { currentTabDomain } : {})
+      trace
     })
 
     const postProcessMs = Date.now() - postProcessStartedAt

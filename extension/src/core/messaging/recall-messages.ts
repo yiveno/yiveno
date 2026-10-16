@@ -1,6 +1,8 @@
 import { z } from 'zod'
 
 import { ParsedRecallClueSchema } from '@/core/recall/parse-recall-clue-types'
+import { PAGE_CONTEXT_MODES } from '@/core/recall/page-context-mode'
+import { RECALL_SOURCE_SCOPES } from '@/core/recall/recall-source-scope'
 import type { RecallResult } from '@/core/recall/recall-result'
 import type { BackgroundMessageScope } from '@/core/messaging/constants'
 
@@ -12,8 +14,21 @@ export const recallDialogContextSchema = z.object({
   accumulated: ParsedRecallClueSchema.optional(),
   /** 本会话已否定的 MemoryItem id（硬排除）。 */
   dismissedIds: z.array(z.string().uuid()).max(50).optional(),
-  /** 当前标签页域名（§7.1 同域软重排；不含路径）。 */
-  currentTabDomain: z.string().max(253).optional()
+  /**
+   * 当前标签页域名（§7.1 Contextual Clue；不含路径）。
+   * 仅在 pageContextMode 为 boost/restrict 时参与检索；none 时忽略。
+   */
+  currentTabDomain: z.string().max(253).optional(),
+  /**
+   * 当前页上下文模式（默认 none）。
+   * none=不参与；boost=同域软抬；restrict=同域硬筛。
+   */
+  pageContextMode: z.enum(PAGE_CONTEXT_MODES).optional(),
+  /**
+   * 来源范围（默认 all）。
+   * text_excerpt / bookmark 在候选加载后按 MemoryItem.type 硬筛。
+   */
+  sourceScope: z.enum(RECALL_SOURCE_SCOPES).optional()
 })
 
 export type RecallDialogContext = z.infer<typeof recallDialogContextSchema>
@@ -77,7 +92,26 @@ export type RecallCancelMessage = {
   payload: z.infer<typeof recallCancelPayloadSchema>
 }
 
-export type RecallBackgroundMessage = RecallWithClueMessage | RecallCancelMessage
+/** 读取当前浏览页域名（composer 页上下文开关展示；不参与检索）。 */
+export type GetRecallPageContextMessage = {
+  scope: BackgroundMessageScope
+  type: 'GET_RECALL_PAGE_CONTEXT'
+}
+
+export type GetRecallPageContextResponse =
+  | {
+      ok: true
+      /** 规范化前的 host；无可用 http(s) Tab 时为 null */
+      domain: string | null
+    }
+  | {
+      ok: false
+      errorCode: 'RECALL_FAILED'
+      error?: string
+    }
+
+export type RecallBackgroundMessage =
+  RecallWithClueMessage | RecallCancelMessage | GetRecallPageContextMessage
 
 export type RecallSuccessResponse = {
   ok: true
