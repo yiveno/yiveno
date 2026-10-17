@@ -638,7 +638,10 @@ function handlePageContextTabActivated(): void {
   scheduleRefreshPageContextDomain()
 }
 
-function handlePageContextTabUpdated(_tabId: number, changeInfo: chrome.tabs.TabChangeInfo): void {
+function handlePageContextTabUpdated(
+  _tabId: number,
+  changeInfo: { url?: string; status?: string }
+): void {
   if (changeInfo.url || changeInfo.status === 'complete') {
     scheduleRefreshPageContextDomain()
   }

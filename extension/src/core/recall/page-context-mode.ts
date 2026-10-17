@@ -35,7 +35,7 @@ export function resolvePageContextMode(input: {
  * 地址还没到、pendingUrl 已是普通网页 → 用 pending，避免加载空窗闪掉。
  */
 export function urlForPageContext(
-  tab: { url?: string; pendingUrl?: string } | undefined
+  tab: { url?: string | undefined; pendingUrl?: string | undefined } | undefined
 ): string | undefined {
   const url = tab?.url?.trim()
   if (url) {
