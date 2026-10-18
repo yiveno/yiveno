@@ -1,6 +1,6 @@
 # Chrome Web Store Listing — Yiveno
 
-> Last Updated: 2026-09-01
+> Last Updated: 2026-10-18
 
 <!-- 开发者向：上架草稿本，与 extension/public/manifest.json 同步维护。商店用户向文案仅美式英语。 -->
 
@@ -137,15 +137,21 @@ https://yiveno.com/privacy
 
 ## Distribution
 
-**Visibility**: Unlisted (initial beta) / Public (when ready)
+**Visibility**: **Not submitted** (as of 2026-10-18). No Chrome Web Store public or unlisted listing yet; no real install base from the Store. Planned path when ready: Unlisted (initial beta) → Public.
 
 **Regions**: All regions (unless product/legal restricts later)
+
+**Commercial status (developer note)**: Not charging the public yet. Free/Pro and Dodo checkout may be wired in code; live paid customers = none until explicitly launched.
 
 ## Developer Info
 
 **Publisher Name** [REQUIRED]
 
 Yiveno
+
+**Legal operator (developer note · not a CWS form field)**
+
+Individual operator based in Hangzhou, China (not yet a registered company). May later operate via a Hangzhou-registered company. Privacy: https://yiveno.com/privacy
 
 **Contact Email** [REQUIRED]
 

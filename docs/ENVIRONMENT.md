@@ -18,7 +18,7 @@
 
 放开发/生产共用的第三方变量：
 
-- `SUPABASE_URL`
+- `SUPABASE_URL`（生产项目主库区域：**East US / Ohio · `us-east-2`**；Dashboard Primary Database 为准）
 - `SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
 - `AUTH_GOOGLE_CLIENT_ID`

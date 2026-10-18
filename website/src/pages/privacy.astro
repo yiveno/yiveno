@@ -6,7 +6,7 @@
 import MainLayout from '../layouts/MainLayout.astro'
 import '../styles/pages.css'
 
-const effectiveDate = '2026-10-10'
+const effectiveDate = '2026-10-18'
 const contactEmail = 'privacy@yiveno.com'
 ---
 
@@ -29,6 +29,18 @@ const contactEmail = 'privacy@yiveno.com'
         Capture with low friction, then Recall into a short list of closest fits — you choose. It is
         not a bookmark manager, note-taking app, chat bot, or “AI organizer” as a primary promise.
       </p>
+      <p>
+        Today Yiveno is operated by an <strong>individual</strong> based in{' '}
+        <strong>Hangzhou, China</strong> (not yet a registered company). We may later transfer
+        operations to a company registered in Hangzhou; if that happens, we will update this Policy
+        and the effective date. Contact: <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.
+      </p>
+      <p>
+        The Chrome extension is <strong>not yet listed</strong> on the Chrome Web Store for public
+        install, and we are <strong>not yet charging</strong> the public for paid plans. Product
+        pages may describe planned Free / Pro features; they are not a claim of a live paid customer
+        base.
+      </p>
 
       <h2>2. What we collect</h2>
       <h3>2.1 On your device (default)</h3>
@@ -48,7 +60,8 @@ const contactEmail = 'privacy@yiveno.com'
       <p>
         Only after you explicitly enable cloud sync in the extension do we store{' '}
         <strong>text excerpts</strong> (and sync backups) in our cloud database (currently
-        Supabase), scoped to your account.{' '}
+        Supabase), scoped to your account. The Supabase primary database for production is in{' '}
+        <strong>East US (Ohio)</strong>, AWS region <strong>us-east-2</strong>.{' '}
         <strong>Bookmark entries imported from Chrome stay on this device</strong>
         and are not merged across devices through Yiveno cloud sync. Turning sync off does{' '}
         <strong>not</strong>
@@ -129,7 +142,8 @@ const contactEmail = 'privacy@yiveno.com'
       <ul>
         <li>
           <strong>Supabase</strong> — authentication, (when sync is on) cloud Memory storage, and
-          waitlist emails if you join
+          waitlist emails if you join; production primary database region <strong>us-east-2</strong>{' '}
+          (East US / Ohio)
         </li>
         <li>
           <strong>Cloudflare</strong> — Workers API, hosting, KV for optional uninstall feedback,
@@ -233,9 +247,13 @@ const contactEmail = 'privacy@yiveno.com'
 
       <h2>9. International users</h2>
       <p>
-        We may process data in regions where our providers operate (including the United States and
-        other locations). If you enable cloud sync or sign in, you understand your account and
-        synced data may be stored outside your country of residence.
+        The operator is based in Hangzhou, China. Account data and (when sync is on) cloud Memory
+        are stored with Supabase in the <strong>United States</strong> (primary database:{' '}
+        <strong>East US / Ohio, us-east-2</strong>). Other processors (for example Cloudflare
+        Workers, AI model providers, and payment providers if you purchase a plan) may process data
+        in the United States and other locations where they operate. If you enable cloud sync or
+        sign in, you understand your account and synced data may be stored outside your country of
+        residence.
       </p>
 
       <h2>10. Changes</h2>

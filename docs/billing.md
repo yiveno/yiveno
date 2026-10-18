@@ -4,6 +4,8 @@
 
 产品规范：`docs/product/Yiveno-产品文档-v4.0.md` **§A.3 / §A.3.1 / §A.3.2 / §5.7**。环境：`docs/ENVIRONMENT.md`。价格：`docs/pricing.md`。
 
+**商业状态（2026-10-18）：** CWS 未上架；**尚未**向公众收费。下文描述产品接线与对账门禁；真实开收前须 `DODO_PAYMENTS_ENVIRONMENT=live_mode` 并完成 ENVIRONMENT 上线清单。
+
 ## 数据流
 
 ```

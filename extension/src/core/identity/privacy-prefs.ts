@@ -4,8 +4,11 @@ import { z } from 'zod'
  * 隐私说明确认水位。
  * 说明文案重大变更时递增 PRIVACY_NOTICE_VERSION，迫使重新确认后再开同步。
  */
-/** v3：云同步面改为仅摘录（ADR-017），须重新确认后再开同步。 */
-export const PRIVACY_NOTICE_VERSION = 3 as const
+/**
+ * v4：披露云 Memory 托管区域（Supabase 生产主库 us-east-2 / East US Ohio）
+ * 与运营主体（个人·杭州）对齐官网 `/privacy`；须重新确认后再开同步。
+ */
+export const PRIVACY_NOTICE_VERSION = 4 as const
 
 /** chrome.storage.local 键。 */
 export const PRIVACY_PREFS_STORAGE_KEY = 'yiveno:privacy_prefs' as const

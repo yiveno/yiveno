@@ -1640,7 +1640,7 @@ Omnibox **离线快跳轨**专用 must（与 Side Panel `recall-eval` 正交）�
 | 快捷键       | `shortcuts`    | 已上线          | 展示绑定；改键跳转 `chrome://extensions/shortcuts`                                                                                      |
 | 账户与同步   | `account_sync` | 已上线          | 顶栏头像登录；**同步 = Pro+登录+开关**（面仅摘录 · ADR-017）；订阅升级（回焦自动对账）；禁止缩量盖云；孤儿桶；退出三选一；默认同步关    |
 | 数据         | `data`         | 已上线          | **Backup 整库导出**（§5.5.1）；**清除本机记忆**（不动 Chrome 原生书签；并关书签灌库；若同步开着则关同步）；**删云端记忆**；**删除账号** |
-| 隐私         | `privacy`      | 已上线（P0+P1） | 数据说明摘要；开同步前确认；链到 `/privacy` 与 `/terms`（操作型入口在「数据」）                                                         |
+| 隐私         | `privacy`      | 已上线（P0+P1） | 数据说明摘要（含主体·杭州个人 / 云区域 us-east-2）；开同步前确认（ack v4）；链到 `/privacy` 与 `/terms`（操作型入口在「数据」）         |
 | AI           | `ai`           | 已上线          | **关 AI**；模型路径说明（线索理解 + enrichment；不碰数据平面）                                                                          |
 
 **数据 vs 隐私（Normative）：** 「隐私」= 政策、同意与说明；「数据」= 用户处置本机/云端 Memory 的操作。清除本机记忆**永远不得**调用 `chrome.bookmarks` 删除或改写用户原生书签。
@@ -1771,8 +1771,9 @@ Chrome API / 选区
   - **官网**账户页 Sign out：仅 `signOut({ scope: local })` + UI 桥否态；**不**踢扩展、不清扩展账号桶。
   - **被挤掉：** 尽力 flush；清账号桶；清凭证；本地档无主摘录保留（仍不踢官网）。
 - **隐私 P0（Normative）**：
-  - Settings「隐私」展示数据说明摘要（本机 Memory / 可选云同步**仅摘录** / 账号 Auth / AI 经 Worker；不收集 History、未 Capture 全文、默认不上云；书签本机灌库不上云）。
-  - **开同步前**须确认当前隐私说明版本（`privacyNoticeVersion` ack）；未确认不得开启同步。关同步 ≠ 自动删云端。
+  - Settings「隐私」展示数据说明摘要（本机 Memory / 可选云同步**仅摘录** / 账号 Auth / AI 经 Worker；不收集 History、未 Capture 全文、默认不上云；书签本机灌库不上云；云摘录托管区域与运营主体见下条）。
+  - **开同步前**须确认当前隐私说明版本（`privacyNoticeVersion` ack）；未确认不得开启同步。关同步 ≠ 自动删云端。当前水位 **`PRIVACY_NOTICE_VERSION = 4`**（云区域 East US / Ohio · `us-east-2` + 主体披露；重大改文案须递增）。
+  - **运营与发布状态（Normative · 披露口径）**：**个人运营**（基地杭州；**尚未**注册公司；日后或迁杭州公司须同步改 `/privacy` `/terms`）。Chrome Web Store **尚未上架**；**无**真实商店安装用户、**尚未**向公众收费（Free/Pro / Dodo 可为产品接线，不得写成已有付费用户群）。生产云 Memory / Auth：**Supabase 主库 `us-east-2`（East US / Ohio）**。
   - **官网隐私政策（Normative）**：`https://yiveno.com/privacy`（及同源部署的 `/privacy`）提供与当前实现对齐的**美式英语**正文；官网页脚与登录页、扩展 Settings「隐私」须外链至此。正文重大变更时更新日期；扩展内同步确认文案重大变更时递增 `privacyNoticeVersion`。本页**不是**律师意见书；未上线能力不得写入为已提供。卸载落地页可选反馈（闭集原因 + 可选短留言）须在 `/privacy` 披露；**不**计入同步 ack 重大变更（不因此递增 `privacyNoticeVersion`），除非 Settings 同步确认文案本身改写。
   - **关 AI + 模型说明（Normative）**：Settings「AI」提供 `aiFeaturesEnabled`（默认开）；关闭后线索 LLM completer 清空、Capture LLM enrichment 跳过；页内说明 Worker 路径与数据平面边界。
   - **服务条款（Normative）**：官网 `/terms`（美式英语）；页脚 / 登录 / Settings 可外链。
@@ -2548,6 +2549,7 @@ RecallOutcomeEvent {
 
 | 日期       | 变更                                                                                                                                                                                                                                                                                                       |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-18 | **隐私披露对齐律师清单事实：** 运营主体=个人·杭州（未注册公司，或日后迁杭州公司）；CWS 未上架、无真实用户/收费；Supabase 生产主库 `us-east-2`（East US / Ohio）；`/privacy` `/terms` + Settings 摘要/开同步确认；`PRIVACY_NOTICE_VERSION`→4；§隐私 P0                                                      |
 | 2026-10-15 | **双向接通：** 扩展头像 Open account → `/auth/from-extension` + `website-session` 反铸官网会话；同账号短路直开 `/account`；§登录态对齐                                                                                                                                                                     |
 | 2026-10-15 | **退出解耦：** 官网 Sign out 只清官网；扩展 Sign out 只清扩展（禁 SIGN_OUT_HANDOFF / 禁退出开 `/logout`）；删除账号仍可连带 `/logout`；§登录态对齐 / ADR-018                                                                                                                                               |
 | 2026-10-15 | **作废退登防孤儿：** `GET_AUTH_STATE` invalid 一律尽力 remote release（他端已占不误清租约）；失败保留 lastLease 供同机认领；§登录态对齐                                                                                                                                                                    |

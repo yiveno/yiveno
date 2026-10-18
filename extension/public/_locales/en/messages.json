@@ -1008,10 +1008,10 @@
     "message": "Full backup export (Data section) is always available — a product responsibility, not a paid feature."
   },
   "settings_privacy_bullet_cloud": {
-    "message": "Cloud (optional): after you turn sync on, excerpts sync with your account. Bookmarks stay on this device from Chrome import."
+    "message": "Cloud (optional): after you turn sync on, excerpts sync with your account and are stored in the United States (East US / Ohio). Bookmarks stay on this device from Chrome import."
   },
   "settings_privacy_bullet_account": {
-    "message": "Account: sign-in for identity and optional sync."
+    "message": "Account: sign-in for identity and optional sync. Yiveno is operated by an individual in Hangzhou, China (may later become a Hangzhou company)."
   },
   "settings_privacy_bullet_ai": {
     "message": "AI: clue understanding may call a model; your full library is not sent by default."
@@ -1032,7 +1032,7 @@
     "message": "Current notice version: not confirmed yet (required before turning sync on)"
   },
   "settings_privacy_sync_confirm": {
-    "message": "Turning on cloud sync aligns excerpts on this device with your account (and may upload). Bookmarks stay local from Chrome. Confirm you have read the privacy notice in Settings. Continue?"
+    "message": "Turning on cloud sync aligns excerpts on this device with your account (and may upload). Synced excerpts are stored in the United States (East US / Ohio). Bookmarks stay local from Chrome. Confirm you have read the privacy notice in Settings. Continue?"
   },
   "settings_privacy_open_sync": {
     "message": "Open Account & Sync"
