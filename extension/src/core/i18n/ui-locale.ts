@@ -47,8 +47,10 @@ export function toBcp47LangTag(locale: UiLocaleId): string {
 
 /** 校验未知字符串是否为合法 preference。 */
 export function parseUiLocalePreference(value: unknown): UiLocalePreference | null {
-  if (value === 'system' || value === 'en' || value === 'zh_CN') {
-    return value
+  if (typeof value !== 'string') {
+    return null
   }
-  return null
+  return (UI_LOCALE_PREFERENCES as readonly string[]).includes(value)
+    ? (value as UiLocalePreference)
+    : null
 }
