@@ -33,7 +33,7 @@ export function subscribeActiveTabNavigation(onNavigate: () => void): () => void
     onNavigate()
   }
 
-  const handleUpdated = (_tabId: number, changeInfo: chrome.tabs.TabChangeInfo): void => {
+  const handleUpdated = (_tabId: number, changeInfo: ActiveTabNavigationChangeInfo): void => {
     if (shouldRefreshOnTabUpdated(changeInfo)) {
       onNavigate()
     }
