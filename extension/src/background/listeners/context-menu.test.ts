@@ -43,6 +43,10 @@ function createChromeMock(initial: StorageMap = {}) {
           Object.assign(store, items)
         }),
         remove: vi.fn(async () => undefined)
+      },
+      // 语言偏好变更会刷新菜单标题；单测只需可挂监听
+      onChanged: {
+        addListener: vi.fn()
       }
     },
     runtime: {
