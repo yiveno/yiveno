@@ -34,7 +34,7 @@ alwaysApply: true
    - `fix`: 修复已有行为 / 契约 / 门禁 / 类型错误
    - `refactor`: 不改对外行为的内部重构（命名 / 抽象 / 拆分）
    - `docs`: 文档 / ADR / 注释 / message 规范
-   - `test`: 新增 / 修改测试夹具、eval must、TTE 案例
+   - `test`: 新增 / 修改测试数据、eval must、TTE 案例
    - `chore`: 工程工具 / 依赖 / 配置 / 清理（不改行为）
    - `ci`: GitHub Actions / pre-commit / pre-push / doc:check 配置
    - `perf`: 性能优化（Recall 排序、Hybrid、IndexedDB 索引）

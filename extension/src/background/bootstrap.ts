@@ -23,6 +23,7 @@ import {
   type SubscriptionChangedEvent
 } from '@/infrastructure/identity/subscription-service'
 import { initializeMemoryDatabase } from '@/infrastructure/indexeddb/memory-db'
+import { initUiLocaleFromSettings } from '@/infrastructure/i18n/t'
 import { logger } from '@/infrastructure/logging/logger'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logChromeStorageQuotaSample } from '@/infrastructure/storage/chrome-storage-quota'
@@ -46,6 +47,11 @@ function handleSubscriptionChanged(event: SubscriptionChangedEvent): void {
 async function bootstrapBackground(): Promise<void> {
   const startedAt = flowStart('Background', 'bootstrap 开始')
   try {
+    // UI 语言偏好（右键菜单 / omnibox 文案走 t()）
+    await initUiLocaleFromSettings().catch(error => {
+      logger.warn('Background', 'UI 语言初始化失败，回退 chrome.i18n', error)
+    })
+
     // Recall 主壳：点图标开 Side Panel（须无 default_popup）
     await ensureSidePanelOpensOnActionClick()
 

@@ -97,6 +97,7 @@ import {
   readInstallOnboardingDone
 } from '@/infrastructure/storage/install-onboarding-storage'
 import { readBrowserOnline, subscribeBrowserOnline } from '@/infrastructure/browser/browser-online'
+import { subscribeActiveTabNavigation } from '@/infrastructure/browser/subscribe-active-tab-navigation'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import DetailExportBar from '@/infrastructure/ui/DetailExportBar.vue'
 import DetailExportBarDock from '@/infrastructure/ui/DetailExportBarDock.vue'
@@ -621,7 +622,8 @@ const needsLivePageContextDomain = computed(
   () => pageContextExpanded.value || pageContextCombine.value || pageContextOnlySite.value
 )
 
-let pageContextTabListenAttached = false
+/** 取消活动标签导航订阅（页面上下文域名刷新）。 */
+let stopPageContextTabNavigation: (() => void) | null = null
 let pageContextDomainRefreshTimer: ReturnType<typeof setTimeout> | null = null
 
 function scheduleRefreshPageContextDomain(): void {
@@ -634,44 +636,18 @@ function scheduleRefreshPageContextDomain(): void {
   }, 120)
 }
 
-function handlePageContextTabActivated(): void {
-  scheduleRefreshPageContextDomain()
-}
-
-function handlePageContextTabUpdated(
-  _tabId: number,
-  changeInfo: { url?: string; status?: string }
-): void {
-  if (changeInfo.url || changeInfo.status === 'complete') {
-    scheduleRefreshPageContextDomain()
-  }
-}
-
-function handlePageContextWindowFocusChanged(windowId: number): void {
-  if (windowId === chrome.windows.WINDOW_ID_NONE) {
-    return
-  }
-  scheduleRefreshPageContextDomain()
-}
-
 function attachPageContextTabListeners(): void {
-  if (pageContextTabListenAttached) {
+  if (stopPageContextTabNavigation) {
     return
   }
-  chrome.tabs.onActivated.addListener(handlePageContextTabActivated)
-  chrome.tabs.onUpdated.addListener(handlePageContextTabUpdated)
-  chrome.windows.onFocusChanged.addListener(handlePageContextWindowFocusChanged)
-  pageContextTabListenAttached = true
+  stopPageContextTabNavigation = subscribeActiveTabNavigation(() => {
+    scheduleRefreshPageContextDomain()
+  })
 }
 
 function detachPageContextTabListeners(): void {
-  if (!pageContextTabListenAttached) {
-    return
-  }
-  chrome.tabs.onActivated.removeListener(handlePageContextTabActivated)
-  chrome.tabs.onUpdated.removeListener(handlePageContextTabUpdated)
-  chrome.windows.onFocusChanged.removeListener(handlePageContextWindowFocusChanged)
-  pageContextTabListenAttached = false
+  stopPageContextTabNavigation?.()
+  stopPageContextTabNavigation = null
   if (pageContextDomainRefreshTimer !== null) {
     clearTimeout(pageContextDomainRefreshTimer)
     pageContextDomainRefreshTimer = null
@@ -2683,8 +2659,8 @@ onUnmounted(() => {
 
 .recall-offline-copy {
   display: flex;
-  flex: 1 1 auto;
   flex-direction: column;
+  flex: 1 1 auto;
   gap: 2px;
   min-width: 0;
 }
@@ -2700,8 +2676,8 @@ onUnmounted(() => {
   margin: 0;
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: 0.01em;
   line-height: 1.3;
+  letter-spacing: 0.01em;
   color: var(--on-surface-muted);
 }
 

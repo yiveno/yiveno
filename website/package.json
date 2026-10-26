@@ -18,6 +18,8 @@
     "stylelint": "stylelint \"src/**/*.vue\" --no-cache --fix && echo '✅ Stylelint: 所有问题已修复'",
     "stylelint:check": "stylelint \"src/**/*.vue\" --no-cache",
     "preview": "astro preview",
+    "test": "vitest run",
+    "test:run": "vitest run",
     "deploy": "bun run build:prod && bunx wrangler pages deploy dist --project-name yiveno-website --branch main --commit-dirty=true"
   },
   "dependencies": {

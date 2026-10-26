@@ -7,6 +7,7 @@
 | -------------------------- | ------------------------------------------------------- | ----------------------------------------- |
 | **`session-boot.mdc`**     | **Cursor 开机层**（当下块由 CURRENT 同步）              | 改 `CURRENT.md` → `bun run sync:ide-boot` |
 | `terminology.mdc`          | 术语硬规则（clue、禁止 Search 等）                      | 改术语表后同步                            |
+| `dev-chinese-plain.mdc`    | 开发者面沟通：清晰优先、术语释义、解释结构 + 正规词表   | 沟通风格 / 黑话清单变更时                 |
 | `project.mdc`              | **Yiveno 项目硬规则的单一权威**（分层、MCP、文档↔代码） | 架构/验证策略变更（详 ADR-013）           |
 | `agent-core.mdc`           | AI **行为元规则**（项目无关；AI 怎么思考与交付）        | 极小改动；可移植                          |
 | `git-workdir-safety.mdc`   | 禁止破坏性 git 还原 WIP                                 | 极少改                                    |

@@ -32,7 +32,7 @@ import {
   parseUserSettings,
   USER_SETTINGS_STORAGE_KEY
 } from '@/core/settings/user-settings'
-import { t } from '@/infrastructure/i18n/t'
+import { initUiLocaleFromSettings, t } from '@/infrastructure/i18n/t'
 import { warnIfContentScriptMessagesMissing } from '@/infrastructure/i18n/extension-i18n-boot'
 import { isMemoryErrorCode, tMemoryError } from '@/infrastructure/i18n/memory-error'
 import type { MessageKey } from '@/infrastructure/i18n/message-keys'
@@ -1303,11 +1303,15 @@ export function bootSelectionToolbar(): boolean {
     return true
   }
 
-  warnIfContentScriptMessagesMissing('selection_toolbar')
   writeBootFlag(runtimeId)
   document.getElementById(TOOLBAR_HOST_ID)?.remove()
   installPageApi()
   registerListeners()
+  void initUiLocaleFromSettings()
+    .catch(() => undefined)
+    .finally(() => {
+      warnIfContentScriptMessagesMissing('selection_toolbar')
+    })
   void refreshToolbarEnabledFromStorage().catch(() => {
     if (!isExtensionContextValid()) {
       teardown()

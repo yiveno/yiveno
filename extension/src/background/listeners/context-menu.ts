@@ -1,11 +1,12 @@
 import { CodedError } from '@/core/common/coded-error'
 import { optionalProp } from '@/core/common/optional-props'
+import { USER_SETTINGS_STORAGE_KEY } from '@/core/settings/user-settings'
 import { captureTextExcerptFromContextMenu } from '@/application/capture/capture-text-excerpt-service'
 import { ensureBackgroundBootstrapped } from '@/background/bootstrap-ready'
 import { flashActionBadge } from '@/infrastructure/browser/action-badge'
 import { isSavablePageUrl } from '@/infrastructure/browser/active-tab-reader'
+import { initUiLocaleFromSettings, t } from '@/infrastructure/i18n/t'
 import { logger } from '@/infrastructure/logging/logger'
-import { t } from '@/infrastructure/i18n/t'
 
 /** 右键菜单：保存选区到 Yiveno。 */
 export const CONTEXT_MENU_SAVE_SELECTION_ID = 'yiveno-save-selection' as const
@@ -127,6 +128,18 @@ export function registerContextMenuListeners(): void {
       .catch(error => {
         logger.error('ContextMenu', '保存选区失败', error)
         void flashActionBadge('error')
+      })
+  })
+
+  // 语言偏好变更后重载文案目录并刷新菜单标题
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== 'local' || !(USER_SETTINGS_STORAGE_KEY in changes)) {
+      return
+    }
+    void initUiLocaleFromSettings()
+      .then(() => registerContextMenuItems())
+      .catch(error => {
+        logger.warn('ContextMenu', '语言变更后刷新菜单失败', error)
       })
   })
 

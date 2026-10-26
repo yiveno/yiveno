@@ -1,6 +1,6 @@
 #!/usr/bin/env bun
 /**
- * Validate en messages.json keys against MESSAGE_KEYS and product-surface forbidden labels.
+ * Validate en/zh_CN messages.json keys against MESSAGE_KEYS and product-surface forbidden labels.
  */
 import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
@@ -10,6 +10,7 @@ import { scanEnMessagesForProductSurfaceViolations } from '../src/infrastructure
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
 const enPath = join(root, 'public/_locales/en/messages.json')
+const zhPath = join(root, 'public/_locales/zh_CN/messages.json')
 const keysTsPath = join(root, 'src/infrastructure/i18n/message-keys.ts')
 
 function loadMessageKeys(path) {
@@ -35,8 +36,10 @@ function diff(a, b) {
 }
 
 const en = loadMessageKeys(enPath)
+const zh = loadMessageKeys(zhPath)
 const declared = loadDeclaredKeys(keysTsPath)
 const enMessages = JSON.parse(readFileSync(enPath, 'utf8'))
+const zhMessages = JSON.parse(readFileSync(zhPath, 'utf8'))
 
 const errors = []
 
@@ -46,7 +49,28 @@ if (onlyDeclared.length > 0) {
   errors.push(`MESSAGE_KEYS 多出: ${onlyDeclared.join(', ')}`)
 }
 if (onlyLocale.length > 0) {
-  errors.push(`messages.json 有但 MESSAGE_KEYS 缺: ${onlyLocale.join(', ')}`)
+  errors.push(`en messages.json 有但 MESSAGE_KEYS 缺: ${onlyLocale.join(', ')}`)
+}
+
+const zhMissing = diff(en, zh)
+const zhExtra = diff(zh, en)
+if (zhMissing.length > 0) {
+  errors.push(
+    `zh_CN 缺键: ${zhMissing.slice(0, 12).join(', ')}${zhMissing.length > 12 ? ` …共 ${zhMissing.length}` : ''}`
+  )
+}
+if (zhExtra.length > 0) {
+  errors.push(
+    `zh_CN 多键: ${zhExtra.slice(0, 12).join(', ')}${zhExtra.length > 12 ? ` …共 ${zhExtra.length}` : ''}`
+  )
+}
+
+for (const key of en) {
+  const enPh = enMessages[key]?.placeholders
+  const zhPh = zhMessages[key]?.placeholders
+  if (JSON.stringify(enPh ?? null) !== JSON.stringify(zhPh ?? null)) {
+    errors.push(`zh_CN placeholders 与 en 不一致: ${key}`)
+  }
 }
 
 const forbiddenViolations = scanEnMessagesForProductSurfaceViolations(enMessages)
@@ -59,6 +83,11 @@ if (forbiddenViolations.length > 0) {
   errors.push(`产品面禁用词 Search: ${preview}${suffix}`)
 }
 
+const zhSearchHits = [...zh].filter(key => /搜索/.test(zhMessages[key]?.message ?? ''))
+if (zhSearchHits.length > 0) {
+  errors.push(`zh_CN 含禁用「搜索」: ${zhSearchHits.slice(0, 8).join(', ')}`)
+}
+
 if (errors.length > 0) {
   console.error('❌ i18n key 校验失败:')
   for (const line of errors) {
@@ -67,4 +96,6 @@ if (errors.length > 0) {
   process.exit(1)
 }
 
-console.log(`✅ i18n keys aligned (en / MESSAGE_KEYS, ${en.size} keys, forbidden-label scan ok)`)
+console.log(
+  `✅ i18n keys aligned (en / zh_CN / MESSAGE_KEYS, ${en.size} keys, forbidden-label scan ok)`
+)

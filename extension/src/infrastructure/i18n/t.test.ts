@@ -1,6 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { getUILanguage, t } from '@/infrastructure/i18n/t'
+import {
+  getEffectiveUiLocale,
+  getUILanguage,
+  setUiLocaleCatalogForTests,
+  t
+} from '@/infrastructure/i18n/t'
 
 describe('i18n t()', () => {
   const getMessage = vi.fn()
@@ -9,6 +14,7 @@ describe('i18n t()', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    setUiLocaleCatalogForTests('en', null)
     Object.defineProperty(globalThis, 'chrome', {
       configurable: true,
       writable: true,
@@ -16,12 +22,16 @@ describe('i18n t()', () => {
         i18n: {
           getMessage,
           getUILanguage: getUILanguageMock
+        },
+        runtime: {
+          getURL: (path: string) => `chrome-extension://test/${path}`
         }
       }
     })
   })
 
   afterEach(() => {
+    setUiLocaleCatalogForTests('en', null)
     Object.defineProperty(globalThis, 'chrome', {
       configurable: true,
       writable: true,
@@ -29,13 +39,13 @@ describe('i18n t()', () => {
     })
   })
 
-  it('返回 getMessage 文案', () => {
+  it('无目录时回退 getMessage', () => {
     getMessage.mockReturnValue('Save to Yiveno')
     expect(t('context_menu_save_selection')).toBe('Save to Yiveno')
     expect(getMessage).toHaveBeenCalledWith('context_menu_save_selection')
   })
 
-  it('支持 substitutions', () => {
+  it('支持 substitutions（chrome 路径）', () => {
     getMessage.mockReturnValue('Importing 3 / 10')
     expect(t('app_name', ['3', '10'])).toBe('Importing 3 / 10')
     expect(getMessage).toHaveBeenCalledWith('app_name', ['3', '10'])
@@ -46,8 +56,15 @@ describe('i18n t()', () => {
     expect(t('omnibox_no_match')).toBe('omnibox_no_match')
   })
 
-  it('getUILanguage 转发 chrome.i18n', () => {
-    expect(getUILanguage()).toBe('en-US')
-    expect(getUILanguageMock).toHaveBeenCalled()
+  it('目录优先于 chrome.i18n；getUILanguage 跟生效 locale', () => {
+    setUiLocaleCatalogForTests('zh_CN', {
+      context_menu_save_selection: { message: '保存到 Yiveno' },
+      with_sub: { message: '导入 $1 / $2' }
+    })
+    expect(t('context_menu_save_selection')).toBe('保存到 Yiveno')
+    expect(t('with_sub', ['3', '10'])).toBe('导入 3 / 10')
+    expect(getMessage).not.toHaveBeenCalled()
+    expect(getEffectiveUiLocale()).toBe('zh_CN')
+    expect(getUILanguage()).toBe('zh-CN')
   })
 })

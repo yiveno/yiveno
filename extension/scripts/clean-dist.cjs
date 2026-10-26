@@ -92,15 +92,19 @@ function syncExtensionPublicAssets() {
   copyIfPresent(path.join(publicDir, '_locales'), path.join(distDir, '_locales'))
   copyIfPresent(path.join(publicDir, 'offscreen.html'), path.join(distDir, 'offscreen.html'))
 
-  /** 仅保留 en；空目录或非 en locale 会导致 Chrome 在对应 UI 语言下加载失败。 */
+  /**
+   * 仅保留已接线产品 locale（en / zh_CN）。
+   * 其它目录（空壳或实验）会在对应 Chrome UI 语言下加载失败，故剔除。
+   */
+  const allowedLocales = new Set(['en', 'zh_CN'])
   const localesDir = path.join(distDir, '_locales')
   if (fs.existsSync(localesDir)) {
     for (const entry of fs.readdirSync(localesDir, { withFileTypes: true })) {
-      if (!entry.isDirectory() || entry.name === 'en') {
+      if (!entry.isDirectory() || allowedLocales.has(entry.name)) {
         continue
       }
       fs.rmSync(path.join(localesDir, entry.name), { recursive: true, force: true })
-      console.warn(`[clean-dist] 已移除非 en locale 目录: _locales/${entry.name}`)
+      console.warn(`[clean-dist] 已移除未支持 locale 目录: _locales/${entry.name}`)
     }
   }
 }

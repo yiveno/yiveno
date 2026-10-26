@@ -36,7 +36,8 @@ MemoryItem.clues.note   →  附注（Capture 时/事后写的提示）
 
 ## 沟通纪律
 
-- **产品面文案**：仅美式英语；用 clue / Recall / library / evidence。
+- **产品面文案**：UI 可为 en / zh_CN；用 clue / Recall / library / evidence；中文 UI 禁止「搜索」指代找回。
+- **Recall 线索**：主路径仍美式英语；勿把中文线索当已上线 P0。
 - **开发者讨论**：中文 OK；核心概念首次出现可括号标注英文标识符。
 - **改术语**：先改 `Yiveno-术语表.md` → 再同步产品文档、设计标准、代码、i18n。
 - **写 PR/测试/MCP 步骤**：用户动作用「提交 clue」「发起 Recall」；不用「搜索」「查询」。

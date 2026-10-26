@@ -13,7 +13,7 @@ module.exports = {
         'fix', // 修复已有行为 / 契约 / 门禁
         'refactor', // 不改对外行为的内部重构
         'docs', // 文档 / ADR / 注释
-        'test', // 测试夹具 / eval must / TTE
+        'test', // 测试数据 / eval must / TTE
         'chore', // 工程工具 / 依赖 / 配置 / 清理
         'ci', // GitHub Actions / hooks / doc:check 配置
         'perf', // 性能优化

@@ -385,9 +385,9 @@ onUnmounted(() => {
 
 .page-context__summary {
   min-width: 0;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .page-context__panel {
@@ -416,20 +416,20 @@ onUnmounted(() => {
 .page-context__card {
   display: flex;
   flex: 1 1 auto;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   min-width: 0;
   margin: 0;
   padding: var(--space-sm) var(--space-xs);
   border: 0;
   border-radius: var(--radius-lg);
-  font: inherit;
   color: var(--on-surface-muted);
   background: color-mix(in srgb, var(--ink) 4%, transparent);
   cursor: pointer;
+  font: inherit;
 }
 
-.page-context__card:hover:not(:disabled):not(.page-context__card--unavailable) {
+.page-context__card:hover:not(:disabled, .page-context__card--unavailable) {
   color: var(--on-surface);
   background: color-mix(in srgb, var(--ink) 8%, transparent);
 }
@@ -474,17 +474,17 @@ onUnmounted(() => {
 .page-context__source {
   display: flex;
   flex: 1 1 auto;
-  align-items: center;
   justify-content: center;
+  align-items: center;
   min-width: 0;
   margin: 0;
   padding: var(--space-sm) var(--space-xs);
   border: 0;
   border-radius: var(--radius-lg);
-  font: inherit;
   color: var(--on-surface-muted);
   background: color-mix(in srgb, var(--ink) 4%, transparent);
   cursor: pointer;
+  font: inherit;
 }
 
 .page-context__source:hover:not(:disabled) {

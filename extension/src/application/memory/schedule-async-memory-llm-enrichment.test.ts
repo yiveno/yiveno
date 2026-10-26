@@ -49,7 +49,8 @@ describe('runAsyncMemoryLlmEnrichment', () => {
       selectionToolbarEnabled: true,
       aiFeaturesEnabled: true,
       chromeBookmarkIngestEnabled: true,
-      mcpReadOnlyEnabled: false
+      mcpReadOnlyEnabled: false,
+      uiLocalePreference: 'system'
     })
   })
 
@@ -58,7 +59,8 @@ describe('runAsyncMemoryLlmEnrichment', () => {
       selectionToolbarEnabled: true,
       aiFeaturesEnabled: false,
       chromeBookmarkIngestEnabled: true,
-      mcpReadOnlyEnabled: false
+      mcpReadOnlyEnabled: false,
+      uiLocalePreference: 'system'
     })
     const item = createBookmarkMemoryItem({
       ownerId: 'o',

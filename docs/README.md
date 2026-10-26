@@ -46,6 +46,10 @@
 - [`design/brand-assets/README.md`](./design/brand-assets/README.md) — 仓内母本
 - [`design/brand-asset-release-checklist.md`](./design/brand-asset-release-checklist.md) — 母本 → `public/` → 商店/官网
 
+**审计（工作区活跃）：**
+
+- [`audits/`](./audits/) — 现行审计落盘；例：[`2026-10-国内化与多市场准备审计.md`](./audits/2026-10-国内化与多市场准备审计.md)
+
 **归档（参考 · 非权威）：**
 
 - [`archive/README.md`](./archive/README.md) — 历史文档入口（TTE 研究、市场调研、过时工程文档、审计快照等）

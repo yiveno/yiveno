@@ -6,6 +6,7 @@ export type SettingsSectionId =
   | 'data' // 数据：导出 / 清除本机 / 删云端 / 删账号
   | 'privacy' // 隐私：说明 / 开同步确认 / 政策外链
   | 'ai' // AI：开关与模型说明
+  | 'language' // 界面语言：system / en / zh_CN
 
 /** 设置分区文案 key（由 UI `t()` 解析；core 不依赖 chrome）。 */
 export interface SettingsSectionTabDef {
@@ -17,6 +18,7 @@ export interface SettingsSectionTabDef {
     | 'settings_tab_data'
     | 'settings_tab_privacy'
     | 'settings_tab_ai'
+    | 'settings_tab_language'
 }
 
 /** 默认分区：划词保存相关开关。 */
@@ -32,7 +34,8 @@ export const SETTINGS_SECTION_TABS: readonly SettingsSectionTabDef[] = [
   { id: 'account_sync', labelKey: 'settings_tab_account_sync' },
   { id: 'data', labelKey: 'settings_tab_data' },
   { id: 'privacy', labelKey: 'settings_tab_privacy' },
-  { id: 'ai', labelKey: 'settings_tab_ai' }
+  { id: 'ai', labelKey: 'settings_tab_ai' },
+  { id: 'language', labelKey: 'settings_tab_language' }
 ] as const
 
 /** 旧深链 `?section=usage` → 现「保存」分区。 */

@@ -1,0 +1,9 @@
+# Cloudflare Pages（yiveno-website）· 与 `bunx wrangler pages deploy dist` 同项目名
+name = "yiveno-website"
+compatibility_date = "2026-07-31"
+pages_build_output_dir = "dist"
+
+# 软性 geo 域名跳转（Pages Function · 非 CF 产品开关）。
+# true：CN → yiveno.cn；其它有国家码 → yiveno.com。临时关闭改 false 后 redeploy。
+[vars]
+GEO_CN_MARKET_LIVE = "true"

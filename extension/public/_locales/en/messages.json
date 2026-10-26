@@ -902,6 +902,33 @@
   "settings_tab_ai": {
     "message": "AI"
   },
+  "settings_tab_language": {
+    "message": "Language"
+  },
+  "settings_section_language": {
+    "message": "Language"
+  },
+  "settings_section_language_copy": {
+    "message": "Choose the language for this extension. Defaults follow your browser language — you can override anytime."
+  },
+  "settings_language_legend": {
+    "message": "Display language"
+  },
+  "settings_language_system": {
+    "message": "Match browser"
+  },
+  "settings_language_system_hint": {
+    "message": "Follows your browser language (Chinese browsers default to Simplified Chinese)."
+  },
+  "settings_language_en": {
+    "message": "English"
+  },
+  "settings_language_zh_CN": {
+    "message": "简体中文"
+  },
+  "settings_language_saving": {
+    "message": "Updating language…"
+  },
   "settings_placeholder_privacy": {
     "message": "Privacy options are not available yet."
   },

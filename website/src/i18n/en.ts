@@ -1,6 +1,7 @@
 /**
- * 官网产品面文案（仅美式英语）。
- * 新增键：先写本表，再在组件用 `t('…')`；禁止在 Vue 里写死用户可见句。
+ * 官网产品面英文文案（美式英语；与 `zh.ts` 键对称）。
+ * 新增键：先写本表与 zh，再在组件用 `t('…')`；禁止在 Vue 里写死用户可见句。
+ * 营销首页等大段文案仍多为 Astro 硬编码英文——见国内化审计报告缺口。
  */
 export const en = {
   'uninstall.meta.title': 'Quick note · Yiveno',
@@ -41,7 +42,18 @@ export const en = {
 
   'uninstall.done.title': 'Thanks — that helps',
   'uninstall.done.lede': "We'll use it to make finding things better.",
-  'uninstall.done.closeHint': 'You can close this tab now.'
+  'uninstall.done.closeHint': 'You can close this tab now.',
+
+  'nav.support': 'Support',
+  'nav.language': 'Language',
+  'nav.language_en': 'English',
+  'nav.language_zh_CN': '简体中文',
+  'nav.language_system': 'Match browser',
+  'nav.aria_primary': 'Primary',
+  'footer.support': 'Support',
+  'footer.privacy': 'Privacy',
+  'footer.terms': 'Terms',
+  'a11y.skip_to_content': 'Skip to content'
 } as const
 
 export type WebsiteMessageKey = keyof typeof en

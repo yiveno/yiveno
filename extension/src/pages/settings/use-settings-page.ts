@@ -5,6 +5,7 @@ import {
 } from '@/core/commands/command-display'
 import type { ExtensionCommandInfo } from '@/core/messaging/commands-messages'
 import type { AuthSignOutMode } from '@/core/messaging/account-sync-messages'
+import type { UiLocalePreference } from '@/core/i18n/ui-locale'
 import {
   parseSettingsSectionFromLocationSearch,
   resolveSettingsSectionTab,
@@ -83,12 +84,14 @@ export function useSettingsPage() {
   const chromeBookmarkIngestEnabled = ref(false)
   const aiFeaturesEnabled = ref(true)
   const mcpReadOnlyEnabled = ref(false)
+  const uiLocalePreference = ref<UiLocalePreference>('system')
   const settingsState = ref<SettingsLoadState>('loading')
   const settingsError = ref('')
   const savingSelectionToolbar = ref(false)
   const savingChromeBookmarkIngest = ref(false)
   const savingAiFeatures = ref(false)
   const savingMcpReadOnly = ref(false)
+  const savingUiLocale = ref(false)
   const hostedQuotaLoading = ref(false)
   const hostedQuotaText = ref('')
   const hostedQuotaError = ref('')
@@ -300,6 +303,7 @@ export function useSettingsPage() {
       chromeBookmarkIngestEnabled.value = response.settings.chromeBookmarkIngestEnabled
       aiFeaturesEnabled.value = response.settings.aiFeaturesEnabled
       mcpReadOnlyEnabled.value = response.settings.mcpReadOnlyEnabled
+      uiLocalePreference.value = response.settings.uiLocalePreference
       settingsState.value = 'ready'
     } catch {
       settingsState.value = 'error'
@@ -388,6 +392,30 @@ export function useSettingsPage() {
       settingsError.value = t('settings_error_update')
     } finally {
       savingMcpReadOnly.value = false
+    }
+  }
+
+  /**
+   * 界面语言偏好；写入 storage 后整页 reload，使所有入口重新 `initUiLocaleFromSettings`。
+   */
+  async function handleUiLocalePreferenceChange(nextValue: UiLocalePreference) {
+    if (nextValue === uiLocalePreference.value) {
+      return
+    }
+    savingUiLocale.value = true
+    settingsError.value = ''
+    try {
+      const response = await updateUserSettings({ uiLocalePreference: nextValue })
+      if (!response.ok) {
+        settingsError.value = tSettingsError(response.errorCode)
+        return
+      }
+      uiLocalePreference.value = response.settings.uiLocalePreference
+      window.location.reload()
+    } catch {
+      settingsError.value = t('settings_error_update')
+    } finally {
+      savingUiLocale.value = false
     }
   }
 
@@ -1180,6 +1208,7 @@ export function useSettingsPage() {
     handleRunIncrementalSync,
     handleSelectionToolbarToggle,
     handleSyncToggle,
+    handleUiLocalePreferenceChange,
     hasCompletedInitialSectionSync,
     hasOrphanOwners,
     hostedQuotaError,
@@ -1216,7 +1245,9 @@ export function useSettingsPage() {
     savingMcpReadOnly,
     savingSelectionToolbar,
     savingSync,
+    savingUiLocale,
     selectionToolbarEnabled,
+    uiLocalePreference,
     settingsActiveTabId,
     settingsError,
     settingsPanelId,

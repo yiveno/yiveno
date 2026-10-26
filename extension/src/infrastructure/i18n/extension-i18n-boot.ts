@@ -1,6 +1,6 @@
 import type { MessageKey } from '@/infrastructure/i18n/message-keys'
 import { applyDocumentLocale } from '@/infrastructure/i18n/apply-document-locale'
-import { t } from '@/infrastructure/i18n/t'
+import { initUiLocaleFromSettings, t } from '@/infrastructure/i18n/t'
 import { logger } from '@/infrastructure/logging/logger'
 
 /** 扩展 HTML 页面入口 id（与 Vite 多页入口一一对应）。 */
@@ -125,9 +125,10 @@ export function warnIfContentScriptMessagesMissing(bundle: ContentScriptBundleId
 }
 
 /**
- * 扩展 HTML 页统一冷启动：document lang/title + 关键 i18n 门禁。
+ * 扩展 HTML 页统一冷启动：加载语言偏好与文案目录 → document lang/title → 关键 i18n 门禁。
  */
-export function bootExtensionPage(page: ExtensionPageId): void {
+export async function bootExtensionPage(page: ExtensionPageId): Promise<void> {
+  await initUiLocaleFromSettings()
   applyDocumentLocale({ titleKey: EXTENSION_PAGE_TITLE_KEYS[page] })
   warnIfExtensionPageMessagesMissing(page)
 }

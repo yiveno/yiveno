@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import type { UiLocalePreference } from '@/core/i18n/ui-locale'
+
 /** chrome.storage.local 中的用户设置键。 */
 export const USER_SETTINGS_STORAGE_KEY = 'yiveno.userSettings' as const
 
@@ -20,7 +22,12 @@ export const UserSettingsSchema = z.object({
   /**
    * 只读 MCP beta（§5.10.5）：关闭后本机 MCP_RECALL_EVIDENCE 与云端 /api/mcp 均拒绝。
    */
-  mcpReadOnlyEnabled: z.boolean().default(false)
+  mcpReadOnlyEnabled: z.boolean().default(false),
+  /**
+   * 界面语言偏好：system 跟浏览器；en / zh_CN 强制。
+   * 只影响 UI 文案，不改变 Recall 线索理解语言策略。
+   */
+  uiLocalePreference: z.enum(['system', 'en', 'zh_CN']).default('system')
 })
 
 /**
@@ -32,7 +39,8 @@ export const UserSettingsPatchSchema = z.object({
   selectionToolbarEnabled: z.boolean().optional(),
   aiFeaturesEnabled: z.boolean().optional(),
   chromeBookmarkIngestEnabled: z.boolean().optional(),
-  mcpReadOnlyEnabled: z.boolean().optional()
+  mcpReadOnlyEnabled: z.boolean().optional(),
+  uiLocalePreference: z.enum(['system', 'en', 'zh_CN']).optional()
 })
 
 export type UserSettings = z.infer<typeof UserSettingsSchema>
@@ -42,7 +50,8 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   selectionToolbarEnabled: true,
   aiFeaturesEnabled: true,
   chromeBookmarkIngestEnabled: false,
-  mcpReadOnlyEnabled: false
+  mcpReadOnlyEnabled: false,
+  uiLocalePreference: 'system' satisfies UiLocalePreference
 }
 
 /** 合并局部更新并校验。 */

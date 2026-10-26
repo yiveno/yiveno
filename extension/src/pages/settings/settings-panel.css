@@ -295,3 +295,53 @@
   line-height: 1.4;
   color: var(--on-surface-muted);
 }
+
+.settings-language-fieldset {
+  margin: 0;
+  padding: 0;
+  border: none;
+  min-inline-size: 0;
+}
+
+.settings-language-legend {
+  margin: 0 0 var(--space-sm);
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--on-surface);
+}
+
+.settings-language-option {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  margin: 0 0 var(--space-sm);
+  padding: var(--space-sm);
+  border-radius: var(--radius-md, 8px);
+  background: var(--surface-muted, transparent);
+  cursor: pointer;
+}
+
+.settings-language-option input {
+  flex-shrink: 0;
+  margin-top: 0.2rem;
+}
+
+.settings-language-option__copy {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+}
+
+.settings-language-option__title {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--on-surface);
+}
+
+.settings-language-option__hint {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--on-surface-muted);
+}

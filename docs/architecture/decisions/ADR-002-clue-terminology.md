@@ -24,10 +24,12 @@
 
 **禁止：**
 
-- 产品面向用户文案使用 query/search 作主术语。
-- 新增 `zh_CN` 或其它非 en 产品 locale。
+- 产品面向用户文案使用 query/search 作主术语（含中文「搜索」指代找回）。
+
+**修订（2026-10）：** UI 允许 `en` + `zh_CN` locale（见产品文档 §市场语言）。本 ADR **不**禁止 zh_CN UI；Recall 线索主路径与术语权威仍见术语表 / 产品文档。
 
 ## 相关
 
 - `docs/product/Yiveno-术语表.md`、`.cursor/rules/terminology.mdc`
 - 消息：`RECALL_WITH_CLUE`；`extension/src/core/messaging/`
+- UI locale：`extension/src/core/i18n/ui-locale.ts`；`_locales/en` · `_locales/zh_CN`

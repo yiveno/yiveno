@@ -18,7 +18,8 @@ describe('user-settings', () => {
       selectionToolbarEnabled: false,
       aiFeaturesEnabled: true,
       chromeBookmarkIngestEnabled: false,
-      mcpReadOnlyEnabled: false
+      mcpReadOnlyEnabled: false,
+      uiLocalePreference: 'system'
     })
   })
 
@@ -27,8 +28,10 @@ describe('user-settings', () => {
       selectionToolbarEnabled: false,
       aiFeaturesEnabled: true,
       chromeBookmarkIngestEnabled: false,
-      mcpReadOnlyEnabled: false
+      mcpReadOnlyEnabled: false,
+      uiLocalePreference: 'system'
     })
     expect(parseUserSettings({ selectionToolbarEnabled: 'yes' })).toEqual(DEFAULT_USER_SETTINGS)
+    expect(parseUserSettings({ uiLocalePreference: 'zh_CN' }).uiLocalePreference).toBe('zh_CN')
   })
 })

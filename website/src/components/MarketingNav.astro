@@ -1,8 +1,9 @@
 ---
 /**
- * 营销页 Nav：无 AuthNav / Vue 依赖。
+ * 营销页 Nav：无 AuthNav 依赖；语言切换为 Vue island。
  */
 import YMark from './home/YMark.astro'
+import WebsiteLanguageSwitcher from './WebsiteLanguageSwitcher.vue'
 
 interface Props {
   waitlist?: boolean
@@ -18,7 +19,9 @@ const { waitlist = false } = Astro.props
   </a>
   <div class="site-nav__spacer"></div>
   {/* Pricing / Sign in：上线前先隐藏入口；路由仍保留 */}
-  <a href="/support" class="site-nav__link">
-    Support
+  <a href="/support" class="site-nav__link" data-yiveno-i18n="nav.support">
+    {' '}
+    Support{' '}
   </a>
+  <WebsiteLanguageSwitcher client:load />
 </nav>

@@ -622,21 +622,23 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 **实战前提：** 词典、canonical、parser、enrichment、追问芯片、单测语料的设计，必须先回答「用户来自哪里、主用什么语言发起 Recall」——**不得**按开发团队当前母语或仓库里已有的 `_locales` 倒推内部建模。
 
-**目标市场判断（Normative）：** 当前投放场景收束为 **北美 / 美式英语**。P0 不再维持“多 locale UI + 英语 Recall 主路径”的折中，而是把**运行时与产品-facing 资源统一到英文**，避免测试语料、parser、追问、UI 文案互相拉扯。
+**目标市场判断（Normative）：** 主验证与 Recall 质量仍以 **北美 / 美式英语线索** 为主；**UI** 已支持 **en + 简体中文（zh_CN）**，默认跟浏览器语言偏好，用户可在设置中覆盖并持久化。公司主体（如杭州）≠ 国内为主市场。
 
-**Normative 结论：** Yiveno 当前不是“多语言产品，英语优先”；而是 **American English only** 的产品切片。非英文输入、非英文 UI、非英文 Recall 语料均**不在 P0 目标能力内**。
+**Normative 结论：** **UI 双 locale（en / zh_CN）+ Recall 线索主路径仍为美式英语。** 非英文 Recall 语料、中文槽位 alias、中文 must eval **不在**当前目标能力内（与 UI 中文化分计）。禁止用 UI 中文冒充中文检索已就绪。
 
-**文案语气（Normative · 面向用户）：** 站在**北美用户**习惯写美式英语。口语、清楚、有一点温度；像帮忙找东西的人，不像公文或系统报错。  
-禁止：官方腔、空话套话、工程师黑话当主文案（如无必要勿堆 `matches` / `candidates` 判决感）、冷硬命令句堆砌。  
-允许：短、自然、略带鼓励（如 Narrow placeholder：`Still a bit broad — try something like “…”`）。
+**文案语气（Normative · 面向用户）：**
+
+- **en：** 北美习惯的美式英语——口语、清楚、有温度。
+- **zh_CN：** 简体中文——口语、清楚、有温度；禁止公文腔；产品动作勿用「搜索」（用找回 / Recall）。  
+  禁止：官方腔、空话套话、工程师黑话当主文案；冷硬命令句堆砌。
 
 **三层语言分离（必须遵守）：**
 
-| 层                   | 职责                                                                          | 语言策略                             |
-| -------------------- | ----------------------------------------------------------------------------- | ------------------------------------ |
-| **UI 展示**          | Side Panel / Settings / 空状态 / 追问文案 / 芯片标签                          | **仅 en**；运行时不再维护其它 locale |
-| **clue（用户线索）** | Recall composer 中的自然语言记忆描述                                          | 目标为 **American English** 自然表达 |
-| **内部 canonical**   | `tags` / `keywords` / `entities`、parser 槽位、编排加权、芯片填入值、分析口径 | **统一 English canonical**           |
+| 层                   | 职责                                                                          | 语言策略                                                |
+| -------------------- | ----------------------------------------------------------------------------- | ------------------------------------------------------- |
+| **UI 展示**          | Side Panel / Settings / 空状态 / 追问文案 / 芯片标签                          | **en + zh_CN**；默认 `system`（跟浏览器）；用户可覆盖   |
+| **clue（用户线索）** | Recall composer 中的自然语言记忆描述                                          | 目标仍为 **American English** 自然表达（中文线索非 P0） |
+| **内部 canonical**   | `tags` / `keywords` / `entities`、parser 槽位、编排加权、芯片填入值、分析口径 | **统一 English canonical**                              |
 
 **Canonical 规则（Normative · 实现约束）：**
 
@@ -648,8 +650,8 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 **P0 语言范围（与下节「P0 理解能力」对齐）：**
 
-- **做：** 英语 recall clue 的规则解析 + enrichment + 追问打穿；UI 与测试语料统一英文。
-- **不做：** 非英文 Recall、非英文 UI locale、以及任何中文 alias 对运行时行为的影响。
+- **做：** 英语 recall clue 的规则解析 + enrichment + 追问打穿；UI `en`/`zh_CN` 可切换；Recall 验收语料仍以英语为主。
+- **不做：** 非英文 Recall 主路径、中文槽位 alias 灰名单、把中文线索当 §5.9 / must 必测。
 
 **典型英语 P0 语料（验收参考，非穷举；与 `parse-recall-clue-lexicon` 对齐）：**
 
@@ -821,7 +823,7 @@ Yiveno 同时承载两条相互促进、**不互相替代**的线程：
 3. IndexedDB 只经 `indexedDBManager`（`extension/src/infrastructure/indexeddb/manager.ts`）。
 4. 领域类型以 Zod 为准：`extension/src/core/memory/*`；消息类型以 `extension/src/core/messaging/*` 为准。**禁止发明新 message `type` 字符串**，先改 schema 再接线。
 5. 对外文案：**筛选 / 找回**；禁止 **搜索 / Search**（各 locale 译文均遵守）。
-6. 扩展用户可见文案：仅经 **`chrome.i18n` + `_locales/en/messages.json`** 与 `t()`（`extension/src/infrastructure/i18n/`）。**禁止**在代码中写死 UI 自然语言，也禁止 `getMessage(...) || '兜底文案'`。`core` 不直接调 `chrome.i18n`（注入 `t` 或返回 message key）。**官网 `website/`** 产品向文案为美式英语，不走扩展 messages 文件；开发者文档/注释可中文。
+6. 扩展用户可见文案：经 **`t()`**（`extension/src/infrastructure/i18n/`）+ **`_locales/en` 与 `_locales/zh_CN`**；偏好 `system`/`en`/`zh_CN`（`UserSettings.uiLocalePreference`）。**禁止**在代码中写死 UI 自然语言，也禁止 `getMessage(...) || '兜底文案'`。`core` 不直接调 `chrome.i18n`（注入 `t` 或返回 message key）。**官网 `website/`** 有独立 `i18n`（en/zh_CN）；营销大段仍可能硬编码英文，缺口见审计。开发者文档/注释可中文。
 7. `:hover|:focus|:active` 禁止 `translate` / `scale` / `rotate`；只用背景 / opacity / shadow / outline / state layer（浮层入场与 pop/shake 例外见 §3）。
 8. 实现范围以 **§1 状态表**为准；未标「已上线」= 不得当成已有行为，也不得在 UI 暗示已可用。
 9. 本机找回：**关键词 + Hybrid**（有 embedding 则融合；无则降级关键词）；**不分 Free/Pro**。**理解层里程碑 M1**：允许「任意线索 → 精确检索约束」；门禁后口语可走 LLM（可关；失败/配额用尽降级规则）。不得全库喂模型，不得模型返回无真实 MemoryItem id 的答案。

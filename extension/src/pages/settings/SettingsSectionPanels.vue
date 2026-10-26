@@ -47,6 +47,7 @@ const {
   handleRunIncrementalSync,
   handleSelectionToolbarToggle,
   handleSyncToggle,
+  handleUiLocalePreferenceChange,
   hasOrphanOwners,
   hostedQuotaError,
   hostedQuotaLoading,
@@ -68,7 +69,9 @@ const {
   savingMcpReadOnly,
   savingSelectionToolbar,
   savingSync,
+  savingUiLocale,
   selectionToolbarEnabled,
+  uiLocalePreference,
   settingsError,
   settingsState,
   signedIn,
@@ -687,6 +690,71 @@ const {
         </SettingsActionRow>
       </div>
 
+      <p v-if="settingsError" class="settings-error" role="alert">{{ settingsError }}</p>
+    </div>
+  </template>
+
+  <template v-else-if="activeSection === 'language'">
+    <div class="settings-block" aria-labelledby="settings-language-heading">
+      <div class="settings-section-head">
+        <h2 id="settings-language-heading" class="settings-section-title">
+          {{ t('settings_section_language') }}
+        </h2>
+        <p class="settings-section-copy">{{ t('settings_section_language_copy') }}</p>
+      </div>
+
+      <fieldset
+        class="settings-language-fieldset"
+        :disabled="savingUiLocale || settingsState !== 'ready'"
+      >
+        <legend class="settings-language-legend">{{ t('settings_language_legend') }}</legend>
+
+        <label class="settings-language-option">
+          <input
+            type="radio"
+            name="yiveno-ui-locale"
+            value="system"
+            :checked="uiLocalePreference === 'system'"
+            @change="handleUiLocalePreferenceChange('system')"
+          />
+          <span class="settings-language-option__copy">
+            <span class="settings-language-option__title">{{ t('settings_language_system') }}</span>
+            <span class="settings-language-option__hint">{{
+              t('settings_language_system_hint')
+            }}</span>
+          </span>
+        </label>
+
+        <label class="settings-language-option">
+          <input
+            type="radio"
+            name="yiveno-ui-locale"
+            value="en"
+            :checked="uiLocalePreference === 'en'"
+            @change="handleUiLocalePreferenceChange('en')"
+          />
+          <span class="settings-language-option__copy">
+            <span class="settings-language-option__title">{{ t('settings_language_en') }}</span>
+          </span>
+        </label>
+
+        <label class="settings-language-option">
+          <input
+            type="radio"
+            name="yiveno-ui-locale"
+            value="zh_CN"
+            :checked="uiLocalePreference === 'zh_CN'"
+            @change="handleUiLocalePreferenceChange('zh_CN')"
+          />
+          <span class="settings-language-option__copy">
+            <span class="settings-language-option__title">{{ t('settings_language_zh_CN') }}</span>
+          </span>
+        </label>
+      </fieldset>
+
+      <p v-if="savingUiLocale" class="settings-status-strip__line" role="status">
+        {{ t('settings_language_saving') }}
+      </p>
       <p v-if="settingsError" class="settings-error" role="alert">{{ settingsError }}</p>
     </div>
   </template>

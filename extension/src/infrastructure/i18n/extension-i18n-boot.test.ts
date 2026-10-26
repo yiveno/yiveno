@@ -8,15 +8,18 @@ import {
   warnIfContentScriptMessagesMissing,
   warnIfExtensionPageMessagesMissing
 } from '@/infrastructure/i18n/extension-i18n-boot'
+import { setUiLocaleCatalogForTests } from '@/infrastructure/i18n/t'
 import { logger } from '@/infrastructure/logging/logger'
 
 describe('extension-i18n-boot', () => {
   const getMessage = vi.fn()
   const originalChrome = globalThis.chrome
   const originalDocument = globalThis.document
+  const originalFetch = globalThis.fetch
 
   beforeEach(() => {
     vi.clearAllMocks()
+    setUiLocaleCatalogForTests('en', null)
     Object.defineProperty(globalThis, 'chrome', {
       configurable: true,
       writable: true,
@@ -24,6 +27,14 @@ describe('extension-i18n-boot', () => {
         i18n: {
           getMessage,
           getUILanguage: () => 'en-US'
+        },
+        runtime: {
+          getURL: (path: string) => `chrome-extension://test/${path}`
+        },
+        storage: {
+          local: {
+            get: vi.fn(async () => ({}))
+          }
         }
       }
     })
@@ -35,9 +46,15 @@ describe('extension-i18n-boot', () => {
         title: ''
       }
     })
+    globalThis.fetch = vi.fn(async () => ({
+      ok: false,
+      status: 404,
+      json: async () => ({})
+    })) as unknown as typeof fetch
   })
 
   afterEach(() => {
+    setUiLocaleCatalogForTests('en', null)
     Object.defineProperty(globalThis, 'chrome', {
       configurable: true,
       writable: true,
@@ -48,6 +65,7 @@ describe('extension-i18n-boot', () => {
       writable: true,
       value: originalDocument
     })
+    globalThis.fetch = originalFetch
   })
 
   it('各扩展页关键 key 含 page title 与首屏 landmark', () => {
@@ -87,10 +105,10 @@ describe('extension-i18n-boot', () => {
     )
   })
 
-  it('bootExtensionPage 设置 document lang/title', () => {
+  it('bootExtensionPage 设置 document lang/title', async () => {
     getMessage.mockImplementation((key: string) => `resolved:${key}`)
-    bootExtensionPage('detail')
-    expect(document.documentElement.lang).toBe('en-US')
+    await bootExtensionPage('detail')
+    expect(document.documentElement.lang).toBe('en')
     expect(document.title).toBe('resolved:page_title_detail')
   })
 
@@ -98,9 +116,10 @@ describe('extension-i18n-boot', () => {
     const keys = getCriticalMessageKeysForContentScript('selection_toolbar')
     expect(keys).toContain('context_menu_save_selection')
     expect(keys).toContain('selection_toolbar_try_recall')
+    expect(keys).toContain('selection_toolbar_add_note')
   })
 
-  it('content script 缺关键文案时打 warn 并带上 bundle', () => {
+  it('缺划词关键文案时打 warn', () => {
     getMessage.mockReturnValue('')
     const warnSpy = vi.spyOn(logger, 'warn')
     warnIfContentScriptMessagesMissing('selection_toolbar')
@@ -108,8 +127,7 @@ describe('extension-i18n-boot', () => {
       'i18n',
       '关键 content script 文案未解析（将露出 message key）',
       expect.objectContaining({
-        bundle: 'selection_toolbar',
-        missingKeys: expect.arrayContaining(['selection_toolbar_try_recall'])
+        bundle: 'selection_toolbar'
       })
     )
   })

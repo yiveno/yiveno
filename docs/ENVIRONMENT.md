@@ -124,6 +124,12 @@ bun run env:check:prod
     - Env：`SKIP_DEPENDENCY_INSTALL=true`、`BUN_VERSION=1.4.0`，以及 `PUBLIC_API_BASE_URL` / `PUBLIC_SUPABASE_*` / `PUBLIC_WEBSITE_URL`
     - Path includes：`website/*`、`packages/*`（design-tokens）
     - 本机直推仍可用：`bun run deploy:web`
+    - **软性 geo 域名跳转（与 UI 语言无关）**
+      - 代码：`website/functions/_middleware.ts` + `website/src/geo/resolve-geo-domain-redirect.ts`
+      - 规则：CF `request.cf.country === CN` → `https://yiveno.cn`（同 path/query）；其它有国家码 → `https://yiveno.com`；港台澳走 `.com`
+      - 软性：Cookie / `?geo_domain=com|cn|stay`（Cookie 名 `yiveno_geo_domain`）；爬虫 UA 与 `*.pages.dev` / localhost 不跳
+      - **开关 `GEO_CN_MARKET_LIVE`**（Pages 环境变量 / `website/wrangler.toml` `[vars]`）：**已启用 `true`（2026-10-26）**。`CN` → `yiveno.cn`；其它有 CF 国家码 → `yiveno.com`；港台澳走 `.com`；Cookie / `?geo_domain=com|cn|stay` 可软性覆盖。临时关闭：改 `false` 后 `bun run deploy:web`
+      - **运维现状（2026-10-26）：** `yiveno.cn` Zone 已在 CF；Pages `yiveno-website` Custom domains 含 **`yiveno.com` / `www.yiveno.com` / `yiveno.cn` / `www.yiveno.cn`**（均 active）。DNS 可用 CNAME→`yiveno-website.pages.dev`（推荐）或 CNAME→`yiveno.com`（当前亦可；均须橙云 Proxied）
 
 ## 维护规则
 

@@ -158,6 +158,7 @@ export function extensionPostBuildPlugin(): Plugin {
         // i18n / manifest 不在 Vite graph：watch public 白名单，改 messages 即同步 dist/_locales
         this.addWatchFile(resolve(frontendPublicDir, 'manifest.json'))
         this.addWatchFile(resolve(frontendPublicDir, '_locales/en/messages.json'))
+        this.addWatchFile(resolve(frontendPublicDir, '_locales/zh_CN/messages.json'))
       }
     },
     watchChange(id) {

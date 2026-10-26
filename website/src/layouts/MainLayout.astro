@@ -65,6 +65,18 @@ const softwareJsonLd = {
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <script is:inline>
+      ;(function () {
+        try {
+          var pref = localStorage.getItem('yiveno.website.uiLocale') || 'system'
+          var nav = (navigator.language || 'en').toLowerCase().replace(/_/g, '-')
+          var zh = nav === 'zh' || nav.indexOf('zh-') === 0
+          var locale = pref === 'zh_CN' || pref === 'en' ? pref : zh ? 'zh_CN' : 'en'
+          document.documentElement.lang = locale === 'zh_CN' ? 'zh-CN' : 'en'
+          document.documentElement.dataset.yivenoUiLocale = locale
+        } catch (e) {}
+      })()
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{title}</title>
     <meta name="description" content={description} />
@@ -128,7 +140,7 @@ const softwareJsonLd = {
     <slot name="head" />
   </head>
   <body data-chrome={chrome} data-nav-over-hero={waitlistNav ? 'true' : undefined}>
-    <a class="skip-link" href="#main">
+    <a class="skip-link" href="#main" data-yiveno-i18n="a11y.skip_to_content">
       Skip to content
     </a>
     {/* 默认营销 Nav；账号域页面用 slot="nav" 注入 AppNav，避免首页打进 AuthNav CSS */}
@@ -146,15 +158,52 @@ const softwareJsonLd = {
       </a>
       <ul class="site-footer__links">
         <li>
-          <a href="/support">Support</a>
+          <a href="/support" data-yiveno-i18n="footer.support">
+            Support
+          </a>
         </li>
         <li>
-          <a href="/privacy">Privacy</a>
+          <a href="/privacy" data-yiveno-i18n="footer.privacy">
+            Privacy
+          </a>
         </li>
         <li>
-          <a href="/terms">Terms</a>
+          <a href="/terms" data-yiveno-i18n="footer.terms">
+            Terms
+          </a>
         </li>
       </ul>
     </footer>
+    <script is:inline>
+      ;(function () {
+        var dict = {
+          en: {
+            'nav.support': 'Support',
+            'footer.support': 'Support',
+            'footer.privacy': 'Privacy',
+            'footer.terms': 'Terms',
+            'a11y.skip_to_content': 'Skip to content',
+            'nav.aria_primary': 'Primary'
+          },
+          zh_CN: {
+            'nav.support': '支持',
+            'footer.support': '支持',
+            'footer.privacy': '隐私',
+            'footer.terms': '条款',
+            'a11y.skip_to_content': '跳到正文',
+            'nav.aria_primary': '主导航'
+          }
+        }
+        var locale = document.documentElement.dataset.yivenoUiLocale || 'en'
+        var pack = dict[locale] || dict.en
+        document.querySelectorAll('[data-yiveno-i18n]').forEach(function (el) {
+          var key = el.getAttribute('data-yiveno-i18n')
+          if (key && pack[key]) el.textContent = pack[key]
+        })
+        var nav = document.querySelector('.site-nav')
+        if (nav && pack['nav.aria_primary'])
+          nav.setAttribute('aria-label', pack['nav.aria_primary'])
+      })()
+    </script>
   </body>
 </html>

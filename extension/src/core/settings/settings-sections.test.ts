@@ -18,7 +18,8 @@ describe('settings-sections', () => {
       'account_sync',
       'data',
       'privacy',
-      'ai'
+      'ai',
+      'language'
     ])
   })
 

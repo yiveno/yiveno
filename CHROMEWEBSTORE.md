@@ -44,6 +44,10 @@ Help users capture web excerpts and bookmarks, then recall them later with natur
 
 English
 
+**Additional locales (extension package):** `_locales/en` + `_locales/zh_CN`. UI defaults follow the browser language; users can override in Settings → Language. Store listing primary language remains English.
+
+**Additional locales (extension package):** `en`, `zh_CN` (`public/_locales/`). UI defaults follow the browser language; users can override in Settings → Language. Store listing copy remains English-primary.
+
 ## Graphics & Assets
 
 | Asset                          | Dimensions          | Status                | Filename                                                                                      |
