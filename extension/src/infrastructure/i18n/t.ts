@@ -39,6 +39,19 @@ function detectSystemLocaleSafe(): UiLocaleId {
   }
 }
 
+/**
+ * 是否在「网页内 content script」上下文。
+ * 此上下文对 `chrome-extension://…` 的 fetch 走页面源，未声明 WAR 会被 Chrome 拒绝（ERR_FAILED）；
+ * 扩展页 / Service Worker 可直接读包内 `_locales`。
+ */
+function isWebPageContentScriptContext(): boolean {
+  try {
+    return typeof location !== 'undefined' && location.protocol !== 'chrome-extension:'
+  } catch {
+    return false
+  }
+}
+
 /** 读取 `_locales/<id>/messages.json`（扩展包内相对路径）。 */
 async function loadLocaleCatalog(locale: UiLocaleId): Promise<LocaleCatalog> {
   const url = chrome.runtime.getURL(`_locales/${locale}/messages.json`)
@@ -75,17 +88,23 @@ export async function initUiLocaleFromSettings(): Promise<UiLocaleId> {
 
     const browserLanguage = chrome.i18n.getUILanguage()
     const nextLocale = resolveUiLocale(preference, browserLanguage)
+    effectiveLocale = nextLocale
+
+    // 划词 CS：不 fetch、不告警，回退 chrome.i18n（跟浏览器 UI 语言）。
+    // 若把 `_locales` 加 WAR，任意网页可探测扩展；若静态打进 CS，包体暴涨。扩展页 / SW 仍 fetch 以尊重强制语言偏好。
+    if (isWebPageContentScriptContext()) {
+      catalog = null
+      return effectiveLocale
+    }
 
     try {
       catalog = await loadLocaleCatalog(nextLocale)
-      effectiveLocale = nextLocale
     } catch (error) {
       logger.warn('i18n', '加载文案目录失败，回退 chrome.i18n', {
         locale: nextLocale,
         error: error instanceof Error ? error.message : String(error)
       })
       catalog = null
-      effectiveLocale = nextLocale
     }
 
     return effectiveLocale

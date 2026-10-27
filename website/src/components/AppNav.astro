@@ -19,10 +19,7 @@ const { waitlist = false } = Astro.props
     <span class="site-nav__name">Yiveno</span>
   </a>
   <div class="site-nav__spacer"></div>
-  {/* Pricing：上线前先隐藏入口；路由仍保留 */}
-  <a href="/support" class="site-nav__link">
-    Support
-  </a>
+  {/* Pricing：上线前先隐藏入口；路由仍保留。Support 仅页脚。 */}
   <AuthNav client:idle />
   <UiBridgeHost client:idle />
 </nav>

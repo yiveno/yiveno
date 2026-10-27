@@ -1,12 +1,13 @@
 ---
 /**
  * 官网品牌 mark。
- * 浅底用 logo-mark.svg；深底用 logo-mark-on-dark.svg。
+ * 浅底（Paper）用 logo-mark.svg；深底（Ink）用 logo-mark-on-dark.svg。
+ * 首页 Nav 自适应：body[data-nav-over-hero]（由 IntersectionObserver 在任意 ink 段上维护）。
  */
 interface Props {
   size?: number
   class?: string
-  /** 首页 Nav：随 body[data-nav-over-hero] 在深/浅 mark 间切换 */
+  /** 首页 Nav：随 data-nav-over-hero 在浅底/深底 mark 间切换 */
   adaptiveNav?: boolean
 }
 

@@ -13,6 +13,15 @@
   --pad-x: clamp(28px, 6.5vw, 104px);
   --sec-y: clamp(88px, 11vw, 128px);
 
+  /*
+   * 官网响应式断点（Normative · §6.1.1）
+   * 仅作文档/DevTools 对照；@media 必须写字面量，勿 var()。
+   * md 640 · lg 960 · xl 1280（少用）
+   */
+  --bp-md: 640px;
+  --bp-lg: 960px;
+  --bp-xl: 1280px;
+
   /* Nav 场景覆盖（不升为跨产品角色） */
   --nav-bg: var(--surface);
   --nav-fg: var(--on-surface);
@@ -86,7 +95,12 @@ h3,
   color: var(--surface);
 }
 
-/* 首页：纸面底；Nav 悬于 Hero 时仅改文字色 */
+/*
+ * 首页 Nav 深/浅：依赖 body[data-nav-over-hero]
+ * - true（默认首屏）：叠在 Ink 上 → 浅色字 + on-dark mark（YMark adaptive）
+ * - false：叠在 Paper 上 → 深色字 + 浅底 mark
+ * 切换由 home-page.ts 观察 #hero 与所有 .home-sec--ink
+ */
 body[data-chrome='home'] {
   --nav-bg: transparent;
   --nav-brand: color-mix(in srgb, var(--on-ink) 98%, white);
@@ -150,9 +164,10 @@ img {
   z-index: var(--z-nav);
   display: flex;
   align-items: center;
-  gap: clamp(1rem, 2.8vw, 2.1rem);
+  /* 移动优先：窄屏紧凑；md+ 再松开 */
+  gap: 0.65rem;
   height: 68px;
-  padding: 0 var(--pad-x);
+  padding: 0 max(16px, var(--pad-x));
   background: var(--nav-bg);
   color: var(--nav-fg);
   border-bottom: 1px solid var(--nav-line);
@@ -183,7 +198,7 @@ img {
 .site-nav__name {
   font-family: var(--font-display);
   font-weight: 500;
-  font-size: 19px;
+  font-size: 17px;
   letter-spacing: -0.025em;
   line-height: 1;
   color: var(--nav-brand, inherit);
@@ -197,7 +212,7 @@ img {
 .site-nav__link {
   text-decoration: none;
   color: var(--nav-muted);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   letter-spacing: 0.005em;
   transition: color 0.18s ease;
@@ -217,4 +232,20 @@ img {
 body[data-chrome='home'][data-nav-over-hero='true'] .site-nav__link:focus-visible,
 body[data-chrome='home'][data-nav-over-hero='true'] .site-nav__brand:focus-visible {
   outline-color: var(--on-accent);
+}
+
+/* md+：导航放松（§6.1.1 · 640） */
+@media (min-width: 640px) {
+  .site-nav {
+    gap: clamp(1rem, 2.8vw, 2.1rem);
+    padding-inline: var(--pad-x);
+  }
+
+  .site-nav__name {
+    font-size: 19px;
+  }
+
+  .site-nav__link {
+    font-size: 15px;
+  }
 }

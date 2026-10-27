@@ -1,0 +1,390 @@
+<!--
+  Yiveno · Supabase Auth「Magic Link / OTP」邮件模板（权威草稿）
+  Dashboard：Authentication → Emails → Magic link
+  直达：https://supabase.com/dashboard/project/ugxgxytykxblctsyulsg/auth/templates
+
+  Subject（建议）:
+    Your Yiveno sign-in code
+
+  变量（Go template，大小写敏感）:
+    {{ .Token }}            — 6 位 OTP（登录页主路径必填）
+    {{ .ConfirmationURL }}  — magic link（备用；打开后落 /auth/callback）
+    {{ .SiteURL }}          — 项目 Site URL
+    {{ .Email }}            — 收件邮箱
+
+  有效期文案：须与 Dashboard「Email OTP expiration」一致（当前默认 3600s = 1 hour）。
+  改 Dashboard 秒数时，同步改本模板里的 “1 hour” / “one hour”。
+
+  设计：Brand Core（Ink / Paper / Sage）；邮件客户端用表格式 + 内联样式；
+  禁止依赖外链字体/远程 CSS。语气：美式英语、清楚有温度。
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
+    <meta name="supported-color-schemes" content="light" />
+    <title>Your Yiveno sign-in code</title>
+  </head>
+  <body
+    style="
+      margin: 0;
+      padding: 0;
+      background-color: #e8ece5;
+      color: #222c24;
+      font-family:
+        system-ui,
+        -apple-system,
+        'Segoe UI',
+        Roboto,
+        Helvetica,
+        Arial,
+        sans-serif;
+      -webkit-font-smoothing: antialiased;
+    "
+  >
+    <!-- Preheader（收件箱预览；隐藏） -->
+    <div
+      style="
+        display: none;
+        max-height: 0;
+        overflow: hidden;
+        opacity: 0;
+        mso-hide: all;
+      "
+    >
+      Your one-time code is {{ .Token }}. It expires in 1 hour — enter it on the Yiveno sign-in page.
+    </div>
+
+    <table
+      role="presentation"
+      cellpadding="0"
+      cellspacing="0"
+      border="0"
+      width="100%"
+      style="background-color: #e8ece5; margin: 0; padding: 0"
+    >
+      <tr>
+        <td align="center" style="padding: 32px 16px">
+          <table
+            role="presentation"
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            width="100%"
+            style="
+              max-width: 560px;
+              background-color: #ffffff;
+              border: 1px solid #ced8cb;
+              border-radius: 12px;
+              overflow: hidden;
+            "
+          >
+            <!-- Brand bar -->
+            <tr>
+              <td style="background-color: #192420; padding: 22px 28px">
+                <p
+                  style="
+                    margin: 0;
+                    font-family: Georgia, 'Times New Roman', Times, serif;
+                    font-size: 22px;
+                    font-weight: 400;
+                    letter-spacing: -0.02em;
+                    color: #dce8de;
+                    line-height: 1.2;
+                  "
+                >
+                  Yiveno
+                </p>
+                <p
+                  style="
+                    margin: 6px 0 0;
+                    font-size: 13px;
+                    font-weight: 400;
+                    color: #82998c;
+                    line-height: 1.4;
+                  "
+                >
+                  Find what you saved
+                </p>
+              </td>
+            </tr>
+
+            <!-- Body -->
+            <tr>
+              <td style="padding: 28px 28px 8px">
+                <h1
+                  style="
+                    margin: 0 0 12px;
+                    font-family: Georgia, 'Times New Roman', Times, serif;
+                    font-size: 24px;
+                    font-weight: 400;
+                    letter-spacing: -0.02em;
+                    color: #192420;
+                    line-height: 1.25;
+                  "
+                >
+                  Your sign-in code
+                </h1>
+                <p
+                  style="
+                    margin: 0 0 20px;
+                    font-size: 15px;
+                    font-weight: 400;
+                    color: #586860;
+                    line-height: 1.55;
+                  "
+                >
+                  Use this one-time code to sign in to Yiveno
+                  <span style="white-space: nowrap">{{ .Email }}</span>. Enter it on the page where
+                  you requested the code — don’t share it with anyone.
+                </p>
+
+                <!-- OTP card -->
+                <table
+                  role="presentation"
+                  cellpadding="0"
+                  cellspacing="0"
+                  border="0"
+                  width="100%"
+                  style="
+                    background-color: #f0f3ee;
+                    border: 1px solid #ced8cb;
+                    border-radius: 10px;
+                  "
+                >
+                  <tr>
+                    <td align="center" style="padding: 22px 16px">
+                      <p
+                        style="
+                          margin: 0 0 8px;
+                          font-size: 12px;
+                          font-weight: 500;
+                          letter-spacing: 0.06em;
+                          text-transform: uppercase;
+                          color: #82998c;
+                          line-height: 1.3;
+                        "
+                      >
+                        One-time code
+                      </p>
+                      <!--
+                        邮件客户端几乎无 Clipboard API：不要做「Copy」假按钮。
+                        user-select:all = 点/长按整段选中，用户再 Cmd/Ctrl+C 或系统「拷贝」。
+                      -->
+                      <p
+                        style="
+                          margin: 0;
+                          font-family:
+                            ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+                            'Courier New', monospace;
+                          font-size: 32px;
+                          font-weight: 600;
+                          letter-spacing: 0.28em;
+                          color: #192420;
+                          line-height: 1.2;
+                          -webkit-user-select: all;
+                          user-select: all;
+                          cursor: text;
+                        "
+                      >
+                        {{ .Token }}
+                      </p>
+                      <p
+                        style="
+                          margin: 10px 0 0;
+                          font-size: 12px;
+                          font-weight: 400;
+                          color: #82998c;
+                          line-height: 1.4;
+                        "
+                      >
+                        Tap or click the code to select · then copy
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+
+                <p
+                  style="
+                    margin: 16px 0 0;
+                    font-size: 13px;
+                    font-weight: 400;
+                    color: #82998c;
+                    line-height: 1.5;
+                  "
+                >
+                  This code expires in 1 hour. If you didn’t request it, you can ignore this email —
+                  your account stays unchanged.
+                </p>
+              </td>
+            </tr>
+
+            <!-- Divider + magic link fallback -->
+            <tr>
+              <td style="padding: 8px 28px 28px">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                  <tr>
+                    <td style="border-top: 1px solid #ced8cb; height: 1px; line-height: 1px; font-size: 0">
+                      &nbsp;
+                    </td>
+                  </tr>
+                </table>
+                <p
+                  style="
+                    margin: 20px 0 12px;
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: #222c24;
+                    line-height: 1.4;
+                  "
+                >
+                  Prefer a link?
+                </p>
+                <p
+                  style="
+                    margin: 0 0 16px;
+                    font-size: 14px;
+                    font-weight: 400;
+                    color: #586860;
+                    line-height: 1.55;
+                  "
+                >
+                  You can also open this secure link on the same device where you started sign-in.
+                  If your mail app opens a different browser, use the code above instead.
+                </p>
+                <!-- Button -->
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td
+                      align="center"
+                      bgcolor="#4b6054"
+                      style="border-radius: 10px; background-color: #4b6054"
+                    >
+                      <a
+                        href="{{ .ConfirmationURL }}"
+                        target="_blank"
+                        rel="noopener"
+                        style="
+                          display: inline-block;
+                          padding: 12px 22px;
+                          font-size: 14px;
+                          font-weight: 500;
+                          color: #d8ede2;
+                          text-decoration: none;
+                          border-radius: 10px;
+                          line-height: 1.3;
+                        "
+                      >
+                        Sign in to Yiveno
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+                <p
+                  style="
+                    margin: 14px 0 0;
+                    font-size: 12px;
+                    font-weight: 400;
+                    color: #82998c;
+                    line-height: 1.5;
+                    word-break: break-all;
+                  "
+                >
+                  If the button doesn’t work, copy and paste this URL into your browser:<br />
+                  <a
+                    href="{{ .ConfirmationURL }}"
+                    style="color: #4b6054; text-decoration: underline"
+                    >{{ .ConfirmationURL }}</a
+                  >
+                </p>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td
+                style="
+                  background-color: #f0f3ee;
+                  border-top: 1px solid #ced8cb;
+                  padding: 18px 28px 22px;
+                "
+              >
+                <p
+                  style="
+                    margin: 0 0 10px;
+                    font-size: 13px;
+                    font-weight: 500;
+                    color: #222c24;
+                    line-height: 1.5;
+                  "
+                >
+                  Do not reply to this email.
+                </p>
+                <p
+                  style="
+                    margin: 0 0 8px;
+                    font-size: 12px;
+                    font-weight: 400;
+                    color: #586860;
+                    line-height: 1.5;
+                  "
+                >
+                  This message was sent automatically by Yiveno’s systems. No one reads replies to
+                  this address — if you reply here, we won’t see it.
+                </p>
+                <p
+                  style="
+                    margin: 0 0 8px;
+                    font-size: 12px;
+                    font-weight: 400;
+                    color: #586860;
+                    line-height: 1.5;
+                  "
+                >
+                  Yiveno · optional account for Pro and sync. What you’ve saved stays on your
+                  device unless you turn sync on.
+                </p>
+                <p
+                  style="
+                    margin: 0;
+                    font-size: 12px;
+                    font-weight: 400;
+                    color: #82998c;
+                    line-height: 1.5;
+                  "
+                >
+                  <a href="{{ .SiteURL }}" style="color: #4b6054; text-decoration: underline"
+                    >yiveno.com</a
+                  >
+                  · Need a human? Email
+                  <a
+                    href="mailto:support@yiveno.com"
+                    style="color: #4b6054; text-decoration: underline"
+                    >support@yiveno.com</a
+                  >
+                </p>
+              </td>
+            </tr>
+          </table>
+
+          <p
+            style="
+              margin: 16px 0 0;
+              max-width: 560px;
+              font-size: 11px;
+              font-weight: 400;
+              color: #82998c;
+              line-height: 1.45;
+              text-align: center;
+            "
+          >
+            Automated sign-in email — do not reply. You’re receiving this because a sign-in was
+            requested for this address. We never ask for your password or code by chat or phone.
+          </p>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

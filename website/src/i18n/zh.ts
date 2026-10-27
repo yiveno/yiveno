@@ -42,7 +42,7 @@ export const zh = {
   'uninstall.done.lede': '我们会用它把找回体验做得更好。',
   'uninstall.done.closeHint': '可以关掉这个标签页了。',
 
-  'nav.support': '支持',
+  'nav.sign_in': '登录',
   'nav.language': '语言',
   'nav.language_en': 'English',
   'nav.language_zh_CN': '简体中文',
@@ -51,5 +51,6 @@ export const zh = {
   'footer.support': '支持',
   'footer.privacy': '隐私',
   'footer.terms': '条款',
+  'footer.tagline': '· 找回你存过的。',
   'a11y.skip_to_content': '跳到正文'
 } as const satisfies Record<WebsiteMessageKey, string>

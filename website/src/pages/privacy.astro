@@ -6,7 +6,7 @@
 import MainLayout from '../layouts/MainLayout.astro'
 import '../styles/pages.css'
 
-const effectiveDate = '2026-10-18'
+const effectiveDate = '2026-10-26'
 const contactEmail = 'privacy@yiveno.com'
 ---
 
@@ -51,9 +51,9 @@ const contactEmail = 'privacy@yiveno.com'
       </p>
       <h3>2.2 Account (optional sign-in)</h3>
       <p>
-        If you sign in via the website (for example Google or Microsoft through our auth provider),
-        we process account identifiers such as user id, email, and profile fields the provider
-        shares (for example display name or avatar URL).{' '}
+        If you sign in via the website — email one-time code (or magic link), or Google / Microsoft
+        OAuth through our auth provider — we process account identifiers such as user id, email, and
+        profile fields the provider shares (for example display name or avatar URL).{' '}
         <strong>Signing in does not by itself upload your memories.</strong>
       </p>
       <h3>2.3 Cloud memory (opt-in sync)</h3>
@@ -147,7 +147,12 @@ const contactEmail = 'privacy@yiveno.com'
         </li>
         <li>
           <strong>Cloudflare</strong> — Workers API, hosting, KV for optional uninstall feedback,
-          Email Sending when enabled, and related infrastructure
+          Email Sending when enabled, Turnstile bot checks on email sign-in, and related
+          infrastructure
+        </li>
+        <li>
+          <strong>Email delivery (via our auth provider’s mail path / configured SMTP)</strong> — if
+          you sign in with an email code or magic link
         </li>
         <li>
           <strong>Google / Microsoft</strong> — if you choose their OAuth sign-in

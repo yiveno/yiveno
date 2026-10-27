@@ -54,6 +54,14 @@ body[data-chrome='home']::-webkit-scrollbar {
   color: var(--muted);
 }
 
+.site-footer__end {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 20px 26px;
+}
+
 .site-footer__links {
   display: flex;
   flex-wrap: wrap;

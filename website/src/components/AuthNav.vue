@@ -88,14 +88,16 @@ onUnmounted(() => {
         class="avatar"
         :class="{ 'avatar--pro': isPro }"
       />
-      <span
+      <img
         v-else
-        class="avatar avatar--fallback"
+        src="/images/logo-mark.svg"
+        alt=""
+        class="avatar avatar--brand"
         :class="{ 'avatar--pro': isPro }"
-        aria-hidden="true"
-      >
-        {{ (user.name || '?').slice(0, 1).toUpperCase() }}
-      </span>
+        width="28"
+        height="28"
+        decoding="async"
+      />
       <span>{{ user.name }}</span>
     </a>
   </div>
@@ -141,12 +143,10 @@ onUnmounted(() => {
   box-sizing: border-box;
 }
 
-.avatar--fallback {
-  display: grid;
-  place-items: center;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--sage, #4b6054);
+.avatar--brand {
+  box-sizing: border-box;
+  padding: 4px;
+  object-fit: contain;
   background: color-mix(in srgb, var(--sage, #4b6054) 12%, transparent);
 }
 

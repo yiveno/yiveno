@@ -263,6 +263,16 @@ onUnmounted(() => {
             referrerpolicy="no-referrer"
             @error="avatarBroken = true"
           />
+          <!-- 已登录无头像：品牌标；未登录仍用 account 图标作入口暗示 -->
+          <img
+            v-else-if="signedIn"
+            class="app-page-header__avatar app-page-header__avatar--brand"
+            :src="brandLogoUrl"
+            alt=""
+            width="22"
+            height="22"
+            decoding="async"
+          />
           <AppIcon v-else name="account_circle" size="22px" />
         </span>
       </AppIconButton>
@@ -354,5 +364,12 @@ onUnmounted(() => {
   height: 22px;
   border-radius: 50%;
   object-fit: cover;
+}
+
+.app-page-header__avatar--brand {
+  box-sizing: border-box;
+  padding: 2px;
+  object-fit: contain;
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 </style>

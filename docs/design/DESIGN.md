@@ -157,6 +157,7 @@ Canonical CSS names in `site-critical.css`. Prefer roles over raw Brand Core in 
 - **Do not** regenerate third-party theme-builder palettes as the source of truth.
 - Authority path: `packages/design-tokens/css/brand.css` (color + space + radius).
 - Extension product CSS: Roles / `--space-*` / `--radius-*`. Self-built `App*` components (`AppButton`, `AppModal`, `AppSectionTabs`, …).
+- **Account avatar fallback:** IdP `avatarUrl` first; else Yiveno `logo-mark` in a soft circle — **never** email/name first letter. Design standard §6.3.1.
 - **Modal Dialog:** Use `AppModal` for blocking confirms/forms; Esc + focus trap required; backdrop click never dismisses; no `window.confirm`. Binary confirms use `AppConfirmModal`. See design standard §6.2.1.
 - **Section Tabs:** In-page panel switching (Settings / Library) uses `AppSectionTabs` (ARIA tabs), not Nav. Cross-page nav stays in `AppPageHeader`. See §6.2.2.
 - **Toast:** Non-blocking feedback (`copy`/`download` done, etc.) via `AppToastHost` + `useAppToast()`; see §6.2.3.
@@ -180,9 +181,12 @@ Canonical CSS names in `site-critical.css`. Prefer roles over raw Brand Core in 
 
 ## Layout
 
-- Max content width ~1120px; horizontal pad `clamp(28px, 6.5vw, 104px)`.
+- Max content width **1120px** (`--max`); horizontal pad `clamp(28px, 6.5vw, 104px)` (`--pad-x`).
+- **Website responsive (Normative):** mobile-first CSS; fluid type/space via `clamp`; one component, not three page variants; no horizontal scroll on forms/cards/mocks.
+- **Website breakpoints (closed set):** **640** (md) · **960** (lg) · **1280** (xl, rare). Prefer `min-width` enhancement; prefer content-driven grids (`auto-fit` / `minmax`) before new breakpoints. Detail: design standard §6.1.1.
 - Marketing: generous whitespace, asymmetric editorial columns, strong vertical rhythm, thin hairlines.
-- First viewport (persuade): brand + one headline + one support line + one CTA group + one dominant product proof — not a dashboard collage.
+- First viewport (persuade): brand + one headline + one support line — pure copy, **horizontally centered** on the homepage (no product mock, no waitlist CTA in hero). Product proof lives in later sections (Capture mock + Recall examples). Not a dashboard collage. Homepage H1/H2: no decorative `<br>`; natural wrap on narrow viewports (no nowrap overflow).
+- Homepage IA: six screens — Hero → Boundary (is/isn't) → Mechanism → Capture → Recall proof → Trust (privacy only; no email waitlist).
 - Product (operate): denser, scannable; same color axis, less editorial theater.
 
 ## Elevation & Depth
@@ -200,7 +204,7 @@ Canonical CSS names in `site-critical.css`. Prefer roles over raw Brand Core in 
 ## Components
 
 - **Primary button:** accent fill, on-accent text, ~50px tall on marketing CTAs.
-- **Secondary:** outline accent / quiet fill — never compete with primary waitlist CTA.
+- **Secondary:** outline accent / quiet fill — never compete with the primary action when one exists.
 - **Recall proof:** clue field + ranked list; Closest visually dominant; personal note/excerpt when showing product truth.
 - **Forms:** visible invalid/error/success; calm copy; no spinner circus.
 - Icons: prefer familiar Lucide icons in product (inline via `AppIcon`); marketing mockups must not use magnifying-glass as the main “search” metaphor.

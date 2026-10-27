@@ -13,7 +13,7 @@ describe('website i18n t()', () => {
   test('zh_CN 键返回中文', () => {
     expect(t('uninstall.done.closeHint', 'zh_CN')).toBe(zh['uninstall.done.closeHint'])
     expect(t('uninstall.feedback.title', 'zh_CN')).toBe('是什么让你离开？')
-    expect(t('nav.support', 'zh_CN')).toBe('支持')
+    expect(t('footer.support', 'zh_CN')).toBe('支持')
   })
 
   test('en / zh 键集合对称', () => {

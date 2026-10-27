@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   getEffectiveUiLocale,
   getUILanguage,
+  initUiLocaleFromSettings,
   setUiLocaleCatalogForTests,
   t
 } from '@/infrastructure/i18n/t'
@@ -11,6 +12,7 @@ describe('i18n t()', () => {
   const getMessage = vi.fn()
   const getUILanguageMock = vi.fn(() => 'en-US')
   const originalChrome = globalThis.chrome
+  const originalFetch = globalThis.fetch
 
   beforeEach(() => {
     vi.clearAllMocks()
@@ -25,6 +27,11 @@ describe('i18n t()', () => {
         },
         runtime: {
           getURL: (path: string) => `chrome-extension://test/${path}`
+        },
+        storage: {
+          local: {
+            get: vi.fn(async () => ({}))
+          }
         }
       }
     })
@@ -37,6 +44,7 @@ describe('i18n t()', () => {
       writable: true,
       value: originalChrome
     })
+    globalThis.fetch = originalFetch
   })
 
   it('无目录时回退 getMessage', () => {
@@ -66,5 +74,35 @@ describe('i18n t()', () => {
     expect(getMessage).not.toHaveBeenCalled()
     expect(getEffectiveUiLocale()).toBe('zh_CN')
     expect(getUILanguage()).toBe('zh-CN')
+  })
+
+  it('扩展页上下文 fetch 成功则目录优先', async () => {
+    getUILanguageMock.mockReturnValue('zh-CN')
+    vi.stubGlobal('location', { protocol: 'chrome-extension:' })
+    globalThis.fetch = vi.fn(async () => ({
+      ok: true,
+      json: async () => ({
+        context_menu_save_selection: { message: '保存到 Yiveno' }
+      })
+    })) as unknown as typeof fetch
+
+    const locale = await initUiLocaleFromSettings()
+    expect(locale).toBe('zh_CN')
+    expect(t('context_menu_save_selection')).toBe('保存到 Yiveno')
+    expect(getMessage).not.toHaveBeenCalled()
+  })
+
+  it('网页 content script 上下文跳过 fetch、不告警，回退 chrome.i18n', async () => {
+    getUILanguageMock.mockReturnValue('zh-CN')
+    getMessage.mockReturnValue('保存到 Yiveno')
+    vi.stubGlobal('location', { protocol: 'https:' })
+    const fetchMock = vi.fn()
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    const locale = await initUiLocaleFromSettings()
+    expect(locale).toBe('zh_CN')
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(t('context_menu_save_selection')).toBe('保存到 Yiveno')
+    expect(getMessage).toHaveBeenCalledWith('context_menu_save_selection')
   })
 })

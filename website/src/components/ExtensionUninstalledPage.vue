@@ -386,10 +386,11 @@ onMounted(() => {
   padding-top: clamp(40px, 7vw, 72px);
 }
 
-/** 标题单行：略收字号 + nowrap，避免 Fraunces 大号折到「Yiveno?」 */
+/** 标题：禁装饰性 nowrap（§6.1.1）；窄屏按词自然折 */
 .uninstall__title {
-  white-space: nowrap;
+  max-width: 100%;
   font-size: clamp(28px, 4.2vw, 40px);
+  text-wrap: balance;
 }
 
 .uninstall__header {

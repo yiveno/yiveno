@@ -1,6 +1,7 @@
 /**
  * 内页共用排版（Support / Privacy / Terms / Pricing / Auth…）
  * 与首页同一 Brand Core：Ink / Paper / Sage + Fraunces / Work Sans。
+ * 响应式：默认单栏流体（移动优先）；断点闭集见 §6.1.1 / site-critical。
  */
 
 body[data-chrome='default'] #main {
@@ -10,7 +11,7 @@ body[data-chrome='default'] #main {
 .page {
   max-width: 720px;
   margin: 0 auto;
-  padding: clamp(48px, 8vw, 88px) var(--pad-x) clamp(64px, 10vw, 112px);
+  padding: clamp(48px, 8vw, 88px) max(16px, var(--pad-x)) clamp(64px, 10vw, 112px);
 }
 
 .page--wide {

@@ -36,7 +36,8 @@
 - [`engineering/background-message-types.registry`](./engineering/background-message-types.registry) — Background `message type` 登记册（`bun run doc:check`）
 - [`engineering/关键词倒排索引-Phase1.md`](./engineering/关键词倒排索引-Phase1.md) — 倒排预过滤设计（R3）
 - [`engineering/业务日志与注释约定.md`](./engineering/业务日志与注释约定.md) — 中文注释与 flow log
-- [`AUTH_GUIDE.md`](./AUTH_GUIDE.md) — OAuth 使用说明
+- [`AUTH_GUIDE.md`](./AUTH_GUIDE.md) — OAuth / Email OTP 使用说明
+- [`engineering/Turnstile-Email-OTP-防刷生命周期.md`](./engineering/Turnstile-Email-OTP-防刷生命周期.md) — Turnstile token 生命周期、发码流程图、china 区域约束
 - [`ENVIRONMENT.md`](./ENVIRONMENT.md) — 环境变量分层、同步与校验规则
 
 **设计 / 品牌（发版）：**

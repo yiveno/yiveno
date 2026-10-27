@@ -104,9 +104,9 @@ function write(
     }
   }
   const prefix = `[${formatLogTimestamp()}] [Yiveno:${scope}] ${line}`
-  // error：只打一行字符串。第二参对象在 chrome://extensions 错误页会变成「… [object Object]」
-  if (level === 'error') {
-    console.error(prefix)
+  // warn/error：只打一行字符串。第二参对象在 chrome://extensions 错误页会变成「… [object Object]」
+  if (level === 'error' || level === 'warn') {
+    console[level](prefix)
     return
   }
   if (data === undefined) {

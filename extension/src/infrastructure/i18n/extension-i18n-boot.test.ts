@@ -107,8 +107,11 @@ describe('extension-i18n-boot', () => {
 
   it('bootExtensionPage 设置 document lang/title', async () => {
     getMessage.mockImplementation((key: string) => `resolved:${key}`)
+    // 单测默认 location 多为 http:（CS 路径会跳过 fetch）；stub 成扩展页以走目录加载分支
+    vi.stubGlobal('location', { protocol: 'chrome-extension:' })
     await bootExtensionPage('detail')
     expect(document.documentElement.lang).toBe('en')
+    // fetch mock 返回 ok:false → catalog null → title 走 chrome.i18n mock
     expect(document.title).toBe('resolved:page_title_detail')
   })
 

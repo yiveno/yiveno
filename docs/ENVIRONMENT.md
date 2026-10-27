@@ -21,7 +21,7 @@
 - `SUPABASE_URL`（生产项目主库区域：**East US / Ohio · `us-east-2`**；Dashboard Primary Database 为准）
 - `SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
-- `AUTH_GOOGLE_CLIENT_ID`
+- `AUTH_GOOGLE_CLIENT_ID`（遗留 Worker OAuth；**用户主路径**已改官网 Supabase Auth）
 - `AUTH_GOOGLE_CLIENT_SECRET`
 - `AUTH_MICROSOFT_CLIENT_ID`
 - `AUTH_MICROSOFT_CLIENT_SECRET`
@@ -31,6 +31,8 @@
 - `AUTH_MICROSOFT_AUTH_URL`
 - `AUTH_MICROSOFT_TOKEN_URL`
 - `AUTH_MICROSOFT_USERINFO_URL`
+- （官网 Email OTP）Supabase 启用 Email、模板含 `{{ .Token }}`、Redirect 含 `/auth/callback`；生产 SMTP = **阿里云 DirectMail**（见 `docs/AUTH_GUIDE.md`）
+- `PUBLIC_TURNSTILE_SITE_KEY`（共享源文件；同步到 `website/.env` / Pages）— Cloudflare Turnstile **sitekey**；对应 **Secret** 只填 Supabase Attack Protection，**不要**写入本仓 env 源文件
 - `DODO_PAYMENTS_API_KEY`（checkout / 对账；生产必配；test=`dodo_test_…`，live=`dodo_live_…`）
 - `DODO_PAYMENTS_WEBHOOK_KEY`（Standard Webhooks signing secret，`whsec_…`）
 - `DODO_PAYMENTS_ENVIRONMENT`（`test_mode` | `live_mode`；缺省按 test，生产必须 `live_mode`）
@@ -121,7 +123,7 @@ bun run env:check:prod
     - 根目录留空（monorepo 根，才能读到 `bun.lock`）；勿再设 `website` 为 root（会触发 `npm install` → `workspace:*` 失败）
     - Build command：`bun install --frozen-lockfile && bun run --cwd website build:prod:compile`
     - Build output：`website/dist`
-    - Env：`SKIP_DEPENDENCY_INSTALL=true`、`BUN_VERSION=1.4.0`，以及 `PUBLIC_API_BASE_URL` / `PUBLIC_SUPABASE_*` / `PUBLIC_WEBSITE_URL`
+    - Env：`SKIP_DEPENDENCY_INSTALL=true`、`BUN_VERSION=1.4.0`，以及 `PUBLIC_API_BASE_URL` / `PUBLIC_SUPABASE_*` / `PUBLIC_WEBSITE_URL` / `PUBLIC_TURNSTILE_SITE_KEY`（Turnstile **sitekey**；Secret 只在 Supabase）
     - Path includes：`website/*`、`packages/*`（design-tokens）
     - 本机直推仍可用：`bun run deploy:web`
     - **软性 geo 域名跳转（与 UI 语言无关）**

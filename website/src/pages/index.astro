@@ -1,31 +1,21 @@
 ---
 import MainLayout from '../layouts/MainLayout.astro'
-import WaitlistForm from '../components/WaitlistForm.astro'
-import RecallPopup from '../components/home/RecallPopup.astro'
-import ClosestStrip from '../components/home/ClosestStrip.astro'
 import YMark from '../components/home/YMark.astro'
 import homeDeferredHref from '../styles/home-deferred.css?url'
 
-const contentTypes = [
-  { label: 'articles', size: 18, op: 0.85 },
-  { label: 'passages you highlighted', size: 14, op: 0.7 },
-  { label: 'videos', size: 15, op: 0.65 },
-  { label: 'repositories', size: 13, op: 0.5 },
-  { label: 'research', size: 16, op: 0.75 },
-  { label: 'your own notes', size: 15, op: 0.7 },
-  { label: 'tutorials', size: 14, op: 0.6 },
-  { label: 'products', size: 15, op: 0.65 },
-  { label: 'design inspiration', size: 12, op: 0.45 },
-  { label: 'threads', size: 16, op: 0.7 },
-  { label: 'books', size: 17, op: 0.8 },
-  { label: 'travel guides', size: 13, op: 0.5 },
-  { label: 'papers', size: 14, op: 0.55 },
-  { label: 'podcasts', size: 15, op: 0.6 },
-  { label: 'places', size: 13, op: 0.5 },
-  { label: 'references', size: 16, op: 0.7 },
-  { label: 'anything worth keeping', size: 12, op: 0.4 }
+/** 屏 5：短 types（非词云） */
+const shortTypes = [
+  'pages',
+  'passages',
+  'notes',
+  'threads',
+  'videos',
+  'references',
+  'travel guides',
+  'anything worth keeping'
 ]
 
+/** 屏 5：口语 clue 例子（避开 AI 工具感） */
 const recallExamples = [
   {
     clue: 'that article about why batteries degrade faster in winter',
@@ -33,14 +23,9 @@ const recallExamples = [
     meta: 'Saved 8 months ago'
   },
   {
-    clue: 'the GitHub repo I saved for building an AI agent',
-    result: 'Minimal agent architecture — a walkthrough from scratch',
-    meta: 'Saved 3 months ago'
-  },
-  {
-    clue: 'that video explaining how transformers actually work',
-    result: 'The illustrated transformer — a visual deep dive',
-    meta: 'Saved last year'
+    clue: 'that travel guide I saved for Japan',
+    result: 'Two weeks in Japan — practical notes from a first visit',
+    meta: 'Saved last spring'
   },
   {
     clue: 'the product I wanted to try for recording meetings',
@@ -48,9 +33,9 @@ const recallExamples = [
     meta: 'Saved 5 months ago'
   },
   {
-    clue: 'that travel guide I saved for Japan',
-    result: 'Two weeks in Japan — practical notes from a first visit',
-    meta: 'Saved last spring'
+    clue: 'the design page with the quiet ending on the pier',
+    result: 'Harbor light — notes on endings that stay with you',
+    meta: 'Saved 4 months ago'
   }
 ]
 
@@ -60,37 +45,13 @@ const trustPoints = [
   "We don't sell your collection or share it with third parties.",
   "We don't use your saved content to train public models."
 ]
-
-const proofSteps = [
-  {
-    n: '01',
-    label: 'Capture',
-    head: 'You save something interesting.',
-    body: 'One click. Add a note if you want. No decisions required.',
-    focus: false
-  },
-  {
-    n: '02',
-    label: 'Forget',
-    head: 'Time passes.',
-    body: 'Weeks. Months. The exact title fades.',
-    focus: false
-  },
-  {
-    n: '03',
-    label: 'Recall',
-    head: 'You describe what you remember.',
-    body: 'Not the title — the idea, the feeling, the context. Pick from the closest fits.',
-    focus: true
-  }
-]
 ---
 
 <MainLayout
   chrome="home"
   jsonLd
   title="Yiveno — Find what you saved"
-  description="Yiveno finds what you saved from what you remember. In active development — join the waitlist to be notified first when it's ready to try."
+  description="Yiveno finds what you saved from what you remember. Closest fits — you pick. We're building the Chrome extension."
 >
   <Fragment slot="head">
     <link
@@ -103,80 +64,91 @@ const proofSteps = [
       <link rel="stylesheet" href={homeDeferredHref} />
     </noscript>
   </Fragment>
-  <!-- Hero -->
-  <section id="hero" class="hero">
+
+  <!-- 1 · Hero：纯文案（无预约） -->
+  <section id="hero" class="hero hero--copy">
     <div class="hero__glow" aria-hidden="true"></div>
     <div class="hero__layout">
       <div class="hero__copy">
         <p class="hero__epithet">The one that finds things</p>
-        <h1 class="hero__title">
-          Find what
-          <br />
-          you saved.
-        </h1>
+        <h1 class="hero__title">Find what you saved.</h1>
         <p class="hero__sub">
           You don't need the title. Say what you remember — closest fits, you pick. We're building
-          it; the waitlist gets first access.
+          the Chrome extension.
         </p>
-        <WaitlistForm tone="dark" />
-      </div>
-      <div class="hero__proof">
-        <RecallPopup />
       </div>
     </div>
   </section>
 
-  <!-- Demo -->
-  <section class="home-sec home-sec--paper" aria-labelledby="demo-heading">
-    <div class="home-wrap demo-layout">
-      <div class="demo-text reveal">
-        <h2 id="demo-heading">
-          Saved it. <em class="home-kicker-em">Forgot the exact words.</em>
-        </h2>
-        <p>
-          Later, ask in plain language. Yiveno leads with what fits best, with a few nearby — so you
-          can choose.
-        </p>
-      </div>
-      <div class="demo-panel reveal d1">
-        <ClosestStrip />
-      </div>
-    </div>
-  </section>
-
-  <!-- Problem -->
-  <section class="home-sec home-sec--dim problem">
-    <div class="home-wrap home-col">
+  <!-- 2 · Boundary：是 / 不是 -->
+  <section class="home-sec home-sec--paper geo" aria-labelledby="geo-heading">
+    <div class="home-wrap geo__layout">
       <div class="reveal">
-        <h2>
-          You remember the feeling.
-          <br />
-          <em class="home-kicker-em">Not where you saved it.</em>
+        <h2 id="geo-heading">
+          Yiveno is the thing <em class="home-kicker-em">that finds what you saved.</em>
         </h2>
+        <p class="geo__lede">Closest fits on top — not one guaranteed answer. You decide.</p>
       </div>
-      <div class="reveal d1">
-        <p>
-          Every day, people save hundreds of things. Articles. Tabs. Ideas. Research. Inspiration.
-          Things worth keeping.
-        </p>
-        <p>
-          But saving creates a pile. Folders only work if you remember how you organized them. Tags
-          only help if you chose the right ones. Titles only surface things if you remember the
-          exact word.
-        </p>
-        <p>
-          Most things disappear — not because you lost them, but because you can't find the way
-          back.
-        </p>
+      <div class="geo__cols">
+        <div class="reveal d1">
+          <p class="geo__label">What it is</p>
+          <ul class="geo__list">
+            <li>The finder for your own saved things</li>
+            <li>Capture first; folders and tags optional forever</li>
+            <li>Recall by saying what you remember</li>
+            <li>Closest matches on top — you decide</li>
+          </ul>
+        </div>
+        <div class="reveal d2">
+          <p class="geo__label">What it isn't</p>
+          <ul class="geo__list geo__list--not">
+            <li>Not a bookmark manager</li>
+            <li>Not a notes app or organizer</li>
+            <li>Not a chatbot or personal assistant</li>
+            <li>Not "AI that always picks the one right link"</li>
+          </ul>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- Capture -->
-  <section class="home-sec home-sec--paper">
+  <!-- 3 · Mechanism：Before / With Yiveno -->
+  <section class="home-sec home-sec--ink org" aria-labelledby="org-heading">
+    <div class="home-wrap">
+      <div class="reveal">
+        <h2 id="org-heading">You don't have to organize everything.</h2>
+      </div>
+      <div class="org-layout">
+        <div class="reveal">
+          <p class="org-label">Before</p>
+          <ul class="org-list">
+            <li>Save the link.</li>
+            <li>Choose a folder.</li>
+            <li>Add some tags.</li>
+            <li>Write a title to remember it by.</li>
+            <li>Hope you find it later.</li>
+            <li>Try to recall the exact title.</li>
+            <li>Give up.</li>
+          </ul>
+        </div>
+        <div class="org-divider" aria-hidden="true"></div>
+        <div class="reveal d1">
+          <p class="org-label org-label--on">With Yiveno</p>
+          <ul class="org-steps">
+            <li>Save.</li>
+            <li>Forget.</li>
+            <li>Recall.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · Capture -->
+  <section class="home-sec home-sec--paper" aria-labelledby="capture-heading">
     <div class="home-wrap capture-layout">
       <div class="capture-copy reveal">
-        <h2>Save anything worth remembering.</h2>
+        <h2 id="capture-heading">Save anything worth remembering.</h2>
         <p>
           A page. A passage. A thread. Add a personal note if you want — the kind of context only
           you would write. No folders. No tags. No titles required.
@@ -233,83 +205,29 @@ const proofSteps = [
     </div>
   </section>
 
-  <!-- Organize -->
-  <section class="home-sec home-sec--ink org">
-    <div class="home-wrap">
-      <div class="reveal">
-        <h2>
-          You don't have to
-          <br />
-          organize everything.
-        </h2>
-      </div>
-      <div class="org-layout">
-        <div class="reveal">
-          <p class="org-label">Before</p>
-          <ul class="org-list">
-            <li>Save the link.</li>
-            <li>Choose a folder.</li>
-            <li>Add some tags.</li>
-            <li>Write a title to remember it by.</li>
-            <li>Hope you find it later.</li>
-            <li>Try to recall the exact title.</li>
-            <li>Give up.</li>
-          </ul>
-        </div>
-        <div class="org-divider" aria-hidden="true"></div>
-        <div class="reveal d1">
-          <p class="org-label org-label--on">With Yiveno</p>
-          <ul class="org-steps">
-            <li>Save.</li>
-            <li>Forget.</li>
-            <li>Recall.</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Content types -->
-  <section class="home-sec home-sec--paper types">
-    <div class="home-wrap">
-      <div class="reveal">
-        <h2>
-          Different things. <em class="home-kicker-em">One personal memory.</em>
-        </h2>
-        <p class="types__lede">
-          Pages, passages, notes — whatever shape your saved things take. Yiveno keeps them
-          together.
-        </p>
-      </div>
-      <div class="types__mosaic reveal d2">
-        {contentTypes.map(({ label, size, op }) => (
-          <span
-            style={`font-size:${size}px;opacity:${op};font-style:${size > 15 ? 'italic' : 'normal'}`}
-          >
-            {label}
-          </span>
-        ))}
-      </div>
-    </div>
-  </section>
-
-  <!-- Natural language examples -->
-  <section class="home-sec home-sec--dim examples">
+  <!-- 5 · Recall proof：例子 + 短 types -->
+  <section class="home-sec home-sec--dim examples" aria-labelledby="examples-heading">
     <div class="home-wrap">
       <div class="examples__intro reveal">
-        <h2>
-          Remember the idea.
-          <br />
-          <em class="home-kicker-em">That's enough.</em>
+        <h2 id="examples-heading">
+          Remember the idea. <em class="home-kicker-em">That's enough.</em>
         </h2>
         <p>
           You recall the way you remember — in plain, imprecise, everyday language. Yiveno works
           with that.
         </p>
+        <p class="examples__types-lede">
+          Pages, passages, notes — whatever shape your saved things take.
+        </p>
+        <ul class="examples__types" aria-label="Kinds of things you can keep">
+          {shortTypes.map(label => (
+            <li>{label}</li>
+          ))}
+        </ul>
       </div>
       <ul class="examples__list">
         {recallExamples.map((ex, i) => (
-          <li class:list={['examples__row', 'reveal', `d${Math.min(i, 4)}`]}>
+          <li class:list={['examples__row', 'reveal', `d${Math.min(i, 3)}`]}>
             <p class="examples__q">"{ex.clue}"</p>
             <div>
               <p class="examples__a-title">{ex.result}</p>
@@ -321,118 +239,16 @@ const proofSteps = [
     </div>
   </section>
 
-  <!-- Compounds -->
-  <section class="home-sec home-sec--ink">
-    <div class="home-wrap compounds">
-      <div class="reveal">
-        <h2>
-          The more you keep,
-          <br />
-          <em class="home-kicker-em">the easier it is to find.</em>
-        </h2>
-      </div>
-      <p class="reveal d1">
-        Your collection becomes a personal memory. The richer it gets, the more naturally everyday
-        language connects to what you chose to keep.
-      </p>
-    </div>
-  </section>
-
-  <!-- Product proof -->
-  <section class="home-sec home-sec--paper">
-    <div class="home-wrap">
-      <div class="proof__intro reveal">
-        <h2>
-          Capture. Forget. Recall.
-          <br />
-          <em class="home-kicker-em">Rediscover.</em>
-        </h2>
-      </div>
-      <div class="proof-grid">
-        {proofSteps.map((s, i) => (
-          <div class:list={['proof-step', 'reveal', `d${i}`, { 'proof-step--focus': s.focus }]}>
-            <p class="proof-step__label">
-              <span>{s.n}</span>
-              <span>{s.label}</span>
-            </p>
-            <h3>{s.head}</h3>
-            <p>{s.body}</p>
-          </div>
-        ))}
-      </div>
-    </div>
-  </section>
-
-  <!-- Privacy -->
-  <section class="home-sec home-sec--dim">
-    <div class="home-wrap privacy-layout">
-      <div class="reveal">
-        <h2>
-          Your memories
-          <br />
-          are yours.
-        </h2>
-      </div>
-      <ul class="privacy-list reveal d1">
-        {trustPoints.map(p => (
-          <li>{p}</li>
-        ))}
-      </ul>
-    </div>
-  </section>
-
-  <!-- GEO：可引用的品类边界（is / isn't） -->
-  <section class="home-sec home-sec--dim geo" aria-labelledby="geo-heading">
-    <div class="home-wrap geo__layout">
-      <div class="reveal">
-        <h2 id="geo-heading">
-          Yiveno is the thing
-          <br />
-          <em class="home-kicker-em">that finds what you saved.</em>
-        </h2>
-        <p class="geo__lede">
-          Capture pages and passages with almost no ceremony. Later, ask in plain language. Yiveno
-          shows a short list of the closest fits — not one guaranteed answer — and you pick.
-        </p>
-      </div>
-      <div class="geo__cols">
-        <div class="reveal d1">
-          <p class="geo__label">What it is</p>
-          <ul class="geo__list">
-            <li>The finder for your own saved things</li>
-            <li>Capture first; folders and tags optional forever</li>
-            <li>Recall by saying what you remember</li>
-            <li>Closest matches on top — you decide</li>
-          </ul>
-        </div>
-        <div class="reveal d2">
-          <p class="geo__label">What it isn't</p>
-          <ul class="geo__list geo__list--not">
-            <li>Not a bookmark manager</li>
-            <li>Not a notes app or organizer</li>
-            <li>Not a chatbot or personal assistant</li>
-            <li>Not "AI that always picks the one right link"</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- Final CTA -->
-  <section id="notify" class="home-sec home-sec--ink final">
-    <div class="final__inner">
-      <div class="reveal">
-        <h2>
-          Be first
-          <br />
-          <em class="home-kicker-em">when it's ready.</em>
-        </h2>
-        <p class="final__lede">
-          We're building the Chrome extension now — join the waitlist for the first invite.
-        </p>
-      </div>
-      <div class="reveal d1">
-        <WaitlistForm tone="dark" centered />
+  <!-- 6 · Trust -->
+  <section id="trust" class="home-sec home-sec--ink trust-close" aria-labelledby="trust-heading">
+    <div class="home-wrap trust-close__layout">
+      <div class="trust-close__privacy reveal">
+        <h2 id="trust-heading">Your memories are yours.</h2>
+        <ul class="trust-close__list">
+          {trustPoints.map(p => (
+            <li>{p}</li>
+          ))}
+        </ul>
       </div>
     </div>
   </section>

@@ -44,7 +44,7 @@ export const en = {
   'uninstall.done.lede': "We'll use it to make finding things better.",
   'uninstall.done.closeHint': 'You can close this tab now.',
 
-  'nav.support': 'Support',
+  'nav.sign_in': 'Sign in',
   'nav.language': 'Language',
   'nav.language_en': 'English',
   'nav.language_zh_CN': '简体中文',
@@ -53,6 +53,7 @@ export const en = {
   'footer.support': 'Support',
   'footer.privacy': 'Privacy',
   'footer.terms': 'Terms',
+  'footer.tagline': '· Find what you saved.',
   'a11y.skip_to_content': 'Skip to content'
 } as const
 

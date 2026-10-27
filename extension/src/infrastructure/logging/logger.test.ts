@@ -81,3 +81,27 @@ describe('logger.error', () => {
     spy.mockRestore()
   })
 })
+
+describe('logger.warn', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date(2026, 8, 11, 9, 5, 12))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  it('首行内联摘要且无对象第二参（避免错误页 [object Object]）', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    logger.warn('i18n', '加载文案目录失败，回退 chrome.i18n', {
+      locale: 'zh_CN',
+      error: 'Failed to fetch'
+    })
+    expect(spy).toHaveBeenCalledWith(
+      '[2026-09-11 09:05:12] [Yiveno:i18n] 加载文案目录失败，回退 chrome.i18n — Failed to fetch'
+    )
+    expect(spy).toHaveBeenCalledTimes(1)
+    spy.mockRestore()
+  })
+})

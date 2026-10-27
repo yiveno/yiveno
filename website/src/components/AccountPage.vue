@@ -56,6 +56,7 @@ const signInProvider = computed(() => {
   const p = raw.trim().toLowerCase()
   if (p === 'google') return 'Google'
   if (p === 'azure' || p === 'microsoft') return 'Microsoft'
+  if (p === 'email') return 'Email'
   return raw
 })
 
@@ -223,9 +224,16 @@ async function handleSignOut() {
           height="56"
           decoding="async"
         />
-        <div v-else class="account__avatar account__avatar--fallback" aria-hidden="true">
-          {{ (profileDisplayName || user.email || '?').slice(0, 1).toUpperCase() }}
-        </div>
+        <!-- 无 OAuth 头像：品牌标，禁止邮箱首字符（数字/符号无意义） -->
+        <img
+          v-else
+          class="account__avatar account__avatar--brand"
+          src="/images/logo-mark.svg"
+          alt=""
+          width="56"
+          height="56"
+          decoding="async"
+        />
         <div class="account__who-text">
           <h1 class="account__name">{{ profileDisplayName || user.email }}</h1>
           <p class="account__meta">
@@ -341,12 +349,11 @@ async function handleSignOut() {
   background: var(--paper-dim);
 }
 
-.account__avatar--fallback {
-  display: grid;
-  place-items: center;
-  font-family: var(--font-display);
-  font-size: 22px;
-  color: var(--sage);
+.account__avatar--brand {
+  box-sizing: border-box;
+  padding: 10px;
+  object-fit: contain;
+  background: var(--paper-dim);
   border: 1px solid var(--border);
 }
 
@@ -542,7 +549,8 @@ async function handleSignOut() {
   }
 }
 
-@media (width <= 480px) {
+/* 窄于 md：身份区纵向（官网断点闭集 · 640） */
+@media (width < 640px) {
   .account__identity {
     flex-direction: column;
     align-items: stretch;
