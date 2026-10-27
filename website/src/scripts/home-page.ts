@@ -8,7 +8,7 @@ const NAV_BAND_PX = 68
  * 只看「顶栏背后那条带」落在哪个段上，不能用「视口内是否还有 ink」——否则 Paper 顶栏会被下方 ink 误切浅色。
  */
 export function initHomePage(): void {
-  const inkSections = [...document.querySelectorAll<HTMLElement>('#hero, .home-sec--ink')]
+  const inkSections = Array.from(document.querySelectorAll<HTMLElement>('#hero, .home-sec--ink'))
   if (inkSections.length > 0) {
     /** 采样点：顶栏垂直中线 */
     const sampleY = (): number => NAV_BAND_PX / 2
