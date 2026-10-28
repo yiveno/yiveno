@@ -1,6 +1,11 @@
 import { describe, expect, test } from 'bun:test'
 
-import { parseAiChatTaskKind, resolveHostedModelForTask, isNlgAiChatTaskKind } from './ai-task-kind'
+import {
+  parseAiChatTaskKind,
+  resolveHostedModelForTask,
+  isNlgAiChatTaskKind,
+  resolveHostedMaxTokensForTask
+} from './ai-task-kind'
 
 describe('parseAiChatTaskKind', () => {
   test('合法闭集原样返回', () => {
@@ -51,5 +56,23 @@ describe('isNlgAiChatTaskKind', () => {
   test('浅 NLG 为 true，nlu 为 false', () => {
     expect(isNlgAiChatTaskKind('framing_nlg')).toBe(true)
     expect(isNlgAiChatTaskKind('nlu')).toBe(false)
+  })
+})
+
+describe('resolveHostedMaxTokensForTask', () => {
+  test('未传 requested → 任务默认 cap', () => {
+    expect(resolveHostedMaxTokensForTask('nlu', undefined)).toBe(400)
+    expect(resolveHostedMaxTokensForTask('framing_nlg', undefined)).toBe(256)
+    expect(resolveHostedMaxTokensForTask('narrow_polish', undefined)).toBe(128)
+  })
+
+  test('客户端过大 → 钳到任务 cap', () => {
+    expect(resolveHostedMaxTokensForTask('narrow_polish', 400)).toBe(128)
+    expect(resolveHostedMaxTokensForTask('nlu', 900)).toBe(400)
+  })
+
+  test('客户端更小 → 保留', () => {
+    expect(resolveHostedMaxTokensForTask('nlu', 64)).toBe(64)
+    expect(resolveHostedMaxTokensForTask('framing_nlg', 100)).toBe(100)
   })
 })

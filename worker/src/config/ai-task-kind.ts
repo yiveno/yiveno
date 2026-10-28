@@ -1,10 +1,10 @@
 /**
  * 托管 / 线索 chat 补全的任务种类（taskKind）。
- * Phase 0–1：仅用于观测与模型解析插座；未配分档 env 时与全局 AI_HOSTED_MODEL 一致。
+ * Phase 0–1：观测 + 模型/maxTokens 路由插座；未配分档 env 时模型与全局 AI_HOSTED_MODEL 一致。
  * 见 docs/architecture/2026-10-任务级模型路由方案.md
  */
 
-import { resolveHostedModel } from './ai-hosted'
+import { clampCompletionMaxTokens, resolveHostedModel } from './ai-hosted'
 
 /** 已支持的 chat 任务种类（闭集）。 */
 export const AI_CHAT_TASK_KINDS = [
@@ -81,4 +81,30 @@ export function resolveHostedModelForTask(env: AiTaskModelEnv, taskKind: AiChatT
 /** 是否属于浅 NLG 任务（观测/后续配额权重用）。 */
 export function isNlgAiChatTaskKind(taskKind: AiChatTaskKind): boolean {
   return NLG_TASK_KINDS.has(taskKind)
+}
+
+/**
+ * 各 task 的 maxTokens 服务端上限（亦作未传 requested 时的默认）。
+ * NLG / polish 更短，压费用与超时；nlu 保持现网 400。
+ */
+export const AI_CHAT_TASK_MAX_TOKENS: Record<AiChatTaskKind, number> = {
+  nlu: 400,
+  framing_nlg: 256,
+  follow_up_nlg: 256,
+  narrow_polish: 128,
+  enrichment: 400,
+  gs_samples: 400
+}
+
+/**
+ * 按 taskKind 解析 maxTokens：先落到合法区间，再钳到该任务上限。
+ * 客户端可传更小值；不得突破任务 cap（防刷）。
+ */
+export function resolveHostedMaxTokensForTask(
+  taskKind: AiChatTaskKind,
+  requested: number | undefined
+): number {
+  const cap = AI_CHAT_TASK_MAX_TOKENS[taskKind]
+  const withinGlobal = clampCompletionMaxTokens(requested, cap)
+  return Math.min(cap, withinGlobal)
 }

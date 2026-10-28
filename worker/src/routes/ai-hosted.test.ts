@@ -205,8 +205,55 @@ describe('hosted ai routes', () => {
       expect(data.taskKind).toBe('framing_nlg')
       expect(data.model).toBe('deepseek-chat')
       const firstFetchCall = fetchMock.mock.calls[0] as Parameters<typeof fetch> | undefined
-      const requestBody = JSON.parse(String(firstFetchCall?.[1]?.body)) as { model?: string }
+      const requestBody = JSON.parse(String(firstFetchCall?.[1]?.body)) as {
+        model?: string
+        max_tokens?: number
+      }
       expect(requestBody.model).toBe('deepseek-chat')
+      // 客户端传 64 < framing cap 256 → 保留 64
+      expect(requestBody.max_tokens).toBe(64)
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test('taskKind=narrow_polish 过大 maxTokens 钳到 128', async () => {
+    const { handleHostedComplete } = await importHostedHandlersAsPro()
+    const kv = createKvMock()
+    const fetchMock = mock(
+      async () =>
+        new Response(
+          JSON.stringify({
+            choices: [{ message: { content: 'ok' } }],
+            usage: { total_tokens: 2 }
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } }
+        )
+    )
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    try {
+      const response = await handleHostedComplete(
+        new Request('http://localhost/api/ai/hosted/complete', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            prompt: 'polish',
+            taskKind: 'narrow_polish',
+            maxTokens: 400
+          })
+        }),
+        createBaseEnv({
+          AI_USAGE_KV: kv as unknown as Env['AI_USAGE_KV']
+        }),
+        TEST_USER_ID
+      )
+
+      expect(response.status).toBe(200)
+      const firstFetchCall = fetchMock.mock.calls[0] as Parameters<typeof fetch> | undefined
+      const requestBody = JSON.parse(String(firstFetchCall?.[1]?.body)) as { max_tokens?: number }
+      expect(requestBody.max_tokens).toBe(128)
     } finally {
       globalThis.fetch = originalFetch
     }

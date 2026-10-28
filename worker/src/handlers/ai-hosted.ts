@@ -6,7 +6,11 @@ import type { Env } from '../types/env'
 import type { AIHostedCompleteRequest } from '../types/ai'
 import { okJson, errorJson } from '../utils/response'
 import { resolveHostedModel } from '../config/ai-hosted'
-import { parseAiChatTaskKind, resolveHostedModelForTask } from '../config/ai-task-kind'
+import {
+  parseAiChatTaskKind,
+  resolveHostedMaxTokensForTask,
+  resolveHostedModelForTask
+} from '../config/ai-task-kind'
 import { isAiChatProviderConfigured, resolveAiChatProvider } from '../services/ai/ai-chat-provider'
 import { consumeHostedQuota, getHostedQuotaSnapshot } from '../services/ai/usage-quota'
 import { isActiveProUser } from '../services/ai/require-pro-user'
@@ -67,6 +71,7 @@ export async function handleHostedComplete(
 
   const taskKind = parseAiChatTaskKind(body.taskKind)
   const model = resolveHostedModelForTask(env, taskKind)
+  const maxTokens = resolveHostedMaxTokensForTask(taskKind, body.maxTokens)
 
   const messages = body.messages?.filter(
     m =>
@@ -121,7 +126,8 @@ export async function handleHostedComplete(
     model,
     hasMessages: Boolean(messages && messages.length > 0),
     messageCount: messages?.length ?? 0,
-    maxTokens: body.maxTokens ?? null
+    maxTokens,
+    requestedMaxTokens: body.maxTokens ?? null
   })
 
   try {
@@ -129,7 +135,7 @@ export async function handleHostedComplete(
     const result = await provider.complete(env, {
       ...(messages && messages.length > 0 ? { messages } : {}),
       ...(prompt ? { prompt } : {}),
-      ...(body.maxTokens !== undefined ? { maxTokens: body.maxTokens } : {}),
+      maxTokens,
       ...(body.temperature !== undefined ? { temperature: body.temperature } : {}),
       model,
       disableThinking: true

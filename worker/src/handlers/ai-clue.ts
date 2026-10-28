@@ -7,6 +7,7 @@ import type { Env } from '../types/env'
 import { isDeepSeekAiGatewayEnabled, resolveHostedModel } from '../config/ai-hosted'
 import {
   parseAiChatTaskKind,
+  resolveHostedMaxTokensForTask,
   resolveHostedModelForTask,
   type AiChatTaskKind
 } from '../config/ai-task-kind'
@@ -104,6 +105,7 @@ export async function handleClueComplete(request: Request, env: Env): Promise<Re
 
   const taskKind: AiChatTaskKind = parseAiChatTaskKind(body.taskKind)
   const model = resolveHostedModelForTask(env, taskKind)
+  const maxTokens = resolveHostedMaxTokensForTask(taskKind, body.maxTokens)
 
   const hasMessages = Array.isArray(body.messages) && body.messages.length > 0
   const prompt = body.prompt?.trim() ?? ''
@@ -126,7 +128,8 @@ export async function handleClueComplete(request: Request, env: Env): Promise<Re
     hasMessages,
     messageCount: hasMessages ? body.messages!.length : 0,
     promptLength: prompt.length,
-    maxTokens: body.maxTokens ?? 400,
+    maxTokens,
+    requestedMaxTokens: body.maxTokens ?? null,
     viaAiGateway
   })
 
@@ -159,7 +162,7 @@ export async function handleClueComplete(request: Request, env: Env): Promise<Re
     const provider = resolveAiChatProvider(env)
     const result = await provider.complete(env, {
       prompt: prompt || ' ',
-      maxTokens: body.maxTokens ?? 400,
+      maxTokens,
       temperature: body.temperature ?? 0,
       disableThinking: true,
       model,

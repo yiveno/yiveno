@@ -116,7 +116,8 @@ bun run env:check:prod
       - `AI_HOSTED_MODEL_NLU`：仅 `taskKind=nlu`
       - `AI_HOSTED_MODEL_NLG`：`framing_nlg` / `follow_up_nlg` / `narrow_polish`
       - `AI_HOSTED_MODEL_ENRICHMENT` / `AI_HOSTED_MODEL_GS_SAMPLES`：对应任务（若走可配置层）
-      - 请求体可带 `taskKind`（闭集；缺省 `nlu`）；**禁止**客户端传任意 `model` 名。方案见 `docs/architecture/2026-10-任务级模型路由方案.md`
+      - 请求体可带 `taskKind`（闭集；缺省 `nlu`）；**禁止**客户端传任意 `model` 名
+      - **maxTokens 服务端按 task 钳制**（nlu/enrichment/gs 400；framing/follow_up 256；narrow_polish 128）；客户端可传更小。方案见 `docs/architecture/2026-10-任务级模型路由方案.md`
     - `AI_GATEWAY_ACCOUNT_ID`：Cloudflare Account ID
     - `AI_GATEWAY_ID`：Gateway 名称（当前 `yiveno`）；Dashboard 需先创建同名 Gateway
     - 二者都非空时，DeepSeek 经 `gateway.ai.cloudflare.com` 转发；否则直连 `DEEPSEEK_API_BASE`

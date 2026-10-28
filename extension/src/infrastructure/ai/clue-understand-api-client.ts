@@ -2,6 +2,7 @@
  * Recall 线索理解：经 Cloudflare Worker 代理 DeepSeek（扩展不持有 API Key）。
  */
 
+import { resolveClientMaxTokensForTask } from '@/core/recall/understand/ai-chat-task-kind'
 import { CLUE_LLM_COMPLETE_TIMEOUT_MS } from '@/core/recall/understand/clue-llm-timeout'
 import type { LlmChatCompleter } from '@/core/recall/understand/parse-recall-clue-with-llm'
 import { logger } from '@/infrastructure/logging/logger'
@@ -41,11 +42,12 @@ export function createClueUnderstandApiCompleter(
 
   return async (messages, options) => {
     const taskKind = options.taskKind
+    const maxTokens = resolveClientMaxTokensForTask(taskKind)
     logger.info('ClueLlm', '代理请求开始', {
       url,
       taskKind,
       messageCount: messages.length,
-      maxTokens: 400
+      maxTokens
     })
     const startedAt = Date.now()
 
@@ -56,7 +58,7 @@ export function createClueUnderstandApiCompleter(
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({
           messages,
-          maxTokens: 400,
+          maxTokens,
           temperature: 0,
           taskKind
         }),
