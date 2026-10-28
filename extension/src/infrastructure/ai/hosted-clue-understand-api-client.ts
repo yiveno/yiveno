@@ -11,6 +11,7 @@ export interface HostedCompleteApiResponse {
   error?: string
   model?: string
   provider?: string
+  taskKind?: string
   tokensUsed?: number
   quota?: {
     used?: number
@@ -30,6 +31,7 @@ function resolveApiBaseUrl(): string {
 /**
  * 创建打托管补全的 completer（登录 Free/Pro；配额用尽抛错，上层降级规则）。
  * accessTokenProvider 每次请求取最新 Bearer（避免过期）。
+ * 请求体带 taskKind，供服务端观测与模型路由。
  */
 export function createHostedClueUnderstandApiCompleter(
   accessTokenProvider: () => Promise<string | null>,
@@ -38,14 +40,16 @@ export function createHostedClueUnderstandApiCompleter(
   const base = apiBaseUrl.replace(/\/$/, '')
   const url = `${base}/api/ai/hosted/complete`
 
-  return async messages => {
+  return async (messages, options) => {
     const accessToken = await accessTokenProvider()
     if (!accessToken) {
       throw new Error('hosted_missing_auth')
     }
 
+    const taskKind = options.taskKind
     logger.info('ClueLlm', '托管请求开始', {
       url,
+      taskKind,
       messageCount: messages.length,
       maxTokens: 400
     })
@@ -62,7 +66,8 @@ export function createHostedClueUnderstandApiCompleter(
         body: JSON.stringify({
           messages,
           maxTokens: 400,
-          temperature: 0
+          temperature: 0,
+          taskKind
         }),
         signal: AbortSignal.timeout(CLUE_LLM_COMPLETE_TIMEOUT_MS)
       })
@@ -74,13 +79,17 @@ export function createHostedClueUnderstandApiCompleter(
       if (aborted) {
         logger.warn('ClueLlm', '托管请求超时，将降级规则理解', {
           url,
+          taskKind,
           durationMs,
-          timeoutMs: CLUE_LLM_COMPLETE_TIMEOUT_MS
+          timeoutMs: CLUE_LLM_COMPLETE_TIMEOUT_MS,
+          outcome: 'timeout'
         })
       } else {
         logger.error('ClueLlm', '托管请求网络失败', {
           url,
+          taskKind,
           durationMs,
+          outcome: 'network_error',
           error: error instanceof Error ? error.message : String(error)
         })
       }
@@ -91,9 +100,11 @@ export function createHostedClueUnderstandApiCompleter(
     if (!response.ok) {
       logger.warn('ClueLlm', '托管请求非 2xx', {
         url,
+        taskKind,
         status: response.status,
         durationMs: Date.now() - startedAt,
-        error: payload.error ?? response.statusText
+        error: payload.error ?? response.statusText,
+        outcome: response.status === 429 ? 'quota' : 'http_error'
       })
       throw new Error(payload.error || response.statusText || 'hosted_complete_failed')
     }
@@ -101,6 +112,7 @@ export function createHostedClueUnderstandApiCompleter(
     if (!text) {
       logger.warn('ClueLlm', '托管响应无 text', {
         url,
+        taskKind,
         status: response.status,
         durationMs: Date.now() - startedAt,
         model: payload.model
@@ -110,13 +122,15 @@ export function createHostedClueUnderstandApiCompleter(
 
     logger.info('ClueLlm', '托管请求成功', {
       url,
+      taskKind,
       status: response.status,
       durationMs: Date.now() - startedAt,
       model: payload.model,
       provider: payload.provider,
       tokensUsed: payload.tokensUsed,
       quota: payload.quota,
-      textLength: text.length
+      textLength: text.length,
+      outcome: 'ok'
     })
     return text
   }

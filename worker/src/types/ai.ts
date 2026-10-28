@@ -14,4 +14,9 @@ export interface AIHostedCompleteRequest {
   maxTokens?: number
   /** 采样温度 */
   temperature?: number
+  /**
+   * 任务种类（闭集；缺省按 nlu）。
+   * 仅服务端用于观测与模型路由；客户端不得传 model 名。
+   */
+  taskKind?: string
 }

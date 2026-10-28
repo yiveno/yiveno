@@ -10,10 +10,17 @@ import {
 } from '@/core/recall/understand/openai-compatible-chat'
 import { PARSE_GOLD_NOW_MS } from '@/core/recall/eval/parse-gold-now'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
+import type { LlmChatCompleteOptions } from '@/core/recall/understand/ai-chat-task-kind'
 
-/** 可注入的补全函数（单测 mock / 真 API）。 */
+export type {
+  AiChatTaskKind,
+  LlmChatCompleteOptions
+} from '@/core/recall/understand/ai-chat-task-kind'
+
+/** 可注入的补全函数（单测 mock / 真 API）；须带 taskKind。 */
 export type LlmChatCompleter = (
-  messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>
+  messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+  options: LlmChatCompleteOptions
 ) => Promise<string>
 
 export interface ParseRecallClueWithLlmOptions {
@@ -54,7 +61,7 @@ export async function parseRecallClueWithLlm(
   })
 
   const startedAt = Date.now()
-  const text = await options.complete(messages)
+  const text = await options.complete(messages, { taskKind: 'nlu' })
   trace('info', 'LLM 解析：completer 返回', {
     durationMs: Date.now() - startedAt,
     textLength: text.length,
@@ -94,9 +101,9 @@ export async function parseRecallClueWithLlm(
   return mapped
 }
 
-/** 用 OpenAI 兼容配置构造 completer。 */
+/** 用 OpenAI 兼容配置构造 completer（开发直连；忽略 taskKind，仅本地调试）。 */
 export function createOpenAiCompatibleCompleter(
   config: OpenAiCompatibleChatConfig
 ): LlmChatCompleter {
-  return messages => completeOpenAiCompatibleChat(config, messages)
+  return (messages, _options) => completeOpenAiCompatibleChat(config, messages)
 }

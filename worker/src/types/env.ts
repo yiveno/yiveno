@@ -43,6 +43,14 @@ export type Env = Cloudflare.Env & {
   /** 托管 LLM Pro 日盖 */
   AI_HOSTED_DAILY_CAP?: string
   /**
+   * 任务级模型覆盖（可选 · Phase 1+ 插座；未设则用 AI_HOSTED_MODEL）。
+   * 见 docs/architecture/2026-10-任务级模型路由方案.md
+   */
+  AI_HOSTED_MODEL_NLU?: string
+  AI_HOSTED_MODEL_NLG?: string
+  AI_HOSTED_MODEL_ENRICHMENT?: string
+  AI_HOSTED_MODEL_GS_SAMPLES?: string
+  /**
    * 聊天补全 Provider：deepseek（默认）。未知值 → 503 ai_provider_unsupported。
    * 换厂商时加 adapter + 改此变量，业务 handler 不改。
    */

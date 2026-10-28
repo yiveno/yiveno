@@ -5,6 +5,11 @@
 
 import type { Env } from '../types/env'
 import { isDeepSeekAiGatewayEnabled, resolveHostedModel } from '../config/ai-hosted'
+import {
+  parseAiChatTaskKind,
+  resolveHostedModelForTask,
+  type AiChatTaskKind
+} from '../config/ai-task-kind'
 import { isAiChatProviderConfigured, resolveAiChatProvider } from '../services/ai/ai-chat-provider'
 import { okJson, errorJson } from '../utils/response'
 import { info as logInfo, logError } from '../utils/logger'
@@ -16,6 +21,8 @@ export interface ClueCompleteRequestBody {
   messages?: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>
   maxTokens?: number
   temperature?: number
+  /** 任务种类（闭集；缺省 nlu） */
+  taskKind?: string
 }
 
 function clientIp(request: Request): string {
@@ -95,10 +102,18 @@ export async function handleClueComplete(request: Request, env: Env): Promise<Re
     body = (await request.json().catch(() => ({}))) as ClueCompleteRequestBody
   }
 
+  const taskKind: AiChatTaskKind = parseAiChatTaskKind(body.taskKind)
+  const model = resolveHostedModelForTask(env, taskKind)
+
   const hasMessages = Array.isArray(body.messages) && body.messages.length > 0
   const prompt = body.prompt?.trim() ?? ''
   if (!hasMessages && !prompt) {
-    logInfo('clue_complete_rejected', { reason: 'missing_prompt_or_messages', ip })
+    logInfo('clue_complete_rejected', {
+      reason: 'missing_prompt_or_messages',
+      ip,
+      taskKind,
+      model
+    })
     return errorJson({ error: 'missing_prompt_or_messages' }, 400, origin)
   }
 
@@ -106,6 +121,8 @@ export async function handleClueComplete(request: Request, env: Env): Promise<Re
   logInfo('clue_complete_start', {
     ip,
     providerId,
+    taskKind,
+    model,
     hasMessages,
     messageCount: hasMessages ? body.messages!.length : 0,
     promptLength: prompt.length,
@@ -116,13 +133,16 @@ export async function handleClueComplete(request: Request, env: Env): Promise<Re
   const quota = await consumeClueDailyQuota(env, ip)
   if (!quota.allowed) {
     if (quota.reason === 'kv_not_configured') {
-      logInfo('clue_complete_rejected', { reason: 'kv_not_configured', ip })
+      logInfo('clue_complete_rejected', { reason: 'kv_not_configured', ip, taskKind, model })
       return errorJson({ error: 'kv_not_configured' }, 503, origin)
     }
     logInfo('clue_complete_quota_exceeded', {
       ip,
+      taskKind,
+      model,
       used: quota.used,
-      limit: quota.limit
+      limit: quota.limit,
+      outcome: 'quota'
     })
     return errorJson(
       {
@@ -142,19 +162,22 @@ export async function handleClueComplete(request: Request, env: Env): Promise<Re
       maxTokens: body.maxTokens ?? 400,
       temperature: body.temperature ?? 0,
       disableThinking: true,
+      model,
       ...(hasMessages ? { messages: body.messages } : {})
     })
 
     logInfo('clue_complete_ok', {
       ip,
-      durationMs: Date.now() - startedAt,
+      taskKind,
+      latencyMs: Date.now() - startedAt,
       providerId: result.providerId,
       model: result.model || resolveHostedModel(env),
       tokensUsed: result.tokensUsed,
       textLength: result.text.length,
       quotaUsed: quota.used,
       quotaLimit: quota.limit,
-      viaAiGateway
+      viaAiGateway,
+      outcome: 'ok'
     })
 
     return okJson(
@@ -163,6 +186,7 @@ export async function handleClueComplete(request: Request, env: Env): Promise<Re
         provider: 'clue',
         providerId: result.providerId,
         model: result.model || resolveHostedModel(env),
+        taskKind,
         tokensUsed: result.tokensUsed,
         quota: {
           used: quota.used,
@@ -177,8 +201,11 @@ export async function handleClueComplete(request: Request, env: Env): Promise<Re
     logError(err, {
       path: '/api/ai/clue/complete',
       ip,
-      durationMs: Date.now() - startedAt,
+      taskKind,
+      model,
+      latencyMs: Date.now() - startedAt,
       providerId,
+      outcome: 'provider_error',
       detail: message
     })
     return errorJson({ error: 'clue_complete_failed' }, 500, origin)

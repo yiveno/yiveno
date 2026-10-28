@@ -110,7 +110,7 @@ export const deepseekAiChatProvider: AiChatProvider = {
 
     const viaGateway = isDeepSeekAiGatewayEnabled(env)
     const completionsUrl = resolveDeepSeekChatCompletionsUrl(env)
-    const model = resolveHostedModel(env)
+    const model = request.model?.trim() || resolveHostedModel(env)
     const maxTokens = clampCompletionMaxTokens(request.maxTokens, 256)
     const temperature = request.temperature ?? 0.6
     const disableThinking = request.disableThinking !== false

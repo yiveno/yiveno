@@ -111,6 +111,12 @@ bun run env:check:prod
   - Cloudflare 线上环境变量在 Worker Dashboard / Wrangler 环境中维护
   - **AI Gateway（非 Secret，写在 `worker/wrangler.toml` `[vars]`）**
     - `AI_PROVIDER`（可选）：聊天补全实现，默认 `deepseek`；换厂商时加 Worker adapter + 改此变量
+    - `AI_HOSTED_MODEL`：全局默认 chat 模型（现网 `deepseek-v4-flash`）
+    - **任务级模型覆盖（可选 · Phase 1 插座；未设 = 全任务同 `AI_HOSTED_MODEL`，勿当已分模上线）**
+      - `AI_HOSTED_MODEL_NLU`：仅 `taskKind=nlu`
+      - `AI_HOSTED_MODEL_NLG`：`framing_nlg` / `follow_up_nlg` / `narrow_polish`
+      - `AI_HOSTED_MODEL_ENRICHMENT` / `AI_HOSTED_MODEL_GS_SAMPLES`：对应任务（若走可配置层）
+      - 请求体可带 `taskKind`（闭集；缺省 `nlu`）；**禁止**客户端传任意 `model` 名。方案见 `docs/architecture/2026-10-任务级模型路由方案.md`
     - `AI_GATEWAY_ACCOUNT_ID`：Cloudflare Account ID
     - `AI_GATEWAY_ID`：Gateway 名称（当前 `yiveno`）；Dashboard 需先创建同名 Gateway
     - 二者都非空时，DeepSeek 经 `gateway.ai.cloudflare.com` 转发；否则直连 `DEEPSEEK_API_BASE`

@@ -48,7 +48,7 @@ export async function completeRecallFollowUpWithLlm(
     weakCandidateCount: input.weakCandidateTitles?.length ?? 0
   })
 
-  const rawText = await input.complete(messages)
+  const rawText = await input.complete(messages, { taskKind: 'follow_up_nlg' })
   trace('info', 'LLM 追问：completer 返回', {
     preview: rawText.slice(0, 120)
   })

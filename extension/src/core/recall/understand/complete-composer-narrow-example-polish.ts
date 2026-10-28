@@ -51,7 +51,7 @@ export async function completeComposerNarrowExamplePolishWithLlm(
     selectedCount: selected.length
   })
 
-  const rawText = await input.complete(messages)
+  const rawText = await input.complete(messages, { taskKind: 'narrow_polish' })
   trace('info', 'LLM 举例润色：completer 返回', {
     preview: rawText.slice(0, 120)
   })

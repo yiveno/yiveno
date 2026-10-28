@@ -29,7 +29,7 @@
 - [`architecture/decisions/ADR-018-account-profile-data-isolation.md`](./architecture/decisions/ADR-018-account-profile-data-isolation.md) — Account vs Profile 隔离 · 未登录≟Free · 登录迁移门闸
 - [`architecture/decisions/ADR-019-website-extension-ui-bridge.md`](./architecture/decisions/ADR-019-website-extension-ui-bridge.md) — 同浏览器官网 ↔ 扩展 UI Port 桥（登录/资料；可见才刷）
 - [`architecture/decisions/ADR-020-chromium-dual-store-edge.md`](./architecture/decisions/ADR-020-chromium-dual-store-edge.md) — Chromium 双店同包（CWS + Edge Add-ons）；大陆主路径 Edge
-- [`architecture/2026-10-任务级模型路由方案.md`](./architecture/2026-10-任务级模型路由方案.md) — **proposed**：按 taskKind 选模型/超时（非 Agent 集群）；对齐 ADR-010；未接受前不改生产默认
+- [`architecture/2026-10-任务级模型路由方案.md`](./architecture/2026-10-任务级模型路由方案.md) — **phase0-1-landed**：taskKind 观测 + 同模路由插座（非 Agent 集群）；未配分档 env = 行为同今日
 
 **运维 / 工程（非规格，与正文冲突时以正文为准）**：
 

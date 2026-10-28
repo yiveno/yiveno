@@ -23,6 +23,11 @@ export type AiChatCompleteRequest = {
   temperature?: number
   /** 关闭思考链（结构化 JSON 场景建议 true） */
   disableThinking?: boolean
+  /**
+   * 上游模型名（由 handler 经 resolveHostedModelForTask 注入）。
+   * 缺省时 provider 回退 resolveHostedModel(env)。
+   */
+  model?: string
 }
 
 /** 统一补全结果。 */

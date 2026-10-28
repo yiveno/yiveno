@@ -55,7 +55,7 @@ export async function completeRecallFramingNlgWithLlm(
     factsKind: input.facts.kind
   })
 
-  const rawText = await input.complete(messages)
+  const rawText = await input.complete(messages, { taskKind: 'framing_nlg' })
   trace('info', 'LLM Framing：completer 返回', {
     preview: rawText.slice(0, 120)
   })
