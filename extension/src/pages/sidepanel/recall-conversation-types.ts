@@ -1,4 +1,5 @@
 import type { RecallFramingFacts } from '@/core/recall/recall-framing-facts'
+import type { RecallShellTextSegment } from '@/core/recall/recall-shell-empty-copy'
 import type { RecallCardModel } from '@/pages/sidepanel/RecallResultCard.vue'
 
 export type RecallSuggestion = {
@@ -18,6 +19,11 @@ export type AssistantTurn = {
   role: 'assistant'
   tone: 'confident' | 'uncertain' | 'miss' | 'error'
   text: string
+  /**
+   * 空库 miss 等：正文可点片段（如「导入书签」→ Settings 开关）。
+   * 有则优先于纯 `text` 渲染；`text` 仍为拼接纯文本回退。
+   */
+  textSegments?: RecallShellTextSegment[]
   /** 续找线程时展示：标明仍在本找，非新一轮 */
   contextStatus?: string
   primaryCard?: RecallCardModel | null

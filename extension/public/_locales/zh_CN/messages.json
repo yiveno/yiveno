@@ -1203,10 +1203,10 @@
     "message": "选中文本后显示「保存到 Yiveno」"
   },
   "settings_toggle_chrome_bookmark_ingest": {
-    "message": "将本浏览器书签加入记忆库"
+    "message": "同步本浏览器书签到本机记忆库"
   },
   "settings_toggle_chrome_bookmark_ingest_hint": {
-    "message": "默认关闭。开启后会把书签复制进本机记忆库；关闭后停止新导入，已有内容保留。"
+    "message": "默认关闭。开启后导入书签进记忆库，并保持同步。关闭后将停止同步，记忆库已有内容将保留。"
   },
   "settings_section_shortcuts": {
     "message": "快捷键"
@@ -1914,7 +1914,7 @@
     "message": "选区为空。请重新选中文字后再保存。"
   },
   "error_bookmark_ingest_disabled": {
-    "message": "「将本浏览器书签加入记忆库」已关闭。请在设置 → Capture 中开启。"
+    "message": "「同步本浏览器书签到本机记忆库」已关闭。请在设置 → 保存 中开启。"
   },
   "error_import_status_read_failed": {
     "message": "无法读取书签导入状态"
@@ -1929,25 +1929,52 @@
     "message": "重试"
   },
   "popup_empty_no_memory_title": {
-    "message": "先留下一条痕迹"
+    "message": "记忆库还是空的"
   },
   "popup_empty_no_memory_body_importing": {
-    "message": "书签正在导入。你也可以划存一行文字——保存后，用自己的话说出来就能 Recall。"
+    "message": "书签正在同步。你也可以先划存一行——保存后，用自己的话就能找回来。"
+  },
+  "popup_empty_no_memory_body_prefix": {
+    "message": "可以先"
+  },
+  "popup_empty_no_memory_body_suffix": {
+    "message": "，或划存一段文字。有了内容，再用自己的话找回来。"
   },
   "popup_empty_no_memory_body": {
-    "message": "在页面上划存一行（或右键「保存选区」）。有了属于你的内容，回来用自己的话 Recall。"
+    "message": "可以先同步书签，或划存一段文字。有了内容，再用自己的话找回来。"
+  },
+  "popup_empty_no_memory_body_ingest_on_empty": {
+    "message": "已开启书签同步，但库里还没有内容。先划存一段，或打开开始设置看看，再用自己的话找回来。"
   },
   "popup_empty_library_empty_title": {
     "message": "还没有任何保存"
   },
+  "popup_empty_library_empty_body_prefix": {
+    "message": "记忆库是空的。请先"
+  },
+  "popup_empty_library_empty_body_suffix": {
+    "message": "或保存一条摘录，再用自己的话试试。"
+  },
   "popup_empty_library_empty_body": {
-    "message": "记忆库里还没有匹配。先保存一条摘录或短附注，再用自己的线索回来找。"
+    "message": "记忆库是空的。请先同步书签或保存一条摘录，再用自己的话试试。"
+  },
+  "popup_empty_library_empty_body_importing": {
+    "message": "书签还在同步中。想马上找东西的话，可以先划存一条摘录。"
+  },
+  "popup_empty_library_empty_body_ingest_on_empty": {
+    "message": "记忆库还是空的。先划存一段文字，再用自己的线索回来找。"
+  },
+  "popup_empty_import_bookmarks": {
+    "message": "同步书签"
+  },
+  "popup_empty_import_bookmarks_aria": {
+    "message": "打开设置，开启书签同步"
   },
   "popup_capture_first_title": {
     "message": "先保存一行"
   },
   "popup_capture_first_body": {
-    "message": "在任意页面划存一句——或在「开始使用」保存演示句——再用自己的话 Recall。"
+    "message": "在任意页面划存一句——或在「开始使用」保存演示句——再用自己的话找回来。"
   },
   "popup_capture_first_body_importing": {
     "message": "书签正在导入。先保存一条摘录——这是最快看到 Recall 怎么工作的方式。"

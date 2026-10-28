@@ -29,26 +29,42 @@ const emit = defineEmits<{
 const model = defineModel<string>({ required: true })
 const inputRef = ref<HTMLTextAreaElement | null>(null)
 
-/** 与 CSS `.recall-input` 单行行高对齐；多行由 scrollHeight 撑开，空态不预留第二行。 */
+/** 与 CSS `.recall-input` 单行行高对齐；多行由 scrollHeight 撑开，空态固定单行。 */
 const INPUT_MIN_HEIGHT_PX = 22
 const INPUT_MAX_HEIGHT_PX = 160
 
 /**
- * 随内容长高。空值清掉 inline height，交给 CSS min-height，
- * 避免 placeholder 换行虚高 scrollHeight → 输入后回落。
+ * 随内容长高（仅 JS，不用 field-sizing）。
+ * Edge Side Panel 窄栏下 field-sizing:content 会按长 placeholder 撑高，
+ * 首字输入后回落并触发 focus scroll，整页下移、底栏贴边裁切；Chrome 宽栏不易复现。
+ * 空态固定单行；有字再按 scrollHeight 长高。长高后钉死文档滚动，防止 Edge 滚视口。
  */
+function pinDocumentScroll(): void {
+  if (typeof window === 'undefined') {
+    return
+  }
+  if (window.scrollY !== 0 || document.documentElement.scrollTop !== 0) {
+    window.scrollTo(0, 0)
+  }
+  if (document.body.scrollTop !== 0) {
+    document.body.scrollTop = 0
+  }
+}
+
 function resizeInput(): void {
   const el = inputRef.value
   if (!el) {
     return
   }
   if (el.value.length === 0) {
-    el.style.height = ''
+    el.style.height = `${INPUT_MIN_HEIGHT_PX}px`
+    pinDocumentScroll()
     return
   }
   el.style.height = 'auto'
   const next = Math.min(Math.max(el.scrollHeight, INPUT_MIN_HEIGHT_PX), INPUT_MAX_HEIGHT_PX)
   el.style.height = `${next}px`
+  pinDocumentScroll()
 }
 
 function handleKeydown(event: KeyboardEvent): void {
@@ -64,7 +80,8 @@ function handleInput(): void {
 }
 
 function focus(): void {
-  inputRef.value?.focus()
+  inputRef.value?.focus({ preventScroll: true })
+  pinDocumentScroll()
 }
 
 watch(model, async () => {
@@ -122,6 +139,7 @@ defineExpose({ focus })
         :disabled="props.disabled"
         @keydown="handleKeydown"
         @input="handleInput"
+        @focus="pinDocumentScroll"
       />
       <button
         type="button"
@@ -236,6 +254,7 @@ defineExpose({ focus })
 
   /* 单行高：按钮 36px + 上下 padding；文案与发送钮垂直居中 */
   min-height: 52px;
+  max-height: calc(160px + 2 * var(--space-xs));
   padding: var(--space-xs) var(--space-xs) var(--space-xs) var(--space-md);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -243,6 +262,7 @@ defineExpose({ focus })
   box-shadow:
     0 1px 2px color-mix(in srgb, var(--ink) 8%, transparent),
     0 8px 24px color-mix(in srgb, var(--ink) 6%, transparent);
+  overflow: hidden;
 }
 
 .recall-form--prominent .recall-composer-shell {
@@ -263,12 +283,14 @@ defineExpose({ focus })
   flex: 1 1 auto;
   align-self: center;
   box-sizing: border-box;
-  width: auto;
-  min-height: 1.45em;
+  width: 100%;
+  min-width: 0;
+  height: 22px;
+  min-height: 22px;
   max-height: 160px;
 
-  /* 空态按 placeholder 撑高，避免单行文案贴在预留第二行的顶部 */
-  field-sizing: content;
+  /* 不用 field-sizing：见 resizeInput 注释（Edge 首字回落 + 整页下移） */
+  field-sizing: fixed;
   margin: 0;
   padding: 0;
   border: 0;
@@ -279,7 +301,9 @@ defineExpose({ focus })
   color: inherit;
   background: transparent;
   resize: none;
+  overflow-x: hidden;
   overflow-y: auto;
+  overflow-anchor: none;
 }
 
 .recall-input:focus {

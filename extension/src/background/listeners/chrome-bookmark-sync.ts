@@ -4,6 +4,7 @@ import {
   handleChromeBookmarkRemoved,
   isChromeBookmarkIngestEnabled
 } from '@/application/capture/chrome-bookmark-sync-service'
+import { ensureChromeBookmarkRepairAlarm } from '@/infrastructure/sync/chrome-bookmark-repair-alarm'
 import { ensureBackgroundBootstrapped } from '@/background/bootstrap-ready'
 import { flashActionBadge } from '@/infrastructure/browser/action-badge'
 import { logger } from '@/infrastructure/logging/logger'
@@ -143,9 +144,11 @@ export async function syncChromeBookmarkSyncListenersWithIngestSetting(
   const ingestEnabled = enabled ?? (await isChromeBookmarkIngestEnabled())
   if (ingestEnabled) {
     registerChromeBookmarkSyncListeners()
+    await ensureChromeBookmarkRepairAlarm(true)
     return
   }
   unregisterChromeBookmarkSyncListeners()
+  await ensureChromeBookmarkRepairAlarm(false)
 }
 
 /** 测试用：重置监听器注册状态（不调用 Chrome remove，需配合 mock）。 */

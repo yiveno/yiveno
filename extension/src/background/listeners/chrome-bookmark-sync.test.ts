@@ -1,9 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const ensureBackgroundBootstrappedMock = vi.hoisted(() => vi.fn(async () => undefined))
+const ensureChromeBookmarkRepairAlarmMock = vi.hoisted(() => vi.fn(async () => undefined))
 
 vi.mock('@/background/bootstrap-ready', () => ({
   ensureBackgroundBootstrapped: ensureBackgroundBootstrappedMock
+}))
+
+vi.mock('@/infrastructure/sync/chrome-bookmark-repair-alarm', () => ({
+  ensureChromeBookmarkRepairAlarm: ensureChromeBookmarkRepairAlarmMock
 }))
 
 import * as syncService from '@/application/capture/chrome-bookmark-sync-service'
@@ -23,6 +28,7 @@ describe('chrome-bookmark-sync listener', () => {
     resetChromeBookmarkSyncListenersForTests()
     syncService.resetPendingChromeBookmarkSyncForTests()
     vi.mocked(ensureBackgroundBootstrappedMock).mockClear()
+    ensureChromeBookmarkRepairAlarmMock.mockClear()
     vi.stubGlobal('chrome', {
       bookmarks: {
         onCreated: { addListener: vi.fn(), removeListener: vi.fn() },
@@ -69,17 +75,19 @@ describe('chrome-bookmark-sync listener', () => {
     expect(areChromeBookmarkSyncListenersRegistered()).toBe(false)
   })
 
-  it('syncChromeBookmarkSyncListenersWithIngestSetting(false) 卸载监听', async () => {
+  it('syncChromeBookmarkSyncListenersWithIngestSetting(false) 卸载监听并清对账闹钟', async () => {
     registerChromeBookmarkSyncListeners()
     await syncChromeBookmarkSyncListenersWithIngestSetting(false)
     expect(areChromeBookmarkSyncListenersRegistered()).toBe(false)
     expect(chrome.bookmarks.onCreated.removeListener).toHaveBeenCalled()
+    expect(ensureChromeBookmarkRepairAlarmMock).toHaveBeenCalledWith(false)
   })
 
-  it('syncChromeBookmarkSyncListenersWithIngestSetting(true) 注册监听', async () => {
+  it('syncChromeBookmarkSyncListenersWithIngestSetting(true) 注册监听并挂对账闹钟', async () => {
     await syncChromeBookmarkSyncListenersWithIngestSetting(true)
     expect(areChromeBookmarkSyncListenersRegistered()).toBe(true)
     expect(chrome.bookmarks.onCreated.addListener).toHaveBeenCalled()
+    expect(ensureChromeBookmarkRepairAlarmMock).toHaveBeenCalledWith(true)
   })
 
   it('onCreated 前先 await bootstrap', async () => {

@@ -42,11 +42,32 @@ export async function focusOrOpenLibraryTab(): Promise<boolean> {
 }
 
 /**
- * 快捷键 / 顶栏：打开或切到设置页。
+ * 快捷键 / 顶栏 / 空库「导入」：打开或切到设置页。
  * 与记忆库同路径：session → URL 扫描 → 新建；避免 openOptionsPage 重复开 Tab。
+ * @param options.hash 不含 `#`；有则改址并对齐深链（滚到书签开关等）
  */
-export async function focusOrOpenSettingsTab(): Promise<boolean> {
-  return focusOrCreateExtensionPage(EXTENSION_OPTIONS_PAGE, SETTINGS_TAB_SESSION_KEY)
+export async function focusOrOpenSettingsTab(options?: { hash?: string }): Promise<boolean> {
+  const hashRaw = options?.hash?.trim() ?? ''
+  const hash = hashRaw.replace(/^#/, '')
+  if (!hash) {
+    return focusOrCreateExtensionPage(EXTENSION_OPTIONS_PAGE, SETTINGS_TAB_SESSION_KEY)
+  }
+
+  const baseUrl = chrome.runtime.getURL(EXTENSION_OPTIONS_PAGE)
+  const targetUrl = `${baseUrl}#${hash}`
+  const expectedHash = `#${hash}`
+  const result = await focusOrOpenTab({
+    targetUrl,
+    match: {
+      kind: 'urlPatterns',
+      patterns: buildExtensionPageTabQueryPattern(EXTENSION_OPTIONS_PAGE)
+    },
+    sessionKey: SETTINGS_TAB_SESSION_KEY,
+    // 已有 Settings tab 时也要对齐 hash（否则空库深链无效）
+    canKeepExistingUrl: current => current.hash === expectedHash,
+    logScope: 'ExtensionTab'
+  })
+  return result.status === 'focused' || result.status === 'created'
 }
 
 /** Side Panel / 安装引导：打开或切到 Getting Started 页。 */

@@ -23,6 +23,7 @@ import {
   handleChromeBookmarkCreated,
   handleChromeBookmarkRemoved,
   reconcileChromeBookmarksWithMemory,
+  repairChromeBookmarksWithMemory,
   resetPendingChromeBookmarkSyncForTests
 } from '@/application/capture/chrome-bookmark-sync-service'
 import { scheduleAsyncMemoryEmbedding } from '@/application/memory/schedule-async-memory-embedding'
@@ -429,5 +430,108 @@ describe('chrome-bookmark-sync-service', () => {
 
     upsertSpy.mockRestore()
     errorSpy.mockRestore()
+  })
+
+  it('full repair 重盖脏 title、软删孤儿、保留第三方无 chromeId', async () => {
+    await handleChromeBookmarkCreated({
+      id: '10',
+      syncing: false,
+      title: '旧标题',
+      url: 'https://example.com/retention',
+      parentId: '1'
+    })
+    const linked = await memoryItemRepository.listByOwner({ type: 'bookmark' })
+    expect(linked).toHaveLength(1)
+    const linkedId = linked[0]!.id
+    await memoryItemRepository.updateNote(linkedId, '私人附注')
+
+    // Memory 脏改 title（模拟 IndexedDB 被改坏）；须重读以免盖掉刚写的附注
+    const afterNote = await memoryItemRepository.getById(linkedId)
+    if (!afterNote || afterNote.type !== 'bookmark') {
+      throw new Error('expected bookmark')
+    }
+    await memoryItemRepository.putEnrichmentClues({
+      ...afterNote,
+      payload: { ...afterNote.payload, title: '脏标题' },
+      updatedAt: new Date().toISOString()
+    })
+
+    // 孤儿：Chrome 已无的 chromeBookmarkId
+    await memoryItemRepository.createBookmark({
+      payload: {
+        title: '孤儿',
+        url: 'https://orphan.example.com',
+        chromeBookmarkId: 'orphan-gone'
+      },
+      captureEntry: 'sync'
+    })
+
+    // 第三方：无 chromeBookmarkId，full repair 不得软删
+    await memoryItemRepository.createBookmark({
+      payload: {
+        title: 'Raindrop 导入',
+        url: 'https://third.example.com',
+        corpusSource: 'raindrop',
+        remoteId: 'rd-1'
+      },
+      captureEntry: 'import'
+    })
+
+    const chromeMock = chrome as unknown as ReturnType<typeof createChromeMock>
+    chromeMock.__bookmarks.set('10', {
+      id: '10',
+      syncing: false,
+      title: 'Retention analysis',
+      url: 'https://example.com/retention',
+      parentId: '1'
+    })
+
+    const result = await repairChromeBookmarksWithMemory({ force: true })
+    expect(result.skipped).toBe(false)
+    expect(result.upserted).toBeGreaterThanOrEqual(1)
+    expect(result.softDeleted).toBe(1)
+
+    const active = await memoryItemRepository.listByOwner({ type: 'bookmark' })
+    const bookmarks = active.filter(item => item.type === 'bookmark')
+    const byChrome = new Map(
+      bookmarks
+        .filter(item => item.payload.chromeBookmarkId)
+        .map(item => [item.payload.chromeBookmarkId!, item] as const)
+    )
+    const repaired = byChrome.get('10')
+    expect(repaired?.payload.title).toBe('Retention analysis')
+    expect(repaired?.clues.note).toBe('私人附注')
+    expect(byChrome.has('orphan-gone')).toBe(false)
+
+    const thirdParty = bookmarks.find(item => item.payload.corpusSource === 'raindrop')
+    expect(thirdParty).toBeTruthy()
+  })
+
+  it('full repair 灌库关闭时跳过', async () => {
+    const chromeMock = createChromeMock({
+      [LOCAL_PROFILE_STORAGE_KEY]: localProfile,
+      [CHROME_BOOKMARK_IMPORT_STORAGE_KEY]: completedImportState,
+      [USER_SETTINGS_STORAGE_KEY]: {
+        ...DEFAULT_USER_SETTINGS,
+        chromeBookmarkIngestEnabled: false
+      }
+    })
+    vi.stubGlobal('chrome', chromeMock)
+
+    const result = await repairChromeBookmarksWithMemory({ force: true })
+    expect(result.skipped).toBe(true)
+    expect(result.reason).toBe('ingest_disabled')
+  })
+
+  it('full repair 同 SW 会话自动路径只跑一次；force 可再跑', async () => {
+    const first = await repairChromeBookmarksWithMemory()
+    expect(first.skipped).toBe(false)
+
+    const second = await repairChromeBookmarksWithMemory()
+    expect(second.skipped).toBe(true)
+    expect(second.reason).toBe('already_done_this_session')
+
+    const forced = await repairChromeBookmarksWithMemory({ force: true })
+    expect(forced.skipped).toBe(false)
   })
 })

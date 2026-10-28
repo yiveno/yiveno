@@ -17,8 +17,10 @@ defineProps<{
 
 <style scoped>
 .detail-export-bar-dock {
+  /* 禁止被父 flex 压矮裁切；稳态可见以免裁向上格式菜单 */
+  flex-shrink: 0;
   width: 100%;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .detail-export-bar-dock-enter-active {

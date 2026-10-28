@@ -89,30 +89,45 @@ export class MemoryItemRepository {
     })
   }
 
-  /** 按 Chrome 书签 ID 查找当前用户的 Bookmark MemoryItem。 */
+  /**
+   * 按 Chrome 书签 ID 查找当前用户的 Bookmark MemoryItem。
+   * 默认跳过软删；`includeDeleted` 时优先返回未删行，否则取更新最近的软删行（供 upsert 同 id 复活）。
+   */
   async getByChromeBookmarkId(
     chromeBookmarkId: string,
-    ownerId?: string
+    ownerId?: string,
+    options: { includeDeleted?: boolean } = {}
   ): Promise<MemoryItem | null> {
     await this.ensureReady()
     const resolvedOwnerId = ownerId ?? (await getCurrentOwnerId())
+    const includeDeleted = options.includeDeleted ?? false
 
     return indexedDBManager.withTransaction(MEMORY_ITEM_STORE, 'readonly', async transaction => {
       const index = transaction
         .objectStore(MEMORY_ITEM_STORE)
         .index(MEMORY_ITEM_INDEX_BY_OWNER_CHROME_BOOKMARK)
-      const raw = await requestToPromise(index.get([resolvedOwnerId, chromeBookmarkId]))
-      const item = safeParseMemoryItem(raw)
-      if (!item || item.ownerId !== resolvedOwnerId || item.deletedAt != null) {
+      const raws = await requestToPromise(index.getAll([resolvedOwnerId, chromeBookmarkId]))
+      const list = (Array.isArray(raws) ? raws : raws == null ? [] : [raws])
+        .map(raw => safeParseMemoryItem(raw))
+        .filter((item): item is MemoryItem => {
+          return item != null && item.ownerId === resolvedOwnerId && item.type === 'bookmark'
+        })
+
+      const active = list.filter(item => item.deletedAt == null)
+      if (active.length > 0) {
+        return active[0] ?? null
+      }
+      if (!includeDeleted) {
         return null
       }
-      return item
+      const deleted = [...list].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+      return deleted[0] ?? null
     })
   }
 
   /**
    * 从 Chrome 书签 upsert Bookmark MemoryItem。
-   * 已存在则更新标题/URL；不存在则新建。
+   * 已存在（含软删）则同 id 更新标题/URL 并清 deletedAt；不存在则新建。
    */
   async upsertBookmarkFromChrome(input: CreateBookmarkInput): Promise<MemoryItem> {
     const chromeBookmarkId = input.payload.chromeBookmarkId
@@ -120,7 +135,9 @@ export class MemoryItemRepository {
       return this.createBookmark(input)
     }
 
-    const existing = await this.getByChromeBookmarkId(chromeBookmarkId)
+    const existing = await this.getByChromeBookmarkId(chromeBookmarkId, undefined, {
+      includeDeleted: true
+    })
     if (!existing || existing.type !== 'bookmark') {
       return this.createBookmark({
         ...input,
@@ -140,6 +157,8 @@ export class MemoryItemRepository {
     const merged: MemoryItem = {
       ...next,
       id: existing.id,
+      // Chrome 仍在则复活软删，避免同 chromeBookmarkId 再建一行
+      deletedAt: null,
       // 以 Chrome dateAdded 校正近因；无则保留原 createdAt
       createdAt: next.payload.chromeCreatedAt ?? existing.createdAt,
       clues: {

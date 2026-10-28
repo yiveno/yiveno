@@ -145,6 +145,27 @@ describe('extension-tab', () => {
     expect(sessionStore.get('yiveno.settingsTabId')).toBe(88)
   })
 
+  it('focusOrOpenSettingsTab 带 hash 时改址到书签开关深链', async () => {
+    tabsQuery.mockResolvedValue([
+      {
+        id: 88,
+        windowId: 2,
+        url: 'chrome-extension://test/settings.html?section=data'
+      } as chrome.tabs.Tab
+    ])
+    tabsGet.mockResolvedValue({
+      id: 88,
+      windowId: 2,
+      url: 'chrome-extension://test/settings.html?section=data'
+    } as chrome.tabs.Tab)
+
+    await focusOrOpenSettingsTab({ hash: 'chrome-bookmark-ingest' })
+    expect(tabsUpdate).toHaveBeenCalledWith(88, {
+      url: 'chrome-extension://test/settings.html#chrome-bookmark-ingest',
+      active: true
+    })
+  })
+
   it('focusOrOpenLibraryTab tabs.create 失败时返回 false', async () => {
     tabsCreate.mockRejectedValue(new Error('quota'))
 

@@ -2,23 +2,36 @@ import type { TranslateFn } from '@/core/i18n/translate'
 
 /** Unit-test English table aligned with a subset of en messages. */
 const EN: Record<string, string> = {
-  popup_empty_no_memory_title: 'Save a first trace',
+  popup_empty_no_memory_title: 'Nothing in your library yet',
   popup_empty_no_memory_body_importing:
-    "Bookmarks are importing. You can still save a sentence you'd want to find again.",
+    'Your bookmarks are syncing in. You can also highlight a line to keep—once it’s saved, recall it in your own words.',
+  popup_empty_no_memory_body_prefix: ' ',
+  popup_empty_no_memory_body_suffix:
+    ', or highlight a line to save. Then come back and recall it in your own words.',
   popup_empty_no_memory_body:
-    'Highlight a sentence you want to keep (or use Save selection). Then come back and recall it in your own words.',
+    'Sync your bookmarks, or highlight a line to save. Then come back and recall it in your own words.',
+  popup_empty_no_memory_body_ingest_on_empty:
+    'Bookmark sync is on, but your library is still empty. Save a highlight (or open Getting Started), then recall it in your own words.',
+  popup_empty_import_bookmarks: 'Sync bookmarks',
+  popup_empty_import_bookmarks_aria: 'Open Settings to turn on bookmark sync',
   popup_capture_first_title: 'Save a line first',
   popup_capture_first_body:
     'Highlight a sentence on any page—or save the demo line on Getting Started—then recall it in your own words.',
   popup_capture_first_body_importing:
-    'Your bookmarks are importing. Save one excerpt first—it is the fastest way to see how recall works.',
+    'Your bookmarks are syncing in. Save one excerpt first—it is the fastest way to see how recall works.',
   popup_empty_library_empty_title: 'Nothing saved yet',
+  popup_empty_library_empty_body_prefix: 'Your library is empty. ',
+  popup_empty_library_empty_body_suffix:
+    ' or save an excerpt first, then try again in your own words.',
   popup_empty_library_empty_body:
-    "There isn't a matching trace in your library yet. Save an excerpt or note first, then come back in your own words.",
+    'Your library is empty. Sync bookmarks or save an excerpt first, then try again in your own words.',
+  popup_empty_library_empty_body_importing:
+    'Your bookmarks are still syncing in. Save an excerpt if you want something to recall right away.',
+  popup_empty_library_empty_body_ingest_on_empty:
+    'Your library is still empty. Save a highlight, then come back with any clue in your own words.',
   popup_no_match_title_with_clue: 'No match for "$1"',
   popup_no_match_title: 'No matching memory yet',
-  popup_no_match_body:
-    "There isn't a matching trace in your library yet. Try a shorter clue or save a trace first.",
+  popup_no_match_body: 'Nothing close enough turned up. Try another detail that stuck with you.',
   popup_welcome_title: 'What do you want to recall?',
   popup_welcome_body: 'Say it however you remember—any detail works.',
   popup_idle_paradigm_hint: 'Try saying it like…',

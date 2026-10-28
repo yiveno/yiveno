@@ -140,7 +140,7 @@ export function setUiLocaleCatalogForTests(
 export const t: TranslateFn = (key, substitutions) => {
   const entry = catalog?.[key]
   if (entry?.message) {
-    return formatChromeI18nMessage(entry.message, substitutions)
+    return formatChromeI18nMessage(entry.message, substitutions, entry.placeholders)
   }
 
   const message =

@@ -23,15 +23,27 @@ const FORBIDDEN_NO_MATCH_RESCUE = /shorten|retry with a shorter|try a different 
 
 function allColdStartCopyStrings(): string[] {
   const idleVariants = [
-    getRecallShellIdleEmptyCopy('empty', false, testTranslateEn),
-    getRecallShellIdleEmptyCopy('empty', true, testTranslateEn),
-    getRecallShellIdleEmptyCopy('ready', false, testTranslateEn, { captureFirst: true }),
-    getRecallShellIdleEmptyCopy('ready', true, testTranslateEn, { captureFirst: true })
+    getRecallShellIdleEmptyCopy('empty', testTranslateEn, { bookmarkFuel: 'ingest_off' }),
+    getRecallShellIdleEmptyCopy('empty', testTranslateEn, { bookmarkFuel: 'importing' }),
+    getRecallShellIdleEmptyCopy('empty', testTranslateEn, { bookmarkFuel: 'ingest_on_empty' }),
+    getRecallShellIdleEmptyCopy('ready', testTranslateEn, { captureFirst: true }),
+    getRecallShellIdleEmptyCopy('ready', testTranslateEn, {
+      captureFirst: true,
+      bookmarkFuel: 'importing'
+    })
   ].filter((copy): copy is NonNullable<typeof copy> => copy !== null)
 
   const noMatchVariants = [
     getRecallShellNoMatchCopy(
-      { library: 'empty', clue: 'the song I used to love' },
+      { library: 'empty', clue: 'the song I used to love', bookmarkFuel: 'ingest_off' },
+      testTranslateEn
+    ),
+    getRecallShellNoMatchCopy(
+      { library: 'empty', clue: 'the song I used to love', bookmarkFuel: 'importing' },
+      testTranslateEn
+    ),
+    getRecallShellNoMatchCopy(
+      { library: 'empty', clue: 'the song I used to love', bookmarkFuel: 'ingest_on_empty' },
       testTranslateEn
     ),
     getRecallShellNoMatchCopy({ library: 'ready', clue: 'poem I saved yesterday' }, testTranslateEn)
@@ -53,13 +65,17 @@ describe('cold-start-shell-contract §5.8', () => {
     }
   })
 
-  it('must：空库 no_match 诚实终局，无缩短再试类补救', () => {
+  it('must：空库 no_match 诚实终局，无缩短再试类补救；含灌库分流', () => {
     const copy = getRecallShellNoMatchCopy(
-      { library: 'empty', clue: 'the song I used to love' },
+      {
+        library: 'empty',
+        clue: 'the song I used to love',
+        bookmarkFuel: 'ingest_off'
+      },
       testTranslateEn
     )
     expect(copy.title).toBe('Nothing saved yet')
-    expect(copy.body).toMatch(/trace|excerpt|note/i)
+    expect(copy.body).toMatch(/empty|import|excerpt|bookmark/i)
     expect(`${copy.title} ${copy.body}`).not.toMatch(FORBIDDEN_NO_MATCH_RESCUE)
   })
 
@@ -71,7 +87,7 @@ describe('cold-start-shell-contract §5.8', () => {
     })
     expect(showCaptureFirst).toBe(true)
 
-    const copy = getRecallShellIdleEmptyCopy('ready', false, testTranslateEn, {
+    const copy = getRecallShellIdleEmptyCopy('ready', testTranslateEn, {
       captureFirst: showCaptureFirst
     })
     expect(copy?.title).toBe('Save a line first')

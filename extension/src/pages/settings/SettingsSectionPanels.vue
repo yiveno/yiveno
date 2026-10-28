@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { inject, type ComponentPublicInstance } from 'vue'
+import { SETTINGS_HASH_CHROME_BOOKMARK_INGEST } from '@/core/settings/settings-sections'
 import AppButton from '@/infrastructure/ui/AppButton.vue'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
 import AppSwitch from '@/infrastructure/ui/AppSwitch.vue'
@@ -126,7 +127,7 @@ const {
               @update:model-value="handleSelectionToolbarToggle"
             />
           </div>
-          <div class="settings-toggle">
+          <div :id="SETTINGS_HASH_CHROME_BOOKMARK_INGEST" class="settings-toggle">
             <div class="settings-toggle-copy">
               <span class="settings-toggle-title">{{
                 t('settings_toggle_chrome_bookmark_ingest')

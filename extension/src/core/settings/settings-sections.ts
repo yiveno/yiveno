@@ -24,6 +24,12 @@ export interface SettingsSectionTabDef {
 /** 默认分区：划词保存相关开关。 */
 export const DEFAULT_SETTINGS_SECTION: SettingsSectionId = 'capture'
 
+/**
+ * Settings 深链 hash：滚到书签灌库开关（Side Panel 空库「导入」链接）。
+ * 对应 DOM `id`；打开 `settings.html#…`（capture 为默认分区，无需 `?section=`）。
+ */
+export const SETTINGS_HASH_CHROME_BOOKMARK_INGEST = 'chrome-bookmark-ingest' as const
+
 /** URL 查询参数：设置分区（刷新后恢复）。 */
 export const SETTINGS_SECTION_QUERY_KEY = 'section'
 

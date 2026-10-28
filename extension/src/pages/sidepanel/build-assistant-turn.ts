@@ -1,4 +1,5 @@
 import type { RecallFramingFacts } from '@/core/recall/recall-framing-facts'
+import type { RecallShellTextSegment } from '@/core/recall/recall-shell-empty-copy'
 import type {
   ConversationTurn,
   AssistantTurn,
@@ -10,6 +11,7 @@ export function createAssistantTurn(input: {
   id: string
   tone: AssistantTurn['tone']
   text: string
+  textSegments?: RecallShellTextSegment[]
   contextStatus?: string
   primaryCard?: RecallCardModel | null
   relatedGuessCard?: RecallCardModel | null
@@ -30,6 +32,7 @@ export function createAssistantTurn(input: {
     role: 'assistant',
     tone: input.tone,
     text: input.text,
+    ...(input.textSegments === undefined ? {} : { textSegments: input.textSegments }),
     ...(input.contextStatus === undefined ? {} : { contextStatus: input.contextStatus }),
     ...(input.primaryCard === undefined ? {} : { primaryCard: input.primaryCard }),
     ...(input.relatedGuessCard === undefined ? {} : { relatedGuessCard: input.relatedGuessCard }),

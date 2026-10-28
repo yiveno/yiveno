@@ -1,4 +1,4 @@
-import { computed, onMounted, onUnmounted, ref, useId, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, useId, watch } from 'vue'
 import {
   formatExtensionCommandShortcut,
   getExtensionCommandDisplayTitle
@@ -7,8 +7,10 @@ import type { ExtensionCommandInfo } from '@/core/messaging/commands-messages'
 import type { AuthSignOutMode } from '@/core/messaging/account-sync-messages'
 import type { UiLocalePreference } from '@/core/i18n/ui-locale'
 import {
+  DEFAULT_SETTINGS_SECTION,
   parseSettingsSectionFromLocationSearch,
   resolveSettingsSectionTab,
+  SETTINGS_HASH_CHROME_BOOKMARK_INGEST,
   SETTINGS_SECTION_TABS,
   type SettingsSectionId
 } from '@/core/settings/settings-sections'
@@ -1134,6 +1136,31 @@ export function useSettingsPage() {
   /** 取消登录态 storage 订阅。 */
   let stopWatchAuthSession: (() => void) | null = null
 
+  /**
+   * 深链 hash（如空库「导入」→ `#chrome-bookmark-ingest`）：
+   * 切到保存分区并滚到目标开关。
+   */
+  function scrollToSettingsHashTarget(): void {
+    const raw = window.location.hash.replace(/^#/, '').trim()
+    if (!raw) {
+      return
+    }
+    if (raw === SETTINGS_HASH_CHROME_BOOKMARK_INGEST && activeSection.value !== 'capture') {
+      activeSection.value = DEFAULT_SETTINGS_SECTION
+    }
+    requestAnimationFrame(() => {
+      const el = document.getElementById(raw)
+      if (!el) {
+        return
+      }
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' })
+    })
+  }
+
+  function handleHashChange(): void {
+    scrollToSettingsHashTarget()
+  }
+
   onMounted(() => {
     void loadCommands()
     void loadUserSettings()
@@ -1143,13 +1170,19 @@ export function useSettingsPage() {
       void loadSyncContext()
     })
     window.addEventListener('popstate', handlePopState)
+    window.addEventListener('hashchange', handleHashChange)
     document.addEventListener('visibilitychange', handleDocumentVisibilityChange)
+    // 首屏：等面板挂上再滚（capture 默认已选）
+    void nextTick().then(() => {
+      scrollToSettingsHashTarget()
+    })
   })
 
   onUnmounted(() => {
     stopWatchAuthSession?.()
     stopWatchAuthSession = null
     window.removeEventListener('popstate', handlePopState)
+    window.removeEventListener('hashchange', handleHashChange)
     document.removeEventListener('visibilitychange', handleDocumentVisibilityChange)
   })
 

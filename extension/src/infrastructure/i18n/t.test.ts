@@ -67,10 +67,15 @@ describe('i18n t()', () => {
   it('目录优先于 chrome.i18n；getUILanguage 跟生效 locale', () => {
     setUiLocaleCatalogForTests('zh_CN', {
       context_menu_save_selection: { message: '保存到 Yiveno' },
-      with_sub: { message: '导入 $1 / $2' }
+      with_sub: { message: '导入 $1 / $2' },
+      detail_export_selection_status: {
+        message: '已选 $count$',
+        placeholders: { count: { content: '$1' } }
+      }
     })
     expect(t('context_menu_save_selection')).toBe('保存到 Yiveno')
     expect(t('with_sub', ['3', '10'])).toBe('导入 3 / 10')
+    expect(t('detail_export_selection_status', ['2'])).toBe('已选 2')
     expect(getMessage).not.toHaveBeenCalled()
     expect(getEffectiveUiLocale()).toBe('zh_CN')
     expect(getUILanguage()).toBe('zh-CN')

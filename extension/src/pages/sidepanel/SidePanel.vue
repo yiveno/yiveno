@@ -23,6 +23,9 @@ import { shouldShowCaptureFirstRecallShell } from '@/core/capture/install-onboar
 import {
   getRecallShellIdleEmptyCopy,
   getRecallShellNoMatchCopy,
+  resolveRecallShellBookmarkFuel,
+  shouldShowRecallEmptyImportCta,
+  shouldShowRecallEmptySetupCta,
   type RecallShellLibraryState
 } from '@/core/recall/recall-shell-empty-copy'
 import { getTimeOfDayGreeting } from '@/core/recall/time-of-day-greeting'
@@ -62,6 +65,9 @@ import {
 import { parseRecallVisibleProgressMessage } from '@/core/messaging/ui-messages'
 import { tRecallError } from '@/infrastructure/i18n/background-error'
 import { openGettingStartedPage } from '@/infrastructure/browser/getting-started-page'
+import { focusOrOpenSettingsTab } from '@/infrastructure/browser/extension-tab'
+import { SETTINGS_HASH_CHROME_BOOKMARK_INGEST } from '@/core/settings/settings-sections'
+import type { RecallShellTextSegment } from '@/core/recall/recall-shell-empty-copy'
 import { t } from '@/infrastructure/i18n/t'
 import {
   readColdStartPostReleaseBannerDismissedReadyAt,
@@ -73,6 +79,7 @@ import {
   fetchAuthState,
   fetchChromeBookmarkImportStatus,
   fetchColdStartStatus,
+  fetchUserSettings,
   listMemoryItems,
   navigateActiveTab,
   getRecallPageContext,
@@ -349,6 +356,8 @@ const recallPendingLabel = computed(() => {
 })
 
 const importState = ref<ChromeBookmarkImportState | null>(null)
+/** 书签灌库开关（空库文案分流；默认关与 UserSettings 一致）。 */
+const bookmarkIngestEnabled = ref(false)
 const coldStartState = ref<ColdStartPipelineState | null>(null)
 /** 本轮冷启动 LLM enrichment 批次进度。 */
 const coldStartEnrichmentBatch = ref<ColdStartEnrichmentBatch | null>(null)
@@ -753,23 +762,35 @@ function collectResultIdsFromRecall(result: {
   return [...new Set(ids)]
 }
 
-/** 无候选 miss：诚实终局文案（无问卷芯片）。 */
-function resolveMissAssistantText(input: {
+/** 无候选 miss：诚实终局文案（无问卷芯片）；空库可带「导入」深链片段。 */
+function resolveMissAssistantCopy(input: {
   emptyKind?: string
   hasRelatedGuess: boolean
   library: RecallShellLibraryState
   clue: string
-}): string {
+}): { text: string; textSegments?: RecallShellTextSegment[] } {
   if (input.emptyKind === 'constrained_none') {
-    return input.hasRelatedGuess
-      ? t('popup_followup_miss_constrained_empty_with_guess')
-      : t('popup_followup_miss_constrained_empty')
+    return {
+      text: input.hasRelatedGuess
+        ? t('popup_followup_miss_constrained_empty_with_guess')
+        : t('popup_followup_miss_constrained_empty')
+    }
   }
   if (input.library === 'empty') {
-    const copy = getRecallShellNoMatchCopy({ library: 'empty', clue: input.clue }, t)
-    return `${copy.title} ${copy.body}`
+    const copy = getRecallShellNoMatchCopy(
+      { library: 'empty', clue: input.clue, bookmarkFuel: bookmarkFuel.value },
+      t
+    )
+    const titleAndBody: RecallShellTextSegment[] = [
+      { kind: 'text', text: `${copy.title} ` },
+      ...(copy.bodySegments ?? [{ kind: 'text' as const, text: copy.body }])
+    ]
+    return {
+      text: `${copy.title} ${copy.body}`,
+      ...(copy.bodySegments ? { textSegments: titleAndBody } : {})
+    }
   }
-  return t('popup_reply_miss')
+  return { text: t('popup_reply_miss') }
 }
 
 let importPollTimer: ReturnType<typeof setInterval> | null = null
@@ -927,8 +948,16 @@ const showColdStartEnrichmentProgressBar = computed(() => {
   return Boolean(batch && batch.total > 0 && batch.status !== 'cleared')
 })
 
-/** 书签 bulk 是否在跑（空态文案 / Capture-first；主进度 UI 在 Getting Started）。 */
-const isImporting = computed(() => importState.value?.status === 'running')
+/**
+ * 空库燃料态：灌库开关 × 导入状态 → Idle / no_match 文案分流。
+ * 主进度仍在 GS；此处只反馈「为何找不到」。
+ */
+const bookmarkFuel = computed(() =>
+  resolveRecallShellBookmarkFuel({
+    bookmarkIngestEnabled: bookmarkIngestEnabled.value,
+    importStatus: importState.value?.status ?? null
+  })
+)
 
 /** 书签库存：导入计数；库已 ready 且无摘录计数时视为至少有书签可召（防 Capture-first 误伤）。 */
 const captureFirstBookmarkCount = computed(() => {
@@ -951,8 +980,27 @@ const captureFirstMode = computed(() =>
 )
 
 const idleEmptyCopy = computed(() =>
-  getRecallShellIdleEmptyCopy(libraryState.value, isImporting.value, t, {
-    captureFirst: captureFirstMode.value
+  getRecallShellIdleEmptyCopy(libraryState.value, t, {
+    captureFirst: captureFirstMode.value,
+    bookmarkFuel: bookmarkFuel.value
+  })
+)
+
+/** 空库 + 未开灌库：Idle 展示导入书签 CTA。 */
+const showEmptyImportCta = computed(() =>
+  shouldShowRecallEmptyImportCta({
+    library: libraryState.value,
+    captureFirst: captureFirstMode.value,
+    bookmarkFuel: bookmarkFuel.value
+  })
+)
+
+/** 空库 + 已开灌库但仍空：Idle 回 GS 软后路。 */
+const showEmptySetupCta = computed(() =>
+  shouldShowRecallEmptySetupCta({
+    library: libraryState.value,
+    captureFirst: captureFirstMode.value,
+    bookmarkFuel: bookmarkFuel.value
   })
 )
 
@@ -1462,6 +1510,11 @@ function handleOpenGettingStarted(): void {
   void openGettingStartedPage()
 }
 
+/** 空库「导入书签」→ Settings 保存分区书签灌库开关。 */
+function handleOpenBookmarkIngestSettings(): void {
+  void focusOrOpenSettingsTab({ hash: SETTINGS_HASH_CHROME_BOOKMARK_INGEST })
+}
+
 async function probeMemoryLibrary() {
   try {
     const response = await listMemoryItems({ limit: 1 })
@@ -1472,6 +1525,23 @@ async function probeMemoryLibrary() {
     libraryState.value = response.total > 0 ? 'ready' : 'empty'
   } catch {
     libraryState.value = 'unknown'
+  }
+}
+
+/** 读取书签灌库开关；失败保持现值，不阻塞空态。 */
+async function refreshBookmarkIngestSetting(): Promise<void> {
+  try {
+    const response = await fetchUserSettings()
+    if (!response.ok) {
+      return
+    }
+    bookmarkIngestEnabled.value = response.settings.chromeBookmarkIngestEnabled
+    // 用户在 GS 刚打开开关时，确保导入轮询已启动
+    if (bookmarkIngestEnabled.value && !importPollTimer) {
+      startImportPolling()
+    }
+  } catch {
+    // 忽略：缺省关，文案走 ingest_off
   }
 }
 
@@ -1857,7 +1927,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
       )
     } else {
       const relatedGuess = response.result.relatedGuess ?? null
-      const missFallback = resolveMissAssistantText({
+      const missFallback = resolveMissAssistantCopy({
         ...(response.result.emptyKind !== undefined
           ? { emptyKind: response.result.emptyKind }
           : {}),
@@ -1868,8 +1938,12 @@ async function runRecall(trimmedClue: string): Promise<void> {
       const understandingEcho = resolveUnderstandingEchoChips(response.result.parsed)
       const omitUnderstood = Boolean(understandingEcho)
       const missFacts = response.result.recallFraming?.facts
-      const missReply =
-        missFacts !== undefined
+      // 空库燃料文案含「导入」深链时优先，避免 Framing 盖掉可点链接
+      const emptyFuelSegments = missFallback.textSegments
+      const preferEmptyFuelCopy = Boolean(emptyFuelSegments)
+      const missReply = preferEmptyFuelCopy
+        ? missFallback
+        : missFacts !== undefined
           ? {
               text: renderRecallFraming(missFacts, t, { omitUnderstood }),
               recallFramingFacts: missFacts
@@ -1879,16 +1953,17 @@ async function runRecall(trimmedClue: string): Promise<void> {
                 text: response.result.recallFraming.text,
                 recallFramingFacts: response.result.recallFraming.facts
               }
-            : { text: missFallback }
+            : missFallback
       conversationTurns.value.push(
         createAssistantTurn({
           id: nextTurnId(),
           tone: 'miss',
           text: missReply.text,
+          ...(emptyFuelSegments && preferEmptyFuelCopy ? { textSegments: emptyFuelSegments } : {}),
           ...contextStatusFields,
           ...deeperReadingTipFields,
           ...(understandingEcho ? { understandingEcho } : {}),
-          ...(missReply.recallFramingFacts !== undefined
+          ...('recallFramingFacts' in missReply && missReply.recallFramingFacts !== undefined
             ? { recallFramingFacts: missReply.recallFramingFacts }
             : {}),
           ...(relatedGuess
@@ -2075,6 +2150,8 @@ function handleSidePanelVisibilityChange(): void {
   }
   void loadGreetingIdentity()
   void refreshPageContextDomain()
+  void refreshBookmarkIngestSetting()
+  void probeMemoryLibrary()
 }
 
 function handleRecallVisibleProgressPush(message: unknown): void {
@@ -2123,6 +2200,7 @@ onMounted(() => {
     }
   })()
   void probeMemoryLibrary()
+  void refreshBookmarkIngestSetting()
   void refreshPageContextDomain()
   startImportPolling()
   startColdStartPolling()
@@ -2304,7 +2382,25 @@ onUnmounted(() => {
             {{ idleEmptyCopy?.title ?? t('popup_welcome_title') }}
           </p>
           <p class="recall-empty-copy">
-            {{ idleEmptyCopy?.body ?? t('popup_welcome_body') }}
+            <template v-if="idleEmptyCopy?.bodySegments && idleEmptyCopy.bodySegments.length > 0">
+              <template
+                v-for="(segment, segmentIndex) in idleEmptyCopy.bodySegments"
+                :key="segmentIndex"
+              >
+                <button
+                  v-if="segment.kind === 'open_bookmark_ingest_settings'"
+                  type="button"
+                  class="recall-empty-inline-link"
+                  :title="t('popup_empty_import_bookmarks_aria')"
+                  :aria-label="t('popup_empty_import_bookmarks_aria')"
+                  @click="handleOpenBookmarkIngestSettings"
+                >
+                  {{ segment.text }}
+                </button>
+                <template v-else>{{ segment.text }}</template>
+              </template>
+            </template>
+            <template v-else>{{ idleEmptyCopy?.body ?? t('popup_welcome_body') }}</template>
           </p>
           <div
             v-if="showIdleClueParadigms"
@@ -2340,6 +2436,16 @@ onUnmounted(() => {
               {{ t('popup_skip_onboarding') }}
             </AppButton>
           </div>
+          <div v-else-if="showEmptyImportCta" class="recall-empty-actions">
+            <AppButton type="button" variant="tonal" @click="handleOpenBookmarkIngestSettings">
+              {{ t('popup_empty_import_bookmarks') }}
+            </AppButton>
+          </div>
+          <div v-else-if="showEmptySetupCta" class="recall-empty-actions">
+            <AppButton type="button" variant="tonal" @click="handleOpenGettingStarted">
+              {{ t('popup_open_getting_started') }}
+            </AppButton>
+          </div>
         </div>
       </section>
 
@@ -2362,6 +2468,7 @@ onUnmounted(() => {
         @dismiss="handleDismissCandidates"
         @show-more="handleShowMoreMatches"
         @use-suggestion="handleUseSuggestion"
+        @open-bookmark-ingest-settings="handleOpenBookmarkIngestSettings"
       />
     </div>
 
@@ -2417,64 +2524,66 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <DetailExportBarDock :visible="showDetailExportBar">
-      <DetailExportBar
-        class="recall-detail-export-bar"
-        :selected-count="detailExportSelectedCount"
-        :exporting="detailExportExporting"
-        @copy-json="runDetailExportAction('json', 'copy')"
-        @copy-markdown="runDetailExportAction('markdown', 'copy')"
-        @download-json="runDetailExportAction('json', 'download')"
-        @download-markdown="runDetailExportAction('markdown', 'download')"
-        @clear="clearDetailExportSelection"
-      />
-    </DetailExportBarDock>
-
-    <p v-if="showOfflineBanner" class="recall-offline-composer-hint" role="status">
-      {{ t('sidepanel_offline_composer_hint') }}
-    </p>
-    <div class="recall-composer-dock">
-      <RecallComposer
-        ref="clueInputRef"
-        v-model="clue"
-        :ariaLabel="t('popup_clue_input_aria')"
-        :placeholder="composerPlaceholder"
-        :sendLabel="t('popup_submit')"
-        :disabled="isRecallRefreshing || showOutcomeExitStrip"
-        :prominent="isComposerProminent"
-        :thread-title="threadFindTitle"
-        :thread-title-label="t('popup_thread_title_label')"
-        :thread-title-aria="threadTitleAria"
-        :thread-new-find-label="t('popup_thread_anchor_clear')"
-        @send="handleSendTurn"
-        @clear-thread="startNewFindSession"
-      >
-        <RecallPageContextControls
-          :domain="pageContextDomain"
-          :combine-with-page="pageContextCombine"
-          :only-this-site="pageContextOnlySite"
-          :source-scope="recallSourceScope"
-          :expanded="pageContextExpanded"
-          :disabled="isRecallRefreshing || showOutcomeExitStrip"
-          :toggle-label="t('sidepanel_recall_settings_toggle')"
-          :dismiss-label="t('sidepanel_recall_settings_dismiss')"
-          :combine-label="t('sidepanel_page_context_combine')"
-          :combine-hint="t('sidepanel_page_context_combine_hint')"
-          :only-site-label="t('sidepanel_page_context_only_site')"
-          :only-site-hint="t('sidepanel_page_context_only_site_hint')"
-          :no-site-hint="t('sidepanel_page_context_no_site_hint')"
-          :source-all-label="t('sidepanel_recall_source_all')"
-          :source-all-hint="t('sidepanel_recall_source_all_hint')"
-          :source-excerpts-label="t('sidepanel_recall_source_excerpts')"
-          :source-excerpts-hint="t('sidepanel_recall_source_excerpts_hint')"
-          :source-bookmarks-label="t('sidepanel_recall_source_bookmarks')"
-          :source-bookmarks-hint="t('sidepanel_recall_source_bookmarks_hint')"
-          @update:expanded="handlePageContextExpanded"
-          @update:combine-with-page="pageContextCombine = $event"
-          @update:only-this-site="pageContextOnlySite = $event"
-          @update:source-scope="recallSourceScope = $event"
+    <div class="recall-bottom-chrome">
+      <DetailExportBarDock :visible="showDetailExportBar">
+        <DetailExportBar
+          class="recall-detail-export-bar"
+          :selected-count="detailExportSelectedCount"
+          :exporting="detailExportExporting"
+          @copy-json="runDetailExportAction('json', 'copy')"
+          @copy-markdown="runDetailExportAction('markdown', 'copy')"
+          @download-json="runDetailExportAction('json', 'download')"
+          @download-markdown="runDetailExportAction('markdown', 'download')"
+          @clear="clearDetailExportSelection"
         />
-      </RecallComposer>
+      </DetailExportBarDock>
+
+      <p v-if="showOfflineBanner" class="recall-offline-composer-hint" role="status">
+        {{ t('sidepanel_offline_composer_hint') }}
+      </p>
+      <div class="recall-composer-dock">
+        <RecallComposer
+          ref="clueInputRef"
+          v-model="clue"
+          :ariaLabel="t('popup_clue_input_aria')"
+          :placeholder="composerPlaceholder"
+          :sendLabel="t('popup_submit')"
+          :disabled="isRecallRefreshing || showOutcomeExitStrip"
+          :prominent="isComposerProminent"
+          :thread-title="threadFindTitle"
+          :thread-title-label="t('popup_thread_title_label')"
+          :thread-title-aria="threadTitleAria"
+          :thread-new-find-label="t('popup_thread_anchor_clear')"
+          @send="handleSendTurn"
+          @clear-thread="startNewFindSession"
+        >
+          <RecallPageContextControls
+            :domain="pageContextDomain"
+            :combine-with-page="pageContextCombine"
+            :only-this-site="pageContextOnlySite"
+            :source-scope="recallSourceScope"
+            :expanded="pageContextExpanded"
+            :disabled="isRecallRefreshing || showOutcomeExitStrip"
+            :toggle-label="t('sidepanel_recall_settings_toggle')"
+            :dismiss-label="t('sidepanel_recall_settings_dismiss')"
+            :combine-label="t('sidepanel_page_context_combine')"
+            :combine-hint="t('sidepanel_page_context_combine_hint')"
+            :only-site-label="t('sidepanel_page_context_only_site')"
+            :only-site-hint="t('sidepanel_page_context_only_site_hint')"
+            :no-site-hint="t('sidepanel_page_context_no_site_hint')"
+            :source-all-label="t('sidepanel_recall_source_all')"
+            :source-all-hint="t('sidepanel_recall_source_all_hint')"
+            :source-excerpts-label="t('sidepanel_recall_source_excerpts')"
+            :source-excerpts-hint="t('sidepanel_recall_source_excerpts_hint')"
+            :source-bookmarks-label="t('sidepanel_recall_source_bookmarks')"
+            :source-bookmarks-hint="t('sidepanel_recall_source_bookmarks_hint')"
+            @update:expanded="handlePageContextExpanded"
+            @update:combine-with-page="pageContextCombine = $event"
+            @update:only-this-site="pageContextOnlySite = $event"
+            @update:source-scope="recallSourceScope = $event"
+          />
+        </RecallComposer>
+      </div>
     </div>
   </main>
 </template>
@@ -2501,12 +2610,18 @@ onUnmounted(() => {
   width: 100%;
   max-width: 100%;
   height: 100%;
+  max-height: 100%;
   margin: 0;
-  overflow-x: hidden;
+  /* Edge Side Panel：禁止文档被 focus/textarea 长高滚出视口（整页下移） */
+  overflow: hidden;
+  overflow-anchor: none;
+  overscroll-behavior: none;
 }
 
 :global(#app) {
   height: 100%;
+  max-height: 100%;
+  overflow: hidden;
 }
 
 .recall-shell {
@@ -2518,14 +2633,15 @@ onUnmounted(() => {
   min-width: 0;
   max-width: 100%;
   height: 100%;
-  min-height: 100%;
-  max-height: none;
+  min-height: 0;
+  max-height: 100%;
 
   /* 顶栏非对称内边距：略紧于标准 page shell */
   padding: var(--space-sm) var(--space-md) var(--space-md);
   color: var(--on-surface);
   background: var(--surface);
   overflow: hidden;
+  overflow-anchor: none;
 }
 
 .recall-detail-export-entry {
@@ -2537,12 +2653,20 @@ onUnmounted(() => {
   padding: 0 var(--space-2xs);
 }
 
+.recall-bottom-chrome {
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  gap: var(--space-sm);
+  min-width: 0;
+}
+
 .recall-detail-export-bar {
   flex-shrink: 0;
-  margin-top: var(--space-xs);
-  margin-bottom: var(--space-xs);
+  margin: 0;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
+  box-shadow: 0 -4px 16px rgb(0 0 0 / 6%);
   overflow: visible;
 }
 
@@ -2683,7 +2807,7 @@ onUnmounted(() => {
 
 .recall-offline-composer-hint {
   flex-shrink: 0;
-  margin: var(--space-xs) var(--space-2xs) 0;
+  margin: 0 var(--space-2xs);
   font-size: 12px;
   line-height: 1.35;
   color: var(--on-surface-muted);
@@ -2693,6 +2817,12 @@ onUnmounted(() => {
   position: relative;
   z-index: 2;
   flex-shrink: 0;
+}
+
+/* 底栏 chrome 的 gap 已管纵向节奏；去掉 composer 内额外上边距避免叠距 */
+.recall-bottom-chrome .recall-composer-dock :deep(.recall-form) {
+  margin-top: 0;
+  padding-top: 0;
 }
 
 .recall-website-connect-label {
@@ -2846,6 +2976,32 @@ onUnmounted(() => {
   line-height: 1.5;
   color: var(--on-surface-muted);
   text-wrap: pretty;
+}
+
+.recall-empty-inline-link {
+  display: inline;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  line-height: inherit;
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.recall-empty-inline-link:hover,
+.recall-empty-inline-link:focus-visible {
+  opacity: 0.85;
+  outline: none;
+}
+
+.recall-empty-inline-link:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--primary) 45%, transparent);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 .recall-idle-paradigms {

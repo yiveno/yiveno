@@ -1206,10 +1206,10 @@
     "message": "Shows “Save to Yiveno” after you select text"
   },
   "settings_toggle_chrome_bookmark_ingest": {
-    "message": "Add browser bookmarks to your library"
+    "message": "Sync browser bookmarks to your local library"
   },
   "settings_toggle_chrome_bookmark_ingest_hint": {
-    "message": "Off by default. When on, copies bookmarks into your local library; turning off stops new imports and keeps what you already have."
+    "message": "Off by default. When on, imports bookmarks into your library and keeps them in sync. Turn off to stop syncing; what’s already in your library stays."
   },
   "settings_section_shortcuts": {
     "message": "Shortcuts"
@@ -1918,7 +1918,7 @@
     "message": "Selection is empty. Select text again, then save."
   },
   "error_bookmark_ingest_disabled": {
-    "message": "“Add browser bookmarks to your library” is off. Turn it on in Settings → Capture."
+    "message": "“Sync browser bookmarks to your local library” is off. Turn it on in Settings → Capture."
   },
   "error_import_status_read_failed": {
     "message": "Could not read bookmark import status"
@@ -1933,19 +1933,46 @@
     "message": "Retry"
   },
   "popup_empty_no_memory_title": {
-    "message": "Save a trace first"
+    "message": "Nothing in your library yet"
   },
   "popup_empty_no_memory_body_importing": {
-    "message": "Your bookmarks are importing. You can also highlight a line to keep—once it’s saved, recall it in your own words."
+    "message": "Your bookmarks are syncing in. You can also highlight a line to keep—once it’s saved, recall it in your own words."
+  },
+  "popup_empty_no_memory_body_prefix": {
+    "message": " "
+  },
+  "popup_empty_no_memory_body_suffix": {
+    "message": ", or highlight a line to save. Then come back and recall it in your own words."
   },
   "popup_empty_no_memory_body": {
-    "message": "Highlight a line on a page (or right-click Save selection). Once something’s yours, come back and recall it in your own words."
+    "message": "Sync your bookmarks, or highlight a line to save. Then come back and recall it in your own words."
+  },
+  "popup_empty_no_memory_body_ingest_on_empty": {
+    "message": "Bookmark sync is on, but your library is still empty. Save a highlight (or open Getting Started), then recall it in your own words."
   },
   "popup_empty_library_empty_title": {
     "message": "Nothing saved yet"
   },
+  "popup_empty_library_empty_body_prefix": {
+    "message": "Your library is empty. "
+  },
+  "popup_empty_library_empty_body_suffix": {
+    "message": " or save an excerpt first, then try again in your own words."
+  },
   "popup_empty_library_empty_body": {
-    "message": "Nothing in your library matches yet. Save an excerpt or a short note, then come back with any clue in your own words."
+    "message": "Your library is empty. Sync bookmarks or save an excerpt first, then try again in your own words."
+  },
+  "popup_empty_library_empty_body_importing": {
+    "message": "Your bookmarks are still syncing in. Save an excerpt if you want something to recall right away."
+  },
+  "popup_empty_library_empty_body_ingest_on_empty": {
+    "message": "Your library is still empty. Save a highlight, then come back with any clue in your own words."
+  },
+  "popup_empty_import_bookmarks": {
+    "message": "Sync bookmarks"
+  },
+  "popup_empty_import_bookmarks_aria": {
+    "message": "Open Settings to turn on bookmark sync"
   },
   "popup_capture_first_title": {
     "message": "Save a line first"

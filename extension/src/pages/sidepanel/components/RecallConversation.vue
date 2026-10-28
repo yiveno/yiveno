@@ -49,6 +49,8 @@ const emit = defineEmits<{
   showMore: [turnId: string, mode: ShowMoreMode]
   useSuggestion: [value: string]
   toggleDetailExportSelection: [memoryItemId: string]
+  /** 空库「导入书签」→ Settings 书签灌库开关 */
+  openBookmarkIngestSettings: []
 }>()
 
 /** Show more 续展模式：再展一页 / 展开剩余全部。 */
@@ -265,7 +267,22 @@ function handleToggleDetailExportSelection(id: string): void {
             class="assistant-turn-copy"
             :class="{ 'assistant-turn-copy--error': turn.tone === 'error' }"
           >
-            {{ turn.text }}
+            <template v-if="turn.textSegments && turn.textSegments.length > 0">
+              <template v-for="(segment, segmentIndex) in turn.textSegments" :key="segmentIndex">
+                <button
+                  v-if="segment.kind === 'open_bookmark_ingest_settings'"
+                  type="button"
+                  class="assistant-turn-inline-link"
+                  :title="t('popup_empty_import_bookmarks_aria')"
+                  :aria-label="t('popup_empty_import_bookmarks_aria')"
+                  @click="emit('openBookmarkIngestSettings')"
+                >
+                  {{ segment.text }}
+                </button>
+                <template v-else>{{ segment.text }}</template>
+              </template>
+            </template>
+            <template v-else>{{ turn.text }}</template>
           </p>
 
           <div v-if="turn.primaryCard" class="assistant-turn-primary">
@@ -621,6 +638,33 @@ function handleToggleDetailExportSelection(id: string): void {
   white-space: pre-wrap;
   color: var(--on-surface);
   text-wrap: pretty;
+}
+
+.assistant-turn-inline-link {
+  display: inline;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  line-height: inherit;
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.assistant-turn-inline-link:hover,
+.assistant-turn-inline-link:focus-visible {
+  color: var(--primary);
+  opacity: 0.85;
+  outline: none;
+}
+
+.assistant-turn-inline-link:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--primary) 45%, transparent);
+  outline-offset: 2px;
+  border-radius: 2px;
 }
 
 .assistant-turn-related-guess {

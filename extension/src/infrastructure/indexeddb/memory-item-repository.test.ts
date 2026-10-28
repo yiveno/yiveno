@@ -155,6 +155,52 @@ describe('memory-item-repository', () => {
     expect(updated).toBe(1)
   })
 
+  it('upsertBookmarkFromChrome 复活同 chromeBookmarkId 软删行且保留附注', async () => {
+    const created = await memoryItemRepository.createBookmark({
+      payload: {
+        title: '旧标题',
+        url: 'https://revive.example.com/old',
+        chromeBookmarkId: 'chrome-revive-1'
+      },
+      captureEntry: 'sync',
+      now: () => '2026-07-22T06:00:00.000Z'
+    })
+    await memoryItemRepository.updateNote(created.id, '私人附注')
+    await memoryItemRepository.softDelete(created.id)
+
+    expect(await memoryItemRepository.getByChromeBookmarkId('chrome-revive-1')).toBeNull()
+
+    const revived = await memoryItemRepository.upsertBookmarkFromChrome({
+      payload: {
+        title: '新标题',
+        url: 'https://revive.example.com/new',
+        chromeBookmarkId: 'chrome-revive-1'
+      },
+      captureEntry: 'sync',
+      now: () => '2026-07-22T07:00:00.000Z'
+    })
+
+    expect(revived.id).toBe(created.id)
+    expect(revived.deletedAt).toBeNull()
+    expect(revived.type).toBe('bookmark')
+    if (revived.type !== 'bookmark') {
+      throw new Error('expected bookmark')
+    }
+    expect(revived.payload.title).toBe('新标题')
+    expect(revived.payload.url).toBe('https://revive.example.com/new')
+    expect(revived.clues.note).toBe('私人附注')
+
+    const listed = await memoryItemRepository.listByOwner({
+      type: 'bookmark',
+      includeDeleted: true
+    })
+    expect(
+      listed.filter(
+        item => item.type === 'bookmark' && item.payload.chromeBookmarkId === 'chrome-revive-1'
+      )
+    ).toHaveLength(1)
+  })
+
   it('remapOwnerId 迁移归属并保留 sourceLocalProfileId', async () => {
     const created = await memoryItemRepository.createBookmark({
       payload: { title: 'Remap', url: 'https://remap.example.com' },
