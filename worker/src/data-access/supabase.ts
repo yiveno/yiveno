@@ -302,6 +302,33 @@ export async function deleteBillingEvent(env: Env, providerEventId: string): Pro
   }
 }
 
+/** 占位 claim 后回写真实 outcome（拒绝 / 忽略 / 补 user_id），避免「假 applied」。 */
+export async function updateBillingEventResult(
+  env: Env,
+  providerEventId: string,
+  patch: {
+    result: 'applied' | 'ignored' | 'rejected' | 'error'
+    skip_reason?: string | null
+    user_id?: string | null
+  }
+): Promise<void> {
+  if (!hasSupabase(env)) return
+  const supabase = createSupabaseClient(env)
+  if (!supabase) return
+  const { error } = await supabase
+    .from('billing_events')
+    .update({
+      result: patch.result,
+      skip_reason: patch.skip_reason ?? null,
+      ...(patch.user_id !== undefined ? { user_id: patch.user_id } : {})
+    })
+    .eq('provider', 'dodo')
+    .eq('provider_event_id', providerEventId)
+  if (error) {
+    logErrorMessage('[Supabase] 更新 billing_events 失败', { detail: toLogError(error) })
+  }
+}
+
 export async function getSubscriptionByProviderId(
   env: Env,
   providerSubscriptionId: string

@@ -114,6 +114,7 @@ describe('projectDodoWebhook', () => {
     const supabase = await import('../../data-access/supabase')
     const dodo = await import('./dodo-client')
     jest.spyOn(supabase, 'insertBillingEvent').mockResolvedValue(true)
+    jest.spyOn(supabase, 'updateBillingEventResult').mockResolvedValue(undefined)
     jest.spyOn(supabase, 'getSubscriptionByProviderId').mockResolvedValue(existingRow)
     jest.spyOn(dodo, 'cancelDodoSubscriptionImmediate').mockResolvedValue({ ok: true })
     const upsert = jest.spyOn(supabase, 'upsertSubscription').mockResolvedValue({
@@ -143,6 +144,8 @@ describe('projectDodoWebhook', () => {
     )
     expect(result.outcome).toBe('applied')
     expect(pay).toHaveBeenCalled()
+    expect(pay.mock.calls[0]?.[1]?.provider_transaction_id).toBe('ref_01full')
+    expect(pay.mock.calls[0]?.[1]?.provider_payment_id).toBe('pay_01abc')
     expect(upsert.mock.calls[0]?.[1]?.status).toBe('expired')
     expect(upsert.mock.calls[0]?.[1]?.provider_status).toBe('refunded')
     expect(dodo.cancelDodoSubscriptionImmediate).toHaveBeenCalledWith(env, SUB_ID)
@@ -152,6 +155,7 @@ describe('projectDodoWebhook', () => {
     const supabase = await import('../../data-access/supabase')
     const dodo = await import('./dodo-client')
     jest.spyOn(supabase, 'insertBillingEvent').mockResolvedValue(true)
+    jest.spyOn(supabase, 'updateBillingEventResult').mockResolvedValue(undefined)
     jest.spyOn(supabase, 'getPaymentRecordByProviderTransactionId').mockResolvedValue({
       user_id: USER_ID,
       provider_subscription_id: SUB_ID,
@@ -193,6 +197,7 @@ describe('projectDodoWebhook', () => {
   test('部分退款 → 不 expire', async () => {
     const supabase = await import('../../data-access/supabase')
     jest.spyOn(supabase, 'insertBillingEvent').mockResolvedValue(true)
+    jest.spyOn(supabase, 'updateBillingEventResult').mockResolvedValue(undefined)
     jest.spyOn(supabase, 'getSubscriptionByProviderId').mockResolvedValue(existingRow)
     const upsert = jest.spyOn(supabase, 'upsertSubscription').mockResolvedValue(existingRow)
     jest.spyOn(supabase, 'insertPaymentRecord').mockImplementation(async (_env, payment) => payment)
@@ -220,6 +225,7 @@ describe('projectDodoWebhook', () => {
     const supabase = await import('../../data-access/supabase')
     const dodo = await import('./dodo-client')
     jest.spyOn(supabase, 'insertBillingEvent').mockResolvedValue(true)
+    jest.spyOn(supabase, 'updateBillingEventResult').mockResolvedValue(undefined)
     jest.spyOn(supabase, 'getPaymentRecordByProviderTransactionId').mockResolvedValue({
       user_id: USER_ID,
       provider_subscription_id: SUB_ID,
@@ -235,7 +241,9 @@ describe('projectDodoWebhook', () => {
       ...existingRow,
       status: 'expired'
     })
-    jest.spyOn(supabase, 'insertPaymentRecord').mockImplementation(async (_env, payment) => payment)
+    const pay = jest
+      .spyOn(supabase, 'insertPaymentRecord')
+      .mockImplementation(async (_env, payment) => payment)
 
     const result = await projectDodoWebhook(
       env,
@@ -252,7 +260,44 @@ describe('projectDodoWebhook', () => {
       '{}'
     )
     expect(result.outcome).toBe('applied')
+    expect(pay.mock.calls[0]?.[1]?.provider_transaction_id).toBe('dsp_01')
+    expect(pay.mock.calls[0]?.[1]?.provider_payment_id).toBe('pay_01abc')
     expect(upsert.mock.calls[0]?.[1]?.status).toBe('expired')
+  })
+
+  test('退款缺 user → rejected 并回写 billing_events', async () => {
+    const supabase = await import('../../data-access/supabase')
+    jest.spyOn(supabase, 'insertBillingEvent').mockResolvedValue(true)
+    const update = jest.spyOn(supabase, 'updateBillingEventResult').mockResolvedValue(undefined)
+    jest.spyOn(supabase, 'getPaymentRecordByProviderTransactionId').mockResolvedValue(null)
+    jest.spyOn(supabase, 'getSubscriptionByProviderId').mockResolvedValue(null)
+    const dodo = await import('./dodo-client')
+    jest.spyOn(dodo, 'fetchDodoPayment').mockResolvedValue({
+      ok: false,
+      reason: 'not_found'
+    })
+
+    const result = await projectDodoWebhook(
+      env,
+      {
+        eventId: 'evt_refund_orphan',
+        eventType: 'refund.succeeded',
+        occurredAt: '2026-08-14T01:00:00.000Z',
+        data: {
+          refund_id: 'ref_orphan',
+          payment_id: 'pay_unknown',
+          is_partial: false
+        }
+      },
+      '{}'
+    )
+    expect(result.outcome).toBe('rejected')
+    expect(result.reason).toBe('missing_user_id')
+    expect(update).toHaveBeenCalledWith(
+      env,
+      'evt_refund_orphan',
+      expect.objectContaining({ result: 'rejected', skip_reason: 'missing_user_id' })
+    )
   })
 
   test('投影失败会删除 event 占位', async () => {

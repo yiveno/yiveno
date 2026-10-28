@@ -50,7 +50,7 @@ Dashboard **Adaptive Currency** 开启后：支持国默认本地币（中国 �
 - **周期结束取消**：`cancel_at_next_billing_date=true` → 投影 `cancel_at_period_end`，**仍 Pro** 至周期结束。
 - **立刻收回**：`cancelled`（立即）/ `on_hold` / `failed` / `expired`；当前周期**全额**退款。
 - **部分退款**：维持 Pro，除非订阅本身已取消。
-- **全额退款投影（`refund.succeeded`）：** Dodo Refund payload **常无** `subscription_id` / `yiveno_user_id`。Worker 用 `payment_id` → 本机 `payment_records` →（必要时）`GET /payments/{id}` 反查订阅与 user；全额退 → 本地 expire（`provider_status=refunded`）+ **尽力** `PATCH` 立即取消 Dodo 订阅（退款本身不取消订阅，否则对账会刷回 Pro）。对账若见本地已 `refunded` expire，即使 Dodo 仍 active 也不复活 Pro。
+- **全额退款投影（`refund.succeeded`）：** Dodo Refund payload **常无** `subscription_id` / `yiveno_user_id`。Worker 用 `payment_id` → 本机 `payment_records` →（必要时）`GET /payments/{id}` 反查订阅与 user；全额退 → 本地 expire（`provider_status=refunded`）+ **尽力** `PATCH` 立即取消 Dodo 订阅（退款本身不取消订阅，否则对账会刷回 Pro）。对账若见本地已 `refunded` expire，即使 Dodo 仍 active 也不复活 Pro。退款 `payment_records` 的 `provider_transaction_id` = **refund_id**（`provider_payment_id` = 原 `payment_id`），避免与 `payment.succeeded` 行撞唯一键。投影结束后须回写 `billing_events.result`（拒绝不得留「假 applied」）。**生产 Worker 须部署含本逻辑的版本**；仅合入 git 不够。
 - **孤立付款**：缺 `yiveno_user_id` → 不开 Pro，事件可观测。官网 Pricing：未登录点 Subscribe → `/login?next=/pricing&intent=subscribe`，登完回定价并自动开 checkout（始终带 `yiveno_user_id`）。
 
 ## 幂等

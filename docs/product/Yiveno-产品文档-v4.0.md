@@ -823,7 +823,7 @@ Yiveno 同时承载两条相互促进、**不互相替代**的线程：
 3. IndexedDB 只经 `indexedDBManager`（`extension/src/infrastructure/indexeddb/manager.ts`）。
 4. 领域类型以 Zod 为准：`extension/src/core/memory/*`；消息类型以 `extension/src/core/messaging/*` 为准。**禁止发明新 message `type` 字符串**，先改 schema 再接线。
 5. 对外文案：**筛选 / 找回**；禁止 **搜索 / Search**（各 locale 译文均遵守）。
-6. 扩展用户可见文案：经 **`t()`**（`extension/src/infrastructure/i18n/`）+ **`_locales/en` 与 `_locales/zh_CN`**；偏好 `system`/`en`/`zh_CN`（`UserSettings.uiLocalePreference`）。**禁止**在代码中写死 UI 自然语言，也禁止 `getMessage(...) || '兜底文案'`。`core` 不直接调 `chrome.i18n`（注入 `t` 或返回 message key）。**官网 `website/`** 有独立 `i18n`（en/zh_CN）；营销大段仍可能硬编码英文，缺口见审计。开发者文档/注释可中文。
+6. 扩展用户可见文案：经 **`t()`**（`extension/src/infrastructure/i18n/`）+ **`_locales/en` 与 `_locales/zh_CN`**；偏好 `system`/`en`/`zh_CN`（`UserSettings.uiLocalePreference`）。**禁止**在代码中写死 UI 自然语言，也禁止 `getMessage(...) || '兜底文案'`。`core` 不直接调 `chrome.i18n`（注入 `t` 或返回 message key）。**官网 `website/`** 有独立 `i18n`（en/zh_CN；已含壳导航/页脚、卸载反馈、`/login`、定价换汇说明）；营销大段仍可能硬编码英文，缺口见审计。开发者文档/注释可中文。
 7. `:hover|:focus|:active` 禁止 `translate` / `scale` / `rotate`；只用背景 / opacity / shadow / outline / state layer（浮层入场与 pop/shake 例外见 §3）。
 8. 实现范围以 **§1 状态表**为准；未标「已上线」= 不得当成已有行为，也不得在 UI 暗示已可用。
 9. 本机找回：**关键词 + Hybrid**（有 embedding 则融合；无则降级关键词）；**不分 Free/Pro**。**理解层里程碑 M1**：允许「任意线索 → 精确检索约束」；门禁后口语可走 LLM（可关；失败/配额用尽降级规则）。不得全库喂模型，不得模型返回无真实 MemoryItem id 的答案。
@@ -1229,6 +1229,7 @@ schema：`extension/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 - **实现：** 首次 `install` 打开 `getting-started.html`；`AppSectionTabs`；Getting Started bundle 打入划词脚本（扩展页不可 `executeScript`）。
 - **Capture-first 空态：** 仅当引导未完成且**无可召库存**（无书签且无摘录）时展示；**仅有书签**时走普通 Idle。
 - **书签 bulk 入口（Normative · 2026-09-14）：** **主路径** = GS Bookmarks 授权；**后路** = Settings 开 `chromeBookmarkIngestEnabled`。Side Panel **不再**展示书签 bulk 导入顶栏细条。冷启动门禁 Import 阶段 = 工程等待/幂等 `ensure` 对齐，**不是**二次授权导入课。
+- **空库燃料反馈（Normative · 2026-10-28）：** Side Panel 在 **库空** 时按 `chromeBookmarkIngestEnabled` × 导入状态分流 Idle / 空库 `no_match` 文案（未开灌库 / 同步中 / 已开仍空）；未开灌库时正文 **「同步书签 / Sync bookmarks」为可点链接**（及 Idle CTA）→ Settings 保存分区 `#chrome-bookmark-ingest`（开关文案 = **持续同步**本机书签，非一次性「导入」按钮）；GS 主路径 CTA 仍为 _Import my bookmarks_（一次性同意）。**禁止**静默灌库；**禁止**有库 `no_match` 误说「请先导入/同步」；**禁止**把 Side Panel 做成 bulk 进度课；**禁止**与云记忆 sync 文案混淆。实现：`resolveRecallShellBookmarkFuel` + `recall-shell-empty-copy` + `focusOrOpenSettingsTab({ hash })`。
 
 #### 5.8.1 冷启动双表面与进度门禁（Normative · 2026-08）
 
@@ -1263,11 +1264,12 @@ schema：`extension/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 #### A. 空库诚实（不得编造）
 
-1. 使用空记忆库配置档（或 Settings → 数据 → 清除本机记忆；**确认不删 Chrome 原生书签**）。
-2. 打开找回主壳（**Side Panel**）：空态标题/正文须导向 **先留下痕迹**（划词 / 右键选区），**不得**出现「还不了解你 / 告诉我喜好我会记住」类助理话术。
+1. 使用空记忆库配置档（或 Settings → 数据 → 清除本机记忆；**确认不删 Chrome 原生书签**）；确认书签灌库开关关。
+2. 打开找回主壳（**Side Panel**）：空态须说明库空，并导向 **同步书签或划存**（可见 **Sync bookmarks** 链/CTA → Settings 开关）；**不得**出现「还不了解你 / 告诉我喜好我会记住」类助理话术。
 3. 输入口语如「我以前最喜欢听的歌」并发送：
-   - 期望：`no_match` / 空库文案；**无** Top Pick；**无**虚构条目；**无**时间/类型追问芯片。
-   - 正文导向 Capture 或诚实终局，而非偏好建档闲聊、缺槽问卷。
+   - 期望：空库 `no_match` 文案（含同步/划存双路径）；**无** Top Pick；**无**虚构条目；**无**时间/类型追问芯片。
+   - 正文导向补燃料或诚实终局，而非偏好建档闲聊、缺槽问卷。
+4. （分流抽测）打开灌库且同步中：Idle/提交文案须说 **syncing**，**不要**再催「请先同步」；同步完成仍空：文案须导向划存 / 打开 GS，**不要**假装已有可找内容。
 
 #### B. 最短「存 → 找」闭环
 
@@ -1426,8 +1428,9 @@ schema：`extension/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 2. **复制**与**下载**各测 Markdown、JSON 至少一次。
 3. 检查每条含：`id`、`url`/`sourceUrl`、`createdAt`、摘录正文或书签 title、可选 `clues.note`。
 4. **禁止：** 导出整库；不得含未选条目。
+5. **Side Panel UI：** 底栏 Copy / Download / Cancel **完整可见**，不遮挡会话标题（「这次找回」）与「新的找回」；Copy/Download 向上格式菜单不被裁切。
 
-**通过：** 粘贴到外部编辑器后，仍能看出每条出处、时间与正文/标题（无需假设用户交给 AI）。
+**通过：** 粘贴到外部编辑器后，仍能看出每条出处、时间与正文/标题（无需假设用户交给 AI）；Side Panel 底栏不被 composer 裁切或叠盖。
 
 > **旧称 Evidence pack** 已废弃作产品名词；JSON `version: 1` 形状不变。MCP §5.10.5 单次 clue 仍 1–5 条，与 UI 分轨。
 
@@ -1746,7 +1749,7 @@ Chrome API / 选区
   - 不再向用户展示「保留本机 / 保留云端」整侧二选一（退出「先同步再清」仍可整侧盖云，出站仅摘录）。
 - **空本机不得盖云（Normative）**：`SYNC_REPLACE_WITH_LOCAL` / Worker `POST /replace` 在本机**同步面**条目数为 0 且云端有数时必须拒绝（`SYNC_REPLACE_LOCAL_EMPTY` / `empty_local_replace_denied`）；退出「先同步再清」在本机无同步面数据时跳过写云。
 - **登录态对齐（Normative）**：
-  - **登录方式（Normative · 官网唯一入口）：** `/login` 提供 **Email OTP**（`signInWithOtp` → 用户输入邮件验证码 `verifyOtp`；邮件模板内 magic link 亦可回跳 `/auth/callback`）与 **Google / Microsoft** OAuth。三者建立的均为带 **email** 的 Supabase Auth user，再走下方 mint/handoff。**禁止**扩展本机 OAuth 弹窗作主路径。**未上线：** 手机号短信、微信/支付宝 IdP、邮箱密码。运维须在 Supabase 启用 Email、模板含 `{{ .Token }}`；生产 SMTP 用阿里云 DirectMail。**Email OTP 位数（Normative）：** Dashboard **Email OTP length** 与仓内 `EMAIL_OTP_LENGTH`（`website/src/services/auth-email.ts`）**精确一致**（当前 **8**）；客户端校验无 6–8 区间容差。**Email OTP 防刷（Normative）：** Supabase Attack Protection **必须开启** Cloudflare Turnstile；官网发码前完成 bot check 并传 `captchaToken`；Secret 只存 Dashboard。另配合 Auth Rate Limits（发信配额 / 同邮箱间隔 / IP）。**官网重发冷却（Normative）：** 发码成功后 **60s** UI 冷却；截止时间存 **`sessionStorage`**（同标签刷新/后退恢复剩余秒与 Code 区，不自动再发；关标签丢弃）；验码成功清键。码区态邮箱只读；**Use a different email**（或改成另一地址）须清冷却键并收起码区，方可换址重发。硬闸仍是服务端限流。详见 `docs/AUTH_GUIDE.md`。
+  - **登录方式（Normative · 官网唯一入口）：** `/login` 提供 **Email OTP**（`signInWithOtp` → 用户输入邮件验证码 `verifyOtp`；邮件模板内 magic link 亦可回跳 `/auth/callback`）与 **Google / Microsoft** OAuth。三者建立的均为带 **email** 的 Supabase Auth user，再走下方 mint/handoff。**禁止**扩展本机 OAuth 弹窗作主路径。**未上线：** 手机号短信、微信/支付宝 IdP、邮箱密码。运维须在 Supabase 启用 Email、模板含 `{{ .Token }}`；生产 SMTP 用阿里云 DirectMail。**Email OTP 位数（Normative）：** Dashboard **Email OTP length** 与仓内 `EMAIL_OTP_LENGTH`（`website/src/services/auth-email.ts`）**精确一致**（当前 **8**）；客户端校验无 6–8 区间容差。**Email OTP 防刷（Normative）：** Supabase Attack Protection **必须开启** Cloudflare Turnstile；官网发码前完成 bot check 并传 `captchaToken`；Secret 只存 Dashboard。另配合 Auth Rate Limits（发信配额 / 同邮箱间隔 / IP）。**官网重发冷却（Normative）：** 发码成功后 **60s** UI 冷却；截止时间存 **`sessionStorage`**（同标签刷新/后退恢复剩余秒与 Code 区，不自动再发；关标签丢弃）；验码成功清键。码区态邮箱只读；**换邮箱**出口（en：_Use a different email_；经官网 `i18n` en/zh_CN；或改成另一地址）须清冷却键并收起码区，方可换址重发。`/login` 用户可见文案走 `website/src/i18n`。硬闸仍是服务端限流。详见 `docs/AUTH_GUIDE.md`。
   - 登录：仅当本次带扩展接通意图（`/login?connect_extension=1&extension_id=…` 写入 sessionStorage）时，官网 **Email OTP / OAuth** / 已登录收尾才 mint。流程：官网先 `YIVENO_EXTENSION_AUTH_STATUS_PROBE` 问本机扩展——**已登录且同一 `userId` → 跳过 mint**（零挤掉弹窗）；否则 → Worker `POST /api/auth/extension-session`（Bearer=官网 access）铸造**扩展专用** Supabase session（独立 refresh 族）→ `YIVENO_AUTH_SESSION_HANDOFF` 回传扩展（并记住 `extension_id`）；handoff 写入 `avatarUrl` / `displayName`（`avatar_url`|`picture`）与一次性 `uninstallRevokeToken`。**禁止**把官网会话的 refresh_token 直接递给扩展。**禁止**仅凭本机 `yiveno_last_extension_id` 在纯官网登录 / 续付 `next` 回跳时静默 remint。**禁止**扩展打开 `/account?extension_id=…` 时 prime/自动 mint（`extension_id` **只**记退出回传目标；账户页无 `connect_extension` 时清残留 pending）。`last_extension_id` 仅供账户页等回传目标。mint 失败则本次不 handoff，提示用户从扩展 Settings 再试。
   - **扩展单活跃（Normative）**：同一账号同时只允许**一条**扩展登录会话保持有效（互斥维度 = Auth `session` / KV 租约，**不是** `chrome.runtime.id`）。CWS 分配的 extensionId 在各安装副本上通常相同，仅作租约元数据与卸载 revoke 附属，**不得**用来跳过挤掉确认或同机认领。Worker 用 `AI_USAGE_KV` 登记 `{ session_id, extensionId?, uninstallRevokeToken? }`。mint 时 KV **已有租约**且未带 `confirmDisplace` → **先用 PostgREST 高置信探测**该 `session_id` 是否仍在 `auth.sessions`：**仅** 200+空数组视为 **gone**（僵死租约）→ 清租约后直接 mint；**alive / unknown**（含探测失败、非空失败）→ **409 `needs_displace_confirm`**（body 含 `existingSessionId` + `existingMintedAt`；互斥优先；禁止把 Admin GET 404 当成 gone）。无 `extensionId` 字段的旧租约 → 清后放行一次（迁移）。
   - **挤掉确认弹窗立意（Normative · 唯一场景）**：弹窗**仅**告知「账号已在**另一端**扩展登录，继续会挤掉那边」——典型为**另一 Chrome Profile / 另一设备**仍占租约。同 Profile 内官网已登录、扩展 Connect **不得**因本机孤儿租约误弹此窗。官网收到 409 后：先 `YIVENO_EXTENSION_LEASE_RECLAIM_PROBE`（payload=`existingSessionId`）问本机扩展——扩展未登录且本地 `yiveno:last_extension_lease_session_id` **等于**该租约 → **静默** `confirmDisplace`（零弹窗）；否则 → **自定义确认弹窗**（非 `window.confirm`；回调页须提示勿当成卡住）。用户确认后带 `confirmDisplace` 再 mint → handoff；取消 → 放弃本次扩展连接（connect 入口可清本浏览器官网会话回登录）。`last_extension_lease_session_id`：handoff 成功时从 access JWT `session_id` 写入；主动退出且远程 revoke/release **成功**后清除；退出远程失败或 `GET_AUTH_STATE` keep_local（`revokeRemote:false`）时**保留/回写**，以便同机 Connect 认领。**禁止**用 extensionId 相等推断「同机」。**mint 成功但 handoff 失败（含 userId 不一致）→ 官网须立刻用本次 `uninstallRevokeToken` 调 `POST /api/auth/extension-uninstall-revoke` 回滚刚铸造的扩展会话与 KV 租约**（防「本机未登录、远端活租约」反复 409）。mint/handoff 失败而官网已登录时 → `/account?extension_connected=0`，扩展侧靠 Connect 软条补接。续付等非 connect 回跳若 mint 失败 / 取消挤掉仅跳过扩展 handoff、保留官网会话。`confirmDisplace` 时：只挤**扩展**——**先**硬撤前序扩展租约 Auth session（可短重试），成功后才铸造新 session 并写 KV；撤销失败 → `displace_revoke_failed`，**不**发新会话（防双 Profile / 双设备短暂同登污染本机库与云同步；弹窗内可重试）。**官网可多端同登**，挤掉扩展**不得**撤销官网会话。铁律：同一账号扩展登录不可多机共存（本机库/书签等会乱）；交接以数据隔离可靠性优先于速度。前者扩展：已登录时 `chrome.alarms` 约每 1 分钟跑 `GET_AUTH_STATE`（lease 探测优先），**无需**用户打开 Side Panel 即可 keep_local 退登；**不**自动打开 `/login`；退登后 Side Panel 可出 displaced 软条 + **Connect**。租约探测不依赖 Supabase token 限流。读不到租约则直接 mint。**不**承诺两台扩展同时在线；官网多端与扩展登录解耦。
@@ -1782,7 +1785,8 @@ Chrome API / 选区
   - **官网隐私政策（Normative）**：`https://yiveno.com/privacy`（及同源部署的 `/privacy`）提供与当前实现对齐的**美式英语**正文；官网页脚与登录页、扩展 Settings「隐私」须外链至此。正文重大变更时更新日期；扩展内同步确认文案重大变更时递增 `privacyNoticeVersion`。本页**不是**律师意见书；未上线能力不得写入为已提供。卸载落地页可选反馈（闭集原因 + 可选短留言）须在 `/privacy` 披露；**不**计入同步 ack 重大变更（不因此递增 `privacyNoticeVersion`），除非 Settings 同步确认文案本身改写。
   - **关 AI + 模型说明（Normative）**：Settings「AI」提供 `aiFeaturesEnabled`（默认开）；关闭后线索 LLM completer 清空、Capture LLM enrichment 跳过；页内说明 Worker 路径与数据平面边界。
   - **服务条款（Normative）**：官网 `/terms`（美式英语）；页脚 / 登录 / Settings 可外链。
-  - **书签灌库开关（Normative）**：Settings「保存」与 Getting Started 共用 `chromeBookmarkIngestEnabled`（**默认关**；须用户明示打开）。**用户可见 bulk 主进度 = GS Bookmarks tab**；Settings 打开开关仍触发 `ensureChromeBookmarksImported`（Skip GS 后的后路），**不**在 Side Panel 顶栏展示导入细条。关闭后**卸载** `bookmarks.on*` 监听、跳过 bulk 导入与增量写入，并拒绝 `CAPTURE_BOOKMARK`；**不删除**已灌入的书签 Memory；重新开启后重新挂监听并补跑 / 续跑 bulk（含 reconcile 补洞）。
+  - **书签灌库开关（Normative）**：Settings「保存」与 Getting Started 共用 `chromeBookmarkIngestEnabled`（**默认关**；须用户明示打开）。Settings 开关面向用户文案用 **同步**（持续状态：本机库 ↔ 本浏览器书签增删改）；GS 按钮仍用 **Import**（一次性同意）。**用户可见 bulk 主进度 = GS Bookmarks tab**；Settings 打开开关仍触发 `ensureChromeBookmarksImported`（Skip GS 后的后路），**不**在 Side Panel 顶栏展示导入细条。关闭后**卸载** `bookmarks.on*` 监听、跳过 bulk 导入与增量写入，并拒绝 `CAPTURE_BOOKMARK`；**不删除**已灌入的书签 Memory；重新开启后重新挂监听并补跑 / 续跑 bulk（含 reconcile 补洞）。**禁止**写成云记忆 sync。
+  - **书签库与 Chrome 对账（Normative）**：**Chrome 书签树 = 壳权威**（单向 Chrome → IndexedDB；**禁止**写回 / 改写 / 删除原生书签；**禁止** Settings 暴露「修复」类用户操作）。增量靠 `bookmarks.on*`；holes-only reconcile 只补「Chrome 有、Memory 无」。**full repair**（后台自动）：对当前全部 http(s) 叶子 upsert（同 `chromeBookmarkId` 含软删则同 id 复活；保留 `clues.note` 与行为计数）；软删带 `chromeBookmarkId` 且已不在 Chrome 树的孤儿；**不动**无 `chromeBookmarkId` 的第三方导入书签。触发：① 灌库已完成时每个 SW 会话最多自动 full repair 一次（其后 finalize 仍走 holes）；② 灌库开启时挂 **每日** `chrome.alarms` 对账（关灌库则清闹钟）。**禁止**暗示云同步书签或双向合并。
 - **数据处置（Normative · Settings「数据」）**：
   - **Backup 整库导出**（§5.5.1）：导出当前 owner 本机全部 Memory（含软删、`clues` 全字段，即 L1+L2+L3）为 JSON（`EXPORT_LOCAL_MEMORY`）；不含孤儿桶（孤儿仍走账户与同步导出）。**Portable 可迁移原料未上线前，本条即用户主权导出的唯一必需路径。**
   - **清除本机记忆**（`CLEAR_LOCAL_MEMORY`）：硬清当前 owner 本机 IndexedDB Memory；**不得**改写/删除 Chrome 原生书签；成功后关闭书签灌库并卸载监听；若云同步开着则关闭同步并提示云端副本需另行删除。二次确认。
@@ -2562,6 +2566,9 @@ RecallOutcomeEvent {
 
 | 日期       | 变更                                                                                                                                                                                                                                                                                                       |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-28 | **退款假 applied 加固：** `billing_events` 投影后回写真实 result；退款行 `provider_transaction_id=refund_id` 避撞 payment；本机修 stale prod 漏 expire 个案；**须 deploy Worker**                                                                                                                          |
+| 2026-10-28 | **官网营销顶栏 AuthNav：** 首页等 `MarketingNav` 与账号域同挂 session 态（已登录头像/名，未登录 Sign in）；禁首页写死 Sign in 冒充未登录                                                                                                                                                                   |
+| 2026-10-28 | **官网 `/login` zh_CN：** `LoginForm` + meta 经 `website/src/i18n`（en/zh_CN）；Toast/错误/`mapAuthUserError` 同批；AUTH_GUIDE 对齐                                                                                                                                                                        |
 | 2026-10-28 | **计费接入核查补洞：** Dodo `past_due`→仍 Pro；`paused`/`unpaused`/`dispute.lost                                                                                                                                                                                                                           | accepted` 接线；与 Refund 无 subscription_id 反查并列；`billing.md` / §A.3.2 |
 | 2026-10-28 | **退款投影修复：** `refund.succeeded` 经 `payment_id` 反查订阅；全额退 expire + 尽力立即 cancel Dodo 订阅；对账不复活 `refunded` expire；`billing.md` / §A.3.2                                                                                                                                             |
 | 2026-10-28 | **计费币种口径：** 展示/基价单一 USD；扣款币种 = Dodo Adaptive Currency（账单国/IP）；收据本地币 ≠ 人民币本地化定价；禁定价页市场 toggle；`pricing.md` / `billing.md` / §A.3 / §5.7；`.cn` 定价页本地币旁注                                                                                                |
@@ -2629,6 +2636,7 @@ RecallOutcomeEvent {
 | 2026-10-06 | **Gap 2 修复：** Framing 层 Topic 独立表述已加（三处）；① `RecallFramingUnderstood.topicTerms`（独立于 contentTerms 的独立 fact）；② `extractComposerNarrowExamples` 新增 `topicTerms` 参数（末尾追加独立 topic 示例）；③ LLM Framing prompt 透传 `topicTerms` fact；§7.05 Framing 表 P1 栏 + 现状差距更新 |
 | 2026-10-06 | **Gap 3 修复：** `RecallResult.topic` 字段（窄子集 `displayName`+`tokens`）已加；`parsed.topic` 存在时填充；TopicDescriptor 在 `core/recall/parse-recall-clue-types.ts` 定义；§7.05 现状差距更新                                                                                                           |
 | 2026-10-06 | **Gap 5 落地（依 D3-C）：** Topic embedding 路径真实接入；`deriveTopicEmbedding` + `withRecallTopicAsync` + topicLookup embedding 路径；仅登录态可用；降级词法；不跨出 Gap 5                                                                                                                               |
+| 2026-10-28 | **空库燃料反馈（§5.8）：** Side Panel Idle / 空库 no_match 按灌库开关×状态三态分流；Settings 开关文案用同步（持续态）；未开灌库「同步书签」可点 → `#chrome-bookmark-ingest`；GS 仍 Import 按钮；`recall-shell-empty-copy` + i18n en/zh_CN                                                                  |
 | 2026-09-27 | **主题必填（H-topic · Normative）：** clue 无主题锚（无 C/G；无 S/T 约束邻域）→ 未进检索，`emptyKind=missing_topic`，只问一问不挂猜测；泛词（word/thing/learned/…）不算主题；术语表「主题锚」+ §5.2.1 手验 #11 + §5.11.2 must `missing-topic-no-retrieval`；采样假设见 `gist-sampling-plan.md`             |
 | 2026-09-15 | **GS 启动叙事：** Give Yiveno something to remember；去品牌行；弱 Tab；删 sync 脚注；Continue 软出口；Excerpts Nothing here yet；§5.8                                                                                                                                                                      |
 | 2026-09-15 | **GS 书签授权文案：** Import / Bring + 价值句；脚注 stop syncing（非 turn off）；§5.8                                                                                                                                                                                                                      |

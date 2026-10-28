@@ -9,6 +9,7 @@ import {
   getSubscriptionByProviderId,
   insertBillingEvent,
   insertPaymentRecord,
+  updateBillingEventResult,
   upsertSubscription
 } from '../../data-access/supabase'
 import type { Env } from '../../types/env'
@@ -268,16 +269,18 @@ async function applyRefundEvent(
     return { reason: 'missing_user_id', userId: null, rejected: true }
   }
 
+  // 唯一键用 refund_id，避免与原 payment.succeeded 的 provider_transaction_id=payment_id 撞 23505
+  const refundId = readString(data, 'refund_id') || readString(data, 'id')
   await insertPaymentRecord(env, {
     user_id: userId,
     provider_subscription_id: subscriptionId ?? row?.provider_subscription_id ?? null,
-    provider_transaction_id: paymentId,
-    provider_payment_id: readString(data, 'refund_id') || readString(data, 'id'),
+    provider_transaction_id: refundId || paymentId,
+    provider_payment_id: paymentId,
     amount: readAmount(data),
     currency: readString(data, 'currency') || 'USD',
     status: 'refunded',
     event_type: event.eventType,
-    metadata: { is_partial: isPartialRefund(data) }
+    metadata: { is_partial: isPartialRefund(data), payment_id: paymentId }
   })
 
   if (isPartialRefund(data)) {
@@ -345,16 +348,17 @@ async function applyDisputeRevokeEvent(
     return { reason: 'missing_user_id', userId: null, rejected: true }
   }
 
+  const disputeId = readString(data, 'dispute_id') || readString(data, 'id')
   await insertPaymentRecord(env, {
     user_id: userId,
     provider_subscription_id: subscriptionId ?? row?.provider_subscription_id ?? null,
-    provider_transaction_id: paymentId,
-    provider_payment_id: readString(data, 'dispute_id') || readString(data, 'id'),
+    provider_transaction_id: disputeId || paymentId,
+    provider_payment_id: paymentId,
     amount: readAmount(data),
     currency: readString(data, 'currency') || 'USD',
     status: 'refunded',
     event_type: event.eventType,
-    metadata: { dispute: true }
+    metadata: { dispute: true, payment_id: paymentId }
   })
 
   if (!row) {
@@ -396,6 +400,7 @@ export async function projectDodoWebhook(
   const type = event.eventType
   info('[Billing] 处理 webhook', { eventId: event.eventId, eventType: type })
 
+  // 先占位 applied；投影结束后按真实 outcome 回写（拒绝不得留「假 applied」）
   const claimed = await claimEvent(env, event, rawBody, 'applied', null)
   if (!claimed) {
     info('[Billing] 重复 webhook，已忽略', { eventId: event.eventId, eventType: type })
@@ -403,48 +408,56 @@ export async function projectDodoWebhook(
   }
 
   try {
+    let outcome: ProjectWebhookResult = { outcome: 'ignored', reason: 'unsupported_event' }
+    let appliedUserId: string | null = null
+
     if (SUBSCRIPTION_EVENTS.has(type)) {
       const applied = await applySubscriptionEvent(env, event)
-      return {
+      appliedUserId = applied.userId
+      outcome = {
         outcome: applied.rejected ? 'rejected' : 'applied',
         reason: applied.reason
       }
-    }
-
-    if (type === 'payment.succeeded') {
+    } else if (type === 'payment.succeeded') {
       const applied = await applyPaymentEvent(env, event, 'paid')
-      return {
+      appliedUserId = applied.userId
+      outcome = {
         outcome: applied.rejected ? 'rejected' : 'applied',
         reason: applied.reason
       }
-    }
-
-    if (type === 'payment.failed') {
+    } else if (type === 'payment.failed') {
       const applied = await applyPaymentEvent(env, event, 'failed')
-      return {
+      appliedUserId = applied.userId
+      outcome = {
         outcome: applied.rejected ? 'rejected' : 'applied',
         reason: applied.reason
       }
-    }
-
-    if (type === 'refund.succeeded') {
+    } else if (type === 'refund.succeeded') {
       const applied = await applyRefundEvent(env, event)
-      return {
+      appliedUserId = applied.userId
+      outcome = {
         outcome: applied.rejected ? 'rejected' : 'applied',
         reason: applied.reason
       }
-    }
-
-    if (DISPUTE_REVOKE_EVENTS.has(type)) {
+    } else if (DISPUTE_REVOKE_EVENTS.has(type)) {
       const applied = await applyDisputeRevokeEvent(env, event)
-      return {
+      appliedUserId = applied.userId
+      outcome = {
         outcome: applied.rejected ? 'rejected' : 'applied',
         reason: applied.reason
       }
+    } else {
+      info('[Billing] 未支持的 webhook event，已忽略', { eventType: type, eventId: event.eventId })
     }
 
-    info('[Billing] 未支持的 webhook event，已忽略', { eventType: type, eventId: event.eventId })
-    return { outcome: 'ignored', reason: 'unsupported_event' }
+    // applied 且无 user 也回写 user_id=null 清占位；rejected/ignored 必回写 result
+    await updateBillingEventResult(env, event.eventId, {
+      result: outcome.outcome,
+      skip_reason: outcome.reason ?? null,
+      user_id: appliedUserId
+    })
+
+    return outcome
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err)
     logErrorMessage('[Billing] 投影失败', { eventId: event.eventId, eventType: type, detail })
