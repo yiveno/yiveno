@@ -41,6 +41,7 @@ import {
 } from '../services/turnstile'
 import SoftToastHost from './SoftToastHost.vue'
 import { useSoftToast } from '../composables/use-soft-toast'
+import { t, tFormat } from '../i18n/t'
 
 defineOptions({ name: 'LoginForm' })
 
@@ -134,9 +135,9 @@ const primaryCtaDisabled = computed(() =>
 
 const primaryCtaLabel = computed(() => {
   if (showOtpField.value) {
-    return emailBusy.value ? 'Verifying…' : 'Verify and continue'
+    return emailBusy.value ? t('login.cta.verifying') : t('login.cta.verify')
   }
-  return emailBusy.value ? 'Sending…' : 'Email me a code'
+  return emailBusy.value ? t('login.cta.sending') : t('login.cta.send')
 })
 
 /** 改邮箱：仍在冷却的同址可恢复码区；换址则收起并清冷却键（防刷新又拉回旧址） */
@@ -252,7 +253,7 @@ async function tryHandoffCurrentSession(): Promise<'ok' | 'cancelled_displace' |
     return 'failed'
   }
   connectingExtension.value = true
-  toast.info('Connecting to the extension…', 8000)
+  toast.info(t('login.toast.connectingExtension'), 8000)
   try {
     const profile = extractProfileFromUserMetadata(
       session.user.user_metadata as Record<string, unknown> | undefined
@@ -264,7 +265,7 @@ async function tryHandoffCurrentSession(): Promise<'ok' | 'cancelled_displace' |
       ...profile
     })
     if (result.status === 'ok') {
-      toast.success('Extension connected')
+      toast.success(t('login.toast.extensionConnected'))
     }
     return result.status
   } finally {
@@ -284,7 +285,7 @@ async function finishSignedInOnLoginPage(): Promise<void> {
       await abortWebsiteLoginAfterDisplaceCancel()
       return
     }
-    flashError('Could not connect the extension. Install Yiveno and try Connect again.')
+    flashError(t('login.error.connectExtension'))
     return
   }
   const pending = peekAuthReturn()
@@ -303,12 +304,12 @@ function applyLoginErrorFromUrl(): void {
   }
   const detail = params.get('detail')
   const labels: Record<string, string> = {
-    no_token: "Sign-in didn't finish. Please try again.",
-    session_error: 'Could not save your sign-in session',
-    auth_error: 'Sign-in failed unexpectedly',
-    oauth_error: "We couldn't finish sign-in with that provider. Try again or use email."
+    no_token: t('login.error.noToken'),
+    session_error: t('login.error.sessionError'),
+    auth_error: t('login.error.authError'),
+    oauth_error: t('login.error.oauthError')
   }
-  const label = labels[code] || 'Sign-in failed. Please try again.'
+  const label = labels[code] || t('login.error.generic')
   if (detail) {
     console.warn('[login]', code, detail)
   }
@@ -317,9 +318,7 @@ function applyLoginErrorFromUrl(): void {
 
 async function mountTurnstile(): Promise<void> {
   if (!turnstileEnabled) {
-    flashError(
-      'Email sign-in bot check is not configured. Use Google / Microsoft, or ask the site owner to finish setup.'
-    )
+    flashError(t('login.error.turnstileNotConfigured'))
     return
   }
   await nextTick()
@@ -331,10 +330,9 @@ async function mountTurnstile(): Promise<void> {
       captchaToken.value = token
     })
   } catch (e: unknown) {
-    const message =
-      e instanceof Error ? e.message : 'Bot check failed to load. Try Google / Microsoft.'
-    flashError(message)
-    console.warn('[LoginForm] Turnstile', message)
+    const detail = e instanceof Error ? e.message : String(e || '')
+    flashError(t('login.error.turnstileLoadFailed'))
+    console.warn('[LoginForm] Turnstile', detail)
   }
 }
 
@@ -378,8 +376,10 @@ onMounted(async () => {
     }
     await goAfterSignIn(buildPostAuthHref('/account'))
   } catch (e: unknown) {
-    const message = e instanceof Error ? e.message : 'Could not check sign-in status'
-    flashError(message)
+    if (e instanceof Error) {
+      console.warn('[LoginForm] check session', e.message)
+    }
+    flashError(t('login.error.checkSession'))
   }
 })
 
@@ -439,7 +439,7 @@ async function login(provider: 'google' | 'microsoft') {
 async function sendEmailCode(): Promise<void> {
   if (oauthOrConnectBusy.value) return
   if (!isValidEmail(emailInput.value)) {
-    flashError('Enter a valid email address.')
+    flashError(t('login.error.invalidEmail'))
     return
   }
   const emailNorm = normalizeEmail(emailInput.value)
@@ -449,12 +449,12 @@ async function sendEmailCode(): Promise<void> {
     emailInput.value = emailNorm
     emailStep.value = 'code'
     beginResendUiCountdown(cooldownLeft)
-    toast.info(`Please wait ${cooldownLeft}s before requesting another code.`)
+    toast.info(tFormat('login.toast.resendWait', { seconds: cooldownLeft }))
     focusOtpField()
     return
   }
   if (!captchaToken.value) {
-    flashError('Bot check is still running. Wait a moment and try again.')
+    flashError(t('login.error.botCheckPending'))
     return
   }
 
@@ -470,11 +470,11 @@ async function sendEmailCode(): Promise<void> {
     emailInput.value = email
     emailStep.value = 'code'
     otpInput.value = ''
-    toast.success(`Code sent to ${email}`)
+    toast.success(tFormat('login.toast.codeSent', { email }))
     recordAndStartResendCooldown(email)
     focusOtpField()
   } catch (e: unknown) {
-    flashError(mapAuthUserError(e, "We couldn't send a code. Check the address and try again."))
+    flashError(mapAuthUserError(e, t('login.error.sendFailed')))
   } finally {
     emailBusy.value = false
     // token 已消耗；静默 reset 供重发
@@ -494,22 +494,22 @@ async function resendEmailCode(): Promise<void> {
   const cooldownLeft = remainingOtpResendSecFor(pendingEmail.value)
   if (cooldownLeft > 0) {
     beginResendUiCountdown(cooldownLeft)
-    toast.info(`Please wait ${cooldownLeft}s before requesting another code.`)
+    toast.info(tFormat('login.toast.resendWait', { seconds: cooldownLeft }))
     return
   }
   if (!captchaToken.value) {
-    flashError('Bot check is still running. Wait a moment and try again.')
+    flashError(t('login.error.botCheckPending'))
     return
   }
   emailBusy.value = true
   const tokenForRequest = captchaToken.value
   try {
     await signInWithEmailOtp(pendingEmail.value, tokenForRequest)
-    toast.success(`New code sent to ${pendingEmail.value}`)
+    toast.success(tFormat('login.toast.newCodeSent', { email: pendingEmail.value }))
     recordAndStartResendCooldown(pendingEmail.value)
     focusOtpField()
   } catch (e: unknown) {
-    flashError(mapAuthUserError(e, "We couldn't resend the code. Try again in a minute."))
+    flashError(mapAuthUserError(e, t('login.error.resendFailed')))
   } finally {
     emailBusy.value = false
     resetTurnstile()
@@ -519,7 +519,7 @@ async function resendEmailCode(): Promise<void> {
 async function verifyEmailCode(): Promise<void> {
   if (!canVerifyOtp.value) {
     if (!isCompleteOtpCode(otpInput.value)) {
-      flashError(`Enter the ${EMAIL_OTP_LENGTH}-digit code from your email.`)
+      flashError(tFormat('login.error.otpIncomplete', { digits: EMAIL_OTP_LENGTH }))
     }
     return
   }
@@ -579,28 +579,29 @@ function scheduleClearLoadingIfStillHere(): void {
       height="48"
       decoding="async"
     />
-    <h1 class="page__title login-form__rise login-form__rise--2">Sign in to Yiveno</h1>
+    <h1 class="page__title login-form__rise login-form__rise--2">{{ t('login.title') }}</h1>
     <p v-if="redirecting" class="hint login-form__rise login-form__rise--3">
-      Taking you to your account…
+      {{ t('login.hint.redirecting') }}
     </p>
     <template v-else>
       <!-- 入口取向说明（非操作反馈）仍可留在标题下；成功/失败一律 Toast -->
       <p v-if="fromSubscribe" class="hint login-form__rise login-form__rise--3">
-        Sign in to continue checkout. We'll bring you back to pricing to finish.
+        {{ t('login.hint.subscribe') }}
       </p>
       <p v-else-if="fromExtension" class="hint login-form__rise login-form__rise--3">
-        Connect this extension to your account. What you've saved stays on this device — sync is
-        optional.
+        {{ t('login.hint.extension') }}
       </p>
       <p v-else class="hint login-form__rise login-form__rise--3">
-        For account and billing. What you've saved stays on this device — sync is optional.
+        {{ t('login.hint.default') }}
       </p>
 
       <form
         class="login-form__email login-form__rise login-form__rise--4"
         @submit.prevent="onEmailFormSubmit"
       >
-        <label class="login-form__field-label" for="login-email">Email</label>
+        <label class="login-form__field-label" for="login-email">{{
+          t('login.email.label')
+        }}</label>
         <input
           id="login-email"
           ref="emailInputEl"
@@ -610,18 +611,24 @@ function scheduleClearLoadingIfStillHere(): void {
           name="email"
           autocomplete="email"
           inputmode="email"
-          placeholder="you@example.com"
+          :placeholder="t('login.email.placeholder')"
           :disabled="oauthOrConnectBusy"
           :readonly="showOtpField"
           required
         />
 
-        <div ref="turnstileHost" class="login-form__turnstile" aria-label="Bot check" />
+        <div
+          ref="turnstileHost"
+          class="login-form__turnstile"
+          :aria-label="t('login.turnstile.aria')"
+        />
 
         <!-- 发码后插在主按钮上方；位数 = EMAIL_OTP_LENGTH + 重发送尾拼接（勿拆成多格，伤 autofill） -->
         <Transition name="login-otp">
           <div v-if="showOtpField" class="login-form__otp-block">
-            <label class="login-form__field-label" for="login-otp">Code</label>
+            <label class="login-form__field-label" for="login-otp">{{
+              t('login.otp.label')
+            }}</label>
             <div class="login-form__otp-row">
               <input
                 id="login-otp"
@@ -642,19 +649,19 @@ function scheduleClearLoadingIfStillHere(): void {
               <button
                 type="button"
                 class="login-form__otp-resend"
-                aria-label="Resend sign-in code"
+                :aria-label="t('login.resend.aria')"
                 :disabled="oauthOrConnectBusy || resendSecondsLeft > 0 || !captchaToken"
                 @click="resendEmailCode"
               >
                 <template v-if="resendSecondsLeft > 0">
-                  Resend in
+                  {{ t('login.resend.beforeSeconds') }}
                   <span :key="resendSecondsLeft" class="login-form__resend-sec">{{
                     resendSecondsLeft
-                  }}</span
-                  >s
+                  }}</span>
+                  {{ t('login.resend.afterSeconds') }}
                 </template>
-                <template v-else-if="!captchaToken">Preparing…</template>
-                <template v-else>Resend</template>
+                <template v-else-if="!captchaToken">{{ t('login.resend.preparing') }}</template>
+                <template v-else>{{ t('login.resend.idle') }}</template>
               </button>
             </div>
             <button
@@ -663,7 +670,7 @@ function scheduleClearLoadingIfStillHere(): void {
               :disabled="oauthOrConnectBusy"
               @click="useDifferentEmail"
             >
-              Use a different email
+              {{ t('login.useDifferentEmail') }}
             </button>
           </div>
         </Transition>
@@ -678,21 +685,21 @@ function scheduleClearLoadingIfStillHere(): void {
       </form>
 
       <div class="login-form__divider login-form__rise login-form__rise--5" role="separator">
-        <span class="login-form__divider-label">or</span>
+        <span class="login-form__divider-label">{{ t('login.divider.or') }}</span>
       </div>
 
       <div
         class="login-form__oauth-row login-form__rise login-form__rise--6"
         role="group"
-        aria-label="Sign in with a provider"
+        :aria-label="t('login.oauth.groupAria')"
       >
         <button
           type="button"
           :disabled="oauthOrConnectBusy"
           class="ui-btn login-form__oauth"
           :class="{ 'login-form__oauth--busy': loadingProvider === 'google' }"
-          title="Sign in with Google"
-          aria-label="Sign in with Google"
+          :title="t('login.oauth.google')"
+          :aria-label="t('login.oauth.google')"
           :aria-busy="loadingProvider === 'google'"
           @click="login('google')"
         >
@@ -721,7 +728,7 @@ function scheduleClearLoadingIfStillHere(): void {
             />
           </svg>
           <span class="visually-hidden" aria-live="polite">
-            {{ loadingProvider === 'google' ? 'Redirecting…' : '' }}
+            {{ loadingProvider === 'google' ? t('login.oauth.redirecting') : '' }}
           </span>
         </button>
         <button
@@ -729,8 +736,8 @@ function scheduleClearLoadingIfStillHere(): void {
           :disabled="oauthOrConnectBusy"
           class="ui-btn login-form__oauth"
           :class="{ 'login-form__oauth--busy': loadingProvider === 'microsoft' }"
-          title="Sign in with Microsoft"
-          aria-label="Sign in with Microsoft"
+          :title="t('login.oauth.microsoft')"
+          :aria-label="t('login.oauth.microsoft')"
           :aria-busy="loadingProvider === 'microsoft'"
           @click="login('microsoft')"
         >
@@ -747,7 +754,7 @@ function scheduleClearLoadingIfStillHere(): void {
             <path fill="#FFB900" d="M9.5 9.5H18V18H9.5z" />
           </svg>
           <span class="visually-hidden" aria-live="polite">
-            {{ loadingProvider === 'microsoft' ? 'Redirecting…' : '' }}
+            {{ loadingProvider === 'microsoft' ? t('login.oauth.redirecting') : '' }}
           </span>
         </button>
       </div>

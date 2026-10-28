@@ -1,7 +1,10 @@
 ---
 /**
- * 营销页 Nav：无 AuthNav 依赖；语言切换为 Vue island。
+ * 营销页 Nav：与账号域同样挂 AuthNav（已登录显示头像/名，未登录 Sign in）。
+ * 语言切换在页脚；YMark 可随 waitlist Hero 适配。
  */
+import AuthNav from './AuthNav.vue'
+import UiBridgeHost from './UiBridgeHost.vue'
 import YMark from './home/YMark.astro'
 
 interface Props {
@@ -17,8 +20,7 @@ const { waitlist = false } = Astro.props
     <span class="site-nav__name">Yiveno</span>
   </a>
   <div class="site-nav__spacer"></div>
-  {/* Pricing：上线前仍隐藏；Sign in 已开放。Support / 语言切换在页脚。 */}
-  <a href="/login" class="site-nav__link" data-yiveno-i18n="nav.sign_in">
-    Sign in
-  </a>
+  {/* Pricing：上线前仍隐藏；Support / 语言切换在页脚。 */}
+  <AuthNav client:idle />
+  <UiBridgeHost client:idle />
 </nav>

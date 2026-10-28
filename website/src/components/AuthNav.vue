@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { t } from '../i18n/t'
 import { getSession } from '../services/auth'
 import {
   startWebsiteAuthLiveness,
@@ -78,8 +79,8 @@ onUnmounted(() => {
 
 <template>
   <div class="auth-nav">
-    <a v-if="!isLoginPage && loading" href="/login" class="nav-link">Sign in</a>
-    <a v-else-if="!isLoginPage && !user" href="/login" class="nav-link">Sign in</a>
+    <a v-if="!isLoginPage && loading" href="/login" class="nav-link">{{ t('nav.sign_in') }}</a>
+    <a v-else-if="!isLoginPage && !user" href="/login" class="nav-link">{{ t('nav.sign_in') }}</a>
     <a v-else-if="user" href="/account" class="nav-link user-info">
       <img
         v-if="user.avatarUrl"

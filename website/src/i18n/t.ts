@@ -21,3 +21,18 @@ export function t(
 ): string {
   return catalogs[locale][key] ?? en[key]
 }
+
+/**
+ * 取文案并替换 `{name}` 占位（如 `{email}` / `{seconds}`）。
+ * 未知占位原样保留，便于发现漏传。
+ */
+export function tFormat(
+  key: WebsiteMessageKey,
+  vars: Record<string, string | number>,
+  locale: WebsiteUiLocaleId = getWebsiteEffectiveUiLocale()
+): string {
+  return t(key, locale).replace(/\{([A-Za-z_][A-Za-z0-9_]*)\}/g, (match, name: string) => {
+    const value = vars[name]
+    return value === undefined ? match : String(value)
+  })
+}

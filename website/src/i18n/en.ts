@@ -1,9 +1,74 @@
 /**
  * 官网产品面英文文案（美式英语；与 `zh.ts` 键对称）。
- * 新增键：先写本表与 zh，再在组件用 `t('…')`；禁止在 Vue 里写死用户可见句。
- * 营销首页等大段文案仍多为 Astro 硬编码英文——见国内化审计报告缺口。
+ * 新增键：先写本表与 zh，再在组件用 `t('…')` / `tFormat('…', vars)`；禁止在 Vue 里写死用户可见句。
+ * 已覆盖：卸载反馈、壳导航/页脚、定价换汇说明、`/login`。营销首页等大段仍可能硬编码英文。
  */
 export const en = {
+  'login.meta.title': 'Sign in · Yiveno',
+  'login.meta.description':
+    "Sign in to Yiveno for your account and billing. What you've saved stays on this device unless you turn sync on.",
+
+  'login.title': 'Sign in to Yiveno',
+  'login.hint.redirecting': 'Taking you to your account…',
+  'login.hint.subscribe':
+    "Sign in to continue checkout. We'll bring you back to pricing to finish.",
+  'login.hint.extension':
+    "Connect this extension to your account. What you've saved stays on this device — sync is optional.",
+  'login.hint.default':
+    "For account and billing. What you've saved stays on this device — sync is optional.",
+
+  'login.email.label': 'Email',
+  'login.email.placeholder': 'you@example.com',
+  'login.otp.label': 'Code',
+  'login.turnstile.aria': 'Bot check',
+  'login.resend.aria': 'Resend sign-in code',
+  /** UI：`Resend in {seconds}s` — 秒数单独包 span 做跳动，见 LoginForm */
+  'login.resend.beforeSeconds': 'Resend in',
+  'login.resend.afterSeconds': 's',
+  'login.resend.idle': 'Resend',
+  'login.resend.preparing': 'Preparing…',
+  'login.useDifferentEmail': 'Use a different email',
+
+  'login.cta.send': 'Email me a code',
+  'login.cta.sending': 'Sending…',
+  'login.cta.verify': 'Verify and continue',
+  'login.cta.verifying': 'Verifying…',
+
+  'login.divider.or': 'or',
+  'login.oauth.groupAria': 'Sign in with a provider',
+  'login.oauth.google': 'Sign in with Google',
+  'login.oauth.microsoft': 'Sign in with Microsoft',
+  'login.oauth.redirecting': 'Redirecting…',
+
+  'login.toast.connectingExtension': 'Connecting to the extension…',
+  'login.toast.extensionConnected': 'Extension connected',
+  'login.toast.codeSent': 'Code sent to {email}',
+  'login.toast.newCodeSent': 'New code sent to {email}',
+  'login.toast.resendWait': 'Please wait {seconds}s before requesting another code.',
+
+  'login.error.connectExtension':
+    'Could not connect the extension. Install Yiveno and try Connect again.',
+  'login.error.noToken': "Sign-in didn't finish. Please try again.",
+  'login.error.sessionError': 'Could not save your sign-in session',
+  'login.error.authError': 'Sign-in failed unexpectedly',
+  'login.error.oauthError':
+    "We couldn't finish sign-in with that provider. Try again or use email.",
+  'login.error.generic': 'Sign-in failed. Please try again.',
+  'login.error.turnstileNotConfigured':
+    'Email sign-in bot check is not configured. Use Google / Microsoft, or ask the site owner to finish setup.',
+  'login.error.turnstileLoadFailed': 'Bot check failed to load. Try Google / Microsoft.',
+  'login.error.checkSession': 'Could not check sign-in status',
+  'login.error.invalidEmail': 'Enter a valid email address.',
+  'login.error.botCheckPending': 'Bot check is still running. Wait a moment and try again.',
+  'login.error.sendFailed': "We couldn't send a code. Check the address and try again.",
+  'login.error.resendFailed': "We couldn't resend the code. Try again in a minute.",
+  'login.error.otpIncomplete': 'Enter the {digits}-digit code from your email.',
+  'login.error.captcha': 'Bot check failed. Refresh and try again, or use Google / Microsoft.',
+  'login.error.sendEmailFailed':
+    "We couldn't send the email right now. Try again in a minute, or use Google / Microsoft.",
+  'login.error.rateLimited': 'Too many attempts. Wait a minute and try again.',
+  'login.error.otpInvalid': 'That code is invalid or expired. Request a new one.',
+
   'uninstall.meta.title': 'Quick note · Yiveno',
   'uninstall.meta.description':
     'Optional note after removing the Yiveno extension. Website login and your library stay put.',

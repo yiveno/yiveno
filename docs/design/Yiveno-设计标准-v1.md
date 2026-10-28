@@ -270,7 +270,7 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
   - **H1（最大字）：** _Find what you saved._ — 可验证履约
   - **禁止**把裸 _Find things._ 单独占最大标题（易读成通用搜）
   - **首页标题排版：** 禁止用 `<br>` 做装饰性断行；桌面尽量一行读完，**窄屏/平板按词自然折行**（`text-wrap: balance`），禁止 `nowrap` 撑出横向滚动
-- 预发阶段：Nav 诚实（勿假装已上线完整账号体系）；营销 Nav 可挂 **Sign in**（进 `/login`）；Pricing 入口可仍隐藏；首页**不**挂邮箱预约 / Notify me；双店未上架时 Install 屏写 Coming soon（见 `EDGEADDONS.md` / `CHROMEWEBSTORE.md`）
+- 预发阶段：Nav 诚实（勿假装已上线完整账号体系）；营销 / 账号域顶栏均挂 **AuthNav**——未登录 **Sign in**（`/login`），已登录头像+展示名进 `/account`；Pricing 入口可仍隐藏；首页**不**挂邮箱预约 / Notify me；双店未上架时 Install 屏写 Coming soon（见 `EDGEADDONS.md` / `CHROMEWEBSTORE.md`）
 - **语言切换（页脚）：** 触发器 = 地球标 + **当前语言本语种名**（`English` / `中文`）+ chevron → 浮层**向上**展开；标题 **LANGUAGE / 语言** + 选项列表。仅 en / zh_CN。首访默认 `system`；点选后持久化为 `en` / `zh_CN`。**不**再挂营销顶栏
 - 产品证明放在屏 3–5（Mechanism 流程动画 + Capture / Recall mock）；若展示 Closest/邻域 mock，**禁止空结果区**
 - 文案禁用用户可见的「搜索 / Search」产品名词（见产品文档）
@@ -379,6 +379,10 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 **范围：** Library 摘录列表 · 书签树 · Side Panel Recall 结果卡（含 sibling）。
 
 **底栏动效：** 进入多选时 `DetailExportBar` 经 `DetailExportBarDock` **自下而上滑入**（~280ms emphasized easing）；Cancel 离场 **向下滑出**（~220ms）。`prefers-reduced-motion` 时仅 opacity 淡入淡出。
+
+**Side Panel 底栏 chrome（Normative）：** 多选时导出条属**底部 chrome 栈**（在 composer 之上：导出条 → 可选离线 hint → composer）。须**预留完整高度**（`flex-shrink: 0`），禁止被父 flex 压矮裁切；与 composer 纵向间距 ≥ `--space-sm`；`DetailExportBarDock` 稳态 `overflow: visible`，格式菜单（向上弹出）不得被 dock 裁切。Library 仍用页面底槽固定高度，规则不变。
+
+**Side Panel 壳高 / composer 长高（Normative · Chromium 双店）：** `html`/`body`/`#app`/`.recall-shell` 锁在视口内（`height/max-height: 100%` + `overflow: hidden`），禁止文档被 focus 滚出。clue textarea **不用** `field-sizing: content`（空态按长 placeholder 撑高 → 首字回落会在 Edge 窄栏触发整页下移）；空态固定单行，有字仅 JS `scrollHeight` 长高；`focus({ preventScroll: true })`。
 
 #### 6.2.5 Library 列表 rhythm（摘录 + 书签）
 

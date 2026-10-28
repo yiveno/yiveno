@@ -144,7 +144,7 @@ const softwareJsonLd = {
     <a class="skip-link" href="#main" data-yiveno-i18n="a11y.skip_to_content">
       Skip to content
     </a>
-    {/* 默认营销 Nav；账号域页面用 slot="nav" 注入 AppNav，避免首页打进 AuthNav CSS */}
+    {/* 默认营销 Nav（含 AuthNav：已登录与账号域一致）；账号域页面用 slot="nav" 注入 AppNav */}
     <slot name="nav">
       <MarketingNav waitlist={waitlistNav} />
     </slot>

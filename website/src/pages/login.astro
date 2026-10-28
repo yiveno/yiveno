@@ -2,14 +2,11 @@
 import MainLayout from '../layouts/MainLayout.astro'
 import AppNav from '../components/AppNav.astro'
 import LoginForm from '../components/LoginForm.vue'
+import { t } from '../i18n/t'
 import '../styles/pages.css'
 ---
 
-<MainLayout
-  noindex
-  title="Sign in · Yiveno"
-  description="Sign in to Yiveno for your account and billing. What you've saved stays on this device unless you turn sync on."
->
+<MainLayout noindex title={t('login.meta.title')} description={t('login.meta.description')}>
   <AppNav slot="nav" />
   <LoginForm client:load />
 </MainLayout>

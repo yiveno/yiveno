@@ -1,4 +1,5 @@
 import type { Provider, Session } from '@supabase/supabase-js'
+import { t } from '../i18n/t'
 import {
   EMAIL_OTP_LENGTH,
   isCompleteOtpCode,
@@ -118,27 +119,27 @@ export async function verifyEmailOtp(rawEmail: string, rawToken: string): Promis
   return data.session
 }
 
-/** 将 GoTrue / 网络错误压成登录页可读短句（细节打 console）。 */
+/** 将 GoTrue / 网络错误压成登录页可读短句（细节打 console；文案走官网 i18n）。 */
 export function mapAuthUserError(
   err: unknown,
-  fallback = 'Sign-in failed. Please try again.'
+  fallback: string = t('login.error.generic')
 ): string {
   const message = err instanceof Error ? err.message : String(err || '')
   const lower = message.toLowerCase()
   if (!message) return fallback
   // captcha_failed 等含 token 字样，须先于 OTP 文案匹配
-  if (lower.includes('captcha')) {
-    return 'Bot check failed. Refresh and try again, or use Google / Microsoft.'
+  if (lower.includes('captcha') || lower.includes('bot check')) {
+    return t('login.error.captcha')
   }
   if (
     lower.includes('error sending') ||
     lower.includes('sending magic link') ||
     lower.includes('unexpected_failure')
   ) {
-    return "We couldn't send the email right now. Try again in a minute, or use Google / Microsoft."
+    return t('login.error.sendEmailFailed')
   }
   if (lower.includes('rate limit') || lower.includes('security purposes')) {
-    return 'Too many attempts. Wait a minute and try again.'
+    return t('login.error.rateLimited')
   }
   if (
     lower.includes('otp_expired') ||
@@ -148,10 +149,10 @@ export function mapAuthUserError(
     lower.includes('invalid otp') ||
     lower.includes('expired otp')
   ) {
-    return 'That code is invalid or expired. Request a new one.'
+    return t('login.error.otpInvalid')
   }
   if (lower.includes('valid email') || lower.includes('email address')) {
-    return message
+    return t('login.error.invalidEmail')
   }
   console.warn('[auth] provider error', message)
   return fallback

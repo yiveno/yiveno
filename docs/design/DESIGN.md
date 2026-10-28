@@ -214,7 +214,7 @@ Canonical CSS names in `site-critical.css`. Prefer roles over raw Brand Core in 
 **Do**
 
 - Lead with find / remember / closest matches / pick.
-- Keep waitlist-phase honesty (no fake Sign in / live Pricing nav when coming soon).
+- Nav AuthNav: signed-out Sign in → `/login`; signed-in avatar/name → `/account` (marketing + account chrome). Pricing nav may stay hidden pre-launch.
 - Derive product roles on the website; extension consumes Brand Roles directly.
 - Keep motion sparse: reveal, result stagger, cursor blink; honor `prefers-reduced-motion`.
 

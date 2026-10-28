@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'vitest'
 import { en } from './en'
-import { t } from './t'
+import { t, tFormat } from './t'
 import { zh } from './zh'
 
 describe('website i18n t()', () => {
@@ -41,5 +41,29 @@ describe('website i18n t()', () => {
       expect(t(key, 'en').length).toBeGreaterThan(0)
       expect(t(key, 'zh_CN').length).toBeGreaterThan(0)
     }
+  })
+
+  test('login 核心键中英齐全', () => {
+    const keys = [
+      'login.title',
+      'login.cta.send',
+      'login.useDifferentEmail',
+      'login.hint.default',
+      'login.error.generic'
+    ] as const
+    for (const key of keys) {
+      expect(t(key, 'en').length).toBeGreaterThan(0)
+      expect(t(key, 'zh_CN').length).toBeGreaterThan(0)
+    }
+    expect(t('login.title', 'zh_CN')).toBe('登录 Yiveno')
+    expect(t('login.useDifferentEmail', 'zh_CN')).toBe('换个邮箱')
+  })
+
+  test('tFormat 替换占位', () => {
+    expect(tFormat('login.toast.codeSent', { email: 'a@b.co' }, 'en')).toBe('Code sent to a@b.co')
+    expect(tFormat('login.toast.codeSent', { email: 'a@b.co' }, 'zh_CN')).toBe(
+      '验证码已发到 a@b.co'
+    )
+    expect(tFormat('login.error.otpIncomplete', { digits: 8 }, 'zh_CN')).toContain('8')
   })
 })
