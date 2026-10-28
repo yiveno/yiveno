@@ -451,11 +451,14 @@ export async function projectDodoWebhook(
     }
 
     // applied 且无 user 也回写 user_id=null 清占位；rejected/ignored 必回写 result
-    await updateBillingEventResult(env, event.eventId, {
-      result: outcome.outcome,
-      skip_reason: outcome.reason ?? null,
-      user_id: appliedUserId
-    })
+    // duplicate 已在 claim 失败时提前 return，此处 outcome 不含 duplicate
+    if (outcome.outcome !== 'duplicate') {
+      await updateBillingEventResult(env, event.eventId, {
+        result: outcome.outcome,
+        skip_reason: outcome.reason ?? null,
+        user_id: appliedUserId
+      })
+    }
 
     return outcome
   } catch (err) {
