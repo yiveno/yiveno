@@ -61,6 +61,11 @@ function marketForHost(host: string): GeoDomainMarket | null {
   return null
 }
 
+/** 当前主机是否大陆市场域名（`yiveno.cn` / `www`）。 */
+export function isCnMarketHost(hostname: string): boolean {
+  return marketForHost(normalizeHost(hostname)) === 'cn'
+}
+
 function canonicalHostForMarket(market: GeoDomainMarket): string {
   return market === 'cn' ? 'yiveno.cn' : 'yiveno.com'
 }

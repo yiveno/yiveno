@@ -1,0 +1,109 @@
+---
+/**
+ * 首页流程动画：Save → Forget → Recall 循环（轻量 DOM + CSS；JS 切相）。
+ * 爽点：存得轻 → 时间过去 → 口语 clue 召回邻域。
+ */
+const phases = [
+  { id: 'save', label: 'Save', hint: 'Capture lightly' },
+  { id: 'forget', label: 'Forget', hint: 'Life moves on' },
+  { id: 'recall', label: 'Recall', hint: 'Say what you remember' }
+] as const
+---
+
+<div
+  class="flow-demo reveal"
+  data-flow-demo
+  data-phase="save"
+  role="region"
+  aria-label="How Yiveno feels: save, forget, then recall"
+>
+  <div class="flow-demo__stage" aria-hidden="true">
+    <!-- Save -->
+    <div class="flow-demo__scene flow-demo__scene--save">
+      <div class="flow-demo__browser">
+        <div class="flow-demo__browser-bar">
+          <span></span>
+          <span></span>
+          <span></span>
+          <i class="flow-demo__browser-url"></i>
+        </div>
+        <div class="flow-demo__browser-page">
+          <div class="flow-demo__line"></div>
+          <div class="flow-demo__highlight">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <div class="flow-demo__line flow-demo__line--dim"></div>
+        </div>
+        <div class="flow-demo__toast">
+          <p class="flow-demo__toast-kicker">Saved to Yiveno</p>
+          <p class="flow-demo__toast-quote">
+            "Cold weather quietly drains lithium-ion cells — range drops before the pack looks
+            empty."
+          </p>
+          <p class="flow-demo__toast-note">
+            <em>Note</em> · winter range, for later
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Forget -->
+    <div class="flow-demo__scene flow-demo__scene--forget">
+      <div class="flow-demo__time">
+        <span class="flow-demo__time-card flow-demo__time-card--a"></span>
+        <span class="flow-demo__time-card flow-demo__time-card--b"></span>
+        <span class="flow-demo__time-card flow-demo__time-card--c">8 months later</span>
+      </div>
+      <p class="flow-demo__time-caption">No folders. No perfect title. Still yours.</p>
+    </div>
+
+    <!-- Recall -->
+    <div class="flow-demo__scene flow-demo__scene--recall">
+      <div class="flow-demo__panel">
+        <div class="flow-demo__panel-top">
+          <span class="flow-demo__panel-brand">Yiveno</span>
+          <span class="flow-demo__panel-chip">Side Panel</span>
+        </div>
+        <div class="flow-demo__composer">
+          <span class="flow-demo__composer-label">Clue</span>
+          <p class="flow-demo__composer-text">
+            <span class="flow-demo__type">that article about batteries in winter</span>
+            <span class="flow-demo__caret"></span>
+          </p>
+        </div>
+        <div class="flow-demo__hits">
+          <div class="flow-demo__hit flow-demo__hit--top">
+            <span>Closest</span>
+            <strong>Why lithium-ion batteries lose capacity in the cold</strong>
+          </div>
+          <div class="flow-demo__hit">
+            <span>Nearby</span>
+            <strong>Winter range tips for EVs — notes I kept</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="flow-demo__rail" role="tablist" aria-label="Flow steps">
+    {phases.map((phase, index) => (
+      <button
+        type="button"
+        class="flow-demo__tab"
+        role="tab"
+        data-flow-tab={phase.id}
+        aria-selected={index === 0 ? 'true' : 'false'}
+      >
+        <span class="flow-demo__tab-index">{String(index + 1).padStart(2, '0')}</span>
+        <span class="flow-demo__tab-label">{phase.label}</span>
+        <span class="flow-demo__tab-hint">{phase.hint}</span>
+      </button>
+    ))}
+  </div>
+
+  <p class="flow-demo__live" data-flow-live aria-live="polite">
+    Save — capture lightly, optional note.
+  </p>
+</div>

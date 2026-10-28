@@ -167,6 +167,114 @@ export async function createDodoCheckout(
   }
 }
 
+export type DodoPaymentSnapshot = {
+  paymentId: string
+  subscriptionId: string | null
+  status: string | null
+  metadata: unknown
+}
+
+export type FetchDodoPaymentResult =
+  | { ok: true; payment: DodoPaymentSnapshot }
+  | { ok: false; reason: 'not_found' | 'api_error' | 'not_configured'; detail?: string }
+
+/**
+ * GET /payments/{id} — 退款 webhook 反查 subscription_id。
+ */
+export async function fetchDodoPayment(
+  env: Env,
+  paymentId: string
+): Promise<FetchDodoPaymentResult> {
+  if (!apiKey(env)) {
+    return { ok: false, reason: 'not_configured' }
+  }
+  const id = paymentId.trim()
+  if (!id) {
+    return { ok: false, reason: 'not_found' }
+  }
+
+  try {
+    const res = await dodoFetch(env, `/payments/${encodeURIComponent(id)}`, { method: 'GET' })
+    if (res.status === 404) {
+      return { ok: false, reason: 'not_found' }
+    }
+    if (!res.ok) {
+      logErrorMessage('[Billing] 拉取 Dodo payment 失败', {
+        status: res.status,
+        detail: res.text.slice(0, 200)
+      })
+      return { ok: false, reason: 'api_error', detail: `http_${res.status}` }
+    }
+    const data = asRecord(res.json)
+    const resolvedPaymentId = readString(data, 'payment_id') || readString(data, 'id') || id
+    let subscriptionId = readString(data, 'subscription_id')
+    if (!subscriptionId) {
+      const ids = data?.subscription_ids
+      if (Array.isArray(ids) && typeof ids[0] === 'string' && ids[0].trim()) {
+        subscriptionId = ids[0].trim()
+      }
+    }
+    return {
+      ok: true,
+      payment: {
+        paymentId: resolvedPaymentId,
+        subscriptionId,
+        status: readString(data, 'status'),
+        metadata: data?.metadata ?? null
+      }
+    }
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err)
+    logErrorMessage('[Billing] 拉取 Dodo payment 异常', { detail })
+    return { ok: false, reason: 'api_error', detail }
+  }
+}
+
+export type CancelDodoSubscriptionResult =
+  | { ok: true }
+  | { ok: false; reason: 'not_found' | 'api_error' | 'not_configured'; detail?: string }
+
+/**
+ * 立即取消 Dodo 订阅（全额退款后对齐 MoR，避免对账又刷回 Pro）。
+ * PATCH body：`{ status: "cancelled" }`。
+ */
+export async function cancelDodoSubscriptionImmediate(
+  env: Env,
+  subscriptionId: string
+): Promise<CancelDodoSubscriptionResult> {
+  if (!apiKey(env)) {
+    return { ok: false, reason: 'not_configured' }
+  }
+  const id = subscriptionId.trim()
+  if (!id) {
+    return { ok: false, reason: 'not_found' }
+  }
+
+  try {
+    const res = await dodoFetch(env, `/subscriptions/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: 'cancelled' })
+    })
+    if (res.status === 404) {
+      return { ok: false, reason: 'not_found' }
+    }
+    if (!res.ok) {
+      logErrorMessage('[Billing] 立即取消 Dodo 订阅失败', {
+        status: res.status,
+        detail: res.text.slice(0, 200),
+        subscriptionId: id
+      })
+      return { ok: false, reason: 'api_error', detail: `http_${res.status}` }
+    }
+    info('[Billing] 已立即取消 Dodo 订阅', { subscriptionId: id })
+    return { ok: true }
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : String(err)
+    logErrorMessage('[Billing] 立即取消 Dodo 订阅异常', { detail, subscriptionId: id })
+    return { ok: false, reason: 'api_error', detail }
+  }
+}
+
 /**
  * GET /subscriptions/{id}
  */

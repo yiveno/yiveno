@@ -112,8 +112,10 @@ describe('projectDodoWebhook', () => {
 
   test('全额退款 → 立刻 expire', async () => {
     const supabase = await import('../../data-access/supabase')
+    const dodo = await import('./dodo-client')
     jest.spyOn(supabase, 'insertBillingEvent').mockResolvedValue(true)
     jest.spyOn(supabase, 'getSubscriptionByProviderId').mockResolvedValue(existingRow)
+    jest.spyOn(dodo, 'cancelDodoSubscriptionImmediate').mockResolvedValue({ ok: true })
     const upsert = jest.spyOn(supabase, 'upsertSubscription').mockResolvedValue({
       ...existingRow,
       status: 'expired'
@@ -142,6 +144,50 @@ describe('projectDodoWebhook', () => {
     expect(result.outcome).toBe('applied')
     expect(pay).toHaveBeenCalled()
     expect(upsert.mock.calls[0]?.[1]?.status).toBe('expired')
+    expect(upsert.mock.calls[0]?.[1]?.provider_status).toBe('refunded')
+    expect(dodo.cancelDodoSubscriptionImmediate).toHaveBeenCalledWith(env, SUB_ID)
+  })
+
+  test('全额退款无 subscription_id → 经 payment_records 反查后 expire', async () => {
+    const supabase = await import('../../data-access/supabase')
+    const dodo = await import('./dodo-client')
+    jest.spyOn(supabase, 'insertBillingEvent').mockResolvedValue(true)
+    jest.spyOn(supabase, 'getPaymentRecordByProviderTransactionId').mockResolvedValue({
+      user_id: USER_ID,
+      provider_subscription_id: SUB_ID,
+      provider_transaction_id: 'pay_01abc',
+      amount: 799,
+      currency: 'USD',
+      status: 'paid',
+      event_type: 'payment.succeeded'
+    })
+    jest.spyOn(supabase, 'getSubscriptionByProviderId').mockResolvedValue(existingRow)
+    jest.spyOn(dodo, 'cancelDodoSubscriptionImmediate').mockResolvedValue({ ok: true })
+    const upsert = jest.spyOn(supabase, 'upsertSubscription').mockResolvedValue({
+      ...existingRow,
+      status: 'expired'
+    })
+    jest.spyOn(supabase, 'insertPaymentRecord').mockImplementation(async (_env, payment) => payment)
+
+    const result = await projectDodoWebhook(
+      env,
+      {
+        eventId: 'evt_refund_via_pay',
+        eventType: 'refund.succeeded',
+        occurredAt: '2026-08-14T01:00:00.000Z',
+        data: {
+          refund_id: 'ref_01via_pay',
+          payment_id: 'pay_01abc',
+          currency: 'USD',
+          amount: 799,
+          is_partial: false
+        }
+      },
+      '{}'
+    )
+    expect(result.outcome).toBe('applied')
+    expect(upsert.mock.calls[0]?.[1]?.status).toBe('expired')
+    expect(dodo.cancelDodoSubscriptionImmediate).toHaveBeenCalled()
   })
 
   test('部分退款 → 不 expire', async () => {
@@ -168,6 +214,45 @@ describe('projectDodoWebhook', () => {
     )
     expect(result.outcome).toBe('applied')
     expect(upsert).not.toHaveBeenCalled()
+  })
+
+  test('dispute.lost → 经 payment 反查后 expire', async () => {
+    const supabase = await import('../../data-access/supabase')
+    const dodo = await import('./dodo-client')
+    jest.spyOn(supabase, 'insertBillingEvent').mockResolvedValue(true)
+    jest.spyOn(supabase, 'getPaymentRecordByProviderTransactionId').mockResolvedValue({
+      user_id: USER_ID,
+      provider_subscription_id: SUB_ID,
+      provider_transaction_id: 'pay_01abc',
+      amount: 799,
+      currency: 'USD',
+      status: 'paid',
+      event_type: 'payment.succeeded'
+    })
+    jest.spyOn(supabase, 'getSubscriptionByProviderId').mockResolvedValue(existingRow)
+    jest.spyOn(dodo, 'cancelDodoSubscriptionImmediate').mockResolvedValue({ ok: true })
+    const upsert = jest.spyOn(supabase, 'upsertSubscription').mockResolvedValue({
+      ...existingRow,
+      status: 'expired'
+    })
+    jest.spyOn(supabase, 'insertPaymentRecord').mockImplementation(async (_env, payment) => payment)
+
+    const result = await projectDodoWebhook(
+      env,
+      {
+        eventId: 'evt_dispute_lost',
+        eventType: 'dispute.lost',
+        occurredAt: '2026-08-14T02:00:00.000Z',
+        data: {
+          dispute_id: 'dsp_01',
+          payment_id: 'pay_01abc',
+          amount: 799
+        }
+      },
+      '{}'
+    )
+    expect(result.outcome).toBe('applied')
+    expect(upsert.mock.calls[0]?.[1]?.status).toBe('expired')
   })
 
   test('投影失败会删除 event 占位', async () => {

@@ -1,26 +1,7 @@
 ---
 /**
- * Dodo checkout success 落地页（Checkout Session return_url）。
+ * 历史 checkout return_url。正式回跳已改为 `/account?checkout=success`。
+ * 保留本路径作永久跳转，避免旧会话 / 书签落空。
  */
-import MainLayout from '../layouts/MainLayout.astro'
-import '../styles/pages.css'
+return Astro.redirect('/account?checkout=success', 301)
 ---
-
-<MainLayout noindex title="Welcome · Yiveno" description="Thanks for subscribing to Yiveno.">
-  <article class="page page--narrow">
-    <h1 class="page__title">Welcome</h1>
-    <p class="page__lede">
-      Thanks for subscribing. Your Pro access usually activates within a few seconds after payment
-      confirms — when you have the extension installed, open Settings or your
-      <a href="/account">account</a> to refresh.
-    </p>
-    <p class="page__actions">
-      <a class="ui-btn ui-btn--primary" href="/account">
-        Go to account
-      </a>
-      <a class="ui-btn ui-btn--ghost" href="/pricing">
-        Back to pricing
-      </a>
-    </p>
-  </article>
-</MainLayout>

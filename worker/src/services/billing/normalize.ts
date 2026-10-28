@@ -24,14 +24,21 @@ export function extractYivenoUserId(metadata: unknown): string | null {
 
 /**
  * Dodo status → 归一化订阅状态。
- * cancelled + 周期末取消在 snapshotToSubscriptionRecord 里提升为仍 active。
+ * - Dodo `past_due`（宽限期内仍可用）→ 本地 `active`（`provider_status` 仍记 past_due）
+ * - Dodo `on_hold`（已停权）→ 本地 `past_due`（历史命名；isDodoAccessActive=false）
+ * - cancelled + 周期末取消在 snapshotToSubscriptionRecord 里提升为仍 active
  */
 export function mapDodoStatus(dodoStatus: string): SubscriptionStatus {
   switch (dodoStatus) {
     case 'active':
       return 'active'
+    case 'past_due':
+      // Grace：顾客保持权益至 past_due_ends_at（对账/webhook 均须保留 Pro）
+      return 'active'
     case 'on_hold':
       return 'past_due'
+    case 'paused':
+      return 'expired'
     case 'cancelled':
       return 'cancelled'
     case 'pending':

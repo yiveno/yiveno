@@ -2,9 +2,10 @@
  * Dodo webhook → 归一化 → 订阅/支付投影。
  */
 
-import type { PaymentRecord, PaymentStatus } from '@yiveno/types'
+import type { PaymentRecord, PaymentStatus, Subscription } from '@yiveno/types'
 import {
   deleteBillingEvent,
+  getPaymentRecordByProviderTransactionId,
   getSubscriptionByProviderId,
   insertBillingEvent,
   insertPaymentRecord,
@@ -12,7 +13,11 @@ import {
 } from '../../data-access/supabase'
 import type { Env } from '../../types/env'
 import { error as logErrorMessage, info, warn } from '../../utils/logger'
-import { mapDodoSubscriptionEntity } from './dodo-client'
+import {
+  cancelDodoSubscriptionImmediate,
+  fetchDodoPayment,
+  mapDodoSubscriptionEntity
+} from './dodo-client'
 import {
   expireSubscriptionPatch,
   extractYivenoUserId,
@@ -28,9 +33,15 @@ const SUBSCRIPTION_EVENTS = new Set([
   'subscription.plan_changed',
   'subscription.cancelled',
   'subscription.on_hold',
+  'subscription.past_due', // 宽限期：仍授 Pro（map → active）
+  'subscription.paused', // 暂停：停权
+  'subscription.unpaused', // 恢复：跟 payload status
   'subscription.failed',
   'subscription.expired'
 ])
+
+/** 争议失败：资金退回顾客，须收回 Pro（与全额退款同级） */
+const DISPUTE_REVOKE_EVENTS = new Set(['dispute.lost', 'dispute.accepted'])
 
 function readString(record: Record<string, unknown> | null, key: string): string | null {
   const value = record?.[key]
@@ -168,22 +179,98 @@ function isPartialRefund(data: Record<string, unknown>): boolean {
   return type === 'partial'
 }
 
+/** Refund payload 偶发 subscription_ids[]；优先取显式 subscription_id。 */
+function readSubscriptionIdFromRefundData(data: Record<string, unknown>): string | null {
+  const direct = readString(data, 'subscription_id')
+  if (direct) return direct
+  const ids = data.subscription_ids
+  if (Array.isArray(ids) && typeof ids[0] === 'string' && ids[0].trim()) {
+    return ids[0].trim()
+  }
+  return null
+}
+
+/**
+ * 解析退款对应的订阅行与 user。
+ * Dodo Refund webhook 常无 subscription_id / yiveno_user_id → 经 payment_id 反查本机支付行或 Dodo payment。
+ */
+async function resolveRefundSubscriptionContext(
+  env: Env,
+  data: Record<string, unknown>
+): Promise<{
+  subscriptionId: string | null
+  row: Subscription | null
+  userId: string | null
+}> {
+  let subscriptionId = readSubscriptionIdFromRefundData(data)
+  let row = subscriptionId ? await getSubscriptionByProviderId(env, subscriptionId) : null
+  let userId = row?.user_id ?? extractYivenoUserId(data.metadata)
+
+  const paymentId = readString(data, 'payment_id')
+  if (paymentId && (!row || !userId || !subscriptionId)) {
+    const payRow = await getPaymentRecordByProviderTransactionId(env, paymentId)
+    if (payRow) {
+      if (!subscriptionId && payRow.provider_subscription_id) {
+        subscriptionId = payRow.provider_subscription_id
+      }
+      if (!userId && payRow.user_id && isValidYivenoUserId(payRow.user_id)) {
+        userId = payRow.user_id
+      }
+      if (!row && subscriptionId) {
+        row = await getSubscriptionByProviderId(env, subscriptionId)
+        userId = row?.user_id ?? userId
+      }
+    }
+  }
+
+  if (paymentId && (!row || !subscriptionId)) {
+    const fetched = await fetchDodoPayment(env, paymentId)
+    if (fetched.ok) {
+      if (!subscriptionId && fetched.payment.subscriptionId) {
+        subscriptionId = fetched.payment.subscriptionId
+      }
+      if (!userId) {
+        userId = extractYivenoUserId(fetched.payment.metadata)
+      }
+      if (!row && subscriptionId) {
+        row = await getSubscriptionByProviderId(env, subscriptionId)
+        userId = row?.user_id ?? userId
+      }
+    } else {
+      warn('[Billing] 退款反查 Dodo payment 失败', {
+        paymentId,
+        reason: fetched.reason,
+        detail: fetched.detail
+      })
+    }
+  }
+
+  return { subscriptionId, row, userId: userId ?? null }
+}
+
 async function applyRefundEvent(
   env: Env,
   event: DodoWebhookEvent
 ): Promise<{ reason?: string; userId: string | null; rejected?: boolean }> {
   const data = event.data
-  const subscriptionId = readString(data, 'subscription_id')
   const paymentId = readString(data, 'payment_id')
-  const row = subscriptionId ? await getSubscriptionByProviderId(env, subscriptionId) : null
-  const userId = row?.user_id ?? extractYivenoUserId(data.metadata)
+  const {
+    subscriptionId,
+    row,
+    userId: resolvedUserId
+  } = await resolveRefundSubscriptionContext(env, data)
+  const userId = resolvedUserId
   if (!userId || !isValidYivenoUserId(userId)) {
+    warn('[Billing] 退款无法解析 user（缺 subscription / payment 关联）', {
+      paymentId,
+      subscriptionId
+    })
     return { reason: 'missing_user_id', userId: null, rejected: true }
   }
 
   await insertPaymentRecord(env, {
     user_id: userId,
-    provider_subscription_id: subscriptionId,
+    provider_subscription_id: subscriptionId ?? row?.provider_subscription_id ?? null,
     provider_transaction_id: paymentId,
     provider_payment_id: readString(data, 'refund_id') || readString(data, 'id'),
     amount: readAmount(data),
@@ -193,11 +280,107 @@ async function applyRefundEvent(
     metadata: { is_partial: isPartialRefund(data) }
   })
 
-  if (!isPartialRefund(data) && row) {
-    await upsertSubscription(env, expireSubscriptionPatch(row, 'refunded', 'verified'))
-    info('[Billing] 全额退款，已收回 Pro', { userId, subscriptionId })
-  } else {
-    info('[Billing] 部分退款，维持订阅投影', { userId, subscriptionId })
+  if (isPartialRefund(data)) {
+    info('[Billing] 部分退款，维持订阅投影', { userId, subscriptionId, paymentId })
+    return { userId }
+  }
+
+  if (!row) {
+    warn('[Billing] 全额退款但无本地订阅行，无法 expire（已记退款 payment）', {
+      userId,
+      subscriptionId,
+      paymentId
+    })
+    return { userId }
+  }
+
+  await upsertSubscription(env, {
+    ...expireSubscriptionPatch(row, 'refunded', 'verified'),
+    source: 'dodo_webhook'
+  })
+  info('[Billing] 全额退款，已收回 Pro', {
+    userId,
+    subscriptionId: row.provider_subscription_id,
+    paymentId
+  })
+
+  // MoR 侧退款不自动取消订阅；立即 cancel，避免随后 dodo_verify 又刷回 active Pro
+  const subToCancel = row.provider_subscription_id || subscriptionId
+  if (subToCancel) {
+    const cancelled = await cancelDodoSubscriptionImmediate(env, subToCancel)
+    if (!cancelled.ok) {
+      warn('[Billing] 全额退款后取消 Dodo 订阅失败（投影已 expire）', {
+        subscriptionId: subToCancel,
+        reason: cancelled.reason,
+        detail: cancelled.detail
+      })
+    }
+  }
+
+  return { userId }
+}
+
+/**
+ * 争议 lost/accepted：按 payment_id 反查订阅并 expire（与全额退款同权）。
+ * opened 仅记账忽略——未败诉前不自动停权（避免误杀；可对账/人工处理）。
+ */
+async function applyDisputeRevokeEvent(
+  env: Env,
+  event: DodoWebhookEvent
+): Promise<{ reason?: string; userId: string | null; rejected?: boolean }> {
+  const data = event.data
+  const paymentId = readString(data, 'payment_id')
+  const {
+    subscriptionId,
+    row,
+    userId: resolvedUserId
+  } = await resolveRefundSubscriptionContext(env, data)
+  const userId = resolvedUserId
+  if (!userId || !isValidYivenoUserId(userId)) {
+    warn('[Billing] 争议无法解析 user', {
+      eventType: event.eventType,
+      paymentId,
+      subscriptionId
+    })
+    return { reason: 'missing_user_id', userId: null, rejected: true }
+  }
+
+  await insertPaymentRecord(env, {
+    user_id: userId,
+    provider_subscription_id: subscriptionId ?? row?.provider_subscription_id ?? null,
+    provider_transaction_id: paymentId,
+    provider_payment_id: readString(data, 'dispute_id') || readString(data, 'id'),
+    amount: readAmount(data),
+    currency: readString(data, 'currency') || 'USD',
+    status: 'refunded',
+    event_type: event.eventType,
+    metadata: { dispute: true }
+  })
+
+  if (!row) {
+    warn('[Billing] 争议无本地订阅行，已记 payment', { userId, paymentId, subscriptionId })
+    return { userId }
+  }
+
+  await upsertSubscription(env, {
+    ...expireSubscriptionPatch(row, event.eventType, 'verified'),
+    source: 'dodo_webhook'
+  })
+  info('[Billing] 争议败诉/接受，已收回 Pro', {
+    userId,
+    eventType: event.eventType,
+    subscriptionId: row.provider_subscription_id
+  })
+
+  const subToCancel = row.provider_subscription_id || subscriptionId
+  if (subToCancel) {
+    const cancelled = await cancelDodoSubscriptionImmediate(env, subToCancel)
+    if (!cancelled.ok) {
+      warn('[Billing] 争议后取消 Dodo 订阅失败（投影已 expire）', {
+        subscriptionId: subToCancel,
+        reason: cancelled.reason
+      })
+    }
   }
   return { userId }
 }
@@ -246,6 +429,14 @@ export async function projectDodoWebhook(
 
     if (type === 'refund.succeeded') {
       const applied = await applyRefundEvent(env, event)
+      return {
+        outcome: applied.rejected ? 'rejected' : 'applied',
+        reason: applied.reason
+      }
+    }
+
+    if (DISPUTE_REVOKE_EVENTS.has(type)) {
+      const applied = await applyDisputeRevokeEvent(env, event)
       return {
         outcome: applied.rejected ? 'rejected' : 'applied',
         reason: applied.reason

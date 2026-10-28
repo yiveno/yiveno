@@ -40,6 +40,8 @@
 - `DODO_PRODUCT_ID_FOUNDING_MONTHLY` / `DODO_PRODUCT_ID_FOUNDING_ANNUAL`（仅 Founding 打开时）
 - `BILLING_FOUNDING_ENABLED`（默认 `false`）
 - `REDIRECT_URI_ALLOWLIST`
+- `ALIYUN_DM_ACCESS_KEY_ID` / `ALIYUN_DM_ACCESS_KEY_SECRET`（Pro 欢迎信 DirectMail API；与 Supabase OTP SMTP 分立）
+- （可选）`ALIYUN_DM_ACCOUNT_NAME`（默认 `hello@yiveno.com`）、`ALIYUN_DM_FROM_ALIAS`、`ALIYUN_DM_REPLY_ADDRESS`（默认 `support@yiveno.com`）、`ALIYUN_DM_REGION_ID`、`ALIYUN_DM_ENDPOINT`
 
 ### 2. `.env.development.local`
 
@@ -160,7 +162,7 @@ bun run env:check:prod
 - 官网：`POST /api/billing/checkout-session` `{ plan }` → Dodo hosted `checkout_url`（Worker 写入 `metadata.yiveno_user_id`）。
 - 扩展→官网登录：`POST /api/auth/website-session`（Bearer=扩展 access）→ 铸造官网独立 session（**不**写扩展租约）；官网页 `/auth/from-extension` 经 `YIVENO_WEBSITE_SESSION_REQUEST` 向扩展索取后 `setSession`。
 - 官网→扩展登录：`POST /api/auth/extension-session`（Bearer；body `{ extensionId?, confirmDisplace? }`）→ 铸造扩展独立 session + `uninstallRevokeToken`；KV `ext_auth_session:{userId}` 含 `sessionId`+可选 `extensionId`+可选 revoke token；**已有租约**时先用 PostgREST 高置信探测该 `sessionId` 是否仍在 `auth.sessions`——仅 **gone**（200+空数组）清僵死租约后直接 mint；**alive / unknown**（含探测失败）→ 409 `needs_displace_confirm`（`data.existingSessionId` + `existingMintedAt`；互斥优先；禁止 Admin GET 404 误判 gone）；**仅**本次 `connect_extension` pending 才 mint（禁止仅凭 `last_extension_id` 静默 remint；`/account?extension_id` 只记退出目标、不 mint）；Connect 前 `YIVENO_EXTENSION_AUTH_STATUS_PROBE` 若扩展已是同一 userId → 跳过 mint；遇 409 → `YIVENO_EXTENSION_LEASE_RECLAIM_PROBE`（本机 `last_extension_lease_session_id` 匹配且未登录 → **静默** `confirmDisplace`；否则**自定义弹窗**——立意仅真·他端 Profile/设备）；`confirmDisplace` **先**硬撤前序扩展租约 Auth session（可重试）成功后才铸造并写新 KV（失败 → `displace_revoke_failed`，不发新会话）；**不**撤官网会话；扩展存活探测 `GET /api/auth/extension-session-lease`（Bearer）对照 KV 租约；官网可多端同登；扩展 1min 闹钟跑 `GET_AUTH_STATE`；官网 `getUser` 存活探测仅对本浏览器官网会话作废（不因扩展挤掉而踢官网）；扩展被挤退登后**不**自动开 `/login`，靠 displaced 软条 Connect。**同浏览器 UI 桥（ADR-019）：** 官网 `chrome.runtime.connect(extensionId, { name: 'yiveno-ui-bridge' })` ↔ SW `onConnectExternal`；登录 UI / 资料展示（无 token）；已登录 Connect：`request_extension_connect` → 官网原地 mint，`website_connect_ack` / `website_connect_result`；无 ack → `/account?connect_extension=1`；Connect 条优先 `chrome.storage.session` `yiveno:website_auth_ui`，`PROBE_WEBSITE_SIGNED_IN` 兜底。卸载：扩展安装即 `setUninstallURL` → 官网 `/auth/extension-uninstalled`（与登录解耦；退登只清 revoke token、保留反馈 URL）；登录态 URL 另带 `?token=`；`POST /api/auth/extension-uninstall-revoke` `{ token }`（公开一次性；官网 mint 成功但 handoff 失败亦用此回滚活租约）；主动退出无本地 token 时 `POST /api/auth/extension-session-release`（Bearer=扩展 access，仅清匹配本 session 的租约）；revoke token 的 KV `expirationTtl` ≤365 天（CF 上限）。落地页可选反馈 `POST /api/website/uninstall-feedback` → `recordFeedback`（闭集 `reasons[]` 与/或 `note` + `context`：Worker 取 IP/UA，客户端可报 displayName/email/language/timezone/screen；IP 限流；**KV 底账成功即 200**；邮件 `waitUntil` 尽力外发，不挡响应：**From=`feedback@yiveno.com`** → To=运营已验证 destination，默认 `FEEDBACK_TO_EMAIL=hi.yiveno@gmail.com`；邮件正文仅运营字段）。别名不可作 TO；欢迎信仍用 From=`hello@`。本地 host 跳过日限流；`[[send_email]] remote = true`。见产品文档 §账户与同步「用户触点三轨」。
-- Webhook：`POST /api/webhooks/dodo`，校验 Standard Webhooks（`DODO_PAYMENTS_WEBHOOK_KEY`）。产品欢迎信已接线但 **未上线**（须 Workers Paid + Email Sending onboard `yiveno.com`；发件 `hello@yiveno.com`）。未开通时发信失败只打日志，不 5xx。
+- Webhook：`POST /api/webhooks/dodo`，校验 Standard Webhooks（`DODO_PAYMENTS_WEBHOOK_KEY`）。产品欢迎信走 **阿里云 DirectMail**（`ALIYUN_DM_ACCESS_KEY_*`；发件 `hello@yiveno.com`）。未配 AK / 发信失败只打日志，不 5xx。
 - 对账：`DODO_PAYMENTS_API_KEY` → `GET /subscriptions/{id}`；未配时门禁退化为投影+硬门槛（生产必须配齐）。
 - 对外档位：Free + **仅 Pro**（Power User / Team / `premium` 预留不售）
 - 云同步须有效 Pro（服务端门禁，不只看扩展本地 snapshot）
@@ -173,7 +175,8 @@ bun run env:check:prod
 3. [ ] `bun run env:sync:prod && bun run env:check:prod`；Worker Secrets 含 API key / webhook secret / Product ID
 4. [ ] 测试购买：webhook 写库（`verified`）→ 回扩展 Settings / 官网账户页自动对账 → `isPro` → 同步可用
 5. [ ] Dodo `cancelled`（立即）/ `on_hold` / 全额退当前周期 → Refresh 或 Cron 后立刻收回；库内 `test-` 行不得为 Pro
-6. [ ] （上线前）Workers Paid + Email Sending enable `yiveno.com`（Dashboard 或 `wrangler email sending enable yiveno.com`；API Token 须含 Email Sending 写权限）；手测欢迎信 + 卸载反馈进 `feedback@`→Gmail（失败不得 5xx）；生产须 `bun run deploy:worker` 后 `POST /api/website/uninstall-feedback` 非 404
+6. [ ] （上线前）欢迎信：`.env.shared.local` + 生产 Worker Secrets 配齐 `ALIYUN_DM_ACCESS_KEY_ID` / `ALIYUN_DM_ACCESS_KEY_SECRET`；DirectMail 控制台 `hello@yiveno.com` 可 API 发信；手测开通 Pro 收信
+7. [ ] （可选 · 卸载反馈）Workers Paid + Email Sending enable `yiveno.com`；手测卸载反馈进 `feedback@`→Gmail（失败不得 5xx）；生产须 `bun run deploy:worker` 后 `POST /api/website/uninstall-feedback` 非 404
 
 ## 禁止事项
 

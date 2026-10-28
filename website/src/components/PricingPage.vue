@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { getPaidTiers, type Tier } from '../billing/tiers'
+import { isCnMarketHost } from '../geo/resolve-geo-domain-redirect'
+import { t } from '../i18n/t'
 import { buildLoginHref } from '../services/auth-return'
 import { createCheckoutSession, createPortalSession } from '../services/billing'
 import { getSupabase } from '../services/supabase'
@@ -19,8 +21,11 @@ const portalBusy = ref(false)
 const customerUserId = ref<string | null>(null)
 const accessToken = ref<string | null>(null)
 const isPro = ref(false)
+/** 大陆市场域名：展示换汇旁注（仍只标 USD 锚点） */
+const showFxNote = ref(false)
 
 const intervalLabel = computed(() => (cycle.value === 'month' ? '/mo' : '/yr'))
+const fxNote = computed(() => t('pricing.fx_note'))
 
 function proDisplayTotal(): string {
   const usd = proTier.value?.displayUsd[cycle.value]
@@ -119,6 +124,7 @@ async function openPortal(): Promise<void> {
 }
 
 onMounted(async () => {
+  showFxNote.value = isCnMarketHost(window.location.hostname)
   try {
     const supabase = await getSupabase()
     const { data } = await supabase.auth.getSession()
@@ -166,6 +172,8 @@ onMounted(async () => {
           Yearly
         </button>
       </div>
+
+      <p v-if="showFxNote" class="pricing-page__fx-note">{{ fxNote }}</p>
     </header>
 
     <p v-if="checkoutError" class="ui-banner" role="alert">{{ checkoutError }}</p>
@@ -383,6 +391,15 @@ onMounted(async () => {
 .plan--pro :deep(.ui-btn--primary):hover,
 .plan--pro :deep(.ui-btn--primary):focus-visible {
   background: rgb(220 232 222 / 22%);
+}
+
+.pricing-page__fx-note {
+  margin: 1rem auto 0;
+  max-width: 32rem;
+  font-size: 13px;
+  font-weight: 300;
+  line-height: 1.55;
+  color: var(--sage-muted);
 }
 
 .pricing-page__footnote {

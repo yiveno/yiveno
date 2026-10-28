@@ -256,21 +256,22 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 ### 6.1 官网 / 营销（Persuade）
 
 - 完整 Brand Core + Fraunces/Work Sans
-- **首页信息架构（定稿 · 6 屏）：**
+- **首页信息架构（定稿 · 6 屏 · 2026-10-27 证明前置）：**
   1. **Hero** — 纯文案居中：epithet + H1（单行）+ 支持句（含 Chrome 扩展）；**无**产品 mock、**无** waitlist / 预约表单
-  2. **Boundary** — GEO is / isn't（品类 + 反神谕，尽早）
-  3. **Mechanism** — Organize Before → Save. Forget. Recall.
-  4. **Capture** — 划存 mock + 附注
-  5. **Recall proof** — 口语 clue 例子（少而硬）+ 短 types（非词云）
+  2. **Boundary** — GEO is / isn't（各 **≤2** 条；品类 + 反神谕，尽早；禁止再扩成双长清单）
+  3. **Mechanism** — **Save → Forget → Recall 流程动画**（入视口循环；可点步进；`prefers-reduced-motion` 停循环）；**禁止** Before 七步清单散文
+  4. **Capture** — 划存 mock + 附注（加重视觉）
+  5. **Recall proof** — **Side Panel 静帧 mock**（clue composer + 非空邻域卡 ≥2）；外层旁白短；**禁止**四条例 + types 条当主证明
   6. **Trust** — Privacy 要点（无预约收尾）
+- **首页证明原则：** 重复说服段用产品 UI 静帧/流程动画替换；禁止空结果区、仪表盘拼贴、神谕百分比
 - **Hero 文案层级（已采纳 · ADR-012）：**
   - **Epithet（小字，非 H1）：** _The one that finds things_ — 心智标签
   - **H1（最大字）：** _Find what you saved._ — 可验证履约
   - **禁止**把裸 _Find things._ 单独占最大标题（易读成通用搜）
   - **首页标题排版：** 禁止用 `<br>` 做装饰性断行；桌面尽量一行读完，**窄屏/平板按词自然折行**（`text-wrap: balance`），禁止 `nowrap` 撑出横向滚动
 - 预发阶段：Nav 诚实（勿假装已上线完整账号体系）；营销 Nav 可挂 **Sign in**（进 `/login`）；Pricing 入口可仍隐藏；首页**不**挂邮箱预约 / Notify me
-- **语言切换（营销 Nav）：** 触发器 = 地球标 + **当前语言本语种名**（`English` / `中文`）+ chevron → 浮层标题 **LANGUAGE / 语言** + 选项列表（本语种自指、选中态高亮）。仅 en / zh_CN，**不做**多国旗网格（语言≠国旗；闭集两档用列表即可）。禁止只用「Match browser」当唯一可见文案。首访默认 `system`；点选后持久化为 `en` / `zh_CN`
-- 产品证明放在屏 4–5；若展示 Closest/邻域 mock，**禁止空结果区**
+- **语言切换（页脚）：** 触发器 = 地球标 + **当前语言本语种名**（`English` / `中文`）+ chevron → 浮层**向上**展开；标题 **LANGUAGE / 语言** + 选项列表。仅 en / zh_CN。首访默认 `system`；点选后持久化为 `en` / `zh_CN`。**不**再挂营销顶栏
+- 产品证明放在屏 3–5（Mechanism 流程动画 + Capture / Recall mock）；若展示 Closest/邻域 mock，**禁止空结果区**
 - 文案禁用用户可见的「搜索 / Search」产品名词（见产品文档）
 - **禁止**把 Demo / Problem / Compounds / 三卡 Proof / Types 马赛克再拆成独立长段重复同一说服点
 
@@ -523,6 +524,8 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 | v1.3   | 2026-08-20 | 扩展接入 Brand Roles；停用多预设色板运行时                                    |
 | v1.4   | 2026-08-20 | 扩展业务 CSS 改写 Roles；删除旧 presets / theme 运行时                        |
 | v1.5   | 2026-08-20 | `--space-*` / `--radius-*` 进 brand；semantic 直连 Roles；variables 瘦身      |
+| v1.11  | 2026-10-27 | §6.1 Mechanism：Save→Forget→Recall 流程动画（循环/步进/reduced-motion）       |
+| v1.10  | 2026-10-27 | §6.1 首页：Mechanism 三步分镜 + Recall Side Panel mock；Boundary 短列表       |
 | v1.9   | 2026-10-27 | §6.3.1 账户头像 fallback = 品牌标；禁止邮箱/昵称首字符默认                    |
 | v1.8   | 2026-10-15 | Modal 一律禁止点遮罩关闭（移除 `closeOnBackdrop`；须显式按钮 / Esc）          |
 | v1.7   | 2026-08-23 | 扩展 `AppModal` Modal Dialog 规范（§6.2.1）；禁止 `window.confirm` 作用户确认 |

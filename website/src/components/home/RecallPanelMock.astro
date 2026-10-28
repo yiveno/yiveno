@@ -1,0 +1,50 @@
+---
+/**
+ * 首页 Recall 证明：Side Panel 形态静帧（composer + 邻域卡，非空结果区）。
+ */
+const neighborhood = [
+  {
+    rank: 'Closest',
+    title: 'Why lithium-ion batteries lose capacity in the cold',
+    meta: 'Saved 8 months ago · excerpt'
+  },
+  {
+    rank: 'Nearby',
+    title: 'Winter range tips for EVs — notes I kept',
+    meta: 'Saved last winter · note'
+  },
+  {
+    rank: 'Nearby',
+    title: 'Battery chemistry explainer (bookmarked)',
+    meta: 'Saved a year ago · bookmark'
+  }
+] as const
+---
+
+<figure class="recall-panel" aria-label="Example of recalling a saved article with a spoken clue">
+  <div class="recall-panel__chrome" aria-hidden="true">
+    <div class="recall-panel__brand">
+      <span class="recall-panel__dot"></span>
+      <span>Yiveno</span>
+    </div>
+    <span class="recall-panel__chip">Side Panel</span>
+  </div>
+  <div class="recall-panel__composer" aria-hidden="true">
+    <p class="recall-panel__composer-label">Clue</p>
+    <p class="recall-panel__composer-text">
+      that article about why batteries degrade faster in winter
+    </p>
+  </div>
+  <ul class="recall-panel__list">
+    {neighborhood.map((item, i) => (
+      <li class:list={['recall-panel__card', i === 0 && 'recall-panel__card--top']}>
+        <span class="recall-panel__rank">{item.rank}</span>
+        <p class="recall-panel__title">{item.title}</p>
+        <p class="recall-panel__meta">{item.meta}</p>
+      </li>
+    ))}
+  </ul>
+  <figcaption class="recall-panel__caption">
+    You don't need the exact title — closest fits on top, you decide.
+  </figcaption>
+</figure>

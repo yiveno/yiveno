@@ -75,13 +75,29 @@ export type Env = Cloudflare.Env & {
   /** 订阅定时对账开关；"false" 关闭 */
   SUBSCRIPTION_RECONCILE_SCHEDULED_ENABLED?: string
   /**
+   * 阿里云 DirectMail AccessKey（Pro 欢迎信 SingleSendMail）。
+   * 未配则跳过欢迎信，不 5xx webhook。
+   */
+  ALIYUN_DM_ACCESS_KEY_ID?: string
+  ALIYUN_DM_ACCESS_KEY_SECRET?: string
+  /** 发信地址；默认 hello@yiveno.com（须在 DirectMail 控制台已创建） */
+  ALIYUN_DM_ACCOUNT_NAME?: string
+  /** 发件显示名；默认 Yiveno（≤15 字符） */
+  ALIYUN_DM_FROM_ALIAS?: string
+  /** 回信地址；默认 support@yiveno.com */
+  ALIYUN_DM_REPLY_ADDRESS?: string
+  /** RegionId；默认 cn-hangzhou */
+  ALIYUN_DM_REGION_ID?: string
+  /** API 端点；默认 https://dm.aliyuncs.com/ */
+  ALIYUN_DM_ENDPOINT?: string
+  /**
    * Workers AI binding（wrangler `[ai]`）。
    * 跑 `bun run types:gen` 后也会出现在 Cloudflare.Env；此处作兜底。
    */
   AI?: Ai
   /**
    * Cloudflare Email Sending（wrangler `[[send_email]]`）。
-   * 产品欢迎信用；本地单测 env 可能缺省。
+   * 卸载/结构化反馈邮件仍用此绑定；欢迎信已改 DirectMail。
    */
   EMAIL?: SendEmail
 }

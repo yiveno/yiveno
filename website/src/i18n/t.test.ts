@@ -20,6 +20,13 @@ describe('website i18n t()', () => {
     expect(Object.keys(zh).sort()).toEqual(Object.keys(en).sort())
   })
 
+  test('pricing.fx_note 中英均有诚实换汇说明', () => {
+    expect(t('pricing.fx_note', 'en')).toMatch(/USD/i)
+    expect(t('pricing.fx_note', 'en')).toMatch(/local currency/i)
+    expect(t('pricing.fx_note', 'zh_CN')).toMatch(/美元|USD/)
+    expect(t('pricing.fx_note', 'zh_CN')).toMatch(/本地货币|汇率/)
+  })
+
   test('卸载原因键齐全', () => {
     const keys = [
       'uninstall.feedback.reason.didnt_find',

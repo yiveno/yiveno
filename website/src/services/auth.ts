@@ -1,5 +1,11 @@
 import type { Provider, Session } from '@supabase/supabase-js'
-import { isValidEmail, normalizeEmail, normalizeOtpCode } from './auth-email'
+import {
+  EMAIL_OTP_LENGTH,
+  isCompleteOtpCode,
+  isValidEmail,
+  normalizeEmail,
+  normalizeOtpCode
+} from './auth-email'
 import { getSupabase } from './supabase'
 
 const providerMap: Record<'google' | 'microsoft', Provider> = {
@@ -96,8 +102,8 @@ export async function verifyEmailOtp(rawEmail: string, rawToken: string): Promis
   if (!isValidEmail(email)) {
     throw new Error('Enter a valid email address.')
   }
-  if (token.length < 6) {
-    throw new Error('Enter the 6-digit code from your email.')
+  if (!isCompleteOtpCode(token)) {
+    throw new Error(`Enter the ${EMAIL_OTP_LENGTH}-digit code from your email.`)
   }
   const supabase = await getSupabase()
   const { data, error } = await supabase.auth.verifyOtp({

@@ -3,6 +3,13 @@
  * OTP / magic link 发信与校验见 `auth.ts`。
  */
 
+/**
+ * Email OTP 精确位数。
+ * **须与** Supabase Dashboard → Authentication → Providers → Email →
+ * **Email OTP length** 保持一致；只改一端会验收失败或漏收尾位。
+ */
+export const EMAIL_OTP_LENGTH = 8 as const
+
 /** 去空白并小写；空串返回 ''。 */
 export function normalizeEmail(raw: string): string {
   return raw.trim().toLowerCase()
@@ -19,12 +26,12 @@ export function isValidEmail(raw: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
 }
 
-/** 用户粘贴的 OTP：只留数字，最长 8（Supabase 默认 6）。 */
+/** 用户粘贴的 OTP：只留数字，截到 `EMAIL_OTP_LENGTH`。 */
 export function normalizeOtpCode(raw: string): string {
-  return raw.replace(/\D/g, '').slice(0, 8)
+  return raw.replace(/\D/g, '').slice(0, EMAIL_OTP_LENGTH)
 }
 
+/** 是否已凑齐精确位数（无区间容差）。 */
 export function isCompleteOtpCode(raw: string): boolean {
-  const code = normalizeOtpCode(raw)
-  return code.length >= 6 && code.length <= 8
+  return normalizeOtpCode(raw).length === EMAIL_OTP_LENGTH
 }

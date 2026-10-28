@@ -22,6 +22,7 @@ import {
 } from '../services/auth-session-liveness'
 import { clearNavIsProCache, writeNavIsProCacheOnVerified } from '../services/nav-pro-badge-cache'
 import { ensureUiBridgeConnected, publishWebsiteAuthChanged } from '../services/ui-bridge'
+import { buildLoginHref } from '../services/auth-return'
 
 defineOptions({ name: 'AccountPage' })
 
@@ -62,6 +63,35 @@ const signInProvider = computed(() => {
 
 const checkoutBusy = ref(false)
 const checkoutError = ref('')
+/** Dodo return_url `?checkout=success`：轻提示，不另开 Welcome 页 */
+const showCheckoutSuccessHint = ref(false)
+let checkoutPollTimer: ReturnType<typeof setTimeout> | null = null
+
+/** 清掉结账回跳参数（含 Dodo 追加的 id/status），避免刷新重复提示 */
+function consumeCheckoutReturnParams(): boolean {
+  const params = new URLSearchParams(window.location.search)
+  const fromCheckout = params.get('checkout') === 'success'
+  if (!fromCheckout && !params.has('payment_id') && !params.has('subscription_id')) {
+    return false
+  }
+  const clean = new URL(window.location.href)
+  for (const key of [
+    'checkout',
+    'payment_id',
+    'subscription_id',
+    'status',
+    'email',
+    'license_key'
+  ]) {
+    clean.searchParams.delete(key)
+  }
+  window.history.replaceState({}, '', clean.pathname + clean.search)
+  return fromCheckout
+}
+
+function dismissCheckoutSuccessHint(): void {
+  showCheckoutSuccessHint.value = false
+}
 
 /**
  * 拉订阅（Worker 内强制对账，约数秒）。
@@ -133,6 +163,10 @@ let stopAuthLiveness: WebsiteAuthLivenessStop | null = null
 
 onMounted(async () => {
   captureExtensionConnectParamsFromUrl()
+  const fromCheckout = consumeCheckoutReturnParams()
+  if (fromCheckout) {
+    showCheckoutSuccessHint.value = true
+  }
   const params = new URLSearchParams(window.location.search)
   const extensionId = params.get('extension_id')?.trim()
   const wantConnect = params.get('connect_extension') === '1'
@@ -156,6 +190,11 @@ onMounted(async () => {
       window.location.replace(`/login?${login.toString()}`)
       return
     }
+    // 结账回跳丢会话：带回 checkout 标记，登完仍落到账户页
+    if (fromCheckout) {
+      window.location.replace(buildLoginHref('/account?checkout=success'))
+      return
+    }
     window.location.replace('/login')
     return
   }
@@ -168,7 +207,14 @@ onMounted(async () => {
   profileDisplayName.value = profile.displayName ?? data.session.user.email ?? ''
   pageLoading.value = false
   document.addEventListener('visibilitychange', refreshSubscriptionOnVisible)
-  void loadSubscription()
+  const becamePro = await loadSubscription()
+  // webhook 可能晚几秒：结账回跳后再对账一次
+  if (fromCheckout && !becamePro) {
+    checkoutPollTimer = setTimeout(() => {
+      checkoutPollTimer = null
+      void loadSubscription({ silent: true })
+    }, 2500)
+  }
   // 本浏览器官网会话作废时尽快回登录页（扩展挤掉不踢官网）
   stopAuthLiveness = await startWebsiteAuthLiveness(() => {
     clearNavIsProCache()
@@ -190,6 +236,10 @@ onMounted(async () => {
 
 onUnmounted(() => {
   document.removeEventListener('visibilitychange', refreshSubscriptionOnVisible)
+  if (checkoutPollTimer) {
+    clearTimeout(checkoutPollTimer)
+    checkoutPollTimer = null
+  }
   stopAuthLiveness?.()
   stopAuthLiveness = null
 })
@@ -212,6 +262,25 @@ async function handleSignOut() {
 
 <template>
   <div v-if="!pageLoading && user" class="account page">
+    <p
+      v-if="showCheckoutSuccessHint"
+      class="account__checkout-hint"
+      role="status"
+      aria-live="polite"
+    >
+      <span>
+        Payment received. Pro usually shows within a few seconds — refresh if the plan below still
+        says Free.
+      </span>
+      <button
+        type="button"
+        class="account__checkout-hint-dismiss"
+        @click="dismissCheckoutSuccessHint"
+      >
+        Dismiss
+      </button>
+    </p>
+
     <!-- 1. 身份 -->
     <header class="account__identity">
       <div class="account__who">
@@ -320,6 +389,45 @@ async function handleSignOut() {
 <style scoped>
 .account {
   max-width: 720px;
+}
+
+.account__checkout-hint {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px 16px;
+  margin: 0 0 clamp(20px, 3vw, 28px);
+  padding: 12px 14px;
+  border: 1px solid color-mix(in srgb, var(--sage) 28%, var(--border));
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--sage) 8%, var(--paper, #fff));
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--charcoal, var(--ink));
+}
+
+.account__checkout-hint-dismiss {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 2px 6px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font: inherit;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.account__checkout-hint-dismiss:hover {
+  background: color-mix(in srgb, var(--paper-dim) 80%, transparent);
+  color: var(--charcoal, var(--ink));
+}
+
+.account__checkout-hint-dismiss:focus-visible {
+  outline: 2px solid var(--focus-ring, color-mix(in srgb, var(--sage) 45%, transparent));
+  outline-offset: 2px;
 }
 
 .account__identity {

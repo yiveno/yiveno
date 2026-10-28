@@ -76,6 +76,20 @@ async function applyFetchResult(
     }
   }
 
+  // 全额退款已 expire 时：Dodo 订阅若尚未 cancel，不得对账刷回 Pro
+  if (row.status === 'expired' && row.provider_status === 'refunded') {
+    info('[BillingReconcile] 本地已因退款 expire，忽略 Dodo 仍 active', {
+      userId: row.user_id,
+      providerSubscriptionId: row.provider_subscription_id
+    })
+    return {
+      isPro: false,
+      apiFailed: false,
+      subscription: row,
+      reason: 'refunded_local'
+    }
+  }
+
   const activated = await upsertSubscription(env, record)
   info('[BillingReconcile] active，已对齐 Pro', { userId: row.user_id })
   return { isPro: true, apiFailed: false, subscription: activated, reason: 'active' }

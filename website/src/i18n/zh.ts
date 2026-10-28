@@ -52,5 +52,8 @@ export const zh = {
   'footer.privacy': '隐私',
   'footer.terms': '条款',
   'footer.tagline': '· 找回你存过的。',
-  'a11y.skip_to_content': '跳到正文'
+  'a11y.skip_to_content': '跳到正文',
+
+  'pricing.fx_note':
+    '标价为美元（USD）。结账时总额可能按汇率显示为本地货币——不是单独的人民币套餐价。'
 } as const satisfies Record<WebsiteMessageKey, string>

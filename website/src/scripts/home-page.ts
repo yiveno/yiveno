@@ -56,4 +56,90 @@ export function initHomePage(): void {
   } else {
     nodes.forEach(el => el.classList.add('in', 'is-in'))
   }
+
+  initHomeFlowDemo()
+}
+
+const FLOW_PHASES = ['save', 'forget', 'recall'] as const
+type FlowPhase = (typeof FLOW_PHASES)[number]
+
+const FLOW_LIVE: Record<FlowPhase, string> = {
+  save: 'Save — capture lightly, optional note.',
+  forget: 'Forget — months can pass; it stays yours.',
+  recall: 'Recall — say a clue; closest fits rise.'
+}
+
+const FLOW_DWELL_MS = 3400
+
+/** Save → Forget → Recall 循环；入视口才跑；尊重 prefers-reduced-motion */
+function initHomeFlowDemo(): void {
+  const root = document.querySelector<HTMLElement>('[data-flow-demo]')
+  if (!root) return
+
+  const live = root.querySelector<HTMLElement>('[data-flow-live]')
+  const tabs = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-flow-tab]'))
+  let phaseIndex = 0
+  let timer: ReturnType<typeof setInterval> | null = null
+  let running = false
+
+  const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+  const setPhase = (phase: FlowPhase): void => {
+    root.dataset.phase = phase
+    phaseIndex = FLOW_PHASES.indexOf(phase)
+    for (const tab of tabs) {
+      const id = tab.dataset.flowTab
+      tab.setAttribute('aria-selected', id === phase ? 'true' : 'false')
+    }
+    if (live) live.textContent = FLOW_LIVE[phase]
+  }
+
+  const tick = (): void => {
+    phaseIndex = (phaseIndex + 1) % FLOW_PHASES.length
+    setPhase(FLOW_PHASES[phaseIndex]!)
+  }
+
+  const stop = (): void => {
+    if (timer != null) {
+      clearInterval(timer)
+      timer = null
+    }
+    running = false
+  }
+
+  const start = (): void => {
+    if (reduceMotion || running) return
+    running = true
+    timer = setInterval(tick, FLOW_DWELL_MS)
+  }
+
+  for (const tab of tabs) {
+    tab.addEventListener('click', () => {
+      const id = tab.dataset.flowTab
+      if (id !== 'save' && id !== 'forget' && id !== 'recall') return
+      setPhase(id)
+      stop()
+      if (!reduceMotion) start()
+    })
+  }
+
+  if (reduceMotion) {
+    setPhase('recall')
+    return
+  }
+
+  if ('IntersectionObserver' in window) {
+    const obs = new IntersectionObserver(
+      entries => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) start()
+          else stop()
+        }
+      },
+      { threshold: 0.35 }
+    )
+    obs.observe(root)
+  } else {
+    start()
+  }
 }

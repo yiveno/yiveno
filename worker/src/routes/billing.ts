@@ -79,7 +79,8 @@ billingRouter.post('/checkout-session', async c => {
     userId,
     productId,
     email,
-    returnUrl: `${websiteBase(c.env)}/welcome`
+    // 回跳账户页（非独立 Welcome）：支付确认态归 Dodo；产品致谢归欢迎信
+    returnUrl: `${websiteBase(c.env)}/account?checkout=success`
   })
   if (!result.ok) {
     return c.json(

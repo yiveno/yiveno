@@ -327,6 +327,41 @@ export async function getSubscriptionByProviderId(
 }
 
 /**
+ * 按 Dodo payment_id（写入时的 provider_transaction_id）查最近一条支付记录。
+ * 用于 refund webhook：官方 Refund payload 常无 subscription_id / yiveno_user_id。
+ */
+export async function getPaymentRecordByProviderTransactionId(
+  env: Env,
+  providerTransactionId: string
+): Promise<PaymentRecord | null> {
+  if (!hasSupabase(env)) return null
+  const supabase = createSupabaseClient(env)
+  if (!supabase) return null
+  const id = providerTransactionId.trim()
+  if (!id) return null
+
+  try {
+    const { data, error } = await supabase
+      .from('payment_records')
+      .select('*')
+      .eq('provider_transaction_id', id)
+      .is('deleted_at', null)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle<PaymentRecord>()
+
+    if (error) {
+      logErrorMessage('[Supabase] 按 payment_id 查支付记录失败', { detail: toLogError(error) })
+      return null
+    }
+    return data
+  } catch (err) {
+    logErrorMessage('[Supabase] 按 payment_id 查支付记录异常', { detail: toLogError(err) })
+    return null
+  }
+}
+
+/**
  * 取用户最新一条订阅行（不限 status；供对账）
  */
 export async function getLatestUserSubscriptionRow(

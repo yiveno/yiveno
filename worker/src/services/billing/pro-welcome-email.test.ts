@@ -1,11 +1,13 @@
 import { afterEach, describe, expect, jest, test } from 'bun:test'
 
 import type { Env } from '../../types/env'
+import * as directMail from '../email/aliyun-directmail'
 import type { DodoWebhookEvent } from './dodo-webhook'
 import {
   extractCustomerEmail,
   sendProWelcomeEmail,
-  shouldSendProWelcomeEmail
+  shouldSendProWelcomeEmail,
+  welcomeCopy
 } from './pro-welcome-email'
 
 const USER_ID = '11111111-1111-4111-8111-111111111111'
@@ -53,48 +55,76 @@ describe('extractCustomerEmail', () => {
   })
 })
 
+describe('welcomeCopy', () => {
+  test('定稿 subject / CTA / 脚注；禁旧工程师口吻', () => {
+    const copy = welcomeCopy('https://yiveno.com')
+    expect(copy.subject).toBe("You're on Yiveno Pro")
+    expect(copy.text).toContain('Thanks for going Pro.')
+    expect(copy.text).toContain('https://yiveno.com/account')
+    expect(copy.text).toContain('Dodo Payments')
+    expect(copy.text).not.toContain('Your Yiveno Pro is ready')
+    expect(copy.text).not.toContain('hosted-clue quota')
+    expect(copy.html).toContain('Manage subscription')
+    expect(copy.html).toContain('https://yiveno.com/account')
+    expect(copy.html).toContain('https://yiveno.com/images/logo-mark.svg')
+    expect(copy.html).toContain('Dodo Payments')
+    expect(copy.html).toContain('clue understanding are ready')
+    expect(copy.html).not.toContain('Your Yiveno Pro is ready')
+    expect(copy.html).not.toContain('hosted-clue quota')
+  })
+})
+
 describe('sendProWelcomeEmail', () => {
   afterEach(() => {
     jest.restoreAllMocks()
   })
 
-  test('无 EMAIL 绑定 → no_binding，不抛', async () => {
+  test('未配 DirectMail → not_configured，不抛', async () => {
     const result = await sendProWelcomeEmail({ WEBSITE_URL: 'https://yiveno.com' } as Env, event())
-    expect(result).toEqual({ sent: false, reason: 'no_binding' })
+    expect(result).toEqual({ sent: false, reason: 'not_configured' })
   })
 
-  test('有绑定则发给 customer.email', async () => {
-    const send = jest.fn().mockResolvedValue({ messageId: 'msg_1' })
-    const env = {
-      WEBSITE_URL: 'https://yiveno.com',
-      EMAIL: { send }
-    } as unknown as Env
+  test('已配置则经 DirectMail 发给 customer.email', async () => {
+    const send = jest.spyOn(directMail, 'sendDirectMail').mockResolvedValue({
+      ok: true,
+      requestId: 'req_1',
+      envId: 'env_1'
+    })
+    jest.spyOn(directMail, 'isDirectMailConfigured').mockReturnValue(true)
 
-    const result = await sendProWelcomeEmail(env, event())
-    expect(result).toEqual({ sent: true, messageId: 'msg_1' })
+    const result = await sendProWelcomeEmail(
+      {
+        WEBSITE_URL: 'https://yiveno.com',
+        ALIYUN_DM_ACCESS_KEY_ID: 'ak',
+        ALIYUN_DM_ACCESS_KEY_SECRET: 'sk'
+      } as Env,
+      event()
+    )
+    expect(result).toEqual({ sent: true, messageId: 'env_1' })
     expect(send).toHaveBeenCalledTimes(1)
-    const payload = send.mock.calls[0]?.[0] as {
-      to: string
-      from: { email: string }
-      subject: string
-      text: string
-      html: string
-    }
-    expect(payload.to).toBe('buyer@example.com')
-    expect(payload.from.email).toBe('hello@yiveno.com')
-    expect(payload.subject).toBe('Your Yiveno Pro is ready')
-    expect(payload.text).toContain('https://yiveno.com/account')
-    expect(payload.html).toContain('https://yiveno.com/account')
+    const payload = send.mock.calls[0]?.[1]
+    expect(payload?.to).toBe('buyer@example.com')
+    expect(payload?.accountName).toBe('hello@yiveno.com')
+    expect(payload?.subject).toBe("You're on Yiveno Pro")
+    expect(payload?.html).toContain('Manage subscription')
   })
 
-  test('send 抛错 → send_failed，不抛给调用方', async () => {
-    const send = jest.fn().mockRejectedValue(new Error('E_SENDER_NOT_VERIFIED'))
-    const env = {
-      WEBSITE_URL: 'https://yiveno.com',
-      EMAIL: { send }
-    } as unknown as Env
+  test('DirectMail 失败 → send_failed，不抛给调用方', async () => {
+    jest.spyOn(directMail, 'isDirectMailConfigured').mockReturnValue(true)
+    jest.spyOn(directMail, 'sendDirectMail').mockResolvedValue({
+      ok: false,
+      reason: 'api_error',
+      detail: 'InvalidMailAddress.NotFound'
+    })
 
-    const result = await sendProWelcomeEmail(env, event())
+    const result = await sendProWelcomeEmail(
+      {
+        WEBSITE_URL: 'https://yiveno.com',
+        ALIYUN_DM_ACCESS_KEY_ID: 'ak',
+        ALIYUN_DM_ACCESS_KEY_SECRET: 'sk'
+      } as Env,
+      event()
+    )
     expect(result).toEqual({ sent: false, reason: 'send_failed' })
   })
 })

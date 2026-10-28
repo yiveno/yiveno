@@ -7,7 +7,7 @@
     Your Yiveno sign-in code
 
   变量（Go template，大小写敏感）:
-    {{ .Token }}            — 6 位 OTP（登录页主路径必填）
+    {{ .Token }}            — OTP（位数 = Dashboard Email OTP length；当前 8；须与 EMAIL_OTP_LENGTH 对齐）
     {{ .ConfirmationURL }}  — magic link（备用；打开后落 /auth/callback）
     {{ .SiteURL }}          — 项目 Site URL
     {{ .Email }}            — 收件邮箱

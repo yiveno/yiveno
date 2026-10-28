@@ -9,6 +9,7 @@ import {
   verifyEmailOtp
 } from '../services/auth'
 import {
+  EMAIL_OTP_LENGTH,
   isCompleteOtpCode,
   isValidEmail,
   normalizeEmail,
@@ -55,6 +56,7 @@ const emailInput = ref('')
 /** 已成功发信的规范化邮箱 */
 const pendingEmail = ref('')
 const otpInput = ref('')
+const emailInputEl = ref<HTMLInputElement | null>(null)
 const otpInputEl = ref<HTMLInputElement | null>(null)
 const resendSecondsLeft = ref(0)
 let resendTimerId: ReturnType<typeof setInterval> | null = null
@@ -71,6 +73,35 @@ const fromExtension = ref(false)
 const fromSubscribe = ref(false)
 /** 已登录且正在跳转账户页时，避免闪一下登录按钮 */
 const redirecting = ref(false)
+/** 首屏入场就绪（阶梯 rise） */
+const motionReady = ref(false)
+/** 验码/已登录跳转前整卡淡出 */
+const leaving = ref(false)
+
+/** 与 CSS `.login-form--leaving` 时长对齐 */
+const LOGIN_LEAVE_MS = 220
+
+function prefersReducedMotion(): boolean {
+  return (
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  )
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => {
+    window.setTimeout(resolve, ms)
+  })
+}
+
+/** 跳转前可选淡出整卡（reduced-motion 则瞬时） */
+async function goAfterSignIn(href: string): Promise<void> {
+  redirecting.value = true
+  if (!prefersReducedMotion()) {
+    leaving.value = true
+    await sleep(LOGIN_LEAVE_MS)
+  }
+  window.location.replace(href)
+}
 
 const oauthOrConnectBusy = computed(
   () => loadingProvider.value !== null || connectingExtension.value || emailBusy.value
@@ -108,7 +139,7 @@ const primaryCtaLabel = computed(() => {
   return emailBusy.value ? 'Sending…' : 'Email me a code'
 })
 
-/** 改邮箱：仍在冷却的同址可恢复码区；换址则收起，须对新地址重新发码 */
+/** 改邮箱：仍在冷却的同址可恢复码区；换址则收起并清冷却键（防刷新又拉回旧址） */
 watch(emailInput, raw => {
   const email = normalizeEmail(raw)
   const remaining = email ? remainingOtpResendSecFor(email) : 0
@@ -120,12 +151,31 @@ watch(emailInput, raw => {
   }
   if (emailStep.value !== 'code' || !pendingEmail.value) return
   if (email === pendingEmail.value) return
+  abandonOtpForEmailChange()
+})
+
+/**
+ * 放弃当前发码态：清 sessionStorage 冷却 + 收起码区。
+ * 「Use a different email」与手动改址共用。
+ */
+function abandonOtpForEmailChange(): void {
+  clearOtpResendCooldown()
+  clearResendTimer()
+  resendSecondsLeft.value = 0
   emailStep.value = 'email'
   pendingEmail.value = ''
   otpInput.value = ''
-  clearResendTimer()
-  resendSecondsLeft.value = 0
-})
+}
+
+/** 显式换邮箱：退出码区并聚焦邮箱框（全选便于改） */
+function useDifferentEmail(): void {
+  if (oauthOrConnectBusy.value) return
+  abandonOtpForEmailChange()
+  void nextTick(() => {
+    emailInputEl.value?.focus()
+    emailInputEl.value?.select()
+  })
+}
 
 function clearResendTimer(): void {
   if (resendTimerId != null) {
@@ -227,8 +277,7 @@ async function finishSignedInOnLoginPage(): Promise<void> {
   if (getPendingExtensionId()) {
     const handoff = await tryHandoffCurrentSession()
     if (handoff === 'ok') {
-      redirecting.value = true
-      window.location.replace('/account?extension_connected=1')
+      await goAfterSignIn('/account?extension_connected=1')
       return
     }
     if (handoff === 'cancelled_displace') {
@@ -242,8 +291,7 @@ async function finishSignedInOnLoginPage(): Promise<void> {
   if (pending.next) {
     console.warn('[LoginForm] 已登录，回跳续意图（不 mint 扩展）', pending)
   }
-  redirecting.value = true
-  window.location.replace(buildPostAuthHref('/account'))
+  await goAfterSignIn(buildPostAuthHref('/account'))
 }
 
 /** 将回调失败映射为用户可读错误（细节仅打 console，避免暴露 OAuth 栈） */
@@ -300,6 +348,10 @@ function resetTurnstile(): void {
  */
 onMounted(async () => {
   window.addEventListener('pageshow', onPageShow)
+  // 下一帧再开入场，避免首帧闪「已到位」
+  requestAnimationFrame(() => {
+    motionReady.value = true
+  })
 
   captureExtensionConnectParamsFromUrl()
   captureAuthReturnFromUrl()
@@ -321,12 +373,10 @@ onMounted(async () => {
     const pending = peekAuthReturn()
     if (pending.next) {
       console.warn('[LoginForm] 已登录，回跳续意图（不 mint 扩展）', pending)
-      redirecting.value = true
-      window.location.replace(buildPostAuthHref('/account'))
+      await goAfterSignIn(buildPostAuthHref('/account'))
       return
     }
-    redirecting.value = true
-    window.location.replace(buildPostAuthHref('/account'))
+    await goAfterSignIn(buildPostAuthHref('/account'))
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : 'Could not check sign-in status'
     flashError(message)
@@ -469,7 +519,7 @@ async function resendEmailCode(): Promise<void> {
 async function verifyEmailCode(): Promise<void> {
   if (!canVerifyOtp.value) {
     if (!isCompleteOtpCode(otpInput.value)) {
-      flashError('Enter the 6-digit code from your email.')
+      flashError(`Enter the ${EMAIL_OTP_LENGTH}-digit code from your email.`)
     }
     return
   }
@@ -516,32 +566,44 @@ function scheduleClearLoadingIfStillHere(): void {
 </script>
 
 <template>
-  <div class="login-form page page--center">
+  <div
+    class="login-form page page--center"
+    :class="{ 'login-form--ready': motionReady, 'login-form--leaving': leaving }"
+  >
     <SoftToastHost />
     <img
-      class="login-form__logo"
+      class="login-form__logo login-form__rise login-form__rise--1"
       src="/images/logo-mark.svg"
       alt=""
-      width="56"
-      height="56"
+      width="48"
+      height="48"
       decoding="async"
     />
-    <h1 class="page__title">Sign in to Yiveno</h1>
-    <p v-if="redirecting" class="hint">Taking you to your account…</p>
+    <h1 class="page__title login-form__rise login-form__rise--2">Sign in to Yiveno</h1>
+    <p v-if="redirecting" class="hint login-form__rise login-form__rise--3">
+      Taking you to your account…
+    </p>
     <template v-else>
       <!-- 入口取向说明（非操作反馈）仍可留在标题下；成功/失败一律 Toast -->
-      <p v-if="fromSubscribe" class="hint">
+      <p v-if="fromSubscribe" class="hint login-form__rise login-form__rise--3">
         Sign in to continue checkout. We'll bring you back to pricing to finish.
       </p>
-      <p v-else-if="fromExtension" class="hint">
-        Connect the extension to your account. Your library stays on this device by default.
+      <p v-else-if="fromExtension" class="hint login-form__rise login-form__rise--3">
+        Connect this extension to your account. What you've saved stays on this device — sync is
+        optional.
       </p>
-      <p v-else class="hint">For Pro and billing — your library stays on this device by default.</p>
+      <p v-else class="hint login-form__rise login-form__rise--3">
+        For account and billing. What you've saved stays on this device — sync is optional.
+      </p>
 
-      <form class="login-form__email" @submit.prevent="onEmailFormSubmit">
+      <form
+        class="login-form__email login-form__rise login-form__rise--4"
+        @submit.prevent="onEmailFormSubmit"
+      >
         <label class="login-form__field-label" for="login-email">Email</label>
         <input
           id="login-email"
+          ref="emailInputEl"
           v-model="emailInput"
           class="login-form__input"
           type="email"
@@ -550,31 +612,61 @@ function scheduleClearLoadingIfStillHere(): void {
           inputmode="email"
           placeholder="you@example.com"
           :disabled="oauthOrConnectBusy"
+          :readonly="showOtpField"
           required
         />
 
         <div ref="turnstileHost" class="login-form__turnstile" aria-label="Bot check" />
 
-        <!-- 发码后插在主按钮上方；不预留整块空白（空白比一次下移更糟） -->
-        <div v-if="showOtpField" class="login-form__otp-block">
-          <label class="login-form__field-label" for="login-otp">Code</label>
-          <input
-            id="login-otp"
-            ref="otpInputEl"
-            class="login-form__input login-form__input--otp"
-            type="text"
-            name="otp"
-            inputmode="numeric"
-            autocomplete="one-time-code"
-            pattern="[0-9]*"
-            maxlength="8"
-            placeholder="6-digit code"
-            :value="otpInput"
-            :disabled="oauthOrConnectBusy"
-            required
-            @input="onOtpInput"
-          />
-        </div>
+        <!-- 发码后插在主按钮上方；位数 = EMAIL_OTP_LENGTH + 重发送尾拼接（勿拆成多格，伤 autofill） -->
+        <Transition name="login-otp">
+          <div v-if="showOtpField" class="login-form__otp-block">
+            <label class="login-form__field-label" for="login-otp">Code</label>
+            <div class="login-form__otp-row">
+              <input
+                id="login-otp"
+                ref="otpInputEl"
+                class="login-form__input login-form__input--otp"
+                type="text"
+                name="otp"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                pattern="[0-9]*"
+                :maxlength="EMAIL_OTP_LENGTH"
+                :placeholder="'•'.repeat(EMAIL_OTP_LENGTH)"
+                :value="otpInput"
+                :disabled="oauthOrConnectBusy"
+                required
+                @input="onOtpInput"
+              />
+              <button
+                type="button"
+                class="login-form__otp-resend"
+                aria-label="Resend sign-in code"
+                :disabled="oauthOrConnectBusy || resendSecondsLeft > 0 || !captchaToken"
+                @click="resendEmailCode"
+              >
+                <template v-if="resendSecondsLeft > 0">
+                  Resend in
+                  <span :key="resendSecondsLeft" class="login-form__resend-sec">{{
+                    resendSecondsLeft
+                  }}</span
+                  >s
+                </template>
+                <template v-else-if="!captchaToken">Preparing…</template>
+                <template v-else>Resend</template>
+              </button>
+            </div>
+            <button
+              type="button"
+              class="login-form__text-link"
+              :disabled="oauthOrConnectBusy"
+              @click="useDifferentEmail"
+            >
+              Use a different email
+            </button>
+          </div>
+        </Transition>
 
         <button
           type="submit"
@@ -583,26 +675,17 @@ function scheduleClearLoadingIfStillHere(): void {
         >
           {{ primaryCtaLabel }}
         </button>
-
-        <div v-if="showOtpField" class="login-form__email-actions">
-          <button
-            type="button"
-            class="login-form__text-btn"
-            :disabled="oauthOrConnectBusy || resendSecondsLeft > 0 || !captchaToken"
-            @click="resendEmailCode"
-          >
-            <template v-if="resendSecondsLeft > 0">Resend in {{ resendSecondsLeft }}s</template>
-            <template v-else-if="!captchaToken">Preparing…</template>
-            <template v-else>Resend code</template>
-          </button>
-        </div>
       </form>
 
-      <div class="login-form__divider" role="separator">
+      <div class="login-form__divider login-form__rise login-form__rise--5" role="separator">
         <span class="login-form__divider-label">or</span>
       </div>
 
-      <div class="login-form__oauth-row" role="group" aria-label="Sign in with a provider">
+      <div
+        class="login-form__oauth-row login-form__rise login-form__rise--6"
+        role="group"
+        aria-label="Sign in with a provider"
+      >
         <button
           type="button"
           :disabled="oauthOrConnectBusy"
@@ -673,9 +756,61 @@ function scheduleClearLoadingIfStillHere(): void {
 </template>
 
 <style scoped>
-.login-form {
-  /* 容纳「Sign in to Yiveno」单行；表单控件仍自限宽度 */
-  max-width: min(36rem, 100%);
+.login-form.page {
+  /*
+   * 内容列 ≈24rem；水平 padding 用紧凑值覆盖 .page 的 --pad-x，
+   * 避免「24rem 含大侧垫」把标题挤成两行。
+   */
+  box-sizing: border-box;
+  width: min(100%, 26.5rem);
+  max-width: 26.5rem;
+  margin-inline: auto;
+  padding-top: clamp(28px, 6vh, 64px);
+  padding-bottom: clamp(40px, 8vh, 88px);
+  padding-left: 1.25rem;
+  padding-right: 1.25rem;
+  transition: opacity 220ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.login-form--leaving {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ① 首屏阶梯入场（仅 --ready 后播；入场允许短位移） */
+.login-form__rise {
+  opacity: 0;
+  transform: translateY(10px);
+}
+
+.login-form--ready .login-form__rise {
+  animation: login-rise 280ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.login-form--ready .login-form__rise--1 {
+  animation-delay: 0ms;
+}
+.login-form--ready .login-form__rise--2 {
+  animation-delay: 50ms;
+}
+.login-form--ready .login-form__rise--3 {
+  animation-delay: 100ms;
+}
+.login-form--ready .login-form__rise--4 {
+  animation-delay: 150ms;
+}
+.login-form--ready .login-form__rise--5 {
+  animation-delay: 200ms;
+}
+.login-form--ready .login-form__rise--6 {
+  animation-delay: 250ms;
+}
+
+@keyframes login-rise {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .visually-hidden {
@@ -692,7 +827,8 @@ function scheduleClearLoadingIfStillHere(): void {
 
 .login-form .page__title {
   font-size: clamp(28px, 4vw, 36px);
-  margin-bottom: 12px;
+  /* 标题组内紧：标题下缘贴近说明 */
+  margin: 0 0 0.5rem;
   max-width: 100%;
   /* 不用 balance：短标题会被刻意拆成两行；窄屏仍按词自然折 */
   text-wrap: wrap;
@@ -700,11 +836,11 @@ function scheduleClearLoadingIfStillHere(): void {
 
 .login-form__logo {
   display: block;
-  width: 56px;
-  height: 56px;
-  margin: 0 auto 1rem;
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 0.75rem;
   object-fit: contain;
-  opacity: 0.9;
+  opacity: 0.92;
 }
 
 .login-form__email {
@@ -712,8 +848,9 @@ function scheduleClearLoadingIfStillHere(): void {
   flex-direction: column;
   align-items: stretch;
   width: 100%;
-  max-width: 24rem;
-  margin: 2rem auto 0;
+  max-width: none;
+  /* 标题组 ↔ 表单：分组间距 */
+  margin: 1.5rem auto 0;
   gap: 0.5rem;
   text-align: left;
 }
@@ -730,14 +867,20 @@ function scheduleClearLoadingIfStillHere(): void {
   box-sizing: border-box;
   min-height: 44px;
   padding: 0 12px;
-  border: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--border) 70%, var(--ink));
   border-radius: var(--radius-sm);
-  background: var(--surface);
+  background: var(--surface-raised, var(--surface));
   color: var(--ink);
   font: inherit;
   font-size: 14px;
   font-weight: 300;
   line-height: 1.45;
+  /* ⑥ 焦点环 / 边框；③ 禁用 opacity — 禁止 hover 几何变换 */
+  transition:
+    border-color 150ms cubic-bezier(0.2, 0, 0, 1),
+    box-shadow 150ms cubic-bezier(0.2, 0, 0, 1),
+    background-color 180ms cubic-bezier(0.2, 0, 0, 1),
+    opacity 180ms cubic-bezier(0.2, 0, 0, 1);
 }
 
 .login-form__input::placeholder {
@@ -753,9 +896,32 @@ function scheduleClearLoadingIfStillHere(): void {
   opacity: var(--disabled-opacity);
 }
 
-.login-form__input--otp {
-  letter-spacing: 0.12em;
-  font-variant-numeric: tabular-nums;
+.login-form__input:read-only {
+  /* 码区态锁邮箱：可读、可选，勿做成禁用灰 */
+  color: var(--ink);
+  cursor: default;
+  background: color-mix(in srgb, var(--surface) 88%, var(--border));
+}
+
+/* 盖掉 Chrome 自动填充浅蓝底（inset 阴影压过 UA 背景） */
+.login-form__input:autofill,
+.login-form__input:autofill:hover,
+.login-form__input:autofill:focus,
+.login-form__input:-webkit-autofill,
+.login-form__input:-webkit-autofill:hover,
+.login-form__input:-webkit-autofill:focus,
+.login-form__input:-webkit-autofill:active {
+  -webkit-text-fill-color: var(--ink);
+  caret-color: var(--ink);
+  box-shadow: 0 0 0 1000px var(--surface-raised, var(--surface)) inset;
+  transition: background-color 99999s ease-out 0s;
+}
+
+.login-form__input:read-only:autofill,
+.login-form__input:read-only:-webkit-autofill,
+.login-form__input:read-only:-webkit-autofill:hover,
+.login-form__input:read-only:-webkit-autofill:focus {
+  box-shadow: 0 0 0 1000px color-mix(in srgb, var(--surface) 88%, var(--border)) inset;
 }
 
 .login-form__turnstile {
@@ -767,63 +933,178 @@ function scheduleClearLoadingIfStillHere(): void {
 .login-form__otp-block {
   display: flex;
   flex-direction: column;
+  /* label→输入 8px；输入→换邮箱 / 块内节奏对齐表单 gap */
   gap: 0.5rem;
   margin-top: 0.15rem;
 }
 
-.login-form__email-submit {
-  width: 100%;
-  margin-top: 0.15rem;
-  /* 与 OAuth 按钮同策略：文案切换不改宽高 */
-  min-height: 44px;
-}
-
-.login-form__email-actions {
+/* 单框 OTP + 重发尾段拼接；焦点环落在整行 */
+.login-form__otp-row {
   display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  gap: 0.5rem 1rem;
-  margin-top: 0.15rem;
-  min-height: 1.35em;
+  align-items: stretch;
+  min-height: 44px;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, var(--ink));
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised, var(--surface));
+  overflow: hidden;
+  transition:
+    border-color 150ms cubic-bezier(0.2, 0, 0, 1),
+    box-shadow 150ms cubic-bezier(0.2, 0, 0, 1);
 }
 
-.login-form__text-btn {
+.login-form__otp-row:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+}
+
+/* ② 码区进出 */
+.login-otp-enter-active,
+.login-otp-leave-active {
+  transition:
+    opacity 240ms cubic-bezier(0.2, 0, 0, 1),
+    transform 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.login-otp-enter-from,
+.login-otp-leave-to {
+  opacity: 0;
+  transform: translateY(-6px);
+}
+
+.login-otp-enter-to,
+.login-otp-leave-from {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.login-form__input--otp {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: none;
+  border-radius: 0;
+  /* ≥16px：避免 iOS 聚焦自动缩放 */
+  font-size: 1rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.28em;
+}
+
+.login-form__input--otp:focus-visible {
+  outline: none;
+}
+
+.login-form__otp-resend {
+  flex: 0 0 auto;
+  max-width: 46%;
+  padding: 0 12px;
+  border: none;
+  border-left: 1px solid var(--border);
+  background: transparent;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition:
+    color 180ms cubic-bezier(0.2, 0, 0, 1),
+    background-color 180ms cubic-bezier(0.2, 0, 0, 1),
+    opacity 180ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+/* ⑤ 倒计时秒数轻闪 */
+.login-form__resend-sec {
+  display: inline-block;
+  min-width: 1.35em;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  animation: login-tick 120ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+@keyframes login-tick {
+  from {
+    opacity: 0.35;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.login-form__otp-resend:hover,
+.login-form__otp-resend:focus-visible {
+  color: var(--accent-hover, var(--accent));
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+}
+
+.login-form__otp-resend:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.login-form__otp-resend:disabled {
+  opacity: var(--disabled-opacity);
+  cursor: default;
+  background: transparent;
+}
+
+.login-form__text-link {
+  align-self: flex-start;
   padding: 0;
   border: none;
   background: transparent;
   color: var(--accent);
   font: inherit;
   font-size: 0.8125rem;
-  font-weight: 400;
+  font-weight: 500;
+  line-height: 1.35;
   cursor: pointer;
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  text-decoration: none;
+  transition:
+    color 180ms cubic-bezier(0.2, 0, 0, 1),
+    opacity 180ms cubic-bezier(0.2, 0, 0, 1);
 }
 
-.login-form__text-btn:hover,
-.login-form__text-btn:focus-visible {
+.login-form__text-link:hover,
+.login-form__text-link:focus-visible {
   color: var(--accent-hover, var(--accent));
 }
 
-.login-form__text-btn:focus-visible {
+.login-form__text-link:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
-.login-form__text-btn:disabled {
+.login-form__text-link:disabled {
   opacity: var(--disabled-opacity);
   cursor: default;
-  text-decoration: none;
+}
+
+.login-form__email-submit {
+  width: 100%;
+  /* 表单 gap 0.5rem + 本边距 ≈ 16–20px，字段组与主 CTA 标准呼吸距 */
+  margin-top: 0.75rem;
+  /* 与 OAuth 按钮同策略：文案切换不改宽高 */
+  min-height: 44px;
+  letter-spacing: 0.01em;
+  /* ③ 与 pages.css ui-btn 对齐；禁用态 opacity 跟手 */
+  transition:
+    background 180ms cubic-bezier(0.2, 0, 0, 1),
+    border-color 180ms cubic-bezier(0.2, 0, 0, 1),
+    color 180ms cubic-bezier(0.2, 0, 0, 1),
+    opacity 180ms cubic-bezier(0.2, 0, 0, 1);
 }
 
 .login-form__divider {
   display: flex;
   align-items: center;
   width: 100%;
-  max-width: 24rem;
-  margin: 1.1rem auto 0.85rem;
+  margin: 1.25rem auto;
   gap: 0.75rem;
-  color: var(--muted);
+  color: var(--on-surface-muted, var(--muted));
 }
 
 .login-form__divider::before,
@@ -843,11 +1124,12 @@ function scheduleClearLoadingIfStillHere(): void {
 .login-form__oauth-row {
   display: flex;
   flex-direction: row;
+  flex-wrap: wrap;
   justify-content: center;
   align-items: center;
-  gap: 5rem;
+  /* 原 5rem 过散；两枚图标钮用 lg 间距即可 */
+  gap: 1.5rem;
   width: 100%;
-  max-width: 24rem;
   margin: 0 auto;
 }
 
@@ -860,6 +1142,17 @@ function scheduleClearLoadingIfStillHere(): void {
   min-width: 3rem;
   padding: 0;
   gap: 0;
+  background: var(--surface-raised, var(--surface));
+  border-color: color-mix(in srgb, var(--border) 70%, var(--ink));
+  transition:
+    background 180ms cubic-bezier(0.2, 0, 0, 1),
+    border-color 180ms cubic-bezier(0.2, 0, 0, 1),
+    opacity 180ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+.login-form__oauth:hover,
+.login-form__oauth:focus-visible {
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface-raised, var(--surface)));
 }
 
 .login-form__oauth--busy {
@@ -873,10 +1166,66 @@ function scheduleClearLoadingIfStillHere(): void {
 }
 
 .hint {
-  color: var(--muted);
-  font-size: 0.875rem;
+  max-width: 22rem;
+  margin: 0 auto;
+  color: var(--on-surface-muted, var(--muted));
+  font-size: 0.9375rem;
   font-weight: 300;
-  line-height: 1.5;
-  margin: 0 0 0.75rem;
+  line-height: 1.55;
+}
+
+@media (max-width: 480px) {
+  .login-form.page {
+    padding-top: clamp(20px, 4vh, 40px);
+    padding-bottom: clamp(32px, 6vh, 64px);
+  }
+
+  .login-form__oauth-row {
+    gap: 1.25rem;
+  }
+}
+
+/* ④ reduced-motion：入场/码区/倒计时/离场瞬时或仅 opacity */
+@media (prefers-reduced-motion: reduce) {
+  .login-form.page {
+    transition: none;
+  }
+
+  .login-form--leaving {
+    opacity: 1;
+  }
+
+  .login-form__rise {
+    opacity: 1;
+    transform: none;
+  }
+
+  .login-form--ready .login-form__rise {
+    animation: none;
+  }
+
+  .login-otp-enter-active,
+  .login-otp-leave-active {
+    transition: none;
+  }
+
+  .login-otp-enter-from,
+  .login-otp-leave-to {
+    opacity: 1;
+    transform: none;
+  }
+
+  .login-form__resend-sec {
+    animation: none;
+  }
+
+  .login-form__input,
+  .login-form__otp-row,
+  .login-form__otp-resend,
+  .login-form__email-submit,
+  .login-form__oauth,
+  .login-form__text-link {
+    transition: none;
+  }
 }
 </style>

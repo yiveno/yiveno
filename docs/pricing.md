@@ -13,6 +13,21 @@
 | Free | $0；本机召回同档；无云同步                         |
 | Pro  | 月/年；展示锚点 **$7.99/月 · $59.99/年**（未含税） |
 
+## 币种与多市场（Normative · 2026-10-28）
+
+| 层               | 权威                                          | 说明                                                                                                      |
+| ---------------- | --------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| **展示 / 基价**  | 本文件 + `plans.ts` / `tiers.ts`              | **仅 USD 锚点**；北美与大陆官网（`yiveno.com` / `yiveno.cn`）同价                                         |
+| **结账扣款币种** | **Dodo Adaptive Currency**                    | 按账单国 / 已存 customer / IP 选本地币；金额 = USD 基价 × 实时汇率（Dashboard 若开 PPP / Charm 会再偏移） |
+| **固定本地价**   | Dodo **Localized Pricing**（未配置 = 未上线） | 按国家或币种钉死另一套标价；**不等于**换汇收据                                                            |
+
+- Worker `createDodoCheckout` **不传** `billing_currency` / `billing_address`；币种完全由 Dodo Checkout + Dashboard 决定。
+- 收据出现 **CN¥** 等本地币 = Adaptive Currency 换汇，**不得**对外写成「已上线人民币本地化定价」。
+- 官网定价页**禁止**「北美 \| 大陆」价签 toggle；市场入口靠域名分流（`GEO_CN_MARKET_LIVE`），不鼓励页内套利。
+- `yiveno.cn` `/pricing` 可加诚实旁注（结账可能按汇率显示本地币），**仍只展示 USD 锚点**；禁止写死「约 ¥xx」当权威价。
+- 若日后要「大陆故意更便宜」：先在 Dodo 配 Localized Pricing，再改本文件与产品文档 §A.3；仍是同一 Product / plan id 映射。
+- 币种解析顺序与 Dashboard 运维自检见 [`docs/billing.md`](./billing.md)「结账币种」。
+
 ## Founding（实验，默认关）
 
 Worker `BILLING_FOUNDING_ENABLED=true` 时才出现在 `GET /api/billing/plans`；官网定价页默认不展示。
@@ -20,5 +35,6 @@ Worker `BILLING_FOUNDING_ENABLED=true` 时才出现在 `GET /api/billing/plans`�
 ## Checkout
 
 - Hosted：Worker `POST /api/billing/checkout-session` → 跳转 Dodo `checkout_url`
-- Success：`/welcome`
+- Success `return_url`：`/account?checkout=success`（支付成功态归 Dodo 自有页；产品致谢归欢迎信，不另做 Welcome 落地页）
+- 旧路径 `/welcome` → 301 到上述账户回跳
 - 未登录 Subscribe → `/login?next=/pricing&intent=subscribe`

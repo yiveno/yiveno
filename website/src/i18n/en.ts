@@ -54,7 +54,11 @@ export const en = {
   'footer.privacy': 'Privacy',
   'footer.terms': 'Terms',
   'footer.tagline': '· Find what you saved.',
-  'a11y.skip_to_content': 'Skip to content'
+  'a11y.skip_to_content': 'Skip to content',
+
+  /** `.cn` 定价页：诚实说明换汇，非独立人民币套餐价 */
+  'pricing.fx_note':
+    'Listed prices are in USD. At checkout, your total may show in a local currency converted from this price.'
 } as const
 
 export type WebsiteMessageKey = keyof typeof en

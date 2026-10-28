@@ -27,12 +27,14 @@ function snapshot(overrides: Partial<DodoSubscriptionSnapshot> = {}): DodoSubscr
 }
 
 describe('mapDodoStatus', () => {
-  test('active → active；on_hold → past_due', () => {
+  test('active → active；Dodo past_due（宽限）→ active；on_hold → 本地 past_due', () => {
     expect(mapDodoStatus('active')).toBe('active')
+    expect(mapDodoStatus('past_due')).toBe('active')
     expect(mapDodoStatus('on_hold')).toBe('past_due')
   })
 
-  test('cancelled / expired / failed 映射', () => {
+  test('paused / cancelled / expired / failed 映射', () => {
+    expect(mapDodoStatus('paused')).toBe('expired')
     expect(mapDodoStatus('cancelled')).toBe('cancelled')
     expect(mapDodoStatus('expired')).toBe('expired')
     expect(mapDodoStatus('failed')).toBe('expired')
@@ -40,7 +42,7 @@ describe('mapDodoStatus', () => {
 })
 
 describe('isDodoAccessActive', () => {
-  test('仅 active 授 Pro；past_due 不授', () => {
+  test('仅本地 active 授 Pro；本地 past_due（=Dodo on_hold）不授', () => {
     expect(isDodoAccessActive('active')).toBe(true)
     expect(isDodoAccessActive('past_due')).toBe(false)
     expect(isDodoAccessActive('cancelled')).toBe(false)

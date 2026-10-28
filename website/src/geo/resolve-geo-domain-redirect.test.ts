@@ -3,6 +3,7 @@ import { describe, expect, test } from 'vitest'
 import {
   GEO_DOMAIN_COOKIE,
   buildGeoDomainCookie,
+  isCnMarketHost,
   resolveGeoDomainRedirect
 } from './resolve-geo-domain-redirect'
 
@@ -148,5 +149,19 @@ describe('resolveGeoDomainRedirect', () => {
         location: 'https://yiveno.com/pricing'
       })
     }
+  })
+})
+
+describe('isCnMarketHost', () => {
+  test('识别 .cn 市场主机', () => {
+    expect(isCnMarketHost('yiveno.cn')).toBe(true)
+    expect(isCnMarketHost('www.yiveno.cn')).toBe(true)
+    expect(isCnMarketHost('Yiveno.CN.')).toBe(true)
+  })
+
+  test('.com / 其它主机为 false', () => {
+    expect(isCnMarketHost('yiveno.com')).toBe(false)
+    expect(isCnMarketHost('www.yiveno.com')).toBe(false)
+    expect(isCnMarketHost('localhost')).toBe(false)
   })
 })

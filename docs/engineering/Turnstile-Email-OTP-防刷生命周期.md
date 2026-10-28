@@ -76,7 +76,7 @@ sequenceDiagram
     W->>W: reset() + 提示改 Google/Microsoft
   end
 
-  U->>W: 输入 6 位码
+  U->>W: 输入 EMAIL_OTP_LENGTH 位码（当前 8）
   W->>SB: verifyOtp({ email, token, type: email })
   Note over SB: 验码不再强制 Captcha
   SB-->>W: session
