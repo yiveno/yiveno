@@ -933,7 +933,7 @@
     "message": "Privacy options are not available yet."
   },
   "settings_data_intro": {
-    "message": "Back up everything, import from Raindrop or Pocket (up to 50), clear what’s stored here, or delete cloud data and your account. Chrome bookmarks stay untouched."
+    "message": "Back up everything, import from Raindrop or Pocket (up to 50), clear what’s stored here, or delete cloud data and your account. Browser bookmarks stay untouched."
   },
   "settings_data_import_raindrop": {
     "message": "Import from Raindrop"
@@ -980,16 +980,16 @@
     "message": "Clear local memory"
   },
   "settings_data_clear_local_hint": {
-    "message": "Permanently delete what’s stored here for this account. Chrome bookmarks stay unchanged."
+    "message": "Permanently delete what’s stored here for this account. Browser bookmarks stay unchanged."
   },
   "settings_data_clear_local_action": {
     "message": "Clear"
   },
   "settings_data_clear_local_confirm": {
-    "message": "This permanently clears Yiveno’s local library and will not change Chrome bookmarks. Bookmark import will turn off; if sync is on it will turn off too. Export first if you need a backup. Continue?"
+    "message": "This permanently clears Yiveno’s local library and will not change browser bookmarks. Bookmark import will turn off; if sync is on it will turn off too. Export first if you need a backup. Continue?"
   },
   "settings_data_clear_local_done": {
-    "message": "Cleared $COUNT$ local items (Chrome bookmarks unchanged)",
+    "message": "Cleared $COUNT$ local items (browser bookmarks unchanged)",
     "placeholders": {
       "COUNT": {
         "content": "$1"
@@ -997,7 +997,7 @@
     }
   },
   "settings_data_clear_local_done_sync_off": {
-    "message": "Cleared $COUNT$ local items; sync and bookmark import are off (Chrome bookmarks unchanged)",
+    "message": "Cleared $COUNT$ local items; sync and bookmark import are off (browser bookmarks unchanged)",
     "placeholders": {
       "COUNT": {
         "content": "$1"
@@ -1035,7 +1035,7 @@
     "message": "Full backup export (Data section) is always available — a product responsibility, not a paid feature."
   },
   "settings_privacy_bullet_cloud": {
-    "message": "Cloud (optional): after you turn sync on, excerpts sync with your account and are stored in the United States (East US / Ohio). Bookmarks stay on this device from Chrome import."
+    "message": "Cloud (optional): after you turn sync on, excerpts sync with your account and are stored in the United States (East US / Ohio). Bookmarks stay on this device from browser bookmark import."
   },
   "settings_privacy_bullet_account": {
     "message": "Account: sign-in for identity and optional sync. Yiveno is operated by an individual in Hangzhou, China (may later become a Hangzhou company)."
@@ -1059,7 +1059,7 @@
     "message": "Current notice version: not confirmed yet (required before turning sync on)"
   },
   "settings_privacy_sync_confirm": {
-    "message": "Turning on cloud sync aligns excerpts on this device with your account (and may upload). Synced excerpts are stored in the United States (East US / Ohio). Bookmarks stay local from Chrome. Confirm you have read the privacy notice in Settings. Continue?"
+    "message": "Turning on cloud sync aligns excerpts on this device with your account (and may upload). Synced excerpts are stored in the United States (East US / Ohio). Bookmarks stay local from this browser. Confirm you have read the privacy notice in Settings. Continue?"
   },
   "settings_privacy_open_sync": {
     "message": "Open Account & Sync"
@@ -1194,7 +1194,7 @@
     "message": "Capture"
   },
   "settings_section_capture_copy": {
-    "message": "Control the save menu on selection and whether Chrome bookmarks join your library."
+    "message": "Control the save menu on selection and whether browser bookmarks join your library."
   },
   "settings_loading": {
     "message": "Loading settings…"
@@ -1206,7 +1206,7 @@
     "message": "Shows “Save to Yiveno” after you select text"
   },
   "settings_toggle_chrome_bookmark_ingest": {
-    "message": "Add Chrome bookmarks to your library"
+    "message": "Add browser bookmarks to your library"
   },
   "settings_toggle_chrome_bookmark_ingest_hint": {
     "message": "Off by default. When on, copies bookmarks into your local library; turning off stops new imports and keeps what you already have."
@@ -1215,10 +1215,10 @@
     "message": "Shortcuts"
   },
   "settings_section_shortcuts_copy": {
-    "message": "Review bindings here; change keys in Chrome."
+    "message": "Review bindings here; change keys in your browser."
   },
   "settings_shortcuts_open_hint": {
-    "message": "Opens Chrome’s extension shortcuts page for Yiveno."
+    "message": "Opens this browser’s extension shortcuts page for Yiveno."
   },
   "settings_open_shortcuts_action": {
     "message": "Open"
@@ -1227,7 +1227,7 @@
     "message": "Loading shortcuts…"
   },
   "settings_open_shortcuts": {
-    "message": "Change shortcuts in Chrome"
+    "message": "Change shortcuts in your browser"
   },
   "settings_opening_shortcuts": {
     "message": "Opening…"
@@ -1694,7 +1694,7 @@
     "message": "No bookmarks yet"
   },
   "library_empty_bookmarks_body": {
-    "message": "Bookmarks you add in Chrome show up in this tree; once synced to Yiveno they can be recalled."
+    "message": "Bookmarks you add in this browser show up in this tree; once synced to Yiveno they can be recalled."
   },
   "library_empty_excerpts_title": {
     "message": "No text excerpts yet"
@@ -1906,7 +1906,7 @@
     "message": "This memory was not found. It may have been deleted."
   },
   "error_memory_delete_bookmark_forbidden": {
-    "message": "Delete bookmarks in Chrome; Yiveno will sync automatically."
+    "message": "Delete bookmarks in this browser; Yiveno will sync automatically."
   },
   "error_memory_operation_failed": {
     "message": "Couldn’t finish that. Try again."
@@ -1918,7 +1918,7 @@
     "message": "Selection is empty. Select text again, then save."
   },
   "error_bookmark_ingest_disabled": {
-    "message": "“Add Chrome bookmarks to your library” is off. Turn it on in Settings → Capture."
+    "message": "“Add browser bookmarks to your library” is off. Turn it on in Settings → Capture."
   },
   "error_import_status_read_failed": {
     "message": "Could not read bookmark import status"
@@ -1966,10 +1966,10 @@
     "message": "Setup"
   },
   "getting_started_consent_aria": {
-    "message": "Chrome bookmark import"
+    "message": "Browser bookmark import"
   },
   "getting_started_consent_title": {
-    "message": "Import your Chrome bookmarks"
+    "message": "Import your browser bookmarks"
   },
   "getting_started_consent_body": {
     "message": "Bring your bookmarks to Yiveno so you can find them later, even when you don’t remember exactly what they’re called."
@@ -2108,7 +2108,7 @@
     "message": "No bookmarks to recall yet"
   },
   "getting_started_empty_body": {
-    "message": "When you have bookmarks in Chrome, describe one in your own words here. You can still continue below."
+    "message": "When you have bookmarks in this browser, describe one in your own words here. You can still continue below."
   },
   "getting_started_composer_label": {
     "message": "What are you looking for?"

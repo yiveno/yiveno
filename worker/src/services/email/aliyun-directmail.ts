@@ -24,9 +24,15 @@ export type DirectMailSendResult =
   | { ok: true; requestId: string; envId: string | null }
   | { ok: false; reason: 'not_configured' | 'api_error'; detail: string }
 
+/** 读 env 并去掉首尾空白与成对引号（.env 里误加引号会导致 InvalidAccessKeyId） */
 function readTrim(env: Env, key: keyof Env): string | null {
   const raw = env[key]
-  return typeof raw === 'string' && raw.trim() ? raw.trim() : null
+  if (typeof raw !== 'string') return null
+  let value = raw.trim()
+  if (value.length >= 2 && value[0] === value.at(-1) && (value[0] === '"' || value[0] === "'")) {
+    value = value.slice(1, -1).trim()
+  }
+  return value || null
 }
 
 /** 是否已配置 DirectMail AccessKey（未配则跳过发信，不 5xx） */
@@ -36,9 +42,19 @@ export function isDirectMailConfigured(env: Env): boolean {
   )
 }
 
-/** 阿里云 OpenAPI 百分号编码（RPC 签名专用） */
+/**
+ * 阿里云 OpenAPI 百分号编码（对齐 Java URLEncoder + 官方替换规则）。
+ * 注意：`encodeURIComponent` 不会编码 `!'()*`，但阿里云签名会——邮件 HTML 里常见 `!important` / `'Segoe UI'`。
+ */
 export function percentEncode(value: string): string {
-  return encodeURIComponent(value).replace(/\+/g, '%20').replace(/\*/g, '%2A').replace(/%7E/g, '~')
+  return encodeURIComponent(value)
+    .replace(/\+/g, '%20')
+    .replace(/\*/g, '%2A')
+    .replace(/%7E/g, '~')
+    .replace(/!/g, '%21')
+    .replace(/'/g, '%27')
+    .replace(/\(/g, '%28')
+    .replace(/\)/g, '%29')
 }
 
 function bytesToBase64(bytes: ArrayBuffer): string {
@@ -80,7 +96,7 @@ function utcTimestamp(): string {
 }
 
 /**
- * 发送单封邮件（HtmlBody + TextBody）。
+ * 发送单封邮件。有 html 时只传 HtmlBody（避免与 TextBody 同传时部分客户端只显示纯文本）。
  * 缺 AK 返回 not_configured；API 失败返回 api_error（不抛）。
  */
 export async function sendDirectMail(
@@ -101,6 +117,7 @@ export async function sendDirectMail(
   const regionId = readTrim(env, 'ALIYUN_DM_REGION_ID') || DEFAULT_REGION
   const endpoint = (readTrim(env, 'ALIYUN_DM_ENDPOINT') || DEFAULT_ENDPOINT).replace(/\/?$/, '/')
 
+  // DirectMail：HtmlBody / TextBody 传其一即可；同时传时部分场景只出纯文本，欢迎信优先 HTML
   const params: Record<string, string> = {
     AccessKeyId: accessKeyId,
     Action: 'SingleSendMail',
@@ -108,8 +125,6 @@ export async function sendDirectMail(
     AccountName: accountName,
     ToAddress: input.to,
     Subject: input.subject,
-    HtmlBody: input.html,
-    TextBody: input.text,
     FromAlias: fromAlias.slice(0, 15),
     ReplyToAddress: 'true',
     ReplyAddress: replyAddress,
@@ -122,12 +137,21 @@ export async function sendDirectMail(
     Version: API_VERSION,
     ClickTrace: '0'
   }
+  if (input.html.trim()) {
+    params.HtmlBody = input.html
+  } else {
+    params.TextBody = input.text
+  }
 
   try {
     const signature = await signDirectMailRpcParams(accessKeySecret, params)
     params.Signature = signature
 
-    const body = new URLSearchParams(params)
+    // 必须与签名同用 percentEncode；URLSearchParams 会把空格编成 +，导致 SignatureDoesNotMatch
+    const body = Object.keys(params)
+      .sort()
+      .map(key => `${percentEncode(key)}=${percentEncode(params[key]!)}`)
+      .join('&')
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: { 'content-type': 'application/x-www-form-urlencoded' },

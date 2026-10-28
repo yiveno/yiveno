@@ -1,0 +1,106 @@
+---
+/**
+ * 首页安装 CTA：按主机选 Edge / Chrome 主路径（ADR-020）。
+ * 商店 URL 未配置时诚实 Coming soon，不假装可装。
+ */
+import { resolvePrimaryInstallCta } from '../install/store-links'
+
+const cta = resolvePrimaryInstallCta(Astro.url.hostname)
+const primaryAvailable = Boolean(cta.href)
+const secondaryAvailable = Boolean(cta.secondary.href)
+---
+
+<section class="home-sec home-sec--paper install-cta" aria-labelledby="install-heading">
+  <div class="home-wrap install-cta__layout reveal">
+    <h2 id="install-heading">Get Yiveno for your browser</h2>
+    <p class="install-cta__lede">
+      Chromium extension for Microsoft Edge and Chrome — same find-what-you-saved experience.
+      Mainland desktop: Edge Add-ons is the primary path when listed.
+    </p>
+    <div class="install-cta__actions">
+      {primaryAvailable && cta.href ? (
+        <a class="install-cta__btn install-cta__btn--primary" href={cta.href}>
+          {cta.labelEn}
+        </a>
+      ) : (
+        <span class="install-cta__btn install-cta__btn--primary install-cta__btn--soon">
+          {cta.labelEn} — coming soon
+        </span>
+      )}
+      {secondaryAvailable && cta.secondary.href ? (
+        <a class="install-cta__btn install-cta__btn--secondary" href={cta.secondary.href}>
+          {cta.secondary.labelEn}
+        </a>
+      ) : (
+        <span class="install-cta__btn install-cta__btn--secondary install-cta__btn--soon">
+          {cta.secondary.labelEn} — coming soon
+        </span>
+      )}
+    </div>
+    <p class="install-cta__note">
+      Not listed on the public stores yet. We will not ask you to sideload a ZIP as the main install
+      path.
+    </p>
+  </div>
+</section>
+
+<style>
+  .install-cta__layout {
+    max-width: 40rem;
+    text-align: center;
+    margin-inline: auto;
+  }
+
+  .install-cta__lede {
+    margin: 0 0 1.25rem;
+    color: var(--muted);
+    font-size: clamp(15px, 1.6vw, 17px);
+    font-weight: 300;
+    line-height: 1.65;
+  }
+
+  .install-cta__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+
+  .install-cta__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.55rem 1.1rem;
+    border-radius: var(--radius, 8px);
+    font-size: 0.9375rem;
+    font-weight: 500;
+    text-decoration: none;
+    line-height: 1.2;
+  }
+
+  .install-cta__btn--primary {
+    background: var(--ink, #192420);
+    color: var(--on-ink, #dce8de);
+  }
+
+  .install-cta__btn--secondary {
+    border: 1px solid var(--border, #d5ddd7);
+    color: var(--on-surface, #222c24);
+    background: transparent;
+  }
+
+  .install-cta__btn--soon {
+    opacity: 0.72;
+    cursor: default;
+  }
+
+  .install-cta__note {
+    margin: 0;
+    font-size: 13px;
+    font-weight: 300;
+    line-height: 1.5;
+    color: var(--sage-muted, #7a8f84);
+  }
+</style>

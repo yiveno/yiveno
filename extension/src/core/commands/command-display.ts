@@ -1,7 +1,20 @@
 import type { TranslateFn } from '@/core/i18n/translate'
 
-/** Chrome 扩展快捷键设置页。 */
+/** Chrome 快捷键设置页（Chromium 默认）。 */
 export const CHROME_EXTENSION_SHORTCUTS_URL = 'chrome://extensions/shortcuts' as const
+
+/** Edge 快捷键设置页。 */
+export const EDGE_EXTENSION_SHORTCUTS_URL = 'edge://extensions/shortcuts' as const
+
+/**
+ * 当前浏览器的扩展快捷键设置页 URL。
+ * Edge Chromium UA 含 `Edg/`；其余 Chromium（含 Chrome）走 chrome://。
+ */
+export function getExtensionShortcutsSettingsUrl(
+  userAgent: string = typeof navigator !== 'undefined' ? navigator.userAgent : ''
+): string {
+  return /\bEdg\//.test(userAgent) ? EDGE_EXTENSION_SHORTCUTS_URL : CHROME_EXTENSION_SHORTCUTS_URL
+}
 
 /** 将 chrome.commands.Command 规范为设置页展示结构。 */
 export function normalizeExtensionCommand(command: {
@@ -21,7 +34,7 @@ export function normalizeExtensionCommand(command: {
   }
 }
 
-/** 设置页展示用标题（优先产品文案，其次 Chrome description）。 */
+/** 设置页展示用标题（优先产品文案，其次浏览器 description）。 */
 export function getExtensionCommandDisplayTitle(
   command: {
     name: string

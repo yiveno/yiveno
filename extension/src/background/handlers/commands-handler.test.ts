@@ -5,7 +5,10 @@ import {
   handleOpenChromeShortcutsPage,
   handleOpenRecallShell
 } from '@/background/handlers/commands-handler'
-import { CHROME_EXTENSION_SHORTCUTS_URL } from '@/core/commands/command-display'
+import {
+  CHROME_EXTENSION_SHORTCUTS_URL,
+  EDGE_EXTENSION_SHORTCUTS_URL
+} from '@/core/commands/command-display'
 
 describe('commands-handler', () => {
   const getAll = vi.fn()
@@ -51,10 +54,20 @@ describe('commands-handler', () => {
     ])
   })
 
-  it('handleOpenChromeShortcutsPage 打开原生设置页', async () => {
+  it('handleOpenChromeShortcutsPage 打开 Chrome 快捷键页', async () => {
+    vi.stubGlobal('navigator', { userAgent: 'Mozilla/5.0 Chrome/120.0.0.0' })
     const response = await handleOpenChromeShortcutsPage()
     expect(response).toEqual({ ok: true })
     expect(tabsCreate).toHaveBeenCalledWith({ url: CHROME_EXTENSION_SHORTCUTS_URL })
+  })
+
+  it('handleOpenChromeShortcutsPage 在 Edge 打开 edge:// 快捷键页', async () => {
+    vi.stubGlobal('navigator', {
+      userAgent: 'Mozilla/5.0 Edg/120.0.0.0 Chrome/120.0.0.0 Safari/537.36'
+    })
+    const response = await handleOpenChromeShortcutsPage()
+    expect(response).toEqual({ ok: true })
+    expect(tabsCreate).toHaveBeenCalledWith({ url: EDGE_EXTENSION_SHORTCUTS_URL })
   })
 
   it('handleOpenRecallShell 打开 Side Panel（WINDOW_ID_CURRENT）', async () => {

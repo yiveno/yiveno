@@ -9,10 +9,13 @@ import {
 } from './aliyun-directmail'
 
 describe('percentEncode', () => {
-  test('空格与星号按阿里云规则', () => {
+  test('空格 / 星号 / 波浪号 / 感叹号引号括号按阿里云规则', () => {
     expect(percentEncode('a b')).toBe('a%20b')
     expect(percentEncode('a*b')).toBe('a%2Ab')
     expect(percentEncode('~')).toBe('~')
+    expect(percentEncode('!important')).toBe('%21important')
+    expect(percentEncode("'Segoe'")).toBe('%27Segoe%27')
+    expect(percentEncode('(x)')).toBe('%28x%29')
   })
 })
 

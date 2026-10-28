@@ -3,6 +3,7 @@ import MainLayout from '../layouts/MainLayout.astro'
 import YMark from '../components/home/YMark.astro'
 import HomeFlowDemo from '../components/home/HomeFlowDemo.astro'
 import RecallPanelMock from '../components/home/RecallPanelMock.astro'
+import InstallCta from '../components/InstallCta.astro'
 import homeDeferredHref from '../styles/home-deferred.css?url'
 
 const trustPoints = [
@@ -17,7 +18,7 @@ const trustPoints = [
   chrome="home"
   jsonLd
   title="Yiveno — Find what you saved"
-  description="Yiveno finds what you saved from what you remember. Closest fits — you pick. We're building the Chrome extension."
+  description="Yiveno finds what you saved from what you remember. Closest fits — you pick. Chromium extension for Edge and Chrome."
 >
   <Fragment slot="head">
     <link
@@ -40,7 +41,7 @@ const trustPoints = [
         <h1 class="hero__title">Find what you saved.</h1>
         <p class="hero__sub">
           You don't need the title. Say what you remember — closest fits, you pick. We're building
-          the Chrome extension.
+          the browser extension for Edge and Chrome.
         </p>
       </div>
     </div>
@@ -166,7 +167,10 @@ const trustPoints = [
     </div>
   </section>
 
-  <!-- 6 · Trust -->
+  <!-- 6 · Install（双店 CTA · ADR-020；未上架诚实 coming soon） -->
+  <InstallCta />
+
+  <!-- 7 · Trust -->
   <section id="trust" class="home-sec home-sec--ink trust-close" aria-labelledby="trust-heading">
     <div class="home-wrap trust-close__layout">
       <div class="trust-close__privacy reveal">

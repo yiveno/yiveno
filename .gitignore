@@ -149,3 +149,6 @@ extension/public/models/**/.model-ready.json
 tmp/yiveno-make-preview-1.png
 tmp/yiveno-make-preview-2.png
 tmp/*
+
+# 商店提交 ZIP（本地 pack:store 产出，勿入库）
+extension/yiveno-extension-store.zip

@@ -7,6 +7,7 @@
     "build:prod:compile": "NODE_ENV=production vue-tsc -b && NODE_ENV=production vite build --mode production",
     "build": "bun ../scripts/dev-env.mjs sync --profile=development --target=extension --quiet && bun run build:compile",
     "build:prod": "bun ../scripts/dev-env.mjs sync --profile=production --target=extension --quiet && bun ../scripts/dev-env.mjs check --profile=production --target=extension --quiet && bun run build:prod:compile",
+    "pack:store": "bun run build:prod && rm -f yiveno-extension-store.zip && cd ../dist && zip -r ../extension/yiveno-extension-store.zip . -x '*.map' -x '**/.*' -x '*.DS_Store' -x '**/.DS_Store' && echo \"Wrote extension/yiveno-extension-store.zip from repo-root dist/ (CWS + Edge · ADR-020)\"",
     "dev": "vite --host 0.0.0.0",
     "build:watch": "bun ../scripts/dev-env.mjs sync --profile=development --target=extension --quiet && NODE_ENV=development vite build --watch --mode development",
     "typecheck": "vue-tsc -b --noEmit",

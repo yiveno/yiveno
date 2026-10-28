@@ -186,7 +186,7 @@ Canonical CSS names in `site-critical.css`. Prefer roles over raw Brand Core in 
 - **Website breakpoints (closed set):** **640** (md) · **960** (lg) · **1280** (xl, rare). Prefer `min-width` enhancement; prefer content-driven grids (`auto-fit` / `minmax`) before new breakpoints. Detail: design standard §6.1.1.
 - Marketing: generous whitespace, asymmetric editorial columns, strong vertical rhythm, thin hairlines.
 - First viewport (persuade): brand + one headline + one support line — pure copy, **horizontally centered** on the homepage (no product mock, no waitlist CTA in hero). Product proof lives in later sections (Capture mock + Recall examples). Not a dashboard collage. Homepage H1/H2: no decorative `<br>`; natural wrap on narrow viewports (no nowrap overflow).
-- Homepage IA: six screens — Hero → Boundary (short is/isn't) → Mechanism (Save→Forget→Recall loop demo) → Capture mock → Recall Side Panel mock → Trust (privacy only; no email waitlist).
+- Homepage IA: seven screens — Hero → Boundary (short is/isn't) → Mechanism (Save→Forget→Recall loop demo) → Capture mock → Recall Side Panel mock → Install (Edge/.cn or Chrome/.com; Coming soon until listed; ADR-020) → Trust (privacy only; no email waitlist).
 - Product (operate): denser, scannable; same color axis, less editorial theater.
 
 ## Elevation & Depth

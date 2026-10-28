@@ -75,20 +75,27 @@ async function resolveRecipientEmail(env: Env, event: DodoWebhookEvent): Promise
 }
 
 /** Brand Core 邮件内联色（设计标准 · 不依赖外部 CSS） */
-const EMAIL_INK = '#222c24'
-const EMAIL_MUTED = '#82998c'
+const EMAIL_INK = '#192420'
+const EMAIL_CHARCOAL = '#222c24'
+const EMAIL_MUTED = '#586860'
 const EMAIL_SAGE = '#4b6054'
 const EMAIL_SAGE_ON = '#d8ede2'
 const EMAIL_PAPER = '#f0f3ee'
-const EMAIL_BORDER = '#d5ddd6'
+const EMAIL_BORDER = '#ced8cb'
+const EMAIL_FONT = '-apple-system,BlinkMacSystemFont,Segoe UI,Helvetica,Arial,sans-serif'
+/** 邮件资源固定走生产域名（Gmail 拉不到 localhost；优先已上线 PNG，勿用 SVG） */
+const EMAIL_ASSET_ORIGIN = 'https://yiveno.com'
+/** 生产已有；`/images/logo-mark.png` 待官网发版后再换 */
+const EMAIL_LOGO_URL = `${EMAIL_ASSET_ORIGIN}/apple-touch-icon.png`
 
 /**
  * Pro 欢迎信定稿文案（美式英语 · 轻品牌单栏）。
  * 产品致谢归本信；支付确认归 Dodo；主 CTA → /account。
  */
 export function welcomeCopy(origin: string): { subject: string; text: string; html: string } {
-  const accountUrl = `${origin}/account`
-  const logoUrl = `${origin}/images/logo-mark.svg`
+  const siteOrigin = (origin || EMAIL_ASSET_ORIGIN).replace(/\/$/, '') || EMAIL_ASSET_ORIGIN
+  const accountUrl = `${siteOrigin}/account`
+  const logoUrl = EMAIL_LOGO_URL
   const subject = "You're on Yiveno Pro"
   const preview = 'Cloud sync and more room for clue understanding are ready.'
   const text = [
@@ -104,60 +111,68 @@ export function welcomeCopy(origin: string): { subject: string; text: string; ht
     'Payment receipts come from Dodo Payments — this note is just from us.'
   ].join('\n')
 
-  // 邮件客户端：表格式单栏 + 全内联样式；预览句对用户隐藏
+  // 表格式单栏 + 全内联；PNG logo；无 !important / 无引号字体（签名编码更稳）
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="light" />
 <title>${subject}</title>
 </head>
 <body style="margin:0;padding:0;background:${EMAIL_PAPER};">
-<span style="display:none!important;visibility:hidden;opacity:0;color:transparent;height:0;width:0;overflow:hidden;mso-hide:all;">${preview}</span>
+<div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent;">${preview}</div>
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${EMAIL_PAPER};">
   <tr>
-    <td align="center" style="padding:32px 16px;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid ${EMAIL_BORDER};border-radius:12px;">
+    <td align="center" style="padding:40px 16px;">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border:1px solid ${EMAIL_BORDER};border-radius:14px;overflow:hidden;">
         <tr>
-          <td style="padding:28px 28px 8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;">
+          <td style="background:${EMAIL_INK};padding:22px 28px;">
             <table role="presentation" cellpadding="0" cellspacing="0">
               <tr>
-                <td style="vertical-align:middle;padding-right:10px;">
-                  <img src="${logoUrl}" width="28" height="28" alt="" style="display:block;border:0;" />
+                <td style="vertical-align:middle;padding-right:12px;">
+                  <img src="${logoUrl}" width="32" height="32" alt="Yiveno" style="display:block;border:0;border-radius:8px;background:#ffffff;" />
                 </td>
-                <td style="vertical-align:middle;font-size:16px;font-weight:600;letter-spacing:-0.02em;color:${EMAIL_INK};">Yiveno</td>
+                <td style="vertical-align:middle;font-family:${EMAIL_FONT};font-size:17px;font-weight:600;letter-spacing:-0.02em;color:#ffffff;">Yiveno</td>
               </tr>
             </table>
           </td>
         </tr>
         <tr>
-          <td style="padding:16px 28px 8px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:22px;font-weight:600;line-height:1.25;letter-spacing:-0.02em;color:${EMAIL_INK};">
+          <td style="padding:32px 28px 8px;font-family:${EMAIL_FONT};font-size:26px;font-weight:600;line-height:1.25;letter-spacing:-0.03em;color:${EMAIL_CHARCOAL};">
             Thanks for going Pro.
           </td>
         </tr>
         <tr>
-          <td style="padding:8px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55;color:${EMAIL_INK};">
+          <td style="padding:12px 28px 0;font-family:${EMAIL_FONT};font-size:15px;line-height:1.6;color:${EMAIL_CHARCOAL};">
             You&rsquo;re all set. Cloud sync is available, and you have more room for hosted clue understanding when you need it.
           </td>
         </tr>
         <tr>
-          <td style="padding:8px 28px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:15px;line-height:1.55;color:${EMAIL_INK};">
-            Next: open the Yiveno Chrome extension &rarr; Settings &rarr; turn on sync when you&rsquo;re ready.
+          <td style="padding:14px 28px 0;font-family:${EMAIL_FONT};font-size:15px;line-height:1.6;color:${EMAIL_CHARCOAL};">
+            <strong style="font-weight:600;">Next step:</strong> open the Yiveno Chrome extension &rarr; Settings &rarr; turn on sync when you&rsquo;re ready.
           </td>
         </tr>
         <tr>
-          <td style="padding:20px 28px 8px;">
-            <a href="${accountUrl}" style="display:inline-block;padding:12px 18px;background:${EMAIL_SAGE};color:${EMAIL_SAGE_ON};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;font-weight:600;line-height:1.2;text-decoration:none;border-radius:8px;">Manage subscription</a>
+          <td style="padding:28px 28px 8px;">
+            <table role="presentation" cellpadding="0" cellspacing="0">
+              <tr>
+                <td align="center" bgcolor="${EMAIL_SAGE}" style="border-radius:10px;background:${EMAIL_SAGE};">
+                  <a href="${accountUrl}" style="display:inline-block;padding:14px 22px;font-family:${EMAIL_FONT};font-size:14px;font-weight:600;line-height:1.2;color:${EMAIL_SAGE_ON};text-decoration:none;border-radius:10px;">Manage subscription</a>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
         <tr>
-          <td style="padding:8px 28px 24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:13px;line-height:1.5;color:${EMAIL_MUTED};">
-            Or open <a href="${accountUrl}" style="color:${EMAIL_SAGE};">${accountUrl}</a>
+          <td style="padding:4px 28px 28px;font-family:${EMAIL_FONT};font-size:13px;line-height:1.5;color:${EMAIL_MUTED};">
+            Or open <a href="${accountUrl}" style="color:${EMAIL_SAGE};text-decoration:underline;">${accountUrl}</a>
           </td>
         </tr>
         <tr>
-          <td style="padding:16px 28px 28px;border-top:1px solid ${EMAIL_BORDER};font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;font-size:12px;line-height:1.5;color:${EMAIL_MUTED};">
-            Payment receipts come from Dodo Payments &mdash; this note is just from us.
+          <td style="padding:18px 28px 28px;border-top:1px solid ${EMAIL_BORDER};font-family:${EMAIL_FONT};font-size:12px;line-height:1.55;color:${EMAIL_MUTED};">
+            Payment receipts come from Dodo Payments &mdash; this note is just from us.<br />
+            Questions? Write <a href="mailto:support@yiveno.com" style="color:${EMAIL_SAGE};">support@yiveno.com</a>
           </td>
         </tr>
       </table>

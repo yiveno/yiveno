@@ -28,6 +28,7 @@
 - [`architecture/decisions/ADR-017-cloud-sync-excerpt-only.md`](./architecture/decisions/ADR-017-cloud-sync-excerpt-only.md) — 云同步仅摘录；书签 Memory 本机化
 - [`architecture/decisions/ADR-018-account-profile-data-isolation.md`](./architecture/decisions/ADR-018-account-profile-data-isolation.md) — Account vs Profile 隔离 · 未登录≟Free · 登录迁移门闸
 - [`architecture/decisions/ADR-019-website-extension-ui-bridge.md`](./architecture/decisions/ADR-019-website-extension-ui-bridge.md) — 同浏览器官网 ↔ 扩展 UI Port 桥（登录/资料；可见才刷）
+- [`architecture/decisions/ADR-020-chromium-dual-store-edge.md`](./architecture/decisions/ADR-020-chromium-dual-store-edge.md) — Chromium 双店同包（CWS + Edge Add-ons）；大陆主路径 Edge
 
 **运维 / 工程（非规格，与正文冲突时以正文为准）**：
 
@@ -39,6 +40,8 @@
 - [`AUTH_GUIDE.md`](./AUTH_GUIDE.md) — OAuth / Email OTP 使用说明
 - [`engineering/Turnstile-Email-OTP-防刷生命周期.md`](./engineering/Turnstile-Email-OTP-防刷生命周期.md) — Turnstile token 生命周期、发码流程图、china 区域约束
 - [`ENVIRONMENT.md`](./ENVIRONMENT.md) — 环境变量分层、同步与校验规则
+- [`../EDGEADDONS.md`](../EDGEADDONS.md) — Edge Add-ons 上架元数据（与根目录 `CHROMEWEBSTORE.md` 对位）
+- [`engineering/Edge-真机验收清单.md`](./engineering/Edge-真机验收清单.md) — Edge 稳定版加载仓库根 `dist/` 验收（ADR-020）
 
 **设计 / 品牌（发版）：**
 

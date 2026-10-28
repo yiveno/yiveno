@@ -930,7 +930,7 @@
     "message": "隐私选项尚未开放。"
   },
   "settings_data_intro": {
-    "message": "备份全部内容、从 Raindrop 或 Pocket 导入（最多 50 条）、清空本机存储，或删除云端数据与账号。Chrome 书签不会被改动。"
+    "message": "备份全部内容、从 Raindrop 或 Pocket 导入（最多 50 条）、清空本机存储，或删除云端数据与账号。本浏览器书签不会被改动。"
   },
   "settings_data_import_raindrop": {
     "message": "从 Raindrop 导入"
@@ -977,16 +977,16 @@
     "message": "清空本机记忆"
   },
   "settings_data_clear_local_hint": {
-    "message": "永久删除此账号在本机存储的内容。Chrome 书签保持不变。"
+    "message": "永久删除此账号在本机存储的内容。本浏览器书签保持不变。"
   },
   "settings_data_clear_local_action": {
     "message": "清空"
   },
   "settings_data_clear_local_confirm": {
-    "message": "这将永久清空 Yiveno 的本机记忆库，不会改动 Chrome 书签。书签导入会关闭；若同步已开启也会关闭。需要备份请先导出。继续？"
+    "message": "这将永久清空 Yiveno 的本机记忆库，不会改动本浏览器书签。书签导入会关闭；若同步已开启也会关闭。需要备份请先导出。继续？"
   },
   "settings_data_clear_local_done": {
-    "message": "已清空 $COUNT$ 条本机条目（Chrome 书签未改动）",
+    "message": "已清空 $COUNT$ 条本机条目（本浏览器书签未改动）",
     "placeholders": {
       "COUNT": {
         "content": "$1"
@@ -994,7 +994,7 @@
     }
   },
   "settings_data_clear_local_done_sync_off": {
-    "message": "已清空 $COUNT$ 条本机条目；同步与书签导入已关闭（Chrome 书签未改动）",
+    "message": "已清空 $COUNT$ 条本机条目；同步与书签导入已关闭（本浏览器书签未改动）",
     "placeholders": {
       "COUNT": {
         "content": "$1"
@@ -1032,7 +1032,7 @@
     "message": "完整备份导出（数据分区）始终可用 — 这是产品责任，不是付费功能。"
   },
   "settings_privacy_bullet_cloud": {
-    "message": "云端（可选）：开启同步后，摘录会随账号同步，并存储在美国（美东 / 俄亥俄）。书签仍来自本机 Chrome 导入。"
+    "message": "云端（可选）：开启同步后，摘录会随账号同步，并存储在美国（美东 / 俄亥俄）。书签仍来自本机浏览器导入。"
   },
   "settings_privacy_bullet_account": {
     "message": "账号：登录用于身份与可选同步。Yiveno 由杭州的个人运营（日后可能成为杭州公司）。"
@@ -1056,7 +1056,7 @@
     "message": "当前说明版本：尚未确认（开启同步前必须确认）"
   },
   "settings_privacy_sync_confirm": {
-    "message": "开启云同步会将本机摘录与账号对齐（可能上传）。已同步摘录存储在美国（美东 / 俄亥俄）。书签仍留在本机 Chrome。请确认已阅读设置中的隐私说明。继续？"
+    "message": "开启云同步会将本机摘录与账号对齐（可能上传）。已同步摘录存储在美国（美东 / 俄亥俄）。书签仍留在本机浏览器。请确认已阅读设置中的隐私说明。继续？"
   },
   "settings_privacy_open_sync": {
     "message": "打开账号与同步"
@@ -1191,7 +1191,7 @@
     "message": "保存"
   },
   "settings_section_capture_copy": {
-    "message": "控制划选时的保存菜单，以及 Chrome 书签是否加入记忆库。"
+    "message": "控制划选时的保存菜单，以及本浏览器书签是否加入记忆库。"
   },
   "settings_loading": {
     "message": "正在加载设置…"
@@ -1203,7 +1203,7 @@
     "message": "选中文本后显示「保存到 Yiveno」"
   },
   "settings_toggle_chrome_bookmark_ingest": {
-    "message": "将 Chrome 书签加入记忆库"
+    "message": "将本浏览器书签加入记忆库"
   },
   "settings_toggle_chrome_bookmark_ingest_hint": {
     "message": "默认关闭。开启后会把书签复制进本机记忆库；关闭后停止新导入，已有内容保留。"
@@ -1212,10 +1212,10 @@
     "message": "快捷键"
   },
   "settings_section_shortcuts_copy": {
-    "message": "在此查看绑定；改键请到 Chrome。"
+    "message": "在此查看绑定；改键请到本浏览器的扩展快捷键页。"
   },
   "settings_shortcuts_open_hint": {
-    "message": "打开 Chrome 中 Yiveno 的扩展快捷键页。"
+    "message": "打开本浏览器中 Yiveno 的扩展快捷键页。"
   },
   "settings_open_shortcuts_action": {
     "message": "打开"
@@ -1224,7 +1224,7 @@
     "message": "正在加载快捷键…"
   },
   "settings_open_shortcuts": {
-    "message": "在 Chrome 中更改快捷键"
+    "message": "在本浏览器中更改快捷键"
   },
   "settings_opening_shortcuts": {
     "message": "正在打开…"
@@ -1690,7 +1690,7 @@
     "message": "还没有书签"
   },
   "library_empty_bookmarks_body": {
-    "message": "你在 Chrome 添加的书签会出现在此树中；同步到 Yiveno 后即可 Recall。"
+    "message": "你在本浏览器添加的书签会出现在此树中；同步到 Yiveno 后即可 Recall。"
   },
   "library_empty_excerpts_title": {
     "message": "还没有文本摘录"
@@ -1902,7 +1902,7 @@
     "message": "找不到这条记忆。可能已删除。"
   },
   "error_memory_delete_bookmark_forbidden": {
-    "message": "请在 Chrome 中删除书签；Yiveno 会自动同步。"
+    "message": "请在本浏览器中删除书签；Yiveno 会自动同步。"
   },
   "error_memory_operation_failed": {
     "message": "没能完成。请再试一次。"
@@ -1914,7 +1914,7 @@
     "message": "选区为空。请重新选中文字后再保存。"
   },
   "error_bookmark_ingest_disabled": {
-    "message": "「将 Chrome 书签加入记忆库」已关闭。请在设置 → Capture 中开启。"
+    "message": "「将本浏览器书签加入记忆库」已关闭。请在设置 → Capture 中开启。"
   },
   "error_import_status_read_failed": {
     "message": "无法读取书签导入状态"
@@ -1962,10 +1962,10 @@
     "message": "设置"
   },
   "getting_started_consent_aria": {
-    "message": "Chrome 书签导入"
+    "message": "浏览器书签导入"
   },
   "getting_started_consent_title": {
-    "message": "导入你的 Chrome 书签"
+    "message": "导入你的浏览器书签"
   },
   "getting_started_consent_body": {
     "message": "把书签带到 Yiveno，即使记不清名字，之后也能找回来。"
@@ -2104,7 +2104,7 @@
     "message": "还没有可 Recall 的书签"
   },
   "getting_started_empty_body": {
-    "message": "Chrome 里有书签后，在此用自己的话描述一条。你也可以继续往下。"
+    "message": "本浏览器里有书签后，在此用自己的话描述一条。你也可以继续往下。"
   },
   "getting_started_composer_label": {
     "message": "你在找什么？"

@@ -5,6 +5,8 @@
 export const EXTERNAL_AUTH_HANDOFF_ORIGINS = [
   'https://yiveno.com',
   'https://www.yiveno.com',
+  'https://yiveno.cn',
+  'https://www.yiveno.cn',
   'http://localhost:3001',
   'https://localhost:3001',
   'http://localhost:3002',

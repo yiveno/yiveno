@@ -66,7 +66,7 @@ describe('welcomeCopy', () => {
     expect(copy.text).not.toContain('hosted-clue quota')
     expect(copy.html).toContain('Manage subscription')
     expect(copy.html).toContain('https://yiveno.com/account')
-    expect(copy.html).toContain('https://yiveno.com/images/logo-mark.svg')
+    expect(copy.html).toContain('https://yiveno.com/apple-touch-icon.png')
     expect(copy.html).toContain('Dodo Payments')
     expect(copy.html).toContain('clue understanding are ready')
     expect(copy.html).not.toContain('Your Yiveno Pro is ready')

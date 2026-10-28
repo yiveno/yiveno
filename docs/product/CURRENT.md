@@ -6,18 +6,18 @@
 > **权威链：** [`Yiveno-术语表.md`](./Yiveno-术语表.md) → 本文 → [`Yiveno-产品文档-v4.0.md`](./Yiveno-产品文档-v4.0.md) §0 → [`Yiveno-改版计划-v1.md`](./Yiveno-改版计划-v1.md) 对应波次。  
 > **架构决策（不可重议）：** [`../architecture/decisions/`](../architecture/decisions/)
 
-**最后更新：** 2026-10-10
+**最后更新：** 2026-10-28
 
 ---
 
 ## 当前波次
 
-| 项         | 状态                                                                                                                                                                                     |
-| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **主线**   | **§5.9 种子验证 + Recall 质量闭环**（自然 clue 采样决策 + `recall-eval` / TTE / Outcome §7.2）                                                                                           |
-| **并行**   | **Getting Started 书签首召（§5.8 · 已接线）**；**Recall 可见进展（体验高优）**；Idle 口语范式；ADR-011 时间置信度；CWS 软上架包装；Side Panel / Capture **其余仅 bug fix**（本项为例外） |
-| **长期**   | **双线程**（权威 `Yiveno-双线程发展原则.md` · §0.1.2 / ADR-016）——五问门禁；`dual-thread/` 归因·适应登记·匿名草图脚手架；笔记 `dual-thread-notes/`；**不**抢 §5.9；无在线自进化          |
-| **已结案** | extension Skills 复查（`Skills-复查-Issues.md` P0–P2 全关）；popup 主壳已退役；见 ADR-001                                                                                                |
+| 项         | 状态                                                                                                                                                                                                                 |
+| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **主线**   | **§5.9 种子验证 + Recall 质量闭环**（自然 clue 采样决策 + `recall-eval` / TTE / Outcome §7.2）                                                                                                                       |
+| **并行**   | **Getting Started 书签首召（§5.8 · 已接线）**；**Recall 可见进展（体验高优）**；Idle 口语范式；ADR-011 时间置信度；**CWS + Edge Add-ons 双店同包（ADR-020）**；Side Panel / Capture **其余仅 bug fix**（本项为例外） |
+| **长期**   | **双线程**（权威 `Yiveno-双线程发展原则.md` · §0.1.2 / ADR-016）——五问门禁；`dual-thread/` 归因·适应登记·匿名草图脚手架；笔记 `dual-thread-notes/`；**不**抢 §5.9；无在线自进化                                      |
+| **已结案** | extension Skills 复查（`Skills-复查-Issues.md` P0–P2 全关）；popup 主壳已退役；见 ADR-001                                                                                                                            |
 
 ## 本周做 / 不做
 
@@ -34,7 +34,8 @@
 - **`recall-eval` must** 增补与校准——失败 case 驱动可复用机制，禁止内容别名灰名单
 - **Outcome Labeling §7.2** P0→P1（含正例须佐证 / None 撤脏 pair）；TTE 种子研究按 checklist 开跑
 - 行为变更同批：文档↔代码、`must` 或 §5 手动步骤、MCP UI 抽测
-- （低优并行）CWS 产品 UI 截图 3–5；Recall 壳空态 / onboarding 薄维护
+- （低优并行）CWS / Edge 产品 UI 截图 3–5；Recall 壳空态 / onboarding 薄维护
+- **Edge 双店（ADR-020）**：`EDGEADDONS.md` + Partner Center MSA 注册与首次提交；上架后填 `EDGE_ADDONS_LISTING_URL`；Edge 真机验收清单
 
 **不做：**
 
@@ -49,7 +50,7 @@
 
 ## 已冻结决策（勿重议）
 
-见 [`docs/architecture/decisions/`](../architecture/decisions/)：Side Panel 主壳、clue 术语、邻域非神谕、LLM 数据平面边界、禁止灰名单通解、**ADR-010 理解流水线**、**ADR-011 时间置信度分层**、**ADR-012 find things 双关为后手（非固定路线；终局壁垒=私有增量+习惯；翻牌未启用）**、**ADR-016 双线程（明线找回 · 暗线记忆探索 · 反馈非真理；目标层禁系统自改）**。
+见 [`docs/architecture/decisions/`](../architecture/decisions/)：Side Panel 主壳、clue 术语、邻域非神谕、LLM 数据平面边界、禁止灰名单通解、**ADR-010 理解流水线**、**ADR-011 时间置信度分层**、**ADR-012 find things 双关为后手（非固定路线；终局壁垒=私有增量+习惯；翻牌未启用）**、**ADR-016 双线程（明线找回 · 暗线记忆探索 · 反馈非真理；目标层禁系统自改）**、**ADR-020 Chromium 双店同包（Chrome + Edge；大陆主路径 Edge）**。
 
 **定位速记（ADR-012）：** 对外始终「那个找东西的 / find things」；当前履约 _Find what you saved_；双关/翻牌是**后手，视发展再定**（可以≠必须）；终局壁垒=不愿迁走的私有增量与习惯，不是 Search→Memory 跳跃；**勿**用终局叙事放松 §5.9。
 
@@ -59,7 +60,7 @@
 
 **已上线（§1）：** Side Panel Recall、Hybrid、倒排 Phase 1、ECS 卡面、detail export、只读 MCP beta、Raindrop/Pocket 导入、TTE 本机埋点、Dodo Pro 门禁等——**完整表见产品文档 §1**。
 
-**工程卫生：** extension Skills 复查 backlog **已结案**（2026-09-01）；CWS 最低物料母本已落盘。
+**工程卫生：** extension Skills 复查 backlog **已结案**（2026-09-01）；CWS / Edge 最低物料母本已落盘（`CHROMEWEBSTORE.md` · `EDGEADDONS.md`）。
 
 **未达对外门槛：** §5.9 **Beta**（种子用户真实库：TTE-V P50≤12s / Success@180≥75% / ECS≥92% 等）；**无种子 study 数据前不得对外宣称 Beta 达标**；MCP **不对用户主宣传**。
 
@@ -96,6 +97,7 @@
 | 2026-09-14 | **GS LLM 示意 clue：** 一次 4 条 + 随机切换 + Try it 开壳；§5.8                                                                                                                                                                                                                            |
 | 2026-09-14 | **书签 bulk 主进度仅 GS：** 去掉 Side Panel 导入条；冷启动 Import 降级；§5.8                                                                                                                                                                                                               |
 | 2026-09-14 | **GS 书签授权 CTA：** 按钮授权 + 导入进度 + 已授权态；§5.8                                                                                                                                                                                                                                 |
+| 2026-10-28 | **ADR-020 Chromium 双店：** 同包 CWS+Edge；大陆主路径 Edge；`EDGEADDONS.md`；官网 Install CTA；`yiveno.cn` externally_connectable                                                                                                                                                          |
 | 2026-09-14 | **GS 双源 tab：** Bookmarks / Excerpts；同意只锁书签；CTA 不绑开关；§5.8                                                                                                                                                                                                                   |
 | 2026-09-14 | **GS = 启动设置页：** 授权决定 + 首召履约，非演示导览；§5.8                                                                                                                                                                                                                                |
 | 2026-09-14 | **书签灌库默认关 + GS 同意开关：** 开后才解锁 Recall/Capture 示意；Settings 同键                                                                                                                                                                                                           |

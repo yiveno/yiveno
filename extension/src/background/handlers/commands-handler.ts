@@ -1,6 +1,6 @@
 import {
   normalizeExtensionCommand,
-  CHROME_EXTENSION_SHORTCUTS_URL
+  getExtensionShortcutsSettingsUrl
 } from '@/core/commands/command-display'
 import type {
   GetExtensionCommandsResponse,
@@ -36,10 +36,11 @@ export async function handleGetExtensionCommands(): Promise<GetExtensionCommands
   }
 }
 
-/** 打开 Chrome 原生快捷键设置页。 */
+/** 打开本浏览器原生快捷键设置页（Chrome / Edge）。 */
 export async function handleOpenChromeShortcutsPage(): Promise<OpenChromeShortcutsPageResponse> {
   try {
-    await chrome.tabs.create({ url: CHROME_EXTENSION_SHORTCUTS_URL })
+    const url = getExtensionShortcutsSettingsUrl()
+    await chrome.tabs.create({ url })
     return { ok: true }
   } catch (error) {
     logger.error('Commands', '打开快捷键设置页失败', error)
