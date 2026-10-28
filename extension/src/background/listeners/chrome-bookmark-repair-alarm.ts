@@ -68,13 +68,3 @@ export function registerChromeBookmarkRepairAlarmListener(): void {
       logger.warn('ChromeBookmarkSync', '启动时对齐书签对账闹钟失败', error)
     })
 }
-
-/** 当前是否已挂上闹钟监听（测试 / 诊断用）。 */
-export function isChromeBookmarkRepairAlarmListenerRegistered(): boolean {
-  return registered
-}
-
-/** 测试用：重置监听器注册状态。 */
-export function resetChromeBookmarkRepairAlarmListenerForTests(): void {
-  registered = false
-}
