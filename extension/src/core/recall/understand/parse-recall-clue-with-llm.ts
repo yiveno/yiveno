@@ -12,11 +12,6 @@ import { PARSE_GOLD_NOW_MS } from '@/core/recall/eval/parse-gold-now'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import type { LlmChatCompleteOptions } from '@/core/recall/understand/ai-chat-task-kind'
 
-export type {
-  AiChatTaskKind,
-  LlmChatCompleteOptions
-} from '@/core/recall/understand/ai-chat-task-kind'
-
 /** 可注入的补全函数（单测 mock / 真 API）；须带 taskKind。 */
 export type LlmChatCompleter = (
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
