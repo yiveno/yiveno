@@ -11,7 +11,7 @@
 
 | 测                                                                            | 不测                                       |
 | ----------------------------------------------------------------------------- | ------------------------------------------ |
-| 地址栏 `yi` + **具体关键字** → 建议列表 → 回车打开                            | Omnibox 口语模糊找回（归 Side Panel）      |
+| 地址栏 `yi` + **具体关键字** → 建议列表 → 回车打开                            | Omnibox 口语模糊找东西（归 Side Panel）    |
 | 建议 description **ECS 五要素**（紧凑布局：标题 — host · 类型 · 时间 · 字段） | MCP 地址栏自动化（MCP 不可靠触发 omnibox） |
 | **无 match** 时默认文案引导 Side Panel                                        | Omnibox 多轮 / framing / need_a_clue 追问  |
 | SW 日志：`entry: omnibox`、`understandSource: rules`、无 framing              | 与 Side Panel 同 clue 结果必须一致         |
@@ -117,7 +117,7 @@ yi hug contents
 | --- | ------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | N1  | `yi play some songs I like`           | 第1行 Tip（关键字 vs 模糊；点/回车**不**接力）；第2行 CTA；**仅点第2行** → Side Panel 预填并自动 Recall |
 | N2  | `yi summarize the latest news for me` | 同上                                                                                                    |
-| N3  | `yi recommend a movie tonight`        | 同上（推荐≠找回）                                                                                       |
+| N3  | `yi recommend a movie tonight`        | 同上（推荐≠找东西）                                                                                     |
 
 ```text
 yi play some songs I like

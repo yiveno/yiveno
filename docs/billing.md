@@ -16,7 +16,7 @@ Dodo → POST /api/webhooks/dodo（Standard Webhooks 验签）
     →（仅首次授 Pro / applied）异步产品欢迎信
 ```
 
-Refresh / 账户页 / Cron 用 `DODO_PAYMENTS_API_KEY` 拉 `GET /subscriptions/{id}` 对账。扩展不嵌 Dodo checkout：升级 → `/pricing`（Worker 创建 Checkout Session 后跳转 hosted 页；`return_url` → `/account?checkout=success`），管理 → `/account` → Customer Portal。支付成功确认归 Dodo；产品欢迎信归 Yiveno（§A.3）。
+Refresh / 账户页 / Cron 用 `DODO_PAYMENTS_API_KEY` 拉 `GET /subscriptions/{id}` 对账。扩展不嵌 Dodo checkout：升级 → `/pricing`（Worker 创建 Checkout Session 后跳转 hosted 页；`return_url` → `/account?checkout=return`），管理 → `/account` → Customer Portal。Dodo 在回跳 URL 追加 `status`（如 `succeeded` / `active` / `failed`）；账户页仅作 UI 分流（失败提示 / 核对中），**授 Pro 只信 webhook 投影**。支付成功确认归 Dodo；产品欢迎信归 Yiveno（§A.3）。
 
 ## 结账币种（Adaptive Currency · Normative）
 

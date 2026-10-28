@@ -71,7 +71,7 @@ alwaysApply: true
 | **产品面 Recall** | **美式英语线索为主** | 质检 / must / parser 词典仍以英语为主；中文线索非 P0 |
 | **开发者面** | **中文 OK** | 与开发者对话回复、git commit message、代码注释 / JSDoc、工程文档备注、业务日志文案 |
 
-**文案语气（产品面）：** en 用北美美式英语；zh_CN 用口语简体中文——清楚、有温度；像帮忙找东西。禁止官方刻板腔；中文 UI **禁止**用「搜索」指代产品找回动作。
+**文案语气（产品面）：** en 用北美美式英语；zh_CN 用口语简体中文——清楚、有温度；像帮忙找东西。禁止官方刻板腔；中文 UI **禁止**用「搜索」指代找东西，亦 **禁止**默认用「找回」（见术语表 §2）。
 
 ```
 ❌ 禁止：把「中文线索」「中英互译召回」当已上线能力或 §5.9 必测
@@ -306,7 +306,7 @@ pre-push **不跑** ESLint、全仓 typecheck；extension 变更时跑 **build +
 - 禁止：书签自动归夹当爽点、用查阅书签当主 demo、独立笔记主路径、过早 LLM/助理主卖点、空结果偏好建档闲聊、过早平台化、**神谕式唯一答案承诺**、**用通用 AI Search 冒充长期护城河**、**无痕迹时提前摊牌人生记忆产品**、**把双关后手当固定 Phase**。
 - Free/Pro：本机召回质量同档（关键词 + Hybrid）；云同步与 LLM/embed 配额分档。未标「已上线」不得暗示可用（§0.4）。
 - **LLM 边界**（产品文档 §0.1.1 / §0.3 / M1）：概率生成不保证真实性 → 只做 NLU/意图/NLG（及候选上重排解释）；**禁止**直接查插改删数据平面。允许「结构化提议 → Zod/门禁 → 确定性代码执行」；事实源始终是 IndexedDB MemoryItem。**AI 是能力核心，不是宣传招牌。**
-- **语料适配器：** 摘录/书签为现有源；未来第三方导入须过「提高找回成功率」门槛；导入 ≠ 做 Notion。改版波次见 `docs/product/Yiveno-改版计划-v1.md`。
+- **语料适配器：** 摘录/书签为现有源；未来第三方导入须过「提高找到成功率」门槛；导入 ≠ 做 Notion。改版波次见 `docs/product/Yiveno-改版计划-v1.md`。
 - **M1：** 口语 → 精确检索约束；**有 LLM 默认理解**（规则仅降级）；Filter 仍关键词 + 硬约束。默认经 Cloudflare hosted/clue complete；可选 `yiveno.dev.clueLlm` 直连调试。见产品文档 §0.1.0。
 
 ---
@@ -319,7 +319,7 @@ pre-push **不跑** ESLint、全仓 typecheck；extension 变更时跑 **build +
 Chrome API / 选区
   → Background（唯一监听者）
   → IndexedDB（indexedDBManager）
-  →（可选 Pinia；找回主壳可用组件状态；P0 关 Side Panel 即丢）
+  →（可选 Pinia；找东西主壳可用组件状态；P0 关 Side Panel 即丢）
   → pages/* Vue UI
   → UI 只经 background-client / sendMessage → Background
 ```
@@ -371,7 +371,7 @@ Background **无** `window` / `document` / `localStorage`。用全局 `setTimeou
 
 ## 术语与 UI
 
-- 对外英文心智：**Filter** / **Recall**；UI **禁止** `Search`（对内注释可用 search/filter；中文「筛选/找回」仅开发者沟通）。
+- 对外英文心智：**Filter** / **Recall**；UI **禁止** `Search`（对内注释可用 search/filter；中文「筛选 / 找」仅开发者沟通；用户面勿写「找回」）。
 - 扩展用户文案：经 `t()` + **`_locales/en` 与 `_locales/zh_CN`**（`extension/src/infrastructure/i18n/`）；偏好 `UserSettings.uiLocalePreference`。禁止写死 UI 自然语言与 `getMessage(...) || 'fallback'`。`core` 不直接调 `chrome.i18n`（注入 `t` 或返回 key）。官网独立 `website/src/i18n`（en/zh_CN）；营销大段未全量翻译不算完成全面中文化。
 - **已支持**产品 UI locale：`en`、`zh_CN`。新增其它 locale 须先改产品文档再接线。
 - **图标优先于文案**（产品文档 §0.2 / §3）：工具操作/导航尽量用通识 Lucide 图标（内联）；省略可见文字时必须有 `title` + `aria-label`（同源 `t()`）。主 CTA、说明正文、空状态、表单标签仍用文案。

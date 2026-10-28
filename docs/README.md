@@ -18,7 +18,7 @@
 - [`product/Yiveno-产品文档-v4.0.md`](./product/Yiveno-产品文档-v4.0.md) — AI 先读 **§0 Quick Contract**；附录 A 为背景非规范
 - [`product/CURRENT.md`](./product/CURRENT.md) — **当下焦点唯一手写源** → `bun run sync:ide-boot`
 - [`product/Yiveno-改版计划-v1.md`](./product/Yiveno-改版计划-v1.md) — 执行计划（R0–R∞ / R5）；与正文冲突时先改产品文档
-- [`product/Yiveno-双线程发展原则.md`](./product/Yiveno-双线程发展原则.md) — **长期权威**：明线找回 + 暗线记忆探索；五问 / 四边界 / 研究记录；产品文档 §0.1.2 短锚；ADR-016
+- [`product/Yiveno-双线程发展原则.md`](./product/Yiveno-双线程发展原则.md) — **长期权威**：明线找 + 暗线记忆探索；五问 / 四边界 / 研究记录；产品文档 §0.1.2 短锚；ADR-016
 - [`product/Yiveno-环境反馈驱动进化-原则.md`](./product/Yiveno-环境反馈驱动进化-原则.md) — **工程子集**：证据 → 受控手段适应与 R5 分期（服从双线程正文）
 - [`archive/research/dual-thread-notes/`](./archive/research/dual-thread-notes/) — 暗线研究笔记（模板；私人数据不入仓）
 - [`engineering/暗线基建-失败归因与受控适应.md`](./engineering/暗线基建-失败归因与受控适应.md) — 失败归因 / 适应旋钮登记 / 匿名草图 / 门禁（脚手架）
@@ -29,6 +29,7 @@
 - [`architecture/decisions/ADR-018-account-profile-data-isolation.md`](./architecture/decisions/ADR-018-account-profile-data-isolation.md) — Account vs Profile 隔离 · 未登录≟Free · 登录迁移门闸
 - [`architecture/decisions/ADR-019-website-extension-ui-bridge.md`](./architecture/decisions/ADR-019-website-extension-ui-bridge.md) — 同浏览器官网 ↔ 扩展 UI Port 桥（登录/资料；可见才刷）
 - [`architecture/decisions/ADR-020-chromium-dual-store-edge.md`](./architecture/decisions/ADR-020-chromium-dual-store-edge.md) — Chromium 双店同包（CWS + Edge Add-ons）；大陆主路径 Edge
+- [`architecture/2026-10-任务级模型路由方案.md`](./architecture/2026-10-任务级模型路由方案.md) — **proposed**：按 taskKind 选模型/超时（非 Agent 集群）；对齐 ADR-010；未接受前不改生产默认
 
 **运维 / 工程（非规格，与正文冲突时以正文为准）**：
 

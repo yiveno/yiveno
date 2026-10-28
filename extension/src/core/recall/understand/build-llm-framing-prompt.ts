@@ -44,7 +44,9 @@ export function buildLlmFramingSystemPrompt(): string {
     '- timeLabel in framingFacts is an internal slug (e.g. few_months_ago). Never show snake_case to the user; say natural English (a few months ago, last week, …). Prefer the wording already in rulesBaseline.',
     '- Do NOT include match counts or "showing 1–5" — the app appends counts separately.',
     '- No preference profiling; no questionnaire; no markdown; no extra keys.',
-    '- chips: 0–5 only when outcome is need_a_clue; empty array for top_pick. label matches reply language; value MUST be stable English phrases.'
+    '- chips: 0–5 only when outcome is need_a_clue AND weakCandidateTitles lists ≥2 distinct candidates; else empty array.',
+    '- chips must differentiate those candidates (type / host / unique word present in some but not all). Never meta chips like "I don\'t remember" / "not sure".',
+    '- empty array for top_pick. label matches reply language; value MUST be stable English phrases.'
   ].join('\n')
 }
 

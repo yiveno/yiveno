@@ -1,7 +1,7 @@
 ---
 /**
- * 历史 checkout return_url。正式回跳已改为 `/account?checkout=success`。
+ * 历史 checkout return_url。正式回跳已改为 `/account?checkout=return`。
  * 保留本路径作永久跳转，避免旧会话 / 书签落空。
  */
-return Astro.redirect('/account?checkout=success', 301)
+return Astro.redirect('/account?checkout=return', 301)
 ---

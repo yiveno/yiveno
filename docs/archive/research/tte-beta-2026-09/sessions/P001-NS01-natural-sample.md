@@ -27,7 +27,7 @@ A few days ago, I bookmarked a book about AI. It talks about the principles of L
 
 ## 3. 确认建议
 
-- 若你确信库里曾有这本书 → `miss`（产品没找回；且库扫描支持「确实没有」→ 更接近记错 / 未 Capture）
+- 若你确信库里曾有这本书 → `miss`（产品没找；且库扫描支持「确实没有」→ 更接近记错 / 未 Capture）
 - 若只是随口猜可能存过 → 记 **`no` / 探索作废**：无 gold，不计正式采样频率分子（维度标注仍可保留作「人会这么说」）
 
 ## 4. taxonomy 旁注

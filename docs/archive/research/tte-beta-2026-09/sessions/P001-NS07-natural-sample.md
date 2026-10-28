@@ -62,7 +62,7 @@ A word that was learned before
 ## 4. 确认
 
 - [ ] `yes` — 目标对且认得出
-- [ ] `miss` — 目标对但产品没找回
+- [ ] `miss` — 目标对但产品没找
 - [x] `no` — 目标/口语不合格作废（无主题 · H-topic 判"无意义请求"忽略）
 
 **taxonomy（可多）：** `missing_topic`（H-topic 新增码）；旧码不适用

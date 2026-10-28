@@ -31,7 +31,7 @@ An article about family affection
 ## 3. 确认
 
 - [ ] `yes`
-- [ ] `miss`（库有但没找回）— **不适用**：库扫描无该篇
+- [ ] `miss`（库有但没找）— **不适用**：库扫描无该篇
 - [x] `no` — 目标在脑中清晰、clue 合格，但 **未进 Memory** → 不计正式采样命中/漏检分子；维度标注仍保留作「人会这么说」
 
 **taxonomy：** `no_signal`（相对本机库）· Hybrid 在无字面锚时易漂到无关文章

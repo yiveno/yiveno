@@ -67,7 +67,7 @@ export const zh = {
 
   'uninstall.feedback.title': '是什么让你离开？',
   'uninstall.feedback.lede':
-    '完全可选。一两句话能帮我们把「找回你存过的东西」做得更好——官网登录和资料库都还在。',
+    '完全可选。一两句话能帮我们把「找到你存过的东西」做得更好——官网登录和资料库都还在。',
   'uninstall.feedback.supportHintBefore': '遇到 bug 或账号问题？',
   'uninstall.feedback.supportHintLink': '发邮件到 support@yiveno.com',
   'uninstall.feedback.supportHintAfter': '——我们会在那里回复。',
@@ -96,7 +96,7 @@ export const zh = {
   'uninstall.feedback.revokeFailed': '后台静默退出没完成。你的官网登录和资料库没有变化。',
 
   'uninstall.done.title': '谢谢，这很有帮助',
-  'uninstall.done.lede': '我们会用它把找回体验做得更好。',
+  'uninstall.done.lede': '我们会用它把找东西体验做得更好。',
   'uninstall.done.closeHint': '可以关掉这个标签页了。',
 
   'nav.sign_in': '登录',
@@ -108,7 +108,7 @@ export const zh = {
   'footer.support': '支持',
   'footer.privacy': '隐私',
   'footer.terms': '条款',
-  'footer.tagline': '· 找回你存过的。',
+  'footer.tagline': '· 找到你存过的。',
   'a11y.skip_to_content': '跳到正文',
 
   'pricing.fx_note':

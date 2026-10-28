@@ -25,7 +25,7 @@
 ## 请你确认
 
 回复示例：`T12 yes; T13 miss; T14 yes; T15 yes; T16 yes`  
-（`yes` = 这条口语 clue 的目标就是 gold，且结果里认得出；`miss` = gold 对但产品没找回；`no` = gold/clue 配对不对）
+（`yes` = 这条口语 clue 的目标就是 gold，且结果里认得出；`miss` = gold 对但产品没找；`no` = gold/clue 配对不对）
 
 ## 失败 taxonomy（v2）
 

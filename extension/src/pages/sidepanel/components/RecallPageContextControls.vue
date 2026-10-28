@@ -55,17 +55,18 @@ const sourceSummary = computed(() => {
   return ''
 })
 
-const summary = computed(() => {
+/** 有生效选项时拼进 a11y，可见层仅图标。 */
+const toggleAriaLabel = computed(() => {
   const source = sourceSummary.value
+  let active = ''
   if (props.domain && props.onlyThisSite) {
-    const site = `Only ${props.domain}`
-    return source ? `${source} · ${site}` : site
+    active = source ? `${source} · Only ${props.domain}` : `Only ${props.domain}`
+  } else if (props.domain && props.combineWithPage) {
+    active = source ? `${source} · With ${props.domain}` : `With ${props.domain}`
+  } else if (source) {
+    active = source
   }
-  if (props.domain && props.combineWithPage) {
-    const site = `With ${props.domain}`
-    return source ? `${source} · ${site}` : site
-  }
-  return source || props.toggleLabel
+  return active ? `${props.toggleLabel}. ${active}` : props.toggleLabel
 })
 
 const combineHintLine = computed(() => {
@@ -143,11 +144,12 @@ function setOutsideInert(active: boolean): void {
       }
     }
   }
-  const form = root.parentElement
-  if (!form) {
+  // 壳内其余控件（textarea / 发送）在展开时不可操作
+  const shell = root.closest('.recall-composer-shell')
+  if (!shell) {
     return
   }
-  for (const child of form.children) {
+  for (const child of shell.children) {
     if (child === root) {
       continue
     }
@@ -192,17 +194,14 @@ onUnmounted(() => {
     <button
       type="button"
       class="page-context__toggle"
-      :class="{ 'page-context__toggle--active': hasActiveOption }"
+      :class="{ 'page-context__toggle--active': hasActiveOption || props.expanded }"
+      :title="props.toggleLabel"
+      :aria-label="toggleAriaLabel"
       :aria-expanded="props.expanded"
       :disabled="props.disabled"
       @click="toggleExpanded"
     >
-      <AppIcon
-        class="page-context__chevron"
-        :name="props.expanded ? 'chevron_up' : 'expand_more'"
-        size="14px"
-      />
-      <span class="page-context__summary">{{ summary }}</span>
+      <AppIcon name="settings" size="18px" />
     </button>
 
     <div
@@ -316,12 +315,13 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
+/* 坐在 composer 壳内左侧；面板相对壳定位（父级 .recall-composer-shell position:relative） */
 .page-context {
-  position: relative;
+  position: static;
   flex-shrink: 0;
-  width: 100%;
-  margin: 0 0 var(--space-2xs);
-  padding: 0 var(--space-2xs);
+  width: auto;
+  margin: 0;
+  padding: 0;
 }
 
 .page-context__mask {
@@ -339,34 +339,33 @@ onUnmounted(() => {
   position: relative;
   z-index: 5;
   display: inline-flex;
+  flex-shrink: 0;
+  justify-content: center;
   align-items: center;
-  gap: var(--space-2xs);
-  max-width: 100%;
+  width: 36px;
+  height: 36px;
   margin: 0;
-  padding: var(--space-2xs) var(--space-xs);
+  padding: 0;
   border: 0;
   border-radius: var(--radius-full);
-  font: inherit;
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1.3;
   color: var(--on-surface-muted);
   background: transparent;
   cursor: pointer;
+  font: inherit;
 }
 
 .page-context__toggle--active {
-  color: var(--on-surface);
-  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
 }
 
 .page-context__toggle:hover:not(:disabled) {
   color: var(--on-surface);
-  background: color-mix(in srgb, var(--ink) 4%, transparent);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
 }
 
 .page-context__toggle--active:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
 .page-context__toggle:disabled {
@@ -379,22 +378,11 @@ onUnmounted(() => {
   outline-offset: 1px;
 }
 
-.page-context__chevron {
-  flex-shrink: 0;
-}
-
-.page-context__summary {
-  min-width: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .page-context__panel {
   position: absolute;
-  right: var(--space-2xs);
+  right: 0;
   bottom: calc(100% + var(--space-2xs));
-  left: var(--space-2xs);
+  left: 0;
   z-index: 5;
   display: flex;
   flex-direction: column;

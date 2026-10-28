@@ -58,7 +58,7 @@
 ## 4. 确认
 
 - [ ] `yes` — 目标对且认得出
-- [ ] `miss` — 目标对但产品没找回
+- [ ] `miss` — 目标对但产品没找
 - [ ] `no` — 目标/口语不合格作废
 
 **失败归因 stage（单选 · 暗线基建）：** `not_captured` · `index_gap` · `candidate_miss` · `understand_skew` · `rank_wrong` · `clue_insufficient` · `absent_honest` · `ux_friction` · `unknown`  

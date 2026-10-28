@@ -4,6 +4,7 @@
  */
 
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
+import { isNonCuttingFollowUpMetaValue } from '@/core/recall/gate-recall-follow-up-chips'
 import type { LlmFollowUpProposal } from '@/core/recall/understand/llm-follow-up-proposal'
 
 /** 已解析出的对象类型时，禁止再问类型的芯片 value（canonical 英文）。 */
@@ -74,6 +75,9 @@ export function mapLlmFollowUpProposal(
     const label = chip.label.trim()
     const value = normalizeValue(chip.value)
     if (!label || !value || !STABLE_VALUE.test(value)) {
+      continue
+    }
+    if (isNonCuttingFollowUpMetaValue(value)) {
       continue
     }
     if (hasObjectTypes && TYPE_CHIP_VALUES.has(value.toLowerCase())) {

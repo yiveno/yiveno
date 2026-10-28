@@ -6,7 +6,7 @@
 
 ## 背景
 
-Action Popup 失焦即关，不适合持续对话式 Recall。Chrome Side Panel 提供稳定找回主战场，且与「找东西」心智一致，非通用 Chat 工作台。
+Action Popup 失焦即关，不适合持续对话式 Recall。Chrome Side Panel 提供稳定找东西主战场，且与「找东西」心智一致，非通用 Chat 工作台。
 
 ## 决定
 

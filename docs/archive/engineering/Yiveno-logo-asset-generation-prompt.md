@@ -13,7 +13,7 @@
 
 ### 产品背景（仅供构图参考，勿写入小 icon）
 
-- **Yiveno**：Chrome 扩展 + 官网。核心是 **Capture（划词存摘录）→ Recall（用模糊线索找回）**。
+- **Yiveno**：Chrome 扩展 + 官网。核心是 **Capture（划词存摘录）→ Recall（用模糊线索找）**。
 - **不是**：书签管理器、笔记 App、AI 聊天产品。
 - **对外一句**：帮助用户 capture & recall 个人浏览痕迹（excerpts / notes）。
 - **品牌色（Normative，见 `docs/design/Yiveno-设计标准-v1.md`）**：

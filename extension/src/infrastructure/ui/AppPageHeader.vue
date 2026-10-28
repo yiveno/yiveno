@@ -31,12 +31,36 @@ const props = withDefaults(
      * Getting Started 等首跑激活页可关，避免首屏 chrome 抢注意力。
      */
     showNav?: boolean
+    /**
+     * 是否展示左侧 logo + 产品名。
+     * Side Panel 默认关：Chrome 面板标题已有品牌，再放会重复；无品牌时导航右对齐。
+     */
+    showBrand?: boolean
+    /** Side Panel：本场找回会话标题（字面；无品牌时占左侧）。 */
+    sessionTitle?: string | null
+    /** 标题前缀（可见 This find / 这次找回）。 */
+    sessionTitleLabel?: string | null
+    /** 标题 a11y（This find: …）。 */
+    sessionTitleAria?: string | null
+    /** Side Panel：展示详情导出入口（图标）。 */
+    showDetailExport?: boolean
+    /** 有可导出结果卡时可点。 */
+    detailExportEnabled?: boolean
+    /** 导出入口 title / aria（如 Export）。 */
+    detailExportLabel?: string
   }>(),
   {
     current: 'none',
     showNewFind: false,
     newFindEnabled: false,
-    showNav: true
+    showNav: true,
+    showBrand: true,
+    sessionTitle: null,
+    sessionTitleLabel: null,
+    sessionTitleAria: null,
+    showDetailExport: false,
+    detailExportEnabled: false,
+    detailExportLabel: ''
   }
 )
 
@@ -45,6 +69,8 @@ const emit = defineEmits<{
   navigateError: [message: string]
   /** 用户显式开新找回线程。 */
   newFind: []
+  /** 用户进入详情导出多选。 */
+  detailExport: []
 }>()
 
 const signedIn = ref(false)
@@ -60,6 +86,15 @@ const showLibrary = computed(() => props.current !== 'library')
 const showSettings = computed(() => props.current !== 'settings')
 /** DEV-only：测试工作台入口；生产构建为 false，按钮不渲染。 */
 const showProbeConsole = import.meta.env.DEV
+
+/** 无品牌时：有会话标题则占左侧；空闲则整行工具条右对齐。 */
+const showSessionTitle = computed(() => !props.showBrand && Boolean(props.sessionTitle?.trim()))
+const headerLayoutClass = computed(() => {
+  if (props.showBrand) {
+    return null
+  }
+  return showSessionTitle.value ? 'app-page-header--with-session' : 'app-page-header--nav-only'
+})
 
 const showAvatarImage = computed(
   () => signedIn.value && Boolean(avatarUrl.value) && !avatarBroken.value
@@ -192,6 +227,13 @@ function handleNewFind() {
   emit('newFind')
 }
 
+function handleDetailExport() {
+  if (!props.detailExportEnabled) {
+    return
+  }
+  emit('detailExport')
+}
+
 function handleSubscriptionStorageChanged(
   changes: Record<string, chrome.storage.StorageChange>,
   areaName: string
@@ -221,8 +263,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="app-page-header">
-    <div class="app-page-header__brand-row">
+  <div class="app-page-header" :class="headerLayoutClass">
+    <div v-if="showBrand" class="app-page-header__brand-row">
       <img
         class="app-page-header__logo"
         :src="brandLogoUrl"
@@ -233,6 +275,18 @@ onUnmounted(() => {
       />
       <p class="app-page-header__brand">{{ t('app_name') }}</p>
     </div>
+    <div v-else-if="showSessionTitle" class="app-page-header__session">
+      <p
+        class="app-page-header__session-heading"
+        role="status"
+        :aria-label="sessionTitleAria || undefined"
+      >
+        <span v-if="sessionTitleLabel" class="app-page-header__session-label">
+          {{ sessionTitleLabel }}
+        </span>
+        <span class="app-page-header__session-title">{{ sessionTitle }}</span>
+      </p>
+    </div>
     <nav v-if="showNav" class="app-page-header__nav" :aria-label="t('nav_aria_label')">
       <AppIconButton
         v-if="showNewFind"
@@ -242,6 +296,15 @@ onUnmounted(() => {
         @click="handleNewFind"
       >
         <AppIcon name="message_circle_plus" size="22px" />
+      </AppIconButton>
+      <AppIconButton
+        v-if="showDetailExport"
+        :title="detailExportLabel || t('detail_export_start')"
+        :aria-label="detailExportLabel || t('detail_export_start')"
+        :disabled="!detailExportEnabled"
+        @click="handleDetailExport"
+      >
+        <AppIcon name="download" size="22px" />
       </AppIconButton>
       <AppIconButton
         :title="accountTitle"
@@ -314,11 +377,57 @@ onUnmounted(() => {
   max-width: 100%;
 }
 
+/* 无品牌、无会话：整行工具条靠右 */
+.app-page-header--nav-only {
+  justify-content: flex-end;
+}
+
+/* 无品牌、有会话标题：标题吃左侧剩余宽，导航靠右 */
+.app-page-header--with-session {
+  justify-content: space-between;
+}
+
 .app-page-header__brand-row {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
   min-width: 0;
+}
+
+.app-page-header__session {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.app-page-header__session-heading {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: baseline;
+  gap: var(--space-2xs);
+  min-width: 0;
+  margin: 0;
+  line-height: 1.35;
+}
+
+.app-page-header__session-label {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--on-surface-muted);
+}
+
+.app-page-header__session-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  color: var(--on-surface);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .app-page-header__logo {

@@ -65,6 +65,9 @@ describe('recall-shell-empty-copy', () => {
     expect(copy?.body).toMatch(/recall/i)
     expect(copy?.body).not.toMatch(FORBIDDEN)
     expect(copy?.bodySegments?.some(s => s.kind === 'open_bookmark_ingest_settings')).toBe(true)
+    // en 前缀为故意单空格；不得被 pushTextSegment 当「空白」丢弃
+    expect(copy?.bodySegments?.[0]).toEqual({ kind: 'text', text: ' ' })
+    expect(copy?.body.startsWith(' Sync bookmarks')).toBe(true)
     expect(
       shouldShowRecallEmptyImportCta({
         library: 'empty',
@@ -140,6 +143,12 @@ describe('recall-shell-empty-copy', () => {
     expect(copy.body).not.toMatch(FORBIDDEN)
     const link = copy.bodySegments?.find(s => s.kind === 'open_bookmark_ingest_settings')
     expect(link?.text).toBe('Sync bookmarks')
+    // 前缀尾空格须保留，否则链钮会贴上句号
+    expect(copy.bodySegments?.[0]).toEqual({
+      kind: 'text',
+      text: 'Your library is empty. '
+    })
+    expect(copy.body).toContain('empty. Sync bookmarks or')
   })
 
   it('empty library no_match · importing / ingest_on_empty 分流', () => {
@@ -174,8 +183,8 @@ describe('recall-shell-empty-copy', () => {
   })
 
   it('R1 welcome copy stays focused on recall, not assistance', () => {
-    expect(testTranslateEn('popup_welcome_title')).toBe('What do you want to recall?')
-    expect(testTranslateEn('popup_welcome_body')).toMatch(/remember|detail|starter/i)
+    expect(testTranslateEn('popup_welcome_title')).toBe('What are you looking for?')
+    expect(testTranslateEn('popup_welcome_body')).toMatch(/whatever|comes to mind|starter/i)
     expect(testTranslateEn('popup_welcome_body')).not.toMatch(FORBIDDEN)
   })
 })

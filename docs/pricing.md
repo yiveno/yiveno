@@ -35,6 +35,6 @@ Worker `BILLING_FOUNDING_ENABLED=true` 时才出现在 `GET /api/billing/plans`�
 ## Checkout
 
 - Hosted：Worker `POST /api/billing/checkout-session` → 跳转 Dodo `checkout_url`
-- Success `return_url`：`/account?checkout=success`（支付成功态归 Dodo 自有页；产品致谢归欢迎信，不另做 Welcome 落地页）
+- `return_url`：`/account?checkout=return`（中性回跳；成败看 Dodo 追加的 `status` + 账户页对账；**禁止** URL 字面 success 冒充已付款；产品致谢归欢迎信，不另做 Welcome 落地页）
 - 旧路径 `/welcome` → 301 到上述账户回跳
 - 未登录 Subscribe → `/login?next=/pricing&intent=subscribe`

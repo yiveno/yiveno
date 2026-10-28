@@ -13,18 +13,19 @@ alwaysApply: true
 | 场景 | 标准叫法 | 禁止 |
 | --- | --- | --- |
 | 用户在 Recall composer 输入的内容 | **clue**（线索 / recall clue） | query · search · prompt · question（作产品名词） |
-| 用户找东西 | **Recall** / find | Search / 搜索 |
+| 用户找东西 | **Recall** / find / **找** · 找东西 | Search / 搜索 / **找回**（用户面默认译；暗示丢了再捡） |
+| 找会话名（对 en This/New find） | **这次找** · **新找** | 这次找回 · 新的找回 |
 | 检索执行（对内） | **Filter** | 对用户说 Filter / Search |
 | 用户存东西 | **Capture** | — |
 | 条目上的私人提示 | **附注** / `clues.note` / note | 「笔记」易与 `note` 类型混淆 |
 | 条目元数据字段 | **clues**（MemoryItem 字段） | 与用户输入 clue 混称 |
-| 找回结果集合 | **邻域** / ranked neighborhood | 唯一答案 · 神谕 |
+| 找结果集合 | **邻域** / ranked neighborhood | 唯一答案 · 神谕 |
 | 建议首项 | **Top Pick** / `top_pick` | 正确答案 · 押中 |
 | 遥测事件 type | `clue_submitted` / `clue_refined` | 文档里把用户输入叫 query |
 | 内部实现名 | `filterClue` · `buildFilterClueFromParsed` · `clueEmbeddingText` | 当产品名词使用；见术语表 §10.2 |
 | **种子 / seed（易混）** | 按术语表 **§8.1** 加限定：种子用户(§5.9) · 种库(`seedRecallProbe`) · 随机种子(`fillerSeed`) · 禁主题 seed | 裸写「种子」；用探针库冒充 §5.9 |
 | **产品心智 / things** | **那个找东西的** / find things（术语表 §1 · ADR-012：双关=后手） | 钉死成「仅文件搜索」；过早摊牌记忆产品；把后手写成必达路线；未启用翻牌句当主 slogan |
-| **明线 / 暗线 / 双线程** | 明线=用户找回价值；暗线=记忆探索；权威 `Yiveno-双线程发展原则.md` | 暗线当对外 slogan；行为当人脑定律；为研究损体验；每项强制双重 KPI |
+| **明线 / 暗线 / 双线程** | 明线=用户找东西价值；暗线=记忆探索；权威 `Yiveno-双线程发展原则.md` | 暗线当对外 slogan；行为当人脑定律；为研究损体验；每项强制双重 KPI |
 
 ## 最易混三组（必须分清）
 
@@ -36,11 +37,11 @@ MemoryItem.clues.note   →  附注（Capture 时/事后写的提示）
 
 ## 沟通纪律
 
-- **产品面文案**：UI 可为 en / zh_CN；用 clue / Recall / library / evidence；中文 UI 禁止「搜索」指代找回。
+- **产品面文案**：UI 可为 en / zh_CN；用 clue / Recall / library / evidence；中文 UI 用 **找 / 找到 / 找东西**，禁止「搜索」，禁止默认「找回」。
 - **Recall 线索**：主路径仍美式英语；勿把中文线索当已上线 P0。
-- **开发者讨论**：中文 OK；核心概念首次出现可括号标注英文标识符。
+- **开发者讨论**：中文 OK；核心概念首次出现可括号标注英文标识符；新写用「找 / Recall」，勿再默认「找回」。
 - **改术语**：先改 `Yiveno-术语表.md` → 再同步产品文档、设计标准、代码、i18n。
-- **写 PR/测试/MCP 步骤**：用户动作用「提交 clue」「发起 Recall」；不用「搜索」「查询」。
+- **写 PR/测试/MCP 步骤**：用户动作用「提交 clue」「发起 Recall / 找」；不用「搜索」「查询」。
 
 - **代码注释**：`clues.note` → **附注**；Recall 输入 → **clue**（见术语表 §11）。
 

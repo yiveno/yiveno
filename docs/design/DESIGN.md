@@ -162,6 +162,7 @@ Canonical CSS names in `site-critical.css`. Prefer roles over raw Brand Core in 
 - **Section Tabs:** In-page panel switching (Settings / Library) uses `AppSectionTabs` (ARIA tabs), not Nav. Cross-page nav stays in `AppPageHeader`. See §6.2.2.
 - **Toast:** Non-blocking feedback (`copy`/`download` done, etc.) via `AppToastHost` + `useAppToast()`; see §6.2.3.
 - **Detail export selection:** Tap row/card to toggle (no checkbox column); see design standard §6.2.4.
+- **Recall quick feedback:** Follow-up chips + None of these share one strip (chips first; dismiss last, not a pill); chips only when neighborhood ≥2 with cut power (product §7.0 · 1a); see §6.2.7.
 - **Library item card:** `AppLibraryItemCard` + `AppLibraryItemFavicon` (`#leading`); row actions on hover; saved time via `resolveMemoryItemSavedAtIso()`; see §6.2.5.
 - Old multi-presets: removed.
 

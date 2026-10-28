@@ -9,10 +9,10 @@
 Omnibox（`yi`）与 Side Panel 共用 `recallService` 且走完整 Hybrid + LLM 理解时：
 
 1. **壳装不下**多轮追问、`need_a_clue` 邻域、framing 等 Side Panel 能力，却消耗同等理解成本。
-2. 地址栏心智更接近 **「已知关键字 → 快跳转」**，而非口语找回主战场。
+2. 地址栏心智更接近 **「已知关键字 → 快跳转」**，而非口语找东西主战场。
 3. 每键 `inputChanged` 触发全量流水线，延迟与成本偏高。
 
-Side Panel 仍是自然语言找回、邻域与非神谕承诺的 Normative 主壳（ADR-001、ADR-003）。
+Side Panel 仍是自然语言找、邻域与非神谕承诺的 Normative 主壳（ADR-001、ADR-003）。
 
 ## 决定
 
@@ -71,7 +71,7 @@ Side Panel 仍是自然语言找回、邻域与非神谕承诺的 Normative 主�
 
 **禁止：**
 
-- Omnibox 冒充 Side Panel 全能力或暗示「口语找回主路径」。
+- Omnibox 冒充 Side Panel 全能力或暗示「口语找东西主路径」。
 - 无命中时静默吞掉回车（须接力或可观测失败日志）。
 - 为 Omnibox 单独堆内容别名灰名单（ADR-005）。
 - Omnibox 调用向量融合（clue embed / Topic embed / RRF / cosine）或 Outcome 软调；这些属于 Side Panel 主战场。

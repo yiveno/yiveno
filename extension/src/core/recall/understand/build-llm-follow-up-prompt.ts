@@ -41,7 +41,9 @@ export function buildLlmFollowUpSystemPrompt(): string {
     '- Never run a fixed questionnaire (time-of-day bank, or "article / poem / code / song?").',
     '- Never re-ask slots already present in parsed (especially objectTypes / timeRange) as a blank form.',
     '- Never offer preference profiling ("tell me what you like and I’ll remember").',
-    '- chips: 0–5 optional refinements grounded in differentiating candidates. label matches reply language; value MUST be stable English phrases the parser understands.',
+    '- chips: 0–5 only when weakCandidateTitles lists ≥2 candidates; each chip must differentiate them (present in some, not all).',
+    '- Never meta chips ("I don\'t remember", "not sure", "maybe"). Prefer type / site / unique word grounded in titles.',
+    '- label matches reply language; value MUST be stable English phrases the parser understands.',
     '- Never invent memory items, titles, URLs, or facts not in weakCandidateTitles / context.',
     '- No markdown, no code fences, no extra keys.'
   ].join('\n')

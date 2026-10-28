@@ -88,9 +88,9 @@ export function shouldShowRecallEmptySetupCta(input: {
   )
 }
 
-/** 推入非空白文本片段（en Idle 前缀可为占位空格，trim 后丢掉）。 */
+/** 推入文本片段；仅跳过空串，保留故意的空白前缀（en Idle 链前空格）。 */
 function pushTextSegment(segments: RecallShellTextSegment[], text: string): void {
-  if (text.trim().length === 0) {
+  if (text.length === 0) {
     return
   }
   segments.push({ kind: 'text', text })

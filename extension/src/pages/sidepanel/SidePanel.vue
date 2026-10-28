@@ -42,10 +42,6 @@ import {
 import { renderRecallFraming } from '@/core/recall/render-recall-framing'
 import type { RecallFramingFacts } from '@/core/recall/recall-framing-facts'
 import {
-  listIdleClueParadigmSpecs,
-  shouldShowIdleClueParadigms
-} from '@/core/recall/idle-clue-paradigms'
-import {
   formatRecallUnderstandingEchoChips,
   recallUnderstandingEchoSourceFromParsed
 } from '@/core/recall/format-recall-understanding-echo'
@@ -441,7 +437,7 @@ const hasActiveFindSession = computed(() => {
 
 const isComposerProminent = computed(() => conversationTurns.value.length === 0)
 
-/** 本场找回会话标题（composer 锚点 / status / 软岔路口共用）。 */
+/** 本场找回会话标题（顶栏左侧 / status / 软岔路口 / placeholder 点名共用）。 */
 const threadFindTitle = computed(() =>
   resolveThreadFindTitle({
     priorUserUtterances: dialogState.value.priorUserUtterances,
@@ -1001,26 +997,6 @@ const showEmptySetupCta = computed(() =>
     library: libraryState.value,
     captureFirst: captureFirstMode.value,
     bookmarkFuel: bookmarkFuel.value
-  })
-)
-
-/** Idle 口语范式：库 ready + 非 Capture-first；推荐句式，填入不自动发。 */
-const showIdleClueParadigms = computed(() =>
-  shouldShowIdleClueParadigms({
-    hasConversationTurns: conversationTurns.value.length > 0,
-    captureFirst: captureFirstMode.value,
-    library: libraryState.value
-  })
-)
-
-const idleClueParadigmButtons = computed(() =>
-  listIdleClueParadigmSpecs().map(spec => {
-    const clueText = t(spec.clueMessageKey)
-    return {
-      id: spec.id,
-      clue: clueText,
-      ariaLabel: t('popup_idle_paradigm_fill_aria', clueText)
-    }
   })
 )
 
@@ -2111,18 +2087,6 @@ function handleUseSuggestion(value: string): void {
   void handleSendTurn(value, { skipPivotCheck: true })
 }
 
-/** Idle 口语范式：仅填入 composer，可改再发（推荐不强制）。 */
-function handleIdleParadigmFill(value: string): void {
-  const trimmed = value.trim()
-  if (!trimmed || isRecallRefreshing.value) {
-    return
-  }
-  clue.value = trimmed
-  void nextTick(() => {
-    clueInputRef.value?.focus()
-  })
-}
-
 /**
  * 关 Side Panel：静默结算 Outcome（不跨次打开补问出口条）。
  * Chrome 无法拦截原生关闭；跨次问「上次找没找到」无上下文、易错愕。
@@ -2257,10 +2221,23 @@ onUnmounted(() => {
     <header class="recall-header">
       <AppPageHeader
         class="recall-header-top"
+        :show-brand="false"
         show-new-find
-        :new-find-enabled="hasActiveFindSession"
+        :new-find-enabled="hasActiveFindSession && !isRecallRefreshing"
+        :session-title="threadFindTitle"
+        :session-title-label="threadFindTitle ? t('popup_thread_title_label') : null"
+        :session-title-aria="threadTitleAria"
+        :show-detail-export="
+          hasRecallResultCards &&
+          !detailExportMode &&
+          !showOutcomeExitStrip &&
+          !showThreadPivotStrip
+        "
+        :detail-export-enabled="!isRecallRefreshing"
+        :detail-export-label="t('detail_export_start')"
         @navigate-error="handleNavigateError"
         @new-find="startNewFindSession"
+        @detail-export="enterDetailExportMode"
       />
 
       <section
@@ -2402,27 +2379,6 @@ onUnmounted(() => {
             </template>
             <template v-else>{{ idleEmptyCopy?.body ?? t('popup_welcome_body') }}</template>
           </p>
-          <div
-            v-if="showIdleClueParadigms"
-            class="recall-idle-paradigms"
-            role="group"
-            :aria-label="t('popup_idle_paradigm_hint')"
-          >
-            <p class="recall-idle-paradigms__hint">{{ t('popup_idle_paradigm_hint') }}</p>
-            <div class="recall-idle-paradigms__pills">
-              <button
-                v-for="paradigm in idleClueParadigmButtons"
-                :key="paradigm.id"
-                type="button"
-                class="recall-idle-paradigm-pill"
-                :title="paradigm.clue"
-                :aria-label="paradigm.ariaLabel"
-                @click="handleIdleParadigmFill(paradigm.clue)"
-              >
-                {{ paradigm.clue }}
-              </button>
-            </div>
-          </div>
           <div v-if="captureFirstMode" class="recall-empty-actions">
             <AppButton type="button" variant="tonal" @click="handleOpenGettingStarted">
               {{ t('popup_open_getting_started') }}
@@ -2470,17 +2426,6 @@ onUnmounted(() => {
         @use-suggestion="handleUseSuggestion"
         @open-bookmark-ingest-settings="handleOpenBookmarkIngestSettings"
       />
-    </div>
-
-    <div
-      v-if="
-        hasRecallResultCards && !detailExportMode && !showOutcomeExitStrip && !showThreadPivotStrip
-      "
-      class="recall-detail-export-entry"
-    >
-      <AppButton type="button" variant="text" @click="enterDetailExportMode">
-        {{ t('detail_export_start') }}
-      </AppButton>
     </div>
 
     <div
@@ -2550,38 +2495,35 @@ onUnmounted(() => {
           :sendLabel="t('popup_submit')"
           :disabled="isRecallRefreshing || showOutcomeExitStrip"
           :prominent="isComposerProminent"
-          :thread-title="threadFindTitle"
-          :thread-title-label="t('popup_thread_title_label')"
-          :thread-title-aria="threadTitleAria"
-          :thread-new-find-label="t('popup_thread_anchor_clear')"
           @send="handleSendTurn"
-          @clear-thread="startNewFindSession"
         >
-          <RecallPageContextControls
-            :domain="pageContextDomain"
-            :combine-with-page="pageContextCombine"
-            :only-this-site="pageContextOnlySite"
-            :source-scope="recallSourceScope"
-            :expanded="pageContextExpanded"
-            :disabled="isRecallRefreshing || showOutcomeExitStrip"
-            :toggle-label="t('sidepanel_recall_settings_toggle')"
-            :dismiss-label="t('sidepanel_recall_settings_dismiss')"
-            :combine-label="t('sidepanel_page_context_combine')"
-            :combine-hint="t('sidepanel_page_context_combine_hint')"
-            :only-site-label="t('sidepanel_page_context_only_site')"
-            :only-site-hint="t('sidepanel_page_context_only_site_hint')"
-            :no-site-hint="t('sidepanel_page_context_no_site_hint')"
-            :source-all-label="t('sidepanel_recall_source_all')"
-            :source-all-hint="t('sidepanel_recall_source_all_hint')"
-            :source-excerpts-label="t('sidepanel_recall_source_excerpts')"
-            :source-excerpts-hint="t('sidepanel_recall_source_excerpts_hint')"
-            :source-bookmarks-label="t('sidepanel_recall_source_bookmarks')"
-            :source-bookmarks-hint="t('sidepanel_recall_source_bookmarks_hint')"
-            @update:expanded="handlePageContextExpanded"
-            @update:combine-with-page="pageContextCombine = $event"
-            @update:only-this-site="pageContextOnlySite = $event"
-            @update:source-scope="recallSourceScope = $event"
-          />
+          <template #leading>
+            <RecallPageContextControls
+              :domain="pageContextDomain"
+              :combine-with-page="pageContextCombine"
+              :only-this-site="pageContextOnlySite"
+              :source-scope="recallSourceScope"
+              :expanded="pageContextExpanded"
+              :disabled="isRecallRefreshing || showOutcomeExitStrip"
+              :toggle-label="t('sidepanel_recall_settings_toggle')"
+              :dismiss-label="t('sidepanel_recall_settings_dismiss')"
+              :combine-label="t('sidepanel_page_context_combine')"
+              :combine-hint="t('sidepanel_page_context_combine_hint')"
+              :only-site-label="t('sidepanel_page_context_only_site')"
+              :only-site-hint="t('sidepanel_page_context_only_site_hint')"
+              :no-site-hint="t('sidepanel_page_context_no_site_hint')"
+              :source-all-label="t('sidepanel_recall_source_all')"
+              :source-all-hint="t('sidepanel_recall_source_all_hint')"
+              :source-excerpts-label="t('sidepanel_recall_source_excerpts')"
+              :source-excerpts-hint="t('sidepanel_recall_source_excerpts_hint')"
+              :source-bookmarks-label="t('sidepanel_recall_source_bookmarks')"
+              :source-bookmarks-hint="t('sidepanel_recall_source_bookmarks_hint')"
+              @update:expanded="handlePageContextExpanded"
+              @update:combine-with-page="pageContextCombine = $event"
+              @update:only-this-site="pageContextOnlySite = $event"
+              @update:source-scope="recallSourceScope = $event"
+            />
+          </template>
         </RecallComposer>
       </div>
     </div>
@@ -2642,15 +2584,6 @@ onUnmounted(() => {
   background: var(--surface);
   overflow: hidden;
   overflow-anchor: none;
-}
-
-.recall-detail-export-entry {
-  display: flex;
-  flex-shrink: 0;
-  justify-content: flex-end;
-  margin-top: calc(-1 * var(--space-2xs));
-  margin-bottom: var(--space-xs);
-  padding: 0 var(--space-2xs);
 }
 
 .recall-bottom-chrome {
@@ -2730,19 +2663,6 @@ onUnmounted(() => {
 
 .recall-header-top {
   margin-bottom: 2px;
-}
-
-.recall-header-top:deep(.app-page-header__logo) {
-  width: 24px;
-  height: 24px;
-}
-
-.recall-header-top:deep(.app-page-header__brand) {
-  font-size: 17px;
-  font-weight: 600;
-  text-transform: none;
-  letter-spacing: -0.01em;
-  color: var(--on-surface);
 }
 
 .recall-header-top:deep(.app-page-header__nav) {
@@ -3002,54 +2922,6 @@ onUnmounted(() => {
   outline: 2px solid color-mix(in srgb, var(--primary) 45%, transparent);
   outline-offset: 2px;
   border-radius: 2px;
-}
-
-.recall-idle-paradigms {
-  display: grid;
-  gap: var(--space-2xs);
-  width: 100%;
-  max-width: 100%;
-  margin-top: var(--space-2xs);
-}
-
-.recall-idle-paradigms__hint {
-  margin: 0;
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--on-surface-muted);
-}
-
-.recall-idle-paradigms__pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-xs);
-}
-
-.recall-idle-paradigm-pill {
-  display: inline-flex;
-  align-items: center;
-  max-width: 100%;
-  min-height: 32px;
-  padding: 0 var(--space-sm);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-full);
-  font-size: 13px;
-  line-height: 1.3;
-  text-align: left;
-  color: var(--on-surface);
-  background: var(--surface-white);
-  cursor: pointer;
-  font: inherit;
-  text-wrap: pretty;
-}
-
-.recall-idle-paradigm-pill:hover {
-  background: var(--surface-chrome);
-}
-
-.recall-idle-paradigm-pill:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
 }
 
 .recall-empty-actions {

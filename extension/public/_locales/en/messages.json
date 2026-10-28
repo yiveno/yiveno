@@ -342,31 +342,10 @@
     "message": "Say a clue — finding on this device…"
   },
   "popup_welcome_title": {
-    "message": "What do you want to recall?"
+    "message": "What are you looking for?"
   },
   "popup_welcome_body": {
-    "message": "Say it however you remember—any detail works."
-  },
-  "popup_idle_paradigm_hint": {
-    "message": "Try saying it like…"
-  },
-  "popup_idle_paradigm_content_time": {
-    "message": "that article I saved yesterday about caching"
-  },
-  "popup_idle_paradigm_note": {
-    "message": "something I noted about the pricing page"
-  },
-  "popup_idle_paradigm_saved_when": {
-    "message": "the page I saved this morning"
-  },
-  "popup_idle_paradigm_fill_aria": {
-    "message": "Fill clue: $1",
-    "placeholders": {
-      "clue": {
-        "content": "$1",
-        "example": "that article I saved yesterday about caching"
-      }
-    }
+    "message": "Just say whatever comes to mind."
   },
   "popup_greeting_morning": {
     "message": "Good morning"
@@ -1409,7 +1388,6 @@
   "settings_error_login_migration_status": {
     "message": "Couldn’t check for local saves to import"
   },
-
   "settings_section_sync": {
     "message": "Sync"
   },

@@ -73,7 +73,7 @@ A wonderful literary figure introduction
 ## 4. 确认
 
 - [ ] `yes` — 目标对且认得出
-- [ ] `miss` — 目标对但产品没找回（**有库 retry 倾向此项**）
+- [ ] `miss` — 目标对但产品没找（**有库 retry 倾向此项**）
 - [ ] `no` — 目标/口语不合格作废
 
 **失败归因 stage（单选）：** `candidate_miss`（倾向）· 备选 `clue_insufficient`  

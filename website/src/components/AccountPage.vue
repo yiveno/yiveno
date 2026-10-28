@@ -63,16 +63,35 @@ const signInProvider = computed(() => {
 
 const checkoutBusy = ref(false)
 const checkoutError = ref('')
-/** Dodo return_url `?checkout=success`：轻提示，不另开 Welcome 页 */
-const showCheckoutSuccessHint = ref(false)
+/**
+ * 结账回跳提示：中性 `?checkout=return` + Dodo 追加的 `status`。
+ * 禁止把 URL 里的 success 字样当成「已付款」；授 Pro 只信投影。
+ */
+type CheckoutReturnHint = 'pending' | 'failed'
+const checkoutReturnHint = ref<CheckoutReturnHint | null>(null)
 let checkoutPollTimer: ReturnType<typeof setTimeout> | null = null
 
-/** 清掉结账回跳参数（含 Dodo 追加的 id/status），避免刷新重复提示 */
-function consumeCheckoutReturnParams(): boolean {
+/** Dodo return_url 上的 status → 失败提示（订阅多为 failed；亦覆盖 expired） */
+function isFailedCheckoutStatus(status: string | null): boolean {
+  if (!status) return false
+  return status === 'failed' || status === 'expired'
+}
+
+/**
+ * 消费结账回跳 query（含 Dodo 追加的 id/status），避免刷新重复提示。
+ * 兼容旧 `checkout=success`（历史 return_url / `/welcome` 301）。
+ */
+function consumeCheckoutReturnParams(): {
+  fromCheckout: boolean
+  dodoStatus: string | null
+} {
   const params = new URLSearchParams(window.location.search)
-  const fromCheckout = params.get('checkout') === 'success'
-  if (!fromCheckout && !params.has('payment_id') && !params.has('subscription_id')) {
-    return false
+  const checkout = params.get('checkout')
+  const fromMarker = checkout === 'return' || checkout === 'success'
+  const hasDodoIds = params.has('payment_id') || params.has('subscription_id')
+  const dodoStatus = params.get('status')?.trim().toLowerCase() || null
+  if (!fromMarker && !hasDodoIds) {
+    return { fromCheckout: false, dodoStatus: null }
   }
   const clean = new URL(window.location.href)
   for (const key of [
@@ -86,12 +105,22 @@ function consumeCheckoutReturnParams(): boolean {
     clean.searchParams.delete(key)
   }
   window.history.replaceState({}, '', clean.pathname + clean.search)
-  return fromCheckout
+  return { fromCheckout: true, dodoStatus }
 }
 
-function dismissCheckoutSuccessHint(): void {
-  showCheckoutSuccessHint.value = false
+function dismissCheckoutReturnHint(): void {
+  checkoutReturnHint.value = null
 }
+
+const checkoutReturnHintText = computed(() => {
+  if (checkoutReturnHint.value === 'failed') {
+    return "Payment didn't go through. You can try Upgrade to Pro again."
+  }
+  if (checkoutReturnHint.value === 'pending') {
+    return 'Checking your checkout. If you paid, Pro usually shows within a few seconds — refresh if the plan below still says Free.'
+  }
+  return ''
+})
 
 /**
  * 拉订阅（Worker 内强制对账，约数秒）。
@@ -163,9 +192,9 @@ let stopAuthLiveness: WebsiteAuthLivenessStop | null = null
 
 onMounted(async () => {
   captureExtensionConnectParamsFromUrl()
-  const fromCheckout = consumeCheckoutReturnParams()
+  const { fromCheckout, dodoStatus } = consumeCheckoutReturnParams()
   if (fromCheckout) {
-    showCheckoutSuccessHint.value = true
+    checkoutReturnHint.value = isFailedCheckoutStatus(dodoStatus) ? 'failed' : 'pending'
   }
   const params = new URLSearchParams(window.location.search)
   const extensionId = params.get('extension_id')?.trim()
@@ -190,9 +219,12 @@ onMounted(async () => {
       window.location.replace(`/login?${login.toString()}`)
       return
     }
-    // 结账回跳丢会话：带回 checkout 标记，登完仍落到账户页
+    // 结账回跳丢会话：带回中性 checkout 标记，登完仍落到账户页
     if (fromCheckout) {
-      window.location.replace(buildLoginHref('/account?checkout=success'))
+      const next = isFailedCheckoutStatus(dodoStatus)
+        ? '/account?checkout=return&status=failed'
+        : '/account?checkout=return'
+      window.location.replace(buildLoginHref(next))
       return
     }
     window.location.replace('/login')
@@ -208,11 +240,19 @@ onMounted(async () => {
   pageLoading.value = false
   document.addEventListener('visibilitychange', refreshSubscriptionOnVisible)
   const becamePro = await loadSubscription()
-  // webhook 可能晚几秒：结账回跳后再对账一次
-  if (fromCheckout && !becamePro) {
+  // 已是 Pro：不必再挂「核对中」；失败提示保留到用户 Dismiss
+  if (becamePro && checkoutReturnHint.value === 'pending') {
+    checkoutReturnHint.value = null
+  }
+  // webhook 可能晚几秒：仅非失败回跳再对账一次
+  if (fromCheckout && !becamePro && checkoutReturnHint.value === 'pending') {
     checkoutPollTimer = setTimeout(() => {
       checkoutPollTimer = null
-      void loadSubscription({ silent: true })
+      void loadSubscription({ silent: true }).then(isProNow => {
+        if (isProNow && checkoutReturnHint.value === 'pending') {
+          checkoutReturnHint.value = null
+        }
+      })
     }, 2500)
   }
   // 本浏览器官网会话作废时尽快回登录页（扩展挤掉不踢官网）
@@ -263,19 +303,17 @@ async function handleSignOut() {
 <template>
   <div v-if="!pageLoading && user" class="account page">
     <p
-      v-if="showCheckoutSuccessHint"
+      v-if="checkoutReturnHint"
       class="account__checkout-hint"
-      role="status"
+      :class="{ 'account__checkout-hint--failed': checkoutReturnHint === 'failed' }"
+      :role="checkoutReturnHint === 'failed' ? 'alert' : 'status'"
       aria-live="polite"
     >
-      <span>
-        Payment received. Pro usually shows within a few seconds — refresh if the plan below still
-        says Free.
-      </span>
+      <span>{{ checkoutReturnHintText }}</span>
       <button
         type="button"
         class="account__checkout-hint-dismiss"
-        @click="dismissCheckoutSuccessHint"
+        @click="dismissCheckoutReturnHint"
       >
         Dismiss
       </button>
@@ -405,6 +443,11 @@ async function handleSignOut() {
   font-weight: 400;
   line-height: 1.45;
   color: var(--charcoal, var(--ink));
+}
+
+.account__checkout-hint--failed {
+  border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
+  background: color-mix(in srgb, var(--danger) 8%, var(--paper, #fff));
 }
 
 .account__checkout-hint-dismiss {

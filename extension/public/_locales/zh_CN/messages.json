@@ -3,7 +3,7 @@
     "message": "Yiveno"
   },
   "app_description": {
-    "message": "存下重要的。之后用 Recall 找回来。"
+    "message": "存下重要的。之后用 Recall 找到。"
   },
   "context_menu_save_selection": {
     "message": "保存到 Yiveno"
@@ -63,7 +63,7 @@
     "message": "页面导航"
   },
   "nav_new_find": {
-    "message": "新的找回"
+    "message": "新找"
   },
   "nav_library": {
     "message": "资料库"
@@ -147,7 +147,7 @@
     "message": "添加附注"
   },
   "selection_toolbar_note_placeholder": {
-    "message": "加一句附注，方便以后找回…"
+    "message": "加一句附注，方便以后找到…"
   },
   "selection_toolbar_note_cancel": {
     "message": "取消"
@@ -168,7 +168,7 @@
     "message": "正在准备你的记忆库"
   },
   "cold_start_stage_idle_body": {
-    "message": "Yiveno 正在整理你的书签，好让你用模糊线索也能找回。"
+    "message": "Yiveno 正在整理你的书签，好让你用模糊线索也能找到。"
   },
   "cold_start_stage_import_title": {
     "message": "正在准备记忆库"
@@ -224,7 +224,7 @@
     }
   },
   "cold_start_detail_ai": {
-    "message": "正在改进模糊找回 $written$ / $attempted$ · 排队 $queued$",
+    "message": "正在改进模糊找东西 $written$ / $attempted$ · 排队 $queued$",
     "placeholders": {
       "written": {
         "content": "$1",
@@ -241,7 +241,7 @@
     }
   },
   "cold_start_detail_ai_indeterminate": {
-    "message": "正在改进模糊找回…"
+    "message": "正在改进模糊找东西…"
   },
   "cold_start_detail_enrichment": {
     "message": "已将 $queued$ 项加入更智能匹配队列",
@@ -259,7 +259,7 @@
     "message": "2 · 准备记忆库"
   },
   "cold_start_step_ai": {
-    "message": "3 · 改进模糊找回（尽力而为）"
+    "message": "3 · 改进模糊找东西（尽力而为）"
   },
   "cold_start_post_release_banner": {
     "message": "现在就能 Recall——但还没到最佳状态。我们仍在后台充实你的记忆库。再等几分钟就好。"
@@ -327,46 +327,25 @@
     "message": "关闭已退出提示"
   },
   "sidepanel_offline_banner": {
-    "message": "你已离线 — 只在本机已保存内容里找回。"
+    "message": "你已离线 — 只在本机已保存内容里找。"
   },
   "sidepanel_offline_banner_aria": {
-    "message": "离线。只在本机已保存内容里找回。仅本机。"
+    "message": "离线。只在本机已保存内容里找。仅本机。"
   },
   "sidepanel_offline_mode_chip": {
     "message": "仅本机"
   },
   "sidepanel_offline_composer_hint": {
-    "message": "云端理解不可用 — 在本机找回。"
+    "message": "云端理解不可用 — 在本机找。"
   },
   "sidepanel_offline_composer_placeholder": {
-    "message": "说一条线索 — 在本机找回…"
+    "message": "说一条线索 — 在本机找…"
   },
   "popup_welcome_title": {
-    "message": "你想找回什么？"
+    "message": "你想找什么？"
   },
   "popup_welcome_body": {
-    "message": "按你记得的方式说就行——任何细节都有用。"
-  },
-  "popup_idle_paradigm_hint": {
-    "message": "可以试着这么说…"
-  },
-  "popup_idle_paradigm_content_time": {
-    "message": "昨天存的那篇关于缓存的文章"
-  },
-  "popup_idle_paradigm_note": {
-    "message": "我在定价页上记过的东西"
-  },
-  "popup_idle_paradigm_saved_when": {
-    "message": "今天早上存的那个页面"
-  },
-  "popup_idle_paradigm_fill_aria": {
-    "message": "填入线索：$1",
-    "placeholders": {
-      "clue": {
-        "content": "$1",
-        "example": "that article I saved yesterday about caching"
-      }
-    }
+    "message": "想到什么就说什么。"
   },
   "popup_greeting_morning": {
     "message": "早上好"
@@ -499,10 +478,10 @@
     }
   },
   "popup_thread_title_label": {
-    "message": "这次找回"
+    "message": "这次找"
   },
   "popup_thread_title_aria": {
-    "message": "这次找回：$1",
+    "message": "这次找：$1",
     "placeholders": {
       "title": {
         "content": "$1",
@@ -511,10 +490,10 @@
     }
   },
   "popup_thread_anchor_clear": {
-    "message": "新的找回"
+    "message": "新找"
   },
   "popup_thread_pivot_prompt": {
-    "message": "看起来像新的找回。还在找「$1」吗？",
+    "message": "看起来像新的一次找。还在找「$1」吗？",
     "placeholders": {
       "label": {
         "content": "$1",
@@ -631,7 +610,7 @@
     "message": "和"
   },
   "popup_recall_heard_as": {
-    "message": "听成了"
+    "message": "理解成"
   },
   "popup_recall_echo_aria_sep": {
     "message": "、"
@@ -783,10 +762,10 @@
     "message": "没有足够接近的结果。试试另一个你记得住的细节。"
   },
   "popup_session_status_continuing": {
-    "message": "仍在细化这次找回 — 不是新的。"
+    "message": "仍在细化这次找 — 不是新的。"
   },
   "popup_session_status_continuing_threaded": {
-    "message": "仍在找「$1」 — 不是新的找回。",
+    "message": "仍在找「$1」 — 不是新的一次找。",
     "placeholders": {
       "label": {
         "content": "$1",
@@ -879,7 +858,7 @@
     "message": "设置"
   },
   "settings_subtitle": {
-    "message": "管理 Yiveno 如何保存与找回内容。"
+    "message": "管理 Yiveno 如何保存与找到内容。"
   },
   "settings_tabs_aria": {
     "message": "设置分区"
@@ -1569,7 +1548,7 @@
     "message": "登录以查看 Pro 状态。"
   },
   "settings_subscription_hybrid_hint": {
-    "message": "Free 与 Pro 的找回质量相同。Pro 解锁云同步，以及更多云端线索帮助。"
+    "message": "Free 与 Pro 的找东西质量相同。Pro 解锁云同步，以及更多云端线索帮助。"
   },
   "settings_sync_pro_required_hint": {
     "message": "云同步需要 Pro。"
@@ -1584,7 +1563,7 @@
     "message": "无法加载线索帮助配额。"
   },
   "settings_ai_quota_summary": {
-    "message": "云端线索帮助 · $TIER$：$USED$ / $LIMIT$ 本月，$DAILY_USED$ / $DAILY_LIMIT$ 今日。达到限额后，理解回退到规则；找回仍可用。",
+    "message": "云端线索帮助 · $TIER$：$USED$ / $LIMIT$ 本月，$DAILY_USED$ / $DAILY_LIMIT$ 今日。达到限额后，理解回退到规则；找东西仍可用。",
     "placeholders": {
       "TIER": {
         "content": "$1"
@@ -1604,7 +1583,7 @@
     }
   },
   "pro_required_for_hybrid": {
-    "message": "云同步与更大的云端线索帮助限额需要 Pro。本机找回在 Free 上同样可用。"
+    "message": "云同步与更大的云端线索帮助限额需要 Pro。本机找东西在 Free 上同样可用。"
   },
   "settings_orphan_title": {
     "message": "其他账号的残留数据"
@@ -1675,7 +1654,7 @@
     "message": "记忆"
   },
   "library_subtitle": {
-    "message": "浏览你存过的内容。需要时，按你记得的方式说出来就能找回。"
+    "message": "浏览你存过的内容。需要时，按你记得的方式说出来就能找到。"
   },
   "library_tabs_aria": {
     "message": "内容类型"
@@ -1932,19 +1911,19 @@
     "message": "记忆库还是空的"
   },
   "popup_empty_no_memory_body_importing": {
-    "message": "书签正在同步。你也可以先划存一行——保存后，用自己的话就能找回来。"
+    "message": "书签正在同步。你也可以先划存一行——保存后，用自己的话就能找到。"
   },
   "popup_empty_no_memory_body_prefix": {
     "message": "可以先"
   },
   "popup_empty_no_memory_body_suffix": {
-    "message": "，或划存一段文字。有了内容，再用自己的话找回来。"
+    "message": "，或划存一段文字。有了内容，再用自己的话找到。"
   },
   "popup_empty_no_memory_body": {
-    "message": "可以先同步书签，或划存一段文字。有了内容，再用自己的话找回来。"
+    "message": "可以先同步书签，或划存一段文字。有了内容，再用自己的话找到。"
   },
   "popup_empty_no_memory_body_ingest_on_empty": {
-    "message": "已开启书签同步，但库里还没有内容。先划存一段，或打开开始设置看看，再用自己的话找回来。"
+    "message": "已开启书签同步，但库里还没有内容。先划存一段，或打开开始设置看看，再用自己的话找到。"
   },
   "popup_empty_library_empty_title": {
     "message": "还没有任何保存"
@@ -1974,7 +1953,7 @@
     "message": "先保存一行"
   },
   "popup_capture_first_body": {
-    "message": "在任意页面划存一句——或在「开始使用」保存演示句——再用自己的话找回来。"
+    "message": "在任意页面划存一句——或在「开始使用」保存演示句——再用自己的话找到。"
   },
   "popup_capture_first_body_importing": {
     "message": "书签正在导入。先保存一条摘录——这是最快看到 Recall 怎么工作的方式。"
@@ -1995,7 +1974,7 @@
     "message": "导入你的浏览器书签"
   },
   "getting_started_consent_body": {
-    "message": "把书签带到 Yiveno，即使记不清名字，之后也能找回来。"
+    "message": "把书签带到 Yiveno，即使记不清名字，之后也能找到。"
   },
   "getting_started_consent_cta": {
     "message": "导入我的书签"
@@ -2032,7 +2011,7 @@
     "message": "书签已就绪。"
   },
   "getting_started_consent_authorized_body": {
-    "message": "选下方一条线索试试找回。"
+    "message": "选下方一条线索试试找。"
   },
   "getting_started_consent_failed_title": {
     "message": "导入未能完成"

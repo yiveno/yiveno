@@ -18,6 +18,11 @@ import type { PageContextMode } from '@/core/recall/page-context-mode'
 import { filterMemoryItemsBySourceScope } from '@/core/recall/recall-source-scope'
 import { RECALL_SCAN_LIMIT } from '@/application/recall/backends/recall-scan-limit'
 import { buildEnvironmentRecallSuggestions } from '@/core/recall/build-environment-recall-suggestions'
+import {
+  countRecallFollowUpChipEligibleCandidates,
+  filterRecallFollowUpChipsByCutPower,
+  shouldOfferRecallFollowUpChips
+} from '@/core/recall/gate-recall-follow-up-chips'
 import { buildRecallFramingFacts } from '@/core/recall/build-recall-framing-facts'
 import { RECALL_RESULT_PAGE_SIZE } from '@/core/recall/build-recall-result'
 import { buildClueEmbeddingText } from '@/core/recall/build-clue-embedding-text'
@@ -350,6 +355,15 @@ async function attachRecallFramingLlmPolish(
     const countsPart = facts.kind === 'candidates' ? renderRecallFramingCounts(facts, t) : ''
     const text = joinRecallFramingSentences(countsPart ? [mapped.text, countsPart] : [mapped.text])
 
+    // P0：邻域过窄 / 无切割力 → 不挂 LLM 芯片（气泡润色仍保留）
+    const gatedSuggestions = filterRecallFollowUpChipsByCutPower(mapped.suggestions, result)
+    if (mapped.suggestions.length > 0 && gatedSuggestions.length === 0) {
+      input.trace('info', 'LLM 芯片：门禁清空（邻域过窄或无切割力）', {
+        before: mapped.suggestions.length,
+        candidateCount: countRecallFollowUpChipEligibleCandidates(result)
+      })
+    }
+
     return {
       ...result,
       recallFraming: {
@@ -357,12 +371,12 @@ async function attachRecallFramingLlmPolish(
         text,
         facts
       },
-      ...(mapped.suggestions.length > 0
+      ...(gatedSuggestions.length > 0
         ? {
             assistantFollowUp: {
               source: 'llm' as const,
               text: '',
-              suggestions: mapped.suggestions
+              suggestions: gatedSuggestions
             }
           }
         : {})
@@ -411,6 +425,12 @@ function attachEnvironmentFollowUpIfNeeded(
     input.trace('info', '环境芯片：已有 LLM 芯片，跳过', {
       llmChipCount: result.assistantFollowUp.suggestions.length
     })
+    return result
+  }
+
+  const candidateCount = countRecallFollowUpChipEligibleCandidates(result)
+  if (!shouldOfferRecallFollowUpChips(candidateCount)) {
+    input.trace('info', '环境芯片：邻域过窄，跳过', { candidateCount })
     return result
   }
 

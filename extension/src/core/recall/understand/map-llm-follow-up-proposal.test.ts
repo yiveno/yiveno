@@ -61,6 +61,21 @@ describe('mapLlmFollowUpProposal', () => {
     expect(mapped?.suggestions).toEqual([])
   })
 
+  it('drops non-cutting meta chips like I do not remember', () => {
+    const parsed = parseRecallClue('the article about trust', { nowMs: NOW_MS })
+    const mapped = mapLlmFollowUpProposal(
+      {
+        reply: 'Which detail feels closer?',
+        chips: [
+          { label: "I don't remember", value: "I don't remember" },
+          { label: 'trust', value: 'trust' }
+        ]
+      },
+      { parsed, outcome: 'need_a_clue' }
+    )
+    expect(mapped?.suggestions.map(item => item.value)).toEqual(['trust'])
+  })
+
   it('rejects assistant-persona follow-up copy', () => {
     const parsed = parseRecallClue('the song I used to like most', { nowMs: NOW_MS })
     expect(

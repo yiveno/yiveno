@@ -29,7 +29,7 @@
 ## 请你确认
 
 回复示例：`T30 yes; T31 miss; T32 yes; T33 miss; T34 yes; T35 yes; T36 yes; T37 yes`  
-（`yes` = 口语目标就是该 gold 且结果认得出；`miss` = 配对对但没找回；`no` = 配对/口语不合格作废）
+（`yes` = 口语目标就是该 gold 且结果认得出；`miss` = 配对对但没找；`no` = 配对/口语不合格作废）
 
 ## 失败 taxonomy（确认前草稿）
 

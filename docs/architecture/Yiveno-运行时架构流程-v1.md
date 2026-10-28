@@ -9,7 +9,7 @@
 - [`Yiveno-术语表.md`](../product/Yiveno-术语表.md)：概念叫法唯一权威（clue、Recall、附注、邻域等）。
 - [`CURRENT.md`](../product/CURRENT.md)：当下焦点与本周 scope（新会话先读）。
 - [`architecture/decisions/`](../architecture/decisions/)：不可逆架构决策（ADR）。
-- `docs/product/Yiveno-产品文档-v4.0.md`：核心路线、资产/边界/隐患、找回体验规范（尤其 §0.1 / §0.1.1 / §7）。
+- `docs/product/Yiveno-产品文档-v4.0.md`：核心路线、资产/边界/隐患、找体验规范（尤其 §0.1 / §0.1.1 / §7）。
 - `.cursor/rules/project.mdc` + `AGENTS.md`：分层与代码硬约束（唯一监听者、IndexedDB 唯一入口、消息契约先于实现等）。
 
 ### 0.2 本文件覆盖范围
@@ -246,7 +246,7 @@ sequenceDiagram
 
 **运行时链路（Capture Bookmark）**同理，payload 走 `CAPTURE_BOOKMARK`。
 
-### 3.2 Recall：用线索找回（关键词 Filter）
+### 3.2 Recall：用线索找（关键词 Filter）
 
 Recall 当前主链路（MVP/当前 Phase A/B 最小）是：
 
@@ -493,7 +493,7 @@ Omnibox 是“单次命中”入口：输入变化只生成原生建议，不做
 
 | 功能                  | UI 调用（background-client） | Background handler            | 领域/服务                                            | IndexedDB 写回                            |
 | --------------------- | ---------------------------- | ----------------------------- | ---------------------------------------------------- | ----------------------------------------- |
-| Recall（关键词找回）  | `recallWithClue()`           | `handleRecallWithClue()`      | `application/recall/recall-service.ts` + core recall | 读 `MemoryItem`（按 `RECALL_SCAN_LIMIT`） |
+| Recall（关键词找）    | `recallWithClue()`           | `handleRecallWithClue()`      | `application/recall/recall-service.ts` + core recall | 读 `MemoryItem`（按 `RECALL_SCAN_LIMIT`） |
 | Need A Clue / dismiss | `recordRecallDismiss()`      | `handleRecordRecallDismiss()` | `memoryItemService.recordDismiss`                    | 写 `dismissCount`/`lastDismissedAt`       |
 | 打开结果行为          | `recordMemoryOpen()`         | `handleRecordMemoryOpen()`    | `memoryItemService.recordOpen`                       | 写 `openCount`/`lastOpenedAt`             |
 | 列出记忆库            | `listMemoryItems()`          | `handleListMemoryItems()`     | `memoryItemService.list()`                           | 读 MemoryItems                            |

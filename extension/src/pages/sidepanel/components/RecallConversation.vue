@@ -239,7 +239,6 @@ function handleToggleDetailExportSelection(id: string): void {
 
       <template v-else>
         <div class="assistant-turn">
-          <p class="assistant-turn-name">Yiveno</p>
           <p v-if="turn.contextStatus" class="assistant-turn-status">{{ turn.contextStatus }}</p>
           <p
             v-if="turn.understandingEcho && turn.understandingEcho.length > 0"
@@ -370,27 +369,33 @@ function handleToggleDetailExportSelection(id: string): void {
             </div>
           </div>
 
+          <!--
+            快速反馈区：追问芯片（硬收窄）+「都不是」（否定本轮候选）同区异形。
+            芯片在前；否定控件在末尾，用 text 钮而非 pill，避免读成又一条 clue。
+          -->
           <div
-            v-if="turn.allowDismiss && latestDismissibleAssistantId === turn.id"
-            class="recall-feedback-actions"
-          >
-            <AppButton type="button" variant="text" @click="onDismissClick">
-              {{ t('popup_dismiss_candidates') }}
-            </AppButton>
-          </div>
-
-          <div
-            v-if="turn.suggestions && turn.suggestions.length > 0"
-            class="assistant-turn-suggestions"
+            v-if="
+              (turn.suggestions && turn.suggestions.length > 0) ||
+              (turn.allowDismiss && latestDismissibleAssistantId === turn.id)
+            "
+            class="assistant-turn-quick-feedback"
           >
             <button
-              v-for="suggestion in turn.suggestions"
+              v-for="suggestion in turn.suggestions ?? []"
               :key="suggestion.id"
               type="button"
               class="assistant-turn-pill"
               @click="onSuggestionClick(suggestion.value)"
             >
               {{ suggestion.label }}
+            </button>
+            <button
+              v-if="turn.allowDismiss && latestDismissibleAssistantId === turn.id"
+              type="button"
+              class="assistant-turn-dismiss"
+              @click="onDismissClick"
+            >
+              {{ t('popup_dismiss_candidates') }}
             </button>
           </div>
         </div>
@@ -404,7 +409,6 @@ function handleToggleDetailExportSelection(id: string): void {
       :aria-label="pendingAriaLabel"
     >
       <div class="assistant-turn assistant-turn--pending">
-        <p class="assistant-turn-name">Yiveno</p>
         <div class="pending-status-row" aria-live="polite">
           <div class="pending-indicator" aria-hidden="true">
             <span class="pending-dot" />
@@ -558,14 +562,6 @@ function handleToggleDetailExportSelection(id: string): void {
   text-align: center;
 }
 
-.assistant-turn-name {
-  margin: 0;
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.01em;
-  color: var(--on-surface-muted);
-}
-
 .assistant-turn-status {
   min-width: 0;
   max-width: 100%;
@@ -707,16 +703,11 @@ function handleToggleDetailExportSelection(id: string): void {
   padding-top: 2px;
 }
 
-.recall-feedback-actions {
-  display: flex;
-  justify-content: flex-end;
-  padding-top: var(--space-2xs);
-}
-
-.assistant-turn-suggestions {
+.assistant-turn-quick-feedback {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-xs);
+  align-items: center;
+  gap: var(--space-xs) var(--space-sm);
   padding-top: var(--space-2xs);
 }
 
@@ -744,8 +735,30 @@ function handleToggleDetailExportSelection(id: string): void {
   outline-offset: 2px;
 }
 
-.assistant-turn-pill--secondary {
-  color: var(--accent);
+/* 否定反馈：同区末尾弱化文字钮，禁止做成追问 pill */
+.assistant-turn-dismiss {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 var(--space-2xs);
+  border: none;
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1;
+  color: var(--on-surface-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.assistant-turn-dismiss:hover {
+  color: var(--on-surface);
+  background: var(--surface-chrome);
+}
+
+.assistant-turn-dismiss:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .assistant-turn-candidates {
