@@ -18,7 +18,8 @@ describe('buildMergedMemoryEnrichment', () => {
     })
     expect(result.path).toBe('rule_only')
     expect(result.proposal).toBeNull()
-    expect(result.merged.tags).toContain('video')
+    // 禁止 host→类型表：仅 YouTube 域名不钉 video（ADR-005）
+    expect(result.merged.tags).not.toContain('video')
     expect(result.merged.entities).toEqual([])
   })
 
@@ -54,7 +55,7 @@ describe('buildMergedMemoryEnrichment', () => {
     })
     expect(result.path).toBe('rule_plus_llm')
     expect(result.proposal?.keywords).toEqual(expect.arrayContaining(['war', 'documentary']))
-    expect(result.merged.keywords).toEqual(expect.arrayContaining(['war', 'documentary', 'video']))
+    expect(result.merged.keywords).toEqual(expect.arrayContaining(['war', 'documentary']))
     expect(result.merged.entities).toEqual(expect.arrayContaining(['BBC']))
     expect(result.merged.summary).toBe('WWII related BBC video')
   })
@@ -76,7 +77,8 @@ describe('buildMergedMemoryEnrichment', () => {
       requestLlmProposal: true
     })
     expect(result.path).toBe('llm_failed_degraded')
-    expect(result.merged.tags).toContain('video')
+    // 降级规则同样不靠 host 钉类型
+    expect(result.merged.tags).not.toContain('video')
   })
 
   it('日配额耗尽时返回 quota_exceeded', async () => {

@@ -455,7 +455,8 @@ describe('recallByKeywordWithParsedClue', () => {
         url: 'https://www.youtube.com/watch?v=wwii-doc'
       }
     })
-    expect(item.clues.tags).toContain('video')
+    // 无 host→类型表时不自动钉 video；召回靠标题字面 WWII
+    expect(item.clues.tags).not.toContain('video')
     expect(item.clues.keywords).not.toEqual(expect.arrayContaining(['wwii']))
 
     const english = recallByKeywordWithParsedClue([item], 'wwii related video', {
