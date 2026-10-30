@@ -4,7 +4,6 @@
  */
 
 export {
-  HYBRID_MIN_COSINE_SIMILARITY,
   HYBRID_SEMANTIC_NEIGHBOR_LIMIT,
   rankIdsByCosineToQuery,
   scoreFromCosineSimilarity

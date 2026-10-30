@@ -232,9 +232,6 @@ export const SLOT_AGREEMENT_NEGATIVE_FIELDS = [
   'excludeContentTerms'
 ] as const satisfies readonly SlotAgreementField[]
 
-export type SlotAgreementPositiveField = (typeof SLOT_AGREEMENT_POSITIVE_FIELDS)[number]
-export type SlotAgreementNegativeField = (typeof SLOT_AGREEMENT_NEGATIVE_FIELDS)[number]
-
 export interface SlotAgreementBucketResult {
   /** 该桶内已检查字段是否通过 */
   fields: Partial<Record<SlotAgreementField, boolean>>

@@ -36,6 +36,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@supabase/supabase-js": "^2.117.0",
     "@types/chrome": "^0.3.4",
     "@types/node": "^24.19.1",
     "@vitejs/plugin-basic-ssl": "^2.3.0",

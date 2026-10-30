@@ -20,7 +20,6 @@ const SOURCE_LOCAL_PROFILE_ID = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
 /** 与 RECALL_EVAL_NOW_MS 同日：2026-07-25T12:00Z */
 export const RETRIEVAL_ABLATION_NOW_MS = RECALL_EVAL_NOW_MS
 
-const ABLATION_NOW_ISO = new Date(RETRIEVAL_ABLATION_NOW_MS).toISOString()
 const RECENT_ISO = '2026-07-24T09:00:00.000Z'
 const OLD_ISO = '2026-06-01T09:00:00.000Z'
 
@@ -231,6 +230,3 @@ export function ablationCorpusFingerprint(items: readonly MemoryItem[]): string 
     .sort()
     .join('|')
 }
-
-/** 时钟 ISO（与 nowMs 一致，便于报告）。 */
-export const RETRIEVAL_ABLATION_NOW_ISO = ABLATION_NOW_ISO
