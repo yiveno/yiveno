@@ -66,7 +66,8 @@ describe('chrome-bookmark-bulk-import', () => {
     }
   })
 
-  it('bulkPutChromeBookmarkLeaves 按批 putMany 写入', async () => {
+  // fake-idb 大批量 putMany 在全仓并行时偶发贴近默认 10s；单独跑约 7s
+  it('bulkPutChromeBookmarkLeaves 按批 putMany 写入', { timeout: 30_000 }, async () => {
     const putManySpy = vi.spyOn(memoryItemRepository, 'putMany')
     const leaves = createLeaves(MEMORY_ITEM_BULK_IMPORT_BATCH_SIZE + 10)
 
