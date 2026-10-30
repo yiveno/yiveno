@@ -1,0 +1,527 @@
+{
+  "schemaVersion": 1,
+  "capturedAt": "2026-10-29T15:30:37.638Z",
+  "gitSha": "6c8af2c9973d8ac4c70ca3311ec873673d86f274",
+  "model": "deepseek-v4-flash",
+  "baseUrl": "https://api.deepseek.com",
+  "temperature": 0,
+  "maxTokens": 400,
+  "disableThinking": true,
+  "nowMsIso": "2026-07-28T12:00:00.000Z",
+  "nowMs": 1785240000000,
+  "gateFilter": "all",
+  "caseCount": 37,
+  "command": "PARSE_GOLD_LLM_MODEL=deepseek-v4-flash PARSE_GOLD_LLM_GATE=all bun run parse-gold:llm",
+  "fingerprintsSha256": {
+    "extension/src/core/recall/understand/build-llm-parse-prompt.ts": "f06d92e9de407d20908913914f057a9de40b295fbb0ba63cc0e2c1fe8cc85a60",
+    "extension/src/core/recall/understand/llm-parsed-clue-proposal.ts": "53f90c8aacadb2ac142a2ccc41cf279e0d4bcfd7b82b8a019cc58a4e2cd9fc68",
+    "extension/src/core/recall/understand/parse-recall-clue-with-llm.ts": "6cc300d1428f3caa6cef0b3bd55dad12455ba9d2e11baac37f70f9852a3ebed6",
+    "extension/src/core/recall/eval/parse-gold-cases.ts": "9b33bea42df3a70e36c5dbe012cc40a368d4e86010f902b8dc911617d317f785",
+    "extension/src/core/recall/eval/parse-gold-now.ts": "e4ab874e3aebb27ad2e993740ee288018ef15e5d27ce3074ccd9aee8d92cb0b0",
+    "extension/src/core/recall/eval/judge-parse-gold.ts": "324d510bc7dbdfced7ca4e3b75b784971a0f32111ca80bbccf5e324a834456e4"
+  },
+  "layers": {
+    "L1_schema": {
+      "passed": 37,
+      "failed": 0,
+      "skipped": 0,
+      "failedCaseIds": []
+    },
+    "L2_parse_gold": {
+      "rules": {
+        "must": "29/29",
+        "stretch": "4/8"
+      },
+      "llm": {
+        "must": "27/29",
+        "stretch": "7/8"
+      },
+      "stretchLiftedByLlm": [
+        "stretch-verse-as-poem",
+        "stretch-never-finished-writeup",
+        "stretch-manifest-v3-looked-at"
+      ],
+      "mustRegressedByLlm": ["p0-long-time-ago-bookmark", "must-wwii-related-video"],
+      "stretchStillFailing": ["stretch-password-staging-stored"],
+      "llmMustFailures": [
+        {
+          "id": "p0-long-time-ago-bookmark",
+          "failureKind": "slot",
+          "detail": "confidence 期望 high，实际 medium"
+        },
+        {
+          "id": "must-wwii-related-video",
+          "failureKind": "slot",
+          "detail": "contentTerms 不应含 [related]（实际 [wwii, related]）"
+        }
+      ],
+      "llmStretchFailures": [
+        {
+          "id": "stretch-password-staging-stored",
+          "failureKind": "slot",
+          "detail": "confidence 期望 high，实际 medium"
+        }
+      ]
+    },
+    "L3_recall_hybrid": "NOT_RUN"
+  },
+  "cases": [
+    {
+      "caseId": "p0-time-type-entity-li-bai",
+      "gate": "must",
+      "clue": "yesterday saved a poem about Li Bai",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 1062,
+      "promptTokens": 604,
+      "completionTokens": 46,
+      "totalTokens": 650
+    },
+    {
+      "caseId": "p0-time-type-content-auth-code",
+      "gate": "must",
+      "clue": "last week the code snippet about auth",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 1045,
+      "promptTokens": 603,
+      "completionTokens": 40,
+      "totalTokens": 643
+    },
+    {
+      "caseId": "p0-behavior-song-yesterday",
+      "gate": "must",
+      "clue": "the song I played on repeat yesterday",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 1001,
+      "promptTokens": 603,
+      "completionTokens": 38,
+      "totalTokens": 641
+    },
+    {
+      "caseId": "p0-half-read-article",
+      "gate": "must",
+      "clue": "the article I didn't finish reading",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 971,
+      "promptTokens": 603,
+      "completionTokens": 36,
+      "totalTokens": 639
+    },
+    {
+      "caseId": "p0-note-deployment-page",
+      "gate": "must",
+      "clue": "yesterday left a note about the deployment page",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 1072,
+      "promptTokens": 605,
+      "completionTokens": 37,
+      "totalTokens": 642
+    },
+    {
+      "caseId": "p0-article-last-week-filler-read",
+      "gate": "must",
+      "clue": "the article I read last week",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 1157,
+      "promptTokens": 602,
+      "completionTokens": 35,
+      "totalTokens": 637
+    },
+    {
+      "caseId": "p0-recently-collected-bookmark",
+      "gate": "must",
+      "clue": "The recently collected bookmark",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 888,
+      "promptTokens": 600,
+      "completionTokens": 40,
+      "totalTokens": 640
+    },
+    {
+      "caseId": "p0-just-saved-behavior-only",
+      "gate": "must",
+      "clue": "just saved",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 774,
+      "promptTokens": 598,
+      "completionTokens": 37,
+      "totalTokens": 635
+    },
+    {
+      "caseId": "p0-day-before-yesterday-rag",
+      "gate": "must",
+      "clue": "day before yesterday the article about RAG",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 869,
+      "promptTokens": 604,
+      "completionTokens": 39,
+      "totalTokens": 643
+    },
+    {
+      "caseId": "p0-while-ago-half-read-article",
+      "gate": "must",
+      "clue": "the article I didn't finish reading a while ago",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 847,
+      "promptTokens": 606,
+      "completionTokens": 40,
+      "totalTokens": 646
+    },
+    {
+      "caseId": "p0-few-months-back-libraries",
+      "gate": "must",
+      "clue": "something about public libraries i saved a few months back",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 933,
+      "promptTokens": 606,
+      "completionTokens": 46,
+      "totalTokens": 652
+    },
+    {
+      "caseId": "p0-last-month-article",
+      "gate": "must",
+      "clue": "an article i saved last month about remote work",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 796,
+      "promptTokens": 605,
+      "completionTokens": 44,
+      "totalTokens": 649
+    },
+    {
+      "caseId": "p0-some-time-ago-excerpts",
+      "gate": "must",
+      "clue": "the excerpts i saved some time ago",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 662,
+      "promptTokens": 603,
+      "completionTokens": 45,
+      "totalTokens": 648
+    },
+    {
+      "caseId": "p0-long-time-ago-bookmark",
+      "gate": "must",
+      "clue": "a bookmark from a long time ago",
+      "passed": false,
+      "failureKind": "slot",
+      "detail": "confidence 期望 high，实际 medium",
+      "latencyMs": 877,
+      "promptTokens": 603,
+      "completionTokens": 36,
+      "totalTokens": 639
+    },
+    {
+      "caseId": "p0-full-english-li-bai-short",
+      "gate": "must",
+      "clue": "yesterday poem about Li Bai",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 731,
+      "promptTokens": 602,
+      "completionTokens": 40,
+      "totalTokens": 642
+    },
+    {
+      "caseId": "p0-code-deployment-last-week",
+      "gate": "must",
+      "clue": "last week saved code deployment",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 835,
+      "promptTokens": 601,
+      "completionTokens": 44,
+      "totalTokens": 645
+    },
+    {
+      "caseId": "p0-command-env-sync",
+      "gate": "must",
+      "clue": "env sync command",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 585,
+      "promptTokens": 599,
+      "completionTokens": 37,
+      "totalTokens": 636
+    },
+    {
+      "caseId": "p0-password-recently-saved",
+      "gate": "must",
+      "clue": "recently just saved password",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 978,
+      "promptTokens": 602,
+      "completionTokens": 40,
+      "totalTokens": 642
+    },
+    {
+      "caseId": "p0-long-ago-poem",
+      "gate": "must",
+      "clue": "long ago a poem",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 979,
+      "promptTokens": 600,
+      "completionTokens": 36,
+      "totalTokens": 636
+    },
+    {
+      "caseId": "p0-quote-yesterday",
+      "gate": "must",
+      "clue": "yesterday the quote",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 533,
+      "promptTokens": 600,
+      "completionTokens": 34,
+      "totalTokens": 634
+    },
+    {
+      "caseId": "p0-poetry-alias-li-bai",
+      "gate": "must",
+      "clue": "poetry about Li Bai",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 878,
+      "promptTokens": 601,
+      "completionTokens": 39,
+      "totalTokens": 640
+    },
+    {
+      "caseId": "p0-just-saved-article",
+      "gate": "must",
+      "clue": "just saved article",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 673,
+      "promptTokens": 599,
+      "completionTokens": 39,
+      "totalTokens": 638
+    },
+    {
+      "caseId": "p0-pure-keywords-cloudflare",
+      "gate": "must",
+      "clue": "Cloudflare Workers",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 542,
+      "promptTokens": 599,
+      "completionTokens": 36,
+      "totalTokens": 635
+    },
+    {
+      "caseId": "p0-only-type-poem",
+      "gate": "must",
+      "clue": "poem",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 944,
+      "promptTokens": 598,
+      "completionTokens": 34,
+      "totalTokens": 632
+    },
+    {
+      "caseId": "p0-only-time-yesterday",
+      "gate": "must",
+      "clue": "yesterday saved that",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 965,
+      "promptTokens": 600,
+      "completionTokens": 38,
+      "totalTokens": 638
+    },
+    {
+      "caseId": "p0-zero-anchor-bored",
+      "gate": "must",
+      "clue": "i feel bored",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 835,
+      "promptTokens": 599,
+      "completionTokens": 34,
+      "totalTokens": 633
+    },
+    {
+      "caseId": "p0-assistant-like-songs",
+      "gate": "must",
+      "clue": "put a few songs i like",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 746,
+      "promptTokens": 602,
+      "completionTokens": 35,
+      "totalTokens": 637
+    },
+    {
+      "caseId": "p0-half-read-compat",
+      "gate": "must",
+      "clue": "half read the article",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 1281,
+      "promptTokens": 600,
+      "completionTokens": 36,
+      "totalTokens": 636
+    },
+    {
+      "caseId": "stretch-verse-as-poem",
+      "gate": "stretch",
+      "clue": "that Li Bai verse from the other day",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 739,
+      "promptTokens": 604,
+      "completionTokens": 42,
+      "totalTokens": 646
+    },
+    {
+      "caseId": "stretch-never-finished-writeup",
+      "gate": "stretch",
+      "clue": "the deployment writeup I never finished",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 731,
+      "promptTokens": 603,
+      "completionTokens": 42,
+      "totalTokens": 645
+    },
+    {
+      "caseId": "stretch-music-kept-opening",
+      "gate": "stretch",
+      "clue": "music I kept opening yesterday",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 801,
+      "promptTokens": 601,
+      "completionTokens": 40,
+      "totalTokens": 641
+    },
+    {
+      "caseId": "stretch-my-note-launch-checklist",
+      "gate": "stretch",
+      "clue": "the page with my note about the launch checklist",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 935,
+      "promptTokens": 605,
+      "completionTokens": 39,
+      "totalTokens": 644
+    },
+    {
+      "caseId": "stretch-rate-limits-docs",
+      "gate": "stretch",
+      "clue": "API docs about rate limits from earlier this week",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 890,
+      "promptTokens": 605,
+      "completionTokens": 43,
+      "totalTokens": 648
+    },
+    {
+      "caseId": "stretch-manifest-v3-looked-at",
+      "gate": "stretch",
+      "clue": "the thing about Manifest V3 I looked at recently",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 903,
+      "promptTokens": 606,
+      "completionTokens": 37,
+      "totalTokens": 643
+    },
+    {
+      "caseId": "must-wwii-related-video",
+      "gate": "must",
+      "clue": "wwii related video",
+      "passed": false,
+      "failureKind": "slot",
+      "detail": "contentTerms 不应含 [related]（实际 [wwii, related]）",
+      "latencyMs": 1173,
+      "promptTokens": 600,
+      "completionTokens": 38,
+      "totalTokens": 638
+    },
+    {
+      "caseId": "stretch-password-staging-stored",
+      "gate": "stretch",
+      "clue": "password I just stored for staging",
+      "passed": false,
+      "failureKind": "slot",
+      "detail": "confidence 期望 high，实际 medium",
+      "latencyMs": 675,
+      "promptTokens": 602,
+      "completionTokens": 42,
+      "totalTokens": 644
+    },
+    {
+      "caseId": "stretch-trying-to-remember-auth-snippet",
+      "gate": "stretch",
+      "clue": "I'm trying to remember the auth snippet from last week",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "latencyMs": 952,
+      "promptTokens": 607,
+      "completionTokens": 40,
+      "totalTokens": 647
+    }
+  ],
+  "latencyMsSummary": {
+    "n": 37,
+    "p50": 878,
+    "p95": 1173,
+    "min": 533,
+    "max": 1281
+  },
+  "tokensSummary": {
+    "promptSum": 22280,
+    "completionSum": 1444,
+    "totalSum": 23724,
+    "note": "sums from API usage fields only"
+  }
+}

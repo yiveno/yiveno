@@ -764,6 +764,8 @@ function resolveMissAssistantCopy(input: {
   hasRelatedGuess: boolean
   library: RecallShellLibraryState
   clue: string
+  /** 本轮 LLM 理解失败已降级规则时，空结果须绑定「简化理解」以免像单纯没找着 */
+  usedRulesFallback?: boolean
 }): { text: string; textSegments?: RecallShellTextSegment[] } {
   if (input.emptyKind === 'constrained_none') {
     return {
@@ -786,7 +788,9 @@ function resolveMissAssistantCopy(input: {
       ...(copy.bodySegments ? { textSegments: titleAndBody } : {})
     }
   }
-  return { text: t('popup_reply_miss') }
+  return {
+    text: input.usedRulesFallback ? t('popup_reply_miss_after_simpler_pass') : t('popup_reply_miss')
+  }
 }
 
 let importPollTimer: ReturnType<typeof setInterval> | null = null
@@ -1903,13 +1907,15 @@ async function runRecall(trimmedClue: string): Promise<void> {
       )
     } else {
       const relatedGuess = response.result.relatedGuess ?? null
+      const usedRulesFallback = response.result.understandSource === 'rules_fallback'
       const missFallback = resolveMissAssistantCopy({
         ...(response.result.emptyKind !== undefined
           ? { emptyKind: response.result.emptyKind }
           : {}),
         hasRelatedGuess: relatedGuess !== null,
         library: libraryState.value,
-        clue: highlightClue
+        clue: highlightClue,
+        usedRulesFallback
       })
       const understandingEcho = resolveUnderstandingEchoChips(response.result.parsed)
       const omitUnderstood = Boolean(understandingEcho)
@@ -1917,19 +1923,22 @@ async function runRecall(trimmedClue: string): Promise<void> {
       // 空库燃料文案含「导入」深链时优先，避免 Framing 盖掉可点链接
       const emptyFuelSegments = missFallback.textSegments
       const preferEmptyFuelCopy = Boolean(emptyFuelSegments)
+      // rules_fallback 空结果：优先用「简化理解后仍无邻域」正文，避免 Framing/默认 miss 盖掉诚实归因
       const missReply = preferEmptyFuelCopy
         ? missFallback
-        : missFacts !== undefined
-          ? {
-              text: renderRecallFraming(missFacts, t, { omitUnderstood }),
-              recallFramingFacts: missFacts
-            }
-          : response.result.recallFraming?.text.trim() && !omitUnderstood
+        : usedRulesFallback
+          ? missFallback
+          : missFacts !== undefined
             ? {
-                text: response.result.recallFraming.text,
-                recallFramingFacts: response.result.recallFraming.facts
+                text: renderRecallFraming(missFacts, t, { omitUnderstood }),
+                recallFramingFacts: missFacts
               }
-            : missFallback
+            : response.result.recallFraming?.text.trim() && !omitUnderstood
+              ? {
+                  text: response.result.recallFraming.text,
+                  recallFramingFacts: response.result.recallFraming.facts
+                }
+              : missFallback
       conversationTurns.value.push(
         createAssistantTurn({
           id: nextTurnId(),

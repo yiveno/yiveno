@@ -62,6 +62,7 @@ export interface UnderstandRecallClueOptions {
 function summarizeParsed(parsed: ParsedRecallClue): Record<string, unknown> {
   return {
     contentTerms: parsed.contentTerms,
+    excludeContentTerms: parsed.excludeContentTerms ?? [],
     timeLabel: parsed.timeRange?.label ?? null,
     objectTypes: parsed.objectTypes ?? null,
     behaviorHints: parsed.behaviorHints ?? null,

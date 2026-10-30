@@ -44,7 +44,6 @@ import {
   scoreFromCosineSimilarity,
   sortIdsByRrf
 } from '@/core/recall/hybrid-fusion'
-import { getFuzzyVariants } from '@/core/recall/fuzzy-lexicon'
 import { isGenericOnlyHitAgainstSpecificClue } from '@/core/recall/keyword-filter'
 import {
   excludeDismissedMemoryItems,
@@ -73,6 +72,7 @@ import {
   shouldAttemptTimeSoftReopen,
   softPenalizeMatchesByContentTermCorroboration
 } from '@/core/recall/content-term-corroboration'
+import { filterMatchesByExcludeContentTerms } from '@/core/recall/exclude-content-terms'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
 import { getMemoryItemDisplay } from '@/core/recall/recall-result'
@@ -142,7 +142,6 @@ async function finalizeKeywordResult(
   pairClue: string,
   options?: {
     skipOutcomePairs?: boolean
-    fuzzyExpandTokens?: readonly string[]
     /** Omnibox 快跳：略抬 open / 近因 / settled（ADR-007） */
     behaviorProfile?: 'omnibox'
   }
@@ -150,7 +149,6 @@ async function finalizeKeywordResult(
   const base = recallByKeywordWithParsedClue(items, displayClue, {
     candidateLimit: RECALL_RESULT_POOL_LIMIT,
     parsed,
-    ...(options?.fuzzyExpandTokens ? { fuzzyExpandTokens: options.fuzzyExpandTokens } : {}),
     ...(options?.behaviorProfile ? { behaviorProfile: options.behaviorProfile } : {})
   })
   const effectiveParsed = base.parsed ?? parsed
@@ -203,6 +201,20 @@ async function finalizeKeywordResult(
 }
 
 // Omnibox 路径：无联网向量兜底（ADR-007 · 完全本地）
+
+/**
+ * 对已打分的 keyword / semantic 池做时间筛 → RRF → 页上下文（boost/restrict）。
+ * 供 L2 消融评测在**预计算向量**下复用同一融合段；不改变算法。
+ */
+export function fuseKeywordAndSemanticPools(input: {
+  keywordMatches: RecallMatch[]
+  semanticMatches: RecallMatch[]
+  parsed: ParsedRecallClue
+  pageContextMode?: PageContextMode
+  currentTabDomain?: string
+}): RecallMatch[] {
+  return fuseScoredPools(input)
+}
 
 /** 对已打分的 keyword / semantic 池做时间筛 → RRF → 页上下文（boost/restrict）。 */
 function fuseScoredPools(input: {
@@ -688,6 +700,8 @@ export async function fuseHybridMatches(input: {
   // 副作用：fused 是空时也无法触发 timeSoftReopen（因为软佐证永不空），但 fused 空在
   // 上方 keyword/semantic 双空检查已覆盖，所以无需 timeSoftReopen 兜底（hybrid 路径）。
   let corroborated = softPenalizeMatchesByContentTermCorroboration(fused, corroborationTerms)
+  // 明确排除硬过滤（与 keyword 同规；软佐证不保证排除，故此处硬切）
+  corroborated = filterMatchesByExcludeContentTerms(corroborated, input.parsed.excludeContentTerms)
   let effectiveParsed = input.parsed
   let timeSoftReopen = false
 
@@ -696,6 +710,10 @@ export async function fuseHybridMatches(input: {
     effectiveParsed = parsedClueForTimeSoftReopen(input.parsed)
     fused = fuseWithParsed(effectiveParsed)
     corroborated = softPenalizeMatchesByContentTermCorroboration(fused, corroborationTerms)
+    corroborated = filterMatchesByExcludeContentTerms(
+      corroborated,
+      effectiveParsed.excludeContentTerms
+    )
     input.trace('info', 'Hybrid：内容佐证空窗，已做一次时间 soft 回退', {
       afterCount: corroborated.length
     })
@@ -715,7 +733,8 @@ export async function fuseHybridMatches(input: {
     contentTerms: corroborationTerms
   })
   // 实验三修复（2026-09-20）：hybrid 路径改为 soft penalty，与上一步同源（佐证永不硬切）。
-  const afterPairs = softPenalizeMatchesByContentTermCorroboration(withPairs, corroborationTerms)
+  let afterPairs = softPenalizeMatchesByContentTermCorroboration(withPairs, corroborationTerms)
+  afterPairs = filterMatchesByExcludeContentTerms(afterPairs, effectiveParsed.excludeContentTerms)
 
   const collapsed = collapseRecallMatches(afterPairs, {
     limit: RECALL_RESULT_POOL_LIMIT + RECALL_COLLAPSE_BACKFILL_EXTRA
@@ -957,8 +976,7 @@ export class HybridRecallBackend implements RecallBackend {
       timeSoftReopen = finalized.timeSoftReopen
     } else if (isOmniboxEntry) {
       // Omnibox 离线快跳（ADR-007）：已知锚点 → 纯本地关键词路径（无 Hybrid / 无向量 / 无 Outcome）。
-      // Indexed Fuzzy：预计算字典展开（js→javascript；recat→react）；仅 Omnibox；Side Panel 不用。
-      const fuzzyTokens = getFuzzyVariants(normalizedClue, 8)
+      // 不做查询侧静态缩写字典扩词（ADR-005）；缩写/口语残差 → Side Panel。
       const finalized = await finalizeKeywordResult(
         normalizedClue,
         items,
@@ -967,16 +985,9 @@ export class HybridRecallBackend implements RecallBackend {
         pairClue,
         {
           skipOutcomePairs: true,
-          behaviorProfile: 'omnibox',
-          // fuzzyTokens[0] === normalizedClue（归一化后），其余为展开变体
-          ...(fuzzyTokens.length > 1 ? { fuzzyExpandTokens: fuzzyTokens.slice(1) } : {})
+          behaviorProfile: 'omnibox'
         }
       )
-      trace('info', 'Omnibox Indexed Fuzzy：变体数', {
-        totalVariants: fuzzyTokens.length,
-        expandedVariants: fuzzyTokens.length - 1,
-        primaryClue: normalizedClue
-      })
       result = finalized.result
       effectiveParsedForFraming = finalized.effectiveParsed
       timeSoftReopen = finalized.timeSoftReopen

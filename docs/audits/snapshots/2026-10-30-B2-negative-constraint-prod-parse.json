@@ -1,0 +1,80 @@
+{
+  "generatedAt": "2026-10-29T17:23:26.267Z",
+  "evidenceClass": "production_real_parse_via_worker_clue_complete",
+  "noteZh": "Prompt 由客户端 buildLlmParseClueMessages 构造；Worker 仅代理 chat。Schema 与生产 mapLlmProposalToParsedClue 同源。非 Side Panel 真机 UI，但是生产 NLU 同构链路。",
+  "apiBase": "http://localhost:8787",
+  "schemaKeys": [
+    "raw",
+    "topic",
+    "timeRange",
+    "timeConfidence",
+    "objectTypes",
+    "behaviorHints",
+    "noteHint",
+    "contentTerms",
+    "excludeContentTerms",
+    "confidence"
+  ],
+  "hasExcludeSlotOnParsedRecallClue": true,
+  "proposalSchemaKeys": [
+    "timeLabel",
+    "objectTypes",
+    "behaviorHints",
+    "noteHint",
+    "contentTerms",
+    "confidence"
+  ],
+  "results": [
+    {
+      "id": "intent-A",
+      "clue": "my Yellowstone lodging booking confirmation from that summer, not the day-hike packing checklist",
+      "httpStatus": 500,
+      "model": null,
+      "provider": null,
+      "rawTextPreview": null,
+      "proposal": null,
+      "mappedParsed": null,
+      "mappedFilterClue": null,
+      "rulesParsed": {
+        "raw": "my Yellowstone lodging booking confirmation from that summer, not the day-hike packing checklist",
+        "contentTerms": ["yellowstone", "lodging", "booking", "confirmation", "from", "summer"],
+        "excludeContentTerms": ["day-hike", "packing", "checklist"],
+        "confidence": "low"
+      },
+      "rulesFilterClue": "yellowstone lodging booking confirmation summer",
+      "parseError": null,
+      "error": "Internal Server Error"
+    },
+    {
+      "id": "intent-B",
+      "clue": "the Yellowstone day-hike packing checklist I saved",
+      "httpStatus": 200,
+      "model": "deepseek-v4-flash",
+      "provider": "clue",
+      "rawTextPreview": "{\"timeLabel\":null,\"objectTypes\":[],\"behaviorHints\":[\"recently_saved\"],\"noteHint\":false,\"contentTerms\":[\"yellowstone\",\"day\",\"hike\",\"packing\",\"checklist\"],\"excludeContentTerms\":[],\"confidence\":\"medium\"}",
+      "proposal": {
+        "timeLabel": null,
+        "objectTypes": [],
+        "behaviorHints": ["recently_saved"],
+        "noteHint": false,
+        "contentTerms": ["yellowstone", "day", "hike", "packing", "checklist"],
+        "excludeContentTerms": [],
+        "confidence": "medium"
+      },
+      "mappedParsed": {
+        "raw": "the Yellowstone day-hike packing checklist I saved",
+        "contentTerms": ["yellowstone", "day", "hike", "packing", "checklist"],
+        "confidence": "low"
+      },
+      "mappedFilterClue": "yellowstone day hike packing checklist",
+      "rulesParsed": {
+        "raw": "the Yellowstone day-hike packing checklist I saved",
+        "contentTerms": ["yellowstone", "day-hike", "packing", "checklist"],
+        "confidence": "low"
+      },
+      "rulesFilterClue": "yellowstone day-hike packing checklist",
+      "parseError": null,
+      "error": null
+    }
+  ]
+}

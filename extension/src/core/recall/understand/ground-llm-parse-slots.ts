@@ -8,28 +8,9 @@ import {
 import type { RecallBehaviorHint, RecallObjectType } from '@/core/recall/parse-recall-clue-types'
 
 /**
- * LLM 侧额外同义词 → canonical 类型（规则词典尚未收录的词面）。
- * 仅用于「线索里出现该词时允许保留对应 objectType」。
+ * 槽位门禁只认 `parse-recall-clue-lexicon` 闭集 surface（产品语言 → 枚举）。
+ * **禁止**再维护第二套 LLM 影子别名表（2026-10-30 已并入主词典）。
  */
-const LLM_OBJECT_TYPE_ALIASES: Array<{ surface: string; value: RecallObjectType }> = [
-  { surface: 'verse', value: 'poem' },
-  { surface: 'verses', value: 'poem' },
-  { surface: 'write-up', value: 'article' },
-  { surface: 'writeup', value: 'article' },
-  { surface: 'youtube', value: 'video' },
-  { surface: 'clip', value: 'video' },
-  { surface: 'movie', value: 'video' },
-  { surface: 'movies', value: 'video' },
-  { surface: 'film', value: 'video' },
-  { surface: 'films', value: 'video' }
-]
-
-/** 行为别名：规则词典未收录、但 stretch 金标需要的说法。 */
-const LLM_BEHAVIOR_ALIASES: Array<{ surface: string; value: RecallBehaviorHint }> = [
-  { surface: 'never finished', value: 'half_read' },
-  { surface: 'didnt finish', value: 'half_read' },
-  { surface: "didn't finish", value: 'half_read' }
-]
 
 function isAsciiWordChar(char: string | undefined): boolean {
   return Boolean(char && /[a-z0-9]/.test(char))
@@ -65,7 +46,7 @@ function clueHasSurface(normalizedClue: string, surface: string): boolean {
   return false
 }
 
-/** 保留有词面支撑的行为；线索命中别名时即使模型漏提也补上。 */
+/** 保留有词面支撑的行为；线索命中词典时即使模型漏提也补上。 */
 export function groundBehaviorHints(
   clue: string,
   hints: RecallBehaviorHint[] | undefined
@@ -77,17 +58,8 @@ export function groundBehaviorHints(
     const lexiconHit = RECALL_BEHAVIOR_LEXICON.some(
       entry => entry.value === hint && clueHasSurface(normalized, entry.surface)
     )
-    const aliasHit = LLM_BEHAVIOR_ALIASES.some(
-      entry => entry.value === hint && clueHasSurface(normalized, entry.surface)
-    )
-    if (lexiconHit || aliasHit) {
+    if (lexiconHit) {
       kept.add(hint)
-    }
-  }
-
-  for (const entry of LLM_BEHAVIOR_ALIASES) {
-    if (clueHasSurface(normalized, entry.surface)) {
-      kept.add(entry.value)
     }
   }
 
@@ -169,7 +141,7 @@ export function groundTimeLabel(
 }
 
 /**
- * 只保留线索中确有词面（或 LLM 别名）支撑的对象类型；别名命中时可补全模型漏提的类型。
+ * 只保留线索中确有词典词面支撑的对象类型；词面命中时可补全模型漏提的类型。
  */
 export function groundObjectTypes(
   clue: string,
@@ -182,17 +154,8 @@ export function groundObjectTypes(
     const lexiconHit = RECALL_OBJECT_TYPE_LEXICON.some(
       entry => entry.value === type && clueHasSurface(normalized, entry.surface)
     )
-    const aliasHit = LLM_OBJECT_TYPE_ALIASES.some(
-      entry => entry.value === type && clueHasSurface(normalized, entry.surface)
-    )
-    if (lexiconHit || aliasHit) {
+    if (lexiconHit) {
       kept.add(type)
-    }
-  }
-
-  for (const entry of LLM_OBJECT_TYPE_ALIASES) {
-    if (clueHasSurface(normalized, entry.surface)) {
-      kept.add(entry.value)
     }
   }
 
@@ -243,22 +206,12 @@ export function stripGroundedSurfacesFromTerms(
           addSurfaceTokens(entry.surface)
         }
       }
-      for (const entry of LLM_OBJECT_TYPE_ALIASES) {
-        if (entry.value === type && clueHasSurface(normalizedClue, entry.surface)) {
-          addSurfaceTokens(entry.surface)
-        }
-      }
     }
   }
 
   if (input.behaviorHints) {
     for (const hint of input.behaviorHints) {
       for (const entry of RECALL_BEHAVIOR_LEXICON) {
-        if (entry.value === hint && clueHasSurface(normalizedClue, entry.surface)) {
-          addSurfaceTokens(entry.surface)
-        }
-      }
-      for (const entry of LLM_BEHAVIOR_ALIASES) {
         if (entry.value === hint && clueHasSurface(normalizedClue, entry.surface)) {
           addSurfaceTokens(entry.surface)
         }

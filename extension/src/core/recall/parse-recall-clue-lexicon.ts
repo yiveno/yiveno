@@ -1,6 +1,9 @@
 /**
  * P0 口语线索词典：时间 / 对象类型 / 行为 / 附注指向。
  *
+ * **角色：** 产品语言 → 闭集枚举（规则 parse + LLM grounding 共用唯一词表）。
+ * **不是**全场景内容理解 / 同义扩词通解；残差留给字面与 Hybrid（ADR-005）。
+ *
  * 规范见产品文档 §0.1.1「市场语言与 Recall Language Strategy」：
  * T1 英语为 parser 一级语料；surface 优先真实用户口语，而非开发者/技术文档用语。
  * 内部 canonical 一律英文 slug；其它语言仅作 alias（本文件 P0 暂不含 alias）。
@@ -94,6 +97,8 @@ export const RECALL_TIME_LEXICON: RecallLexiconEntry<RecallRelativeTimeLabel>[] 
 export const RECALL_OBJECT_TYPE_LEXICON: RecallLexiconEntry<RecallObjectType>[] = [
   // poem
   { surface: 'poetry', value: 'poem' },
+  { surface: 'verses', value: 'poem' },
+  { surface: 'verse', value: 'poem' },
   { surface: 'poems', value: 'poem' },
   { surface: 'poem', value: 'poem' },
 
@@ -183,6 +188,7 @@ export const RECALL_BEHAVIOR_LEXICON: RecallLexiconEntry<RecallBehaviorHint>[] =
   { surface: "didn't finish", value: 'half_read' },
   { surface: 'didnt finish', value: 'half_read' },
   { surface: 'never finished reading', value: 'half_read' },
+  { surface: 'never finished', value: 'half_read' },
   { surface: 'stopped halfway through', value: 'half_read' },
   { surface: 'only got halfway through', value: 'half_read' },
   { surface: 'halfway through', value: 'half_read' },

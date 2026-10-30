@@ -761,6 +761,9 @@
   "popup_reply_miss": {
     "message": "Nothing close enough turned up. Try another detail that stuck with you."
   },
+  "popup_reply_miss_after_simpler_pass": {
+    "message": "Nothing close enough with that simpler on-device reading. Try another detail that stuck with you."
+  },
   "popup_session_status_continuing": {
     "message": "Still refining this find — not a new one."
   },

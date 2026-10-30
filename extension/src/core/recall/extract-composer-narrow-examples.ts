@@ -3,7 +3,7 @@
  * P1：按切割力（信息增益）排序——优先能切开邻域的类型/token/host。
  */
 
-import { MEMORY_DOMAIN_ENRICHMENT_RULES } from '@/core/memory/enrich-memory-clues'
+import { detectObjectTypesFromText } from '@/core/memory/enrich-memory-clues'
 import {
   isUsableRecallToken,
   normalizeRecallText,
@@ -130,17 +130,6 @@ function normalizeHost(urlOrHost: string): string | null {
   } catch {
     return null
   }
-}
-
-function matchObjectTypeFromHost(host: string): RecallObjectType | null {
-  for (const rule of MEMORY_DOMAIN_ENRICHMENT_RULES) {
-    for (const candidate of rule.hosts) {
-      if (host === candidate || host.endsWith(`.${candidate}`)) {
-        return rule.objectType
-      }
-    }
-  }
-  return null
 }
 
 /** 展示用 host 短标签（仍须能在 url 中核验）。 */
@@ -300,17 +289,19 @@ export function extractComposerNarrowExamples(input: ExtractComposerNarrowExampl
   }
   const hasHostDiversity = hostCountsEarly.size >= 2
 
-  // A. 对象类型（域名启发式 + bookmark 种类）；须 ≥2 种且无单类统治
+  // A. 对象类型（标题/副标题/摘录/URL 词面 + bookmark 种类）；须 ≥2 种且无单类统治
+  // 无高频站 host→类型表（ADR-005）；URL 含 youtube 等词典 surface 时仍可识别
   const typeCounts = new Map<RecallObjectType, number>()
   for (const card of candidates) {
-    const host = normalizeHost(card.url)
-    const fromHost = host ? matchObjectTypeFromHost(host) : null
-    const type: RecallObjectType | null =
-      fromHost ?? (card.itemKind === 'bookmark' ? 'bookmark' : null)
-    if (!type) {
-      continue
+    const blob = [card.title, card.subtitle, card.excerpt, card.note, card.url]
+      .filter(Boolean)
+      .join('\n')
+    const fromText = detectObjectTypesFromText(blob)
+    const types: RecallObjectType[] =
+      fromText.length > 0 ? fromText : card.itemKind === 'bookmark' ? ['bookmark'] : []
+    for (const type of types) {
+      typeCounts.set(type, (typeCounts.get(type) ?? 0) + 1)
     }
-    typeCounts.set(type, (typeCounts.get(type) ?? 0) + 1)
   }
   const typedTotal = [...typeCounts.values()].reduce((sum, n) => sum + n, 0)
   if (typeCounts.size >= 2 && typedTotal > 0) {

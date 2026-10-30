@@ -695,6 +695,15 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 3. **无有效 contentTerms**（纯类型/时间/刚存，或仅剩弱残留）：不启用本门，避免误伤约束邻域。
 4. 回退最多 **1** 次；禁止无限扩窗。
 
+**线索内明确排除（Normative · 2026-10-30 · `excludeContentTerms`）：**
+
+- **语义：** 用户在 clue 中**明确要求不要**的内容词（如 `not the day-hike packing checklist`）。写入 `ParsedRecallClue.excludeContentTerms`（及 LLM proposal 同名槽）。**不是** dismiss / Outcome 反馈否定；**不是**开放同义词典。
+- **理解：** LLM Prompt 须区分正向 `contentTerms`、明确排除、不确定（`not sure` / `I don't remember` → **不**填排除）、行为否定（`not finished` → `half_read`）。规则降级仅在高置信表面（`not the …` / `except the …` / `rather than …` / `don't want …`）抽排除跨度；否则**只剥孤立否定标记、不猜范围**。
+- **冲突：** 同词不得双挂；共享词**保留正词、移出排除**（降低硬过滤误杀主题锚）。
+- **执行：** keyword / Hybrid 在佐证（或 soft 佐证）之后，对命中任一有效排除词的候选做**硬过滤**。排除匹配为**专用契约**（与正佐证裸 `includes` 分计）：字段按非字母数字切分（连字符为边界）；单词用 token 相等 + 双向拉丁屈折（`hike` 命中 `day-hike`/`hiking`，**不**命中 `hikers`）；连字符短语按连续 token 对齐（`day-hike` ≡ `day hike`）。过泛词（如单独 `day`）不进有效排除集。硬过滤后空池 = 诚实空邻域；**不**因排除单独做时间 soft 回退。选硬过滤而非软惩罚：软惩罚**不保证**排除，无法兑现「不要 X」。
+- **多轮 merge：** `excludeContentTerms` 并集后再与正词冲突消解。
+- **UI：** `Heard as` **不**展示 exclude（内部可用 `listExcludeTermsHittingItem` 诊断）；与 dismiss 反馈否定分计。
+
 NA 分立：`a while ago` / `some time ago` → 数周；`a while back` → `few_months_ago`（常偏数月）。改窗宽、confidence 表、佐证门或回退 → 同批改 lexicon + LLM enum + 本表 + ADR-011 + must。
 
 **Capture enrichment 应能承接的 recall 关键词（English canonical 示例）：**
@@ -720,9 +729,9 @@ NA 分立：`a while ago` / `some time ago` → 数周；`a while back` → `few
 
 **P0 做（有记忆锚点）：**
 
-- 数据：规则 enrichment（高频站 / 标题类型词面 / recall 导向英文 keywords；**无**主题·实体 seed）+ 用户附注；写回 `tags` / `keywords`（`entities` 规则层为空，可由 LLM enrichment 补）— **新建已接入**；**存量经 `ensureMemoryEnrichmentBackfilled` 启动回填（版本幂等，当前 v5：`clip` 仅线索侧；正文不因 clip 打 video；scrub 存量误标）**
-- 编排：约束软加权 + **`timeRange` 按 timeConfidence 硬筛或软排（ADR-011）** + **内容佐证门（`contentTerms` 非空）** + 硬筛空窗一次 soft 回退 + keyword-filter + 线索置信度决策 — **`recallByKeywordWithParsedClue` 已接入 Hybrid 降级路径**；**追问：仅 `need_a_clue` 走 LLM NLG（`assistantFollowUp`）；`no_match` 诚实终局、无规则缺槽问卷**
-- Query：时间词、对象类型词、附注指向、弱行为词 → 结构化约束；内容实体先当关键词 — **`parseRecallClue` 已落地**（词典以真实英语口语为主，见「市场语言策略」典型语料）
+- 数据：规则 enrichment（**仅**标题/正文/附注类型词面 → 闭集 `objectType`；keywords **仅** canonical；**禁止**高频站 host→类型表 / 同义 keyword 灌入 / 主题·实体 seed）+ 用户附注；写回 `tags` / `keywords`（`entities` 规则层为空，可由 LLM enrichment 补）— **新建已接入**；**存量经 `ensureMemoryEnrichmentBackfilled` 启动回填（版本幂等，当前 v7：拆除 host 表并 scrub 旧钉类型；停灌同义 keywords；`clip` 仅线索侧）**
+- 编排：约束软加权 + **`timeRange` 按 timeConfidence 硬筛或软排（ADR-011）** + **内容佐证门（`contentTerms` 非空）** + **`excludeContentTerms` 硬过滤** + 硬筛空窗一次 soft 回退 + keyword-filter + 线索置信度决策 — **`recallByKeywordWithParsedClue` 已接入 Hybrid 降级路径**；**追问：仅 `need_a_clue` 走 LLM NLG（`assistantFollowUp`）；`no_match` 诚实终局、无规则缺槽问卷**
+- Query：时间词、对象类型词、附注指向、弱行为词、**明确排除** → 结构化约束；内容实体先当关键词 — **`parseRecallClue` 已落地**（词典以真实英语口语为主，见「市场语言策略」典型语料）
 - Enrichment：域名 / 对象类型词面 + **recall 导向英文 keywords**（如 `listen` `tutorial` `repo`）；写回 `tags` / `keywords`；**规则层不写专名 `entities`**
 - **LLM enrichment 插座（已接线·稀疏异步）**：提议 Zod（`MemoryEnrichmentProposal`）+ merge（`mergeMemoryClueEnrichment`：existing → rule → proposal；`summary` 仅空槽；永不写 `note`/`embedding`）+ Worker `POST /api/ai/enrichment/complete`；Capture 经 `memoryItemService` **新建**落库后 `scheduleAsyncMemoryLlmEnrichment`（串行队列；已有 summary / 信号过短跳过；bulk `putMany`/repository 续传不经 service 故不烧配额）；失败降级保留规则层；**不改 `updatedAt`**
 
@@ -867,12 +876,12 @@ Yiveno 同时承载两条相互促进、**不互相替代**的线程：
 
 **入口能力差异（Normative · 2026-08-21 拍板；Omnibox 分轨 2026-08-29 ADR-007）：** 共用 `recallService` 门面；**检索轨分轨**——
 
-| 壳                              | 职责                                                                                                                                                                                                                                                                                                      |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Chrome Side Panel**           | **对话式找东西主战场**（composer、邻域、追问、多轮会话）。工具栏图标与快捷键 `_execute_action`（默认 `Alt+Shift+Y`）均打开/聚焦 Side Panel；**无** `action.default_popup`。                                                                                                                               |
-| **Omnibox**                     | **关键字快跳**（`entry: omnibox`）：规则 parse + 本机字段 Filter + 结构化约束 + 佐证门 + **Indexed Fuzzy**（质>量折扣 / 短路径）+ **个人 soft rank** + 短锚字段权重；壳层 ≤6（Memory ≤5 + 末行换赛道 CTA）+ Tip + 无命中/有命中 CTA 接力。**能力天花板见 ADR-007 §6**——禁止 Semantic/Hybrid/LLM/Outcome。 |
-| **Action Popup**                | **不再作为对话主壳**（失焦即关，只适合 summary，不适合持续交互）。实现退役后不保留双壳抢 action。                                                                                                                                                                                                         |
-| **Library / Settings / Detail** | 整页 Tab；轻浏览与设置，不是找东西主路径。                                                                                                                                                                                                                                                                |
+| 壳                              | 职责                                                                                                                                                                                                                                                                                                              |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Chrome Side Panel**           | **对话式找东西主战场**（composer、邻域、追问、多轮会话）。工具栏图标与快捷键 `_execute_action`（默认 `Alt+Shift+Y`）均打开/聚焦 Side Panel；**无** `action.default_popup`。                                                                                                                                       |
+| **Omnibox**                     | **关键字快跳**（`entry: omnibox`）：规则 parse + 本机字段 Filter + 结构化约束 + 佐证门 + **个人 soft rank** + 短锚字段权重；壳层 ≤6（Memory ≤5 + 末行换赛道 CTA）+ Tip + 无命中/有命中 CTA 接力。**禁止查询侧静态缩写字典**（ADR-005 / ADR-007）。**能力天花板见 ADR-007 §6**——禁止 Semantic/Hybrid/LLM/Outcome。 |
+| **Action Popup**                | **不再作为对话主壳**（失焦即关，只适合 summary，不适合持续交互）。实现退役后不保留双壳抢 action。                                                                                                                                                                                                                 |
+| **Library / Settings / Detail** | 整页 Tab；轻浏览与设置，不是找东西主路径。                                                                                                                                                                                                                                                                        |
 
 Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**首屏 ≤5**，可 **Show more** 续展；弱命中给候选并允许**仅围绕候选**的追问；无相关则诚实终局。**允许对话式找，不允许开放式闲聊。** 禁止「most likely」终审句、假装全集只有 5 条、以及「主答案 / Also」两段神谕心智。
 书签 Capture：**仅** Chrome 原生加书签 + 导入/增量 sync，不提供「保存当前页」快捷键或找壳内按钮。快捷键改绑：Settings → Chrome 原生 `chrome://extensions/shortcuts`（扩展无法自行改键）。
@@ -920,7 +929,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 | LocalProfile / ownerId           | 已上线                                         | 未登录可用；登录后 `ownerId=accountId`                                                                                                                                                                                                                                                                                               |
 | Settings                         | 已上线（最小+账户同步）                        | `options_ui`；左侧分区导航（与记忆库同构）+ `?section=`；快捷键；账户/云同步；隐私/AI 占位                                                                                                                                                                                                                                           |
 | Offscreen                        | 占位                                           | 预留本地 embedding；当前 Pro 走 Worker AI，未启用 Offscreen                                                                                                                                                                                                                                                                          |
-| Omnibox 找                       | 已上线                                         | 关键词 `yi`；`entry: omnibox` 离线快跳（规则 + 本机字段 Filter + 结构化约束 + Indexed Fuzzy + soft rank；ADR-007 §6 天花板）；**无向量融合**；**单次无会话**；换赛道 **点 CTA**（无命中单独行 / 有命中末行；非 Tip）→ prefill + Side Panel 完整 Recall                                                                               |
+| Omnibox 找                       | 已上线                                         | 关键词 `yi`；`entry: omnibox` 离线快跳（规则 + 本机字段 Filter + 结构化约束 + soft rank；ADR-007 §6 天花板；**无**查询侧静态缩写字典）；**无向量融合**；**单次无会话**；换赛道 **点 CTA**（无命中单独行 / 有命中末行；非 Tip）→ prefill + Side Panel 完整 Recall                                                                     |
 | 快捷键找                         | 已上线                                         | `_execute_action`（默认 `Alt+Shift+Y`）与点图标开 Side Panel                                                                                                                                                                                                                                                                         |
 | 快捷键打开记忆库                 | 已上线                                         | `open_library`（默认 `Alt+Shift+L`）                                                                                                                                                                                                                                                                                                 |
 | 快捷键打开设置                   | 已上线                                         | `open_settings`（无默认建议键；Chrome 最多 4 个 suggested_key，可自绑）                                                                                                                                                                                                                                                              |
@@ -1288,7 +1297,7 @@ schema：`extension/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 ### 5.3 Phase A（Omnibox / 快捷键）验收
 
-1. Omnibox 触发后走 **离线快跳轨**（`entry: omnibox`：规则 parse + 本机字段 Filter + 结构化约束 + 佐证门 + Indexed Fuzzy（质>量/短路径）+ 个人 soft rank + 短锚字段权重；壳层 ≤6 + Tip + CTA 接力；**无**向量融合 / Outcome 软调 / LLM；天花板见 ADR-007 §6）；Side Panel 走完整 Hybrid + 理解。仍经同一 `recallService`，**禁止**第二套 Filter 实现。
+1. Omnibox 触发后走 **离线快跳轨**（`entry: omnibox`：规则 parse + 本机字段 Filter + 结构化约束 + 佐证门 + 个人 soft rank + 短锚字段权重；壳层 ≤6 + Tip + CTA 接力；**无**查询侧静态缩写字典 / 向量融合 / Outcome 软调 / LLM；天花板见 ADR-007 §6）；Side Panel 走完整 Hybrid + 理解。仍经同一 `recallService`，**禁止**第二套 Filter 实现。
 2. 不引入第二套搜索/筛选实现。
 3. Omnibox / 快捷键 §1 状态已更新（快捷键开 Side Panel = R-shell 目标）。
 4. Omnibox 入口为单次命中：建议列表 Memory 行 → 打开 URL；**换赛道**须点 CTA 行（无命中单独 CTA，或有命中时末行「Not what you wanted? Open Side Panel」；均非 default Tip）→ 写 `yiveno.recallPrefill` + 开 Side Panel 并自动提交完整 Recall（ADR-007 接力）；Omnibox 本身仍无追问/会话。
@@ -1599,30 +1608,29 @@ schema：`extension/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 Omnibox **离线快跳轨**专用 must（与 Side Panel `recall-eval` 正交）：
 
-| 约束 | 说明                                                                               |
-| ---- | ---------------------------------------------------------------------------------- |
-| 理解 | `understandRecallClue` + `forceMode: lexical`；**无** LLM completer                |
-| 检索 | 同 corpus 上 `recallByKeywordWithParsedClue` + Indexed Fuzzy（`getFuzzyVariants`） |
-| 范围 | 具体锚点 `top1` + 前缀锚点 `in_topk` + 1 条附注字面 `in_topk` k=3 + R0 `no_match`  |
-| 不含 | 多轮、`need_a_clue`、逛一簇、framing、向量融合                                     |
+| 约束 | 说明                                                                              |
+| ---- | --------------------------------------------------------------------------------- |
+| 理解 | `understandRecallClue` + `forceMode: lexical`；**无** LLM completer               |
+| 检索 | 同 corpus 上 `recallByKeywordWithParsedClue`（**无**查询侧静态缩写字典；ADR-005） |
+| 范围 | 具体锚点 `top1` + 前缀锚点 `in_topk` + 1 条附注字面 `in_topk` k=3 + R0 `no_match` |
+| 不含 | 多轮、`need_a_clue`、逛一簇、framing、向量融合、缩写字典 must（已拆除）           |
 
-| id（Normative）                    | clue（示例）                             | expectation                                      |
-| ---------------------------------- | ---------------------------------------- | ------------------------------------------------ |
-| `omnibox-concrete-mv3`             | `Manifest V3`                            | `top1` · chromeExtensionMv3                      |
-| `omnibox-concrete-i18n-token`      | `i18n:check`                             | `top1` · deployChecklistExcerpt                  |
-| `omnibox-concrete-github-path`     | `github.com/cqw`                         | `top1` · githubRepo                              |
-| `omnibox-concrete-rt-host`         | `rottentomatoes.com`                     | `top1` · oppenheimerRtExcerpt                    |
-| `omnibox-concrete-cloudflare`      | `Cloudflare Workers`                     | `top1` · cloudflareWorkersGuide                  |
-| `omnibox-fuzzy-cf-workers`         | `cf Workers`                             | `top1` · cloudflareWorkersGuide（Indexed Fuzzy） |
-| `omnibox-concrete-retention-title` | `retention analysis`                     | `top1` · retentionFramework                      |
-| `omnibox-concrete-product-doc`     | `product doc`                            | `top1` · yivenoProductDoc                        |
-| `omnibox-concrete-empty-state`     | `empty-state tiers`                      | `top1` · weeklyReviewNote                        |
-| `omnibox-prefix-github`            | `gi`                                     | `in_topk` k=5 · githubRepo                       |
-| `omnibox-prefix-rottentomatoes`    | `rotte`                                  | `in_topk` k=5 · oppenheimerRtExcerpt             |
-| `omnibox-semi-note-deploy`         | `page where I left a note about deploy`  | `in_topk` k=3 · deployNoteExcerpt                |
-| `omnibox-negative-songs`           | `play some songs I like`                 | `no_match`                                       |
-| `omnibox-negative-summarize`       | `summarize the latest news for me`       | `no_match`                                       |
-| `omnibox-negative-bored-pick`      | `i feel bored pick something fun for me` | `no_match`                                       |
+| id（Normative）                    | clue（示例）                             | expectation                          |
+| ---------------------------------- | ---------------------------------------- | ------------------------------------ |
+| `omnibox-concrete-mv3`             | `Manifest V3`                            | `top1` · chromeExtensionMv3          |
+| `omnibox-concrete-i18n-token`      | `i18n:check`                             | `top1` · deployChecklistExcerpt      |
+| `omnibox-concrete-github-path`     | `github.com/cqw`                         | `top1` · githubRepo                  |
+| `omnibox-concrete-rt-host`         | `rottentomatoes.com`                     | `top1` · oppenheimerRtExcerpt        |
+| `omnibox-concrete-cloudflare`      | `Cloudflare Workers`                     | `top1` · cloudflareWorkersGuide      |
+| `omnibox-concrete-retention-title` | `retention analysis`                     | `top1` · retentionFramework          |
+| `omnibox-concrete-product-doc`     | `product doc`                            | `top1` · yivenoProductDoc            |
+| `omnibox-concrete-empty-state`     | `empty-state tiers`                      | `top1` · weeklyReviewNote            |
+| `omnibox-prefix-github`            | `gi`                                     | `in_topk` k=5 · githubRepo           |
+| `omnibox-prefix-rottentomatoes`    | `rotte`                                  | `in_topk` k=5 · oppenheimerRtExcerpt |
+| `omnibox-semi-note-deploy`         | `page where I left a note about deploy`  | `in_topk` k=3 · deployNoteExcerpt    |
+| `omnibox-negative-songs`           | `play some songs I like`                 | `no_match`                           |
+| `omnibox-negative-summarize`       | `summarize the latest news for me`       | `no_match`                           |
+| `omnibox-negative-bored-pick`      | `i feel bored pick something fun for me` | `no_match`                           |
 
 **门禁：** `cd extension && bun run test:run -- omnibox-eval` 须全绿；合入 Omnibox 分轨变更须同步 §5.10.8。
 
@@ -1863,6 +1871,7 @@ Chrome API / 选区
 | 槽位                    | 本轮有信号时                                      | 本轮无信号时 |
 | ----------------------- | ------------------------------------------------- | ------------ |
 | `contentTerms`          | 与 accumulated **并集去重**（先 prior 后本轮）    | 保留 prior   |
+| `excludeContentTerms`   | 与 accumulated **并集去重**，再与正词冲突消解     | 保留 prior   |
 | `timeRange`             | **覆盖**                                          | 保留 prior   |
 | `objectTypes`           | **覆盖**                                          | 保留 prior   |
 | `behaviorHints`         | **并集**                                          | 保留 prior   |
@@ -1963,6 +1972,8 @@ Chrome API / 选区
 
 > Nothing close enough turned up. Try another detail that stuck with you.
 
+- 当本轮同时为 **`rules_fallback` + `no_match`**（非空库燃料态）：正文改用 _Nothing close enough with that simpler on-device reading. Try another detail that stuck with you._（zh：_用更简单的本机理解后，还是没有足够接近的结果。试试另一个你记得住的细节。_）——与上方 deeper-reading 轻提示同旨，避免读成「完整理解后单纯没找着」。
+- **仍禁止**工程师 timeout / network / VPN / server 归因；**仍禁止**「无法连接，请稍后再试」硬失败挡本地 Recall。
 - **仍禁止**「缩短再试」等**换查询补救 CTA**（按钮/芯片）；上句是正文软引导「再丢一个下意识细节」，不暗示「系统还能救刚才那次检索」。
 - 空库 Capture 轻提示规则不变。
 
@@ -2565,6 +2576,7 @@ RecallOutcomeEvent {
 
 | 日期       | 变更                                                                                                                                                                                                                                                                                                       |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-10-30 | **线索内明确排除 `excludeContentTerms`：** 理解槽 + Prompt 区分明确排除/不确定/行为否定；规则保守抽跨度；keyword/Hybrid **硬过滤**；正负冲突消解；parse-gold must；与 dismiss 反馈否定分计                                                                                                                 |
 | 2026-10-29 | **追问芯片门禁 P0：** 邻域互异组 ≥2 才挂；须切割力；禁「记不清」元芯片；§7.0 交互 1a / `gate-recall-follow-up-chips`                                                                                                                                                                                       |
 | 2026-10-29 | **快速反馈区同区异形：** 追问芯片与「都不是这些」同条；芯片在前、否定在末且非 pill；§7.0 交互 2a / §5.2.1 / 设计 §6.2.7                                                                                                                                                                                    |
 | 2026-10-29 | **中文 Recall 译名纠偏：** 用户面默认「找回」→「**找 / 找到 / 找东西**」（忌失物招领义）；会话名「这次找 / 新找」；术语表 §2 + zh_CN / 官网 i18n；产品文档 / ADR / 工程权威正文同批扫残（changelog 与术语表禁旧译处保留「找回」字面）；仍禁「搜索」                                                        |
@@ -2583,6 +2595,7 @@ RecallOutcomeEvent {
 | 2026-10-27 | **账户头像 fallback：** 无 `avatarUrl` 用 Yiveno `logo-mark`；禁止邮箱/昵称首字符；官网 Account/AuthNav + 扩展已登录顶栏；设计标准 §6.3.1                                                                                                                                                                  |
 | 2026-10-27 | **Email OTP 重发冷却持久化：** 发码后 60s 截止写入 `sessionStorage`；同标签刷新/后退恢复 Code 区与剩余秒，不自动再发；验码成功清键（`otp-resend-cooldown.ts`）                                                                                                                                             |
 | 2026-10-27 | **Email OTP 防刷资料：** `docs/engineering/Turnstile-Email-OTP-防刷生命周期.md`（生命周期 / 流程图）；`region:china` 本账号无权创建（entitlement）；双区域须 Worker 双验，见该文 §5                                                                                                                        |
+| 2026-10-30 | **收口写死字典（ADR-005）：** 拆除 Omnibox Indexed Fuzzy；拆除 enrichment 高频站 host→类型；停灌同义 keywords（仅正文词面 + canonical）；LLM grounding 影子别名并入主 lexicon；回填 v7；`omnibox-fuzzy-cf-workers` 退役；ADR-007 §6 更新                                                                   |
 | 2026-10-27 | **Email OTP 防刷：** Supabase Attack Protection 开启 Cloudflare Turnstile；官网发码传 `captchaToken`；`PUBLIC_TURNSTILE_SITE_KEY`；Secret 仅 Dashboard                                                                                                                                                     |
 | 2026-10-26 | **官网 Email OTP 登录：** `/login` 增加邮箱一次性验证码（magic link 兼容 `/auth/callback`）；保留 Google / Microsoft；mint/handoff 契约不变；`/privacy` 披露同步；未上线手机号/微信；§1 + §登录态对齐                                                                                                      |
 | 2026-10-28 | **Chromium 双店（ADR-020）：** 同包 CWS + Edge Add-ons；大陆桌面主路径 Edge；`EDGEADDONS.md`；`yiveno.cn` externally_connectable；官网 Install CTA（未上架诚实 coming soon）；隐私/条款按店分述未上架                                                                                                      |
@@ -2600,6 +2613,7 @@ RecallOutcomeEvent {
 | 2026-10-15 | **Connect 软条去持久 Dismiss：** 关闭 icon 仅藏当前展示；满足条件每次打开/探测再出现；§登录态对齐                                                                                                                                                                                                          |
 | 2026-10-15 | **Connect 意图分流：** `/account?extension_id` 只记退出目标、禁自动 mint；Connect 前 `YIVENO_EXTENSION_AUTH_STATUS_PROBE` 同账号短路；砍 `last_extension_id` 顺带 remint；§登录态对齐                                                                                                                      |
 | 2026-10-15 | **纯官网登录不 remint 扩展：** 仅 `connect_extension` pending 才 mint；砍 AuthCallback/LoginForm 凭 `last_extension_id` 顺带铸造（防自挤 → displaced 假象）；§登录态对齐                                                                                                                                   |
+| 2026-10-30 | **`rules_fallback` + `no_match` 诚实正文：** 空结果用「简化本机理解后仍无足够接近」；仍禁止 network/VPN 工程师口吻与硬失败挡本地 Recall；§7.0                                                                                                                                                              |
 | 2026-10-15 | **在线弱网（主线 2）：** understanding 等待梯级 4s/8s；线索 LLM 12s Abort→`rules_fallback`；结果态 deeper-reading 轻提示；§7.0 / §1                                                                                                                                                                        |
 | 2026-10-15 | **离线模式感加深（不换肤）：** 顶栏 soft accent + _On-device only_；composer 轻句 + 离线 idle placeholder；禁整壳换主题；§7.0                                                                                                                                                                              |
 | 2026-10-14 | **Side Panel 壳级离线态：** 顶栏 wifi-off + 本机找文案；挂载/`online`·`offline`；离线跳过线索 LLM；禁在线 AI 灯与硬失败终局；§7.0 / §1                                                                                                                                                                     |
@@ -2633,7 +2647,7 @@ RecallOutcomeEvent {
 | 2026-10-08 | **Omnibox→Panel 无命中接力：** Tip（default）非 CTA；**仅 CTA SuggestResult** 写 `yiveno.recallPrefill` + 开 Side Panel 并自动提交；§5.3 + ADR-007                                                                                                                                                         |
 | 2026-10-08 | **Omnibox default 快捷键：** 首行 Tip 文案读 `commands.getAll()` `_execute_action` 当前绑定（可短 TTL 缓存）；未绑定省略；禁止写死 `Alt+Shift+Y`；ADR-007                                                                                                                                                  |
 | 2026-10-08 | **Omnibox 建议条数解耦：** `OMNIBOX_SUGGEST_LIMIT=6`（`omnibox-suggest.ts`），不再复用 Side Panel `RECALL_RESULT_PAGE_SIZE`；无分页 one-shot；§3.1 + ADR-007                                                                                                                                               |
-| 2026-10-08 | **Omnibox 边界内打磨 + 天花板：** soft rank（`settledCount`/`behaviorProfile:omnibox`）+ 短锚字段权重 + Fuzzy 质>量/短路径 + Tip/CTA 文案；ADR-007 **§6 能力天花板**；`omnibox-fuzzy-cf-workers` must                                                                                                      |
+| 2026-10-08 | **Omnibox 边界内打磨 + 天花板：** soft rank（`settledCount`/`behaviorProfile:omnibox`）+ 短锚字段权重 + Tip/CTA 文案；ADR-007 **§6 能力天花板**（Indexed Fuzzy 字典后于 2026-10-30 拆除）                                                                                                                  |
 | 2026-10-08 | **Omnibox 有命中末行换赛道：** Memory ≤5 + 末行 `omnibox_switch_track` CTA（handoff）；总 ≤6；与无命中 CTA 同路径接力 Side Panel；§3.1 + ADR-007                                                                                                                                                           |
 | 2026-10-06 | **Recall Request 模型晋升 Normative（D1 已裁决）：** §7.05 + 完整正文 `Recall-Request-模型与Discovery边界-草案.md`；D1 选 D1-B（退化弱 Topic）：Preference-driven 路径（`objectTypes`+`timeRange`）保留为弱 Topic；Topic 两种来源写进 Normative；P1–P3 落地阶段明确；§5.9 / §7.0 / ADR-011 引用对齐        |
 | 2026-10-06 | **Gap 2 修复：** Framing 层 Topic 独立表述已加（三处）；① `RecallFramingUnderstood.topicTerms`（独立于 contentTerms 的独立 fact）；② `extractComposerNarrowExamples` 新增 `topicTerms` 参数（末尾追加独立 topic 示例）；③ LLM Framing prompt 透传 `topicTerms` fact；§7.05 Framing 表 P1 栏 + 现状差距更新 |

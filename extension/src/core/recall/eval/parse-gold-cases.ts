@@ -29,6 +29,14 @@ export interface ParseGoldSlots {
   contentTermsMustInclude?: string[]
   contentTermsMustExclude?: string[]
   contentTermsExact?: boolean
+  /** 明确排除槽：须全部出现在 excludeContentTerms */
+  excludeContentTermsMustInclude?: string[]
+  /** 排除槽不得含这些词（冲突消解后） */
+  excludeContentTermsMustExclude?: string[]
+  /** true = excludeContentTerms 须与 mustInclude 精确相等（可空） */
+  excludeContentTermsExact?: boolean
+  /** true = 不得有排除槽（空或缺省） */
+  excludeContentTermsEmpty?: boolean
   confidence?: RecallClueConfidence
 }
 
@@ -398,9 +406,9 @@ export const PARSE_GOLD_CASES: ParseGoldCase[] = [
 
   // —— stretch：理想金标；规则词典/句式常不够（未来 LLM 目标） ——
   {
-    id: 'stretch-verse-as-poem',
+    id: 'must-verse-as-poem',
     clue: 'that Li Bai verse from the other day',
-    gate: 'stretch',
+    gate: 'must',
     expect: {
       timeLabel: 'recent',
       objectTypes: ['poem'],
@@ -408,7 +416,7 @@ export const PARSE_GOLD_CASES: ParseGoldCase[] = [
       contentTermsMustExclude: ['verse'],
       confidence: 'high'
     },
-    note: 'verse→poem 理想映射；the other day→recent（近几天）'
+    note: 'verse→poem 主词典槽位；the other day→recent（近几天）'
   },
   {
     id: 'stretch-never-finished-writeup',
@@ -507,5 +515,63 @@ export const PARSE_GOLD_CASES: ParseGoldCase[] = [
       confidence: 'high'
     },
     note: '起手式 filler + snippet + 时间'
+  },
+  // —— must：线索内明确排除（excludeContentTerms）——
+  {
+    id: 'must-exclude-yellowstone-lodging-not-hike',
+    clue: 'my Yellowstone lodging booking confirmation from that summer, not the day-hike packing checklist',
+    gate: 'must',
+    expect: {
+      contentTermsMustInclude: ['yellowstone', 'lodging', 'booking', 'confirmation', 'summer'],
+      contentTermsMustExclude: ['not', 'day-hike', 'packing', 'checklist'],
+      excludeContentTermsMustInclude: ['day-hike', 'packing', 'checklist'],
+      excludeContentTermsExact: false
+    },
+    note: '意图 A：明确排除徒步清单；孤立 not 不得进 contentTerms'
+  },
+  {
+    id: 'must-find-yellowstone-hike-checklist',
+    clue: 'the Yellowstone day-hike packing checklist I saved',
+    gate: 'must',
+    expect: {
+      contentTermsMustInclude: ['yellowstone', 'packing', 'checklist'],
+      excludeContentTermsEmpty: true
+    },
+    note: '意图 B：正向找清单；无排除槽'
+  },
+  {
+    id: 'must-uncertain-not-sure-no-exclude',
+    clue: "I'm not sure which privacy article I meant",
+    gate: 'must',
+    expect: {
+      objectTypes: ['article'],
+      contentTermsMustInclude: ['privacy'],
+      contentTermsMustExclude: ['not'],
+      excludeContentTermsEmpty: true
+    },
+    note: '不确定表达：不抽 exclude；article 进 objectTypes 而非 contentTerms'
+  },
+  {
+    id: 'must-plain-query-no-exclude',
+    clue: 'the privacy article from yesterday',
+    gate: 'must',
+    expect: {
+      timeLabel: 'yesterday',
+      contentTermsMustInclude: ['privacy'],
+      excludeContentTermsEmpty: true
+    },
+    note: '普通查询：无排除'
+  },
+  {
+    id: 'must-exclude-conflict-shared-topic-stays-positive',
+    clue: 'yellowstone lodging confirmation, not the yellowstone day-hike packing checklist',
+    gate: 'must',
+    expect: {
+      contentTermsMustInclude: ['yellowstone', 'lodging', 'confirmation'],
+      contentTermsMustExclude: ['not'],
+      excludeContentTermsMustInclude: ['day-hike', 'packing', 'checklist'],
+      excludeContentTermsMustExclude: ['yellowstone']
+    },
+    note: '正负冲突：共享 yellowstone 保留在 contentTerms'
   }
 ]

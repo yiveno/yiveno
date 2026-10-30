@@ -1,0 +1,2404 @@
+{
+  "generatedAt": "2026-10-29T16:54:34.153Z",
+  "apiBase": "http://localhost:8787",
+  "tokenSource": "supabase_admin_mint",
+  "tokenSourceDetail": "email=retrieval-ablation-local@yiveno.dev userId=1c63774f-95c4-487a-8c0f-b99444b2ae32（generateLink+verifyOtp · 与 Worker mint 同源）",
+  "observedEmbedModel": "@cf/baai/bge-m3",
+  "summaryLines": [
+    "[retrieval-ablation] nowMs=1784980800000 cases=22 embed=@cf/baai/bge-m3",
+    "[retrieval-ablation] corpus=33333333-3333-4333-8333-333333333301|33333333-3333-4333-8333-333333333302|33333333-3333-4333-8333-333333333303|33333333-3333-4333-8333-333333333304|33333333-3333-4333-8333-333333333305|33333333-3333-4333-8333-333333333306|33333333-3333-4333-8333-333333333307|33333333-3333-4333-8333-333333333308|33333333-3333-4333-8333-333333333309|33333333-3333-4333-8333-333333333310|33333333-3333-4333-8333-333333333311|33333333-3333-4333-8333-333333333312",
+    "[retrieval-ablation] missPolicy=include_miss_as_zero（hit 子集平均；负例用 negFP，不用 Recall@K）",
+    "[retrieval-ablation] hitCases=11 negativeCases=11 ambiguousLabels=3",
+    "[retrieval-ablation] scenarios={\"keyword_anchor\":2,\"paraphrase\":3,\"time_hard\":1,\"strong_distractor_hit\":1,\"negative_orthogonal\":7,\"zero_overlap\":2,\"fuzzy_memory\":2,\"negative_no_match\":4}",
+    "[retrieval-ablation] hybridVsProd: 实验 Hybrid=冻结理解 + RRF/截断/时间硬筛/佐证软罚；不含 Outcome 对、同域加成、佐证空窗 time soft 回退、空池关键词降级、LLM framing。不可外推生产端到端收益。",
+    "[retrieval-ablation] embed ok=24/24 texts=34 models=@cf/baai/bge-m3 p50Ms=2457 maxMs=5010",
+    "[retrieval-ablation] main[include] hits=11 negs=11 ambiguousInView=3 pendingReview=3 (denomMode=include)",
+    "[retrieval-ablation] main[include] keyword Recall@1/5/10=0.636/0.636/0.636 MRR=0.636 nDCG@5/10=0.636/0.636 denom=11 | candMiss=4 inPool>5=0 inPoolNotTop1=0 r5ok=7 | negFP=3/11 (0.273)",
+    "[retrieval-ablation] main[include] semantic Recall@1/5/10=0.818/1.000/1.000 MRR=0.879 nDCG@5/10=0.909/0.909 denom=11 | candMiss=0 inPool>5=0 inPoolNotTop1=2 r5ok=11 | negFP=3/11 (0.273)",
+    "[retrieval-ablation] main[include] hybrid Recall@1/5/10=0.818/1.000/1.000 MRR=0.879 nDCG@5/10=0.909/0.909 denom=11 | candMiss=0 inPool>5=0 inPoolNotTop1=2 r5ok=11 | negFP=3/11 (0.273)",
+    "[retrieval-ablation] clear-only hits=9 negs=10 ambiguousInView=0 pendingReview=0 (denomMode=clear_only)",
+    "[retrieval-ablation] clear-only keyword Recall@1/5/10=0.667/0.667/0.667 MRR=0.667 nDCG@5/10=0.667/0.667 denom=9 | candMiss=3 inPool>5=0 inPoolNotTop1=0 r5ok=6 | negFP=2/10 (0.200)",
+    "[retrieval-ablation] clear-only semantic Recall@1/5/10=0.778/1.000/1.000 MRR=0.852 nDCG@5/10=0.889/0.889 denom=9 | candMiss=0 inPool>5=0 inPoolNotTop1=2 r5ok=9 | negFP=2/10 (0.200)",
+    "[retrieval-ablation] clear-only hybrid Recall@1/5/10=0.778/1.000/1.000 MRR=0.852 nDCG@5/10=0.889/0.889 denom=9 | candMiss=0 inPool>5=0 inPoolNotTop1=2 r5ok=9 | negFP=2/10 (0.200)",
+    "[retrieval-ablation] 禁止混用：主报告=include；clear-only 仅对照，分母与指标不得交叉引用",
+    "[retrieval-ablation] delta: Hybrid：Outcome 对 = 未纳入（生产融合后 applyStoredOutcomePairs）",
+    "[retrieval-ablation] delta: Hybrid：同域加成 = 未纳入（pageContextMode=none）",
+    "[retrieval-ablation] delta: Hybrid：候选截断 = 已纳入（与生产同常量族 keyword≈100 / semantic neighbor / collapse）",
+    "[retrieval-ablation] delta: Hybrid：过滤 = 部分纳入（时间硬筛、槽位软加成、佐证软罚）；未纳入佐证空窗 time soft 回退与空池关键词降级",
+    "[retrieval-ablation] delta: Semantic = 余弦 Top-K + 时间硬筛 + 槽位软加成；无 RRF；非生产终排",
+    "[retrieval-ablation] delta: Keyword = recallByKeywordWithParsedClue（含佐证门/时间 soft 回退主路径）",
+    "[retrieval-ablation] delta: 本实验回答固定 goldParsed 下覆盖与位次；不可外推生产 Recall 成功率或 §5.9 TTE",
+    "[retrieval-ablation] negative-details:",
+    "  - ablate-documentary-not-recipe OK forbid=33333333-3333-4333-8333-333333333308@10",
+    "  - ablate-privacy-not-weather FP forbid=33333333-3333-4333-8333-333333333306@5 ranks={k:2,s:2,h:2} disagree=false",
+    "  - ablate-physicists-not-burial OK forbid=33333333-3333-4333-8333-333333333305@10",
+    "  - ablate-oppenheimer-not-cookie OK forbid=33333333-3333-4333-8333-333333333309@10",
+    "  - ablate-oppenheimer-not-nuclear-policy OK forbid=33333333-3333-4333-8333-333333333310@10",
+    "  - ablate-anxious-lead-not-policy OK forbid=33333333-3333-4333-8333-333333333310@10",
+    "  - ablate-nomatch-yellowstone-not-movie OK forbid=33333333-3333-4333-8333-333333333301@10",
+    "  - ablate-nomatch-yellowstone-not-privacy OK forbid=33333333-3333-4333-8333-333333333304@10",
+    "  - ablate-nomatch-yellowstone-not-hiking FP forbid=33333333-3333-4333-8333-333333333311@5 ranks={k:1,s:1,h:1} disagree=false [ambiguous]",
+    "  - ablate-yellowstone-exclude-hike-clear FP forbid=33333333-3333-4333-8333-333333333311@5 ranks={k:1,s:1,h:1} disagree=false",
+    "  - ablate-documentary-not-sourdough OK forbid=33333333-3333-4333-8333-333333333312@10",
+    "[retrieval-ablation] per-case:",
+    "  - ablate-keyword-strong-atomic [keyword_anchor/clear] (hit 33333333-3333-4333-8333-333333333302) | keyword:r=1@cand=5:not_applicable | semantic:r=1@cand=9:not_applicable | hybrid:r=1@cand=9:not_applicable",
+    "  - ablate-semantic-movie-paraphrase [paraphrase/clear] (hit 33333333-3333-4333-8333-333333333301) | keyword:r=1@cand=4:not_applicable | semantic:r=3@cand=4:not_applicable | hybrid:r=3@cand=4:not_applicable",
+    "  - ablate-pure-semantic-physicists [paraphrase/clear] (hit 33333333-3333-4333-8333-333333333303) | keyword:r=1@cand=3:not_applicable | semantic:r=1@cand=3:not_applicable | hybrid:r=1@cand=3:not_applicable",
+    "  - ablate-privacy-yesterday [time_hard/clear] (hit 33333333-3333-4333-8333-333333333304) | keyword:r=1@cand=2:not_applicable | semantic:r=1@cand=2:not_applicable | hybrid:r=1@cand=2:not_applicable",
+    "  - ablate-nuclear-vs-weekly-noise [strong_distractor_hit/clear] (hit 33333333-3333-4333-8333-333333333301) | keyword:r=∅@cand=6:candidate_miss | semantic:r=3@cand=4:not_applicable | hybrid:r=3@cand=4:not_applicable",
+    "  - ablate-documentary-not-recipe [negative_orthogonal/clear] (miss 33333333-3333-4333-8333-333333333308) | keyword:r=∅@cand=1:absent_honest | semantic:r=∅@cand=9:absent_honest | hybrid:r=∅@cand=9:absent_honest",
+    "  - ablate-privacy-not-weather [negative_orthogonal/clear] (miss 33333333-3333-4333-8333-333333333306) | keyword:r=2@cand=2:expectation_failed | semantic:r=2@cand=2:expectation_failed | hybrid:r=2@cand=2:expectation_failed",
+    "  - ablate-physicists-not-burial [negative_orthogonal/clear] (miss 33333333-3333-4333-8333-333333333305) | keyword:r=∅@cand=3:absent_honest | semantic:r=∅@cand=3:absent_honest | hybrid:r=∅@cand=3:absent_honest",
+    "  - ablate-zero-overlap-oppenheimer-biopic [zero_overlap/clear] (hit 33333333-3333-4333-8333-333333333301) | keyword:r=∅@cand=0:candidate_miss | semantic:r=1@cand=6:not_applicable | hybrid:r=1@cand=6:not_applicable",
+    "  - ablate-oppenheimer-not-cookie [negative_orthogonal/clear] (miss 33333333-3333-4333-8333-333333333309) | keyword:r=∅@cand=0:absent_honest | semantic:r=∅@cand=6:absent_honest | hybrid:r=∅@cand=6:absent_honest",
+    "  - ablate-zero-overlap-anxious-lead [zero_overlap/clear] (hit 33333333-3333-4333-8333-333333333301) | keyword:r=∅@cand=0:candidate_miss | semantic:r=1@cand=3:not_applicable | hybrid:r=1@cand=3:not_applicable",
+    "  - ablate-fuzzy-trinity-test-film [fuzzy_memory/ambiguous] (hit 33333333-3333-4333-8333-333333333301) | keyword:r=∅@cand=0:candidate_miss | semantic:r=1@cand=7:not_applicable | hybrid:r=1@cand=7:not_applicable",
+    "  - ablate-paraphrase-privacy-quiet-data [paraphrase/clear] (hit 33333333-3333-4333-8333-333333333304) | keyword:r=1@cand=1:not_applicable | semantic:r=1@cand=2:not_applicable | hybrid:r=1@cand=2:not_applicable",
+    "  - ablate-fuzzy-fermi-pile-notes [fuzzy_memory/ambiguous] (hit 33333333-3333-4333-8333-333333333303) | keyword:r=1@cand=6:not_applicable | semantic:r=1@cand=5:not_applicable | hybrid:r=1@cand=6:not_applicable",
+    "  - ablate-oppenheimer-not-nuclear-policy [negative_orthogonal/clear] (miss 33333333-3333-4333-8333-333333333310) | keyword:r=∅@cand=0:absent_honest | semantic:r=∅@cand=6:absent_honest | hybrid:r=∅@cand=6:absent_honest",
+    "  - ablate-anxious-lead-not-policy [negative_orthogonal/clear] (miss 33333333-3333-4333-8333-333333333310) | keyword:r=∅@cand=0:absent_honest | semantic:r=∅@cand=3:absent_honest | hybrid:r=∅@cand=3:absent_honest",
+    "  - ablate-nomatch-yellowstone-not-movie [negative_no_match/clear] (miss 33333333-3333-4333-8333-333333333301) | keyword:r=∅@cand=2:absent_honest | semantic:r=∅@cand=6:absent_honest | hybrid:r=∅@cand=6:absent_honest",
+    "  - ablate-nomatch-yellowstone-not-privacy [negative_no_match/clear] (miss 33333333-3333-4333-8333-333333333304) | keyword:r=∅@cand=2:absent_honest | semantic:r=∅@cand=6:absent_honest | hybrid:r=∅@cand=6:absent_honest",
+    "  - ablate-nomatch-yellowstone-not-hiking [negative_no_match/ambiguous] (miss 33333333-3333-4333-8333-333333333311) | keyword:r=1@cand=2:expectation_failed | semantic:r=1@cand=6:expectation_failed | hybrid:r=1@cand=6:expectation_failed",
+    "  - ablate-yellowstone-exclude-hike-clear [negative_no_match/clear] (miss 33333333-3333-4333-8333-333333333311) | keyword:r=1@cand=6:expectation_failed | semantic:r=1@cand=7:expectation_failed | hybrid:r=1@cand=8:expectation_failed",
+    "  - ablate-yellowstone-find-hike-clear [keyword_anchor/clear] (hit 33333333-3333-4333-8333-333333333311) | keyword:r=1@cand=2:not_applicable | semantic:r=1@cand=7:not_applicable | hybrid:r=1@cand=7:not_applicable",
+    "  - ablate-documentary-not-sourdough [negative_orthogonal/clear] (miss 33333333-3333-4333-8333-333333333312) | keyword:r=∅@cand=1:absent_honest | semantic:r=∅@cand=9:absent_honest | hybrid:r=∅@cand=9:absent_honest"
+  ],
+  "report": {
+    "meta": {
+      "nowMs": 1784980800000,
+      "corpusFingerprint": "33333333-3333-4333-8333-333333333301|33333333-3333-4333-8333-333333333302|33333333-3333-4333-8333-333333333303|33333333-3333-4333-8333-333333333304|33333333-3333-4333-8333-333333333305|33333333-3333-4333-8333-333333333306|33333333-3333-4333-8333-333333333307|33333333-3333-4333-8333-333333333308|33333333-3333-4333-8333-333333333309|33333333-3333-4333-8333-333333333310|33333333-3333-4333-8333-333333333311|33333333-3333-4333-8333-333333333312",
+      "caseCount": 22,
+      "hitCaseCount": 11,
+      "negativeCaseCount": 11,
+      "ambiguousLabelCaseCount": 3,
+      "scenarioCoverage": {
+        "keyword_anchor": 2,
+        "paraphrase": 3,
+        "time_hard": 1,
+        "strong_distractor_hit": 1,
+        "negative_orthogonal": 7,
+        "zero_overlap": 2,
+        "fuzzy_memory": 2,
+        "negative_no_match": 4
+      },
+      "strategies": ["keyword", "semantic", "hybrid"],
+      "embedModel": "@cf/baai/bge-m3",
+      "embedTelemetry": {
+        "callCount": 24,
+        "okCount": 24,
+        "errorCount": 0,
+        "totalTexts": 34,
+        "modelsSeen": ["@cf/baai/bge-m3"],
+        "latencyMsP50": 2457,
+        "latencyMsMax": 5010,
+        "lastErrorCode": null
+      },
+      "missPolicy": "include_miss_as_zero",
+      "ambiguousInDenominator": "include",
+      "hybridVsProduction": {
+        "outcomePairs": "excluded",
+        "sameDomainBoost": "excluded",
+        "candidateTruncation": "aligned_constants",
+        "timeSoftReopenOnEmptyCorroboration": "excluded",
+        "keywordFallbackWhenEmpty": "excluded",
+        "llmFramingPolish": "excluded",
+        "understanding": "frozen_goldParsed",
+        "noteZh": "实验 Hybrid=冻结理解 + RRF/截断/时间硬筛/佐证软罚；不含 Outcome 对、同域加成、佐证空窗 time soft 回退、空池关键词降级、LLM framing。不可外推生产端到端收益。"
+      },
+      "knownDeltasZh": [
+        "Hybrid：Outcome 对 = 未纳入（生产融合后 applyStoredOutcomePairs）",
+        "Hybrid：同域加成 = 未纳入（pageContextMode=none）",
+        "Hybrid：候选截断 = 已纳入（与生产同常量族 keyword≈100 / semantic neighbor / collapse）",
+        "Hybrid：过滤 = 部分纳入（时间硬筛、槽位软加成、佐证软罚）；未纳入佐证空窗 time soft 回退与空池关键词降级",
+        "Semantic = 余弦 Top-K + 时间硬筛 + 槽位软加成；无 RRF；非生产终排",
+        "Keyword = recallByKeywordWithParsedClue（含佐证门/时间 soft 回退主路径）",
+        "本实验回答固定 goldParsed 下覆盖与位次；不可外推生产 Recall 成功率或 §5.9 TTE"
+      ]
+    },
+    "cases": [
+      {
+        "caseId": "ablate-keyword-strong-atomic",
+        "gate": "measure",
+        "scenario": "keyword_anchor",
+        "labelConfidence": "clear",
+        "goldReviewStatus": "stable",
+        "judgmentZh": "书签标题与 clue 词面高度重合（atomic/bomb/documentary/notes）",
+        "expectationKind": "hit",
+        "expectedId": "33333333-3333-4333-8333-333333333302",
+        "missK": null,
+        "goldParsed": {
+          "raw": "atomic bomb documentary notes",
+          "contentTerms": ["atomic", "bomb", "documentary", "notes"],
+          "confidence": "high"
+        },
+        "clueEmbeddingText": "atomic bomb documentary",
+        "byStrategy": {
+          "keyword": {
+            "strategy": "keyword",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333307",
+              "33333333-3333-4333-8333-333333333309",
+              "33333333-3333-4333-8333-333333333312"
+            ],
+            "candidateCount": 5,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 1,
+            "ndcgAt5": 1,
+            "ndcgAt10": 1,
+            "rank": 1,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标已在 Recall@1"
+          },
+          "semantic": {
+            "strategy": "semantic",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333301",
+              "33333333-3333-4333-8333-333333333310",
+              "33333333-3333-4333-8333-333333333306",
+              "33333333-3333-4333-8333-333333333304",
+              "33333333-3333-4333-8333-333333333309",
+              "33333333-3333-4333-8333-333333333307",
+              "33333333-3333-4333-8333-333333333305"
+            ],
+            "candidateCount": 9,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 1,
+            "ndcgAt5": 1,
+            "ndcgAt10": 1,
+            "rank": 1,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标已在 Recall@1"
+          },
+          "hybrid": {
+            "strategy": "hybrid",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333301",
+              "33333333-3333-4333-8333-333333333310",
+              "33333333-3333-4333-8333-333333333306",
+              "33333333-3333-4333-8333-333333333304",
+              "33333333-3333-4333-8333-333333333309",
+              "33333333-3333-4333-8333-333333333307",
+              "33333333-3333-4333-8333-333333333305"
+            ],
+            "candidateCount": 9,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 1,
+            "ndcgAt5": 1,
+            "ndcgAt10": 1,
+            "rank": 1,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标已在 Recall@1"
+          }
+        },
+        "negativeStrategyDisagreement": null
+      },
+      {
+        "caseId": "ablate-semantic-movie-paraphrase",
+        "gate": "measure",
+        "scenario": "paraphrase",
+        "labelConfidence": "clear",
+        "goldReviewStatus": "stable",
+        "judgmentZh": "objectTypes=video + 核试/影评语义；目标正文为曼哈顿计划影评摘录",
+        "expectationKind": "hit",
+        "expectedId": "33333333-3333-4333-8333-333333333301",
+        "missK": null,
+        "goldParsed": {
+          "raw": "that movie review about the first nuclear detonation",
+          "objectTypes": ["video"],
+          "contentTerms": ["movie", "review", "first", "nuclear", "detonation"],
+          "confidence": "medium"
+        },
+        "clueEmbeddingText": "first nuclear detonation movie",
+        "byStrategy": {
+          "keyword": {
+            "strategy": "keyword",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333301",
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333310",
+              "33333333-3333-4333-8333-333333333307"
+            ],
+            "candidateCount": 4,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 1,
+            "ndcgAt5": 1,
+            "ndcgAt10": 1,
+            "rank": 1,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标已在 Recall@1"
+          },
+          "semantic": {
+            "strategy": "semantic",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333301",
+              "33333333-3333-4333-8333-333333333310"
+            ],
+            "candidateCount": 4,
+            "goldInCandidates": true,
+            "recallAt1": false,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 0.3333333333333333,
+            "ndcgAt5": 0.5,
+            "ndcgAt10": 0.5,
+            "rank": 3,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标在 Recall@5 内但非 Top1（rank=3）；计 inPoolNotTop1，不计 inPoolOutsideTop5"
+          },
+          "hybrid": {
+            "strategy": "hybrid",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333310",
+              "33333333-3333-4333-8333-333333333301",
+              "33333333-3333-4333-8333-333333333302"
+            ],
+            "candidateCount": 4,
+            "goldInCandidates": true,
+            "recallAt1": false,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 0.3333333333333333,
+            "ndcgAt5": 0.5,
+            "ndcgAt10": 0.5,
+            "rank": 3,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标在 Recall@5 内但非 Top1（rank=3）；计 inPoolNotTop1，不计 inPoolOutsideTop5"
+          }
+        },
+        "negativeStrategyDisagreement": null
+      },
+      {
+        "caseId": "ablate-pure-semantic-physicists",
+        "gate": "measure",
+        "scenario": "paraphrase",
+        "labelConfidence": "clear",
+        "goldReviewStatus": "stable",
+        "judgmentZh": "目标正文含 physicists / chain reaction；与 clue 对齐",
+        "expectationKind": "hit",
+        "expectedId": "33333333-3333-4333-8333-333333333303",
+        "missK": null,
+        "goldParsed": {
+          "raw": "review of physicists behind the first chain reaction",
+          "contentTerms": ["review", "physicists", "behind", "first", "chain", "reaction"],
+          "confidence": "medium"
+        },
+        "clueEmbeddingText": "physicists behind first chain reaction",
+        "byStrategy": {
+          "keyword": {
+            "strategy": "keyword",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333307",
+              "33333333-3333-4333-8333-333333333301"
+            ],
+            "candidateCount": 3,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 1,
+            "ndcgAt5": 1,
+            "ndcgAt10": 1,
+            "rank": 1,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标已在 Recall@1"
+          },
+          "semantic": {
+            "strategy": "semantic",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333301"
+            ],
+            "candidateCount": 3,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 1,
+            "ndcgAt5": 1,
+            "ndcgAt10": 1,
+            "rank": 1,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标已在 Recall@1"
+          },
+          "hybrid": {
+            "strategy": "hybrid",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333301"
+            ],
+            "candidateCount": 3,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 1,
+            "ndcgAt5": 1,
+            "ndcgAt10": 1,
+            "rank": 1,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标已在 Recall@1"
+          }
+        },
+        "negativeStrategyDisagreement": null
+      },
+      {
+        "caseId": "ablate-privacy-yesterday",
+        "gate": "measure",
+        "scenario": "time_hard",
+        "labelConfidence": "clear",
+        "goldReviewStatus": "stable",
+        "judgmentZh": "时窗内唯一 privacy 主题摘录；窗外 burial 不得冒充",
+        "expectationKind": "hit",
+        "expectedId": "33333333-3333-4333-8333-333333333304",
+        "missK": null,
+        "goldParsed": {
+          "raw": "the privacy article I saved yesterday",
+          "timeRange": {
+            "from": "2026-07-24T00:00:00.000Z",
+            "to": "2026-07-24T23:59:59.999Z",
+            "label": "yesterday"
+          },
+          "timeConfidence": "high",
+          "objectTypes": ["article"],
+          "contentTerms": ["privacy", "article"],
+          "confidence": "high"
+        },
+        "clueEmbeddingText": "privacy",
+        "byStrategy": {
+          "keyword": {
+            "strategy": "keyword",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333304",
+              "33333333-3333-4333-8333-333333333306"
+            ],
+            "candidateCount": 2,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 1,
+            "ndcgAt5": 1,
+            "ndcgAt10": 1,
+            "rank": 1,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标已在 Recall@1"
+          },
+          "semantic": {
+            "strategy": "semantic",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333304",
+              "33333333-3333-4333-8333-333333333306"
+            ],
+            "candidateCount": 2,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 1,
+            "ndcgAt5": 1,
+            "ndcgAt10": 1,
+            "rank": 1,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标已在 Recall@1"
+          },
+          "hybrid": {
+            "strategy": "hybrid",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333304",
+              "33333333-3333-4333-8333-333333333306"
+            ],
+            "candidateCount": 2,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 1,
+            "ndcgAt5": 1,
+            "ndcgAt10": 1,
+            "rank": 1,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标已在 Recall@1"
+          }
+        },
+        "negativeStrategyDisagreement": null
+      },
+      {
+        "caseId": "ablate-nuclear-vs-weekly-noise",
+        "gate": "measure",
+        "scenario": "strong_distractor_hit",
+        "labelConfidence": "clear",
+        "goldReviewStatus": "stable",
+        "judgmentZh": "正确目标=影评摘录；weekly review 为词面噪音；政策简报为后增强干扰",
+        "expectationKind": "hit",
+        "expectedId": "33333333-3333-4333-8333-333333333301",
+        "missK": null,
+        "goldParsed": {
+          "raw": "notes on the first nuclear detonation film",
+          "objectTypes": ["video"],
+          "contentTerms": ["notes", "first", "nuclear", "detonation", "film"],
+          "confidence": "medium"
+        },
+        "clueEmbeddingText": "first nuclear detonation movie",
+        "byStrategy": {
+          "keyword": {
+            "strategy": "keyword",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333310",
+              "33333333-3333-4333-8333-333333333307",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333309",
+              "33333333-3333-4333-8333-333333333312"
+            ],
+            "candidateCount": 6,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "candidate_miss",
+            "summaryZh": "目标未进入该策略候选列表（召回覆盖失败；根因未推断，不得直接归因 Embedding）"
+          },
+          "semantic": {
+            "strategy": "semantic",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333301",
+              "33333333-3333-4333-8333-333333333310"
+            ],
+            "candidateCount": 4,
+            "goldInCandidates": true,
+            "recallAt1": false,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 0.3333333333333333,
+            "ndcgAt5": 0.5,
+            "ndcgAt10": 0.5,
+            "rank": 3,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标在 Recall@5 内但非 Top1（rank=3）；计 inPoolNotTop1，不计 inPoolOutsideTop5"
+          },
+          "hybrid": {
+            "strategy": "hybrid",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333310",
+              "33333333-3333-4333-8333-333333333301",
+              "33333333-3333-4333-8333-333333333302"
+            ],
+            "candidateCount": 4,
+            "goldInCandidates": true,
+            "recallAt1": false,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 0.3333333333333333,
+            "ndcgAt5": 0.5,
+            "ndcgAt10": 0.5,
+            "rank": 3,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标在 Recall@5 内但非 Top1（rank=3）；计 inPoolNotTop1，不计 inPoolOutsideTop5"
+          }
+        },
+        "negativeStrategyDisagreement": null
+      },
+      {
+        "caseId": "ablate-documentary-not-recipe",
+        "gate": "negative",
+        "scenario": "negative_orthogonal",
+        "labelConfidence": "clear",
+        "goldReviewStatus": "stable",
+        "judgmentZh": "食谱与核武纪录片正交；不应进前 10",
+        "expectationKind": "miss",
+        "expectedId": "33333333-3333-4333-8333-333333333308",
+        "missK": 10,
+        "goldParsed": {
+          "raw": "atomic bomb documentary",
+          "contentTerms": ["atomic", "bomb", "documentary"],
+          "confidence": "high"
+        },
+        "clueEmbeddingText": "atomic bomb documentary",
+        "byStrategy": {
+          "keyword": {
+            "strategy": "keyword",
+            "rankedIds": ["33333333-3333-4333-8333-333333333302"],
+            "candidateCount": 1,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "absent_honest",
+            "summaryZh": "负例正确地未进入前 10"
+          },
+          "semantic": {
+            "strategy": "semantic",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333301",
+              "33333333-3333-4333-8333-333333333310",
+              "33333333-3333-4333-8333-333333333306",
+              "33333333-3333-4333-8333-333333333304",
+              "33333333-3333-4333-8333-333333333309",
+              "33333333-3333-4333-8333-333333333307",
+              "33333333-3333-4333-8333-333333333305"
+            ],
+            "candidateCount": 9,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "absent_honest",
+            "summaryZh": "负例正确地未进入前 10"
+          },
+          "hybrid": {
+            "strategy": "hybrid",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333301",
+              "33333333-3333-4333-8333-333333333310",
+              "33333333-3333-4333-8333-333333333306",
+              "33333333-3333-4333-8333-333333333304",
+              "33333333-3333-4333-8333-333333333309",
+              "33333333-3333-4333-8333-333333333307",
+              "33333333-3333-4333-8333-333333333305"
+            ],
+            "candidateCount": 9,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "absent_honest",
+            "summaryZh": "负例正确地未进入前 10"
+          }
+        },
+        "negativeStrategyDisagreement": false
+      },
+      {
+        "caseId": "ablate-privacy-not-weather",
+        "gate": "negative",
+        "scenario": "negative_orthogonal",
+        "labelConfidence": "clear",
+        "goldReviewStatus": "stable",
+        "judgmentZh": "窗内天气与 privacy 正交；不应进前 5",
+        "expectationKind": "miss",
+        "expectedId": "33333333-3333-4333-8333-333333333306",
+        "missK": 5,
+        "goldParsed": {
+          "raw": "the privacy article I saved yesterday",
+          "timeRange": {
+            "from": "2026-07-24T00:00:00.000Z",
+            "to": "2026-07-24T23:59:59.999Z",
+            "label": "yesterday"
+          },
+          "timeConfidence": "high",
+          "objectTypes": ["article"],
+          "contentTerms": ["privacy", "article"],
+          "confidence": "high"
+        },
+        "clueEmbeddingText": "privacy",
+        "byStrategy": {
+          "keyword": {
+            "strategy": "keyword",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333304",
+              "33333333-3333-4333-8333-333333333306"
+            ],
+            "candidateCount": 2,
+            "goldInCandidates": true,
+            "recallAt1": false,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": 2,
+            "negativeFalsePositive": true,
+            "observedStage": "expectation_failed",
+            "summaryZh": "负例禁止 id 不应进前 5，但被召回（误报）；根因未推断"
+          },
+          "semantic": {
+            "strategy": "semantic",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333304",
+              "33333333-3333-4333-8333-333333333306"
+            ],
+            "candidateCount": 2,
+            "goldInCandidates": true,
+            "recallAt1": false,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": 2,
+            "negativeFalsePositive": true,
+            "observedStage": "expectation_failed",
+            "summaryZh": "负例禁止 id 不应进前 5，但被召回（误报）；根因未推断"
+          },
+          "hybrid": {
+            "strategy": "hybrid",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333304",
+              "33333333-3333-4333-8333-333333333306"
+            ],
+            "candidateCount": 2,
+            "goldInCandidates": true,
+            "recallAt1": false,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": 2,
+            "negativeFalsePositive": true,
+            "observedStage": "expectation_failed",
+            "summaryZh": "负例禁止 id 不应进前 5，但被召回（误报）；根因未推断"
+          }
+        },
+        "negativeStrategyDisagreement": false
+      },
+      {
+        "caseId": "ablate-physicists-not-burial",
+        "gate": "negative",
+        "scenario": "negative_orthogonal",
+        "labelConfidence": "clear",
+        "goldReviewStatus": "stable",
+        "judgmentZh": "埋葬考古与 physicists 线索正交",
+        "expectationKind": "miss",
+        "expectedId": "33333333-3333-4333-8333-333333333305",
+        "missK": 10,
+        "goldParsed": {
+          "raw": "review of physicists behind the first chain reaction",
+          "contentTerms": ["review", "physicists", "behind", "first", "chain", "reaction"],
+          "confidence": "medium"
+        },
+        "clueEmbeddingText": "physicists behind first chain reaction",
+        "byStrategy": {
+          "keyword": {
+            "strategy": "keyword",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333307",
+              "33333333-3333-4333-8333-333333333301"
+            ],
+            "candidateCount": 3,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "absent_honest",
+            "summaryZh": "负例正确地未进入前 10"
+          },
+          "semantic": {
+            "strategy": "semantic",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333301"
+            ],
+            "candidateCount": 3,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "absent_honest",
+            "summaryZh": "负例正确地未进入前 10"
+          },
+          "hybrid": {
+            "strategy": "hybrid",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333301"
+            ],
+            "candidateCount": 3,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "absent_honest",
+            "summaryZh": "负例正确地未进入前 10"
+          }
+        },
+        "negativeStrategyDisagreement": false
+      },
+      {
+        "caseId": "ablate-zero-overlap-oppenheimer-biopic",
+        "gate": "measure",
+        "scenario": "zero_overlap",
+        "labelConfidence": "clear",
+        "goldReviewStatus": "stable",
+        "judgmentZh": "目标正文含 Manhattan Project / Cillian Murphy；clue 词面 Oppenheimer/biopic 与正文零重叠（机制区分题）",
+        "expectationKind": "hit",
+        "expectedId": "33333333-3333-4333-8333-333333333301",
+        "missK": null,
+        "goldParsed": {
+          "raw": "that Oppenheimer biopic writeup I bookmarked",
+          "objectTypes": ["video"],
+          "contentTerms": ["oppenheimer", "biopic", "writeup"],
+          "confidence": "medium"
+        },
+        "clueEmbeddingText": "oppenheimer biopic writeup movie",
+        "byStrategy": {
+          "keyword": {
+            "strategy": "keyword",
+            "rankedIds": [],
+            "candidateCount": 0,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "candidate_miss",
+            "summaryZh": "目标未进入该策略候选列表（召回覆盖失败；根因未推断，不得直接归因 Embedding）"
+          },
+          "semantic": {
+            "strategy": "semantic",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333301",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333306",
+              "33333333-3333-4333-8333-333333333304",
+              "33333333-3333-4333-8333-333333333307"
+            ],
+            "candidateCount": 6,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 1,
+            "ndcgAt5": 1,
+            "ndcgAt10": 1,
+            "rank": 1,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标已在 Recall@1"
+          },
+          "hybrid": {
+            "strategy": "hybrid",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333301",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333306",
+              "33333333-3333-4333-8333-333333333304",
+              "33333333-3333-4333-8333-333333333307"
+            ],
+            "candidateCount": 6,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 1,
+            "ndcgAt5": 1,
+            "ndcgAt10": 1,
+            "rank": 1,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标已在 Recall@1"
+          }
+        },
+        "negativeStrategyDisagreement": null
+      },
+      {
+        "caseId": "ablate-oppenheimer-not-cookie",
+        "gate": "negative",
+        "scenario": "negative_orthogonal",
+        "labelConfidence": "clear",
+        "goldReviewStatus": "stable",
+        "judgmentZh": "cookie 法务与影评正交",
+        "expectationKind": "miss",
+        "expectedId": "33333333-3333-4333-8333-333333333309",
+        "missK": 10,
+        "goldParsed": {
+          "raw": "that Oppenheimer biopic writeup I bookmarked",
+          "objectTypes": ["video"],
+          "contentTerms": ["oppenheimer", "biopic", "writeup"],
+          "confidence": "medium"
+        },
+        "clueEmbeddingText": "oppenheimer biopic writeup movie",
+        "byStrategy": {
+          "keyword": {
+            "strategy": "keyword",
+            "rankedIds": [],
+            "candidateCount": 0,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "absent_honest",
+            "summaryZh": "负例正确地未进入前 10"
+          },
+          "semantic": {
+            "strategy": "semantic",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333301",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333306",
+              "33333333-3333-4333-8333-333333333304",
+              "33333333-3333-4333-8333-333333333307"
+            ],
+            "candidateCount": 6,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "absent_honest",
+            "summaryZh": "负例正确地未进入前 10"
+          },
+          "hybrid": {
+            "strategy": "hybrid",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333301",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333306",
+              "33333333-3333-4333-8333-333333333304",
+              "33333333-3333-4333-8333-333333333307"
+            ],
+            "candidateCount": 6,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "absent_honest",
+            "summaryZh": "负例正确地未进入前 10"
+          }
+        },
+        "negativeStrategyDisagreement": false
+      },
+      {
+        "caseId": "ablate-zero-overlap-anxious-lead",
+        "gate": "measure",
+        "scenario": "zero_overlap",
+        "labelConfidence": "clear",
+        "goldReviewStatus": "stable",
+        "judgmentZh": "目标含 looking worried / Cillian；clue 用 anxious/lead/actor/device，避开 Manhattan/Cillian/bomb 词面",
+        "expectationKind": "hit",
+        "expectedId": "33333333-3333-4333-8333-333333333301",
+        "missK": null,
+        "goldParsed": {
+          "raw": "that film where the lead actor looks anxious about the device",
+          "objectTypes": ["video"],
+          "contentTerms": ["film", "lead", "actor", "anxious", "device"],
+          "confidence": "medium"
+        },
+        "clueEmbeddingText": "lead actor anxious device movie",
+        "byStrategy": {
+          "keyword": {
+            "strategy": "keyword",
+            "rankedIds": [],
+            "candidateCount": 0,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "candidate_miss",
+            "summaryZh": "目标未进入该策略候选列表（召回覆盖失败；根因未推断，不得直接归因 Embedding）"
+          },
+          "semantic": {
+            "strategy": "semantic",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333301",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333303"
+            ],
+            "candidateCount": 3,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 1,
+            "ndcgAt5": 1,
+            "ndcgAt10": 1,
+            "rank": 1,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标已在 Recall@1"
+          },
+          "hybrid": {
+            "strategy": "hybrid",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333301",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333303"
+            ],
+            "candidateCount": 3,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 1,
+            "ndcgAt5": 1,
+            "ndcgAt10": 1,
+            "rank": 1,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标已在 Recall@1"
+          }
+        },
+        "negativeStrategyDisagreement": null
+      },
+      {
+        "caseId": "ablate-fuzzy-trinity-test-film",
+        "gate": "measure",
+        "scenario": "fuzzy_memory",
+        "labelConfidence": "ambiguous",
+        "goldReviewStatus": "pending_review",
+        "judgmentZh": "评测意图：曼哈顿影评为「Trinity 试验电影」模糊记忆的合理落点（corpus 无 Trinity 字面）；裁定：暂维持 hit→301，待复核",
+        "labelAmbiguityZh": "也可能被理解为泛核武纪录片 → keywordLeader（atomic bomb documentary）可能更贴；不因当前策略 Top1 改标签",
+        "expectationKind": "hit",
+        "expectedId": "33333333-3333-4333-8333-333333333301",
+        "missK": null,
+        "goldParsed": {
+          "raw": "that Trinity test film writeup I meant to reopen",
+          "objectTypes": ["video"],
+          "contentTerms": ["trinity", "test", "film", "writeup"],
+          "confidence": "low"
+        },
+        "clueEmbeddingText": "trinity test writeup movie",
+        "byStrategy": {
+          "keyword": {
+            "strategy": "keyword",
+            "rankedIds": [],
+            "candidateCount": 0,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "candidate_miss",
+            "summaryZh": "目标未进入该策略候选列表（召回覆盖失败；根因未推断，不得直接归因 Embedding）"
+          },
+          "semantic": {
+            "strategy": "semantic",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333301",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333307",
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333306",
+              "33333333-3333-4333-8333-333333333304",
+              "33333333-3333-4333-8333-333333333310"
+            ],
+            "candidateCount": 7,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 1,
+            "ndcgAt5": 1,
+            "ndcgAt10": 1,
+            "rank": 1,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标已在 Recall@1"
+          },
+          "hybrid": {
+            "strategy": "hybrid",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333301",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333307",
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333306",
+              "33333333-3333-4333-8333-333333333304",
+              "33333333-3333-4333-8333-333333333310"
+            ],
+            "candidateCount": 7,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 1,
+            "ndcgAt5": 1,
+            "ndcgAt10": 1,
+            "rank": 1,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标已在 Recall@1"
+          }
+        },
+        "negativeStrategyDisagreement": null
+      },
+      {
+        "caseId": "ablate-paraphrase-privacy-quiet-data",
+        "gate": "measure",
+        "scenario": "paraphrase",
+        "labelConfidence": "clear",
+        "goldReviewStatus": "stable",
+        "judgmentZh": "yesterday 窗 + dashboards/user data 同义指向 privacy 摘录（正文含 privacy/dashboards）",
+        "expectationKind": "hit",
+        "expectedId": "33333333-3333-4333-8333-333333333304",
+        "missK": null,
+        "goldParsed": {
+          "raw": "the thing I saved yesterday about keeping user data quiet in dashboards",
+          "timeRange": {
+            "from": "2026-07-24T00:00:00.000Z",
+            "to": "2026-07-24T23:59:59.999Z",
+            "label": "yesterday"
+          },
+          "timeConfidence": "high",
+          "objectTypes": ["article"],
+          "contentTerms": ["user", "data", "quiet", "dashboards"],
+          "confidence": "medium"
+        },
+        "clueEmbeddingText": "user data quiet dashboards",
+        "byStrategy": {
+          "keyword": {
+            "strategy": "keyword",
+            "rankedIds": ["33333333-3333-4333-8333-333333333304"],
+            "candidateCount": 1,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 1,
+            "ndcgAt5": 1,
+            "ndcgAt10": 1,
+            "rank": 1,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标已在 Recall@1"
+          },
+          "semantic": {
+            "strategy": "semantic",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333304",
+              "33333333-3333-4333-8333-333333333306"
+            ],
+            "candidateCount": 2,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 1,
+            "ndcgAt5": 1,
+            "ndcgAt10": 1,
+            "rank": 1,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标已在 Recall@1"
+          },
+          "hybrid": {
+            "strategy": "hybrid",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333304",
+              "33333333-3333-4333-8333-333333333306"
+            ],
+            "candidateCount": 2,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 1,
+            "ndcgAt5": 1,
+            "ndcgAt10": 1,
+            "rank": 1,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标已在 Recall@1"
+          }
+        },
+        "negativeStrategyDisagreement": null
+      },
+      {
+        "caseId": "ablate-fuzzy-fermi-pile-notes",
+        "gate": "measure",
+        "scenario": "fuzzy_memory",
+        "labelConfidence": "ambiguous",
+        "goldReviewStatus": "pending_review",
+        "judgmentZh": "意图：chain-reaction physicists 摘录；corpus 无 Fermi 字面，靠语义桥；裁定：暂维持 hit→303，待复核",
+        "labelAmbiguityZh": "核主题影评可能近邻抢位；不因当前策略输出改标签，不把抢位单独判为 embedding 失败",
+        "expectationKind": "hit",
+        "expectedId": "33333333-3333-4333-8333-333333333303",
+        "missK": null,
+        "goldParsed": {
+          "raw": "notes on the Fermi pile and those physicists",
+          "contentTerms": ["notes", "fermi", "pile", "physicists"],
+          "confidence": "low"
+        },
+        "clueEmbeddingText": "fermi pile physicists",
+        "byStrategy": {
+          "keyword": {
+            "strategy": "keyword",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333307",
+              "33333333-3333-4333-8333-333333333310",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333309",
+              "33333333-3333-4333-8333-333333333312"
+            ],
+            "candidateCount": 6,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 1,
+            "ndcgAt5": 1,
+            "ndcgAt10": 1,
+            "rank": 1,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标已在 Recall@1"
+          },
+          "semantic": {
+            "strategy": "semantic",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333301",
+              "33333333-3333-4333-8333-333333333305",
+              "33333333-3333-4333-8333-333333333307"
+            ],
+            "candidateCount": 5,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 1,
+            "ndcgAt5": 1,
+            "ndcgAt10": 1,
+            "rank": 1,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标已在 Recall@1"
+          },
+          "hybrid": {
+            "strategy": "hybrid",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333310",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333301",
+              "33333333-3333-4333-8333-333333333305",
+              "33333333-3333-4333-8333-333333333307"
+            ],
+            "candidateCount": 6,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 1,
+            "ndcgAt5": 1,
+            "ndcgAt10": 1,
+            "rank": 1,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标已在 Recall@1"
+          }
+        },
+        "negativeStrategyDisagreement": null
+      },
+      {
+        "caseId": "ablate-oppenheimer-not-nuclear-policy",
+        "gate": "negative",
+        "scenario": "negative_orthogonal",
+        "labelConfidence": "clear",
+        "goldReviewStatus": "stable",
+        "judgmentZh": "政策简报含 nuclear 但是非影评；不应进 Oppenheimer 线索前 10",
+        "expectationKind": "miss",
+        "expectedId": "33333333-3333-4333-8333-333333333310",
+        "missK": 10,
+        "goldParsed": {
+          "raw": "that Oppenheimer biopic writeup I bookmarked",
+          "objectTypes": ["video"],
+          "contentTerms": ["oppenheimer", "biopic", "writeup"],
+          "confidence": "medium"
+        },
+        "clueEmbeddingText": "oppenheimer biopic writeup movie",
+        "byStrategy": {
+          "keyword": {
+            "strategy": "keyword",
+            "rankedIds": [],
+            "candidateCount": 0,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "absent_honest",
+            "summaryZh": "负例正确地未进入前 10"
+          },
+          "semantic": {
+            "strategy": "semantic",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333301",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333306",
+              "33333333-3333-4333-8333-333333333304",
+              "33333333-3333-4333-8333-333333333307"
+            ],
+            "candidateCount": 6,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "absent_honest",
+            "summaryZh": "负例正确地未进入前 10"
+          },
+          "hybrid": {
+            "strategy": "hybrid",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333301",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333306",
+              "33333333-3333-4333-8333-333333333304",
+              "33333333-3333-4333-8333-333333333307"
+            ],
+            "candidateCount": 6,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "absent_honest",
+            "summaryZh": "负例正确地未进入前 10"
+          }
+        },
+        "negativeStrategyDisagreement": false
+      },
+      {
+        "caseId": "ablate-anxious-lead-not-policy",
+        "gate": "negative",
+        "scenario": "negative_orthogonal",
+        "labelConfidence": "clear",
+        "goldReviewStatus": "stable",
+        "judgmentZh": "与零词面 hit 同 clue；政策简报不得抢前 10",
+        "expectationKind": "miss",
+        "expectedId": "33333333-3333-4333-8333-333333333310",
+        "missK": 10,
+        "goldParsed": {
+          "raw": "that film where the lead actor looks anxious about the device",
+          "objectTypes": ["video"],
+          "contentTerms": ["film", "lead", "actor", "anxious", "device"],
+          "confidence": "medium"
+        },
+        "clueEmbeddingText": "lead actor anxious device movie",
+        "byStrategy": {
+          "keyword": {
+            "strategy": "keyword",
+            "rankedIds": [],
+            "candidateCount": 0,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "absent_honest",
+            "summaryZh": "负例正确地未进入前 10"
+          },
+          "semantic": {
+            "strategy": "semantic",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333301",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333303"
+            ],
+            "candidateCount": 3,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "absent_honest",
+            "summaryZh": "负例正确地未进入前 10"
+          },
+          "hybrid": {
+            "strategy": "hybrid",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333301",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333303"
+            ],
+            "candidateCount": 3,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "absent_honest",
+            "summaryZh": "负例正确地未进入前 10"
+          }
+        },
+        "negativeStrategyDisagreement": false
+      },
+      {
+        "caseId": "ablate-nomatch-yellowstone-not-movie",
+        "gate": "negative",
+        "scenario": "negative_no_match",
+        "labelConfidence": "clear",
+        "goldReviewStatus": "stable",
+        "judgmentZh": "无匹配查询：电影摘录不得冒充行程记忆",
+        "expectationKind": "miss",
+        "expectedId": "33333333-3333-4333-8333-333333333301",
+        "missK": 10,
+        "goldParsed": {
+          "raw": "my Yellowstone trip packing list from that summer",
+          "contentTerms": ["yellowstone", "trip", "packing", "list", "summer"],
+          "confidence": "medium"
+        },
+        "clueEmbeddingText": "yellowstone trip packing list summer",
+        "byStrategy": {
+          "keyword": {
+            "strategy": "keyword",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333311",
+              "33333333-3333-4333-8333-333333333309"
+            ],
+            "candidateCount": 2,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "absent_honest",
+            "summaryZh": "负例正确地未进入前 10"
+          },
+          "semantic": {
+            "strategy": "semantic",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333311",
+              "33333333-3333-4333-8333-333333333307",
+              "33333333-3333-4333-8333-333333333312",
+              "33333333-3333-4333-8333-333333333306",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333309"
+            ],
+            "candidateCount": 6,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "absent_honest",
+            "summaryZh": "负例正确地未进入前 10"
+          },
+          "hybrid": {
+            "strategy": "hybrid",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333311",
+              "33333333-3333-4333-8333-333333333309",
+              "33333333-3333-4333-8333-333333333307",
+              "33333333-3333-4333-8333-333333333312",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333306"
+            ],
+            "candidateCount": 6,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "absent_honest",
+            "summaryZh": "负例正确地未进入前 10"
+          }
+        },
+        "negativeStrategyDisagreement": false
+      },
+      {
+        "caseId": "ablate-nomatch-yellowstone-not-privacy",
+        "gate": "negative",
+        "scenario": "negative_no_match",
+        "labelConfidence": "clear",
+        "goldReviewStatus": "stable",
+        "judgmentZh": "无匹配查询：privacy 摘录不得冒充",
+        "expectationKind": "miss",
+        "expectedId": "33333333-3333-4333-8333-333333333304",
+        "missK": 10,
+        "goldParsed": {
+          "raw": "my Yellowstone trip packing list from that summer",
+          "contentTerms": ["yellowstone", "trip", "packing", "list", "summer"],
+          "confidence": "medium"
+        },
+        "clueEmbeddingText": "yellowstone trip packing list summer",
+        "byStrategy": {
+          "keyword": {
+            "strategy": "keyword",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333311",
+              "33333333-3333-4333-8333-333333333309"
+            ],
+            "candidateCount": 2,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "absent_honest",
+            "summaryZh": "负例正确地未进入前 10"
+          },
+          "semantic": {
+            "strategy": "semantic",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333311",
+              "33333333-3333-4333-8333-333333333307",
+              "33333333-3333-4333-8333-333333333312",
+              "33333333-3333-4333-8333-333333333306",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333309"
+            ],
+            "candidateCount": 6,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "absent_honest",
+            "summaryZh": "负例正确地未进入前 10"
+          },
+          "hybrid": {
+            "strategy": "hybrid",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333311",
+              "33333333-3333-4333-8333-333333333309",
+              "33333333-3333-4333-8333-333333333307",
+              "33333333-3333-4333-8333-333333333312",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333306"
+            ],
+            "candidateCount": 6,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "absent_honest",
+            "summaryZh": "负例正确地未进入前 10"
+          }
+        },
+        "negativeStrategyDisagreement": false
+      },
+      {
+        "caseId": "ablate-nomatch-yellowstone-not-hiking",
+        "gate": "negative",
+        "scenario": "negative_no_match",
+        "labelConfidence": "ambiguous",
+        "goldReviewStatus": "pending_review",
+        "judgmentZh": "裁定：保持 ambiguous，不改为意图 A/B；独立 clear 案见 ablate-yellowstone-exclude-hike-clear / find-hike-clear",
+        "labelAmbiguityZh": "现 clue 无法区分「明确排除徒步」与「不确定是否徒步」；旧案保留、不覆盖。禁止用模型 Top1 反推金标",
+        "expectationKind": "miss",
+        "expectedId": "33333333-3333-4333-8333-333333333311",
+        "missK": 5,
+        "goldParsed": {
+          "raw": "my Yellowstone trip packing list from that summer",
+          "contentTerms": ["yellowstone", "trip", "packing", "list", "summer"],
+          "confidence": "medium"
+        },
+        "clueEmbeddingText": "yellowstone trip packing list summer",
+        "byStrategy": {
+          "keyword": {
+            "strategy": "keyword",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333311",
+              "33333333-3333-4333-8333-333333333309"
+            ],
+            "candidateCount": 2,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": 1,
+            "negativeFalsePositive": true,
+            "observedStage": "expectation_failed",
+            "summaryZh": "负例禁止 id 不应进前 5，但被召回（误报）；根因未推断"
+          },
+          "semantic": {
+            "strategy": "semantic",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333311",
+              "33333333-3333-4333-8333-333333333307",
+              "33333333-3333-4333-8333-333333333312",
+              "33333333-3333-4333-8333-333333333306",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333309"
+            ],
+            "candidateCount": 6,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": 1,
+            "negativeFalsePositive": true,
+            "observedStage": "expectation_failed",
+            "summaryZh": "负例禁止 id 不应进前 5，但被召回（误报）；根因未推断"
+          },
+          "hybrid": {
+            "strategy": "hybrid",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333311",
+              "33333333-3333-4333-8333-333333333309",
+              "33333333-3333-4333-8333-333333333307",
+              "33333333-3333-4333-8333-333333333312",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333306"
+            ],
+            "candidateCount": 6,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": 1,
+            "negativeFalsePositive": true,
+            "observedStage": "expectation_failed",
+            "summaryZh": "负例禁止 id 不应进前 5，但被召回（误报）；根因未推断"
+          }
+        },
+        "negativeStrategyDisagreement": false
+      },
+      {
+        "caseId": "ablate-yellowstone-exclude-hike-clear",
+        "gate": "negative",
+        "scenario": "negative_no_match",
+        "labelConfidence": "clear",
+        "goldReviewStatus": "stable",
+        "judgmentZh": "意图 A（独立新案）：clue 明示 not the day-hike packing checklist → hiking 条目应 miss@5；库中无 lodging 正解",
+        "expectationKind": "miss",
+        "expectedId": "33333333-3333-4333-8333-333333333311",
+        "missK": 5,
+        "goldParsed": {
+          "raw": "my Yellowstone lodging booking confirmation from that summer, not the day-hike packing checklist",
+          "contentTerms": [
+            "yellowstone",
+            "lodging",
+            "booking",
+            "confirmation",
+            "summer",
+            "not",
+            "day-hike",
+            "packing",
+            "checklist"
+          ],
+          "confidence": "high"
+        },
+        "clueEmbeddingText": "yellowstone lodging booking confirmation summer not day-hike packing checklist",
+        "byStrategy": {
+          "keyword": {
+            "strategy": "keyword",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333311",
+              "33333333-3333-4333-8333-333333333309",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333307",
+              "33333333-3333-4333-8333-333333333312"
+            ],
+            "candidateCount": 6,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": 1,
+            "negativeFalsePositive": true,
+            "observedStage": "expectation_failed",
+            "summaryZh": "负例禁止 id 不应进前 5，但被召回（误报）；根因未推断"
+          },
+          "semantic": {
+            "strategy": "semantic",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333311",
+              "33333333-3333-4333-8333-333333333307",
+              "33333333-3333-4333-8333-333333333312",
+              "33333333-3333-4333-8333-333333333309",
+              "33333333-3333-4333-8333-333333333310",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333306"
+            ],
+            "candidateCount": 7,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": 1,
+            "negativeFalsePositive": true,
+            "observedStage": "expectation_failed",
+            "summaryZh": "负例禁止 id 不应进前 5，但被召回（误报）；根因未推断"
+          },
+          "hybrid": {
+            "strategy": "hybrid",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333311",
+              "33333333-3333-4333-8333-333333333309",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333307",
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333312",
+              "33333333-3333-4333-8333-333333333310",
+              "33333333-3333-4333-8333-333333333306"
+            ],
+            "candidateCount": 8,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": 1,
+            "negativeFalsePositive": true,
+            "observedStage": "expectation_failed",
+            "summaryZh": "负例禁止 id 不应进前 5，但被召回（误报）；根因未推断"
+          }
+        },
+        "negativeStrategyDisagreement": false
+      },
+      {
+        "caseId": "ablate-yellowstone-find-hike-clear",
+        "gate": "measure",
+        "scenario": "keyword_anchor",
+        "labelConfidence": "clear",
+        "goldReviewStatus": "stable",
+        "judgmentZh": "意图 B（独立新案）：clue 明示 day hike packing checklist + bear spray → 与 hiking 条目正文对齐，应为 hit",
+        "expectationKind": "hit",
+        "expectedId": "33333333-3333-4333-8333-333333333311",
+        "missK": null,
+        "goldParsed": {
+          "raw": "the Yellowstone day hike packing checklist with bear spray I saved",
+          "contentTerms": ["yellowstone", "day", "hike", "packing", "checklist", "bear", "spray"],
+          "confidence": "high"
+        },
+        "clueEmbeddingText": "yellowstone day hike packing checklist bear spray",
+        "byStrategy": {
+          "keyword": {
+            "strategy": "keyword",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333311",
+              "33333333-3333-4333-8333-333333333309"
+            ],
+            "candidateCount": 2,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 1,
+            "ndcgAt5": 1,
+            "ndcgAt10": 1,
+            "rank": 1,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标已在 Recall@1"
+          },
+          "semantic": {
+            "strategy": "semantic",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333311",
+              "33333333-3333-4333-8333-333333333307",
+              "33333333-3333-4333-8333-333333333312",
+              "33333333-3333-4333-8333-333333333309",
+              "33333333-3333-4333-8333-333333333306",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333310"
+            ],
+            "candidateCount": 7,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 1,
+            "ndcgAt5": 1,
+            "ndcgAt10": 1,
+            "rank": 1,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标已在 Recall@1"
+          },
+          "hybrid": {
+            "strategy": "hybrid",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333311",
+              "33333333-3333-4333-8333-333333333309",
+              "33333333-3333-4333-8333-333333333307",
+              "33333333-3333-4333-8333-333333333312",
+              "33333333-3333-4333-8333-333333333306",
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333310"
+            ],
+            "candidateCount": 7,
+            "goldInCandidates": true,
+            "recallAt1": true,
+            "recallAt5": true,
+            "recallAt10": true,
+            "mrr": 1,
+            "ndcgAt5": 1,
+            "ndcgAt10": 1,
+            "rank": 1,
+            "negativeFalsePositive": false,
+            "observedStage": "not_applicable",
+            "summaryZh": "目标已在 Recall@1"
+          }
+        },
+        "negativeStrategyDisagreement": null
+      },
+      {
+        "caseId": "ablate-documentary-not-sourdough",
+        "gate": "negative",
+        "scenario": "negative_orthogonal",
+        "labelConfidence": "clear",
+        "goldReviewStatus": "stable",
+        "judgmentZh": "酸种笔记与纪录片正交（第二食物域）",
+        "expectationKind": "miss",
+        "expectedId": "33333333-3333-4333-8333-333333333312",
+        "missK": 10,
+        "goldParsed": {
+          "raw": "atomic bomb documentary",
+          "contentTerms": ["atomic", "bomb", "documentary"],
+          "confidence": "high"
+        },
+        "clueEmbeddingText": "atomic bomb documentary",
+        "byStrategy": {
+          "keyword": {
+            "strategy": "keyword",
+            "rankedIds": ["33333333-3333-4333-8333-333333333302"],
+            "candidateCount": 1,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "absent_honest",
+            "summaryZh": "负例正确地未进入前 10"
+          },
+          "semantic": {
+            "strategy": "semantic",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333301",
+              "33333333-3333-4333-8333-333333333310",
+              "33333333-3333-4333-8333-333333333306",
+              "33333333-3333-4333-8333-333333333304",
+              "33333333-3333-4333-8333-333333333309",
+              "33333333-3333-4333-8333-333333333307",
+              "33333333-3333-4333-8333-333333333305"
+            ],
+            "candidateCount": 9,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "absent_honest",
+            "summaryZh": "负例正确地未进入前 10"
+          },
+          "hybrid": {
+            "strategy": "hybrid",
+            "rankedIds": [
+              "33333333-3333-4333-8333-333333333302",
+              "33333333-3333-4333-8333-333333333303",
+              "33333333-3333-4333-8333-333333333301",
+              "33333333-3333-4333-8333-333333333310",
+              "33333333-3333-4333-8333-333333333306",
+              "33333333-3333-4333-8333-333333333304",
+              "33333333-3333-4333-8333-333333333309",
+              "33333333-3333-4333-8333-333333333307",
+              "33333333-3333-4333-8333-333333333305"
+            ],
+            "candidateCount": 9,
+            "goldInCandidates": false,
+            "recallAt1": false,
+            "recallAt5": false,
+            "recallAt10": false,
+            "mrr": 0,
+            "ndcgAt5": 0,
+            "ndcgAt10": 0,
+            "rank": null,
+            "negativeFalsePositive": false,
+            "observedStage": "absent_honest",
+            "summaryZh": "负例正确地未进入前 10"
+          }
+        },
+        "negativeStrategyDisagreement": false
+      }
+    ],
+    "aggregateHitCases": {
+      "keyword": {
+        "recallAt1": 0.6363636363636364,
+        "recallAt5": 0.6363636363636364,
+        "recallAt10": 0.6363636363636364,
+        "mrr": 0.6363636363636364,
+        "ndcgAt5": 0.6363636363636364,
+        "ndcgAt10": 0.6363636363636364,
+        "denominator": 11,
+        "candidateMissCount": 4,
+        "inPoolOutsideTop5Count": 0,
+        "inPoolNotTop1Count": 0,
+        "recallAt5HitCount": 7
+      },
+      "semantic": {
+        "recallAt1": 0.8181818181818182,
+        "recallAt5": 1,
+        "recallAt10": 1,
+        "mrr": 0.8787878787878788,
+        "ndcgAt5": 0.9090909090909091,
+        "ndcgAt10": 0.9090909090909091,
+        "denominator": 11,
+        "candidateMissCount": 0,
+        "inPoolOutsideTop5Count": 0,
+        "inPoolNotTop1Count": 2,
+        "recallAt5HitCount": 11
+      },
+      "hybrid": {
+        "recallAt1": 0.8181818181818182,
+        "recallAt5": 1,
+        "recallAt10": 1,
+        "mrr": 0.8787878787878788,
+        "ndcgAt5": 0.9090909090909091,
+        "ndcgAt10": 0.9090909090909091,
+        "denominator": 11,
+        "candidateMissCount": 0,
+        "inPoolOutsideTop5Count": 0,
+        "inPoolNotTop1Count": 2,
+        "recallAt5HitCount": 11
+      }
+    },
+    "aggregateNegative": {
+      "keyword": {
+        "caseCount": 11,
+        "falsePositiveCount": 3,
+        "falsePositiveRate": 0.2727272727272727,
+        "kDefault": 10
+      },
+      "semantic": {
+        "caseCount": 11,
+        "falsePositiveCount": 3,
+        "falsePositiveRate": 0.2727272727272727,
+        "kDefault": 10
+      },
+      "hybrid": {
+        "caseCount": 11,
+        "falsePositiveCount": 3,
+        "falsePositiveRate": 0.2727272727272727,
+        "kDefault": 10
+      }
+    },
+    "denominatorViews": {
+      "include": {
+        "mode": "include",
+        "hitCaseCount": 11,
+        "negativeCaseCount": 11,
+        "ambiguousCaseCount": 3,
+        "pendingReviewCaseCount": 3,
+        "aggregateHitCases": {
+          "keyword": {
+            "recallAt1": 0.6363636363636364,
+            "recallAt5": 0.6363636363636364,
+            "recallAt10": 0.6363636363636364,
+            "mrr": 0.6363636363636364,
+            "ndcgAt5": 0.6363636363636364,
+            "ndcgAt10": 0.6363636363636364,
+            "denominator": 11,
+            "candidateMissCount": 4,
+            "inPoolOutsideTop5Count": 0,
+            "inPoolNotTop1Count": 0,
+            "recallAt5HitCount": 7
+          },
+          "semantic": {
+            "recallAt1": 0.8181818181818182,
+            "recallAt5": 1,
+            "recallAt10": 1,
+            "mrr": 0.8787878787878788,
+            "ndcgAt5": 0.9090909090909091,
+            "ndcgAt10": 0.9090909090909091,
+            "denominator": 11,
+            "candidateMissCount": 0,
+            "inPoolOutsideTop5Count": 0,
+            "inPoolNotTop1Count": 2,
+            "recallAt5HitCount": 11
+          },
+          "hybrid": {
+            "recallAt1": 0.8181818181818182,
+            "recallAt5": 1,
+            "recallAt10": 1,
+            "mrr": 0.8787878787878788,
+            "ndcgAt5": 0.9090909090909091,
+            "ndcgAt10": 0.9090909090909091,
+            "denominator": 11,
+            "candidateMissCount": 0,
+            "inPoolOutsideTop5Count": 0,
+            "inPoolNotTop1Count": 2,
+            "recallAt5HitCount": 11
+          }
+        },
+        "aggregateNegative": {
+          "keyword": {
+            "caseCount": 11,
+            "falsePositiveCount": 3,
+            "falsePositiveRate": 0.2727272727272727,
+            "kDefault": 10
+          },
+          "semantic": {
+            "caseCount": 11,
+            "falsePositiveCount": 3,
+            "falsePositiveRate": 0.2727272727272727,
+            "kDefault": 10
+          },
+          "hybrid": {
+            "caseCount": 11,
+            "falsePositiveCount": 3,
+            "falsePositiveRate": 0.2727272727272727,
+            "kDefault": 10
+          }
+        }
+      },
+      "clearOnly": {
+        "mode": "clear_only",
+        "hitCaseCount": 9,
+        "negativeCaseCount": 10,
+        "ambiguousCaseCount": 0,
+        "pendingReviewCaseCount": 0,
+        "aggregateHitCases": {
+          "keyword": {
+            "recallAt1": 0.6666666666666666,
+            "recallAt5": 0.6666666666666666,
+            "recallAt10": 0.6666666666666666,
+            "mrr": 0.6666666666666666,
+            "ndcgAt5": 0.6666666666666666,
+            "ndcgAt10": 0.6666666666666666,
+            "denominator": 9,
+            "candidateMissCount": 3,
+            "inPoolOutsideTop5Count": 0,
+            "inPoolNotTop1Count": 0,
+            "recallAt5HitCount": 6
+          },
+          "semantic": {
+            "recallAt1": 0.7777777777777778,
+            "recallAt5": 1,
+            "recallAt10": 1,
+            "mrr": 0.8518518518518517,
+            "ndcgAt5": 0.8888888888888888,
+            "ndcgAt10": 0.8888888888888888,
+            "denominator": 9,
+            "candidateMissCount": 0,
+            "inPoolOutsideTop5Count": 0,
+            "inPoolNotTop1Count": 2,
+            "recallAt5HitCount": 9
+          },
+          "hybrid": {
+            "recallAt1": 0.7777777777777778,
+            "recallAt5": 1,
+            "recallAt10": 1,
+            "mrr": 0.8518518518518517,
+            "ndcgAt5": 0.8888888888888888,
+            "ndcgAt10": 0.8888888888888888,
+            "denominator": 9,
+            "candidateMissCount": 0,
+            "inPoolOutsideTop5Count": 0,
+            "inPoolNotTop1Count": 2,
+            "recallAt5HitCount": 9
+          }
+        },
+        "aggregateNegative": {
+          "keyword": {
+            "caseCount": 10,
+            "falsePositiveCount": 2,
+            "falsePositiveRate": 0.2,
+            "kDefault": 10
+          },
+          "semantic": {
+            "caseCount": 10,
+            "falsePositiveCount": 2,
+            "falsePositiveRate": 0.2,
+            "kDefault": 10
+          },
+          "hybrid": {
+            "caseCount": 10,
+            "falsePositiveCount": 2,
+            "falsePositiveRate": 0.2,
+            "kDefault": 10
+          }
+        }
+      }
+    },
+    "negativeCaseDetails": [
+      {
+        "caseId": "ablate-documentary-not-recipe",
+        "scenario": "negative_orthogonal",
+        "labelConfidence": "clear",
+        "forbiddenId": "33333333-3333-4333-8333-333333333308",
+        "k": 10,
+        "ranksByStrategy": {
+          "keyword": null,
+          "semantic": null,
+          "hybrid": null
+        },
+        "falsePositiveByStrategy": {
+          "keyword": false,
+          "semantic": false,
+          "hybrid": false
+        },
+        "strategiesDisagree": false,
+        "anyFalsePositive": false
+      },
+      {
+        "caseId": "ablate-privacy-not-weather",
+        "scenario": "negative_orthogonal",
+        "labelConfidence": "clear",
+        "forbiddenId": "33333333-3333-4333-8333-333333333306",
+        "k": 5,
+        "ranksByStrategy": {
+          "keyword": 2,
+          "semantic": 2,
+          "hybrid": 2
+        },
+        "falsePositiveByStrategy": {
+          "keyword": true,
+          "semantic": true,
+          "hybrid": true
+        },
+        "strategiesDisagree": false,
+        "anyFalsePositive": true
+      },
+      {
+        "caseId": "ablate-physicists-not-burial",
+        "scenario": "negative_orthogonal",
+        "labelConfidence": "clear",
+        "forbiddenId": "33333333-3333-4333-8333-333333333305",
+        "k": 10,
+        "ranksByStrategy": {
+          "keyword": null,
+          "semantic": null,
+          "hybrid": null
+        },
+        "falsePositiveByStrategy": {
+          "keyword": false,
+          "semantic": false,
+          "hybrid": false
+        },
+        "strategiesDisagree": false,
+        "anyFalsePositive": false
+      },
+      {
+        "caseId": "ablate-oppenheimer-not-cookie",
+        "scenario": "negative_orthogonal",
+        "labelConfidence": "clear",
+        "forbiddenId": "33333333-3333-4333-8333-333333333309",
+        "k": 10,
+        "ranksByStrategy": {
+          "keyword": null,
+          "semantic": null,
+          "hybrid": null
+        },
+        "falsePositiveByStrategy": {
+          "keyword": false,
+          "semantic": false,
+          "hybrid": false
+        },
+        "strategiesDisagree": false,
+        "anyFalsePositive": false
+      },
+      {
+        "caseId": "ablate-oppenheimer-not-nuclear-policy",
+        "scenario": "negative_orthogonal",
+        "labelConfidence": "clear",
+        "forbiddenId": "33333333-3333-4333-8333-333333333310",
+        "k": 10,
+        "ranksByStrategy": {
+          "keyword": null,
+          "semantic": null,
+          "hybrid": null
+        },
+        "falsePositiveByStrategy": {
+          "keyword": false,
+          "semantic": false,
+          "hybrid": false
+        },
+        "strategiesDisagree": false,
+        "anyFalsePositive": false
+      },
+      {
+        "caseId": "ablate-anxious-lead-not-policy",
+        "scenario": "negative_orthogonal",
+        "labelConfidence": "clear",
+        "forbiddenId": "33333333-3333-4333-8333-333333333310",
+        "k": 10,
+        "ranksByStrategy": {
+          "keyword": null,
+          "semantic": null,
+          "hybrid": null
+        },
+        "falsePositiveByStrategy": {
+          "keyword": false,
+          "semantic": false,
+          "hybrid": false
+        },
+        "strategiesDisagree": false,
+        "anyFalsePositive": false
+      },
+      {
+        "caseId": "ablate-nomatch-yellowstone-not-movie",
+        "scenario": "negative_no_match",
+        "labelConfidence": "clear",
+        "forbiddenId": "33333333-3333-4333-8333-333333333301",
+        "k": 10,
+        "ranksByStrategy": {
+          "keyword": null,
+          "semantic": null,
+          "hybrid": null
+        },
+        "falsePositiveByStrategy": {
+          "keyword": false,
+          "semantic": false,
+          "hybrid": false
+        },
+        "strategiesDisagree": false,
+        "anyFalsePositive": false
+      },
+      {
+        "caseId": "ablate-nomatch-yellowstone-not-privacy",
+        "scenario": "negative_no_match",
+        "labelConfidence": "clear",
+        "forbiddenId": "33333333-3333-4333-8333-333333333304",
+        "k": 10,
+        "ranksByStrategy": {
+          "keyword": null,
+          "semantic": null,
+          "hybrid": null
+        },
+        "falsePositiveByStrategy": {
+          "keyword": false,
+          "semantic": false,
+          "hybrid": false
+        },
+        "strategiesDisagree": false,
+        "anyFalsePositive": false
+      },
+      {
+        "caseId": "ablate-nomatch-yellowstone-not-hiking",
+        "scenario": "negative_no_match",
+        "labelConfidence": "ambiguous",
+        "forbiddenId": "33333333-3333-4333-8333-333333333311",
+        "k": 5,
+        "ranksByStrategy": {
+          "keyword": 1,
+          "semantic": 1,
+          "hybrid": 1
+        },
+        "falsePositiveByStrategy": {
+          "keyword": true,
+          "semantic": true,
+          "hybrid": true
+        },
+        "strategiesDisagree": false,
+        "anyFalsePositive": true
+      },
+      {
+        "caseId": "ablate-yellowstone-exclude-hike-clear",
+        "scenario": "negative_no_match",
+        "labelConfidence": "clear",
+        "forbiddenId": "33333333-3333-4333-8333-333333333311",
+        "k": 5,
+        "ranksByStrategy": {
+          "keyword": 1,
+          "semantic": 1,
+          "hybrid": 1
+        },
+        "falsePositiveByStrategy": {
+          "keyword": true,
+          "semantic": true,
+          "hybrid": true
+        },
+        "strategiesDisagree": false,
+        "anyFalsePositive": true
+      },
+      {
+        "caseId": "ablate-documentary-not-sourdough",
+        "scenario": "negative_orthogonal",
+        "labelConfidence": "clear",
+        "forbiddenId": "33333333-3333-4333-8333-333333333312",
+        "k": 10,
+        "ranksByStrategy": {
+          "keyword": null,
+          "semantic": null,
+          "hybrid": null
+        },
+        "falsePositiveByStrategy": {
+          "keyword": false,
+          "semantic": false,
+          "hybrid": false
+        },
+        "strategiesDisagree": false,
+        "anyFalsePositive": false
+      }
+    ]
+  }
+}

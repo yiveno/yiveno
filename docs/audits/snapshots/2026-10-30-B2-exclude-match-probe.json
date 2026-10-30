@@ -1,0 +1,83 @@
+{
+  "generatedAt": "2026-10-29T21:19:23.138Z",
+  "evidenceClass": "static_probe_exclude_match_semantics",
+  "compactExamples": {
+    "dayHyphen": "day-hike",
+    "daySpace": "dayhike",
+    "fieldIncludesHike": true,
+    "compactIncludesHike": true
+  },
+  "normalizedExclude": {
+    "llmExclude": ["hike", "packing", "checklist"],
+    "rulesExclude": ["day-hike", "packing", "checklist"]
+  },
+  "hitsLlmExclude": [
+    {
+      "title": "Yellowstone day-hike packing checklist",
+      "hits": true
+    },
+    {
+      "title": "Yellowstone lodging booking confirmation",
+      "hits": false
+    },
+    {
+      "title": "Ashike lodging booking",
+      "hits": false
+    },
+    {
+      "title": "Yellowstone lodging for hikers",
+      "hits": false
+    },
+    {
+      "title": "Kitchen packing tips",
+      "hits": true
+    },
+    {
+      "title": "Yellowstone day hike guide",
+      "hits": true
+    }
+  ],
+  "hitsRulesExclude": [
+    {
+      "title": "Yellowstone day-hike packing checklist",
+      "hits": true
+    },
+    {
+      "title": "Yellowstone lodging booking confirmation",
+      "hits": false
+    },
+    {
+      "title": "Ashike lodging booking",
+      "hits": false
+    },
+    {
+      "title": "Yellowstone lodging for hikers",
+      "hits": false
+    },
+    {
+      "title": "Kitchen packing tips",
+      "hits": true
+    },
+    {
+      "title": "Yellowstone day hike guide",
+      "hits": true
+    }
+  ],
+  "emptyPool": {
+    "rules": {
+      "outcome": "no_match",
+      "topPickId": null,
+      "alsoCount": 0,
+      "excludeContentTerms": ["day-hike", "packing", "checklist"]
+    },
+    "llmMapped": {
+      "outcome": "no_match",
+      "topPickId": null,
+      "alsoCount": 0,
+      "excludeContentTerms": ["hike", "packing", "checklist"]
+    }
+  },
+  "mixedCorpusRankedIds": ["e8ba8787-ed1c-4deb-9a1f-f07feeb533ad"],
+  "lodgingSurvives": true,
+  "hikingExcluded": true
+}

@@ -93,7 +93,7 @@ alwaysApply: true
 | --- | --- | --- |
 | **禁止** | 内容/实体/标题/民间缩写的一对多对照，仅为过某条线索、某本库、某条 eval | `SHORT_LATIN_WORD_ALIASES`；主题/实体 seed（WWII·Hitler·Changchun）；诗人/框架 allowlist 冒充通用 enrichment |
 | **禁止** | 未在产品文档 **明确指定** 的闭集词表，却写进召回主路径冒充语义通解 | 查询侧 `expand*Terms` 靠手写 alias 扩词 |
-| **允许（须产品文档 Normative 明示 + 对全用户同一规则）** | 闭合**产品槽位**词面 → 枚举（objectType / behavior / time）；高频 host → 类型启发式；settings 迁移 id；i18n key | `RECALL_OBJECT_TYPE_LEXICON`；域名 enrichment（若 § 已写明） |
+| **允许（须产品文档 Normative 明示 + 对全用户同一规则）** | 闭合**产品槽位**词面 → 枚举（objectType / behavior / time）；settings 迁移 id；i18n key | `RECALL_OBJECT_TYPE_LEXICON` 等；类型靠正文词面 / LLM，**禁止**高频 host→类型表（2026-10-30 拆除） |
 | **允许** | 无内容词典的通用算法 | CamelCase / 多词首字母入倒排；折叠键；配额门禁 |
 | **仅测试数据 / eval 用例集** | 可出现专名种子；**不得**复制进生产召回/索引主路径 | `recall-eval` fixtures |
 

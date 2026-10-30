@@ -10,9 +10,10 @@
  * - 单测可调 `LLM_PARSE_CACHE_TTL_MS` 缩短 TTL。
  *
  * 适用边界：
- * - 仅 cache 同 host / 同 model 配置；切换 completer（开发切 hosted ↔ 直连）时**不**自动失效。
- *   调用方若切换 completer 必须 `clearLlmParseCache()`；当前唯一 completer 来自
- *   `clue-llm-completer-registry`，build 时机稳定。
+ * - 缓存键**不含** model；切换 completer / 换模型时**不**自动失效。
+ *   调用方须 `clearLlmParseCache()`，或 `parseRecallClueWithLlm({ useCache: false })`。
+ * - `compareParseGoldWithLlm` 默认清缓存且 `useCache: false`（离线换模不串提案）。
+ * - 生产路径：`clue-llm-completer-registry` 装配时机稳定；换配置时 registry 侧应清缓存。
  */
 
 import type { LlmParsedClueProposal } from '@/core/recall/understand/llm-parsed-clue-proposal'

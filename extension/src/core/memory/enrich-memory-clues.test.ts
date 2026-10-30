@@ -21,7 +21,7 @@ describe('mergeUniqueStrings', () => {
 })
 
 describe('enrichMemoryClues', () => {
-  it('music domain -> song + recall-oriented English keywords', () => {
+  it('标题含 music → song tag（不靠 host 表）', () => {
     expect(
       enrichMemoryClues({
         title: 'NetEase Cloud Music',
@@ -30,20 +30,20 @@ describe('enrichMemoryClues', () => {
       })
     ).toEqual({
       tags: ['song'],
-      keywords: expect.arrayContaining(['music', 'listen', 'audio', 'song', 'playlist', 'track']),
+      keywords: ['song'],
       entities: []
     })
   })
 
-  it('YouTube -> video（不再标 song）+ watch keywords', () => {
+  it('仅 YouTube host、标题无类型词 → 不钉 video', () => {
     const result = enrichMemoryClues({
       title: 'Lo-fi beats',
       url: 'https://www.youtube.com/watch?v=abc',
       domain: 'youtube.com'
     })
-    expect(result.tags).toContain('video')
+    expect(result.tags).not.toContain('video')
     expect(result.tags).not.toContain('song')
-    expect(result.keywords).toEqual(expect.arrayContaining(['video', 'youtube', 'watch', 'clip']))
+    expect(result.keywords).toEqual([])
   })
 
   it('标题仅含 clip 不打 video（clueOnly；防 diversity 假阳性）', () => {
@@ -88,16 +88,16 @@ describe('enrichMemoryClues', () => {
     expect(merged.clues.keywords).toEqual(expect.arrayContaining(['retries']))
   })
 
-  it('YouTube bookmark keeps video tags without topic/entity seed keywords', () => {
+  it('无类型词面时不发明 video/topic/entity', () => {
     const result = enrichMemoryClues({
       title: 'Why Hitler still casts a shadow after 80 years - BBC News',
       url: 'https://www.youtube.com/watch?v=hitler',
       domain: 'youtube.com'
     })
-    expect(result.tags).toEqual(['video'])
+    expect(result.tags).toEqual([])
     expect(result.entities).toEqual([])
+    expect(result.keywords).toEqual([])
     expect(result.keywords).not.toEqual(expect.arrayContaining(['wwii', 'Hitler', 'BBC']))
-    expect(result.keywords).toEqual(expect.arrayContaining(['video', 'youtube', 'watch']))
   })
 
   it('city title does not invent economy topic keywords', () => {
@@ -106,50 +106,57 @@ describe('enrichMemoryClues', () => {
       url: 'https://www.youtube.com/watch?v=_weXNUQ5NS4',
       domain: 'www.youtube.com'
     })
-    expect(result.tags).toContain('video')
+    expect(result.tags).not.toContain('video')
     expect(result.entities).toEqual([])
     expect(result.keywords).not.toEqual(expect.arrayContaining(['economy', 'Changchun']))
   })
 
-  it('GitHub -> code + repo keywords', () => {
+  it('仅 GitHub host、标题无类型词 → 不钉 code', () => {
     const result = enrichMemoryClues({
       title: 'yiveno',
       url: 'https://github.com/cqw/yiveno',
       domain: 'github.com'
     })
-    expect(result.tags).toContain('code')
-    expect(result.keywords).toEqual(
-      expect.arrayContaining(['code', 'repo', 'snippet', 'repository'])
-    )
+    expect(result.tags).not.toContain('code')
+    expect(result.keywords).toEqual([])
   })
 
-  it('MDN docs -> article + guide keywords', () => {
+  it('标题含 code → code tag（不靠 host）', () => {
+    const result = enrichMemoryClues({
+      title: 'yiveno source code',
+      url: 'https://github.com/cqw/yiveno',
+      domain: 'github.com'
+    })
+    expect(result.tags).toEqual(['code'])
+    expect(result.keywords).toEqual(['code'])
+  })
+
+  it('MDN 标题无类型词 → 不钉 article', () => {
     const result = enrichMemoryClues({
       title: 'IndexedDB API',
       url: 'https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API',
       domain: 'developer.mozilla.org'
     })
-    expect(result.tags).toContain('article')
-    expect(result.keywords).toEqual(
-      expect.arrayContaining(['docs', 'tutorial', 'guide', 'reference'])
-    )
+    expect(result.tags).not.toContain('article')
+    expect(result.keywords).toEqual([])
   })
 
-  it('title contains tutorial -> tutorial + guide keywords', () => {
+  it('title contains tutorial → article 类型词面打标；不灌 guide 同义 keyword', () => {
     const result = enrichMemoryClues({
       title: 'Vue 3 Composition API tutorial',
       text: 'A step-by-step guide for beginners.'
     })
     expect(result.tags).toContain('article')
-    expect(result.keywords).toEqual(expect.arrayContaining(['tutorial', 'guide']))
+    expect(result.keywords).toEqual(['article'])
+    expect(result.keywords).not.toContain('guide')
   })
 
-  it('text contains auth -> auth keywords', () => {
+  it('text contains authentication → 不灌 auth 同义 keyword', () => {
     const result = enrichMemoryClues({
       title: 'OAuth notes',
       text: 'How authentication works with JWT tokens.'
     })
-    expect(result.keywords).toEqual(expect.arrayContaining(['auth', 'authentication']))
+    expect(result.keywords).not.toEqual(expect.arrayContaining(['auth', 'authentication']))
   })
 
   it('body contains poem → poem tag; no entity allowlist', () => {
@@ -172,13 +179,13 @@ describe('enrichMemoryClues', () => {
     expect(result.keywords).not.toContain('Li Bai')
   })
 
-  it('GitHub bookmark gets code tag from domain', () => {
+  it('GitHub bookmark 无标题类型词 → 不钉 code', () => {
     const result = enrichMemoryClues({
       title: 'yiveno',
       url: 'https://github.com/cqw/yiveno',
       domain: 'github.com'
     })
-    expect(result.tags).toContain('code')
+    expect(result.tags).not.toContain('code')
   })
 
   it('generic page wording does not over-tag as page', () => {
@@ -205,7 +212,8 @@ describe('create-memory-item enrichment', () => {
       }
     })
     expect(item.clues.tags).toContain('song')
-    expect(item.clues.keywords).toEqual(expect.arrayContaining(['music', 'song', 'listen']))
+    expect(item.clues.keywords).toEqual(expect.arrayContaining(['song']))
+    expect(item.clues.keywords).not.toEqual(expect.arrayContaining(['music', 'listen']))
   })
 
   it('creating excerpt detects poem type without entity allowlist', () => {
@@ -221,7 +229,7 @@ describe('create-memory-item enrichment', () => {
     expect(item.clues.entities).toEqual([])
   })
 
-  it('caller-provided tags merge with enrichment tags', () => {
+  it('caller-provided tags merge；无标题类型词不因 host 钉 song', () => {
     const item = createBookmarkMemoryItem({
       ...baseContext,
       payload: {
@@ -230,7 +238,8 @@ describe('create-memory-item enrichment', () => {
       },
       clues: { tags: ['favorite'] }
     })
-    expect(item.clues.tags).toEqual(expect.arrayContaining(['favorite', 'song']))
+    expect(item.clues.tags).toEqual(expect.arrayContaining(['favorite', 'bookmark']))
+    expect(item.clues.tags).not.toContain('song')
   })
 })
 
@@ -304,6 +313,32 @@ describe('mergeEnrichmentIntoMemoryItem', () => {
     expect(merged.item.clues.keywords).not.toEqual(
       expect.arrayContaining(['wwii', 'Hitler', 'BBC', 'world war ii'])
     )
-    expect(merged.item.clues.keywords).toEqual(expect.arrayContaining(['video', 'youtube']))
+    // 无正文类型词：scrub 掉旧 host 钉的 video
+    expect(merged.item.clues.tags).not.toContain('video')
+    expect(merged.item.clues.keywords).not.toContain('video')
+    expect(merged.item.clues.keywords).not.toContain('youtube')
+  })
+
+  it('scrub 旧 host 钉的 song tag（标题无类型词时）', () => {
+    const item = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: {
+        title: 'Custom bookmark',
+        url: 'https://music.163.com/x'
+      }
+    })
+    const stale = {
+      ...item,
+      clues: {
+        ...item.clues,
+        tags: ['song', 'bookmark'],
+        keywords: ['song', 'music']
+      }
+    }
+    const merged = mergeEnrichmentIntoMemoryItem(stale)
+    expect(merged.changed).toBe(true)
+    expect(merged.item.clues.tags).not.toContain('song')
+    expect(merged.item.clues.tags).toContain('bookmark')
+    expect(merged.item.clues.keywords).not.toContain('music')
   })
 })

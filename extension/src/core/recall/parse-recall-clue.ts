@@ -3,6 +3,7 @@
  * 当前仅提供解析能力，不接入召回后端。
  */
 
+import { applyRuleExcludeToContentTerms } from '@/core/recall/exclude-content-terms'
 import { normalizeRecallText } from '@/core/recall/keyword-filter'
 import {
   RECALL_BEHAVIOR_LEXICON,
@@ -342,7 +343,7 @@ export function parseRecallClue(
   ]
 
   const residue = maskFillerSurfaces(maskSpans(normalized, allSpans))
-  const contentTerms = extractContentTerms(residue)
+  const rawContentTerms = extractContentTerms(residue)
 
   const timeLabel = timeHits.values[0]
   const timeRange = timeLabel ? resolveRelativeTimeRange(timeLabel, nowMs) : undefined
@@ -355,6 +356,12 @@ export function parseRecallClue(
   objectTypes = reinforceBookmarkObjectType(normalized, objectTypes)
   // 「recently collected」若时间词先占 recently，仍补 recently_saved
   behaviorHints = reinforceRecentlySavedBehavior(normalized, behaviorHints)
+
+  // 明确排除跨度 → excludeContentTerms；否则仅剥孤立否定标记，不猜排除范围
+  const { contentTerms, excludeContentTerms } = applyRuleExcludeToContentTerms(
+    normalized,
+    rawContentTerms
+  )
 
   const hasTime = Boolean(timeRange)
   const hasObject = objectTypes.length > 0
@@ -376,7 +383,8 @@ export function parseRecallClue(
     ...(timeConfidence ? { timeConfidence } : {}),
     ...(hasObject ? { objectTypes } : {}),
     ...(hasBehavior ? { behaviorHints } : {}),
-    ...(noteHint ? { noteHint } : {})
+    ...(noteHint ? { noteHint } : {}),
+    ...(excludeContentTerms.length > 0 ? { excludeContentTerms } : {})
   }
 
   return ParsedRecallClueSchema.parse(parsed)

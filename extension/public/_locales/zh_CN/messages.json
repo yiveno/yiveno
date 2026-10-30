@@ -761,6 +761,9 @@
   "popup_reply_miss": {
     "message": "没有足够接近的结果。试试另一个你记得住的细节。"
   },
+  "popup_reply_miss_after_simpler_pass": {
+    "message": "用更简单的本机理解后，还是没有足够接近的结果。试试另一个你记得住的细节。"
+  },
   "popup_session_status_continuing": {
     "message": "仍在细化这次找 — 不是新的。"
   },

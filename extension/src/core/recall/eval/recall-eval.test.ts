@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { formatEvalFailureObservationLine } from '@/core/recall/eval/eval-failure-observation'
 import { RECALL_EVAL_CASES } from '@/core/recall/eval/recall-eval-cases'
 import { buildRecallEvalCorpus } from '@/core/recall/eval/recall-eval-corpus'
 import { RECALL_EVAL_IDS } from '@/core/recall/eval/recall-eval-ids'
@@ -18,7 +19,10 @@ describe('recall-eval', () => {
 
     if (report.must.failed.length > 0) {
       const summary = report.must.failed
-        .map(item => `- ${item.caseId} clue="${item.clue}": ${item.detail}`)
+        .map(
+          item =>
+            `- ${item.caseId} clue="${item.clue}": ${item.detail}\n  ${formatEvalFailureObservationLine(item.caseId, item.failureObservation)}`
+        )
         .join('\n')
       throw new Error(
         `must 用例失败 ${report.must.failed.length}/${report.must.total}:\n${summary}`
@@ -69,5 +73,21 @@ describe('recall-eval', () => {
       `[recall-eval] stretch ${report.stretch.passed}/${report.stretch.total}` +
         (failedSummary ? ` | fail: ${failedSummary}` : '')
     )
+    for (const item of report.stretch.failed) {
+      console.info(
+        `[recall-eval] stretch-obs ${formatEvalFailureObservationLine(item.caseId, item.failureObservation)}`
+      )
+    }
+  })
+
+  it('失败观察：通过用例为 not_applicable；根因策略恒 not_inferred', () => {
+    const report = runRecallEval(RECALL_EVAL_CASES)
+    for (const item of report.cases) {
+      expect(item.failureObservation.rootCausePolicy).toBe('not_inferred')
+      expect(item.failureObservation.inferredRootCause).toBeNull()
+      if (item.passed) {
+        expect(item.failureObservation.observedStage).toBe('not_applicable')
+      }
+    }
   })
 })

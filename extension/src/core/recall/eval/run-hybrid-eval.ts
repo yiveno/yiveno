@@ -13,6 +13,10 @@ import { fuseHybridMatches } from '@/application/recall/backends/hybrid-recall-b
 import { RECALL_RESULT_PAGE_SIZE } from '@/core/recall/build-recall-result'
 import { buildHybridEvalCorpus, HYBRID_EVAL_NOW_MS } from '@/core/recall/eval/hybrid-eval-corpus'
 import type { HybridEvalCase } from '@/core/recall/eval/hybrid-eval-cases'
+import {
+  observeEvalFailure,
+  type EvalFailureObservation
+} from '@/core/recall/eval/eval-failure-observation'
 import { excludeDismissedMemoryItems } from '@/core/recall/merge-recall-dialog-turn'
 import { parseRecallClue } from '@/core/recall/parse-recall-clue'
 import type { RecallResult } from '@/core/recall/recall-result'
@@ -29,6 +33,11 @@ export interface HybridEvalCaseResult {
   result: RecallResult | null
   /** 是否真正跑到 Hybrid 融合（vs 关键词降级 / null 跳过） */
   hybridUsed: boolean
+  /**
+   * 失败时的阶段观察（非根因）。
+   * 通过用例为 not_applicable；**不**改变 must 判定。
+   */
+  failureObservation: EvalFailureObservation
 }
 
 export interface HybridEvalReport {
@@ -165,6 +174,14 @@ export async function runHybridEval(
     )
 
     const judged = judgeHybridEvalCase(evalCase, result)
+    const expectation = evalCase.expectation
+    const failureObservation = observeEvalFailure({
+      passed: judged.passed,
+      expectationKind: expectation.kind,
+      ...(expectation.kind !== 'no_match' ? { expectedId: expectation.expectedId } : {}),
+      result,
+      goldInLibrary: true
+    })
     caseResults.push({
       caseId: evalCase.id,
       gate: evalCase.gate,
@@ -172,7 +189,8 @@ export async function runHybridEval(
       passed: judged.passed,
       detail: judged.detail,
       result,
-      hybridUsed
+      hybridUsed,
+      failureObservation
     })
   }
 

@@ -24,6 +24,23 @@ describe('parseRecallClueWithLlm cache integration', () => {
     expect(r2.confidence).toBe(r1.confidence)
   })
 
+  it('useCache:false 时同 clue 每次都打 LLM', async () => {
+    clearLlmParseCache()
+    let calls = 0
+    const complete: LlmChatCompleter = async () => {
+      calls += 1
+      return JSON.stringify({
+        timeLabel: null,
+        objectTypes: null,
+        contentTerms: ['cloudflare'],
+        confidence: 'low'
+      })
+    }
+    await parseRecallClueWithLlm('same clue', { complete, useCache: false })
+    await parseRecallClueWithLlm('same clue', { complete, useCache: false })
+    expect(calls).toBe(2)
+  })
+
   it('不同 clue 各调一次 LLM', async () => {
     clearLlmParseCache()
     let calls = 0

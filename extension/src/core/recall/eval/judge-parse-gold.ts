@@ -85,6 +85,43 @@ export function diffParseGoldSlots(parsed: ParsedRecallClue, expect: ParseGoldSl
     }
   }
 
+  const excludeTerms = parsed.excludeContentTerms ?? []
+
+  if (expect.excludeContentTermsEmpty === true) {
+    if (excludeTerms.length > 0) {
+      failures.push(`excludeContentTerms 期望空，实际 ${formatList(excludeTerms)}`)
+    }
+  }
+
+  if (expect.excludeContentTermsMustInclude !== undefined) {
+    const missing = expect.excludeContentTermsMustInclude.filter(
+      term => !excludeTerms.includes(term)
+    )
+    if (missing.length > 0) {
+      failures.push(
+        `excludeContentTerms 缺少 ${formatList(missing)}（实际 ${formatList(excludeTerms)}）`
+      )
+    }
+  }
+
+  if (expect.excludeContentTermsMustExclude !== undefined) {
+    const leaked = expect.excludeContentTermsMustExclude.filter(term => excludeTerms.includes(term))
+    if (leaked.length > 0) {
+      failures.push(
+        `excludeContentTerms 不应含 ${formatList(leaked)}（实际 ${formatList(excludeTerms)}）`
+      )
+    }
+  }
+
+  if (expect.excludeContentTermsExact === true) {
+    const required = expect.excludeContentTermsMustInclude ?? []
+    if (!sameStringSet(excludeTerms, required)) {
+      failures.push(
+        `excludeContentTerms 须精确等于 ${formatList(required)}，实际 ${formatList(excludeTerms)}`
+      )
+    }
+  }
+
   if (expect.confidence !== undefined && parsed.confidence !== expect.confidence) {
     failures.push(`confidence 期望 ${expect.confidence}，实际 ${parsed.confidence}`)
   }

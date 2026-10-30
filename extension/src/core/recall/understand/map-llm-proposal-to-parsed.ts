@@ -7,6 +7,7 @@ import {
   stripGroundedSurfacesFromTerms
 } from '@/core/recall/understand/ground-llm-parse-slots'
 import { normalizeRecallText } from '@/core/recall/keyword-filter'
+import { reconcilePositiveAndExcludeTerms } from '@/core/recall/exclude-content-terms'
 import {
   extractContentTerms,
   reinforceBookmarkObjectType,
@@ -22,7 +23,8 @@ import {
 
 /**
  * 将 LLM 提议映射为编排层可消费的 ParsedRecallClue（确定性）。
- * - contentTerms：短语拆 token
+ * - contentTerms：短语拆 token（正向）
+ * - excludeContentTerms：明确排除；与正词冲突时消解
  * - objectTypes / behaviorHints：须在线索中有词面支撑
  * - confidence：按槽位重算（忽略模型自评）
  */
@@ -80,6 +82,14 @@ export function mapLlmProposalToParsedClue(
     contentTerms = contentTerms.filter(term => !noise.has(term))
   }
 
+  const excludeFromProposal = extractContentTerms((proposal.excludeContentTerms ?? []).join(' '))
+  const reconciled = reconcilePositiveAndExcludeTerms({
+    contentTerms,
+    excludeContentTerms: excludeFromProposal
+  })
+  contentTerms = reconciled.contentTerms
+  const excludeContentTerms = reconciled.excludeContentTerms
+
   const hasTime = Boolean(timeRange)
   const hasObject = objectTypes.length > 0
   const hasBehavior = behaviorHints.length > 0
@@ -100,6 +110,7 @@ export function mapLlmProposalToParsedClue(
     ...(timeConfidence ? { timeConfidence } : {}),
     ...(hasObject ? { objectTypes } : {}),
     ...(hasBehavior ? { behaviorHints } : {}),
-    ...(noteHint ? { noteHint } : {})
+    ...(noteHint ? { noteHint } : {}),
+    ...(excludeContentTerms.length > 0 ? { excludeContentTerms } : {})
   })
 }

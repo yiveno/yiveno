@@ -1,3 +1,4 @@
+import { observeEvalFailure } from '@/core/recall/eval/eval-failure-observation'
 import type { RecallEvalCaseResult } from '@/core/recall/eval/run-recall-eval'
 import { judgeRecallEvalCase } from '@/core/recall/eval/run-recall-eval'
 import { buildRecallEvalCorpus } from '@/core/recall/eval/recall-eval-corpus'
@@ -6,7 +7,6 @@ import type { OmniboxEvalCase } from '@/core/recall/eval/omnibox-eval-cases'
 import { toRecallEvalMustCase } from '@/core/recall/eval/omnibox-eval-cases'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import { excludeDismissedMemoryItems } from '@/core/recall/merge-recall-dialog-turn'
-import { getFuzzyVariants } from '@/core/recall/fuzzy-lexicon'
 import {
   recallByKeywordWithParsedClue,
   shouldSkipRecallAsZeroAnchor
@@ -38,7 +38,7 @@ function emptyNoMatch(clue: string): RecallResult {
  * 跑 Omnibox 离线快跳轨 eval（对齐 ADR-007）：
  * - `understandRecallClue` + `forceMode: lexical`（无 LLM completer）
  * - 单轮、无 context / framing
- * - 关键词 Filter + Indexed Fuzzy（与 HybridRecallBackend Omnibox 分支同契约）
+ * - 关键词 Filter（与 HybridRecallBackend Omnibox 分支同契约；无静态缩写字典）
  */
 export async function runOmniboxEval(
   cases: OmniboxEvalCase[],
@@ -60,12 +60,10 @@ export async function runOmniboxEval(
       result = emptyNoMatch(clue)
     } else {
       const items = excludeDismissedMemoryItems(corpus, undefined)
-      const fuzzyTokens = getFuzzyVariants(clue, 8)
       result = recallByKeywordWithParsedClue(items, clue, {
         nowMs: RECALL_EVAL_NOW_MS,
         parsed: understood.parsed,
-        behaviorProfile: 'omnibox',
-        ...(fuzzyTokens.length > 1 ? { fuzzyExpandTokens: fuzzyTokens.slice(1) } : {})
+        behaviorProfile: 'omnibox'
       })
       result = {
         ...result,
@@ -76,6 +74,14 @@ export async function runOmniboxEval(
     }
 
     const judged = judgeRecallEvalCase(toRecallEvalMustCase(evalCase), result)
+    const expectation = evalCase.expectation
+    const failureObservation = observeEvalFailure({
+      passed: judged.passed,
+      expectationKind: expectation.kind,
+      ...(expectation.kind !== 'no_match' ? { expectedId: expectation.expectedId } : {}),
+      result,
+      goldInLibrary: true
+    })
     caseResults.push({
       caseId: evalCase.id,
       gate: 'must',
@@ -83,6 +89,7 @@ export async function runOmniboxEval(
       passed: judged.passed,
       detail: judged.detail,
       result,
+      failureObservation,
       understandSource: understood.source
     })
   }

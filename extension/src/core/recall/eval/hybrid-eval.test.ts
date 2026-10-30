@@ -13,6 +13,7 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import { formatEvalFailureObservationLine } from '@/core/recall/eval/eval-failure-observation'
 import { HYBRID_EVAL_CASES } from '@/core/recall/eval/hybrid-eval-cases'
 import {
   HYBRID_FAKE_EMBEDDING_DIM,
@@ -83,7 +84,10 @@ describe('hybrid-eval', () => {
 
     if (report.must.failed.length > 0) {
       const summary = report.must.failed
-        .map(item => `- ${item.caseId} clue="${item.clue}": ${item.detail}`)
+        .map(
+          item =>
+            `- ${item.caseId} clue="${item.clue}": ${item.detail}\n  ${formatEvalFailureObservationLine(item.caseId, item.failureObservation)}`
+        )
         .join('\n')
       throw new Error(
         `Hybrid must 用例失败 ${report.must.failed.length}/${report.must.total}:\n${summary}`
@@ -114,5 +118,21 @@ describe('hybrid-eval', () => {
       `[hybrid-eval] stretch ${report.stretch.passed}/${report.stretch.total}` +
         (failedSummary ? ` | fail: ${failedSummary}` : '')
     )
+    for (const item of report.stretch.failed) {
+      console.info(
+        `[hybrid-eval] stretch-obs ${formatEvalFailureObservationLine(item.caseId, item.failureObservation)}`
+      )
+    }
+  })
+
+  it('失败观察：通过用例为 not_applicable；根因策略恒 not_inferred', async () => {
+    const report = await runHybridEval(HYBRID_EVAL_CASES)
+    for (const item of report.cases) {
+      expect(item.failureObservation.rootCausePolicy).toBe('not_inferred')
+      expect(item.failureObservation.inferredRootCause).toBeNull()
+      if (item.passed) {
+        expect(item.failureObservation.observedStage).toBe('not_applicable')
+      }
+    }
   })
 })

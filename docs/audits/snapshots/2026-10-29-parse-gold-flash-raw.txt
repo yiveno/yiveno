@@ -1,0 +1,12 @@
+$ bun scripts/run-parse-gold-llm.mjs
+[parse-gold:llm] model=deepseek-v4-flash base=https://api.deepseek.com cases=37
+[parse-gold] rules must 29/29 | stretch 4/8
+[parse-gold] llm   must 27/29 | stretch 7/8
+[parse-gold] stretch lifted by llm: stretch-verse-as-poem, stretch-never-finished-writeup, stretch-manifest-v3-looked-at
+[parse-gold] must regressed by llm: p0-long-time-ago-bookmark, must-wwii-related-video
+[parse-gold] stretch still failing: stretch-password-staging-stored
+[parse-gold] llm must failures:
+  - p0-long-time-ago-bookmark: confidence 期望 high，实际 medium
+  - must-wwii-related-video: contentTerms 不应含 [related]（实际 [wwii, related]）
+[parse-gold] llm stretch failures:
+  - stretch-password-staging-stored: confidence 期望 high，实际 medium

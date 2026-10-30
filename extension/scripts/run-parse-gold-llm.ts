@@ -5,24 +5,43 @@
  *   cd extension && bun run parse-gold:llm
  *
  * 环境变量：
- *   PARSE_GOLD_LLM_API_KEY   必填（也可用 DEEPSEEK_API_KEY / OPENAI_API_KEY）
+ *   PARSE_GOLD_LLM_API_KEY   可选显式覆盖；否则按 COMPAT 用 DEEPSEEK_/OPENAI_/DASHSCOPE_API_KEY
  *   PARSE_GOLD_LLM_BASE_URL  默认 https://api.deepseek.com
- *   PARSE_GOLD_LLM_MODEL     默认 deepseek-chat（可用 deepseek-v4-flash）
+ *   PARSE_GOLD_LLM_MODEL     默认 deepseek-chat（可用 deepseek-v4-flash / qwen-flash）
+ *   PARSE_GOLD_LLM_COMPAT    可选 deepseek|openai|dashscope（默认 deepseek）
  *   PARSE_GOLD_LLM_GATE      可选 must|stretch|all（默认 all）
+ *   PARSE_GOLD_LLM_JSON_OUT  可选；机器可读报告路径（相对 cwd 或绝对）
+ *   PARSE_GOLD_GIT_SHA       可选；不设则尝试 `git rev-parse HEAD`
  */
 
-import { existsSync, readFileSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
+import { createHash } from 'node:crypto'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { dirname, isAbsolute, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { spawnSync } from 'node:child_process'
 
 import {
   compareParseGoldWithLlm,
   formatParseGoldCompareSummary
 } from '../src/core/recall/eval/compare-parse-gold'
+import { formatSlotAgreementAggregateSummary } from '../src/core/recall/eval/metrics'
 import { PARSE_GOLD_CASES, type ParseGoldCase } from '../src/core/recall/eval/parse-gold-cases'
-import { createOpenAiCompatibleCompleter } from '../src/core/recall/understand/parse-recall-clue-with-llm'
+import { PARSE_GOLD_NOW_MS } from '../src/core/recall/eval/parse-gold-now'
+import {
+  buildParseGoldLlmJsonReport,
+  serializeParseGoldLlmJsonReport,
+  type ParseGoldCompleterCallMetric
+} from '../src/core/recall/eval/parse-gold-llm-report'
+import { clearLlmParseCache } from '../src/core/recall/understand/llm-parse-cache'
+import {
+  completeOpenAiCompatibleChatDetailed,
+  resolveOpenAiCompatibleChatCompletionsUrl,
+  type OpenAiCompatibleChatCompat
+} from '../src/core/recall/understand/openai-compatible-chat'
+import type { LlmChatCompleter } from '../src/core/recall/understand/parse-recall-clue-with-llm'
 
 const scriptDir = dirname(fileURLToPath(import.meta.url))
+const repoRoot = resolve(scriptDir, '../..')
 
 /** 从仓库根 .env*.local 注入缺失的环境变量（不覆盖已有）。 */
 function loadLocalEnvFiles(): void {
@@ -60,13 +79,31 @@ function loadLocalEnvFiles(): void {
   }
 }
 
-function resolveApiKey(): string | undefined {
-  return (
-    process.env.PARSE_GOLD_LLM_API_KEY?.trim() ||
-    process.env.DEEPSEEK_API_KEY?.trim() ||
-    process.env.OPENAI_API_KEY?.trim() ||
-    undefined
-  )
+/**
+ * 按 compat 选厂商 Key，避免同文件里 DeepSeek Key 抢先打到百炼/OpenAI。
+ * `PARSE_GOLD_LLM_API_KEY` 仍为显式覆盖（任意 compat）。
+ */
+function resolveApiKey(compat: OpenAiCompatibleChatCompat): {
+  apiKey: string | undefined
+  source: string | undefined
+} {
+  const explicit = process.env.PARSE_GOLD_LLM_API_KEY?.trim()
+  if (explicit) {
+    return { apiKey: explicit, source: 'PARSE_GOLD_LLM_API_KEY' }
+  }
+  if (compat === 'dashscope') {
+    const key = process.env.DASHSCOPE_API_KEY?.trim()
+    return { apiKey: key, source: key ? 'DASHSCOPE_API_KEY' : undefined }
+  }
+  if (compat === 'openai') {
+    const key = process.env.OPENAI_API_KEY?.trim()
+    return { apiKey: key, source: key ? 'OPENAI_API_KEY' : undefined }
+  }
+  const deepseek = process.env.DEEPSEEK_API_KEY?.trim()
+  if (deepseek) {
+    return { apiKey: deepseek, source: 'DEEPSEEK_API_KEY' }
+  }
+  return { apiKey: undefined, source: undefined }
 }
 
 function filterCases(gate: string | undefined): ParseGoldCase[] {
@@ -79,45 +116,145 @@ function filterCases(gate: string | undefined): ParseGoldCase[] {
   throw new Error(`PARSE_GOLD_LLM_GATE 无效: ${gate}（用 must|stretch|all）`)
 }
 
+function resolveCompat(raw: string | undefined): OpenAiCompatibleChatCompat {
+  const compat = raw?.trim() || 'deepseek'
+  if (compat === 'deepseek' || compat === 'openai' || compat === 'dashscope') return compat
+  throw new Error('PARSE_GOLD_LLM_COMPAT invalid; use deepseek|openai|dashscope')
+}
+
+function resolveGitSha(): string {
+  const fromEnv = process.env.PARSE_GOLD_GIT_SHA?.trim()
+  if (fromEnv) {
+    return fromEnv
+  }
+  const result = spawnSync('git', ['rev-parse', 'HEAD'], {
+    cwd: repoRoot,
+    encoding: 'utf8'
+  })
+  if (result.status === 0 && result.stdout.trim()) {
+    return result.stdout.trim()
+  }
+  return 'MISSING'
+}
+
+function defaultJsonOutPath(model: string): string {
+  const day = new Date().toISOString().slice(0, 10)
+  const safeModel = model.replace(/[^a-zA-Z0-9._-]+/g, '_')
+  return resolve(repoRoot, `docs/audits/snapshots/${day}-parse-gold-${safeModel}.json`)
+}
+
+function resolveJsonOutPath(model: string): string {
+  const raw = process.env.PARSE_GOLD_LLM_JSON_OUT?.trim()
+  if (!raw) {
+    return defaultJsonOutPath(model)
+  }
+  return isAbsolute(raw) ? raw : resolve(process.cwd(), raw)
+}
+
 export async function runParseGoldLlmCli(): Promise<void> {
   loadLocalEnvFiles()
-
-  const apiKey = resolveApiKey()
-  if (!apiKey) {
-    console.error(
-      '缺少 API Key：请设置 PARSE_GOLD_LLM_API_KEY（或 DEEPSEEK_API_KEY / OPENAI_API_KEY）'
-    )
-    process.exitCode = 1
-    return
-  }
 
   const baseUrl = process.env.PARSE_GOLD_LLM_BASE_URL?.trim() || 'https://api.deepseek.com'
   const model =
     process.env.PARSE_GOLD_LLM_MODEL?.trim() ||
     process.env.AI_HOSTED_MODEL?.trim() ||
     'deepseek-chat'
-  const cases = filterCases(process.env.PARSE_GOLD_LLM_GATE?.trim())
+  const gateFilter = process.env.PARSE_GOLD_LLM_GATE?.trim() || 'all'
+  const cases = filterCases(gateFilter)
+  const compat = resolveCompat(process.env.PARSE_GOLD_LLM_COMPAT)
+  const { apiKey, source: apiKeySource } = resolveApiKey(compat)
+  if (!apiKey) {
+    const hint =
+      compat === 'dashscope'
+        ? 'DASHSCOPE_API_KEY 或 PARSE_GOLD_LLM_API_KEY'
+        : compat === 'openai'
+          ? 'OPENAI_API_KEY 或 PARSE_GOLD_LLM_API_KEY'
+          : 'DEEPSEEK_API_KEY 或 PARSE_GOLD_LLM_API_KEY'
+    console.error(`缺少 API Key：请设置 ${hint}`)
+    process.exitCode = 1
+    return
+  }
 
-  console.info(`[parse-gold:llm] model=${model} base=${baseUrl} cases=${cases.length}`)
+  const temperature = 0
+  const maxTokens = 400
+  const disableThinking = true
+  const gitSha = resolveGitSha()
+  const jsonOut = resolveJsonOutPath(model)
+  const command = `PARSE_GOLD_LLM_COMPAT=${compat} PARSE_GOLD_LLM_MODEL=${model} PARSE_GOLD_LLM_GATE=${gateFilter} bun run parse-gold:llm`
+  const completionsUrl = resolveOpenAiCompatibleChatCompletionsUrl(baseUrl)
 
-  const complete = createOpenAiCompatibleCompleter({
-    apiKey,
-    baseUrl,
-    model,
-    temperature: 0,
-    maxTokens: 400,
-    disableThinking: true
+  console.info(
+    `[parse-gold:llm] compat=${compat} model=${model} key=${apiKeySource} base=${baseUrl} path=${completionsUrl} cases=${cases.length} git=${gitSha.slice(0, 8)}`
+  )
+
+  // 独立进程本已空缓存；仍显式清空，防止同进程二次调用串模
+  clearLlmParseCache()
+
+  const callMetrics: ParseGoldCompleterCallMetric[] = []
+  const complete: LlmChatCompleter = async messages => {
+    const detailed = await completeOpenAiCompatibleChatDetailed(
+      {
+        apiKey,
+        baseUrl,
+        model,
+        temperature,
+        maxTokens,
+        compat,
+        disableThinking
+      },
+      messages
+    )
+    callMetrics.push({
+      latencyMs: detailed.latencyMs,
+      usage: detailed.usage
+    })
+    return detailed.text
+  }
+
+  const report = await compareParseGoldWithLlm({
+    cases,
+    complete,
+    nowMs: PARSE_GOLD_NOW_MS,
+    useCache: false
   })
-
-  const report = await compareParseGoldWithLlm({ cases, complete })
   console.info(formatParseGoldCompareSummary(report))
+
+  const capturedAt = new Date().toISOString()
+  const jsonReport = buildParseGoldLlmJsonReport({
+    compare: report,
+    callMetrics,
+    meta: {
+      capturedAt,
+      gitSha,
+      model,
+      baseUrl,
+      compat,
+      temperature,
+      maxTokens,
+      disableThinking,
+      nowMsIso: new Date(PARSE_GOLD_NOW_MS).toISOString(),
+      nowMs: PARSE_GOLD_NOW_MS,
+      gateFilter,
+      caseCount: cases.length,
+      command,
+      repoRoot
+    }
+  })
+  console.info(formatSlotAgreementAggregateSummary(jsonReport.slotAgreement))
+
+  mkdirSync(dirname(jsonOut), { recursive: true })
+  writeFileSync(jsonOut, serializeParseGoldLlmJsonReport(jsonReport), 'utf8')
+  const digest = createHash('sha256').update(readFileSync(jsonOut)).digest('hex').slice(0, 12)
+  console.info(
+    `[parse-gold:llm] json=${jsonOut} schema=${jsonReport.schemaVersion} slotProtocol=${jsonReport.slotAgreement.protocol} l1=${jsonReport.layers.L1_schema.passed}/${cases.length} sha256prefix=${digest}`
+  )
 
   const authBlocked = report.llm.cases.some(item =>
     /authentication|unauthorized|invalid.*api.?key|401/i.test(item.detail)
   )
   if (authBlocked) {
     console.error(
-      '[parse-gold:llm] API 鉴权失败：请更新 DEEPSEEK_API_KEY / PARSE_GOLD_LLM_API_KEY 后重试'
+      '[parse-gold:llm] API 鉴权失败：请更新 PARSE_GOLD_LLM_API_KEY（或厂商 Key）后重试'
     )
     process.exitCode = 1
     return

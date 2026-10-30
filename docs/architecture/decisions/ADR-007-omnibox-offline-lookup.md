@@ -23,11 +23,11 @@ Side Panel 仍是自然语言找、邻域与非神谕承诺的 Normative 主壳�
 2. **Omnibox 离线查找轨（Normative）：**
    - **目标用户：** 已明确记得要找什么、能提供**关键字/片段/域名/标题词**等锚点；快捷键唤起地址栏快速命中即走。
    - **理解：** 仅规则 parser（`forceMode: lexical`）；**禁止**托管/直连 LLM 听懂（§0.1.0 NLU 不挡 Omnibox 快跳）。
-   - **检索：** 本机字段 Filter（标题、摘录正文、附注、URL/域名等）+ 结构化约束（时间 high/low、类型、附注指向）+ 内容佐证门（仅本次必修）+ **Indexed Fuzzy 预计算字典**（闭合技术缩写 / 技术词形 / 少量技术拼写变体，如 js→javascript、recat→react）。
+   - **检索：** 本机字段 Filter（标题、摘录正文、附注、URL/域名等）+ 结构化约束（时间 high/low、类型、附注指向）+ 内容佐证门（仅本次必修）。缩写/形态靠**索引侧**通用机制（CamelCase / 多词首字母入倒排等），**禁止**查询侧静态缩写→规范形字典（如 js→javascript、cf→cloudflare）——与 ADR-005 对齐；字典盖不住的残差诚实 miss 或换 Side Panel。
    - **禁止向量融合：** 不调 `requestWorkerEmbeddings`（clue / Topic embed 均跳过），不走 RRF，不做 cosine 扫描；miss 也不联网兜底；已知锚点场景下向量召回为延迟浪费。
    - **禁止 Outcome 软调：** 单次命中即走，无多轮会话上下文，跳过 `applyStoredOutcomePairsToMatches`。
    - **Topic lookup：** 仅词法（`withRecallTopic`），不注入 Topic embedding（`withRecallTopicAsync`）。
-   - **Indexed Fuzzy（2026-10-07）：** Omnibox 下 `getFuzzyVariants` 查静态字典展开；与原始 clue 多路 Filter 取并集（按 id 保留最高分）。词表规模以 `fuzzy-lexicon.ts` 为准（约百级行业闭集，非内容别名）；T0 查表 O(1)，无运行时 Levenshtein。**质>量（2026-10-08）：** 变体路径分 × `FUZZY_VARIANT_SCORE_FACTOR`（0.82），禁止扩词满分冲掉原词精确 Top1；`omnibox_must` 含 `cf Workers` 等钉防退化。**短路径（2026-10-08）：** 主 clue 命中 ≥`OMNIBOX_FUZZY_SKIP_IF_PRIMARY_COUNT`（6）且头名 ≥ Top Pick 阈值时跳过变体扫；Chrome one-shot `suggest` 不可二次推送，故「增量」= 同次回调内字面优先、稀疏才扩 fuzzy。壳层：Tip 与 lookup 并行；`commands.getAll` 快捷键缓存 TTL。
+   - **已拆除 · Indexed Fuzzy 字典（2026-10-30）：** 曾用 `fuzzy-lexicon.ts` 在 Omnibox 做查询侧多路展开；判定为内容/行业对照灰名单冒充通解（ADR-005），整表与 `getFuzzyVariants` 接线删除。壳层仍：Tip 与 lookup 并行；`commands.getAll` 快捷键缓存 TTL。
    - **个人 soft rank（2026-10-08）：** 词面命中后叠加 `computeBehaviorBoost`；Omnibox 传 `behaviorProfile: 'omnibox'`——计入 `settledCount`（§7.2 履约正例；此前本函数未读），并略抬 `openCount` / 近因。仍受 `RECALL_BEHAVIOR_BOOST_CAP`，不得压过强词面差；**不等于** Outcome 软调（仍禁止读 Outcome 对）。
    - **短锚字段权重（2026-10-08）：** 同档 `behaviorProfile: 'omnibox'` 使用 `OMNIBOX_FIELD_WEIGHTS`——抬 title / note / domain / url，压 `textExcerpt` / `excerptContext` / summary，减轻短 token 正文噪声；Side Panel 仍用默认 `FIELD_WEIGHTS`。
    - **禁止：** 多轮 `context`、framing NLG、Narrow 举例、环境追问芯片、`relatedGuess` 空态编造。
@@ -46,18 +46,18 @@ Side Panel 仍是自然语言找、邻域与非神谕承诺的 Normative 主壳�
 
 6. **能力天花板（Normative · 2026-10-08 · 防漂移）：** Omnibox **允许且仅允许**下列能力叠层；更高智能只投 Side Panel。
 
-   | 层                                 | 允许 | 说明                                                                |
-   | ---------------------------------- | ---- | ------------------------------------------------------------------- |
-   | ① 规则理解                         | ✓    | `forceMode: lexical` only                                           |
-   | ② 本机字段 Filter                  | ✓    | title / note / domain / URL / 摘录等                                |
-   | ③ 结构化约束 + 佐证门              | ✓    | 时间 high/low、类型、附注；内容佐证                                 |
-   | ④ 闭集 Indexed Fuzzy               | ✓    | 行业缩写/词形；变体分折扣；稀疏才扩                                 |
-   | ⑤ 个人 soft rank                   | ✓    | `settledCount` / open / 近因；非 Outcome                            |
-   | ⑥ 短锚字段权重                     | ✓    | `behaviorProfile: omnibox`                                          |
-   | ⑦ 壳层                             | ✓    | ≤6 SuggestResult、Tip、无命中/有命中末行换赛道 CTA、短路径/并行 Tip |
-   | ❌ Semantic / Hybrid / embed / RRF | 禁止 | 含「轻量向量」变体                                                  |
-   | ❌ LLM NLU / framing / 多轮        | 禁止 | miss → Side Panel 接力                                              |
-   | ❌ Outcome 软调 / 内容别名灰名单   | 禁止 | ADR-005 / §7.2                                                      |
+   | 层                                 | 允许 | 说明                                                         |
+   | ---------------------------------- | ---- | ------------------------------------------------------------ |
+   | ① 规则理解                         | ✓    | `forceMode: lexical` only                                    |
+   | ② 本机字段 Filter                  | ✓    | title / note / domain / URL / 摘录等；索引形态缩写可命中     |
+   | ③ 结构化约束 + 佐证门              | ✓    | 时间 high/low、类型、附注；内容佐证                          |
+   | ④ 个人 soft rank                   | ✓    | `settledCount` / open / 近因；非 Outcome                     |
+   | ⑤ 短锚字段权重                     | ✓    | `behaviorProfile: omnibox`                                   |
+   | ⑥ 壳层                             | ✓    | ≤6 SuggestResult、Tip、无命中/有命中末行换赛道 CTA、并行 Tip |
+   | ❌ 查询侧静态缩写/拼写字典扩词     | 禁止 | 曾 Indexed Fuzzy；ADR-005（2026-10-30 拆除）                 |
+   | ❌ Semantic / Hybrid / embed / RRF | 禁止 | 含「轻量向量」变体                                           |
+   | ❌ LLM NLU / framing / 多轮        | 禁止 | miss → Side Panel 接力                                       |
+   | ❌ Outcome 软调 / 内容别名灰名单   | 禁止 | ADR-005 / §7.2                                               |
 
 ## 后果
 
@@ -89,4 +89,4 @@ Side Panel 仍是自然语言找、邻域与非神谕承诺的 Normative 主壳�
 
 - ADR-001（主壳）、ADR-003（邻域）、ADR-004（LLM 边界）、ADR-005（灰名单）
 - 产品文档 §0.5、§5.3、§5.10.1（Omnibox ECS 仍须五要素 suggest）、§3.1 Omnibox 条数
-- 代码：`recall-backend.ts`、`hybrid-recall-backend.ts`、`omnibox.ts`、`omnibox-suggest.ts`（`OMNIBOX_SUGGEST_LIMIT`）、`fuzzy-lexicon.ts`、`keyword-filter.ts`（`behaviorProfile`）
+- 代码：`recall-backend.ts`、`hybrid-recall-backend.ts`、`omnibox.ts`、`omnibox-suggest.ts`（`OMNIBOX_SUGGEST_LIMIT`）、`keyword-filter.ts`（`behaviorProfile` / 形态缩写）

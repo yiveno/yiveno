@@ -2,6 +2,10 @@ import { RECALL_RESULT_PAGE_SIZE } from '@/core/recall/build-recall-result'
 import type { RecallEvalCase } from '@/core/recall/eval/recall-eval-cases'
 import { buildRecallEvalCorpus } from '@/core/recall/eval/recall-eval-corpus'
 import { RECALL_EVAL_NOW_MS } from '@/core/recall/eval/recall-eval-now'
+import {
+  observeEvalFailure,
+  type EvalFailureObservation
+} from '@/core/recall/eval/eval-failure-observation'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import {
   excludeDismissedMemoryItems,
@@ -19,6 +23,11 @@ export interface RecallEvalCaseResult {
   passed: boolean
   detail: string
   result: RecallResult
+  /**
+   * 失败时的阶段观察（非根因）。
+   * 通过用例为 not_applicable；**不**改变 must 判定。
+   */
+  failureObservation: EvalFailureObservation
 }
 
 /** 汇总指标。 */
@@ -148,13 +157,24 @@ export function runRecallEval(
       { parsed: merged, effectiveClue: effectiveRaw, clue: currentClue }
     )
     const judged = judgeRecallEvalCase(evalCase, result)
+    const expectation = evalCase.expectation
+    const failureObservation = observeEvalFailure({
+      passed: judged.passed,
+      expectationKind: expectation.kind,
+      ...(expectation.kind !== 'no_match' ? { expectedId: expectation.expectedId } : {}),
+      result,
+      // 合成 eval 库：有金标 id 即视为在库（dismiss 后仍可能「库有但不在本轮 items」——
+      // Phase A 不细分 dismiss；观察仅基于结果邻域位置）
+      goldInLibrary: true
+    })
     return {
       caseId: evalCase.id,
       gate: evalCase.gate,
       clue: evalCase.clue,
       passed: judged.passed,
       detail: judged.detail,
-      result
+      result,
+      failureObservation
     }
   })
 

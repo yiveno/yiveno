@@ -22,6 +22,11 @@ export interface ParseRecallClueWithLlmOptions {
   nowMs?: number
   complete: LlmChatCompleter
   trace?: ClueFlowTrace
+  /**
+   * 是否读写 `llm-parse-cache`（默认 true，生产路径）。
+   * 离线换模对比须 false：缓存键不含 model，避免串用他模 proposal。
+   */
+  useCache?: boolean
 }
 
 /**
@@ -29,7 +34,7 @@ export interface ParseRecallClueWithLlmOptions {
  * 流程：LLM prompt → 文本 → JSON → Zod 提议 → 确定性映射。不碰数据平面。
  *
  * 缓存策略：同 clue 5min 内复用 LLM proposal（时间相关字段仍按调用方 nowMs 重算）。
- * 见 `llm-parse-cache.ts`。
+ * 见 `llm-parse-cache.ts`。换 completer / 换模型前须 `clearLlmParseCache()`，或设 `useCache: false`。
  */
 export async function parseRecallClueWithLlm(
   clue: string,
@@ -37,16 +42,19 @@ export async function parseRecallClueWithLlm(
 ): Promise<ParsedRecallClue> {
   const nowMs = options.nowMs ?? PARSE_GOLD_NOW_MS
   const trace = options.trace ?? noopClueFlowTrace
+  const useCache = options.useCache !== false
   const messages = buildLlmParseClueMessages(clue)
 
   // 1) cache 命中：跳过 LLM，直接用 proposal + 当前 nowMs 重算 timeRange
-  const cached = getCachedLlmParse(clue, { nowMs })
-  if (cached) {
-    trace('info', 'LLM 解析：cache 命中，跳过 completer', {
-      clue,
-      contentTerms: cached.contentTerms
-    })
-    return mapLlmProposalToParsedClue(clue, cached, nowMs)
+  if (useCache) {
+    const cached = getCachedLlmParse(clue, { nowMs })
+    if (cached) {
+      trace('info', 'LLM 解析：cache 命中，跳过 completer', {
+        clue,
+        contentTerms: cached.contentTerms
+      })
+      return mapLlmProposalToParsedClue(clue, cached, nowMs)
+    }
   }
 
   trace('info', 'LLM 解析：已构造 messages', {
@@ -74,7 +82,9 @@ export async function parseRecallClueWithLlm(
 
   const proposal = LlmParsedClueProposalSchema.parse(rawJson)
   // 2) 写入 cache（不含时间戳；下次复用）
-  setCachedLlmParse(clue, proposal, { nowMs: Date.now() })
+  if (useCache) {
+    setCachedLlmParse(clue, proposal, { nowMs: Date.now() })
+  }
   trace('info', 'LLM 解析：Zod 提议通过', {
     timeLabel: proposal.timeLabel ?? null,
     objectTypes: proposal.objectTypes ?? null,

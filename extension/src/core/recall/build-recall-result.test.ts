@@ -2,8 +2,6 @@ import { describe, expect, it } from 'vitest'
 
 import { createBookmarkMemoryItem } from '@/core/memory/create-memory-item'
 import {
-  FUZZY_VARIANT_SCORE_FACTOR,
-  OMNIBOX_FUZZY_SKIP_IF_PRIMARY_COUNT,
   buildRecallResult,
   filterKeywordMatchesBeforeCollapse,
   recallByKeyword
@@ -193,47 +191,7 @@ describe('build-recall-result Top/Also 互斥', () => {
     expect(cookie?.duplicateGroup?.totalCount).toBe(520)
   })
 
-  it('Indexed Fuzzy：主路径已满额且头名够强时跳过变体扫（短路径）', () => {
-    // recat≠react 子串/形态，避免主路径误命中 canon 标题
-    const shortItems = Array.from({ length: OMNIBOX_FUZZY_SKIP_IF_PRIMARY_COUNT }, (_, i) =>
-      createBookmarkMemoryItem({
-        ...baseContext,
-        payload: {
-          title: `recat notes ${i}`,
-          url: `https://example.com/recat-${i}`
-        }
-      })
-    )
-    const fuzzyOnly = createBookmarkMemoryItem({
-      ...baseContext,
-      payload: {
-        title: 'React handbook deep dive',
-        url: 'https://example.com/react-handbook'
-      }
-    })
-
-    const sparse = filterKeywordMatchesBeforeCollapse(
-      [...shortItems.slice(0, 2), fuzzyOnly],
-      'recat',
-      {
-        minScore: 1,
-        fuzzyExpandTokens: ['react'],
-        behaviorProfile: 'omnibox'
-      }
-    )
-    expect(sparse.some(m => m.item.id === fuzzyOnly.id)).toBe(true)
-
-    const skipped = filterKeywordMatchesBeforeCollapse([...shortItems, fuzzyOnly], 'recat', {
-      minScore: 1,
-      fuzzyExpandTokens: ['react'],
-      behaviorProfile: 'omnibox'
-    })
-    expect(skipped).toHaveLength(OMNIBOX_FUZZY_SKIP_IF_PRIMARY_COUNT)
-    expect(skipped.every(m => shortItems.some(s => s.id === m.item.id))).toBe(true)
-    expect(skipped.some(m => m.item.id === fuzzyOnly.id)).toBe(false)
-  })
-
-  it('Indexed Fuzzy：变体分折扣，精确标题不被扩词满分冲掉', () => {
+  it('查询侧无静态缩写扩词：js 不凭字典命中仅含 JavaScript 的标题', () => {
     const exactJs = createBookmarkMemoryItem({
       ...baseContext,
       payload: { title: 'js cheat sheet', url: 'https://example.com/js-cheat' }
@@ -248,22 +206,10 @@ describe('build-recall-result Top/Also 互斥', () => {
 
     const merged = filterKeywordMatchesBeforeCollapse([exactJs, longCanon], 'js', {
       minScore: 1,
-      fuzzyExpandTokens: ['javascript'],
       behaviorProfile: 'omnibox'
     })
-    merged.sort((a, b) => b.score - a.score)
+    expect(merged.some(m => m.item.id === exactJs.id)).toBe(true)
+    // 无 js→javascript 字典时，仅靠形态：文档侧有 JavaScript→js 才可能命中；本条仅测不靠字典满分冲榜
     expect(merged[0]?.item.id).toBe(exactJs.id)
-
-    const fuzzyOnly = merged.find(m => m.item.id === longCanon.id)
-    expect(fuzzyOnly).toBeDefined()
-    // 变体路径须带折扣（相对未折扣主路径满分）
-    const undiscounted = filterKeywordMatchesBeforeCollapse([longCanon], 'javascript', {
-      minScore: 1,
-      behaviorProfile: 'omnibox'
-    })[0]
-    expect(undiscounted).toBeDefined()
-    expect(fuzzyOnly!.score).toBeLessThanOrEqual(
-      Math.floor(undiscounted!.score * FUZZY_VARIANT_SCORE_FACTOR)
-    )
   })
 })

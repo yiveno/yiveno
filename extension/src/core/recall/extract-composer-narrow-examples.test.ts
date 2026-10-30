@@ -26,7 +26,7 @@ describe('scoreNarrowExampleDocFreq', () => {
 })
 
 describe('extractComposerNarrowExamples', () => {
-  it('多类型域名 → 举 video / code 等类型词', () => {
+  it('多类型词面（URL youtube + 标题 repo）→ 举 video / code', () => {
     const examples = extractComposerNarrowExamples({
       candidates: [
         {
@@ -37,31 +37,31 @@ describe('extractComposerNarrowExamples', () => {
         },
         {
           itemKind: 'bookmark',
-          title: 'Repo',
+          title: 'App repo',
           subtitle: 'github.com',
           url: 'https://github.com/acme/app'
         },
         {
           itemKind: 'bookmark',
-          title: 'Clip',
+          title: 'Second talk',
           subtitle: 'youtube.com',
           url: 'https://youtube.com/watch?v=2'
         },
         {
           itemKind: 'bookmark',
-          title: 'Lib',
+          title: 'Lib repository',
           subtitle: 'github.com',
           url: 'https://github.com/acme/lib'
         },
         {
           itemKind: 'bookmark',
-          title: 'Pkg',
+          title: 'Pkg code',
           subtitle: 'npmjs.com',
           url: 'https://www.npmjs.com/package/x'
         },
         {
           itemKind: 'bookmark',
-          title: 'More',
+          title: 'More on youtube',
           subtitle: 'vimeo.com',
           url: 'https://vimeo.com/1'
         }

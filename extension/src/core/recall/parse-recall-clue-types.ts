@@ -151,6 +151,12 @@ export const ParsedRecallClueSchema = z.object({
   noteHint: z.boolean().optional(),
   /** 剥掉时间/类型/行为/附注指向词与填充词后的检索词。 */
   contentTerms: z.array(z.string()),
+  /**
+   * 用户**明确要求排除**的内容词（闭集产品槽）。
+   * 仅来自明确否定跨度（如 not the … / except the …）；不得把 uncertain（not sure）或孤立 not 写入。
+   * 与 contentTerms 互斥（同词保留正词、移出本槽）；检索侧对命中词面的候选硬过滤。
+   */
+  excludeContentTerms: z.array(z.string()).optional(),
   confidence: RecallClueConfidenceSchema
 })
 

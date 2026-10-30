@@ -1,0 +1,63 @@
+{
+  "snapshotId": "2026-10-29-parse-gold-flash",
+  "capturedAt": "2026-10-29T23:12:00+08:00",
+  "gitSha": "6c8af2c9973d8ac4c70ca3311ec873673d86f274",
+  "gitShaShort": "6c8af2c9",
+  "model": "deepseek-v4-flash",
+  "baseUrl": "https://api.deepseek.com",
+  "temperature": 0,
+  "maxTokens": 400,
+  "disableThinking": true,
+  "nowMs": "2026-07-28T12:00:00.000Z",
+  "gate": "all",
+  "caseCount": 37,
+  "command": "cd extension && PARSE_GOLD_LLM_MODEL=deepseek-v4-flash PARSE_GOLD_LLM_GATE=all bun run parse-gold:llm",
+  "fingerprintsSha256": {
+    "extension/src/core/recall/understand/build-llm-parse-prompt.ts": "f06d92e9de407d20908913914f057a9de40b295fbb0ba63cc0e2c1fe8cc85a60",
+    "extension/src/core/recall/understand/llm-parsed-clue-proposal.ts": "53f90c8aacadb2ac142a2ccc41cf279e0d4bcfd7b82b8a019cc58a4e2cd9fc68",
+    "extension/src/core/recall/eval/parse-gold-cases.ts": "9b33bea42df3a70e36c5dbe012cc40a368d4e86010f902b8dc911617d317f785",
+    "extension/src/core/recall/eval/parse-gold-now.ts": "e4ab874e3aebb27ad2e993740ee288018ef15e5d27ce3074ccd9aee8d92cb0b0",
+    "extension/src/core/recall/understand/parse-recall-clue-with-llm.ts": "d1fe155e9ff4549a4fd3686eb1215db3e294b4965fec9aae86676b2e435dbda6"
+  },
+  "layers": {
+    "L1_schema": "未单独报表；Zod/解析抛错会记入 case detail「解析失败」。本跑未见解析失败类明细，must/stretch 失败均为槽位 expect 不符 → 归 L2。",
+    "L2_parse_gold": {
+      "rules": {
+        "must": "29/29",
+        "stretch": "4/8"
+      },
+      "llm_flash": {
+        "must": "27/29",
+        "stretch": "7/8"
+      },
+      "stretchLiftedByLlm": [
+        "stretch-verse-as-poem",
+        "stretch-never-finished-writeup",
+        "stretch-manifest-v3-looked-at"
+      ],
+      "mustRegressedByLlm": ["p0-long-time-ago-bookmark", "must-wwii-related-video"],
+      "stretchStillFailing": ["stretch-password-staging-stored"],
+      "llmMustFailures": [
+        {
+          "id": "p0-long-time-ago-bookmark",
+          "detail": "confidence 期望 high，实际 medium"
+        },
+        {
+          "id": "must-wwii-related-video",
+          "detail": "contentTerms 不应含 [related]（实际 [wwii, related]）"
+        }
+      ],
+      "llmStretchFailures": [
+        {
+          "id": "stretch-password-staging-stored",
+          "detail": "confidence 期望 high，实际 medium"
+        }
+      ]
+    },
+    "L3_recall_hybrid": "本快照未跑 recall-eval / hybrid-eval（与 N2 范围一致；换模传导另做）。"
+  },
+  "tokensAndCost": "MISSING — CLI 未记录 tokensUsed / USD；勿用估算冒充账单",
+  "latencyMs": "MISSING — CLI 未记录 per-case / aggregate latency",
+  "rawLogPath": "docs/audits/snapshots/2026-10-29-parse-gold-flash-raw.txt",
+  "note_model_alias": "生产 AI Gateway 日志显示 model=deepseek/deepseek-flash；离线 CLI 用 deepseek-v4-flash（与 wrangler AI_HOSTED_MODEL 一致）。二者是否同一 upstream 未在本轮证明等价，对比时须固定同一接入路径。"
+}

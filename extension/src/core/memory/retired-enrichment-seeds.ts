@@ -27,8 +27,51 @@ const RETIRED_ENTITY_CANONICALS = [
   'RAG'
 ] as const
 
+/**
+ * 曾随域名/类型规则灌入的同义 keywords（2026-10-30 停灌）。
+ * 不含各类型 canonical（song/video/article/…），那些仍可由 enrichment 合法写入。
+ */
+const RETIRED_SYNONYM_KEYWORDS = [
+  'music',
+  'listen',
+  'audio',
+  'playlist',
+  'track',
+  'youtube',
+  'watch',
+  'clip',
+  'reading',
+  'story',
+  'tutorial',
+  'guide',
+  'write-up',
+  'docs',
+  'repo',
+  'snippet',
+  'development',
+  'programming',
+  'repository',
+  'poetry',
+  'terminal',
+  'cli',
+  'excerpt',
+  'highlight',
+  'passage',
+  'login',
+  'credentials',
+  'bookmarked',
+  'saved',
+  'auth',
+  'authentication',
+  'deploy',
+  'deployment',
+  'readme'
+] as const
+
 const RETIRED_SEED_KEY_SET: ReadonlySet<string> = new Set(
-  [...RETIRED_TOPIC_KEYWORDS, ...RETIRED_ENTITY_CANONICALS].map(token => token.toLowerCase())
+  [...RETIRED_TOPIC_KEYWORDS, ...RETIRED_ENTITY_CANONICALS, ...RETIRED_SYNONYM_KEYWORDS].map(
+    token => token.toLowerCase()
+  )
 )
 
 /** 是否为已退役 enrichment seed 词面。 */

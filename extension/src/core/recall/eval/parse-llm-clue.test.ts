@@ -173,7 +173,7 @@ describe('mapLlmProposalToParsedClue', () => {
 })
 
 describe('parseRecallClueWithLlm + compare（mock）', () => {
-  it('mock 补全能抬升 stretch verse 用例且不回归 must 子集', async () => {
+  it('mock：verse 主词典 must 与既有 must 同过且不回归', async () => {
     const complete: LlmChatCompleter = async messages => {
       const user = messages.find(item => item.role === 'user')?.content ?? ''
       const clue = user.replace(/^Clue:\n/, '')
@@ -222,9 +222,9 @@ describe('parseRecallClueWithLlm + compare（mock）', () => {
         note: 'subset must'
       },
       {
-        id: 'stretch-verse-as-poem',
+        id: 'must-verse-as-poem',
         clue: 'that Li Bai verse from the other day',
-        gate: 'stretch' as const,
+        gate: 'must' as const,
         expect: {
           timeLabel: 'recent' as const,
           objectTypes: ['poem' as const],
@@ -232,7 +232,7 @@ describe('parseRecallClueWithLlm + compare（mock）', () => {
           contentTermsMustExclude: ['verse'],
           confidence: 'high' as const
         },
-        note: 'subset stretch'
+        note: 'subset must · verse 主词典'
       }
     ]
 
@@ -241,8 +241,10 @@ describe('parseRecallClueWithLlm + compare（mock）', () => {
     expect(parsed.contentTerms).toEqual(['li', 'bai'])
 
     const report = await compareParseGoldWithLlm({ cases: subset, complete })
-    expect(report.stretchLiftedByLlm).toContain('stretch-verse-as-poem')
+    // verse 已并入主词典：规则与 LLM 均过 must；无 stretch 抬升叙事
+    expect(report.stretchLiftedByLlm).toEqual([])
     expect(report.mustRegressedByLlm).toEqual([])
-    expect(report.llm.must.passed).toBe(1)
+    expect(report.llm.must.passed).toBe(2)
+    expect(report.rules.must.passed).toBe(2)
   })
 })

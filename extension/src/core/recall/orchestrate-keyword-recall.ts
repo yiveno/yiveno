@@ -24,6 +24,7 @@ import {
   parsedClueForTimeSoftReopen,
   shouldAttemptTimeSoftReopen
 } from '@/core/recall/content-term-corroboration'
+import { filterMatchesByExcludeContentTerms } from '@/core/recall/exclude-content-terms'
 import { hasRecallTopicAnchor, withRecallTopic } from '@/core/recall/recall-topic'
 import { mergeTopicLookupWithKeywordMatches, topicLookup } from '@/core/recall/topic-lookup'
 import type { TopicDescriptor } from '@/core/recall/parse-recall-clue-types'
@@ -75,13 +76,6 @@ export interface OrchestrateKeywordRecallOptions {
   nowMs?: number
   /** 预解析结果；提供则跳过内部 parseRecallClue（供理解层注入）。 */
   parsed?: ParsedRecallClue
-  /**
-   * Indexed Fuzzy 展开词（2026-10-07）。
-   * 由 fuzzy-lexicon.ts 预计算字典展开的额外检索词（js→javascript；recat→react）。
-   * 仅 Omnibox 模式注入；Side Panel 不使用。
-   * 传递到 filterKeywordMatchesBeforeCollapse 做多路合并。
-   */
-  fuzzyExpandTokens?: readonly string[]
   /**
    * 行为加权档（Omnibox 传 `omnibox`：略抬 open/近因/settled）。
    * Side Panel / 默认不传。
@@ -712,12 +706,15 @@ export function applyTimeFilterThenContentCorroborationWithSoftReopen(
   const hardTimed = filterMatchesByParsedTimeRange(scoredMatches, parsed, nowMs)
   const corroborationTerms = effectiveContentTermsForRecall(parsed)
   let corroborated = filterMatchesByContentTermCorroboration(hardTimed, corroborationTerms)
+  // 明确排除：词面命中任一 excludeContentTerms → 硬剔除（不因排除空池做时间 soft 回退）
+  corroborated = filterMatchesByExcludeContentTerms(corroborated, parsed.excludeContentTerms)
   if (!shouldAttemptTimeSoftReopen(parsed, corroborated.length)) {
     return { matches: corroborated, effectiveParsed: parsed, timeSoftReopen: false }
   }
   const softParsed = parsedClueForTimeSoftReopen(parsed)
   const softTimed = filterMatchesByParsedTimeRange(scoredMatches, softParsed, nowMs)
   corroborated = filterMatchesByContentTermCorroboration(softTimed, corroborationTerms)
+  corroborated = filterMatchesByExcludeContentTerms(corroborated, softParsed.excludeContentTerms)
   return {
     matches: corroborated,
     effectiveParsed: softParsed,
@@ -836,7 +833,6 @@ export function recallByKeywordWithParsedClue(
 
   const scored = filterKeywordMatchesBeforeCollapse(items, filterClue, {
     nowMs,
-    ...(options.fuzzyExpandTokens ? { fuzzyExpandTokens: options.fuzzyExpandTokens } : {}),
     ...(options.behaviorProfile ? { behaviorProfile: options.behaviorProfile } : {})
   }).map(match => applyParsedClueScoreBoosts(match, parsed, nowMs))
   const { matches, effectiveParsed, timeSoftReopen } =

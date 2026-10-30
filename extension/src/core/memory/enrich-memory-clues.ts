@@ -1,7 +1,7 @@
 /**
- * Capture-time 规则 enrichment：从标题/正文/域名推断 tags / keywords。
+ * Capture-time 规则 enrichment：从标题/正文/附注推断 tags / keywords。
  * 无 LLM；与 parse-recall-clue 对象类型 slug 对齐。
- * **禁止**内容/专名硬编码别名表（主题·实体 seed）；实体留给 LLM enrichment / 用户附注 / 字面线索。
+ * **禁止**内容/专名硬编码别名表、高频站 host→类型表（ADR-005）；实体留给 LLM enrichment / 用户附注 / 字面线索。
  * 见产品文档 §0.1.1「市场语言与 Recall Language Strategy」与 AGENTS「全量用户能力」。
  */
 
@@ -29,109 +29,10 @@ export type EnrichMemoryCluesInput = {
   domain?: string
 }
 
-/** 高频站域名 → 对象类型 + 用途关键词（host 小写，可无 www）。 */
-export type DomainEnrichmentRule = {
-  /** 精确 host，或以 `.` 开头的后缀匹配（如 `.github.com` 不采用；用 endsWith）。 */
-  hosts: string[]
-  objectType: RecallObjectType
-  keywords: string[]
-}
-
-/**
- * P0 高频站映射。host 比较前会去 www. 并小写。
- */
-export const MEMORY_DOMAIN_ENRICHMENT_RULES: DomainEnrichmentRule[] = [
-  {
-    hosts: [
-      'music.163.com',
-      'y.qq.com',
-      'open.spotify.com',
-      'music.apple.com',
-      'soundcloud.com',
-      'kugou.com',
-      'kuwo.cn'
-    ],
-    objectType: 'song',
-    keywords: ['music', 'listen', 'audio', 'song', 'playlist', 'track']
-  },
-  {
-    hosts: ['youtube.com', 'youtu.be', 'bilibili.com', 'b23.tv', 'vimeo.com'],
-    objectType: 'video',
-    keywords: ['video', 'youtube', 'watch', 'clip']
-  },
-  {
-    hosts: [
-      'github.com',
-      'gitlab.com',
-      'bitbucket.org',
-      'gitee.com',
-      'stackoverflow.com',
-      'npmjs.com',
-      'crates.io'
-    ],
-    objectType: 'code',
-    keywords: ['code', 'repo', 'snippet', 'development', 'programming', 'repository']
-  },
-  {
-    hosts: [
-      'zhihu.com',
-      'juejin.cn',
-      'zhuanlan.zhihu.com',
-      'mp.weixin.qq.com',
-      'medium.com',
-      'substack.com',
-      'reddit.com',
-      'sspai.com',
-      'infoq.cn'
-    ],
-    objectType: 'article',
-    keywords: ['article', 'reading', 'story', 'tutorial', 'write-up']
-  },
-  {
-    hosts: [
-      'developer.mozilla.org',
-      'docs.github.com',
-      'developers.cloudflare.com',
-      'readthedocs.io'
-    ],
-    objectType: 'article',
-    keywords: ['docs', 'tutorial', 'guide', 'reference']
-  }
-]
-
-/**
- * 按对象类型补充 recall 导向关键词（与 parser 口语槽位对齐）。
- * 域名规则未覆盖时，文本识别出类型也会写入。
- */
-export const MEMORY_OBJECT_TYPE_RECALL_KEYWORDS: Partial<Record<RecallObjectType, string[]>> = {
-  song: ['song', 'music', 'listen', 'audio', 'playlist', 'track'],
-  video: ['video', 'youtube', 'watch', 'clip'],
-  article: ['article', 'reading', 'story', 'tutorial', 'guide', 'write-up', 'docs'],
-  code: ['code', 'repo', 'snippet', 'development', 'programming', 'repository'],
-  poem: ['poem', 'poetry'],
-  command: ['command', 'terminal', 'cli'],
-  quote: ['quote', 'excerpt', 'highlight', 'passage'],
-  password: ['password', 'login', 'credentials'],
-  bookmark: ['bookmark', 'bookmarked', 'saved']
-}
-
-/** 正文/标题命中特定词面时追加 recall 关键词（English canonical）。 */
-export type TextRecallKeywordRule = {
-  surfaces: string[]
-  keywords: string[]
-}
-
-/**
- * 正文词面 → recall 导向关键词（闭合产品启发式，非开放同义词典）。
- * 仅通用英文槽位词面；禁止专名/主题 seed。
- */
-export const MEMORY_TEXT_RECALL_KEYWORD_RULES: TextRecallKeywordRule[] = [
-  { surfaces: ['tutorial', 'how-to', 'how to'], keywords: ['tutorial', 'guide'] },
-  { surfaces: ['readme'], keywords: ['readme', 'docs'] },
-  { surfaces: ['playlist'], keywords: ['playlist', 'listen'] },
-  { surfaces: ['authentication', 'authorize'], keywords: ['auth', 'authentication'] },
-  { surfaces: ['deployment', 'deploy'], keywords: ['deploy', 'deployment'] }
-]
+/** 闭集 objectType slug（用于 scrub 存量 host 钉的 tag）。 */
+const OBJECT_TYPE_TAG_SET = new Set<string>(
+  Object.keys(RECALL_OBJECT_TYPE_CANONICAL_SURFACES).map(key => key.toLowerCase())
+)
 
 /** 合并去重（保序）。 */
 export function mergeUniqueStrings(...lists: Array<string[] | undefined>): string[] {
@@ -154,34 +55,11 @@ export function mergeUniqueStrings(...lists: Array<string[] | undefined>): strin
   return out
 }
 
-function normalizeHost(domainOrUrl: string | undefined): string | null {
-  if (!domainOrUrl?.trim()) {
-    return null
-  }
-  let host = domainOrUrl.trim().toLowerCase()
-  try {
-    if (host.includes('://')) {
-      host = new URL(host).hostname.toLowerCase()
-    }
-  } catch {
-    // 非 URL 时按域名片段处理
-  }
-  host = host.replace(/^www\./, '')
-  return host || null
-}
-
-function matchDomainRule(host: string): DomainEnrichmentRule | null {
-  for (const rule of MEMORY_DOMAIN_ENRICHMENT_RULES) {
-    for (const candidate of rule.hosts) {
-      if (host === candidate || host.endsWith(`.${candidate}`)) {
-        return rule
-      }
-    }
-  }
-  return null
-}
-
-function detectObjectTypesFromText(blob: string): RecallObjectType[] {
+/**
+ * 从正文词面推断对象类型（复用线索词典 surface；无 host 表）。
+ * 导出供 Narrow 举例等同源使用。
+ */
+export function detectObjectTypesFromText(blob: string): RecallObjectType[] {
   const normalized = normalizeRecallText(blob)
   if (!normalized) {
     return []
@@ -227,32 +105,12 @@ function detectObjectTypesFromText(blob: string): RecallObjectType[] {
   return types
 }
 
-/** 从正文词面推断 recall 导向关键词。 */
-function detectRecallKeywordsFromText(blob: string): string[] {
-  const normalized = normalizeRecallText(blob)
-  if (!normalized) {
-    return []
-  }
-
-  const hits: string[] = []
-  for (const rule of MEMORY_TEXT_RECALL_KEYWORD_RULES) {
-    for (const surface of rule.surfaces) {
-      const needle = normalizeRecallText(surface)
-      if (needle && normalized.includes(needle)) {
-        hits.push(...rule.keywords)
-        break
-      }
-    }
-  }
-  return hits
-}
-
-function appendRecallKeywordsForTypes(keywords: string[], objectTypes: RecallObjectType[]): void {
+/** 类型 → 仅写入 canonical 槽位词面（一首一义；无同义扩词）。 */
+function appendCanonicalKeywordsForTypes(
+  keywords: string[],
+  objectTypes: RecallObjectType[]
+): void {
   for (const type of objectTypes) {
-    const recallKeywords = MEMORY_OBJECT_TYPE_RECALL_KEYWORDS[type]
-    if (recallKeywords) {
-      keywords.push(...recallKeywords)
-    }
     const surface = RECALL_OBJECT_TYPE_CANONICAL_SURFACES[type]
     if (surface) {
       keywords.push(surface)
@@ -265,33 +123,14 @@ function appendRecallKeywordsForTypes(keywords: string[], objectTypes: RecallObj
  * 调用方负责与已有 clues 合并。
  */
 export function enrichMemoryClues(input: EnrichMemoryCluesInput): MemoryClueEnrichment {
-  const host = normalizeHost(input.domain) ?? normalizeHost(input.url)
   const textBlob = [input.title, input.text, input.note].filter(Boolean).join('\n')
-
-  const tags: string[] = []
+  const objectTypes = detectObjectTypesFromText(textBlob)
   const keywords: string[] = []
-  const objectTypes: RecallObjectType[] = []
-
-  if (host) {
-    const rule = matchDomainRule(host)
-    if (rule) {
-      objectTypes.push(rule.objectType)
-      tags.push(rule.objectType)
-      keywords.push(...rule.keywords)
-    }
-  }
-
-  const textTypes = detectObjectTypesFromText(textBlob)
-  tags.push(...textTypes)
-  objectTypes.push(...textTypes)
-
-  appendRecallKeywordsForTypes(keywords, [...new Set(objectTypes)])
-
-  keywords.push(...detectRecallKeywordsFromText(textBlob))
+  appendCanonicalKeywordsForTypes(keywords, objectTypes)
 
   // 规则层不写 entities：禁止专名 allowlist；实体由 LLM enrichment / 用户附注承接
   return {
-    tags: mergeUniqueStrings(tags),
+    tags: mergeUniqueStrings(objectTypes),
     keywords: mergeUniqueStrings(keywords),
     entities: []
   }
@@ -328,29 +167,27 @@ function sameStringListIgnoreCase(left: string[], right: string[]): boolean {
   return a.every((value, index) => value === b[index])
 }
 
+/**
+ * 曾随 video 类型/域名规则写入的同义 keywords（已停灌）。
+ * 仅供 scrub 清存量；**不得**再作 enrichment 写入源。
+ */
+const RETIRED_VIDEO_ENRICHMENT_KEYWORDS = ['video', 'youtube', 'watch', 'clip'] as const
+
 const VIDEO_RECALL_KEYWORD_SET = new Set(
-  (MEMORY_OBJECT_TYPE_RECALL_KEYWORDS.video ?? []).map(token => token.toLowerCase())
+  RETIRED_VIDEO_ENRICHMENT_KEYWORDS.map(token => token.toLowerCase())
 )
 
 /**
- * 去掉「仅因旧版 clip 正文打标」留下的 video tag/keywords。
- * 当前 enrichment 已不再主张 video、且非视频站时 scrub。
+ * 去掉「仅因旧版 clip 正文打标 / 旧 host 表」留下的 video tag/keywords。
+ * 当前 enrichment（正文词面）未主张 video 时 scrub。
  */
 function scrubStaleVideoEnrichment(input: {
   tags: string[]
   keywords: string[]
   enrichmentTags: string[]
-  domain?: string
-  url?: string
 }): { tags: string[]; keywords: string[] } {
   const enrichmentHasVideo = input.enrichmentTags.some(tag => tag.trim().toLowerCase() === 'video')
   if (enrichmentHasVideo) {
-    return { tags: input.tags, keywords: input.keywords }
-  }
-
-  const host = normalizeHost(input.domain) ?? normalizeHost(input.url)
-  const videoHost = Boolean(host && matchDomainRule(host)?.objectType === 'video')
-  if (videoHost) {
     return { tags: input.tags, keywords: input.keywords }
   }
 
@@ -362,8 +199,30 @@ function scrubStaleVideoEnrichment(input: {
 }
 
 /**
+ * 闭集 objectType tag：仅保留当前 enrichment 仍主张的（+ 书签 bookmark）。
+ * 清掉旧高频站 host→类型残留。
+ */
+function scrubStaleObjectTypeTags(input: {
+  tags: string[]
+  enrichmentTags: string[]
+  isBookmark: boolean
+}): string[] {
+  const keep = new Set(input.enrichmentTags.map(tag => tag.trim().toLowerCase()).filter(Boolean))
+  if (input.isBookmark) {
+    keep.add('bookmark')
+  }
+  return input.tags.filter(tag => {
+    const key = tag.trim().toLowerCase()
+    if (!OBJECT_TYPE_TAG_SET.has(key)) {
+      return true
+    }
+    return keep.has(key)
+  })
+}
+
+/**
  * 将规则 enrichment 合并进已有 MemoryItem（不改 createdAt/updatedAt）。
- * 合并后剔除已退役主题/实体 seed（存量 scrub）；并 scrub 旧版 clip→video 误标。
+ * 合并后剔除已退役主题/实体 seed（存量 scrub）；并 scrub 旧 host 钉类型与 clip→video 误标。
  * LLM 提议请用 mergeMemoryClueEnrichment 后再写回。
  */
 export function mergeEnrichmentIntoMemoryItem(item: MemoryItem): {
@@ -372,21 +231,23 @@ export function mergeEnrichmentIntoMemoryItem(item: MemoryItem): {
 } {
   const enrichInput = enrichInputFromMemoryItem(item)
   const enrichment = enrichMemoryClues(enrichInput)
-  const mergedTags = mergeUniqueStrings(
-    item.clues.tags,
-    enrichment.tags,
-    // 书签语料始终带 bookmark tag，便于类型词面路径与约束邻域一致
-    item.type === 'bookmark' ? ['bookmark'] : []
-  )
+  const mergedTags = scrubStaleObjectTypeTags({
+    tags: mergeUniqueStrings(
+      item.clues.tags,
+      enrichment.tags,
+      // 书签语料始终带 bookmark tag，便于类型词面路径与约束邻域一致
+      item.type === 'bookmark' ? ['bookmark'] : []
+    ),
+    enrichmentTags: enrichment.tags,
+    isBookmark: item.type === 'bookmark'
+  })
   const mergedKeywords = scrubRetiredEnrichmentSeedTokens(
     mergeUniqueStrings(item.clues.keywords, enrichment.keywords)
   )
   const scrubbed = scrubStaleVideoEnrichment({
     tags: mergedTags,
     keywords: mergedKeywords,
-    enrichmentTags: enrichment.tags,
-    ...(enrichInput.domain !== undefined ? { domain: enrichInput.domain } : {}),
-    ...(enrichInput.url !== undefined ? { url: enrichInput.url } : {})
+    enrichmentTags: enrichment.tags
   })
   const tags = scrubbed.tags
   const keywords = scrubbed.keywords

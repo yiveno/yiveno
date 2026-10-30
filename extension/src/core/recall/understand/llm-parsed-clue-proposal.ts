@@ -40,6 +40,11 @@ export const LlmParsedClueProposalSchema = z.object({
   behaviorHints: z.array(RecallBehaviorHintSchema).nullable().optional(),
   noteHint: z.boolean().optional(),
   contentTerms: z.array(z.string()),
+  /**
+   * 用户明确要求排除的内容词（与 contentTerms 互斥）。
+   * null/缺省 = 无线索内排除；禁止把 not sure / don't remember 等不确定表达写入本槽。
+   */
+  excludeContentTerms: z.array(z.string()).nullable().optional(),
   /** 仅作提示；map 时会按槽位重算 */
   confidence: RecallClueConfidenceSchema.optional().default('low')
 })

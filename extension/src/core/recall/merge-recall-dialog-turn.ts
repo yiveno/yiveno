@@ -3,6 +3,7 @@
  * 本轮理解结果 refine accumulated；短补充（如 yesterday）不得冲掉 prior content。
  */
 
+import { reconcilePositiveAndExcludeTerms } from '@/core/recall/exclude-content-terms'
 import { parseRecallClue, resolveRecallClueConfidence } from '@/core/recall/parse-recall-clue'
 import {
   ParsedRecallClueSchema,
@@ -87,6 +88,7 @@ export function buildEffectiveRecallRaw(
 /**
  * 合并两轮 ParsedRecallClue（槽位规则见产品文档 §7.0）。
  * - contentTerms：并集
+ * - excludeContentTerms：并集，再与正词做冲突消解
  * - timeRange / objectTypes：本轮有则覆盖
  * - behaviorHints：并集
  * - noteHint：OR
@@ -103,7 +105,17 @@ export function mergeParsedRecallClues(
     })
   }
 
-  const contentTerms = unionUniqueStrings(accumulated.contentTerms, current.contentTerms)
+  const contentTermsMerged = unionUniqueStrings(accumulated.contentTerms, current.contentTerms)
+  const excludeMerged = unionUniqueStrings(
+    accumulated.excludeContentTerms ?? [],
+    current.excludeContentTerms ?? []
+  )
+  const reconciled = reconcilePositiveAndExcludeTerms({
+    contentTerms: contentTermsMerged,
+    excludeContentTerms: excludeMerged
+  })
+  const contentTerms = reconciled.contentTerms
+  const excludeContentTerms = reconciled.excludeContentTerms
   const timeRange = current.timeRange ?? accumulated.timeRange
   const timeConfidence = current.timeRange ? current.timeConfidence : accumulated.timeConfidence
   const objectTypes: RecallObjectType[] | undefined =
@@ -133,7 +145,8 @@ export function mergeParsedRecallClues(
     ...(timeRange && timeConfidence ? { timeConfidence } : {}),
     ...(objectTypes && objectTypes.length > 0 ? { objectTypes } : {}),
     ...(behaviorHints ? { behaviorHints } : {}),
-    ...(noteHint ? { noteHint } : {})
+    ...(noteHint ? { noteHint } : {}),
+    ...(excludeContentTerms.length > 0 ? { excludeContentTerms } : {})
   })
 }
 
