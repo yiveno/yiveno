@@ -1,6 +1,6 @@
 # Microsoft Edge Add-ons Listing — Yiveno
 
-> Last Updated: 2026-10-28
+> Last Updated: 2026-10-30
 
 <!-- 开发者向：Edge 上架草稿本，与 extension/public/manifest.json + CHROMEWEBSTORE.md 同步维护。商店用户向文案仅美式英语。双店同包见 ADR-020。 -->
 
@@ -70,16 +70,39 @@ https://yiveno.com/privacy
 
 ## Distribution
 
-**Visibility**: **Not submitted** (as of 2026-10-28). No public Edge Add-ons listing yet.
+**Visibility**: **Not submitted** (as of 2026-10-30). No public Edge Add-ons listing yet.
+
+**Partner Center 账号（运维 · 非商店表单字段）：**
+
+| 项                       | 值                                                                                                                                                                                                                                                   |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **MSA 登录邮箱**         | `admin@yiveno.com`                                                                                                                                                                                                                                   |
+| **账号状态**             | **Microsoft Edge 程序已报名**（2026-10-30）：Publisher=`Yiveno` · Individual · China · MSA=`admin@yiveno.com`；仪表盘已可见 `Create new extension`；**账号核验未完成**（需按邮件/Account Settings 完成 verification 后方可上架）；尚未首次提交扩展包 |
+| **Primary Owner 硬约束** | 必须是 **个人 MSA**。自定义域邮箱可以，但须按个人账号注册（account.microsoft.com）。**仅** Azure AD / 工作或学校账号 **不能** 作 Primary Owner——若登录后提示无法作为个人开发者，需改用/关联合格 MSA。                                                |
 
 **Partner Center（首次提交步骤）：**
 
-1. 用 **MSA**（Outlook/Live/Hotmail）在 Partner Center 注册 Microsoft Edge 开发者计划（工作账号不可作 Primary Owner）。
-2. `cd extension && bun run pack:store` → 从**仓库根** `dist/` 打 ZIP，产出 `extension/yiveno-extension-store.zip`（勿指向不存在的 `extension/dist`）。
-3. 填本文件 Store Listing 字段 + 隐私 URL + logo / small promo tile（见 Graphics）。
-4. 审核通过后，把商店公开 URL 写入 [`website/src/install/store-links.ts`](website/src/install/store-links.ts) 的 `EDGE_ADDONS_LISTING_URL`（官网 Install CTA 自动从 Coming soon 变为可点深链）。
+> **说明：** 官网/Partner Center **没有**单独叫「Microsoft Edge 开发者计划」的产品页可搜。正确叫法是在 Partner Center 里 **enroll into the Microsoft Edge program**（卡片上常写 **Microsoft Edge** / **Get started**）。权威步骤：[Register as a Microsoft Edge extension developer](https://learn.microsoft.com/en-us/microsoft-edge/extensions/publish/create-dev-account)。
 
-**Partner Center:** Register Microsoft Edge program with a **Microsoft account (MSA)** as Primary Owner (work/school account alone is not supported). No registration fee for Edge extensions.
+1. **报名（二选一）**
+   - **直达（优先）：** 用 MSA 打开  
+     [partner.microsoft.com/.../enrollnow/msedgeaddons](https://partner.microsoft.com/en-us/dashboard/account/exp/enrollnow/msedgeaddons)  
+     （Edge 扩展团队在官方 issue 里给出的报名链；登录后应出现 **Microsoft Edge Developer Account Registration** 表单）
+   - **菜单路径：** [Partner Center](https://partner.microsoft.com/) → 右上角 **齿轮 Settings** → **Account settings** → **Programs** → 找到 **Microsoft Edge** 卡片 → **Get started**
+2. 表单里选 **Account country/region**（选完不可改）→ **Individual**（Yiveno 尚未注册公司；Company 要法人核验、更慢）→ Publisher display name 填 `Yiveno` → 勾协议 → **Finish**。无扩展上架费。
+3. `cd extension && bun run pack:store` → 从**仓库根** `dist/` 打 ZIP，产出 `extension/yiveno-extension-store.zip`（勿指向不存在的 `extension/dist`）。
+4. 填本文件 Store Listing 字段 + 隐私 URL + logo / small promo tile（见 Graphics）。
+5. 审核通过后，把商店公开 URL 写入 [`website/src/install/store-links.ts`](website/src/install/store-links.ts) 的 `EDGE_ADDONS_LISTING_URL`（官网 Install CTA 自动从 Coming soon 变为可点深链）。
+
+**若看不到 Microsoft Edge / Get started：**
+
+| 现象                                              | 常见原因                                              | 处理                                                                                                |
+| ------------------------------------------------- | ----------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| 只有 Windows / Office / Azure 等程序卡，没有 Edge | 当前登录是 **工作/学校账号**，或尚未进 Edge 报名流    | 先试上面 **直达链接**；仍无 → 换个人 MSA（Outlook/Live/Hotmail，或 GitHub 登录由系统创建 MSA）再试  |
+| 登录后进了 CSP / 企业 Partner 工作区              | 账号绑了企业 Partner 身份，Edge 扩展报名入口被盖住    | 无痕窗口 + 仅 MSA 登录；或直达 `enrollnow/msedgeaddons`                                             |
+| `admin@yiveno.com` 被当成 Entra 工作账号          | 自定义域常落成工作账号，**不能**作 Edge Primary Owner | 新建个人 MSA（如 `…@outlook.com`）作 Primary Owner；`admin@yiveno.com` 可作联系邮箱，不必当登录主号 |
+
+**Partner Center:** Enroll in the **Microsoft Edge** program with a **Microsoft account (MSA)** as Primary Owner (work/school account alone is not supported). No registration fee for Edge extensions.
 
 **Commercial status:** Same as CWS — not charging the public until explicitly launched.
 
@@ -88,6 +111,8 @@ https://yiveno.com/privacy
 ## Developer Info
 
 **Publisher Name:** Yiveno
+
+**Partner Center MSA (ops):** admin@yiveno.com — Primary Owner 登录；商店对外联系仍用下方 Contact / Support。
 
 **Contact Email:** privacy@yiveno.com
 

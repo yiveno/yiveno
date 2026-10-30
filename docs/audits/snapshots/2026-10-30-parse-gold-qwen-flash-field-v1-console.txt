@@ -1,0 +1,131 @@
+$ bun scripts/run-parse-gold-llm.mjs
+[parse-gold:llm] compat=dashscope model=qwen-flash key=DASHSCOPE_API_KEY base=https://dashscope.aliyuncs.com/compatible-mode/v1 path=https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions cases=42 git=a4c434d9
+[parse-gold] rules must 35/35 | stretch 5/7
+[parse-gold] llm   must 21/35 | stretch 4/7
+[parse-gold] stretch lifted by llm: stretch-manifest-v3-looked-at
+[parse-gold] must regressed by llm: p0-time-type-entity-li-bai, p0-behavior-song-yesterday, p0-recently-collected-bookmark, p0-while-ago-half-read-article, p0-last-month-article, p0-long-time-ago-bookmark, p0-code-deployment-last-week, p0-password-recently-saved, p0-assistant-like-songs, p0-half-read-compat, must-wwii-related-video, must-exclude-yellowstone-lodging-not-hike, must-uncertain-not-sure-no-exclude, must-exclude-conflict-shared-topic-stays-positive
+[parse-gold] stretch still failing: stretch-password-staging-stored
+[parse-gold] llm must failures:
+  - p0-time-type-entity-li-bai: 解析失败: [
+  {
+    "expected": "boolean",
+    "code": "invalid_type",
+    "path": [
+      "noteHint"
+    ],
+    "message": "Invalid input: expected boolean, received null"
+  }
+]
+  - p0-behavior-song-yesterday: 解析失败: [
+  {
+    "expected": "boolean",
+    "code": "invalid_type",
+    "path": [
+      "noteHint"
+    ],
+    "message": "Invalid input: expected boolean, received null"
+  }
+]
+  - p0-recently-collected-bookmark: 解析失败: [
+  {
+    "expected": "boolean",
+    "code": "invalid_type",
+    "path": [
+      "noteHint"
+    ],
+    "message": "Invalid input: expected boolean, received null"
+  }
+]
+  - p0-while-ago-half-read-article: 解析失败: [
+  {
+    "expected": "array",
+    "code": "invalid_type",
+    "path": [
+      "contentTerms"
+    ],
+    "message": "Invalid input: expected array, received undefined"
+  }
+]
+  - p0-last-month-article: 解析失败: [
+  {
+    "expected": "boolean",
+    "code": "invalid_type",
+    "path": [
+      "noteHint"
+    ],
+    "message": "Invalid input: expected boolean, received null"
+  }
+]
+  - p0-long-time-ago-bookmark: confidence 期望 high，实际 medium
+  - p0-code-deployment-last-week: 解析失败: [
+  {
+    "expected": "array",
+    "code": "invalid_type",
+    "path": [
+      "contentTerms"
+    ],
+    "message": "Invalid input: expected array, received undefined"
+  }
+]
+  - p0-password-recently-saved: 解析失败: [
+  {
+    "expected": "boolean",
+    "code": "invalid_type",
+    "path": [
+      "noteHint"
+    ],
+    "message": "Invalid input: expected boolean, received null"
+  }
+]
+  - p0-assistant-like-songs: contentTerms 缺少 [like]（实际 []）；confidence 期望 medium，实际 low
+  - p0-half-read-compat: 解析失败: [
+  {
+    "expected": "boolean",
+    "code": "invalid_type",
+    "path": [
+      "noteHint"
+    ],
+    "message": "Invalid input: expected boolean, received null"
+  }
+]
+  - must-wwii-related-video: contentTerms 不应含 [related]（实际 [wwii, related]）
+  - must-exclude-yellowstone-lodging-not-hike: 解析失败: [
+  {
+    "code": "invalid_value",
+    "values": [
+      "today",
+      "yesterday",
+      "day_before_yesterday",
+      "last_week",
+      "recent",
+      "a_while_ago",
+      "last_month",
+      "few_months_ago",
+      "long_ago"
+    ],
+    "path": [
+      "timeLabel"
+    ],
+    "message": "Invalid option: expected one of \"today\"|\"yesterday\"|\"day_before_yesterday\"|\"last_week\"|\"recent\"|\"a_while_ago\"|\"last_month\"|\"few_months_ago\"|\"long_ago\""
+  }
+]
+  - must-uncertain-not-sure-no-exclude: contentTerms 缺少 [privacy]（实际 []）
+  - must-exclude-conflict-shared-topic-stays-positive: excludeContentTerms 缺少 [day-hike]（实际 [packing, checklist, hike]）
+[parse-gold] llm stretch failures:
+  - stretch-never-finished-writeup: contentTerms 缺少 [deployment]（实际 []）
+  - stretch-music-kept-opening: 解析失败: [
+  {
+    "expected": "boolean",
+    "code": "invalid_type",
+    "path": [
+      "noteHint"
+    ],
+    "message": "Invalid input: expected boolean, received null"
+  }
+]
+  - stretch-password-staging-stored: contentTerms 缺少 [staging]（实际 []）；confidence 期望 high，实际 medium
+[parse-gold] slotAgreement protocol=field-v1 (field-level; not term P/R/F1)
+[parse-gold] slotAgreement positive mean=0.715 (n=42) | timeLabel=0.714(20/28) objectTypes=0.750(27/36) behaviorHints=0.538(7/13) noteHint=1.000(4/4) contentTerms=0.743(26/35) confidence=0.676(25/37)
+[parse-gold] slotAgreement negative mean=0.600 (n=5) | excludeContentTerms=0.600(3/5)
+[parse-gold] slotAgreement overall  mean=0.707 (n=42) (auxiliary)
+[parse-gold:llm] json=/Users/cqw/Documents/github/yiveno/docs/audits/snapshots/2026-10-30-parse-gold-qwen-flash-field-v1.json schema=2 slotProtocol=field-v1 l1=32/42 sha256prefix=0fae41e9a6c7

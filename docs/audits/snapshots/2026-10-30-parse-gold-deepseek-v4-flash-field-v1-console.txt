@@ -1,0 +1,19 @@
+$ bun scripts/run-parse-gold-llm.mjs
+[parse-gold:llm] compat=deepseek model=deepseek-v4-flash key=DEEPSEEK_API_KEY base=https://api.deepseek.com path=https://api.deepseek.com/v1/chat/completions cases=42 git=a4c434d9
+[parse-gold] rules must 35/35 | stretch 5/7
+[parse-gold] llm   must 31/35 | stretch 6/7
+[parse-gold] stretch lifted by llm: stretch-manifest-v3-looked-at
+[parse-gold] must regressed by llm: p0-long-time-ago-bookmark, must-wwii-related-video, must-exclude-yellowstone-lodging-not-hike, must-exclude-conflict-shared-topic-stays-positive
+[parse-gold] stretch still failing: stretch-password-staging-stored
+[parse-gold] llm must failures:
+  - p0-long-time-ago-bookmark: confidence 期望 high，实际 medium
+  - must-wwii-related-video: contentTerms 不应含 [related]（实际 [wwii, related]）
+  - must-exclude-yellowstone-lodging-not-hike: excludeContentTerms 缺少 [day-hike]（实际 [hike, packing, checklist]）
+  - must-exclude-conflict-shared-topic-stays-positive: excludeContentTerms 缺少 [day-hike]（实际 [hike, packing, checklist]）
+[parse-gold] llm stretch failures:
+  - stretch-password-staging-stored: confidence 期望 high，实际 medium
+[parse-gold] slotAgreement protocol=field-v1 (field-level; not term P/R/F1)
+[parse-gold] slotAgreement positive mean=0.978 (n=42) | timeLabel=1.000(28/28) objectTypes=1.000(36/36) behaviorHints=1.000(13/13) noteHint=1.000(4/4) contentTerms=0.971(34/35) confidence=0.946(35/37)
+[parse-gold] slotAgreement negative mean=0.600 (n=5) | excludeContentTerms=0.600(3/5)
+[parse-gold] slotAgreement overall  mean=0.954 (n=42) (auxiliary)
+[parse-gold:llm] json=/Users/cqw/Documents/github/yiveno/docs/audits/snapshots/2026-10-30-parse-gold-deepseek-v4-flash-field-v1.json schema=2 slotProtocol=field-v1 l1=42/42 sha256prefix=074bd58ff390

@@ -1,0 +1,1854 @@
+{
+  "schemaVersion": 2,
+  "capturedAt": "2026-10-30T00:27:07.010Z",
+  "gitSha": "a4c434d949ae41d00dfbcc8e5886d4cf0c981f5d",
+  "model": "deepseek-v4-flash",
+  "baseUrl": "https://api.deepseek.com",
+  "compat": "deepseek",
+  "temperature": 0,
+  "maxTokens": 400,
+  "disableThinking": true,
+  "nowMsIso": "2026-07-28T12:00:00.000Z",
+  "nowMs": 1785240000000,
+  "gateFilter": "all",
+  "caseCount": 42,
+  "command": "PARSE_GOLD_LLM_COMPAT=deepseek PARSE_GOLD_LLM_MODEL=deepseek-v4-flash PARSE_GOLD_LLM_GATE=all bun run parse-gold:llm",
+  "fingerprintsSha256": {
+    "extension/src/core/recall/understand/build-llm-parse-prompt.ts": "b761a1a33178bbbd428b02525e071148829a591c8fee1de4f8ee43464cebb9b3",
+    "extension/src/core/recall/understand/llm-parsed-clue-proposal.ts": "20f81941a071dcef138cacf2e78df31aa03b5395c717f66b809f54ead8948489",
+    "extension/src/core/recall/understand/parse-recall-clue-with-llm.ts": "6cc300d1428f3caa6cef0b3bd55dad12455ba9d2e11baac37f70f9852a3ebed6",
+    "extension/src/core/recall/eval/parse-gold-cases.ts": "cbfc537a7f1225dcc1d9813d6528e7a8b61f4b3e5db1ee197525865d5041b52b",
+    "extension/src/core/recall/eval/parse-gold-now.ts": "e4ab874e3aebb27ad2e993740ee288018ef15e5d27ce3074ccd9aee8d92cb0b0",
+    "extension/src/core/recall/eval/judge-parse-gold.ts": "ff0fb9313062f36dbee473f63c61be582a3e750e216ec9fb4f99311d0a012e10",
+    "extension/src/core/recall/eval/metrics.ts": "e5f8319ce5c4b1e2137d4ea5223876fb6b1e4165f199d1a152fa43a676ba8974"
+  },
+  "slotAgreement": {
+    "protocol": "field-v1",
+    "metricKind": "field_agreement",
+    "note": "Field-level pass rate vs ParseGoldSlots (same as diffParseGoldSlots). Not term-level Precision/Recall/F1. Positive/negative are primary; overall is auxiliary.",
+    "positive": {
+      "mean": 0.978174603174603,
+      "denominator": 42,
+      "perFieldHitRate": {
+        "timeLabel": {
+          "declaredCount": 28,
+          "passedCount": 28,
+          "hitRate": 1
+        },
+        "objectTypes": {
+          "declaredCount": 36,
+          "passedCount": 36,
+          "hitRate": 1
+        },
+        "behaviorHints": {
+          "declaredCount": 13,
+          "passedCount": 13,
+          "hitRate": 1
+        },
+        "noteHint": {
+          "declaredCount": 4,
+          "passedCount": 4,
+          "hitRate": 1
+        },
+        "contentTerms": {
+          "declaredCount": 35,
+          "passedCount": 34,
+          "hitRate": 0.9714285714285714
+        },
+        "confidence": {
+          "declaredCount": 37,
+          "passedCount": 35,
+          "hitRate": 0.9459459459459459
+        }
+      }
+    },
+    "negative": {
+      "mean": 0.6,
+      "denominator": 5,
+      "perFieldHitRate": {
+        "excludeContentTerms": {
+          "declaredCount": 5,
+          "passedCount": 3,
+          "hitRate": 0.6
+        }
+      }
+    },
+    "overall": {
+      "mean": 0.9543650793650793,
+      "denominator": 42,
+      "perFieldHitRate": {
+        "timeLabel": {
+          "declaredCount": 28,
+          "passedCount": 28,
+          "hitRate": 1
+        },
+        "objectTypes": {
+          "declaredCount": 36,
+          "passedCount": 36,
+          "hitRate": 1
+        },
+        "behaviorHints": {
+          "declaredCount": 13,
+          "passedCount": 13,
+          "hitRate": 1
+        },
+        "noteHint": {
+          "declaredCount": 4,
+          "passedCount": 4,
+          "hitRate": 1
+        },
+        "contentTerms": {
+          "declaredCount": 35,
+          "passedCount": 34,
+          "hitRate": 0.9714285714285714
+        },
+        "confidence": {
+          "declaredCount": 37,
+          "passedCount": 35,
+          "hitRate": 0.9459459459459459
+        },
+        "excludeContentTerms": {
+          "declaredCount": 5,
+          "passedCount": 3,
+          "hitRate": 0.6
+        }
+      }
+    }
+  },
+  "layers": {
+    "L1_schema": {
+      "passed": 42,
+      "failed": 0,
+      "skipped": 0,
+      "failedCaseIds": []
+    },
+    "L2_parse_gold": {
+      "rules": {
+        "must": "35/35",
+        "stretch": "5/7"
+      },
+      "llm": {
+        "must": "31/35",
+        "stretch": "6/7"
+      },
+      "stretchLiftedByLlm": ["stretch-manifest-v3-looked-at"],
+      "mustRegressedByLlm": [
+        "p0-long-time-ago-bookmark",
+        "must-wwii-related-video",
+        "must-exclude-yellowstone-lodging-not-hike",
+        "must-exclude-conflict-shared-topic-stays-positive"
+      ],
+      "stretchStillFailing": ["stretch-password-staging-stored"],
+      "llmMustFailures": [
+        {
+          "id": "p0-long-time-ago-bookmark",
+          "failureKind": "slot",
+          "detail": "confidence 期望 high，实际 medium"
+        },
+        {
+          "id": "must-wwii-related-video",
+          "failureKind": "slot",
+          "detail": "contentTerms 不应含 [related]（实际 [wwii, related]）"
+        },
+        {
+          "id": "must-exclude-yellowstone-lodging-not-hike",
+          "failureKind": "slot",
+          "detail": "excludeContentTerms 缺少 [day-hike]（实际 [hike, packing, checklist]）"
+        },
+        {
+          "id": "must-exclude-conflict-shared-topic-stays-positive",
+          "failureKind": "slot",
+          "detail": "excludeContentTerms 缺少 [day-hike]（实际 [hike, packing, checklist]）"
+        }
+      ],
+      "llmStretchFailures": [
+        {
+          "id": "stretch-password-staging-stored",
+          "failureKind": "slot",
+          "detail": "confidence 期望 high，实际 medium"
+        }
+      ]
+    },
+    "L3_recall_hybrid": "NOT_RUN"
+  },
+  "cases": [
+    {
+      "caseId": "p0-time-type-entity-li-bai",
+      "gate": "must",
+      "clue": "yesterday saved a poem about Li Bai",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "objectTypes": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 4,
+        "passedCount": 4,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "objectTypes": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 4,
+          "passedCount": 4,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 1047,
+      "promptTokens": 817,
+      "completionTokens": 53,
+      "totalTokens": 870
+    },
+    {
+      "caseId": "p0-time-type-content-auth-code",
+      "gate": "must",
+      "clue": "last week the code snippet about auth",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "objectTypes": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 4,
+        "passedCount": 4,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "objectTypes": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 4,
+          "passedCount": 4,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 726,
+      "promptTokens": 816,
+      "completionTokens": 44,
+      "totalTokens": 860
+    },
+    {
+      "caseId": "p0-behavior-song-yesterday",
+      "gate": "must",
+      "clue": "the song I played on repeat yesterday",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "objectTypes": true,
+          "behaviorHints": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 5,
+        "passedCount": 5,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "objectTypes": true,
+            "behaviorHints": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 5,
+          "passedCount": 5,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 764,
+      "promptTokens": 816,
+      "completionTokens": 45,
+      "totalTokens": 861
+    },
+    {
+      "caseId": "p0-half-read-article",
+      "gate": "must",
+      "clue": "the article I didn't finish reading",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "objectTypes": true,
+          "behaviorHints": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 5,
+        "passedCount": 5,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "objectTypes": true,
+            "behaviorHints": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 5,
+          "passedCount": 5,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 636,
+      "promptTokens": 816,
+      "completionTokens": 43,
+      "totalTokens": 859
+    },
+    {
+      "caseId": "p0-note-deployment-page",
+      "gate": "must",
+      "clue": "yesterday left a note about the deployment page",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "objectTypes": true,
+          "noteHint": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 5,
+        "passedCount": 5,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "objectTypes": true,
+            "noteHint": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 5,
+          "passedCount": 5,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 832,
+      "promptTokens": 818,
+      "completionTokens": 44,
+      "totalTokens": 862
+    },
+    {
+      "caseId": "p0-article-last-week-filler-read",
+      "gate": "must",
+      "clue": "the article I read last week",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "objectTypes": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 4,
+        "passedCount": 4,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "objectTypes": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 4,
+          "passedCount": 4,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 916,
+      "promptTokens": 815,
+      "completionTokens": 42,
+      "totalTokens": 857
+    },
+    {
+      "caseId": "p0-recently-collected-bookmark",
+      "gate": "must",
+      "clue": "The recently collected bookmark",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "objectTypes": true,
+          "behaviorHints": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 5,
+        "passedCount": 5,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "objectTypes": true,
+            "behaviorHints": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 5,
+          "passedCount": 5,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 716,
+      "promptTokens": 813,
+      "completionTokens": 48,
+      "totalTokens": 861
+    },
+    {
+      "caseId": "p0-just-saved-behavior-only",
+      "gate": "must",
+      "clue": "just saved",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "objectTypes": true,
+          "behaviorHints": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 5,
+        "passedCount": 5,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "objectTypes": true,
+            "behaviorHints": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 5,
+          "passedCount": 5,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 612,
+      "promptTokens": 811,
+      "completionTokens": 44,
+      "totalTokens": 855
+    },
+    {
+      "caseId": "p0-day-before-yesterday-rag",
+      "gate": "must",
+      "clue": "day before yesterday the article about RAG",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "objectTypes": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 4,
+        "passedCount": 4,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "objectTypes": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 4,
+          "passedCount": 4,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 656,
+      "promptTokens": 817,
+      "completionTokens": 46,
+      "totalTokens": 863
+    },
+    {
+      "caseId": "p0-while-ago-half-read-article",
+      "gate": "must",
+      "clue": "the article I didn't finish reading a while ago",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "objectTypes": true,
+          "behaviorHints": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 5,
+        "passedCount": 5,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "objectTypes": true,
+            "behaviorHints": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 5,
+          "passedCount": 5,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 893,
+      "promptTokens": 819,
+      "completionTokens": 47,
+      "totalTokens": 866
+    },
+    {
+      "caseId": "p0-few-months-back-libraries",
+      "gate": "must",
+      "clue": "something about public libraries i saved a few months back",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 3,
+        "passedCount": 3,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 3,
+          "passedCount": 3,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 613,
+      "promptTokens": 819,
+      "completionTokens": 53,
+      "totalTokens": 872
+    },
+    {
+      "caseId": "p0-last-month-article",
+      "gate": "must",
+      "clue": "an article i saved last month about remote work",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "objectTypes": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 4,
+        "passedCount": 4,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "objectTypes": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 4,
+          "passedCount": 4,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 672,
+      "promptTokens": 818,
+      "completionTokens": 51,
+      "totalTokens": 869
+    },
+    {
+      "caseId": "p0-some-time-ago-excerpts",
+      "gate": "must",
+      "clue": "the excerpts i saved some time ago",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "objectTypes": true,
+          "confidence": true
+        },
+        "checkedCount": 3,
+        "passedCount": 3,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "objectTypes": true,
+            "confidence": true
+          },
+          "checkedCount": 3,
+          "passedCount": 3,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 967,
+      "promptTokens": 816,
+      "completionTokens": 52,
+      "totalTokens": 868
+    },
+    {
+      "caseId": "p0-long-time-ago-bookmark",
+      "gate": "must",
+      "clue": "a bookmark from a long time ago",
+      "passed": false,
+      "failureKind": "slot",
+      "detail": "confidence 期望 high，实际 medium",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "objectTypes": true,
+          "confidence": false
+        },
+        "checkedCount": 3,
+        "passedCount": 2,
+        "agreement": 0.6666666666666666,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "objectTypes": true,
+            "confidence": false
+          },
+          "checkedCount": 3,
+          "passedCount": 2,
+          "agreement": 0.6666666666666666
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 948,
+      "promptTokens": 816,
+      "completionTokens": 43,
+      "totalTokens": 859
+    },
+    {
+      "caseId": "p0-full-english-li-bai-short",
+      "gate": "must",
+      "clue": "yesterday poem about Li Bai",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "objectTypes": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 4,
+        "passedCount": 4,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "objectTypes": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 4,
+          "passedCount": 4,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 619,
+      "promptTokens": 815,
+      "completionTokens": 47,
+      "totalTokens": 862
+    },
+    {
+      "caseId": "p0-code-deployment-last-week",
+      "gate": "must",
+      "clue": "last week saved code deployment",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "objectTypes": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 4,
+        "passedCount": 4,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "objectTypes": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 4,
+          "passedCount": 4,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 1420,
+      "promptTokens": 814,
+      "completionTokens": 51,
+      "totalTokens": 865
+    },
+    {
+      "caseId": "p0-command-env-sync",
+      "gate": "must",
+      "clue": "env sync command",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "objectTypes": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 3,
+        "passedCount": 3,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "objectTypes": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 3,
+          "passedCount": 3,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 807,
+      "promptTokens": 812,
+      "completionTokens": 44,
+      "totalTokens": 856
+    },
+    {
+      "caseId": "p0-password-recently-saved",
+      "gate": "must",
+      "clue": "recently just saved password",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "objectTypes": true,
+          "behaviorHints": true,
+          "confidence": true
+        },
+        "checkedCount": 4,
+        "passedCount": 4,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "objectTypes": true,
+            "behaviorHints": true,
+            "confidence": true
+          },
+          "checkedCount": 4,
+          "passedCount": 4,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 749,
+      "promptTokens": 815,
+      "completionTokens": 46,
+      "totalTokens": 861
+    },
+    {
+      "caseId": "p0-long-ago-poem",
+      "gate": "must",
+      "clue": "long ago a poem",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "objectTypes": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 4,
+        "passedCount": 4,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "objectTypes": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 4,
+          "passedCount": 4,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 818,
+      "promptTokens": 813,
+      "completionTokens": 43,
+      "totalTokens": 856
+    },
+    {
+      "caseId": "p0-quote-yesterday",
+      "gate": "must",
+      "clue": "yesterday the quote",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "objectTypes": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 4,
+        "passedCount": 4,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "objectTypes": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 4,
+          "passedCount": 4,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 844,
+      "promptTokens": 813,
+      "completionTokens": 41,
+      "totalTokens": 854
+    },
+    {
+      "caseId": "p0-poetry-alias-li-bai",
+      "gate": "must",
+      "clue": "poetry about Li Bai",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "objectTypes": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 3,
+        "passedCount": 3,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "objectTypes": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 3,
+          "passedCount": 3,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 700,
+      "promptTokens": 814,
+      "completionTokens": 46,
+      "totalTokens": 860
+    },
+    {
+      "caseId": "p0-just-saved-article",
+      "gate": "must",
+      "clue": "just saved article",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "objectTypes": true,
+          "behaviorHints": true,
+          "confidence": true
+        },
+        "checkedCount": 3,
+        "passedCount": 3,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "objectTypes": true,
+            "behaviorHints": true,
+            "confidence": true
+          },
+          "checkedCount": 3,
+          "passedCount": 3,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 491,
+      "promptTokens": 812,
+      "completionTokens": 46,
+      "totalTokens": 858
+    },
+    {
+      "caseId": "p0-pure-keywords-cloudflare",
+      "gate": "must",
+      "clue": "Cloudflare Workers",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "objectTypes": true,
+          "behaviorHints": true,
+          "noteHint": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 6,
+        "passedCount": 6,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "objectTypes": true,
+            "behaviorHints": true,
+            "noteHint": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 6,
+          "passedCount": 6,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 699,
+      "promptTokens": 812,
+      "completionTokens": 43,
+      "totalTokens": 855
+    },
+    {
+      "caseId": "p0-only-type-poem",
+      "gate": "must",
+      "clue": "poem",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "objectTypes": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 3,
+        "passedCount": 3,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "objectTypes": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 3,
+          "passedCount": 3,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 893,
+      "promptTokens": 811,
+      "completionTokens": 41,
+      "totalTokens": 852
+    },
+    {
+      "caseId": "p0-only-time-yesterday",
+      "gate": "must",
+      "clue": "yesterday saved that",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 3,
+        "passedCount": 3,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 3,
+          "passedCount": 3,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 876,
+      "promptTokens": 813,
+      "completionTokens": 45,
+      "totalTokens": 858
+    },
+    {
+      "caseId": "p0-zero-anchor-bored",
+      "gate": "must",
+      "clue": "i feel bored",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "objectTypes": true,
+          "behaviorHints": true,
+          "noteHint": true,
+          "confidence": true
+        },
+        "checkedCount": 5,
+        "passedCount": 5,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "objectTypes": true,
+            "behaviorHints": true,
+            "noteHint": true,
+            "confidence": true
+          },
+          "checkedCount": 5,
+          "passedCount": 5,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 765,
+      "promptTokens": 812,
+      "completionTokens": 41,
+      "totalTokens": 853
+    },
+    {
+      "caseId": "p0-assistant-like-songs",
+      "gate": "must",
+      "clue": "put a few songs i like",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "objectTypes": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 3,
+        "passedCount": 3,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "objectTypes": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 3,
+          "passedCount": 3,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 676,
+      "promptTokens": 815,
+      "completionTokens": 42,
+      "totalTokens": 857
+    },
+    {
+      "caseId": "p0-half-read-compat",
+      "gate": "must",
+      "clue": "half read the article",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "objectTypes": true,
+          "behaviorHints": true,
+          "confidence": true
+        },
+        "checkedCount": 3,
+        "passedCount": 3,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "objectTypes": true,
+            "behaviorHints": true,
+            "confidence": true
+          },
+          "checkedCount": 3,
+          "passedCount": 3,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 844,
+      "promptTokens": 813,
+      "completionTokens": 43,
+      "totalTokens": 856
+    },
+    {
+      "caseId": "must-verse-as-poem",
+      "gate": "must",
+      "clue": "that Li Bai verse from the other day",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "objectTypes": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 4,
+        "passedCount": 4,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "objectTypes": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 4,
+          "passedCount": 4,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 830,
+      "promptTokens": 817,
+      "completionTokens": 47,
+      "totalTokens": 864
+    },
+    {
+      "caseId": "stretch-never-finished-writeup",
+      "gate": "stretch",
+      "clue": "the deployment writeup I never finished",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "objectTypes": true,
+          "behaviorHints": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 4,
+        "passedCount": 4,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "objectTypes": true,
+            "behaviorHints": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 4,
+          "passedCount": 4,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 992,
+      "promptTokens": 816,
+      "completionTokens": 49,
+      "totalTokens": 865
+    },
+    {
+      "caseId": "stretch-music-kept-opening",
+      "gate": "stretch",
+      "clue": "music I kept opening yesterday",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "objectTypes": true,
+          "behaviorHints": true,
+          "confidence": true
+        },
+        "checkedCount": 4,
+        "passedCount": 4,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "objectTypes": true,
+            "behaviorHints": true,
+            "confidence": true
+          },
+          "checkedCount": 4,
+          "passedCount": 4,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 953,
+      "promptTokens": 814,
+      "completionTokens": 45,
+      "totalTokens": 859
+    },
+    {
+      "caseId": "stretch-my-note-launch-checklist",
+      "gate": "stretch",
+      "clue": "the page with my note about the launch checklist",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "objectTypes": true,
+          "noteHint": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 4,
+        "passedCount": 4,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "objectTypes": true,
+            "noteHint": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 4,
+          "passedCount": 4,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 885,
+      "promptTokens": 818,
+      "completionTokens": 46,
+      "totalTokens": 864
+    },
+    {
+      "caseId": "stretch-rate-limits-docs",
+      "gate": "stretch",
+      "clue": "API docs about rate limits from earlier this week",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "objectTypes": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 4,
+        "passedCount": 4,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "objectTypes": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 4,
+          "passedCount": 4,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 517,
+      "promptTokens": 818,
+      "completionTokens": 49,
+      "totalTokens": 867
+    },
+    {
+      "caseId": "stretch-manifest-v3-looked-at",
+      "gate": "stretch",
+      "clue": "the thing about Manifest V3 I looked at recently",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "objectTypes": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 4,
+        "passedCount": 4,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "objectTypes": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 4,
+          "passedCount": 4,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 576,
+      "promptTokens": 819,
+      "completionTokens": 44,
+      "totalTokens": 863
+    },
+    {
+      "caseId": "must-wwii-related-video",
+      "gate": "must",
+      "clue": "wwii related video",
+      "passed": false,
+      "failureKind": "slot",
+      "detail": "contentTerms 不应含 [related]（实际 [wwii, related]）",
+      "slotAgreement": {
+        "fields": {
+          "objectTypes": true,
+          "contentTerms": false,
+          "confidence": true
+        },
+        "checkedCount": 3,
+        "passedCount": 2,
+        "agreement": 0.6666666666666666,
+        "positive": {
+          "fields": {
+            "objectTypes": true,
+            "contentTerms": false,
+            "confidence": true
+          },
+          "checkedCount": 3,
+          "passedCount": 2,
+          "agreement": 0.6666666666666666
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 898,
+      "promptTokens": 813,
+      "completionTokens": 45,
+      "totalTokens": 858
+    },
+    {
+      "caseId": "stretch-password-staging-stored",
+      "gate": "stretch",
+      "clue": "password I just stored for staging",
+      "passed": false,
+      "failureKind": "slot",
+      "detail": "confidence 期望 high，实际 medium",
+      "slotAgreement": {
+        "fields": {
+          "objectTypes": true,
+          "behaviorHints": true,
+          "contentTerms": true,
+          "confidence": false
+        },
+        "checkedCount": 4,
+        "passedCount": 3,
+        "agreement": 0.75,
+        "positive": {
+          "fields": {
+            "objectTypes": true,
+            "behaviorHints": true,
+            "contentTerms": true,
+            "confidence": false
+          },
+          "checkedCount": 4,
+          "passedCount": 3,
+          "agreement": 0.75
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 953,
+      "promptTokens": 815,
+      "completionTokens": 49,
+      "totalTokens": 864
+    },
+    {
+      "caseId": "stretch-trying-to-remember-auth-snippet",
+      "gate": "stretch",
+      "clue": "I'm trying to remember the auth snippet from last week",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "objectTypes": true,
+          "contentTerms": true,
+          "confidence": true
+        },
+        "checkedCount": 4,
+        "passedCount": 4,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "objectTypes": true,
+            "contentTerms": true,
+            "confidence": true
+          },
+          "checkedCount": 4,
+          "passedCount": 4,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {},
+          "checkedCount": 0,
+          "passedCount": 0,
+          "agreement": "NA"
+        }
+      },
+      "latencyMs": 862,
+      "promptTokens": 820,
+      "completionTokens": 47,
+      "totalTokens": 867
+    },
+    {
+      "caseId": "must-exclude-yellowstone-lodging-not-hike",
+      "gate": "must",
+      "clue": "my Yellowstone lodging booking confirmation from that summer, not the day-hike packing checklist",
+      "passed": false,
+      "failureKind": "slot",
+      "detail": "excludeContentTerms 缺少 [day-hike]（实际 [hike, packing, checklist]）",
+      "slotAgreement": {
+        "fields": {
+          "contentTerms": true,
+          "excludeContentTerms": false
+        },
+        "checkedCount": 2,
+        "passedCount": 1,
+        "agreement": 0.5,
+        "positive": {
+          "fields": {
+            "contentTerms": true
+          },
+          "checkedCount": 1,
+          "passedCount": 1,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {
+            "excludeContentTerms": false
+          },
+          "checkedCount": 1,
+          "passedCount": 0,
+          "agreement": 0
+        }
+      },
+      "latencyMs": 939,
+      "promptTokens": 825,
+      "completionTokens": 65,
+      "totalTokens": 890
+    },
+    {
+      "caseId": "must-find-yellowstone-hike-checklist",
+      "gate": "must",
+      "clue": "the Yellowstone day-hike packing checklist I saved",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "contentTerms": true,
+          "excludeContentTerms": true
+        },
+        "checkedCount": 2,
+        "passedCount": 2,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "contentTerms": true
+          },
+          "checkedCount": 1,
+          "passedCount": 1,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {
+            "excludeContentTerms": true
+          },
+          "checkedCount": 1,
+          "passedCount": 1,
+          "agreement": 1
+        }
+      },
+      "latencyMs": 868,
+      "promptTokens": 818,
+      "completionTokens": 58,
+      "totalTokens": 876
+    },
+    {
+      "caseId": "must-uncertain-not-sure-no-exclude",
+      "gate": "must",
+      "clue": "I'm not sure which privacy article I meant",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "objectTypes": true,
+          "contentTerms": true,
+          "excludeContentTerms": true
+        },
+        "checkedCount": 3,
+        "passedCount": 3,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "objectTypes": true,
+            "contentTerms": true
+          },
+          "checkedCount": 2,
+          "passedCount": 2,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {
+            "excludeContentTerms": true
+          },
+          "checkedCount": 1,
+          "passedCount": 1,
+          "agreement": 1
+        }
+      },
+      "latencyMs": 609,
+      "promptTokens": 818,
+      "completionTokens": 43,
+      "totalTokens": 861
+    },
+    {
+      "caseId": "must-plain-query-no-exclude",
+      "gate": "must",
+      "clue": "the privacy article from yesterday",
+      "passed": true,
+      "failureKind": "none",
+      "detail": "槽位对齐金标",
+      "slotAgreement": {
+        "fields": {
+          "timeLabel": true,
+          "contentTerms": true,
+          "excludeContentTerms": true
+        },
+        "checkedCount": 3,
+        "passedCount": 3,
+        "agreement": 1,
+        "positive": {
+          "fields": {
+            "timeLabel": true,
+            "contentTerms": true
+          },
+          "checkedCount": 2,
+          "passedCount": 2,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {
+            "excludeContentTerms": true
+          },
+          "checkedCount": 1,
+          "passedCount": 1,
+          "agreement": 1
+        }
+      },
+      "latencyMs": 1047,
+      "promptTokens": 814,
+      "completionTokens": 44,
+      "totalTokens": 858
+    },
+    {
+      "caseId": "must-exclude-conflict-shared-topic-stays-positive",
+      "gate": "must",
+      "clue": "yellowstone lodging confirmation, not the yellowstone day-hike packing checklist",
+      "passed": false,
+      "failureKind": "slot",
+      "detail": "excludeContentTerms 缺少 [day-hike]（实际 [hike, packing, checklist]）",
+      "slotAgreement": {
+        "fields": {
+          "contentTerms": true,
+          "excludeContentTerms": false
+        },
+        "checkedCount": 2,
+        "passedCount": 1,
+        "agreement": 0.5,
+        "positive": {
+          "fields": {
+            "contentTerms": true
+          },
+          "checkedCount": 1,
+          "passedCount": 1,
+          "agreement": 1
+        },
+        "negative": {
+          "fields": {
+            "excludeContentTerms": false
+          },
+          "checkedCount": 1,
+          "passedCount": 0,
+          "agreement": 0
+        }
+      },
+      "latencyMs": 1035,
+      "promptTokens": 823,
+      "completionTokens": 58,
+      "totalTokens": 881
+    }
+  ],
+  "latencyMsSummary": {
+    "n": 42,
+    "p50": 830,
+    "p95": 1047,
+    "min": 491,
+    "max": 1420
+  },
+  "tokensSummary": {
+    "promptSum": 34259,
+    "completionSum": 1963,
+    "totalSum": 36222,
+    "note": "sums from API usage fields only"
+  }
+}

@@ -6,7 +6,7 @@
 > **权威链：** [`Yiveno-术语表.md`](./Yiveno-术语表.md) → 本文 → [`Yiveno-产品文档-v4.0.md`](./Yiveno-产品文档-v4.0.md) §0 → [`Yiveno-改版计划-v1.md`](./Yiveno-改版计划-v1.md) 对应波次。  
 > **架构决策（不可重议）：** [`../architecture/decisions/`](../architecture/decisions/)
 
-**最后更新：** 2026-10-29
+**最后更新：** 2026-10-30
 
 ---
 
@@ -34,7 +34,7 @@
 - **Outcome Labeling §7.2** P0→P1（含正例须佐证 / None 撤脏 pair）；TTE 种子研究按 checklist 开跑
 - 行为变更同批：文档↔代码、`must` 或 §5 手动步骤、MCP UI 抽测
 - （低优并行）CWS / Edge 产品 UI 截图 3–5；Recall 壳空态 / onboarding 薄维护
-- **Edge 双店（ADR-020）**：`EDGEADDONS.md` + Partner Center MSA 注册与首次提交；上架后填 `EDGE_ADDONS_LISTING_URL`；Edge 真机验收清单
+- **Edge 双店（ADR-020）**：MSA `admin@yiveno.com` · Partner Center **Microsoft Edge 程序已报名**（Publisher=`Yiveno` · Individual · China）；**账号核验未完成**（见 Edge 概览黄条）；核验通过后首次提交 + 填 `EDGE_ADDONS_LISTING_URL`；Edge 真机验收清单
 
 **不做：**
 
@@ -97,6 +97,7 @@
 | 2026-09-14 | **GS LLM 示意 clue：** 一次 4 条 + 随机切换 + Try it 开壳；§5.8                                                                                                                                                                                                                            |
 | 2026-09-14 | **书签 bulk 主进度仅 GS：** 去掉 Side Panel 导入条；冷启动 Import 降级；§5.8                                                                                                                                                                                                               |
 | 2026-09-14 | **GS 书签授权 CTA：** 按钮授权 + 导入进度 + 已授权态；§5.8                                                                                                                                                                                                                                 |
+| 2026-10-30 | **Edge 程序已报名：** MSA `admin@yiveno.com` · Publisher=`Yiveno` · Individual · China；账号核验未完成；见 `EDGEADDONS.md`                                                                                                                                                                 |
 | 2026-10-28 | **ADR-020 Chromium 双店：** 同包 CWS+Edge；大陆主路径 Edge；`EDGEADDONS.md`；官网 Install CTA；`yiveno.cn` externally_connectable                                                                                                                                                          |
 | 2026-09-14 | **GS 双源 tab：** Bookmarks / Excerpts；同意只锁书签；CTA 不绑开关；§5.8                                                                                                                                                                                                                   |
 | 2026-09-14 | **GS = 启动设置页：** 授权决定 + 首召履约，非演示导览；§5.8                                                                                                                                                                                                                                |
