@@ -6,18 +6,20 @@
 
 ## 总览
 
-| 脚本                             | 触发                       | 类别     |
-| -------------------------------- | -------------------------- | -------- |
-| `check-doc-drift.mjs`            | `doc:check`                | CI 门禁  |
-| `check-doc-code-consistency.mjs` | `doc:check:consistency`    | CI 门禁  |
-| `check-commit-message.mjs`       | `.husky/commit-msg`        | git 门禁 |
-| （根 `bunx knip`）               | `knip*`                    | CI 门禁  |
-| `dev-env.mjs`                    | `env:sync*` / `env:check*` | 工具     |
-| `sync-ide-boot.mjs`              | `sync:ide-boot`            | 工具     |
-| `sync-brand-assets.mjs`          | `sync:brand-assets`        | 工具     |
-| `setup-git-lfs.sh`               | `setup:git-lfs`            | 工具     |
-| `tte-summarize-telemetry.mjs`    | `tte:summarize`            | 研究工具 |
-| `dev-green-check.mjs`            | `dev:check`                | 本地绿检 |
+| 脚本                             | 触发                                         | 类别                                           |
+| -------------------------------- | -------------------------------------------- | ---------------------------------------------- |
+| `check-doc-drift.mjs`            | `doc:check`                                  | CI 门禁                                        |
+| `check-doc-code-consistency.mjs` | `doc:check:consistency`                      | CI 门禁                                        |
+| `sync-diagrams.mjs`              | `docs:sync-diagrams` / `docs:check-diagrams` | CI（经 `doc:check:all`） / Agent 工具          |
+| `diagram-change-impact.mjs`      | `docs:diagram-impact`                        | Agent 工具（**不**改图、**不**进 CI 失败门禁） |
+| `check-commit-message.mjs`       | `.husky/commit-msg`                          | git 门禁                                       |
+| （根 `bunx knip`）               | `knip*`                                      | CI 门禁                                        |
+| `dev-env.mjs`                    | `env:sync*` / `env:check*`                   | 工具                                           |
+| `sync-ide-boot.mjs`              | `sync:ide-boot`                              | 工具                                           |
+| `sync-brand-assets.mjs`          | `sync:brand-assets`                          | 工具                                           |
+| `setup-git-lfs.sh`               | `setup:git-lfs`                              | 工具                                           |
+| `tte-summarize-telemetry.mjs`    | `tte:summarize`                              | 研究工具                                       |
+| `dev-green-check.mjs`            | `dev:check`                                  | 本地绿检                                       |
 
 ---
 
@@ -64,12 +66,56 @@ bun run doc:check --check            # 仅校验，漂移则 exit 1
 
 ```bash
 bun run doc:check:consistency
-bun run doc:check:all               # = doc:check + doc:check:consistency
+bun run doc:check:all               # = doc:check + doc:check:consistency + docs:check-diagrams
 ```
 
 **CI：** push / PR 时自动执行。
 
 **扩展方法：** 在 `checks` 数组中追加 `{ id, description, fn }` 对象即可新增校验项。
+
+---
+
+### `docs:sync-diagrams` / `docs:check-diagrams` → `sync-diagrams.mjs`
+
+**作用：** Mermaid 业务逻辑图清单门禁 + 生成 Cursor Agent 同步 Brief（**不**调用外部 LLM API）。
+
+**校验项：**
+
+- `docs/diagrams/registry.json` ↔ 宿主 MD 内 `<!-- diagram: id=… -->` 锚点一一对应
+- kind / status 合法且与锚点一致；关联 `codePaths` / `docPaths` 存在
+- 已登记宿主上每个 ````mermaid` fence 必须有锚点；结构语法粗检（图类型首行等）
+
+**运行：**
+
+```bash
+bun run docs:sync-diagrams              # 校验 + 写 docs/diagrams/.cache/SYNC-BRIEF.md
+bun run docs:sync-diagrams --id <id>    # 单图
+bun run docs:check-diagrams             # 仅门禁（CI / doc:check:all）
+```
+
+**规范：** `docs/engineering/Yiveno-Mermaid图表规范.md` · `docs/diagrams/README.md`
+
+---
+
+### `docs:diagram-impact` → `diagram-change-impact.mjs`
+
+**作用：** 把 Git base↔工作区（或显式 `--paths`）的文件变更映射到 `registry.json` 的 `codePaths` / `doc` / `docPaths`，输出建议复核的图 id。供 Cursor Agent 做语义复核入口。
+
+**不做：** 不改 Mermaid；不判定语义对错；不改变 `docs:check-diagrams`；无外部网络。
+
+**口径：** 命中 ≠ 过时；未命中 ≠ 无影响（无 import 依赖图，间接依赖不作确定性结论）。
+
+```bash
+bun run docs:diagram-impact --base HEAD
+bun run docs:diagram-impact --base origin/main --write-brief
+bun run docs:diagram-impact --paths extension/src/background/listeners/omnibox.ts
+bun run docs:diagram-impact --paths A:new.ts D:old.ts M:changed.ts --json
+bun run docs:diagram-impact --base HEAD --id runtime.omnibox-offline-recall
+```
+
+**输出：** stdout Markdown（或 `--json`）；可选 `--write-brief` → `docs/diagrams/.cache/DIAGRAM-CHANGE-IMPACT.md`（gitignore）。
+
+**报告：** `docs/diagrams/reports/2026-10-图表变更感知机制.md`
 
 ---
 

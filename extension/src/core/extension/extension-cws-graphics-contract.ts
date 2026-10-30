@@ -20,17 +20,24 @@ export interface ChromeWebStoreGraphicSpec {
   requiredForListing: boolean
 }
 
-/** 已落盘、可上传商店的图形资产（不含设计稿导出大图）。 */
+/** 已落盘、可上传商店的图形资产（不含设计稿导出大图 / archive-*）。 */
 export const CHROMEWEBSTORE_GRAPHICS: readonly ChromeWebStoreGraphicSpec[] = [
   {
-    filename: 'screenshot-01-brand-focus-1280x800.png',
+    filename: 'screenshot-01-sidepanel-recall-1280x800.png',
     width: 1280,
     height: 800,
     kind: 'screenshot',
     requiredForListing: true
   },
   {
-    filename: 'screenshot-02-brand-connect-1280x800.png',
+    filename: 'screenshot-02-library-1280x800.png',
+    width: 1280,
+    height: 800,
+    kind: 'screenshot',
+    requiredForListing: false
+  },
+  {
+    filename: 'screenshot-03-settings-1280x800.png',
     width: 1280,
     height: 800,
     kind: 'screenshot',

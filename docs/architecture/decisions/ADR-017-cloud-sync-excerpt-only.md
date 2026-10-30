@@ -46,7 +46,87 @@
 | 仅同步「带 note 的书签」      | 仍绑 `chromeBookmarkId` / 壳合并，半吊子 |
 | 云同步书签但禁止反向写 Chrome | 仍有双设备 Yiveno 书签并集冲突，未减风险 |
 
+## 门禁与主链（图表）
+
+> **范围：** Pro + 登录 + 开关 → 仅 `text_excerpt` 上云/拉回；开同步对齐；15 分钟增量；replace 缩量 409。  
+> **不含：** Dodo webhook→Pro 投影细节（盘点 P2-1）；书签 Chrome→IDB 灌库；Auth mint/handoff；删账号 / 整库导出全时序。  
+> **权威行为：** 产品文档 §账户与同步 / 隐私 Normative；本 ADR 钉类型范围。  
+> **报告：** [`docs/diagrams/reports/2026-10-Pro-Cloud-Sync图表补齐.md`](../../diagrams/reports/2026-10-Pro-Cloud-Sync图表补齐.md)
+
+**三门禁（Normative · 代码双端）：** 登录（`AccountBinding` + Bearer）· 有效 Pro（扩展本机 snapshot 开同步前拦；Worker `denyUnlessActivePro` 拦 pull/push/replace/restore）· `syncPrefs.enabled`（`chrome.storage.local` · 默认 false）。`GET /status` 与隐私删云 `delete-all` **仅需登录**（可不 Pro）。
+
+<!-- diagram: id=sync.excerpt-cloud-pro-gate kind=flowchart status=implemented -->
+
+```mermaid
+flowchart TD
+  Intent[用户 / 闹钟意图] --> Kind{哪种路径?}
+
+  Kind -->|SET_SYNC_ENABLED true| OpenGate
+  Kind -->|SET_SYNC_ENABLED false| CloseOnly
+  Kind -->|15min 闹钟 / 立即同步| IncrGate
+  Kind -->|订阅快照刷新| ProEnforce
+
+  subgraph OpenGate["开同步门禁（扩展）"]
+    O1{已登录?}
+    O1 -->|否| EAuth[SYNC_NOT_AUTHENTICATED]
+    O1 -->|是| O2{isProActiveFromSnapshot?}
+    O2 -->|否| EPro[SYNC_PRO_REQUIRED]
+    O2 -->|是| O3{隐私 notice ack?}
+    O3 -->|否| EPriv[PRIVACY_NOTICE_REQUIRED]
+    O3 -->|是| OPatch[patchSyncPrefs enabled=true]
+  end
+
+  OPatch --> Align{开同步对齐 · 同步面=摘录}
+  Align -->|本机有摘录 · 云空| L2C[replace 本机盖云<br/>出站 filterCloudSyncable]
+  Align -->|本机同步面空 · 云有| C2L[pull → 仅写入摘录<br/>本机 bookmark 保留]
+  Align -->|两边都有| Merge[LWW 并集 → replace 云<br/>再写本机 · allowDestructiveShrink]
+  Align -->|两边都空| Ready[仅挂闹钟]
+  L2C --> Ready
+  C2L --> Ready
+  Merge --> Ready
+  Ready --> AlarmOn[ensureMemoryCloudSyncAlarm true · 15min]
+  Align -.->|对齐失败| FailOpen[回滚 enabled=false<br/>避免半开假成功]
+
+  CloseOnly --> PatchOff[enabled=false + 清闹钟]
+  PatchOff --> NoteClose[关同步 ≠ 删云端<br/>云副本须另 DELETE_CLOUD_MEMORY]
+
+  subgraph IncrGate["增量（不走整侧 replace）"]
+    I1{enabled?}
+    I1 -->|否| Skip[跳过 / SYNC_INCREMENTAL_FAILED]
+    I1 -->|是| Pull[pull since=lastPulledAt]
+    Pull --> Filt[filterCloudSyncable<br/>忽略远程 bookmark]
+    Filt --> LWW[LWW 写本机变更]
+    LWW --> Push[push 水位后摘录<br/>strip embedding]
+    Push --> Watermark[更新 lastPulledAt / lastPushedAt]
+  end
+
+  ProEnforce{有 snapshot 且非有效 Pro?}
+  ProEnforce -->|是且 enabled| ForceOff[enforceSyncRequiresPro<br/>关开关 + 清闹钟]
+  ProEnforce -->|无 snapshot| Keep[勿因 unknown 误关]
+  ProEnforce -->|仍是 Pro| Keep
+
+  subgraph Server["Worker 服务端"]
+    SAuth[supabaseAuth Bearer]
+    SAuth --> SRoute{路由}
+    SRoute -->|GET status / delete-all| SLogin[仅登录]
+    SRoute -->|pull / push / replace / restore| SPro{isActiveProUser?}
+    SPro -->|否| S403[403 pro_required]
+    SPro -->|是| SOk[执行]
+    SOk --> S409{replace 缩量?}
+    S409 -->|items空且云有数| E409a[409 empty_local_replace_denied]
+    S409 -->|条数变少且无 allowDestructiveShrink| E409b[409 destructive_shrink_denied]
+    S409 -->|允许缩量或未缩| SWrite[backup 后写云]
+  end
+
+  Push -.->|Bearer| SAuth
+  L2C -.->|Bearer| SAuth
+  Merge -.->|Bearer allowDestructiveShrink| SAuth
+```
+
+**刻意折叠：** Dodo 投影链路；退出 flush_then_keep 整侧盖云旁路；restore-latest-backup 条数最多快照细节；孤儿桶 remap 内部。
+
 ## 相关
 
 - 产品文档 §0.1.1 资产表；§5 账户与同步 / 隐私
 - ADR-012（私有增量壁垒）；ADR-004（数据平面确定性）
+- 图表 registry：`sync.excerpt-cloud-pro-gate`

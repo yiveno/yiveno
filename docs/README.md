@@ -40,6 +40,8 @@
 - [`engineering/业务日志与注释约定.md`](./engineering/业务日志与注释约定.md) — 中文注释与 flow log
 - [`AUTH_GUIDE.md`](./AUTH_GUIDE.md) — OAuth / Email OTP 使用说明
 - [`engineering/Turnstile-Email-OTP-防刷生命周期.md`](./engineering/Turnstile-Email-OTP-防刷生命周期.md) — Turnstile token 生命周期、发码流程图、china 区域约束
+- [`engineering/Yiveno-Mermaid图表规范.md`](./engineering/Yiveno-Mermaid图表规范.md) — Mermaid 五类图适用场景与 Agent 同步纪律
+- [`diagrams/`](./diagrams/) — 业务逻辑图清单（`registry.json`）· `bun run docs:sync-diagrams`
 - [`ENVIRONMENT.md`](./ENVIRONMENT.md) — 环境变量分层、同步与校验规则
 - [`../EDGEADDONS.md`](../EDGEADDONS.md) — Edge Add-ons 上架元数据（与根目录 `CHROMEWEBSTORE.md` 对位）
 - [`engineering/Edge-真机验收清单.md`](./engineering/Edge-真机验收清单.md) — Edge 稳定版加载仓库根 `dist/` 验收（ADR-020）
@@ -50,10 +52,12 @@
 - [`design/DESIGN.md`](./design/DESIGN.md) — 设计系统机器可读摘要（YAML tokens）
 - [`design/brand-assets/README.md`](./design/brand-assets/README.md) — 仓内母本
 - [`design/brand-asset-release-checklist.md`](./design/brand-asset-release-checklist.md) — 母本 → `public/` → 商店/官网
+- [`design/figma-index.md`](./design/figma-index.md) — Figma Design 库 URL 索引（意图/comps；发版母本仍为 brand-assets）
+- [`audits/2026-10-UI资产与Figma职责分配.md`](./audits/2026-10-UI资产与Figma职责分配.md) — UI 资产职责分配（P0 已落地）
 
 **审计（工作区活跃）：**
 
-- [`audits/`](./audits/) — 现行审计落盘；例：[`2026-10-国内化与多市场准备审计.md`](./audits/2026-10-国内化与多市场准备审计.md)、[`2026-10-多模型架构第一阶段准备工作.md`](./audits/2026-10-多模型架构第一阶段准备工作.md)、[`2026-10-多模型N1N2基线与N3对比准备.md`](./audits/2026-10-多模型N1N2基线与N3对比准备.md)、[`2026-10-多模型N3候选选型报告.md`](./audits/2026-10-多模型N3候选选型报告.md)、[`2026-10-多模型N3第二厂商桌面选型.md`](./audits/2026-10-多模型N3第二厂商桌面选型.md)、[`2026-10-多模型N3-OpenAI离线接入方案.md`](./audits/2026-10-多模型N3-OpenAI离线接入方案.md)、[`2026-10-多模型N3国内第二厂商桌面选型.md`](./audits/2026-10-多模型N3国内第二厂商桌面选型.md)、[`2026-10-三类模型独立评测与归因方案.md`](./audits/2026-10-三类模型独立评测与归因方案.md)、[`2026-10-L2召回消融实验报告.md`](./audits/2026-10-L2召回消融实验报告.md)、[`2026-10-L2召回消融-样本设计与实现差异.md`](./audits/2026-10-L2召回消融-样本设计与实现差异.md)、[`2026-10-L2召回消融-指标与金标审计.md`](./audits/2026-10-L2召回消融-指标与金标审计.md)、[`2026-10-B2否定约束生产链路审计.md`](./audits/2026-10-B2否定约束生产链路审计.md)、[`2026-10-B2否定约束最小闭环落地.md`](./audits/2026-10-B2否定约束最小闭环落地.md)、[`2026-10-B2否定约束生产回归审计.md`](./audits/2026-10-B2否定约束生产回归审计.md)、[`2026-10-B2排除匹配收紧落地.md`](./audits/2026-10-B2排除匹配收紧落地.md)
+- [`audits/`](./audits/) — 现行审计落盘；例：[`2026-10-国内化与多市场准备审计.md`](./audits/2026-10-国内化与多市场准备审计.md)、[`2026-10-多模型架构第一阶段准备工作.md`](./audits/2026-10-多模型架构第一阶段准备工作.md)、[`2026-10-多模型N1N2基线与N3对比准备.md`](./audits/2026-10-多模型N1N2基线与N3对比准备.md)、[`2026-10-多模型N3候选选型报告.md`](./audits/2026-10-多模型N3候选选型报告.md)、[`2026-10-多模型N3第二厂商桌面选型.md`](./audits/2026-10-多模型N3第二厂商桌面选型.md)、[`2026-10-多模型N3-OpenAI离线接入方案.md`](./audits/2026-10-多模型N3-OpenAI离线接入方案.md)、[`2026-10-多模型N3国内第二厂商桌面选型.md`](./audits/2026-10-多模型N3国内第二厂商桌面选型.md)、[`2026-10-三类模型独立评测与归因方案.md`](./audits/2026-10-三类模型独立评测与归因方案.md)、[`2026-10-L2召回消融实验报告.md`](./audits/2026-10-L2召回消融实验报告.md)、[`2026-10-L2召回消融-样本设计与实现差异.md`](./audits/2026-10-L2召回消融-样本设计与实现差异.md)、[`2026-10-L2召回消融-指标与金标审计.md`](./audits/2026-10-L2召回消融-指标与金标审计.md)、[`2026-10-B2否定约束生产链路审计.md`](./audits/2026-10-B2否定约束生产链路审计.md)、[`2026-10-B2否定约束最小闭环落地.md`](./audits/2026-10-B2否定约束最小闭环落地.md)、[`2026-10-B2否定约束生产回归审计.md`](./audits/2026-10-B2否定约束生产回归审计.md)、[`2026-10-B2排除匹配收紧落地.md`](./audits/2026-10-B2排除匹配收紧落地.md)、[`2026-10-运行时架构文档与实现漂移.md`](./audits/2026-10-运行时架构文档与实现漂移.md)（早期运行时架构文 ≠ HEAD 快照）
 
 **归档（参考 · 非权威）：**
 
@@ -68,3 +72,4 @@
 - [`.cursor/hooks.json`](../.cursor/hooks.json) — Agent `sessionStart` / 破坏性 git 拦截（见 [`.cursor/hooks/README.md`](../.cursor/hooks/README.md)）
 - [`engineering/background-message-types.registry`](./engineering/background-message-types.registry) + `bun run doc:check` — message type / CURRENT 漂移门禁
 - `bun run doc:check:consistency` — 代码 ↔ 文档一致性门禁（验证 ADR-001/004/005/007/012 等关键架构约束在代码中可被验证）
+- `bun run docs:check-diagrams` — Mermaid 清单 / 锚点 / 结构语法（含于 `doc:check:all`）

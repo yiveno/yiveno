@@ -28,4 +28,7 @@
 ## 规范引用
 
 - 视觉 Normative：[`Yiveno-设计标准-v1.md`](../Yiveno-设计标准-v1.md)
+- 设计意图（Figma）：[`figma-index.md`](../figma-index.md) — 构图 / comps / App\* 视觉库；**Assets · ship masters** 已镜像本目录 logo、chrome-extension、applications；**发版母本仍为本目录**
+- 派生截图脚本：[`_captures/`](./_captures/)（官网分节 + `shot-extension-store.mjs`；PNG **不入库**）
+- CWS 产品截图 01–03：[`chrome-web-store/`](./chrome-web-store/)（空 Profile；Capture / 真实库重拍仍待）
 - 导出尺寸与 prompt：[`Yiveno-logo-asset-generation-prompt.md`](../Yiveno-logo-asset-generation-prompt.md)

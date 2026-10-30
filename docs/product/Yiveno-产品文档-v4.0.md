@@ -888,31 +888,31 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 
 ### 0.5 权威路径速查
 
-| 主题                           | 路径                                                                                  |
-| ------------------------------ | ------------------------------------------------------------------------------------- |
-| **R4 Phase E 验收与 eval**     | `docs/engineering/R4-Phase-E-验收与eval.md`；Normative 摘要 §5.10 / §5.11             |
-| **TTE 种子用户研究 checklist** | `docs/engineering/TTE-种子用户研究-checklist.md`；Normative 门槛 §5.9                 |
-| **TTE 研究包模板**             | `docs/archive/research/tte-beta-template/`；复制后本地填数据，勿 commit PII（已归档） |
-| MemoryItem / clues / payload   | `extension/src/core/memory/`                                                          |
-| 语料适配器契约（R2）           | `docs/engineering/语料适配器契约.md` + `core/memory/corpus-adapter-contract.ts`       |
-| 关键词倒排 Phase 1             | `docs/engineering/关键词倒排索引-Phase1.md` + `keyword-index-repository.ts`           |
-| Background 消息联合类型        | `extension/src/core/messaging/background-messages.ts`                                 |
-| UI 发消息                      | `extension/src/infrastructure/messaging/background-client.ts`                         |
-| SW 分发                        | `extension/src/background/handlers/message-handler.ts`                                |
-| Recall                         | `extension/src/application/recall/recall-service.ts`                                  |
-| Omnibox                        | `extension/src/background/listeners/omnibox.ts`                                       |
-| Commands（快捷键）             | `extension/src/background/listeners/commands.ts`                                      |
-| Command ID 契约                | `extension/src/core/commands/command-ids.ts`                                          |
-| Settings                       | `extension/src/pages/settings/Settings.vue`                                           |
-| Settings 分区（`?section=`）   | `extension/src/core/settings/settings-sections.ts`                                    |
-| Side Panel（Recall 主壳）      | `extension/src/pages/sidepanel/`                                                      |
-| Placeholder × 追问芯片双通道   | `docs/engineering/Recall-Placeholder与追问芯片-双通道.md`（实现分期；Normative §7.0） |
-| 通用键盘意图（↑↓←→/Enter）     | `extension/src/core/ui/keyboard-command.ts`                                           |
-| 线性列表选中下标               | `extension/src/core/ui/list-selection.ts`                                             |
-| 摘录详情                       | `extension/src/pages/detail/Detail.vue`                                               |
-| 记忆库                         | `extension/src/pages/library/Library.vue`                                             |
-| UI 图标（Lucide 内联）         | `extension/src/infrastructure/ui/icons/`                                              |
-| 扩展 i18n（`t` / locales）     | `extension/src/infrastructure/i18n/` + `public/_locales/`                             |
+| 主题                           | 路径                                                                                        |
+| ------------------------------ | ------------------------------------------------------------------------------------------- |
+| **R4 Phase E 验收与 eval**     | `docs/archive/engineering/R4-Phase-E-验收与eval.md`（已归档）；Normative 摘要 §5.10 / §5.11 |
+| **TTE 种子用户研究 checklist** | `docs/engineering/TTE-种子用户研究-checklist.md`；Normative 门槛 §5.9                       |
+| **TTE 研究包模板**             | `docs/archive/research/tte-beta-template/`；复制后本地填数据，勿 commit PII（已归档）       |
+| MemoryItem / clues / payload   | `extension/src/core/memory/`                                                                |
+| 语料适配器契约（R2）           | `docs/engineering/语料适配器契约.md` + `core/memory/corpus-adapter-contract.ts`             |
+| 关键词倒排 Phase 1             | `docs/engineering/关键词倒排索引-Phase1.md` + `keyword-index-repository.ts`                 |
+| Background 消息联合类型        | `extension/src/core/messaging/background-messages.ts`                                       |
+| UI 发消息                      | `extension/src/infrastructure/messaging/background-client.ts`                               |
+| SW 分发                        | `extension/src/background/handlers/message-handler.ts`                                      |
+| Recall                         | `extension/src/application/recall/recall-service.ts`                                        |
+| Omnibox                        | `extension/src/background/listeners/omnibox.ts`                                             |
+| Commands（快捷键）             | `extension/src/background/listeners/commands.ts`                                            |
+| Command ID 契约                | `extension/src/core/commands/command-ids.ts`                                                |
+| Settings                       | `extension/src/pages/settings/Settings.vue`                                                 |
+| Settings 分区（`?section=`）   | `extension/src/core/settings/settings-sections.ts`                                          |
+| Side Panel（Recall 主壳）      | `extension/src/pages/sidepanel/`                                                            |
+| Placeholder × 追问芯片双通道   | `docs/engineering/Recall-Placeholder与追问芯片-双通道.md`（实现分期；Normative §7.0）       |
+| 通用键盘意图（↑↓←→/Enter）     | `extension/src/core/ui/keyboard-command.ts`                                                 |
+| 线性列表选中下标               | `extension/src/core/ui/list-selection.ts`                                                   |
+| 摘录详情                       | `extension/src/pages/detail/Detail.vue`                                                     |
+| 记忆库                         | `extension/src/pages/library/Library.vue`                                                   |
+| UI 图标（Lucide 内联）         | `extension/src/infrastructure/ui/icons/`                                                    |
+| 扩展 i18n（`t` / locales）     | `extension/src/infrastructure/i18n/` + `public/_locales/`                                   |
 
 ---
 
@@ -1314,7 +1314,7 @@ schema：`extension/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 - **P1 / Phase B**：Hybrid/embedding（召回不分档）+ §7.1 首批 **已接线**；**倒排 Phase 1（候选预过滤）已接线**；选区预填仍待
 - **P2 / Phase C**：账户 UI + 云同步铺路 **已完成切片**；隐私 P0（说明 + 开同步确认 + **官网 `/privacy`**）**已上线**；隐私 P1（**关 AI / ToS**）**已上线**；**数据**分区（整库导出 / 清除本机 / 删云端 / 删账号）**已上线**；**书签灌库开关**已上线；分享仍待
 - **P3 / Phase D**：标签/失效链接/统计等轻管理余项（摘录删除已提前上线）
-- **Phase E / R4**：**证据与复用**——见 **§5.10** 手工 + **§5.11** eval must + §5.9 TTE 门槛 + **§7.2 Outcome Labeling**；工程旁挂 `docs/engineering/R4-Phase-E-验收与eval.md`
+- **Phase E / R4**：**证据与复用**——见 **§5.10** 手工 + **§5.11** eval must + §5.9 TTE 门槛 + **§7.2 Outcome Labeling**；工程旁挂 `docs/archive/engineering/R4-Phase-E-验收与eval.md`（已归档）
 
 **禁止重做**：双面板重组、复杂拖拽整理、AI 聚类主卖点、大规模书签树编辑。
 
@@ -1381,7 +1381,7 @@ schema：`extension/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 > 目标：证明 **Explain → Reuse** 闭环可手测、可复现；与 §5.8 冷启动互补。  
 > 预计耗时：§5.10.1–2 约 15 分钟；全量含导入/MCP 约 45 分钟。  
-> **工程旁挂（实现锚点 / eval case id）：** [`docs/engineering/R4-Phase-E-验收与eval.md`](../engineering/R4-Phase-E-验收与eval.md)
+> **工程旁挂（实现锚点 / eval case id）：** [`docs/archive/engineering/R4-Phase-E-验收与eval.md`](../archive/engineering/R4-Phase-E-验收与eval.md)（已归档）
 
 **合入门禁：** R4 任一子项标「已上线」前，须对应小节 **全绿** + §5.11 相关 must 绿（若适用）+ §1.1 归属已填。
 
@@ -1499,7 +1499,7 @@ schema：`extension/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 ### 5.11 recall-eval must 规格（R4 · Normative）
 
-> **实现位置：** `extension/src/core/recall/eval/`；旁挂 [`docs/engineering/R4-Phase-E-验收与eval.md`](../engineering/R4-Phase-E-验收与eval.md)
+> **实现位置：** `extension/src/core/recall/eval/`；旁挂 [`docs/archive/engineering/R4-Phase-E-验收与eval.md`](../archive/engineering/R4-Phase-E-验收与eval.md)（已归档）
 
 #### 5.11.1 期望形态（与代码对齐）
 
@@ -2366,7 +2366,7 @@ RecallOutcomeEvent {
 
 **P1 实现切片（2026-08-24 / 2026-08-27）：** New find 出口条（Found / None / Skip）；open dwell 粗测（供 C1）；出口写 settled 防双计。**关 Panel：** 静默结算（**不**停放、**不**下次打开补问）。**（2026-08-26：结果卡 Mark 已下线；2026-08-27：撤 exit park。）**
 
-**P2 实现切片（2026-08-24）：** `recall-outcome-calibration`：`RECALL_OUTCOME_C2_SETTLE_ENABLED=false`（C2 可解析、**不写** settled）；工程旁挂 [`R4-Outcome-Labeling-P2-校准.md`](../engineering/R4-Outcome-Labeling-P2-校准.md)。**开 C2 进 settled 须过旁挂 gold 门后再改常量。**（2026-08-26：去掉 Mark↔隐式对拍；改以出口 Found / gold 为准。）
+**P2 实现切片（2026-08-24）：** `recall-outcome-calibration`：`RECALL_OUTCOME_C2_SETTLE_ENABLED=false`（C2 可解析、**不写** settled）；工程旁挂 [`R4-Outcome-Labeling-P2-校准.md`](../archive/engineering/R4-Outcome-Labeling-P2-校准.md)（已归档）。**开 C2 进 settled 须过旁挂 gold 门后再改常量。**（2026-08-26：去掉 Mark↔隐式对拍；改以出口 Found / gold 为准。）
 
 **P3 实现切片（2026-08-24）：** 本机 `chrome.storage.local` ring buffer 持久化 settled `(clue fingerprint → target)` 与 `none_in_results` 硬负例；Hybrid / 关键词 finalize 路径软升权 / 降权重排（`applyOutcomePairScoreAdjustments`）；**禁止**用人设建档。eval 纯关键词路径不读 storage（保持确定性）。
 

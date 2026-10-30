@@ -51,19 +51,19 @@ English
 
 ## Graphics & Assets
 
-| Asset                          | Dimensions          | Status                | Filename                                                                                      |
-| ------------------------------ | ------------------- | --------------------- | --------------------------------------------------------------------------------------------- |
-| Store Icon [REQUIRED]          | 128×128 PNG         | ✅ Verified           | `extension/public/images/icon128.png` (128×128 PNG, manifest `icons` + `action.default_icon`) |
-| Screenshot 1 [REQUIRED]        | 1280×800 or 640×400 | ✅ Ready (interim)    | `docs/design/brand-assets/chrome-web-store/screenshot-01-brand-focus-1280x800.png`            |
-| Screenshot 2 [RECOMMENDED]     | 1280×800 or 640×400 | ✅ Ready (interim)    | `docs/design/brand-assets/chrome-web-store/screenshot-02-brand-connect-1280x800.png`          |
-| Screenshot 3 [RECOMMENDED]     | 1280×800 or 640×400 | ⬜ Product UI pending | Recall Side Panel — see Screenshot Notes #1                                                   |
-| Screenshot 4                   | 1280×800 or 640×400 | ⬜ Product UI pending | Capture — see Screenshot Notes #2                                                             |
-| Screenshot 5                   | 1280×800 or 640×400 | ⬜ Product UI pending | Library — see Screenshot Notes #3                                                             |
-| Small Promo Tile [RECOMMENDED] | 440×280             | ✅ Verified           | `docs/design/brand-assets/chrome-web-store/chrome-web-store-small-promo-440x280.png`          |
-| Marquee Promo Tile             | 1400×560            | ✅ Verified           | `docs/design/brand-assets/chrome-web-store/chrome-web-store-marquee-1400x560.png`             |
+| Asset                          | Dimensions          | Status                        | Filename                                                                                      |
+| ------------------------------ | ------------------- | ----------------------------- | --------------------------------------------------------------------------------------------- |
+| Store Icon [REQUIRED]          | 128×128 PNG         | ✅ Verified                   | `extension/public/images/icon128.png` (128×128 PNG, manifest `icons` + `action.default_icon`) |
+| Screenshot 1 [REQUIRED]        | 1280×800 or 640×400 | ✅ Product UI (empty profile) | `docs/design/brand-assets/chrome-web-store/screenshot-01-sidepanel-recall-1280x800.png`       |
+| Screenshot 2 [RECOMMENDED]     | 1280×800 or 640×400 | ✅ Product UI (empty library) | `docs/design/brand-assets/chrome-web-store/screenshot-02-library-1280x800.png`                |
+| Screenshot 3 [RECOMMENDED]     | 1280×800 or 640×400 | ✅ Product UI (Settings)      | `docs/design/brand-assets/chrome-web-store/screenshot-03-settings-1280x800.png`               |
+| Screenshot 4                   | 1280×800 or 640×400 | ⬜ Capture toolbar pending    | Capture — see Screenshot Notes #2                                                             |
+| Screenshot 5                   | 1280×800 or 640×400 | ⬜ Optional                   | Omnibox / Getting Started — optional                                                          |
+| Small Promo Tile [RECOMMENDED] | 440×280             | ✅ Verified                   | `docs/design/brand-assets/chrome-web-store/chrome-web-store-small-promo-440x280.png`          |
+| Marquee Promo Tile             | 1400×560            | ✅ Verified                   | `docs/design/brand-assets/chrome-web-store/chrome-web-store-marquee-1400x560.png`             |
 
 **母本目录：** `docs/design/brand-assets/chrome-web-store/`（不进扩展包；契约见 `extension-cws-graphics-contract.ts`）。  
-**Interim：** Screenshot 1–2 当前为品牌 hero（自 `docs/design/brand-assets` 整理）；公开发布前建议替换为真实产品 UI（见该目录 `README.md`）。
+**2026-10-31：** Screenshot 1–3 已换为 Playwright 加载 `dist` 的产品 UI（冷启动空库 Profile）。公开发布前建议用**日常真实库**重截：邻域非空的 Side Panel、有条目的 Library、Capture 划存浮层。旧品牌 hero 见同目录 `archive-screenshot-01/02-*`。再生脚本：`docs/design/brand-assets/_captures/shot-extension-store.mjs`。
 
 ### Screenshot Notes
 
@@ -185,7 +185,7 @@ https://yiveno.com
 - **Recall delivers a neighborhood, not a single oracle answer:** Store copy must not promise “always picks the right one.”
 - **`localhost:8787` host permission:** Present in dev `public/manifest.json` only. **`bun run build:extension:prod`** / `cd extension && bun run pack:store`（`NODE_ENV=production`）strips it from repo-root `dist/manifest.json` via `clean-dist` before store upload. ZIP 落在 `extension/yiveno-extension-store.zip`（CWS 与 Edge 同包 · ADR-020）。
 - **Dual store:** Same ZIP for Chrome Web Store and Microsoft Edge Add-ons; listing metadata split across this file and `EDGEADDONS.md`.
-- **Store screenshots / promo tiles:** Not yet produced (see Graphics table).
+- **Store screenshots / promo tiles:** Screenshot 1–3 + promo tiles ready (see Graphics table). Capture toolbar still pending; prefer re-shoot Side Panel/Library on a daily library before public listing.
 - **MCP beta:** Read-only MCP exists; not marketed as a primary user feature in the listing.
 
 ### Rejection History

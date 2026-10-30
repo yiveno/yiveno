@@ -1,0 +1,283 @@
+{
+  "version": 1,
+  "updated": "2026-10-31",
+  "diagrams": [
+    {
+      "id": "turnstile.captcha-token-lifecycle",
+      "kind": "sequence",
+      "status": "implemented",
+      "title": "captchaToken 生命周期（发码 → Siteverify → 验码）",
+      "doc": "docs/engineering/Turnstile-Email-OTP-防刷生命周期.md",
+      "codePaths": [
+        "website/src/services/turnstile.ts",
+        "website/src/components/LoginForm.vue",
+        "website/src/services/auth.ts"
+      ],
+      "docPaths": ["docs/AUTH_GUIDE.md", "docs/ENVIRONMENT.md"]
+    },
+    {
+      "id": "turnstile.captcha-token-state",
+      "kind": "state",
+      "status": "implemented",
+      "title": "captchaToken 本地/校验状态机",
+      "doc": "docs/engineering/Turnstile-Email-OTP-防刷生命周期.md",
+      "codePaths": ["website/src/services/turnstile.ts", "website/src/components/LoginForm.vue"],
+      "docPaths": ["docs/AUTH_GUIDE.md"]
+    },
+    {
+      "id": "turnstile.email-otp-e2e",
+      "kind": "flowchart",
+      "status": "implemented",
+      "title": "Email OTP 端到端（含配额层）",
+      "doc": "docs/engineering/Turnstile-Email-OTP-防刷生命周期.md",
+      "codePaths": [
+        "website/src/components/LoginForm.vue",
+        "website/src/services/auth.ts",
+        "website/src/services/turnstile.ts"
+      ],
+      "docPaths": ["docs/AUTH_GUIDE.md", "docs/ENVIRONMENT.md"]
+    },
+    {
+      "id": "turnstile.secrets-split",
+      "kind": "flowchart",
+      "status": "implemented",
+      "title": "Turnstile sitekey / secret 分工",
+      "doc": "docs/engineering/Turnstile-Email-OTP-防刷生命周期.md",
+      "codePaths": ["website/src/services/turnstile.ts"],
+      "docPaths": ["docs/ENVIRONMENT.md", "docs/AUTH_GUIDE.md"]
+    },
+    {
+      "id": "turnstile.china-dual-region-target",
+      "kind": "flowchart",
+      "status": "planned",
+      "title": "china/world 双区域目标架构（未接线）",
+      "doc": "docs/engineering/Turnstile-Email-OTP-防刷生命周期.md",
+      "codePaths": ["website/src/services/turnstile.ts", "website/src/components/LoginForm.vue"],
+      "docPaths": ["docs/AUTH_GUIDE.md"],
+      "notes": "账号尚无 china 小组件；不得画成现行路径"
+    },
+    {
+      "id": "runtime.system-overview",
+      "kind": "flowchart",
+      "status": "implemented",
+      "title": "运行时系统全景（单向数据流）",
+      "doc": "docs/architecture/Yiveno-运行时架构流程-v1.md",
+      "codePaths": [
+        "extension/src/background/handlers/message-handler.ts",
+        "extension/src/infrastructure/messaging/background-client.ts",
+        "extension/src/infrastructure/indexeddb/manager.ts"
+      ],
+      "docPaths": [
+        "docs/product/Yiveno-产品文档-v4.0.md",
+        "docs/architecture/decisions/ADR-001-side-panel-recall-shell.md",
+        "docs/audits/2026-10-运行时架构文档与实现漂移.md",
+        "docs/AUTH_GUIDE.md",
+        "docs/architecture/decisions/ADR-017-cloud-sync-excerpt-only.md"
+      ],
+      "notes": "高层全景；宿主文含术语分流（书签灌库≠云同步）与跨图 registry 导航；细节见各业务图"
+    },
+    {
+      "id": "runtime.capture-excerpt-sequence",
+      "kind": "sequence",
+      "status": "implemented",
+      "title": "划词 Capture → Text Excerpt 落库",
+      "doc": "docs/architecture/Yiveno-运行时架构流程-v1.md",
+      "codePaths": [
+        "extension/src/content/selection-toolbar",
+        "extension/src/background/handlers/memory-handler.ts",
+        "extension/src/background/handlers/message-handler.ts",
+        "extension/src/application/memory/memory-item-service.ts",
+        "extension/src/application/memory/schedule-async-memory-llm-enrichment.ts",
+        "extension/src/application/memory/schedule-async-memory-embedding.ts",
+        "extension/src/background/listeners/context-menu.ts",
+        "extension/src/application/capture/capture-text-excerpt-service.ts"
+      ],
+      "docPaths": ["docs/product/Yiveno-产品文档-v4.0.md"],
+      "notes": "本图仅 CAPTURE_TEXT_EXCERPT messaging；右键 listener→capture-text-excerpt-service 直调对照；书签 Chrome→IDB 不在本图"
+    },
+    {
+      "id": "runtime.recall-sidepanel-sequence",
+      "kind": "sequence",
+      "status": "implemented",
+      "title": "Side Panel Recall 端到端（Hybrid）",
+      "doc": "docs/architecture/Yiveno-运行时架构流程-v1.md",
+      "codePaths": [
+        "extension/src/pages/sidepanel",
+        "extension/src/background/handlers/recall-handler.ts",
+        "extension/src/application/recall/recall-service.ts",
+        "extension/src/application/recall/backends/hybrid-recall-backend.ts",
+        "extension/src/infrastructure/messaging/notify-recall-visible-progress.ts"
+      ],
+      "docPaths": [
+        "docs/product/Yiveno-产品文档-v4.0.md",
+        "docs/architecture/decisions/ADR-010-clue-understanding-pipeline.md",
+        "docs/architecture/decisions/ADR-011-recall-time-confidence.md",
+        "docs/architecture/decisions/ADR-014-recall-request-topic-two-sources.md"
+      ]
+    },
+    {
+      "id": "runtime.open-record-sequence",
+      "kind": "sequence",
+      "status": "implemented",
+      "title": "RECORD_MEMORY_OPEN 写 open 信号",
+      "doc": "docs/architecture/Yiveno-运行时架构流程-v1.md",
+      "codePaths": [
+        "extension/src/pages/sidepanel",
+        "extension/src/pages/library",
+        "extension/src/pages/detail",
+        "extension/src/background/handlers/memory-handler.ts",
+        "extension/src/application/memory/memory-item-service.ts",
+        "extension/src/background/listeners/omnibox.ts"
+      ],
+      "docPaths": ["docs/product/Yiveno-产品文档-v4.0.md"],
+      "notes": "本图仅 UI messaging；Omnibox listener 直调对照；open≠settled"
+    },
+    {
+      "id": "runtime.dismiss-feedback-sequence",
+      "kind": "sequence",
+      "status": "implemented",
+      "title": "None of these → dismiss 双层否定",
+      "doc": "docs/architecture/Yiveno-运行时架构流程-v1.md",
+      "codePaths": [
+        "extension/src/pages/sidepanel",
+        "extension/src/background/handlers/memory-handler.ts",
+        "extension/src/application/memory/memory-item-service.ts",
+        "extension/src/infrastructure/indexeddb/memory-item-repository.ts",
+        "extension/src/application/recall/commit-recall-outcome.ts"
+      ],
+      "docPaths": ["docs/product/Yiveno-产品文档-v4.0.md"],
+      "notes": "recordDismiss：handler→service→repository；禁止再挂 application/memory 整目录"
+    },
+    {
+      "id": "auth.extension-session-mint-handoff",
+      "kind": "sequence",
+      "status": "implemented",
+      "title": "扩展 Session mint / handoff（Connect vs Sign in）",
+      "doc": "docs/AUTH_GUIDE.md",
+      "codePaths": [
+        "website/src/services/extension-auth-handoff.ts",
+        "website/src/services/mint-extension-session.ts",
+        "website/src/services/run-extension-connect.ts",
+        "website/src/services/rollback-minted-extension-session.ts",
+        "website/src/services/ui-bridge.ts",
+        "website/src/components/UiBridgeHost.vue",
+        "website/src/components/LoginForm.vue",
+        "website/src/components/AuthCallback.vue",
+        "worker/src/services/auth/mint-extension-session.ts",
+        "extension/src/background/handlers/account-sync-handler.ts",
+        "extension/src/background/listeners/external-auth-handoff.ts",
+        "extension/src/background/listeners/ui-bridge.ts",
+        "extension/src/core/identity/external-auth-handoff.ts",
+        "extension/src/infrastructure/auth/auth-session-revalidate.ts",
+        "extension/src/infrastructure/auth/extension-oauth.ts"
+      ],
+      "docPaths": [
+        "docs/AUTH_GUIDE.md",
+        "docs/product/Yiveno-产品文档-v4.0.md",
+        "docs/architecture/decisions/ADR-018-account-profile-data-isolation.md",
+        "docs/architecture/decisions/ADR-019-website-extension-ui-bridge.md"
+      ],
+      "notes": "官网→扩展接通主链；不含 Turnstile/OTP、反铸 website-session、登录迁移门闸；官网 session≠扩展 session"
+    },
+    {
+      "id": "sync.excerpt-cloud-pro-gate",
+      "kind": "flowchart",
+      "status": "implemented",
+      "title": "Pro 摘录云同步门禁（开关 / 对齐 / 增量 / 409）",
+      "doc": "docs/architecture/decisions/ADR-017-cloud-sync-excerpt-only.md",
+      "codePaths": [
+        "extension/src/background/handlers/account-sync-handler.ts",
+        "extension/src/core/memory/cloud-syncable-memory-item.ts",
+        "extension/src/core/memory/select-memory-items-to-push.ts",
+        "extension/src/core/identity/sync-prefs.ts",
+        "extension/src/infrastructure/identity/sync-prefs-service.ts",
+        "extension/src/infrastructure/identity/subscription-service.ts",
+        "extension/src/infrastructure/sync/memory-cloud-sync-alarm.ts",
+        "extension/src/background/listeners/memory-cloud-sync-alarm.ts",
+        "extension/src/infrastructure/messaging/memory-sync-api-client.ts",
+        "worker/src/routes/memory-sync.ts",
+        "worker/src/services/memory/require-pro-for-sync.ts",
+        "worker/src/data-access/memory-items.ts"
+      ],
+      "docPaths": [
+        "docs/architecture/decisions/ADR-017-cloud-sync-excerpt-only.md",
+        "docs/product/Yiveno-产品文档-v4.0.md",
+        "docs/ENVIRONMENT.md"
+      ],
+      "notes": "同步=Pro+登录+开关；面仅 text_excerpt；关开关≠删云；status 可不 Pro；409≠普通失败"
+    },
+    {
+      "id": "recall.outcome-settlement-channels",
+      "kind": "flowchart",
+      "status": "implemented",
+      "title": "Recall Outcome 多通道与结算（§7.2）",
+      "doc": "docs/architecture/Yiveno-运行时架构流程-v1.md",
+      "codePaths": [
+        "extension/src/pages/sidepanel/SidePanel.vue",
+        "extension/src/application/recall/commit-recall-outcome.ts",
+        "extension/src/core/recall/recall-outcome.ts",
+        "extension/src/core/recall/recall-outcome-calibration.ts",
+        "extension/src/core/recall/recall-outcome-pairs.ts",
+        "extension/src/infrastructure/storage/recall-outcome-pairs-storage.ts",
+        "extension/src/background/handlers/memory-handler.ts",
+        "extension/src/infrastructure/messaging/background-client.ts"
+      ],
+      "docPaths": [
+        "docs/product/Yiveno-产品文档-v4.0.md",
+        "docs/archive/engineering/R4-Outcome-Labeling-P2-校准.md"
+      ],
+      "notes": "open≠settled；D>B/B′>C1>C5>C2；C2 默认可解析不写 settled；A Mark 已下线；与 open/dismiss 单通道图分工"
+    },
+    {
+      "id": "runtime.omnibox-offline-recall",
+      "kind": "sequence",
+      "status": "implemented",
+      "title": "Omnibox 离线快跳（entry=omnibox · ADR-007）",
+      "doc": "docs/architecture/Yiveno-运行时架构流程-v1.md",
+      "codePaths": [
+        "extension/src/background/listeners/omnibox.ts",
+        "extension/src/core/recall/omnibox-suggest.ts",
+        "extension/src/application/recall/recall-service.ts",
+        "extension/src/application/recall/backends/hybrid-recall-backend.ts",
+        "extension/src/core/recall/understand/understand-recall-clue.ts",
+        "extension/src/application/memory/memory-item-service.ts",
+        "extension/src/infrastructure/storage/first-recall-onboarding-storage.ts",
+        "extension/src/infrastructure/browser/side-panel.ts"
+      ],
+      "docPaths": [
+        "docs/architecture/decisions/ADR-007-omnibox-offline-lookup.md",
+        "docs/product/Yiveno-产品文档-v4.0.md",
+        "docs/diagrams/reports/2026-10-Omnibox-Bookmark双链路盘点.md",
+        "docs/diagrams/reports/2026-10-Omnibox-Offline-Recall图表补齐.md",
+        "docs/diagrams/reports/2026-10-Omnibox-Offline-Recall语义复核.md"
+      ],
+      "notes": "天花板：lexical / 无 LLM / 无 Hybrid·embed·RRF / 无 Outcome；约束邻域 early 亦可 finalize；CTA 接力完整 Hybrid 与本轨分计；只读 IDB≠Capture/ingest；≠ Side Panel 图"
+    },
+    {
+      "id": "runtime.bookmark-chrome-ingest",
+      "kind": "sequence",
+      "status": "implemented",
+      "title": "Bookmark Chrome → IDB 灌库（≠ Capture · 不上云）",
+      "doc": "docs/architecture/Yiveno-运行时架构流程-v1.md",
+      "codePaths": [
+        "extension/src/background/listeners/chrome-bookmark-sync.ts",
+        "extension/src/background/listeners/chrome-bookmark-repair-alarm.ts",
+        "extension/src/application/capture/chrome-bookmark-sync-service.ts",
+        "extension/src/application/capture/chrome-bookmark-bulk-import.ts",
+        "extension/src/application/capture/import-chrome-bookmarks-service.ts",
+        "extension/src/infrastructure/browser/chrome-bookmark-reader.ts",
+        "extension/src/infrastructure/sync/chrome-bookmark-repair-alarm.ts",
+        "extension/src/infrastructure/indexeddb/memory-item-repository.ts",
+        "extension/src/application/memory/memory-item-service.ts",
+        "extension/src/application/memory/schedule-async-memory-embedding.ts",
+        "extension/src/core/memory/chrome-bookmark-sync-pending.ts"
+      ],
+      "docPaths": [
+        "docs/product/Yiveno-产品文档-v4.0.md",
+        "docs/architecture/decisions/ADR-017-cloud-sync-excerpt-only.md",
+        "docs/diagrams/reports/2026-10-Omnibox-Bookmark双链路盘点.md"
+      ],
+      "notes": "Chrome 树权威单向→IDB；ingest 门禁；bulk≠增量；force:true 仅每日 alarm（≠ Settings 手动修复）；pending session 队列 schema；≠划词 Capture；书签不上云仍本机可召回"
+    }
+  ]
+}

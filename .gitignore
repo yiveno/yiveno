@@ -69,6 +69,11 @@ worker/.dev.vars
 # Impeccable 本地过程产物（截图 / live / critique）一律不入仓
 .impeccable/
 
+# 官网分节派生截图（shot-sections.mjs 若仍写本目录；定稿后应删，勿入库）
+docs/design/brand-assets/_captures/*.png
+docs/design/brand-assets/_captures/*.jpg
+docs/design/brand-assets/_captures/*.webp
+
 # Impeccable 技能包：各宿主本地 `npx impeccable` 安装，内容几乎相同，禁止入库
 .claude/skills/
 .github/skills/
@@ -105,6 +110,12 @@ coverage/
 .nyc_output/
 test-results/
 reports/
+# 图表审阅报告（docs/diagrams/README：可提交；勿被上方 reports/ 吞掉）
+!docs/diagrams/reports/
+!docs/diagrams/reports/**
+
+# Mermaid 同步命令生成的 Agent Brief（可再生成 · 勿提交）
+docs/diagrams/.cache/
 
 # 各种缓存和临时文件
 *.cache

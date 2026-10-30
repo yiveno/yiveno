@@ -1,7 +1,7 @@
 ---
 title: Turnstile Email OTP 防刷 · 生命周期与流程图
 created: 2026-10-27 18:51 +0800
-updated: 2026-10-27 19:50 +0800
+updated: 2026-10-30 23:40 +0800
 author: agent:cursor
 scope: website Email OTP · Cloudflare Turnstile · Supabase Attack Protection · 国内可达性
 status: active
@@ -44,6 +44,8 @@ downstream:
 
 ## 2. `captchaToken` 生命周期
 
+<!-- diagram: id=turnstile.captcha-token-lifecycle kind=sequence status=implemented -->
+
 ```mermaid
 sequenceDiagram
   autonumber
@@ -84,6 +86,8 @@ sequenceDiagram
 
 ### 状态机（token）
 
+<!-- diagram: id=turnstile.captcha-token-state kind=state status=implemented -->
+
 ```mermaid
 stateDiagram-v2
   [*] --> Absent: 页加载 / reset / 过期回调
@@ -105,6 +109,8 @@ stateDiagram-v2
 ---
 
 ## 3. 端到端流程图（含配额层）
+
+<!-- diagram: id=turnstile.email-otp-e2e kind=flowchart status=implemented -->
 
 ```mermaid
 flowchart TD
@@ -139,6 +145,8 @@ flowchart TD
 ---
 
 ## 4. 密钥与环境（勿混）
+
+<!-- diagram: id=turnstile.secrets-split kind=flowchart status=implemented -->
 
 ```mermaid
 flowchart LR
@@ -183,6 +191,8 @@ flowchart LR
 
 ### 5.4 目标架构（未接线 · 待账号能力）
 
+<!-- diagram: id=turnstile.china-dual-region-target kind=flowchart status=planned -->
+
 ```mermaid
 flowchart TD
   U[用户] --> H{访问主机}
@@ -214,18 +224,22 @@ flowchart TD
 
 ## 6. 相关代码与文档
 
-| 路径                                   | 职责                               |
-| -------------------------------------- | ---------------------------------- |
-| `website/src/services/turnstile.ts`    | 加载脚本、render、reset            |
-| `website/src/components/LoginForm.vue` | 发码/重发门禁、失败文案            |
-| `website/src/services/auth.ts`         | `signInWithOtp(..., captchaToken)` |
-| `docs/AUTH_GUIDE.md`                   | 运维步骤（Captcha 必开）           |
-| `docs/ENVIRONMENT.md`                  | `PUBLIC_TURNSTILE_SITE_KEY`        |
+| 路径                                   | 职责                                      |
+| -------------------------------------- | ----------------------------------------- |
+| `website/src/services/turnstile.ts`    | 加载脚本、render、reset                   |
+| `website/src/components/LoginForm.vue` | 发码/重发门禁、失败文案                   |
+| `website/src/services/auth.ts`         | `signInWithOtp(..., captchaToken)`        |
+| `docs/AUTH_GUIDE.md`                   | 运维步骤（Captcha 必开）                  |
+| `docs/ENVIRONMENT.md`                  | `PUBLIC_TURNSTILE_SITE_KEY`               |
+| `docs/diagrams/registry.json`          | 本文 5 张 Mermaid 图登记（`turnstile.*`） |
+
+同步：`bun run docs:sync-diagrams --id turnstile.captcha-token-lifecycle`（或整域审阅 Brief）。
 
 ---
 
 ## 7. 修订
 
-| 日期       | 说明                                                                        |
-| ---------- | --------------------------------------------------------------------------- |
-| 2026-10-27 | 首版：生命周期 / 流程图 / 密钥分工；记录 china 区域未落地原因与目标双验架构 |
+| 日期       | 说明                                                                              |
+| ---------- | --------------------------------------------------------------------------------- |
+| 2026-10-30 | 接入 diagrams registry 锚点；对照 LoginForm/turnstile/auth 试点同步（无逻辑改图） |
+| 2026-10-27 | 首版：生命周期 / 流程图 / 密钥分工；记录 china 区域未落地原因与目标双验架构       |

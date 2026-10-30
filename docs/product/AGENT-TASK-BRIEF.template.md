@@ -31,6 +31,10 @@
 ### 禁止
 - （例：灰名单 alias · 未上线能力接线 · 跨模块顺手重构 · 用「暗线/懂人类」损体验或放松 §5.9 · 私人遥测原文入仓）
 
+### 图表（行为/契约变更时）
+- 查 `docs/diagrams/registry.json` 是否命中本次 `codePaths` / `docPaths`
+- 有命中 → `bun run docs:sync-diagrams --id <id>` 后按 Brief 更新 Mermaid；`bun run docs:check-diagrams`
+
 ### 备注（可选）
 - （例：延续上次关于划词菜单的讨论；或贴 issue/截图要点）
 
