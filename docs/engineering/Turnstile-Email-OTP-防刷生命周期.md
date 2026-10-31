@@ -1,7 +1,7 @@
 ---
 title: Turnstile Email OTP 防刷 · 生命周期与流程图
 created: 2026-10-27 18:51 +0800
-updated: 2026-10-30 23:40 +0800
+updated: 2026-10-31 20:45 +0800
 author: agent:cursor
 scope: website Email OTP · Cloudflare Turnstile · Supabase Attack Protection · 国内可达性
 status: active
@@ -19,7 +19,8 @@ downstream:
 
 # Turnstile · Email OTP 防刷生命周期与流程图
 
-> 开发者资料（非产品 UI 文案）。说明官网「邮件验证码登录」如何与 Cloudflare Turnstile、Supabase Auth 串起来，以及 **国内可达 / china 区域** 的约束与后续路径。
+> 开发者资料（非产品 UI 文案）。说明官网「邮件验证码登录」如何与 Cloudflare Turnstile、Supabase Auth 串起来，以及 **国内可达 / china 区域** 的约束与后续路径。  
+> **用词：** Turnstile = Cloudflare 人机验证产品；`captchaToken` = 小组件发给官网的一次性证明；**Siteverify** = Cloudflare 服务端校验并作废该 token 的接口（业内产品 API 名，可保留）。
 
 ## 1. 角色一览
 
@@ -43,6 +44,8 @@ downstream:
 ---
 
 ## 2. `captchaToken` 生命周期
+
+**读图小词：** **sitekey** = 公开的小组件 ID（可进前端）；**secret** = 仅服务端校验用（禁止进 git/官网）；**签发** = Turnstile 回调给出 token；**Siteverify** = Cloudflare 校验并作废 token；**reset** = 官网清本地 token 并重渲小组件。
 
 <!-- diagram: id=turnstile.captcha-token-lifecycle kind=sequence status=implemented -->
 
@@ -86,29 +89,33 @@ sequenceDiagram
 
 ### 状态机（token）
 
+**读图小词（相对上节生命周期）：** 本图只描述**官网本地** `captchaToken` 状态，**不含**邮箱 OTP 验码。**Absent** = 无本地 token；**Pending** = 小组件挑战进行中；**Issued** = 已签发、尚未经服务端作废（可被重放，故必须 Siteverify）；**Consumed** = Siteverify 成功、token 已作废；**Rejected** = Siteverify 失败；各路失败/过期/reset 均回 Absent。
+
 <!-- diagram: id=turnstile.captcha-token-state kind=state status=implemented -->
 
 ```mermaid
 stateDiagram-v2
   [*] --> Absent: 页加载 / reset / 过期回调
   Absent --> Pending: render 开始挑战
-  Pending --> Issued: callback(token)
+  Pending --> Issued: callback 签发 token
   Pending --> Absent: error-callback / 加载失败
-  Issued --> Absent: expired-callback（~5min）
-  Issued --> Consumed: Supabase Siteverify 成功
+  Issued --> Absent: expired-callback（约 5min）
+  Issued --> Consumed: 服务端 Siteverify 成功
   Issued --> Rejected: Siteverify 失败（伪造/重放/错 secret）
-  Consumed --> Absent: LoginForm.reset()
-  Rejected --> Absent: LoginForm.reset()
+  Consumed --> Absent: LoginForm.reset 清本地
+  Rejected --> Absent: LoginForm.reset 清本地
   note right of Issued
     本地 ref captchaToken
-    未校验前可被重放请求
-    故必须服务端 Siteverify
+    未校验前可被重放
+    必须服务端 Siteverify
   end note
 ```
 
 ---
 
 ## 3. 端到端流程图（含配额层）
+
+**读图小词：** 本图止于**官网 session**；末端「铸造并交接」见 `auth.extension-session-mint-handoff`（AUTH_GUIDE）。**Attack Protection** = Supabase 控制台人机验证开关；**Auth Rate Limits** = 发信配额/同邮箱间隔（业内限流，非 Turnstile）。
 
 <!-- diagram: id=turnstile.email-otp-e2e kind=flowchart status=implemented -->
 
@@ -131,7 +138,7 @@ flowchart TD
   J -->|通过| K[DirectMail 投递 OTP 邮件]
   K --> L[同页保留邮箱 + Code 框]
   L --> M[verifyOtp]
-  M --> N[官网 session → mint/handoff 等]
+  M --> N[官网 session 已建立<br/>→ 铸造并交接扩展会话<br/>见 auth.extension-session-mint-handoff]
 ```
 
 三层分工：
@@ -145,6 +152,8 @@ flowchart TD
 ---
 
 ## 4. 密钥与环境（勿混）
+
+**读图小词：** 左公开、右机密；GoTrue = Supabase Auth 服务；二者只在**服务端 Siteverify** 相遇。
 
 <!-- diagram: id=turnstile.secrets-split kind=flowchart status=implemented -->
 
@@ -190,6 +199,10 @@ flowchart LR
 3. 即便建出 china 小组件，完整双区域还须 **Worker 双 secret Siteverify**（或关闭 GoTrue 内建 Captcha、改 Admin 发码），否则 `.cn` 与 `.com` 会互斥。
 
 ### 5.4 目标架构（未接线 · 待账号能力）
+
+> **status=planned**：下图**不是**现行路径；china 小组件与 Worker 双 secret 均未接线。
+
+**读图小词：** **china / world** = Turnstile 创建时选定的区域（不可改）；两套 sitekey+secret；单 secret 的 GoTrue Captcha **无法**同时服务双区域。
 
 <!-- diagram: id=turnstile.china-dual-region-target kind=flowchart status=planned -->
 

@@ -150,9 +150,9 @@
     },
     {
       "id": "auth.extension-session-mint-handoff",
-      "kind": "sequence",
+      "kind": "flowchart",
       "status": "implemented",
-      "title": "扩展 Session mint / handoff（Connect vs Sign in）",
+      "title": "扩展会话铸造并交接（Connect vs Sign in）",
       "doc": "docs/AUTH_GUIDE.md",
       "codePaths": [
         "website/src/services/extension-auth-handoff.ts",
@@ -177,7 +177,33 @@
         "docs/architecture/decisions/ADR-018-account-profile-data-isolation.md",
         "docs/architecture/decisions/ADR-019-website-extension-ui-bridge.md"
       ],
-      "notes": "官网→扩展接通主链；不含 Turnstile/OTP、反铸 website-session、登录迁移门闸；官网 session≠扩展 session"
+      "notes": "flowchart：入口→probe→mint/挤掉→handoff/回滚；不含 Turnstile/OTP、反铸 website-session；登录迁移见 auth.login-migration-gate；官网 session≠扩展 session"
+    },
+    {
+      "id": "auth.login-migration-gate",
+      "kind": "flowchart",
+      "status": "implemented",
+      "title": "登录迁移门闸（无主摘录 Import/Export/Delete · ADR-018）",
+      "doc": "docs/AUTH_GUIDE.md",
+      "codePaths": [
+        "extension/src/application/identity/login-migration.ts",
+        "extension/src/pages/shared/use-login-migration-dialog.ts",
+        "extension/src/pages/shared/LoginMigrationDialog.vue",
+        "extension/src/background/handlers/account-sync-handler.ts",
+        "extension/src/core/messaging/account-sync-messages.ts",
+        "extension/src/infrastructure/messaging/background-client.ts",
+        "extension/src/infrastructure/indexeddb/memory-item-repository.ts",
+        "extension/src/infrastructure/identity/local-profile-service.ts",
+        "extension/src/pages/sidepanel/SidePanel.vue",
+        "extension/src/pages/settings/use-settings-page.ts"
+      ],
+      "docPaths": [
+        "docs/AUTH_GUIDE.md",
+        "docs/architecture/decisions/ADR-018-account-profile-data-isolation.md",
+        "docs/product/Yiveno-产品文档-v4.0.md",
+        "docs/diagrams/reports/2026-10-Auth-Login-Migration-Gate图表补齐.md"
+      ],
+      "notes": "无主=仅 localProfile 未登录摘录；禁静默 absorb；主窗无取消；Export≠改归属；Import 书签本机 remap 不上云；≠ mint 图；≠孤儿桶清理"
     },
     {
       "id": "sync.excerpt-cloud-pro-gate",

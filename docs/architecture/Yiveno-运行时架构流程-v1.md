@@ -42,6 +42,8 @@
 
 > 关键词：**单向数据流**、**Background 唯一监听者**、**IndexedDB 唯一事实源**。
 
+**读图小词：** **Background** = 扩展 Service Worker，唯一听 Chrome API / 消息；**UI** = `pages/*` / 划词浮层，只经 `background-client` 发消息，**禁止**直连 IndexedDB / 数据面 Chrome API；**事实源** = IndexedDB `MemoryItem`；`chrome.storage` = 轻状态/身份/设置；**书签灌库 ≠ 云同步**（见表）；MCP = 只读 beta、不对用户主宣传。本图高层；细节见下方跨图导航。
+
 <!-- diagram: id=runtime.system-overview kind=flowchart status=implemented -->
 
 ```mermaid
@@ -98,15 +100,16 @@ flowchart LR
 
 **跨图导航（本图保持高层；细节不复制进节点）：**
 
-| 域                  | registry id                           | 落点                                                      |
-| ------------------- | ------------------------------------- | --------------------------------------------------------- |
-| Auth mint / handoff | `auth.extension-session-mint-handoff` | [`docs/AUTH_GUIDE.md`](../AUTH_GUIDE.md)                  |
-| Pro 摘录云同步      | `sync.excerpt-cloud-pro-gate`         | [ADR-017](./decisions/ADR-017-cloud-sync-excerpt-only.md) |
-| 书签 Chrome→IDB     | `runtime.bookmark-chrome-ingest`      | 本文 §3.1.1                                               |
-| Omnibox 离线快跳    | `runtime.omnibox-offline-recall`      | 本文 §3.5                                                 |
-| Outcome 结算        | `recall.outcome-settlement-channels`  | 本文 §3.4.1                                               |
-| 划词 Capture        | `runtime.capture-excerpt-sequence`    | 本文 §3.1                                                 |
-| Side Panel Recall   | `runtime.recall-sidepanel-sequence`   | 本文 §3.2                                                 |
+| 域                       | registry id                           | 落点                                                      |
+| ------------------------ | ------------------------------------- | --------------------------------------------------------- |
+| 扩展会话铸造并交接       | `auth.extension-session-mint-handoff` | [`docs/AUTH_GUIDE.md`](../AUTH_GUIDE.md)                  |
+| 登录迁移门闸（无主摘录） | `auth.login-migration-gate`           | [`docs/AUTH_GUIDE.md`](../AUTH_GUIDE.md)（ADR-018）       |
+| Pro 摘录云同步           | `sync.excerpt-cloud-pro-gate`         | [ADR-017](./decisions/ADR-017-cloud-sync-excerpt-only.md) |
+| 书签 Chrome→IDB          | `runtime.bookmark-chrome-ingest`      | 本文 §3.1.1                                               |
+| Omnibox 离线快跳         | `runtime.omnibox-offline-recall`      | 本文 §3.5                                                 |
+| Outcome 结算             | `recall.outcome-settlement-channels`  | 本文 §3.4.1                                               |
+| 划词 Capture             | `runtime.capture-excerpt-sequence`    | 本文 §3.1                                                 |
+| Side Panel Recall        | `runtime.recall-sidepanel-sequence`   | 本文 §3.2                                                 |
 
 ## 2. 分层依赖与硬约束（避免走弯路）
 
@@ -270,6 +273,8 @@ flowchart LR
 
 > **本图范围：** `selection-toolbar`（含快捷键 `captureEntry: shortcut` / Getting Started 页）→ `CAPTURE_TEXT_EXCERPT`。右键 = `listeners/context-menu` → `captureTextExcerptFromContextMenu`（**listener 直调 application**，不经 BC）。书签主灌库见上文表，**勿**画进本图。
 
+**读图小词：** **附注** = `clues.note`；**enrichment** = 落库后稀疏异步 LLM 补摘要等（失败不挡 Capture）；**embedding** = 向量化后台任务（同上，不挡返回）；`CAPTURE_UNSAVABLE_PAGE` = 不可存页（未进 application）。
+
 <!-- diagram: id=runtime.capture-excerpt-sequence kind=sequence status=implemented -->
 
 ```mermaid
@@ -319,6 +324,8 @@ sequenceDiagram
 | 对账   | holes reconcile（只补缺）；full repair（upsert 全叶子 + 软删孤儿；无 `chromeBookmarkId` 第三方不动）；SW 会话最多一次 + 每日 alarm |
 | Recall | `put` / `putMany` 同步倒排 diff（大批量可 markDirty）；增量可单条 embedding；bulk/reconcile **不**刷万级 embed                     |
 | 关灌库 | 卸 `on*`、停 bulk；**不删**已有书签 Memory                                                                                         |
+
+**读图小词：** **灌库（ingest）** = Chrome 书签 → 本机 IDB（≠ 云同步）；**full repair** = 全叶子对账 upsert + 软删孤儿（每日 alarm 可用 `force:true`；≠ Settings 手动）；**holes reconcile** = 只补缺口；**pending** = 导入未完成时暂存在 session 的增量事件。
 
 <!-- diagram: id=runtime.bookmark-chrome-ingest kind=sequence status=implemented -->
 
@@ -392,6 +399,8 @@ clue
 
 **Recall 端到端链路（以 Side Panel 为例）**
 
+**读图小词：** **clue** = 用户输入的找东西线索；**理解** = 规则或 LLM 解析线索（非查库）；**主题锚门禁** = 无主题则诚实 `no_match`、不进检索；**可见进展** = UI 进度阶段（understanding → narrowing → checking）；**Framing / Heard as** = 结果态理解回声（体验面，≠ 神谕）；outcome 三分见 §3.4.1。
+
 <!-- diagram: id=runtime.recall-sidepanel-sequence kind=sequence status=implemented -->
 
 ```mermaid
@@ -453,6 +462,8 @@ sequenceDiagram
 
 > **本图范围：** UI → `RECORD_MEMORY_OPEN` messaging。Omnibox 书签落点 = listener **直调** `memoryItemService.recordOpen`（不经本图）。**open ≠ settled**（§7.2 / `RECORD_RECALL_SETTLE` 分计）。
 
+**读图小词：** **Open** = 记「打开过」行为（`openCount` / `lastOpenedAt`），**不等于**找东西履约结算（settled）；进 `detail.html` 时由 Detail 页写 open，避免双计。
+
 <!-- diagram: id=runtime.open-record-sequence kind=sequence status=implemented -->
 
 ```mermaid
@@ -488,6 +499,8 @@ sequenceDiagram
 
 1. **会话内硬排除：** Side Panel `dismissedIds` 并集后随下一轮 `RECALL_WITH_CLUE` 传入；Hybrid 候选加载后 `excludeDismissedMemoryItems` 直接剔除（产品文档：会话内 dismissedIds 硬排除）。
 2. **持久惩罚：** `RECORD_RECALL_DISMISS` → `dismissCount += 1`、`lastDismissedAt = now`；**不改** `updatedAt`。`keyword-filter` 的 `computeDismissPenalty` 在评分中软减分。
+
+**读图小词：** **None of these** = 本轮结果都不对；**会话硬排除** = 下一轮候选直接剔除 `dismissedIds`；**持久惩罚** = 跨轮评分软减分；图中 `par` = 与 Outcome 标签提交并行（best-effort），**不等于**写 settled。
 
 <!-- diagram: id=runtime.dismiss-feedback-sequence kind=sequence status=implemented -->
 
@@ -525,9 +538,11 @@ sequenceDiagram
 > **不含：** Omnibox（无 Outcome）；Hybrid 对重排算法细节；通道 A Mark（**已下线**，UI 不再产生）。  
 > **权威：** 产品文档 §7.2；单通道时序仍见 `runtime.open-record-sequence` / `runtime.dismiss-feedback-sequence`。
 
+**读图小词：** **Outcome** = 本轮找东西会话的结果标签（非神谕）；**settled** = 计入履约结算写库；**pair** = 线索与条目的配对记录（可撤脏）；通道代号 B/D/C* 见产品 §7.2，图中保留代号并对中文动作。
+
 语义三分（禁止混用）：
 
-| 概念                | 信号                                                                         | 是否等于「找回成功」                             |
+| 概念                | 信号                                                                         | 是否等于「找东西履约正例」                       |
 | ------------------- | ---------------------------------------------------------------------------- | ------------------------------------------------ |
 | **Open**            | `RECORD_MEMORY_OPEN` + 会话 `opens[]`                                        | **否**（explore）                                |
 | **Feedback / 标签** | `resolveRecallOutcome` → `target` / `none_in_results` / `absent` / `unknown` | 标签本身；strong/medium 才可进 settled 策略      |
@@ -611,6 +626,8 @@ Omnibox 是“单次命中”入口：输入变化只生成原生建议，不做
 - **降级（listener）：** 空 clue → `suggest([])`；Recall 异常 catch → `suggest([])`；无 Memory 行仍可出无命中 CTA 行
 - **backend 分支折叠：** 零锚点 → `no_match`；约束邻域 early-return 亦走 `finalizeKeywordResult`（可不带 `behaviorProfile:omnibox`）；主锚点带 `skipOutcomePairs` + `behaviorProfile:omnibox`；**永不** `fuseHybrid`
 
+**读图小词：** **clue** = 地址栏 `yi` 后用户输入；**离线 lexical** = 本路径强制规则解析 + 本机字段 Filter（无 LLM / 无向量融合），**仍**读本机 IndexedDB；**`entry: omnibox`** = 分轨开关（漏传则误走完整 Hybrid）；**换赛道 CTA** = 预填同 clue 开 Side Panel 跑完整 Hybrid（**≠** 鉴权交接 handoff）；**`skipOutcomePairs`** = 不写 Outcome 配对；与 Side Panel 成功率**分计**。
+
 <!-- diagram: id=runtime.omnibox-offline-recall kind=sequence status=implemented -->
 
 ```mermaid
@@ -635,7 +652,7 @@ sequenceDiagram
   HB-->>OL: RecallResult
   OL->>OM: suggest ≤6（Memory≤5 + 可选末行 CTA）
 
-  alt 点换赛道 CTA（handoff content）
+  alt 点换赛道 CTA（预填 clue · 非鉴权交接）
     U->>OM: onInputEntered
     OM->>OL: tryParseOmniboxHandoffClue
     Note over OL: 先 openRecallSidePanel（保手势）<br/>再 writeRecallPrefill

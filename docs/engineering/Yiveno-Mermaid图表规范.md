@@ -1,13 +1,14 @@
 ---
 created: 2026-10-30T23:35:00+08:00
-updated: 2026-10-31T01:27:07+08:00
+updated: 2026-10-31T20:35:00+08:00
 author: agent:cursor
-scope: Mermaid + Markdown + Git 业务逻辑可视化；图表类型适用场景与 Agent 同步纪律
+scope: Mermaid + Markdown + Git 业务逻辑可视化；图表类型适用场景与 Agent 同步纪律；图面用词标准
 status: active
 upstream:
   - docs/diagrams/README.md
   - docs/diagrams/registry.json
   - docs/product/Yiveno-术语表.md
+  - .cursor/rules/dev-chinese-plain.mdc
 downstream:
   - scripts/sync-diagrams.mjs
   - scripts/diagram-change-impact.mjs
@@ -19,7 +20,8 @@ downstream:
 # Yiveno Mermaid 图表规范
 
 > **单源：** Git 内 Markdown + Mermaid。不引入外部画布平台。  
-> **清单与命令：** [`docs/diagrams/`](../diagrams/README.md)
+> **清单与命令：** [`docs/diagrams/`](../diagrams/README.md)  
+> **用词：** 与开发者面规则一致——**专业准确优先，其次降低理解成本、避免歧义**（`.cursor/rules/dev-chinese-plain.mdc`）。
 
 ## 1. 权威优先级
 
@@ -52,6 +54,14 @@ downstream:
 4. **中文说明 OK**（开发者面）；产品术语遵循术语表（clue / Recall / 附注，禁止用户面 Search）。
 5. **规划内容**必须 `status=planned` 或文内标明「未接线」，不得画成现行路径。
 6. 不确定 → 在宿主 MD 写「不确定：…」，**不要**编节点补全。
+
+### 3.1 图面用词（专业 · 低歧义）
+
+1. **节点 / 边标签**优先写清行为（「探测扩展是否已登录」），不要只贴未释义的消息字面量（裸 `STATUS_PROBE`）。
+2. **业内通用词**（session、OTP、Bearer、409、幂等）可直接用；**本仓专有词**须白话 + 首次/名词表括注代码名（铸造 mint、交接 handoff、作废票等）。
+3. **鉴权 / 同步 / Outcome** 等 dense 域：宿主在图前放**名词表**或凭证/通道分工表。
+4. 改标签**不改语义**；同一概念全图一词一义（鉴权 handoff ≠ Omnibox 换赛道交接）。
+5. 需要对代码时：入口对照表或括号保留 `message type` / 路径，**主路径仍可读**。
 
 ## 4. 与代码 / 文档关联
 
@@ -102,5 +112,6 @@ Git（或 `--paths`）变更 → 对照 registry `codePaths` / `doc` / `docPaths
 
 | 日期       | 说明                                         |
 | ---------- | -------------------------------------------- |
+| 2026-10-31 | §3.1 图面用词；对齐 `dev-chinese-plain`      |
 | 2026-10-31 | §6.1 变更感知 `docs:diagram-impact`          |
 | 2026-10-30 | 初版：五类图场景、锚点、同步纪律、无外部画布 |

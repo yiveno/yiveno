@@ -1,7 +1,8 @@
 # 业务逻辑图表（Mermaid · Git 单源）
 
 > **权威格式：** Mermaid 嵌在 Markdown 内。**不**引入 Figma / FigJam / draw.io / Excalidraw / tldraw。  
-> **规范正文：** [`../engineering/Yiveno-Mermaid图表规范.md`](../engineering/Yiveno-Mermaid图表规范.md)  
+> **规范正文：** [`../engineering/Yiveno-Mermaid图表规范.md`](../engineering/Yiveno-Mermaid图表规范.md)（含图面用词 §3.1）  
+> **用词标准：** 专业准确 + 低歧义；本仓专有词白话释义（`.cursor/rules/dev-chinese-plain.mdc`）  
 > **清单：** [`registry.json`](./registry.json)  
 > **同步：** `bun run docs:sync-diagrams`
 

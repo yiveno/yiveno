@@ -49,11 +49,13 @@
 ## 门禁与主链（图表）
 
 > **范围：** Pro + 登录 + 开关 → 仅 `text_excerpt` 上云/拉回；开同步对齐；15 分钟增量；replace 缩量 409。  
-> **不含：** Dodo webhook→Pro 投影细节（盘点 P2-1）；书签 Chrome→IDB 灌库；Auth mint/handoff；删账号 / 整库导出全时序。  
+> **不含：** Dodo webhook→Pro 投影细节（盘点 P2-1）；书签 Chrome→IDB 灌库；扩展会话铸造并交接（见 AUTH_GUIDE）；删账号 / 整库导出全时序。  
 > **权威行为：** 产品文档 §账户与同步 / 隐私 Normative；本 ADR 钉类型范围。  
 > **报告：** [`docs/diagrams/reports/2026-10-Pro-Cloud-Sync图表补齐.md`](../../diagrams/reports/2026-10-Pro-Cloud-Sync图表补齐.md)
 
 **三门禁（Normative · 代码双端）：** 登录（`AccountBinding` + Bearer）· 有效 Pro（扩展本机 snapshot 开同步前拦；Worker `denyUnlessActivePro` 拦 pull/push/replace/restore）· `syncPrefs.enabled`（`chrome.storage.local` · 默认 false）。`GET /status` 与隐私删云 `delete-all` **仅需登录**（可不 Pro）。
+
+**读图小词：** **同步面** = 仅可上云的 `text_excerpt`（书签不上云）；**开同步对齐** = 首次打开开关时本机↔云摘录并集/盖写；**增量** = 15 分钟闹钟 pull+push（非整侧 replace）；**LWW** = 同 id 取较新 `updatedAt`；**缩量 409** = replace 条数变少且未显式允许时拒绝（防误盖）；**关同步 ≠ 删云**。
 
 <!-- diagram: id=sync.excerpt-cloud-pro-gate kind=flowchart status=implemented -->
 

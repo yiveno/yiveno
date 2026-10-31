@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Yiveno 项目规则
 
-用中文回复。精简、工程化。沟通风格与正规词见 `dev-chinese-plain.mdc`。
+用中文回复。精简、工程化。沟通与**工程文档/图表用词**见 `dev-chinese-plain.mdc`（专业准确优先，降低理解成本、避免歧义；本仓专有词须白话+释义）。
 
 **仓库归属（勿误判）：** GitHub **Org** `yiveno` · 主仓 [`yiveno/yiveno`](https://github.com/yiveno/yiveno)；对应品牌 [`yiveno.com`](https://yiveno.com)，**不是**维护者个人名下的实验仓。
 
