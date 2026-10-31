@@ -13,7 +13,7 @@ const privacyEmail = 'privacy@yiveno.com'
 
 <MainLayout
   title="Support · Yiveno"
-  description="Get help with Yiveno — bugs, account, and waitlist questions by email. We reply at support@yiveno.com."
+  description="Get help with Yiveno — bugs, account, billing, and install questions by email. We reply at support@yiveno.com."
 >
   <article class="page">
     <header>
@@ -21,7 +21,8 @@ const privacyEmail = 'privacy@yiveno.com'
       <p class="page__lede">
         Need a reply? Email us. For product ideas that don’t need a reply, use
         <a href={`mailto:${feedbackEmail}`}>{feedbackEmail}</a>
-        or the optional form if you remove the extension.
+        or the optional form if you remove the extension. Short product answers:{' '}
+        <a href="/faq">FAQ</a>.
       </p>
     </header>
 
@@ -32,17 +33,18 @@ const privacyEmail = 'privacy@yiveno.com'
         <a href={`mailto:${supportEmail}?subject=Yiveno%20support`}>{supportEmail}</a>
       </p>
       <p class="page__hint">
-        Include what you tried, your Chrome version, and the extension version if you can — one
-        clear note helps us reply once.
+        Include what you tried, your browser (Edge or Chrome) and version, and the extension version
+        if you can — one clear note helps us reply once.
       </p>
     </section>
 
     <section class="page__section">
-      <h2>Waitlist</h2>
+      <h2>Install availability</h2>
       <p>
-        Joined the list on the homepage and need to change or remove your email? Write
-        <a href={`mailto:${supportEmail}?subject=Yiveno%20waitlist`}>{supportEmail}</a>
-        with the subject "Waitlist".
+        Yiveno is not listed on the public Chrome Web Store or Microsoft Edge Add-ons yet. If you
+        want a notice when a public listing is available, email
+        <a href={`mailto:${supportEmail}?subject=Yiveno%20install%20notify`}>{supportEmail}</a>
+        with the subject "Install notify".
       </p>
     </section>
 

@@ -9,6 +9,7 @@ import siteCriticalCssRaw from '../styles/site-critical.css?raw'
 import siteDeferredHref from '../styles/site-deferred.css?url'
 import homeCriticalCssRaw from '../styles/home-critical.css?raw'
 import { minifyCss } from '../lib/minify-css'
+import { CANONICAL_ORIGIN, buildHomeJsonLdGraph } from '../seo/json-ld'
 
 interface Props {
   /** 页面标题（写入 document title） */
@@ -19,20 +20,24 @@ interface Props {
   chrome?: 'default' | 'home'
   /** 账号/结账等非公开页：禁止索引 */
   noindex?: boolean
-  /** 首页等：输出 SoftwareApplication JSON-LD（GEO） */
+  /** 首页：输出 Organization + WebSite + SoftwareApplication JSON-LD（GEO） */
   jsonLd?: boolean
+  /** 其它页自定义 JSON-LD（如 FAQPage）；与 jsonLd 可同时输出 */
+  structuredData?: Record<string, unknown>
 }
 
 const {
   title = 'Yiveno',
-  description = 'Find the stuff you saved. Say what you remember — Yiveno brings back the closest fits.',
+  description = 'Find what you saved from what you remember. Closest fits — you pick. Chromium extension for Edge and Chrome.',
   chrome = 'default',
   noindex = false,
-  jsonLd = false
+  jsonLd = false,
+  structuredData
 } = Astro.props
 
+/** 首页深色 Hero 上门面；变量名历史遗留，≠ 预约名单产品 */
 const waitlistNav = chrome === 'home'
-const canonicalOrigin = 'https://yiveno.com'
+const canonicalOrigin = CANONICAL_ORIGIN
 const pathname = Astro.url.pathname.replace(/\/$/, '') || '/'
 const canonicalUrl = `${canonicalOrigin}${pathname === '/' ? '/' : pathname}`
 const ogImage = `${canonicalOrigin}/og-image.jpg`
@@ -42,24 +47,7 @@ const fontsCriticalCss = minifyCss(fontsCriticalCssRaw)
 const siteCriticalCss = minifyCss(`${brandCssRaw}\n${siteCriticalCssRaw}`)
 const homeCriticalCss = chrome === 'home' ? minifyCss(homeCriticalCssRaw) : ''
 
-/** GEO：可引用的产品实体定义（与产品文档 §0.1 对外心智对齐；预约阶段无在售 Offer） */
-const softwareJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'SoftwareApplication',
-  name: 'Yiveno',
-  applicationCategory: 'BrowserApplication',
-  operatingSystem: 'Chrome',
-  url: canonicalOrigin,
-  description:
-    'Find what you saved from what you remember. Closest matches from your captures — you pick. Chrome extension in active development.',
-  offers: {
-    '@type': 'Offer',
-    availability: 'https://schema.org/PreOrder',
-    price: '0',
-    priceCurrency: 'EUR',
-    description: 'Chrome extension in active development; Free/Pro details at launch.'
-  }
-}
+const homeJsonLd = jsonLd ? buildHomeJsonLdGraph() : null
 ---
 
 <!doctype html>
@@ -102,7 +90,12 @@ const softwareJsonLd = {
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImage} />
-    {jsonLd && <script type="application/ld+json" set:html={JSON.stringify(softwareJsonLd)} />}
+    {homeJsonLd && (
+      <script is:inline type="application/ld+json" set:html={JSON.stringify(homeJsonLd)} />
+    )}
+    {structuredData && (
+      <script is:inline type="application/ld+json" set:html={JSON.stringify(structuredData)} />
+    )}
     <link
       rel="preload"
       href="/fonts/fraunces-normal.woff2"
@@ -163,6 +156,16 @@ const softwareJsonLd = {
       <div class="site-footer__end">
         <ul class="site-footer__links">
           <li>
+            <a href="/pricing" data-yiveno-i18n="footer.pricing">
+              Pricing
+            </a>
+          </li>
+          <li>
+            <a href="/faq" data-yiveno-i18n="footer.faq">
+              FAQ
+            </a>
+          </li>
+          <li>
             <a href="/support" data-yiveno-i18n="footer.support">
               Support
             </a>
@@ -185,6 +188,8 @@ const softwareJsonLd = {
       ;(function () {
         var dict = {
           en: {
+            'footer.pricing': 'Pricing',
+            'footer.faq': 'FAQ',
             'footer.support': 'Support',
             'footer.privacy': 'Privacy',
             'footer.terms': 'Terms',
@@ -193,6 +198,8 @@ const softwareJsonLd = {
             'nav.aria_primary': 'Primary'
           },
           zh_CN: {
+            'footer.pricing': '定价',
+            'footer.faq': '常见问题',
             'footer.support': '支持',
             'footer.privacy': '隐私',
             'footer.terms': '条款',

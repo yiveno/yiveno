@@ -20,7 +20,7 @@ const { waitlist = false } = Astro.props
     <span class="site-nav__name">Yiveno</span>
   </a>
   <div class="site-nav__spacer"></div>
-  {/* Pricing：上线前仍隐藏；Support / 语言切换在页脚。 */}
+  {/* Pricing：顶栏仍隐藏；页脚已链 /pricing 供爬虫与用户发现。Support / 语言在页脚。 */}
   <AuthNav client:idle />
   <UiBridgeHost client:idle />
 </nav>

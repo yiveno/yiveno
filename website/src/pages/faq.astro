@@ -1,0 +1,32 @@
+---
+/**
+ * FAQ：答案优先短文，供人读 + GEO/FAQPage JSON-LD。
+ * 条目权威在 `seo/json-ld.ts` 的 FAQ_ENTRIES（正文与 schema 同源）。
+ */
+import MainLayout from '../layouts/MainLayout.astro'
+import { FAQ_ENTRIES, buildFaqPageJsonLd } from '../seo/json-ld'
+import '../styles/pages.css'
+---
+
+<MainLayout
+  title="FAQ · Yiveno"
+  description="What Yiveno is and isn't, how Recall works, privacy defaults, Free vs Pro, and store listing status."
+  structuredData={buildFaqPageJsonLd(FAQ_ENTRIES)}
+>
+  <article class="page">
+    <header>
+      <h1 class="page__title">FAQ</h1>
+      <p class="page__lede">
+        Short answers about finding what you saved. For bugs or account help, see{' '}
+        <a href="/support">Support</a>.
+      </p>
+    </header>
+
+    {FAQ_ENTRIES.map(entry => (
+      <section class="page__section">
+        <h2>{entry.question}</h2>
+        <p>{entry.answer}</p>
+      </section>
+    ))}
+  </article>
+</MainLayout>

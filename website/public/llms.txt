@@ -1,0 +1,30 @@
+# Yiveno
+
+> Find what you saved from what you remember. Closest fits — you pick.
+
+Yiveno is a Chromium browser extension (Microsoft Edge and Google Chrome) for personal capture and recall. It is not a bookmark manager, notes app, chatbot, or AI organizer as its primary promise. It does not guarantee one correct link; ranked neighborhoods are suggestions.
+
+## Product facts
+
+- Positioning: the one that finds things / Find what you saved
+- Capture: save pages or passages with optional personal notes; no folders required
+- Recall: type a clue in everyday language; get closest fits in the Side Panel; you decide
+- Privacy default: library stays on-device; sign-in does not upload by itself; excerpt cloud sync is opt-in
+- We do not sell your collection or use saved content to train public models
+- Platforms: Chromium — Edge and Chrome (mainland desktop prefers Edge Add-ons when listed)
+- Store status: not yet listed on the public Chrome Web Store or Microsoft Edge Add-ons; no ZIP sideload as the main install path
+- Pricing: Free $0 (same on-device find quality); Pro display anchors $7.99/month or $59.99/year USD (excerpt sync + higher cloud clue help). Not a claim of a live public paid customer base
+
+## Canonical pages
+
+- Home: https://yiveno.com/
+- FAQ: https://yiveno.com/faq
+- Pricing: https://yiveno.com/pricing
+- Support: https://yiveno.com/support
+- Privacy: https://yiveno.com/privacy
+- Terms: https://yiveno.com/terms
+- GitHub org: https://github.com/yiveno
+
+## Optional
+
+- Full FAQ answers: https://yiveno.com/faq

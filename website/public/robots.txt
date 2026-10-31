@@ -1,14 +1,13 @@
-# Yiveno marketing site — waitlist / pre-launch
+# Yiveno marketing site — public product pages indexable for search / AI citation
 User-agent: *
 Allow: /
 
-# Auth / billing / pre-launch commerce — not for discovery
+# Auth / account / checkout — not for discovery
 Disallow: /login
 Disallow: /logout
 Disallow: /account
 Disallow: /checkout
 Disallow: /welcome
-Disallow: /pricing
 Disallow: /auth/
 
 Sitemap: https://yiveno.com/sitemap.xml

@@ -6,13 +6,13 @@
 import MainLayout from '../layouts/MainLayout.astro'
 import '../styles/pages.css'
 
-const effectiveDate = '2026-10-26'
+const effectiveDate = '2026-10-31'
 const contactEmail = 'privacy@yiveno.com'
 ---
 
 <MainLayout
   title="Privacy Policy · Yiveno"
-  description="How Yiveno handles personal data for the Chrome extension and website: local-first memory, optional cloud sync, account, and AI."
+  description="How Yiveno handles personal data for the Chromium extension (Edge and Chrome) and website: local-first memory, optional cloud sync, account, and AI."
 >
   <article class="page">
     <header>
@@ -76,11 +76,12 @@ const contactEmail = 'privacy@yiveno.com'
         our servers to a model provider. The model does not directly create, change, or delete what
         you saved. We do not default to sending your entire library to a model.
       </p>
-      <h3>2.5 Waitlist (optional)</h3>
+      <h3>2.5 Install notify (optional)</h3>
       <p>
-        If you leave an email on yiveno.com to be notified when the extension is ready to install,
-        we store that email so we can send that notice. We do not add waitlist addresses to a
-        marketing list.
+        The public store listings are not live yet. If you email support@yiveno.com asking to be
+        notified when a public install listing is available, we may store that email solely to send
+        that notice. We do not add those addresses to a marketing list. There is no homepage signup
+        form for this.
       </p>
       <h3>2.6 Extension uninstall feedback (optional)</h3>
       <p>
@@ -132,7 +133,9 @@ const contactEmail = 'privacy@yiveno.com'
           Process subscriptions or payments if you purchase paid plans (billing records may be
           retained as required by law)
         </li>
-        <li>Email you if you joined the install waitlist, when a spot is available</li>
+        <li>
+          Email you if you asked support to notify you when a public store listing is available
+        </li>
         <li>
           Review optional uninstall feedback (closed-set reason and short note) if you choose to
           send it
@@ -143,9 +146,8 @@ const contactEmail = 'privacy@yiveno.com'
       <p>Depending on features you use, data may be processed by:</p>
       <ul>
         <li>
-          <strong>Supabase</strong> — authentication, (when sync is on) cloud Memory storage, and
-          waitlist emails if you join; production primary database region <strong>us-east-2</strong>{' '}
-          (East US / Ohio)
+          <strong>Supabase</strong> — authentication and (when sync is on) cloud Memory storage;
+          production primary database region <strong>us-east-2</strong> (East US / Ohio)
         </li>
         <li>
           <strong>Cloudflare</strong> — Workers API, hosting, KV for optional uninstall feedback,
@@ -185,8 +187,9 @@ const contactEmail = 'privacy@yiveno.com'
           subscription/payment history is removed after 180 days.
         </li>
         <li>
-          <strong>Waitlist emails</strong> are kept until we have notified you, you ask us to remove
-          the address, or we no longer need the list.
+          <strong>Install-notify emails</strong> (if you asked support for a listing notice) are
+          kept until we have notified you, you ask us to remove the address, or we no longer need
+          the list.
         </li>
         <li>
           <strong>Uninstall feedback</strong> (reason and optional note) is kept in short-lived
