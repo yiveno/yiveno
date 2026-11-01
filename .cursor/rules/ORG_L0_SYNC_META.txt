@@ -1,0 +1,4 @@
+source_repo=yiveno/agent-rules
+source_sha=a757b7fb79cc7984c41ff599c74d9dc110f7e17a
+synced_at_utc=2026-10-31T15:29:03Z
+layout=flat

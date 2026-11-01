@@ -5,35 +5,22 @@ alwaysApply: true
 
 # Yiveno 项目规则
 
-用中文回复。精简、工程化。沟通与**工程文档/图表用词**见 `dev-chinese-plain.mdc`（专业准确优先，降低理解成本、避免歧义；本仓专有词须白话+释义）。
+用中文回复。精简、工程化。沟通用词：Org L0 `dev-chinese-plain-core.mdc` + 本仓附录 `dev-chinese-plain.mdc`。
+
+**Org L0（自 [`yiveno/agent-rules`](https://github.com/yiveno/agent-rules) sync，约定只读）：** `agent-core` · `git-workdir-safety` · `commit-message-core` · `dev-chinese-plain-core` · `session-discipline` · `docs-sync-iron`（见 `ORG_L0_SYNC.md`）。  
+**本文件 = 本仓 L2 单一权威**（产品/架构/MCP/栈）；与产品文档冲突时以产品文档为准。
 
 **仓库归属（勿误判）：** GitHub **Org** `yiveno` · 主仓 [`yiveno/yiveno`](https://github.com/yiveno/yiveno)；对应品牌 [`yiveno.com`](https://yiveno.com)，**不是**维护者个人名下的实验仓。
 
 **权威优先级（冲突时）：**
-**Agent 开机层** `.cursor/rules/session-boot.mdc`（alwaysApply · 当下+冻结）> **术语定义** `docs/product/Yiveno-术语表.md`（Glossary · 唯一权威）> **当下详版** `docs/product/CURRENT.md`（**只改本文** → `bun run sync:ide-boot`）> `docs/product/Yiveno-产品文档-v4.0.md`（Normative §0–§7 · 行为/契约）> **架构决策** `docs/architecture/decisions/` > **视觉/品牌** `docs/design/Yiveno-设计标准-v1.md`（≈ `docs/design/DESIGN.md`）> **本文件**（Yiveno AI 协作脚手架的**单一权威**；`AGENTS.md` 为跨 IDE 薄指针）> 其它 steering。  
+**Agent 开机层** `.cursor/rules/session-boot.mdc`（alwaysApply · 当下+冻结）> **术语定义** `docs/product/Yiveno-术语表.md`（Glossary · 唯一权威）> **当下详版** `docs/product/CURRENT.md`（**只改本文** → `bun run sync:ide-boot`）> `docs/product/Yiveno-产品文档-v4.0.md`（Normative §0–§7 · 行为/契约）> **架构决策** `docs/architecture/decisions/` > **视觉/品牌** `docs/design/Yiveno-设计标准-v1.md`（≈ `docs/design/DESIGN.md`）> **本文件**（Yiveno AI 协作脚手架的**本仓权威**；`AGENTS.md` 为跨 IDE 薄指针）> 其它 steering。  
 改术语/概念叫法 → **先改术语表**再同步产品文档、设计标准、`.cursor/rules/terminology.mdc`、代码与 i18n。  
 改架构/消息协议/UI 硬约束 → **先改产品文档再改代码与本文件**；不可逆决策 → **补 ADR** 并更新 `CURRENT.md` + `bun run sync:ide-boot`；改品牌色/字体/物料气质 → **先改设计标准再改官网 CSS / MD token / logo**。附录 A 非实现范围。
 
-### 文档 ↔ 代码同步（铁律）
+### 文档 ↔ 代码同步（本仓路径表）
 
-**任何代码改动，但凡与现有文档有脱节或差异，必须在同一次交付内更新对应文档**，始终让文档与代码可对照、可审计。报完成 = 代码 + 相关文档已对齐。
-
-#### 方案已定 → 改码即同步（硬规则 · 不过问）
-
-**方案/契约一经确定并开始改代码：** 权威文档同步是交付的**必选步骤**，与单测同级——**禁止**事后再问「要不要改文档 / 要不要补齐漂移」。发现同主题旧表述残留（能力表、§5 验收、变更日志、手测、ADR 后果条）→ **同批改干净**，不得只改 ADR/入口表而留下 §1「无命中回车」类旧话。
-
-| 时机 | 动作 |
-| --- | --- |
-| 改行为前 | 对照相关 Normative / ADR / 手测；计划同批触及的文档路径 |
-| 改码中 | 行为一落地就改文档（或同工作区未提交批次内紧接改完） |
-| 报完成前 | 自检：本次改动面相关段落是否仍写旧键/旧入口/旧接力/旧配额；有 → 先改文档再报 |
-
-```
-❌ 禁止：方案已落地代码后，把文档同步当成「可选 / 需用户确认」再问
-❌ 禁止：只改 ADR 或只改入口表一行，同主题其它 Normative 段仍写旧行为（半同步 = 漂移）
-❌ 禁止：用「用户没点名改文档」「先报完成再补」推迟同步
-✅ 默认：行为变更 → 不问、同批改权威文档；残留旧句一并扫掉
-```
+**原则（不过问、半同步=漂移、禁发明未实现能力）：** 见 Org L0 `docs-sync-iron.mdc`。  
+下表仅列**本仓**改动面 → 权威文档：
 
 | 改动面 | 必须同步的文档 |
 | --- | --- |
@@ -47,17 +34,9 @@ alwaysApply: true
 | 新增 Background `message type` | `docs/engineering/background-message-types.registry` + `core/messaging/*` + handler +（核心表）产品文档 §4 |
 | manifest 权限 / `host_permissions` / CWS 上架披露 | 根目录 `CHROMEWEBSTORE.md` |
 | AI 行为 / 架构硬规则 | 本文件 + `AGENTS.md`（与产品文档冲突时仍以产品文档为准） |
+| Org 共用 L0 条文 | [`yiveno/agent-rules`](https://github.com/yiveno/agent-rules) → 再 `sync-to-repo.sh` 回灌本仓 |
 
-```
-❌ 禁止：只改代码、文档仍写旧行为 / 旧键 / 旧配额 / 未上线状态
-❌ 禁止：用「以后再补文档」「对话里说过了」代替落盘
-❌ 禁止：为过文档而发明未实现能力，或文档声称已上线但代码未接线
-✅ 允许：小 bugfix 若行为与文档一致 → 可不改文档
-✅ 允许：纯重构 / 注释 / 测试且对外契约不变 → 可不改文档
-✅ 必选：行为、契约、键定义、门禁、配额、消息 type、分层边界任一变化 → 同批改文档（不过问）
-```
-
-与下方「禁止主动写总结文档 / CHANGELOG / Spec」不冲突：**禁止**无需求地新开总结类 Spec；**必须**维护既有 Normative / 工程权威文档与代码同步。
+与「禁止主动写总结文档 / CHANGELOG / Spec」不冲突：**禁止**无需求地新开总结类 Spec；**必须**维护既有 Normative / 工程权威文档与代码同步。
 
 ---
 
@@ -115,9 +94,9 @@ alwaysApply: true
 ❌ 禁止：任务完成后主动问「要不要 commit / 要不要 push」（维护者会主动要求；报完成只陈述结果即可）
 ❌ 禁止：用 git checkout/restore/reset --hard 静默丢弃工作区 WIP（详见 git-workdir-safety.mdc）
 ❌ 禁止：主动写总结文档、CHANGELOG、Spec（除非用户明确要求）
-❌ 禁止：代码与权威文档脱节仍报完成（见上「文档 ↔ 代码同步」铁律）
-❌ 禁止：方案已定并改码后，把文档同步当成可选项再询问用户（见上「方案已定 → 改码即同步」）
-❌ 禁止：已排序且互不冲突的多项方案/清理项，再逼用户「选 A 还是 B」（见下「按优先级依次执行」）
+❌ 禁止：代码与权威文档脱节仍报完成（`docs-sync-iron.mdc` + 上表）
+❌ 禁止：方案已定并改码后，把文档同步当成可选项再询问用户
+❌ 禁止：已排序且互不冲突的多项方案/清理项，再逼用户「选 A 还是 B」（`session-discipline.mdc`）
 ❌ 禁止：用硬编码别名/灰名单冒充全量用户通解（见上「全量用户能力」）
 ❌ 禁止：把"面向持久查阅的交付物"写到 `/tmp`（Cursor 会话级沙箱跨会话清空 → 产物随即丢失；2026-09-17 Reality Map 丢失事件教训）
 ❌ 禁止：审计/报告/设计稿的标题仅用英文；面向开发者的报告/审计文档的**文件名与标题**均须以中文描述（命名规范：`YYYY-MM-<主题>.md` 或 `Phase<n>-<主题>.md`；中文文件名需在 Markdown frontmatter 顶部保留标题行便于 IDE 排序；不要为了路径英文而失去可读性）
@@ -125,7 +104,7 @@ alwaysApply: true
 ❌ 禁止：编造 `created` / `updated` 时间戳；`created` = agent **第一次落盘该文件** 的真实时间（落盘时立即记下，不可事后回填或推测）；`updated` = 每次内容修改的真实时间（修改时立即刷新）；agent **不得**凭"我大约几点写的"等记忆/猜测写时间，必须以文件系统时间或当时记录的笔记为准
 ✅ bug / 小需求：直接改代码，不写新 Spec；若行为相对文档有差异 → **同批改权威文档**
 ✅ 允许：改代码 + 对话内简述改动（文档同步仍必选）
-✅ 用户要求 commit 时：message **必须中文**（可用 Conventional 前缀如 `feat:` / `fix:`，说明正文用中文）
+✅ 用户要求 commit 时：message **必须中文**（`commit-message-core.mdc` + 本仓 `commit-message.mdc`）
 ✅ 代码注释 / JSDoc：**必须中文**（标识符、API 专有名词可保留英文）
 ✅ 新增业务逻辑：**必须**有清晰 log + 中文注释（见 docs/engineering/业务日志与注释约定.md）
 ✅ 扩展用户可感改动：相关单测通过后 **必须 MCP 真机实测**（见下「MCP 真机实测」），再报完成
@@ -151,53 +130,19 @@ Agent 指令（原文）：
 
 改 manifest 权限 → 同批更新权限理由表与隐私披露；商店用户向文案仅 en。
 
-### 多会话纪律（防决策漂移）
+### 多会话 / 必选可选 / 优先级（本仓加项）
 
-- **开机已注入：** `.cursor/rules/session-boot.mdc`（当下 + 冻结 + 深读索引）；详版 `docs/product/CURRENT.md`。
-- **用户首条：** 应用 `docs/product/AGENT-TASK-BRIEF.template.md` 填 scope；**以 Brief 的 In/Out 为准**。
-- **长会话收尾：** 当前会话发模板内「会话收尾 · Handoff」→ 复制输出的 Handoff 块 → **新会话首条粘贴**；**交接不绑定** commit/push；WIP 用 `git status` 交接。
-- **默认小 scope：** 单次任务聚焦用户声明范围；未要求不得「顺手」跨模块大改或广泛重构。
-- **换焦点：** 只改 `docs/product/CURRENT.md` → `bun run sync:ide-boot`；不可逆分叉写 ADR。
-- **报完成 =** 代码 + 相关权威文档 +（Recall/Capture 用户可感）must eval 或 §5 步骤 + MCP 结论。
-- **合入 PR：** 使用 `.github/pull_request_template.md` 勾选 §1.1 验收归属。
-- **Hooks：** `.cursor/hooks.json` 拦截破坏性 git；`sessionStart` 尽力注入 CURRENT（仍以 `@CURRENT.md` 为准）。
+**通用纪律：** Org L0 `session-discipline.mdc`（Brief/Handoff、必选 vs 可选、按优先级执行、收益成本、禁问 commit）。
 
-### 目标任务：必选 vs 可选（硬规则）
+本仓加项：
 
-允许给任务排优先级，但必须先分清相对**当前目标**哪些是必选、哪些是可选。
-
-| 类型 | 判定 | 执行 |
-| --- | --- | --- |
-| **必选** | 缺了会导致目标效果变差、链路断裂或根本不可用（含文档 Normative 落地链上的 P0/P1/… 质检关） | **不问用户意见**，按序逐个做完；优先级只影响顺序，不决定可否跳过 |
-| **可选** | 增强项、旁路体验、可延后不影响主链路成立 | 先按下方「收益 / 成本」默认决策；**持平才询问** |
-
-一句话：**目标的必选任务不用问意见、逐个完成；可选任务按收益默认做或持平再问。**  
-禁止把必选当成「低优先级可砍」；禁止在必选未完成时用可选工作充数报完成。
-
-#### 按优先级依次执行（硬规则 · 维护者明示 2026-10-10）
-
-盘点 / 清理 / 工程优化等出现**多项互不冲突**的落地项时：
-
-```
-❌ 禁止：列完优先级后再问「先做 A 还是 B」「选哪一个方向」
-✅ 默认：按已排优先级 **依次执行落地**，直到列表做完或用户喊停
-✅ 允许询问：范围截断——「按优先级做到哪一步 / 做到第几项」（不是二选一）
-✅ 仅当项与项 **真正冲突**（互斥方案、不可逆产品分叉、高风险取舍）时才停下来问选哪条
-```
-
-#### 收益 / 成本默认决策（硬规则）
-
-对**可选或旁路项**（如把已钉死的真机失败匿名化进 `recall-eval` must、补小回归评测用例、同批文档对齐以外的加固）：
-
-| 判定 | 执行 |
-| --- | --- |
-| **收益明显大于成本** | **默认做、不问**（少而硬的 must、防回归评测用例、已修坑的匿名期望命中等） |
-| **收益与成本基本持平** / 取舍有争议 | **停下来询问**用户意见后再做 |
-| **成本明显大于收益** | **不做**；必要时一句说明为何跳过 |
-
-**收益偏大的典型信号：** 防 CI 静默退步、合入口径已有 Normative、评测用例可匿名且不脆、改动面小。 
-**成本偏大 / 宜问的典型信号：** 期望命中易碎且排序仍在大改、会显著扩大 must 面、触及产品口径争议、灰名单风险。
-禁止把「整库探针搬进 must」当成默认收益项；must 宜少而硬。
+- **开机已注入：** `session-boot.mdc`；详版 `docs/product/CURRENT.md`。
+- **Brief 模板：** `docs/product/AGENT-TASK-BRIEF.template.md`（含双线程五问等本产品扩展）。
+- **换焦点：** 只改 `CURRENT.md` → `bun run sync:ide-boot`；不可逆分叉写 ADR。
+- **报完成 =** 代码 + 权威文档 +（Recall/Capture 用户可感）must eval 或 §5 步骤 + **MCP** 结论。
+- **合入 PR：** `.github/pull_request_template.md` 勾选 §1.1。
+- **Hooks：** `.cursor/hooks.json` 拦破坏性 git。
+- **可选收益例子（本仓）：** 少而硬的 `recall-eval` must、防回归评测；**勿**把整库探针搬进 must；触及灰名单/产品口径争议须问。
 
 ### 验证（与 AGENTS.md 一致）
 

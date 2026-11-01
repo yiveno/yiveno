@@ -1,9 +1,11 @@
 ---
-description: 禁止静默丢弃工作区改动；实验还原不得用 git restore/checkout
+description: 禁止静默丢弃工作区改动；实验还原不得用 git restore/checkout（Yiveno Org L0）
 alwaysApply: true
 ---
 
 # Git 工作区安全（硬规则）
+
+> **来源：** 权威：本仓 `rules/`（由 yiveno/yiveno 提炼迁入）；栈无关。
 
 ## 禁止（除非用户明确要求丢弃改动）
 
@@ -18,9 +20,9 @@ alwaysApply: true
 
 ```bash
 # ✅ 先备份再改；还原用备份，不用 git
-cp path/to/file /tmp/yiveno-bak-file
+cp path/to/file /tmp/repo-bak-file
 # …实验…
-cp /tmp/yiveno-bak-file path/to/file
+cp /tmp/repo-bak-file path/to/file
 ```
 
 - 只追加测试字节时：精确删回（如去掉末尾一行），**禁止** `git checkout` 整文件。

@@ -42,4 +42,4 @@ Yiveno 维护者当前 AI 编程工具 = **Cursor**（唯一激活的 IDE 入口
 - **每会话首条**：复制 [`docs/product/AGENT-TASK-BRIEF.template.md`](./docs/product/AGENT-TASK-BRIEF.template.md) 填 scope。
 - **CI 门禁**：`bun run doc:check`（含 `sync:ide-boot --check`）。
 
-详细索引：[`.cursor/rules/README.md`](./.cursor/rules/README.md) · [`docs/README.md`](./docs/README.md) · [`CHROMEWEBSTORE.md`](./CHROMEWEBSTORE.md)（Chrome 上架）· [`EDGEADDONS.md`](./EDGEADDONS.md)（Edge Add-ons · ADR-020）· [`ADR-013`](./docs/architecture/decisions/ADR-013-ai-collaboration-scaffolding.md)（脚手架收敛决策）。
+详细索引：[`.cursor/rules/README.md`](./.cursor/rules/README.md) · [`docs/README.md`](./docs/README.md) · [`CHROMEWEBSTORE.md`](./CHROMEWEBSTORE.md)（Chrome 上架）· [`EDGEADDONS.md`](./EDGEADDONS.md)（Edge Add-ons · ADR-020）· [`ADR-013`](./docs/architecture/decisions/ADR-013-ai-collaboration-scaffolding.md)（脚手架收敛决策）· Org 共用规则 [`yiveno/agent-rules`](https://github.com/yiveno/agent-rules)（L0 sync；说明见 [`docs/engineering/org-agent-rules/`](./docs/engineering/org-agent-rules/README.md)）。

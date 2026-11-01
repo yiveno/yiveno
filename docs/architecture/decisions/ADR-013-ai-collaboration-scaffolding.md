@@ -100,7 +100,10 @@
 - `.cursor/rules/README.md` · `docs/README.md`（索引）
 - `scripts/sync-ide-boot.mjs`（同步门禁；当前仅同步 session-boot.mdc）
 - `docs/product/CURRENT.md`（当下焦点；`sync:ide-boot` 数据源）
+- [`yiveno/agent-rules`](https://github.com/yiveno/agent-rules)（Org L0 权威 + sync；2026-10-31）
+- `docs/engineering/org-agent-rules/`（分层说明与新仓接入）
 
 ## 变更记录
 
+- **2026-10-31** Org 多仓分发：创建 [`yiveno/agent-rules`](https://github.com/yiveno/agent-rules) 承载 L0 权威（`rules/`）与 `scripts/sync-to-repo.sh`（拷贝至各仓 `.cursor/rules/shared/`）。主产品仓运行时仍为本仓 `.cursor/rules/`（暂不双重注入）。入口说明：`docs/engineering/org-agent-rules/`。与 [`yiveno/yiveno-agent`](https://github.com/yiveno/yiveno-agent)（运行时基建）职责分离。
 - **2026-09-16** 初版：删除 `.claude/CLAUDE.md` 与 `AGENTS.original.md`（历史遗留）；`AGENTS.md` 收敛为薄指针；`agent-core.mdc` 去项目化；`project.mdc` 成为单一权威；删除死代码 `CLAUDE.md` / `GEMINI.md` / `.codex/.codex.md`。

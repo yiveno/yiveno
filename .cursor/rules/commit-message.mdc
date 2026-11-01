@@ -1,91 +1,23 @@
 ---
-description: AI Agent 生成 commit message 的强制规范（含文件级 diff 索引）。Cursor .cursor/rules alwaysApply 注入，AI 提交时**必须**遵循。
-globs:
+description: 本仓 commit message L2 附录（hook 路径、产品示例、术语 checklist）；格式核见 commit-message-core.mdc（Org L0 sync）
 alwaysApply: true
 ---
 
-# Commit Message 规范（AI 硬规则）
+# Commit Message · 本仓附录（L2）
 
-> 本规则由 `scripts/check-commit-message.mjs` + `.husky/commit-msg` 强制执行。
-> AI 在用户要求 commit / push 时**必须**按本规范生成 message；格式不合规会被 hook 拒绝。
+> **格式核（type / 文件索引 / 中文 subject / 禁擅自 commit）：** 见同目录 `commit-message-core.mdc`（自 [`yiveno/agent-rules`](https://github.com/yiveno/agent-rules) sync，勿在本仓改当权威）。  
+> 本文件只补 **本仓 hook、产品示例与术语校验**。
 
-## 必读上下文
+## 本仓强制执行
 
-- 用户审阅历史 commit 时，需要一份「按文件索引、分门别类」的归档。
-- 本规范解决：**漏改文件无记录 + 改动零散难追溯**。
-- AI 不可"擅自 commit / push"（见 `project.mdc` `AI 行为`）；本规则仅在用户明确要求时触发。
+本规范由 `scripts/check-commit-message.mjs` + `.husky/commit-msg` 强制执行。格式不合规会被 hook 拒绝。
 
-## 何时生效
+## 本仓示例（真实改动风格）
 
-| 用户请求 | AI 动作 |
-|---|---|
-| "commit 一下" / "提交" | 生成符合规范的 message，进入交互确认流程 |
-| "push" | 先 commit（按本规范），再 push |
-| "帮我写 commit message" | 直接输出规范 message（不调用 git） |
+> **`subject-case`：** 主题英文词全小写（`getting started` / `try it`）；`ADR-011` 形式允许。  
+> 反例：`Getting Started 书签首召` / `Omnibox 入口`。
 
-## 生成步骤（AI 必须按序执行）
-
-1. **跑 `git status`**：确认工作区在用户期望的状态（如有意外 WIP 先问）。
-2. **跑 `git diff --cached --stat`**：拿**已暂存**文件的路径清单与变更行数。
-3. **如未暂存**：跑 `git add -A`（或在 commit 前提示用户决定）。
-4. **跑 `git diff --cached`**：读详细 diff（按文件分段），理解每个文件改动语义。
-5. **判断主导 type**：
-   - `feat`: 新增用户可感能力、新 message type、新 ADR 落地、新接口
-   - `fix`: 修复已有行为 / 契约 / 门禁 / 类型错误
-   - `refactor`: 不改对外行为的内部重构（命名 / 抽象 / 拆分）
-   - `docs`: 文档 / ADR / 注释 / message 规范
-   - `test`: 新增 / 修改测试数据、eval must、TTE 案例
-   - `chore`: 工程工具 / 依赖 / 配置 / 清理（不改行为）
-   - `ci`: GitHub Actions / pre-commit / pre-push / doc:check 配置
-   - `perf`: 性能优化（Recall 排序、Hybrid、IndexedDB 索引）
-   - `style`: 仅格式（Prettier 自动改，不应手动提交）
-6. **按模板生成**（见下）。
-7. **自检**：每个 `git diff --cached` 路径都在 body 中出现；prefix 合法；首行 ≤ 50 字符且为中文。
-8. **不要调用 `git commit -m "..."` 直接提交**——应展示完整 message 让用户确认（除非用户明确说"直接提交"）。
-
-## 格式模板
-
-```text
-<type>(<scope>): <中文一句话（≤50 字符，无句号）>
-
-[<仓库相对路径 1>] <动作>: <一句话说明（可加要点）>
-- <细项 1>
-- <细项 2>
-
-[<仓库相对路径 2>] <动作>:
-- <细项 1>
-
-## 验证（可选但推荐）
-
-- <实际跑过的命令 + 结果，如 "cd extension && bun run test:run · 全过">
-- 或 "MCP 真机：sidepanel_retain ECS≥4"
-
-## 引用（可选）
-
-- ADR-XXX / issue#XXX / 简述产品文档 §X
-```
-
-### 关键约束
-
-- **首行**：`<type>(<scope>): 中文` · type ∈ {`feat` `fix` `refactor` `docs` `test` `chore` `ci` `perf`} · scope 可选（多模块主题时填）
-- **文件索引段**：仓库根相对路径（如 `extension/src/core/recall/...`），包方括号；每个被改文件一段
-- **动作**：中文动词短语（修改 / 新增 / 删除 / 移除 / 重命名 / 拆分 / 回滚 / 合并）
-- **说明**：一句话 + 可选要点列表（每条 ≤ 80 字符）
-- **保留路径完整**：连路径前缀（`extension/` `worker/` `docs/` 等），未来 `git log -p -- <path>` 可直接定位
-- **不总结性省略**：「修了一堆 bug」类描述禁止
-- **不自吹**：不做营销语句（"史诗级""完美"）
-- **不引用 emoji**：除非用户明确要求
-
-### 示例（基于本仓真实改动）
-
-> ⚠️ **`subject-case` 强约束（commitlint 默认黑名单 sentence-case / start-case / pascal-case / upper-case）：**
-> - 主题里的英文词必须**全小写**（`getting started` / `try it`），不可首字母大写
-> - ADR-XXX 形式**允许**（数字+大写字母+连字符作为技术标识符不被黑名单识别）
-> - 中英混排时，把英文短语改成小写或纯中文
-> - 反例：`Getting Started 书签首召` / `Omnibox 入口` / `ADR-011 启动` — 触发 sentence-case 拦截
-> - 正例：`getting started 书签首召` / `omnibox 入口` / `ADR-011 启动`
-
-#### ✅ 好（feat）
+#### feat
 
 ```text
 feat(sidepanel): getting started 书签首召 + 自然 clue 采样
@@ -93,149 +25,52 @@ feat(sidepanel): getting started 书签首召 + 自然 clue 采样
 [extension/src/pages/getting-started/GettingStarted.vue] 新增:
 - 双源 tab（bookmarks / excerpts）含主进度条与 LLM 示意 clue
 
-[extension/src/pages/getting-started/BookmarksTab.vue] 新增:
-- import→主进度→try it 三段流
-
-[extension/src/pages/getting-started/ExcerptsTab.vue] 新增:
-- things we miss 划存 + 定稿 clue + try it
-
-[extension/src/pages/getting-started/ContinueFooter.vue] 新增:
-- 页底 continue 软出口（无 start using / skip 双按钮）
-
 [docs/product/CURRENT.md] 修改:
 - 「本周做」增列 getting started 启动设置（§5.8）
-- 「本周不做」明确不动 side panel 顶栏条
-
-[.cursor/rules/session-boot.mdc] 自动同步:
-- bun run sync:ide-boot 重写「当下」块
 
 ## 验证
 
 - bun run typecheck
-- cd extension && bun run test:run（含 recall-eval must）
 - MCP 真机：getting_started_bookmarks 首召卡片可见
 
 ## 引用
 
-- ADR-001 / ADR-005 / §5.8
+- ADR-001 / §5.8
 ```
 
-#### ✅ 好（fix）
+#### fix
 
 ```text
 fix(recall): 时间置信度回归（ADR-011） + omnibox 入口漏 tag
 
 [extension/src/core/recall/content-term-corroboration.ts] 修改:
-- high 硬筛 + low 软排；framing around 改为解释文案
-
-[extension/src/core/recall/orchestrate-keyword-recall.ts] 修改:
-- 硬筛命中 0 条时 soft fallback 到字面候选而非空结果
+- high 硬筛 + low 软排
 
 [extension/src/background/listeners/omnibox.ts] 修改:
 - 调 recallWithClue 强制带 entry: 'omnibox'（ADR-007）
 
-[scripts/check-doc-code-consistency.mjs] 修改:
-- C3 校验项已存在；增补 C7 校验 entry 字段必填
-
 ## 验证
 
-- bun run doc:check:all · 7/7 通过
-- cd extension && bun run test:run · all passed
-- MCP 真机：omnibox_to_top_pick 路径 ECS=4
-
-## 引用
-
-- ADR-007 / ADR-011
+- cd extension && bun run test:run
+- MCP 真机：omnibox_to_top_pick
 ```
 
-#### ✅ 好（chore）
+## 本仓自检加项
 
-```text
-chore(scripts): 清理废弃脚本与 ESLint/Knip 残留引用
+- [ ] 产品面用语经 `terminology.mdc`（clue / Recall / 附注；禁止 Search）
+- [ ] 常见 sentence-case 触发词改为小写或中文：`Getting Started` / `Side Panel` / `Omnibox` / `Bookmarks` / `Excerpts` / `Continue` / `Try it` / `Heard as` / `Framing Around`
 
-[scripts/keep-supabase-alive.mjs] 删除:（历史示例 · 文件已不在树）
-- 历史 supabase 保活（CI workflow 已接管）
+## hook 拒绝时
 
-[scripts/e2e-management.mjs] 删除:（历史示例 · 文件已不在树）
-- CDP 薄冒烟已退役；验收改 MCP 真机 + Vitest/must
+1. 报告缺路径 / 哪行不合规  
+2. 按错误修 message，勿死循环同一份  
+3. 修到合规再 commit  
 
-[eslint.config.js] 修改:（历史示例）
-- 移除 scopePath('extension/test-puppeteer.js') ignore
+## 与其它规则
 
-[knip.json] 修改:（历史示例）
-- 移除 ignoreDependencies: ["puppeteer-core"]
-
-[scripts/README.md] 新增:
-- 8 个脚本作用 / 价值说明
-
-## 引用
-
-- scripts/README.md §门禁脚本
-```
-
-#### ✅ 好（docs ADR 落地）
-
-```text
-docs(adr): 落档 recall request topic 两种来源（D1-B 退化弱 topic 模型化）
-
-[docs/architecture/decisions/ADR-014-recall-request-topic-two-sources.md] 新增:
-- 决策落档：D1-B 退化弱 topic（topic-driven 强 + preference-driven 弱）
-- topic 定位为 recall 必要条件判定器（主语=问题边界，非产品功能）
-- 含上游 ADR-001/003/005/010/011 + 下游草案/§7.05/代码/eval
-- 含拒绝的替代方案（D1-A 严格 / D1-C 不建模）
-
-[docs/architecture/decisions/README.md] 修改:
-- 索引表加 ADR-014 一行
-
-[docs/README.md] 修改:
-- 规格正文段：草案块下补 ADR-014 链接（决策 ↔ 正文可对照）
-
-## 引用
-
-- ADR-001 / ADR-003 / ADR-005 / ADR-010 / ADR-011
-- §7.05 / Recall-Request 草案
-```
-
-#### ❌ 反例（禁止）
-
-```text
-❌ 优化 Supabase 保活脚本中的 API 请求
-   → 无 prefix、无文件索引、留作历史反例（eed0d887）
-
-❌ fix: 修复召回 bug
-   → 无 prefix scope 太宽、无文件索引
-
-❌ feat: many new features
-   → 英文 + 无具体内容
-
-❌ chore: 改了一堆东西
-   → 汇总模糊，无法归档
-```
-
-## 与已有规则的关系
-
-| 现有规则 | 关系 |
-|---|---|
-| `project.mdc`「用户要求 commit 时 message 必须中文」 | 本规范细化到格式 + 文件索引 |
-| `session-boot.mdc` | 不影响；commit 后由 `sync:ide-boot` 决定是否同步 |
-| `terminology.mdc` | 涉及产品面的描述必须用 clue / Recall / Filter，禁止 Search |
-| `git-workdir-safety.mdc` | 改动工作区前必须先看 `git status -- <path>`；commit 本规则不冲突 |
-
-## 自我校验清单（提交前必走）
-
-- [ ] 第一行匹配 `^(feat|fix|refactor|docs|test|chore|ci|perf)(\([\w\-/]+\))?!: ` + 中文
-- [ ] 首行 ≤ 50 字符
-- [ ] **subject 不含 sentence-case / start-case / pascal-case / upper-case 英文短语**（commitlint 黑名单，详见上方 `subject-case` 警告）
-- [ ] `git diff --cached --name-only` 每个路径在 body 的方括号中至少出现 1 次
-- [ ] 没引用未跑的验证命令
-- [ ] 产品面用语经 `terminology.mdc`（clue / Recall / 附注）
-- [ ] 不出现 emoji、不出现营销话
-- [ ] 不出现空白段落、不出现 git 自动生成的 `Co-Authored-By`（除非用户要求）
-
-## hook 拒绝时的反馈
-
-commit 触发 `.husky/commit-msg` 时如被拒绝，AI 应：
-1. **报告**：哪些路径缺失、哪行格式不合规
-2. **不反复重试同一份 message**——读错误信息，针对性修
-3. **常见 sentence-case 触发词**（历史高频拦截）：`Getting Started` / `Side Panel` / `Omnibox` / `Bookmarks` / `Excerpts` / `Continue` / `Try it` / `Start using` / `Skip` / `Heard as` / `Framing Around` —— 改为小写或中文
-4. **修到完全合规后再 commit**
+| 规则 | 关系 |
+| --- | --- |
+| `commit-message-core.mdc` | Org L0 格式核 |
+| `project.mdc` | 禁擅自 commit / push |
+| `session-boot.mdc` | commit 后是否 `sync:ide-boot` 另计 |
+| `git-workdir-safety.mdc` | 改前先 `git status` |

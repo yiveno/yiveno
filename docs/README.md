@@ -42,6 +42,7 @@
 - [`engineering/Turnstile-Email-OTP-防刷生命周期.md`](./engineering/Turnstile-Email-OTP-防刷生命周期.md) — Turnstile token 生命周期、发码流程图、china 区域约束
 - [`engineering/Yiveno-Mermaid图表规范.md`](./engineering/Yiveno-Mermaid图表规范.md) — Mermaid 五类图适用场景与 Agent 同步纪律
 - [`engineering/Yiveno-官网GEO.md`](./engineering/Yiveno-官网GEO.md) — 官网生成式引擎优化（JSON-LD / FAQ / llms.txt；≠ 地区域名 soft-redirect）
+- [`engineering/org-agent-rules/`](./engineering/org-agent-rules/README.md) — Org Agent Rules 分层（L0 权威仓 [`yiveno/agent-rules`](https://github.com/yiveno/agent-rules) + sync；本仓盘点与新仓接入）
 - [`diagrams/`](./diagrams/) — 业务逻辑图清单（`registry.json`）· `bun run docs:sync-diagrams`
 - [`ENVIRONMENT.md`](./ENVIRONMENT.md) — 环境变量分层、同步与校验规则
 - [`../EDGEADDONS.md`](../EDGEADDONS.md) — Edge Add-ons 上架元数据（与根目录 `CHROMEWEBSTORE.md` 对位）

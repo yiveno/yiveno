@@ -1,0 +1,129 @@
+---
+description: Commit message 核规范（Conventional + 中文 subject + 按文件方括号索引）；Yiveno Org L0；hook 路径与产品示例由各仓 L2 补
+alwaysApply: true
+---
+
+# Commit Message 规范（Org L0 · 核）
+
+> AI **仅在用户明确要求** commit / push /「写 commit message」时按本规范生成。  
+> **禁止**擅自 `git commit` / `git push`。  
+> 各仓可用 hook（如 commit-msg + commitlint）机器强制；**hook 脚本路径写在该仓 L2**，不写死于此。
+
+## 何时生效
+
+| 用户请求 | AI 动作 |
+| --- | --- |
+| 「commit 一下」/「提交」 | 生成合规 message，进入确认流程（除非用户说「直接提交」） |
+| 「push」 | 先按本规范 commit，再 push |
+| 「帮我写 commit message」 | 只输出 message，不调用 git |
+
+## 生成步骤（必须按序）
+
+1. `git status` — 工作区是否符合预期（意外 WIP 先问）
+2. `git diff --cached --stat` — 已暂存路径与行数
+3. 如未暂存 — `git add` 相关文件（或先让用户决定范围）
+4. `git diff --cached` — 按文件理解语义
+5. 判定主导 type（见下）
+6. 按模板生成
+7. 自检：每个已暂存路径出现在 body 方括号中；prefix 合法；首行 ≤50 字符且为中文
+8. 默认**展示**完整 message 供确认；仅用户明示「直接提交」才执行 commit
+
+## Type
+
+- `feat` — 用户可感能力 / 新接口 / 新契约落地
+- `fix` — 修复已有行为 / 契约 / 门禁 / 类型错误
+- `refactor` — 对外行为不变的内部重构
+- `docs` — 文档 / ADR / 注释 / message 规范
+- `test` — 测试数据 / 评测用例
+- `chore` — 工具 / 依赖 / 配置 / 清理（不改行为）
+- `ci` — CI / hook / 门禁配置
+- `perf` — 性能
+- `style` — 仅格式（通常勿手写提交）
+
+## 格式模板
+
+```text
+<type>(<scope>): <中文一句话（≤50 字符，无句号）>
+
+[<仓库相对路径 1>] <动作>: <一句话说明>
+- <细项 1>
+
+[<仓库相对路径 2>] <动作>:
+- <细项 1>
+
+## 验证（可选但推荐）
+
+- <实际跑过的命令 + 结果>
+
+## 引用（可选）
+
+- ADR-XXX / issue#XXX / 文档章节
+```
+
+### 关键约束
+
+- 首行：`<type>(<scope>): 中文`；type ∈ 上表；scope 可选
+- **每个**改动文件一段：路径包方括号；动作 = 修改 / 新增 / 删除 / 重命名 / …
+- 保留完整相对路径，便于 `git log -p -- <path>`
+- 禁止总结性省略（「修了一堆」）、营销话、emoji（除非用户要求）
+- **subject-case：** 主题中的英文短语用**全小写**或纯中文；避免 sentence-case / start-case（commitlint 常见黑名单）。技术标识如 `ADR-014` 通常可保留。
+
+### 栈无关示例
+
+```text
+feat(api): 增加健康检查端点
+
+[src/routes/health.ts] 新增:
+- GET /health 返回 ok 与版本号
+
+[docs/api.md] 修改:
+- 补 /health 契约一行
+
+## 验证
+
+- 相关单测通过
+```
+
+```text
+fix(auth): 刷新失败时不再静默清空会话
+
+[src/auth/session.ts] 修改:
+- refresh 4xx 时保留本地态并上抛可识别错误码
+
+## 验证
+
+- 单测：refresh_expired_keeps_state
+```
+
+### 反例
+
+```text
+❌ 优化 API 请求
+   → 无 type、无文件索引
+
+❌ fix: 修 bug
+   → 无文件索引、过宽
+
+❌ feat: many new features
+   → 英文空话
+```
+
+## 自我校验清单
+
+- [ ] 首行匹配 type + 可选 scope + 中文，≤50 字符
+- [ ] subject 无非法大小写英文短语（按该仓 commitlint）
+- [ ] `git diff --cached --name-only` 每个路径在 body 方括号出现 ≥1 次
+- [ ] 未引用未跑的验证命令
+- [ ] 无 emoji、无空吹、无擅自 `Co-Authored-By`
+
+## hook 拒绝时
+
+1. 报告缺路径 / 哪行不合规  
+2. 按错误修 message，**不要**死循环同一份  
+3. 修到合规再 commit  
+
+## L2 由各仓补充
+
+- commit-msg hook / commitlint 配置路径  
+- 产品术语 checklist（若有 Glossary）  
+- 本仓真实改动示例（可替换上方占位示例）

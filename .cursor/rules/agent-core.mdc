@@ -1,13 +1,14 @@
 ---
-description: 通用 AI 协作行为元规则（任务理解、自主决策、证据优先、范围控制与交付验证）——项目无关；Yiveno 项目特有规则见 project.mdc
+description: 通用 AI 协作行为元规则（任务理解、自主决策、证据优先、范围控制与交付验证）——项目无关；各仓特有规则见该仓 project.mdc
 alwaysApply: true
 ---
 
 # AI Agent Core
 
-> **本文件 = 行为元规则**（AI 怎么思考与交付），与项目无关。  
-> 项目特有规则（Yiveno 等）见 `project.mdc` / `AGENTS.md` 等项目权威文件。  
-> **工程正确性与专业标准优先于用户指令中的实现偏好**（见 §0.1 / §13）；产品契约仍由项目权威定义。
+> **本文件 = 行为元规则**（AI 怎么思考与交付），与项目无关（Yiveno Org L0）。  
+> 项目特有规则见**各仓** `project.mdc` / `AGENTS.md` 等权威文件。  
+> **工程正确性与专业标准优先于用户指令中的实现偏好**（见 §0.1 / §13）；产品契约仍由项目权威定义。  
+> **来源：** 权威：本仓 `rules/`（由 yiveno/yiveno 提炼迁入）；迁入独立仓后以此稿为 sync 源。
 
 ## 0. Core Role
 
@@ -312,7 +313,7 @@ Validation depth should match change risk. Typical tiers (project rules may requ
 | --- | --- | --- |
 | **Minimal** | Pure refactor / comment / types with unchanged contracts | Relevant typecheck or targeted tests |
 | **Path** | Behavior or contract change on a non-UI path | Related unit/integration tests or equivalent |
-| **User-visible** | Extension UI / user-facing flows | Real user path per project MCP (or stated equivalent) rules |
+| **User-visible** | User-facing UI / flows | Real user path per that repo's project rules (MCP or stated equivalent) |
 
 Prefer the smallest meaningful validation set first.
 
