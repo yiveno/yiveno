@@ -34,6 +34,7 @@ export const APP_ICON_NAMES = [
   'looks_one',
   'looks_two',
   'message_circle_plus',
+  'mic',
   'open_in_new',
   'package',
   'radio_unchecked',
@@ -79,6 +80,7 @@ export const APP_ICON_LUCIDE_SOURCE: Record<AppIconName, string> = {
   looks_one: 'custom-step-1',
   looks_two: 'custom-step-2',
   message_circle_plus: 'MessageCirclePlus',
+  mic: 'Mic',
   open_in_new: 'ExternalLink',
   package: 'Package',
   radio_unchecked: 'Circle',
@@ -306,6 +308,12 @@ export const APP_ICON_NODES: Record<AppIconName, readonly AppIconNode[]> = {
     ['path', { d: 'M2 18h1.4c1.3 0 2.5-.6 3.3-1.7l6.1-8.6c.7-1.1 2-1.7 3.3-1.7H22' }],
     ['path', { d: 'M2 6h1.9c1.5 0 2.9.9 3.6 2.2' }],
     ['path', { d: 'M22 18h-5.9c-1.3 0-2.6-.7-3.3-1.8l-.5-.8' }]
+  ] as const,
+  // Lucide Mic：composer 语音录入
+  mic: [
+    ['path', { d: 'M12 19v3' }],
+    ['path', { d: 'M19 10v2a7 7 0 0 1-14 0v-2' }],
+    ['rect', { x: '9', y: '2', width: '6', height: '13', rx: '3' }]
   ] as const,
   settings: [
     [

@@ -561,6 +561,36 @@
   "popup_submitting": {
     "message": "正在 Recall…"
   },
+  "sidepanel_voice_start": {
+    "message": "语音输入线索"
+  },
+  "sidepanel_voice_stop": {
+    "message": "停止语音输入"
+  },
+  "sidepanel_voice_unavailable": {
+    "message": "当前浏览器不支持语音输入"
+  },
+  "sidepanel_voice_error_not_allowed": {
+    "message": "需要麦克风权限 — 点下方「允许」，再试一次"
+  },
+  "sidepanel_voice_error_no_speech": {
+    "message": "没听清，再说一次试试"
+  },
+  "sidepanel_voice_error_generic": {
+    "message": "语音输入没启动，再试一次或直接打字"
+  },
+  "sidepanel_voice_permission_hint": {
+    "message": "允许麦克风才能语音输入线索。若没有弹出提示，会打开站点设置。"
+  },
+  "sidepanel_voice_permission_allow": {
+    "message": "允许"
+  },
+  "sidepanel_voice_permission_busy": {
+    "message": "处理中…"
+  },
+  "sidepanel_voice_permission_dismiss": {
+    "message": "关闭"
+  },
   "popup_filtering_status": {
     "message": "正在翻看你存过的内容…"
   },

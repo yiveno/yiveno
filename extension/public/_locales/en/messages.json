@@ -561,6 +561,36 @@
   "popup_submitting": {
     "message": "Recalling…"
   },
+  "sidepanel_voice_start": {
+    "message": "Dictate clue"
+  },
+  "sidepanel_voice_stop": {
+    "message": "Stop dictation"
+  },
+  "sidepanel_voice_unavailable": {
+    "message": "Voice input isn’t available in this browser"
+  },
+  "sidepanel_voice_error_not_allowed": {
+    "message": "Microphone needs permission — use Allow below, then try again"
+  },
+  "sidepanel_voice_error_no_speech": {
+    "message": "Didn’t catch that — try speaking again"
+  },
+  "sidepanel_voice_error_generic": {
+    "message": "Couldn’t start voice input — try again or type"
+  },
+  "sidepanel_voice_permission_hint": {
+    "message": "Allow the mic to dictate clues. If the prompt doesn’t appear, we’ll open site settings."
+  },
+  "sidepanel_voice_permission_allow": {
+    "message": "Allow"
+  },
+  "sidepanel_voice_permission_busy": {
+    "message": "Working…"
+  },
+  "sidepanel_voice_permission_dismiss": {
+    "message": "Dismiss"
+  },
   "popup_filtering_status": {
     "message": "Looking through what you saved…"
   },

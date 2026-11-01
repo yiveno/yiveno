@@ -8,7 +8,7 @@ alwaysApply: true
 > **本文件 = Cursor 每会话自动注入的「当下事实」。** 「当下」块由 `docs/product/CURRENT.md` 生成；改焦点时 **只改 CURRENT**，再 `bun run sync:ide-boot`（`doc:check` 会校验）。
 
 <!-- SYNC:IDE_BOOT:START -->
-**最后更新：** 2026-10-30
+**最后更新：** 2026-11-01
 
 > **每会话首条：** 用户应粘贴 [`AGENT-TASK-BRIEF.template.md`](../../docs/product/AGENT-TASK-BRIEF.template.md)（In/Out/验收/禁止）。
 
@@ -35,6 +35,7 @@ alwaysApply: true
 - **相对时间** high 硬筛 / low 软排（ADR-011）；禁止糊时间单独硬空
 - **禁止**内容别名灰名单冒充全用户通解；残差留给字面/Hybrid
 - **find things（ADR-012）：** 定位句不变；双关/翻牌为**后手（视发展再定，可以≠必须）**；终局壁垒=私有增量+习惯+信任；翻牌句**未启用**；禁止用终局叙事放松召回验收
+- **产品哲学（§0.1）：** 人机认知协同 · 机记人想（对内句 _Let humans think. Let computers remember._）；愿景可大；**当前履约面**=已存痕迹高置信邻域；哲学句**不得**替代对外主 slogan，**不得**暗示「想起来就一定找得到」
 - **双线程（ADR-016）：** 明线=找东西体验；暗线=记忆探索；方案五问必过、回归可 N/A；行为≠脑规律；研究笔记在 `dual-thread-notes/`；**禁止**为研究损体验或放松 §5.9；不得把未实现能力写成已上线
 - **云同步面（ADR-017）：** 上云/拉回仅 `text_excerpt`；书签 Memory 本机灌库、不上云、不经云并书签林；Backup 仍含全书签
 - **身份隔离（ADR-018）：** 未登录≟Free 本机能力（书签+摘录）；Pro=摘录换机同步；登录迁移门闸仅未登录无主摘录，禁止静默 absorb；扩展退出清本机账号桶（书签回本地档）；**官网/扩展退出解耦**（各退各的）

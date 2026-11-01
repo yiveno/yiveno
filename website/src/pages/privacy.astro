@@ -6,7 +6,7 @@
 import MainLayout from '../layouts/MainLayout.astro'
 import '../styles/pages.css'
 
-const effectiveDate = '2026-10-31'
+const effectiveDate = '2026-11-01'
 const contactEmail = 'privacy@yiveno.com'
 ---
 
@@ -75,6 +75,18 @@ const contactEmail = 'privacy@yiveno.com'
         Some features (for example understanding what you typed) may send limited requests through
         our servers to a model provider. The model does not directly create, change, or delete what
         you saved. We do not default to sending your entire library to a model.
+      </p>
+      <h3>2.4a Voice dictation (optional)</h3>
+      <p>
+        In the Recall side panel you may tap a microphone control to <strong>dictate a clue</strong>{' '}
+        into the text field (same path as typing — not a live voice chat). The browser’s Web Speech
+        / speech-recognition stack may process that audio, which often means the{' '}
+        <strong>browser vendor</strong> (not Yiveno’s API) temporarily handles the audio for
+        transcription. Yiveno does not receive the raw audio on <code>api.yiveno.com</code>. The
+        resulting text remains in the composer for you to edit before you submit a Recall.
+        Microphone access is requested only when you use this control; if the side panel cannot show
+        the system prompt, Yiveno shows an in-panel Allow control (and may open the browser’s site
+        settings for this extension if permission is still blocked).
       </p>
       <h3>2.5 Install notify (optional)</h3>
       <p>

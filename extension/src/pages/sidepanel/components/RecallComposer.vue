@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { nextTick, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onMounted, ref, toRef, watch } from 'vue'
 
+import { t } from '@/infrastructure/i18n/t'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
+import { useComposerSpeechDictation } from '@/pages/sidepanel/use-composer-speech-dictation'
 
 defineOptions({ name: 'RecallComposer' })
 
@@ -9,6 +11,12 @@ const props = defineProps<{
   ariaLabel: string
   placeholder: string
   sendLabel: string
+  /** 麦克风开始听写 */
+  voiceStartLabel: string
+  /** 麦克风停止听写 */
+  voiceStopLabel: string
+  /** 不可用时 title（无 SpeechRecognition） */
+  voiceUnavailableLabel: string
   disabled?: boolean
   /** 空线程时加重阴影（高度与有字态一致，避免跳变） */
   prominent?: boolean
@@ -19,6 +27,31 @@ const emit = defineEmits<{
 }>()
 const model = defineModel<string>({ required: true })
 const inputRef = ref<HTMLTextAreaElement | null>(null)
+
+const disabledRef = toRef(props, 'disabled')
+const speech = useComposerSpeechDictation({
+  model,
+  disabled: computed(() => Boolean(disabledRef.value))
+})
+
+const voiceButtonLabel = computed(() =>
+  speech.status.value === 'listening' ? props.voiceStopLabel : props.voiceStartLabel
+)
+
+const showMicPermissionStrip = computed(
+  () => speech.supported && speech.status.value === 'requesting_permission'
+)
+
+const voiceTitle = computed(() => {
+  if (!speech.supported) {
+    return props.voiceUnavailableLabel
+  }
+  const errorKey = speech.lastErrorKey.value
+  if (errorKey) {
+    return t(errorKey)
+  }
+  return voiceButtonLabel.value
+})
 
 /** 与 CSS `.recall-input` 单行行高对齐；多行由 scrollHeight 撑开，空态固定单行。 */
 const INPUT_MIN_HEIGHT_PX = 22
@@ -75,6 +108,13 @@ function focus(): void {
   pinDocumentScroll()
 }
 
+function handleVoiceClick(): void {
+  if (!speech.supported || props.disabled) {
+    return
+  }
+  speech.toggleListening()
+}
+
 watch(model, async () => {
   await nextTick()
   resizeInput()
@@ -97,6 +137,32 @@ defineExpose({ focus })
 
 <template>
   <div class="recall-form" :class="{ 'recall-form--prominent': prominent }">
+    <div v-if="showMicPermissionStrip" class="recall-voice-permission" role="status">
+      <p class="recall-voice-permission__text">{{ t('sidepanel_voice_permission_hint') }}</p>
+      <div class="recall-voice-permission__actions">
+        <button
+          type="button"
+          class="recall-voice-permission__allow"
+          :disabled="props.disabled || speech.permissionBusy.value"
+          @click="speech.allowMicrophoneFromPanel()"
+        >
+          {{
+            speech.permissionBusy.value
+              ? t('sidepanel_voice_permission_busy')
+              : t('sidepanel_voice_permission_allow')
+          }}
+        </button>
+        <button
+          type="button"
+          class="recall-voice-permission__dismiss"
+          :aria-label="t('sidepanel_voice_permission_dismiss')"
+          :disabled="speech.permissionBusy.value"
+          @click="speech.dismissPermissionPrompt()"
+        >
+          <AppIcon name="close" size="16px" />
+        </button>
+      </div>
+    </div>
     <div class="recall-composer-shell">
       <!-- 输入框内左侧工具（如 Recall settings 图标） -->
       <slot name="leading" />
@@ -112,6 +178,19 @@ defineExpose({ focus })
         @input="handleInput"
         @focus="pinDocumentScroll"
       />
+      <button
+        v-if="speech.supported"
+        type="button"
+        class="recall-voice-button"
+        :class="{ 'recall-voice-button--listening': speech.status.value === 'listening' }"
+        :aria-label="voiceButtonLabel"
+        :title="voiceTitle"
+        :aria-pressed="speech.status.value === 'listening'"
+        :disabled="props.disabled"
+        @click="handleVoiceClick"
+      >
+        <AppIcon name="mic" size="18px" />
+      </button>
       <button
         type="button"
         class="recall-send-button"
@@ -135,6 +214,91 @@ defineExpose({ focus })
 .recall-form--prominent {
   margin-top: 0;
   padding-top: 0;
+}
+
+.recall-voice-permission {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2xs) var(--space-xs);
+  margin: 0 0 var(--space-2xs);
+  padding: var(--space-2xs) var(--space-xs);
+  border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--accent) 8%, var(--surface-white));
+}
+
+.recall-voice-permission__text {
+  flex: 1 1 10rem;
+  margin: 0;
+  color: var(--on-surface);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.recall-voice-permission__actions {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: var(--space-2xs);
+}
+
+.recall-voice-permission__allow {
+  margin: 0;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: var(--radius-full);
+  color: var(--on-accent);
+  background: var(--accent);
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.recall-voice-permission__allow:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 88%, var(--ink) 12%);
+}
+
+.recall-voice-permission__allow:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.recall-voice-permission__allow:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.recall-voice-permission__dismiss {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  color: var(--on-surface-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.recall-voice-permission__dismiss:hover:not(:disabled) {
+  color: var(--on-surface);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+.recall-voice-permission__dismiss:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.recall-voice-permission__dismiss:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 .recall-composer-shell {
@@ -207,6 +371,50 @@ defineExpose({ focus })
 
 .recall-input::placeholder {
   color: var(--on-surface-muted);
+}
+
+.recall-voice-button {
+  display: inline-flex;
+  flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
+  width: 36px;
+  height: 36px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  color: var(--on-surface-muted);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background-color 140ms ease-out,
+    color 140ms ease-out,
+    opacity 140ms ease-out;
+}
+
+.recall-voice-button:hover:not(:disabled) {
+  color: var(--on-surface);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
+}
+
+.recall-voice-button--listening {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+
+.recall-voice-button--listening:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--accent) 18%, transparent);
+}
+
+.recall-voice-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.recall-voice-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .recall-send-button {

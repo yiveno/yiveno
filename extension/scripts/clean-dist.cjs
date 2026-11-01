@@ -161,9 +161,11 @@ function finalizeExtensionDist() {
     fs.rmSync(nestedSrcDir, { recursive: true, force: true })
   }
 
-  // 移除历史 popup 产物，避免误加载
+  // 移除历史 popup / 麦克风授权页产物，避免误加载
   removeIfPresent(path.join(distDir, 'popup.html'))
   removeIfPresent(path.join(distDir, 'popup.js'))
+  removeIfPresent(path.join(distDir, 'mic-permission.html'))
+  removeIfPresent(path.join(distDir, 'mic_permission.js'))
 
   const readyParts = [
     'sidepanel.html',
