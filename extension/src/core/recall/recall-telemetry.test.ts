@@ -20,7 +20,7 @@ describe('recall-telemetry', () => {
     expect(previewRecallClue('  hello  ')).toBe('hello')
   })
 
-  it('七事件 schema 可解析', () => {
+  it('TTE 七事件 + wait_abandoned schema 可解析', () => {
     const events = [
       { type: 'clue_submitted', cluePreview: 'deploy checklist', ...baseIds },
       {
@@ -38,6 +38,12 @@ describe('recall-telemetry', () => {
           candidateLoadMs: 120,
           retrieveMs: 40,
           totalMs: 960
+        },
+        waitProgress: {
+          progressRevealed: true,
+          waitElapsedMs: 1200,
+          peakStage: 'checking',
+          understandingTier: 1
         },
         ...baseIds
       },
@@ -64,7 +70,18 @@ describe('recall-telemetry', () => {
         memoryItemId: '33333333-3333-4333-8333-333333333333',
         ...baseIds
       },
-      { type: 'task_timeout', timeoutMs: 180_000, ...baseIds }
+      { type: 'task_timeout', timeoutMs: 180_000, ...baseIds },
+      {
+        type: 'wait_abandoned',
+        reason: 'panel_close',
+        waitProgress: {
+          progressRevealed: true,
+          waitElapsedMs: 2500,
+          peakStage: 'understanding',
+          understandingTier: 2
+        },
+        ...baseIds
+      }
     ] as const
 
     for (const event of events) {

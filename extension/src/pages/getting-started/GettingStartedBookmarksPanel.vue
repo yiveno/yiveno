@@ -286,9 +286,10 @@ async function handleTrySidePanel(clue: string): Promise<void> {
     return
   }
   try {
+    // 先开火开壳再写预填（保扩展页用户手势）；开壳失败则不 mark，引导可重试
+    const opening = openRecallSidePanelFromExtensionPage()
     await writeRecallPrefill(trimmed)
-    // 先开壳再 mark：开壳失败时引导仍可重试
-    await openRecallSidePanelFromExtensionPage()
+    await opening
     await markInstallOnboardingDone()
     logger.info('Onboarding', 'GS Try it 已开 Side Panel 并预填', {
       cluePreview: trimmed.slice(0, 48)

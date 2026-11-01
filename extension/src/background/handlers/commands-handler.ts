@@ -7,6 +7,7 @@ import type {
   NavigateActiveTabPayload,
   NavigateActiveTabResponse,
   OpenChromeShortcutsPageResponse,
+  OpenRecallShellPayload,
   OpenRecallShellResponse
 } from '@/core/messaging/commands-messages'
 import { navigateTabToUrl } from '@/infrastructure/browser/navigate-tab'
@@ -14,8 +15,10 @@ import {
   openRecallSidePanel,
   type OpenRecallSidePanelOptions
 } from '@/infrastructure/browser/side-panel'
+import { resolveRecallShellHandoff } from '@/core/recall/recall-shell-handoff'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
+import { writeRecallPrefill } from '@/infrastructure/storage/first-recall-onboarding-storage'
 
 /** 读取扩展命令与当前快捷键。 */
 export async function handleGetExtensionCommands(): Promise<GetExtensionCommandsResponse> {
@@ -52,24 +55,60 @@ export async function handleOpenChromeShortcutsPage(): Promise<OpenChromeShortcu
   }
 }
 
-/** 在用户手势链上打开 Recall Side Panel。 */
+/**
+ * 在用户手势链上打开 Recall Side Panel；可选附带预填 clue。
+ * 有 clue 时：先开火开壳，再写 session（对齐 Omnibox）；开壳失败但预填已写 → 仍 ok（Panel 多半已开，storage 监听会吃）。
+ */
 export async function handleOpenRecallShell(
-  options: OpenRecallSidePanelOptions = {}
+  options: OpenRecallSidePanelOptions = {},
+  prefill?: OpenRecallShellPayload
 ): Promise<OpenRecallShellResponse> {
   const startedAt = flowStart('Recall', '打开 Side Panel')
-  try {
-    await openRecallSidePanel(options)
-    flowOk('Recall', '打开 Side Panel', startedAt, { ok: true })
-    return { ok: true }
-  } catch (error) {
-    flowFail('Recall', '打开 Side Panel', startedAt, error)
-    logger.warn('Commands', '打开 Recall Side Panel 失败', error)
-    return {
-      ok: false,
-      errorCode: 'RECALL_SHELL_OPEN_FAILED',
-      ...(error instanceof Error ? { error: error.message } : {})
+  const clue = prefill?.clue?.trim() ?? ''
+
+  if (!clue) {
+    try {
+      await openRecallSidePanel(options)
+      flowOk('Recall', '打开 Side Panel', startedAt, { ok: true, wrotePrefill: false })
+      return { ok: true }
+    } catch (error) {
+      flowFail('Recall', '打开 Side Panel', startedAt, error)
+      logger.warn('Commands', '打开 Recall Side Panel 失败', error)
+      return {
+        ok: false,
+        errorCode: 'RECALL_SHELL_OPEN_FAILED',
+        ...(error instanceof Error ? { error: error.message } : {})
+      }
     }
   }
+
+  const autoSubmit = prefill?.autoSubmit !== false
+  const handoff = await resolveRecallShellHandoff({
+    openShell: async () => {
+      try {
+        await openRecallSidePanel(options)
+        return { ok: true }
+      } catch (error) {
+        logger.warn('Commands', 'sidePanel.open 失败（可能 Panel 已开）', error)
+        return { ok: false }
+      }
+    },
+    writePrefill: () => writeRecallPrefill(clue, { autoSubmit })
+  })
+
+  if (handoff === 'failed') {
+    const err = new Error('开壳与预填均失败')
+    flowFail('Recall', '打开 Side Panel', startedAt, err)
+    return { ok: false, errorCode: 'RECALL_SHELL_OPEN_FAILED', error: err.message }
+  }
+
+  flowOk('Recall', '打开 Side Panel', startedAt, {
+    ok: true,
+    handoff,
+    wrotePrefill: true,
+    autoSubmit
+  })
+  return { ok: true }
 }
 
 /** Side Panel 等：在活动标签（或新标签）打开可导航 URL。 */

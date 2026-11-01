@@ -6,7 +6,10 @@ import type {
 import { isBackgroundScopedMessage } from '@/core/messaging/background-messages'
 import { ensureBackgroundBootstrapped } from '@/background/bootstrap-ready'
 import { handleDebugBackgroundMessage } from '@/dev/probe/debug-dev-handler'
-import { parseNavigateActiveTabPayload } from '@/core/messaging/commands-messages'
+import {
+  parseNavigateActiveTabPayload,
+  parseOpenRecallShellPayload
+} from '@/core/messaging/commands-messages'
 import {
   handleAuthSignIn,
   handleAuthConnectWebsite,
@@ -204,10 +207,13 @@ async function dispatchBackgroundMessage(
     case 'OPEN_CHROME_SHORTCUTS_PAGE':
       return handleOpenChromeShortcutsPage()
     case 'OPEN_RECALL_SHELL':
-      return handleOpenRecallShell({
-        ...(typeof sender?.tab?.id === 'number' ? { tabId: sender.tab.id } : {}),
-        ...(typeof sender?.tab?.windowId === 'number' ? { windowId: sender.tab.windowId } : {})
-      })
+      return handleOpenRecallShell(
+        {
+          ...(typeof sender?.tab?.id === 'number' ? { tabId: sender.tab.id } : {}),
+          ...(typeof sender?.tab?.windowId === 'number' ? { windowId: sender.tab.windowId } : {})
+        },
+        parseOpenRecallShellPayload(message.payload)
+      )
     case 'NAVIGATE_ACTIVE_TAB':
       return handleNavigateActiveTab(parseNavigateActiveTabPayload(message.payload))
     case 'GET_USER_SETTINGS':

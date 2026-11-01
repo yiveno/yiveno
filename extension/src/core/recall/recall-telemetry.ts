@@ -33,7 +33,35 @@ const telemetryBaseSchema = z.object({
   at: z.iso.datetime()
 })
 
-/** TTE 七事件 discriminated union（§5.9 最小埋点）。 */
+/** 可见进展峰值阶段（体验度量 · 非 §5.9 TTE KPI）。 */
+export const RecallWaitPeakStageSchema = z.enum([
+  'understanding', // 理解印象
+  'narrowing', // 库内收窄
+  'checking' // 核对最接近
+])
+
+/** 等待中放弃原因（体验 · 与 TTE 分计）。 */
+export const RecallWaitAbandonReasonSchema = z.enum([
+  'panel_close', // 关 Side Panel
+  'new_find', // 新找清空线程
+  'superseded_clue' // 等待中改发另一条 clue
+])
+
+/** 可见进展快照（放弃 / 出结果时附带）。 */
+export const RecallWaitProgressSnapshotSchema = z.object({
+  progressRevealed: z.boolean(),
+  waitElapsedMs: z.number().int().nonnegative(),
+  peakStage: RecallWaitPeakStageSchema.optional(),
+  understandingTier: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional()
+})
+
+export type RecallWaitProgressSnapshot = z.infer<typeof RecallWaitProgressSnapshotSchema>
+export type RecallWaitAbandonReason = z.infer<typeof RecallWaitAbandonReasonSchema>
+
+/**
+ * TTE 七事件 + 体验 `wait_abandoned`（§5.9 最小埋点 ∪ §7.0 可见进展度量）。
+ * `wait_abandoned` **不得**计入 Success@180 / TTE 达标。
+ */
 export const RecallTelemetryEventSchema = z.discriminatedUnion('type', [
   telemetryBaseSchema.extend({
     type: z.literal('clue_submitted'),
@@ -48,7 +76,9 @@ export const RecallTelemetryEventSchema = z.discriminatedUnion('type', [
     type: z.literal('result_rendered'),
     outcome: z.enum(['top_pick', 'need_a_clue', 'no_match']),
     resultCount: z.number().int().nonnegative(),
-    pipelineTiming: RecallPipelineTimingSchema.optional()
+    pipelineTiming: RecallPipelineTimingSchema.optional(),
+    /** 可见进展快照（体验 A/B；可选） */
+    waitProgress: RecallWaitProgressSnapshotSchema.optional()
   }),
   telemetryBaseSchema.extend({
     type: z.literal('evidence_visible'),
@@ -82,6 +112,11 @@ export const RecallTelemetryEventSchema = z.discriminatedUnion('type', [
   telemetryBaseSchema.extend({
     type: z.literal('task_timeout'),
     timeoutMs: z.number().int().positive()
+  }),
+  telemetryBaseSchema.extend({
+    type: z.literal('wait_abandoned'),
+    reason: RecallWaitAbandonReasonSchema,
+    waitProgress: RecallWaitProgressSnapshotSchema
   })
 ])
 

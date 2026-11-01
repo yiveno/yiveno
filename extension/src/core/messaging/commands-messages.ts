@@ -92,10 +92,37 @@ export type OpenChromeShortcutsPageResponse =
       error?: string
     }
 
-/** 在用户手势链上打开 Recall Side Panel（预填线索须已写入 session）。 */
+/**
+ * 打开 Recall Side Panel 时可附带预填（划选「用这段来找」）。
+ * SW 内先开火 `sidePanel.open` 再写 session（与 Omnibox 同手势铁律）；无 payload 时仅开壳。
+ */
+export const openRecallShellPayloadSchema = z.object({
+  /** 预填进 composer 的 clue；缺省则只开壳 */
+  clue: z.string().min(1).max(500).optional(),
+  /**
+   * 是否开壳后自动提交。
+   * - true / 缺省：Getting Started / Omnibox 行为（若带 clue）
+   * - false：选区富线索，只预填可改
+   */
+  autoSubmit: z.boolean().optional()
+})
+
+export type OpenRecallShellPayload = z.infer<typeof openRecallShellPayloadSchema>
+
+/** 在用户手势链上打开 Recall Side Panel；可选附带预填 clue。 */
 export type OpenRecallShellMessage = {
   scope: BackgroundMessageScope
   type: 'OPEN_RECALL_SHELL'
+  payload?: OpenRecallShellPayload
+}
+
+/** 解析可选开壳预填载荷（无 / 非法 → 空对象，仅开壳）。 */
+export function parseOpenRecallShellPayload(value: unknown): OpenRecallShellPayload {
+  if (value === undefined || value === null) {
+    return {}
+  }
+  const parsed = openRecallShellPayloadSchema.safeParse(value)
+  return parsed.success ? parsed.data : {}
 }
 
 export type OpenRecallShellResponse =

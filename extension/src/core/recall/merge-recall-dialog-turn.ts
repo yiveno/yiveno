@@ -3,7 +3,11 @@
  * 本轮理解结果 refine accumulated；短补充（如 yesterday）不得冲掉 prior content。
  */
 
-import { reconcilePositiveAndExcludeTerms } from '@/core/recall/exclude-content-terms'
+import {
+  normalizeExcludeContentTerms,
+  reconcilePositiveAndExcludeTerms
+} from '@/core/recall/exclude-content-terms'
+import { normalizeRecallText } from '@/core/recall/keyword-filter'
 import { parseRecallClue, resolveRecallClueConfidence } from '@/core/recall/parse-recall-clue'
 import {
   ParsedRecallClueSchema,
@@ -87,8 +91,8 @@ export function buildEffectiveRecallRaw(
 
 /**
  * 合并两轮 ParsedRecallClue（槽位规则见产品文档 §7.0）。
- * - contentTerms：并集
- * - excludeContentTerms：并集，再与正词做冲突消解
+ * - contentTerms：并集；若本轮明确 exclude 命中 prior 正词 → 从正词侧拿掉（纠错优先）
+ * - excludeContentTerms：并集，再与正词做冲突消解（同轮双挂仍保正词）
  * - timeRange / objectTypes：本轮有则覆盖
  * - behaviorHints：并集
  * - noteHint：OR
@@ -105,7 +109,24 @@ export function mergeParsedRecallClues(
     })
   }
 
-  const contentTermsMerged = unionUniqueStrings(accumulated.contentTerms, current.contentTerms)
+  /** 本轮明确排除 ∩ prior 正词 → 纠错优先，不走「同轮双挂保正词」。 */
+  const turnExcludeNormalized = normalizeExcludeContentTerms(current.excludeContentTerms ?? [])
+  const priorPositiveNormalized = new Set(
+    accumulated.contentTerms
+      .map(term => normalizeRecallText(term))
+      .filter((term): term is string => Boolean(term))
+  )
+  const dropPositiveForTurnExclude = new Set(
+    turnExcludeNormalized.filter(term => priorPositiveNormalized.has(term))
+  )
+
+  const contentTermsMerged = unionUniqueStrings(
+    accumulated.contentTerms,
+    current.contentTerms
+  ).filter(term => {
+    const normalized = normalizeRecallText(term)
+    return !normalized || !dropPositiveForTurnExclude.has(normalized)
+  })
   const excludeMerged = unionUniqueStrings(
     accumulated.excludeContentTerms ?? [],
     current.excludeContentTerms ?? []

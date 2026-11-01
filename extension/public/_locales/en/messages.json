@@ -108,7 +108,7 @@
     "message": "Saved to Yiveno"
   },
   "selection_toolbar_saved_hint": {
-    "message": "Try recalling: “$1”",
+    "message": "Find with this: “$1” — edit in Recall before sending",
     "placeholders": {
       "clue": {
         "content": "$1",
@@ -119,11 +119,20 @@
   "selection_toolbar_saved_hint_generic": {
     "message": "Try recalling with any word you remember"
   },
+  "selection_toolbar_saved_hint_edit": {
+    "message": "Opens Recall with “$1” ready to edit",
+    "placeholders": {
+      "clue": {
+        "content": "$1",
+        "example": "hydration"
+      }
+    }
+  },
   "selection_toolbar_try_recall": {
-    "message": "Try recalling"
+    "message": "Find with this"
   },
   "selection_toolbar_try_recall_aria": {
-    "message": "Try recalling with “$1”",
+    "message": "Open Recall with “$1” as a clue you can edit",
     "placeholders": {
       "clue": {
         "content": "$1",
@@ -567,6 +576,12 @@
   "sidepanel_voice_stop": {
     "message": "Stop dictation"
   },
+  "sidepanel_voice_cancel": {
+    "message": "Cancel dictation"
+  },
+  "sidepanel_voice_listening": {
+    "message": "Listening…"
+  },
   "sidepanel_voice_unavailable": {
     "message": "Voice input isn’t available in this browser"
   },
@@ -605,6 +620,9 @@
   },
   "popup_recall_progress_understanding_slower": {
     "message": "Taking longer than usual — still working on your clue…"
+  },
+  "popup_recall_progress_understanding_fallback_soon": {
+    "message": "Still working — if this keeps taking, we'll use a simpler on-device reading…"
   },
   "sidepanel_recall_deeper_reading_unavailable": {
     "message": "Couldn't get a deeper reading — used a simpler on-device pass."
@@ -674,6 +692,24 @@
         "example": "retention"
       }
     }
+  },
+  "popup_recall_echo_correct_aria": {
+    "message": "Change $1",
+    "placeholders": {
+      "chip": {
+        "content": "$1",
+        "example": "yesterday"
+      }
+    }
+  },
+  "popup_recall_echo_change_time": {
+    "message": "Change time"
+  },
+  "popup_recall_echo_change_type": {
+    "message": "Change type"
+  },
+  "popup_recall_echo_drop_term": {
+    "message": "Not this"
   },
   "popup_shorten_retry": {
     "message": "Shorten and retry"

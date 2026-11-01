@@ -43,10 +43,15 @@ import { renderRecallFraming } from '@/core/recall/render-recall-framing'
 import type { RecallFramingFacts } from '@/core/recall/recall-framing-facts'
 import {
   formatRecallUnderstandingEchoChips,
-  recallUnderstandingEchoSourceFromParsed
+  recallUnderstandingEchoSourceFromParsed,
+  type RecallUnderstandingEchoChip
 } from '@/core/recall/format-recall-understanding-echo'
 import { formatRecallVisibleProgressBasis } from '@/core/recall/format-recall-visible-progress-basis'
-import { selectRecallVisibleProgressBasisKinds } from '@/core/recall/visible-progress-basis'
+import type { RecallWaitProgressSnapshot } from '@/core/recall/recall-telemetry'
+import {
+  selectBasisKindsForResultCopy,
+  selectRecallVisibleProgressBasisKinds
+} from '@/core/recall/visible-progress-basis'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import {
   advanceRecallVisibleProgress,
@@ -92,6 +97,7 @@ import {
   consumeRecallPrefill,
   consumeRecallPrefillWithRetry,
   markFirstRecallOpenDone,
+  parseRecallPrefillStorageValue,
   readExcerptCaptureCount,
   RECALL_PREFILL_SESSION_KEY
 } from '@/infrastructure/storage/first-recall-onboarding-storage'
@@ -339,6 +345,38 @@ const recallPendingSteps = computed(() => {
   return steps
 })
 
+/** 本轮等待快照（放弃 / 出结果体验度量；与 §5.9 分计）。 */
+function snapshotWaitProgress(): RecallWaitProgressSnapshot {
+  const startedAt = recallProgressStartedAt.value
+  const elapsedMs = startedAt > 0 ? Math.max(0, Date.now() - startedAt) : 0
+  const peakStage =
+    recallProgressCurrent.value ??
+    (recallProgressCompleted.value.length > 0
+      ? recallProgressCompleted.value[recallProgressCompleted.value.length - 1]
+      : undefined)
+  const understandingTier =
+    recallProgressCurrent.value === 'understanding'
+      ? selectUnderstandingWaitTier(elapsedMs)
+      : undefined
+  return {
+    progressRevealed: recallProgressRevealed.value,
+    waitElapsedMs: elapsedMs,
+    ...(peakStage ? { peakStage } : {}),
+    ...(understandingTier !== undefined ? { understandingTier } : {})
+  }
+}
+
+/** 等待中放弃：关 Panel / 新找（改发 clue 由 beginClue 记 superseded）。 */
+function recordVisibleProgressWaitAbandoned(reason: 'panel_close' | 'new_find'): void {
+  if (!isRecallRefreshing.value) {
+    return
+  }
+  recallTelemetry.recordWaitAbandoned({
+    reason,
+    waitProgress: snapshotWaitProgress()
+  })
+}
+
 const recallPendingLabel = computed(() => {
   if (!isRecallRefreshing.value) {
     return t('popup_recall_pending')
@@ -393,7 +431,7 @@ const dialogState = ref<RecallDialogState>({
 
 /** §7.2 Outcome 会话信号（与 dialog 同寿；关 Panel / New find 结算后重置）。 */
 const outcomeSession = ref<RecallOutcomeSessionState>(createRecallOutcomeSessionState())
-/** §5.9 TTE 七事件本机录制（与 Outcome 会话同寿）。 */
+/** §5.9 TTE 七事件 + §7.0 wait_abandoned 本机录制（与 Outcome 会话同寿）。 */
 const recallTelemetry = createRecallTelemetryRecorder()
 /** 出口条（通道 D）：仅同场 New find 前出示（不跨次打开补问）。 */
 const showOutcomeExitStrip = ref(false)
@@ -571,6 +609,7 @@ function startNewFindSession(): void {
 async function completeNewFindSession(reason: string): Promise<void> {
   showOutcomeExitStrip.value = false
   clearThreadPivotStrip()
+  recordVisibleProgressWaitAbandoned('new_find')
   await flushOutcomeSession(reason, true)
   recallRequestId += 1
   isRecallRefreshing.value = false
@@ -828,10 +867,25 @@ function tryFlushPendingGsPrefillRecall(): void {
   void handleSendTurn(pending, { skipPivotCheck: true })
 }
 
-/** 挂起预填并在门禁放行后自动提交（GS Try it / Omnibox 无命中接力）。 */
-function applyRecallPrefillClue(prefill: string): void {
-  clue.value = prefill
-  pendingGsPrefillRecall.value = prefill
+/**
+ * 消费预填进 composer。
+ * - autoSubmit true：GS Try it / Omnibox 接力 → 门禁后自动提交
+ * - autoSubmit false：选区富线索 → 只预填可改，不自动发
+ */
+function applyRecallPrefillClue(prefill: string, options?: { autoSubmit?: boolean }): void {
+  const trimmed = prefill.trim()
+  if (!trimmed) {
+    return
+  }
+  clue.value = trimmed
+  if (options?.autoSubmit === false) {
+    pendingGsPrefillRecall.value = null
+    void nextTick(() => {
+      clueInputRef.value?.focus()
+    })
+    return
+  }
+  pendingGsPrefillRecall.value = trimmed
   tryFlushPendingGsPrefillRecall()
 }
 
@@ -847,19 +901,17 @@ function handleRecallPrefillStorageChanged(
     return
   }
   const change = changes[RECALL_PREFILL_SESSION_KEY]
-  if (!change || typeof change.newValue !== 'string') {
-    return
-  }
-  if (!change.newValue.trim()) {
+  // 载荷为 { clue, autoSubmit }；兼容旧版纯字符串。清空 / 非法值忽略。
+  if (!change || !parseRecallPrefillStorageValue(change.newValue)) {
     return
   }
   void (async () => {
     try {
-      const prefill = await consumeRecallPrefill()
-      if (!prefill) {
+      const payload = await consumeRecallPrefill()
+      if (!payload) {
         return
       }
-      applyRecallPrefillClue(prefill)
+      applyRecallPrefillClue(payload.clue, { autoSubmit: payload.autoSubmit })
     } catch {
       // 忽略：预填消费失败不挡主壳
     }
@@ -1108,7 +1160,9 @@ function formatRankedReplyText(total: number, visible: number): string {
 }
 
 /** 有真实槽位时生成理解回声芯片；无则 undefined。 */
-function resolveUnderstandingEchoChips(parsed: ParsedRecallClue | undefined): string[] | undefined {
+function resolveUnderstandingEchoChips(
+  parsed: ParsedRecallClue | undefined
+): RecallUnderstandingEchoChip[] | undefined {
   const source = recallUnderstandingEchoSourceFromParsed(parsed)
   if (!source) {
     return undefined
@@ -1136,13 +1190,16 @@ function resolveListReplyText(
     text = fallback
   }
 
-  // 理解回声已展示具体槽位时，不再追加泛化「Mainly based on」
-  if (!omitUnderstood) {
+  // 有 Heard as：仅保留回声未覆盖的 source；无回声：完整 Mainly based on
+  {
     const framingForBasis = facts ?? result.recallFraming?.facts
-    const basisKinds = selectRecallVisibleProgressBasisKinds({
-      ...(result.parsed !== undefined ? { parsed: result.parsed } : {}),
-      ...(framingForBasis !== undefined ? { framingFacts: framingForBasis } : {})
-    })
+    const basisKinds = selectBasisKindsForResultCopy(
+      selectRecallVisibleProgressBasisKinds({
+        ...(result.parsed !== undefined ? { parsed: result.parsed } : {}),
+        ...(framingForBasis !== undefined ? { framingFacts: framingForBasis } : {})
+      }),
+      { omitEchoOverlap: omitUnderstood }
+    )
     const basis = formatRecallVisibleProgressBasis(basisKinds, t)
     if (basis) {
       text = `${text} ${basis}`
@@ -1684,6 +1741,9 @@ async function runRecall(trimmedClue: string): Promise<void> {
     void cancelRecall({ source: 'sidepanel', recallId: `sp-${requestId - 1}` }).catch(() => {})
   }
   errorMessage.value = ''
+  /** 改发前先拍上一轮等待快照（startRecallVisibleProgressUi 会清进度态）。 */
+  const supersedeWaitProgress =
+    recallProgressStartedAt.value > 0 ? snapshotWaitProgress() : undefined
   isRecallRefreshing.value = true
   startRecallVisibleProgressUi(progressRequestId)
 
@@ -1700,7 +1760,8 @@ async function runRecall(trimmedClue: string): Promise<void> {
     priorUserUtterances.length > 0 ? priorUserUtterances[priorUserUtterances.length - 1] : undefined
   recallTelemetry.beginClue({
     clue: trimmed,
-    ...(priorUserUtterances.length > 0 && priorCluePreview ? { priorCluePreview } : {})
+    ...(priorUserUtterances.length > 0 && priorCluePreview ? { priorCluePreview } : {}),
+    ...(supersedeWaitProgress ? { supersedeWaitProgress } : {})
   })
 
   const pageContextMode = resolvePageContextMode({
@@ -1745,6 +1806,8 @@ async function runRecall(trimmedClue: string): Promise<void> {
     if (response.ok) {
       enqueueMissingVisibleProgressStages(response.result.visibleProgressStages)
     }
+    /** finish 会清进度态；出结果前先拍快照供体验度量。 */
+    const completedWaitProgress = snapshotWaitProgress()
     await finishRecallVisibleProgressUi()
     if (requestId !== recallRequestId) {
       return
@@ -1970,7 +2033,8 @@ async function runRecall(trimmedClue: string): Promise<void> {
     recallTelemetry.recordResultRendered({
       outcome: response.result.outcome,
       resultCount: renderedCount,
-      ...(response.result.pipelineTiming ? { pipelineTiming: response.result.pipelineTiming } : {})
+      ...(response.result.pipelineTiming ? { pipelineTiming: response.result.pipelineTiming } : {}),
+      waitProgress: completedWaitProgress
     })
 
     void probeMemoryLibrary()
@@ -2007,7 +2071,8 @@ async function handleSendTurn(
   options?: { skipPivotCheck?: boolean }
 ): Promise<void> {
   const trimmed = (overrideClue ?? clue.value).trim()
-  if (!trimmed || isRecallRefreshing.value || showOutcomeExitStrip.value) {
+  // 等待中允许改发 clue（取消上一轮）；出口条仍挡发送
+  if (!trimmed || showOutcomeExitStrip.value) {
     return
   }
 
@@ -2044,7 +2109,7 @@ async function handleSendTurn(
 /** 真正推入用户气泡并召回（已过软岔路口或芯片跳过）。 */
 async function commitSendTurn(trimmedClue: string): Promise<void> {
   const trimmed = trimmedClue.trim()
-  if (!trimmed || isRecallRefreshing.value) {
+  if (!trimmed) {
     return
   }
 
@@ -2090,10 +2155,15 @@ async function handleThreadPivotNew(): Promise<void> {
 
 /** 追问芯片：点击即发送一轮（稳定英文 value / 当前 locale label）；跳过软岔路口。 */
 function handleUseSuggestion(value: string): void {
-  if (!value.trim() || isRecallRefreshing.value) {
+  if (!value.trim()) {
     return
   }
   void handleSendTurn(value, { skipPivotCheck: true })
+}
+
+/** 理解回声纠错：合成英文 refine → 同追问路径（merge 覆盖/排除）。 */
+function handleCorrectUnderstanding(value: string): void {
+  handleUseSuggestion(value)
 }
 
 /**
@@ -2105,6 +2175,7 @@ async function handlePanelCloseOutcome(): Promise<void> {
     return
   }
   outcomeCloseHandled = true
+  recordVisibleProgressWaitAbandoned('panel_close')
   finalizeOpenDwell()
   await flushOutcomeSession('panel_close', true)
 }
@@ -2162,12 +2233,12 @@ onMounted(() => {
   document.addEventListener('visibilitychange', handleSidePanelVisibilityChange)
   void (async () => {
     try {
-      // Getting Started / Omnibox 接力：写 prefill 与开壳可能竞态，短窗重试
-      const prefill = await consumeRecallPrefillWithRetry()
-      if (!prefill) {
+      // Getting Started / Omnibox / 选区预填：写 session 与开壳可能竞态，短窗重试
+      const payload = await consumeRecallPrefillWithRetry()
+      if (!payload) {
         return
       }
-      applyRecallPrefillClue(prefill)
+      applyRecallPrefillClue(payload.clue, { autoSubmit: payload.autoSubmit })
     } catch {
       // 忽略：无预填不阻塞 Side Panel
     }
@@ -2433,6 +2504,7 @@ onUnmounted(() => {
         @dismiss="handleDismissCandidates"
         @show-more="handleShowMoreMatches"
         @use-suggestion="handleUseSuggestion"
+        @correct-understanding="handleCorrectUnderstanding"
         @open-bookmark-ingest-settings="handleOpenBookmarkIngestSettings"
       />
     </div>
@@ -2505,7 +2577,7 @@ onUnmounted(() => {
           :voiceStartLabel="t('sidepanel_voice_start')"
           :voiceStopLabel="t('sidepanel_voice_stop')"
           :voiceUnavailableLabel="t('sidepanel_voice_unavailable')"
-          :disabled="isRecallRefreshing || showOutcomeExitStrip"
+          :disabled="showOutcomeExitStrip"
           :prominent="isComposerProminent"
           @send="handleSendTurn"
         >
@@ -2516,7 +2588,7 @@ onUnmounted(() => {
               :only-this-site="pageContextOnlySite"
               :source-scope="recallSourceScope"
               :expanded="pageContextExpanded"
-              :disabled="isRecallRefreshing || showOutcomeExitStrip"
+              :disabled="showOutcomeExitStrip"
               :toggle-label="t('sidepanel_recall_settings_toggle')"
               :dismiss-label="t('sidepanel_recall_settings_dismiss')"
               :combine-label="t('sidepanel_page_context_combine')"

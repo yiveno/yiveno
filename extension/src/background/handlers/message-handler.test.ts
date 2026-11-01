@@ -82,6 +82,27 @@ describe('handleBackgroundMessage', () => {
       expect(sendResponse).toHaveBeenCalledWith({ ok: true })
     })
     expect(ensureBackgroundBootstrappedMock).not.toHaveBeenCalled()
-    expect(handleOpenRecallShellMock).toHaveBeenCalledWith({ tabId: 7, windowId: 1 })
+    expect(handleOpenRecallShellMock).toHaveBeenCalledWith({ tabId: 7, windowId: 1 }, {})
+  })
+
+  it('OPEN_RECALL_SHELL 带选区预填 payload 原样下传', async () => {
+    const sendResponse = vi.fn()
+    const handled = handleBackgroundMessage(
+      {
+        scope: BACKGROUND_MESSAGE_SCOPE,
+        type: 'OPEN_RECALL_SHELL',
+        payload: { clue: 'unsaturated substrate', autoSubmit: false }
+      },
+      sendResponse,
+      { tab: { id: 3, windowId: 9 } } as chrome.runtime.MessageSender
+    )
+    expect(handled).toBe(true)
+    await vi.waitFor(() => {
+      expect(sendResponse).toHaveBeenCalledWith({ ok: true })
+    })
+    expect(handleOpenRecallShellMock).toHaveBeenCalledWith(
+      { tabId: 3, windowId: 9 },
+      { clue: 'unsaturated substrate', autoSubmit: false }
+    )
   })
 })

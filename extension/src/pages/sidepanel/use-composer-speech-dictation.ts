@@ -43,6 +43,8 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
   const permissionBusy = ref(false)
 
   let recognition: BrowserSpeechRecognition | null = null
+  /** 本轮听写开始时的 clue（取消时还原） */
+  let sessionStartText = ''
   /** 本轮听写开始时的 clue + 已定稿转写 */
   let committedPrefix = ''
   let intentionalStop = false
@@ -83,6 +85,19 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
       teardownRecognition()
       status.value = 'idle'
     }
+  }
+
+  /** 取消听写：丢弃本轮转写，还原点麦前 clue。 */
+  function cancelListening(): void {
+    if (status.value !== 'listening' && status.value !== 'requesting_permission') {
+      return
+    }
+    intentionalStop = true
+    options.model.value = sessionStartText
+    teardownRecognition()
+    status.value = 'idle'
+    lastErrorKey.value = null
+    logger.info('SidePanel', '语音转写已取消，还原 clue')
   }
 
   /** 听写遇无权限：壳内轻条，不新开扩展页。 */
@@ -143,6 +158,7 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
 
     lastErrorKey.value = null
     intentionalStop = false
+    sessionStartText = options.model.value
     committedPrefix = options.model.value
     const lang = speechRecognitionLangForUiLocale(getEffectiveUiLocale())
     const instance = createBrowserSpeechRecognition({ lang })
@@ -224,6 +240,7 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
     permissionBusy,
     toggleListening,
     stopListening,
+    cancelListening,
     allowMicrophoneFromPanel,
     dismissPermissionPrompt
   }

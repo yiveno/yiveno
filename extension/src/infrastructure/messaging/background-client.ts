@@ -310,11 +310,26 @@ export async function openChromeShortcutsPage(): Promise<OpenChromeShortcutsPage
   return sendBackgroundMessage<OpenChromeShortcutsPageResponse>(message)
 }
 
-/** 打开 Recall Side Panel（划词等 content script → SW；扩展页应本页直调 sidePanel.open）。 */
-export async function openRecallShell(): Promise<OpenRecallShellResponse> {
+/**
+ * 打开 Recall Side Panel（划词等 content script → SW；扩展页应本页直调 sidePanel.open）。
+ * 划选预填：传 `clue` + `autoSubmit:false`，由 SW 先开火开壳再写 session（勿在 content 先 await storage）。
+ */
+export async function openRecallShell(options?: {
+  clue?: string
+  autoSubmit?: boolean
+}): Promise<OpenRecallShellResponse> {
+  const clue = options?.clue?.trim()
   const message: OpenRecallShellMessage = {
     scope: 'background',
-    type: 'OPEN_RECALL_SHELL'
+    type: 'OPEN_RECALL_SHELL',
+    ...(clue
+      ? {
+          payload: {
+            clue,
+            ...(options?.autoSubmit === false ? { autoSubmit: false } : {})
+          }
+        }
+      : {})
   }
   return sendBackgroundMessage<OpenRecallShellResponse>(message)
 }

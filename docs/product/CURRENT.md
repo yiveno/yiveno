@@ -25,7 +25,7 @@
 
 - **Getting Started 启动设置（体验 / 冷启动）** — §5.8 **已接线**：**双源 tab**；页眉 _Give Yiveno something to remember_；Bookmarks = Import→主进度→LLM 示意 clue + Try it；Excerpts = Things we miss 划存 + 定稿 clue + Try it；页底 Continue 软出口；**无** Start using / Skip 双按钮；Side Panel **无**书签导入顶栏条；冷启动 Import=等待/对齐
 - **自然 clue 采样协议**（真实目标 · 「还记得什么都行」· 首句标注 · 1/2 clue TTE）— 决策 must 扩面；见 [`docs/archive/research/tte-beta-2026-09/`](../archive/research/tte-beta-2026-09/README.md)（已归档）
-- **Recall 可见进展（体验高优）** — §7.0 **已接线**；先 A/B 度量；勿当召回质量已验证
+- **Recall 可见进展（体验高优）** — §7.0 **已接线**；放弃率/`wait_abandoned`/`progress:summarize` 可观测；勿当召回质量已验证
 - **理解回声（体验）** — §7.0 **已接线**：结果态 `Heard as` 槽位芯片；与可见进展同属体验面、与 §5.9 **分计**
 - **冷启动放行后轻条（体验）** — §5.8.1 **已接线**：门禁 ready 后顶栏非阻挡提示；Dismiss + 5min TTL；不挡 Recall
 - **ADR-011 时间置信度**落地与回归（high 硬筛 / low 软排；Framing Around；must + MCP）

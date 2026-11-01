@@ -63,6 +63,7 @@
     "docs:diagram-impact": "bun ./scripts/diagram-change-impact.mjs",
     "doc:check:all": "bun run doc:check && bun run doc:check:consistency && bun run docs:check-diagrams",
     "tte:summarize": "bun ./scripts/tte-summarize-telemetry.mjs",
+    "progress:summarize": "bun ./scripts/summarize-visible-progress-telemetry.mjs",
     "sync:ide-boot": "bun ./scripts/sync-ide-boot.mjs",
     "sync:brand-assets": "bun ./scripts/sync-brand-assets.mjs",
     "setup:git-lfs": "sh ./scripts/setup-git-lfs.sh",

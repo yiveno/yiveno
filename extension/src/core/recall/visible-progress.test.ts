@@ -6,9 +6,13 @@ import {
   selectUnderstandingWaitTier,
   shouldRevealRecallVisibleProgress,
   UNDERSTANDING_WAIT_TIER2_MS,
-  UNDERSTANDING_WAIT_TIER3_MS
+  UNDERSTANDING_WAIT_TIER3_MS,
+  UNDERSTANDING_WAIT_TIER4_MS
 } from '@/core/recall/visible-progress'
-import { selectRecallVisibleProgressBasisKinds } from '@/core/recall/visible-progress-basis'
+import {
+  selectBasisKindsForResultCopy,
+  selectRecallVisibleProgressBasisKinds
+} from '@/core/recall/visible-progress-basis'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 
 describe('visible-progress', () => {
@@ -42,12 +46,17 @@ describe('visible-progress', () => {
     expect(selectUnderstandingWaitTier(UNDERSTANDING_WAIT_TIER2_MS)).toBe(2)
     expect(selectUnderstandingWaitTier(UNDERSTANDING_WAIT_TIER3_MS - 1)).toBe(2)
     expect(selectUnderstandingWaitTier(UNDERSTANDING_WAIT_TIER3_MS)).toBe(3)
+    expect(selectUnderstandingWaitTier(UNDERSTANDING_WAIT_TIER4_MS - 1)).toBe(3)
+    expect(selectUnderstandingWaitTier(UNDERSTANDING_WAIT_TIER4_MS)).toBe(4)
   })
 
   it('understanding 梯级映射 i18n key', () => {
     expect(messageKeyForUnderstandingWaitTier(1)).toBe('popup_recall_progress_understanding')
     expect(messageKeyForUnderstandingWaitTier(2)).toBe('popup_recall_progress_understanding_slow')
     expect(messageKeyForUnderstandingWaitTier(3)).toBe('popup_recall_progress_understanding_slower')
+    expect(messageKeyForUnderstandingWaitTier(4)).toBe(
+      'popup_recall_progress_understanding_fallback_soon'
+    )
   })
 })
 
@@ -103,5 +112,19 @@ describe('visible-progress-basis', () => {
         }
       })
     ).toEqual(['source', 'purpose'])
+  })
+
+  it('有 Heard as 时 Mainly based on 仅保留 source', () => {
+    expect(
+      selectBasisKindsForResultCopy(['timing', 'source', 'purpose'], {
+        omitEchoOverlap: true
+      })
+    ).toEqual(['source'])
+    expect(selectBasisKindsForResultCopy(['timing', 'purpose'], { omitEchoOverlap: true })).toEqual(
+      []
+    )
+    expect(selectBasisKindsForResultCopy(['timing', 'source'], { omitEchoOverlap: false })).toEqual(
+      ['timing', 'source']
+    )
   })
 })

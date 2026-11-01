@@ -100,6 +100,23 @@ describe('mergeParsedRecallClues / mergeRecallDialogTurn', () => {
     }).merged
     expect(merged.confidence).toBe('high')
   })
+
+  it('本轮 not the X：优先清掉 prior 正词并进 exclude（理解回声纠错）', () => {
+    const turn1 = parseRecallClue('that video about retention', { nowMs: NOW_MS })
+    expect(turn1.contentTerms.map(t => t.toLowerCase())).toEqual(
+      expect.arrayContaining(['retention'])
+    )
+    const turn2 = parseRecallClue('not the retention', { nowMs: NOW_MS })
+    expect(turn2.excludeContentTerms ?? []).toEqual(expect.arrayContaining(['retention']))
+    const merged = mergeParsedRecallClues(
+      turn1,
+      turn2,
+      'that video about retention not the retention'
+    )
+    expect(merged.contentTerms.map(t => t.toLowerCase())).not.toContain('retention')
+    expect(merged.excludeContentTerms ?? []).toEqual(expect.arrayContaining(['retention']))
+    expect(merged.objectTypes).toContain('video')
+  })
 })
 
 describe('excludeDismissedMemoryItems', () => {

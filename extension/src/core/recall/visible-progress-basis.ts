@@ -49,3 +49,18 @@ export function selectRecallVisibleProgressBasisKinds(
 
   return kinds
 }
+
+/**
+ * 结果正文「Mainly based on」与 Heard as 协同：
+ * - 无回声：保留全部真实依据维度
+ * - 有回声：去掉与芯片重叠的 timing/purpose，仅保留回声未覆盖的 source（域名桶）
+ */
+export function selectBasisKindsForResultCopy(
+  kinds: readonly RecallVisibleProgressBasisKind[],
+  options: { omitEchoOverlap: boolean }
+): RecallVisibleProgressBasisKind[] {
+  if (!options.omitEchoOverlap) {
+    return [...kinds]
+  }
+  return kinds.filter(kind => kind === 'source')
+}

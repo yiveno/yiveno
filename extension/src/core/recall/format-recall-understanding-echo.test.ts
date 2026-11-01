@@ -40,7 +40,7 @@ describe('formatRecallUnderstandingEchoChips', () => {
     ).toEqual([])
   })
 
-  it('按类型→时间→行为→附注→内容词排序；low 时间加 ~', () => {
+  it('按类型→时间→行为→附注→内容词排序；low 时间加 ~；可纠字段正确', () => {
     const chips = formatRecallUnderstandingEchoChips(
       {
         objectTypes: ['video'],
@@ -52,7 +52,7 @@ describe('formatRecallUnderstandingEchoChips', () => {
       },
       translate
     )
-    expect(chips).toEqual([
+    expect(chips.map(chip => chip.label)).toEqual([
       'video',
       '~a while ago',
       'just saved',
@@ -61,23 +61,34 @@ describe('formatRecallUnderstandingEchoChips', () => {
       '“deploy”',
       '“extra”'
     ])
-    expect(chips.join(' ')).not.toContain('a_while_ago')
+    expect(chips.map(chip => chip.correctable)).toEqual([
+      true,
+      true,
+      false,
+      false,
+      true,
+      true,
+      true
+    ])
+    expect(chips[0]?.objectType).toBe('video')
+    expect(chips[1]?.timeLabel).toBe('a_while_ago')
+    expect(chips[4]?.contentTerm).toBe('retention')
+    expect(chips.map(chip => chip.label).join(' ')).not.toContain('a_while_ago')
   })
 
   it('high 时间不加 ~', () => {
-    expect(
-      formatRecallUnderstandingEchoChips(
-        {
-          objectTypes: ['article'],
-          timeLabel: 'yesterday',
-          timeConfidence: 'high',
-          contentTerms: [],
-          behaviorHints: [],
-          noteHint: false
-        },
-        translate
-      )
-    ).toEqual(['article', 'yesterday'])
+    const chips = formatRecallUnderstandingEchoChips(
+      {
+        objectTypes: ['article'],
+        timeLabel: 'yesterday',
+        timeConfidence: 'high',
+        contentTerms: [],
+        behaviorHints: [],
+        noteHint: false
+      },
+      translate
+    )
+    expect(chips.map(chip => chip.label)).toEqual(['article', 'yesterday'])
   })
 })
 

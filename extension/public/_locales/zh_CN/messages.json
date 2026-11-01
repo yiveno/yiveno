@@ -108,7 +108,7 @@
     "message": "已保存到 Yiveno"
   },
   "selection_toolbar_saved_hint": {
-    "message": "试试 Recall：「$1」",
+    "message": "用这段来找：「$1」— 打开后可先改再发",
     "placeholders": {
       "clue": {
         "content": "$1",
@@ -119,11 +119,20 @@
   "selection_toolbar_saved_hint_generic": {
     "message": "用你记得的任何词试试 Recall"
   },
+  "selection_toolbar_saved_hint_edit": {
+    "message": "会打开 Recall，并带上「$1」供你改",
+    "placeholders": {
+      "clue": {
+        "content": "$1",
+        "example": "hydration"
+      }
+    }
+  },
   "selection_toolbar_try_recall": {
-    "message": "试试 Recall"
+    "message": "用这段来找"
   },
   "selection_toolbar_try_recall_aria": {
-    "message": "用「$1」试试 Recall",
+    "message": "打开 Recall，并把「$1」填进线索框供你改",
     "placeholders": {
       "clue": {
         "content": "$1",
@@ -567,6 +576,12 @@
   "sidepanel_voice_stop": {
     "message": "停止语音输入"
   },
+  "sidepanel_voice_cancel": {
+    "message": "取消语音输入"
+  },
+  "sidepanel_voice_listening": {
+    "message": "正在听…"
+  },
   "sidepanel_voice_unavailable": {
     "message": "当前浏览器不支持语音输入"
   },
@@ -605,6 +620,9 @@
   },
   "popup_recall_progress_understanding_slower": {
     "message": "比平时更久一点 — 仍在处理你的线索…"
+  },
+  "popup_recall_progress_understanding_fallback_soon": {
+    "message": "还在处理 — 若再久等，会先用更简单的本机理解…"
   },
   "sidepanel_recall_deeper_reading_unavailable": {
     "message": "没拿到更深层理解 — 已改用更简单的本机通道。"
@@ -674,6 +692,24 @@
         "example": "retention"
       }
     }
+  },
+  "popup_recall_echo_correct_aria": {
+    "message": "改掉「$1」",
+    "placeholders": {
+      "chip": {
+        "content": "$1",
+        "example": "yesterday"
+      }
+    }
+  },
+  "popup_recall_echo_change_time": {
+    "message": "换时间"
+  },
+  "popup_recall_echo_change_type": {
+    "message": "换类型"
+  },
+  "popup_recall_echo_drop_term": {
+    "message": "不要这个词"
   },
   "popup_shorten_retry": {
     "message": "缩短后重试"

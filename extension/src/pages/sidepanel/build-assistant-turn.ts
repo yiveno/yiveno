@@ -1,3 +1,4 @@
+import type { RecallUnderstandingEchoChip } from '@/core/recall/format-recall-understanding-echo'
 import type { RecallFramingFacts } from '@/core/recall/recall-framing-facts'
 import type { RecallShellTextSegment } from '@/core/recall/recall-shell-empty-copy'
 import type {
@@ -23,7 +24,7 @@ export function createAssistantTurn(input: {
   suggestions?: RecallSuggestion[]
   composerNarrowExamples?: string[]
   recallFramingFacts?: RecallFramingFacts
-  understandingEcho?: string[]
+  understandingEcho?: RecallUnderstandingEchoChip[]
   deeperReadingTip?: string
   allowDismiss?: boolean
 }): ConversationTurn {

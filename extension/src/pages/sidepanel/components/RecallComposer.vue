@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed, nextTick, onMounted, ref, toRef, watch } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, toRef, watch } from 'vue'
 
 import { t } from '@/infrastructure/i18n/t'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
 import { useComposerSpeechDictation } from '@/pages/sidepanel/use-composer-speech-dictation'
+import { useVoiceInputMeter } from '@/pages/sidepanel/use-voice-input-meter'
 
 defineOptions({ name: 'RecallComposer' })
 
@@ -34,8 +35,11 @@ const speech = useComposerSpeechDictation({
   disabled: computed(() => Boolean(disabledRef.value))
 })
 
+const isListening = computed(() => speech.status.value === 'listening')
+const voiceMeter = useVoiceInputMeter(isListening)
+
 const voiceButtonLabel = computed(() =>
-  speech.status.value === 'listening' ? props.voiceStopLabel : props.voiceStartLabel
+  isListening.value ? props.voiceStopLabel : props.voiceStartLabel
 )
 
 const showMicPermissionStrip = computed(
@@ -51,6 +55,15 @@ const voiceTitle = computed(() => {
     return t(errorKey)
   }
   return voiceButtonLabel.value
+})
+
+/** 柱高 px：跟电平；装饰用，不用 transform。 */
+const meterBarStyles = computed(() => {
+  const minPx = 4
+  const maxPx = 22
+  return voiceMeter.barLevels.value.map(ratio => ({
+    height: `${Math.round(minPx + ratio * (maxPx - minPx))}px`
+  }))
 })
 
 /** 与 CSS `.recall-input` 单行行高对齐；多行由 scrollHeight 撑开，空态固定单行。 */
@@ -99,6 +112,15 @@ function handleKeydown(event: KeyboardEvent): void {
   }
 }
 
+/** 听写中 textarea 隐藏，Esc 挂在 window。 */
+function handleListeningEscape(event: KeyboardEvent): void {
+  if (event.key !== 'Escape' || !isListening.value) {
+    return
+  }
+  event.preventDefault()
+  speech.cancelListening()
+}
+
 function handleInput(): void {
   resizeInput()
 }
@@ -115,6 +137,13 @@ function handleVoiceClick(): void {
   speech.toggleListening()
 }
 
+function handleCancelVoice(): void {
+  if (props.disabled) {
+    return
+  }
+  speech.cancelListening()
+}
+
 watch(model, async () => {
   await nextTick()
   resizeInput()
@@ -128,8 +157,23 @@ watch(
   }
 )
 
+watch(isListening, async listening => {
+  if (listening) {
+    window.addEventListener('keydown', handleListeningEscape)
+  } else {
+    window.removeEventListener('keydown', handleListeningEscape)
+    await nextTick()
+    resizeInput()
+    focus()
+  }
+})
+
 onMounted(() => {
   resizeInput()
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleListeningEscape)
 })
 
 defineExpose({ focus })
@@ -163,10 +207,23 @@ defineExpose({ focus })
         </button>
       </div>
     </div>
-    <div class="recall-composer-shell">
-      <!-- 输入框内左侧工具（如 Recall settings 图标） -->
-      <slot name="leading" />
+    <div class="recall-composer-shell" :class="{ 'recall-composer-shell--listening': isListening }">
+      <!-- 听写态：取消（还原点麦前 clue） -->
+      <button
+        v-if="isListening"
+        type="button"
+        class="recall-voice-cancel"
+        :aria-label="t('sidepanel_voice_cancel')"
+        :title="t('sidepanel_voice_cancel')"
+        :disabled="props.disabled"
+        @click="handleCancelVoice"
+      >
+        <AppIcon name="close" size="16px" />
+      </button>
+      <!-- 输入框内左侧工具（如 Recall settings）；听写态让位给波形 -->
+      <slot v-if="!isListening" name="leading" />
       <textarea
+        v-show="!isListening"
         ref="inputRef"
         v-model="model"
         class="recall-input"
@@ -178,18 +235,33 @@ defineExpose({ focus })
         @input="handleInput"
         @focus="pinDocumentScroll"
       />
+      <!-- 听写态：跟麦能量的波形（失败则氛围起伏） -->
+      <div
+        v-if="isListening"
+        class="recall-voice-meter"
+        role="status"
+        :aria-label="t('sidepanel_voice_listening')"
+      >
+        <span
+          v-for="(style, index) in meterBarStyles"
+          :key="index"
+          class="recall-voice-meter__bar"
+          :style="style"
+        />
+      </div>
       <button
         v-if="speech.supported"
         type="button"
         class="recall-voice-button"
-        :class="{ 'recall-voice-button--listening': speech.status.value === 'listening' }"
+        :class="{ 'recall-voice-button--listening': isListening }"
         :aria-label="voiceButtonLabel"
         :title="voiceTitle"
-        :aria-pressed="speech.status.value === 'listening'"
+        :aria-pressed="isListening"
         :disabled="props.disabled"
         @click="handleVoiceClick"
       >
-        <AppIcon name="mic" size="18px" />
+        <span v-if="isListening" class="recall-voice-stop-glyph" aria-hidden="true" />
+        <AppIcon v-else name="mic" size="18px" />
       </button>
       <button
         type="button"
@@ -324,6 +396,10 @@ defineExpose({ focus })
   overflow: visible;
 }
 
+.recall-composer-shell--listening {
+  border-color: color-mix(in srgb, var(--accent) 36%, var(--border));
+}
+
 .recall-form--prominent .recall-composer-shell {
   box-shadow:
     0 1px 2px color-mix(in srgb, var(--ink) 10%, transparent),
@@ -373,6 +449,69 @@ defineExpose({ focus })
   color: var(--on-surface-muted);
 }
 
+.recall-voice-cancel {
+  display: inline-flex;
+  flex-shrink: 0;
+  justify-content: center;
+  align-items: center;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  color: var(--on-surface-muted);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  cursor: pointer;
+  transition:
+    background-color 140ms ease-out,
+    color 140ms ease-out;
+}
+
+.recall-voice-cancel:hover:not(:disabled) {
+  color: var(--on-surface);
+  background: color-mix(in srgb, var(--ink) 10%, transparent);
+}
+
+.recall-voice-cancel:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.recall-voice-cancel:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.recall-voice-meter {
+  display: flex;
+  flex: 1 1 auto;
+  justify-content: center;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  height: 28px;
+  padding: 0 var(--space-2xs);
+}
+
+.recall-voice-meter__bar {
+  display: block;
+  flex: 0 0 auto;
+  width: 3px;
+  min-height: 4px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--on-surface-muted) 72%, var(--accent) 28%);
+  transition: height 70ms linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recall-voice-meter__bar {
+    transition: none;
+    height: 8px !important;
+    opacity: 0.7;
+  }
+}
+
 .recall-voice-button {
   display: inline-flex;
   flex-shrink: 0;
@@ -399,12 +538,21 @@ defineExpose({ focus })
 }
 
 .recall-voice-button--listening {
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  color: var(--on-surface);
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 55%, var(--border));
 }
 
 .recall-voice-button--listening:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--accent) 18%, transparent);
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+.recall-voice-stop-glyph {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  background: currentColor;
 }
 
 .recall-voice-button:disabled {

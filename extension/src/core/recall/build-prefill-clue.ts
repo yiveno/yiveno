@@ -6,8 +6,11 @@
  * - `buildCaptureSavedPreview`：展示预览；可见行数由 CSS line-clamp，JS 只归一空白与病态安全上限。
  */
 
-/** 预填线索最大字符数（中英混排按 code unit 截；业务短线索，非布局省略）。 */
-export const RECALL_PREFILL_CLUE_MAX = 24
+/**
+ * 预填线索最大字符数（中英混排按 code unit 截；业务上限，非布局省略）。
+ * 选区富线索需保留更多字面；可见截断仍交给 composer CSS。
+ */
+export const RECALL_PREFILL_CLUE_MAX = 120
 
 /** 存完浮层预览病态安全上限（可见截断交给 `.saved-preview` line-clamp）。 */
 export const CAPTURE_SAVED_PREVIEW_SAFETY_MAX = 500

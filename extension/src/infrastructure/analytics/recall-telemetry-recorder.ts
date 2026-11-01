@@ -1,5 +1,5 @@
 /**
- * Side Panel Recall TTE 会话录制器：维护 active task + 七事件写入。
+ * Side Panel Recall 遥测录制器：TTE 七事件 + §7.0 等待放弃（体验 · 与 TTE 分计）。
  */
 
 import type {
@@ -7,12 +7,13 @@ import type {
   RecallOutcomeLabel,
   RecallOutcomeSource
 } from '@/core/recall/recall-outcome'
-import type { RecallPipelineTiming } from '@/core/recall/recall-telemetry'
-import {
-  previewRecallClue,
-  RECALL_TTE_TASK_TIMEOUT_MS,
-  type RecallTelemetryEvent
+import type {
+  RecallPipelineTiming,
+  RecallWaitAbandonReason,
+  RecallWaitProgressSnapshot,
+  RecallTelemetryEvent
 } from '@/core/recall/recall-telemetry'
+import { previewRecallClue, RECALL_TTE_TASK_TIMEOUT_MS } from '@/core/recall/recall-telemetry'
 import { appendRecallTelemetryEvent } from '@/infrastructure/analytics/recall-telemetry-store'
 
 interface ActiveRecallTelemetryTask {
@@ -20,6 +21,10 @@ interface ActiveRecallTelemetryTask {
   traceId: string
   clueSubmittedAt: number
   timeoutTimer: ReturnType<typeof setTimeout> | null
+  /** 本 task 是否已写出结果（防重复 wait_abandoned） */
+  resultRendered: boolean
+  /** 是否已记过等待放弃 */
+  waitAbandoned: boolean
 }
 
 function nowIso(): string {
@@ -37,7 +42,14 @@ function emit(event: RecallTelemetryEvent): void {
     })
 }
 
-/** 创建 Side Panel 用 TTE 录制器（组件内单例）。 */
+function defaultWaitProgressSnapshot(clueSubmittedAt: number): RecallWaitProgressSnapshot {
+  return {
+    progressRevealed: false,
+    waitElapsedMs: Math.max(0, Date.now() - clueSubmittedAt)
+  }
+}
+
+/** 创建 Side Panel 用遥测录制器（组件内单例）。 */
 export function createRecallTelemetryRecorder() {
   let active: ActiveRecallTelemetryTask | null = null
 
@@ -69,11 +81,46 @@ export function createRecallTelemetryRecorder() {
     }, RECALL_TTE_TASK_TIMEOUT_MS)
   }
 
+  /**
+   * 等待中放弃（关 Panel / 新找 / 改发 clue）。
+   * 已出结果或已记过放弃则 no-op。
+   */
+  function recordWaitAbandoned(input: {
+    reason: RecallWaitAbandonReason
+    waitProgress?: RecallWaitProgressSnapshot
+  }): void {
+    if (!active || active.resultRendered || active.waitAbandoned) {
+      return
+    }
+    const waitProgress = input.waitProgress ?? defaultWaitProgressSnapshot(active.clueSubmittedAt)
+    active.waitAbandoned = true
+    clearTimeoutTimer()
+    emit({
+      type: 'wait_abandoned',
+      taskId: active.taskId,
+      traceId: active.traceId,
+      reason: input.reason,
+      waitProgress,
+      at: nowIso()
+    })
+  }
+
   /** 用户提交 clue；若为多轮 refine 则先发 clue_refined。 */
-  function beginClue(input: { clue: string; priorCluePreview?: string }): {
+  function beginClue(input: {
+    clue: string
+    priorCluePreview?: string
+    /** 覆盖上一段未出结果的等待（改发 clue） */
+    supersedeWaitProgress?: RecallWaitProgressSnapshot
+  }): {
     taskId: string
     traceId: string
   } {
+    if (active && !active.resultRendered && !active.waitAbandoned) {
+      recordWaitAbandoned({
+        reason: 'superseded_clue',
+        ...(input.supersedeWaitProgress ? { waitProgress: input.supersedeWaitProgress } : {})
+      })
+    }
     clearActiveTask()
     const taskId = crypto.randomUUID()
     const traceId = taskId
@@ -103,7 +150,9 @@ export function createRecallTelemetryRecorder() {
       taskId,
       traceId,
       clueSubmittedAt: Date.now(),
-      timeoutTimer: null
+      timeoutTimer: null,
+      resultRendered: false,
+      waitAbandoned: false
     }
     scheduleTaskTimeout(active)
     return { taskId, traceId }
@@ -114,10 +163,12 @@ export function createRecallTelemetryRecorder() {
     outcome: 'top_pick' | 'need_a_clue' | 'no_match'
     resultCount: number
     pipelineTiming?: RecallPipelineTiming
+    waitProgress?: RecallWaitProgressSnapshot
   }): void {
     if (!active) {
       return
     }
+    active.resultRendered = true
     emit({
       type: 'result_rendered',
       taskId: active.taskId,
@@ -125,6 +176,7 @@ export function createRecallTelemetryRecorder() {
       outcome: input.outcome,
       resultCount: input.resultCount,
       ...(input.pipelineTiming ? { pipelineTiming: input.pipelineTiming } : {}),
+      ...(input.waitProgress ? { waitProgress: input.waitProgress } : {}),
       at: nowIso()
     })
   }
@@ -201,6 +253,7 @@ export function createRecallTelemetryRecorder() {
     recordEvidenceVisible,
     recordSourceOpened,
     recordUserConfirmed,
+    recordWaitAbandoned,
     clearActiveTask,
     getActiveTaskId
   }

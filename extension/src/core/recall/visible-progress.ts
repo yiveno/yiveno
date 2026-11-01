@@ -38,14 +38,23 @@ export const UNDERSTANDING_WAIT_TIER2_MS = 4_000
 /** understanding 同阶段等待梯级 3（更慢 · 毫秒）。 */
 export const UNDERSTANDING_WAIT_TIER3_MS = 8_000
 
+/**
+ * understanding 同阶段等待梯级 4（近线索 LLM 硬超时 · 毫秒）。
+ * 对齐 `CLUE_LLM_COMPLETE_TIMEOUT_MS=12s`：提前软预期 rules_fallback，禁止网络归因。
+ */
+export const UNDERSTANDING_WAIT_TIER4_MS = 10_000
+
 /** 同阶段慢等梯级（仅 understanding；不改阶段枚举）。 */
-export type RecallUnderstandingWaitTier = 1 | 2 | 3
+export type RecallUnderstandingWaitTier = 1 | 2 | 3 | 4
 
 /**
  * 按本轮 elapsed 选 understanding 等待梯级文案档。
  * 调用方须已过 500ms 揭示门控且 current===understanding。
  */
 export function selectUnderstandingWaitTier(elapsedMs: number): RecallUnderstandingWaitTier {
+  if (elapsedMs >= UNDERSTANDING_WAIT_TIER4_MS) {
+    return 4
+  }
   if (elapsedMs >= UNDERSTANDING_WAIT_TIER3_MS) {
     return 3
   }
@@ -57,6 +66,9 @@ export function selectUnderstandingWaitTier(elapsedMs: number): RecallUnderstand
 
 /** understanding 梯级 → i18n message key。 */
 export function messageKeyForUnderstandingWaitTier(tier: RecallUnderstandingWaitTier): string {
+  if (tier === 4) {
+    return 'popup_recall_progress_understanding_fallback_soon'
+  }
   if (tier === 3) {
     return 'popup_recall_progress_understanding_slower'
   }

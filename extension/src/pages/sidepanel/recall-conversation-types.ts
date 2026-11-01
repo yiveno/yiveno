@@ -1,3 +1,4 @@
+import type { RecallUnderstandingEchoChip } from '@/core/recall/format-recall-understanding-echo'
 import type { RecallFramingFacts } from '@/core/recall/recall-framing-facts'
 import type { RecallShellTextSegment } from '@/core/recall/recall-shell-empty-copy'
 import type { RecallCardModel } from '@/pages/sidepanel/RecallResultCard.vue'
@@ -51,9 +52,9 @@ export type AssistantTurn = {
   recallFramingFacts?: RecallFramingFacts
   /**
    * 理解回声芯片（已翻译）：本轮合并 Parsed 的真实槽位。
-   * 与 Framing P1 互斥展示（有芯片则气泡省略 P1）。
+   * 可纠芯片点开菜单 → 合成英文 refine；与 Framing P1 互斥展示。
    */
-  understandingEcho?: string[]
+  understandingEcho?: RecallUnderstandingEchoChip[]
   /**
    * LLM 失败/超时降级后的结果轻提示（已翻译）。
    * 仅 `rules_fallback`；离线 omit（`rules`）不叠。

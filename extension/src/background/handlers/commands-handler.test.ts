@@ -16,6 +16,9 @@ describe('commands-handler', () => {
   const sidePanelOpen = vi.fn(async () => undefined)
   const windowsGetCurrent = vi.fn(async () => ({ id: 42 }))
 
+  const sessionSet = vi.fn(async () => undefined)
+  const sessionRemove = vi.fn(async () => undefined)
+
   beforeEach(() => {
     vi.clearAllMocks()
     vi.stubGlobal('chrome', {
@@ -25,6 +28,13 @@ describe('commands-handler', () => {
       sidePanel: {
         setPanelBehavior: vi.fn(async () => undefined),
         open: sidePanelOpen
+      },
+      storage: {
+        session: {
+          set: sessionSet,
+          remove: sessionRemove,
+          get: vi.fn(async () => ({}))
+        }
       }
     })
   })
@@ -82,5 +92,35 @@ describe('commands-handler', () => {
     expect(response).toEqual({ ok: true })
     expect(sidePanelOpen).toHaveBeenCalledWith({ tabId: 7 })
     expect(windowsGetCurrent).not.toHaveBeenCalled()
+  })
+
+  it('handleOpenRecallShell 带 clue：先 open 再写预填（autoSubmit false）', async () => {
+    const order: string[] = []
+    sidePanelOpen.mockImplementation(async () => {
+      order.push('open')
+    })
+    sessionSet.mockImplementation(async () => {
+      order.push('write')
+    })
+
+    const response = await handleOpenRecallShell(
+      { tabId: 7 },
+      { clue: 'hydration reaction', autoSubmit: false }
+    )
+    expect(response).toEqual({ ok: true })
+    expect(order).toEqual(['open', 'write'])
+    expect(sessionSet).toHaveBeenCalledWith({
+      'yiveno.recallPrefill': { clue: 'hydration reaction', autoSubmit: false }
+    })
+  })
+
+  it('handleOpenRecallShell：open 失败但预填已写 → 仍 ok', async () => {
+    sidePanelOpen.mockRejectedValueOnce(new Error('already open / gesture'))
+    const response = await handleOpenRecallShell(
+      { tabId: 7 },
+      { clue: 'anne carson', autoSubmit: false }
+    )
+    expect(response).toEqual({ ok: true })
+    expect(sessionSet).toHaveBeenCalled()
   })
 })

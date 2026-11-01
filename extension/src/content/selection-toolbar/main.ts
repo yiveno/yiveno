@@ -1,6 +1,5 @@
 import type { CaptureEntry } from '@/core/memory/capture-entry'
 import { buildCaptureSavedPreview, buildRecallPrefillClue } from '@/core/recall/build-prefill-clue'
-import { shouldShowFirstRecallHint } from '@/core/recall/first-recall-onboarding'
 import { extractSelectionContextOnPage } from '@/infrastructure/browser/selection-context-page'
 import {
   isGettingStartedPageUrl,
@@ -36,11 +35,7 @@ import { initUiLocaleFromSettings, t } from '@/infrastructure/i18n/t'
 import { warnIfContentScriptMessagesMissing } from '@/infrastructure/i18n/extension-i18n-boot'
 import { isMemoryErrorCode, tMemoryError } from '@/infrastructure/i18n/memory-error'
 import type { MessageKey } from '@/infrastructure/i18n/message-keys'
-import {
-  readExcerptCaptureCount,
-  readFirstRecallOpenDone,
-  writeRecallPrefill
-} from '@/infrastructure/storage/first-recall-onboarding-storage'
+import { writeRecallPrefill } from '@/infrastructure/storage/first-recall-onboarding-storage'
 import {
   getAppIconNodes,
   getAppIconViewBox,
@@ -50,10 +45,8 @@ import { getSelectionToolbarShadowStyles } from '@/content/selection-toolbar/sel
 
 const TOOLBAR_HOST_ID = 'yiveno-selection-toolbar-host'
 const NOTE_MAX_LENGTH = 500
-/** 存成抓住感展示时长（无找回 CTA）。 */
+/** 存成抓住感展示时长。 */
 const SAVED_FEEDBACK_HIDE_MS = 2400
-/** 存成后展示「Try recalling」按钮的停留时长。 */
-const SAVED_RECALL_CTA_HIDE_MS = 12000
 
 /** 划词浮层 UI 模式。 */
 type ToolbarUiMode =
@@ -82,8 +75,9 @@ let notePanel: HTMLElement | null = null
 let savedFeedbackPanel: HTMLElement | null = null
 let savedPreviewEl: HTMLElement | null = null
 let savedHintEl: HTMLElement | null = null
-let savedRecallButton: HTMLButtonElement | null = null
 let saveButton: HTMLButtonElement | null = null
+/** 划选「用这段来找」：选区当 clue 预填 composer，不要求先存。 */
+let findButton: HTMLButtonElement | null = null
 let noteButton: HTMLButtonElement | null = null
 let noteInput: HTMLTextAreaElement | null = null
 let statusButton: HTMLButtonElement | null = null
@@ -296,9 +290,10 @@ function ensureToolbarHost(): void {
   document.getElementById(TOOLBAR_HOST_ID)?.remove()
 
   const saveLabel = safeT('context_menu_save_selection')
+  const findLabel = safeT('selection_toolbar_try_recall')
   const noteLabel = safeT('selection_toolbar_add_note')
   const notePlaceholder = safeT('selection_toolbar_note_placeholder')
-  if (saveLabel === null || noteLabel === null || notePlaceholder === null) {
+  if (saveLabel === null || findLabel === null || noteLabel === null || notePlaceholder === null) {
     return
   }
 
@@ -318,7 +313,7 @@ function ensureToolbarHost(): void {
   actionsRow = document.createElement('div')
   actionsRow.className = 'toolbar'
   actionsRow.setAttribute('role', 'toolbar')
-  actionsRow.setAttribute('aria-label', `${saveLabel}. ${noteLabel}`)
+  actionsRow.setAttribute('aria-label', `${saveLabel}. ${findLabel}. ${noteLabel}`)
 
   saveButton = createIconActionButton('bookmark_add', saveLabel)
   saveButton.addEventListener('mousedown', preserveSelectionOnMouseDown)
@@ -328,9 +323,22 @@ function ensureToolbarHost(): void {
     void handleSaveClick()
   })
 
-  const divider = document.createElement('span')
-  divider.className = 'divider'
-  divider.setAttribute('aria-hidden', 'true')
+  const dividerAfterSave = document.createElement('span')
+  dividerAfterSave.className = 'divider'
+  dividerAfterSave.setAttribute('aria-hidden', 'true')
+
+  // 选区当 clue 开 Recall（不必先存）；GS 页隐藏，避免与 Step 2 抢路径
+  findButton = createIconActionButton('format_quote', findLabel)
+  findButton.addEventListener('mousedown', preserveSelectionOnMouseDown)
+  findButton.addEventListener('click', event => {
+    event.preventDefault()
+    event.stopPropagation()
+    void handleFindWithSelectionClick()
+  })
+
+  const dividerAfterFind = document.createElement('span')
+  dividerAfterFind.className = 'divider'
+  dividerAfterFind.setAttribute('aria-hidden', 'true')
 
   noteButton = createIconActionButton('edit_note', noteLabel)
   noteButton.addEventListener('mousedown', preserveSelectionOnMouseDown)
@@ -345,7 +353,15 @@ function ensureToolbarHost(): void {
   statusButton.className = 'status-button is-hidden'
   statusButton.disabled = true
 
-  actionsRow.append(saveButton, divider, noteButton, statusButton)
+  actionsRow.append(
+    saveButton,
+    dividerAfterSave,
+    findButton,
+    dividerAfterFind,
+    noteButton,
+    statusButton
+  )
+  syncFindButtonVisibility()
 
   notePanel = document.createElement('div')
   notePanel.className = 'note-panel'
@@ -398,15 +414,7 @@ function ensureToolbarHost(): void {
   savedHintEl = document.createElement('p')
   savedHintEl.className = 'saved-hint'
   savedHintEl.classList.add('is-hidden')
-  savedRecallButton = document.createElement('button')
-  savedRecallButton.type = 'button'
-  savedRecallButton.className = 'saved-recall-button is-hidden'
-  savedRecallButton.addEventListener('click', event => {
-    event.preventDefault()
-    event.stopPropagation()
-    void handleOpenRecallClick()
-  })
-  savedFeedbackPanel.append(savedPreviewEl, savedHintEl, savedRecallButton)
+  savedFeedbackPanel.append(savedPreviewEl, savedHintEl)
 
   const shell = document.createElement('div')
   shell.className = 'shell'
@@ -417,9 +425,33 @@ function ensureToolbarHost(): void {
   buttonState = 'idle'
 }
 
+/** Getting Started 有独立试找；普通页才展示划选「用这段来找」。 */
+function syncFindButtonVisibility(): void {
+  if (!findButton || !actionsRow) {
+    return
+  }
+  const onGettingStarted = isGettingStartedPageUrl(window.location.href)
+  // DOM: save | d0 | find | d1 | note → GS 藏 find+d1，剩下 save | d0 | note
+  const afterFindDivider = actionsRow.querySelectorAll('.divider').item(1)
+  if (onGettingStarted) {
+    findButton.classList.add('is-hidden')
+    if (afterFindDivider instanceof HTMLElement) {
+      afterFindDivider.classList.add('is-hidden')
+    }
+    return
+  }
+  findButton.classList.remove('is-hidden')
+  if (afterFindDivider instanceof HTMLElement && buttonState === 'idle' && uiMode === 'actions') {
+    afterFindDivider.classList.remove('is-hidden')
+  }
+}
+
 function setBusy(busy: boolean): void {
   if (saveButton) {
     saveButton.disabled = busy
+  }
+  if (findButton) {
+    findButton.disabled = busy
   }
   if (noteButton) {
     noteButton.disabled = busy
@@ -437,10 +469,14 @@ function showStatus(state: 'saving' | 'saved' | 'error', label: string): void {
 
   setBusy(state === 'saving')
   saveButton.classList.add('is-hidden')
+  if (findButton) {
+    findButton.classList.add('is-hidden')
+  }
   noteButton.classList.add('is-hidden')
-  const divider = actionsRow.querySelector('.divider')
-  if (divider instanceof HTMLElement) {
-    divider.classList.add('is-hidden')
+  for (const divider of actionsRow.querySelectorAll('.divider')) {
+    if (divider instanceof HTMLElement) {
+      divider.classList.add('is-hidden')
+    }
   }
 
   statusButton.classList.remove('is-hidden', 'status-button--saved', 'status-button--error')
@@ -460,69 +496,59 @@ function showStatus(state: 'saving' | 'saved' | 'error', label: string): void {
   )
 }
 
-/** 展示存成抓住感：预览正文 + 可选找回引导与一键打开 Side Panel。 */
-function showSavedFeedback(input: {
-  preview: string
-  hint: string | null
-  showRecallAction: boolean
-  recallAriaLabel: string | null
-}): void {
+/** 展示存成抓住感：预览正文（找东西入口在划选菜单，不绑存成后）。 */
+function showSavedFeedback(input: { preview: string }): void {
   if (!savedFeedbackPanel || !savedPreviewEl || !savedHintEl) {
     return
   }
   savedPreviewEl.textContent = input.preview
-  if (input.hint) {
-    savedHintEl.textContent = input.hint
-    savedHintEl.classList.remove('is-hidden')
-  } else {
-    savedHintEl.textContent = ''
-    savedHintEl.classList.add('is-hidden')
-  }
-
-  if (savedRecallButton) {
-    if (input.showRecallAction) {
-      const label = safeT('selection_toolbar_try_recall')
-      if (label !== null) {
-        savedRecallButton.textContent = label
-        savedRecallButton.disabled = false
-        savedRecallButton.setAttribute('aria-label', input.recallAriaLabel?.trim() || label)
-        savedRecallButton.classList.remove('is-hidden')
-      }
-    } else {
-      savedRecallButton.disabled = false
-      savedRecallButton.classList.add('is-hidden')
-    }
-  }
-
+  savedHintEl.textContent = ''
+  savedHintEl.classList.add('is-hidden')
   savedFeedbackPanel.classList.add('is-open')
 }
 
-async function handleOpenRecallClick(): Promise<void> {
-  if (!ensureLiveContext() || !savedRecallButton) {
+/**
+ * 划选「用这段来找」：选区 → composer 预填（可改、不自动发）。
+ * 不要求先 Capture；找的是库里已有痕迹，不是「刚划的这段本身」。
+ */
+async function handleFindWithSelectionClick(): Promise<void> {
+  if (!ensureLiveContext() || !findButton || buttonState === 'saving') {
+    return
+  }
+  if (isGettingStartedPageUrl(window.location.href)) {
     return
   }
 
   clearHideTimer()
-  savedRecallButton.disabled = true
+  capturePendingSelection()
+  const selectedText = pendingCapture?.selectedText || getSelectedText()
+  const prefill = buildRecallPrefillClue(selectedText)
+  if (!prefill) {
+    const gone = safeT('selection_toolbar_selection_gone')
+    if (gone !== null) {
+      showStatus('error', gone)
+      scheduleHideToolbar(1600)
+    }
+    return
+  }
 
+  findButton.disabled = true
   try {
-    const response = await openRecallShell()
-
+    // 预填交给 SW：先开火开壳再写 session（content 先 await storage 会丢手势且与 Panel mount 竞态）。
+    // Panel 已开时 SW 开壳失败但预填已写仍返回 ok。
+    const response = await openRecallShell({ clue: prefill, autoSubmit: false })
     if (!ensureLiveContext()) {
       return
     }
-
     if (response?.ok) {
       hideToolbar()
       return
     }
-
     const failed = safeT('selection_toolbar_open_recall_failed')
-    if (failed !== null && savedHintEl) {
-      savedHintEl.textContent = failed
-      savedHintEl.classList.remove('is-hidden')
+    if (failed !== null) {
+      showStatus('error', failed)
     }
-    savedRecallButton.disabled = false
+    findButton.disabled = false
     scheduleHideToolbar(3200)
   } catch (error) {
     if (isContextInvalidatedError(error) || !isExtensionContextValid()) {
@@ -530,12 +556,11 @@ async function handleOpenRecallClick(): Promise<void> {
       return
     }
     const failed = safeT('selection_toolbar_open_recall_failed')
-    if (failed !== null && savedHintEl) {
-      savedHintEl.textContent = failed
-      savedHintEl.classList.remove('is-hidden')
+    if (failed !== null) {
+      showStatus('error', failed)
     }
-    if (savedRecallButton) {
-      savedRecallButton.disabled = false
+    if (findButton) {
+      findButton.disabled = false
     }
     scheduleHideToolbar(3200)
   }
@@ -552,10 +577,6 @@ function hideSavedFeedback(): void {
     savedHintEl.textContent = ''
     savedHintEl.classList.add('is-hidden')
   }
-  if (savedRecallButton) {
-    savedRecallButton.disabled = false
-    savedRecallButton.classList.add('is-hidden')
-  }
 }
 
 function resetActionsView(): void {
@@ -571,11 +592,13 @@ function resetActionsView(): void {
     noteButton.classList.remove('is-hidden')
   }
   if (actionsRow) {
-    const divider = actionsRow.querySelector('.divider')
-    if (divider instanceof HTMLElement) {
-      divider.classList.remove('is-hidden')
+    for (const divider of actionsRow.querySelectorAll('.divider')) {
+      if (divider instanceof HTMLElement) {
+        divider.classList.remove('is-hidden')
+      }
     }
   }
+  syncFindButtonVisibility()
   if (statusButton) {
     statusButton.classList.add('is-hidden')
     statusButton.classList.remove('status-button--saved', 'status-button--error')
@@ -765,45 +788,20 @@ async function handleSaveClick(
     showStatus('saved', saved)
 
     const preview = buildCaptureSavedPreview(selectedText)
-    const onGettingStarted = isGettingStartedPageUrl(window.location.href)
-    const prefill = onGettingStarted ? null : buildRecallPrefillClue(selectedText)
-    let hint: string | null = null
-    let showRecallAction = false
-    let recallAriaLabel: string | null = null
     try {
-      // Getting Started Step 2 要用户自己贴 clue，禁止写入预填以免 Side Panel 自动提交
-      if (prefill) {
-        await writeRecallPrefill(prefill)
-      } else if (onGettingStarted) {
+      // Getting Started：清预填，避免误带进 Side Panel；试找走独立 Step 2
+      if (isGettingStartedPageUrl(window.location.href)) {
         await writeRecallPrefill('')
-      }
-      const captureCount = await readExcerptCaptureCount()
-      const firstDone = await readFirstRecallOpenDone()
-      // Getting Started 有独立 Step 2，Saved 浮层不再塞 Try recalling
-      if (
-        !onGettingStarted &&
-        shouldShowFirstRecallHint({
-          excerptCaptureCount: captureCount,
-          firstRecallOpenDone: firstDone
-        })
-      ) {
-        showRecallAction = true
-        if (prefill) {
-          hint = safeT('selection_toolbar_saved_hint', prefill)
-          recallAriaLabel = safeT('selection_toolbar_try_recall_aria', prefill)
-        } else {
-          hint = safeT('selection_toolbar_saved_hint_generic')
-          recallAriaLabel = safeT('selection_toolbar_try_recall_aria_generic')
-        }
       }
     } catch {
       // storage 失败不影响抓住感主文案
     }
-    showSavedFeedback({ preview, hint, showRecallAction, recallAriaLabel })
+    // 存成只反馈「进库」；「用这段来找」在划选菜单，不绑存后
+    showSavedFeedback({ preview })
 
     clearPageSelection()
     clearPendingCapture()
-    scheduleHideToolbar(showRecallAction ? SAVED_RECALL_CTA_HIDE_MS : SAVED_FEEDBACK_HIDE_MS)
+    scheduleHideToolbar(SAVED_FEEDBACK_HIDE_MS)
     return true
   } catch (error) {
     if (isContextInvalidatedError(error) || !isExtensionContextValid()) {
@@ -1247,6 +1245,7 @@ function teardown(): void {
   savedPreviewEl = null
   savedHintEl = null
   saveButton = null
+  findButton = null
   noteButton = null
   noteInput = null
   statusButton = null

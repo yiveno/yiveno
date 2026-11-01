@@ -1,9 +1,22 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import AppButton from '@/infrastructure/ui/AppButton.vue'
 
 import { RECALL_RESULT_PAGE_SIZE } from '@/core/recall/build-recall-result'
+import {
+  recallObjectTypeLabelKey,
+  recallTimeLabelMessageKey,
+  type RecallUnderstandingEchoChip
+} from '@/core/recall/format-recall-understanding-echo'
+import { RECALL_OBJECT_TYPE_CANONICAL_SURFACES } from '@/core/recall/parse-recall-clue-lexicon'
+import type { RecallObjectType } from '@/core/recall/parse-recall-clue-types'
 import { recallRemainingVisibleCount } from '@/core/recall/recall-result-visible-count'
+import {
+  ECHO_CORRECTION_TIME_OPTIONS,
+  synthesizeEchoContentTermExcludeClue,
+  synthesizeEchoObjectTypeReplaceClue,
+  synthesizeEchoTimeReplaceClue
+} from '@/core/recall/synthesize-echo-correction-clue'
 import {
   RECALL_CONVERSATION_TURN_PAGE_SIZE,
   recallHiddenEarlierTurnCount,
@@ -48,10 +61,17 @@ const emit = defineEmits<{
   dismiss: []
   showMore: [turnId: string, mode: ShowMoreMode]
   useSuggestion: [value: string]
+  /** 理解回声纠错：合成英文 refine clue */
+  correctUnderstanding: [value: string]
   toggleDetailExportSelection: [memoryItemId: string]
   /** 空库「导入书签」→ Settings 书签灌库开关 */
   openBookmarkIngestSettings: []
 }>()
+
+/** 纠错菜单：`${turnId}::${chipId}`；null = 关闭。 */
+const openEchoMenuKey = ref<string | null>(null)
+
+const ALL_OBJECT_TYPES = Object.keys(RECALL_OBJECT_TYPE_CANONICAL_SURFACES) as RecallObjectType[]
 
 /** Show more 续展模式：再展一页 / 展开剩余全部。 */
 export type ShowMoreMode = 'page' | 'all'
@@ -86,6 +106,7 @@ watch(
   (nextLength, previousLength) => {
     if (nextLength > previousLength) {
       earlierRevealedCount.value = 0
+      openEchoMenuKey.value = null
     }
   }
 )
@@ -194,9 +215,90 @@ function onShowEarlierClick(mode: 'page' | 'all'): void {
 }
 
 /** 理解回声 a11y：前缀 + 芯片用逗号连接。 */
-function understandingEchoAriaLabel(chips: string[]): string {
-  return `${t('popup_recall_heard_as')} ${chips.join(t('popup_recall_echo_aria_sep'))}`
+function understandingEchoAriaLabel(chips: RecallUnderstandingEchoChip[]): string {
+  return `${t('popup_recall_heard_as')} ${chips
+    .map(chip => chip.label)
+    .join(t('popup_recall_echo_aria_sep'))}`
 }
+
+function echoMenuKey(turnId: string, chipId: string): string {
+  return `${turnId}::${chipId}`
+}
+
+function isEchoMenuOpen(turnId: string, chipId: string): boolean {
+  return openEchoMenuKey.value === echoMenuKey(turnId, chipId)
+}
+
+function toggleEchoMenu(turnId: string, chip: RecallUnderstandingEchoChip): void {
+  if (!chip.correctable) {
+    return
+  }
+  const key = echoMenuKey(turnId, chip.id)
+  openEchoMenuKey.value = openEchoMenuKey.value === key ? null : key
+}
+
+function closeEchoMenu(): void {
+  openEchoMenuKey.value = null
+}
+
+function echoCorrectAria(chip: RecallUnderstandingEchoChip): string {
+  return t('popup_recall_echo_correct_aria', [chip.label])
+}
+
+/** 时间纠错选项：排除当前 label。 */
+function echoTimeOptions(chip: RecallUnderstandingEchoChip) {
+  return ECHO_CORRECTION_TIME_OPTIONS.filter(label => label !== chip.timeLabel).map(label => ({
+    label: t(recallTimeLabelMessageKey(label)),
+    value: synthesizeEchoTimeReplaceClue(label)
+  }))
+}
+
+/** 类型纠错选项：排除当前类型。 */
+function echoObjectTypeOptions(chip: RecallUnderstandingEchoChip) {
+  return ALL_OBJECT_TYPES.filter(type => type !== chip.objectType).map(type => ({
+    label: t(recallObjectTypeLabelKey(type)),
+    value: synthesizeEchoObjectTypeReplaceClue(type)
+  }))
+}
+
+function commitEchoCorrection(clue: string): void {
+  const trimmed = clue.trim()
+  if (!trimmed) {
+    return
+  }
+  closeEchoMenu()
+  emit('correctUnderstanding', trimmed)
+}
+
+function commitEchoDropTerm(chip: RecallUnderstandingEchoChip): void {
+  if (!chip.contentTerm) {
+    return
+  }
+  commitEchoCorrection(synthesizeEchoContentTermExcludeClue(chip.contentTerm))
+}
+
+function onDocumentPointerDown(event: PointerEvent): void {
+  if (!openEchoMenuKey.value) {
+    return
+  }
+  const target = event.target
+  if (!(target instanceof Element)) {
+    closeEchoMenu()
+    return
+  }
+  if (target.closest('.assistant-turn-echo-item')) {
+    return
+  }
+  closeEchoMenu()
+}
+
+onMounted(() => {
+  document.addEventListener('pointerdown', onDocumentPointerDown, true)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('pointerdown', onDocumentPointerDown, true)
+})
 
 function isDetailExportSelected(id: string): boolean {
   return props.selectedDetailExportIds?.has(id) === true
@@ -249,13 +351,73 @@ function handleToggleDetailExportSelection(id: string): void {
             <span class="assistant-turn-echo-chips">
               <span
                 v-for="(chip, echoIndex) in turn.understandingEcho"
-                :key="`${turn.id}-echo-${echoIndex}`"
+                :key="`${turn.id}-echo-${chip.id}`"
                 class="assistant-turn-echo-item"
               >
                 <span v-if="echoIndex > 0" class="assistant-turn-echo-sep" aria-hidden="true"
                   >·</span
                 >
-                <span class="assistant-turn-echo-chip">{{ chip }}</span>
+                <button
+                  v-if="chip.correctable"
+                  type="button"
+                  class="assistant-turn-echo-chip assistant-turn-echo-chip--correctable"
+                  :aria-expanded="isEchoMenuOpen(turn.id, chip.id)"
+                  :aria-haspopup="chip.kind === 'content_term' ? 'true' : 'menu'"
+                  :title="echoCorrectAria(chip)"
+                  :aria-label="echoCorrectAria(chip)"
+                  @click.stop="toggleEchoMenu(turn.id, chip)"
+                >
+                  {{ chip.label }}
+                </button>
+                <span v-else class="assistant-turn-echo-chip">{{ chip.label }}</span>
+                <span
+                  v-if="isEchoMenuOpen(turn.id, chip.id)"
+                  class="assistant-turn-echo-menu"
+                  role="menu"
+                  :aria-label="echoCorrectAria(chip)"
+                  @click.stop
+                >
+                  <template v-if="chip.kind === 'time'">
+                    <span class="assistant-turn-echo-menu-title" aria-hidden="true">{{
+                      t('popup_recall_echo_change_time')
+                    }}</span>
+                    <button
+                      v-for="option in echoTimeOptions(chip)"
+                      :key="`${chip.id}-${option.value}`"
+                      type="button"
+                      class="assistant-turn-echo-menu-item"
+                      role="menuitem"
+                      @click="commitEchoCorrection(option.value)"
+                    >
+                      {{ option.label }}
+                    </button>
+                  </template>
+                  <template v-else-if="chip.kind === 'object_type'">
+                    <span class="assistant-turn-echo-menu-title" aria-hidden="true">{{
+                      t('popup_recall_echo_change_type')
+                    }}</span>
+                    <button
+                      v-for="option in echoObjectTypeOptions(chip)"
+                      :key="`${chip.id}-${option.value}`"
+                      type="button"
+                      class="assistant-turn-echo-menu-item"
+                      role="menuitem"
+                      @click="commitEchoCorrection(option.value)"
+                    >
+                      {{ option.label }}
+                    </button>
+                  </template>
+                  <template v-else-if="chip.kind === 'content_term'">
+                    <button
+                      type="button"
+                      class="assistant-turn-echo-menu-item"
+                      role="menuitem"
+                      @click="commitEchoDropTerm(chip)"
+                    >
+                      {{ t('popup_recall_echo_drop_term') }}
+                    </button>
+                  </template>
+                </span>
               </span>
             </span>
           </p>
@@ -530,6 +692,18 @@ function handleToggleDetailExportSelection(id: string): void {
   font-size: 13px;
   line-height: 1.4;
   color: var(--on-surface);
+  /* 仅 opacity 呼吸；禁止几何变换（产品 §3） */
+  animation: pending-label-breathe 2.4s ease-in-out infinite;
+}
+
+@keyframes pending-label-breathe {
+  0%,
+  100% {
+    opacity: 0.78;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 .pending-steps-done {
@@ -601,6 +775,7 @@ function handleToggleDetailExportSelection(id: string): void {
 }
 
 .assistant-turn-echo-item {
+  position: relative;
   display: inline-flex;
   align-items: baseline;
   gap: var(--space-2xs) var(--space-2xs);
@@ -614,8 +789,84 @@ function handleToggleDetailExportSelection(id: string): void {
 
 .assistant-turn-echo-chip {
   min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: none;
+  font: inherit;
+  font-size: inherit;
+  line-height: inherit;
   color: var(--on-surface);
+  background: transparent;
   overflow-wrap: anywhere;
+}
+
+.assistant-turn-echo-chip--correctable {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 0.18em;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.assistant-turn-echo-chip--correctable:hover {
+  background: var(--surface-chrome);
+}
+
+.assistant-turn-echo-chip--correctable:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.assistant-turn-echo-menu {
+  position: absolute;
+  z-index: 4;
+  top: calc(100% + 4px);
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 9rem;
+  max-width: min(16rem, 70vw);
+  max-height: 14rem;
+  overflow: auto;
+  padding: var(--space-2xs);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-white);
+  box-shadow: var(--elevation-1, 0 4px 12px rgb(0 0 0 / 8%));
+}
+
+.assistant-turn-echo-menu-title {
+  padding: 2px var(--space-2xs);
+  font-size: 11px;
+  line-height: 1.3;
+  font-weight: 600;
+  color: var(--on-surface-muted);
+}
+
+.assistant-turn-echo-menu-item {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  padding: 4px var(--space-2xs);
+  border: none;
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.3;
+  text-align: left;
+  color: var(--on-surface);
+  background: transparent;
+  cursor: pointer;
+}
+
+.assistant-turn-echo-menu-item:hover {
+  background: var(--surface-chrome);
+}
+
+.assistant-turn-echo-menu-item:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 .assistant-turn-deeper-tip {
