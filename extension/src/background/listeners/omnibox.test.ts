@@ -92,10 +92,10 @@ describe('omnibox listeners', () => {
             return `Tip: Title, site, or note keyword. Fuzzy → Side Panel (${sub})`
           }
           if (key === 'omnibox_no_match') {
-            return 'No quick match — open Side Panel to recall this'
+            return 'No quick match — try a fuller recall in Side Panel'
           }
           if (key === 'omnibox_no_match_with_shortcut') {
-            return `No quick match — open Side Panel to recall this (${sub})`
+            return `No quick match — try a fuller recall in Side Panel (${sub})`
           }
           if (key === 'omnibox_switch_track') {
             return 'Not what you wanted? Open Side Panel'

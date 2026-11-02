@@ -21,10 +21,10 @@
     }
   },
   "omnibox_no_match": {
-    "message": "No quick match — open Side Panel to recall this"
+    "message": "No quick match — try a fuller recall in Side Panel"
   },
   "omnibox_no_match_with_shortcut": {
-    "message": "No quick match — open Side Panel to recall this ($1)",
+    "message": "No quick match — try a fuller recall in Side Panel ($1)",
     "placeholders": {
       "shortcut": {
         "content": "$1",

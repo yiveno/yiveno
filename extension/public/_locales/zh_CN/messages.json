@@ -21,10 +21,10 @@
     }
   },
   "omnibox_no_match": {
-    "message": "没有快速匹配 — 打开侧边栏用 Recall 找"
+    "message": "没有快速匹配 — 可在侧边栏试更完整的 Recall"
   },
   "omnibox_no_match_with_shortcut": {
-    "message": "没有快速匹配 — 打开侧边栏用 Recall 找（$1）",
+    "message": "没有快速匹配 — 可在侧边栏试更完整的 Recall（$1）",
     "placeholders": {
       "shortcut": {
         "content": "$1",

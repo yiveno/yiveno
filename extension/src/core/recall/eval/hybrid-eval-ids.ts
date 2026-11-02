@@ -27,7 +27,9 @@ export const HYBRID_EVAL_IDS = {
   /** R0 must：零锚点助手发令，Hybrid 不得用语义近邻填空 */
   r0AssistantCommand: '22222222-2222-4222-8222-222222222209',
   /** R0 must：非 Recall 生活助手意图，语义命中也不得交卷 */
-  r0NonRecallWeather: '22222222-2222-4222-8222-222222222210'
+  r0NonRecallWeather: '22222222-2222-4222-8222-222222222210',
+  /** 窗外专有内容锚：high 硬筛空佐证后 soft 回退须捞回（窗内仅噪音） */
+  softReopenXenonRetention: '22222222-2222-4222-8222-222222222211'
 } as const
 
 export type HybridEvalItemId = (typeof HYBRID_EVAL_IDS)[keyof typeof HYBRID_EVAL_IDS]

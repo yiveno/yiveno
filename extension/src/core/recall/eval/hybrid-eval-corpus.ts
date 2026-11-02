@@ -50,7 +50,9 @@ export const HYBRID_EVAL_ANCHORS = {
   /** inWindowRecentExcerpt 的 anchor；用例 corroboration-suppress-window-only-unrelated / adr011 */
   inWindowRecent: 'privacy article yesterday',
   /** sameDomainArticle 的 anchor；用例 same-domain-beats-semantic-tie */
-  sameDomain: 'Yiveno product documentation recall chapter'
+  sameDomain: 'Yiveno product documentation recall chapter',
+  /** softReopenXenonRetention 的 anchor；用例 hybrid soft 回退 */
+  softReopenXenon: 'xenonretentionprotocol vendor audit handbook'
 } as const
 
 /** 用工厂出 item 后用稳定 ID + 时间戳覆写，方便断言。 */
@@ -82,6 +84,7 @@ export function buildHybridEvalCorpus(): MemoryItem[] {
   const pureSemanticVector = makeFakeEmbedding(HYBRID_EVAL_ANCHORS.pureSemantic)
   const inWindowVector = makeFakeEmbedding(HYBRID_EVAL_ANCHORS.inWindowRecent)
   const sameDomainVector = makeFakeEmbedding(HYBRID_EVAL_ANCHORS.sameDomain)
+  const softReopenXenonVector = makeFakeEmbedding(HYBRID_EVAL_ANCHORS.softReopenXenon)
 
   // —— 正交对照：与所有 anchor 都准正交，验证 R0 / 抑制语义命中 ——
   const musicRivalOrthogonal = makeOrthogonalVector('a tune that keeps replaying in my head')
@@ -290,6 +293,25 @@ export function buildHybridEvalCorpus(): MemoryItem[] {
         OLD_HYBRID_ISO
       ),
       offDomainNearNeighborVector
+    ),
+
+    // —— 窗外专有内容锚：yesterday 硬筛 + 窗内噪音 → soft 回退须捞回 ——
+    withFakeEmbedding(
+      withStableIdentity(
+        createTextExcerptMemoryItem({
+          ownerId: OWNER_ID,
+          sourceLocalProfileId: SOURCE_LOCAL_PROFILE_ID,
+          payload: {
+            selectedText: 'Handbook section on xenonretentionprotocol for vendor audits.',
+            sourceUrl: 'https://docs.example.com/eval-hybrid-xenonretentionprotocol',
+            pageTitle: 'Vendor audit handbook'
+          },
+          now: () => OLD_HYBRID_ISO
+        }),
+        HYBRID_EVAL_IDS.softReopenXenonRetention,
+        OLD_HYBRID_ISO
+      ),
+      softReopenXenonVector
     )
   ]
 }

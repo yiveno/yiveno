@@ -713,13 +713,14 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 - **low**：糊时间印象 → **禁止**仅因时间硬切导致邻域空 / 轻易 `no_match`；中心窗内软加分，窗外可留在邻域。Framing：high 用 Within；low 用 Around。
 - **刚存**（`recently_saved` 且无显式 timeLabel）：合成 `recent` 窗时按 **high** 处理（用户在说「刚存」，非糊远距）。
 
-**内容佐证门 × 硬筛空/弱窗（Normative · 2026-09-11 · ADR-011 例外）：**  
+**内容佐证门 × 硬筛空/弱窗（Normative · 2026-09-11 · ADR-011 例外；Hybrid 计数澄清 2026-11-02）：**  
 优先级：**禁止甩无关**（见上节空结果）**>** 日历硬筛 **>** 弱语义填屏。当 `contentTerms` 非空时：
 
-1. 邻域候选必须对至少一个**有效** contentTerm（与 Filter 同源：剥掉 `like`/`good` 等弱偏好残留后再判）在条目索引字段（title / textExcerpt / excerptContext / pageTitle / summary / domain / url / keywords / tags / **note**）上有**词面佐证**（与 keyword-filter 归一/折叠同规；**禁止**内容别名表）。不得仅靠弱 embedding / `hybridRrf` / `outcomePair` / 类型·时间加成交付邻域。
-2. **high 仍先硬筛**（含 `recently_saved` 合成 `recent` 窗；有 contentTerms 的关键词/Hybrid 路径同样适用）。硬筛 + 佐证门后池空 → **同一 clue 内容优先回退一次**：时间按 soft（不硬切窗外；窗内仍可软加分），Framing 用 **Around** 并诚实提示时间可能不准；只接受有佐证的命中。Hybrid 池内仍空 → **降级全库关键词**再试；仍空 → 诚实 `no_match`。
-3. **无有效 contentTerms**（纯类型/时间/刚存，或仅剩弱残留）：不启用本门，避免误伤约束邻域。
-4. 回退最多 **1** 次；禁止无限扩窗。
+1. **交付邻域**必须对至少一个**有效** contentTerm（与 Filter 同源：剥掉 `like`/`good` 等弱偏好残留后再判）在条目索引字段（title / textExcerpt / excerptContext / pageTitle / summary / domain / url / keywords / tags / **note**）上有**词面佐证**（与 keyword-filter 归一/折叠同规；**禁止**内容别名表）。不得仅靠弱 embedding / `hybridRrf` / `outcomePair` / 类型·时间加成交付邻域。
+2. **high 仍先硬筛**（含 `recently_saved` 合成 `recent` 窗；有 contentTerms 的关键词/Hybrid 路径同样适用）。硬筛 + **硬佐证**后池空 → **同一 clue 内容优先回退一次**：时间按 soft（不硬切窗外；窗内仍可软加分），Framing 用 **Around**（诚实提示时间可能不准）；只接受有佐证的命中。Hybrid 交付硬滤后仍空 → **降级全库关键词**再试；仍空 → 诚实 `no_match`。
+3. **Hybrid 排序 vs 回退计数（分计）：** Hybrid 融合后可对未佐证项做 **soft penalty**（保留语义近邻排序，避免 contentTerms 误判 hard-veto）。**soft 回退是否触发必须以硬佐证计数为准**——禁止用 soft 池长冒充「窗非空」导致该回退却不回退、假 `no_match`。交付仍走硬滤（`buildRecallResult`）；关键词路径全程硬佐证。
+4. **无有效 contentTerms**（纯类型/时间/刚存，或仅剩弱残留）：不启用本门，避免误伤约束邻域。
+5. 回退最多 **1** 次；禁止无限扩窗。
 
 **线索内明确排除（Normative · 2026-10-30 · `excludeContentTerms`）：**
 
@@ -1597,28 +1598,29 @@ schema：`extension/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 下列 case **id** 为 Normative 命名；实现时写入 `recall-eval-cases.ts`，corpus 项写入 `recall-eval-ids.ts` / `recall-eval-corpus.ts`。
 
-| id                                            | clueClass  | clue（示例）                                                                 | expectation                                               | 意图 / 说明                                                                   |
-| --------------------------------------------- | ---------- | ---------------------------------------------------------------------------- | --------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| `r4-semi-fuzzy-time-excerpt`                  | semi_fuzzy | `article I didn't finish last week`                                          | `in_topk` k=3 · half-read 摘录                            | 行为+时间 · 钉死一条                                                          |
-| `r4-semi-fuzzy-note-anchor`                   | semi_fuzzy | `page where I left a note about deploy`                                      | `in_topk` k=3 · 带 note 条目                              | 附注指向 · R4/Explain                                                         |
-| `semi-fuzzy-note-inflection-over-shared-word` | semi_fuzzy | `newsletter where I disagreed with section 3`                                | `top1` · note「disagree with section 3」                  | 屈折+多词附注压过共享词 newsletter 对手                                       |
-| `semi-fuzzy-weak-title-note-anchor`           | semi_fuzzy | `the untitled doc where I noted NSF grant narrative`                         | `top1` · 弱标题+附注                                      | 弱标题靠 note 钉死                                                            |
-| `semi-fuzzy-few-days-ago-privacy`             | semi_fuzzy | `the privacy article from a few days ago`                                    | `top1` · URL 含 privacy 近几天项                          | `a few days ago`/`the other day`→`recent`（勿误入 `a_while_ago` 排除近 3 天） |
-| `semi-fuzzy-old-adjective-dense-passage`      | semi_fuzzy | `that old DPR paper on arxiv`                                                | `top1` · 旧稿+内容锚                                      | soft「old」不作时间硬窗；靠内容词                                             |
-| `r4-vague-recently-saved`                     | vague      | `just saved something about i18n`                                            | `in_topk` k=3 · 近因摘录                                  | recently_saved 邻域                                                           |
-| `r4-vague-often-opened`                       | vague      | `the Yiveno page I kept opening`                                             | `top1` 或 `in_topk` k=3 · 高 openCount                    | 行为排序                                                                      |
-| `r4-cluster-yiveno-docs`                      | semi_fuzzy | `Yiveno docs I saved`                                                        | **两条** `in_topk` k=6（实现拆 `…-product` / `…-design`） | **逛一簇**；须两条都进名单（不同 host，避免同域互斥）                         |
-| `r4-negative-zero-anchor`                     | negative   | `play some songs I like`                                                     | `no_match`                                                | 零锚点 · 禁助手路径                                                           |
-| `r0-zero-anchor-bored-pick`                   | negative   | `i feel bored pick something fun for me`                                     | `no_match`                                                | 无聊助手发令 · 禁扫库                                                         |
-| `r0-zero-anchor-recommend-movie`              | negative   | `recommend a good movie I should watch tonight`                              | `no_match`                                                | 推荐≠找；有 video 词面也不得当娱乐推荐                                        |
-| `r0-non-recall-weather`                       | negative   | `what is the weather going to be like tomorrow`                              | `no_match`                                                | 天气问答非找                                                                  |
-| `r0-non-recall-order-food`                    | negative   | `order me some pizza for dinner`                                             | `no_match`                                                | 点餐非找                                                                      |
-| `r0-non-recall-summarize`                     | negative   | `summarize the latest news for me`                                           | `no_match`                                                | 摘要助手非找                                                                  |
-| `r0-non-recall-plan-trip`                     | negative   | `plan a weekend trip to seattle for me`                                      | `no_match`                                                | 行程规划非找                                                                  |
-| `r0-non-recall-codegen`                       | negative   | `write a python script that renames my files`                                | `no_match`                                                | 写码助手非找                                                                  |
-| `r4-constrained-time-empty`                   | semi_fuzzy | `poem I saved yesterday`（库中无 poem+昨天）                                 | `no_match` + `constrained_none` 语义                      | 强约束诚实空（eval 断言 emptyKind 若 exposed）                                |
-| `content-corroboration-time-soft-reopen`      | semi_fuzzy | `that article I saved yesterday about xenonretentionprotocol`                | `in_topk` k=3 · 窗外专有内容锚点                          | high 硬筛后窗内无佐证 → **一次 soft 回退** 捞窗外内容锚点（ADR-011 例外）     |
-| `content-corroboration-reject-weak-neighbor`  | semi_fuzzy | `that article I saved yesterday about standupscrapnoise`（库仅窗内无关摘录） | `no_match`                                                | 有 contentTerms 时禁止窗内弱 embedding 甩无关                                 |
+| id                                              | clueClass  | clue（示例）                                                                 | expectation                                               | 意图 / 说明                                                                            |
+| ----------------------------------------------- | ---------- | ---------------------------------------------------------------------------- | --------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| `r4-semi-fuzzy-time-excerpt`                    | semi_fuzzy | `article I didn't finish last week`                                          | `in_topk` k=3 · half-read 摘录                            | 行为+时间 · 钉死一条                                                                   |
+| `r4-semi-fuzzy-note-anchor`                     | semi_fuzzy | `page where I left a note about deploy`                                      | `in_topk` k=3 · 带 note 条目                              | 附注指向 · R4/Explain                                                                  |
+| `semi-fuzzy-note-inflection-over-shared-word`   | semi_fuzzy | `newsletter where I disagreed with section 3`                                | `top1` · note「disagree with section 3」                  | 屈折+多词附注压过共享词 newsletter 对手                                                |
+| `semi-fuzzy-weak-title-note-anchor`             | semi_fuzzy | `the untitled doc where I noted NSF grant narrative`                         | `top1` · 弱标题+附注                                      | 弱标题靠 note 钉死                                                                     |
+| `semi-fuzzy-few-days-ago-privacy`               | semi_fuzzy | `the privacy article from a few days ago`                                    | `top1` · URL 含 privacy 近几天项                          | `a few days ago`/`the other day`→`recent`（勿误入 `a_while_ago` 排除近 3 天）          |
+| `semi-fuzzy-old-adjective-dense-passage`        | semi_fuzzy | `that old DPR paper on arxiv`                                                | `top1` · 旧稿+内容锚                                      | soft「old」不作时间硬窗；靠内容词                                                      |
+| `r4-vague-recently-saved`                       | vague      | `just saved something about i18n`                                            | `in_topk` k=3 · 近因摘录                                  | recently_saved 邻域                                                                    |
+| `r4-vague-often-opened`                         | vague      | `the Yiveno page I kept opening`                                             | `top1` 或 `in_topk` k=3 · 高 openCount                    | 行为排序                                                                               |
+| `r4-cluster-yiveno-docs`                        | semi_fuzzy | `Yiveno docs I saved`                                                        | **两条** `in_topk` k=6（实现拆 `…-product` / `…-design`） | **逛一簇**；须两条都进名单（不同 host，避免同域互斥）                                  |
+| `r4-negative-zero-anchor`                       | negative   | `play some songs I like`                                                     | `no_match`                                                | 零锚点 · 禁助手路径                                                                    |
+| `r0-zero-anchor-bored-pick`                     | negative   | `i feel bored pick something fun for me`                                     | `no_match`                                                | 无聊助手发令 · 禁扫库                                                                  |
+| `r0-zero-anchor-recommend-movie`                | negative   | `recommend a good movie I should watch tonight`                              | `no_match`                                                | 推荐≠找；有 video 词面也不得当娱乐推荐                                                 |
+| `r0-non-recall-weather`                         | negative   | `what is the weather going to be like tomorrow`                              | `no_match`                                                | 天气问答非找                                                                           |
+| `r0-non-recall-order-food`                      | negative   | `order me some pizza for dinner`                                             | `no_match`                                                | 点餐非找                                                                               |
+| `r0-non-recall-summarize`                       | negative   | `summarize the latest news for me`                                           | `no_match`                                                | 摘要助手非找                                                                           |
+| `r0-non-recall-plan-trip`                       | negative   | `plan a weekend trip to seattle for me`                                      | `no_match`                                                | 行程规划非找                                                                           |
+| `r0-non-recall-codegen`                         | negative   | `write a python script that renames my files`                                | `no_match`                                                | 写码助手非找                                                                           |
+| `r4-constrained-time-empty`                     | semi_fuzzy | `poem I saved yesterday`（库中无 poem+昨天）                                 | `no_match` + `constrained_none` 语义                      | 强约束诚实空（eval 断言 emptyKind 若 exposed）                                         |
+| `content-corroboration-time-soft-reopen`        | semi_fuzzy | `that article I saved yesterday about xenonretentionprotocol`                | `in_topk` k=3 · 窗外专有内容锚点                          | high 硬筛后窗内无佐证 → **一次 soft 回退** 捞窗外内容锚点（ADR-011 例外；关键词 must） |
+| `hybrid-content-corroboration-time-soft-reopen` | semi_fuzzy | 同上（Hybrid eval corpus · 窗内噪音 + 窗外 xenon）                           | `in_topk` k=3 · `softReopenXenonRetention`                | Hybrid：**硬佐证空**才 soft 回退；禁 soft 池长冒充窗非空（hybrid-eval must）           |
+| `content-corroboration-reject-weak-neighbor`    | semi_fuzzy | `that article I saved yesterday about standupscrapnoise`（库仅窗内无关摘录） | `no_match`                                                | 有 contentTerms 时禁止窗内弱 embedding 甩无关                                          |
 
 **已有 must 须保持绿：** 全部现有 `gate: 'must'` case；R4 **不得**为抬 TTE 牺牲 `negative-*` / `r0-zero-anchor-*`。
 
@@ -2041,15 +2043,16 @@ Chrome API / 选区
 
 **展示规则：**
 
-| 项                       | 规范                                                                                          |
-| ------------------------ | --------------------------------------------------------------------------------------------- |
-| 前缀文案                 | en `Heard as` / zh_CN `理解成`（`popup_recall_heard_as`；**禁止**「听成了」——中文易读成听错） |
-| 芯片内容（有则出，按序） | 对象类型 → 相对时间 → 行为提示 → 附注指向 → 内容词（≤3）                                      |
-| 时间 low 置信            | 芯片前缀 `~`（如 `~a while ago`）；high 不加                                                  |
-| 内容词                   | 用线索字面 token，加引号；禁止主题 seed / 编造专名                                            |
-| 无有意义槽位             | **不展示**整行（含噪音拒绝、空约束）                                                          |
-| 与 Framing P1            | **互斥**：有回声芯片时气泡省略 Framing P1「听成了什么」散文，且不追加泛化「Mainly based on…」 |
-| Omnibox                  | 本 Normative **不要求**（主指 Side Panel）                                                    |
+| 项                       | 规范                                                                                             |
+| ------------------------ | ------------------------------------------------------------------------------------------------ |
+| 前缀文案                 | en `Heard as` / zh_CN `理解成`（`popup_recall_heard_as`；**禁止**「听成了」——中文易读成听错）    |
+| 芯片内容（有则出，按序） | 对象类型 → 相对时间 → 行为提示 → 附注指向 → 内容词（≤3）                                         |
+| 时间 low 置信            | 芯片前缀 `~`（如 `~a while ago`）；high 不加                                                     |
+| 内容词                   | 用线索字面 token，加引号；禁止主题 seed / 编造专名                                               |
+| 无有意义槽位             | **不展示**整行（含噪音拒绝、空约束）                                                             |
+| 失败态                   | **`no_match`（含 `missing_topic`）不出 Heard as**——一边「没对上 / 没开查」一边像「已听懂」半装懂 |
+| 与 Framing P1            | **互斥**：有回声芯片时气泡省略 Framing P1「听成了什么」散文，且不追加泛化「Mainly based on…」    |
+| Omnibox                  | 本 Normative **不要求**（主指 Side Panel）                                                       |
 
 **闭集纠错（本切片 · 已接线）：**
 
@@ -2749,6 +2752,7 @@ RecallOutcomeEvent {
 | 2026-09-13 | **Getting Started Try recalling：** 示意 clue 预填 + Side Panel 自动提交；扩展页直调 `sidePanel.open`；`OPEN_RECALL_SHELL` 跳过 bootstrap await                                                                                                                                                            |
 | 2026-09-13 | **Getting Started 激活收敛（§5.8）：** 主路径一键 Save this line；demo 嵌 Step 1 下、below 指引成立；页眉仅品牌；Skip/Close 尽量关页签；划词菜单降为次要 web tip                                                                                                                                           |
 | 2026-09-11 | **官网 Hero：** epithet _The one that finds things_ + H1 _Find what you saved._（禁裸 Find things 独占最大字）；设计标准 §6.1 / A.4                                                                                                                                                                        |
+| 2026-11-02 | **失败诚实收口：** Hybrid soft 回退以**硬佐证空**触发 + hybrid must；`missing_topic` miss 优先级；`no_match` 抑制 Heard as；`need_a_clue` 无 Framing 用弱命中兜底；Omnibox 空结果中性 CTA；Normative 佐证门 Hybrid 分计                                                                                    |
 | 2026-11-01 | **可见进展体验收口**：`wait_abandoned` + `progress:summarize`；understanding ≥10s 软预期 rules_fallback；等待中可改发 clue；Heard as 时 Mainly based on 仅留 source；§7.0                                                                                                                                  |
 | 2026-11-01 | **理解回声闭集纠错**：类型/时间 Replace + 内容词 Exclude（`not the …`）；行为/附注本切片只读；合成英文 refine；§7.0 Normative                                                                                                                                                                              |
 | 2026-10-29 | **理解回声 zh 前缀**：`听成了` → `理解成`（避免听错联想）；§7.0 前缀改为 en/zh 双语文案                                                                                                                                                                                                                    |

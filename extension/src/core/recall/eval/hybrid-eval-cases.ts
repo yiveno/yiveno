@@ -109,6 +109,20 @@ export const HYBRID_EVAL_CASES: HybridEvalCase[] = [
     note: '时窗内 + 词面命中「privacy article」应 Top；窗内准正交 weather 摘录被佐证门剔除'
   },
 
+  // —— 硬佐证空窗 soft 回退（禁止 soft 池长冒充窗非空）——
+  {
+    id: 'hybrid-content-corroboration-time-soft-reopen',
+    clue: 'that article I saved yesterday about xenonretentionprotocol',
+    embeddingAnchor: HYBRID_EVAL_ANCHORS.softReopenXenon,
+    gate: 'must',
+    expectation: {
+      kind: 'in_topk',
+      expectedId: HYBRID_EVAL_IDS.softReopenXenonRetention,
+      k: 3
+    },
+    note: '窗内仅无关噪音；硬佐证空 → soft 回退捞窗外 xenonretentionprotocol（与 keyword must 同口径）'
+  },
+
   // —— ADR-011 时窗硬筛 ——
   {
     id: 'adr011-high-time-hard-window',

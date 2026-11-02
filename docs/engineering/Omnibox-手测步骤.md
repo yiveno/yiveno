@@ -163,7 +163,7 @@ that chrome extension migration guide I bookmarked
 ## 6. 回归检查表
 
 - [ ] 默认行 = Tip（`Title, site, or note keyword. Fuzzy → Side Panel`）；快捷键与 shortcuts 一致（未绑定则无括号）；非 CTA
-- [ ] 无命中 = CTA 行 `No quick match — open Side Panel to recall this`（点该行接力；非 Tip）；自动提交完整 Recall
+- [ ] 无命中 = CTA 行 `No quick match — try a fuller recall in Side Panel`（点该行接力；非 Tip；**不**暗示 Side Panel 必中）；自动提交完整 Recall
 - [ ] **有命中** = Memory 行 ≤5，**末行** `Not what you wanted? Open Side Panel`（点末行接力同 clue；点 Memory 仍打开条目）
 - [ ] 常开 / 高 settled 条目在同词面下更靠前（个人 soft rank）
 - [ ] `cf Workers` 等缩写锚：**不**依赖静态字典命中；无字面/形态命中时诚实 miss 或换 Side Panel（ADR-005）

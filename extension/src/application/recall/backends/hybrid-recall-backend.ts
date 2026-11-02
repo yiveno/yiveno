@@ -694,34 +694,37 @@ export async function fuseHybridMatches(input: {
 
   let fused = fuseWithParsed(input.parsed)
   const corroborationTerms = effectiveContentTermsForRecall(input.parsed)
-  // 实验三修复（2026-09-20）：hybrid 路径改为 soft penalty 而非 hard filter。
-  // 原因：hybrid 已有 embedding 独立验证，contentTerms 错误不应 hard veto 正确候选。
-  // soft penalty 保留候选项在排序池中，未佐证项 score 扣 HYBRID_CORROBORATION_SOFT_PENALTY。
-  // 副作用：fused 是空时也无法触发 timeSoftReopen（因为软佐证永不空），但 fused 空在
-  // 上方 keyword/semantic 双空检查已覆盖，所以无需 timeSoftReopen 兜底（hybrid 路径）。
-  let corroborated = softPenalizeMatchesByContentTermCorroboration(fused, corroborationTerms)
+  // Hybrid 排序：soft penalty 保留语义候选（contentTerms 误判不 hard-veto 正确近邻）。
+  // soft 回退触发必须以**硬佐证**空为准——禁止用 soft 池长冒充「窗非空」导致假 no_match（诚实失败 P0）。
+  // 交付仍经 buildRecallResult 硬滤；硬滤后空 → return null 降级全库关键词。
+  let softRanked = softPenalizeMatchesByContentTermCorroboration(fused, corroborationTerms)
   // 明确排除硬过滤（与 keyword 同规；软佐证不保证排除，故此处硬切）
-  corroborated = filterMatchesByExcludeContentTerms(corroborated, input.parsed.excludeContentTerms)
+  softRanked = filterMatchesByExcludeContentTerms(softRanked, input.parsed.excludeContentTerms)
+  const hardCorroboratedCount = filterMatchesByExcludeContentTerms(
+    filterMatchesByContentTermCorroboration(fused, corroborationTerms),
+    input.parsed.excludeContentTerms
+  ).length
   let effectiveParsed = input.parsed
   let timeSoftReopen = false
 
-  if (shouldAttemptTimeSoftReopen(input.parsed, corroborated.length)) {
+  if (shouldAttemptTimeSoftReopen(input.parsed, hardCorroboratedCount)) {
     timeSoftReopen = true
     effectiveParsed = parsedClueForTimeSoftReopen(input.parsed)
     fused = fuseWithParsed(effectiveParsed)
-    corroborated = softPenalizeMatchesByContentTermCorroboration(fused, corroborationTerms)
-    corroborated = filterMatchesByExcludeContentTerms(
-      corroborated,
-      effectiveParsed.excludeContentTerms
-    )
-    input.trace('info', 'Hybrid：内容佐证空窗，已做一次时间 soft 回退', {
-      afterCount: corroborated.length
+    softRanked = softPenalizeMatchesByContentTermCorroboration(fused, corroborationTerms)
+    softRanked = filterMatchesByExcludeContentTerms(softRanked, effectiveParsed.excludeContentTerms)
+    input.trace('info', 'Hybrid：硬佐证空窗，已做一次时间 soft 回退', {
+      afterSoftCount: softRanked.length,
+      afterHardCount: filterMatchesByExcludeContentTerms(
+        filterMatchesByContentTermCorroboration(fused, corroborationTerms),
+        effectiveParsed.excludeContentTerms
+      ).length
     })
   }
 
-  // 佐证后仍空（含 soft 回退后）：降级全库关键词，避免 HYBRID_KEYWORD_POOL 假空
-  if (corroborated.length === 0) {
-    input.trace('info', 'Hybrid：佐证后仍空，降级关键词', {
+  // soft 池空（含 soft 回退后）：降级全库关键词，避免 HYBRID_KEYWORD_POOL 假空
+  if (softRanked.length === 0) {
+    input.trace('info', 'Hybrid：排序池空，降级关键词', {
       keywordCount: keywordScored.length,
       semanticCount: semanticScored.length,
       timeSoftReopen
@@ -729,16 +732,28 @@ export async function fuseHybridMatches(input: {
     return null
   }
 
-  const withPairs = await applyStoredOutcomePairsToMatches(corroborated, input.pairClue, {
+  const withPairs = await applyStoredOutcomePairsToMatches(softRanked, input.pairClue, {
     contentTerms: corroborationTerms
   })
-  // 实验三修复（2026-09-20）：hybrid 路径改为 soft penalty，与上一步同源（佐证永不硬切）。
+  // 与上一步同源 soft penalty；交付硬滤在 buildRecallResult。
   let afterPairs = softPenalizeMatchesByContentTermCorroboration(withPairs, corroborationTerms)
   afterPairs = filterMatchesByExcludeContentTerms(afterPairs, effectiveParsed.excludeContentTerms)
 
   const collapsed = collapseRecallMatches(afterPairs, {
     limit: RECALL_RESULT_POOL_LIMIT + RECALL_COLLAPSE_BACKFILL_EXTRA
   })
+  const result = buildRecallResult(input.displayClue, collapsed, {
+    contentTerms: corroborationTerms
+  })
+  // 交付硬滤后空邻域 → 降级关键词（soft 回退后仍无词面佐证、或仅噪音 soft 池）
+  if (result.outcome === 'no_match') {
+    input.trace('info', 'Hybrid：交付硬滤后空邻域，降级关键词', {
+      keywordCount: keywordScored.length,
+      semanticCount: semanticScored.length,
+      timeSoftReopen
+    })
+    return null
+  }
   input.trace('info', 'Hybrid：RRF 融合完成', {
     keywordCount: keywordScored.length,
     semanticCount: semanticScored.length,
@@ -746,9 +761,7 @@ export async function fuseHybridMatches(input: {
     timeSoftReopen
   })
   return {
-    result: buildRecallResult(input.displayClue, collapsed, {
-      contentTerms: corroborationTerms
-    }),
+    result,
     effectiveParsed,
     timeSoftReopen
   }

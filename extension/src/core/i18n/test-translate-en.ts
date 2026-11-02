@@ -82,8 +82,8 @@ const EN: Record<string, string> = {
   omnibox_default_suggestion: 'Tip: Title, site, or note keyword. Fuzzy → Side Panel',
   omnibox_default_suggestion_with_shortcut:
     'Tip: Title, site, or note keyword. Fuzzy → Side Panel ($1)',
-  omnibox_no_match: 'No quick match — open Side Panel to recall this',
-  omnibox_no_match_with_shortcut: 'No quick match — open Side Panel to recall this ($1)',
+  omnibox_no_match: 'No quick match — try a fuller recall in Side Panel',
+  omnibox_no_match_with_shortcut: 'No quick match — try a fuller recall in Side Panel ($1)',
   omnibox_switch_track: 'Not what you wanted? Open Side Panel',
   omnibox_switch_track_with_shortcut: 'Not what you wanted? Open Side Panel ($1)',
   omnibox_type_bookmark: 'Bookmark',

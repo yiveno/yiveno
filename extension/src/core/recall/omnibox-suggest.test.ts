@@ -51,10 +51,10 @@ describe('omnibox-suggest', () => {
       'Tip: Title, site, or note keyword. Fuzzy → Side Panel'
     )
     expect(formatOmniboxNoMatchSuggestionDescription('Ctrl+Shift+Y', testTranslateEn)).toBe(
-      'No quick match — open Side Panel to recall this (Ctrl+Shift+Y)'
+      'No quick match — try a fuller recall in Side Panel (Ctrl+Shift+Y)'
     )
     expect(formatOmniboxNoMatchSuggestionDescription('  ', testTranslateEn)).toBe(
-      'No quick match — open Side Panel to recall this'
+      'No quick match — try a fuller recall in Side Panel'
     )
     expect(formatOmniboxSwitchTrackSuggestionDescription('Alt+Shift+Y', testTranslateEn)).toBe(
       'Not what you wanted? Open Side Panel (Alt+Shift+Y)'
