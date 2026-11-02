@@ -1,6 +1,7 @@
 import type { z } from 'zod'
 import type { TranslateFn } from '@/core/i18n/translate'
 import type { MemoryItem } from '@/core/memory/memory-item'
+import { formatSavedTitleForUserDisplay } from '@/core/recall/clue-plain-url'
 import { explainRecallMatch, getRecallMatchFieldLabel } from '@/core/recall/explain-recall-match'
 import type { TopicDescriptorSchema } from '@/core/recall/parse-recall-clue-types'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
@@ -152,11 +153,11 @@ export function formatExcerptProvenance(pageTitle: string, domain: string): stri
   return page || host
 }
 
-/** 提取 MemoryItem 的展示字段（纯函数）。 */
+/** 提取 MemoryItem 的展示字段（纯函数 · 可见面；契约 payload 不变）。 */
 export function getMemoryItemDisplay(item: MemoryItem, translate: TranslateFn): MemoryItemDisplay {
   if (item.type === 'bookmark') {
     return {
-      title: item.payload.title,
+      title: formatSavedTitleForUserDisplay(item.payload.title, item.payload.url),
       subtitle: item.payload.domain,
       url: item.payload.url,
       ...(item.clues.note?.trim() ? { note: item.clues.note.trim() } : {}),

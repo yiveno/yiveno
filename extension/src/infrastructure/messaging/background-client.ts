@@ -66,7 +66,9 @@ import type {
   GetRecallPageContextResponse,
   RecallBackgroundResponse,
   RecallCancelResponse,
-  RecallWithClueMessage
+  RecallWithClueMessage,
+  ResolveClueUrlDisplayPayload,
+  ResolveClueUrlDisplayResponse
 } from '@/core/messaging/recall-messages'
 import type {
   GetAiHostedQuotaResponse,
@@ -127,6 +129,17 @@ export async function getRecallPageContext(): Promise<GetRecallPageContextRespon
   return sendBackgroundMessage<GetRecallPageContextResponse>({
     scope: 'background',
     type: 'GET_RECALL_PAGE_CONTEXT'
+  })
+}
+
+/** composer URL 芯片：解析本机库 / 打开中 tab 的展示标题（不联网）。 */
+export async function resolveClueUrlDisplay(
+  payload: ResolveClueUrlDisplayPayload
+): Promise<ResolveClueUrlDisplayResponse> {
+  return sendBackgroundMessage<ResolveClueUrlDisplayResponse>({
+    scope: 'background',
+    type: 'RESOLVE_CLUE_URL_DISPLAY',
+    payload
   })
 }
 

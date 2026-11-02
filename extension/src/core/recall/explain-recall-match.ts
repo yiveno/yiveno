@@ -3,6 +3,7 @@
  * 纯函数；文案经注入的 translate，无 Chrome / DOM 依赖。
  */
 import type { TranslateFn } from '@/core/i18n/translate'
+import { formatCluePlainForUserDisplay } from '@/core/recall/clue-plain-url'
 import {
   collectFilterIndexFields,
   normalizeRecallText,
@@ -188,7 +189,8 @@ export function explainRecallMatch(
           return token
             ? translate('explain_reason_field_contains', [
                 fieldLabel,
-                truncateRecallExplainText(token, EXPLAIN_INTERPOLATION_SAFETY_MAX)
+                // 可见面：token 内 URL 缩短；契约面 clue / Filter 字面不变
+                formatExplainInterpolationForDisplay(token)
               ])
             : translate('explain_reason_field_related', fieldLabel)
         })()
@@ -211,16 +213,24 @@ export function explainRecallMatch(
   }
 }
 
-/** 结果卡线索回显（可见省略交给宿主 CSS；此处仅安全上限）。 */
+/**
+ * 解释插值可见文案：先 URL 缩短（可见面），再安全上限截断。
+ * 不改 clue 契约字面。
+ */
+export function formatExplainInterpolationForDisplay(text: string): string {
+  return truncateRecallExplainText(
+    formatCluePlainForUserDisplay(text),
+    EXPLAIN_INTERPOLATION_SAFETY_MAX
+  )
+}
+
+/** 结果卡线索回显（可见面缩短 URL；布局省略交给宿主 CSS；此处仅安全上限）。 */
 export function formatRecallClueEcho(clue: string, translate: TranslateFn): string {
   const trimmed = clue.trim()
   if (!trimmed) {
     return ''
   }
-  return translate(
-    'explain_clue_echo',
-    truncateRecallExplainText(trimmed, EXPLAIN_INTERPOLATION_SAFETY_MAX)
-  )
+  return translate('explain_clue_echo', formatExplainInterpolationForDisplay(trimmed))
 }
 
 /**

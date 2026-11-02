@@ -1,4 +1,7 @@
-import { scoreRecallEvidenceEcs } from '@/core/recall/recall-telemetry'
+import {
+  scoreRecallEvidenceEcs,
+  truncateRecallTelemetryAnchor
+} from '@/core/recall/recall-telemetry'
 
 /** TTE evidenceVisible 所需卡片字段（与 RecallCardModel 子集对齐）。 */
 export interface RecallEvidenceCardInput {
@@ -41,14 +44,15 @@ export function buildRecallEvidencePayload(
     ...(card.reasonLine !== undefined ? { reasonLine: card.reasonLine } : {})
   })
 
+  const anchorRaw = card.excerpt?.trim() || card.title.trim()
+  const anchor = anchorRaw ? truncateRecallTelemetryAnchor(anchorRaw) : ''
+
   return {
     memoryItemId: card.id,
     rank,
     ecs,
     ...(card.reasonCodes?.length ? { reasonCodes: card.reasonCodes } : {}),
-    ...(card.excerpt?.trim() || card.title.trim()
-      ? { anchor: card.excerpt?.trim() || card.title.trim() }
-      : {})
+    ...(anchor ? { anchor } : {})
   }
 }
 

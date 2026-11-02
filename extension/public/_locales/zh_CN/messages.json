@@ -414,7 +414,7 @@
     "message": "或者再补一个细节…"
   },
   "popup_clue_placeholder_neutral_threaded": {
-    "message": "再给「$1」补一个细节…",
+    "message": "围绕「$1」再补一句…",
     "placeholders": {
       "label": {
         "content": "$1",
@@ -426,7 +426,7 @@
     "message": "还是有点宽 — 再补一个你记得的细节…"
   },
   "popup_clue_placeholder_narrow_generic_threaded": {
-    "message": "再给「$1」补一个细节…",
+    "message": "围绕「$1」再补一句…",
     "placeholders": {
       "label": {
         "content": "$1",
@@ -448,7 +448,7 @@
     }
   },
   "popup_clue_placeholder_narrow_threaded": {
-    "message": "给「$1」补细节 — 试试「$2」或「$3」。",
+    "message": "围绕「$1」再收窄 — 试试「$2」或「$3」。",
     "placeholders": {
       "label": {
         "content": "$1",
@@ -474,7 +474,7 @@
     }
   },
   "popup_clue_placeholder_narrow_one_threaded": {
-    "message": "给「$1」补细节 — 试试「$2」。",
+    "message": "围绕「$1」再收窄 — 试试「$2」。",
     "placeholders": {
       "label": {
         "content": "$1",
@@ -605,6 +605,15 @@
   },
   "sidepanel_voice_permission_dismiss": {
     "message": "关闭"
+  },
+  "sidepanel_clue_too_long": {
+    "message": "线索有点长 — 最多 $1 字，先精简一下。",
+    "placeholders": {
+      "max": {
+        "content": "$1",
+        "example": "500"
+      }
+    }
   },
   "popup_filtering_status": {
     "message": "正在翻看你存过的内容…"

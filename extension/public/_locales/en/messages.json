@@ -414,7 +414,7 @@
     "message": "Or add another detail…"
   },
   "popup_clue_placeholder_neutral_threaded": {
-    "message": "Add another detail to “$1”…",
+    "message": "About “$1” — add one more detail…",
     "placeholders": {
       "label": {
         "content": "$1",
@@ -426,7 +426,7 @@
     "message": "Still a bit broad — add another detail you remember…"
   },
   "popup_clue_placeholder_narrow_generic_threaded": {
-    "message": "Add another detail to “$1”…",
+    "message": "About “$1” — add one more detail…",
     "placeholders": {
       "label": {
         "content": "$1",
@@ -448,7 +448,7 @@
     }
   },
   "popup_clue_placeholder_narrow_threaded": {
-    "message": "Add detail to “$1” — try “$2” or “$3”.",
+    "message": "About “$1” — try “$2” or “$3”.",
     "placeholders": {
       "label": {
         "content": "$1",
@@ -474,7 +474,7 @@
     }
   },
   "popup_clue_placeholder_narrow_one_threaded": {
-    "message": "Add detail to “$1” — try “$2”.",
+    "message": "About “$1” — try “$2”.",
     "placeholders": {
       "label": {
         "content": "$1",
@@ -605,6 +605,15 @@
   },
   "sidepanel_voice_permission_dismiss": {
     "message": "Dismiss"
+  },
+  "sidepanel_clue_too_long": {
+    "message": "That clue is too long — keep it under $1 characters.",
+    "placeholders": {
+      "max": {
+        "content": "$1",
+        "example": "500"
+      }
+    }
   },
   "popup_filtering_status": {
     "message": "Looking through what you saved…"

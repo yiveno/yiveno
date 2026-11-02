@@ -144,6 +144,7 @@ export const MESSAGE_KEYS = [
   'sidepanel_voice_permission_allow',
   'sidepanel_voice_permission_busy',
   'sidepanel_voice_permission_dismiss',
+  'sidepanel_clue_too_long',
   'popup_filtering_status',
   'popup_recall_pending',
   'popup_recall_progress_understanding',

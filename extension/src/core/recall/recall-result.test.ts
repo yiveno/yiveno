@@ -43,6 +43,18 @@ describe('getMemoryItemDisplay', () => {
     })
   })
 
+  it('书签标题若为 URL：可见面缩短，契约 url 仍完整', () => {
+    const href = 'https://www.example.com/very/long/path/docs'
+    const item = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: { title: href, url: href }
+    })
+    const display = getMemoryItemDisplay(item, testTranslateEn)
+    expect(display.title).not.toContain('https://')
+    expect(display.title.startsWith('example.com')).toBe(true)
+    expect(display.url).toBe(href)
+  })
+
   it('摘录无标题，正文为主，页名为出处', () => {
     const item = createTextExcerptMemoryItem({
       ...baseContext,

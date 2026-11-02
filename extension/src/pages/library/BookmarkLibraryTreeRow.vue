@@ -5,6 +5,7 @@ import AppIconButton from '@/infrastructure/ui/AppIconButton.vue'
 import type { BookmarkLibraryVisibleRow } from '@/core/memory/bookmark-library-index'
 import { getBookmarkLibraryRowStride } from '@/core/memory/bookmark-library-index'
 import { extractDomainFromUrl } from '@/core/memory/payload'
+import { formatSavedTitleForUserDisplay } from '@/core/recall/clue-plain-url'
 import { formatLibrarySavedAt } from '@/infrastructure/i18n/format-library-saved-at'
 import { t } from '@/infrastructure/i18n/t'
 import AppLibraryItemCard from '@/infrastructure/ui/AppLibraryItemCard.vue'
@@ -47,11 +48,20 @@ const rowStyle = computed(() => ({
   '--tree-depth': String(props.row.depth)
 }))
 
+/** 悬停完整真相：优先完整 URL（契约）；无 URL 才用标题字面。 */
 const bookmarkTooltip = computed(() => {
   if (props.row.kind !== 'bookmark') {
     return ''
   }
-  return props.row.title.trim()
+  return props.row.url?.trim() || props.row.title.trim()
+})
+
+/** 主标题可见面：URL 标题缩短；契约 title/url 不改。 */
+const bookmarkTitleDisplay = computed(() => {
+  if (props.row.kind !== 'bookmark') {
+    return ''
+  }
+  return formatSavedTitleForUserDisplay(props.row.title, props.row.url)
 })
 
 const bookmarkDomain = computed(() => {
@@ -61,7 +71,7 @@ const bookmarkDomain = computed(() => {
   try {
     return extractDomainFromUrl(props.row.url)
   } catch {
-    return props.row.url
+    return formatSavedTitleForUserDisplay(props.row.url)
   }
 })
 
@@ -162,7 +172,7 @@ function handleBookmarkActivate(event: MouseEvent | KeyboardEvent) {
       </template>
       <template #title>
         <span class="lib-item-title-with-flag">
-          <span class="lib-item-title lib-item-title--single-line">{{ row.title }}</span>
+          <span class="lib-item-title lib-item-title--single-line">{{ bookmarkTitleDisplay }}</span>
           <span v-if="showUnsyncedFlags && !row.memoryItemId" class="lib-item-flag">{{
             t('library_bookmark_unsynced')
           }}</span>

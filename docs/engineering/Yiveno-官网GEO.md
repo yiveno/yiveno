@@ -1,11 +1,12 @@
 ---
 created: 2026-10-31T21:17:19+0800
-updated: 2026-10-31T21:41:26+0800
+updated: 2026-11-02T11:05:53+0800
 author: agent:cursor
 scope: 官网 Generative Engine Optimization（生成式引擎可引用信号）— 非地区域名 soft-redirect
 status: active
 upstream:
   - docs/product/Yiveno-产品文档-v4.0.md（§0.1 对外心智）
+  - docs/product/Yiveno-可见与契约分面-体验原则.md（§4.2 官网 W1–W6）
   - docs/pricing.md
   - docs/architecture/decisions/ADR-020-chromium-dual-store-edge.md
 downstream:
@@ -68,7 +69,18 @@ curl -sS https://yiveno.com/llms.txt
 
 **引用率：** 真实 ChatGPT / Perplexity 是否点名引用需上线后人工抽样；本工程交付不保证引用率数字。
 
-## 5. 与地区 geo 的边界
+## 5. 可见面 vs 契约面（官网）
+
+与扩展同一原则（权威 [`Yiveno-可见与契约分面-体验原则.md`](../product/Yiveno-可见与契约分面-体验原则.md) §4.2）：
+
+| 面       | 官网落点                                                                                               |
+| -------- | ------------------------------------------------------------------------------------------------------ |
+| **可见** | CTA 人读店名；mock 人读标题；FAQ/营销正文不堆长绝对 URL                                                |
+| **契约** | `href` / canonical / JSON-LD `url` / sitemap / `llms.txt` **完整**绝对 URL；FAQ 正文与 schema **同源** |
+
+禁止为「好看」把 `llms.txt` 或 schema 里的 canonical 改成缩短串；也禁止 CTA 主文案贴商店深链原文。
+
+## 6. 与地区 geo 的边界
 
 | 主题                   | 路径                                                                    |
 | ---------------------- | ----------------------------------------------------------------------- |

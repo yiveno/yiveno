@@ -1,6 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import {
+  RECALL_TELEMETRY_EVIDENCE_ANCHOR_MAX_CHARS,
+  RecallTelemetryEventSchema
+} from '@/core/recall/recall-telemetry'
+import {
   buildRecallEvidencePayload,
   scheduleRecallEvidenceWhenVisible
 } from '@/pages/sidepanel/recall-result-card-evidence'
@@ -36,6 +40,32 @@ describe('buildRecallEvidencePayload', () => {
       reasonCodes: ['note'],
       anchor: 'snippet'
     })
+  })
+
+  it('超长摘录截到 anchor 上限，可通过 Zod', () => {
+    const longExcerpt = `https://example.com/${'a'.repeat(300)} and more text`
+    const payload = buildRecallEvidencePayload({
+      id: '550e8400-e29b-41d4-a716-446655440000',
+      typeLabel: 'Excerpt',
+      subtitle: 'Example · example.com',
+      title: 'Title',
+      url: 'https://example.com/p',
+      excerpt: longExcerpt,
+      telemetryRank: 0
+    })
+    expect(payload?.anchor?.length).toBe(RECALL_TELEMETRY_EVIDENCE_ANCHOR_MAX_CHARS)
+    expect(
+      RecallTelemetryEventSchema.safeParse({
+        type: 'evidence_visible',
+        taskId: '550e8400-e29b-41d4-a716-446655440000',
+        traceId: '550e8400-e29b-41d4-a716-446655440001',
+        at: '2026-11-02T02:00:00.000Z',
+        memoryItemId: '550e8400-e29b-41d4-a716-446655440000',
+        rank: 0,
+        ecs: 1,
+        anchor: payload?.anchor
+      }).success
+    ).toBe(true)
   })
 })
 

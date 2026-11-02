@@ -13,7 +13,11 @@ import type {
   RecallWaitProgressSnapshot,
   RecallTelemetryEvent
 } from '@/core/recall/recall-telemetry'
-import { previewRecallClue, RECALL_TTE_TASK_TIMEOUT_MS } from '@/core/recall/recall-telemetry'
+import {
+  previewRecallClue,
+  RECALL_TTE_TASK_TIMEOUT_MS,
+  truncateRecallTelemetryAnchor
+} from '@/core/recall/recall-telemetry'
 import { appendRecallTelemetryEvent } from '@/infrastructure/analytics/recall-telemetry-store'
 
 interface ActiveRecallTelemetryTask {
@@ -200,7 +204,7 @@ export function createRecallTelemetryRecorder() {
       rank: input.rank,
       ecs: input.ecs,
       ...(input.reasonCodes?.length ? { reasonCodes: input.reasonCodes } : {}),
-      ...(input.anchor ? { anchor: input.anchor } : {}),
+      ...(input.anchor ? { anchor: truncateRecallTelemetryAnchor(input.anchor) } : {}),
       at: nowIso()
     })
   }

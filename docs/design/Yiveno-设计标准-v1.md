@@ -382,7 +382,7 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 
 **Side Panel 底栏 chrome（Normative）：** 多选时导出条属**底部 chrome 栈**（在 composer 之上：导出条 → 可选离线 hint → composer）。须**预留完整高度**（`flex-shrink: 0`），禁止被父 flex 压矮裁切；与 composer 纵向间距 ≥ `--space-sm`；`DetailExportBarDock` 稳态 `overflow: visible`，格式菜单（向上弹出）不得被 dock 裁切。Library 仍用页面底槽固定高度，规则不变。
 
-**Side Panel 壳高 / composer 长高（Normative · Chromium 双店）：** `html`/`body`/`#app`/`.recall-shell` 锁在视口内（`height/max-height: 100%` + `overflow: hidden`），禁止文档被 focus 滚出。clue textarea **不用** `field-sizing: content`（空态按长 placeholder 撑高 → 首字回落会在 Edge 窄栏触发整页下移）；空态固定单行，有字仅 JS `scrollHeight` 长高；`focus({ preventScroll: true })`。
+**Side Panel 壳高 / composer 长高（Normative · Chromium 双店）：** `html`/`body`/`#app`/`.recall-shell` 锁在视口内（`height/max-height: 100%` + `overflow: hidden`），禁止文档被 focus 滚出。clue 输入为 **contenteditable**（非 textarea）；**不用** `field-sizing: content`（空态按长 placeholder 撑高 → 首字回落会在 Edge 窄栏触发整页下移）；空态固定单行 + `data-placeholder`，有字仅 JS `scrollHeight` 长高；`focus({ preventScroll: true })`。URL 原子芯片（favicon + 缩短 host/path，可异步换成库内/tab 标题）可内联于编辑器与用户气泡，**禁止**用几何 `transform` 做 hover；标题切换允许文案替换、不做位移动画。
 
 #### 6.2.5 Library 列表 rhythm（摘录 + 书签）
 

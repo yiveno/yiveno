@@ -47,6 +47,25 @@ describe('explain-recall-match', () => {
     expect(explanation.reasonLine).toBe('Found “retention” in title; Also: domain')
   })
 
+  it('解释插值可见面缩短 URL（契约 clue 仍可为完整 https）', () => {
+    const item = createTextExcerptMemoryItem({
+      ...baseContext,
+      payload: {
+        selectedText: '跟https://yiveno.com/terms/这个相关的 legal note',
+        sourceUrl: 'https://yiveno.com/terms/',
+        pageTitle: 'Terms'
+      }
+    })
+    const clue = '跟https://yiveno.com/terms/这个相关的'
+    const explanation = explainRecallMatch(
+      { clue, matchedFields: ['textExcerpt'], item },
+      testTranslateEn
+    )
+    expect(explanation.primary).toContain('yiveno.com/terms/')
+    expect(explanation.primary).not.toContain('https://')
+    expect(clue).toContain('https://')
+  })
+
   it('摘录命中出处页名时解释为页名而非标题', () => {
     const item = createTextExcerptMemoryItem({
       ...baseContext,

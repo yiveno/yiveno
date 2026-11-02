@@ -27,6 +27,7 @@ alwaysApply: true
 | 术语 / 概念叫法 / 禁用词 | `docs/product/Yiveno-术语表.md`（Glossary · 唯一权威） |
 | **换波次 / 本周焦点** | `docs/product/CURRENT.md` → `bun run sync:ide-boot` |
 | **不可逆架构/产品分叉** | `docs/architecture/decisions/`（ADR）+ 产品文档 |
+| **可见面 vs 契约面（展示/传输）** | `docs/product/Yiveno-可见与契约分面-体验原则.md` + 产品文档 §0.1.3 |
 | 产品行为 / Recall / Capture / 配额 / 折叠键 / 消息协议 / 分层边界 | `docs/product/Yiveno-产品文档-v4.0.md`（Normative） |
 | 视觉 / 品牌 / token / 控件气质 | `docs/design/Yiveno-设计标准-v1.md`（及 `docs/design/DESIGN.md` 摘要若受影响） |
 | 环境变量 / 部署 / Worker 绑定 | `docs/ENVIRONMENT.md` 等既有工程文档 |

@@ -35,6 +35,7 @@ import { resolveNextRecallVisibleCount } from '@/core/recall/recall-result-visib
 import { computeComposerPlaceholder } from '@/core/recall/compute-composer-placeholder'
 import { extractComposerNarrowExamples } from '@/core/recall/extract-composer-narrow-examples'
 import { resolveThreadFindTitle } from '@/core/recall/resolve-thread-anchor-label'
+import { formatCluePlainForUserDisplay } from '@/core/recall/clue-plain-url'
 import {
   collectThreadAnchorTerms,
   shouldOfferThreadPivotConfirm
@@ -475,13 +476,22 @@ const hasActiveFindSession = computed(() => {
 
 const isComposerProminent = computed(() => conversationTurns.value.length === 0)
 
-/** 本场找回会话标题（顶栏左侧 / status / 软岔路口 / placeholder 点名共用）。 */
+/**
+ * 本场找会话标题字面（完整 URL 等）— 供 a11y / 与 prior utterances 对齐的权威字面。
+ * 用户可见展示另走 threadFindTitleDisplay（URL 缩短）。
+ */
 const threadFindTitle = computed(() =>
   resolveThreadFindTitle({
     priorUserUtterances: dialogState.value.priorUserUtterances,
     contentTerms: dialogState.value.accumulated?.contentTerms ?? []
   })
 )
+
+/** 用户可见：标题里的 URL → 缩短 host/path；不改会话存储与召回传输。 */
+const threadFindTitleDisplay = computed(() => {
+  const title = threadFindTitle.value
+  return title ? formatCluePlainForUserDisplay(title) : null
+})
 
 const threadTitleAria = computed(() => {
   const title = threadFindTitle.value
@@ -529,7 +539,7 @@ const composerPlaceholder = computed(() => {
     chipsPresent,
     ...(latestAssistant?.tone !== undefined ? { assistantTone: latestAssistant.tone } : {}),
     ...(narrowExamples.length > 0 ? { narrowExamples } : {}),
-    ...(threadFindTitle.value ? { threadLabel: threadFindTitle.value } : {})
+    ...(threadFindTitleDisplay.value ? { threadLabel: threadFindTitleDisplay.value } : {})
   })
 
   if (result.messageArgs.length === 0) {
@@ -576,9 +586,10 @@ function continuingContextStatus(
     priorUserUtterances: priorUtterances,
     contentTerms: accumulated?.contentTerms ?? []
   })
+  const display = label ? formatCluePlainForUserDisplay(label) : null
   return {
-    contextStatus: label
-      ? t('popup_session_status_continuing_threaded', label)
+    contextStatus: display
+      ? t('popup_session_status_continuing_threaded', display)
       : t('popup_session_status_continuing')
   }
 }
@@ -1370,8 +1381,8 @@ async function handleDismissCandidates(): Promise<void> {
     role: 'assistant',
     tone: 'miss',
     text: t('popup_reply_after_dismiss'),
-    contextStatus: threadFindTitle.value
-      ? t('popup_session_status_continuing_threaded', threadFindTitle.value)
+    contextStatus: threadFindTitleDisplay.value
+      ? t('popup_session_status_continuing_threaded', threadFindTitleDisplay.value)
       : t('popup_session_status_continuing'),
     allowDismiss: false
   })
@@ -2304,8 +2315,8 @@ onUnmounted(() => {
         :show-brand="false"
         show-new-find
         :new-find-enabled="hasActiveFindSession && !isRecallRefreshing"
-        :session-title="threadFindTitle"
-        :session-title-label="threadFindTitle ? t('popup_thread_title_label') : null"
+        :session-title="threadFindTitleDisplay"
+        :session-title-label="threadFindTitleDisplay ? t('popup_thread_title_label') : null"
         :session-title-aria="threadTitleAria"
         :show-detail-export="
           hasRecallResultCards &&
@@ -2532,13 +2543,13 @@ onUnmounted(() => {
     </div>
 
     <div
-      v-if="showThreadPivotStrip && threadFindTitle"
+      v-if="showThreadPivotStrip && threadFindTitleDisplay"
       class="recall-thread-pivot"
       role="group"
-      :aria-label="t('popup_thread_pivot_prompt', threadFindTitle)"
+      :aria-label="t('popup_thread_pivot_prompt', threadFindTitle || '')"
     >
       <p class="recall-thread-pivot__prompt">
-        {{ t('popup_thread_pivot_prompt', threadFindTitle) }}
+        {{ t('popup_thread_pivot_prompt', threadFindTitleDisplay) }}
       </p>
       <div class="recall-thread-pivot__actions">
         <AppButton type="button" variant="filled" @click="handleThreadPivotContinue">

@@ -17,6 +17,12 @@ export type SpeechDictationStatus =
   | 'requesting_permission' // 壳内轻条引导授权
 
 /**
+ * 听写无新转写（无 onresult）自动停止的静默窗口。
+ * 等同点停止：保留已写入文案；不 cancel。浏览器 `no-speech` 另计。
+ */
+export const SPEECH_DICTATION_SILENCE_STOP_MS = 12_000
+
+/**
  * UI locale → SpeechRecognition `lang`（BCP 47）。
  * 产品 clue 以美式英语为主；zh_CN UI 时跟浏览器中文识别，仍走同一 composer 路径。
  */
@@ -49,7 +55,7 @@ export type SpeechRecognitionResultPiece = {
 
 /**
  * 从 result 列表归并：已定稿串 + 当前临时串（供 interim 预览）。
- * `committedPrefix` = 本轮听写开始前的 clue 快照 + 已定稿片段。
+ * `committedPrefix` = 本轮听写开始时光标前原文 + 已定稿片段。
  */
 export function composeSpeechDictationPreview(
   committedPrefix: string,
@@ -74,4 +80,43 @@ export function composeSpeechDictationPreview(
     ? mergeSpeechTranscriptIntoClue(nextCommitted, interim)
     : nextCommitted
   return { nextCommittedPrefix: nextCommitted, displayText, hasFinal }
+}
+
+/**
+ * 听写头（光标前+转写）与光标后原文拼接；边界无空白时补空格，避免粘连 URL。
+ */
+export function joinSpeechHeadAndCaretSuffix(head: string, caretSuffix: string): string {
+  if (!caretSuffix) {
+    return head
+  }
+  if (!head) {
+    return caretSuffix
+  }
+  if (/\s$/u.test(head) || /^\s/u.test(caretSuffix)) {
+    return `${head}${caretSuffix}`
+  }
+  return `${head} ${caretSuffix}`
+}
+
+/**
+ * 听写插入光标处：前缀+转写 与 光标后原文（suffix）拼接。
+ * `caretEnd` = 转写段末尾偏移（不含 suffix），供结束后钉光标。
+ */
+export function composeSpeechDictationWithCaretSuffix(
+  committedPrefix: string,
+  pieces: readonly SpeechRecognitionResultPiece[],
+  caretSuffix: string
+): {
+  nextCommittedPrefix: string
+  displayText: string
+  caretEnd: number
+  hasFinal: boolean
+} {
+  const merged = composeSpeechDictationPreview(committedPrefix, pieces)
+  return {
+    nextCommittedPrefix: merged.nextCommittedPrefix,
+    displayText: joinSpeechHeadAndCaretSuffix(merged.displayText, caretSuffix),
+    caretEnd: merged.displayText.length,
+    hasFinal: merged.hasFinal
+  }
 }

@@ -58,6 +58,18 @@ export const RecallWaitProgressSnapshotSchema = z.object({
 export type RecallWaitProgressSnapshot = z.infer<typeof RecallWaitProgressSnapshotSchema>
 export type RecallWaitAbandonReason = z.infer<typeof RecallWaitAbandonReasonSchema>
 
+/** `evidence_visible.anchor` 上限（埋点预览，非 UI 展示宽度）。 */
+export const RECALL_TELEMETRY_EVIDENCE_ANCHOR_MAX_CHARS = 200
+
+/** 写入埋点前截断 anchor，避免超长摘录/标题撑爆 Zod。 */
+export function truncateRecallTelemetryAnchor(raw: string): string {
+  const trimmed = raw.trim()
+  if (trimmed.length <= RECALL_TELEMETRY_EVIDENCE_ANCHOR_MAX_CHARS) {
+    return trimmed
+  }
+  return trimmed.slice(0, RECALL_TELEMETRY_EVIDENCE_ANCHOR_MAX_CHARS)
+}
+
 /**
  * TTE 七事件 + 体验 `wait_abandoned`（§5.9 最小埋点 ∪ §7.0 可见进展度量）。
  * `wait_abandoned` **不得**计入 Success@180 / TTE 达标。
@@ -86,7 +98,8 @@ export const RecallTelemetryEventSchema = z.discriminatedUnion('type', [
     rank: z.number().int().nonnegative(),
     ecs: z.number().int().min(0).max(5),
     reasonCodes: z.array(z.string()).optional(),
-    anchor: z.string().max(200).optional()
+    /** 可见证据锚点预览（摘录/标题）；写入前须 ≤ 上限 */
+    anchor: z.string().max(RECALL_TELEMETRY_EVIDENCE_ANCHOR_MAX_CHARS).optional()
   }),
   telemetryBaseSchema.extend({
     type: z.literal('source_opened'),

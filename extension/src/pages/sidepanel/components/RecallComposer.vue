@@ -1,10 +1,33 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, toRef, watch } from 'vue'
 
+import { RECALL_CLUE_MAX_CHARS } from '@/core/messaging/recall-messages'
+import {
+  clampRecallClueText,
+  remainingRecallClueInsertCapacity
+} from '@/core/recall/clamp-recall-clue-text'
 import { t } from '@/infrastructure/i18n/t'
+import { navigateActiveTab } from '@/infrastructure/messaging/background-client'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
+import { useAppToast } from '@/infrastructure/ui/use-app-toast'
+import {
+  CLUE_URL_CHIP_ATTR,
+  ensureClueEditorCaretSlots,
+  ensureZwspAfterClueUrlChip,
+  findClueUrlChipContainingSelection,
+  getClueEditorPlainCaretOffset,
+  insertPlainTextAtClueCaret,
+  maybeRebuildClueEditorChips,
+  serializeClueEditorPlain,
+  setClueEditorFromPlainText,
+  setClueEditorPlainCaretOffset
+} from '@/pages/sidepanel/composer/clue-editor-dom'
+import { enrichClueUrlChipsInEditor } from '@/pages/sidepanel/composer/enrich-clue-url-chips'
+import { normalizeClueUrl } from '@/pages/sidepanel/composer/clue-url'
 import { useComposerSpeechDictation } from '@/pages/sidepanel/use-composer-speech-dictation'
 import { useVoiceInputMeter } from '@/pages/sidepanel/use-voice-input-meter'
+
+import '@/pages/sidepanel/composer/clue-url-chip.css'
 
 defineOptions({ name: 'RecallComposer' })
 
@@ -27,12 +50,135 @@ const emit = defineEmits<{
   send: []
 }>()
 const model = defineModel<string>({ required: true })
-const inputRef = ref<HTMLTextAreaElement | null>(null)
+const editorRef = ref<HTMLDivElement | null>(null)
+
+/** 外部写 model（prefill / 听写）时跳过 DOM→model 回写环。 */
+let syncingFromModel = false
+/** IME 组字中不收芯片。 */
+let isComposing = false
+/** 异步标题 enrich 代数；过期结果丢弃。 */
+let enrichGeneration = 0
+/** 超长 tip 节流，避免连按刷屏。 */
+let lastClueTooLongTipAt = 0
+
+const toast = useAppToast()
+
+/** 线索超长 tip（与 RECALL_WITH_CLUE 上限一致）。 */
+function notifyClueTooLong(): void {
+  const now = Date.now()
+  if (now - lastClueTooLongTipAt < 2500) {
+    return
+  }
+  lastClueTooLongTipAt = now
+  toast.warning(t('sidepanel_clue_too_long', String(RECALL_CLUE_MAX_CHARS)))
+}
+
+/** 选区将被替换的近似纯文本长度（芯片选中时偏短，靠事后 clamp 兜底）。 */
+function approxSelectedPlainLength(root: HTMLElement): number {
+  const selection = window.getSelection()
+  if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+    return 0
+  }
+  if (!root.contains(selection.anchorNode) || !root.contains(selection.focusNode)) {
+    return 0
+  }
+  return selection.toString().length
+}
+
+/**
+ * 按剩余容量插入纯文本；超限则截断并 tip。
+ * @returns 实际插入长度
+ */
+function insertPlainTextWithinClueLimit(el: HTMLElement, piece: string): number {
+  if (!piece) {
+    return 0
+  }
+  const plainLen = serializeClueEditorPlain(el).length
+  const selected = approxSelectedPlainLength(el)
+  const room = remainingRecallClueInsertCapacity(plainLen, selected)
+  if (room <= 0) {
+    notifyClueTooLong()
+    return 0
+  }
+  if (piece.length <= room) {
+    insertPlainTextAtClueCaret(el, piece)
+    return piece.length
+  }
+  insertPlainTextAtClueCaret(el, piece.slice(0, room))
+  notifyClueTooLong()
+  return room
+}
+
+/** 若 DOM/model 已超上限，截回并 tip（IME / 旁路兜底）。 */
+function enforceClueLengthCap(el: HTMLElement): string {
+  const plain = serializeClueEditorPlain(el)
+  const clamped = clampRecallClueText(plain)
+  if (!clamped.truncated) {
+    return plain
+  }
+  notifyClueTooLong()
+  const caret = getClueEditorPlainCaretOffset(el)
+  syncingFromModel = true
+  try {
+    setClueEditorFromPlainText(el, clamped.text, { chipTrailing: false })
+    updateEmptyAttr()
+    setClueEditorPlainCaretOffset(
+      el,
+      caret !== null ? Math.min(caret, clamped.text.length) : clamped.text.length
+    )
+  } finally {
+    syncingFromModel = false
+  }
+  return clamped.text
+}
+
+/** 粘贴/重建芯片后异步补库内/tab 标题（不阻塞输入）。 */
+function scheduleEnrichUrlChipTitles(): void {
+  const el = editorRef.value
+  if (!el) {
+    return
+  }
+  const generation = ++enrichGeneration
+  void enrichClueUrlChipsInEditor(el).then(() => {
+    if (generation !== enrichGeneration || editorRef.value !== el) {
+      return
+    }
+    resizeInput()
+  })
+}
 
 const disabledRef = toRef(props, 'disabled')
+/**
+ * 点麦 mousedown 时快照的插入偏移（click 抢焦前）。
+ * startListening 消费后清空。
+ */
+let pendingSpeechInsertOffset: number | null = null
+
+function captureSpeechInsertOffsetFromEditor(): void {
+  const el = editorRef.value
+  if (!el) {
+    pendingSpeechInsertOffset = model.value.length
+    return
+  }
+  const offset = getClueEditorPlainCaretOffset(el)
+  pendingSpeechInsertOffset = offset ?? model.value.length
+}
+
 const speech = useComposerSpeechDictation({
   model,
-  disabled: computed(() => Boolean(disabledRef.value))
+  disabled: computed(() => Boolean(disabledRef.value)),
+  getInsertOffset: () => {
+    if (pendingSpeechInsertOffset !== null) {
+      const offset = pendingSpeechInsertOffset
+      pendingSpeechInsertOffset = null
+      return offset
+    }
+    const el = editorRef.value
+    if (!el) {
+      return model.value.length
+    }
+    return getClueEditorPlainCaretOffset(el) ?? model.value.length
+  }
 })
 
 const isListening = computed(() => speech.status.value === 'listening')
@@ -88,31 +234,317 @@ function pinDocumentScroll(): void {
   }
 }
 
-function resizeInput(): void {
-  const el = inputRef.value
+function isEditorEmpty(): boolean {
+  const el = editorRef.value
+  if (!el) {
+    return true
+  }
+  return serializeClueEditorPlain(el).trim().length === 0
+}
+
+function updateEmptyAttr(): void {
+  const el = editorRef.value
   if (!el) {
     return
   }
-  if (el.value.length === 0) {
+  if (isEditorEmpty()) {
+    el.setAttribute('data-empty', 'true')
+  } else {
+    el.removeAttribute('data-empty')
+  }
+}
+
+function resizeInput(): void {
+  const el = editorRef.value
+  if (!el) {
+    return
+  }
+  if (isEditorEmpty()) {
     el.style.height = `${INPUT_MIN_HEIGHT_PX}px`
+    updateEmptyAttr()
     pinDocumentScroll()
     return
   }
   el.style.height = 'auto'
   const next = Math.min(Math.max(el.scrollHeight, INPUT_MIN_HEIGHT_PX), INPUT_MAX_HEIGHT_PX)
   el.style.height = `${next}px`
+  updateEmptyAttr()
   pinDocumentScroll()
 }
 
+/**
+ * DOM → model。
+ * @param formatUrls 是否扫描收 URL 芯片。键入 / IME **禁止**；仅 blur / 发送 / 粘贴路径为 true。
+ */
+function syncModelFromEditor(options?: { chipTrailing?: boolean; formatUrls?: boolean }): void {
+  const el = editorRef.value
+  if (!el || syncingFromModel) {
+    return
+  }
+  const caret = getClueEditorPlainCaretOffset(el)
+  let plain = enforceClueLengthCap(el)
+  const chipTrailing = options?.chipTrailing === true
+  const formatUrls = options?.formatUrls === true
+  // 手动键入保持纯文本；不在 @input 路径做 URL→芯片
+  if (!isComposing && formatUrls) {
+    const rebuilt = maybeRebuildClueEditorChips(el, plain, { chipTrailing })
+    if (rebuilt) {
+      plain = enforceClueLengthCap(el)
+      if (caret !== null) {
+        setClueEditorPlainCaretOffset(el, Math.min(caret, plain.length))
+      }
+      scheduleEnrichUrlChipTitles()
+    }
+  }
+  if (plain !== model.value) {
+    model.value = plain
+  }
+  resizeInput()
+}
+
+/**
+ * 外部 clue 写入编辑器（听写 / prefill / 取消还原）。
+ * @param caret 重建后光标；听写结束用转写段末偏移，勿一律 `'end'`（否则会跳过光标后原文）。
+ */
+function applyModelToEditor(
+  plain: string,
+  chipTrailing: boolean,
+  options?: { caret?: 'end' | 'start' | number }
+): void {
+  const el = editorRef.value
+  if (!el) {
+    return
+  }
+  const clamped = clampRecallClueText(plain)
+  if (clamped.truncated) {
+    notifyClueTooLong()
+    if (clamped.text !== model.value) {
+      model.value = clamped.text
+    }
+  }
+  const nextPlain = clamped.text
+  syncingFromModel = true
+  try {
+    setClueEditorFromPlainText(el, nextPlain, { chipTrailing })
+    updateEmptyAttr()
+    const caretMode = options?.caret ?? 'end'
+    if (caretMode === 'end') {
+      setClueEditorPlainCaretOffset(el, nextPlain.length)
+    } else if (caretMode === 'start') {
+      setClueEditorPlainCaretOffset(el, 0)
+    } else {
+      setClueEditorPlainCaretOffset(el, Math.min(caretMode, nextPlain.length))
+    }
+  } finally {
+    syncingFromModel = false
+  }
+  resizeInput()
+  scheduleEnrichUrlChipTitles()
+}
+
+/** focus 后再钉光标（部分浏览器 focus contenteditable 会甩到开头）。 */
+function focusWithCaretAt(offset: number): void {
+  const el = editorRef.value
+  focus()
+  if (!el) {
+    return
+  }
+  setClueEditorPlainCaretOffset(el, offset)
+}
+
 function handleKeydown(event: KeyboardEvent): void {
+  if (props.disabled) {
+    return
+  }
   // Enter 发送；Shift+Enter 换行
   if (event.key === 'Enter' && !event.shiftKey) {
     event.preventDefault()
+    // 发送前收文末 URL 芯片（手打完整 URL 的收口）
+    syncModelFromEditor({ chipTrailing: true, formatUrls: true })
     emit('send')
+    return
   }
 }
 
-/** 听写中 textarea 隐藏，Esc 挂在 window。 */
+function handleBeforeInput(event: InputEvent): void {
+  if (props.disabled) {
+    event.preventDefault()
+    return
+  }
+  const el = editorRef.value
+  if (!el) {
+    return
+  }
+  const insertType =
+    event.inputType === 'insertText' ||
+    event.inputType === 'insertCompositionText' ||
+    event.inputType === 'insertFromPaste' ||
+    event.inputType === 'insertParagraph' ||
+    event.inputType === 'insertLineBreak'
+  // 粘贴由 @paste 统一处理（含截断）；此处跳过以免双插
+  if (event.inputType === 'insertFromPaste') {
+    return
+  }
+
+  const data =
+    event.data ??
+    (event.inputType === 'insertParagraph' || event.inputType === 'insertLineBreak' ? '\n' : '')
+
+  // 选区落在 ce=false 芯片内时，浏览器仍可能把字打进芯片 → 改插到芯片后
+  const insideChip = findClueUrlChipContainingSelection(el)
+  if (insideChip) {
+    if (!insertType) {
+      return
+    }
+    event.preventDefault()
+    const slot = ensureZwspAfterClueUrlChip(insideChip)
+    const selection = window.getSelection()
+    if (selection) {
+      const range = document.createRange()
+      range.setStart(slot, Math.min(1, slot.data.length))
+      range.collapse(true)
+      selection.removeAllRanges()
+      selection.addRange(range)
+    }
+    if (!data) {
+      return
+    }
+    insertPlainTextWithinClueLimit(el, data)
+    const next = serializeClueEditorPlain(el)
+    if (next !== model.value) {
+      model.value = next
+    }
+    resizeInput()
+    return
+  }
+
+  // 普通键入：超限物理拦截（截断可写入部分）
+  if (!insertType || !data) {
+    return
+  }
+  const plainLen = serializeClueEditorPlain(el).length
+  const selected = approxSelectedPlainLength(el)
+  const room = remainingRecallClueInsertCapacity(plainLen, selected)
+  if (data.length <= room) {
+    return
+  }
+  event.preventDefault()
+  if (room > 0) {
+    insertPlainTextWithinClueLimit(el, data)
+    const next = serializeClueEditorPlain(el)
+    if (next !== model.value) {
+      model.value = next
+    }
+    resizeInput()
+  } else {
+    notifyClueTooLong()
+  }
+}
+
+function handleInput(): void {
+  if (syncingFromModel) {
+    return
+  }
+  const el = editorRef.value
+  if (el) {
+    ensureClueEditorCaretSlots(el)
+  }
+  // 键入：只同步纯文本 model，不做 URL→芯片
+  syncModelFromEditor()
+}
+
+function handleCompositionStart(): void {
+  isComposing = true
+}
+
+function handleCompositionEnd(): void {
+  isComposing = false
+  syncModelFromEditor()
+}
+
+function handlePaste(event: ClipboardEvent): void {
+  event.preventDefault()
+  if (props.disabled) {
+    return
+  }
+  const el = editorRef.value
+  if (!el) {
+    return
+  }
+  const piece = event.clipboardData?.getData('text/plain') ?? ''
+  if (!piece) {
+    return
+  }
+  const caretBefore = getClueEditorPlainCaretOffset(el)
+  const insertedLen = insertPlainTextWithinClueLimit(el, piece)
+  if (insertedLen === 0) {
+    return
+  }
+  let plain = serializeClueEditorPlain(el)
+  maybeRebuildClueEditorChips(el, plain, { chipTrailing: true })
+  plain = enforceClueLengthCap(el)
+  if (plain !== model.value) {
+    model.value = plain
+  }
+  if (caretBefore !== null) {
+    setClueEditorPlainCaretOffset(el, Math.min(caretBefore + insertedLen, plain.length))
+  }
+  resizeInput()
+  scheduleEnrichUrlChipTitles()
+}
+
+function handleBlur(): void {
+  // 失焦收文末完整 URL（粘贴为主；手打打完失焦也可成芯片）
+  syncModelFromEditor({ chipTrailing: true, formatUrls: true })
+}
+
+/** 点在 URL 芯片上：避免 contenteditable 抢 caret；返回芯片根。 */
+function chipFromEventTarget(target: EventTarget | null): Element | null {
+  if (!(target instanceof Element) || !editorRef.value) {
+    return null
+  }
+  const chip = target.closest(`[${CLUE_URL_CHIP_ATTR}]`)
+  if (!chip || !editorRef.value.contains(chip)) {
+    return null
+  }
+  return chip
+}
+
+/**
+ * mousedown 先拦住：否则 Chrome contenteditable 会先改选区，click 像「没点开」。
+ */
+function handleEditorMouseDown(event: MouseEvent): void {
+  const chip = chipFromEventTarget(event.target)
+  if (!chip) {
+    return
+  }
+  event.preventDefault()
+}
+
+function handleEditorClick(event: MouseEvent): void {
+  const chip = chipFromEventTarget(event.target)
+  if (!chip) {
+    return
+  }
+  event.preventDefault()
+  event.stopPropagation()
+  const href = normalizeClueUrl(chip.getAttribute(CLUE_URL_CHIP_ATTR) ?? '')
+  if (!href) {
+    return
+  }
+  // 芯片像超链接：默认新开前台标签（活动标签已是同 URL 时 currentTab 无感）
+  // Shift+点击 → 当前活动标签（对齐结果卡默认）
+  const disposition =
+    event.shiftKey && !event.metaKey && !event.ctrlKey ? 'currentTab' : 'newForegroundTab'
+  void navigateActiveTab({
+    url: href,
+    disposition
+  }).catch(() => {
+    // 忽略：导航失败不打断输入
+  })
+}
+
+/** 听写中编辑器隐藏，Esc 挂在 window。 */
 function handleListeningEscape(event: KeyboardEvent): void {
   if (event.key !== 'Escape' || !isListening.value) {
     return
@@ -121,13 +553,24 @@ function handleListeningEscape(event: KeyboardEvent): void {
   speech.cancelListening()
 }
 
-function handleInput(): void {
-  resizeInput()
+function focus(): void {
+  editorRef.value?.focus({ preventScroll: true })
+  pinDocumentScroll()
 }
 
-function focus(): void {
-  inputRef.value?.focus({ preventScroll: true })
-  pinDocumentScroll()
+/**
+ * 点麦前 mousedown：禁止按钮抢焦（保住 contenteditable 选区），并快照插入偏移。
+ * 停止听写时不必快照。
+ */
+function handleVoiceMouseDown(event: MouseEvent): void {
+  if (props.disabled) {
+    return
+  }
+  // 避免 mic 按钮拿到 focus → 编辑器选区丢失
+  event.preventDefault()
+  if (!isListening.value) {
+    captureSpeechInsertOffsetFromEditor()
+  }
 }
 
 function handleVoiceClick(): void {
@@ -144,10 +587,48 @@ function handleCancelVoice(): void {
   speech.cancelListening()
 }
 
-watch(model, async () => {
+function handleSendClick(): void {
+  if (props.disabled || !model.value.trim()) {
+    return
+  }
+  syncModelFromEditor({ chipTrailing: true })
+  emit('send')
+}
+
+watch(model, async (next, prev) => {
+  // 听写中编辑器隐藏，结束时再一次性重建（避免 interim 把 caret 钉到全文末）
+  if (isListening.value) {
+    return
+  }
+  const el = editorRef.value
+  if (!el) {
+    return
+  }
+  const current = serializeClueEditorPlain(el)
+  // 外部写入（prefill / 取消还原 / 清空）才重建；用户键入已由 input 同步
+  if (next === current) {
+    await nextTick()
+    resizeInput()
+    return
+  }
+  if (next === prev) {
+    return
+  }
+  applyModelToEditor(next, true, { caret: 'end' })
   await nextTick()
   resizeInput()
 })
+
+watch(
+  () => props.disabled,
+  disabled => {
+    const el = editorRef.value
+    if (!el) {
+      return
+    }
+    el.contentEditable = disabled ? 'false' : 'true'
+  }
+)
 
 watch(
   () => props.prominent,
@@ -157,18 +638,41 @@ watch(
   }
 )
 
+watch(
+  () => props.placeholder,
+  () => {
+    const el = editorRef.value
+    if (!el) {
+      return
+    }
+    el.setAttribute('data-placeholder', props.placeholder)
+  }
+)
+
 watch(isListening, async listening => {
   if (listening) {
     window.addEventListener('keydown', handleListeningEscape)
   } else {
     window.removeEventListener('keydown', handleListeningEscape)
     await nextTick()
+    // 听写结束：光标钉在转写段末尾（其后仍是点麦时的原文，如 URL 芯片）
+    const caretOffset = speech.caretAfterInsert.value
+    const caret = caretOffset !== null ? caretOffset : 'end'
+    applyModelToEditor(model.value, true, { caret })
     resizeInput()
-    focus()
+    await nextTick()
+    const plainLen = model.value.length
+    focusWithCaretAt(caretOffset !== null ? Math.min(caretOffset, plainLen) : plainLen)
   }
 })
 
 onMounted(() => {
+  const el = editorRef.value
+  if (el) {
+    el.setAttribute('data-placeholder', props.placeholder)
+    el.contentEditable = props.disabled ? 'false' : 'true'
+    applyModelToEditor(model.value, true)
+  }
   resizeInput()
 })
 
@@ -222,18 +726,26 @@ defineExpose({ focus })
       </button>
       <!-- 输入框内左侧工具（如 Recall settings）；听写态让位给波形 -->
       <slot v-if="!isListening" name="leading" />
-      <textarea
+      <div
         v-show="!isListening"
-        ref="inputRef"
-        v-model="model"
+        ref="editorRef"
         class="recall-input"
-        rows="1"
+        role="textbox"
+        aria-multiline="true"
         :aria-label="props.ariaLabel"
-        :placeholder="props.placeholder"
-        :disabled="props.disabled"
+        :aria-disabled="props.disabled ? 'true' : undefined"
+        data-empty="true"
+        spellcheck="true"
         @keydown="handleKeydown"
+        @beforeinput="handleBeforeInput"
         @input="handleInput"
+        @paste="handlePaste"
+        @compositionstart="handleCompositionStart"
+        @compositionend="handleCompositionEnd"
+        @blur="handleBlur"
         @focus="pinDocumentScroll"
+        @mousedown="handleEditorMouseDown"
+        @click="handleEditorClick"
       />
       <!-- 听写态：跟麦能量的波形（失败则氛围起伏） -->
       <div
@@ -258,6 +770,7 @@ defineExpose({ focus })
         :title="voiceTitle"
         :aria-pressed="isListening"
         :disabled="props.disabled"
+        @mousedown="handleVoiceMouseDown"
         @click="handleVoiceClick"
       >
         <span v-if="isListening" class="recall-voice-stop-glyph" aria-hidden="true" />
@@ -268,7 +781,7 @@ defineExpose({ focus })
         class="recall-send-button"
         :aria-label="props.sendLabel"
         :disabled="props.disabled || !model.trim()"
-        @click="emit('send')"
+        @click="handleSendClick"
       >
         <AppIcon name="arrow_upward" size="18px" />
       </button>
@@ -423,9 +936,6 @@ defineExpose({ focus })
   height: 22px;
   min-height: 22px;
   max-height: 160px;
-
-  /* 不用 field-sizing：见 resizeInput 注释（Edge 首字回落 + 整页下移） */
-  field-sizing: fixed;
   margin: 0;
   padding: 0;
   border: 0;
@@ -435,18 +945,30 @@ defineExpose({ focus })
   line-height: 1.45;
   color: inherit;
   background: transparent;
-  resize: none;
   overflow-x: hidden;
   overflow-y: auto;
   overflow-anchor: none;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  caret-color: var(--on-surface);
 }
 
 .recall-input:focus {
   outline: none;
 }
 
-.recall-input::placeholder {
+.recall-input[data-empty='true']::before {
+  content: attr(data-placeholder);
   color: var(--on-surface-muted);
+  pointer-events: none;
+  float: left;
+  height: 0;
+}
+
+.recall-input[aria-disabled='true'] {
+  opacity: 0.6;
+  cursor: default;
 }
 
 .recall-voice-cancel {

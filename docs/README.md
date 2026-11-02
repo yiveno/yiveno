@@ -19,6 +19,7 @@
 - [`product/CURRENT.md`](./product/CURRENT.md) — **当下焦点唯一手写源** → `bun run sync:ide-boot`
 - [`product/Yiveno-改版计划-v1.md`](./product/Yiveno-改版计划-v1.md) — 执行计划（R0–R∞ / R5）；与正文冲突时先改产品文档
 - [`product/Yiveno-双线程发展原则.md`](./product/Yiveno-双线程发展原则.md) — **长期权威**：明线找 + 暗线记忆探索；五问 / 四边界 / 研究记录；产品文档 §0.1.2 短锚；ADR-016
+- [`product/Yiveno-可见与契约分面-体验原则.md`](./product/Yiveno-可见与契约分面-体验原则.md) — **长期权威**：用户可见展示 vs 契约/传输字面；产品文档 §0.1.3 短锚；Recall 核心首波核查表
 - [`product/Yiveno-环境反馈驱动进化-原则.md`](./product/Yiveno-环境反馈驱动进化-原则.md) — **工程子集**：证据 → 受控手段适应与 R5 分期（服从双线程正文）
 - [`archive/research/dual-thread-notes/`](./archive/research/dual-thread-notes/) — 暗线研究笔记（模板；私人数据不入仓）
 - [`engineering/暗线基建-失败归因与受控适应.md`](./engineering/暗线基建-失败归因与受控适应.md) — 失败归因 / 适应旋钮登记 / 匿名草图 / 门禁（脚手架）

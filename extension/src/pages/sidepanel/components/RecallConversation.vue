@@ -25,6 +25,7 @@ import {
 } from '@/pages/sidepanel/recall-conversation-turn-window'
 import type { ConversationTurn, AssistantTurn } from '@/pages/sidepanel/recall-conversation-types'
 import type { RecallCardModel } from '@/pages/sidepanel/RecallResultCard.vue'
+import ClueFormattedText from '@/pages/sidepanel/composer/ClueFormattedText.vue'
 import RecallResultCard from '@/pages/sidepanel/RecallResultCard.vue'
 import { t } from '@/infrastructure/i18n/t'
 
@@ -336,7 +337,9 @@ function handleToggleDetailExportSelection(id: string): void {
       :class="turn.role === 'user' ? 'conversation-turn--user' : 'conversation-turn--assistant'"
     >
       <template v-if="turn.role === 'user'">
-        <div class="conversation-bubble conversation-bubble--user">{{ turn.text }}</div>
+        <div class="conversation-bubble conversation-bubble--user">
+          <ClueFormattedText :text="turn.text" />
+        </div>
       </template>
 
       <template v-else>

@@ -6,10 +6,16 @@ import { RECALL_SOURCE_SCOPES } from '@/core/recall/recall-source-scope'
 import type { RecallResult } from '@/core/recall/recall-result'
 import type { BackgroundMessageScope } from '@/core/messaging/constants'
 
+/**
+ * 单条 recall clue 最大字符数（契约 ∪ composer 物理上限）。
+ * UI 键入/粘贴/听写须在此拦住；与 Zod `clue.max` 同值。
+ */
+export const RECALL_CLUE_MAX_CHARS = 500
+
 /** Side Panel 多轮会话上下文（Omnibox 不传）。 */
 export const recallDialogContextSchema = z.object({
   /** 本轮之前已发送的用户原文（有序；最多 5）。 */
-  priorUserUtterances: z.array(z.string().max(2000)).max(5).optional(),
+  priorUserUtterances: z.array(z.string().max(RECALL_CLUE_MAX_CHARS)).max(5).optional(),
   /** 上一轮合并后的 ParsedRecallClue 快照。 */
   accumulated: ParsedRecallClueSchema.optional(),
   /** 本会话已否定的 MemoryItem id（硬排除）。 */
@@ -43,7 +49,7 @@ export const RECALL_SOURCE = {
 export type RecallSource = (typeof RECALL_SOURCE)[keyof typeof RECALL_SOURCE]
 
 const recallWithCluePayloadSchema = z.object({
-  clue: z.string().min(1).max(2000),
+  clue: z.string().min(1).max(RECALL_CLUE_MAX_CHARS),
   context: recallDialogContextSchema.optional(),
   /**
    * 来源标记（用于 active recall 命名空间隔离，避免 Side Panel cancel Omnibox）。
@@ -110,8 +116,53 @@ export type GetRecallPageContextResponse =
       error?: string
     }
 
+/** composer URL 芯片：异步解析展示标题（本机库优先，其次打开中的 tab；不联网抓页）。 */
+const resolveClueUrlDisplayPayloadSchema = z.object({
+  /** 规范化后的 http(s) URL；单次最多 8 条。 */
+  urls: z.array(z.string().url().max(2000)).min(1).max(8)
+})
+
+export type ResolveClueUrlDisplayPayload = z.infer<typeof resolveClueUrlDisplayPayloadSchema>
+
+export type ResolveClueUrlDisplayMessage = {
+  scope: BackgroundMessageScope
+  type: 'RESOLVE_CLUE_URL_DISPLAY'
+  payload: ResolveClueUrlDisplayPayload
+}
+
+/**
+ * 单条解析来源。
+ * - library：本机 Memory（书签 title / 摘录 pageTitle）
+ * - tab：当前浏览器已打开标签的 title
+ * - none：未命中（UI 保持缩短 host/path）
+ */
+export type ClueUrlDisplaySource =
+  | 'library' // 本机库标题
+  | 'tab' // 打开中的标签标题
+  | 'none' // 无标题，回退缩短 URL
+
+export type ResolveClueUrlDisplayEntry = {
+  url: string
+  title: string | null
+  source: ClueUrlDisplaySource
+}
+
+export type ResolveClueUrlDisplayResponse =
+  | {
+      ok: true
+      entries: ResolveClueUrlDisplayEntry[]
+    }
+  | {
+      ok: false
+      errorCode: 'RECALL_FAILED'
+      error?: string
+    }
+
 export type RecallBackgroundMessage =
-  RecallWithClueMessage | RecallCancelMessage | GetRecallPageContextMessage
+  | RecallWithClueMessage
+  | RecallCancelMessage
+  | GetRecallPageContextMessage
+  | ResolveClueUrlDisplayMessage
 
 export type RecallSuccessResponse = {
   ok: true
@@ -138,4 +189,8 @@ export function parseRecallWithCluePayload(value: unknown) {
 
 export function parseRecallCancelPayload(value: unknown) {
   return recallCancelPayloadSchema.parse(value)
+}
+
+export function parseResolveClueUrlDisplayPayload(value: unknown) {
+  return resolveClueUrlDisplayPayloadSchema.parse(value)
 }

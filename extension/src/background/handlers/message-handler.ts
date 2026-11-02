@@ -69,6 +69,7 @@ import {
   handleRecallCancel,
   handleRecallWithClue
 } from '@/background/handlers/recall-handler'
+import { handleResolveClueUrlDisplay } from '@/background/handlers/resolve-clue-url-display'
 import {
   handleGetAiHostedQuota,
   handleGetUserSettings,
@@ -188,6 +189,8 @@ async function dispatchBackgroundMessage(
       return handleRecallCancel(message.payload)
     case 'GET_RECALL_PAGE_CONTEXT':
       return handleGetRecallPageContext()
+    case 'RESOLVE_CLUE_URL_DISPLAY':
+      return handleResolveClueUrlDisplay(message.payload)
     case 'MCP_RECALL_EVIDENCE':
       return handleMcpRecallEvidence(message.payload)
     case 'GET_CHROME_BOOKMARK_IMPORT_STATUS':

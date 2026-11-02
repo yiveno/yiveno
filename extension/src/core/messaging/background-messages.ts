@@ -27,7 +27,8 @@ import type {
   GetRecallPageContextResponse,
   RecallBackgroundMessage,
   RecallBackgroundResponse,
-  RecallCancelResponse
+  RecallCancelResponse,
+  ResolveClueUrlDisplayResponse
 } from '@/core/messaging/recall-messages'
 import type {
   SettingsBackgroundMessage,
@@ -105,6 +106,7 @@ export type BackgroundMessageResponse =
   | RecallBackgroundResponse
   | RecallCancelResponse
   | GetRecallPageContextResponse
+  | ResolveClueUrlDisplayResponse
   | McpBackgroundResponse
   | ImportBackgroundResponse
   | CommandsBackgroundResponse

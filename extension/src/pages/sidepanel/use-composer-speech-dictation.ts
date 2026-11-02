@@ -1,15 +1,22 @@
 /**
  * Side Panel composer：麦克风听写 → 写入 clue 文案（不自动提交）。
+ * 转写插入**点麦时光标位置**；取消还原整段；结束后由 UI 把 caret 钉在转写段末尾。
+ * 无新转写超过静默窗口 → 自动 stop（保留文案）。
  * Side Panel 常无法弹出麦克风授权 → 壳内轻条引导；页内 getUserMedia，再不行开站点设置。
  */
 
 import { onUnmounted, ref, type Ref } from 'vue'
 
+import { RECALL_CLUE_MAX_CHARS } from '@/core/messaging/recall-messages'
+import { clampRecallClueText } from '@/core/recall/clamp-recall-clue-text'
 import {
-  composeSpeechDictationPreview,
+  composeSpeechDictationWithCaretSuffix,
+  SPEECH_DICTATION_SILENCE_STOP_MS,
   speechRecognitionLangForUiLocale,
   type SpeechDictationStatus
 } from '@/core/speech/speech-dictation'
+import { t } from '@/infrastructure/i18n/t'
+import { showAppToast } from '@/infrastructure/ui/use-app-toast'
 import {
   openExtensionMicrophoneSiteSettings,
   requestExtensionMicrophoneAccess
@@ -28,6 +35,11 @@ export type UseComposerSpeechDictationOptions = {
   model: Ref<string>
   /** 与 composer 同禁（召回中等） */
   disabled: Ref<boolean>
+  /**
+   * 点麦瞬间的纯文本光标偏移（与 contenteditable 序列化同规）。
+   * 缺省 / 非法 → 插到文末。
+   */
+  getInsertOffset?: () => number
 }
 
 export function useComposerSpeechDictation(options: UseComposerSpeechDictationOptions) {
@@ -41,13 +53,49 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
   >(null)
   /** 页内点「允许」进行中 */
   const permissionBusy = ref(false)
+  /**
+   * 本轮听写结束后建议的 caret 偏移（转写段末尾，不含光标后原文）。
+   * idle 时为 null。
+   */
+  const caretAfterInsert = ref<number | null>(null)
 
   let recognition: BrowserSpeechRecognition | null = null
-  /** 本轮听写开始时的 clue（取消时还原） */
+  /** 本轮听写开始时的完整 clue（取消时还原） */
   let sessionStartText = ''
-  /** 本轮听写开始时的 clue + 已定稿转写 */
+  /** 点麦时光标前原文 + 已定稿转写 */
   let committedPrefix = ''
+  /** 点麦时光标后原文（听写过程中不变） */
+  let caretSuffix = ''
   let intentionalStop = false
+  /** 无转写静默自动停 */
+  let silenceTimer: ReturnType<typeof setTimeout> | null = null
+  /** 听写超长 tip 节流 */
+  let lastClueTooLongTipAt = 0
+
+  function clearSilenceWatch(): void {
+    if (silenceTimer !== null) {
+      clearTimeout(silenceTimer)
+      silenceTimer = null
+    }
+  }
+
+  /** 有转写活动或刚开麦时重置；超时 → stop（保留文案）。 */
+  function bumpSilenceWatch(): void {
+    clearSilenceWatch()
+    if (status.value !== 'listening') {
+      return
+    }
+    silenceTimer = setTimeout(() => {
+      silenceTimer = null
+      if (status.value !== 'listening') {
+        return
+      }
+      logger.info('SidePanel', '语音转写静默超时，自动停止', {
+        silenceMs: SPEECH_DICTATION_SILENCE_STOP_MS
+      })
+      stopListening()
+    }, SPEECH_DICTATION_SILENCE_STOP_MS)
+  }
 
   function clearRecognitionHandlers(instance: BrowserSpeechRecognition): void {
     instance.onresult = null
@@ -56,6 +104,7 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
   }
 
   function teardownRecognition(): void {
+    clearSilenceWatch()
     if (!recognition) {
       return
     }
@@ -68,7 +117,16 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
     recognition = null
   }
 
+  function resolveInsertOffset(full: string): number {
+    const raw = options.getInsertOffset?.()
+    if (typeof raw !== 'number' || !Number.isFinite(raw)) {
+      return full.length
+    }
+    return Math.max(0, Math.min(full.length, Math.floor(raw)))
+  }
+
   function stopListening(): void {
+    clearSilenceWatch()
     if (!recognition || status.value !== 'listening') {
       if (status.value !== 'requesting_permission') {
         status.value = 'idle'
@@ -94,6 +152,7 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
     }
     intentionalStop = true
     options.model.value = sessionStartText
+    caretAfterInsert.value = null
     teardownRecognition()
     status.value = 'idle'
     lastErrorKey.value = null
@@ -102,6 +161,7 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
 
   /** 听写遇无权限：壳内轻条，不新开扩展页。 */
   function enterPermissionNeeded(): void {
+    clearSilenceWatch()
     status.value = 'requesting_permission'
     lastErrorKey.value = 'sidepanel_voice_error_not_allowed'
     logger.info('SidePanel', '语音转写需麦克风授权，显示壳内提示')
@@ -159,7 +219,10 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
     lastErrorKey.value = null
     intentionalStop = false
     sessionStartText = options.model.value
-    committedPrefix = options.model.value
+    const insertAt = resolveInsertOffset(sessionStartText)
+    committedPrefix = sessionStartText.slice(0, insertAt)
+    caretSuffix = sessionStartText.slice(insertAt)
+    caretAfterInsert.value = insertAt
     const lang = speechRecognitionLangForUiLocale(getEffectiveUiLocale())
     const instance = createBrowserSpeechRecognition({ lang })
     if (!instance) {
@@ -170,8 +233,29 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
     recognition = instance
     instance.onresult = event => {
       const pieces = extractSpeechRecognitionPieces(event)
-      const merged = composeSpeechDictationPreview(committedPrefix, pieces)
+      const hasText = pieces.some(piece => piece.transcript.trim().length > 0)
+      if (hasText) {
+        bumpSilenceWatch()
+      }
+      const merged = composeSpeechDictationWithCaretSuffix(committedPrefix, pieces, caretSuffix)
+      const clamped = clampRecallClueText(merged.displayText)
+      if (clamped.truncated) {
+        const now = Date.now()
+        if (now - lastClueTooLongTipAt >= 2500) {
+          lastClueTooLongTipAt = now
+          showAppToast({
+            tone: 'warning',
+            message: t('sidepanel_clue_too_long', String(RECALL_CLUE_MAX_CHARS))
+          })
+        }
+        // 定稿前缀也压到上限内，避免后续 interim 继续涨
+        committedPrefix = clampRecallClueText(merged.nextCommittedPrefix).text
+        caretAfterInsert.value = Math.min(merged.caretEnd, clamped.text.length)
+        options.model.value = clamped.text
+        return
+      }
       committedPrefix = merged.nextCommittedPrefix
+      caretAfterInsert.value = merged.caretEnd
       options.model.value = merged.displayText
     }
 
@@ -185,12 +269,17 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
       }
       if (code === 'no-speech') {
         lastErrorKey.value = 'sidepanel_voice_error_no_speech'
+        // 浏览器判定无声：收口听写壳（保留已有转写），不依赖仅改 title
+        if (status.value === 'listening') {
+          stopListening()
+        }
       } else if (code !== 'aborted') {
         lastErrorKey.value = 'sidepanel_voice_error_generic'
       }
     }
 
     instance.onend = () => {
+      clearSilenceWatch()
       clearRecognitionHandlers(instance)
       if (recognition === instance) {
         recognition = null
@@ -200,7 +289,10 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
       }
       status.value = 'idle'
       if (!intentionalStop) {
-        logger.info('SidePanel', '语音转写会话结束')
+        logger.info('SidePanel', '语音转写会话结束', {
+          insertAt,
+          caretEnd: caretAfterInsert.value
+        })
       }
       intentionalStop = false
     }
@@ -208,7 +300,13 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
     try {
       instance.start()
       status.value = 'listening'
-      logger.info('SidePanel', '语音转写开始', { lang })
+      bumpSilenceWatch()
+      logger.info('SidePanel', '语音转写开始', {
+        lang,
+        insertAt,
+        suffixLen: caretSuffix.length,
+        silenceStopMs: SPEECH_DICTATION_SILENCE_STOP_MS
+      })
     } catch (error) {
       logger.warn('SidePanel', '语音转写 start 失败', {
         error: error instanceof Error ? error.message : String(error)
@@ -216,6 +314,7 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
       teardownRecognition()
       lastErrorKey.value = 'sidepanel_voice_error_generic'
       status.value = 'idle'
+      caretAfterInsert.value = null
     }
   }
 
@@ -231,6 +330,7 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
     intentionalStop = true
     teardownRecognition()
     status.value = 'idle'
+    caretAfterInsert.value = null
   })
 
   return {
@@ -238,6 +338,7 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
     status,
     lastErrorKey,
     permissionBusy,
+    caretAfterInsert,
     toggleListening,
     stopListening,
     cancelListening,

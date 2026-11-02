@@ -1,9 +1,11 @@
 /**
- * 本场找回会话标题（thread title）：标识「这场找叫什么」，非过程态文案。
- * 优先首轮用户句；否则用 accumulated contentTerms。供锚点 / status / 日后会话列表复用。
+ * 本场找会话标题字面（thread title）：标识「这场找叫什么」，非过程态文案。
+ * 优先首轮用户句；否则用 accumulated contentTerms。
  *
- * 可见截断交给 UI（CSS ellipsis，随侧栏宽度自适应）；此处只归一空白，
- * 并设极高上限防病态长串撑爆 a11y / placeholder。
+ * **字面权威**（完整 URL 等）供 a11y / 与 prior utterances 对齐；
+ * **用户可见**（顶栏 / placeholder / status）由 UI 再经
+ * `@/core/recall/clue-plain-url` · `formatCluePlainForUserDisplay` 缩短 URL，
+ * 不改本函数返回值与传输面。病态长串安全上限仍在此；布局 ellipsis 仍靠 CSS。
  */
 
 /** 病态长串安全上限（非视觉展示宽度；展示截断见 composer CSS）。 */
