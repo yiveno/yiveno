@@ -1,9 +1,6 @@
 /** 距顶/底 threshold 内视为「贴边」（与 Side Panel 滚动区一致）。 */
 export const RECALL_SHELL_STICK_EDGE_THRESHOLD_PX = 96
 
-/** @deprecated 用 `RECALL_SHELL_STICK_EDGE_THRESHOLD_PX`；保留别名以免外部引用断裂。 */
-export const RECALL_SHELL_STICK_TO_BOTTOM_THRESHOLD_PX = RECALL_SHELL_STICK_EDGE_THRESHOLD_PX
-
 export type RecallShellScrollState = {
   /** 距顶不足 threshold */
   nearTop: boolean
