@@ -1,31 +1,49 @@
 ---
 /**
  * FAQ：答案优先短文，供人读 + GEO/FAQPage JSON-LD。
- * 条目权威在 `seo/json-ld.ts` 的 FAQ_ENTRIES（正文与 schema 同源）。
+ * JSON-LD 权威仍是英文 `FAQ_ENTRIES`（爬虫 / GEO）。
+ * 可见文案经 `data-yiveno-i18n` 按 locale 换；与 schema 在 zh 下允许分面（见 GEO 文档）。
  */
 import MainLayout from '../layouts/MainLayout.astro'
+import { en } from '../i18n/en'
 import { FAQ_ENTRIES, buildFaqPageJsonLd } from '../seo/json-ld'
 import '../styles/pages.css'
+
+/** 可见 Q&A 键序；与 FAQ_ENTRIES 条数/语义对齐 */
+const FAQ_VISIBLE = [
+  { q: 'faq.what_is.q', a: 'faq.what_is.a' },
+  { q: 'faq.what_isnt.q', a: 'faq.what_isnt.a' },
+  { q: 'faq.recall.q', a: 'faq.recall.a' },
+  { q: 'faq.data.q', a: 'faq.data.a' },
+  { q: 'faq.pricing.q', a: 'faq.pricing.a' },
+  { q: 'faq.install.q', a: 'faq.install.a' }
+] as const
 ---
 
 <MainLayout
-  title="FAQ · Yiveno"
-  description="What Yiveno is and isn't, how Recall works, privacy defaults, Free vs Pro, and store listing status."
+  title={en['faq.meta.title']}
+  description={en['faq.meta.description']}
+  i18nTitleKey="faq.meta.title"
   structuredData={buildFaqPageJsonLd(FAQ_ENTRIES)}
 >
   <article class="page">
     <header>
-      <h1 class="page__title">FAQ</h1>
+      <h1 class="page__title" data-yiveno-i18n="faq.title">
+        {en['faq.title']}
+      </h1>
       <p class="page__lede">
-        Short answers about finding what you saved. For bugs or account help, see{' '}
-        <a href="/support">Support</a>.
+        <span data-yiveno-i18n="faq.lede_before">{en['faq.lede_before']}</span>{' '}
+        <a href="/support" data-yiveno-i18n="faq.lede_support">
+          {en['faq.lede_support']}
+        </a>
+        <span data-yiveno-i18n="faq.lede_after">{en['faq.lede_after']}</span>
       </p>
     </header>
 
-    {FAQ_ENTRIES.map(entry => (
+    {FAQ_VISIBLE.map(entry => (
       <section class="page__section">
-        <h2>{entry.question}</h2>
-        <p>{entry.answer}</p>
+        <h2 data-yiveno-i18n={entry.q}>{en[entry.q]}</h2>
+        <p data-yiveno-i18n={entry.a}>{en[entry.a]}</p>
       </section>
     ))}
   </article>

@@ -17,7 +17,7 @@ import {
 } from '@/core/recall/omnibox-suggest'
 import { openRecallSidePanel } from '@/infrastructure/browser/side-panel'
 import { navigateTabToUrl } from '@/infrastructure/browser/navigate-tab'
-import { t } from '@/infrastructure/i18n/t'
+import { getUILanguage, t } from '@/infrastructure/i18n/t'
 import { logger } from '@/infrastructure/logging/logger'
 import { writeRecallPrefill } from '@/infrastructure/storage/first-recall-onboarding-storage'
 
@@ -209,7 +209,8 @@ async function handleOmniboxInputChanged(
     detailPageUrl,
     translate: t,
     clue: result.effectiveClue ?? clue,
-    openRecallShortcut
+    openRecallShortcut,
+    locale: getUILanguage()
   })
   if (suggests.length === 0) {
     // 第 1 行 = default（常驻 Tip，非 CTA）；

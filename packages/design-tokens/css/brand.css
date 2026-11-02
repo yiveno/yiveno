@@ -64,6 +64,10 @@
   --space-2xl: 48px;
   --space-3xl: 64px;
 
+  /* ── Typography（Body/UI；Display Fraunces 仅官网/营销面加载） ── */
+  --font-sans: 'Work Sans', 'Work Sans Fallback', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-body: var(--font-sans);
+
   /* ── Shape ── */
   --radius-xs: 4px;
   --radius-sm: 8px;

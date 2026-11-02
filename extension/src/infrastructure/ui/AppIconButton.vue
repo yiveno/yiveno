@@ -44,6 +44,7 @@ withDefaults(
   padding: 0;
   border: none;
   border-radius: var(--radius-full);
+  font: inherit;
   color: var(--on-surface-muted);
   background: transparent;
   cursor: pointer;

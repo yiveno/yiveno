@@ -50,6 +50,28 @@ describe('renderRecallFraming', () => {
     expect(text).toContain('showing 1–5')
   })
 
+  it('omitCounts 时不拼 P6（卡前计数承接）', () => {
+    const facts: RecallFramingCandidateFacts = {
+      kind: 'candidates',
+      understood: {
+        objectTypes: ['video'],
+        contentTerms: [],
+        behaviorHints: [],
+        noteHint: false
+      },
+      retrievalPath: 'constraint_neighborhood',
+      buckets: [],
+      stance: 'weak_candidates',
+      counts: { total: 12, shown: 5 },
+      isWideNeighborhood: true
+    }
+
+    const text = renderRecallFraming(facts, translate, { omitCounts: true })
+    expect(text).toContain('video')
+    expect(text).not.toContain('12 related')
+    expect(text).not.toContain('showing 1–5')
+  })
+
   it('timeLabel 用日常英语，不露出 snake_case', () => {
     const facts: RecallFramingCandidateFacts = {
       kind: 'candidates',

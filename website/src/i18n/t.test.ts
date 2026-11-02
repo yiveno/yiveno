@@ -66,4 +66,13 @@ describe('website i18n t()', () => {
     )
     expect(tFormat('login.error.otpIncomplete', { digits: 8 }, 'zh_CN')).toContain('8')
   })
+
+  test('首页 / FAQ / 页脚键中英齐全且不用「找回」默认译', () => {
+    expect(t('home.hero.title', 'zh_CN')).toBe('找到你存过的。')
+    expect(t('home.hero.title', 'zh_CN')).not.toMatch(/找回/)
+    expect(t('footer.tagline', 'zh_CN')).toBe('· 找到你存过的。')
+    expect(t('footer.faq', 'zh_CN')).toBe('常见问题')
+    expect(t('faq.what_is.q', 'zh_CN')).toContain('Yiveno')
+    expect(t('home.geo.title_html', 'zh_CN')).toContain('home-kicker-em')
+  })
 })

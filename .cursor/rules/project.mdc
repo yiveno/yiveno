@@ -201,7 +201,7 @@ pre-push **不跑** ESLint、全仓 typecheck；extension 变更时跑 **build +
 
 1. 相关单测 + 必要 `typecheck` 通过。
 2. `cd extension && bun run build`（或确认 `build:watch` 已产出最新 `dist/`；改 `_locales` / manifest 须确认 post-build 已同步）。
-3. MCP：`chrome://extensions` → 重新加载 Yiveno → 打开 Side Panel（`chrome-extension://<id>/sidepanel.html` 或真实 Side Panel 入口）。
+3. MCP：`chrome://extensions` → 重新加载 Yiveno → 打开 Side Panel（`chrome-extension://<id>/sidepanel.html` 或真实 Side Panel 入口）。**开页前先 `list_pages` 复用已有标签**（见 `mcp-chrome-tab-reuse.mdc`），禁止同 URL 再堆新标签。
 4. **UI 路径**复现：用 `fill` / `click` / `wait_for` / `take_snapshot`；**禁止**用 `evaluate_script` 直调 `RECALL_WITH_CLUE` 等消息冒充 UI 测试。
 5. 报完成时简述 MCP 结论（测了什么、通过/失败、若失败是否已修并重测）。
 
@@ -214,7 +214,7 @@ pre-push **不跑** ESLint、全仓 typecheck；extension 变更时跑 **build +
 | 原则 | 说明 |
 | --- | --- |
 | **先复现、后推断** | 按用户/产品真实路径（Side Panel、Capture、Settings、Omnibox 等）走 **UI 操作**，勿只靠读代码或单测结论 |
-| **证据优先** | 用 `take_snapshot`（a11y 树）、`list_console_messages`、`wait_for`、必要时 `take_screenshot`；扩展问题先 `chrome://extensions` 重新加载 |
+| **证据优先** | 用 `take_snapshot`（a11y 树）、`list_console_messages`、`wait_for`、必要时 `take_screenshot`；扩展问题先 `chrome://extensions` 重新加载（**复用已有页**，见 `mcp-chrome-tab-reuse.mdc`） |
 | **信息够再动手** | 能稳定复现或能明确「无法复现 + 已试步骤」后再提修复方案；禁止信息不足就报「已修好」 |
 | **UI vs 旁路** | 验收/排查用户可见行为走 `fill`/`click`；`evaluate_script` 仅作**辅助**（查 i18n、console、DOM），不可替代 UI 复现 |
 
@@ -320,7 +320,7 @@ Background **无** `window` / `document` / `localStorage`。用全局 `setTimeou
 ## 术语与 UI
 
 - 对外英文心智：**Filter** / **Recall**；UI **禁止** `Search`（对内注释可用 search/filter；中文「筛选 / 找」仅开发者沟通；用户面勿写「找回」）。
-- 扩展用户文案：经 `t()` + **`_locales/en` 与 `_locales/zh_CN`**（`extension/src/infrastructure/i18n/`）；偏好 `UserSettings.uiLocalePreference`。禁止写死 UI 自然语言与 `getMessage(...) || 'fallback'`。`core` 不直接调 `chrome.i18n`（注入 `t` 或返回 key）。官网独立 `website/src/i18n`（en/zh_CN）；营销大段未全量翻译不算完成全面中文化。
+- 扩展用户文案：经 `t()` + **`_locales/en` 与 `_locales/zh_CN`**（`extension/src/infrastructure/i18n/`）；偏好 `UserSettings.uiLocalePreference`。禁止写死 UI 自然语言与 `getMessage(...) || 'fallback'`。`core` 不直接调 `chrome.i18n`（注入 `t` 或返回 key）。官网独立 `website/src/i18n`（en/zh_CN；壳 + 首页 + FAQ 可见已接；Support/Privacy/Terms/定价正文等长文未全量不算全面中文化）。
 - **已支持**产品 UI locale：`en`、`zh_CN`。新增其它 locale 须先改产品文档再接线。
 - **图标优先于文案**（产品文档 §0.2 / §3）：工具操作/导航尽量用通识 Lucide 图标（内联）；省略可见文字时必须有 `title` + `aria-label`（同源 `t()`）。主 CTA、说明正文、空状态、表单标签仍用文案。
 - 面向用户的失败：演进为稳定 `errorCode` + UI `t()`；禁止用本地化 error 字符串做分支。

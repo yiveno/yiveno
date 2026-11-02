@@ -176,7 +176,7 @@ Canonical CSS names in `site-critical.css`. Prefer roles over raw Brand Core in 
 **Rules**
 
 - Marketing: large confident display + light body; generous line-height.
-- Extension / dense product UI: prefer Work Sans (or system) for density; do **not** force Fraunces into every chrome label.
+- Extension / dense product UI: **default Work Sans** (system stack = fallback only; CJK still system); do **not** force Fraunces into every chrome label.
 - Avoid fashion-magazine ornament and default Inter/Roboto stacks as brand voice.
 - Extension user copy still goes through `t()` / `_locales` (product rule); this file does not replace i18n.
 

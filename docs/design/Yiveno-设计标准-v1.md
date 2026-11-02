@@ -196,11 +196,11 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 
 ### 4.2 分面规则
 
-| 面                     | 规则                                                                                       |
-| ---------------------- | ------------------------------------------------------------------------------------------ |
-| 官网 / 营销 / 幻灯封面 | Fraunces + Work Sans 完整使用                                                              |
-| 扩展密集 UI            | **以 Work Sans（或系统 UI）为主**；Fraunces 仅可用于极少品牌点缀，避免小字号衬线降低可读性 |
-| Logo 字标              | 与品牌词标一致或经品牌确认的定制字形；不得随意换网红字体                                   |
+| 面                     | 规则                                                                                                                                         |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| 官网 / 营销 / 幻灯封面 | Fraunces + Work Sans 完整使用                                                                                                                |
+| 扩展密集 UI            | **默认 Work Sans**（`extension/public/fonts`）；系统栈仅作 fallback；CJK 无字形仍回退系统黑体/苹方；Fraunces 仅极少品牌点缀，勿进密集 chrome |
+| Logo 字标              | 与品牌词标一致或经品牌确认的定制字形；不得随意换网红字体                                                                                     |
 
 ### 4.3 排版气质
 
@@ -246,6 +246,7 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 
 - 目的：理解与氛围，不是表演
 - 允许：scroll reveal、结果列表 stagger、光标闪烁、短淡入
+- **Side Panel Recall 结果卡（已接线）：** 邻域列表 opacity stagger；集合 sibling 短淡入；仅 opacity（无位移/缩放）
 - 禁止：全页视差、常驻漂浮物、循环渐变动画、夸张 AI 粒子
 - 必须尊重 `prefers-reduced-motion`
 
@@ -271,7 +272,7 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
   - **禁止**把裸 _Find things._ 单独占最大标题（易读成通用搜）
   - **首页标题排版：** 禁止用 `<br>` 做装饰性断行；桌面尽量一行读完，**窄屏/平板按词自然折行**（`text-wrap: balance`），禁止 `nowrap` 撑出横向滚动
 - 预发阶段：Nav 诚实（勿假装已上线完整账号体系）；营销 / 账号域顶栏均挂 **AuthNav**——未登录 **Sign in**（`/login`），已登录头像+展示名进 `/account`；Pricing 入口可仍隐藏；首页**不**挂邮箱预约 / Notify me；双店未上架时 Install 屏写 Coming soon（见 `EDGEADDONS.md` / `CHROMEWEBSTORE.md`）
-- **语言切换（页脚）：** 触发器 = 地球标 + **当前语言本语种名**（`English` / `中文`）+ chevron → 浮层**向上**展开；标题 **LANGUAGE / 语言** + 选项列表。仅 en / zh_CN。首访默认 `system`；点选后持久化为 `en` / `zh_CN`。**不**再挂营销顶栏
+- **语言切换（页脚）：** 触发器 = 地球标 + **当前语言本语种名**（`English` / `中文`）+ chevron → 浮层**向上**展开；标题 **LANGUAGE / 语言** + 选项列表。仅 en / zh_CN。首访默认 `system`；点选后持久化为 `en` / `zh_CN`，刷新后壳 + 首页 + FAQ 可见文案跟 locale（字典 `website/src/i18n`）。**不**再挂营销顶栏
 - 产品证明放在屏 3–5（Mechanism 流程动画 + Capture / Recall mock）；若展示 Closest/邻域 mock，**禁止空结果区**
 - 文案禁用用户可见的「搜索 / Search」产品名词（见产品文档）
 - **禁止**把 Demo / Problem / Compounds / 三卡 Proof / Types 马赛克再拆成独立长段重复同一说服点
@@ -384,6 +385,10 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 
 **Side Panel 壳高 / composer 长高（Normative · Chromium 双店）：** `html`/`body`/`#app`/`.recall-shell` 锁在视口内（`height/max-height: 100%` + `overflow: hidden`），禁止文档被 focus 滚出。clue 输入为 **contenteditable**（非 textarea）；**不用** `field-sizing: content`（空态按长 placeholder 撑高 → 首字回落会在 Edge 窄栏触发整页下移）；空态固定单行 + `data-placeholder`，有字仅 JS `scrollHeight` 长高；`focus({ preventScroll: true })`。URL 原子芯片（favicon + 缩短 host/path，可异步换成库内/tab 标题）可内联于编辑器与用户气泡，**禁止**用几何 `transform` 做 hover；标题切换允许文案替换、不做位移动画。
 
+**Side Panel composer 壳布局（Normative · 2026-11-02 · ChatGPT 式）：** 壳内**上下分行**——上行 = 线索编辑（或听写波形）；下行工具条 = 左 Recall settings（听写中为取消）· 右语音 + 发送。composer **浮在**会话滚动区底（四周留白；内容可滚到半透明壳下隐约透出）；壳底约 **62%** `surface-white` + `backdrop-filter: blur`；圆角 `--radius-xl`；**扁平**——无抬升投影，靠边框分区，焦点用 border / outline（非 soft glow 阴影环）。会话区底垫由浮底实测高度写入 `--recall-dock-clearance`。**禁止**在浮底外再铺实色/高不透明渐变遮罩（易在输入框上方留下白带）。会话区滚动条：细轨（约 5px）、低对比、贴面板右缘；track 透明。hover/focus 交互仍禁几何变换。
+
+**Side Panel 会话滚动跳转（Normative · 2026-11-02）：** composer 属底栏 chrome，**不**随会话内容滚走。可滚时在会话滚动区下缘中央浮出**同一枚**圆形图标钮（白底 + `--border` + 轻阴影；仅 icon + 随朝向切换的 `title`/`aria-label`）。箭头基态 ↓＝到底；贴底后 `rotate(180deg)` → ↑＝置顶（方向态过渡；**不是** hover 反馈）。hover/focus/active 只用背景 / opacity / outline（**禁止**在这些态上再加 translate/scale/rotate）。`prefers-reduced-motion`：取消旋转过渡（可瞬间切朝向）；滚动是否平滑由 UA/`scroll-behavior` 处理。
+
 #### 6.2.5 Library 列表 rhythm（摘录 + 书签）
 
 **条目壳：** `AppLibraryItemCard` 固定**三行**：
@@ -416,6 +421,7 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 | ----------- | -------------------------------------------------------------------------------------------------------------- |
 | 卡壳        | 书签 / 摘录 **同** `--surface-white` 底、同 `--border`、**同 hover**（`--surface-chrome`）                     |
 | 类型        | 角标（quote / favicon）+ 内容形（引文正文 vs 页标题）；摘录可 **≤1px** 左侧 accent（`inset` 阴影，非整卡铺色） |
+| Top Pick    | 细 accent 描边 + 浅底 wash + 轻阴影；**禁止**左侧加粗轨；弱于键盘选中；无卡面判决文案                          |
 | 选中 / 键盘 | 共用 accent 描边 + `--surface-accent-soft`；不跟类型底色纠缠                                                   |
 
 **禁止：** 用整卡分色区分书签/摘录（易成斑马纹 + 双套 hover）。
@@ -536,6 +542,8 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 
 | 版本   | 日期       | 说明                                                                          |
 | ------ | ---------- | ----------------------------------------------------------------------------- |
+| v1.14  | 2026-11-02 | §6.2.6 Top Pick：细描边+浅底 wash，禁左侧加粗轨                               |
+| v1.13  | 2026-11-02 | §5.4 Side Panel 结果卡 opacity stagger / sibling 淡入（已接线）               |
 | v1.12  | 2026-10-29 | §6.2.7 Recall 快速反馈条：同区异形 + 芯片触发对齐产品交互 1a（N≥2）           |
 | v1.0   | 2026-08-15 | 以官网敲定 Brand Core；宣告旧实验色非标准                                     |
 | v1.1   | 2026-08-16 | 废弃旧色板路径；官网为色系试验场，角色层在官网补全后再外推                    |

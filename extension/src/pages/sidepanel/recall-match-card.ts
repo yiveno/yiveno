@@ -5,6 +5,7 @@ import { explainRecallMatch } from '@/core/recall/explain-recall-match'
 import { buildRecallCardHighlightParts } from '@/core/recall/highlight-recall-text'
 import { formatRecallSavedTime } from '@/core/recall/format-recall-saved-time'
 import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
+import { getUILanguage } from '@/infrastructure/i18n/t'
 import type { RecallCardModel } from '@/pages/sidepanel/RecallResultCard.vue'
 
 /** `toRecallMatchCard` 可选行为。 */
@@ -52,7 +53,8 @@ export function toRecallMatchCard(
       : undefined
 
   const savedLabels = formatRecallSavedTime(match.item.createdAt, {
-    justSavedLabel: t('recall_card_saved_just_now')
+    justSavedLabel: t('recall_card_saved_just_now'),
+    locale: getUILanguage()
   })
 
   const siblings =
@@ -73,6 +75,9 @@ export function toRecallMatchCard(
     url: getMemoryItemOpenHref(match.item, {
       detailPageUrl: options.detailPageUrl
     }),
+    ...(match.item.type === 'text_excerpt' && match.item.payload.sourceUrl.trim()
+      ? { sourceUrl: match.item.payload.sourceUrl.trim() }
+      : {}),
     typeLabel: display.typeLabel,
     savedAtIso: match.item.createdAt,
     reasonLine: explanation.reasonLine,

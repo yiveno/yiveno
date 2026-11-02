@@ -112,6 +112,8 @@ export interface OmniboxSuggestOptions {
    * 无命中空列表仍由 listener 单独 suggest 无命中 CTA。
    */
   includeSwitchTrackCta?: boolean
+  /** BCP 47；相对/绝对保存时间跟 UI locale（缺省 en）。 */
+  locale?: string
 }
 
 /** Omnibox 主文最大字符（书签标题 / 摘录锚点）。 */
@@ -230,7 +232,8 @@ export function recallMatchToOmniboxSuggest(
   const meta: string[] = [typePrefix]
 
   const savedLabels = formatRecallSavedTime(match.item.createdAt, {
-    justSavedLabel: translate('recall_card_saved_just_now')
+    justSavedLabel: translate('recall_card_saved_just_now'),
+    ...(options.locale !== undefined ? { locale: options.locale } : {})
   })
   if (savedLabels) {
     meta.push(escapeOmniboxXml(savedLabels.relative))

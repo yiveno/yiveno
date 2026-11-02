@@ -1,0 +1,40 @@
+---
+description: Chrome DevTools MCP 开页前先复用已有标签，禁止同 URL 堆重复页
+alwaysApply: true
+---
+
+# MCP · 标签页复用（硬规则）
+
+> **适用：** `user-chrome-devtools`（及任何会在维护者日常 Chrome Profile 开标签的 MCP）。  
+> **动机：** 盲目 `new_page` / 对空白页乱导航会堆出多份「扩展程序」、Side Panel、官网页，维护者要一个个关。
+
+## 开页前必做
+
+对目标 URL（含 `chrome://extensions`、`chrome-extension://…/sidepanel.html`、官网、Settings 等）：
+
+1. **先** `list_pages`
+2. 若已有**同页** → `select_page`（可 `bringToFront: true`）复用；需要刷新/换 query 时在该页 `navigate_page`，**禁止**再 `new_page`
+3. **仅当**列表里没有可复用页时，才 `new_page` 或对无关空白页 `navigate_page`
+
+## 「同页」判定（宽松匹配）
+
+| 目标 | 视为已存在 |
+| --- | --- |
+| `chrome://extensions`（含 `?errors=` / 其它 query） | 任一 `chrome://extensions…` |
+| `chrome-extension://<id>/…` | 同扩展 id + 同路径（如 `sidepanel.html`）；query/hash 差异可在该页再 navigate |
+| 普通 http(s) | 同 origin + 同 pathname（忽略尾 `/`；hash 可再 navigate） |
+
+## 禁止 / 允许
+
+```
+❌ 禁止：未 list_pages 就 new_page
+❌ 禁止：已有同页仍再开一份「扩展程序」/ Side Panel / 同站点页
+❌ 禁止：为「干净环境」默认新开标签（除非用户明确要求隔离页）
+✅ 默认：list → select 复用 → 必要时同页 navigate / reload
+✅ 允许：list 后发现多份同 URL 副本时，选其一复用，并 close_page 关掉多余的同类副本（勿关无关业务标签）
+✅ 允许：用户点名「新开一个」时再 new_page
+```
+
+## 与其它 MCP 规则的关系
+
+- 真机实测 / 排查流程仍见 `project.mdc`「MCP 真机实测」「MCP 排查优先」——本文件只约束**开标签方式**，不削弱必测义务。

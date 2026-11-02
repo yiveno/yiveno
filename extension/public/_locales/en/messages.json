@@ -606,6 +606,12 @@
   "sidepanel_voice_permission_dismiss": {
     "message": "Dismiss"
   },
+  "sidepanel_scroll_to_top": {
+    "message": "Scroll to top"
+  },
+  "sidepanel_scroll_to_bottom": {
+    "message": "Scroll to bottom"
+  },
   "sidepanel_clue_too_long": {
     "message": "That clue is too long — keep it under $1 characters.",
     "placeholders": {

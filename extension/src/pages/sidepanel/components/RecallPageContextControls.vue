@@ -315,7 +315,7 @@ onUnmounted(() => {
 </template>
 
 <style scoped>
-/* 坐在 composer 壳内左侧；面板相对壳定位（父级 .recall-composer-shell position:relative） */
+/* 坐在 composer 工具条左侧；面板相对壳定位（父级 .recall-composer-shell position:relative） */
 .page-context {
   position: static;
   flex-shrink: 0;

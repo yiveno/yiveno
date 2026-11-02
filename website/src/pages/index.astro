@@ -4,21 +4,18 @@ import YMark from '../components/home/YMark.astro'
 import HomeFlowDemo from '../components/home/HomeFlowDemo.astro'
 import RecallPanelMock from '../components/home/RecallPanelMock.astro'
 import InstallCta from '../components/InstallCta.astro'
+import { en } from '../i18n/en'
 import homeDeferredHref from '../styles/home-deferred.css?url'
 
-const trustPoints = [
-  'Your saved things stay yours — private by default, visible to no one else.',
-  'You can delete what you saved, completely and at any time.',
-  "We don't sell your collection or share it with third parties.",
-  "We don't use your saved content to train public models."
-]
+const trustPointKeys = ['home.trust.1', 'home.trust.2', 'home.trust.3', 'home.trust.4'] as const
 ---
 
 <MainLayout
   chrome="home"
   jsonLd
-  title="Yiveno — Find what you saved"
-  description="Yiveno finds what you saved from what you remember. Closest fits — you pick. Chromium extension for Edge and Chrome."
+  title={en['home.meta.title']}
+  description={en['home.meta.description']}
+  i18nTitleKey="home.meta.title"
 >
   <Fragment slot="head">
     <link
@@ -37,11 +34,14 @@ const trustPoints = [
     <div class="hero__glow" aria-hidden="true"></div>
     <div class="hero__layout">
       <div class="hero__copy">
-        <p class="hero__epithet">The one that finds things</p>
-        <h1 class="hero__title">Find what you saved.</h1>
-        <p class="hero__sub">
-          You don't need the title. Say what you remember — closest fits, you pick. We're building
-          the browser extension for Edge and Chrome.
+        <p class="hero__epithet" data-yiveno-i18n="home.hero.epithet">
+          {en['home.hero.epithet']}
+        </p>
+        <h1 class="hero__title" data-yiveno-i18n="home.hero.title">
+          {en['home.hero.title']}
+        </h1>
+        <p class="hero__sub" data-yiveno-i18n="home.hero.sub">
+          {en['home.hero.sub']}
         </p>
       </div>
     </div>
@@ -51,24 +51,32 @@ const trustPoints = [
   <section class="home-sec home-sec--paper geo" aria-labelledby="geo-heading">
     <div class="home-wrap geo__layout">
       <div class="reveal">
-        <h2 id="geo-heading">
-          Yiveno is the thing <em class="home-kicker-em">that finds what you saved.</em>
-        </h2>
-        <p class="geo__lede">Closest fits on top — not one guaranteed answer. You decide.</p>
+        <h2
+          id="geo-heading"
+          data-yiveno-i18n-html="home.geo.title_html"
+          set:html={en['home.geo.title_html']}
+        />
+        <p class="geo__lede" data-yiveno-i18n="home.geo.lede">
+          {en['home.geo.lede']}
+        </p>
       </div>
       <div class="geo__cols">
         <div class="reveal d1">
-          <p class="geo__label">What it is</p>
+          <p class="geo__label" data-yiveno-i18n="home.geo.is_label">
+            {en['home.geo.is_label']}
+          </p>
           <ul class="geo__list">
-            <li>The finder for your own saved things</li>
-            <li>Recall by saying what you remember</li>
+            <li data-yiveno-i18n="home.geo.is_1">{en['home.geo.is_1']}</li>
+            <li data-yiveno-i18n="home.geo.is_2">{en['home.geo.is_2']}</li>
           </ul>
         </div>
         <div class="reveal d2">
-          <p class="geo__label">What it isn't</p>
+          <p class="geo__label" data-yiveno-i18n="home.geo.not_label">
+            {en['home.geo.not_label']}
+          </p>
           <ul class="geo__list geo__list--not">
-            <li>Not a bookmark manager or notes app</li>
-            <li>Not a chatbot that always picks one link</li>
+            <li data-yiveno-i18n="home.geo.not_1">{en['home.geo.not_1']}</li>
+            <li data-yiveno-i18n="home.geo.not_2">{en['home.geo.not_2']}</li>
           </ul>
         </div>
       </div>
@@ -79,9 +87,11 @@ const trustPoints = [
   <section class="home-sec home-sec--ink org" aria-labelledby="org-heading">
     <div class="home-wrap">
       <div class="reveal org__intro">
-        <h2 id="org-heading">You don't have to organize everything.</h2>
-        <p class="org__lede">
-          Watch the loop: capture lightly, let time pass, recall in your own words.
+        <h2 id="org-heading" data-yiveno-i18n="home.org.title">
+          {en['home.org.title']}
+        </h2>
+        <p class="org__lede" data-yiveno-i18n="home.org.lede">
+          {en['home.org.lede']}
         </p>
       </div>
       <HomeFlowDemo />
@@ -92,12 +102,13 @@ const trustPoints = [
   <section class="home-sec home-sec--paper" aria-labelledby="capture-heading">
     <div class="home-wrap capture-layout">
       <div class="capture-copy reveal">
-        <h2 id="capture-heading">Save anything worth remembering.</h2>
-        <p>
-          A page. A passage. A thread. Add a personal note if you want — the kind of context only
-          you would write. No folders. No tags. No titles required.
+        <h2 id="capture-heading" data-yiveno-i18n="home.capture.title">
+          {en['home.capture.title']}
+        </h2>
+        <p data-yiveno-i18n="home.capture.body">{en['home.capture.body']}</p>
+        <p class="capture-copy__tag" data-yiveno-i18n="home.capture.tag">
+          {en['home.capture.tag']}
         </p>
-        <p class="capture-copy__tag">Save first. Organize later — or never.</p>
       </div>
       <div class="capture-visual reveal d1">
         <div class="capture-mock" aria-hidden="true">
@@ -133,14 +144,23 @@ const trustPoints = [
                     ></path>
                   </svg>
                 </div>
-                Saved to Yiveno
+                <span data-yiveno-i18n="home.capture.toast_kicker">
+                  {en['home.capture.toast_kicker']}
+                </span>
               </div>
-              <p class="capture-toast__quote">
-                "The sea doesn't keep track of the things it's swallowed."
+              <p class="capture-toast__quote" data-yiveno-i18n="home.capture.toast_quote">
+                {en['home.capture.toast_quote']}
               </p>
               <p class="capture-toast__note">
-                <span class="capture-toast__note-label">Note:</span>
-                <span>remind me of this for the intro</span>
+                <span
+                  class="capture-toast__note-label"
+                  data-yiveno-i18n="home.capture.toast_note_label"
+                >
+                  {en['home.capture.toast_note_label']}
+                </span>
+                <span data-yiveno-i18n="home.capture.toast_note_body">
+                  {en['home.capture.toast_note_body']}
+                </span>
               </p>
             </div>
           </div>
@@ -153,13 +173,12 @@ const trustPoints = [
   <section class="home-sec home-sec--dim examples" aria-labelledby="examples-heading">
     <div class="home-wrap examples__layout">
       <div class="examples__intro reveal">
-        <h2 id="examples-heading">
-          Remember the idea. <em class="home-kicker-em">That's enough.</em>
-        </h2>
-        <p>
-          You recall the way you remember — in plain, imprecise, everyday language. Closest fits
-          show up in the Side Panel.
-        </p>
+        <h2
+          id="examples-heading"
+          data-yiveno-i18n-html="home.examples.title_html"
+          set:html={en['home.examples.title_html']}
+        />
+        <p data-yiveno-i18n="home.examples.body">{en['home.examples.body']}</p>
       </div>
       <div class="examples__visual reveal d1">
         <RecallPanelMock />
@@ -174,10 +193,12 @@ const trustPoints = [
   <section id="trust" class="home-sec home-sec--ink trust-close" aria-labelledby="trust-heading">
     <div class="home-wrap trust-close__layout">
       <div class="trust-close__privacy reveal">
-        <h2 id="trust-heading">Your memories are yours.</h2>
+        <h2 id="trust-heading" data-yiveno-i18n="home.trust.title">
+          {en['home.trust.title']}
+        </h2>
         <ul class="trust-close__list">
-          {trustPoints.map(p => (
-            <li>{p}</li>
+          {trustPointKeys.map(key => (
+            <li data-yiveno-i18n={key}>{en[key]}</li>
           ))}
         </ul>
       </div>

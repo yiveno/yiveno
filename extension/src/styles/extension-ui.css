@@ -1,7 +1,9 @@
 /**
  * 扩展 UI 样式入口：Brand Roles + motion + 语义色。
  * 业务样式与自研 App* 控件写 Roles / --space-* / --radius-* / --motion-*。
+ * Work Sans：./fonts.css（woff2 源 public/fonts；clean-dist 另同步 dist/fonts）。
  */
+@import url('./fonts.css');
 @import url('@yiveno/design-tokens/css/brand.css');
 @import url('@yiveno/design-tokens/css/variables.css');
 @import url('@yiveno/design-tokens/css/semantic-colors.css');
@@ -19,13 +21,7 @@
   --page-shell-padding-bottom-compact: var(--space-lg);
 
   color-scheme: light;
-  font-family:
-    ui-sans-serif,
-    system-ui,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    sans-serif;
+  font-family: var(--font-sans);
   color: var(--on-surface);
   background: var(--surface);
 }
@@ -33,8 +29,18 @@
 body {
   min-width: 320px;
   margin: 0;
+  /* 显式设字栈：中文 UA 会给 body 写 system-ui/PingFang，仅 :root 无法靠继承盖掉 */
+  font-family: var(--font-sans);
   color: inherit;
   background: inherit;
+}
+
+/* 表单控件默认不继承字体（UA 常落 Arial）；与官网/品牌 UI 对齐 */
+button,
+input,
+textarea,
+select {
+  font: inherit;
 }
 
 .app-shell {

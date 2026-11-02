@@ -1,50 +1,67 @@
 ---
 /**
  * 首页 Recall 证明：Side Panel 形态静帧（composer + 邻域卡，非空结果区）。
+ * 文案走官网 i18n（SSR 默认 en；客户端按 locale 换）。
  */
+import { en } from '../../i18n/en'
+
 const neighborhood = [
   {
-    rank: 'Closest',
-    title: 'Why lithium-ion batteries lose capacity in the cold',
-    meta: 'Saved 8 months ago · excerpt'
+    rankKey: 'home.examples.rank_closest',
+    titleKey: 'home.examples.card_1_title',
+    metaKey: 'home.examples.card_1_meta'
   },
   {
-    rank: 'Nearby',
-    title: 'Winter range tips for EVs — notes I kept',
-    meta: 'Saved last winter · note'
+    rankKey: 'home.examples.rank_nearby',
+    titleKey: 'home.examples.card_2_title',
+    metaKey: 'home.examples.card_2_meta'
   },
   {
-    rank: 'Nearby',
-    title: 'Battery chemistry explainer (bookmarked)',
-    meta: 'Saved a year ago · bookmark'
+    rankKey: 'home.examples.rank_nearby',
+    titleKey: 'home.examples.card_3_title',
+    metaKey: 'home.examples.card_3_meta'
   }
 ] as const
 ---
 
-<figure class="recall-panel" aria-label="Example of recalling a saved article with a spoken clue">
+<figure
+  class="recall-panel"
+  data-yiveno-i18n-aria="home.examples.panel_aria"
+  aria-label={en['home.examples.panel_aria']}
+>
   <div class="recall-panel__chrome" aria-hidden="true">
     <div class="recall-panel__brand">
       <span class="recall-panel__dot"></span>
       <span>Yiveno</span>
     </div>
-    <span class="recall-panel__chip">Side Panel</span>
+    <span class="recall-panel__chip" data-yiveno-i18n="home.examples.panel_chip">
+      {en['home.examples.panel_chip']}
+    </span>
   </div>
   <div class="recall-panel__composer" aria-hidden="true">
-    <p class="recall-panel__composer-label">Clue</p>
-    <p class="recall-panel__composer-text">
-      that article about why batteries degrade faster in winter
+    <p class="recall-panel__composer-label" data-yiveno-i18n="home.examples.clue_label">
+      {en['home.examples.clue_label']}
+    </p>
+    <p class="recall-panel__composer-text" data-yiveno-i18n="home.examples.clue_text">
+      {en['home.examples.clue_text']}
     </p>
   </div>
   <ul class="recall-panel__list">
     {neighborhood.map((item, i) => (
       <li class:list={['recall-panel__card', i === 0 && 'recall-panel__card--top']}>
-        <span class="recall-panel__rank">{item.rank}</span>
-        <p class="recall-panel__title">{item.title}</p>
-        <p class="recall-panel__meta">{item.meta}</p>
+        <span class="recall-panel__rank" data-yiveno-i18n={item.rankKey}>
+          {en[item.rankKey]}
+        </span>
+        <p class="recall-panel__title" data-yiveno-i18n={item.titleKey}>
+          {en[item.titleKey]}
+        </p>
+        <p class="recall-panel__meta" data-yiveno-i18n={item.metaKey}>
+          {en[item.metaKey]}
+        </p>
       </li>
     ))}
   </ul>
-  <figcaption class="recall-panel__caption">
-    You don't need the exact title — closest fits on top, you decide.
+  <figcaption class="recall-panel__caption" data-yiveno-i18n="home.examples.caption">
+    {en['home.examples.caption']}
   </figcaption>
 </figure>

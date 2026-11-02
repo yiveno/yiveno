@@ -8,6 +8,7 @@ export type AppIconNode = readonly [tag: string, attrs: Readonly<Record<string, 
 
 export const APP_ICON_NAMES = [
   'account_circle',
+  'arrow_downward',
   'arrow_upward',
   'bookmark',
   'bookmark_add',
@@ -54,6 +55,7 @@ export const APP_ICON_VIEW_BOX = '0 0 24 24'
 /** 登记名 → Lucide 源图标名（custom-* 为步骤序号自研线框）。 */
 export const APP_ICON_LUCIDE_SOURCE: Record<AppIconName, string> = {
   account_circle: 'CircleUser',
+  arrow_downward: 'ArrowDown',
   arrow_upward: 'ArrowUp',
   bookmark: 'Bookmark',
   bookmark_add: 'BookmarkPlus',
@@ -101,6 +103,10 @@ export const APP_ICON_NODES: Record<AppIconName, readonly AppIconNode[]> = {
     ['circle', { cx: '12', cy: '12', r: '10' }],
     ['circle', { cx: '12', cy: '10', r: '3' }],
     ['path', { d: 'M7 20.662V19a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v1.662' }]
+  ] as const,
+  arrow_downward: [
+    ['path', { d: 'm19 12-7 7-7-7' }],
+    ['path', { d: 'M12 5v14' }]
   ] as const,
   arrow_upward: [
     ['path', { d: 'm5 12 7-7 7 7' }],

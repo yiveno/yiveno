@@ -1,6 +1,6 @@
 ---
 created: 2026-11-02T10:13:40+08:00
-updated: 2026-11-02T11:05:53+08:00
+updated: 2026-11-02T12:50:00+08:00
 author: agent:cursor
 scope: 用户可见展示 vs 契约/传输字面的产品体验分面原则（长期权威）
 status: normative-principles
@@ -105,7 +105,7 @@ downstream:
 
 ### 4.2 官网营销 / GEO · 第三波核查表（2026-11-02）
 
-> **官网契约面含义：** `href` / `canonical` / JSON-LD `url` / `sitemap` / `llms.txt` 绝对 URL、FAQ 正文与 schema 同源事实。  
+> **官网契约面含义：** `href` / `canonical` / JSON-LD `url` / `sitemap` / `llms.txt` 绝对 URL；FAQ **JSON-LD 与英文 `FAQ_ENTRIES` 同源**（可见 zh 文案可分面，见 `Yiveno-官网GEO.md`）。  
 > **可见面：** 人读营销文案、CTA 标签、演示 mock；**禁止**把商店深链 / 长绝对 URL 当主按钮文案。  
 > **与 GEO：** [`Yiveno-官网GEO.md`](../engineering/Yiveno-官网GEO.md) — 可见事实 ↔ schema / `llms.txt` 一致；完整 URL 属 agent/爬虫契约，不是 UI 装饰。
 

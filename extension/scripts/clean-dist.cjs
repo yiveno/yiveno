@@ -89,6 +89,7 @@ function syncExtensionPublicAssets() {
 
   copyIfPresent(path.join(publicDir, 'manifest.json'), path.join(distDir, 'manifest.json'))
   copyIfPresent(path.join(publicDir, 'images'), path.join(distDir, 'images'))
+  copyIfPresent(path.join(publicDir, 'fonts'), path.join(distDir, 'fonts'))
   copyIfPresent(path.join(publicDir, '_locales'), path.join(distDir, '_locales'))
   copyIfPresent(path.join(publicDir, 'offscreen.html'), path.join(distDir, 'offscreen.html'))
 

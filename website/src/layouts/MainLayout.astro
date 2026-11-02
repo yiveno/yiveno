@@ -10,6 +10,8 @@ import siteDeferredHref from '../styles/site-deferred.css?url'
 import homeCriticalCssRaw from '../styles/home-critical.css?raw'
 import { minifyCss } from '../lib/minify-css'
 import { CANONICAL_ORIGIN, buildHomeJsonLdGraph } from '../seo/json-ld'
+import { en, type WebsiteMessageKey } from '../i18n/en'
+import { zh } from '../i18n/zh'
 
 interface Props {
   /** 页面标题（写入 document title） */
@@ -24,6 +26,11 @@ interface Props {
   jsonLd?: boolean
   /** 其它页自定义 JSON-LD（如 FAQPage）；与 jsonLd 可同时输出 */
   structuredData?: Record<string, unknown>
+  /**
+   * 客户端按 locale 改写 document.title 的消息键（SSR 仍用 title 作默认英文）。
+   * 与 `en`/`zh` 同源；未设则不改 title。
+   */
+  i18nTitleKey?: WebsiteMessageKey
 }
 
 const {
@@ -32,8 +39,12 @@ const {
   chrome = 'default',
   noindex = false,
   jsonLd = false,
-  structuredData
+  structuredData,
+  i18nTitleKey
 } = Astro.props
+
+/** 壳层 + 营销静态文案：与 Vue `t()` 同源，禁止再维护内联双份 dict */
+const websiteUiI18nDictJson = JSON.stringify({ en, zh_CN: zh })
 
 /** 首页深色 Hero 上门面；变量名历史遗留，≠ 预约名单产品 */
 const waitlistNav = chrome === 'home'
@@ -133,7 +144,11 @@ const homeJsonLd = jsonLd ? buildHomeJsonLdGraph() : null
     </noscript>
     <slot name="head" />
   </head>
-  <body data-chrome={chrome} data-nav-over-hero={waitlistNav ? 'true' : undefined}>
+  <body
+    data-chrome={chrome}
+    data-nav-over-hero={waitlistNav ? 'true' : undefined}
+    data-yiveno-i18n-title={i18nTitleKey}
+  >
     <a class="skip-link" href="#main" data-yiveno-i18n="a11y.skip_to_content">
       Skip to content
     </a>
@@ -184,40 +199,35 @@ const homeJsonLd = jsonLd ? buildHomeJsonLdGraph() : null
         <WebsiteLanguageSwitcher client:load menu-placement="above" />
       </div>
     </footer>
-    <script is:inline>
-      ;(function () {
-        var dict = {
-          en: {
-            'footer.pricing': 'Pricing',
-            'footer.faq': 'FAQ',
-            'footer.support': 'Support',
-            'footer.privacy': 'Privacy',
-            'footer.terms': 'Terms',
-            'footer.tagline': '· Find what you saved.',
-            'a11y.skip_to_content': 'Skip to content',
-            'nav.aria_primary': 'Primary'
-          },
-          zh_CN: {
-            'footer.pricing': '定价',
-            'footer.faq': '常见问题',
-            'footer.support': '支持',
-            'footer.privacy': '隐私',
-            'footer.terms': '条款',
-            'footer.tagline': '· 找回你存过的。',
-            'a11y.skip_to_content': '跳到正文',
-            'nav.aria_primary': '主导航'
-          }
-        }
-        var locale = document.documentElement.dataset.yivenoUiLocale || 'en'
-        var pack = dict[locale] || dict.en
-        document.querySelectorAll('[data-yiveno-i18n]').forEach(function (el) {
-          var key = el.getAttribute('data-yiveno-i18n')
-          if (key && pack[key]) el.textContent = pack[key]
-        })
-        var nav = document.querySelector('.site-nav')
-        if (nav && pack['nav.aria_primary'])
-          nav.setAttribute('aria-label', pack['nav.aria_primary'])
-      })()
-    </script>
+    <script
+      is:inline
+      set:html={`
+(function () {
+  var dict = ${websiteUiI18nDictJson};
+  var locale = document.documentElement.dataset.yivenoUiLocale || 'en';
+  var pack = dict[locale] || dict.en;
+  function msg(key) {
+    return key && pack[key] ? pack[key] : '';
+  }
+  document.querySelectorAll('[data-yiveno-i18n]').forEach(function (el) {
+    var v = msg(el.getAttribute('data-yiveno-i18n'));
+    if (v) el.textContent = v;
+  });
+  document.querySelectorAll('[data-yiveno-i18n-html]').forEach(function (el) {
+    var v = msg(el.getAttribute('data-yiveno-i18n-html'));
+    if (v) el.innerHTML = v;
+  });
+  document.querySelectorAll('[data-yiveno-i18n-aria]').forEach(function (el) {
+    var v = msg(el.getAttribute('data-yiveno-i18n-aria'));
+    if (v) el.setAttribute('aria-label', v);
+  });
+  var nav = document.querySelector('.site-nav');
+  if (nav && pack['nav.aria_primary']) nav.setAttribute('aria-label', pack['nav.aria_primary']);
+  var titleKey = document.body.getAttribute('data-yiveno-i18n-title');
+  var titleMsg = msg(titleKey);
+  if (titleMsg) document.title = titleMsg;
+})();
+`}
+    />
   </body>
 </html>

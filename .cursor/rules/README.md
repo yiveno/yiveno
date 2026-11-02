@@ -28,6 +28,7 @@
 | `commit-message.mdc`       | commit **附录**（hook/示例/术语）      | 本仓示例或 hook 变更                      |
 | `dev-chinese-plain.mdc`    | 沟通 **附录**（鉴权词表等）            | 本仓对照表变更                            |
 | `testing-real-library.mdc` | 维护者真库测试偏好                     | 维护者偏好变更                            |
+| `mcp-chrome-tab-reuse.mdc` | Chrome DevTools MCP **开页先复用标签** | MCP 开页堆重复标签 / 真机流程变更         |
 
 > **当前 AI 工具 = Cursor**。其它 IDE 薄指针按 ADR-013 §7。
 

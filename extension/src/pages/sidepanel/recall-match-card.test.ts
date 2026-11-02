@@ -54,14 +54,16 @@ describe('toRecallMatchCard', () => {
     expect(card.itemKind).toBe('bookmark')
     expect(card.title).toBeTruthy()
     expect(card.url).toBe('https://example.com/doc')
+    expect(card.sourceUrl).toBeUndefined()
     expect(card.reasonCodes).toEqual(['title', 'url'])
     expect(card.telemetryRank).toBeUndefined()
   })
 
-  it('摘录 detail URL 走 memory-open-href', () => {
+  it('摘录 detail URL 走 memory-open-href，并透传 sourceUrl', () => {
     const card = toRecallMatchCard(excerptMatch(), 'passage', mockT, { detailPageUrl })
 
     expect(card.url).toContain('detail.html')
+    expect(card.sourceUrl).toBe('https://example.com/a')
   })
 
   it('摘录 → itemKind text_excerpt，附注与高亮字段透传', () => {

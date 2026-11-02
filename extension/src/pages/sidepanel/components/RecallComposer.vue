@@ -712,79 +712,85 @@ defineExpose({ focus })
       </div>
     </div>
     <div class="recall-composer-shell" :class="{ 'recall-composer-shell--listening': isListening }">
-      <!-- 听写态：取消（还原点麦前 clue） -->
-      <button
-        v-if="isListening"
-        type="button"
-        class="recall-voice-cancel"
-        :aria-label="t('sidepanel_voice_cancel')"
-        :title="t('sidepanel_voice_cancel')"
-        :disabled="props.disabled"
-        @click="handleCancelVoice"
-      >
-        <AppIcon name="close" size="16px" />
-      </button>
-      <!-- 输入框内左侧工具（如 Recall settings）；听写态让位给波形 -->
-      <slot v-if="!isListening" name="leading" />
-      <div
-        v-show="!isListening"
-        ref="editorRef"
-        class="recall-input"
-        role="textbox"
-        aria-multiline="true"
-        :aria-label="props.ariaLabel"
-        :aria-disabled="props.disabled ? 'true' : undefined"
-        data-empty="true"
-        spellcheck="true"
-        @keydown="handleKeydown"
-        @beforeinput="handleBeforeInput"
-        @input="handleInput"
-        @paste="handlePaste"
-        @compositionstart="handleCompositionStart"
-        @compositionend="handleCompositionEnd"
-        @blur="handleBlur"
-        @focus="pinDocumentScroll"
-        @mousedown="handleEditorMouseDown"
-        @click="handleEditorClick"
-      />
-      <!-- 听写态：跟麦能量的波形（失败则氛围起伏） -->
-      <div
-        v-if="isListening"
-        class="recall-voice-meter"
-        role="status"
-        :aria-label="t('sidepanel_voice_listening')"
-      >
-        <span
-          v-for="(style, index) in meterBarStyles"
-          :key="index"
-          class="recall-voice-meter__bar"
-          :style="style"
+      <!-- 上行：线索编辑 / 听写波形（与工具图标分行，ChatGPT 式） -->
+      <div class="recall-composer-main">
+        <div
+          v-show="!isListening"
+          ref="editorRef"
+          class="recall-input"
+          role="textbox"
+          aria-multiline="true"
+          :aria-label="props.ariaLabel"
+          :aria-disabled="props.disabled ? 'true' : undefined"
+          data-empty="true"
+          spellcheck="true"
+          @keydown="handleKeydown"
+          @beforeinput="handleBeforeInput"
+          @input="handleInput"
+          @paste="handlePaste"
+          @compositionstart="handleCompositionStart"
+          @compositionend="handleCompositionEnd"
+          @blur="handleBlur"
+          @focus="pinDocumentScroll"
+          @mousedown="handleEditorMouseDown"
+          @click="handleEditorClick"
         />
+        <div
+          v-if="isListening"
+          class="recall-voice-meter"
+          role="status"
+          :aria-label="t('sidepanel_voice_listening')"
+        >
+          <span
+            v-for="(style, index) in meterBarStyles"
+            :key="index"
+            class="recall-voice-meter__bar"
+            :style="style"
+          />
+        </div>
       </div>
-      <button
-        v-if="speech.supported"
-        type="button"
-        class="recall-voice-button"
-        :class="{ 'recall-voice-button--listening': isListening }"
-        :aria-label="voiceButtonLabel"
-        :title="voiceTitle"
-        :aria-pressed="isListening"
-        :disabled="props.disabled"
-        @mousedown="handleVoiceMouseDown"
-        @click="handleVoiceClick"
-      >
-        <span v-if="isListening" class="recall-voice-stop-glyph" aria-hidden="true" />
-        <AppIcon v-else name="mic" size="18px" />
-      </button>
-      <button
-        type="button"
-        class="recall-send-button"
-        :aria-label="props.sendLabel"
-        :disabled="props.disabled || !model.trim()"
-        @click="handleSendClick"
-      >
-        <AppIcon name="arrow_upward" size="18px" />
-      </button>
+
+      <!-- 下行：设置 / 取消 · 语音 · 发送 -->
+      <div class="recall-composer-toolbar">
+        <button
+          v-if="isListening"
+          type="button"
+          class="recall-voice-cancel"
+          :aria-label="t('sidepanel_voice_cancel')"
+          :title="t('sidepanel_voice_cancel')"
+          :disabled="props.disabled"
+          @click="handleCancelVoice"
+        >
+          <AppIcon name="close" size="16px" />
+        </button>
+        <slot v-else name="leading" />
+        <div class="recall-composer-toolbar__end">
+          <button
+            v-if="speech.supported"
+            type="button"
+            class="recall-voice-button"
+            :class="{ 'recall-voice-button--listening': isListening }"
+            :aria-label="voiceButtonLabel"
+            :title="voiceTitle"
+            :aria-pressed="isListening"
+            :disabled="props.disabled"
+            @mousedown="handleVoiceMouseDown"
+            @click="handleVoiceClick"
+          >
+            <span v-if="isListening" class="recall-voice-stop-glyph" aria-hidden="true" />
+            <AppIcon v-else name="mic" size="18px" />
+          </button>
+          <button
+            type="button"
+            class="recall-send-button"
+            :aria-label="props.sendLabel"
+            :disabled="props.disabled || !model.trim()"
+            @click="handleSendClick"
+          >
+            <AppIcon name="arrow_upward" size="18px" />
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -889,22 +895,23 @@ defineExpose({ focus })
 .recall-composer-shell {
   position: relative;
   display: flex;
-  align-items: center;
-  gap: var(--space-xs);
+  flex-direction: column;
+  gap: var(--space-2xs);
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
 
-  /* 单行高：按钮 36px + 上下 padding；文案与发送钮垂直居中 */
-  min-height: 52px;
-  max-height: calc(160px + 2 * var(--space-xs));
-  padding: var(--space-xs);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--surface-white);
-  box-shadow:
-    0 1px 2px color-mix(in srgb, var(--ink) 8%, transparent),
-    0 8px 24px color-mix(in srgb, var(--ink) 6%, transparent);
+  /* 上行编辑 + 下行 36px 工具条 + 内边距 */
+  min-height: 0;
+  max-height: calc(160px + 36px + var(--space-2xs) + 2 * var(--space-sm));
+  padding: var(--space-sm) var(--space-sm) var(--space-xs);
+  border: 1px solid color-mix(in srgb, var(--border) 85%, var(--ink));
+  border-radius: var(--radius-xl);
+  /* ChatGPT 式浮底：半透明毛玻璃；扁平——无抬升阴影，靠边框分区 */
+  background: color-mix(in srgb, var(--surface-white) 62%, transparent);
+  box-shadow: none;
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+  backdrop-filter: blur(18px) saturate(1.15);
   /* 可见：壳内 leading 的悬浮设置面板可向上溢出 */
   overflow: visible;
 }
@@ -914,22 +921,44 @@ defineExpose({ focus })
 }
 
 .recall-form--prominent .recall-composer-shell {
-  box-shadow:
-    0 1px 2px color-mix(in srgb, var(--ink) 10%, transparent),
-    0 12px 32px color-mix(in srgb, var(--ink) 8%, transparent);
+  box-shadow: none;
 }
 
 .recall-composer-shell:focus-within {
-  border-color: color-mix(in srgb, var(--accent) 40%, var(--border));
-  box-shadow:
-    0 1px 2px color-mix(in srgb, var(--ink) 8%, transparent),
-    0 8px 24px color-mix(in srgb, var(--ink) 6%, transparent),
-    0 0 0 3px color-mix(in srgb, var(--accent) 12%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  outline-offset: 1px;
+  box-shadow: none;
+}
+
+.recall-composer-main {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: stretch;
+  min-width: 0;
+  min-height: 22px;
+}
+
+.recall-composer-toolbar {
+  display: flex;
+  flex-shrink: 0;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-2xs);
+  min-width: 0;
+  min-height: 36px;
+}
+
+.recall-composer-toolbar__end {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 2px;
+  margin-left: auto;
 }
 
 .recall-input {
   flex: 1 1 auto;
-  align-self: center;
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
@@ -1011,9 +1040,11 @@ defineExpose({ focus })
   justify-content: center;
   align-items: center;
   gap: 3px;
+  box-sizing: border-box;
+  width: 100%;
   min-width: 0;
-  height: 28px;
-  padding: 0 var(--space-2xs);
+  min-height: 28px;
+  padding: 2px 0;
 }
 
 .recall-voice-meter__bar {

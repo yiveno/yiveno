@@ -1,5 +1,7 @@
 /** 首页客户端交互：Nav 深底态、scroll reveal */
 
+import { t } from '../i18n/t'
+
 /** 顶栏高度（与 site-critical Nav padding / rootMargin 约定一致） */
 const NAV_BAND_PX = 68
 
@@ -63,10 +65,11 @@ export function initHomePage(): void {
 const FLOW_PHASES = ['save', 'forget', 'recall'] as const
 type FlowPhase = (typeof FLOW_PHASES)[number]
 
-const FLOW_LIVE: Record<FlowPhase, string> = {
-  save: 'Save — capture lightly, optional note.',
-  forget: 'Forget — months can pass; it stays yours.',
-  recall: 'Recall — say a clue; closest fits rise.'
+/** 流程 live 区文案：跟官网 locale（与 data-yiveno-i18n 同源） */
+function flowLiveCopy(phase: FlowPhase): string {
+  if (phase === 'save') return t('home.flow.live_save')
+  if (phase === 'forget') return t('home.flow.live_forget')
+  return t('home.flow.live_recall')
 }
 
 const FLOW_DWELL_MS = 3400
@@ -91,7 +94,7 @@ function initHomeFlowDemo(): void {
       const id = tab.dataset.flowTab
       tab.setAttribute('aria-selected', id === phase ? 'true' : 'false')
     }
-    if (live) live.textContent = FLOW_LIVE[phase]
+    if (live) live.textContent = flowLiveCopy(phase)
   }
 
   const tick = (): void => {

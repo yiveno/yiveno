@@ -1,6 +1,6 @@
 ---
 created: 2026-10-31T21:17:19+0800
-updated: 2026-11-02T11:05:53+0800
+updated: 2026-11-02T12:45:00+0800
 author: agent:cursor
 scope: 官网 Generative Engine Optimization（生成式引擎可引用信号）— 非地区域名 soft-redirect
 status: active
@@ -37,16 +37,17 @@ Google 对 `llms.txt` **明确忽略**；仍保留供部分其它 agent。主收
 
 ## 2. 已落地信号
 
-| 信号                                                                | 位置                                                  |
-| ------------------------------------------------------------------- | ----------------------------------------------------- |
-| 首页 `@graph`：Organization + WebSite + SoftwareApplication         | `website/src/seo/json-ld.ts` → `MainLayout` `jsonLd`  |
-| FAQ 可见 Q&A + `FAQPage` JSON-LD                                    | `website/src/pages/faq.astro`（条目 = `FAQ_ENTRIES`） |
-| `robots.txt` 允许 `/pricing` `/faq`；Disallow auth/account/checkout | `website/public/robots.txt`                           |
-| `sitemap.xml` 含 faq / pricing                                      | `website/public/sitemap.xml`                          |
-| `llms.txt` 英文事实短表                                             | `website/public/llms.txt`                             |
-| canonical 钉 `https://yiveno.com`（`.cn` 同内容单实体）             | `MainLayout`                                          |
-| 页脚链 `/pricing` + `/faq`（顶栏 Pricing 仍藏）                     | `MainLayout` footer                                   |
-| OG 图真 JPEG 1200×630（约数十 KB；禁止伪 `.jpg` 的巨型 PNG）        | `website/public/og-image.jpg` · `_headers`            |
+| 信号                                                                | 位置                                                                          |
+| ------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
+| 首页 `@graph`：Organization + WebSite + SoftwareApplication         | `website/src/seo/json-ld.ts` → `MainLayout` `jsonLd`                          |
+| FAQ 可见 Q&A（可 zh）+ `FAQPage` JSON-LD（英）                      | `faq.astro` 可见键 + `FAQ_ENTRIES` schema                                     |
+| `robots.txt` 允许 `/pricing` `/faq`；Disallow auth/account/checkout | `website/public/robots.txt`                                                   |
+| `sitemap.xml` 含 faq / pricing                                      | `website/public/sitemap.xml`                                                  |
+| `llms.txt` 英文事实短表                                             | `website/public/llms.txt`                                                     |
+| 官网 UI locale（en / zh_CN）：壳 + 首页 + FAQ 可见文案              | `website/src/i18n/*` → MainLayout 注入 apply；JSON-LD / `llms.txt` **仍英文** |
+| canonical 钉 `https://yiveno.com`（`.cn` 同内容单实体）             | `MainLayout`                                                                  |
+| 页脚链 `/pricing` + `/faq`（顶栏 Pricing 仍藏）                     | `MainLayout` footer                                                           |
+| OG 图真 JPEG 1200×630（约数十 KB；禁止伪 `.jpg` 的巨型 PNG）        | `website/public/og-image.jpg` · `_headers`                                    |
 
 **Offer 约定：** Free / Pro 均为 `PreOrder` + `USD`；描述写明商店未上架。**禁止** `InStock` 冒充可装。
 
@@ -73,12 +74,12 @@ curl -sS https://yiveno.com/llms.txt
 
 与扩展同一原则（权威 [`Yiveno-可见与契约分面-体验原则.md`](../product/Yiveno-可见与契约分面-体验原则.md) §4.2）：
 
-| 面       | 官网落点                                                                                               |
-| -------- | ------------------------------------------------------------------------------------------------------ |
-| **可见** | CTA 人读店名；mock 人读标题；FAQ/营销正文不堆长绝对 URL                                                |
-| **契约** | `href` / canonical / JSON-LD `url` / sitemap / `llms.txt` **完整**绝对 URL；FAQ 正文与 schema **同源** |
+| 面       | 官网落点                                                                                                                            |
+| -------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| **可见** | CTA 人读店名；mock 人读标题；FAQ/营销正文不堆长绝对 URL                                                                             |
+| **契约** | `href` / canonical / JSON-LD `url` / sitemap / `llms.txt` **完整**绝对 URL；FAQ **JSON-LD 与英文 `FAQ_ENTRIES` 同源**（爬虫 / GEO） |
 
-禁止为「好看」把 `llms.txt` 或 schema 里的 canonical 改成缩短串；也禁止 CTA 主文案贴商店深链原文。
+**FAQ 分面：** 可见文案可经 `data-yiveno-i18n` 换 zh_CN；`FAQPage` JSON-LD **不**随 UI locale 改写（保持英文事实面）。禁止为「好看」把 `llms.txt` 或 schema 里的 canonical 改成缩短串；也禁止 CTA 主文案贴商店深链原文。
 
 ## 6. 与地区 geo 的边界
 

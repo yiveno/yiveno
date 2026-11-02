@@ -312,6 +312,57 @@ function isDetailExportSelectionDisabled(_id: string): boolean {
 function handleToggleDetailExportSelection(id: string): void {
   emit('toggleDetailExportSelection', id)
 }
+
+/** 本轮是否有可点选结果卡（有卡时 Framing 说明书放到卡后，先扫邻域）。 */
+function hasAssistantResultCards(turn: AssistantTurn): boolean {
+  if (turn.primaryCard) {
+    return true
+  }
+  if (turn.relatedGuessCard) {
+    return true
+  }
+  return (turn.candidateCards?.length ?? 0) > 0
+}
+
+/** Framing/助手正文是否有可渲染内容（避免卡后空段落）。 */
+function hasAssistantCopy(turn: AssistantTurn): boolean {
+  if (turn.textSegments && turn.textSegments.length > 0) {
+    return true
+  }
+  return turn.text.trim().length > 0
+}
+
+/** 本轮已展示卡数（供卡前 P6 紧凑计数）。 */
+function shownNeighborhoodCardCount(turn: AssistantTurn): number {
+  let count = 0
+  if (turn.primaryCard) {
+    count += 1
+  }
+  if (turn.relatedGuessCard) {
+    count += 1
+  }
+  if (turn.candidateCards && turn.candidateCards.length > 0) {
+    const limit = turn.visibleCount ?? turn.candidateCards.length
+    count += Math.min(turn.candidateCards.length, Math.max(0, limit))
+  }
+  return count
+}
+
+/**
+ * 卡前邻域计数（承接 Framing P6）。
+ * 有卡时说明书不再拼计数，避免「先卡后 Framing」把 N 埋到卡后。
+ */
+function neighborhoodCountLabel(turn: AssistantTurn): string | null {
+  const total = turn.rankedTotalCount
+  if (!total || total <= 0 || !hasAssistantResultCards(turn)) {
+    return null
+  }
+  const shown = Math.min(shownNeighborhoodCardCount(turn), total)
+  if (shown >= total) {
+    return t('popup_reply_ranked_all', [String(total)])
+  }
+  return t('popup_reply_ranked_partial', [String(total), '1', String(shown)])
+}
 </script>
 
 <template>
@@ -427,7 +478,9 @@ function handleToggleDetailExportSelection(id: string): void {
           <p v-if="turn.deeperReadingTip" class="assistant-turn-deeper-tip" role="status">
             {{ turn.deeperReadingTip }}
           </p>
+          <!-- 无卡：Framing/文案仍在上（空结果/错误主读）；有卡：先卡后说明书 -->
           <p
+            v-if="!hasAssistantResultCards(turn) && hasAssistantCopy(turn)"
             class="assistant-turn-copy"
             :class="{ 'assistant-turn-copy--error': turn.tone === 'error' }"
           >
@@ -449,90 +502,131 @@ function handleToggleDetailExportSelection(id: string): void {
             <template v-else>{{ turn.text }}</template>
           </p>
 
-          <div v-if="turn.primaryCard" class="assistant-turn-primary">
-            <RecallResultCard
-              :card="turn.primaryCard"
-              result-dom-id="conversation-primary-card"
-              :keyboard-selected="false"
-              top-pick
-              :show-detail-export-selection="detailExportSelectionActive === true"
-              :detail-export-item-selected="isDetailExportSelected"
-              :detail-export-item-disabled="isDetailExportSelectionDisabled"
-              :expanded="expandedDuplicateGroupId === turn.primaryCard.id"
-              :expand-label="expandLabel"
-              :collapse-label="collapseLabel"
-              :note-field-label="noteFieldLabel"
-              @open="handleOpen"
-              @evidence-visible="handleEvidenceVisible"
-              @toggle-detail-export-selection="handleToggleDetailExportSelection"
-              @toggle-expand="() => handleToggleExpand(turn.primaryCard!.id)"
-            />
-          </div>
-
-          <div v-if="turn.relatedGuessCard" class="assistant-turn-related-guess">
-            <p class="assistant-turn-related-guess-label">{{ turn.relatedGuessLabel }}</p>
-            <RecallResultCard
-              :card="turn.relatedGuessCard"
-              result-dom-id="conversation-related-guess-card"
-              :keyboard-selected="false"
-              compact
-              :show-detail-export-selection="detailExportSelectionActive === true"
-              :detail-export-item-selected="isDetailExportSelected"
-              :detail-export-item-disabled="isDetailExportSelectionDisabled"
-              :expanded="expandedDuplicateGroupId === turn.relatedGuessCard.id"
-              :expand-label="expandLabel"
-              :collapse-label="collapseLabel"
-              :note-field-label="noteFieldLabel"
-              @open="handleOpen"
-              @evidence-visible="handleEvidenceVisible"
-              @toggle-detail-export-selection="handleToggleDetailExportSelection"
-              @toggle-expand="() => handleToggleExpand(turn.relatedGuessCard!.id)"
-            />
-          </div>
-
+          <!-- 邻域锚点：有卡时滚到此处，避免黏底把首卡顶出视口；P6 计数紧贴卡前 -->
           <div
-            v-if="turn.candidateCards && turn.candidateCards.length > 0"
-            class="assistant-turn-candidates-block"
+            v-if="hasAssistantResultCards(turn)"
+            class="assistant-turn-neighborhood"
+            data-recall-neighborhood-anchor
           >
-            <p v-if="turn.candidateSectionLabel" class="assistant-turn-candidates-label">
-              {{ turn.candidateSectionLabel }}
+            <p
+              v-if="neighborhoodCountLabel(turn)"
+              class="assistant-turn-neighborhood-count"
+              role="status"
+            >
+              {{ neighborhoodCountLabel(turn) }}
             </p>
-            <ol class="assistant-turn-candidates">
-              <li v-for="(item, index) in visibleCardsFor(turn)" :key="item.id">
-                <RecallResultCard
-                  :card="item"
-                  :result-dom-id="`conversation-candidate-${turn.id}-${index}`"
-                  :keyboard-selected="false"
-                  :top-pick="turn.tone === 'confident' && index === 0"
-                  :compact="!(turn.tone === 'confident' && index === 0)"
-                  :show-detail-export-selection="detailExportSelectionActive === true"
-                  :detail-export-item-selected="isDetailExportSelected"
-                  :detail-export-item-disabled="isDetailExportSelectionDisabled"
-                  :expanded="expandedDuplicateGroupId === item.id"
-                  :expand-label="expandLabel"
-                  :collapse-label="collapseLabel"
-                  :note-field-label="noteFieldLabel"
-                  @open="handleOpen"
-                  @evidence-visible="handleEvidenceVisible"
-                  @toggle-detail-export-selection="handleToggleDetailExportSelection"
-                  @toggle-expand="() => handleToggleExpand(item.id)"
-                />
-              </li>
-            </ol>
-            <div v-if="canShowMore(turn)" class="assistant-turn-show-more">
-              <AppButton
-                v-if="canShowMorePage(turn)"
-                type="button"
-                variant="text"
-                @click="onShowMoreClick(turn.id, 'page')"
-              >
-                {{ showMoreCountLabel(RECALL_RESULT_PAGE_SIZE) }}
-              </AppButton>
-              <AppButton type="button" variant="text" @click="onShowMoreClick(turn.id, 'all')">
-                {{ showAllCountLabel(remainingCount(turn)) }}
-              </AppButton>
+
+            <div v-if="turn.primaryCard" class="assistant-turn-primary">
+              <RecallResultCard
+                :card="turn.primaryCard"
+                result-dom-id="conversation-primary-card"
+                :keyboard-selected="false"
+                top-pick
+                :show-detail-export-selection="detailExportSelectionActive === true"
+                :detail-export-item-selected="isDetailExportSelected"
+                :detail-export-item-disabled="isDetailExportSelectionDisabled"
+                :expanded="expandedDuplicateGroupId === turn.primaryCard.id"
+                :expand-label="expandLabel"
+                :collapse-label="collapseLabel"
+                :note-field-label="noteFieldLabel"
+                @open="handleOpen"
+                @evidence-visible="handleEvidenceVisible"
+                @toggle-detail-export-selection="handleToggleDetailExportSelection"
+                @toggle-expand="() => handleToggleExpand(turn.primaryCard!.id)"
+              />
+            </div>
+
+            <div v-if="turn.relatedGuessCard" class="assistant-turn-related-guess">
+              <p class="assistant-turn-related-guess-label">{{ turn.relatedGuessLabel }}</p>
+              <RecallResultCard
+                :card="turn.relatedGuessCard"
+                result-dom-id="conversation-related-guess-card"
+                :keyboard-selected="false"
+                compact
+                :show-detail-export-selection="detailExportSelectionActive === true"
+                :detail-export-item-selected="isDetailExportSelected"
+                :detail-export-item-disabled="isDetailExportSelectionDisabled"
+                :expanded="expandedDuplicateGroupId === turn.relatedGuessCard.id"
+                :expand-label="expandLabel"
+                :collapse-label="collapseLabel"
+                :note-field-label="noteFieldLabel"
+                @open="handleOpen"
+                @evidence-visible="handleEvidenceVisible"
+                @toggle-detail-export-selection="handleToggleDetailExportSelection"
+                @toggle-expand="() => handleToggleExpand(turn.relatedGuessCard!.id)"
+              />
+            </div>
+
+            <div
+              v-if="turn.candidateCards && turn.candidateCards.length > 0"
+              class="assistant-turn-candidates-block"
+            >
+              <p v-if="turn.candidateSectionLabel" class="assistant-turn-candidates-label">
+                {{ turn.candidateSectionLabel }}
+              </p>
+              <ol class="assistant-turn-candidates">
+                <li v-for="(item, index) in visibleCardsFor(turn)" :key="item.id">
+                  <RecallResultCard
+                    :card="item"
+                    :result-dom-id="`conversation-candidate-${turn.id}-${index}`"
+                    :keyboard-selected="false"
+                    :top-pick="turn.tone === 'confident' && index === 0"
+                    :compact="!(turn.tone === 'confident' && index === 0)"
+                    :show-detail-export-selection="detailExportSelectionActive === true"
+                    :detail-export-item-selected="isDetailExportSelected"
+                    :detail-export-item-disabled="isDetailExportSelectionDisabled"
+                    :expanded="expandedDuplicateGroupId === item.id"
+                    :expand-label="expandLabel"
+                    :collapse-label="collapseLabel"
+                    :note-field-label="noteFieldLabel"
+                    @open="handleOpen"
+                    @evidence-visible="handleEvidenceVisible"
+                    @toggle-detail-export-selection="handleToggleDetailExportSelection"
+                    @toggle-expand="() => handleToggleExpand(item.id)"
+                  />
+                </li>
+              </ol>
+              <div v-if="canShowMore(turn)" class="assistant-turn-show-more">
+                <AppButton
+                  v-if="canShowMorePage(turn)"
+                  type="button"
+                  variant="text"
+                  @click="onShowMoreClick(turn.id, 'page')"
+                >
+                  {{ showMoreCountLabel(RECALL_RESULT_PAGE_SIZE) }}
+                </AppButton>
+                <AppButton type="button" variant="text" @click="onShowMoreClick(turn.id, 'all')">
+                  {{ showAllCountLabel(remainingCount(turn)) }}
+                </AppButton>
+              </div>
             </div>
           </div>
+
+          <p
+            v-if="hasAssistantResultCards(turn) && hasAssistantCopy(turn)"
+            class="assistant-turn-copy assistant-turn-copy--after-cards"
+            :class="{ 'assistant-turn-copy--error': turn.tone === 'error' }"
+          >
+            <template v-if="turn.textSegments && turn.textSegments.length > 0">
+              <template
+                v-for="(segment, segmentIndex) in turn.textSegments"
+                :key="`after-${segmentIndex}`"
+              >
+                <button
+                  v-if="segment.kind === 'open_bookmark_ingest_settings'"
+                  type="button"
+                  class="assistant-turn-inline-link"
+                  :title="t('popup_empty_import_bookmarks_aria')"
+                  :aria-label="t('popup_empty_import_bookmarks_aria')"
+                  @click="emit('openBookmarkIngestSettings')"
+                >
+                  {{ segment.text }}
+                </button>
+                <template v-else>{{ segment.text }}</template>
+              </template>
+            </template>
+            <template v-else>{{ turn.text }}</template>
+          </p>
 
           <!--
             快速反馈区：追问芯片（硬收窄）+「都不是」（否定本轮候选）同区异形。
@@ -890,6 +984,14 @@ function handleToggleDetailExportSelection(id: string): void {
   text-wrap: pretty;
 }
 
+/* 有邻域卡时：说明书退居卡后，略降字号/对比，不抢扫读 */
+.assistant-turn-copy--after-cards {
+  margin-top: var(--space-2xs);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--on-surface-muted);
+}
+
 .assistant-turn-inline-link {
   display: inline;
   padding: 0;
@@ -917,11 +1019,27 @@ function handleToggleDetailExportSelection(id: string): void {
   border-radius: 2px;
 }
 
+.assistant-turn-neighborhood {
+  display: grid;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.assistant-turn-neighborhood-count {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--on-surface-muted);
+}
+
 .assistant-turn-related-guess {
   display: grid;
   gap: var(--space-xs);
   min-width: 0;
   padding-top: 2px;
+  animation: recall-result-card-enter var(--motion-duration-short, 150ms)
+    var(--motion-easing-standard, cubic-bezier(0.2, 0, 0, 1)) both;
 }
 
 .assistant-turn-related-guess-label {
@@ -955,6 +1073,8 @@ function handleToggleDetailExportSelection(id: string): void {
   display: grid;
   gap: var(--space-xs);
   padding-top: 2px;
+  animation: recall-result-card-enter var(--motion-duration-short, 150ms)
+    var(--motion-easing-standard, cubic-bezier(0.2, 0, 0, 1)) both;
 }
 
 .assistant-turn-quick-feedback {
@@ -1023,12 +1143,52 @@ function handleToggleDetailExportSelection(id: string): void {
   list-style: none;
 }
 
+/* 邻域入场：仅 opacity stagger；禁止几何变换（设计标准 §5.3–5.4） */
+.assistant-turn-candidates > li {
+  animation: recall-result-card-enter var(--motion-duration-medium, 250ms)
+    var(--motion-easing-standard, cubic-bezier(0.2, 0, 0, 1)) both;
+}
+
+.assistant-turn-candidates > li:nth-child(1) {
+  animation-delay: 0ms;
+}
+
+.assistant-turn-candidates > li:nth-child(2) {
+  animation-delay: 40ms;
+}
+
+.assistant-turn-candidates > li:nth-child(3) {
+  animation-delay: 80ms;
+}
+
+.assistant-turn-candidates > li:nth-child(4) {
+  animation-delay: 120ms;
+}
+
+.assistant-turn-candidates > li:nth-child(5) {
+  animation-delay: 160ms;
+}
+
+.assistant-turn-candidates > li:nth-child(n + 6) {
+  animation-delay: 200ms;
+}
+
 .assistant-turn-show-more {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-start;
   gap: var(--space-xs) var(--space-sm);
   padding-top: var(--space-2xs);
+}
+
+@keyframes recall-result-card-enter {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes pending-pulse {
@@ -1040,6 +1200,19 @@ function handleToggleDetailExportSelection(id: string): void {
 
   40% {
     opacity: 0.9;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .assistant-turn-primary,
+  .assistant-turn-related-guess,
+  .assistant-turn-candidates > li {
+    animation: none;
+  }
+
+  .pending-dot,
+  .pending-label {
+    animation: none;
   }
 }
 </style>

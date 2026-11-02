@@ -132,7 +132,14 @@ import { createAssistantTurn } from '@/pages/sidepanel/build-assistant-turn'
 import type { ConversationTurn, AssistantTurn } from '@/pages/sidepanel/recall-conversation-types'
 import {
   createRecallShellScrollListener,
-  scheduleRecallShellScrollToBottom
+  readRecallShellScrollState,
+  resolveRecallShellScrollJumpDirection,
+  scheduleRecallShellScrollChildToStart,
+  scheduleRecallShellScrollToBottom,
+  scrollRecallShellToBottom,
+  scrollRecallShellToTop,
+  type RecallShellScrollJumpDirection,
+  type RecallShellScrollState
 } from '@/pages/sidepanel/recall-shell-scroll'
 import type { RecallDialogState } from '@/core/recall/merge-recall-dialog-turn'
 import {
@@ -460,8 +467,48 @@ const conversationTurns = ref<ConversationTurn[]>([])
 let turnSeq = 0
 
 const recallBodyRef = ref<HTMLElement | null>(null)
+/** 浮底 composer 栈（含出口条 / 导出条）；量高给会话区底 padding，内容可滚到半透明壳下。 */
+const recallFloatDockRef = ref<HTMLElement | null>(null)
+const recallScrollRegionRef = ref<HTMLElement | null>(null)
 /** 靠近底部时跟随新消息；用户上翻后暂停。 */
 const stickToBottom = ref(true)
+/** 单一跳转钮朝向：down=到底、up=置顶；null=隐藏。 */
+const scrollJumpDirection = ref<RecallShellScrollJumpDirection | null>(null)
+let recallBodyResizeObserver: ResizeObserver | null = null
+let recallFloatDockResizeObserver: ResizeObserver | null = null
+
+/** 浮底高度 → CSS 变量，供 body 底垫与跳转钮定位。 */
+function syncRecallFloatDockClearance(): void {
+  const dock = recallFloatDockRef.value
+  const region = recallScrollRegionRef.value
+  if (!region) {
+    return
+  }
+  const height = dock ? Math.ceil(dock.getBoundingClientRect().height) : 0
+  // 跳转钮与浮底之间再留一小段空隙
+  const clearance = Math.max(96, height + 12)
+  region.style.setProperty('--recall-dock-clearance', `${clearance}px`)
+}
+
+function applyRecallShellScrollState(state: RecallShellScrollState): void {
+  stickToBottom.value = state.nearBottom
+  scrollJumpDirection.value = resolveRecallShellScrollJumpDirection(state)
+}
+
+function syncRecallShellScrollState(): void {
+  const element = recallBodyRef.value
+  if (!element) {
+    scrollJumpDirection.value = null
+    return
+  }
+  applyRecallShellScrollState(readRecallShellScrollState(element))
+}
+
+const scrollJumpLabel = computed(() =>
+  scrollJumpDirection.value === 'up'
+    ? t('sidepanel_scroll_to_top')
+    : t('sidepanel_scroll_to_bottom')
+)
 
 /** 有气泡或 dialog 槽位时视为活动线程（可 New find）。 */
 const hasActiveFindSession = computed(() => {
@@ -548,24 +595,138 @@ const composerPlaceholder = computed(() => {
   return t(result.messageKey, result.messageArgs)
 })
 
-const recallShellScrollListener = createRecallShellScrollListener(nearBottom => {
-  stickToBottom.value = nearBottom
-})
+const recallShellScrollListener = createRecallShellScrollListener(applyRecallShellScrollState)
 
 function scrollRecallToBottom(): void {
   scheduleRecallShellScrollToBottom(
     () => recallBodyRef.value,
     () => stickToBottom.value
   )
+  requestAnimationFrame(() => {
+    syncRecallShellScrollState()
+  })
+}
+
+/** 最新助手轮是否带可点选邻域卡（有卡时滚锚点，勿盲黏底把首卡顶出视口）。 */
+function latestAssistantHasResultCards(): boolean {
+  for (let index = conversationTurns.value.length - 1; index >= 0; index -= 1) {
+    const turn = conversationTurns.value[index]
+    if (!turn || turn.role !== 'assistant') {
+      continue
+    }
+    if (turn.primaryCard || turn.relatedGuessCard || (turn.candidateCards?.length ?? 0) > 0) {
+      return true
+    }
+    return false
+  }
+  return false
+}
+
+function lastNeighborhoodAnchor(): HTMLElement | null {
+  const root = recallBodyRef.value
+  if (!root) {
+    return null
+  }
+  const anchors = root.querySelectorAll<HTMLElement>('[data-recall-neighborhood-anchor]')
+  return anchors.length > 0 ? (anchors.item(anchors.length - 1) ?? null) : null
+}
+
+/**
+ * 会话更新后滚动：
+ * - 等待态：黏底（看见进展）
+ * - 有邻域卡：取消黏底并滚到邻域锚点（避免迟到的 scrollToBottom 把首卡顶出视口）
+ * - 无卡终局：仍黏底（若用户未上滚）
+ * 用户已上滚且无「有卡需对位」时不抢滚动。
+ */
+function scrollRecallAfterConversationUpdate(): void {
+  if (isRecallRefreshing.value) {
+    if (stickToBottom.value) {
+      scrollRecallToBottom()
+    }
+    return
+  }
+  if (latestAssistantHasResultCards()) {
+    // 先关黏底，让等待期已排队的 scheduleRecallShellScrollToBottom 在 rAF 里 no-op
+    stickToBottom.value = false
+    scheduleRecallShellScrollChildToStart(
+      () => recallBodyRef.value,
+      () => lastNeighborhoodAnchor(),
+      () => !isRecallRefreshing.value
+    )
+    requestAnimationFrame(() => {
+      syncRecallShellScrollState()
+    })
+    return
+  }
+  if (stickToBottom.value) {
+    scrollRecallToBottom()
+  }
+}
+
+function handleScrollJump(): void {
+  if (scrollJumpDirection.value === 'up') {
+    scrollRecallShellToTop(recallBodyRef.value)
+    stickToBottom.value = false
+  } else if (scrollJumpDirection.value === 'down') {
+    stickToBottom.value = true
+    scrollRecallShellToBottom(recallBodyRef.value)
+  } else {
+    return
+  }
+  requestAnimationFrame(() => {
+    syncRecallShellScrollState()
+  })
 }
 
 watch(
   () => [conversationTurns.value.length, isRecallRefreshing.value] as const,
   async () => {
     await nextTick()
-    scrollRecallToBottom()
+    // 邻域卡挂载可能再晚一拍；多等一帧 DOM，减少锚点 query 空窗
+    await nextTick()
+    scrollRecallAfterConversationUpdate()
+    syncRecallShellScrollState()
   }
 )
+
+watch(recallBodyRef, (element, _previous, onCleanup) => {
+  recallBodyResizeObserver?.disconnect()
+  recallBodyResizeObserver = null
+  if (!element) {
+    scrollJumpDirection.value = null
+    return
+  }
+  syncRecallShellScrollState()
+  if (typeof ResizeObserver === 'undefined') {
+    return
+  }
+  recallBodyResizeObserver = new ResizeObserver(() => {
+    syncRecallShellScrollState()
+  })
+  recallBodyResizeObserver.observe(element)
+  onCleanup(() => {
+    recallBodyResizeObserver?.disconnect()
+    recallBodyResizeObserver = null
+  })
+})
+
+watch(recallFloatDockRef, (element, _previous, onCleanup) => {
+  recallFloatDockResizeObserver?.disconnect()
+  recallFloatDockResizeObserver = null
+  syncRecallFloatDockClearance()
+  if (!element || typeof ResizeObserver === 'undefined') {
+    return
+  }
+  recallFloatDockResizeObserver = new ResizeObserver(() => {
+    syncRecallFloatDockClearance()
+    syncRecallShellScrollState()
+  })
+  recallFloatDockResizeObserver.observe(element)
+  onCleanup(() => {
+    recallFloatDockResizeObserver?.disconnect()
+    recallFloatDockResizeObserver = null
+  })
+})
 
 function nextTurnId(): string {
   turnSeq += 1
@@ -1182,21 +1343,28 @@ function resolveUnderstandingEchoChips(
   return chips.length > 0 ? chips : undefined
 }
 
-/** 列表级 Framing 文案；有理解回声时省略 P1 / 「主要依据」，避免重复。 */
+/** 列表级 Framing 文案；有理解回声时省略 P1 / 「主要依据」；有卡时省略 P6（卡前计数承接）。 */
 function resolveListReplyText(
   result: RecallResult,
   total: number,
   visibleCount: number,
   fallback: string,
-  options: { omitUnderstood?: boolean } = {}
+  options: { omitUnderstood?: boolean; omitCounts?: boolean } = {}
 ): { text: string; recallFramingFacts?: RecallFramingFacts } {
   const omitUnderstood = options.omitUnderstood === true
+  const omitCounts = options.omitCounts === true
   const facts = result.recallFraming?.facts
   let text: string
   if (facts) {
-    text = renderFramingWithShownCount(facts, total, visibleCount, { omitUnderstood })
+    text = renderFramingWithShownCount(facts, total, visibleCount, {
+      omitUnderstood,
+      omitCounts
+    })
   } else if (result.recallFraming?.text.trim() && !omitUnderstood) {
     text = result.recallFraming.text
+  } else if (omitCounts) {
+    // 无 facts 且卡前已报计数：勿再塞纯计数 fallback
+    text = ''
   } else {
     text = fallback
   }
@@ -1230,7 +1398,7 @@ function renderFramingWithShownCount(
   facts: RecallFramingFacts,
   total: number,
   shown: number,
-  options: { omitUnderstood?: boolean } = {}
+  options: { omitUnderstood?: boolean; omitCounts?: boolean } = {}
 ): string {
   if (facts.kind !== 'candidates') {
     return renderRecallFraming(facts, t, options)
@@ -1259,14 +1427,21 @@ function handleShowMoreMatches(turnId: string, mode: 'page' | 'all' = 'page'): v
     const nextVisible = resolveNextRecallVisibleCount(currentVisible, total, mode)
     const rankedTotal = turn.rankedTotalCount ?? total
     const omitUnderstood = (turn.understandingEcho?.length ?? 0) > 0
+    const hasCards =
+      Boolean(turn.primaryCard) ||
+      Boolean(turn.relatedGuessCard) ||
+      (turn.candidateCards?.length ?? 0) > 0
     const nextText =
       turn.recallFramingFacts !== undefined
         ? renderFramingWithShownCount(turn.recallFramingFacts, rankedTotal, nextVisible, {
-            omitUnderstood
+            omitUnderstood,
+            omitCounts: hasCards
           })
-        : turn.tone === 'confident'
-          ? formatRankedReplyText(rankedTotal, nextVisible)
-          : turn.text
+        : hasCards
+          ? turn.text
+          : turn.tone === 'confident'
+            ? formatRankedReplyText(rankedTotal, nextVisible)
+            : turn.text
     return {
       ...turn,
       visibleCount: nextVisible,
@@ -1914,7 +2089,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
         total,
         visibleCount,
         formatRankedReplyText(total, visibleCount),
-        { omitUnderstood: Boolean(understandingEcho) }
+        { omitUnderstood: Boolean(understandingEcho), omitCounts: rankedCards.length > 0 }
       )
       conversationTurns.value.push(
         createAssistantTurn({
@@ -1956,7 +2131,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
         total,
         visibleCount,
         formatRankedReplyText(total, visibleCount),
-        { omitUnderstood: Boolean(understandingEcho) }
+        { omitUnderstood: Boolean(understandingEcho), omitCounts: candidateCards.length > 0 }
       )
       conversationTurns.value.push(
         createAssistantTurn({
@@ -2435,191 +2610,214 @@ onUnmounted(() => {
       </section>
     </header>
 
-    <div
-      ref="recallBodyRef"
-      class="recall-body"
-      :class="{ 'recall-body--empty': conversationTurns.length === 0 }"
-      @scroll="recallShellScrollListener"
-    >
-      <section v-if="conversationTurns.length === 0" class="recall-empty" aria-live="polite">
-        <div class="recall-greeting-slot">
-          <p class="recall-greeting">{{ idleGreeting }}</p>
-        </div>
-        <div class="recall-empty-main">
-          <p class="recall-empty-title">
-            {{ idleEmptyCopy?.title ?? t('popup_welcome_title') }}
-          </p>
-          <p class="recall-empty-copy">
-            <template v-if="idleEmptyCopy?.bodySegments && idleEmptyCopy.bodySegments.length > 0">
-              <template
-                v-for="(segment, segmentIndex) in idleEmptyCopy.bodySegments"
-                :key="segmentIndex"
-              >
-                <button
-                  v-if="segment.kind === 'open_bookmark_ingest_settings'"
-                  type="button"
-                  class="recall-empty-inline-link"
-                  :title="t('popup_empty_import_bookmarks_aria')"
-                  :aria-label="t('popup_empty_import_bookmarks_aria')"
-                  @click="handleOpenBookmarkIngestSettings"
+    <div ref="recallScrollRegionRef" class="recall-scroll-region">
+      <div
+        ref="recallBodyRef"
+        class="recall-body"
+        :class="{ 'recall-body--empty': conversationTurns.length === 0 }"
+        @scroll="recallShellScrollListener"
+      >
+        <section v-if="conversationTurns.length === 0" class="recall-empty" aria-live="polite">
+          <div class="recall-greeting-slot">
+            <p class="recall-greeting">{{ idleGreeting }}</p>
+          </div>
+          <div class="recall-empty-main">
+            <p class="recall-empty-title">
+              {{ idleEmptyCopy?.title ?? t('popup_welcome_title') }}
+            </p>
+            <p class="recall-empty-copy">
+              <template v-if="idleEmptyCopy?.bodySegments && idleEmptyCopy.bodySegments.length > 0">
+                <template
+                  v-for="(segment, segmentIndex) in idleEmptyCopy.bodySegments"
+                  :key="segmentIndex"
                 >
-                  {{ segment.text }}
-                </button>
-                <template v-else>{{ segment.text }}</template>
+                  <button
+                    v-if="segment.kind === 'open_bookmark_ingest_settings'"
+                    type="button"
+                    class="recall-empty-inline-link"
+                    :title="t('popup_empty_import_bookmarks_aria')"
+                    :aria-label="t('popup_empty_import_bookmarks_aria')"
+                    @click="handleOpenBookmarkIngestSettings"
+                  >
+                    {{ segment.text }}
+                  </button>
+                  <template v-else>{{ segment.text }}</template>
+                </template>
               </template>
-            </template>
-            <template v-else>{{ idleEmptyCopy?.body ?? t('popup_welcome_body') }}</template>
+              <template v-else>{{ idleEmptyCopy?.body ?? t('popup_welcome_body') }}</template>
+            </p>
+            <div v-if="captureFirstMode" class="recall-empty-actions">
+              <AppButton type="button" variant="tonal" @click="handleOpenGettingStarted">
+                {{ t('popup_open_getting_started') }}
+              </AppButton>
+              <AppButton
+                type="button"
+                :disabled="skipOnboardingBusy"
+                variant="text"
+                @click="handleSkipOnboarding"
+              >
+                {{ t('popup_skip_onboarding') }}
+              </AppButton>
+            </div>
+            <div v-else-if="showEmptyImportCta" class="recall-empty-actions">
+              <AppButton type="button" variant="tonal" @click="handleOpenBookmarkIngestSettings">
+                {{ t('popup_empty_import_bookmarks') }}
+              </AppButton>
+            </div>
+            <div v-else-if="showEmptySetupCta" class="recall-empty-actions">
+              <AppButton type="button" variant="tonal" @click="handleOpenGettingStarted">
+                {{ t('popup_open_getting_started') }}
+              </AppButton>
+            </div>
+          </div>
+        </section>
+
+        <RecallConversation
+          v-else
+          :turns="conversationTurns"
+          :expandedDuplicateGroupId="expandedDuplicateGroupId"
+          :expandLabel="t('popup_duplicate_expand')"
+          :collapseLabel="t('popup_duplicate_collapse')"
+          :noteFieldLabel="t('detail_note_label')"
+          :pending="isRecallRefreshing"
+          :pendingLabel="recallPendingLabel"
+          :pendingSteps="recallPendingSteps"
+          :selected-detail-export-ids="selectedDetailExportIds"
+          :detail-export-selection-active="detailExportMode"
+          @open="handleCardOpen"
+          @evidence-visible="handleEvidenceVisible"
+          @toggle-detail-export-selection="handleToggleDetailExportSelection"
+          @toggle-expand="toggleDuplicateGroup"
+          @dismiss="handleDismissCandidates"
+          @show-more="handleShowMoreMatches"
+          @use-suggestion="handleUseSuggestion"
+          @correct-understanding="handleCorrectUnderstanding"
+          @open-bookmark-ingest-settings="handleOpenBookmarkIngestSettings"
+        />
+      </div>
+
+      <div v-if="scrollJumpDirection" class="recall-scroll-jump">
+        <AppIconButton
+          class="recall-scroll-jump__btn"
+          type="button"
+          :title="scrollJumpLabel"
+          :aria-label="scrollJumpLabel"
+          @click="handleScrollJump"
+        >
+          <span
+            class="recall-scroll-jump__glyph"
+            :class="{ 'recall-scroll-jump__glyph--up': scrollJumpDirection === 'up' }"
+            aria-hidden="true"
+          >
+            <AppIcon name="arrow_downward" size="18px" />
+          </span>
+        </AppIconButton>
+      </div>
+
+      <!-- ChatGPT 式浮底：叠在会话滚动之上；半透明壳下可隐约看见内容 -->
+      <div ref="recallFloatDockRef" class="recall-float-dock">
+        <div
+          v-if="showOutcomeExitStrip"
+          class="recall-outcome-exit"
+          role="group"
+          :aria-label="t('popup_outcome_exit_prompt')"
+        >
+          <p class="recall-outcome-exit__prompt">
+            {{ t('popup_outcome_exit_prompt') }}
           </p>
-          <div v-if="captureFirstMode" class="recall-empty-actions">
-            <AppButton type="button" variant="tonal" @click="handleOpenGettingStarted">
-              {{ t('popup_open_getting_started') }}
+          <div class="recall-outcome-exit__actions">
+            <AppButton type="button" variant="filled" @click="handleOutcomeExitFound">
+              {{ t('popup_outcome_exit_found') }}
             </AppButton>
-            <AppButton
-              type="button"
-              :disabled="skipOnboardingBusy"
-              variant="text"
-              @click="handleSkipOnboarding"
-            >
-              {{ t('popup_skip_onboarding') }}
+            <AppButton type="button" variant="outlined" @click="handleOutcomeExitNone">
+              {{ t('popup_outcome_exit_none') }}
             </AppButton>
-          </div>
-          <div v-else-if="showEmptyImportCta" class="recall-empty-actions">
-            <AppButton type="button" variant="tonal" @click="handleOpenBookmarkIngestSettings">
-              {{ t('popup_empty_import_bookmarks') }}
-            </AppButton>
-          </div>
-          <div v-else-if="showEmptySetupCta" class="recall-empty-actions">
-            <AppButton type="button" variant="tonal" @click="handleOpenGettingStarted">
-              {{ t('popup_open_getting_started') }}
+            <AppButton type="button" variant="text" @click="handleOutcomeExitSkip">
+              {{ t('popup_outcome_exit_skip') }}
             </AppButton>
           </div>
         </div>
-      </section>
 
-      <RecallConversation
-        v-else
-        :turns="conversationTurns"
-        :expandedDuplicateGroupId="expandedDuplicateGroupId"
-        :expandLabel="t('popup_duplicate_expand')"
-        :collapseLabel="t('popup_duplicate_collapse')"
-        :noteFieldLabel="t('detail_note_label')"
-        :pending="isRecallRefreshing"
-        :pendingLabel="recallPendingLabel"
-        :pendingSteps="recallPendingSteps"
-        :selected-detail-export-ids="selectedDetailExportIds"
-        :detail-export-selection-active="detailExportMode"
-        @open="handleCardOpen"
-        @evidence-visible="handleEvidenceVisible"
-        @toggle-detail-export-selection="handleToggleDetailExportSelection"
-        @toggle-expand="toggleDuplicateGroup"
-        @dismiss="handleDismissCandidates"
-        @show-more="handleShowMoreMatches"
-        @use-suggestion="handleUseSuggestion"
-        @correct-understanding="handleCorrectUnderstanding"
-        @open-bookmark-ingest-settings="handleOpenBookmarkIngestSettings"
-      />
-    </div>
-
-    <div
-      v-if="showOutcomeExitStrip"
-      class="recall-outcome-exit"
-      role="group"
-      :aria-label="t('popup_outcome_exit_prompt')"
-    >
-      <p class="recall-outcome-exit__prompt">
-        {{ t('popup_outcome_exit_prompt') }}
-      </p>
-      <div class="recall-outcome-exit__actions">
-        <AppButton type="button" variant="filled" @click="handleOutcomeExitFound">
-          {{ t('popup_outcome_exit_found') }}
-        </AppButton>
-        <AppButton type="button" variant="outlined" @click="handleOutcomeExitNone">
-          {{ t('popup_outcome_exit_none') }}
-        </AppButton>
-        <AppButton type="button" variant="text" @click="handleOutcomeExitSkip">
-          {{ t('popup_outcome_exit_skip') }}
-        </AppButton>
-      </div>
-    </div>
-
-    <div
-      v-if="showThreadPivotStrip && threadFindTitleDisplay"
-      class="recall-thread-pivot"
-      role="group"
-      :aria-label="t('popup_thread_pivot_prompt', threadFindTitle || '')"
-    >
-      <p class="recall-thread-pivot__prompt">
-        {{ t('popup_thread_pivot_prompt', threadFindTitleDisplay) }}
-      </p>
-      <div class="recall-thread-pivot__actions">
-        <AppButton type="button" variant="filled" @click="handleThreadPivotContinue">
-          {{ t('popup_thread_pivot_continue') }}
-        </AppButton>
-        <AppButton type="button" variant="outlined" @click="handleThreadPivotNew">
-          {{ t('popup_thread_pivot_new') }}
-        </AppButton>
-      </div>
-    </div>
-
-    <div class="recall-bottom-chrome">
-      <DetailExportBarDock :visible="showDetailExportBar">
-        <DetailExportBar
-          class="recall-detail-export-bar"
-          :selected-count="detailExportSelectedCount"
-          :exporting="detailExportExporting"
-          @copy-json="runDetailExportAction('json', 'copy')"
-          @copy-markdown="runDetailExportAction('markdown', 'copy')"
-          @download-json="runDetailExportAction('json', 'download')"
-          @download-markdown="runDetailExportAction('markdown', 'download')"
-          @clear="clearDetailExportSelection"
-        />
-      </DetailExportBarDock>
-
-      <p v-if="showOfflineBanner" class="recall-offline-composer-hint" role="status">
-        {{ t('sidepanel_offline_composer_hint') }}
-      </p>
-      <div class="recall-composer-dock">
-        <RecallComposer
-          ref="clueInputRef"
-          v-model="clue"
-          :ariaLabel="t('popup_clue_input_aria')"
-          :placeholder="composerPlaceholder"
-          :sendLabel="t('popup_submit')"
-          :voiceStartLabel="t('sidepanel_voice_start')"
-          :voiceStopLabel="t('sidepanel_voice_stop')"
-          :voiceUnavailableLabel="t('sidepanel_voice_unavailable')"
-          :disabled="showOutcomeExitStrip"
-          :prominent="isComposerProminent"
-          @send="handleSendTurn"
+        <div
+          v-if="showThreadPivotStrip && threadFindTitleDisplay"
+          class="recall-thread-pivot"
+          role="group"
+          :aria-label="t('popup_thread_pivot_prompt', threadFindTitle || '')"
         >
-          <template #leading>
-            <RecallPageContextControls
-              :domain="pageContextDomain"
-              :combine-with-page="pageContextCombine"
-              :only-this-site="pageContextOnlySite"
-              :source-scope="recallSourceScope"
-              :expanded="pageContextExpanded"
-              :disabled="showOutcomeExitStrip"
-              :toggle-label="t('sidepanel_recall_settings_toggle')"
-              :dismiss-label="t('sidepanel_recall_settings_dismiss')"
-              :combine-label="t('sidepanel_page_context_combine')"
-              :combine-hint="t('sidepanel_page_context_combine_hint')"
-              :only-site-label="t('sidepanel_page_context_only_site')"
-              :only-site-hint="t('sidepanel_page_context_only_site_hint')"
-              :no-site-hint="t('sidepanel_page_context_no_site_hint')"
-              :source-all-label="t('sidepanel_recall_source_all')"
-              :source-all-hint="t('sidepanel_recall_source_all_hint')"
-              :source-excerpts-label="t('sidepanel_recall_source_excerpts')"
-              :source-excerpts-hint="t('sidepanel_recall_source_excerpts_hint')"
-              :source-bookmarks-label="t('sidepanel_recall_source_bookmarks')"
-              :source-bookmarks-hint="t('sidepanel_recall_source_bookmarks_hint')"
-              @update:expanded="handlePageContextExpanded"
-              @update:combine-with-page="pageContextCombine = $event"
-              @update:only-this-site="pageContextOnlySite = $event"
-              @update:source-scope="recallSourceScope = $event"
+          <p class="recall-thread-pivot__prompt">
+            {{ t('popup_thread_pivot_prompt', threadFindTitleDisplay) }}
+          </p>
+          <div class="recall-thread-pivot__actions">
+            <AppButton type="button" variant="filled" @click="handleThreadPivotContinue">
+              {{ t('popup_thread_pivot_continue') }}
+            </AppButton>
+            <AppButton type="button" variant="outlined" @click="handleThreadPivotNew">
+              {{ t('popup_thread_pivot_new') }}
+            </AppButton>
+          </div>
+        </div>
+
+        <div class="recall-bottom-chrome">
+          <DetailExportBarDock :visible="showDetailExportBar">
+            <DetailExportBar
+              class="recall-detail-export-bar"
+              :selected-count="detailExportSelectedCount"
+              :exporting="detailExportExporting"
+              @copy-json="runDetailExportAction('json', 'copy')"
+              @copy-markdown="runDetailExportAction('markdown', 'copy')"
+              @download-json="runDetailExportAction('json', 'download')"
+              @download-markdown="runDetailExportAction('markdown', 'download')"
+              @clear="clearDetailExportSelection"
             />
-          </template>
-        </RecallComposer>
+          </DetailExportBarDock>
+
+          <p v-if="showOfflineBanner" class="recall-offline-composer-hint" role="status">
+            {{ t('sidepanel_offline_composer_hint') }}
+          </p>
+          <div class="recall-composer-dock">
+            <RecallComposer
+              ref="clueInputRef"
+              v-model="clue"
+              :ariaLabel="t('popup_clue_input_aria')"
+              :placeholder="composerPlaceholder"
+              :sendLabel="t('popup_submit')"
+              :voiceStartLabel="t('sidepanel_voice_start')"
+              :voiceStopLabel="t('sidepanel_voice_stop')"
+              :voiceUnavailableLabel="t('sidepanel_voice_unavailable')"
+              :disabled="showOutcomeExitStrip"
+              :prominent="isComposerProminent"
+              @send="handleSendTurn"
+            >
+              <template #leading>
+                <RecallPageContextControls
+                  :domain="pageContextDomain"
+                  :combine-with-page="pageContextCombine"
+                  :only-this-site="pageContextOnlySite"
+                  :source-scope="recallSourceScope"
+                  :expanded="pageContextExpanded"
+                  :disabled="showOutcomeExitStrip"
+                  :toggle-label="t('sidepanel_recall_settings_toggle')"
+                  :dismiss-label="t('sidepanel_recall_settings_dismiss')"
+                  :combine-label="t('sidepanel_page_context_combine')"
+                  :combine-hint="t('sidepanel_page_context_combine_hint')"
+                  :only-site-label="t('sidepanel_page_context_only_site')"
+                  :only-site-hint="t('sidepanel_page_context_only_site_hint')"
+                  :no-site-hint="t('sidepanel_page_context_no_site_hint')"
+                  :source-all-label="t('sidepanel_recall_source_all')"
+                  :source-all-hint="t('sidepanel_recall_source_all_hint')"
+                  :source-excerpts-label="t('sidepanel_recall_source_excerpts')"
+                  :source-excerpts-hint="t('sidepanel_recall_source_excerpts_hint')"
+                  :source-bookmarks-label="t('sidepanel_recall_source_bookmarks')"
+                  :source-bookmarks-hint="t('sidepanel_recall_source_bookmarks_hint')"
+                  @update:expanded="handlePageContextExpanded"
+                  @update:combine-with-page="pageContextCombine = $event"
+                  @update:only-this-site="pageContextOnlySite = $event"
+                  @update:source-scope="recallSourceScope = $event"
+                />
+              </template>
+            </RecallComposer>
+          </div>
+        </div>
       </div>
     </div>
   </main>
@@ -2673,12 +2871,32 @@ onUnmounted(() => {
   min-height: 0;
   max-height: 100%;
 
-  /* 顶栏非对称内边距：略紧于标准 page shell */
-  padding: var(--space-sm) var(--space-md) var(--space-md);
+  /* 底边距交给浮底 dock；左右仍给顶栏对齐 */
+  padding: var(--space-sm) var(--space-md) 0;
   color: var(--on-surface);
   background: var(--surface);
   overflow: hidden;
   overflow-anchor: none;
+}
+
+/* 浮在会话滚动之上；四周留白。勿在壳外再铺实色/渐变遮罩——半透明只在 composer 壳上。 */
+.recall-float-dock {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  box-sizing: border-box;
+  /* 与 shell 左右 gutter 对齐后再略内收，滚动条可贴面板右缘 */
+  padding: 0 calc(var(--space-md) + var(--space-xs)) var(--space-md);
+  pointer-events: none;
+}
+
+.recall-float-dock > * {
+  pointer-events: auto;
 }
 
 .recall-bottom-chrome {
@@ -2702,24 +2920,26 @@ onUnmounted(() => {
   display: grid;
   flex-shrink: 0;
   gap: var(--space-xs);
-  margin-top: var(--space-xs);
-  margin-bottom: var(--space-sm);
+  margin: 0;
   padding: var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  background: var(--surface-chrome);
+  background: color-mix(in srgb, var(--surface-chrome) 88%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
 
 .recall-thread-pivot {
   display: grid;
   flex-shrink: 0;
   gap: var(--space-xs);
-  margin-top: var(--space-xs);
-  margin-bottom: var(--space-sm);
+  margin: 0;
   padding: var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  background: var(--surface-white);
+  background: color-mix(in srgb, var(--surface-white) 88%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
 }
 
 .recall-thread-pivot__prompt {
@@ -2918,19 +3138,111 @@ onUnmounted(() => {
   margin: -2px 0 0;
 }
 
-.recall-body {
-  display: flex;
-  flex-direction: column;
+/* 会话滚动区铺满；左右负边距让滚动条贴面板右缘；浮底 composer 叠在上方。 */
+.recall-scroll-region {
+  position: relative;
   flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
+  margin-right: calc(-1 * var(--space-md));
+  margin-left: calc(-1 * var(--space-md));
+  /* 由 syncRecallFloatDockClearance 写入；兜底避免首帧裁切 */
+  --recall-dock-clearance: 120px;
+}
+
+.recall-body {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
+  padding-right: var(--space-md);
+  padding-bottom: var(--recall-dock-clearance);
+  padding-left: var(--space-md);
   overflow: hidden auto;
   overscroll-behavior: contain;
   scroll-behavior: smooth;
+  /* 细滚动条、低对比、贴边（Firefox） */
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--ink) 22%, transparent) transparent;
+}
+
+.recall-body::-webkit-scrollbar {
+  width: 5px;
+}
+
+.recall-body::-webkit-scrollbar-track {
+  margin: var(--space-2xs) 0;
+  background: transparent;
+}
+
+.recall-body::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 18%, transparent);
+  background-clip: padding-box;
+  border: 1px solid transparent;
+}
+
+.recall-body::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--ink) 32%, transparent);
+  background-clip: padding-box;
+  border: 1px solid transparent;
 }
 
 .recall-body--empty {
-  padding-bottom: var(--space-xs);
+  padding-bottom: max(var(--recall-dock-clearance), var(--space-md));
+}
+
+.recall-scroll-jump {
+  position: absolute;
+  right: 0;
+  /* clearance 已含 dock 高 + 空隙；再略抬一点避开壳顶 */
+  bottom: calc(var(--recall-dock-clearance) - 4px);
+  left: 0;
+  z-index: 4;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  pointer-events: none;
+}
+
+.recall-scroll-jump .recall-scroll-jump__btn {
+  width: 36px;
+  height: 36px;
+  color: var(--on-surface);
+  pointer-events: auto;
+  background: color-mix(in srgb, var(--surface-white) 82%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 10%);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+}
+
+.recall-scroll-jump .recall-scroll-jump__btn:hover:not(:disabled) {
+  color: var(--on-surface);
+  background: var(--surface-chrome);
+}
+
+.recall-scroll-jump .recall-scroll-jump__btn:active:not(:disabled) {
+  background: var(--surface-chrome);
+}
+
+/* 方向态旋转（非 hover/focus）；↓ 为基态，↑ = 180° */
+.recall-scroll-jump__glyph {
+  display: inline-flex;
+  transition: transform var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.recall-scroll-jump__glyph--up {
+  transform: rotate(180deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recall-scroll-jump__glyph {
+    transition: none;
+  }
 }
 
 .recall-empty {

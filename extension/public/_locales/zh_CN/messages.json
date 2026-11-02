@@ -606,6 +606,12 @@
   "sidepanel_voice_permission_dismiss": {
     "message": "关闭"
   },
+  "sidepanel_scroll_to_top": {
+    "message": "一键置顶"
+  },
+  "sidepanel_scroll_to_bottom": {
+    "message": "一键到底"
+  },
   "sidepanel_clue_too_long": {
     "message": "线索有点长 — 最多 $1 字，先精简一下。",
     "placeholders": {
@@ -880,7 +886,7 @@
     "placeholders": {
       "time": {
         "content": "$1",
-        "example": "3 weeks ago"
+        "example": "3 周前"
       }
     }
   },

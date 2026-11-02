@@ -867,7 +867,7 @@ Yiveno 同时承载两条相互促进、**不互相替代**的线程：
 3. IndexedDB 只经 `indexedDBManager`（`extension/src/infrastructure/indexeddb/manager.ts`）。
 4. 领域类型以 Zod 为准：`extension/src/core/memory/*`；消息类型以 `extension/src/core/messaging/*` 为准。**禁止发明新 message `type` 字符串**，先改 schema 再接线。
 5. 对外文案：**筛选 / 找**；禁止 **搜索 / Search**（各 locale 译文均遵守）。
-6. 扩展用户可见文案：经 **`t()`**（`extension/src/infrastructure/i18n/`）+ **`_locales/en` 与 `_locales/zh_CN`**；偏好 `system`/`en`/`zh_CN`（`UserSettings.uiLocalePreference`）。**禁止**在代码中写死 UI 自然语言，也禁止 `getMessage(...) || '兜底文案'`。`core` 不直接调 `chrome.i18n`（注入 `t` 或返回 message key）。**官网 `website/`** 有独立 `i18n`（en/zh_CN；已含壳导航/页脚、卸载反馈、`/login`、定价换汇说明）；营销大段仍可能硬编码英文，缺口见审计。开发者文档/注释可中文。
+6. 扩展用户可见文案：经 **`t()`**（`extension/src/infrastructure/i18n/`）+ **`_locales/en` 与 `_locales/zh_CN`**；偏好 `system`/`en`/`zh_CN`（`UserSettings.uiLocalePreference`）。**禁止**在代码中写死 UI 自然语言，也禁止 `getMessage(...) || '兜底文案'`。`core` 不直接调 `chrome.i18n`（注入 `t` 或返回 message key）。**官网 `website/`** 有独立 `i18n`（en/zh_CN；壳导航/页脚、卸载反馈、`/login`、定价换汇、**营销首页**、**FAQ 可见文案**经 `t()` / `data-yiveno-i18n`；Support / Privacy / Terms 等长文与定价页大段仍可能硬编码英文）。FAQ **JSON-LD** 仍英文 `FAQ_ENTRIES`（与 UI locale 分面，见 `Yiveno-官网GEO.md`）。开发者文档/注释可中文。
 7. `:hover|:focus|:active` 禁止 `translate` / `scale` / `rotate`；只用背景 / opacity / shadow / outline / state layer（浮层入场与 pop/shake 例外见 §3）。
 8. 实现范围以 **§1 状态表**为准；未标「已上线」= 不得当成已有行为，也不得在 UI 暗示已可用。
 9. 本机找：**关键词 + Hybrid**（有 embedding 则融合；无则降级关键词）；**不分 Free/Pro**。**理解层里程碑 M1**：允许「任意线索 → 精确检索约束」；门禁后口语可走 LLM（可关；失败/配额用尽降级规则）。不得全库喂模型，不得模型返回无真实 MemoryItem id 的答案。
@@ -1250,8 +1250,8 @@ schema：`extension/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 1. **Idle：** 新会话 / New find 后，composer placeholder 为 Idle 模板（`e.g. that article…` 类）；空态主区靠标题 / 正文引导开口；**无**固定口语样句芯片；**无**会话标题。
 2. **宽邻域 Narrow：** 输入可召回 ≥6 互异组的线索（例：`javascript`）→ 无芯片；顶栏左侧出现**会话标题**（首轮线索字面，无 `Narrowing:` 前缀）；旁路 **New find** 为顶栏图标；placeholder **点名标题**（`Add detail to "…"`）且举例词可在结果卡字段中核验（或 generic 无举例句）。
 3. **有芯片让位：** 出现追问芯片（登录后 LLM，或窄结果下刚存/刚打开环境芯片；且邻域互异组 **≥2**、芯片有切割力）→ placeholder 为点名标题的中性短句，**无** `like "…"` 举例。宽邻域 top_pick **不**挂环境芯片。**N≤1** 的 `need_a_clue` **无**追问芯片。芯片与 **None of these** 同在结果下快速反馈条（芯片在前、否定在末；否定为 text 非 pill）。
-   3a. **页上下文（§7.1）：** composer **输入框内左侧**为 **Recall settings** 图标入口（`settings` + `title`/`aria-label`；**无**可见文案）；展开为向上悬浮面板（不挤占输入框）并铺蒙版，其余区域不可操作；点蒙版或 Esc 收起。默认收起且双关。页上下文与来源类型分成两排，中间一条分隔线。两项与来源类型同为图标按钮，点选后整块背景标识（再点取消）；悬停或键盘焦点弹出 **Combine with this page** / **Only this site** 说明；开 Combine → 同域软抬；开 Only this site → 同域硬筛；**不**把 host 拼进 clue。入口/提示里的 host 在展开或已开启页上下文时跟活动标签走；发送瞬间再读一次。
-   3b. **语音录入（dictation）：** composer **发送钮左侧**麦克风图标（`mic` + `title`/`aria-label`；**无**可见文案）。先在 composer 放好光标（例：已有 URL 芯片时把 caret 移到最前）再点麦 → 转写插在该光标处，其后原文保留；停后 caret 在转写段末。点按开始听写 → composer **中间换跟麦能量波形**（取样失败则氛围起伏；`prefers-reduced-motion` 静止），麦钮变 **停止方块**，左侧 **取消（X）** 还原点麦前 clue；再点停止保留转写；**不**自动发送 Recall。用户可改字后照常提交。无浏览器 SpeechRecognition → **不显示**按钮。首次麦克风被拒 / Side Panel 无法弹授权 → composer **上方轻条**点 Allow（页内授权）；仍失败再打开浏览器站点设置；**禁止**为此新开扩展授权页。**禁止**做成实时语音对话壳（听写壳波形 ≠ 语音聊天）。
+   3a. **页上下文（§7.1）：** composer **工具条左侧**为 **Recall settings** 图标入口（`settings` + `title`/`aria-label`；**无**可见文案；与线索编辑分行，ChatGPT 式上下布局）；展开为向上悬浮面板（不挤占输入框）并铺蒙版，其余区域不可操作；点蒙版或 Esc 收起。默认收起且双关。页上下文与来源类型分成两排，中间一条分隔线。两项与来源类型同为图标按钮，点选后整块背景标识（再点取消）；悬停或键盘焦点弹出 **Combine with this page** / **Only this site** 说明；开 Combine → 同域软抬；开 Only this site → 同域硬筛；**不**把 host 拼进 clue。入口/提示里的 host 在展开或已开启页上下文时跟活动标签走；发送瞬间再读一次。
+   3b. **语音录入（dictation）：** composer **工具条右侧、发送钮左侧**麦克风图标（`mic` + `title`/`aria-label`；**无**可见文案）。先在 composer 放好光标（例：已有 URL 芯片时把 caret 移到最前）再点麦 → 转写插在该光标处，其后原文保留；停后 caret 在转写段末。点按开始听写 → 上行换跟麦能量波形（取样失败则氛围起伏；`prefers-reduced-motion` 静止），麦钮变 **停止方块**，工具条左侧 **取消（X）** 还原点麦前 clue；再点停止保留转写；**不**自动发送 Recall。用户可改字后照常提交。无浏览器 SpeechRecognition → **不显示**按钮。首次麦克风被拒 / Side Panel 无法弹授权 → composer **上方轻条**点 Allow（页内授权）；仍失败再打开浏览器站点设置；**禁止**为此新开扩展授权页。**禁止**做成实时语音对话壳（听写壳波形 ≠ 语音聊天）。
    3c. **contenteditable + URL 芯片：** composer 为 **contenteditable** textbox（Enter 发送 / Shift+Enter 换行；空态 `data-placeholder`）。粘贴 **仅** `text/plain`，粘贴后扫描收芯片。`http(s)://` 与裸 `www.` → **原子芯片**（favicon；文案先缩短 host/path，再异步换成**本机库标题**或**打开中 tab 标题**；CSS 限宽 ellipsis；悬停 `title`/`aria-label`=完整 URL）。**键入过程不收芯片**（保持纯文本）；blur / 发送再收文末完整 URL。Backspace 整颗删；**点芯片新开前台标签**。**禁止**联网抓页标题；**提交与用户气泡**仍完整 http(s) 纯字符串；**禁止** Markdown / 开放富文本。
 4. **Dismiss / 快速反馈区：** 有候选可否定时，「None of these」与追问芯片（若有）同区；芯片在前、否定在末且**非** pill。点 None of these 后 **无** site/quote/note/type 固定四芯片；placeholder 中性（有标题则点名）。
 5. **软岔路口：** 在 `javascript` 线程下输入明显无关长线索（例：`The movie I watched yesterday`）→ 发送前出现 Keep refining / Start new；**不**静默清线程。点 Keep → 仍带 context；点 Start new → 清空线程后以该线索首轮召回。短收窄词（例：`history`）**不**弹确认。
@@ -1437,7 +1437,7 @@ schema：`extension/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 1. 对一条**半模糊**线索发起 Recall（例：`release checklist` 或 `note about deployment`），须触发 `top_pick` 或 `need_a_clue` 且短名单非空。
 2. 检查 **Top Pick** 与 **alsoPossible** 每张卡是否**同时可见**：
-   - **来源身份**：类型 chip + 域名/页名（摘录为出处行，书签为标题+路径）。
+   - **来源身份**：类型 chip + 域名/页名（摘录为出处行，书签为标题+路径）。**摘录卡扫读序：** 正文 → 出处 →（附注）→ 理由 → 时间——出处须先于理由可见。
    - **保存时间**：相对或绝对 `createdAt`（书签优先 `chromeCreatedAt` 若存在）。
    - **内容锚点**：摘录正文片段或高亮命中段；书签至少标题。
    - **命中理由**：可读一句（字段 + token / 相关说明），非仅高亮无文案。
@@ -1864,14 +1864,18 @@ Chrome API / 选区
   → 反馈写回（打开 / 否定）→ 再排序
 ```
 
-| 形态             | Normative                                                                                                               |
-| ---------------- | ----------------------------------------------------------------------------------------------------------------------- |
-| 排序短名单       | 报 N；首屏 ≤5；**Show 5 more** / **Show all K**（K=剩余）；头名仅视觉略强调；**禁止**「most likely」与假装全集只有 5 条 |
-| 书签结果卡角标   | Chrome 缓存 **favicon**（`chrome://favicon` / `_favicon/`）；失败回退 Lucide `bookmark`；摘录仍用 quote                 |
-| 结果卡壳（类型） | 书签/摘录**同底同 hover**；类型靠角标与内容形；摘录可选 ≤1px 左侧 accent；**禁止**整卡分色斑马纹                        |
-| 低置信排序候选   | 有候选才进此态；明确“不够确定”；追问**只为在候选内收窄**，禁止缺槽填表                                                  |
-| 多轮补充线索     | 仅在有候选 / 用户主动再发时推进；补充句 refine 上一轮约束，不是孤立新查询                                               |
-| No Match         | 诚实承认没对上即终局；空库导向 Capture；**禁止**无候选时的时间/类型问卷                                                 |
+| 形态             | Normative                                                                                                                                      |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| 排序短名单       | 报 N；首屏 ≤5；**Show 5 more** / **Show all K**（K=剩余）；头名仅视觉略强调；**禁止**「most likely」与假装全集只有 5 条                        |
+| 书签结果卡角标   | Chrome 缓存 **favicon**（`chrome://favicon` / `_favicon/`）；失败回退 Lucide `bookmark`；摘录仍用 quote                                        |
+| 结果卡壳（类型） | 书签/摘录**同底同 hover**；类型靠角标与内容形；摘录可选 ≤1px 左侧 accent；**禁止**整卡分色斑马纹                                               |
+| 结果卡扫读层级   | **摘录：** 正文 → 出处行（页名·domain + 保存时间同行）→ 附注 → 命中理由；**书签：** 标题 → 附注 → 理由 → 域名 → 时间。出处须先于理由可扫到     |
+| 头名视觉强调     | Top Pick **仅**细 accent 描边 + 浅底 wash + 轻阴影（**禁止**左侧加粗轨）；**禁止**卡上文案判决（「就是它 / most likely / Closest」等贴在卡面） |
+| 结果卡入场动效   | 邻域列表短淡入 stagger；集合展开 sibling 短淡入；仅 opacity；`prefers-reduced-motion` 关闭；**禁止** hover 几何变换                            |
+| 摘录卡次要打开   | 主点卡 → `detail.html`；右下角 **打开原文**（`open_in_new` · `detail_open_source`）→ `sourceUrl` 新标签；**禁止**卡上工具条堆砌                |
+| 低置信排序候选   | 有候选才进此态；明确“不够确定”；追问**只为在候选内收窄**，禁止缺槽填表                                                                         |
+| 多轮补充线索     | 仅在有候选 / 用户主动再发时推进；补充句 refine 上一轮约束，不是孤立新查询                                                                      |
+| No Match         | 诚实承认没对上即终局；空库导向 Capture；**禁止**无候选时的时间/类型问卷                                                                        |
 
 原则：
 
@@ -1935,6 +1939,7 @@ Chrome API / 选区
 6. **禁止**用自动话题检测 / 打开结果 / `no_match` **静默**清线程代替「新会话」（避免误清 refine；成败不做会话边界裁判）。允许上表 **软岔路口确认条**（用户点选后才清或续）。
 7. **「都不是这些」之后：** 保留线程约束；**不得**再挂 site/quote/note/type 等固定追问芯片银行；composer 用中性 placeholder，由用户自由续打。
 8. **会话标题（Normative · 2026-08-26；宽度自适应 · 2026-09-08；顶栏左侧 · 2026-10-29；可见 URL 缩短 · 2026-11-02）：** 有 `priorUserUtterances` / `accumulated` 时在 **`AppPageHeader` 左侧**展示本场找**标题**（首轮用户句优先，否则 `contentTerms`）；Side Panel **不**再叠 logo/品名。标题是**身份标签**（类 ChatGPT 会话名），不是过程说明；**禁止**前缀 `Narrowing:`；P0 **禁止** LLM 开放摘要造题（日后可选润色须 fold/字面门禁）。**分面：** 字面权威（完整 http(s) 等）保留在会话/a11y；**用户可见**顶栏 / placeholder 点名 / 续找 status / 软岔路口文案经 `formatCluePlainForUserDisplay` 把 URL 缩成 host/path（**不要**做成芯片）。布局 **CSS ellipsis** 仍随壳宽；**禁止**为布局固定字符数硬截标题字面；病态超长可另设安全上限。旁路 **New find** = 顶栏导航**图标**（`title`/`aria-label`；**无**可见文案；无会话时禁用）。**禁止**仅用 ✕ 表示开新找。有标题时 Narrow/Neutral placeholder **须点名标题**（en _About “…”_ / zh「围绕「…」」），避免听起来像全新搜索框。
+9. **会话区滚动与一键跳转（Normative · 2026-11-02 · 体验 · 已接线）：** composer **浮在会话滚动区底**（四周留白；半透明毛玻璃；**扁平无抬升投影**，靠边框分区；内容可滚到壳下隐约透出；文档/`#app` 仍不滚）。内容可滚且未同时贴顶贴底时，浮底上方中央浮出**同一枚**圆形图标钮（ChatGPT 式）：箭头基态朝下＝**一键到底**，贴底后旋转 180° 朝上＝**一键置顶**（仅 icon + 随朝向切换的 `title`/`aria-label`；**无**可见文案；en _Scroll to top_ / _Scroll to bottom_）。未贴底（含读到中间）优先朝下；仅贴底时朝上；不可滚时隐藏。点「到底」恢复黏底跟随新消息；点「置顶」暂停黏底。箭头方向态允许 `rotate` 过渡；**禁止** hover/focus/active 几何变换；`prefers-reduced-motion` 下取消旋转过渡（可瞬间切朝向）。**禁止**做成第二条工具条或改召回算法。
 
 #### Side Panel 壳级离线态（Normative · 2026-10-14 · 体验 · 已接线）
 
@@ -2080,23 +2085,23 @@ Chrome API / 选区
 
 **Composer 语音录入（Normative · dictation · 2026-11-01 · 体验）：**
 
-| 规则         | 要求                                                                                                                                                                                                                                                          |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **是什么**   | composer **另一种录入方式**：麦克风 → 浏览器 Web Speech 转写 → **可见可改的 clue 文案** → 用户照常发送                                                                                                                                                        |
-| **不是什么** | **禁止** Gemini / ChatGPT 式实时语音聊天；**禁止**跳过文字直出邻域；**禁止**改理解层 / Filter / 结果 UI                                                                                                                                                       |
-| **听写壳**   | 听写中：隐藏 contenteditable / leading，中间 **跟麦能量波形**（`AnalyserNode`；失败氛围回退），麦钮 → **停止方块**，左侧 **取消**还原点麦前文案；停后恢复可编辑 clue（仍走纯字符串 → 编辑器重建）。允许 ChatGPT **听写壳**视觉；**禁止**语音对话 / Agent 轨迹 |
-| **插入点**   | 转写插入 **点麦瞬间** contenteditable 光标偏移（mousedown 防麦钮抢焦丢选区）；光标后原文保留；与后缀边界无空白时补空格。停后 caret 钉在**转写段末**（其后仍是点麦时原文，如 URL 芯片）。无选区 / 非法偏移 → 插到文末                                          |
-| **静默收口** | **约 12s** 无新转写（无 `onresult` 文本）→ 自动 **stop**（等同点停止：保留已写入文案；**不** cancel）。浏览器 `no-speech` 亦收口听写壳。主路径仍是用户点停止；**不**自动提交 Recall                                                                           |
-| **提交**     | 听写**不**自动 `RECALL_WITH_CLUE`；停说或再点停止后用户确认再发                                                                                                                                                                                               |
-| **授权**     | Side Panel 内常无法弹出麦克风提示 → `not-allowed` 时 composer **上方轻条**：Allow 走页内 `getUserMedia`；仍失败打开浏览器站点设置（`chrome://settings/content/siteDetails`）；**不**新开扩展授权页；与库本机存储分开披露                                      |
-| **语言**     | 跟生效 UI locale：`en` → `en-US`，`zh_CN` → `zh-CN`；中文线索仍非 Recall P0 质量承诺                                                                                                                                                                          |
-| **与 §5.9**  | **分计**；不得用「能说话」冒充召回质量达标                                                                                                                                                                                                                    |
+| 规则         | 要求                                                                                                                                                                                                                                                                      |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **是什么**   | composer **另一种录入方式**：麦克风 → 浏览器 Web Speech 转写 → **可见可改的 clue 文案** → 用户照常发送                                                                                                                                                                    |
+| **不是什么** | **禁止** Gemini / ChatGPT 式实时语音聊天；**禁止**跳过文字直出邻域；**禁止**改理解层 / Filter / 结果 UI                                                                                                                                                                   |
+| **听写壳**   | 听写中：上行隐藏 contenteditable、换 **跟麦能量波形**（`AnalyserNode`；失败氛围回退）；下行工具条：左 **取消**还原点麦前文案 · 右麦钮变 **停止方块** + 发送；停后恢复可编辑 clue（仍走纯字符串 → 编辑器重建）。允许 ChatGPT **听写壳**视觉；**禁止**语音对话 / Agent 轨迹 |
+| **插入点**   | 转写插入 **点麦瞬间** contenteditable 光标偏移（mousedown 防麦钮抢焦丢选区）；光标后原文保留；与后缀边界无空白时补空格。停后 caret 钉在**转写段末**（其后仍是点麦时原文，如 URL 芯片）。无选区 / 非法偏移 → 插到文末                                                      |
+| **静默收口** | **约 12s** 无新转写（无 `onresult` 文本）→ 自动 **stop**（等同点停止：保留已写入文案；**不** cancel）。浏览器 `no-speech` 亦收口听写壳。主路径仍是用户点停止；**不**自动提交 Recall                                                                                       |
+| **提交**     | 听写**不**自动 `RECALL_WITH_CLUE`；停说或再点停止后用户确认再发                                                                                                                                                                                                           |
+| **授权**     | Side Panel 内常无法弹出麦克风提示 → `not-allowed` 时 composer **上方轻条**：Allow 走页内 `getUserMedia`；仍失败打开浏览器站点设置（`chrome://settings/content/siteDetails`）；**不**新开扩展授权页；与库本机存储分开披露                                                  |
+| **语言**     | 跟生效 UI locale：`en` → `en-US`，`zh_CN` → `zh-CN`；中文线索仍非 Recall P0 质量承诺                                                                                                                                                                                      |
+| **与 §5.9**  | **分计**；不得用「能说话」冒充召回质量达标                                                                                                                                                                                                                                |
 
 **Composer contenteditable + URL 可视链接（Normative · 2026-11-02 · 体验）：**
 
 | 规则         | 要求                                                                                                                                                                                                                                                                                                                                   |
 | ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **编辑器**   | Side Panel clue 输入为 **contenteditable**（`role=textbox` · `aria-multiline`）；Enter 发送、Shift+Enter 换行；空态用 `data-placeholder`（**不用** textarea `placeholder` / `field-sizing`）                                                                                                                                           |
+| **编辑器**   | Side Panel clue 输入为 **contenteditable**（`role=textbox` · `aria-multiline`）；Enter 发送、Shift+Enter 换行；空态用 `data-placeholder`（**不用** textarea `placeholder` / `field-sizing`）。壳内 **上下分行**（上行编辑 / 下行工具条）；壳底半透明 + blur（设计标准）                                                                |
 | **长度门禁** | 与 `RECALL_WITH_CLUE.clue` 同上限 **500** 字符（`RECALL_CLUE_MAX_CHARS` · UTF-16 码元／JS `.length`）；键入 / 粘贴 / 听写 **物理拦截**（可写入部分截断）；超限 toast tip（节流）；**禁止**仅靠发送时 Zod 才失败                                                                                                                        |
 | **URL 芯片** | `http(s)://` 与裸 `www.` → 原子芯片；**仅**粘贴扫描收芯片 + blur/发送收文末完整 URL；**键入 / IME 过程不格式化**（保持纯文本，避免 `www.baidu.` 中途成气泡）；芯片后可继续键入（ce=false 后保底插入点；粘连中文等不吞进 URL）                                                                                                          |
 | **标题解析** | 粘贴瞬间先缩短 host/path（不阻塞）；异步 `RESOLVE_CLUE_URL_DISPLAY`：**本机库标题优先** → **打开中 tab 标题** → 保持缩短；SW 按 owner 缓存库 URL→title；**禁止**联网抓页标题/OG。芯片文案 **CSS 限宽 + ellipsis**（约 `10.5rem`）；悬停 `title` 与 `aria-label` **始终完整 URL**（不用页面标题冒充 tooltip）；病态超长另有字符安全上限 |
@@ -2140,6 +2145,12 @@ Chrome API / 选区
 #### Recall Framing（邻域说明 · Normative · 2026-08-28）
 
 **定位：** 助手气泡的**列表级**说明层，回答「Yiveno 为什么给出这一屏候选、还困惑什么」——可审计的**邻域说明书**，不是 LLM 内心独白、不是生活助理、不是神谕分数。与 **§5.10.1 卡片级 Explain（ECS）** 分工：Framing = 整批；Explain = 单条。
+
+**结果态 DOM 顺序（体验 · Normative · 2026-11-02）：** `Heard as`（若有）→ **邻域结果卡** → Framing 正文 → 追问/否定反馈。有可点选卡时 **禁止** Framing 长文挡在首卡之前；无卡（`no_match` / 错误）时 Framing/文案仍可居上作为主读。卡后 Framing 可用略弱字号/对比，不抢扫读。
+
+**P6 计数位置（体验 · 2026-11-02）：** 有可点选邻域卡时，**P6 紧凑计数贴在卡前**（`N related · showing 1–k`）；卡后 Framing 只保留 P1–P5（`omitCounts`），避免计数埋在卡后说明书末尾。无卡时 P6 仍随 Framing 正文。
+
+**结果落地滚动（体验 · 2026-11-02）：** 等待态仍黏底（看见进展）；有邻域卡落地时 **取消黏底并滚到邻域锚点**（卡区起点对齐可视区顶附近），避免排队中的 sticky-bottom 把首卡顶出视口；Framing/反馈可在下方，用一键到底查看。无卡终局仍黏底（用户未上滚时）。
 
 **工程旁挂：** [`Recall-Framing-邻域说明.md`](../engineering/Recall-Framing-邻域说明.md)。
 
@@ -2327,7 +2338,7 @@ Chrome API / 选区
 1. 产品内信号（最近存 / 开 / 上次线索）— **behaviorHints 软加权已上线**；会话「最近打开」信号仍可加厚
 2. 选区预填 — **已接线**：划选浮层 **「用这段来找」**（与保存并列；**不要求先存**）→ content 发 `OPEN_RECALL_SHELL`（payload `{ clue, autoSubmit:false }`）→ **SW 先开火开壳、再写** `yiveno.recallPrefill`（与 Omnibox 同手势铁律；避免 content 先写 session 与 Panel mount 竞态）→ composer 填入可改线索、**不**自动提交。Panel **已开**时仍写预填并由 storage 监听消费；开壳 API 失败但预填已写入时仍 ok、**不**谎报「打不开」。语义：用眼前文字当 clue 找**库里已有**痕迹，不是「找刚划的这段」。存成反馈只表达进库，不再叠同一 CTA。Getting Started / Omnibox 仍为 `autoSubmit:true`。预填截断 `RECALL_PREFILL_CLUE_MAX=120`。Getting Started 页不展示此钮（独立 Step 2）。
 3. 追问芯片（刚存的 / 刚打开过的）— **有信号才挂**（信号接线渐进）。属 **弱通道**。与 LLM 芯片同屏时 **不抢主**。**禁止** dismiss 后 site/quote/note/type 固定银行（已废）。**禁止**再以「Related to this site」把 host 当 clue 发出。
-4. **页上下文 + 来源范围 — 已上线**：composer 输入框内左侧 **Recall settings** 图标 → 向上悬浮面板（默认收起；展开时蒙版挡住其余区域，点蒙版或 Esc 收起）。页上下文与来源类型分两排，中间分隔线。页上下文双可选归一为 `pageContextMode`：
+4. **页上下文 + 来源范围 — 已上线**：composer 工具条左侧 **Recall settings** 图标 → 向上悬浮面板（默认收起；展开时蒙版挡住其余区域，点蒙版或 Esc 收起）。页上下文与来源类型分两排，中间分隔线。页上下文双可选归一为 `pageContextMode`：
    - **none**（默认双关）：当前域名**不参与**检索（**不**静默同域加成）。
    - **boost**（Combine with this page）：全库候选后同域软抬（既有 `CURRENT_TAB_DOMAIN_BOOST`）；域名**不**进 clue / embedding。
    - **restrict**（Only this site）：硬筛 `clues.domain` 与当前 host **规范化后精确相等**（去 `www.`；子域≠父域）；空窗诚实 `no_match`，不静默放回全库。双开时 **restrict 覆盖 boost**。上面两项为图标按钮，选中用整块背景，不用开关；名称与说明在悬停或键盘焦点时弹出。
@@ -2671,6 +2682,14 @@ RecallOutcomeEvent {
 
 | 日期       | 变更                                                                                                                                                                                                                                                                                                       |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-02 | **Composer 浮底去白带 + 细滚动条：** 去掉浮底外实色渐变遮罩；半透明仅在 composer 壳；会话滚动条细轨贴边；§7.0 / 设计标准                                                                                                                                                                                   |
+| 2026-11-02 | **Composer ChatGPT 式浮底：** 上下分行；四周留白浮在会话上；半透明毛玻璃下可透出滚动内容；§5.2.1 / §7.0 / 设计标准；与 §5.9 **分计**                                                                                                                                                                       |
+| 2026-11-02 | **Side Panel 会话滚动跳转：** composer 固底；单枚浮钮箭头旋转切换置顶/到底；黏底跟随；§7.0 交互 9；与 §5.9 **分计**                                                                                                                                                                                        |
+| 2026-11-02 | **结果态节奏补强：** 有卡时 P6 计数贴卡前、Framing `omitCounts`；结果落地滚邻域锚点（禁盲黏底顶出首卡）；§7.0 Framing                                                                                                                                                                                      |
+| 2026-11-02 | **结果态先卡后 Framing：** 有邻域卡时 DOM=`Heard as`→卡→Framing→反馈；无卡仍文案居上；§7.0 Framing                                                                                                                                                                                                         |
+| 2026-11-02 | **结果卡保存时间跟 UI locale：** `formatRecallSavedTime` 接收 BCP 47；zh_CN 不再「保存于 last month」混排                                                                                                                                                                                                  |
+| 2026-11-02 | **Top Pick 视觉改安静：** 去掉左侧加粗 inset 轨 → 细 accent 描边 + 浅底 wash；§7 形态表                                                                                                                                                                                                                    |
+| 2026-11-02 | **结果卡体验（扫读+入场+打开原文）：** 摘录出处紧跟正文（时间同行）；Top Pick 视觉略强调；邻域 stagger；摘录次要「打开原文」→ sourceUrl 新标签；`prefers-reduced-motion`；§7 形态表；与 §5.9 **分计**                                                                                                      |
 | 2026-11-02 | **可见与契约分面 · 官网/GEO 波：** 原则 §4.2 W1–W6 核查（CTA/mock/FAQ/JSON-LD/`llms.txt`/法务链无缺口）；`Yiveno-官网GEO.md` §5 交叉锚；§0.1.3 指向三表                                                                                                                                                    |
 | 2026-11-02 | **可见与契约分面 · Library 波：** 书签 URL 标题可见缩短（`formatSavedTitleForUserDisplay`）；Detail/Settings 核查无缺口；原则 §4.1                                                                                                                                                                         |
 | 2026-11-02 | **§0.1.3 可见与契约分面原则：** 权威 `Yiveno-可见与契约分面-体验原则.md`；Recall 核心首波核查；`clue-plain-url` 入 core；术语表词条同步                                                                                                                                                                    |

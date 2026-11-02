@@ -22,6 +22,11 @@ export interface RecallCardModel {
   title: string
   subtitle: string
   url: string
+  /**
+   * 摘录源站 URL（可见次要动作「打开原文」）；书签无——主 `url` 已是源站。
+   * 契约：与 MemoryItem.payload.sourceUrl 一致，不经展示缩短。
+   */
+  sourceUrl?: string
   excerpt?: string
   note?: string
   typeLabel: string
@@ -194,6 +199,21 @@ function handleMoreClick(event: MouseEvent): void {
   event.stopPropagation()
   emit('toggleExpand')
 }
+
+/** 摘录次要动作：开源站（默认新标签，保留 Side Panel）；不经详情页。 */
+function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank?: number): void {
+  event.preventDefault()
+  event.stopPropagation()
+  if (props.showDetailExportSelection) {
+    return
+  }
+  emit('open', {
+    id,
+    url: sourceUrl,
+    openInNewTab: true,
+    ...(rank !== undefined ? { rank } : {})
+  })
+}
 </script>
 
 <template>
@@ -214,6 +234,8 @@ function handleMoreClick(event: MouseEvent): void {
         'recall-card-shell--detail-export-mode': showDetailExportSelection,
         'recall-card-shell--detail-export-selected':
           showDetailExportSelection && isDetailExportItemSelected(card.id),
+        'recall-card-shell--has-open-source':
+          card.itemKind === 'text_excerpt' && Boolean(card.sourceUrl) && !showDetailExportSelection,
         'is-keyboard-selected': keyboardSelected
       }"
     >
@@ -262,6 +284,7 @@ function handleMoreClick(event: MouseEvent): void {
         :aria-selected="showDetailExportSelection ? isDetailExportItemSelected(card.id) : undefined"
         @click="handleOpen($event, card.id, card.url, card.telemetryRank)"
       >
+        <!-- 摘录：正文 → 出处 → 附注 → 理由 → 时间；书签：标题 → 附注 → 理由 → 域名 → 时间 -->
         <p
           v-if="card.excerpt"
           class="recall-card-body"
@@ -278,6 +301,22 @@ function handleMoreClick(event: MouseEvent): void {
         >
           <RecallHighlightText :parts="card.titleParts" />
         </component>
+        <div
+          v-if="card.itemKind === 'text_excerpt' && card.subtitle"
+          class="recall-card-provenance-row"
+          :class="{ 'recall-card-provenance-row--compact': compact }"
+        >
+          <p class="recall-card-subtitle recall-card-subtitle--provenance" :title="card.subtitle">
+            <span class="recall-card-subtitle-text">
+              <RecallHighlightText :parts="card.subtitleParts" />
+            </span>
+          </p>
+          <p v-if="card.savedAtLabel" class="recall-card-saved recall-card-saved--inline">
+            <time :datetime="card.savedAtIso" :title="card.savedAtTitle">{{
+              card.savedAtLabel
+            }}</time>
+          </p>
+        </div>
         <p
           v-if="card.note"
           class="recall-card-note"
@@ -295,20 +334,32 @@ function handleMoreClick(event: MouseEvent): void {
           {{ card.reasonLine }}
         </p>
         <p
+          v-if="card.itemKind === 'bookmark'"
           class="recall-card-subtitle"
-          :title="card.itemKind === 'bookmark' ? card.subtitle : undefined"
+          :title="card.subtitle || undefined"
         >
           <span class="recall-card-subtitle-text">
             <RecallHighlightText :parts="card.subtitleParts" />
           </span>
         </p>
-        <p v-if="card.savedAtLabel" class="recall-card-saved">
+        <p v-if="card.itemKind === 'bookmark' && card.savedAtLabel" class="recall-card-saved">
           <time :datetime="card.savedAtIso" :title="card.savedAtTitle">{{
             card.savedAtLabel
           }}</time>
         </p>
       </a>
 
+      <!-- 次要热区：在 <a> 外，避免可交互嵌套；减「详情再点打开原文」一步 -->
+      <button
+        v-if="card.itemKind === 'text_excerpt' && card.sourceUrl && !showDetailExportSelection"
+        type="button"
+        class="recall-card-open-source"
+        :title="t('detail_open_source')"
+        :aria-label="t('detail_open_source')"
+        @click="handleOpenSource($event, card.id, card.sourceUrl, card.telemetryRank)"
+      >
+        <AppIcon name="open_in_new" size="14px" />
+      </button>
       <button
         v-if="isCollection"
         type="button"
@@ -386,6 +437,27 @@ function handleMoreClick(event: MouseEvent): void {
           >
             <RecallHighlightText :parts="sibling.titleParts" />
           </h3>
+          <div
+            v-if="sibling.itemKind === 'text_excerpt' && sibling.subtitle"
+            class="recall-card-provenance-row recall-card-provenance-row--compact"
+          >
+            <p
+              class="recall-card-subtitle recall-card-subtitle--provenance recall-card-subtitle--compact"
+              :title="sibling.subtitle"
+            >
+              <span class="recall-card-subtitle-text">
+                <RecallHighlightText :parts="sibling.subtitleParts" />
+              </span>
+            </p>
+            <p
+              v-if="sibling.savedAtLabel"
+              class="recall-card-saved recall-card-saved--inline recall-card-saved--compact"
+            >
+              <time :datetime="sibling.savedAtIso" :title="sibling.savedAtTitle">
+                {{ sibling.savedAtLabel }}
+              </time>
+            </p>
+          </div>
           <p v-if="sibling.note" class="recall-card-note recall-card-note--compact">
             <span class="recall-card-note-label">{{ noteFieldLabel }}</span>
             <RecallHighlightText :parts="sibling.noteParts" />
@@ -402,19 +474,39 @@ function handleMoreClick(event: MouseEvent): void {
             {{ sibling.reasonLine }}
           </p>
           <p
+            v-if="sibling.itemKind === 'bookmark'"
             class="recall-card-subtitle"
-            :title="sibling.itemKind === 'bookmark' ? sibling.subtitle : undefined"
+            :title="sibling.subtitle || undefined"
           >
             <span class="recall-card-subtitle-text">
               <RecallHighlightText :parts="sibling.subtitleParts" />
             </span>
           </p>
-          <p v-if="sibling.savedAtLabel" class="recall-card-saved recall-card-saved--compact">
+          <p
+            v-if="sibling.itemKind === 'bookmark' && sibling.savedAtLabel"
+            class="recall-card-saved recall-card-saved--compact"
+          >
             <time :datetime="sibling.savedAtIso" :title="sibling.savedAtTitle">
               {{ sibling.savedAtLabel }}
             </time>
           </p>
         </a>
+        <button
+          v-if="
+            sibling.itemKind === 'text_excerpt' && sibling.sourceUrl && !showDetailExportSelection
+          "
+          type="button"
+          class="recall-card-open-source recall-card-open-source--sibling"
+          :title="t('detail_open_source')"
+          :aria-label="t('detail_open_source')"
+          @click="
+            sibling.sourceUrl
+              ? handleOpenSource($event, sibling.id, sibling.sourceUrl, sibling.telemetryRank)
+              : undefined
+          "
+        >
+          <AppIcon name="open_in_new" size="14px" />
+        </button>
       </li>
     </ul>
   </div>
@@ -475,8 +567,25 @@ function handleMoreClick(event: MouseEvent): void {
     0 1px 2px color-mix(in srgb, var(--ink) 6%, transparent);
 }
 
+/*
+ * Top Pick：仅视觉略强调（产品 §0.1.1）；禁止「就是它 / most likely」文案。
+ * 不用左侧加粗轨（易读成引用条/选中态，单卡时尤吵）→ 一圈细 accent 描边 + 浅底 wash。
+ * 弱于键盘选中（inset 2px ring）；摘录类型仍保留自有 ≤1px 左轨，不叠厚。
+ */
 .recall-card-shell--top {
-  border-color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 58%, var(--border));
+  background: color-mix(in srgb, var(--surface-accent-soft) 70%, var(--surface-white));
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--ink) 7%, transparent);
+}
+
+.recall-card-shell--top.recall-card-shell--excerpt {
+  box-shadow:
+    inset 1px 0 0 color-mix(in srgb, var(--accent) 55%, var(--border)),
+    0 1px 3px color-mix(in srgb, var(--ink) 7%, transparent);
+}
+
+.recall-card-shell--top:hover {
+  background: color-mix(in srgb, var(--surface-accent-soft) 55%, var(--surface-chrome));
 }
 
 .recall-card-shell.is-keyboard-selected {
@@ -679,9 +788,10 @@ function handleMoreClick(event: MouseEvent): void {
 .recall-card-reason {
   display: -webkit-box;
   margin: 0 0 var(--space-2xs);
-  font-size: 12px;
+  font-size: 12.5px;
   line-height: 1.45;
-  color: var(--on-surface-muted);
+  /* 略高于纯 muted，扫读「为何贴合」不糊成灰墙 */
+  color: color-mix(in srgb, var(--on-surface) 72%, var(--on-surface-muted));
   overflow: hidden;
   overflow-wrap: anywhere;
   -webkit-line-clamp: 2;
@@ -704,6 +814,40 @@ function handleMoreClick(event: MouseEvent): void {
   overflow-wrap: anywhere;
 }
 
+/* 摘录出处紧跟正文：页身份先于理由，服务 ECS「来源身份」扫读 */
+.recall-card-provenance-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs) var(--space-xs);
+  min-width: 0;
+  margin: 0 0 var(--space-2xs);
+}
+
+.recall-card-provenance-row--compact {
+  margin-bottom: var(--space-2xs);
+}
+
+.recall-card-subtitle--provenance {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: color-mix(in srgb, var(--on-surface) 78%, var(--on-surface-muted));
+  overflow: hidden;
+}
+
+.recall-card-subtitle--provenance .recall-card-subtitle-text {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.recall-card-subtitle--compact {
+  font-size: 12px;
+}
+
 .recall-card-subtitle-text {
   min-width: 0;
 }
@@ -715,6 +859,12 @@ function handleMoreClick(event: MouseEvent): void {
   color: var(--on-surface-muted);
 }
 
+.recall-card-saved--inline {
+  flex: 0 0 auto;
+  margin: 0;
+  white-space: nowrap;
+}
+
 .recall-card-saved--compact {
   font-size: 10px;
 }
@@ -722,6 +872,42 @@ function handleMoreClick(event: MouseEvent): void {
 .recall-card-saved time {
   font: inherit;
   color: inherit;
+}
+
+.recall-card-shell--has-open-source > .recall-card {
+  padding-right: 2.25rem;
+}
+
+.recall-card-open-source {
+  position: absolute;
+  right: var(--space-xs);
+  bottom: var(--space-xs);
+  z-index: 1;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  color: var(--on-surface);
+  background: var(--surface-chrome);
+  cursor: pointer;
+}
+
+.recall-card-open-source:hover {
+  background: color-mix(in srgb, var(--surface-chrome) 80%, var(--sage-muted) 20%);
+}
+
+.recall-card-open-source:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.recall-card-open-source--sibling {
+  bottom: var(--space-xs);
 }
 
 .recall-duplicate-more {
@@ -775,5 +961,22 @@ function handleMoreClick(event: MouseEvent): void {
   overflow: hidden auto;
   list-style: none;
   overscroll-behavior: contain;
+  animation: recall-siblings-enter var(--motion-duration-short, 150ms)
+    var(--motion-easing-standard, cubic-bezier(0.2, 0, 0, 1)) both;
+}
+
+@keyframes recall-siblings-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recall-duplicate-siblings {
+    animation: none;
+  }
 }
 </style>

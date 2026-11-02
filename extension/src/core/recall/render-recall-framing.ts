@@ -146,6 +146,10 @@ export type RenderRecallFramingOptions = {
    * 跳过 P1「听成了什么」散文（由 Side Panel 理解回声芯片承接，避免重复）。
    */
   omitUnderstood?: boolean
+  /**
+   * 跳过 P6 计数句（有邻域卡时由卡前紧凑计数承接，避免卡后说明书再报一遍）。
+   */
+  omitCounts?: boolean
 }
 
 /** P1–P5 规则正文（不含 P6 计数）。 */
@@ -197,8 +201,9 @@ export function renderRecallFraming(
     return renderRecallFramingRulesBody(facts, translate, options)
   }
 
-  return joinSentences([
-    renderRecallFramingRulesBody(facts, translate, options),
-    renderRecallFramingCounts(facts, translate)
-  ])
+  const body = renderRecallFramingRulesBody(facts, translate, options)
+  if (options.omitCounts === true) {
+    return body
+  }
+  return joinSentences([body, renderRecallFramingCounts(facts, translate)])
 }

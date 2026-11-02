@@ -2,11 +2,26 @@
 /**
  * 首页流程动画：Save → Forget → Recall 循环（轻量 DOM + CSS；JS 切相）。
  * 爽点：存得轻 → 时间过去 → 口语 clue 召回邻域。
+ * 文案走官网 i18n（SSR 默认 en；客户端按 locale 换）。
  */
+import { en } from '../../i18n/en'
+
 const phases = [
-  { id: 'save', label: 'Save', hint: 'Capture lightly' },
-  { id: 'forget', label: 'Forget', hint: 'Life moves on' },
-  { id: 'recall', label: 'Recall', hint: 'Say what you remember' }
+  {
+    id: 'save',
+    labelKey: 'home.flow.tab_save',
+    hintKey: 'home.flow.tab_save_hint'
+  },
+  {
+    id: 'forget',
+    labelKey: 'home.flow.tab_forget',
+    hintKey: 'home.flow.tab_forget_hint'
+  },
+  {
+    id: 'recall',
+    labelKey: 'home.flow.tab_recall',
+    hintKey: 'home.flow.tab_recall_hint'
+  }
 ] as const
 ---
 
@@ -15,7 +30,8 @@ const phases = [
   data-flow-demo
   data-phase="save"
   role="region"
-  aria-label="How Yiveno feels: save, forget, then recall"
+  data-yiveno-i18n-aria="home.flow.aria"
+  aria-label={en['home.flow.aria']}
 >
   <div class="flow-demo__stage" aria-hidden="true">
     <!-- Save -->
@@ -37,14 +53,17 @@ const phases = [
           <div class="flow-demo__line flow-demo__line--dim"></div>
         </div>
         <div class="flow-demo__toast">
-          <p class="flow-demo__toast-kicker">Saved to Yiveno</p>
-          <p class="flow-demo__toast-quote">
-            "Cold weather quietly drains lithium-ion cells — range drops before the pack looks
-            empty."
+          <p class="flow-demo__toast-kicker" data-yiveno-i18n="home.flow.toast_kicker">
+            {en['home.flow.toast_kicker']}
           </p>
-          <p class="flow-demo__toast-note">
-            <em>Note</em> · winter range, for later
+          <p class="flow-demo__toast-quote" data-yiveno-i18n="home.flow.toast_quote">
+            {en['home.flow.toast_quote']}
           </p>
+          <p
+            class="flow-demo__toast-note"
+            data-yiveno-i18n-html="home.flow.toast_note_html"
+            set:html={en['home.flow.toast_note_html']}
+          />
         </div>
       </div>
     </div>
@@ -54,9 +73,16 @@ const phases = [
       <div class="flow-demo__time">
         <span class="flow-demo__time-card flow-demo__time-card--a"></span>
         <span class="flow-demo__time-card flow-demo__time-card--b"></span>
-        <span class="flow-demo__time-card flow-demo__time-card--c">8 months later</span>
+        <span
+          class="flow-demo__time-card flow-demo__time-card--c"
+          data-yiveno-i18n="home.flow.time_later"
+        >
+          {en['home.flow.time_later']}
+        </span>
       </div>
-      <p class="flow-demo__time-caption">No folders. No perfect title. Still yours.</p>
+      <p class="flow-demo__time-caption" data-yiveno-i18n="home.flow.time_caption">
+        {en['home.flow.time_caption']}
+      </p>
     </div>
 
     <!-- Recall -->
@@ -64,30 +90,41 @@ const phases = [
       <div class="flow-demo__panel">
         <div class="flow-demo__panel-top">
           <span class="flow-demo__panel-brand">Yiveno</span>
-          <span class="flow-demo__panel-chip">Side Panel</span>
+          <span class="flow-demo__panel-chip" data-yiveno-i18n="home.flow.panel_chip">
+            {en['home.flow.panel_chip']}
+          </span>
         </div>
         <div class="flow-demo__composer">
-          <span class="flow-demo__composer-label">Clue</span>
+          <span class="flow-demo__composer-label" data-yiveno-i18n="home.flow.clue_label">
+            {en['home.flow.clue_label']}
+          </span>
           <p class="flow-demo__composer-text">
-            <span class="flow-demo__type">that article about batteries in winter</span>
+            <span class="flow-demo__type" data-yiveno-i18n="home.flow.clue_text">
+              {en['home.flow.clue_text']}
+            </span>
             <span class="flow-demo__caret"></span>
           </p>
         </div>
         <div class="flow-demo__hits">
           <div class="flow-demo__hit flow-demo__hit--top">
-            <span>Closest</span>
-            <strong>Why lithium-ion batteries lose capacity in the cold</strong>
+            <span data-yiveno-i18n="home.flow.hit_closest">{en['home.flow.hit_closest']}</span>
+            <strong data-yiveno-i18n="home.flow.hit_title_1">{en['home.flow.hit_title_1']}</strong>
           </div>
           <div class="flow-demo__hit">
-            <span>Nearby</span>
-            <strong>Winter range tips for EVs — notes I kept</strong>
+            <span data-yiveno-i18n="home.flow.hit_nearby">{en['home.flow.hit_nearby']}</span>
+            <strong data-yiveno-i18n="home.flow.hit_title_2">{en['home.flow.hit_title_2']}</strong>
           </div>
         </div>
       </div>
     </div>
   </div>
 
-  <div class="flow-demo__rail" role="tablist" aria-label="Flow steps">
+  <div
+    class="flow-demo__rail"
+    role="tablist"
+    data-yiveno-i18n-aria="home.flow.steps_aria"
+    aria-label={en['home.flow.steps_aria']}
+  >
     {phases.map((phase, index) => (
       <button
         type="button"
@@ -97,13 +134,22 @@ const phases = [
         aria-selected={index === 0 ? 'true' : 'false'}
       >
         <span class="flow-demo__tab-index">{String(index + 1).padStart(2, '0')}</span>
-        <span class="flow-demo__tab-label">{phase.label}</span>
-        <span class="flow-demo__tab-hint">{phase.hint}</span>
+        <span class="flow-demo__tab-label" data-yiveno-i18n={phase.labelKey}>
+          {en[phase.labelKey]}
+        </span>
+        <span class="flow-demo__tab-hint" data-yiveno-i18n={phase.hintKey}>
+          {en[phase.hintKey]}
+        </span>
       </button>
     ))}
   </div>
 
-  <p class="flow-demo__live" data-flow-live aria-live="polite">
-    Save — capture lightly, optional note.
+  <p
+    class="flow-demo__live"
+    data-flow-live
+    aria-live="polite"
+    data-yiveno-i18n="home.flow.live_save"
+  >
+    {en['home.flow.live_save']}
   </p>
 </div>

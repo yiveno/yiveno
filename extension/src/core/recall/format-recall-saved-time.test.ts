@@ -19,9 +19,20 @@ describe('formatRecallSavedTime', () => {
     expect(labels?.absolute).toContain('2026')
   })
 
-  it('数天前返回相对英文', () => {
+  it('数天前返回相对英文（缺省 locale）', () => {
     const labels = formatRecallSavedTime('2026-08-20T12:00:00.000Z', { nowMs })
     expect(labels?.relative).toMatch(/day|week/)
+    expect(labels?.absolute.length).toBeGreaterThan(0)
+  })
+
+  it('zh-CN 相对时间跟 locale（不上 en last month）', () => {
+    // ≥30 天且周档已出（diffDay/7≥5）→ 月份档；Intl zh-CN →「上个月」等
+    const labels = formatRecallSavedTime('2026-07-20T12:00:00.000Z', {
+      nowMs,
+      locale: 'zh-CN'
+    })
+    expect(labels?.relative).toMatch(/月/)
+    expect(labels?.relative).not.toMatch(/last month|month ago/i)
     expect(labels?.absolute.length).toBeGreaterThan(0)
   })
 })
