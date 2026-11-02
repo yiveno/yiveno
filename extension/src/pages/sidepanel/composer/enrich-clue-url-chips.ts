@@ -10,15 +10,6 @@ import { CLUE_URL_CHIP_ATTR } from '@/pages/sidepanel/composer/clue-editor-dom'
 /** 会话级 URL → 标题缓存（避免同面板反复打 SW）。 */
 const titleCache = new Map<string, string>()
 
-/** 测试用。 */
-export function clearClueUrlTitleUiCacheForTests(): void {
-  titleCache.clear()
-}
-
-export function peekClueUrlTitleUiCache(href: string): string | undefined {
-  return titleCache.get(href)
-}
-
 /**
  * 解析一批 URL 的展示标题；命中写入会话缓存。
  * @returns href → title（仅有标题的条目）
