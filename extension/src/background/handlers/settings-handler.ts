@@ -64,6 +64,12 @@ export async function handleUpdateUserSettings(
     if (typeof parsed.mcpReadOnlyEnabled === 'boolean') {
       patch.mcpReadOnlyEnabled = parsed.mcpReadOnlyEnabled
     }
+    if (typeof parsed.recallOutcomePairSoftAdjustEnabled === 'boolean') {
+      patch.recallOutcomePairSoftAdjustEnabled = parsed.recallOutcomePairSoftAdjustEnabled
+    }
+    if (parsed.uiLocalePreference !== undefined) {
+      patch.uiLocalePreference = parsed.uiLocalePreference
+    }
     const settings = await updateUserSettings(patch)
     if (typeof patch.aiFeaturesEnabled === 'boolean') {
       // AI 开关变更后立刻重挂 / 清空线索 LLM completer

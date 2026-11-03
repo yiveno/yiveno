@@ -1,7 +1,8 @@
 /**
  * 官网产品面英文文案（美式英语；与 `zh.ts` 键对称）。
  * 新增键：先写本表与 zh，再在组件用 `t('…')` / `data-yiveno-i18n` / `tFormat`；禁止写死用户可见句。
- * 覆盖：卸载、壳导航/页脚、定价换汇、`/login`、营销首页、FAQ 可见文案（JSON-LD 仍用英文 FAQ_ENTRIES）。
+ * 覆盖：卸载、壳导航/页脚、Pricing/Account/Support、法律页壳键、`/login`、营销首页、FAQ（JSON-LD 仍英文 FAQ_ENTRIES）。
+ * Privacy/Terms 长文：同页双语 prose（`data-yiveno-legal-locale`），不进本字典。
  */
 export const en = {
   'login.meta.title': 'Sign in · Yiveno',
@@ -126,6 +127,106 @@ export const en = {
   /** `.cn` 定价页：诚实说明换汇，非独立人民币套餐价 */
   'pricing.fx_note':
     'Listed prices are in USD. At checkout, your total may show in a local currency converted from this price.',
+  'pricing.meta.title': 'Pricing · Yiveno',
+  'pricing.meta.description':
+    'Yiveno Free and Pro: same find quality on your device. Pro adds library sync and more room for cloud help with your clues. Prices in USD.',
+  'pricing.title': 'Pricing',
+  'pricing.lede':
+    'Find what you saved: capture lightly, get a short list of closest fits — you pick. Free and Pro find just as well on your device; Pro syncs your library and gives you more room for cloud help with your clues.',
+  'pricing.cycle.aria': 'Pro billing period',
+  'pricing.cycle.month': 'Monthly',
+  'pricing.cycle.year': 'Yearly',
+  'pricing.interval.month': '/mo',
+  'pricing.interval.year': '/yr',
+  'pricing.free.tier': 'Free',
+  'pricing.free.desc': 'Find from what you saved — on your device. No cloud sync.',
+  'pricing.free.f1': 'Capture excerpts & bookmarks',
+  'pricing.free.f2': 'Find closest fits on your device',
+  'pricing.free.f3': 'Local library, notes, export',
+  'pricing.free.f4': 'Sign in: a little cloud clue help each month',
+  'pricing.free.cta': 'Sign in',
+  'pricing.pro.tier': 'Pro',
+  'pricing.pro.desc':
+    'Same find quality as Free, plus sync across devices and a higher limit for cloud help with your clues.',
+  'pricing.pro.f1': 'Same find quality as Free',
+  'pricing.pro.f2': 'Cloud sync across devices',
+  'pricing.pro.f3': 'Higher limit for cloud clue help',
+  'pricing.pro.f4': 'Higher daily limit for smarter matching in the cloud',
+  'pricing.pro.manage': 'Manage subscription',
+  'pricing.pro.subscribe': 'Subscribe',
+  'pricing.pro.sign_in_subscribe': 'Sign in to subscribe',
+  'pricing.pro.opening': 'Opening…',
+  'pricing.error.already_pro': 'This account already has Pro. Manage it from your subscription.',
+  'pricing.error.checkout_failed': 'Could not start checkout. Try again.',
+  'pricing.footnote':
+    'Roadmap only (not for sale): Power User, Team. Displayed totals are list prices before tax. Checkout happens on our secure checkout page after you sign in.',
+
+  'account.meta.title': 'Account · Yiveno',
+  'account.meta.description': 'Your Yiveno account, plan, and billing.',
+  'account.sign_out': 'Sign out',
+  'account.plan_heading': 'Plan',
+  'account.checking_plan': 'Checking your plan…',
+  'account.plan.pro': 'Pro',
+  'account.plan.free': 'Free',
+  'account.plan.load_failed': "Couldn't load plan",
+  'account.plan.updating': 'Updating…',
+  'account.plan.verify_error':
+    "We couldn't verify your plan right now. Your paid access is unchanged if you already subscribe.",
+  'account.plan.renews': 'Renews / ends {date}',
+  'account.retry': 'Retry',
+  'account.upgrade': 'Upgrade to Pro',
+  'account.manage': 'Manage subscription',
+  'account.view_pricing': 'View pricing',
+  'account.opening': 'Opening…',
+  'account.loading': 'Loading…',
+  'account.dismiss': 'Dismiss',
+  'account.provider.unknown': 'Unknown',
+  'account.provider.google': 'Google',
+  'account.provider.microsoft': 'Microsoft',
+  'account.provider.email': 'Email',
+  'account.checkout.pending':
+    'Checking your checkout. If you paid, Pro usually shows within a few seconds — refresh if the plan below still says Free.',
+  'account.checkout.failed': "Payment didn't go through. You can try Upgrade to Pro again.",
+  'account.checkout.error': 'Could not start checkout. Try again.',
+  'account.date.unknown': 'Unknown',
+
+  'support.meta.title': 'Support · Yiveno',
+  'support.meta.description':
+    'Get help with Yiveno — bugs, account, billing, and install questions by email. We reply at support@yiveno.com.',
+  'support.title': 'Support',
+  'support.lede_before': 'Need a reply? Email us. For product ideas that don’t need a reply, use',
+  'support.lede_mid': 'or the optional form if you remove the extension. Short product answers:',
+  'support.lede_faq': 'FAQ',
+  'support.lede_after': '.',
+  'support.bugs.title': 'Bugs & account help',
+  'support.bugs.body_before': 'Something broken, can’t sign in, sync issues, or billing questions:',
+  'support.bugs.hint':
+    'Include what you tried, your browser (Edge or Chrome) and version, and the extension version if you can — one clear note helps us reply once.',
+  'support.install.title': 'Install availability',
+  'support.install.body_before':
+    'Yiveno is not listed on the public Chrome Web Store or Microsoft Edge Add-ons yet. If you want a notice when a public listing is available, email',
+  'support.install.body_after': 'with the subject "Install notify".',
+  'support.ideas.title': 'Product ideas',
+  'support.ideas.body_before': 'Feature ideas or “why I left” style notes (no reply expected):',
+  'support.privacy.title': 'Privacy',
+  'support.privacy.body_before': 'Privacy questions:',
+  'support.privacy.policy': 'Privacy Policy',
+
+  'privacy.meta.title': 'Privacy Policy · Yiveno',
+  'privacy.meta.description':
+    'How Yiveno handles personal data for the Chromium extension (Edge and Chrome) and website: local-first memory, optional cloud sync, account, and AI.',
+  'privacy.title': 'Privacy Policy',
+  'privacy.effective': 'Effective date: {date}',
+  'privacy.translation_note':
+    'Convenience translation. If anything conflicts with the English text, the English version controls.',
+
+  'terms.meta.title': 'Terms of Service · Yiveno',
+  'terms.meta.description':
+    'Terms of Service for the Yiveno Chromium extension (Microsoft Edge and Google Chrome) and website.',
+  'terms.title': 'Terms of Service',
+  'terms.effective': 'Effective date: {date}',
+  'terms.translation_note':
+    'Convenience translation. If anything conflicts with the English text, the English version controls.',
 
   'home.meta.title': 'Yiveno — Find what you saved',
   'home.meta.description':

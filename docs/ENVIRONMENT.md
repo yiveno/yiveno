@@ -185,6 +185,20 @@ bun run env:check:prod
 6. [ ] （上线前）欢迎信：`.env.shared.local` + 生产 Worker Secrets 配齐 `ALIYUN_DM_ACCESS_KEY_ID` / `ALIYUN_DM_ACCESS_KEY_SECRET`；DirectMail 控制台 `hello@yiveno.com` 可 API 发信；手测开通 Pro 收信
 7. [ ] （可选 · 卸载反馈）Workers Paid + Email Sending enable `yiveno.com`；手测卸载反馈进 `feedback@`→Gmail（失败不得 5xx）；生产须 `bun run deploy:worker` 后 `POST /api/website/uninstall-feedback` 非 404
 
+## GitHub Actions · Recall 真实评测 Secrets
+
+> **用途：** 手动 workflow [`.github/workflows/recall-real-eval.yml`](../.github/workflows/recall-real-eval.yml)（`workflow_dispatch`）。  
+> **与 PR CI 分计：** 日常 CI 只跑确定性 `test:must`；真实 LLM / BGE **不**进每次 PR。  
+> **配置位置：** 仓库 Settings → Secrets and variables → Actions。
+
+| Secret                                         | 用途                                                          | 必填                       |
+| ---------------------------------------------- | ------------------------------------------------------------- | -------------------------- |
+| `DEEPSEEK_API_KEY` 或 `PARSE_GOLD_LLM_API_KEY` | `parse-gold:llm` 调上游聊天补全                               | 跑 parse-gold 套件时二选一 |
+| `RETRIEVAL_ABLATION_ACCESS_TOKEN`              | `retrieval-ablation:real` 调 Worker `/api/ai/embed` 的 Bearer | 跑消融套件时必填           |
+| `RETRIEVAL_ABLATION_API_BASE`                  | embed API 基址；未设则脚本侧默认 `https://api.yiveno.com`     | 可选                       |
+
+**何时触发：** 改 clue NLU prompt / Zod 槽位、`AI_HOSTED_MODEL*`、Worker embed 模型，或发版前抽检。Actions → **Recall Real Eval** → Run workflow。
+
 ## 禁止事项
 
 - 禁止手改 `worker/.dev.vars`

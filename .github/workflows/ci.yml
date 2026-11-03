@@ -1,6 +1,7 @@
-# Yiveno CI（对齐 AGENTS.md 质量门禁矩阵）
-# PR / push main：typecheck:ci + lint + i18n + knip + extension/worker test + extension build
-# 不在此跑：bun audit、全仓 typecheck:force；扩展 UI 验收走 MCP 真机（非 CI）
+# Yiveno CI（对齐 AGENTS.md / project.mdc 质量门禁矩阵）
+# PR / push main：typecheck:ci + lint + i18n + knip + extension/worker test + explicit test:must + extension build
+# 不在此跑：bun audit、全仓 typecheck:force、真实 LLM/BGE（见 recall-real-eval.yml · workflow_dispatch）
+# 扩展 UI 验收走 MCP 真机（非 CI）
 
 name: CI
 
@@ -15,6 +16,8 @@ permissions:
 
 env:
   BUN_VERSION: latest
+  # eval/*.test.ts 数量地板：防止目录搬迁/清空后 test:must 仍「0 tests 假绿」
+  RECALL_EVAL_TEST_FILE_FLOOR: '8'
 
 jobs:
   quality-check:
@@ -52,6 +55,18 @@ jobs:
 
       - name: Extension tests
         run: cd extension && bun run test:run
+
+      # 显性 must 门禁：不依赖 vitest 默认 include 是否仍扫到 eval（与 test:run 分计）
+      - name: Recall eval must (explicit)
+        run: |
+          set -euo pipefail
+          EVAL_TESTS=$(find extension/src/core/recall/eval -name '*.test.ts' | wc -l | tr -d ' ')
+          echo "eval test files: ${EVAL_TESTS} (floor=${RECALL_EVAL_TEST_FILE_FLOOR})"
+          if [ "${EVAL_TESTS}" -lt "${RECALL_EVAL_TEST_FILE_FLOOR}" ]; then
+            echo "eval test files below floor — check include/exclude or directory move"
+            exit 1
+          fi
+          cd extension && bun run test:must
 
       - name: Worker tests
         run: cd worker && bun run test

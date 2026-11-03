@@ -2,10 +2,16 @@
 import MainLayout from '../layouts/MainLayout.astro'
 import AppNav from '../components/AppNav.astro'
 import AccountPage from '../components/AccountPage.vue'
+import { en } from '../i18n/en'
 import '../styles/pages.css'
 ---
 
-<MainLayout noindex title="Account · Yiveno" description="Manage your Yiveno account.">
+<MainLayout
+  noindex
+  title={en['account.meta.title']}
+  description={en['account.meta.description']}
+  i18nTitleKey="account.meta.title"
+>
   <AppNav slot="nav" />
   <AccountPage client:load />
 </MainLayout>

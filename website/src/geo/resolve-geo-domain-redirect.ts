@@ -117,7 +117,8 @@ function inferredMarketFromCountry(country: string | null | undefined): GeoDomai
 
 /**
  * 纯函数：决定是否 302，以及是否写偏好 Cookie。
- * 显示语言不在此处理。
+ * 优先级：显式 `?geo_domain=` → Cookie 偏好 → CF country 建议 → 不跳。
+ * 显示语言不在此处理（见 `Yiveno-国际化-CN-NA.md` §2.1）。
  */
 export function resolveGeoDomainRedirect(
   input: ResolveGeoDomainRedirectInput

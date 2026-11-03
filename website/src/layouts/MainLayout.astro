@@ -221,6 +221,10 @@ const homeJsonLd = jsonLd ? buildHomeJsonLdGraph() : null
     var v = msg(el.getAttribute('data-yiveno-i18n-aria'));
     if (v) el.setAttribute('aria-label', v);
   });
+  /** Privacy/Terms 同页双语 prose：按生效 locale 显隐 */
+  document.querySelectorAll('[data-yiveno-legal-locale]').forEach(function (el) {
+    el.hidden = el.getAttribute('data-yiveno-legal-locale') !== locale;
+  });
   var nav = document.querySelector('.site-nav');
   if (nav && pack['nav.aria_primary']) nav.setAttribute('aria-label', pack['nav.aria_primary']);
   var titleKey = document.body.getAttribute('data-yiveno-i18n-title');

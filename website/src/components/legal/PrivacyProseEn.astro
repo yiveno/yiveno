@@ -1,0 +1,285 @@
+---
+/**
+ * 隐私政策英文正文（权威版）。中文译本见 PrivacyProseZh。
+ */
+const contactEmail = 'privacy@yiveno.com'
+---
+
+<section class="page__prose" data-yiveno-legal-locale="en" lang="en">
+  <h2>1. Who we are</h2>
+  <p>
+    This Privacy Policy describes how <strong>Yiveno</strong> (“we”, “us”) handles information when
+    you use the Yiveno Chrome extension, the website at yiveno.com, and related backend services
+    (Cloudflare Workers). Yiveno helps you <strong>find what you saved</strong>: Capture with low
+    friction, then Recall into a short list of closest fits — you choose. It is not a bookmark
+    manager, note-taking app, chat bot, or “AI organizer” as a primary promise.
+  </p>
+  <p>
+    Today Yiveno is operated by an <strong>individual</strong> based in{' '}
+    <strong>Hangzhou, China</strong> (not yet a registered company). We may later transfer
+    operations to a company registered in Hangzhou; if that happens, we will update this Policy and
+    the effective date. Contact: <a href={`mailto:${contactEmail}`}>{contactEmail}</a>.
+  </p>
+  <p>
+    The browser extension (Chromium — Microsoft Edge and Google Chrome) is{' '}
+    <strong>not yet listed</strong> for public install on the <strong>Chrome Web Store</strong> or{' '}
+    <strong>Microsoft Edge Add-ons</strong>, and we are <strong>not yet charging</strong> the public
+    for paid plans. Product pages may describe planned Free / Pro features; they are not a claim of
+    a live paid customer base. When listed, mainland desktop install prefers Edge Add-ons (see
+    product docs · ADR-020).
+  </p>
+
+  <h2>2. What we collect</h2>
+  <h3>2.1 On your device (default)</h3>
+  <p>
+    By default, memories you Capture (for example text excerpts, related page metadata you choose to
+    save, and your notes) are stored in the extension’s local IndexedDB on your browser profile.
+    Uninstalling the extension typically removes this local store.
+  </p>
+  <h3>2.2 Account (optional sign-in)</h3>
+  <p>
+    If you sign in via the website — email one-time code (or magic link), or Google / Microsoft
+    OAuth through our auth provider — we process account identifiers such as user id, email, and
+    profile fields the provider shares (for example display name or avatar URL).{' '}
+    <strong>Signing in does not by itself upload your memories.</strong>
+  </p>
+  <h3>2.3 Cloud memory (opt-in sync)</h3>
+  <p>
+    Only after you explicitly enable cloud sync in the extension do we store{' '}
+    <strong>text excerpts</strong> (and sync backups) in our cloud database (currently Supabase),
+    scoped to your account. The Supabase primary database for production is in{' '}
+    <strong>East US (Ohio)</strong>, AWS region <strong>us-east-2</strong>.{' '}
+    <strong>Bookmark entries imported from Chrome stay on this device</strong>
+    and are not merged across devices through Yiveno cloud sync. Turning sync off does{' '}
+    <strong>not</strong>
+    automatically delete cloud copies; you can delete cloud memories or delete your account from
+    Settings → Data.
+  </p>
+  <h3>2.4 AI / language features</h3>
+  <p>
+    Some features (for example understanding what you typed) may send limited requests through our
+    servers to a model provider. The model does not directly create, change, or delete what you
+    saved. We do not default to sending your entire library to a model.
+  </p>
+  <h3>2.4a Voice dictation (optional)</h3>
+  <p>
+    In the Recall side panel you may tap a microphone control to <strong>dictate a clue</strong>{' '}
+    into the text field (same path as typing — not a live voice chat). The browser’s Web Speech /
+    speech-recognition stack may process that audio, which often means the{' '}
+    <strong>browser vendor</strong> (not Yiveno’s API) temporarily handles the audio for
+    transcription. Yiveno does not receive the raw audio on <code>api.yiveno.com</code>. The
+    resulting text remains in the composer for you to edit before you submit a Recall. Microphone
+    access is requested only when you use this control; if the side panel cannot show the system
+    prompt, Yiveno shows an in-panel Allow control (and may open the browser’s site settings for
+    this extension if permission is still blocked).
+  </p>
+  <h3>2.5 Install notify (optional)</h3>
+  <p>
+    The public store listings are not live yet. If you email support@yiveno.com asking to be
+    notified when a public install listing is available, we may store that email solely to send that
+    notice. We do not add those addresses to a marketing list. There is no homepage signup form for
+    this.
+  </p>
+  <h3>2.6 Extension uninstall feedback (optional)</h3>
+  <p>
+    When you remove the Chrome extension, Chrome may open a short page on yiveno.com (best effort;
+    not gated on website or extension sign-in). You may optionally pick closed-set reasons and leave
+    a short note. If a one-time uninstall token is present (you were signed in to the extension),
+    the page also clears the <strong>extension</strong> remote session — not your website login, and
+    not your local or cloud Memory. Feedback is optional and not tied to reinstalling. We store the
+    reasons, note, and technical context needed to improve the product and reproduce issues (for
+    example approximate IP, browser user-agent, language, timezone, screen size, and — if you are
+    signed in on the website — display name and account email). Retention is short; we may email a
+    copy to our internal feedback inbox. We do not use this form to delete your library or sign you
+    out of the website. Bugs or account issues that need a reply should go to
+    <a href="mailto:support@yiveno.com">support@yiveno.com</a>, not the optional uninstall form.
+  </p>
+  <h3>2.7 What we do not collect by default</h3>
+  <ul>
+    <li>Your full browsing History</li>
+    <li>Always-on clipboard reading</li>
+    <li>Full webpage content you did not actively Capture</li>
+    <li>Uploading memories to the cloud without enabling sync</li>
+  </ul>
+  <h3>2.8 Usage signals on your library</h3>
+  <p>
+    To improve Recall ordering on <strong>your</strong> device, Yiveno may store how you interact
+    with saved items — for example how often you open a result, when you dismiss “none of these,” or
+    Outcome pairs that softly boost or demote later matches for a similar clue. These signals
+    describe your relationship with <strong>your</strong> library; they stay in your browser
+    profile, are not uploaded as product analytics by default, and are not sold as a separate
+    product asset. In Settings → Data you can clear the on-device Outcome-pair buffer and local
+    timing diagnostics without deleting your library; clearing local memory also clears those
+    buffers. Open counts stored on items are removed only when you clear the library itself.
+  </p>
+  <p>
+    We do <strong>not</strong> by default upload de-identified aggregate product analytics. Optional
+    uninstall feedback (above) is a narrow, separate path. Turning on AI features may send clue text
+    to a model for understanding while you use the feature; that is not permission to retain your
+    content for a separate AI quality-review dataset.
+  </p>
+  <h3>2.9 Per-item derived recall helpers</h3>
+  <p>
+    Yiveno may compute recall helpers bound to a specific saved item — for example tags or keywords
+    inferred from its title or excerpt, or math helpers stored with the item so fuzzy finding works
+    better. These stay with the item in your local library (and in your cloud copy if sync is on).
+    They help retrieve <strong>your</strong> content; we do not treat them as Yiveno-owned secrets
+    you cannot export.
+  </p>
+
+  <h2>3. How we use information</h2>
+  <ul>
+    <li>Provide Capture and Recall on your device</li>
+    <li>Authenticate you and optional cloud sync when you enable it</li>
+    <li>
+      Operate, secure, and debug the service (including Worker logs with limited previews where
+      needed)
+    </li>
+    <li>
+      Process subscriptions or payments if you purchase paid plans (billing records may be retained
+      as required by law)
+    </li>
+    <li>Email you if you asked support to notify you when a public store listing is available</li>
+    <li>
+      Review optional uninstall feedback (closed-set reason and short note) if you choose to send it
+    </li>
+  </ul>
+
+  <h2>4. Processors and subprocessors</h2>
+  <p>Depending on features you use, data may be processed by:</p>
+  <ul>
+    <li>
+      <strong>Supabase</strong> — authentication and (when sync is on) cloud Memory storage;
+      production primary database region <strong>us-east-2</strong> (East US / Ohio)
+    </li>
+    <li>
+      <strong>Cloudflare</strong> — Workers API, hosting, KV for optional uninstall feedback, Email
+      Sending when enabled, Turnstile bot checks on email sign-in, and related infrastructure
+    </li>
+    <li>
+      <strong>Email delivery (via our auth provider’s mail path / configured SMTP)</strong> — if you
+      sign in with an email code or magic link
+    </li>
+    <li>
+      <strong>Google / Microsoft</strong> — if you choose their OAuth sign-in
+    </li>
+    <li>
+      <strong>Model providers</strong> — only when an AI feature you use is routed through our
+      Worker
+    </li>
+    <li>
+      <strong>Payment providers</strong> (Dodo Payments) — if you purchase a subscription
+    </li>
+  </ul>
+
+  <h2>5. Retention and deletion</h2>
+  <ul>
+    <li>
+      <strong>Local memories</strong> remain until you delete them, clear leftover account data, or
+      remove the extension.
+    </li>
+    <li>
+      <strong>Cloud memories</strong> remain while your account exists and sync data has not been
+      deleted; you can delete all cloud memories without deleting the account.
+    </li>
+    <li>
+      To manage storage redundancy, we may periodically prune certain cloud-related data, such as
+      sync backups and soft-deleted billing records. For example, sync backups keep only the most
+      recent snapshots (currently up to 5 per account), and soft-deleted subscription/payment
+      history is removed after 180 days.
+    </li>
+    <li>
+      <strong>Install-notify emails</strong> (if you asked support for a listing notice) are kept
+      until we have notified you, you ask us to remove the address, or we no longer need the list.
+    </li>
+    <li>
+      <strong>Uninstall feedback</strong> (reason and optional note) is kept in short-lived storage
+      for product improvement, and may also appear in our feedback email inbox. It is not tied to
+      your account login.
+    </li>
+    <li>
+      <strong>Delete account</strong> (Settings → Data) removes cloud Memory and backups, closes the
+      auth user, clears this account’s local Memory bucket on that device, and signs you out.
+      Billing records may be retained in anonymized or legally required form and are not a
+      recoverable login.
+    </li>
+  </ul>
+
+  <h2>6. Data ownership and export</h2>
+  <p>
+    Yiveno is local-first: you should be able to <strong>take, clear, and leave</strong> with your
+    library. Export is a product responsibility, not a paid perk.
+  </p>
+  <ul>
+    <li>
+      <strong>Your content</strong> — excerpts, notes, URLs, and bookmark traces you chose to save —
+      belongs to you.
+    </li>
+    <li>
+      <strong>Your in-library usage</strong> — open/dismiss signals and timestamps on your items —
+      belongs to you as part of your library history.
+    </li>
+    <li>
+      <strong>Per-item recall helpers</strong> — inferred tags/keywords and matching helpers stored
+      on an item — stay with that item in your backup; they are not withheld as separate Yiveno
+      property.
+    </li>
+    <li>
+      <strong>Yiveno service layer</strong> — de-identified aggregate statistics or
+      non-individualized models used to improve the product for everyone — is not included in your
+      personal export and is cut off from you when you delete your account, to the extent we store
+      individual links.
+    </li>
+  </ul>
+  <p>
+    <strong>Full backup export</strong> (Settings → Data) downloads your current identity’s local
+    Memory as JSON, including soft-deleted items and the fields above. A lighter “portable” export
+    for moving to other tools may be added later; it would not replace full backup.
+  </p>
+
+  <h2>7. Your choices</h2>
+  <ul>
+    <li>Use Yiveno without signing in (local profile)</li>
+    <li>Sign in without enabling cloud sync</li>
+    <li>Enable or disable cloud sync</li>
+    <li>
+      Export a full backup, delete cloud memories, or delete your account from Settings → Data
+    </li>
+    <li>Review a short privacy notice in Settings → Privacy before enabling sync</li>
+    <li>Send optional uninstall feedback after removing the extension</li>
+  </ul>
+
+  <h2>8. Children</h2>
+  <p>
+    Yiveno is not directed to children under 13 (or the minimum age required in your jurisdiction).
+    Do not use the service if you are under that age.
+  </p>
+
+  <h2>9. International users</h2>
+  <p>
+    The operator is based in Hangzhou, China. Account data and (when sync is on) cloud Memory are
+    stored with Supabase in the <strong>United States</strong> (primary database:{' '}
+    <strong>East US / Ohio, us-east-2</strong>). Other processors (for example Cloudflare Workers,
+    AI model providers, and payment providers if you purchase a plan) may process data in the United
+    States and other locations where they operate. If you enable cloud sync or sign in, you
+    understand your account and synced data may be stored outside your country of residence.
+  </p>
+
+  <h2>10. Changes</h2>
+  <p>
+    We may update this Policy as the product changes. We will update the effective date on this
+    page. Material changes to the in-extension sync notice may require you to re-confirm before
+    turning sync on again.
+  </p>
+
+  <h2>11. Contact</h2>
+  <p>
+    Privacy questions: <a href={`mailto:${contactEmail}`}>{contactEmail}</a>. Product help and
+    complaints:
+    <a href="/support">Support</a>.
+  </p>
+  <p class="page__note">
+    This page reflects how Yiveno works today. It is not legal advice. Features not marked available
+    in the product are not claimed here as shipped.
+  </p>
+</section>

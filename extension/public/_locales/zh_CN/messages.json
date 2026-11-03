@@ -956,11 +956,8 @@
   "settings_tab_account_sync": {
     "message": "账号与同步"
   },
-  "settings_tab_data": {
-    "message": "数据"
-  },
   "settings_tab_privacy": {
-    "message": "隐私"
+    "message": "数据与隐私"
   },
   "settings_tab_ai": {
     "message": "AI"
@@ -992,8 +989,17 @@
   "settings_placeholder_privacy": {
     "message": "隐私选项尚未开放。"
   },
-  "settings_data_intro": {
-    "message": "备份全部内容、从 Raindrop 或 Pocket 导入（最多 50 条）、清空本机存储，或删除云端数据与账号。本浏览器书签不会被改动。"
+  "settings_data_group_bring_in": {
+    "message": "导入"
+  },
+  "settings_data_group_backup": {
+    "message": "备份"
+  },
+  "settings_data_group_adaptation": {
+    "message": "本机 Recall 适应"
+  },
+  "settings_data_group_remove": {
+    "message": "清除与删除"
   },
   "settings_data_import_raindrop": {
     "message": "从 Raindrop 导入"
@@ -1040,13 +1046,13 @@
     "message": "清空本机记忆"
   },
   "settings_data_clear_local_hint": {
-    "message": "永久删除此账号在本机存储的内容。本浏览器书签保持不变。"
+    "message": "永久删除此账号在本机存储的内容。本浏览器书签保持不变。也会清除本机 Recall 排序信号。"
   },
   "settings_data_clear_local_action": {
     "message": "清空"
   },
   "settings_data_clear_local_confirm": {
-    "message": "这将永久清空 Yiveno 的本机记忆库，不会改动本浏览器书签。书签导入会关闭；若同步已开启也会关闭。需要备份请先导出。继续？"
+    "message": "这将永久清空 Yiveno 的本机记忆库，不会改动本浏览器书签。书签导入会关闭；若同步已开启也会关闭。本机 Recall 排序信号一并清除。需要备份请先导出。继续？"
   },
   "settings_data_clear_local_done": {
     "message": "已清空 $COUNT$ 条本机条目（本浏览器书签未改动）",
@@ -1064,11 +1070,35 @@
       }
     }
   },
+  "settings_data_outcome_soft_adjust_toggle": {
+    "message": "用 Outcome 做个人排序加成"
+  },
+  "settings_data_outcome_soft_adjust_hint": {
+    "message": "开启时，Yiveno 可用本机 Outcome 对软升/降权候选。关闭只暂停这一步——记忆库与找东西仍可用；对缓冲保留直至你清除。"
+  },
+  "settings_data_clear_recall_adaptation": {
+    "message": "清除本机 Recall 适应信号"
+  },
+  "settings_data_clear_recall_adaptation_hint": {
+    "message": "重置 Outcome 排序对与本机计时诊断。记忆库保留；找东西仍可用。"
+  },
+  "settings_data_clear_recall_adaptation_action": {
+    "message": "清除信号"
+  },
+  "settings_data_clear_recall_adaptation_confirm": {
+    "message": "仅清除本机 Outcome 排序对与本地计时诊断。记忆库、书签与同步设置不变。继续？"
+  },
+  "settings_data_clear_recall_adaptation_done": {
+    "message": "已清除本机 Recall 适应信号"
+  },
   "settings_error_local_clear": {
     "message": "清空本机记忆失败"
   },
+  "settings_error_local_recall_adaptation_clear": {
+    "message": "清除本机 Recall 适应信号失败"
+  },
   "settings_privacy_intro": {
-    "message": "Yiveno 如何处理你的记忆、所有权、可选同步与 AI。"
+    "message": "了解 Yiveno 如何处理你的记忆，以及导入、备份、本机 Recall 适应与清除。本浏览器书签不会被改动。"
   },
   "settings_mcp_toggle": {
     "message": "只读 MCP（beta）"
@@ -1087,6 +1117,9 @@
   },
   "settings_privacy_bullet_local": {
     "message": "本机：摘录、附注、书签、打开/忽略信号，以及让 Recall 工作的辅助数据。"
+  },
+  "settings_privacy_bullet_adaptation": {
+    "message": "本机 Recall 排序可能使用 Outcome 对与打开信号；它们留在本机。数据 → 清除本机 Recall 适应信号可重置这些缓冲且不删库。开启 AI 做理解 ≠ 授权把内容留存做质量评估。默认不上传送去标识的产品分析。"
   },
   "settings_privacy_bullet_ownership": {
     "message": "你拥有 Capture 的内容与库内使用历史；Recall 辅助数据随条目存在，不作为单独的 Yiveno 资产。"
@@ -1178,9 +1211,6 @@
         "content": "$1"
       }
     }
-  },
-  "settings_privacy_delete_cloud_sign_in": {
-    "message": "登录后才能删除云端记忆或账号。"
   },
   "settings_privacy_delete_account": {
     "message": "删除账号"
@@ -1481,9 +1511,6 @@
   "settings_sync_toggle": {
     "message": "将记忆同步到云端"
   },
-  "settings_sync_toggle_hint": {
-    "message": "请先点页眉账号图标登录。"
-  },
   "settings_sync_now": {
     "message": "立即同步"
   },
@@ -1605,34 +1632,11 @@
   "settings_error_subscription_status": {
     "message": "无法加载订阅状态"
   },
-  "settings_subscription_title": {
-    "message": "方案"
-  },
   "settings_subscription_tier_free": {
     "message": "Free"
   },
   "settings_subscription_tier_pro": {
     "message": "Pro"
-  },
-  "settings_subscription_period_end": {
-    "message": "续订 / 到期 $DATE$",
-    "placeholders": {
-      "DATE": {
-        "content": "$1"
-      }
-    }
-  },
-  "settings_subscription_upgrade": {
-    "message": "升级到 Pro"
-  },
-  "settings_subscription_manage": {
-    "message": "管理订阅"
-  },
-  "settings_subscription_sign_in_hint": {
-    "message": "登录以查看 Pro 状态。"
-  },
-  "settings_subscription_hybrid_hint": {
-    "message": "Free 与 Pro 的找东西质量相同。Pro 解锁云同步，以及更多云端线索帮助。"
   },
   "settings_sync_pro_required_hint": {
     "message": "云同步需要 Pro。"

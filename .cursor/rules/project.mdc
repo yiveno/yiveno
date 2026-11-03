@@ -173,11 +173,14 @@ pre-push **不跑** ESLint、全仓 typecheck；extension 变更时跑 **build +
 
 #### CI 检查矩阵
 
-| 场景          | TypeScript                             | Lint         | i18n                       | Knip                | 前端测试                    |
-| ------------- | -------------------------------------- | ------------ | -------------------------- | ------------------- | --------------------------- |
-| **PR**        | `typecheck:ci` + build 内 `vue-tsc -b`（app+node+vitest） | `lint:check` | `i18n:check` + `doc:check` | `knip`              | extension `test:run` + worker `test` |
-| **push main** | 同上                                   | 同上         | `i18n:check` + `doc:check` | `knip`              | 同上                        |
-| **每周一**    | —                                      | —            | —                          | `knip.yml` 定时复检 | —                           |
+| 场景          | TypeScript                             | Lint         | i18n                       | Knip                | 前端测试                                                                 |
+| ------------- | -------------------------------------- | ------------ | -------------------------- | ------------------- | ------------------------------------------------------------------------ |
+| **PR**        | `typecheck:ci` + build 内 `vue-tsc -b`（app+node+vitest） | `lint:check` | `i18n:check` + `doc:check` | `knip`              | extension `test:run` + **显式 `test:must`**（eval 目录地板）+ worker `test` |
+| **push main** | 同上                                   | 同上         | `i18n:check` + `doc:check` | `knip`              | 同上                                                                     |
+| **每周一**    | —                                      | —            | —                          | `knip.yml` 定时复检 | —                                                                        |
+| **手动**      | —                                      | —            | —                          | —                   | **Recall Real Eval**（`workflow_dispatch`）：真实 `parse-gold:llm` / `retrieval-ablation:real`；**不**挡 PR |
+
+**CI vs 真实模型（Normative 工程口径）：** PR/main CI 只守**确定性替身**（规则 parse、fake/mock embed、`recall-eval` must）。托管模型 / prompt / Worker embed 变更前须手动跑 `.github/workflows/recall-real-eval.yml`（需 Actions Secrets）；禁止把真实 LLM/BGE 塞进每次 PR。
 
 #### 本地命令
 

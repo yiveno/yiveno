@@ -97,6 +97,7 @@ function formatIsoForMarkdown(iso: string): string {
   if (Number.isNaN(date.getTime())) {
     return iso
   }
+  // Markdown 人读展示固定 en-US（非 UI locale）。机器交换用 ISO datetime 字段，见 Yiveno-国际化-CN-NA.md §5.1
   return date.toLocaleString('en-US', {
     year: 'numeric',
     month: 'short',

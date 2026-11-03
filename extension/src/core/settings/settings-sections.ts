@@ -3,8 +3,7 @@ export type SettingsSectionId =
   | 'capture' // 保存：划词浮层 / 书签灌库
   | 'shortcuts' // 快捷键：展示绑定；改键跳转 Chrome 原生页
   | 'account_sync' // 账户与同步：同步 / 冲突 / 孤儿桶 / 退出
-  | 'data' // 数据：导出 / 清除本机 / 删云端 / 删账号
-  | 'privacy' // 隐私：说明 / 开同步确认 / 政策外链
+  | 'privacy' // 数据与隐私：说明 / MCP / 政策外链 / 导入备份 / 本机适应 / 清除删除
   | 'ai' // AI：开关与模型说明
   | 'language' // 界面语言：system / en / zh_CN
 
@@ -15,7 +14,6 @@ export interface SettingsSectionTabDef {
     | 'settings_tab_capture'
     | 'settings_tab_shortcuts'
     | 'settings_tab_account_sync'
-    | 'settings_tab_data'
     | 'settings_tab_privacy'
     | 'settings_tab_ai'
     | 'settings_tab_language'
@@ -38,15 +36,18 @@ export const SETTINGS_SECTION_TABS: readonly SettingsSectionTabDef[] = [
   { id: 'capture', labelKey: 'settings_tab_capture' },
   { id: 'shortcuts', labelKey: 'settings_tab_shortcuts' },
   { id: 'account_sync', labelKey: 'settings_tab_account_sync' },
-  { id: 'data', labelKey: 'settings_tab_data' },
   { id: 'privacy', labelKey: 'settings_tab_privacy' },
   { id: 'ai', labelKey: 'settings_tab_ai' },
   { id: 'language', labelKey: 'settings_tab_language' }
 ] as const
 
-/** 旧深链 `?section=usage` → 现「保存」分区。 */
+/**
+ * 旧深链别名 → 现分区。
+ * `usage` → 保存；`data` → 数据与隐私（原独立「数据」已并入 `privacy`）。
+ */
 const LEGACY_SECTION_ALIASES: Readonly<Record<string, SettingsSectionId>> = {
-  usage: 'capture'
+  usage: 'capture',
+  data: 'privacy'
 }
 
 /** 解析分区定义；非法值回退默认「保存」。 */

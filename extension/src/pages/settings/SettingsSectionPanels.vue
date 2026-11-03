@@ -34,7 +34,9 @@ const {
   handleAiFeaturesToggle,
   handleChromeBookmarkIngestToggle,
   handleClearLocalMemory,
+  handleClearLocalRecallAdaptation,
   handleClearOrphans,
+  handleRecallOutcomePairSoftAdjustToggle,
   handleDeleteCloudMemory,
   handleExportLocalMemory,
   handleExportOrphans,
@@ -54,8 +56,8 @@ const {
   hostedQuotaLoading,
   hostedQuotaText,
   mcpReadOnlyEnabled,
+  recallOutcomePairSoftAdjustEnabled,
   openDeleteAccountDialog,
-  openExternalUrl,
   openShortcutsError,
   openSignOutDialog,
   openingShortcuts,
@@ -68,6 +70,7 @@ const {
   savingAiFeatures,
   savingChromeBookmarkIngest,
   savingMcpReadOnly,
+  savingRecallOutcomeSoftAdjust,
   savingSelectionToolbar,
   savingSync,
   savingUiLocale,
@@ -77,11 +80,7 @@ const {
   settingsState,
   signedIn,
   signingOut,
-  subscriptionError,
   subscriptionIsPro,
-  subscriptionManageUrl,
-  subscriptionPlanRowTitle,
-  subscriptionUpgradeUrl,
   syncEnabled,
   syncLastPulledAt,
   syncLocalCount,
@@ -216,10 +215,12 @@ const {
         <p class="settings-section-copy">{{ t('settings_section_sync_copy') }}</p>
       </div>
 
-      <div class="settings-toggle">
+      <div
+        class="settings-toggle"
+        :title="!signedIn ? t('settings_sync_sign_in_required') : undefined"
+      >
         <div class="settings-toggle-copy">
           <span class="settings-toggle-title">{{ t('settings_sync_toggle') }}</span>
-          <span class="settings-toggle-hint">{{ t('settings_sync_toggle_hint') }}</span>
         </div>
         <AppSwitch
           :aria-label="t('settings_sync_toggle')"
@@ -250,7 +251,6 @@ const {
           <template v-if="accountDisplayName && accountEmail"> · {{ accountEmail }}</template>
         </p>
       </div>
-      <p v-else class="settings-status">{{ t('settings_sync_sign_in_required') }}</p>
 
       <div v-if="signedIn && syncEnabled" class="settings-actions">
         <AppButton
@@ -262,40 +262,6 @@ const {
         >
           {{ runningIncrementalSync ? t('settings_sync_now_working') : t('settings_sync_now') }}
         </AppButton>
-      </div>
-
-      <div class="settings-subsection" aria-labelledby="settings-subscription-heading">
-        <h3 id="settings-subscription-heading" class="settings-subsection-title">
-          {{ t('settings_subscription_title') }}
-        </h3>
-        <SettingsActionRow
-          v-if="signedIn"
-          :title="subscriptionPlanRowTitle"
-          :subtitle="t('settings_subscription_hybrid_hint')"
-        >
-          <AppButton
-            v-if="!subscriptionIsPro && subscriptionUpgradeUrl"
-            type="button"
-            :title="t('settings_subscription_upgrade')"
-            variant="outlined"
-            @click="openExternalUrl(subscriptionUpgradeUrl)"
-          >
-            {{ t('settings_subscription_upgrade') }}
-          </AppButton>
-          <AppButton
-            v-else-if="subscriptionIsPro && subscriptionManageUrl"
-            type="button"
-            :title="t('settings_subscription_manage')"
-            variant="outlined"
-            @click="openExternalUrl(subscriptionManageUrl)"
-          >
-            {{ t('settings_subscription_manage') }}
-          </AppButton>
-        </SettingsActionRow>
-        <p v-else class="settings-status">{{ t('settings_subscription_sign_in_hint') }}</p>
-        <p v-if="subscriptionError" class="settings-error" role="alert">
-          {{ subscriptionError }}
-        </p>
       </div>
 
       <div v-if="signedIn" class="settings-subsection" aria-labelledby="settings-advanced-heading">
@@ -373,154 +339,6 @@ const {
     </div>
   </template>
 
-  <template v-else-if="activeSection === 'data'">
-    <div class="settings-block" aria-labelledby="settings-data-heading">
-      <div class="settings-section-head">
-        <h2 id="settings-data-heading" class="settings-section-title">
-          {{ t('settings_tab_data') }}
-        </h2>
-        <p class="settings-section-copy">{{ t('settings_data_intro') }}</p>
-      </div>
-
-      <div class="settings-card-stack">
-        <SettingsActionRow
-          :title="t('settings_privacy_export')"
-          :subtitle="t('settings_privacy_export_hint')"
-        >
-          <AppButton
-            type="button"
-            :disabled="exportWorking || dataWorking || thirdPartyImportWorking || signingOut"
-            :title="t('settings_privacy_export')"
-            variant="outlined"
-            @click="handleExportLocalMemory"
-          >
-            {{
-              exportWorking ? t('settings_privacy_working') : t('settings_privacy_export_action')
-            }}
-          </AppButton>
-        </SettingsActionRow>
-
-        <SettingsActionRow
-          :title="t('settings_data_import_raindrop')"
-          :subtitle="t('settings_data_import_raindrop_hint')"
-        >
-          <input
-            :ref="bindRaindropFileInput"
-            type="file"
-            class="settings-file-input"
-            accept=".html,.htm,.csv,.json,text/html,text/csv,application/json"
-            :aria-label="t('settings_data_import_raindrop')"
-            @change="handleRaindropFileSelected"
-          />
-          <AppButton
-            type="button"
-            :disabled="thirdPartyImportWorking || dataWorking || exportWorking || signingOut"
-            :title="t('settings_data_import_raindrop')"
-            variant="outlined"
-            @click="handlePickRaindropImportFile"
-          >
-            {{
-              thirdPartyImportWorking
-                ? t('settings_privacy_working')
-                : t('settings_data_import_action')
-            }}
-          </AppButton>
-        </SettingsActionRow>
-
-        <SettingsActionRow
-          :title="t('settings_data_import_pocket')"
-          :subtitle="t('settings_data_import_pocket_hint')"
-        >
-          <input
-            :ref="bindPocketFileInput"
-            type="file"
-            class="settings-file-input"
-            accept=".html,.htm,text/html"
-            :aria-label="t('settings_data_import_pocket')"
-            @change="handlePocketFileSelected"
-          />
-          <AppButton
-            type="button"
-            :disabled="thirdPartyImportWorking || dataWorking || exportWorking || signingOut"
-            :title="t('settings_data_import_pocket')"
-            variant="outlined"
-            @click="handlePickPocketImportFile"
-          >
-            {{
-              thirdPartyImportWorking
-                ? t('settings_privacy_working')
-                : t('settings_data_import_action')
-            }}
-          </AppButton>
-        </SettingsActionRow>
-
-        <SettingsActionRow
-          :title="t('settings_data_clear_local')"
-          :subtitle="t('settings_data_clear_local_hint')"
-        >
-          <AppButton
-            type="button"
-            :disabled="dataWorking || exportWorking || thirdPartyImportWorking || signingOut"
-            :title="t('settings_data_clear_local')"
-            variant="outlined"
-            @click="handleClearLocalMemory"
-          >
-            {{
-              dataWorking ? t('settings_privacy_working') : t('settings_data_clear_local_action')
-            }}
-          </AppButton>
-        </SettingsActionRow>
-
-        <template v-if="signedIn">
-          <SettingsActionRow
-            :title="t('settings_privacy_delete_cloud')"
-            :subtitle="t('settings_privacy_delete_cloud_hint')"
-            tone="danger"
-          >
-            <AppButton
-              type="button"
-              :disabled="dataWorking || signingOut || savingSync"
-              :title="t('settings_privacy_delete_cloud')"
-              variant="outlined"
-              tone="danger"
-              @click="handleDeleteCloudMemory"
-            >
-              {{
-                dataWorking
-                  ? t('settings_privacy_working')
-                  : t('settings_privacy_delete_cloud_action')
-              }}
-            </AppButton>
-          </SettingsActionRow>
-
-          <SettingsActionRow
-            :title="t('settings_privacy_delete_account')"
-            :subtitle="t('settings_privacy_delete_account_hint')"
-            tone="danger"
-          >
-            <AppButton
-              type="button"
-              tone="danger"
-              :disabled="dataWorking || signingOut || savingSync"
-              :title="t('settings_privacy_delete_account')"
-              variant="outlined"
-              @click="openDeleteAccountDialog"
-            >
-              {{
-                dataWorking
-                  ? t('settings_privacy_working')
-                  : t('settings_privacy_delete_account_action')
-              }}
-            </AppButton>
-          </SettingsActionRow>
-        </template>
-      </div>
-      <p v-if="!signedIn" class="settings-status">
-        {{ t('settings_privacy_delete_cloud_sign_in') }}
-      </p>
-    </div>
-  </template>
-
   <template v-else-if="activeSection === 'privacy'">
     <div class="settings-block" aria-labelledby="settings-privacy-heading">
       <div class="settings-section-head">
@@ -550,6 +368,7 @@ const {
         </summary>
         <ul class="settings-details__list">
           <li>{{ t('settings_privacy_bullet_local') }}</li>
+          <li>{{ t('settings_privacy_bullet_adaptation') }}</li>
           <li>{{ t('settings_privacy_bullet_ownership') }}</li>
           <li>{{ t('settings_privacy_bullet_export') }}</li>
           <li>{{ t('settings_privacy_bullet_cloud') }}</li>
@@ -607,6 +426,205 @@ const {
             {{ t('settings_privacy_open_terms_action') }}
           </AppButton>
         </SettingsActionRow>
+
+        <section class="settings-group" :aria-label="t('settings_data_group_bring_in')">
+          <h3 class="settings-group__label">{{ t('settings_data_group_bring_in') }}</h3>
+          <div class="settings-group__card">
+            <SettingsActionRow
+              surface="embedded"
+              :title="t('settings_data_import_raindrop')"
+              :subtitle="t('settings_data_import_raindrop_hint')"
+            >
+              <input
+                :ref="bindRaindropFileInput"
+                type="file"
+                class="settings-file-input"
+                accept=".html,.htm,.csv,.json,text/html,text/csv,application/json"
+                :aria-label="t('settings_data_import_raindrop')"
+                @change="handleRaindropFileSelected"
+              />
+              <AppButton
+                type="button"
+                :disabled="thirdPartyImportWorking || dataWorking || exportWorking || signingOut"
+                :title="t('settings_data_import_raindrop')"
+                variant="outlined"
+                @click="handlePickRaindropImportFile"
+              >
+                {{
+                  thirdPartyImportWorking
+                    ? t('settings_privacy_working')
+                    : t('settings_data_import_action')
+                }}
+              </AppButton>
+            </SettingsActionRow>
+            <SettingsActionRow
+              surface="embedded"
+              :title="t('settings_data_import_pocket')"
+              :subtitle="t('settings_data_import_pocket_hint')"
+            >
+              <input
+                :ref="bindPocketFileInput"
+                type="file"
+                class="settings-file-input"
+                accept=".html,.htm,text/html"
+                :aria-label="t('settings_data_import_pocket')"
+                @change="handlePocketFileSelected"
+              />
+              <AppButton
+                type="button"
+                :disabled="thirdPartyImportWorking || dataWorking || exportWorking || signingOut"
+                :title="t('settings_data_import_pocket')"
+                variant="outlined"
+                @click="handlePickPocketImportFile"
+              >
+                {{
+                  thirdPartyImportWorking
+                    ? t('settings_privacy_working')
+                    : t('settings_data_import_action')
+                }}
+              </AppButton>
+            </SettingsActionRow>
+          </div>
+        </section>
+
+        <section class="settings-group" :aria-label="t('settings_data_group_backup')">
+          <h3 class="settings-group__label">{{ t('settings_data_group_backup') }}</h3>
+          <div class="settings-group__card">
+            <SettingsActionRow
+              surface="embedded"
+              :title="t('settings_privacy_export')"
+              :subtitle="t('settings_privacy_export_hint')"
+            >
+              <AppButton
+                type="button"
+                :disabled="exportWorking || dataWorking || thirdPartyImportWorking || signingOut"
+                :title="t('settings_privacy_export')"
+                variant="outlined"
+                @click="handleExportLocalMemory"
+              >
+                {{
+                  exportWorking
+                    ? t('settings_privacy_working')
+                    : t('settings_privacy_export_action')
+                }}
+              </AppButton>
+            </SettingsActionRow>
+          </div>
+        </section>
+
+        <section class="settings-group" :aria-label="t('settings_data_group_adaptation')">
+          <h3 class="settings-group__label">{{ t('settings_data_group_adaptation') }}</h3>
+          <div class="settings-group__card">
+            <div class="settings-toggle">
+              <div class="settings-toggle-copy">
+                <span class="settings-toggle-title">{{
+                  t('settings_data_outcome_soft_adjust_toggle')
+                }}</span>
+                <span class="settings-toggle-hint">{{
+                  t('settings_data_outcome_soft_adjust_hint')
+                }}</span>
+              </div>
+              <AppSwitch
+                :model-value="recallOutcomePairSoftAdjustEnabled"
+                :disabled="
+                  savingRecallOutcomeSoftAdjust || dataWorking || settingsState !== 'ready'
+                "
+                :aria-label="t('settings_data_outcome_soft_adjust_toggle')"
+                @update:model-value="handleRecallOutcomePairSoftAdjustToggle"
+              />
+            </div>
+            <SettingsActionRow
+              surface="embedded"
+              :title="t('settings_data_clear_recall_adaptation')"
+              :subtitle="t('settings_data_clear_recall_adaptation_hint')"
+            >
+              <AppButton
+                type="button"
+                :disabled="dataWorking || exportWorking || thirdPartyImportWorking || signingOut"
+                :title="t('settings_data_clear_recall_adaptation')"
+                variant="outlined"
+                @click="handleClearLocalRecallAdaptation"
+              >
+                {{
+                  dataWorking
+                    ? t('settings_privacy_working')
+                    : t('settings_data_clear_recall_adaptation_action')
+                }}
+              </AppButton>
+            </SettingsActionRow>
+          </div>
+        </section>
+
+        <section class="settings-group" :aria-label="t('settings_data_group_remove')">
+          <h3 class="settings-group__label">{{ t('settings_data_group_remove') }}</h3>
+          <div class="settings-group__card settings-group__card--danger">
+            <SettingsActionRow
+              surface="embedded"
+              tone="danger"
+              :title="t('settings_data_clear_local')"
+              :subtitle="t('settings_data_clear_local_hint')"
+            >
+              <AppButton
+                type="button"
+                :disabled="dataWorking || exportWorking || thirdPartyImportWorking || signingOut"
+                :title="t('settings_data_clear_local')"
+                variant="outlined"
+                tone="danger"
+                @click="handleClearLocalMemory"
+              >
+                {{
+                  dataWorking
+                    ? t('settings_privacy_working')
+                    : t('settings_data_clear_local_action')
+                }}
+              </AppButton>
+            </SettingsActionRow>
+            <template v-if="signedIn">
+              <SettingsActionRow
+                surface="embedded"
+                tone="danger"
+                :title="t('settings_privacy_delete_cloud')"
+                :subtitle="t('settings_privacy_delete_cloud_hint')"
+              >
+                <AppButton
+                  type="button"
+                  :disabled="dataWorking || signingOut || savingSync"
+                  :title="t('settings_privacy_delete_cloud')"
+                  variant="outlined"
+                  tone="danger"
+                  @click="handleDeleteCloudMemory"
+                >
+                  {{
+                    dataWorking
+                      ? t('settings_privacy_working')
+                      : t('settings_privacy_delete_cloud_action')
+                  }}
+                </AppButton>
+              </SettingsActionRow>
+              <SettingsActionRow
+                surface="embedded"
+                tone="danger"
+                :title="t('settings_privacy_delete_account')"
+                :subtitle="t('settings_privacy_delete_account_hint')"
+              >
+                <AppButton
+                  type="button"
+                  tone="danger"
+                  :disabled="dataWorking || signingOut || savingSync"
+                  :title="t('settings_privacy_delete_account')"
+                  variant="outlined"
+                  @click="openDeleteAccountDialog"
+                >
+                  {{
+                    dataWorking
+                      ? t('settings_privacy_working')
+                      : t('settings_privacy_delete_account_action')
+                  }}
+                </AppButton>
+              </SettingsActionRow>
+            </template>
+          </div>
+        </section>
       </div>
     </div>
   </template>

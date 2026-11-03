@@ -648,9 +648,9 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 **实战前提：** 词典、canonical、parser、enrichment、追问芯片、单测语料的设计，必须先回答「用户来自哪里、主用什么语言发起 Recall」——**不得**按开发团队当前母语或仓库里已有的 `_locales` 倒推内部建模。
 
-**目标市场判断（Normative）：** 主验证与 Recall 质量仍以 **北美 / 美式英语线索** 为主；**UI** 已支持 **en + 简体中文（zh_CN）**，默认跟浏览器语言偏好，用户可在设置中覆盖并持久化。公司主体（如杭州）≠ 国内为主市场。
+**目标市场判断（Normative）：** 主验证与 Recall 质量仍以 **美国优先的美式英语线索** 为主（「北美」商业口径 = 美国正式目标；加拿大待定；墨西哥不纳入——见 [`Yiveno-国际化-CN-NA.md`](./Yiveno-国际化-CN-NA.md)）。**UI** 已支持 **en + 简体中文（zh_CN）**，默认跟浏览器语言偏好，用户可在设置中覆盖并持久化。公司主体（如杭州）≠ 国内为主市场。中国大陆当前 = **可访问的体验/验证市场**；**市场覆盖 ≠ 产品能力覆盖 ≠ 商业覆盖**（三层分计，禁止合并成「已全面支持中国」）。
 
-**Normative 结论：** **UI 双 locale（en / zh_CN）+ Recall 线索主路径仍为美式英语。** 非英文 Recall 语料、中文槽位 alias、中文 must eval **不在**当前目标能力内（与 UI 中文化分计）。禁止用 UI 中文冒充中文检索已就绪。
+**Normative 结论：** **UI 双 locale（en / zh_CN）+ Recall 线索主路径仍为美式英语。** 非英文 Recall 语料、中文槽位 alias、中文 must eval **不在**当前目标能力内（与 UI 中文化分计）。禁止用 UI 中文冒充中文检索已就绪。国际化八项轴与冻结基线见 [`Yiveno-国际化-CN-NA.md`](./Yiveno-国际化-CN-NA.md)。
 
 **文案语气（Normative · 面向用户）：**
 
@@ -867,7 +867,7 @@ Yiveno 同时承载两条相互促进、**不互相替代**的线程：
 3. IndexedDB 只经 `indexedDBManager`（`extension/src/infrastructure/indexeddb/manager.ts`）。
 4. 领域类型以 Zod 为准：`extension/src/core/memory/*`；消息类型以 `extension/src/core/messaging/*` 为准。**禁止发明新 message `type` 字符串**，先改 schema 再接线。
 5. 对外文案：**筛选 / 找**；禁止 **搜索 / Search**（各 locale 译文均遵守）。
-6. 扩展用户可见文案：经 **`t()`**（`extension/src/infrastructure/i18n/`）+ **`_locales/en` 与 `_locales/zh_CN`**；偏好 `system`/`en`/`zh_CN`（`UserSettings.uiLocalePreference`）。**禁止**在代码中写死 UI 自然语言，也禁止 `getMessage(...) || '兜底文案'`。`core` 不直接调 `chrome.i18n`（注入 `t` 或返回 message key）。**官网 `website/`** 有独立 `i18n`（en/zh_CN；壳导航/页脚、卸载反馈、`/login`、定价换汇、**营销首页**、**FAQ 可见文案**经 `t()` / `data-yiveno-i18n`；Support / Privacy / Terms 等长文与定价页大段仍可能硬编码英文）。FAQ **JSON-LD** 仍英文 `FAQ_ENTRIES`（与 UI locale 分面，见 `Yiveno-官网GEO.md`）。开发者文档/注释可中文。
+6. 扩展用户可见文案：经 **`t()`**（`extension/src/infrastructure/i18n/`）+ **`_locales/en` 与 `_locales/zh_CN`**；偏好 `system`/`en`/`zh_CN`（`UserSettings.uiLocalePreference`）。**禁止**在代码中写死 UI 自然语言，也禁止 `getMessage(...) || '兜底文案'`。`core` 不直接调 `chrome.i18n`（注入 `t` 或返回 message key）。**官网 `website/`** 有独立 `i18n`（en/zh_CN；壳导航/页脚、卸载反馈、`/login`、**营销首页**、**FAQ 可见文案**、**Pricing / Account / Support** 经 `t()` / `data-yiveno-i18n`；**Privacy / Terms** 同 URL 双语正文，冲突以英文为准）。双市场八项轴与冻结见 [`Yiveno-国际化-CN-NA.md`](./Yiveno-国际化-CN-NA.md)。FAQ **JSON-LD** 仍英文 `FAQ_ENTRIES`（与 UI locale 分面，见 `Yiveno-官网GEO.md`）。开发者文档/注释可中文。Detail **导出** Markdown 时间戳固定 `en-US`（交换格式，非 UI locale）。
 7. `:hover|:focus|:active` 禁止 `translate` / `scale` / `rotate`；只用背景 / opacity / shadow / outline / state layer（浮层入场与 pop/shake 例外见 §3）。
 8. 实现范围以 **§1 状态表**为准；未标「已上线」= 不得当成已有行为，也不得在 UI 暗示已可用。
 9. 本机找：**关键词 + Hybrid**（有 embedding 则融合；无则降级关键词）；**不分 Free/Pro**。**理解层里程碑 M1**：允许「任意线索 → 精确检索约束」；门禁后口语可走 LLM（可关；失败/配额用尽降级规则）。不得全库喂模型，不得模型返回无真实 MemoryItem id 的答案。
@@ -1043,6 +1043,9 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 2. 禁止「只改代码、无验收归属」。合并后应能在本表或 §5 找到覆盖方式。
 3. **MCP 真机边界：** 扩展用户可感路径须 UI 抽测（装载 `dist/` → Side Panel 等入口 → `fill`/`click` 提交 clue → 断言结果卡）。**不上**全量可视化回归、大型 Playwright/Puppeteer 套件、逐 UI 状态自动化 E2E。
 4. 未标「已上线」的能力不得用 MCP 抽测记录或文案暗示可用。
+5. **CI vs 真实模型（工程门禁 · 与 §5.9 分计）：**
+   - PR / `main` CI：`test:run` **加**显式 `bun run test:must`（`extension/src/core/recall/eval`；另有 eval `*.test.ts` 数量地板）。守的是**确定性替身**（规则 parse、fake/mock embed、工厂 must）。
+   - **真实** LLM（如 deepseek-v4-flash）解析率、真实 BGE-M3 消融：**不**进每次 PR。改 prompt / `AI_HOSTED_MODEL*` / Worker embed 模型前，手动触发 GitHub Actions **Recall Real Eval**（`.github/workflows/recall-real-eval.yml` · `workflow_dispatch`；需仓库 Actions Secrets）。本 workflow 红 ≠ 挡 PR，须人工判读后再合模型/prompt。
 
 ---
 
@@ -1137,7 +1140,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 
 **组装顺序（enrichment）：**
 
-```
+```text
 最终 clues 字段
   = domainProfile(host)          // 可选；cache → 同 host donor
   ∪ pageOverlay(rule ⊕ LLM)      // 同 URL 整包命中则可整段跳过 LLM
@@ -1691,16 +1694,15 @@ Omnibox **离线快跳轨**专用 must（与 Side Panel `recall-eval` 正交）�
 
 **布局（Normative）：** 与记忆库同构——**左侧竖导航 + 右侧单面板切换**；窄屏降级为顶部横排 chips。深链 `settings.html?section=<id>`（默认 `capture` 不写 query；旧 `usage` 映射到 `capture`）。
 
-| 分区（侧栏） | `section` id   | 状态            | 说明                                                                                                                                    |
-| ------------ | -------------- | --------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
-| 保存         | `capture`      | 已上线          | 划词浮层开关（默认开）；**Chrome 书签灌库**开关（**默认关**；GS/Settings 明示开；关后卸监听/停 bulk，不删已有）                         |
-| 快捷键       | `shortcuts`    | 已上线          | 展示绑定；改键跳转 `chrome://extensions/shortcuts`                                                                                      |
-| 账户与同步   | `account_sync` | 已上线          | 顶栏头像登录；**同步 = Pro+登录+开关**（面仅摘录 · ADR-017）；订阅升级（回焦自动对账）；禁止缩量盖云；孤儿桶；退出三选一；默认同步关    |
-| 数据         | `data`         | 已上线          | **Backup 整库导出**（§5.5.1）；**清除本机记忆**（不动 Chrome 原生书签；并关书签灌库；若同步开着则关同步）；**删云端记忆**；**删除账号** |
-| 隐私         | `privacy`      | 已上线（P0+P1） | 数据说明摘要（含主体·杭州个人 / 云区域 us-east-2）；开同步前确认（ack v4）；链到 `/privacy` 与 `/terms`（操作型入口在「数据」）         |
-| AI           | `ai`           | 已上线          | **关 AI**；模型路径说明（线索理解 + enrichment；不碰数据平面）                                                                          |
+| 分区（侧栏） | `section` id                    | 状态            | 说明                                                                                                                                                                                                                                                         |
+| ------------ | ------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 保存         | `capture`                       | 已上线          | 划词浮层开关（默认开）；**Chrome 书签灌库**开关（**默认关**；GS/Settings 明示开；关后卸监听/停 bulk，不删已有）                                                                                                                                              |
+| 快捷键       | `shortcuts`                     | 已上线          | 展示绑定；改键跳转 `chrome://extensions/shortcuts`                                                                                                                                                                                                           |
+| 账户与同步   | `account_sync`                  | 已上线          | 顶栏头像登录；**同步 = Pro+登录+开关**（面仅摘录 · ADR-017）；订阅升级（回焦自动对账）；禁止缩量盖云；孤儿桶；退出三选一；默认同步关                                                                                                                         |
+| 数据与隐私   | `privacy`（旧 `data` 映射至此） | 已上线（P0+P1） | **单分区：** 披露摘要（A/B/C · 主体·杭州个人 / 云区域 us-east-2）；MCP；`/privacy` `/terms`；导入 / 备份 / 本机 Recall 适应（Outcome 软调 + 清适应信号）；清除本机记忆（并清 Outcome/TTE；不动原生书签）；删云端；删账号。开同步前确认（ack v4）仍在同步路径 |
+| AI           | `ai`                            | 已上线          | **关 AI**；模型路径说明（线索理解 + enrichment；不碰数据平面）                                                                                                                                                                                               |
 
-**数据 vs 隐私（Normative）：** 「隐私」= 政策、同意与说明；「数据」= 用户处置本机/云端 Memory 的操作。清除本机记忆**永远不得**调用 `chrome.bookmarks` 删除或改写用户原生书签。
+**Normative：** 清除本机记忆**永远不得**调用 `chrome.bookmarks` 删除或改写用户原生书签。侧栏**禁止**再拆独立「数据」「隐私」双分区；禁「帮助改进 AI」总开关冒充 B/C。
 
 ### 5.5.1 数据归属与导出（Normative）
 
@@ -1721,12 +1723,25 @@ Omnibox **离线快跳轨**专用 must（与 Side Panel `recall-eval` 正交）�
 - **未来库级 personal ranker（若上线）：** 权重仅存用户桶 → 随 Backup 导出或删账号即毁；仅存 Yiveno 全局 → 不写进用户 export，删账号时切断个体关联。
 - L3 虽由 Yiveno 模型 / 规则计算，语义上仍是「用户那条摘录在本库内的检索索引」——跟用户内容的备份权一致，**不是**可单独扣留的服务器-side secret。
 
+#### 数据用途授权三层（A/B/C · Normative）
+
+> **详表与本机链路对照：** [`Yiveno-数据授权与本机反馈链路-草案.md`](./Yiveno-数据授权与本机反馈链路-草案.md)（细节权威；与本文冲突时以**本节 + `/privacy`** 为准）。  
+> **勿与上表 L1–L3 混淆：** L1–L3 = **归属**；A/B/C = **用途授权**。
+
+| 层                          | 含义                                                                                  | 默认                                       | 与现有开关                                         |
+| --------------------------- | ------------------------------------------------------------------------------------- | ------------------------------------------ | -------------------------------------------------- |
+| **A · 本机个人适应**        | 本机打开/dismiss、§7.2 Outcome 对、条目行为计数、本机 TTE 环等，用于**本机**排序/观测 | **开**（披露；不作「捐数据」opt-in）       | ≠ 云同步；关/清后 Recall **必须仍可用**            |
+| **B · 匿名产品改进**        | 经处理的聚合/诊断上送（无 clue 原文、无 memory id、无 URL 原文）                      | **关**；**今日无上云管道**                 | **禁止**未实现管道就放可开 UI 开关                 |
+| **C · AI 质量评估（内容）** | 可识别的 AI 请求/反馈及相关内容**留存**做质量评估                                     | **关**；不得由 A/B 或「AI 功能开」自动打开 | ≠ `aiFeaturesEnabled`（后者=交付推理，非留存授权） |
+
+**Normative：** Settings「隐私」摘要与官网 `/privacy` 须写明 A 本机、B 默认不上送、C 与关 AI 解耦。**禁止**单一「Help improve Yiveno」总开关把 A/B/C 揉成一把刀。
+
 #### 两层导出
 
-| 层           | 名称       | 状态                                                  | 用途                             | 字段原则                                                                                           |
-| ------------ | ---------- | ----------------------------------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------- |
-| **Backup**   | 整库备份   | **已上线**（Settings「数据」· `EXPORT_LOCAL_MEMORY`） | 换机、灾备、换号恢复、用户主权   | 当前 owner 全部 `MemoryItem`（含软删、`clues` 全字段）；**不含**孤儿桶（孤儿仍走账户与同步区导出） |
-| **Portable** | 可迁移原料 | **目标 · 未上线**                                     | 迁到其他工具；减轻跨产品搬运体积 | L1 核心（摘录 + note + 来源 + 时间戳等）；**默认不含** L2 行为、L3 embedding；enrichment 可选剥离  |
+| 层           | 名称       | 状态                                                        | 用途                             | 字段原则                                                                                           |
+| ------------ | ---------- | ----------------------------------------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------- |
+| **Backup**   | 整库备份   | **已上线**（Settings「数据与隐私」· `EXPORT_LOCAL_MEMORY`） | 换机、灾备、换号恢复、用户主权   | 当前 owner 全部 `MemoryItem`（含软删、`clues` 全字段）；**不含**孤儿桶（孤儿仍走账户与同步区导出） |
+| **Portable** | 可迁移原料 | **目标 · 未上线**                                           | 迁到其他工具；减轻跨产品搬运体积 | L1 核心（摘录 + note + 来源 + 时间戳等）；**默认不含** L2 行为、L3 embedding；enrichment 可选剥离  |
 
 **Normative：**
 
@@ -1831,17 +1846,19 @@ Chrome API / 选区
   - **官网**账户页 Sign out：仅 `signOut({ scope: local })` + UI 桥否态；**不**踢扩展、不清扩展账号桶。
   - **被挤掉：** 尽力 flush；清账号桶；清凭证；本地档无主摘录保留（仍不踢官网）。
 - **隐私 P0（Normative）**：
-  - Settings「隐私」展示数据说明摘要（本机 Memory / 可选云同步**仅摘录** / 账号 Auth / AI 经 Worker；不收集 History、未 Capture 全文、默认不上云；书签本机灌库不上云；云摘录托管区域与运营主体见下条）。
-  - **开同步前**须确认当前隐私说明版本（`privacyNoticeVersion` ack）；未确认不得开启同步。关同步 ≠ 自动删云端。当前水位 **`PRIVACY_NOTICE_VERSION = 4`**（云区域 East US / Ohio · `us-east-2` + 主体披露；重大改文案须递增）。
+  - Settings「隐私」展示数据说明摘要（本机 Memory / **A 本机适应信号** / 可选云同步**仅摘录** / 账号 Auth / AI 经 Worker；**B** 默认不收集去标识聚合产品分析上送；**C** 未授权内容留存质量评估；不收集 History、未 Capture 全文、默认不上云；书签本机灌库不上云；云摘录托管区域与运营主体见下条）。口径见 **§5.5.1 A/B/C**。
+  - **开同步前**须确认当前隐私说明版本（`privacyNoticeVersion` ack）；未确认不得开启同步。关同步 ≠ 自动删云端。当前水位 **`PRIVACY_NOTICE_VERSION = 4`**（云区域 East US / Ohio · `us-east-2` + 主体披露；重大改文案须递增）。**仅澄清 A/B/C 披露、不同步确认弹窗正文时，不强制递增 ack。**
   - **运营与发布状态（Normative · 披露口径）**：**个人运营**（基地杭州；**尚未**注册公司；日后或迁杭州公司须同步改 `/privacy` `/terms`）。扩展为 **Chromium 双店同包**（Chrome Web Store + Microsoft Edge Add-ons · [ADR-020](../architecture/decisions/ADR-020-chromium-dual-store-edge.md)）：两店均 **尚未公开上架**；**无**真实商店安装用户、**尚未**向公众收费（Free/Pro / Dodo 可为产品接线，不得写成已有付费用户群）。上架后：**大陆桌面主 CTA → Edge Add-ons**；能访问 CWS 者仍可装 Chrome。生产云 Memory / Auth：**Supabase 主库 `us-east-2`（East US / Ohio）**。
-  - **官网隐私政策（Normative）**：`https://yiveno.com/privacy`（及同源部署的 `/privacy`）提供与当前实现对齐的**美式英语**正文；官网页脚与登录页、扩展 Settings「隐私」须外链至此。正文重大变更时更新日期；扩展内同步确认文案重大变更时递增 `privacyNoticeVersion`。本页**不是**律师意见书；未上线能力不得写入为已提供。卸载落地页可选反馈（闭集原因 + 可选短留言）须在 `/privacy` 披露；**不**计入同步 ack 重大变更（不因此递增 `privacyNoticeVersion`），除非 Settings 同步确认文案本身改写。
-  - **关 AI + 模型说明（Normative）**：Settings「AI」提供 `aiFeaturesEnabled`（默认开）；关闭后线索 LLM completer 清空、Capture LLM enrichment 跳过；页内说明 Worker 路径与数据平面边界。
+  - **官网隐私政策（Normative）**：`https://yiveno.com/privacy`（及同源部署的 `/privacy`）提供与当前实现对齐的**美式英语**正文；官网页脚与登录页、扩展 Settings「数据与隐私」须外链至此。正文重大变更时更新日期；扩展内同步确认文案重大变更时递增 `privacyNoticeVersion`。本页**不是**律师意见书；未上线能力不得写入为已提供。卸载落地页可选反馈（闭集原因 + 可选短留言）须在 `/privacy` 披露；**不**计入同步 ack 重大变更（不因此递增 `privacyNoticeVersion`），除非 Settings 同步确认文案本身改写。
+  - **关 AI + 模型说明（Normative）**：Settings「AI」提供 `aiFeaturesEnabled`（默认开）；关闭后线索 LLM completer 清空、Capture LLM enrichment 跳过；页内说明 Worker 路径与数据平面边界。**开 AI ≠ C 层内容留存授权。**
   - **服务条款（Normative）**：官网 `/terms`（美式英语）；页脚 / 登录 / Settings 可外链。
   - **书签灌库开关（Normative）**：Settings「保存」与 Getting Started 共用 `chromeBookmarkIngestEnabled`（**默认关**；须用户明示打开）。Settings 开关面向用户文案用 **同步**（持续状态：本机库 ↔ 本浏览器书签增删改）；GS 按钮仍用 **Import**（一次性同意）。**用户可见 bulk 主进度 = GS Bookmarks tab**；Settings 打开开关仍触发 `ensureChromeBookmarksImported`（Skip GS 后的后路），**不**在 Side Panel 顶栏展示导入细条。关闭后**卸载** `bookmarks.on*` 监听、跳过 bulk 导入与增量写入，并拒绝 `CAPTURE_BOOKMARK`；**不删除**已灌入的书签 Memory；重新开启后重新挂监听并补跑 / 续跑 bulk（含 reconcile 补洞）。**禁止**写成云记忆 sync。
   - **书签库与 Chrome 对账（Normative）**：**Chrome 书签树 = 壳权威**（单向 Chrome → IndexedDB；**禁止**写回 / 改写 / 删除原生书签；**禁止** Settings 暴露「修复」类用户操作）。增量靠 `bookmarks.on*`；holes-only reconcile 只补「Chrome 有、Memory 无」。**full repair**（后台自动）：对当前全部 http(s) 叶子 upsert（同 `chromeBookmarkId` 含软删则同 id 复活；保留 `clues.note` 与行为计数）；软删带 `chromeBookmarkId` 且已不在 Chrome 树的孤儿；**不动**无 `chromeBookmarkId` 的第三方导入书签。触发：① 灌库已完成时每个 SW 会话最多自动 full repair 一次（其后 finalize 仍走 holes）；② 灌库开启时挂 **每日** `chrome.alarms` 对账（关灌库则清闹钟）。**禁止**暗示云同步书签或双向合并。
-- **数据处置（Normative · Settings「数据」）**：
+- **数据处置（Normative · Settings「数据与隐私」）**：
   - **Backup 整库导出**（§5.5.1）：导出当前 owner 本机全部 Memory（含软删、`clues` 全字段，即 L1+L2+L3）为 JSON（`EXPORT_LOCAL_MEMORY`）；不含孤儿桶（孤儿仍走账户与同步导出）。**Portable 可迁移原料未上线前，本条即用户主权导出的唯一必需路径。**
-  - **清除本机记忆**（`CLEAR_LOCAL_MEMORY`）：硬清当前 owner 本机 IndexedDB Memory；**不得**改写/删除 Chrome 原生书签；成功后关闭书签灌库并卸载监听；若云同步开着则关闭同步并提示云端副本需另行删除。二次确认。
+  - **清除本机记忆**（`CLEAR_LOCAL_MEMORY`）：硬清当前 owner 本机 IndexedDB Memory；**不得**改写/删除 Chrome 原生书签；成功后关闭书签灌库并卸载监听；若云同步开着则关闭同步并提示云端副本需另行删除；**并清除**本机 Outcome 对缓冲与 TTE 遥测环（`yiveno.recallOutcomePairs` / `yiveno.recallTelemetry`）。二次确认。
+  - **Outcome 软调开关**（`recallOutcomePairSoftAdjustEnabled`，默认开）：关闭后 Hybrid **跳过**本机 Outcome 对软升/降权；对缓冲仍可累积直至清除；**不**锁死 Recall。与「清除适应信号」互补（暂停 vs 清空）。Omnibox 本就不走 Outcome。
+  - **清除本机 Recall 适应信号**（`CLEAR_LOCAL_RECALL_ADAPTATION`）：仅清除 Outcome 对缓冲 + TTE 遥测环；**不**删 Memory、**不**改 `openCount` 等条目字段、**不**关灌库/同步。用于重置 A 层软排学习而不毁库。二次确认。Recall 主链须仍可用。
   - **删除云端记忆**：登录后可一键删除该账号云端 `memory_items` 与 `memory_sync_backups`；默认**不**清本机 IndexedDB；成功后关闭云同步并清定时闹钟。二次确认。
   - **删除账号**（与「仅退出」/「仅删云端」分开）：登录后强确认 → Worker 删云端 Memory/backups 并用 service role **注销 Supabase Auth 用户** → 扩展清本机当前 `accountId` 桶（**不动** `localProfileId` 身份；该桶若仍有未归并数据则保留）→ 清 session/binding/同步/隐私 ack → 打开官网 `/logout`。订阅/支付行可按法律保留、不再可登录关联（不暗示可恢复账号）。
 - **禁止回潮**：旧管理页 / **侧边栏书签整理中心** / 书签树编辑 / AI 自动整理进 build 或 manifest。  
@@ -2682,6 +2699,9 @@ RecallOutcomeEvent {
 
 | 日期       | 变更                                                                                                                                                                                                                                                                                                       |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-03 | **Settings「数据」与「隐私」合并：** 侧栏单分区「数据与隐私」`privacy`；旧 `?section=data` 映射；披露/MCP/政策与导入备份适应清除同页                                                                                                                                                                       |
+| 2026-11-03 | **CI 显式 `test:must` + 真实模型评测 workflow：** PR/main CI 加 `test:must` 与 eval 测试文件地板；真实 `parse-gold:llm` / `retrieval-ablation:real` 走 `recall-real-eval.yml`（`workflow_dispatch`，不挡 PR）；§1.1 合入门禁第 5 条                                                                        |
+| 2026-11-03 | **数据用途授权 A/B/C + 本机适应控制：** §5.5.1 短锚；`/privacy` §2.8；Settings 隐私 bullet；`CLEAR_LOCAL_RECALL_ADAPTATION`；`recallOutcomePairSoftAdjustEnabled` 暂停软调；清库顺带清 Outcome/TTE；细节 `Yiveno-数据授权与本机反馈链路-草案.md`                                                           |
 | 2026-11-02 | **Composer 浮底去白带 + 细滚动条：** 去掉浮底外实色渐变遮罩；半透明仅在 composer 壳；会话滚动条细轨贴边；§7.0 / 设计标准                                                                                                                                                                                   |
 | 2026-11-02 | **Composer ChatGPT 式浮底：** 上下分行；四周留白浮在会话上；半透明毛玻璃下可透出滚动内容；§5.2.1 / §7.0 / 设计标准；与 §5.9 **分计**                                                                                                                                                                       |
 | 2026-11-02 | **Side Panel 会话滚动跳转：** composer 固底；单枚浮钮箭头旋转切换置顶/到底；黏底跟随；§7.0 交互 9；与 §5.9 **分计**                                                                                                                                                                                        |
@@ -2714,7 +2734,7 @@ RecallOutcomeEvent {
 | 2026-10-28 | **退款假 applied 加固：** `billing_events` 投影后回写真实 result；退款行 `provider_transaction_id=refund_id` 避撞 payment；本机修 stale prod 漏 expire 个案；**须 deploy Worker**                                                                                                                          |
 | 2026-10-28 | **官网营销顶栏 AuthNav：** 首页等 `MarketingNav` 与账号域同挂 session 态（已登录头像/名，未登录 Sign in）；禁首页写死 Sign in 冒充未登录                                                                                                                                                                   |
 | 2026-10-28 | **官网 `/login` zh_CN：** `LoginForm` + meta 经 `website/src/i18n`（en/zh_CN）；Toast/错误/`mapAuthUserError` 同批；AUTH_GUIDE 对齐                                                                                                                                                                        |
-| 2026-10-28 | **计费接入核查补洞：** Dodo `past_due`→仍 Pro；`paused`/`unpaused`/`dispute.lost                                                                                                                                                                                                                           | accepted` 接线；与 Refund 无 subscription_id 反查并列；`billing.md` / §A.3.2 |
+| 2026-10-28 | **计费接入核查补洞：** Dodo `past_due`→仍 Pro；`paused` / `unpaused` / `dispute.lost` / `accepted` 接线；与 Refund 无 subscription_id 反查并列；`billing.md` / §A.3.2                                                                                                                                      |
 | 2026-10-28 | **退款投影修复：** `refund.succeeded` 经 `payment_id` 反查订阅；全额退 expire + 尽力立即 cancel Dodo 订阅；对账不复活 `refunded` expire；`billing.md` / §A.3.2                                                                                                                                             |
 | 2026-10-28 | **计费币种口径：** 展示/基价单一 USD；扣款币种 = Dodo Adaptive Currency（账单国/IP）；收据本地币 ≠ 人民币本地化定价；禁定价页市场 toggle；`pricing.md` / `billing.md` / §A.3 / §5.7；`.cn` 定价页本地币旁注                                                                                                |
 | 2026-10-28 | **Pro 欢迎信改阿里云 DirectMail：** Worker `SingleSendMail`（`ALIYUN_DM_*`）；废欢迎信对 CF Email Sending / Workers Paid 依赖；反馈邮件仍可走 CF `EMAIL`；文案锚点不变；§A.3 / billing / ENVIRONMENT                                                                                                       |

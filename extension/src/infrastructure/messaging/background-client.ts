@@ -8,6 +8,7 @@ import type {
   AuthSignOutMode,
   AuthSignOutResponse,
   ClearLocalMemoryResponse,
+  ClearLocalRecallAdaptationResponse,
   ClearOrphanOwnersResponse,
   DeleteAccountResponse,
   DeleteCloudMemoryResponse,
@@ -549,6 +550,14 @@ export async function clearLocalMemory(): Promise<ClearLocalMemoryResponse> {
   return sendBackgroundMessage<ClearLocalMemoryResponse>({
     scope: 'background',
     type: 'CLEAR_LOCAL_MEMORY'
+  })
+}
+
+/** 仅清除本机 Recall 适应信号（Outcome 对 + TTE 环；不删库）。 */
+export async function clearLocalRecallAdaptation(): Promise<ClearLocalRecallAdaptationResponse> {
+  return sendBackgroundMessage<ClearLocalRecallAdaptationResponse>({
+    scope: 'background',
+    type: 'CLEAR_LOCAL_RECALL_ADAPTATION'
   })
 }
 

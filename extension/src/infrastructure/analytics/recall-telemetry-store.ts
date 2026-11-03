@@ -8,7 +8,10 @@ import {
   RecallTelemetryEventSchema,
   type RecallTelemetryEvent
 } from '@/core/recall/recall-telemetry'
-import { writeChromeStorageLocal } from '@/infrastructure/storage/chrome-storage-local'
+import {
+  removeChromeStorageLocal,
+  writeChromeStorageLocal
+} from '@/infrastructure/storage/chrome-storage-local'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 
 export const RECALL_TELEMETRY_LOCAL_KEY = 'yiveno.recallTelemetry'
@@ -83,4 +86,9 @@ export async function appendRecallTelemetryEvent(event: RecallTelemetryEvent): P
 export async function listRecallTelemetryEvents(): Promise<RecallTelemetryEvent[]> {
   const store = await readTelemetryStore()
   return store.events
+}
+
+/** 清空本机 TTE / 体验遥测环（不上云；不改 Memory）。 */
+export async function clearRecallTelemetryEvents(): Promise<void> {
+  await removeChromeStorageLocal(RECALL_TELEMETRY_LOCAL_KEY)
 }

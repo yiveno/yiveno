@@ -24,8 +24,16 @@ const isPro = ref(false)
 /** 大陆市场域名：展示换汇旁注（仍只标 USD 锚点） */
 const showFxNote = ref(false)
 
-const intervalLabel = computed(() => (cycle.value === 'month' ? '/mo' : '/yr'))
+const intervalLabel = computed(() =>
+  cycle.value === 'month' ? t('pricing.interval.month') : t('pricing.interval.year')
+)
 const fxNote = computed(() => t('pricing.fx_note'))
+const proFeatures = computed(() => [
+  t('pricing.pro.f1'),
+  t('pricing.pro.f2'),
+  t('pricing.pro.f3'),
+  t('pricing.pro.f4')
+])
 
 function proDisplayTotal(): string {
   const usd = proTier.value?.displayUsd[cycle.value]
@@ -69,7 +77,7 @@ async function subscribePro(): Promise<void> {
     const alreadyPro = await refreshProFlag()
     if (alreadyPro) {
       console.warn('[Pricing] 已是有效 Pro，跳过 checkout')
-      checkoutError.value = 'This account already has Pro. Manage it from your subscription.'
+      checkoutError.value = t('pricing.error.already_pro')
       return
     }
 
@@ -77,18 +85,18 @@ async function subscribePro(): Promise<void> {
     if (result.status === 'already_subscribed') {
       isPro.value = true
       console.warn('[Pricing] Worker 判定已是 Pro，拒绝新 checkout')
-      checkoutError.value = 'This account already has Pro. Manage it from your subscription.'
+      checkoutError.value = t('pricing.error.already_pro')
       return
     }
     if (result.status !== 'ok') {
-      checkoutError.value = 'Could not start checkout. Try again.'
+      checkoutError.value = t('pricing.error.checkout_failed')
       return
     }
     window.location.assign(result.checkoutUrl)
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err)
     console.error('[Pricing] checkout-session failed', detail)
-    checkoutError.value = 'Could not start checkout. Try again.'
+    checkoutError.value = t('pricing.error.checkout_failed')
   } finally {
     checkoutBusy.value = false
   }
@@ -147,21 +155,17 @@ onMounted(async () => {
 <template>
   <div class="pricing-page page page--wide">
     <header class="pricing-page__hero">
-      <h1 class="page__title">Pricing</h1>
-      <p class="page__lede">
-        Find what you saved: capture lightly, get a short list of closest fits — you pick. Free and
-        Pro find just as well on your device; Pro syncs your library and gives you more room for
-        cloud help with your clues.
-      </p>
+      <h1 class="page__title">{{ t('pricing.title') }}</h1>
+      <p class="page__lede">{{ t('pricing.lede') }}</p>
 
-      <div class="billing-toggle" role="group" aria-label="Pro billing period">
+      <div class="billing-toggle" role="group" :aria-label="t('pricing.cycle.aria')">
         <button
           type="button"
           class="toggle-btn"
           :class="{ active: cycle === 'month' }"
           @click="cycle = 'month'"
         >
-          Monthly
+          {{ t('pricing.cycle.month') }}
         </button>
         <button
           type="button"
@@ -169,7 +173,7 @@ onMounted(async () => {
           :class="{ active: cycle === 'year' }"
           @click="cycle = 'year'"
         >
-          Yearly
+          {{ t('pricing.cycle.year') }}
         </button>
       </div>
 
@@ -180,28 +184,28 @@ onMounted(async () => {
 
     <div class="plans">
       <section class="plan" aria-labelledby="plan-free">
-        <p id="plan-free" class="plan__tier">Free</p>
+        <p id="plan-free" class="plan__tier">{{ t('pricing.free.tier') }}</p>
         <p class="plan__price">$0</p>
-        <p class="plan__desc">Find from what you saved — on your device. No cloud sync.</p>
+        <p class="plan__desc">{{ t('pricing.free.desc') }}</p>
         <ul class="plan__features">
-          <li>Capture excerpts &amp; bookmarks</li>
-          <li>Find closest fits on your device</li>
-          <li>Local library, notes, export</li>
-          <li>Sign in: a little cloud clue help each month</li>
+          <li>{{ t('pricing.free.f1') }}</li>
+          <li>{{ t('pricing.free.f2') }}</li>
+          <li>{{ t('pricing.free.f3') }}</li>
+          <li>{{ t('pricing.free.f4') }}</li>
         </ul>
         <div class="plan__cta">
-          <a class="ui-btn ui-btn--block" href="/login">Sign in</a>
+          <a class="ui-btn ui-btn--block" href="/login">{{ t('pricing.free.cta') }}</a>
         </div>
       </section>
 
       <section class="plan plan--pro" aria-labelledby="plan-pro">
-        <p id="plan-pro" class="plan__tier">Pro</p>
+        <p id="plan-pro" class="plan__tier">{{ t('pricing.pro.tier') }}</p>
         <p class="plan__price">
           {{ proDisplayTotal() }}<span class="plan__interval">{{ intervalLabel }}</span>
         </p>
-        <p class="plan__desc">{{ proTier?.description }}</p>
+        <p class="plan__desc">{{ t('pricing.pro.desc') }}</p>
         <ul class="plan__features">
-          <li v-for="feature in proTier?.features || []" :key="feature">{{ feature }}</li>
+          <li v-for="feature in proFeatures" :key="feature">{{ feature }}</li>
         </ul>
         <div class="plan__cta">
           <button
@@ -211,7 +215,7 @@ onMounted(async () => {
             :disabled="portalBusy"
             @click="openPortal"
           >
-            {{ portalBusy ? 'Opening…' : 'Manage subscription' }}
+            {{ portalBusy ? t('pricing.pro.opening') : t('pricing.pro.manage') }}
           </button>
           <button
             v-else
@@ -220,16 +224,19 @@ onMounted(async () => {
             :disabled="checkoutBusy"
             @click="subscribePro"
           >
-            {{ checkoutBusy ? 'Opening…' : customerUserId ? 'Subscribe' : 'Sign in to subscribe' }}
+            {{
+              checkoutBusy
+                ? t('pricing.pro.opening')
+                : customerUserId
+                  ? t('pricing.pro.subscribe')
+                  : t('pricing.pro.sign_in_subscribe')
+            }}
           </button>
         </div>
       </section>
     </div>
 
-    <p class="pricing-page__footnote">
-      Roadmap only (not for sale): Power User, Team. Displayed totals are list prices before tax.
-      Checkout happens on our secure checkout page after you sign in.
-    </p>
+    <p class="pricing-page__footnote">{{ t('pricing.footnote') }}</p>
   </div>
 </template>
 

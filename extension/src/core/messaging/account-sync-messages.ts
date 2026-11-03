@@ -33,6 +33,7 @@ export const AccountSyncErrorCodeSchema = z.enum([
   'ORPHAN_EXPORT_FAILED', // 导出孤儿桶失败
   'ORPHAN_CLEAR_FAILED', // 清除孤儿桶失败
   'LOCAL_CLEAR_FAILED', // 清除本机记忆失败
+  'LOCAL_RECALL_ADAPTATION_CLEAR_FAILED', // 清除本机 Recall 适应信号失败
   'LOGIN_MIGRATION_STATUS_FAILED', // 读取登录迁移门闸失败
   'LOGIN_MIGRATION_FAILED', // 执行登录迁移（导入/导出/删除）失败
   'SUBSCRIPTION_STATUS_FAILED', // 拉取订阅状态失败
@@ -521,6 +522,29 @@ export type ClearLocalMemoryResponse =
       error?: string
     }
 
+/**
+ * 仅清除本机 Recall 适应信号（Outcome 对 + TTE 环）。
+ * 不删 Memory、不改条目 openCount、不关灌库/同步。
+ */
+export type ClearLocalRecallAdaptationMessage = {
+  scope: BackgroundMessageScope
+  type: 'CLEAR_LOCAL_RECALL_ADAPTATION'
+}
+
+export type ClearLocalRecallAdaptationResponse =
+  | {
+      ok: true
+      /** 是否已清 Outcome 对键 */
+      outcomePairsCleared: true
+      /** 是否已清 TTE 遥测环 */
+      telemetryCleared: true
+    }
+  | {
+      ok: false
+      errorCode: AccountSyncErrorCode
+      error?: string
+    }
+
 /** 读取本机订阅快照（可顺带刷新）。 */
 export type GetSubscriptionStatusMessage = {
   scope: BackgroundMessageScope
@@ -569,6 +593,7 @@ export type AccountSyncBackgroundMessage =
   | DeleteAccountMessage
   | ExportLocalMemoryMessage
   | ClearLocalMemoryMessage
+  | ClearLocalRecallAdaptationMessage
   | GetSubscriptionStatusMessage
 
 export type AccountSyncBackgroundResponse =
@@ -594,4 +619,5 @@ export type AccountSyncBackgroundResponse =
   | DeleteAccountResponse
   | ExportLocalMemoryResponse
   | ClearLocalMemoryResponse
+  | ClearLocalRecallAdaptationResponse
   | GetSubscriptionStatusResponse

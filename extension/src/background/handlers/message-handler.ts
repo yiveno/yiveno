@@ -16,6 +16,7 @@ import {
   handleAuthSignOut,
   handleAckPrivacyNotice,
   handleClearLocalMemory,
+  handleClearLocalRecallAdaptation,
   handleClearOrphanOwners,
   handleDeleteCloudMemory,
   handleDeleteAccount,
@@ -161,6 +162,8 @@ async function dispatchBackgroundMessage(
       return handleExportLocalMemory()
     case 'CLEAR_LOCAL_MEMORY':
       return handleClearLocalMemory()
+    case 'CLEAR_LOCAL_RECALL_ADAPTATION':
+      return handleClearLocalRecallAdaptation()
     case 'CAPTURE_BOOKMARK':
       return handleCaptureBookmark(message.payload)
     case 'CAPTURE_TEXT_EXCERPT':

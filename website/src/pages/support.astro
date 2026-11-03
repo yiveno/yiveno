@@ -2,8 +2,10 @@
 /**
  * Support：要回复的问题走 support@（轨道 3 · 轻量工单 = 邮件线程）。
  * 产品意见走 feedback@；不做自建工单系统。
+ * 可见文案经 data-yiveno-i18n；SSR 默认 en。
  */
 import MainLayout from '../layouts/MainLayout.astro'
+import { en } from '../i18n/en'
 import '../styles/pages.css'
 
 const supportEmail = 'support@yiveno.com'
@@ -12,55 +14,68 @@ const privacyEmail = 'privacy@yiveno.com'
 ---
 
 <MainLayout
-  title="Support · Yiveno"
-  description="Get help with Yiveno — bugs, account, billing, and install questions by email. We reply at support@yiveno.com."
+  title={en['support.meta.title']}
+  description={en['support.meta.description']}
+  i18nTitleKey="support.meta.title"
 >
   <article class="page">
     <header>
-      <h1 class="page__title">Support</h1>
+      <h1 class="page__title" data-yiveno-i18n="support.title">
+        {en['support.title']}
+      </h1>
       <p class="page__lede">
-        Need a reply? Email us. For product ideas that don’t need a reply, use
-        <a href={`mailto:${feedbackEmail}`}>{feedbackEmail}</a>
-        or the optional form if you remove the extension. Short product answers:{' '}
-        <a href="/faq">FAQ</a>.
+        <span data-yiveno-i18n="support.lede_before">{en['support.lede_before']}</span>{' '}
+        <a href={`mailto:${feedbackEmail}`}>{feedbackEmail}</a>{' '}
+        <span data-yiveno-i18n="support.lede_mid">{en['support.lede_mid']}</span>{' '}
+        <a href="/faq" data-yiveno-i18n="support.lede_faq">
+          {en['support.lede_faq']}
+        </a>
+        <span data-yiveno-i18n="support.lede_after">{en['support.lede_after']}</span>
       </p>
     </header>
 
     <section class="page__section">
-      <h2>Bugs &amp; account help</h2>
+      <h2 data-yiveno-i18n="support.bugs.title">{en['support.bugs.title']}</h2>
       <p>
-        Something broken, can’t sign in, sync issues, or billing questions:
+        <span data-yiveno-i18n="support.bugs.body_before">{en['support.bugs.body_before']}</span>{' '}
         <a href={`mailto:${supportEmail}?subject=Yiveno%20support`}>{supportEmail}</a>
       </p>
-      <p class="page__hint">
-        Include what you tried, your browser (Edge or Chrome) and version, and the extension version
-        if you can — one clear note helps us reply once.
+      <p class="page__hint" data-yiveno-i18n="support.bugs.hint">
+        {en['support.bugs.hint']}
       </p>
     </section>
 
     <section class="page__section">
-      <h2>Install availability</h2>
+      <h2 data-yiveno-i18n="support.install.title">{en['support.install.title']}</h2>
       <p>
-        Yiveno is not listed on the public Chrome Web Store or Microsoft Edge Add-ons yet. If you
-        want a notice when a public listing is available, email
-        <a href={`mailto:${supportEmail}?subject=Yiveno%20install%20notify`}>{supportEmail}</a>
-        with the subject "Install notify".
+        <span data-yiveno-i18n="support.install.body_before">
+          {en['support.install.body_before']}
+        </span>{' '}
+        <a href={`mailto:${supportEmail}?subject=Yiveno%20install%20notify`}>{supportEmail}</a>{' '}
+        <span data-yiveno-i18n="support.install.body_after">
+          {en['support.install.body_after']}
+        </span>
       </p>
     </section>
 
     <section class="page__section">
-      <h2>Product ideas</h2>
+      <h2 data-yiveno-i18n="support.ideas.title">{en['support.ideas.title']}</h2>
       <p>
-        Feature ideas or “why I left” style notes (no reply expected):
+        <span data-yiveno-i18n="support.ideas.body_before">{en['support.ideas.body_before']}</span>{' '}
         <a href={`mailto:${feedbackEmail}?subject=Yiveno%20feedback`}>{feedbackEmail}</a>
       </p>
     </section>
 
     <section class="page__section">
-      <h2>Privacy</h2>
+      <h2 data-yiveno-i18n="support.privacy.title">{en['support.privacy.title']}</h2>
       <p>
-        Privacy questions:
-        <a href={`mailto:${privacyEmail}`}>{privacyEmail}</a>·<a href="/privacy">Privacy Policy</a>
+        <span data-yiveno-i18n="support.privacy.body_before">
+          {en['support.privacy.body_before']}
+        </span>{' '}
+        <a href={`mailto:${privacyEmail}`}>{privacyEmail}</a>·
+        <a href="/privacy" data-yiveno-i18n="support.privacy.policy">
+          {en['support.privacy.policy']}
+        </a>
       </p>
     </section>
   </article>

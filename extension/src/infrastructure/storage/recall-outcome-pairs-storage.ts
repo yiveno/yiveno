@@ -8,6 +8,7 @@ import { optionalProp } from '@/core/common/optional-props'
 import type { RecallOutcomePairRecord } from '@/core/recall/recall-outcome-pairs'
 import {
   readChromeStorageLocal,
+  removeChromeStorageLocal,
   writeChromeStorageLocal
 } from '@/infrastructure/storage/chrome-storage-local'
 
@@ -108,4 +109,9 @@ export async function revokeTargetOutcomePairsForFingerprint(input: {
     pairs: next.slice(0, MAX_PAIRS)
   })
   return removed
+}
+
+/** 清空本机 Outcome 对缓冲（不改 Memory / 条目行为字段）。 */
+export async function clearRecallOutcomePairs(): Promise<void> {
+  await removeChromeStorageLocal(RECALL_OUTCOME_PAIRS_LOCAL_KEY)
 }

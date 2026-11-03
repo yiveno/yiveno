@@ -49,7 +49,8 @@ if [ -n "$EXTENSION_BUILD_TRIGGER" ]; then
 
   if [ "$BUILD_STATUS" -eq 0 ]; then
     # build 内 vue-tsc -b 已覆盖 app + node + vitest（与 IDE solution 同图）
-    echo "🧪 extension test:run（含 recall-eval must）..."
+    # 本地 push 跑全量 test:run；CI 另有显式 test:must（防 vitest include 漂移）
+    echo "🧪 extension test:run（范围含 recall-eval；CI 另显式 test:must）..."
     EXT_TEST_OUTPUT=$(cd extension && bun run test:run 2>&1)
     EXT_TEST_STATUS=$?
     if [ "$EXT_TEST_STATUS" -eq 0 ]; then
@@ -198,7 +199,8 @@ if [ -n "$ERRORS" ]; then
   echo ""
   echo "🛠️  可用的修复命令："
   echo "   bun run build:extension          # extension 构建（vue-tsc -b：app+node+vitest）"
-  echo "   cd extension && bun run test:run  # extension 单测（含 recall-eval must）"
+  echo "   cd extension && bun run test:run  # extension 单测（范围含 recall-eval）"
+  echo "   cd extension && bun run test:must # 显式 must（CI 另跑；防 include 漂移）"
   echo "   bun run typecheck:worker      # worker 类型检查"
   echo "   bun run typecheck:web     # website 类型检查（astro check）"
   echo "   bun run --filter './packages/*' typecheck  # packages 类型检查"

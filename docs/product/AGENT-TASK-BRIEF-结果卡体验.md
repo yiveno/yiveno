@@ -16,7 +16,7 @@ downstream:
 
 # Task Brief · Recall 结果卡体验
 
-### Scope
+## Scope
 
 - **In：** `RecallResultCard` 扫读层级 / Top Pick **视觉**略强调 / 集合展开与邻域入场动效；`RecallConversation` 列表节奏；权威文档与 CURRENT 同步
 - **Out：** 不改 Filter / Hybrid / 佐证门 / must 扩面 / 召回排序；不加 Projects/Artifacts/图谱；不加神谕文案（「most likely」等）；不做卡上工具条堆砌

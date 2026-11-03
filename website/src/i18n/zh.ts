@@ -1,6 +1,7 @@
 /**
  * 官网产品面简体中文文案（与 `en.ts` 键对称）。
- * 覆盖：卸载、壳导航/页脚、定价换汇、`/login`、营销首页、FAQ 可见文案。
+ * 覆盖：卸载、壳、Pricing/Account/Support、法律页壳键、`/login`、首页、FAQ。
+ * Privacy/Terms 长文在 `components/legal/*` 双语 prose，不进本字典。
  * 口语简体；找/找到；禁止「搜索」；禁止默认「找回」。
  */
 import type { WebsiteMessageKey } from './en'
@@ -116,6 +117,102 @@ export const zh = {
 
   'pricing.fx_note':
     '标价为美元（USD）。结账时总额可能按汇率显示为本地货币——不是单独的人民币套餐价。',
+  'pricing.meta.title': '定价 · Yiveno',
+  'pricing.meta.description':
+    'Yiveno Free 与 Pro：本机找东西质量同档。Pro 增加库同步，以及更多云端线索协助额度。标价为美元。',
+  'pricing.title': '定价',
+  'pricing.lede':
+    '找到你存过的：轻轻存下，得到一小份最相近的列表——你来选。Free 与 Pro 在本机找得一样好；Pro 同步你的库，并给你更多云端线索协助空间。',
+  'pricing.cycle.aria': 'Pro 计费周期',
+  'pricing.cycle.month': '按月',
+  'pricing.cycle.year': '按年',
+  'pricing.interval.month': '/月',
+  'pricing.interval.year': '/年',
+  'pricing.free.tier': 'Free',
+  'pricing.free.desc': '在本机找你存过的东西。不同步到云。',
+  'pricing.free.f1': '存摘录与书签',
+  'pricing.free.f2': '在本机找到最相近的',
+  'pricing.free.f3': '本机库、附注、导出',
+  'pricing.free.f4': '登录后：每月一点云端线索协助',
+  'pricing.free.cta': '登录',
+  'pricing.pro.tier': 'Pro',
+  'pricing.pro.desc': '与 Free 同档找东西质量，外加跨设备同步，以及更高的云端线索协助额度。',
+  'pricing.pro.f1': '与 Free 同档找东西质量',
+  'pricing.pro.f2': '跨设备云同步',
+  'pricing.pro.f3': '更高的云端线索协助额度',
+  'pricing.pro.f4': '更高的每日云端智能匹配额度',
+  'pricing.pro.manage': '管理订阅',
+  'pricing.pro.subscribe': '订阅',
+  'pricing.pro.sign_in_subscribe': '登录后订阅',
+  'pricing.pro.opening': '打开中…',
+  'pricing.error.already_pro': '此账号已是 Pro。请从订阅管理处处理。',
+  'pricing.error.checkout_failed': '无法开始结账，请再试一次。',
+  'pricing.footnote':
+    '路线图（暂不售卖）：Power User、Team。展示总额为税前标价。结账在登录后于我们的安全结账页完成。',
+
+  'account.meta.title': '账号 · Yiveno',
+  'account.meta.description': '你的 Yiveno 账号、方案与账单。',
+  'account.sign_out': '退出登录',
+  'account.plan_heading': '方案',
+  'account.checking_plan': '正在核对方案…',
+  'account.plan.pro': 'Pro',
+  'account.plan.free': 'Free',
+  'account.plan.load_failed': '无法加载方案',
+  'account.plan.updating': '更新中…',
+  'account.plan.verify_error': '暂时无法核对你的方案。若你已订阅，付费权益不会因此改变。',
+  'account.plan.renews': '续订 / 到期 {date}',
+  'account.retry': '重试',
+  'account.upgrade': '升级到 Pro',
+  'account.manage': '管理订阅',
+  'account.view_pricing': '查看定价',
+  'account.opening': '打开中…',
+  'account.loading': '加载中…',
+  'account.dismiss': '关闭',
+  'account.provider.unknown': '未知',
+  'account.provider.google': 'Google',
+  'account.provider.microsoft': 'Microsoft',
+  'account.provider.email': '邮箱',
+  'account.checkout.pending':
+    '正在核对结账。若已付款，Pro 通常几秒内会显示——若下方仍是 Free，请刷新。',
+  'account.checkout.failed': '付款未成功。你可以再试一次「升级到 Pro」。',
+  'account.checkout.error': '无法开始结账，请再试一次。',
+  'account.date.unknown': '未知',
+
+  'support.meta.title': '支持 · Yiveno',
+  'support.meta.description':
+    'Yiveno 帮助：缺陷、账号、账单与安装相关问题请发邮件。我们通过 support@yiveno.com 回复。',
+  'support.title': '支持',
+  'support.lede_before': '需要回复？发邮件给我们。不需要回复的产品想法，请用',
+  'support.lede_mid': '；或在卸载扩展时用可选表单。短问答见',
+  'support.lede_faq': '常见问题',
+  'support.lede_after': '。',
+  'support.bugs.title': '缺陷与账号帮助',
+  'support.bugs.body_before': '东西坏了、登不进去、同步问题或账单疑问：',
+  'support.bugs.hint':
+    '请写明你试过什么、浏览器（Edge 或 Chrome）与版本，以及扩展版本（如有）——说清楚一次，我们好一次回完。',
+  'support.install.title': '安装可得性',
+  'support.install.body_before':
+    'Yiveno 尚未上架公开的 Chrome 网上应用店或 Microsoft Edge 加载项。若希望公开上架时收到通知，请发邮件到',
+  'support.install.body_after': '，主题写 "Install notify"。',
+  'support.ideas.title': '产品想法',
+  'support.ideas.body_before': '功能想法或「为什么离开」类留言（不期待回复）：',
+  'support.privacy.title': '隐私',
+  'support.privacy.body_before': '隐私相关问题：',
+  'support.privacy.policy': '隐私政策',
+
+  'privacy.meta.title': '隐私政策 · Yiveno',
+  'privacy.meta.description':
+    'Yiveno 如何处理 Chromium 扩展（Edge 与 Chrome）与官网相关的个人数据：本机优先、可选云同步、账号与 AI。',
+  'privacy.title': '隐私政策',
+  'privacy.effective': '生效日期：{date}',
+  'privacy.translation_note': '便利译本。若与英文正文冲突，以英文版为准。',
+
+  'terms.meta.title': '服务条款 · Yiveno',
+  'terms.meta.description':
+    'Yiveno Chromium 扩展（Microsoft Edge 与 Google Chrome）与官网的服务条款。',
+  'terms.title': '服务条款',
+  'terms.effective': '生效日期：{date}',
+  'terms.translation_note': '便利译本。若与英文正文冲突，以英文版为准。',
 
   'home.meta.title': 'Yiveno — 找到你存过的',
   'home.meta.description':

@@ -37,6 +37,46 @@
   gap: var(--space-sm);
 }
 
+/** 数据分区等：分组标题 + 单卡内多行（Meta 式分组，非单行散卡） */
+.settings-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+}
+
+.settings-group__label {
+  margin: 0;
+  padding-inline: var(--space-2xs);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--on-surface-muted);
+}
+
+.settings-group__card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+  overflow: hidden;
+}
+
+.settings-group__card--danger {
+  border-color: color-mix(in srgb, var(--danger) 28%, var(--border));
+}
+
+.settings-group__card .settings-toggle {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.settings-group__card .settings-toggle + .settings-action-row--embedded,
+.settings-group__card .settings-action-row--embedded + .settings-toggle {
+  border-top: 1px solid var(--border);
+}
+
 .settings-file-input {
   position: absolute;
   width: 1px;

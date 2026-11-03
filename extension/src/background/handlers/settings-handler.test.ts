@@ -40,7 +40,10 @@ import {
 const fullSettings = {
   selectionToolbarEnabled: true,
   aiFeaturesEnabled: true,
-  chromeBookmarkIngestEnabled: true
+  chromeBookmarkIngestEnabled: true,
+  mcpReadOnlyEnabled: false,
+  recallOutcomePairSoftAdjustEnabled: true,
+  uiLocalePreference: 'system' as const
 }
 
 describe('settings-handler', () => {
@@ -97,5 +100,25 @@ describe('settings-handler', () => {
     expect(response.ok).toBe(true)
     expect(syncChromeBookmarkSyncListenersWithIngestSettingMock).toHaveBeenCalledWith(false)
     expect(ensureChromeBookmarksImportedMock).not.toHaveBeenCalled()
+  })
+
+  it('可关闭本机 Outcome 软调且不触其它副作用', async () => {
+    updateUserSettingsMock.mockResolvedValue({
+      ...fullSettings,
+      recallOutcomePairSoftAdjustEnabled: false
+    })
+
+    const response = await handleUpdateUserSettings({
+      recallOutcomePairSoftAdjustEnabled: false
+    })
+    expect(response).toEqual({
+      ok: true,
+      settings: { ...fullSettings, recallOutcomePairSoftAdjustEnabled: false }
+    })
+    expect(updateUserSettingsMock).toHaveBeenCalledWith({
+      recallOutcomePairSoftAdjustEnabled: false
+    })
+    expect(refreshClueLlmCompleterFromDevConfigMock).not.toHaveBeenCalled()
+    expect(syncChromeBookmarkSyncListenersWithIngestSettingMock).not.toHaveBeenCalled()
   })
 })

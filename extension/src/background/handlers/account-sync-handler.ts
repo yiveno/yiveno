@@ -25,6 +25,7 @@ import type {
   AuthSignOutMode,
   AuthSignOutResponse,
   ClearLocalMemoryResponse,
+  ClearLocalRecallAdaptationResponse,
   ClearOrphanOwnersResponse,
   DeleteAccountResponse,
   DeleteCloudMemoryResponse,
@@ -84,7 +85,9 @@ import {
   isProActiveFromSnapshot,
   refreshSubscriptionSnapshot
 } from '@/infrastructure/identity/subscription-service'
+import { clearRecallTelemetryEvents } from '@/infrastructure/analytics/recall-telemetry-store'
 import { updateUserSettings } from '@/infrastructure/settings/user-settings-service'
+import { clearRecallOutcomePairs } from '@/infrastructure/storage/recall-outcome-pairs-storage'
 import { syncChromeBookmarkSyncListenersWithIngestSetting } from '@/background/listeners/chrome-bookmark-sync'
 import {
   ackCurrentPrivacyNotice,
@@ -1594,8 +1597,18 @@ export async function handleExportLocalMemory(): Promise<ExportLocalMemoryRespon
 }
 
 /**
+ * 清本机 Outcome 对 + TTE 环（A 层缓冲；不碰 Memory）。
+ * CLEAR_LOCAL_MEMORY / CLEAR_LOCAL_RECALL_ADAPTATION 共用。
+ */
+async function clearLocalRecallAdaptationBuffers(): Promise<void> {
+  await clearRecallOutcomePairs()
+  await clearRecallTelemetryEvents()
+}
+
+/**
  * CLEAR_LOCAL_MEMORY — 硬清当前 owner 本机 Memory。
- * 不动 Chrome 原生书签；关书签灌库；若同步开着则关同步（云端副本需用户另删）。
+ * 不动 Chrome 原生书签；关书签灌库；若同步开着则关同步（云端副本需用户另删）；
+ * 并清 Outcome 对 / TTE 环。
  */
 export async function handleClearLocalMemory(): Promise<ClearLocalMemoryResponse> {
   const startedAt = flowStart('Data', 'CLEAR_LOCAL_MEMORY')
@@ -1608,6 +1621,7 @@ export async function handleClearLocalMemory(): Promise<ClearLocalMemoryResponse
     const clearedCount = existing.length
 
     await memoryItemRepository.replaceOwnerItems(ownerId, [])
+    await clearLocalRecallAdaptationBuffers()
 
     await updateUserSettings({ chromeBookmarkIngestEnabled: false })
     await syncChromeBookmarkSyncListenersWithIngestSetting(false)
@@ -1642,6 +1656,33 @@ export async function handleClearLocalMemory(): Promise<ClearLocalMemoryResponse
     return {
       ok: false,
       errorCode: 'LOCAL_CLEAR_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/**
+ * CLEAR_LOCAL_RECALL_ADAPTATION — 仅清 Outcome 对 + TTE 环，保留记忆库。
+ */
+export async function handleClearLocalRecallAdaptation(): Promise<ClearLocalRecallAdaptationResponse> {
+  const startedAt = flowStart('Data', 'CLEAR_LOCAL_RECALL_ADAPTATION')
+  try {
+    await clearLocalRecallAdaptationBuffers()
+    flowOk('Data', 'CLEAR_LOCAL_RECALL_ADAPTATION', startedAt, {
+      outcomePairsCleared: true,
+      telemetryCleared: true
+    })
+    logger.info('Data', '已清除本机 Recall 适应信号（未改记忆库）')
+    return {
+      ok: true,
+      outcomePairsCleared: true,
+      telemetryCleared: true
+    }
+  } catch (error) {
+    flowFail('Data', 'CLEAR_LOCAL_RECALL_ADAPTATION', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'LOCAL_RECALL_ADAPTATION_CLEAR_FAILED',
       ...(error instanceof Error ? { error: error.message } : {})
     }
   }

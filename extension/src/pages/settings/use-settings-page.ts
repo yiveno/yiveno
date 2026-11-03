@@ -18,6 +18,7 @@ import {
   ackPrivacyNotice,
   authSignOut,
   clearLocalMemory,
+  clearLocalRecallAdaptation,
   clearOrphanOwners,
   deleteAccount,
   deleteCloudMemory,
@@ -86,6 +87,7 @@ export function useSettingsPage() {
   const chromeBookmarkIngestEnabled = ref(false)
   const aiFeaturesEnabled = ref(true)
   const mcpReadOnlyEnabled = ref(false)
+  const recallOutcomePairSoftAdjustEnabled = ref(true)
   const uiLocalePreference = ref<UiLocalePreference>('system')
   const settingsState = ref<SettingsLoadState>('loading')
   const settingsError = ref('')
@@ -93,6 +95,7 @@ export function useSettingsPage() {
   const savingChromeBookmarkIngest = ref(false)
   const savingAiFeatures = ref(false)
   const savingMcpReadOnly = ref(false)
+  const savingRecallOutcomeSoftAdjust = ref(false)
   const savingUiLocale = ref(false)
   const hostedQuotaLoading = ref(false)
   const hostedQuotaText = ref('')
@@ -102,11 +105,6 @@ export function useSettingsPage() {
   const accountEmail = ref('')
   const accountDisplayName = ref('')
   const subscriptionIsPro = ref(false)
-  const subscriptionTierLabel = ref('')
-  const subscriptionPeriodEnd = ref<string | null>(null)
-  const subscriptionUpgradeUrl = ref<string | null>(null)
-  const subscriptionManageUrl = ref<string | null>(null)
-  const subscriptionError = ref('')
 
   const syncEnabled = ref(false)
   const syncLocalCount = ref(0)
@@ -136,7 +134,12 @@ export function useSettingsPage() {
   const deleteAccountDialogOpen = ref(false)
   /** 通用危险/确认弹窗（替代 window.confirm） */
   type SettingsConfirmAction =
-    'clear_local' | 'delete_cloud' | 'clear_orphans' | 'privacy_sync' | 'restore_backup'
+    | 'clear_local'
+    | 'clear_recall_adaptation'
+    | 'delete_cloud'
+    | 'clear_orphans'
+    | 'privacy_sync'
+    | 'restore_backup'
 
   const confirmDialogAction = ref<SettingsConfirmAction | null>(null)
   const confirmDialogError = ref('')
@@ -305,6 +308,8 @@ export function useSettingsPage() {
       chromeBookmarkIngestEnabled.value = response.settings.chromeBookmarkIngestEnabled
       aiFeaturesEnabled.value = response.settings.aiFeaturesEnabled
       mcpReadOnlyEnabled.value = response.settings.mcpReadOnlyEnabled
+      recallOutcomePairSoftAdjustEnabled.value =
+        response.settings.recallOutcomePairSoftAdjustEnabled
       uiLocalePreference.value = response.settings.uiLocalePreference
       settingsState.value = 'ready'
     } catch {
@@ -369,6 +374,27 @@ export function useSettingsPage() {
       settingsError.value = t('settings_error_update')
     } finally {
       savingAiFeatures.value = false
+    }
+  }
+
+  /** A 层：暂停 / 恢复本机 Outcome 对软调（不删缓冲）。 */
+  async function handleRecallOutcomePairSoftAdjustToggle(nextValue: boolean) {
+    savingRecallOutcomeSoftAdjust.value = true
+    settingsError.value = ''
+    try {
+      const response = await updateUserSettings({
+        recallOutcomePairSoftAdjustEnabled: nextValue
+      })
+      if (!response.ok) {
+        settingsError.value = tSettingsError(response.errorCode)
+        return
+      }
+      recallOutcomePairSoftAdjustEnabled.value =
+        response.settings.recallOutcomePairSoftAdjustEnabled
+    } catch {
+      settingsError.value = t('settings_error_update')
+    } finally {
+      savingRecallOutcomeSoftAdjust.value = false
     }
   }
 
@@ -496,32 +522,18 @@ export function useSettingsPage() {
     }
   }
 
-  /** 加载订阅快照（Pro / Free + 升级/管理链接）。 */
+  /** 加载订阅快照（仅门禁用 isPro；升级/管理在官网）。 */
   async function loadSubscriptionStatus(forceRefresh = false): Promise<void> {
-    subscriptionError.value = ''
     try {
       const response = await fetchSubscriptionStatus(forceRefresh ? { refresh: true } : undefined)
       if (!response.ok) {
-        subscriptionError.value = tAccountSyncError(response.errorCode)
+        showToastError(tAccountSyncError(response.errorCode))
         return
       }
       subscriptionIsPro.value = response.snapshot.isPro
-      subscriptionTierLabel.value = response.snapshot.isPro
-        ? t('settings_subscription_tier_pro')
-        : t('settings_subscription_tier_free')
-      subscriptionPeriodEnd.value = response.snapshot.currentPeriodEnd
-      subscriptionUpgradeUrl.value = response.upgradeUrl
-      subscriptionManageUrl.value = response.manageUrl
     } catch {
-      subscriptionError.value = t('settings_error_subscription_status')
+      showToastError(t('settings_error_subscription_status'))
     }
-  }
-
-  function openExternalUrl(url: string | null): void {
-    if (!url) {
-      return
-    }
-    window.open(url, '_blank', 'noopener,noreferrer')
   }
 
   /** 下载孤儿桶 JSON 备份。 */
@@ -740,28 +752,14 @@ export function useSettingsPage() {
     }
   }
 
-  /** Plan 行标题：档位 + 续费/到期日 */
-  const subscriptionPlanRowTitle = computed(() => {
-    if (!signedIn.value) {
-      return ''
-    }
-    const parts = [subscriptionTierLabel.value]
-    if (subscriptionPeriodEnd.value) {
-      parts.push(
-        t('settings_subscription_period_end', [
-          new Date(subscriptionPeriodEnd.value).toLocaleDateString()
-        ])
-      )
-    }
-    return parts.join(' · ')
-  })
-
   const confirmDialogOpen = computed(() => confirmDialogAction.value !== null)
 
   const confirmDialogTitle = computed(() => {
     switch (confirmDialogAction.value) {
       case 'clear_local':
         return t('settings_data_clear_local')
+      case 'clear_recall_adaptation':
+        return t('settings_data_clear_recall_adaptation')
       case 'delete_cloud':
         return t('settings_privacy_delete_cloud')
       case 'clear_orphans':
@@ -779,6 +777,8 @@ export function useSettingsPage() {
     switch (confirmDialogAction.value) {
       case 'clear_local':
         return t('settings_data_clear_local_confirm')
+      case 'clear_recall_adaptation':
+        return t('settings_data_clear_recall_adaptation_confirm')
       case 'delete_cloud':
         return t('settings_privacy_delete_cloud_confirm')
       case 'clear_orphans':
@@ -797,7 +797,10 @@ export function useSettingsPage() {
 
   const confirmDialogTone = computed<'default' | 'danger'>(() => {
     const action = confirmDialogAction.value
-    return action === 'clear_local' || action === 'delete_cloud' || action === 'clear_orphans'
+    return action === 'clear_local' ||
+      action === 'clear_recall_adaptation' ||
+      action === 'delete_cloud' ||
+      action === 'clear_orphans'
       ? 'danger'
       : 'default'
   })
@@ -805,6 +808,7 @@ export function useSettingsPage() {
   const confirmDialogLoading = computed(() => {
     switch (confirmDialogAction.value) {
       case 'clear_local':
+      case 'clear_recall_adaptation':
       case 'delete_cloud':
         return dataWorking.value
       case 'clear_orphans':
@@ -868,6 +872,9 @@ export function useSettingsPage() {
     switch (confirmDialogAction.value) {
       case 'clear_local':
         ok = await executeClearLocalMemory()
+        break
+      case 'clear_recall_adaptation':
+        ok = await executeClearLocalRecallAdaptation()
         break
       case 'delete_cloud':
         ok = await executeDeleteCloudMemory()
@@ -989,6 +996,20 @@ export function useSettingsPage() {
     confirmDialogAction.value = 'clear_local'
   }
 
+  /** 仅清除本机 Recall 适应信号（Outcome 对 + TTE 环）。 */
+  function handleClearLocalRecallAdaptation() {
+    if (
+      dataWorking.value ||
+      exportWorking.value ||
+      thirdPartyImportWorking.value ||
+      signingOut.value
+    ) {
+      return
+    }
+    confirmDialogError.value = ''
+    confirmDialogAction.value = 'clear_recall_adaptation'
+  }
+
   async function executeClearLocalMemory(): Promise<boolean> {
     dataWorking.value = true
     try {
@@ -1010,6 +1031,24 @@ export function useSettingsPage() {
       return true
     } catch {
       confirmDialogError.value = t('settings_error_local_clear')
+      return false
+    } finally {
+      dataWorking.value = false
+    }
+  }
+
+  async function executeClearLocalRecallAdaptation(): Promise<boolean> {
+    dataWorking.value = true
+    try {
+      const response = await clearLocalRecallAdaptation()
+      if (!response.ok) {
+        confirmDialogError.value = tAccountSyncError(response.errorCode)
+        return false
+      }
+      showToastSuccess(t('settings_data_clear_recall_adaptation_done'))
+      return true
+    } catch {
+      confirmDialogError.value = t('settings_error_local_recall_adaptation_clear')
       return false
     } finally {
       dataWorking.value = false
@@ -1217,6 +1256,7 @@ export function useSettingsPage() {
     downloadLocalMemoryExportJson,
     downloadOrphanExportJson,
     executeClearLocalMemory,
+    executeClearLocalRecallAdaptation,
     executeClearOrphans,
     executeDeleteCloudMemory,
     executePrivacySyncEnable,
@@ -1225,7 +1265,9 @@ export function useSettingsPage() {
     handleAiFeaturesToggle,
     handleChromeBookmarkIngestToggle,
     handleClearLocalMemory,
+    handleClearLocalRecallAdaptation,
     handleClearOrphans,
+    handleRecallOutcomePairSoftAdjustToggle,
     handleDeleteCloudMemory,
     handleDocumentVisibilityChange,
     handleExportLocalMemory,
@@ -1253,8 +1295,8 @@ export function useSettingsPage() {
     loadSyncContext,
     loadUserSettings,
     mcpReadOnlyEnabled,
+    recallOutcomePairSoftAdjustEnabled,
     openDeleteAccountDialog,
-    openExternalUrl,
     openShortcutsError,
     openSignOutDialog,
     openingShortcuts,
@@ -1276,6 +1318,7 @@ export function useSettingsPage() {
     savingAiFeatures,
     savingChromeBookmarkIngest,
     savingMcpReadOnly,
+    savingRecallOutcomeSoftAdjust,
     savingSelectionToolbar,
     savingSync,
     savingUiLocale,
@@ -1304,13 +1347,7 @@ export function useSettingsPage() {
     signOutLocalCount,
     signedIn,
     signingOut,
-    subscriptionError,
     subscriptionIsPro,
-    subscriptionManageUrl,
-    subscriptionPeriodEnd,
-    subscriptionPlanRowTitle,
-    subscriptionTierLabel,
-    subscriptionUpgradeUrl,
     syncAccountOwnerCount,
     syncActiveSectionToUrl,
     syncEnabled,

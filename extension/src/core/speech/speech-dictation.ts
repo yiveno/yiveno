@@ -23,8 +23,10 @@ export type SpeechDictationStatus =
 export const SPEECH_DICTATION_SILENCE_STOP_MS = 12_000
 
 /**
- * UI locale → SpeechRecognition `lang`（BCP 47）。
- * 产品 clue 以美式英语为主；zh_CN UI 时跟浏览器中文识别，仍走同一 composer 路径。
+ * UI locale → SpeechRecognition `lang`（BCP 47）的**默认**映射。
+ * `speechLocale` 与 `uiLocale` 为独立轴（见 `Yiveno-国际化-CN-NA.md` §5.2）：
+ * 当前无独立设置，默认跟随 UI；禁止在存储/类型层把二者焊死为同一字段。
+ * 产品 clue 质量仍以美式英语为主；zh_CN UI 默认中文识别，仍走同一 composer 路径。
  */
 export function speechRecognitionLangForUiLocale(locale: UiLocaleId): string {
   return locale === 'zh_CN' ? 'zh-CN' : 'en-US'

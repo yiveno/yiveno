@@ -24,6 +24,11 @@ export const UserSettingsSchema = z.object({
    */
   mcpReadOnlyEnabled: z.boolean().default(false),
   /**
+   * A 层：是否用本机 Outcome 对做 Hybrid 软升/降权（§7.2 P3）。
+   * 关闭后仍保留对缓冲与可清除；不锁死 Recall；Omnibox 本就不走 Outcome。
+   */
+  recallOutcomePairSoftAdjustEnabled: z.boolean().default(true),
+  /**
    * 界面语言偏好：system 跟浏览器；en / zh_CN 强制。
    * 只影响 UI 文案，不改变 Recall 线索理解语言策略。
    */
@@ -40,6 +45,7 @@ export const UserSettingsPatchSchema = z.object({
   aiFeaturesEnabled: z.boolean().optional(),
   chromeBookmarkIngestEnabled: z.boolean().optional(),
   mcpReadOnlyEnabled: z.boolean().optional(),
+  recallOutcomePairSoftAdjustEnabled: z.boolean().optional(),
   uiLocalePreference: z.enum(['system', 'en', 'zh_CN']).optional()
 })
 
@@ -51,6 +57,7 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   aiFeaturesEnabled: true,
   chromeBookmarkIngestEnabled: false,
   mcpReadOnlyEnabled: false,
+  recallOutcomePairSoftAdjustEnabled: true,
   uiLocalePreference: 'system' satisfies UiLocalePreference
 }
 

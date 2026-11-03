@@ -16,17 +16,17 @@ describe('settings-sections', () => {
       'capture',
       'shortcuts',
       'account_sync',
-      'data',
       'privacy',
       'ai',
       'language'
     ])
   })
 
-  it('resolveSettingsSectionTab 非法值回退保存；兼容旧 usage', () => {
+  it('resolveSettingsSectionTab 非法值回退保存；兼容旧 usage / data', () => {
     expect(resolveSettingsSectionTab('shortcuts').id).toBe('shortcuts')
     expect(resolveSettingsSectionTab('account_sync').id).toBe('account_sync')
-    expect(resolveSettingsSectionTab('data').id).toBe('data')
+    expect(resolveSettingsSectionTab('privacy').id).toBe('privacy')
+    expect(resolveSettingsSectionTab('data').id).toBe('privacy')
     expect(resolveSettingsSectionTab('usage').id).toBe('capture')
     expect(resolveSettingsSectionTab('nope').id).toBe('capture')
     expect(resolveSettingsSectionTab(undefined).id).toBe('capture')
@@ -35,7 +35,7 @@ describe('settings-sections', () => {
   it('parseSettingsSectionFromLocationSearch 从 query 恢复分区', () => {
     expect(parseSettingsSectionFromLocationSearch('?section=shortcuts')).toBe('shortcuts')
     expect(parseSettingsSectionFromLocationSearch('?section=privacy')).toBe('privacy')
-    expect(parseSettingsSectionFromLocationSearch('?section=data')).toBe('data')
+    expect(parseSettingsSectionFromLocationSearch('?section=data')).toBe('privacy')
     expect(parseSettingsSectionFromLocationSearch('section=ai')).toBe('ai')
     expect(parseSettingsSectionFromLocationSearch('')).toBe('capture')
     expect(parseSettingsSectionFromLocationSearch('?section=nope')).toBe('capture')

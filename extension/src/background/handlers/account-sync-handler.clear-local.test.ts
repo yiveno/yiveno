@@ -9,7 +9,9 @@ const {
   patchSyncPrefsMock,
   ensureMemoryCloudSyncAlarmMock,
   updateUserSettingsMock,
-  syncListenersMock
+  syncListenersMock,
+  clearRecallOutcomePairsMock,
+  clearRecallTelemetryEventsMock
 } = vi.hoisted(() => ({
   getAccountBindingMock: vi.fn(),
   getOrCreateLocalProfileMock: vi.fn(),
@@ -19,7 +21,9 @@ const {
   patchSyncPrefsMock: vi.fn(),
   ensureMemoryCloudSyncAlarmMock: vi.fn(),
   updateUserSettingsMock: vi.fn(),
-  syncListenersMock: vi.fn()
+  syncListenersMock: vi.fn(),
+  clearRecallOutcomePairsMock: vi.fn(),
+  clearRecallTelemetryEventsMock: vi.fn()
 }))
 
 vi.mock('@/infrastructure/identity/local-profile-service', () => ({
@@ -54,7 +58,18 @@ vi.mock('@/background/listeners/chrome-bookmark-sync', () => ({
   syncChromeBookmarkSyncListenersWithIngestSetting: syncListenersMock
 }))
 
-import { handleClearLocalMemory } from '@/background/handlers/account-sync-handler'
+vi.mock('@/infrastructure/storage/recall-outcome-pairs-storage', () => ({
+  clearRecallOutcomePairs: clearRecallOutcomePairsMock
+}))
+
+vi.mock('@/infrastructure/analytics/recall-telemetry-store', () => ({
+  clearRecallTelemetryEvents: clearRecallTelemetryEventsMock
+}))
+
+import {
+  handleClearLocalMemory,
+  handleClearLocalRecallAdaptation
+} from '@/background/handlers/account-sync-handler'
 
 describe('handleClearLocalMemory', () => {
   beforeEach(() => {
@@ -74,6 +89,8 @@ describe('handleClearLocalMemory', () => {
       chromeBookmarkIngestEnabled: false
     })
     syncListenersMock.mockResolvedValue(undefined)
+    clearRecallOutcomePairsMock.mockResolvedValue(undefined)
+    clearRecallTelemetryEventsMock.mockResolvedValue(undefined)
   })
 
   it('清除本机条目并关闭书签灌库，不依赖 Chrome bookmarks API', async () => {
@@ -86,6 +103,8 @@ describe('handleClearLocalMemory', () => {
       syncDisabled: false
     })
     expect(replaceOwnerItemsMock).toHaveBeenCalledWith('local-1', [])
+    expect(clearRecallOutcomePairsMock).toHaveBeenCalledOnce()
+    expect(clearRecallTelemetryEventsMock).toHaveBeenCalledOnce()
     expect(updateUserSettingsMock).toHaveBeenCalledWith({ chromeBookmarkIngestEnabled: false })
     expect(syncListenersMock).toHaveBeenCalledWith(false)
     expect(patchSyncPrefsMock).not.toHaveBeenCalled()
@@ -103,5 +122,25 @@ describe('handleClearLocalMemory', () => {
     }
     expect(patchSyncPrefsMock).toHaveBeenCalledWith({ enabled: false })
     expect(ensureMemoryCloudSyncAlarmMock).toHaveBeenCalledWith(false)
+  })
+})
+
+describe('handleClearLocalRecallAdaptation', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    clearRecallOutcomePairsMock.mockResolvedValue(undefined)
+    clearRecallTelemetryEventsMock.mockResolvedValue(undefined)
+  })
+
+  it('仅清 Outcome 对与 TTE 环，不碰记忆库', async () => {
+    const response = await handleClearLocalRecallAdaptation()
+    expect(response).toEqual({
+      ok: true,
+      outcomePairsCleared: true,
+      telemetryCleared: true
+    })
+    expect(clearRecallOutcomePairsMock).toHaveBeenCalledOnce()
+    expect(clearRecallTelemetryEventsMock).toHaveBeenCalledOnce()
+    expect(replaceOwnerItemsMock).not.toHaveBeenCalled()
   })
 })

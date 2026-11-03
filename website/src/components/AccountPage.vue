@@ -23,6 +23,7 @@ import {
 import { clearNavIsProCache, writeNavIsProCacheOnVerified } from '../services/nav-pro-badge-cache'
 import { ensureUiBridgeConnected, publishWebsiteAuthChanged } from '../services/ui-bridge'
 import { buildLoginHref } from '../services/auth-return'
+import { t, tFormat } from '../i18n/t'
 
 defineOptions({ name: 'AccountPage' })
 
@@ -53,11 +54,11 @@ const showVerifyError = computed(
 
 const signInProvider = computed(() => {
   const raw = user.value?.app_metadata?.provider
-  if (typeof raw !== 'string' || !raw.trim()) return 'Unknown'
+  if (typeof raw !== 'string' || !raw.trim()) return t('account.provider.unknown')
   const p = raw.trim().toLowerCase()
-  if (p === 'google') return 'Google'
-  if (p === 'azure' || p === 'microsoft') return 'Microsoft'
-  if (p === 'email') return 'Email'
+  if (p === 'google') return t('account.provider.google')
+  if (p === 'azure' || p === 'microsoft') return t('account.provider.microsoft')
+  if (p === 'email') return t('account.provider.email')
   return raw
 })
 
@@ -114,12 +115,18 @@ function dismissCheckoutReturnHint(): void {
 
 const checkoutReturnHintText = computed(() => {
   if (checkoutReturnHint.value === 'failed') {
-    return "Payment didn't go through. You can try Upgrade to Pro again."
+    return t('account.checkout.failed')
   }
   if (checkoutReturnHint.value === 'pending') {
-    return 'Checking your checkout. If you paid, Pro usually shows within a few seconds — refresh if the plan below still says Free.'
+    return t('account.checkout.pending')
   }
   return ''
+})
+
+const renewsLabel = computed(() => {
+  const end = subscription.value?.currentPeriodEnd
+  if (!end) return ''
+  return tFormat('account.plan.renews', { date: formatDate(end) })
 })
 
 /**
@@ -162,18 +169,18 @@ async function startMonthlyCheckout(): Promise<void> {
     const proNow = await loadSubscription({ silent: true })
     if (proNow) {
       console.warn('[Account] 已是有效 Pro，跳过 checkout')
-      checkoutError.value = 'This account already has Pro. Manage it from your subscription.'
+      checkoutError.value = t('pricing.error.already_pro')
       return
     }
     const result = await createCheckoutSession(accessToken.value, 'pro_monthly')
     if (result.status === 'already_subscribed') {
       await loadSubscription({ silent: true })
       console.warn('[Account] Worker 判定已是 Pro，拒绝新 checkout')
-      checkoutError.value = 'This account already has Pro. Manage it from your subscription.'
+      checkoutError.value = t('pricing.error.already_pro')
       return
     }
     if (result.status !== 'ok') {
-      checkoutError.value = 'Could not start checkout. Try again.'
+      checkoutError.value = t('account.checkout.error')
       return
     }
     window.location.assign(result.checkoutUrl)
@@ -315,7 +322,7 @@ async function handleSignOut() {
         class="account__checkout-hint-dismiss"
         @click="dismissCheckoutReturnHint"
       >
-        Dismiss
+        {{ t('account.dismiss') }}
       </button>
     </p>
 
@@ -351,12 +358,16 @@ async function handleSignOut() {
         </div>
       </div>
       <!-- 4. 结束会话 -->
-      <button type="button" class="account__sign-out" @click="handleSignOut">Sign out</button>
+      <button type="button" class="account__sign-out" @click="handleSignOut">
+        {{ t('account.sign_out') }}
+      </button>
     </header>
 
     <!-- 2. 权益 + 3. 付费与管理 -->
     <section class="account__plan" aria-labelledby="account-plan-heading">
-      <h2 id="account-plan-heading" class="account__section-label">Plan</h2>
+      <h2 id="account-plan-heading" class="account__section-label">
+        {{ t('account.plan_heading') }}
+      </h2>
 
       <div
         v-if="subscriptionLoading && !subscription"
@@ -367,25 +378,30 @@ async function handleSignOut() {
         <div class="account__skel account__skel--title" />
         <div class="account__skel account__skel--line" />
         <div class="account__skel account__skel--line account__skel--short" />
-        <p class="account__plan-status-text">Checking your plan…</p>
+        <p class="account__plan-status-text">{{ t('account.checking_plan') }}</p>
       </div>
 
       <div v-else class="account__plan-panel" :class="{ 'account__plan-panel--pro': isPro }">
         <div class="account__plan-top">
           <p class="account__plan-name">
-            {{ isPro ? 'Pro' : showVerifyError ? "Couldn't load plan" : 'Free' }}
+            {{
+              isPro
+                ? t('account.plan.pro')
+                : showVerifyError
+                  ? t('account.plan.load_failed')
+                  : t('account.plan.free')
+            }}
           </p>
-          <p v-if="subscriptionLoading" class="account__plan-updating" role="status">Updating…</p>
+          <p v-if="subscriptionLoading" class="account__plan-updating" role="status">
+            {{ t('account.plan.updating') }}
+          </p>
         </div>
         <p v-if="showVerifyError" class="account__plan-renew" role="alert">
-          We couldn’t verify your plan right now. Your paid access is unchanged if you already
-          subscribe.
+          {{ t('account.plan.verify_error') }}
         </p>
         <p v-else-if="isPro && subscription?.status" class="account__plan-renew">
           <span class="account__plan-status">{{ subscription.status }}</span>
-          <template v-if="subscription.currentPeriodEnd">
-            · Renews / ends {{ formatDate(subscription.currentPeriodEnd) }}
-          </template>
+          <template v-if="subscription.currentPeriodEnd"> · {{ renewsLabel }} </template>
         </p>
         <div class="account__plan-actions">
           <button
@@ -395,7 +411,7 @@ async function handleSignOut() {
             :disabled="subscriptionLoading"
             @click="loadSubscription()"
           >
-            Retry
+            {{ t('account.retry') }}
           </button>
           <button
             v-if="showConfirmedFree"
@@ -404,7 +420,7 @@ async function handleSignOut() {
             :disabled="checkoutBusy || subscriptionLoading"
             @click="startMonthlyCheckout"
           >
-            {{ checkoutBusy ? 'Opening…' : 'Upgrade to Pro' }}
+            {{ checkoutBusy ? t('account.opening') : t('account.upgrade') }}
           </button>
           <button
             v-if="isPro"
@@ -413,15 +429,15 @@ async function handleSignOut() {
             :disabled="subscriptionLoading"
             @click="openPortal"
           >
-            Manage subscription
+            {{ t('account.manage') }}
           </button>
-          <a class="ui-btn ui-btn--ghost" href="/pricing">View pricing</a>
+          <a class="ui-btn ui-btn--ghost" href="/pricing">{{ t('account.view_pricing') }}</a>
         </div>
         <p v-if="checkoutError" class="account__error" role="alert">{{ checkoutError }}</p>
       </div>
     </section>
   </div>
-  <div v-else class="ui-status">Loading…</div>
+  <div v-else class="ui-status">{{ t('account.loading') }}</div>
 </template>
 
 <style scoped>

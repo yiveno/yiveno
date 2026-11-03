@@ -75,4 +75,29 @@ describe('website i18n t()', () => {
     expect(t('faq.what_is.q', 'zh_CN')).toContain('Yiveno')
     expect(t('home.geo.title_html', 'zh_CN')).toContain('home-kicker-em')
   })
+
+  test('pricing / account / support / legal 壳键中英齐全', () => {
+    const keys = [
+      'pricing.title',
+      'pricing.pro.subscribe',
+      'pricing.fx_note',
+      'account.sign_out',
+      'account.upgrade',
+      'account.checkout.pending',
+      'support.title',
+      'support.bugs.title',
+      'privacy.title',
+      'privacy.translation_note',
+      'terms.title',
+      'terms.translation_note'
+    ] as const
+    for (const key of keys) {
+      expect(t(key, 'en').length).toBeGreaterThan(0)
+      expect(t(key, 'zh_CN').length).toBeGreaterThan(0)
+    }
+    expect(t('pricing.title', 'zh_CN')).toBe('定价')
+    expect(t('account.sign_out', 'zh_CN')).toBe('退出登录')
+    expect(t('support.title', 'zh_CN')).toBe('支持')
+    expect(t('privacy.translation_note', 'zh_CN')).toMatch(/英文/)
+  })
 })

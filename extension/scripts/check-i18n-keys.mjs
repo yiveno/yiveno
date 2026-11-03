@@ -65,10 +65,22 @@ if (zhExtra.length > 0) {
   )
 }
 
+/** 只比占位名与 content（$1…）；example 可本地化，不纳入对称门禁。 */
+function placeholderSignature(placeholders) {
+  if (!placeholders || typeof placeholders !== 'object') return null
+  const names = Object.keys(placeholders).sort()
+  return names.map(name => {
+    const entry = placeholders[name]
+    const content =
+      entry && typeof entry === 'object' && typeof entry.content === 'string' ? entry.content : null
+    return `${name}:${content}`
+  })
+}
+
 for (const key of en) {
-  const enPh = enMessages[key]?.placeholders
-  const zhPh = zhMessages[key]?.placeholders
-  if (JSON.stringify(enPh ?? null) !== JSON.stringify(zhPh ?? null)) {
+  const enSig = placeholderSignature(enMessages[key]?.placeholders)
+  const zhSig = placeholderSignature(zhMessages[key]?.placeholders)
+  if (JSON.stringify(enSig) !== JSON.stringify(zhSig)) {
     errors.push(`zh_CN placeholders 与 en 不一致: ${key}`)
   }
 }

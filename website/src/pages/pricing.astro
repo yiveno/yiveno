@@ -2,12 +2,14 @@
 import MainLayout from '../layouts/MainLayout.astro'
 import AppNav from '../components/AppNav.astro'
 import PricingPage from '../components/PricingPage.vue'
+import { en } from '../i18n/en'
 import '../styles/pages.css'
 ---
 
 <MainLayout
-  title="Pricing · Yiveno"
-  description="Yiveno Free vs Pro: same find quality on your device; Pro adds sync across devices and more cloud help with your clues."
+  title={en['pricing.meta.title']}
+  description={en['pricing.meta.description']}
+  i18nTitleKey="pricing.meta.title"
 >
   <AppNav slot="nav" />
   <PricingPage client:visible />

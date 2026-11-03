@@ -956,11 +956,8 @@
   "settings_tab_account_sync": {
     "message": "Account & sync"
   },
-  "settings_tab_data": {
-    "message": "Data"
-  },
   "settings_tab_privacy": {
-    "message": "Privacy"
+    "message": "Data & privacy"
   },
   "settings_tab_ai": {
     "message": "AI"
@@ -995,8 +992,17 @@
   "settings_placeholder_privacy": {
     "message": "Privacy options are not available yet."
   },
-  "settings_data_intro": {
-    "message": "Back up everything, import from Raindrop or Pocket (up to 50), clear what’s stored here, or delete cloud data and your account. Browser bookmarks stay untouched."
+  "settings_data_group_bring_in": {
+    "message": "Bring in"
+  },
+  "settings_data_group_backup": {
+    "message": "Backup"
+  },
+  "settings_data_group_adaptation": {
+    "message": "On-device recall adaptation"
+  },
+  "settings_data_group_remove": {
+    "message": "Remove"
   },
   "settings_data_import_raindrop": {
     "message": "Import from Raindrop"
@@ -1043,13 +1049,13 @@
     "message": "Clear local memory"
   },
   "settings_data_clear_local_hint": {
-    "message": "Permanently delete what’s stored here for this account. Browser bookmarks stay unchanged."
+    "message": "Permanently delete what’s stored here for this account. Browser bookmarks stay unchanged. Also clears on-device recall ranking signals."
   },
   "settings_data_clear_local_action": {
     "message": "Clear"
   },
   "settings_data_clear_local_confirm": {
-    "message": "This permanently clears Yiveno’s local library and will not change browser bookmarks. Bookmark import will turn off; if sync is on it will turn off too. Export first if you need a backup. Continue?"
+    "message": "This permanently clears Yiveno’s local library and will not change browser bookmarks. Bookmark import will turn off; if sync is on it will turn off too. On-device recall ranking signals are cleared as well. Export first if you need a backup. Continue?"
   },
   "settings_data_clear_local_done": {
     "message": "Cleared $COUNT$ local items (browser bookmarks unchanged)",
@@ -1067,11 +1073,35 @@
       }
     }
   },
+  "settings_data_outcome_soft_adjust_toggle": {
+    "message": "Personal ranking boosts from Outcomes"
+  },
+  "settings_data_outcome_soft_adjust_hint": {
+    "message": "When on, Yiveno may softly boost or demote matches using on-device Outcome pairs. Off pauses that only—your library and find still work; pairs stay until you clear them."
+  },
+  "settings_data_clear_recall_adaptation": {
+    "message": "Clear on-device recall adaptation"
+  },
+  "settings_data_clear_recall_adaptation_hint": {
+    "message": "Reset Outcome ranking pairs and local timing diagnostics. Your saved library stays; find still works."
+  },
+  "settings_data_clear_recall_adaptation_action": {
+    "message": "Clear signals"
+  },
+  "settings_data_clear_recall_adaptation_confirm": {
+    "message": "This clears on-device Outcome ranking pairs and local timing diagnostics only. Your library, bookmarks, and sync settings stay. Continue?"
+  },
+  "settings_data_clear_recall_adaptation_done": {
+    "message": "On-device recall adaptation signals cleared"
+  },
   "settings_error_local_clear": {
     "message": "Failed to clear local memory"
   },
+  "settings_error_local_recall_adaptation_clear": {
+    "message": "Failed to clear on-device recall adaptation"
+  },
   "settings_privacy_intro": {
-    "message": "How Yiveno handles your memories, ownership, optional sync, and AI."
+    "message": "How Yiveno handles your memories, plus import, backup, on-device recall adaptation, and remove. Browser bookmarks stay untouched."
   },
   "settings_mcp_toggle": {
     "message": "Read-only MCP (beta)"
@@ -1090,6 +1120,9 @@
   },
   "settings_privacy_bullet_local": {
     "message": "On this device: excerpts, notes, bookmarks, open/dismiss signals, and helpers that make recall work."
+  },
+  "settings_privacy_bullet_adaptation": {
+    "message": "On-device recall ranking may use Outcome pairs and open signals; they stay on this device. Data → Clear on-device recall adaptation resets those buffers without deleting your library. Turning AI on for understanding is not permission to keep your content for quality review. We do not upload de-identified product analytics by default."
   },
   "settings_privacy_bullet_ownership": {
     "message": "You own what you Capture and your in-library usage history; recall helpers stay with your items, not as separate Yiveno assets."
@@ -1181,9 +1214,6 @@
         "content": "$1"
       }
     }
-  },
-  "settings_privacy_delete_cloud_sign_in": {
-    "message": "Sign in to delete cloud memories or your account."
   },
   "settings_privacy_delete_account": {
     "message": "Delete account"
@@ -1484,9 +1514,6 @@
   "settings_sync_toggle": {
     "message": "Sync memories to the cloud"
   },
-  "settings_sync_toggle_hint": {
-    "message": "Sign in from the header account icon first."
-  },
   "settings_sync_now": {
     "message": "Sync now"
   },
@@ -1608,34 +1635,11 @@
   "settings_error_subscription_status": {
     "message": "Couldn’t load subscription status"
   },
-  "settings_subscription_title": {
-    "message": "Plan"
-  },
   "settings_subscription_tier_free": {
     "message": "Free"
   },
   "settings_subscription_tier_pro": {
     "message": "Pro"
-  },
-  "settings_subscription_period_end": {
-    "message": "Renews / ends $DATE$",
-    "placeholders": {
-      "DATE": {
-        "content": "$1"
-      }
-    }
-  },
-  "settings_subscription_upgrade": {
-    "message": "Upgrade to Pro"
-  },
-  "settings_subscription_manage": {
-    "message": "Manage subscription"
-  },
-  "settings_subscription_sign_in_hint": {
-    "message": "Sign in to check Pro status."
-  },
-  "settings_subscription_hybrid_hint": {
-    "message": "Find quality is the same on Free and Pro. Pro unlocks cloud sync and more cloud help with your clues."
   },
   "settings_sync_pro_required_hint": {
     "message": "Cloud sync requires Pro."

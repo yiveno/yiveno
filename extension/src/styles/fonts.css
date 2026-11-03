@@ -15,8 +15,8 @@
 
 @font-face {
   font-family: 'Work Sans';
-  font-style: normal;
   font-weight: 300 500;
+  font-style: normal;
   font-display: swap;
   src: url('../../public/fonts/worksans-normal.woff2') format('woff2');
   unicode-range:

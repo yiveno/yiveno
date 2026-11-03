@@ -12,15 +12,27 @@ withDefaults(
     subtitle?: string
     /** danger=不可逆/删除类操作行 */
     tone?: 'default' | 'danger'
+    /**
+     * embedded=嵌在分组卡内（去独立描边/圆角，由分组卡统一包边）。
+     * card=默认独立行卡。
+     */
+    surface?: 'card' | 'embedded'
   }>(),
   {
-    tone: 'default'
+    tone: 'default',
+    surface: 'card'
   }
 )
 </script>
 
 <template>
-  <div class="settings-action-row" :class="{ 'settings-action-row--danger': tone === 'danger' }">
+  <div
+    class="settings-action-row"
+    :class="{
+      'settings-action-row--danger': tone === 'danger',
+      'settings-action-row--embedded': surface === 'embedded'
+    }"
+  >
     <div class="settings-action-row__copy">
       <p class="settings-action-row__title">{{ title }}</p>
       <p v-if="subtitle" class="settings-action-row__subtitle">{{ subtitle }}</p>
@@ -45,6 +57,25 @@ withDefaults(
 
 .settings-action-row--danger {
   border-color: color-mix(in srgb, var(--danger) 28%, var(--border));
+}
+
+.settings-action-row--embedded {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.settings-action-row--embedded + .settings-action-row--embedded {
+  border-top: 1px solid var(--border);
+}
+
+.settings-action-row--embedded.settings-action-row--danger {
+  border-color: transparent;
+}
+
+.settings-action-row--embedded.settings-action-row--danger + .settings-action-row--embedded {
+  border-top-color: color-mix(in srgb, var(--danger) 22%, var(--border));
 }
 
 .settings-action-row__copy {

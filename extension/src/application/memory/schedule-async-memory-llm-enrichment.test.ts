@@ -50,6 +50,7 @@ describe('runAsyncMemoryLlmEnrichment', () => {
       aiFeaturesEnabled: true,
       chromeBookmarkIngestEnabled: true,
       mcpReadOnlyEnabled: false,
+      recallOutcomePairSoftAdjustEnabled: true,
       uiLocalePreference: 'system'
     })
   })
@@ -60,6 +61,7 @@ describe('runAsyncMemoryLlmEnrichment', () => {
       aiFeaturesEnabled: false,
       chromeBookmarkIngestEnabled: true,
       mcpReadOnlyEnabled: false,
+      recallOutcomePairSoftAdjustEnabled: true,
       uiLocalePreference: 'system'
     })
     const item = createBookmarkMemoryItem({

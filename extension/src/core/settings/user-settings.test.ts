@@ -11,6 +11,7 @@ describe('user-settings', () => {
     expect(DEFAULT_USER_SETTINGS.selectionToolbarEnabled).toBe(true)
     expect(DEFAULT_USER_SETTINGS.aiFeaturesEnabled).toBe(true)
     expect(DEFAULT_USER_SETTINGS.chromeBookmarkIngestEnabled).toBe(false)
+    expect(DEFAULT_USER_SETTINGS.recallOutcomePairSoftAdjustEnabled).toBe(true)
   })
 
   it('mergeUserSettings 合并局部更新', () => {
@@ -19,6 +20,7 @@ describe('user-settings', () => {
       aiFeaturesEnabled: true,
       chromeBookmarkIngestEnabled: false,
       mcpReadOnlyEnabled: false,
+      recallOutcomePairSoftAdjustEnabled: true,
       uiLocalePreference: 'system'
     })
   })
@@ -29,6 +31,7 @@ describe('user-settings', () => {
       aiFeaturesEnabled: true,
       chromeBookmarkIngestEnabled: false,
       mcpReadOnlyEnabled: false,
+      recallOutcomePairSoftAdjustEnabled: true,
       uiLocalePreference: 'system'
     })
     expect(parseUserSettings({ selectionToolbarEnabled: 'yes' })).toEqual(DEFAULT_USER_SETTINGS)

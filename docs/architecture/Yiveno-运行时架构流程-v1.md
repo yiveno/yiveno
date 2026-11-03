@@ -853,8 +853,10 @@ Listener 直调（无 UI messaging）仍算运行时入口：`omnibox` / `contex
 
 ### 7.1 必保门禁（CI / pre-push）
 
+- CI：`test:run` **加**显式 `bun run test:must`（`src/core/recall/eval`；eval `*.test.ts` 数量地板）——防 vitest include/目录漂移把 must 静默移出门禁
 - `recall-eval.test.ts`：**must 全绿**；stretch 汇报进度、不挡门禁
-- 相关入口另有：`omnibox-eval` / `omnibox_must`、`hybrid-eval`、parse-gold 等（按改动面选跑；合入前 Recall 用户可感变更至少 must 或产品文档 §5 手测）
+- 相关入口另有：`omnibox-eval` / `omnibox_must`、`hybrid-eval`、parse-gold（规则）等（按改动面选跑；合入前 Recall 用户可感变更至少 must 或产品文档 §5 手测）
+- **真实** LLM / BGE：不进 PR CI；改模型/prompt 前手动跑 Actions **Recall Real Eval**（`workflow_dispatch`；见产品文档 §1.1 第 5 条）
 - `bun run doc:check`：message registry / CURRENT 等文档门禁
 
 ### 7.2 领域单测（示例，非穷尽）
