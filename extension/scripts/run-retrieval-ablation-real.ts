@@ -441,6 +441,7 @@ async function resolveAccessToken(): Promise<
   }
   tried.push('env:RETRIEVAL_ABLATION_ACCESS_TOKEN=missing')
 
+  const onGitHubActions = process.env.GITHUB_ACTIONS === 'true'
   const forceBridge = process.env.RETRIEVAL_ABLATION_TOKEN_BRIDGE === '1'
   if (!forceBridge) {
     const minted = await mintAccessTokenViaSupabaseAdmin()
@@ -457,8 +458,26 @@ async function resolveAccessToken(): Promise<
         detail: `email=${minted.email} userId=${minted.userId}（generateLink+verifyOtp · 与 Worker mint 同源）`
       }
     }
+    // Actions 无本机扩展 bridge：mint 失败应立刻停，勿空等 90s
+    if (onGitHubActions && !forceBridge) {
+      return {
+        ok: false,
+        detail:
+          'GitHub Actions 上 supabase_admin_mint 失败。请核对 Actions Secret：SUPABASE_SERVICE_ROLE_KEY 须为 Dashboard → API → service_role（secret），勿贴成 anon；SUPABASE_URL 须同项目。',
+        tried
+      }
+    }
   } else {
     tried.push('supabase_admin_mint:skipped(RETRIEVAL_ABLATION_TOKEN_BRIDGE=1)')
+  }
+
+  if (onGitHubActions && !forceBridge) {
+    return {
+      ok: false,
+      detail:
+        'GitHub Actions 默认不启 extension bridge；请配 SUPABASE_* mint 或 RETRIEVAL_ABLATION_ACCESS_TOKEN',
+      tried
+    }
   }
 
   const bridged = await waitForExtensionBridgeToken(BRIDGE_WAIT_MS)

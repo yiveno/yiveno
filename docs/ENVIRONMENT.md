@@ -211,6 +211,8 @@ BGE 消融要打 **Yiveno Worker** `POST /api/ai/embed`（鉴权后才出真实�
 
 **安全：** service role 仅用于评测 mint；勿写入仓库；Actions Secret 权限与生产同源，只给可信维护者。
 
+**Actions mint 踩坑：** `SUPABASE_SERVICE_ROLE_KEY` 必须是 Dashboard → API → **service_role**（标 secret），**不要**误贴 `anon` `public`。URL / anon / service_role 须同一 project。贴错时日志会出现 `This endpoint requires a valid …`，job 会红。
+
 **门禁：**
 
 - **parse-gold：** workflow 默认 `vs_baseline`——对照 field-v1 快照；已知 31/35 残差绿，**新增** must 回归才红（只防退步）。本地默认 `absolute`。
