@@ -191,13 +191,29 @@ bun run env:check:prod
 > **与 PR CI 分计：** 日常 CI 只跑确定性 `test:must`；真实 LLM / BGE **不**进每次 PR。  
 > **配置位置：** 仓库 Settings → Secrets and variables → Actions。
 
-| Secret                                         | 用途                                                          | 必填                       |
-| ---------------------------------------------- | ------------------------------------------------------------- | -------------------------- |
-| `DEEPSEEK_API_KEY` 或 `PARSE_GOLD_LLM_API_KEY` | `parse-gold:llm` 调上游聊天补全                               | 跑 parse-gold 套件时二选一 |
-| `RETRIEVAL_ABLATION_ACCESS_TOKEN`              | `retrieval-ablation:real` 调 Worker `/api/ai/embed` 的 Bearer | 跑消融套件时必填           |
-| `RETRIEVAL_ABLATION_API_BASE`                  | embed API 基址；未设则脚本侧默认 `https://api.yiveno.com`     | 可选                       |
+| Secret                                                             | 用途                                                                            | 必填                   |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------- | ---------------------- |
+| `DEEPSEEK_API_KEY` 或 `PARSE_GOLD_LLM_API_KEY`                     | `parse-gold:llm` 调上游聊天补全                                                 | 跑 parse-gold 时二选一 |
+| `SUPABASE_URL` + `SUPABASE_ANON_KEY` + `SUPABASE_SERVICE_ROLE_KEY` | 消融 job 内 **mint** 短期会话（与本机脚本同源；**推荐**，不过期）               | 跑消融时与下行二选一   |
+| `RETRIEVAL_ABLATION_ACCESS_TOKEN`                                  | 消融用短期 **登录 Bearer**（会过期；仅当不想把 service role 放进 Actions 时用） | 跑消融时与上行二选一   |
+| `RETRIEVAL_ABLATION_API_BASE`                                      | embed API 基址；未设默认 `https://api.yiveno.com`                               | 可选                   |
+| `RETRIEVAL_ABLATION_USER_EMAIL`                                    | mint 目标邮箱；默认 `retrieval-ablation-local@yiveno.dev`                       | 可选                   |
 
-**何时触发：** 改 clue NLU prompt / Zod 槽位、`AI_HOSTED_MODEL*`、Worker embed 模型，或发版前抽检。Actions → **Recall Real Eval** → Run workflow。
+### 消融鉴权是什么
+
+BGE 消融要打 **Yiveno Worker** `POST /api/ai/embed`（鉴权后才出真实向量）。鉴权物是**登录用户 access JWT**——**不是** DeepSeek Key。
+
+| 场景                       | 做法                                                                                       |
+| -------------------------- | ------------------------------------------------------------------------------------------ |
+| **本机**                   | `.env*.local` 有 `SUPABASE_*` → 脚本自动 mint；无需手贴 token                              |
+| **GitHub Actions（推荐）** | 配 `SUPABASE_URL` / `SUPABASE_ANON_KEY` / `SUPABASE_SERVICE_ROLE_KEY` → workflow 每次 mint |
+| **GitHub Actions（备选）** | 配短期 `RETRIEVAL_ABLATION_ACCESS_TOKEN`（过期需换）                                       |
+
+**安全：** service role 仅用于评测 mint；勿写入仓库；Actions Secret 权限与生产同源，只给可信维护者。
+
+**parse-gold 门禁：** workflow 默认 `PARSE_GOLD_LLM_GATE_MODE=vs_baseline`——对照 `docs/audits/snapshots/2026-10-30-parse-gold-deepseek-v4-flash-field-v1.json`；已知 31/35 残差绿，**新增** must 回归才红。本地默认仍是 `absolute`。
+
+**何时触发：** 改 clue NLU prompt / Zod 槽位、`AI_HOSTED_MODEL*`、Worker embed 模型，或发版前抽检。Actions → **Recall Real Eval** → suite 选 `both` 或 `retrieval-ablation-real`。
 
 ## 禁止事项
 

@@ -12,6 +12,10 @@
  *   PARSE_GOLD_LLM_GATE      可选 must|stretch|all（默认 all）
  *   PARSE_GOLD_LLM_JSON_OUT  可选；机器可读报告路径（相对 cwd 或绝对）
  *   PARSE_GOLD_GIT_SHA       可选；不设则尝试 `git rev-parse HEAD`
+ *   PARSE_GOLD_LLM_GATE_MODE  absolute（默认：任一 must 回归 → exit 2）|
+ *                             vs_baseline（仅相对基线**新增**回归才红；已知残差绿）
+ *   PARSE_GOLD_LLM_BASELINE_PATH  vs_baseline 时快照路径（相对仓库根或绝对）；
+ *                             未设且 model=deepseek-v4-flash 时用默认 field-v1 快照
  */
 
 import { createHash } from 'node:crypto'
@@ -20,6 +24,11 @@ import { dirname, isAbsolute, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { spawnSync } from 'node:child_process'
 
+import {
+  compareMustRegressionsToBaseline,
+  extractParseGoldBaselineSnapshot,
+  formatParseGoldBaselineCompareSummary
+} from '../src/core/recall/eval/compare-parse-gold-baseline'
 import {
   compareParseGoldWithLlm,
   formatParseGoldCompareSummary
@@ -42,6 +51,33 @@ import type { LlmChatCompleter } from '../src/core/recall/understand/parse-recal
 
 const scriptDir = dirname(fileURLToPath(import.meta.url))
 const repoRoot = resolve(scriptDir, '../..')
+
+/** deepseek-v4-flash 默认对照快照（已知 must 31/35 残差）。 */
+const DEFAULT_BASELINE_BY_MODEL: Record<string, string> = {
+  'deepseek-v4-flash': 'docs/audits/snapshots/2026-10-30-parse-gold-deepseek-v4-flash-field-v1.json'
+}
+
+type GateMode = 'absolute' | 'vs_baseline'
+
+function resolveGateMode(raw: string | undefined): GateMode {
+  const mode = raw?.trim() || 'absolute'
+  if (mode === 'absolute' || mode === 'vs_baseline') {
+    return mode
+  }
+  throw new Error(`PARSE_GOLD_LLM_GATE_MODE 无效: ${mode}（用 absolute|vs_baseline）`)
+}
+
+function resolveBaselinePath(model: string, explicit: string | undefined): string {
+  const raw = explicit?.trim()
+  if (raw) {
+    return isAbsolute(raw) ? raw : resolve(repoRoot, raw)
+  }
+  const fallback = DEFAULT_BASELINE_BY_MODEL[model]
+  if (!fallback) {
+    throw new Error(`vs_baseline 需要 PARSE_GOLD_LLM_BASELINE_PATH（model=${model} 无默认快照）`)
+  }
+  return resolve(repoRoot, fallback)
+}
 
 /** 从仓库根 .env*.local 注入缺失的环境变量（不覆盖已有）。 */
 function loadLocalEnvFiles(): void {
@@ -260,7 +296,66 @@ export async function runParseGoldLlmCli(): Promise<void> {
     return
   }
 
-  // 有 must 回归时以非 0 退出，便于本地门禁；无 key 的 CI 不会跑本脚本
+  const gateMode = resolveGateMode(process.env.PARSE_GOLD_LLM_GATE_MODE)
+  if (gateMode === 'vs_baseline') {
+    let baselinePath: string
+    try {
+      baselinePath = resolveBaselinePath(model, process.env.PARSE_GOLD_LLM_BASELINE_PATH)
+    } catch (error) {
+      console.error(error instanceof Error ? error.message : error)
+      process.exitCode = 1
+      return
+    }
+    if (!existsSync(baselinePath)) {
+      console.error(`[parse-gold:llm] 基线快照不存在: ${baselinePath}`)
+      process.exitCode = 1
+      return
+    }
+    let baselineRaw: unknown
+    try {
+      baselineRaw = JSON.parse(readFileSync(baselinePath, 'utf8')) as unknown
+    } catch (error) {
+      console.error(
+        `[parse-gold:llm] 基线快照无法解析: ${baselinePath}`,
+        error instanceof Error ? error.message : error
+      )
+      process.exitCode = 1
+      return
+    }
+    let baseline
+    try {
+      baseline = extractParseGoldBaselineSnapshot(baselineRaw)
+    } catch (error) {
+      console.error(
+        `[parse-gold:llm] 基线快照结构无效: ${baselinePath}`,
+        error instanceof Error ? error.message : error
+      )
+      process.exitCode = 1
+      return
+    }
+    if (baseline.model !== model) {
+      console.warn(
+        `[parse-gold:llm] 警告：基线 model=${baseline.model} 与本次 model=${model} 不一致；仍按回归 id 集合比较`
+      )
+    }
+    const compared = compareMustRegressionsToBaseline({
+      currentMustRegressedByLlm: report.mustRegressedByLlm,
+      baseline
+    })
+    console.info(
+      formatParseGoldBaselineCompareSummary(compared, {
+        baselinePath,
+        baselineMustScore: baseline.llmMustScore
+      })
+    )
+    // 仅新增 must 回归才红；已知残差（如 31/35 那 4 条）绿
+    if (!compared.passed) {
+      process.exitCode = 2
+    }
+    return
+  }
+
+  // absolute：任一 must 回归 → exit 2（本地严门禁；无 key 的 PR CI 不跑本脚本）
   if (report.mustRegressedByLlm.length > 0) {
     process.exitCode = 2
   }

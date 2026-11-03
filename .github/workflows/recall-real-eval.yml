@@ -12,10 +12,15 @@
 #
 # 仓库 Secrets（Settings → Secrets and variables → Actions）：
 #   - DEEPSEEK_API_KEY 或 PARSE_GOLD_LLM_API_KEY（parse-gold:llm）
-#   - RETRIEVAL_ABLATION_ACCESS_TOKEN（retrieval-ablation:real · 有效 Bearer）
+#   - 消融鉴权二选一：
+#       A) SUPABASE_URL + SUPABASE_ANON_KEY + SUPABASE_SERVICE_ROLE_KEY（推荐 · job 内 mint，不过期）
+#       B) RETRIEVAL_ABLATION_ACCESS_TOKEN（短期 JWT · 会过期）
 #   - 可选 RETRIEVAL_ABLATION_API_BASE（默认 https://api.yiveno.com）
+#   - 可选 RETRIEVAL_ABLATION_USER_EMAIL（mint 用户；默认 retrieval-ablation-local@yiveno.dev）
 #
-# 与 CI 分计：本 workflow 红 ≠ 挡 PR；红 = 真实评测回归，须人工判读后再合模型/prompt。
+# 与 CI 分计：本 workflow 红 ≠ 挡 PR。
+# parse-gold 默认 vs_baseline：已知残差（如 deepseek-v4-flash 31/35）绿；仅新增 must 回归才红。
+# absolute 模式仍可选手动「任一 must 回归即红」。
 
 name: Recall Real Eval
 
@@ -41,6 +46,13 @@ on:
           - must
           - all
         default: must
+      gate_mode:
+        description: 'parse-gold 门禁：vs_baseline=对照快照变差才红；absolute=任一 must 回归即红'
+        type: choice
+        options:
+          - vs_baseline
+          - absolute
+        default: vs_baseline
 
 permissions:
   contents: read
@@ -86,9 +98,12 @@ jobs:
           PARSE_GOLD_LLM_API_KEY: ${{ secrets.PARSE_GOLD_LLM_API_KEY }}
           PARSE_GOLD_LLM_MODEL: ${{ inputs.model }}
           PARSE_GOLD_LLM_GATE: ${{ inputs.gate }}
+          PARSE_GOLD_LLM_GATE_MODE: ${{ inputs.gate_mode }}
           PARSE_GOLD_LLM_COMPAT: deepseek
           PARSE_GOLD_GIT_SHA: ${{ github.sha }}
           PARSE_GOLD_LLM_JSON_OUT: ${{ github.workspace }}/parse-gold-llm-report.json
+          # deepseek-v4-flash 默认快照；换模型时请改 inputs 或另设 Secret/改脚本 DEFAULT_BASELINE_BY_MODEL
+          PARSE_GOLD_LLM_BASELINE_PATH: docs/audits/snapshots/2026-10-30-parse-gold-deepseek-v4-flash-field-v1.json
         run: bun run parse-gold:llm
 
       - name: Upload parse-gold report
@@ -119,25 +134,39 @@ jobs:
       - name: Install
         run: bun install --frozen-lockfile
 
-      - name: Require ablation access token
+      - name: Require ablation auth (token or Supabase mint)
         env:
           RETRIEVAL_ABLATION_ACCESS_TOKEN: ${{ secrets.RETRIEVAL_ABLATION_ACCESS_TOKEN }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
         run: |
           set -euo pipefail
-          if [ -z "${RETRIEVAL_ABLATION_ACCESS_TOKEN:-}" ]; then
-            echo "缺少 Actions Secret：RETRIEVAL_ABLATION_ACCESS_TOKEN"
-            exit 1
+          if [ -n "${RETRIEVAL_ABLATION_ACCESS_TOKEN:-}" ]; then
+            echo "auth=RETRIEVAL_ABLATION_ACCESS_TOKEN"
+            exit 0
           fi
+          if [ -n "${SUPABASE_URL:-}" ] && [ -n "${SUPABASE_ANON_KEY:-}" ] && [ -n "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
+            echo "auth=supabase_admin_mint（job 内签发短期会话）"
+            exit 0
+          fi
+          echo "缺少消融鉴权：请配 SUPABASE_URL + SUPABASE_ANON_KEY + SUPABASE_SERVICE_ROLE_KEY（推荐），"
+          echo "或配短期 RETRIEVAL_ABLATION_ACCESS_TOKEN"
+          exit 1
 
       - name: Run retrieval-ablation:real
         working-directory: extension
         env:
           RETRIEVAL_ABLATION_ACCESS_TOKEN: ${{ secrets.RETRIEVAL_ABLATION_ACCESS_TOKEN }}
           RETRIEVAL_ABLATION_API_BASE: ${{ secrets.RETRIEVAL_ABLATION_API_BASE }}
+          RETRIEVAL_ABLATION_USER_EMAIL: ${{ secrets.RETRIEVAL_ABLATION_USER_EMAIL }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           RETRIEVAL_ABLATION_OUT: ${{ github.workspace }}/retrieval-ablation-real-report.json
         run: |
           set -euo pipefail
-          # Secret 未配时回落到生产 API（Bearer 仍必填）
+          # Secret 未配时回落到生产 API
           export RETRIEVAL_ABLATION_API_BASE="${RETRIEVAL_ABLATION_API_BASE:-https://api.yiveno.com}"
           echo "apiBase=${RETRIEVAL_ABLATION_API_BASE}"
           bun run retrieval-ablation:real
