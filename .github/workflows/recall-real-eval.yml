@@ -4,23 +4,20 @@
 # 托管模型升级、prompt 改动、Worker embed 模型变更对真实解析率 / BGE 消融的影响，
 # 须另跑本 workflow；禁止把真实 LLM/BGE 塞进每次 PR。
 #
-# 何时手动触发（Actions → Recall Real Eval → Run workflow）：
-#   - 改 clue NLU prompt / Zod 槽位契约 / hosted completer 路径
-#   - 改 Worker `AI_HOSTED_MODEL*` / DeepSeek 上游模型
-#   - 改 Worker embed 模型（BGE-M3 等）或 Hybrid 融合契约
-#   - 发版前抽检真实 must 回归
+# 触发：
+#   - workflow_dispatch（改 prompt / AI_HOSTED_MODEL* / embed / 发版前）
+#   - schedule：每周一 06:00 UTC（≈北京 14:00）跑 both，作「人忘了跑」的兜底
+# 与 CI 分计：红 ≠ 挡 PR；红 = 真实评测回归/质量退化，须人工判读。
 #
-# 仓库 Secrets（Settings → Secrets and variables → Actions）：
-#   - DEEPSEEK_API_KEY 或 PARSE_GOLD_LLM_API_KEY（parse-gold:llm）
-#   - 消融鉴权二选一：
-#       A) SUPABASE_URL + SUPABASE_ANON_KEY + SUPABASE_SERVICE_ROLE_KEY（推荐 · job 内 mint，不过期）
-#       B) RETRIEVAL_ABLATION_ACCESS_TOKEN（短期 JWT · 会过期）
-#   - 可选 RETRIEVAL_ABLATION_API_BASE（默认 https://api.yiveno.com）
-#   - 可选 RETRIEVAL_ABLATION_USER_EMAIL（mint 用户；默认 retrieval-ablation-local@yiveno.dev）
+# 门禁：
+#   - parse-gold 默认 vs_baseline（已知 31/35 残差绿；新增 must 回归才红）
+#   - 消融默认 vs_baseline（对照 B2 real-run；召回/MRR/nDCG 不得降、negFP 不得升）
 #
-# 与 CI 分计：本 workflow 红 ≠ 挡 PR。
-# parse-gold 默认 vs_baseline：已知残差（如 deepseek-v4-flash 31/35）绿；仅新增 must 回归才红。
-# absolute 模式仍可选手动「任一 must 回归即红」。
+# 仓库 Secrets：
+#   - DEEPSEEK_API_KEY 或 PARSE_GOLD_LLM_API_KEY（parse-gold）
+#   - 消融鉴权：SUPABASE_URL + SUPABASE_ANON_KEY + SUPABASE_SERVICE_ROLE_KEY（推荐）
+#     或短期 RETRIEVAL_ABLATION_ACCESS_TOKEN
+#   - 可选 RETRIEVAL_ABLATION_API_BASE / RETRIEVAL_ABLATION_USER_EMAIL
 
 name: Recall Real Eval
 
@@ -34,7 +31,7 @@ on:
           - parse-gold-llm
           - retrieval-ablation-real
           - both
-        default: parse-gold-llm
+        default: both
       model:
         description: 'PARSE_GOLD_LLM_MODEL（空则用脚本默认 / AI_HOSTED_MODEL）'
         required: false
@@ -53,6 +50,9 @@ on:
           - vs_baseline
           - absolute
         default: vs_baseline
+  schedule:
+    # 每周一 06:00 UTC · 兜底抽检 both（Secrets 未配会红，提醒配齐）
+    - cron: '0 6 * * 1'
 
 permissions:
   contents: read
@@ -63,7 +63,7 @@ env:
 jobs:
   parse-gold-llm:
     name: parse-gold:llm (real)
-    if: ${{ inputs.suite == 'parse-gold-llm' || inputs.suite == 'both' }}
+    if: ${{ github.event_name == 'schedule' || inputs.suite == 'parse-gold-llm' || inputs.suite == 'both' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -96,13 +96,12 @@ jobs:
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
           PARSE_GOLD_LLM_API_KEY: ${{ secrets.PARSE_GOLD_LLM_API_KEY }}
-          PARSE_GOLD_LLM_MODEL: ${{ inputs.model }}
-          PARSE_GOLD_LLM_GATE: ${{ inputs.gate }}
-          PARSE_GOLD_LLM_GATE_MODE: ${{ inputs.gate_mode }}
+          PARSE_GOLD_LLM_MODEL: ${{ inputs.model || 'deepseek-v4-flash' }}
+          PARSE_GOLD_LLM_GATE: ${{ inputs.gate || 'must' }}
+          PARSE_GOLD_LLM_GATE_MODE: ${{ inputs.gate_mode || 'vs_baseline' }}
           PARSE_GOLD_LLM_COMPAT: deepseek
           PARSE_GOLD_GIT_SHA: ${{ github.sha }}
           PARSE_GOLD_LLM_JSON_OUT: ${{ github.workspace }}/parse-gold-llm-report.json
-          # deepseek-v4-flash 默认快照；换模型时请改 inputs 或另设 Secret/改脚本 DEFAULT_BASELINE_BY_MODEL
           PARSE_GOLD_LLM_BASELINE_PATH: docs/audits/snapshots/2026-10-30-parse-gold-deepseek-v4-flash-field-v1.json
         run: bun run parse-gold:llm
 
@@ -117,7 +116,7 @@ jobs:
 
   retrieval-ablation-real:
     name: retrieval-ablation:real (BGE)
-    if: ${{ inputs.suite == 'retrieval-ablation-real' || inputs.suite == 'both' }}
+    if: ${{ github.event_name == 'schedule' || inputs.suite == 'retrieval-ablation-real' || inputs.suite == 'both' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
@@ -164,9 +163,11 @@ jobs:
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           RETRIEVAL_ABLATION_OUT: ${{ github.workspace }}/retrieval-ablation-real-report.json
+          # 质量门禁：对照 B2 对齐快照；指标退化 → exit 2
+          RETRIEVAL_ABLATION_GATE_MODE: vs_baseline
+          RETRIEVAL_ABLATION_BASELINE_PATH: docs/audits/2026-10-L2召回消融-real-run-b2-aligned.json
         run: |
           set -euo pipefail
-          # Secret 未配时回落到生产 API
           export RETRIEVAL_ABLATION_API_BASE="${RETRIEVAL_ABLATION_API_BASE:-https://api.yiveno.com}"
           echo "apiBase=${RETRIEVAL_ABLATION_API_BASE}"
           bun run retrieval-ablation:real

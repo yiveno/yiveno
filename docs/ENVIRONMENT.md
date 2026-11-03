@@ -211,9 +211,12 @@ BGE 消融要打 **Yiveno Worker** `POST /api/ai/embed`（鉴权后才出真实�
 
 **安全：** service role 仅用于评测 mint；勿写入仓库；Actions Secret 权限与生产同源，只给可信维护者。
 
-**parse-gold 门禁：** workflow 默认 `PARSE_GOLD_LLM_GATE_MODE=vs_baseline`——对照 `docs/audits/snapshots/2026-10-30-parse-gold-deepseek-v4-flash-field-v1.json`；已知 31/35 残差绿，**新增** must 回归才红。本地默认仍是 `absolute`。
+**门禁：**
 
-**何时触发：** 改 clue NLU prompt / Zod 槽位、`AI_HOSTED_MODEL*`、Worker embed 模型，或发版前抽检。Actions → **Recall Real Eval** → suite 选 `both` 或 `retrieval-ablation-real`。
+- **parse-gold：** workflow 默认 `vs_baseline`——对照 field-v1 快照；已知 31/35 残差绿，**新增** must 回归才红（只防退步）。本地默认 `absolute`。
+- **消融：** workflow 默认 `RETRIEVAL_ABLATION_GATE_MODE=vs_baseline`——对照 `docs/audits/2026-10-L2召回消融-real-run-b2-aligned.json` 主口径 include；召回/MRR/nDCG 不得降、negFP 不得升。本地默认 `off`（仅测量）。
+
+**触发：** `workflow_dispatch`（改 prompt / 模型 / 发版前）+ **每周一 06:00 UTC cron** 跑 `both`（人忘了跑的兜底；Secrets 未配会红）。**不**挡 PR。
 
 ## 禁止事项
 

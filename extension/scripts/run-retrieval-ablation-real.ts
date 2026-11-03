@@ -19,17 +19,27 @@
  *
  * 其它：
  *   VITE_API_BASE_URL 或 RETRIEVAL_ABLATION_API_BASE  默认 http://localhost:8787
+ *   RETRIEVAL_ABLATION_OUT  报告写出路径
+ *   RETRIEVAL_ABLATION_GATE_MODE  off（默认）| vs_baseline
+ *     vs_baseline：对照快照主口径 include 指标；召回/MRR/nDCG 不得降、negFP 不得升
+ *   RETRIEVAL_ABLATION_BASELINE_PATH  vs_baseline 快照（相对仓库根或绝对）；
+ *     默认 docs/audits/2026-10-L2召回消融-real-run-b2-aligned.json
  *
  * 禁止：fake embedding / embeddingAnchor / 空向量续算。
  */
 
 import { createServer, type IncomingMessage, type ServerResponse } from 'node:http'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
+import { dirname, isAbsolute, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 import { createClient } from '@supabase/supabase-js'
 
+import {
+  compareRetrievalAblationToBaseline,
+  extractRetrievalAblationReport,
+  formatRetrievalAblationBaselineCompareSummary
+} from '../src/core/recall/eval/compare-retrieval-ablation-baseline'
 import {
   formatRetrievalAblationSummary,
   runRetrievalAblation,
@@ -41,6 +51,26 @@ const scriptDir = dirname(fileURLToPath(import.meta.url))
 const repoRoot = resolve(scriptDir, '../..')
 
 const DEFAULT_EVAL_EMAIL = 'retrieval-ablation-local@yiveno.dev'
+/** 与 B2 对齐 real-run 同档；vs_baseline 默认对照。 */
+const DEFAULT_ABLATION_BASELINE_REL = 'docs/audits/2026-10-L2召回消融-real-run-b2-aligned.json'
+
+type AblationGateMode = 'off' | 'vs_baseline'
+
+function resolveAblationGateMode(raw: string | undefined): AblationGateMode {
+  const mode = raw?.trim() || 'off'
+  if (mode === 'off' || mode === 'vs_baseline') {
+    return mode
+  }
+  throw new Error(`RETRIEVAL_ABLATION_GATE_MODE 无效: ${mode}（用 off|vs_baseline）`)
+}
+
+function resolveAblationBaselinePath(explicit: string | undefined): string {
+  const raw = explicit?.trim()
+  if (raw) {
+    return isAbsolute(raw) ? raw : resolve(repoRoot, raw)
+  }
+  return resolve(repoRoot, DEFAULT_ABLATION_BASELINE_REL)
+}
 const BRIDGE_PORT = Number(process.env.RETRIEVAL_ABLATION_BRIDGE_PORT || '17387')
 const BRIDGE_WAIT_MS = Number(process.env.RETRIEVAL_ABLATION_BRIDGE_WAIT_MS || '90000')
 
@@ -535,6 +565,63 @@ export async function runRetrievalAblationRealCli(): Promise<void> {
     'utf8'
   )
   console.info(`[retrieval-ablation:real] 已写入 ${outPath}`)
+
+  // 故障阈值已在上方设 exitCode；质量阈值（vs_baseline）另计，防「测了但不过问退化」
+  if (process.exitCode && process.exitCode !== 0) {
+    return
+  }
+
+  let gateMode: AblationGateMode
+  try {
+    gateMode = resolveAblationGateMode(process.env.RETRIEVAL_ABLATION_GATE_MODE)
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : error)
+    process.exitCode = 1
+    return
+  }
+  if (gateMode === 'off') {
+    console.info(
+      '[retrieval-ablation:real] gate=off（仅测量；设 RETRIEVAL_ABLATION_GATE_MODE=vs_baseline 启用质量门禁）'
+    )
+    return
+  }
+
+  const baselinePath = resolveAblationBaselinePath(process.env.RETRIEVAL_ABLATION_BASELINE_PATH)
+  if (!existsSync(baselinePath)) {
+    console.error(`[retrieval-ablation:real] 基线快照不存在: ${baselinePath}`)
+    process.exitCode = 1
+    return
+  }
+  let baselineRaw: unknown
+  try {
+    baselineRaw = JSON.parse(readFileSync(baselinePath, 'utf8')) as unknown
+  } catch (error) {
+    console.error(
+      `[retrieval-ablation:real] 基线快照无法解析: ${baselinePath}`,
+      error instanceof Error ? error.message : error
+    )
+    process.exitCode = 1
+    return
+  }
+  let baselineReport
+  try {
+    baselineReport = extractRetrievalAblationReport(baselineRaw)
+  } catch (error) {
+    console.error(
+      `[retrieval-ablation:real] 基线快照结构无效: ${baselinePath}`,
+      error instanceof Error ? error.message : error
+    )
+    process.exitCode = 1
+    return
+  }
+  const compared = compareRetrievalAblationToBaseline({
+    current: report,
+    baseline: baselineReport
+  })
+  console.info(formatRetrievalAblationBaselineCompareSummary(compared, { baselinePath }))
+  if (!compared.passed) {
+    process.exitCode = 2
+  }
 }
 
 const isDirectBunRun =

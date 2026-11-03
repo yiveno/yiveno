@@ -180,7 +180,7 @@ pre-push **不跑** ESLint、全仓 typecheck；extension 变更时跑 **build +
 | **每周一**    | —                                      | —            | —                          | `knip.yml` 定时复检 | —                                                                        |
 | **手动**      | —                                      | —            | —                          | —                   | **Recall Real Eval**（`workflow_dispatch`）：真实 `parse-gold:llm` / `retrieval-ablation:real`；**不**挡 PR |
 
-**CI vs 真实模型（Normative 工程口径）：** PR/main CI 只守**确定性替身**（规则 parse、fake/mock embed、`recall-eval` must）。托管模型 / prompt / Worker embed 变更前须手动跑 `.github/workflows/recall-real-eval.yml`（需 Actions Secrets）；禁止把真实 LLM/BGE 塞进每次 PR。parse-gold 真实评测默认 `vs_baseline`（已知 31/35 残差绿，新增回归才红）；BGE 消融用 `RETRIEVAL_ABLATION_ACCESS_TOKEN`（Worker 登录 Bearer，≠ DeepSeek Key）。
+**CI vs 真实模型（Normative 工程口径）：** PR/main CI 只守**确定性替身**（规则 parse、fake/mock embed、`recall-eval` must）。真实评测走 `.github/workflows/recall-real-eval.yml`（`workflow_dispatch` + 每周一 cron；**不**挡 PR）。parse-gold / 消融均默认 `vs_baseline`（只防退步）；消融另有指标质量阈值（召回不得降、negFP 不得升）。鉴权：`SUPABASE_*` mint 或短期 Bearer（≠ DeepSeek Key）。
 
 #### 本地命令
 
