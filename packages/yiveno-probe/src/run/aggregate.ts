@@ -16,7 +16,9 @@ function emptyGroup(): ProbeBatchGroupStats {
     in_topk: 0,
     miss: 0,
     unmapped: 0,
-    error: 0
+    error: 0,
+    false_positive: 0,
+    rejected: 0
   }
 }
 
@@ -37,6 +39,12 @@ function bumpGroup(group: ProbeBatchGroupStats, verdict: ProbeBatchVerdict): voi
       break
     case 'error':
       group.error += 1
+      break
+    case 'false_positive':
+      group.false_positive += 1
+      break
+    case 'rejected':
+      group.rejected += 1
       break
   }
 }
@@ -60,15 +68,18 @@ export function percentile(sortedAscending: readonly number[], p: number): numbe
   return sortedAscending[lo]! * (1 - weight) + sortedAscending[hi]! * weight
 }
 
+/** 失败优先：error < unmapped < false_positive < miss < in_topk < top1 < rejected */
 const VERDICT_FAILURE_RANK: Record<ProbeBatchVerdict, number> = {
   error: 0,
   unmapped: 1,
-  miss: 2,
-  in_topk: 3,
-  top1: 4
+  false_positive: 2,
+  miss: 3,
+  in_topk: 4,
+  top1: 5,
+  rejected: 6
 }
 
-/** 失败（error / unmapped / miss）排前，同档按耗时降序。 */
+/** 失败排前，同档按耗时降序。 */
 export function sortProbeResultsFailuresFirst(
   rows: readonly ProbeBatchCaseResult[]
 ): ProbeBatchCaseResult[] {
@@ -87,19 +98,25 @@ export function aggregateProbeBatchResults(
 ): ProbeBatchAggregates & { cases: ProbeBatchCaseResult[] } {
   const byPersona: Record<string, ProbeBatchGroupStats> = {}
   const bySource: Record<string, ProbeBatchGroupStats> = {}
+  const byClueType: Record<string, ProbeBatchGroupStats> = {}
   let top1Count = 0
   let inTopkCount = 0
   let missCount = 0
   let unmappedCount = 0
   let errorCount = 0
+  let clusterTotal = 0
+  let clusterAnyHit = 0
+  let clusterPreferredTop1 = 0
+  let negativeTotal = 0
+  let negativeFp = 0
+  let negativeRejected = 0
   const latencies: number[] = []
 
   for (const row of rows) {
     latencies.push(row.latencyMs)
-    const personaGroup = (byPersona[row.persona] ??= emptyGroup())
-    const sourceGroup = (bySource[row.source] ??= emptyGroup())
-    bumpGroup(personaGroup, row.verdict)
-    bumpGroup(sourceGroup, row.verdict)
+    bumpGroup((byPersona[row.persona] ??= emptyGroup()), row.verdict)
+    bumpGroup((bySource[row.source] ??= emptyGroup()), row.verdict)
+    bumpGroup((byClueType[row.clueType] ??= emptyGroup()), row.verdict)
 
     switch (row.verdict) {
       case 'top1':
@@ -117,6 +134,27 @@ export function aggregateProbeBatchResults(
       case 'error':
         errorCount += 1
         break
+      default:
+        break
+    }
+
+    if (row.source === 'cluster' && row.expectedIds !== undefined) {
+      clusterTotal += 1
+      if (row.verdict === 'top1') {
+        clusterPreferredTop1 += 1
+        clusterAnyHit += 1
+      } else if (row.verdict === 'in_topk') {
+        clusterAnyHit += 1
+      }
+    }
+
+    if (row.source === 'negative') {
+      negativeTotal += 1
+      if (row.verdict === 'false_positive') {
+        negativeFp += 1
+      } else if (row.verdict === 'rejected') {
+        negativeRejected += 1
+      }
     }
   }
 
@@ -138,6 +176,20 @@ export function aggregateProbeBatchResults(
     missRate: judged === 0 ? 0 : missCount / judged,
     byPersona,
     bySource,
+    byClueType,
+    clusters: {
+      total: clusterTotal,
+      anyHitCount: clusterAnyHit,
+      preferredTop1Count: clusterPreferredTop1,
+      anyHitRate: clusterTotal === 0 ? 0 : clusterAnyHit / clusterTotal,
+      preferredTop1Rate: clusterTotal === 0 ? 0 : clusterPreferredTop1 / clusterTotal
+    },
+    negatives: {
+      total: negativeTotal,
+      falsePositiveCount: negativeFp,
+      rejectedCount: negativeRejected,
+      falsePositiveRate: negativeTotal === 0 ? 0 : negativeFp / negativeTotal
+    },
     latencyMs: {
       p50: percentile(sortedLatency, 0.5),
       p95: percentile(sortedLatency, 0.95)

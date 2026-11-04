@@ -1,5 +1,5 @@
 /**
- * 扩展画像语料包：精选条数、多样性可生成、suggestedClues 非空。
+ * 扩展画像语料包：精选条数、多样性可生成、clues 非空。
  * 不进召回 runtime；仅保证 seeder 夹具完整。
  */
 
@@ -30,12 +30,12 @@ describe('recall-probe extended personas', () => {
     expect(corpus!.bookmarks.length).toBeGreaterThanOrEqual(8)
     expect(corpus!.excerpts.length).toBeGreaterThanOrEqual(5)
     for (const bm of corpus!.bookmarks) {
-      expect(bm.suggestedClues.length).toBeGreaterThan(0)
+      expect(bm.clues.length).toBeGreaterThan(0)
       expect(bm.title.length).toBeGreaterThan(0)
       expect(bm.url.startsWith('http')).toBe(true)
     }
     for (const ex of corpus!.excerpts) {
-      expect(ex.suggestedClues.length).toBeGreaterThan(0)
+      expect(ex.clues.length).toBeGreaterThan(0)
       expect(ex.selectedText.length).toBeGreaterThan(20)
     }
   })

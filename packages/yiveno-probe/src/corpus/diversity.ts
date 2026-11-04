@@ -1,8 +1,10 @@
 /**
  * 质量轮多样性语料：画像风味 + 过程随机（可复现 seed）。
+ * 内容生成与线索生成分离（线索见 clue-gen.ts，独立 rng 流）。
  * URL 保留 yiveno-div 指纹供 DEV 清理；禁止进召回 runtime。
  */
 
+import { generateDiversityClues } from './clue-gen'
 import { DEFAULT_PROBE_FILLER_SEED, rngForFillerItem, type SeededRng } from './prng'
 import type { RecallProbePersonaId } from './types'
 import type { RecallProbeBookmarkSeed, RecallProbeExcerptSeed } from './types'
@@ -13,15 +15,17 @@ export type ProbeDiversityBuildOptions = {
   seed?: number
 }
 
-type DiversityHostPack = {
+export type DiversityHostPack = {
   hosts: readonly string[]
   titlePrefixes: readonly string[]
   subjects: readonly string[]
   noteTemplates: readonly string[]
   excerptSnippets: readonly string[]
+  /** 保存理由 / 场景片段（线索生成用；≥8） */
+  sceneFragments: readonly string[]
 }
 
-const PACKS: Record<RecallProbePersonaId, DiversityHostPack> = {
+export const DIVERSITY_PACKS: Record<RecallProbePersonaId, DiversityHostPack> = {
   researcher: {
     hosts: [
       'https://www.nature.com/articles/yiveno-div',
@@ -76,6 +80,16 @@ const PACKS: Record<RecallProbePersonaId, DiversityHostPack> = {
       'Verification rituals matter more than another dashboard of unverified quotes.',
       'Field notes drift when the codebook is updated mid-wave without a migration log.',
       'Interview prompts work better when they ask for a concrete scene, not a trait.'
+    ],
+    sceneFragments: [
+      'for the intro of my talk',
+      'ahead of Friday office hours',
+      'for the visiting scholar brief',
+      'before the panel dry run',
+      'for the podcast guest prep',
+      'ahead of the commute home',
+      'for the Sunday desk tidy',
+      'before the evening train ride'
     ]
   },
   creator: {
@@ -132,6 +146,16 @@ const PACKS: Record<RecallProbePersonaId, DiversityHostPack> = {
       'Labels die quietly; users blame themselves before your navigation.',
       'Density without clutter means every pixel still answers a question.',
       'Critique lands when it names the decision, not the person.'
+    ],
+    sceneFragments: [
+      'for the Sunday scrapbook night',
+      'ahead of the studio open house',
+      'for the weekend desk rearrange',
+      'before the gallery night talk',
+      'for the kitchen table sketch',
+      'ahead of the evening bus home',
+      'for the rainy-day tidy stack',
+      'before the morning coffee walk'
     ]
   },
   developer: {
@@ -188,6 +212,16 @@ const PACKS: Record<RecallProbePersonaId, DiversityHostPack> = {
       'Service worker event handles must stay registered or the worker sleeps mid-task.',
       'Idempotency keys only help if every client path actually sends them.',
       'EXPLAIN is a hint; production load still has to agree with the plan.'
+    ],
+    sceneFragments: [
+      'for the brown-bag lunch talk',
+      'ahead of the Friday bike ride',
+      'for the weekend errand list',
+      'before the evening stretch break',
+      'for the mentor circle notes',
+      'ahead of the Sunday desk reset',
+      'for the commute playlist swap',
+      'before the morning coffee refill'
     ]
   },
   student: {
@@ -244,6 +278,16 @@ const PACKS: Record<RecallProbePersonaId, DiversityHostPack> = {
       'Spaced repetition beats one long cram block when the exam spans multiple chapters.',
       'Office hours help when you bring the stuck step, not the whole unsolved set.',
       'Lab prep notes matter more than the pretty plot you paste into the PDF.'
+    ],
+    sceneFragments: [
+      'for the Sunday laundry pile',
+      'ahead of the evening bus home',
+      'for the club bake sale shift',
+      'before the advising appointment',
+      'for the roommate chore chart',
+      'ahead of the weekend kitchen tidy',
+      'for the hallway bulletin glance',
+      'before the morning alarm snooze'
     ]
   },
   knowledge_worker: {
@@ -300,6 +344,16 @@ const PACKS: Record<RecallProbePersonaId, DiversityHostPack> = {
       'All-hands agendas fail when renewals at risk are buried under hiring theater.',
       'RACI only helps if the Responsible person is a human, not a team emoji.',
       'Expense policy fights start when meals and travel sit in different Notion pages.'
+    ],
+    sceneFragments: [
+      'for the lobby bulletin glance',
+      'ahead of the charity drive kickoff',
+      'for the new-hire buddy lunch',
+      'before the building elevator wait',
+      'for the cafeteria tray line',
+      'ahead of the evening commute home',
+      'for the wellness flyer stack',
+      'before the holiday shutdown notice'
     ]
   }
 }
@@ -365,7 +419,7 @@ export function buildDiversityBookmarkSeeds(
   maybeOptions?: ProbeDiversityBuildOptions
 ): RecallProbeBookmarkSeed[] {
   const { keyPrefix, seed } = resolveOptions(keyPrefixOrOptions, maybeOptions, `div-bm-${persona}`)
-  const pack = PACKS[persona]
+  const pack = DIVERSITY_PACKS[persona]
   const out: RecallProbeBookmarkSeed[] = []
   for (let i = 0; i < count; i += 1) {
     const rng = rngForFillerItem(seed, 'div-bm', i, persona)
@@ -377,20 +431,25 @@ export function buildDiversityBookmarkSeeds(
     const withNote = weak || rng.next() < 0.16
     const note = withNote ? `${rng.pick(pack.noteTemplates)} (#${i + 1})` : undefined
     const title = weak ? rng.pick(WEAK_TITLES) : `${prefix} ${subject}`
-    const suggestedClues =
-      withNote && note
-        ? [
-            `the ${weak ? 'untitled ' : ''}page where I noted ${note.split(' (#')[0]}`,
-            `${prefix.toLowerCase().replace(/:$/, '')} I saved about ${subject}`
-          ]
-        : []
+    const clues = generateDiversityClues({
+      persona,
+      kind: 'bookmark',
+      index: i,
+      seed,
+      title,
+      subject,
+      daysAgo,
+      host,
+      sceneFragments: pack.sceneFragments,
+      ...(note ? { note } : {})
+    })
     out.push({
       key: `${keyPrefix}-${i}`,
       title,
       url: `${host}/${pathSlug(rng, i)}`,
       daysAgo,
       ...(note ? { note } : {}),
-      suggestedClues
+      clues
     })
   }
   return out
@@ -407,7 +466,7 @@ export function buildDiversityExcerptSeeds(
   maybeOptions?: ProbeDiversityBuildOptions
 ): RecallProbeExcerptSeed[] {
   const { keyPrefix, seed } = resolveOptions(keyPrefixOrOptions, maybeOptions, `div-ex-${persona}`)
-  const pack = PACKS[persona]
+  const pack = DIVERSITY_PACKS[persona]
   const out: RecallProbeExcerptSeed[] = []
   for (let i = 0; i < count; i += 1) {
     const rng = rngForFillerItem(seed, 'div-ex', i, persona)
@@ -417,16 +476,28 @@ export function buildDiversityExcerptSeeds(
     const weakPage = rng.next() < 0.1
     const withNote = weakPage || rng.next() < 0.18
     const note = withNote ? `${rng.pick(pack.noteTemplates)} excerpt ${i + 1}` : undefined
-    const pageTitle = weakPage
-      ? rng.pick(WEAK_TITLES)
-      : `${rng.pick(pack.titlePrefixes)} ${rng.pick(pack.subjects)}`
-    const suggestedClues =
-      withNote && note
-        ? [
-            `excerpt I annotated: ${note.split(' excerpt')[0]}`,
-            `piece about ${snippet.slice(0, 32).toLowerCase()}…`
-          ]
-        : []
+    // rng 消耗顺序须与改造前逐字一致（弱页只 pick WEAK；否则 prefix 再 subject）
+    let pageTitle: string
+    let subject = ''
+    if (weakPage) {
+      pageTitle = rng.pick(WEAK_TITLES)
+    } else {
+      const prefix = rng.pick(pack.titlePrefixes)
+      subject = rng.pick(pack.subjects)
+      pageTitle = `${prefix} ${subject}`
+    }
+    const clues = generateDiversityClues({
+      persona,
+      kind: 'excerpt',
+      index: i,
+      seed,
+      title: pageTitle,
+      subject,
+      daysAgo,
+      host,
+      sceneFragments: pack.sceneFragments,
+      ...(note ? { note } : {})
+    })
     out.push({
       key: `${keyPrefix}-${i}`,
       pageTitle,
@@ -434,7 +505,7 @@ export function buildDiversityExcerptSeeds(
       selectedText: `${snippet} (div ${i + 1})`,
       daysAgo,
       ...(note ? { note } : {}),
-      suggestedClues
+      clues
     })
   }
   return out

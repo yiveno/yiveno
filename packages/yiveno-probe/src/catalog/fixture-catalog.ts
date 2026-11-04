@@ -1,5 +1,5 @@
 /**
- * 探针精选夹具目录（不写库；纯展开语料 suggestedClues）。
+ * 探针精选夹具目录（不写库；纯展开语料 clues）。
  */
 
 import {
@@ -8,13 +8,14 @@ import {
   resolveProbeCorpora,
   type RecallProbePersonaId
 } from '../corpus/index'
+import type { ProbeTypedClue } from '../corpus/types'
 
 export type ProbeFixtureClueRow = {
   persona: RecallProbePersonaId
   kind: 'bookmark' | 'excerpt'
   key: string
   label: string
-  suggestedClues: string[]
+  clues: ProbeTypedClue[]
 }
 
 export type ProbeFixtureCatalog = {
@@ -23,7 +24,7 @@ export type ProbeFixtureCatalog = {
   rows: ProbeFixtureClueRow[]
 }
 
-/** 展开全部（或指定）画像的精选 suggestedClues。 */
+/** 展开全部（或指定）画像的精选 clues。 */
 export function listProbeFixtureCatalog(
   personas: readonly RecallProbePersonaId[] = RECALL_PROBE_PERSONA_ORDER
 ): ProbeFixtureCatalog {
@@ -37,7 +38,7 @@ export function listProbeFixtureCatalog(
         kind: 'bookmark',
         key: bm.key,
         label: bm.title,
-        suggestedClues: [...bm.suggestedClues]
+        clues: [...bm.clues]
       })
     }
     for (const ex of corpus.excerpts) {
@@ -46,7 +47,7 @@ export function listProbeFixtureCatalog(
         kind: 'excerpt',
         key: ex.key,
         label: ex.pageTitle,
-        suggestedClues: [...ex.suggestedClues]
+        clues: [...ex.clues]
       })
     }
   }

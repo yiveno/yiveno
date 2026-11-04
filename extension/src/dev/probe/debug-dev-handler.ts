@@ -26,6 +26,7 @@ import {
   type DevProbeCleanupResponse,
   type DevProbeLibrarySnapshotResponse,
   type DevPurgeProbeNoiseResponse,
+  type DevProbeBatchReportDto,
   type DevRunProbeBatchResponse,
   type DevSeedRecallProbeResponse
 } from '@/core/messaging/debug-messages'
@@ -222,7 +223,7 @@ export async function handleDebugBackgroundMessage(
         const ok: DevRunProbeBatchResponse = {
           ok: true,
           runId: result.runId,
-          report: result.report
+          report: result.report as DevProbeBatchReportDto
         }
         return ok
       } catch (error) {
@@ -277,7 +278,7 @@ export async function handleDebugBackgroundMessage(
         const ok: DevGetProbeRunResponse = {
           ok: true,
           runId: record.runId,
-          report: record.report
+          report: record.report as DevProbeBatchReportDto
         }
         return ok
       } catch (error) {

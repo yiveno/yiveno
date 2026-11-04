@@ -35,6 +35,10 @@ const seedRecallProbePayloadSchema = z.object({
   diversityBookmarkCount: z.number().int().min(0).max(12000).default(350),
   /** 画像风味多样性摘录。 */
   diversityExcerptCount: z.number().int().min(0).max(8000).default(150),
+  /** 每画像混淆组书签组数（缺省 0）。 */
+  clusterBookmarkCount: z.number().int().min(0).max(200).default(0),
+  /** 每画像混淆组摘录组数（缺省 0）。 */
+  clusterExcerptCount: z.number().int().min(0).max(200).default(0),
   /**
    * 书签写入 Chrome 的范围。
    * - all：精选 + 多样性 + 噪声均写 Chrome（质量轮；万级极慢）
@@ -76,12 +80,14 @@ export type DevSeedRecallProbeResponse =
       diversityExcerptCount: number
       noiseBookmarkCount: number
       noiseExcerptCount: number
+      clusterBookmarkCount: number
+      clusterExcerptCount: number
       chromeBookmarkSync: 'all' | 'curated_only'
       indexRebuilt: boolean
       wipedChromeFolders: number
       clearedMemoryCount: number
       probeKeys: string[]
-      /** 全量 key→id 映射条数（精选 + diversity + noise） */
+      /** 全量 key→id 映射条数（精选 + diversity + noise + cluster） */
       mappedCount: number
     }
   | {
@@ -241,7 +247,10 @@ export type DevListProbeFixturesResponse =
         kind: 'bookmark' | 'excerpt'
         key: string
         label: string
-        suggestedClues: string[]
+        clues: Array<{
+          text: string
+          type: 'verbatim' | 'paraphrase' | 'associative' | 'temporal' | 'note' | 'ambiguous'
+        }>
       }>
     }
   | {
@@ -323,7 +332,10 @@ const runProbeBatchPayloadSchema = z.object({
   fillerSeed: z.number().int().min(0).max(0xffff_ffff).optional(),
   personas: z.array(RecallProbePersonaSchema).min(1).max(5).optional(),
   diversityBookmarkCount: z.number().int().min(0).max(12000).optional(),
-  diversityExcerptCount: z.number().int().min(0).max(8000).optional()
+  diversityExcerptCount: z.number().int().min(0).max(8000).optional(),
+  clusterBookmarkCount: z.number().int().min(0).max(200).optional(),
+  clusterExcerptCount: z.number().int().min(0).max(200).optional(),
+  includeNegatives: z.boolean().optional()
 })
 
 export type RunProbeBatchPayload = z.infer<typeof runProbeBatchPayloadSchema>
@@ -335,65 +347,82 @@ export type DevRunProbeBatchMessage = {
   payload?: RunProbeBatchPayload
 }
 
+/** 批量报告分组计数（消息面；optional 字段带 | undefined 以兼容 exactOptionalPropertyTypes）。 */
+type ProbeBatchGroupStatsDto = {
+  total: number
+  top1: number
+  in_topk: number
+  miss: number
+  unmapped: number
+  error: number
+  false_positive?: number | undefined
+  rejected?: number | undefined
+}
+
+/** 批量报告 DTO（与 runner / history 读写共用）。 */
+export type DevProbeBatchReportDto = {
+  recipeId: string
+  fillerSeed: number
+  startedAtIso: string
+  finishedAtIso: string
+  cases: Array<{
+    caseId: string
+    clue: string
+    clueType?: string | undefined
+    expectedKey: string
+    expectedId: string | null
+    expectedIds?: string[] | undefined
+    preferredId?: string | undefined
+    clusterId?: string | undefined
+    persona: string
+    source: 'curated' | 'diversity' | 'cluster' | 'negative'
+    kind: 'bookmark' | 'excerpt' | 'negative'
+    label: string
+    verdict: 'top1' | 'in_topk' | 'miss' | 'unmapped' | 'error' | 'false_positive' | 'rejected'
+    actualTop1Title: string | null
+    latencyMs: number
+    error?: string | undefined
+  }>
+  aggregates: {
+    total: number
+    judged: number
+    top1Count: number
+    inTopkCount: number
+    missCount: number
+    unmappedCount: number
+    errorCount: number
+    top1Rate: number
+    inTop3Rate: number
+    missRate: number
+    byPersona: Record<string, ProbeBatchGroupStatsDto>
+    bySource: Record<string, ProbeBatchGroupStatsDto>
+    byClueType?: Record<string, ProbeBatchGroupStatsDto> | undefined
+    clusters?:
+      | {
+          total: number
+          anyHitCount: number
+          preferredTop1Count: number
+          anyHitRate: number
+          preferredTop1Rate: number
+        }
+      | undefined
+    negatives?:
+      | {
+          total: number
+          falsePositiveCount: number
+          rejectedCount: number
+          falsePositiveRate: number
+        }
+      | undefined
+    latencyMs: { p50: number; p95: number }
+  }
+}
+
 export type DevRunProbeBatchResponse =
   | {
       ok: true
       runId: string
-      report: {
-        recipeId: string
-        fillerSeed: number
-        startedAtIso: string
-        finishedAtIso: string
-        cases: Array<{
-          caseId: string
-          clue: string
-          expectedKey: string
-          expectedId: string | null
-          persona: string
-          source: 'curated' | 'diversity'
-          kind: 'bookmark' | 'excerpt'
-          label: string
-          verdict: 'top1' | 'in_topk' | 'miss' | 'unmapped' | 'error'
-          actualTop1Title: string | null
-          latencyMs: number
-          error?: string | undefined
-        }>
-        aggregates: {
-          total: number
-          judged: number
-          top1Count: number
-          inTopkCount: number
-          missCount: number
-          unmappedCount: number
-          errorCount: number
-          top1Rate: number
-          inTop3Rate: number
-          missRate: number
-          byPersona: Record<
-            string,
-            {
-              total: number
-              top1: number
-              in_topk: number
-              miss: number
-              unmapped: number
-              error: number
-            }
-          >
-          bySource: Record<
-            string,
-            {
-              total: number
-              top1: number
-              in_topk: number
-              miss: number
-              unmapped: number
-              error: number
-            }
-          >
-          latencyMs: { p50: number; p95: number }
-        }
-      }
+      report: DevProbeBatchReportDto
     }
   | {
       ok: false

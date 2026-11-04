@@ -10,6 +10,9 @@ import { STUDENT_PROBE_CORPUS } from './student'
 import type { RecallProbePersonaCorpus, RecallProbePersonaId } from './types'
 
 export type {
+  ProbeClueType,
+  ProbeSeedRole,
+  ProbeTypedClue,
   RecallProbeBookmarkSeed,
   RecallProbeExcerptSeed,
   RecallProbePersonaCorpus,
@@ -21,9 +24,29 @@ export { DEVELOPER_PROBE_CORPUS } from './developer'
 export { KNOWLEDGE_WORKER_PROBE_CORPUS } from './knowledge-worker'
 export { RESEARCHER_PROBE_CORPUS } from './researcher'
 export { STUDENT_PROBE_CORPUS } from './student'
-export { buildDiversityBookmarkSeeds, buildDiversityExcerptSeeds } from './diversity'
+export {
+  buildDiversityBookmarkSeeds,
+  buildDiversityExcerptSeeds,
+  DIVERSITY_PACKS
+} from './diversity'
 export { buildNoiseBookmarkSeeds, buildNoiseExcerptSeeds } from './noise'
-export { DEFAULT_PROBE_FILLER_SEED, createMulberry32, createSeededRng, mixSeed } from './prng'
+export { buildClusterBookmarkSeeds, buildClusterExcerptSeeds, listProbeClusters } from './clusters'
+export type { ProbeClusterMeta } from './clusters'
+export { PROBE_NEGATIVE_CLUES } from './negatives'
+export type { ProbeNegativeClue } from './negatives'
+export {
+  contentWordIntersection,
+  contentWords,
+  generateDiversityClues,
+  generateForcedClue
+} from './clue-gen'
+export {
+  DEFAULT_PROBE_FILLER_SEED,
+  createMulberry32,
+  createSeededRng,
+  mixSeed,
+  rngForFillerItem
+} from './prng'
 
 /** 首发优先三画像，其后为学生 / 知识工作者扩展包。 */
 export const RECALL_PROBE_PERSONA_ORDER: readonly RecallProbePersonaId[] = [

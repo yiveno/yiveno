@@ -21,6 +21,8 @@ export type ProbeSeedRecallResponse =
       diversityExcerptCount: number
       noiseBookmarkCount: number
       noiseExcerptCount: number
+      clusterBookmarkCount?: number
+      clusterExcerptCount?: number
       chromeBookmarkSync: 'all' | 'curated_only'
       indexRebuilt: boolean
       wipedChromeFolders: number
@@ -60,16 +62,31 @@ export type ProbeCleanupResponse =
     }
   | FailResponse
 
+type ProbeGroupStatsView = {
+  total: number
+  top1: number
+  in_topk: number
+  miss: number
+  unmapped: number
+  error: number
+  false_positive?: number
+  rejected?: number
+}
+
 export type ProbeBatchCaseRow = {
   caseId: string
   clue: string
+  clueType?: string
   expectedKey: string
   expectedId: string | null
+  expectedIds?: string[]
+  preferredId?: string
+  clusterId?: string
   persona: string
-  source: 'curated' | 'diversity'
-  kind: 'bookmark' | 'excerpt'
+  source: 'curated' | 'diversity' | 'cluster' | 'negative'
+  kind: 'bookmark' | 'excerpt' | 'negative'
   label: string
-  verdict: 'top1' | 'in_topk' | 'miss' | 'unmapped' | 'error'
+  verdict: 'top1' | 'in_topk' | 'miss' | 'unmapped' | 'error' | 'false_positive' | 'rejected'
   actualTop1Title: string | null
   latencyMs: number
   error?: string
@@ -86,28 +103,22 @@ export type ProbeBatchAggregatesView = {
   top1Rate: number
   inTop3Rate: number
   missRate: number
-  byPersona: Record<
-    string,
-    {
-      total: number
-      top1: number
-      in_topk: number
-      miss: number
-      unmapped: number
-      error: number
-    }
-  >
-  bySource: Record<
-    string,
-    {
-      total: number
-      top1: number
-      in_topk: number
-      miss: number
-      unmapped: number
-      error: number
-    }
-  >
+  byPersona: Record<string, ProbeGroupStatsView>
+  bySource: Record<string, ProbeGroupStatsView>
+  byClueType?: Record<string, ProbeGroupStatsView>
+  clusters?: {
+    total: number
+    anyHitCount: number
+    preferredTop1Count: number
+    anyHitRate: number
+    preferredTop1Rate: number
+  }
+  negatives?: {
+    total: number
+    falsePositiveCount: number
+    rejectedCount: number
+    falsePositiveRate: number
+  }
   latencyMs: { p50: number; p95: number }
 }
 
@@ -126,6 +137,9 @@ export type ProbeRunBatchPayload = {
   personas?: ProbeSeedPayload['personas']
   diversityBookmarkCount?: number
   diversityExcerptCount?: number
+  clusterBookmarkCount?: number
+  clusterExcerptCount?: number
+  includeNegatives?: boolean
 }
 
 export type ProbeRunBatchResponse =

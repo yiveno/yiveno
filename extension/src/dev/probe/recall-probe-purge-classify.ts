@@ -16,6 +16,10 @@ export function isProbeNoiseOrDiversityUrl(url: string): boolean {
   if (/\/probe(?:\/|$)/i.test(url)) {
     return true
   }
+  // 混淆组成员 URL：…/cluster/clu-bm-… 或 …/cluster-excerpt/…
+  if (/\/cluster(?:-excerpt)?\//i.test(url)) {
+    return true
+  }
   return false
 }
 
@@ -40,6 +44,9 @@ export function isProbeNoiseOrDiversityItem(item: MemoryItem): boolean {
     if (/ excerpt \d+$/i.test(note)) {
       return true
     }
+    if (/· cluster \d+ member \d+/i.test(note)) {
+      return true
+    }
     return false
   }
 
@@ -57,6 +64,9 @@ export function isProbeNoiseOrDiversityItem(item: MemoryItem): boolean {
       return true
     }
     if (/filler annotation/i.test(note)) {
+      return true
+    }
+    if (/· cluster \d+ member \d+/i.test(note)) {
       return true
     }
     if (/ \(#\d+\)$/.test(note)) {

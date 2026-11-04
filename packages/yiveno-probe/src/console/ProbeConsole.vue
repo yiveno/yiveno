@@ -51,6 +51,9 @@ const diversityBookmarkCount = ref(80)
 const diversityExcerptCount = ref(40)
 const noiseBookmarkCount = ref(40)
 const noiseExcerptCount = ref(20)
+/** 每画像混淆组数；Console 缺省 2 */
+const clusterBookmarkCount = ref(2)
+const clusterExcerptCount = ref(2)
 const chromeBookmarkSync = ref<'all' | 'curated_only'>('all')
 const enrichCurated = ref(false)
 const fillerSeed = ref(DEFAULT_PROBE_FILLER_SEED)
@@ -93,7 +96,23 @@ const runAggregateLine = computed(() => {
     return ''
   }
   const pct = (rate: number) => `${(rate * 100).toFixed(1)}%`
-  return `top1 ${pct(agg.top1Rate)} · in-top3 ${pct(agg.inTop3Rate)} · miss ${pct(agg.missRate)} · unmapped ${agg.unmappedCount} · p50 ${Math.round(agg.latencyMs.p50)}ms · p95 ${Math.round(agg.latencyMs.p95)}ms · n=${agg.total}`
+  const clueTypeBits = Object.entries(agg.byClueType ?? {})
+    .map(([type, stats]) => {
+      const judged = stats.top1 + stats.in_topk + stats.miss
+      const rate = judged === 0 ? 0 : stats.top1 / judged
+      return `${type} ${pct(rate)}`
+    })
+    .join(' · ')
+  const clusterBit =
+    agg.clusters && agg.clusters.total > 0
+      ? ` · cluster anyHit ${pct(agg.clusters.anyHitRate)} preferredTop1 ${pct(agg.clusters.preferredTop1Rate)}`
+      : ''
+  const negBit =
+    agg.negatives && agg.negatives.total > 0
+      ? ` · neg FP ${pct(agg.negatives.falsePositiveRate)} (n=${agg.negatives.total})`
+      : ''
+  const clueBit = clueTypeBits ? ` · byType[${clueTypeBits}]` : ''
+  return `top1 ${pct(agg.top1Rate)} · in-top3 ${pct(agg.inTop3Rate)} · miss ${pct(agg.missRate)} · unmapped ${agg.unmappedCount} · p50 ${Math.round(agg.latencyMs.p50)}ms · p95 ${Math.round(agg.latencyMs.p95)}ms · n=${agg.total}${clueBit}${clusterBit}${negBit}`
 })
 
 const recipeEstimate = computed(() => {
@@ -127,6 +146,8 @@ function currentFormState() {
     diversityExcerptCount: diversityExcerptCount.value,
     noiseBookmarkCount: noiseBookmarkCount.value,
     noiseExcerptCount: noiseExcerptCount.value,
+    clusterBookmarkCount: clusterBookmarkCount.value,
+    clusterExcerptCount: clusterExcerptCount.value,
     chromeBookmarkSync: chromeBookmarkSync.value,
     enrichCurated: enrichCurated.value,
     fillerSeed: fillerSeed.value
@@ -140,6 +161,8 @@ function applyFormState(form: ReturnType<typeof currentFormState>): void {
   diversityExcerptCount.value = form.diversityExcerptCount
   noiseBookmarkCount.value = form.noiseBookmarkCount
   noiseExcerptCount.value = form.noiseExcerptCount
+  clusterBookmarkCount.value = form.clusterBookmarkCount
+  clusterExcerptCount.value = form.clusterExcerptCount
   chromeBookmarkSync.value = form.chromeBookmarkSync
   enrichCurated.value = form.enrichCurated
   fillerSeed.value = form.fillerSeed
@@ -334,7 +357,7 @@ async function runSeedWithPayload(
           : ' · 对照有偏差'
     const replaceHint = payload.replace === true ? ' · 已先清空' : ''
     setStatus(
-      `${options.label}完成 · 书签 ${res.bookmarkCount} · 摘录 ${res.excerptCount} · 半仿真 ${res.diversityBookmarkCount}/${res.diversityExcerptCount} · 干扰 ${res.noiseBookmarkCount}/${res.noiseExcerptCount} · 精选键 ${res.probeKeys.length} · 映射 ${res.mappedCount}${compareHint}${replaceHint}`
+      `${options.label}完成 · 书签 ${res.bookmarkCount} · 摘录 ${res.excerptCount} · 半仿真 ${res.diversityBookmarkCount}/${res.diversityExcerptCount} · 干扰 ${res.noiseBookmarkCount}/${res.noiseExcerptCount} · 混淆组 ${res.clusterBookmarkCount ?? 0}/${res.clusterExcerptCount ?? 0} · 精选键 ${res.probeKeys.length} · 映射 ${res.mappedCount}${compareHint}${replaceHint}`
     )
   } finally {
     busy.value = false
@@ -350,6 +373,8 @@ async function runCustomSeed(): Promise<void> {
       diversityExcerptCount: diversityExcerptCount.value,
       noiseBookmarkCount: noiseBookmarkCount.value,
       noiseExcerptCount: noiseExcerptCount.value,
+      clusterBookmarkCount: clusterBookmarkCount.value,
+      clusterExcerptCount: clusterExcerptCount.value,
       chromeBookmarkSync: chromeBookmarkSync.value,
       enrichCurated: enrichCurated.value,
       fillerSeed: fillerSeed.value
@@ -479,7 +504,10 @@ async function runProbeBatchFromForm(): Promise<void> {
       fillerSeed: fillerSeed.value,
       personas: personas.length > 0 ? personas : undefined,
       diversityBookmarkCount: diversityBookmarkCount.value,
-      diversityExcerptCount: diversityExcerptCount.value
+      diversityExcerptCount: diversityExcerptCount.value,
+      clusterBookmarkCount: clusterBookmarkCount.value,
+      clusterExcerptCount: clusterExcerptCount.value,
+      includeNegatives: true
     })
     if (!res.ok) {
       setStatus(`批量探针失败：${res.errorCode} ${res.error ?? ''}`)
@@ -624,6 +652,14 @@ onUnmounted(() => {
             无关干扰摘录
             <input v-model.number="noiseExcerptCount" type="number" min="0" max="8000" />
           </label>
+          <label>
+            混淆组书签（每画像组数）
+            <input v-model.number="clusterBookmarkCount" type="number" min="0" max="200" />
+          </label>
+          <label>
+            混淆组摘录（每画像组数）
+            <input v-model.number="clusterExcerptCount" type="number" min="0" max="200" />
+          </label>
         </div>
 
         <div class="pc-row">
@@ -718,8 +754,8 @@ onUnmounted(() => {
     <section class="pc-card" aria-labelledby="pc-run">
       <h2 id="pc-run">运行探针</h2>
       <p class="pc-hint">
-        数据驱动：精选全部 suggestedClues + 已种库 diversity 带线索条目；entry=omnibox；k=3。原 11
-        条 Omnibox smoke 仍经 SW 调试 API 保留。
+        数据驱动：精选全部 clues + 已种库 diversity / cluster 消歧与集合线索 +
+        负例；entry=omnibox；k=3。原 11 条 Omnibox smoke 仍经 SW 调试 API 保留。
       </p>
 
       <div class="pc-actions">
@@ -766,8 +802,13 @@ onUnmounted(() => {
           <tbody>
             <tr v-for="row in lastRunReport.cases" :key="row.caseId" :data-verdict="row.verdict">
               <td>{{ row.verdict }}</td>
-              <td class="pc-clip" :title="row.clue">{{ row.clue }}</td>
-              <td class="pc-mono">{{ row.expectedKey }}</td>
+              <td class="pc-clip" :title="row.clue">
+                {{ row.clue
+                }}<template v-if="row.clusterId">
+                  <span class="pc-muted"> · {{ row.clusterId }}</span>
+                </template>
+              </td>
+              <td class="pc-mono">{{ row.expectedKey || '—' }}</td>
               <td class="pc-clip" :title="row.actualTop1Title ?? ''">
                 {{ row.actualTop1Title ?? '—' }}
               </td>

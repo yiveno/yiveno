@@ -11,7 +11,7 @@ import {
 
 export type { ProbeFixtureCatalog }
 
-/** 展开全部（或指定）画像的精选 suggestedClues。 */
+/** 展开全部（或指定）画像的精选线索（`clues`）。 */
 export function listProbeFixtureCatalog(
   personas?: readonly RecallProbePersonaId[]
 ): ProbeFixtureCatalog {

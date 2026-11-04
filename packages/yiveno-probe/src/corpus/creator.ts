@@ -14,9 +14,9 @@ export const CREATOR_PROBE_CORPUS: RecallProbePersonaCorpus = {
       url: 'https://help.figma.com/hc/en-us/articles/360040451373',
       daysAgo: 12,
       note: 'reuse for client onboarding deck',
-      suggestedClues: [
-        'figma auto layout article I saved for the client deck',
-        'that help page about auto layout best practices'
+      clues: [
+        { text: 'figma auto layout article I saved for the client deck', type: 'note' },
+        { text: 'that help page about auto layout best practices', type: 'verbatim' }
       ]
     },
     {
@@ -24,9 +24,9 @@ export const CREATOR_PROBE_CORPUS: RecallProbePersonaCorpus = {
       title: 'Information Architecture 101',
       url: 'https://www.nngroup.com/articles/information-architecture-101/',
       daysAgo: 40,
-      suggestedClues: [
-        'nielsen norman piece on information architecture',
-        'IA 101 article from nngroup'
+      clues: [
+        { text: 'nielsen norman piece on information architecture', type: 'verbatim' },
+        { text: 'IA 101 article from nngroup', type: 'paraphrase' }
       ]
     },
     {
@@ -35,9 +35,9 @@ export const CREATOR_PROBE_CORPUS: RecallProbePersonaCorpus = {
       url: 'https://www.typewolf.com/tips/font-pairing-editorial',
       daysAgo: 6,
       note: 'try for portfolio refresh',
-      suggestedClues: [
-        'typewolf font pairing for editorial',
-        'bookmark about font pairing for my portfolio'
+      clues: [
+        { text: 'typewolf font pairing for editorial', type: 'verbatim' },
+        { text: 'bookmark about font pairing for my portfolio', type: 'note' }
       ]
     },
     {
@@ -45,9 +45,9 @@ export const CREATOR_PROBE_CORPUS: RecallProbePersonaCorpus = {
       title: 'Case study: Motion systems that stay quiet',
       url: 'https://www.awwwards.com/case-study-motion-systems-quiet/',
       daysAgo: 18,
-      suggestedClues: [
-        'awwwards case study on quiet motion systems',
-        'the motion systems case study I bookmarked'
+      clues: [
+        { text: 'awwwards case study on quiet motion systems', type: 'verbatim' },
+        { text: 'the motion systems case study I bookmarked', type: 'verbatim' }
       ]
     },
     {
@@ -55,9 +55,9 @@ export const CREATOR_PROBE_CORPUS: RecallProbePersonaCorpus = {
       title: 'Accessible color contrast for brand kits',
       url: 'https://blog.adobe.com/en/publish/accessible-color-contrast-brand',
       daysAgo: 25,
-      suggestedClues: [
-        'adobe blog on accessible color contrast',
-        'brand kit contrast article I saved'
+      clues: [
+        { text: 'adobe blog on accessible color contrast', type: 'verbatim' },
+        { text: 'brand kit contrast article I saved', type: 'verbatim' }
       ]
     },
     {
@@ -65,9 +65,9 @@ export const CREATOR_PROBE_CORPUS: RecallProbePersonaCorpus = {
       title: 'Dashboard density without clutter',
       url: 'https://dribbble.com/shots/dashboard-density-without-clutter',
       daysAgo: 2,
-      suggestedClues: [
-        'dribbble shot about dashboard density',
-        'the dense dashboard reference from a couple days ago'
+      clues: [
+        { text: 'dribbble shot about dashboard density', type: 'verbatim' },
+        { text: 'the dense dashboard reference from a couple days ago', type: 'temporal' }
       ]
     },
     {
@@ -76,9 +76,9 @@ export const CREATOR_PROBE_CORPUS: RecallProbePersonaCorpus = {
       url: 'https://www.smashingmagazine.com/2024/form-design-patterns-drop-off/',
       daysAgo: 55,
       note: 'checkout redesign research',
-      suggestedClues: [
-        'smashing magazine form design patterns',
-        'article on forms reducing drop-off for checkout'
+      clues: [
+        { text: 'smashing magazine form design patterns', type: 'verbatim' },
+        { text: 'article on forms reducing drop-off for checkout', type: 'note' }
       ]
     },
     {
@@ -86,9 +86,9 @@ export const CREATOR_PROBE_CORPUS: RecallProbePersonaCorpus = {
       title: 'Design critique rituals that do not crush juniors',
       url: 'https://www.youtube.com/watch?v=yivenoDesignCritique01',
       daysAgo: 9,
-      suggestedClues: [
-        'youtube talk on design critique rituals',
-        'video about critiques that do not crush juniors'
+      clues: [
+        { text: 'youtube talk on design critique rituals', type: 'verbatim' },
+        { text: 'video about critiques that do not crush juniors', type: 'verbatim' }
       ]
     }
   ],
@@ -101,9 +101,9 @@ export const CREATOR_PROBE_CORPUS: RecallProbePersonaCorpus = {
         'Hug contents first; only switch to fill once the parent owns a clear width contract.',
       daysAgo: 11,
       note: 'teach in workshop',
-      suggestedClues: [
-        'figma excerpt about hug contents before fill',
-        'clip I marked to teach in the workshop'
+      clues: [
+        { text: 'figma excerpt about hug contents before fill', type: 'paraphrase' },
+        { text: 'clip I marked to teach in the workshop', type: 'note' }
       ]
     },
     {
@@ -113,9 +113,9 @@ export const CREATOR_PROBE_CORPUS: RecallProbePersonaCorpus = {
       selectedText:
         'Labels fail quietly: users blame themselves before they blame your navigation.',
       daysAgo: 39,
-      suggestedClues: [
-        'nngroup excerpt about labels failing quietly',
-        'IA quote where users blame themselves'
+      clues: [
+        { text: 'nngroup excerpt about labels failing quietly', type: 'paraphrase' },
+        { text: 'IA quote where users blame themselves', type: 'paraphrase' }
       ]
     },
     {
@@ -124,9 +124,12 @@ export const CREATOR_PROBE_CORPUS: RecallProbePersonaCorpus = {
       sourceUrl: 'https://www.smashingmagazine.com/2024/form-design-patterns-drop-off/',
       selectedText: 'Inline validation should celebrate progress, not only punish mistakes.',
       daysAgo: 54,
-      suggestedClues: [
-        'smashing excerpt about inline validation celebrating progress',
-        'form design clip for checkout redesign'
+      clues: [
+        {
+          text: 'smashing excerpt about inline validation celebrating progress',
+          type: 'paraphrase'
+        },
+        { text: 'form design clip for checkout redesign', type: 'verbatim' }
       ]
     },
     {
@@ -135,9 +138,9 @@ export const CREATOR_PROBE_CORPUS: RecallProbePersonaCorpus = {
       sourceUrl: 'https://www.awwwards.com/case-study-motion-systems-quiet/',
       selectedText: 'Motion that explains hierarchy beats motion that performs personality.',
       daysAgo: 17,
-      suggestedClues: [
-        'awwwards clip about motion that explains hierarchy',
-        'quiet motion systems quote I highlighted'
+      clues: [
+        { text: 'awwwards clip about motion that explains hierarchy', type: 'verbatim' },
+        { text: 'quiet motion systems quote I highlighted', type: 'verbatim' }
       ]
     },
     {
@@ -147,9 +150,9 @@ export const CREATOR_PROBE_CORPUS: RecallProbePersonaCorpus = {
       selectedText: 'Placeholder frame copy for spacing experiments.',
       daysAgo: 10,
       note: 'steal midnight teal from brand sheet',
-      suggestedClues: [
-        'figma draft where I noted steal midnight teal',
-        'clip annotated about midnight teal from brand sheet'
+      clues: [
+        { text: 'figma draft where I noted steal midnight teal', type: 'note' },
+        { text: 'clip annotated about midnight teal from brand sheet', type: 'note' }
       ]
     }
   ]

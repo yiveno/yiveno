@@ -1,5 +1,5 @@
 /**
- * 质量轮噪声语料：过程随机拼装（可复现 seed），不含 suggestedClues。
+ * 质量轮噪声语料：过程随机拼装（可复现 seed），clues 恒为空、role=distractor。
  * URL 保留 /probe/ 指纹供 DEV 清理分类；禁止复制进召回 runtime。
  */
 
@@ -106,7 +106,8 @@ export function buildNoiseBookmarkSeeds(
       url: `${host}/${pathSlug(rng, i)}`,
       daysAgo,
       ...(withNote ? { note: `noise note ${i}` } : {}),
-      suggestedClues: []
+      clues: [],
+      role: 'distractor'
     })
   }
   return out
@@ -132,7 +133,8 @@ export function buildNoiseExcerptSeeds(
       selectedText: `${lead} Filler excerpt ${i} about ${topic.toLowerCase()}.`,
       daysAgo: 2 + rng.nextInt(200),
       ...(withNote ? { note: `filler annotation ${i}` } : {}),
-      suggestedClues: []
+      clues: [],
+      role: 'distractor'
     })
   }
   return out

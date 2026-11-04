@@ -27,6 +27,28 @@ export function judgeProbeNeighborhood(
   return 'in_topk'
 }
 
+/**
+ * 集合判定：命中 preferred → top1；否则任一 expected 在 top-k → in_topk；否则 miss。
+ */
+export function judgeProbeNeighborhoodForSet(
+  rankedIds: readonly string[],
+  expectedIds: readonly string[],
+  preferredId: string,
+  k = 3
+): ProbeVerifyVerdict {
+  if (rankedIds[0] === preferredId) {
+    return 'top1'
+  }
+  const expected = new Set(expectedIds)
+  const limit = Math.min(k, rankedIds.length)
+  for (let i = 0; i < limit; i += 1) {
+    if (expected.has(rankedIds[i]!)) {
+      return 'in_topk'
+    }
+  }
+  return 'miss'
+}
+
 /** 从 RecallResult 抽出有序邻域 id。 */
 export function rankedIdsFromRecallResult(result: {
   topPick: { item: { id: string } } | null

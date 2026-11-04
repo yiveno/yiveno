@@ -1,6 +1,6 @@
 /**
  * DEV 召回探针语料 · 跨来源研究者画像（首发分群优先）。
- * 每条带 suggestedClues（英语母语口语），供 MCP 探针；禁止当作 runtime 灰名单。
+ * 每条带 clues（英语母语口语 + ProbeClueType），供 MCP 探针；禁止当作 runtime 灰名单。
  */
 
 import type { RecallProbePersonaCorpus } from './types'
@@ -17,9 +17,9 @@ export const RESEARCHER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       url: 'https://www.theatlantic.com/yiveno-probe/attention-economy-myth/',
       daysAgo: 45,
       note: 'use for intro on focus vs metrics',
-      suggestedClues: [
-        'that atlantic piece about attention I bookmarked for an intro',
-        'the article about attention economy from a while ago'
+      clues: [
+        { text: 'that atlantic piece about attention I bookmarked for an intro', type: 'note' },
+        { text: 'the article about attention economy from a while ago', type: 'temporal' }
       ]
     },
     {
@@ -27,9 +27,9 @@ export const RESEARCHER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       title: 'How Memory Works',
       url: 'https://www.newyorker.com/magazine/2023/05/15/how-memory-works',
       daysAgo: 120,
-      suggestedClues: [
-        'the new yorker essay on how memory works',
-        'magazine piece about memory I saved months ago'
+      clues: [
+        { text: 'the new yorker essay on how memory works', type: 'verbatim' },
+        { text: 'magazine piece about memory I saved months ago', type: 'temporal' }
       ]
     },
     {
@@ -38,9 +38,9 @@ export const RESEARCHER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       url: 'https://www.nature.com/articles/d41586-023-00000-0',
       daysAgo: 20,
       note: 'cite in climate brief',
-      suggestedClues: [
-        'nature article on climate tipping points I noted for a brief',
-        'that climate tipping points piece I saved a few weeks ago'
+      clues: [
+        { text: 'nature article on climate tipping points I noted for a brief', type: 'note' },
+        { text: 'that climate tipping points piece I saved a few weeks ago', type: 'note' }
       ]
     },
     {
@@ -48,9 +48,9 @@ export const RESEARCHER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       title: 'Aggregation Theory',
       url: 'https://stratechery.com/2015/aggregation-theory/',
       daysAgo: 200,
-      suggestedClues: [
-        'stratechery aggregation theory bookmark',
-        'that old aggregation theory essay'
+      clues: [
+        { text: 'stratechery aggregation theory bookmark', type: 'verbatim' },
+        { text: 'that old aggregation theory essay', type: 'verbatim' }
       ]
     },
     {
@@ -58,9 +58,9 @@ export const RESEARCHER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       title: 'The joy of being bored',
       url: 'https://aeon.co/essays/the-joy-of-being-bored',
       daysAgo: 8,
-      suggestedClues: [
-        'aeon essay about boredom from last week',
-        'something I saved about the joy of being bored'
+      clues: [
+        { text: 'aeon essay about boredom from last week', type: 'temporal' },
+        { text: 'something I saved about the joy of being bored', type: 'verbatim' }
       ]
     },
     {
@@ -68,9 +68,9 @@ export const RESEARCHER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       title: 'Your Phone Is Listening. Sort Of.',
       url: 'https://www.wired.com/story/phone-listening-ads-privacy/',
       daysAgo: 3,
-      suggestedClues: [
-        'wired story about phones listening that I just saved',
-        'the privacy article from a few days ago'
+      clues: [
+        { text: 'wired story about phones listening that I just saved', type: 'paraphrase' },
+        { text: 'the privacy article from a few days ago', type: 'temporal' }
       ]
     },
     {
@@ -79,9 +79,9 @@ export const RESEARCHER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       url: 'https://www.ft.com/content/remote-work-science-2024',
       daysAgo: 60,
       note: 'compare with my notes on hybrid teams',
-      suggestedClues: [
-        'ft article on remote work science',
-        'financial times piece about remote work I annotated'
+      clues: [
+        { text: 'ft article on remote work science', type: 'verbatim' },
+        { text: 'financial times piece about remote work I annotated', type: 'note' }
       ]
     },
     {
@@ -89,9 +89,9 @@ export const RESEARCHER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       title: 'How misinformation spreads online',
       url: 'https://www.theguardian.com/technology/2024/misinformation-spreads',
       daysAgo: 15,
-      suggestedClues: [
-        'guardian article about misinformation',
-        'how misinformation spreads — that bookmark'
+      clues: [
+        { text: 'guardian article about misinformation', type: 'verbatim' },
+        { text: 'how misinformation spreads — that bookmark', type: 'verbatim' }
       ]
     },
     {
@@ -99,16 +99,19 @@ export const RESEARCHER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       title: 'Working Paper: Measuring Trust in News',
       url: 'https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1234567',
       daysAgo: 30,
-      suggestedClues: ['ssrn working paper on trust in news', 'that preprint about measuring trust']
+      clues: [
+        { text: 'ssrn working paper on trust in news', type: 'verbatim' },
+        { text: 'that preprint about measuring trust', type: 'verbatim' }
+      ]
     },
     {
       key: 'jstor-library',
       title: 'Public Libraries and Civic Life',
       url: 'https://www.jstor.org/stable/10.1086/000000',
       daysAgo: 90,
-      suggestedClues: [
-        'jstor article on public libraries',
-        'academic paper about libraries and civic life'
+      clues: [
+        { text: 'jstor article on public libraries', type: 'verbatim' },
+        { text: 'academic paper about libraries and civic life', type: 'verbatim' }
       ]
     },
     {
@@ -117,9 +120,9 @@ export const RESEARCHER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       url: 'https://example.substack.com/p/why-note-taking-apps-fail',
       daysAgo: 5,
       note: 'disagree with section 3',
-      suggestedClues: [
-        'substack about note-taking apps failing researchers',
-        'newsletter where I disagreed with section 3'
+      clues: [
+        { text: 'substack about note-taking apps failing researchers', type: 'verbatim' },
+        { text: 'newsletter where I disagreed with section 3', type: 'note' }
       ]
     },
     {
@@ -127,7 +130,10 @@ export const RESEARCHER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       title: 'Dense Passage Retrieval for Open-Domain QA',
       url: 'https://arxiv.org/abs/2004.04906',
       daysAgo: 400,
-      suggestedClues: ['arxiv dense passage retrieval paper', 'that old DPR paper on arxiv']
+      clues: [
+        { text: 'arxiv dense passage retrieval paper', type: 'verbatim' },
+        { text: 'that old DPR paper on arxiv', type: 'ambiguous' }
+      ]
     },
     {
       key: 'weak-title-grant',
@@ -135,9 +141,9 @@ export const RESEARCHER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       url: 'https://docs.google.com/document/d/yivenoProbeGrantNotes01',
       daysAgo: 11,
       note: 'NSF grant narrative outline — revise budget table',
-      suggestedClues: [
-        'the untitled doc where I noted NSF grant narrative',
-        'page with my note about revising the budget table'
+      clues: [
+        { text: 'the untitled doc where I noted NSF grant narrative', type: 'note' },
+        { text: 'page with my note about revising the budget table', type: 'note' }
       ]
     },
     {
@@ -146,9 +152,12 @@ export const RESEARCHER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       url: 'https://notion.so/yiveno-probe-interview-notes',
       daysAgo: 16,
       note: 'interview: ask about cross-source save friction',
-      suggestedClues: [
-        'notes page where I wrote interview ask about cross-source save friction',
-        'the note about interview questions on save friction'
+      clues: [
+        {
+          text: 'notes page where I wrote interview ask about cross-source save friction',
+          type: 'note'
+        },
+        { text: 'the note about interview questions on save friction', type: 'note' }
       ]
     }
   ],
@@ -161,9 +170,9 @@ export const RESEARCHER_PROBE_CORPUS: RecallProbePersonaCorpus = {
         'What we call the attention economy is often just a metrics economy wearing a psychological costume.',
       daysAgo: 44,
       note: 'perfect pull quote for talk',
-      suggestedClues: [
-        'the quote I saved about metrics economy wearing a costume',
-        'excerpt where I wrote perfect pull quote for talk'
+      clues: [
+        { text: 'the quote I saved about metrics economy wearing a costume', type: 'note' },
+        { text: 'excerpt where I wrote perfect pull quote for talk', type: 'note' }
       ]
     },
     {
@@ -174,9 +183,9 @@ export const RESEARCHER_PROBE_CORPUS: RecallProbePersonaCorpus = {
         'A memory palace works because place and sequence hitch a ride on an older navigation system.',
       daysAgo: 118,
       note: 'link to method of loci',
-      suggestedClues: [
-        'excerpt about memory palace and navigation',
-        'the line I highlighted about method of loci'
+      clues: [
+        { text: 'excerpt about memory palace and navigation', type: 'verbatim' },
+        { text: 'the line I highlighted about method of loci', type: 'note' }
       ]
     },
     {
@@ -186,9 +195,9 @@ export const RESEARCHER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       selectedText:
         'Once ice-sheet collapse begins, local feedbacks can outrun policy cycles by decades.',
       daysAgo: 19,
-      suggestedClues: [
-        'nature excerpt about ice-sheet collapse outrunning policy',
-        'the climate paragraph I clipped about feedbacks'
+      clues: [
+        { text: 'nature excerpt about ice-sheet collapse outrunning policy', type: 'paraphrase' },
+        { text: 'the climate paragraph I clipped about feedbacks', type: 'paraphrase' }
       ]
     },
     {
@@ -198,9 +207,9 @@ export const RESEARCHER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       selectedText: 'Boredom is not empty time; it is unstructured time that still belongs to you.',
       daysAgo: 7,
       note: 'use in newsletter opener',
-      suggestedClues: [
-        'aeon excerpt saying boredom is unstructured time',
-        'clip I noted for newsletter opener about boredom'
+      clues: [
+        { text: 'aeon excerpt saying boredom is unstructured time', type: 'paraphrase' },
+        { text: 'clip I noted for newsletter opener about boredom', type: 'note' }
       ]
     },
     {
@@ -210,9 +219,9 @@ export const RESEARCHER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       selectedText:
         'Shares travel farther than corrections because outrage is a better forwarding heuristic than accuracy.',
       daysAgo: 14,
-      suggestedClues: [
-        'guardian clip about outrage forwarding heuristic',
-        'excerpt on why shares beat corrections'
+      clues: [
+        { text: 'guardian clip about outrage forwarding heuristic', type: 'paraphrase' },
+        { text: 'excerpt on why shares beat corrections', type: 'paraphrase' }
       ]
     },
     {
@@ -223,9 +232,9 @@ export const RESEARCHER_PROBE_CORPUS: RecallProbePersonaCorpus = {
         'Weak-tie conversations collapse first when offices go fully remote, then innovation metrics follow.',
       daysAgo: 58,
       note: 'hybrid teams slide',
-      suggestedClues: [
-        'ft excerpt about weak-tie conversations collapsing',
-        'remote work clip I marked for hybrid teams slide'
+      clues: [
+        { text: 'ft excerpt about weak-tie conversations collapsing', type: 'paraphrase' },
+        { text: 'remote work clip I marked for hybrid teams slide', type: 'note' }
       ]
     },
     {
@@ -235,9 +244,9 @@ export const RESEARCHER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       selectedText:
         'Retrieving then reading remains competitive when the reader is strong and the corpus is noisy.',
       daysAgo: 390,
-      suggestedClues: [
-        'arxiv excerpt about retrieving then reading',
-        'DPR paper quote on noisy corpus'
+      clues: [
+        { text: 'arxiv excerpt about retrieving then reading', type: 'paraphrase' },
+        { text: 'DPR paper quote on noisy corpus', type: 'paraphrase' }
       ]
     },
     {
@@ -248,9 +257,9 @@ export const RESEARCHER_PROBE_CORPUS: RecallProbePersonaCorpus = {
         'The library desk remains one of the last places where a stranger can ask a hard question for free.',
       daysAgo: 88,
       note: 'civic infrastructure angle',
-      suggestedClues: [
-        'jstor excerpt about library desk and hard questions',
-        'clip about civic infrastructure and libraries'
+      clues: [
+        { text: 'jstor excerpt about library desk and hard questions', type: 'paraphrase' },
+        { text: 'clip about civic infrastructure and libraries', type: 'note' }
       ]
     },
     {
@@ -260,9 +269,9 @@ export const RESEARCHER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       selectedText: 'Generic paragraph without distinctive topic words here.',
       daysAgo: 22,
       note: 'parked for lit review on verification rituals',
-      suggestedClues: [
-        'excerpt I annotated for lit review on verification rituals',
-        'the clip where my note mentions verification rituals'
+      clues: [
+        { text: 'excerpt I annotated for lit review on verification rituals', type: 'note' },
+        { text: 'the clip where my note mentions verification rituals', type: 'note' }
       ]
     }
   ]

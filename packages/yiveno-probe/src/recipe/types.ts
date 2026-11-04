@@ -40,6 +40,8 @@ export type ProbeSeedResultCounts = {
   diversityExcerptCount: number
   noiseBookmarkCount: number
   noiseExcerptCount: number
+  clusterBookmarkCount?: number
+  clusterExcerptCount?: number
   chromeBookmarkSync: 'all' | 'curated_only'
   probeKeys: string[]
 }
@@ -65,8 +67,12 @@ export type ProbeRecipeFormState = {
   diversityExcerptCount: number
   noiseBookmarkCount: number
   noiseExcerptCount: number
+  /** 每画像混淆组书签组数 */
+  clusterBookmarkCount: number
+  /** 每画像混淆组摘录组数 */
+  clusterExcerptCount: number
   chromeBookmarkSync: 'all' | 'curated_only'
   enrichCurated: boolean
-  /** diversity / noise 过程随机种子 */
+  /** diversity / noise / cluster 过程随机种子 */
   fillerSeed: number
 }

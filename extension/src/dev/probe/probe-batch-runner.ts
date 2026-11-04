@@ -1,6 +1,6 @@
 /**
  * DEV-only：数据驱动批量探针 Runner。
- * 精选目录线索 + 已种库 diversity 带线索条目 → recallWithClue(omnibox) → judgeProbeNeighborhood(k=3)。
+ * 精选 / diversity / cluster / 负例 → recallWithClue(omnibox) → 邻域或集合判定 / 负例判定。
  */
 
 import {
@@ -8,6 +8,7 @@ import {
   buildProbeBatchCasePlan,
   DEFAULT_PROBE_FILLER_SEED,
   judgeProbeNeighborhood,
+  judgeProbeNeighborhoodForSet,
   rankedIdsFromRecallResult,
   type ProbeBatchCaseResult,
   type ProbeBatchReport,
@@ -28,6 +29,9 @@ export type RunProbeBatchInput = {
   personas?: readonly RecallProbePersonaId[] | undefined
   diversityBookmarkCount?: number | undefined
   diversityExcerptCount?: number | undefined
+  clusterBookmarkCount?: number | undefined
+  clusterExcerptCount?: number | undefined
+  includeNegatives?: boolean | undefined
 }
 
 function topPickDisplayTitle(item: MemoryItem | undefined): string | null {
@@ -69,13 +73,19 @@ export async function runProbeBatch(input: RunProbeBatchInput = {}): Promise<{
     const fillerSeed = input.fillerSeed ?? ctx?.fillerSeed ?? DEFAULT_PROBE_FILLER_SEED
     const diversityBookmarkCount = input.diversityBookmarkCount ?? ctx?.diversityBookmarkCount ?? 0
     const diversityExcerptCount = input.diversityExcerptCount ?? ctx?.diversityExcerptCount ?? 0
+    const clusterBookmarkCount = input.clusterBookmarkCount ?? ctx?.clusterBookmarkCount ?? 0
+    const clusterExcerptCount = input.clusterExcerptCount ?? ctx?.clusterExcerptCount ?? 0
+    const includeNegatives = input.includeNegatives ?? true
     const recipeId = input.recipeId ?? ctx?.recipeId ?? 'adhoc'
 
     const plan = buildProbeBatchCasePlan({
       personas,
       fillerSeed,
       diversityBookmarkCount,
-      diversityExcerptCount
+      diversityExcerptCount,
+      clusterBookmarkCount,
+      clusterExcerptCount,
+      includeNegatives
     })
 
     const runIdPreview = `${recipeId}__${fillerSeed}__${startedAtMs}`
@@ -91,7 +101,9 @@ export async function runProbeBatch(input: RunProbeBatchInput = {}): Promise<{
       totalCases: plan.length,
       mappedKeys: Object.keys(map.entries).length,
       recipeId,
-      fillerSeed
+      fillerSeed,
+      clusterBookmarkCount,
+      clusterExcerptCount
     })
 
     const rawResults: ProbeBatchCaseResult[] = []
@@ -102,9 +114,7 @@ export async function runProbeBatch(input: RunProbeBatchInput = {}): Promise<{
 
     for (let index = 0; index < plan.length; index += 1) {
       const casePlan = plan[index]!
-      const expectedId = map.entries[casePlan.expectedKey] ?? null
 
-      // 进度节流：第 1 条、每满 10 条、最后一条（避免计入召回延迟）
       if (shouldWriteProgress(index, plan.length)) {
         await writeProbeBatchProgress({
           runId: runIdPreview,
@@ -116,12 +126,129 @@ export async function runProbeBatch(input: RunProbeBatchInput = {}): Promise<{
         })
       }
 
+      // 负例：不查映射
+      if (casePlan.source === 'negative') {
+        const caseStarted = performance.now()
+        try {
+          const recall = await recallService.recallWithClue(casePlan.clue, { entry: 'omnibox' })
+          const latencyMs = Math.round(performance.now() - caseStarted)
+          const hasTop = recall.topPick != null
+          rawResults.push({
+            caseId: casePlan.caseId,
+            clue: casePlan.clue,
+            clueType: casePlan.clueType,
+            expectedKey: '',
+            expectedId: null,
+            persona: casePlan.persona,
+            source: 'negative',
+            kind: 'negative',
+            label: casePlan.label,
+            verdict: hasTop ? 'false_positive' : 'rejected',
+            actualTop1Title: topPickDisplayTitle(recall.topPick?.item),
+            latencyMs
+          })
+        } catch (error) {
+          rawResults.push({
+            caseId: casePlan.caseId,
+            clue: casePlan.clue,
+            clueType: casePlan.clueType,
+            expectedKey: '',
+            expectedId: null,
+            persona: casePlan.persona,
+            source: 'negative',
+            kind: 'negative',
+            label: casePlan.label,
+            verdict: 'error',
+            actualTop1Title: null,
+            latencyMs: Math.round(performance.now() - caseStarted),
+            error: error instanceof Error ? error.message : String(error)
+          })
+        }
+        continue
+      }
+
+      // 集合 case（ambiguous）
+      if (casePlan.expectedKeys && casePlan.preferredKey) {
+        const expectedIds = casePlan.expectedKeys
+          .map(key => map.entries[key])
+          .filter((id): id is string => typeof id === 'string' && id.length > 0)
+        const preferredId = map.entries[casePlan.preferredKey] ?? null
+        if (!preferredId || expectedIds.length !== casePlan.expectedKeys.length) {
+          rawResults.push({
+            caseId: casePlan.caseId,
+            clue: casePlan.clue,
+            clueType: casePlan.clueType,
+            expectedKey: casePlan.expectedKey,
+            expectedId: preferredId,
+            expectedIds: expectedIds.length > 0 ? expectedIds : undefined,
+            preferredId: preferredId ?? undefined,
+            clusterId: casePlan.clusterId,
+            persona: casePlan.persona,
+            source: casePlan.source,
+            kind: casePlan.kind,
+            label: casePlan.label,
+            verdict: 'unmapped',
+            actualTop1Title: null,
+            latencyMs: 0
+          })
+          continue
+        }
+
+        const caseStarted = performance.now()
+        try {
+          const recall = await recallService.recallWithClue(casePlan.clue, { entry: 'omnibox' })
+          const latencyMs = Math.round(performance.now() - caseStarted)
+          const rankedIds = rankedIdsFromRecallResult(recall)
+          const verdict = judgeProbeNeighborhoodForSet(rankedIds, expectedIds, preferredId, 3)
+          rawResults.push({
+            caseId: casePlan.caseId,
+            clue: casePlan.clue,
+            clueType: casePlan.clueType,
+            expectedKey: casePlan.expectedKey,
+            expectedId: preferredId,
+            expectedIds,
+            preferredId,
+            clusterId: casePlan.clusterId,
+            persona: casePlan.persona,
+            source: casePlan.source,
+            kind: casePlan.kind,
+            label: casePlan.label,
+            verdict,
+            actualTop1Title: topPickDisplayTitle(recall.topPick?.item),
+            latencyMs
+          })
+        } catch (error) {
+          rawResults.push({
+            caseId: casePlan.caseId,
+            clue: casePlan.clue,
+            clueType: casePlan.clueType,
+            expectedKey: casePlan.expectedKey,
+            expectedId: preferredId,
+            expectedIds,
+            preferredId,
+            clusterId: casePlan.clusterId,
+            persona: casePlan.persona,
+            source: casePlan.source,
+            kind: casePlan.kind,
+            label: casePlan.label,
+            verdict: 'error',
+            actualTop1Title: null,
+            latencyMs: Math.round(performance.now() - caseStarted),
+            error: error instanceof Error ? error.message : String(error)
+          })
+        }
+        continue
+      }
+
+      const expectedId = map.entries[casePlan.expectedKey] ?? null
       if (!expectedId) {
         rawResults.push({
           caseId: casePlan.caseId,
           clue: casePlan.clue,
+          clueType: casePlan.clueType,
           expectedKey: casePlan.expectedKey,
           expectedId: null,
+          clusterId: casePlan.clusterId,
           persona: casePlan.persona,
           source: casePlan.source,
           kind: casePlan.kind,
@@ -133,7 +260,6 @@ export async function runProbeBatch(input: RunProbeBatchInput = {}): Promise<{
         continue
       }
 
-      // 计时紧贴 recall，不含进度 storage 写
       const caseStarted = performance.now()
       try {
         const recall = await recallService.recallWithClue(casePlan.clue, { entry: 'omnibox' })
@@ -143,8 +269,10 @@ export async function runProbeBatch(input: RunProbeBatchInput = {}): Promise<{
         rawResults.push({
           caseId: casePlan.caseId,
           clue: casePlan.clue,
+          clueType: casePlan.clueType,
           expectedKey: casePlan.expectedKey,
           expectedId,
+          clusterId: casePlan.clusterId,
           persona: casePlan.persona,
           source: casePlan.source,
           kind: casePlan.kind,
@@ -157,8 +285,10 @@ export async function runProbeBatch(input: RunProbeBatchInput = {}): Promise<{
         rawResults.push({
           caseId: casePlan.caseId,
           clue: casePlan.clue,
+          clueType: casePlan.clueType,
           expectedKey: casePlan.expectedKey,
           expectedId,
+          clusterId: casePlan.clusterId,
           persona: casePlan.persona,
           source: casePlan.source,
           kind: casePlan.kind,
@@ -192,6 +322,9 @@ export async function runProbeBatch(input: RunProbeBatchInput = {}): Promise<{
         missRate: aggregated.missRate,
         byPersona: aggregated.byPersona,
         bySource: aggregated.bySource,
+        byClueType: aggregated.byClueType,
+        clusters: aggregated.clusters,
+        negatives: aggregated.negatives,
         latencyMs: aggregated.latencyMs
       }
     }
@@ -210,7 +343,9 @@ export async function runProbeBatch(input: RunProbeBatchInput = {}): Promise<{
       total: report.aggregates.total,
       top1Rate: report.aggregates.top1Rate,
       inTop3Rate: report.aggregates.inTop3Rate,
-      unmappedCount: report.aggregates.unmappedCount
+      unmappedCount: report.aggregates.unmappedCount,
+      clusterAnyHitRate: report.aggregates.clusters?.anyHitRate,
+      negativeFpRate: report.aggregates.negatives?.falsePositiveRate
     })
 
     return { runId: record.runId, report }

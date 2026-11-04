@@ -38,10 +38,14 @@ describe('probe filler procedural RNG', () => {
     }
   })
 
-  it('同 seed 可复现 diversity', () => {
+  it('同 seed 可复现 diversity（内容字段 + 线索）', () => {
     const a = buildDiversityBookmarkSeeds('developer', 16, { seed: 99 })
     const b = buildDiversityBookmarkSeeds('developer', 16, { seed: 99 })
-    expect(a.map(x => `${x.title}|${x.url}`)).toEqual(b.map(x => `${x.title}|${x.url}`))
+    expect(a.map(x => `${x.title}|${x.url}|${x.daysAgo}|${x.note ?? ''}`)).toEqual(
+      b.map(x => `${x.title}|${x.url}|${x.daysAgo}|${x.note ?? ''}`)
+    )
+    expect(a.map(x => JSON.stringify(x.clues))).toEqual(b.map(x => JSON.stringify(x.clues)))
+    expect(a.every(x => x.clues.length >= 1)).toBe(true)
   })
 
   it('diversity URL 保留 yiveno-div 指纹', () => {

@@ -1,6 +1,7 @@
 /**
  * DEV-only：探针批量运行历史（chrome.storage.local）。
  * 键按 recipeId + fillerSeed + 时间戳；供 Console 列表与 diff。
+ * M2 新字段一律 optional，历史键不升版，兼容 M1 记录。
  */
 
 import { z } from 'zod'
@@ -23,7 +24,10 @@ const groupStatsSchema = z.object({
   in_topk: z.number().int().min(0),
   miss: z.number().int().min(0),
   unmapped: z.number().int().min(0),
-  error: z.number().int().min(0)
+  error: z.number().int().min(0),
+  // default(0)：M1 记录缺字段时补齐，读回类型为 number
+  false_positive: z.number().int().min(0).default(0),
+  rejected: z.number().int().min(0).default(0)
 })
 
 const aggregatesSchema = z.object({
@@ -39,6 +43,24 @@ const aggregatesSchema = z.object({
   missRate: z.number(),
   byPersona: z.record(z.string(), groupStatsSchema),
   bySource: z.record(z.string(), groupStatsSchema),
+  byClueType: z.record(z.string(), groupStatsSchema).optional(),
+  clusters: z
+    .object({
+      total: z.number().int().min(0),
+      anyHitCount: z.number().int().min(0),
+      preferredTop1Count: z.number().int().min(0),
+      anyHitRate: z.number(),
+      preferredTop1Rate: z.number()
+    })
+    .optional(),
+  negatives: z
+    .object({
+      total: z.number().int().min(0),
+      falsePositiveCount: z.number().int().min(0),
+      rejectedCount: z.number().int().min(0),
+      falsePositiveRate: z.number()
+    })
+    .optional(),
   latencyMs: z.object({
     p50: z.number(),
     p95: z.number()
@@ -48,13 +70,19 @@ const aggregatesSchema = z.object({
 const caseResultSchema = z.object({
   caseId: z.string(),
   clue: z.string(),
+  clueType: z
+    .enum(['verbatim', 'paraphrase', 'associative', 'temporal', 'note', 'ambiguous'])
+    .optional(),
   expectedKey: z.string(),
   expectedId: z.string().nullable(),
+  expectedIds: z.array(z.string()).optional(),
+  preferredId: z.string().optional(),
+  clusterId: z.string().optional(),
   persona: z.string(),
-  source: z.enum(['curated', 'diversity']),
-  kind: z.enum(['bookmark', 'excerpt']),
+  source: z.enum(['curated', 'diversity', 'cluster', 'negative']),
+  kind: z.enum(['bookmark', 'excerpt', 'negative']),
   label: z.string(),
-  verdict: z.enum(['top1', 'in_topk', 'miss', 'unmapped', 'error']),
+  verdict: z.enum(['top1', 'in_topk', 'miss', 'unmapped', 'error', 'false_positive', 'rejected']),
   actualTop1Title: z.string().nullable(),
   latencyMs: z.number(),
   error: z.string().optional()
@@ -174,4 +202,9 @@ export async function listProbeRunHistorySummaries(): Promise<ProbeRunHistorySum
 export async function getProbeRunRecord(runId: string): Promise<ProbeRunRecord | null> {
   const store = await readStore()
   return store.runs.find(run => run.runId === runId) ?? null
+}
+
+/** 供单测：解析 report（含 M2 新字段）是否被 schema 保留。 */
+export function parseProbeBatchReportForStorage(report: unknown): ProbeBatchReport {
+  return reportSchema.parse(report) as ProbeBatchReport
 }

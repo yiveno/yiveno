@@ -43,6 +43,8 @@ export function formStateToSeedPayload(form: ProbeRecipeFormState): ProbeSeedPay
     diversityExcerptCount: form.diversityExcerptCount,
     noiseBookmarkCount: form.noiseBookmarkCount,
     noiseExcerptCount: form.noiseExcerptCount,
+    clusterBookmarkCount: form.clusterBookmarkCount,
+    clusterExcerptCount: form.clusterExcerptCount,
     chromeBookmarkSync: form.chromeBookmarkSync,
     enrichCurated: form.enrichCurated,
     fillerSeed: form.fillerSeed
@@ -60,6 +62,8 @@ export function recipeToFormState(recipe: ProbeDataRecipe): ProbeRecipeFormState
     diversityExcerptCount: asNonNegInt(seed.diversityExcerptCount, 0),
     noiseBookmarkCount: asNonNegInt(seed.noiseBookmarkCount, 0),
     noiseExcerptCount: asNonNegInt(seed.noiseExcerptCount, 0),
+    clusterBookmarkCount: asNonNegInt(seed.clusterBookmarkCount, 0),
+    clusterExcerptCount: asNonNegInt(seed.clusterExcerptCount, 0),
     chromeBookmarkSync: seed.chromeBookmarkSync === 'all' ? 'all' : 'curated_only',
     enrichCurated: seed.enrichCurated === true,
     fillerSeed: asNonNegInt(seed.fillerSeed, DEFAULT_PROBE_FILLER_SEED)
@@ -97,11 +101,18 @@ export function estimateCuratedCounts(
 
 /** 估计噪声+多样性层总量（与 purge 分类口径近似）。 */
 export function estimateNoiseDivLayerCount(seed: ProbeSeedPayload): number {
+  const personaN = Math.max(1, (seed.personas ?? ['researcher']).length)
+  // cluster 计数 = 每画像组数；估计按每组 4 名成员近似
+  const clusterMembers =
+    (asNonNegInt(seed.clusterBookmarkCount, 0) + asNonNegInt(seed.clusterExcerptCount, 0)) *
+    personaN *
+    4
   return (
     asNonNegInt(seed.diversityBookmarkCount, 0) +
     asNonNegInt(seed.diversityExcerptCount, 0) +
     asNonNegInt(seed.noiseBookmarkCount, 0) +
-    asNonNegInt(seed.noiseExcerptCount, 0)
+    asNonNegInt(seed.noiseExcerptCount, 0) +
+    clusterMembers
   )
 }
 
@@ -140,6 +151,8 @@ export function compareSeedResultToRecipe(
   pushRow(rows, 'diversityExcerptCount', form.diversityExcerptCount, result.diversityExcerptCount)
   pushRow(rows, 'noiseBookmarkCount', form.noiseBookmarkCount, result.noiseBookmarkCount)
   pushRow(rows, 'noiseExcerptCount', form.noiseExcerptCount, result.noiseExcerptCount)
+  pushRow(rows, 'clusterBookmarkCount', form.clusterBookmarkCount, result.clusterBookmarkCount ?? 0)
+  pushRow(rows, 'clusterExcerptCount', form.clusterExcerptCount, result.clusterExcerptCount ?? 0)
   pushRow(rows, 'chromeBookmarkSync', form.chromeBookmarkSync, result.chromeBookmarkSync)
   pushRow(rows, 'curatedBookmarks(est)', curated.bookmarks, result.bookmarkCount)
   pushRow(rows, 'curatedExcerpts(est)', curated.excerpts, result.excerptCount)
@@ -216,6 +229,8 @@ export function parseProbeDataRecipe(raw: unknown): ProbeDataRecipe {
     diversityExcerptCount: asNonNegInt(seedRaw.diversityExcerptCount, 0),
     noiseBookmarkCount: asNonNegInt(seedRaw.noiseBookmarkCount, 0),
     noiseExcerptCount: asNonNegInt(seedRaw.noiseExcerptCount, 0),
+    clusterBookmarkCount: asNonNegInt(seedRaw.clusterBookmarkCount, 0),
+    clusterExcerptCount: asNonNegInt(seedRaw.clusterExcerptCount, 0),
     chromeBookmarkSync: seedRaw.chromeBookmarkSync === 'all' ? 'all' : 'curated_only',
     enrichCurated: seedRaw.enrichCurated === true,
     fillerSeed: asNonNegInt(seedRaw.fillerSeed, DEFAULT_PROBE_FILLER_SEED)

@@ -3,23 +3,34 @@
  */
 
 import type { ProbeVerifyVerdict } from '../verify/neighborhood'
-import type { RecallProbePersonaId } from '../corpus/types'
+import type { ProbeClueType, RecallProbePersonaId } from '../corpus/types'
 
 /** 用例来源层。 */
-export type ProbeBatchCaseSource = 'curated' | 'diversity'
+export type ProbeBatchCaseSource = 'curated' | 'diversity' | 'cluster' | 'negative'
 
-/** 判定扩展：邻域三态 + 映射缺失 + 运行异常。 */
-export type ProbeBatchVerdict = ProbeVerifyVerdict | 'unmapped' | 'error'
+/** 判定扩展：邻域三态 + 映射缺失 + 运行异常 + 负例。 */
+export type ProbeBatchVerdict =
+  | ProbeVerifyVerdict
+  | 'unmapped'
+  | 'error'
+  | 'false_positive' // 负例误报（有 topPick）
+  | 'rejected' // 负例正确拒绝（topPick 为 null）
 
 /** 展开后的单条跑分用例（尚未绑定 MemoryItem id）。 */
 export type ProbeBatchCasePlan = {
-  /** 稳定用例 id：`${expectedKey}#${clueIndex}` */
+  /** 稳定用例 id */
   caseId: string
   clue: string
+  clueType: ProbeClueType
+  /** 单条 expected key；集合/负例可空串 */
   expectedKey: string
+  /** 集合 case：成员 keys */
+  expectedKeys?: string[] | undefined
+  preferredKey?: string | undefined
+  clusterId?: string | undefined
   persona: RecallProbePersonaId
   source: ProbeBatchCaseSource
-  kind: 'bookmark' | 'excerpt'
+  kind: 'bookmark' | 'excerpt' | 'negative'
   label: string
   clueIndex: number
 }
@@ -28,12 +39,16 @@ export type ProbeBatchCasePlan = {
 export type ProbeBatchCaseResult = {
   caseId: string
   clue: string
+  clueType: ProbeClueType
   expectedKey: string
-  /** 映射缺失时为 null */
+  /** 映射缺失或负例时为 null */
   expectedId: string | null
+  expectedIds?: string[] | undefined
+  preferredId?: string | undefined
+  clusterId?: string | undefined
   persona: RecallProbePersonaId
   source: ProbeBatchCaseSource
-  kind: 'bookmark' | 'excerpt'
+  kind: 'bookmark' | 'excerpt' | 'negative'
   label: string
   verdict: ProbeBatchVerdict
   actualTop1Title: string | null
@@ -49,25 +64,46 @@ export type ProbeBatchGroupStats = {
   miss: number
   unmapped: number
   error: number
+  false_positive: number
+  rejected: number
 }
 
 /** 聚合指标。 */
 export type ProbeBatchAggregates = {
   total: number
-  /** 有 expectedId 且未抛错的判定条数 */
+  /** 仅 top1/in_topk/miss */
   judged: number
   top1Count: number
   inTopkCount: number
   missCount: number
   unmappedCount: number
   errorCount: number
-  /** top1 / judged；judged=0 时为 0 */
   top1Rate: number
-  /** (top1+in_topk) / judged */
   inTop3Rate: number
   missRate: number
   byPersona: Record<string, ProbeBatchGroupStats>
   bySource: Record<string, ProbeBatchGroupStats>
+  /** M2；M1 历史记录可能缺省 */
+  byClueType?: Record<string, ProbeBatchGroupStats> | undefined
+  /** M2；M1 历史记录可能缺省 */
+  clusters?:
+    | {
+        total: number
+        anyHitCount: number
+        preferredTop1Count: number
+        anyHitRate: number
+        preferredTop1Rate: number
+      }
+    | undefined
+  /** M2；M1 历史记录可能缺省 */
+  negatives?:
+    | {
+        total: number
+        falsePositiveCount: number
+        rejectedCount: number
+        falsePositiveRate: number
+      }
+    | undefined
   latencyMs: {
     p50: number
     p95: number

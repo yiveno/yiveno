@@ -15,9 +15,9 @@ export const KNOWLEDGE_WORKER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       url: 'https://www.notion.so/yiveno-probe/Expense-policy-meals-travel',
       daysAgo: 28,
       note: 'receipts before month end',
-      suggestedClues: [
-        'notion page about expense policy for meals and travel',
-        'wiki I annotated about receipts before month end'
+      clues: [
+        { text: 'notion page about expense policy for meals and travel', type: 'verbatim' },
+        { text: 'wiki I annotated about receipts before month end', type: 'note' }
       ]
     },
     {
@@ -25,9 +25,9 @@ export const KNOWLEDGE_WORKER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       title: 'QBR talking points — North America',
       url: 'https://docs.google.com/document/d/yivenoProbeQbrNa01',
       daysAgo: 12,
-      suggestedClues: [
-        'google doc with qbr talking points for north america',
-        'that quarterly business review talking points doc'
+      clues: [
+        { text: 'google doc with qbr talking points for north america', type: 'verbatim' },
+        { text: 'that quarterly business review talking points doc', type: 'verbatim' }
       ]
     },
     {
@@ -36,9 +36,9 @@ export const KNOWLEDGE_WORKER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       url: 'https://slack.com/help/articles/201864558-Set-your-status-and-availability',
       daysAgo: 5,
       note: 'focus Friday ritual',
-      suggestedClues: [
-        'slack help on setting status and pausing notifications',
-        'bookmark I noted for focus Friday ritual'
+      clues: [
+        { text: 'slack help on setting status and pausing notifications', type: 'verbatim' },
+        { text: 'bookmark I noted for focus Friday ritual', type: 'note' }
       ]
     },
     {
@@ -46,9 +46,9 @@ export const KNOWLEDGE_WORKER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       title: 'Project brief: Vendor onboarding refresh',
       url: 'https://app.asana.com/0/yiveno-probe/vendor-onboarding-refresh',
       daysAgo: 19,
-      suggestedClues: [
-        'asana project brief about vendor onboarding refresh',
-        'that vendor onboarding project page I saved'
+      clues: [
+        { text: 'asana project brief about vendor onboarding refresh', type: 'verbatim' },
+        { text: 'that vendor onboarding project page I saved', type: 'verbatim' }
       ]
     },
     {
@@ -57,9 +57,9 @@ export const KNOWLEDGE_WORKER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       url: 'https://hr.example.com/handbook/pto-blackout-dates',
       daysAgo: 40,
       note: 'check before booking flights',
-      suggestedClues: [
-        'hr handbook page on pto blackout dates',
-        'pto policy bookmark I noted before booking flights'
+      clues: [
+        { text: 'hr handbook page on pto blackout dates', type: 'verbatim' },
+        { text: 'pto policy bookmark I noted before booking flights', type: 'note' }
       ]
     },
     {
@@ -67,9 +67,9 @@ export const KNOWLEDGE_WORKER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       title: 'Cloud recording retention and who can download',
       url: 'https://support.zoom.com/hc/en/article?id=zm_kb_yiveno_probe_recording',
       daysAgo: 8,
-      suggestedClues: [
-        'zoom support article about cloud recording retention',
-        'page on who can download meeting recordings'
+      clues: [
+        { text: 'zoom support article about cloud recording retention', type: 'verbatim' },
+        { text: 'page on who can download meeting recordings', type: 'verbatim' }
       ]
     },
     {
@@ -77,9 +77,9 @@ export const KNOWLEDGE_WORKER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       title: 'RACI for the spring ops migration',
       url: 'https://confluence.example.com/display/OPS/RACI-spring-migration',
       daysAgo: 33,
-      suggestedClues: [
-        'confluence page with raci for spring ops migration',
-        'ops wiki about who is responsible for the migration'
+      clues: [
+        { text: 'confluence page with raci for spring ops migration', type: 'verbatim' },
+        { text: 'ops wiki about who is responsible for the migration', type: 'paraphrase' }
       ]
     },
     {
@@ -87,9 +87,9 @@ export const KNOWLEDGE_WORKER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       title: 'All-hands agenda · September',
       url: 'https://calendar.google.com/calendar/u/0/r/eventedit/yivenoProbeAllHandsSep',
       daysAgo: 2,
-      suggestedClues: [
-        'calendar event for september all-hands agenda',
-        'all-hands agenda I bookmarked a couple days ago'
+      clues: [
+        { text: 'calendar event for september all-hands agenda', type: 'verbatim' },
+        { text: 'all-hands agenda I bookmarked a couple days ago', type: 'temporal' }
       ]
     }
   ],
@@ -102,9 +102,9 @@ export const KNOWLEDGE_WORKER_PROBE_CORPUS: RecallProbePersonaCorpus = {
         'Per-diem covers meals only when the trip includes an overnight stay away from the home office.',
       daysAgo: 27,
       note: 'client dinner needs pre-approval',
-      suggestedClues: [
-        'notion excerpt about per-diem covering meals overnight',
-        'expense clip I annotated about client dinner pre-approval'
+      clues: [
+        { text: 'notion excerpt about per-diem covering meals overnight', type: 'verbatim' },
+        { text: 'expense clip I annotated about client dinner pre-approval', type: 'note' }
       ]
     },
     {
@@ -114,9 +114,9 @@ export const KNOWLEDGE_WORKER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       selectedText:
         'Lead with renewals at risk, then expansion pipeline, then hiring gaps that block delivery.',
       daysAgo: 11,
-      suggestedClues: [
-        'qbr doc excerpt about leading with renewals at risk',
-        'talking points clip on expansion pipeline and hiring gaps'
+      clues: [
+        { text: 'qbr doc excerpt about leading with renewals at risk', type: 'paraphrase' },
+        { text: 'talking points clip on expansion pipeline and hiring gaps', type: 'verbatim' }
       ]
     },
     {
@@ -126,9 +126,9 @@ export const KNOWLEDGE_WORKER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       selectedText:
         'Paused notifications still deliver DMs marked urgent; everything else waits until you clear the status.',
       daysAgo: 4,
-      suggestedClues: [
-        'slack excerpt about paused notifications and urgent dms',
-        'help clip on clearing status to resume the queue'
+      clues: [
+        { text: 'slack excerpt about paused notifications and urgent dms', type: 'verbatim' },
+        { text: 'help clip on clearing status to resume the queue', type: 'verbatim' }
       ]
     },
     {
@@ -139,9 +139,12 @@ export const KNOWLEDGE_WORKER_PROBE_CORPUS: RecallProbePersonaCorpus = {
         'Finance is Consulted on cutover weekend; Legal is Informed after the first successful dry run.',
       daysAgo: 32,
       note: 'ping legal after dry run',
-      suggestedClues: [
-        'confluence excerpt about finance consulted on cutover weekend',
-        'raci clip I noted to ping legal after dry run'
+      clues: [
+        {
+          text: 'confluence excerpt about finance consulted on cutover weekend',
+          type: 'paraphrase'
+        },
+        { text: 'raci clip I noted to ping legal after dry run', type: 'note' }
       ]
     },
     {
@@ -151,9 +154,9 @@ export const KNOWLEDGE_WORKER_PROBE_CORPUS: RecallProbePersonaCorpus = {
       selectedText: 'Standup scrap — blockers copied from yesterday.',
       daysAgo: 1,
       note: 'wait on vendor SSO reply',
-      suggestedClues: [
-        'notes doc where I wrote wait on vendor SSO reply',
-        'standup scrap annotated about vendor SSO'
+      clues: [
+        { text: 'notes doc where I wrote wait on vendor SSO reply', type: 'note' },
+        { text: 'standup scrap annotated about vendor SSO', type: 'note' }
       ]
     }
   ]

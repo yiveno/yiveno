@@ -22,7 +22,11 @@ const seedContextSchema = z.object({
   diversityBookmarkCount: z.number().int().min(0),
   diversityExcerptCount: z.number().int().min(0),
   noiseBookmarkCount: z.number().int().min(0),
-  noiseExcerptCount: z.number().int().min(0)
+  noiseExcerptCount: z.number().int().min(0),
+  /** 每画像混淆组书签组数；optional 兼容 M1 映射 */
+  clusterBookmarkCount: z.number().int().min(0).optional(),
+  /** 每画像混淆组摘录组数 */
+  clusterExcerptCount: z.number().int().min(0).optional()
 })
 
 const probeKeyIdMapSchema = z.object({

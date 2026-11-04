@@ -13,9 +13,16 @@ function pushRate(rows: ProbeRunDiffRow[], metric: string, before: number, after
   })
 }
 
+function groupTop1Rate(group: { total: number; top1: number } | undefined): number | null {
+  if (!group || group.total === 0) {
+    return null
+  }
+  return group.top1 / group.total
+}
+
 /**
- * 对比两次聚合指标（率与计数 + 延迟）。
- * before / after 对应较早 / 较晚一次运行的语义由调用方决定。
+ * 对比两次聚合指标。
+ * 兼容 M1 记录：任一侧缺 byClueType/clusters/negatives 时跳过对应行。
  */
 export function diffProbeBatchAggregates(input: {
   beforeRunId: string
@@ -33,6 +40,43 @@ export function diffProbeBatchAggregates(input: {
   pushRate(rows, 'errorCount', input.before.errorCount, input.after.errorCount)
   pushRate(rows, 'latencyMs.p50', input.before.latencyMs.p50, input.after.latencyMs.p50)
   pushRate(rows, 'latencyMs.p95', input.before.latencyMs.p95, input.after.latencyMs.p95)
+
+  const beforeTypes = input.before.byClueType ?? {}
+  const afterTypes = input.after.byClueType ?? {}
+  const typeKeys = new Set([...Object.keys(beforeTypes), ...Object.keys(afterTypes)])
+  for (const type of [...typeKeys].sort()) {
+    const beforeRate = groupTop1Rate(beforeTypes[type])
+    const afterRate = groupTop1Rate(afterTypes[type])
+    if (beforeRate === null || afterRate === null) {
+      continue
+    }
+    pushRate(rows, `clueType.${type}.top1Rate`, beforeRate, afterRate)
+  }
+
+  if (input.before.clusters && input.after.clusters) {
+    pushRate(
+      rows,
+      'clusters.anyHitRate',
+      input.before.clusters.anyHitRate,
+      input.after.clusters.anyHitRate
+    )
+    pushRate(
+      rows,
+      'clusters.preferredTop1Rate',
+      input.before.clusters.preferredTop1Rate,
+      input.after.clusters.preferredTop1Rate
+    )
+  }
+
+  if (input.before.negatives && input.after.negatives) {
+    pushRate(
+      rows,
+      'negatives.falsePositiveRate',
+      input.before.negatives.falsePositiveRate,
+      input.after.negatives.falsePositiveRate
+    )
+  }
+
   return {
     beforeRunId: input.beforeRunId,
     afterRunId: input.afterRunId,

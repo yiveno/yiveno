@@ -19,6 +19,7 @@ function stubResult(
 ): ProbeBatchCaseResult {
   return {
     clue: 'c',
+    clueType: 'verbatim',
     expectedKey: 'k',
     expectedId: 'id',
     kind: 'bookmark',
@@ -59,6 +60,43 @@ describe('buildProbeBatchCasePlan', () => {
 })
 
 describe('aggregateProbeBatchResults', () => {
+  it('cluster 集合 / 负例进入专节；不进 judged', () => {
+    const agg = aggregateProbeBatchResults([
+      stubResult({
+        caseId: 'set',
+        verdict: 'in_topk',
+        persona: 'developer',
+        source: 'cluster',
+        clueType: 'ambiguous',
+        expectedIds: ['a', 'b'],
+        latencyMs: 4
+      }),
+      stubResult({
+        caseId: 'neg',
+        verdict: 'false_positive',
+        persona: 'developer',
+        source: 'negative',
+        kind: 'negative',
+        clueType: 'associative',
+        latencyMs: 5
+      }),
+      stubResult({
+        caseId: 'ok',
+        verdict: 'top1',
+        persona: 'developer',
+        source: 'curated',
+        latencyMs: 3
+      })
+    ])
+    expect(agg.judged).toBe(2)
+    expect(agg.clusters.total).toBe(1)
+    expect(agg.clusters.anyHitCount).toBe(1)
+    expect(agg.negatives.total).toBe(1)
+    expect(agg.negatives.falsePositiveCount).toBe(1)
+    expect(agg.byClueType.ambiguous?.in_topk).toBe(1)
+    expect(agg.cases.map(r => r.verdict)[0]).toBe('false_positive')
+  })
+
   it('失败优先排序 + 率计算 + unmapped 单列', () => {
     const rows: ProbeBatchCaseResult[] = [
       stubResult({

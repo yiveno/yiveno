@@ -82,6 +82,8 @@ describe('probe data recipe', () => {
         diversityExcerptCount: 5,
         noiseBookmarkCount: 3,
         noiseExcerptCount: 2,
+        clusterBookmarkCount: 0,
+        clusterExcerptCount: 0,
         chromeBookmarkSync: 'curated_only',
         enrichCurated: false,
         fillerSeed: 20260906

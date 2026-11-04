@@ -7,6 +7,8 @@
  */
 
 import {
+  buildClusterBookmarkSeeds,
+  buildClusterExcerptSeeds,
   buildDiversityBookmarkSeeds,
   buildDiversityExcerptSeeds,
   buildNoiseBookmarkSeeds,
@@ -353,13 +355,17 @@ export async function seedRecallProbeCorpus(payload: SeedRecallProbePayload): Pr
   diversityExcerptCount: number
   noiseBookmarkCount: number
   noiseExcerptCount: number
+  /** 每画像混淆组书签组数（与 payload / seedContext 对齐） */
+  clusterBookmarkCount: number
+  /** 每画像混淆组摘录组数 */
+  clusterExcerptCount: number
   chromeBookmarkSync: 'all' | 'curated_only'
   indexRebuilt: boolean
   wipedChromeFolders: number
   clearedMemoryCount: number
   /** 仅精选稳定键（配方对照仍用此字段） */
   probeKeys: string[]
-  /** 全量映射条数（精选 + diversity + noise） */
+  /** 全量映射条数（精选 + diversity + noise + cluster） */
   mappedCount: number
 }> {
   if (!import.meta.env.DEV) {
@@ -375,6 +381,8 @@ export async function seedRecallProbeCorpus(payload: SeedRecallProbePayload): Pr
     diversityExcerptCount: payload.diversityExcerptCount,
     noiseBookmarkCount: payload.noiseBookmarkCount,
     noiseExcerptCount: payload.noiseExcerptCount,
+    clusterBookmarkCount: payload.clusterBookmarkCount,
+    clusterExcerptCount: payload.clusterExcerptCount,
     fillerSeed
   })
 
@@ -451,19 +459,46 @@ export async function seedRecallProbeCorpus(payload: SeedRecallProbePayload): Pr
       seed: fillerSeed
     })
 
+    // cluster：每画像组数（缺省 0）；成员并入 filler 写入并登记映射
+    const clusterBookmarkCount = payload.clusterBookmarkCount ?? 0
+    const clusterExcerptCount = payload.clusterExcerptCount ?? 0
+    const clusterBookmarks: RecallProbeBookmarkSeed[] = []
+    const clusterExcerpts: RecallProbeExcerptSeed[] = []
+    for (const persona of personaIds) {
+      clusterBookmarks.push(
+        ...buildClusterBookmarkSeeds(persona, clusterBookmarkCount, { seed: fillerSeed })
+      )
+      clusterExcerpts.push(
+        ...buildClusterExcerptSeeds(persona, clusterExcerptCount, { seed: fillerSeed })
+      )
+    }
+
     if (memoryOnlyFill) {
       fillerRefs.push(
-        ...(await seedBookmarksBulkMemoryOnly([...diversityBookmarks, ...noiseBookmarks]))
+        ...(await seedBookmarksBulkMemoryOnly([
+          ...diversityBookmarks,
+          ...clusterBookmarks,
+          ...noiseBookmarks
+        ]))
       )
-      fillerRefs.push(...(await seedExcerptsBulkQuiet([...diversityExcerpts, ...noiseExcerpts])))
+      fillerRefs.push(
+        ...(await seedExcerptsBulkQuiet([
+          ...diversityExcerpts,
+          ...clusterExcerpts,
+          ...noiseExcerpts
+        ]))
+      )
     } else {
       let fillerBmIndex = 0
-      for (const bm of [...diversityBookmarks, ...noiseBookmarks]) {
+      for (const bm of [...diversityBookmarks, ...clusterBookmarks, ...noiseBookmarks]) {
         const parentId = pickBookmarkParentId(fillerBmIndex, barId, scatterFolderIds)
         fillerBmIndex += 1
         fillerRefs.push(await seedBookmark(parentId, bm, { enrich: false }))
       }
       for (const ex of diversityExcerpts) {
+        fillerRefs.push(await seedExcerptQuiet(ex))
+      }
+      for (const ex of clusterExcerpts) {
         fillerRefs.push(await seedExcerptQuiet(ex))
       }
       for (const ex of noiseExcerpts) {
@@ -483,7 +518,9 @@ export async function seedRecallProbeCorpus(payload: SeedRecallProbePayload): Pr
       diversityBookmarkCount: diversityBookmarks.length,
       diversityExcerptCount: diversityExcerpts.length,
       noiseBookmarkCount: noiseBookmarks.length,
-      noiseExcerptCount: noiseExcerpts.length
+      noiseExcerptCount: noiseExcerpts.length,
+      clusterBookmarkCount,
+      clusterExcerptCount
     }
     const mapStore = payload.replace
       ? await replaceProbeKeyIdMap({ entries, seedContext })
@@ -500,6 +537,8 @@ export async function seedRecallProbeCorpus(payload: SeedRecallProbePayload): Pr
       diversityExcerptCount: diversityExcerpts.length,
       noiseBookmarkCount: noiseBookmarks.length,
       noiseExcerptCount: noiseExcerpts.length,
+      clusterBookmarkCount,
+      clusterExcerptCount,
       chromeBookmarkSync: payload.chromeBookmarkSync,
       indexRebuilt: indexReady.rebuilt,
       wipedChromeFolders,

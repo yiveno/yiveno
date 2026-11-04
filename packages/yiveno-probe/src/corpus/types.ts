@@ -2,6 +2,24 @@
  * DEV 召回探针语料共享类型（仅 seeder / 夹具；禁止进召回 runtime）。
  */
 
+/** 线索类型（生成即标注）。 */
+export type ProbeClueType =
+  | 'verbatim' // 直接引用标题/主题词
+  | 'paraphrase' // 改述型
+  | 'associative' // 仅保存场景/用途，零内容词重叠
+  | 'temporal' // 以时间表达为主区分
+  | 'note' // 指向条目附注
+  | 'ambiguous' // 模糊指代（精选仍单条 expected；cluster 可集合判定）
+
+/** 带类型标注的线索。 */
+export type ProbeTypedClue = {
+  text: string
+  type: ProbeClueType
+}
+
+/** seed 层角色；缺省即 target。不进 MemoryItem。 */
+export type ProbeSeedRole = 'target' | 'distractor'
+
 export type RecallProbeBookmarkSeed = {
   /** 稳定键，便于日志与探针对照 */
   key: string
@@ -11,7 +29,9 @@ export type RecallProbeBookmarkSeed = {
   daysAgo: number
   note?: string
   /** 英语口语线索（期望邻域命中本条）；噪声可为空 */
-  suggestedClues: string[]
+  clues: ProbeTypedClue[]
+  /** 缺省 target；noise 一律 distractor */
+  role?: ProbeSeedRole
 }
 
 export type RecallProbeExcerptSeed = {
@@ -21,7 +41,8 @@ export type RecallProbeExcerptSeed = {
   selectedText: string
   daysAgo: number
   note?: string
-  suggestedClues: string[]
+  clues: ProbeTypedClue[]
+  role?: ProbeSeedRole
 }
 
 export type RecallProbePersonaId =
