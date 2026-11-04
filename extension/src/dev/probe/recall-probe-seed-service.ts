@@ -13,6 +13,7 @@ import {
   buildNoiseExcerptSeeds,
   DEFAULT_PROBE_FILLER_SEED,
   resolveProbeCorpora,
+  splitCountAcrossPersonas,
   type RecallProbeBookmarkSeed,
   type RecallProbeExcerptSeed,
   type RecallProbePersonaId
@@ -338,19 +339,6 @@ async function seedExcerptsBulkQuiet(seeds: RecallProbeExcerptSeed[]): Promise<P
     await yieldToEventLoop()
   }
   return refs
-}
-
-/** 将总数按画像均分（余数给前列画像）。 */
-function splitCountAcrossPersonas(
-  total: number,
-  personas: readonly RecallProbePersonaId[]
-): number[] {
-  if (personas.length === 0) {
-    return []
-  }
-  const base = Math.floor(total / personas.length)
-  const rem = total % personas.length
-  return personas.map((_, index) => base + (index < rem ? 1 : 0))
 }
 
 /**

@@ -95,20 +95,26 @@ export async function runProbeBatch(input: RunProbeBatchInput = {}): Promise<{
     })
 
     const rawResults: ProbeBatchCaseResult[] = []
+    const shouldWriteProgress = (index: number, total: number): boolean => {
+      const current = index + 1
+      return current === 1 || current % 10 === 0 || current === total
+    }
 
     for (let index = 0; index < plan.length; index += 1) {
       const casePlan = plan[index]!
       const expectedId = map.entries[casePlan.expectedKey] ?? null
-      const caseStarted = performance.now()
 
-      await writeProbeBatchProgress({
-        runId: runIdPreview,
-        phase: 'running',
-        current: index + 1,
-        total: plan.length,
-        lastClue: casePlan.clue,
-        updatedAtIso: new Date().toISOString()
-      })
+      // 进度节流：第 1 条、每满 10 条、最后一条（避免计入召回延迟）
+      if (shouldWriteProgress(index, plan.length)) {
+        await writeProbeBatchProgress({
+          runId: runIdPreview,
+          phase: 'running',
+          current: index + 1,
+          total: plan.length,
+          lastClue: casePlan.clue,
+          updatedAtIso: new Date().toISOString()
+        })
+      }
 
       if (!expectedId) {
         rawResults.push({
@@ -122,13 +128,16 @@ export async function runProbeBatch(input: RunProbeBatchInput = {}): Promise<{
           label: casePlan.label,
           verdict: 'unmapped',
           actualTop1Title: null,
-          latencyMs: Math.round(performance.now() - caseStarted)
+          latencyMs: 0
         })
         continue
       }
 
+      // 计时紧贴 recall，不含进度 storage 写
+      const caseStarted = performance.now()
       try {
         const recall = await recallService.recallWithClue(casePlan.clue, { entry: 'omnibox' })
+        const latencyMs = Math.round(performance.now() - caseStarted)
         const rankedIds = rankedIdsFromRecallResult(recall)
         const verdict = judgeProbeNeighborhood(rankedIds, expectedId, 3)
         rawResults.push({
@@ -142,7 +151,7 @@ export async function runProbeBatch(input: RunProbeBatchInput = {}): Promise<{
           label: casePlan.label,
           verdict,
           actualTop1Title: topPickDisplayTitle(recall.topPick?.item),
-          latencyMs: Math.round(performance.now() - caseStarted)
+          latencyMs
         })
       } catch (error) {
         rawResults.push({
