@@ -1,10 +1,10 @@
 <script setup lang="ts">
 /**
- * DEV-only 测试工作台：写入测试数据 + 清理。
- * 盘点与对拍已撤出 UI；评审能力后续另开。禁止冒充 §5.9。
+ * DEV-only 测试工作台：写入测试数据 + 清理 + 批量探针跑分。
+ * 禁止冒充 §5.9。
  */
 
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 import { RECALL_PROBE_PERSONA_ORDER, type RecallProbePersonaId } from '../corpus/index'
 import { DEFAULT_PROBE_FILLER_SEED } from '../corpus/prng'
@@ -22,7 +22,20 @@ import {
 } from '../recipe/index'
 import { deleteCustomRecipe, listAllRecipes, upsertCustomRecipe } from '../recipe/recipe-storage'
 import type { ProbeSeedPayload } from '../presets/seed-payload'
-import { probeCleanup, probeSeedRecall, type ProbeCleanupPayload } from './probe-console-client'
+import {
+  probeCleanup,
+  probeDiffRuns,
+  probeGetBatchProgress,
+  probeGetRun,
+  probeListRuns,
+  probeRunBatch,
+  probeSeedRecall,
+  type ProbeBatchProgressView,
+  type ProbeBatchReportView,
+  type ProbeCleanupPayload,
+  type ProbeDiffRow,
+  type ProbeRunHistorySummary
+} from './probe-console-client'
 
 defineOptions({ name: 'ProbeConsole' })
 
@@ -59,9 +72,29 @@ const cleanTypes = ref<'all' | 'bookmark' | 'text_excerpt'>('all')
 const cleanRemoveProbeFolder = ref(true)
 const cleanWipeChromeChildren = ref(false)
 
+/** 批量探针跑分区 */
+const runBusy = ref(false)
+const runProgress = ref<ProbeBatchProgressView | null>(null)
+const lastRunReport = ref<ProbeBatchReportView | null>(null)
+const lastRunId = ref('')
+const runHistory = ref<ProbeRunHistorySummary[]>([])
+const diffBeforeRunId = ref('')
+const diffAfterRunId = ref('')
+const lastDiffRows = ref<ProbeDiffRow[]>([])
+let progressPollTimer: ReturnType<typeof setInterval> | null = null
+
 const selectedRecipe = computed(() =>
   recipeCatalog.value.find(recipe => recipe.id === selectedRecipeId.value)
 )
+
+const runAggregateLine = computed(() => {
+  const agg = lastRunReport.value?.aggregates
+  if (!agg) {
+    return ''
+  }
+  const pct = (rate: number) => `${(rate * 100).toFixed(1)}%`
+  return `top1 ${pct(agg.top1Rate)} · in-top3 ${pct(agg.inTop3Rate)} · miss ${pct(agg.missRate)} · unmapped ${agg.unmappedCount} · p50 ${Math.round(agg.latencyMs.p50)}ms · p95 ${Math.round(agg.latencyMs.p95)}ms · n=${agg.total}`
+})
 
 const recipeEstimate = computed(() => {
   const personas = seedPersonas.value.filter((id): id is RecallProbePersonaId =>
@@ -158,7 +191,8 @@ async function runSelectedRecipe(): Promise<void> {
   const payload = {
     ...recipe.seed,
     ...(personasOverride !== undefined ? { personas: personasOverride } : {}),
-    fillerSeed: fillerSeed.value
+    fillerSeed: fillerSeed.value,
+    recipeId: recipe.id
   }
   await runSeedWithPayload(payload, {
     label: recipe.label,
@@ -262,7 +296,8 @@ async function runSeedWithPayload(
 
   const payload: Partial<ProbeSeedPayload> = {
     ...partial,
-    personas: (partial.personas ?? seedPersonas.value) as NonNullable<ProbeSeedPayload['personas']>
+    personas: (partial.personas ?? seedPersonas.value) as NonNullable<ProbeSeedPayload['personas']>,
+    recipeId: partial.recipeId ?? options.recipe?.id ?? selectedRecipeId.value
   }
 
   busy.value = true
@@ -299,7 +334,7 @@ async function runSeedWithPayload(
           : ' · 对照有偏差'
     const replaceHint = payload.replace === true ? ' · 已先清空' : ''
     setStatus(
-      `${options.label}完成 · 书签 ${res.bookmarkCount} · 摘录 ${res.excerptCount} · 半仿真 ${res.diversityBookmarkCount}/${res.diversityExcerptCount} · 干扰 ${res.noiseBookmarkCount}/${res.noiseExcerptCount} · 精选键 ${res.probeKeys.length}${compareHint}${replaceHint}`
+      `${options.label}完成 · 书签 ${res.bookmarkCount} · 摘录 ${res.excerptCount} · 半仿真 ${res.diversityBookmarkCount}/${res.diversityExcerptCount} · 干扰 ${res.noiseBookmarkCount}/${res.noiseExcerptCount} · 精选键 ${res.probeKeys.length} · 映射 ${res.mappedCount}${compareHint}${replaceHint}`
     )
   } finally {
     busy.value = false
@@ -393,13 +428,133 @@ async function runCleanupAllMemory(): Promise<void> {
   await runCleanupWithPayload(currentCleanupPayload(), '清空整库')
 }
 
+function stopProgressPoll(): void {
+  if (progressPollTimer !== null) {
+    clearInterval(progressPollTimer)
+    progressPollTimer = null
+  }
+}
+
+function startProgressPoll(): void {
+  stopProgressPoll()
+  progressPollTimer = setInterval(() => {
+    void (async () => {
+      const res = await probeGetBatchProgress()
+      if (res.ok) {
+        runProgress.value = res.progress
+      }
+    })()
+  }, 300)
+}
+
+async function refreshRunHistory(): Promise<void> {
+  const res = await probeListRuns()
+  if (!res.ok) {
+    setStatus(`读取运行历史失败：${res.errorCode} ${res.error ?? ''}`)
+    return
+  }
+  runHistory.value = res.runs
+  if (!diffBeforeRunId.value && res.runs[1]) {
+    diffBeforeRunId.value = res.runs[1].runId
+  }
+  if (!diffAfterRunId.value && res.runs[0]) {
+    diffAfterRunId.value = res.runs[0].runId
+  }
+}
+
+async function runProbeBatchFromForm(): Promise<void> {
+  if (busy.value || runBusy.value) {
+    return
+  }
+  runBusy.value = true
+  lastDiffRows.value = []
+  setStatus('批量探针运行中…')
+  startProgressPoll()
+  try {
+    const personas = seedPersonas.value.filter((id): id is RecallProbePersonaId =>
+      PERSONA_ORDER.includes(id as RecallProbePersonaId)
+    )
+    const res = await probeRunBatch({
+      recipeId: selectedRecipeId.value || 'adhoc',
+      fillerSeed: fillerSeed.value,
+      personas: personas.length > 0 ? personas : undefined,
+      diversityBookmarkCount: diversityBookmarkCount.value,
+      diversityExcerptCount: diversityExcerptCount.value
+    })
+    if (!res.ok) {
+      setStatus(`批量探针失败：${res.errorCode} ${res.error ?? ''}`)
+      return
+    }
+    lastRunId.value = res.runId
+    lastRunReport.value = res.report
+    diffAfterRunId.value = res.runId
+    await refreshRunHistory()
+    setStatus(`批量探针完成 · ${runAggregateLine.value} · ${res.runId}`)
+  } finally {
+    stopProgressPoll()
+    const progressRes = await probeGetBatchProgress()
+    if (progressRes.ok) {
+      runProgress.value = progressRes.progress
+    }
+    runBusy.value = false
+  }
+}
+
+async function loadHistoryRun(runId: string): Promise<void> {
+  const res = await probeGetRun(runId)
+  if (!res.ok) {
+    setStatus(`读取运行失败：${res.errorCode} ${res.error ?? ''}`)
+    return
+  }
+  lastRunId.value = res.runId
+  lastRunReport.value = res.report
+  setStatus(`已载入运行 ${res.runId}`)
+}
+
+async function runSelectedDiff(): Promise<void> {
+  if (!diffBeforeRunId.value || !diffAfterRunId.value) {
+    setStatus('请选择两次运行再 diff')
+    return
+  }
+  if (diffBeforeRunId.value === diffAfterRunId.value) {
+    setStatus('diff 需要两个不同的运行 id')
+    return
+  }
+  const res = await probeDiffRuns(diffBeforeRunId.value, diffAfterRunId.value)
+  if (!res.ok) {
+    setStatus(`diff 失败：${res.errorCode} ${res.error ?? ''}`)
+    return
+  }
+  lastDiffRows.value = res.rows
+  setStatus(`已对比 ${res.beforeRunId} → ${res.afterRunId}`)
+}
+
+function formatRate(rate: number): string {
+  return `${(rate * 100).toFixed(1)}%`
+}
+
+function formatDelta(delta: number, metric: string): string {
+  const isRate = metric.endsWith('Rate')
+  if (isRate) {
+    const sign = delta > 0 ? '+' : ''
+    return `${sign}${(delta * 100).toFixed(1)}pp`
+  }
+  const sign = delta > 0 ? '+' : ''
+  return `${sign}${Number.isInteger(delta) ? delta : delta.toFixed(1)}`
+}
+
 onMounted(() => {
   refreshRecipeCatalog()
   const initial = findRecipe(selectedRecipeId.value)
   if (initial) {
     loadRecipeToForm(initial)
-    setStatus('就绪 · 可写入或清理测试数据')
+    setStatus('就绪 · 可写入、清理或运行探针')
   }
+  void refreshRunHistory()
+})
+
+onUnmounted(() => {
+  stopProgressPoll()
 })
 </script>
 
@@ -408,7 +563,7 @@ onMounted(() => {
     <header class="pc-header">
       <p class="pc-eyebrow">DEV ONLY · not shipped to CWS</p>
       <h1 class="pc-title">Yiveno 测试工作台</h1>
-      <p class="pc-sub">写入与清理本机测试数据。禁止用探针结果冒充 §5.9。</p>
+      <p class="pc-sub">写入、清理与批量探针跑分。禁止用探针结果冒充 §5.9。</p>
       <p class="pc-status" aria-live="polite">{{ statusLine }}</p>
     </header>
 
@@ -560,6 +715,115 @@ onMounted(() => {
       <p v-if="lastProbeKeys.length" class="pc-keys">精选键：{{ lastProbeKeys.join(', ') }}</p>
     </section>
 
+    <section class="pc-card" aria-labelledby="pc-run">
+      <h2 id="pc-run">运行探针</h2>
+      <p class="pc-hint">
+        数据驱动：精选全部 suggestedClues + 已种库 diversity 带线索条目；entry=omnibox；k=3。原 11
+        条 Omnibox smoke 仍经 SW 调试 API 保留。
+      </p>
+
+      <div class="pc-actions">
+        <button
+          type="button"
+          class="pc-btn"
+          :disabled="busy || runBusy"
+          @click="runProbeBatchFromForm"
+        >
+          运行探针
+        </button>
+        <button
+          type="button"
+          class="pc-btn ghost"
+          :disabled="busy || runBusy"
+          @click="refreshRunHistory"
+        >
+          刷新历史
+        </button>
+      </div>
+
+      <p v-if="runProgress" class="pc-progress" aria-live="polite">
+        进度 {{ runProgress.phase }} · {{ runProgress.current }}/{{ runProgress.total }}
+        <template v-if="runProgress.lastClue"> · {{ runProgress.lastClue }}</template>
+        <template v-if="runProgress.error"> · {{ runProgress.error }}</template>
+      </p>
+
+      <p v-if="lastRunReport" class="pc-estimate">
+        最近运行 {{ lastRunId }} · {{ runAggregateLine }}
+      </p>
+
+      <div v-if="lastRunReport" class="pc-table-wrap">
+        <table class="pc-table">
+          <thead>
+            <tr>
+              <th>判定</th>
+              <th>线索</th>
+              <th>期望 key</th>
+              <th>实际 top1</th>
+              <th>来源</th>
+              <th>ms</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="row in lastRunReport.cases" :key="row.caseId" :data-verdict="row.verdict">
+              <td>{{ row.verdict }}</td>
+              <td class="pc-clip" :title="row.clue">{{ row.clue }}</td>
+              <td class="pc-mono">{{ row.expectedKey }}</td>
+              <td class="pc-clip" :title="row.actualTop1Title ?? ''">
+                {{ row.actualTop1Title ?? '—' }}
+              </td>
+              <td>{{ row.source }}/{{ row.persona }}</td>
+              <td>{{ row.latencyMs }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <details class="pc-details" open>
+        <summary>历史与 diff</summary>
+        <ul v-if="runHistory.length" class="pc-list">
+          <li v-for="run in runHistory" :key="run.runId">
+            <button type="button" class="pc-link" @click="loadHistoryRun(run.runId)">
+              {{ run.runId }}
+            </button>
+            · top1 {{ formatRate(run.top1Rate) }} · in3 {{ formatRate(run.inTop3Rate) }} · miss
+            {{ formatRate(run.missRate) }} · n={{ run.total }}
+          </li>
+        </ul>
+        <p v-else class="pc-hint">尚无运行记录</p>
+
+        <div class="pc-row">
+          <label class="pc-inline">
+            较早
+            <select v-model="diffBeforeRunId" class="pc-input">
+              <option value="">—</option>
+              <option v-for="run in runHistory" :key="`b-${run.runId}`" :value="run.runId">
+                {{ run.runId }}
+              </option>
+            </select>
+          </label>
+          <label class="pc-inline">
+            较晚
+            <select v-model="diffAfterRunId" class="pc-input">
+              <option value="">—</option>
+              <option v-for="run in runHistory" :key="`a-${run.runId}`" :value="run.runId">
+                {{ run.runId }}
+              </option>
+            </select>
+          </label>
+          <button type="button" class="pc-btn ghost" :disabled="runBusy" @click="runSelectedDiff">
+            对比指标
+          </button>
+        </div>
+
+        <ul v-if="lastDiffRows.length" class="pc-list">
+          <li v-for="row in lastDiffRows" :key="row.metric">
+            <span class="pc-mono">{{ row.metric }}</span
+            >：{{ row.before }} → {{ row.after }}（{{ formatDelta(row.delta, row.metric) }}）
+          </li>
+        </ul>
+      </details>
+    </section>
+
     <section class="pc-card" aria-labelledby="pc-clean">
       <h2 id="pc-clean">清理</h2>
       <p class="pc-hint">按类别删除测试数据；「清空整库」会 soft-delete 当前账号下全部 Memory。</p>
@@ -634,7 +898,7 @@ onMounted(() => {
 <style scoped>
 .pc {
   box-sizing: border-box;
-  max-width: 640px;
+  max-width: 920px;
   margin: 0 auto;
   padding: 28px 20px 56px;
   color: var(--on-surface, #1a1a1a);
@@ -912,5 +1176,69 @@ onMounted(() => {
   color: #4b5563;
   background: #f3f4f6;
   word-break: break-all;
+}
+
+.pc-progress {
+  margin: 0 0 10px;
+  font-family: ui-monospace, monospace;
+  font-size: 12px;
+  color: #374151;
+}
+
+.pc-table-wrap {
+  max-height: 360px;
+  margin: 10px 0;
+  overflow: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+}
+
+.pc-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 12px;
+}
+
+.pc-table th,
+.pc-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid #f3f4f6;
+  text-align: left;
+  vertical-align: top;
+}
+
+.pc-table th {
+  position: sticky;
+  top: 0;
+  background: #f9fafb;
+  font-weight: 600;
+}
+
+.pc-table tr[data-verdict='miss'],
+.pc-table tr[data-verdict='unmapped'],
+.pc-table tr[data-verdict='error'] {
+  background: #fff7ed;
+}
+
+.pc-clip {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pc-mono {
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+}
+
+.pc-link {
+  padding: 0;
+  border: 0;
+  color: #1d4ed8;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
+  text-decoration: underline;
 }
 </style>

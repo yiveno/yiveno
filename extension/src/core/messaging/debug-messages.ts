@@ -50,7 +50,11 @@ const seedRecallProbePayloadSchema = z.object({
    * diversity / noise 过程随机种子（可复现）。
    * 缺省由 seeder 使用包内 DEFAULT_PROBE_FILLER_SEED。
    */
-  fillerSeed: z.number().int().min(0).max(0xffff_ffff).optional()
+  fillerSeed: z.number().int().min(0).max(0xffff_ffff).optional(),
+  /**
+   * 可选配方 id（Probe Console 写入；写入 key→id 映射的 seedContext，供 runner 历史对账）。
+   */
+  recipeId: z.string().min(1).max(120).optional()
 })
 
 export type SeedRecallProbePayload = z.infer<typeof seedRecallProbePayloadSchema>
@@ -77,6 +81,8 @@ export type DevSeedRecallProbeResponse =
       wipedChromeFolders: number
       clearedMemoryCount: number
       probeKeys: string[]
+      /** 全量 key→id 映射条数（精选 + diversity + noise） */
+      mappedCount: number
     }
   | {
       ok: false
@@ -312,6 +318,201 @@ export type DevColdMemoryLatencyResponse =
       error?: string
     }
 
+const runProbeBatchPayloadSchema = z.object({
+  recipeId: z.string().min(1).max(120).optional(),
+  fillerSeed: z.number().int().min(0).max(0xffff_ffff).optional(),
+  personas: z.array(RecallProbePersonaSchema).min(1).max(5).optional(),
+  diversityBookmarkCount: z.number().int().min(0).max(12000).optional(),
+  diversityExcerptCount: z.number().int().min(0).max(8000).optional()
+})
+
+export type RunProbeBatchPayload = z.infer<typeof runProbeBatchPayloadSchema>
+
+/** DEV：数据驱动批量探针跑分。 */
+export type DevRunProbeBatchMessage = {
+  scope: BackgroundMessageScope
+  type: 'DEV_RUN_PROBE_BATCH'
+  payload?: RunProbeBatchPayload
+}
+
+export type DevRunProbeBatchResponse =
+  | {
+      ok: true
+      runId: string
+      report: {
+        recipeId: string
+        fillerSeed: number
+        startedAtIso: string
+        finishedAtIso: string
+        cases: Array<{
+          caseId: string
+          clue: string
+          expectedKey: string
+          expectedId: string | null
+          persona: string
+          source: 'curated' | 'diversity'
+          kind: 'bookmark' | 'excerpt'
+          label: string
+          verdict: 'top1' | 'in_topk' | 'miss' | 'unmapped' | 'error'
+          actualTop1Title: string | null
+          latencyMs: number
+          error?: string | undefined
+        }>
+        aggregates: {
+          total: number
+          judged: number
+          top1Count: number
+          inTopkCount: number
+          missCount: number
+          unmappedCount: number
+          errorCount: number
+          top1Rate: number
+          inTop3Rate: number
+          missRate: number
+          byPersona: Record<
+            string,
+            {
+              total: number
+              top1: number
+              in_topk: number
+              miss: number
+              unmapped: number
+              error: number
+            }
+          >
+          bySource: Record<
+            string,
+            {
+              total: number
+              top1: number
+              in_topk: number
+              miss: number
+              unmapped: number
+              error: number
+            }
+          >
+          latencyMs: { p50: number; p95: number }
+        }
+      }
+    }
+  | {
+      ok: false
+      errorCode: 'DEV_ONLY' | 'DEV_PROBE_BATCH_FAILED'
+      error?: string
+    }
+
+/** DEV：批量探针进度（Console 轮询）。 */
+export type DevGetProbeBatchProgressMessage = {
+  scope: BackgroundMessageScope
+  type: 'DEV_GET_PROBE_BATCH_PROGRESS'
+}
+
+export type DevGetProbeBatchProgressResponse =
+  | {
+      ok: true
+      progress: {
+        runId: string
+        phase: 'running' | 'done' | 'error'
+        current: number
+        total: number
+        lastClue?: string | undefined
+        updatedAtIso: string
+        error?: string | undefined
+      } | null
+    }
+  | {
+      ok: false
+      errorCode: 'DEV_ONLY' | 'DEV_PROBE_BATCH_PROGRESS_FAILED'
+      error?: string
+    }
+
+/** DEV：列出探针运行历史摘要。 */
+export type DevListProbeRunsMessage = {
+  scope: BackgroundMessageScope
+  type: 'DEV_LIST_PROBE_RUNS'
+}
+
+export type DevListProbeRunsResponse =
+  | {
+      ok: true
+      runs: Array<{
+        runId: string
+        recipeId: string
+        fillerSeed: number
+        startedAtIso: string
+        finishedAtIso: string
+        total: number
+        top1Rate: number
+        inTop3Rate: number
+        missRate: number
+        unmappedCount: number
+        latencyP50: number
+        latencyP95: number
+      }>
+    }
+  | {
+      ok: false
+      errorCode: 'DEV_ONLY' | 'DEV_PROBE_RUNS_FAILED'
+      error?: string
+    }
+
+const getProbeRunPayloadSchema = z.object({
+  runId: z.string().min(1).max(200)
+})
+
+export type GetProbeRunPayload = z.infer<typeof getProbeRunPayloadSchema>
+
+/** DEV：读取单次运行完整报告。 */
+export type DevGetProbeRunMessage = {
+  scope: BackgroundMessageScope
+  type: 'DEV_GET_PROBE_RUN'
+  payload: GetProbeRunPayload
+}
+
+export type DevGetProbeRunResponse =
+  | {
+      ok: true
+      runId: string
+      report: Extract<DevRunProbeBatchResponse, { ok: true }>['report']
+    }
+  | {
+      ok: false
+      errorCode: 'DEV_ONLY' | 'DEV_PROBE_RUN_NOT_FOUND' | 'DEV_PROBE_RUNS_FAILED'
+      error?: string
+    }
+
+const diffProbeRunsPayloadSchema = z.object({
+  beforeRunId: z.string().min(1).max(200),
+  afterRunId: z.string().min(1).max(200)
+})
+
+export type DiffProbeRunsPayload = z.infer<typeof diffProbeRunsPayloadSchema>
+
+/** DEV：两次运行聚合指标 diff。 */
+export type DevDiffProbeRunsMessage = {
+  scope: BackgroundMessageScope
+  type: 'DEV_DIFF_PROBE_RUNS'
+  payload: DiffProbeRunsPayload
+}
+
+export type DevDiffProbeRunsResponse =
+  | {
+      ok: true
+      beforeRunId: string
+      afterRunId: string
+      rows: Array<{
+        metric: string
+        before: number
+        after: number
+        delta: number
+      }>
+    }
+  | {
+      ok: false
+      errorCode: 'DEV_ONLY' | 'DEV_PROBE_RUN_NOT_FOUND' | 'DEV_PROBE_DIFF_FAILED'
+      error?: string
+    }
+
 export type DebugBackgroundMessage =
   | DevSeedRecallProbeMessage
   | DevPurgeProbeNoiseMessage
@@ -321,6 +522,11 @@ export type DebugBackgroundMessage =
   | DevListProbeFixturesMessage
   | DevColdMemoryImpactMessage
   | DevColdMemoryLatencyMessage
+  | DevRunProbeBatchMessage
+  | DevGetProbeBatchProgressMessage
+  | DevListProbeRunsMessage
+  | DevGetProbeRunMessage
+  | DevDiffProbeRunsMessage
 export type DebugBackgroundResponse =
   | DevSeedRecallProbeResponse
   | DevPurgeProbeNoiseResponse
@@ -330,6 +536,11 @@ export type DebugBackgroundResponse =
   | DevListProbeFixturesResponse
   | DevColdMemoryImpactResponse
   | DevColdMemoryLatencyResponse
+  | DevRunProbeBatchResponse
+  | DevGetProbeBatchProgressResponse
+  | DevListProbeRunsResponse
+  | DevGetProbeRunResponse
+  | DevDiffProbeRunsResponse
 
 export function parseSeedRecallProbePayload(value: unknown): SeedRecallProbePayload {
   return seedRecallProbePayloadSchema.parse(value ?? {})
@@ -345,4 +556,16 @@ export function parseBackdateMemorySavedAtPayload(value: unknown): BackdateMemor
 
 export function parseListProbeFixturesPayload(value: unknown): ListProbeFixturesPayload {
   return listProbeFixturesPayloadSchema.parse(value ?? {})
+}
+
+export function parseRunProbeBatchPayload(value: unknown): RunProbeBatchPayload {
+  return runProbeBatchPayloadSchema.parse(value ?? {})
+}
+
+export function parseGetProbeRunPayload(value: unknown): GetProbeRunPayload {
+  return getProbeRunPayloadSchema.parse(value)
+}
+
+export function parseDiffProbeRunsPayload(value: unknown): DiffProbeRunsPayload {
+  return diffProbeRunsPayloadSchema.parse(value)
 }

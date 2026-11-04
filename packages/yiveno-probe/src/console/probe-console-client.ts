@@ -1,5 +1,5 @@
 /**
- * Probe Console → Background（造数 / 清理相关 DEV 消息）。
+ * Probe Console → Background（造数 / 清理 / 批量跑分相关 DEV 消息）。
  * 故意不依赖 extension background-client；消息 type 与扩展 DEV 契约对齐。
  */
 
@@ -26,6 +26,7 @@ export type ProbeSeedRecallResponse =
       wipedChromeFolders: number
       clearedMemoryCount: number
       probeKeys: string[]
+      mappedCount: number
     }
   | FailResponse
 
@@ -56,6 +57,126 @@ export type ProbeCleanupResponse =
       wipedChromeFolders: number
       clearedAllMemory: boolean
       indexRebuilt: boolean
+    }
+  | FailResponse
+
+export type ProbeBatchCaseRow = {
+  caseId: string
+  clue: string
+  expectedKey: string
+  expectedId: string | null
+  persona: string
+  source: 'curated' | 'diversity'
+  kind: 'bookmark' | 'excerpt'
+  label: string
+  verdict: 'top1' | 'in_topk' | 'miss' | 'unmapped' | 'error'
+  actualTop1Title: string | null
+  latencyMs: number
+  error?: string
+}
+
+export type ProbeBatchAggregatesView = {
+  total: number
+  judged: number
+  top1Count: number
+  inTopkCount: number
+  missCount: number
+  unmappedCount: number
+  errorCount: number
+  top1Rate: number
+  inTop3Rate: number
+  missRate: number
+  byPersona: Record<
+    string,
+    {
+      total: number
+      top1: number
+      in_topk: number
+      miss: number
+      unmapped: number
+      error: number
+    }
+  >
+  bySource: Record<
+    string,
+    {
+      total: number
+      top1: number
+      in_topk: number
+      miss: number
+      unmapped: number
+      error: number
+    }
+  >
+  latencyMs: { p50: number; p95: number }
+}
+
+export type ProbeBatchReportView = {
+  recipeId: string
+  fillerSeed: number
+  startedAtIso: string
+  finishedAtIso: string
+  cases: ProbeBatchCaseRow[]
+  aggregates: ProbeBatchAggregatesView
+}
+
+export type ProbeRunBatchPayload = {
+  recipeId?: string
+  fillerSeed?: number
+  personas?: ProbeSeedPayload['personas']
+  diversityBookmarkCount?: number
+  diversityExcerptCount?: number
+}
+
+export type ProbeRunBatchResponse =
+  { ok: true; runId: string; report: ProbeBatchReportView } | FailResponse
+
+export type ProbeBatchProgressView = {
+  runId: string
+  phase: 'running' | 'done' | 'error'
+  current: number
+  total: number
+  lastClue?: string
+  updatedAtIso: string
+  error?: string
+}
+
+export type ProbeBatchProgressResponse =
+  { ok: true; progress: ProbeBatchProgressView | null } | FailResponse
+
+export type ProbeRunHistorySummary = {
+  runId: string
+  recipeId: string
+  fillerSeed: number
+  startedAtIso: string
+  finishedAtIso: string
+  total: number
+  top1Rate: number
+  inTop3Rate: number
+  missRate: number
+  unmappedCount: number
+  latencyP50: number
+  latencyP95: number
+}
+
+export type ProbeListRunsResponse = { ok: true; runs: ProbeRunHistorySummary[] } | FailResponse
+
+export type ProbeGetRunResponse =
+  { ok: true; runId: string; report: ProbeBatchReportView } | FailResponse
+
+export type ProbeDiffRow = {
+  metric: string
+  before: number
+  after: number
+  delta: number
+}
+
+export type ProbeDiffRunsResponse =
+  | {
+      ok: true
+      beforeRunId: string
+      afterRunId: string
+      rows: ProbeDiffRow[]
     }
   | FailResponse
 
@@ -105,5 +226,53 @@ export async function probeCleanup(payload: ProbeCleanupPayload): Promise<ProbeC
     scope: 'background',
     type: 'DEV_PROBE_CLEANUP',
     payload
+  })
+}
+
+/** 数据驱动批量探针跑分。 */
+export async function probeRunBatch(
+  payload?: ProbeRunBatchPayload
+): Promise<ProbeRunBatchResponse> {
+  return sendProbeMessage({
+    scope: 'background',
+    type: 'DEV_RUN_PROBE_BATCH',
+    ...(payload !== undefined ? { payload } : {})
+  })
+}
+
+/** 批量跑分进度。 */
+export async function probeGetBatchProgress(): Promise<ProbeBatchProgressResponse> {
+  return sendProbeMessage({
+    scope: 'background',
+    type: 'DEV_GET_PROBE_BATCH_PROGRESS'
+  })
+}
+
+/** 运行历史摘要列表。 */
+export async function probeListRuns(): Promise<ProbeListRunsResponse> {
+  return sendProbeMessage({
+    scope: 'background',
+    type: 'DEV_LIST_PROBE_RUNS'
+  })
+}
+
+/** 读取单次运行报告。 */
+export async function probeGetRun(runId: string): Promise<ProbeGetRunResponse> {
+  return sendProbeMessage({
+    scope: 'background',
+    type: 'DEV_GET_PROBE_RUN',
+    payload: { runId }
+  })
+}
+
+/** 两次运行指标 diff。 */
+export async function probeDiffRuns(
+  beforeRunId: string,
+  afterRunId: string
+): Promise<ProbeDiffRunsResponse> {
+  return sendProbeMessage({
+    scope: 'background',
+    type: 'DEV_DIFF_PROBE_RUNS',
+    payload: { beforeRunId, afterRunId }
   })
 }

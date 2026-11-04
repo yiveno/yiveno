@@ -18,4 +18,6 @@ export type ProbeSeedPayload = {
    * 缺省由 seeder 使用 DEFAULT_PROBE_FILLER_SEED。
    */
   fillerSeed?: number
+  /** 可选配方 id（写入映射 seedContext，供 runner 历史对账） */
+  recipeId?: string
 }

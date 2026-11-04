@@ -6,6 +6,10 @@
 import { RECALL_PROBE_PERSONA_ORDER, resolveProbeCorpora } from '@yiveno/probe'
 import type { ProbeCleanupPayload } from '@/core/messaging/debug-messages'
 import {
+  clearProbeKeyIdMap,
+  pruneProbeKeyIdMapByMemoryIds
+} from '@/dev/probe/probe-key-id-map-storage'
+import {
   isCuratedProbeItem,
   isProbeNoiseOrDiversityItem
 } from '@/dev/probe/recall-probe-purge-classify'
@@ -201,6 +205,12 @@ export async function cleanupProbeLibrary(
         removedChromeBookmarkNodes,
         detached
       })
+    }
+
+    if (payload.allMemory) {
+      await clearProbeKeyIdMap()
+    } else {
+      await pruneProbeKeyIdMapByMemoryIds(purgeIds)
     }
 
     const indexReady = await keywordIndexRepository.ensureReadyForOwner(ownerId)

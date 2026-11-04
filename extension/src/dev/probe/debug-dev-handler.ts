@@ -4,24 +4,35 @@
  * 仍由 message-handler 在 DEV 分支动态加载本模块，便于 production 剔除语料。
  */
 
+import { diffProbeBatchAggregates } from '@yiveno/probe'
 import type { BackgroundMessage } from '@/core/messaging/background-messages'
 import {
   parseBackdateMemorySavedAtPayload,
+  parseDiffProbeRunsPayload,
+  parseGetProbeRunPayload,
   parseListProbeFixturesPayload,
   parseProbeCleanupPayload,
+  parseRunProbeBatchPayload,
   parseSeedRecallProbePayload,
   type DebugBackgroundResponse,
   type DevBackdateMemorySavedAtResponse,
   type DevColdMemoryImpactResponse,
   type DevColdMemoryLatencyResponse,
+  type DevDiffProbeRunsResponse,
+  type DevGetProbeBatchProgressResponse,
+  type DevGetProbeRunResponse,
   type DevListProbeFixturesResponse,
+  type DevListProbeRunsResponse,
   type DevProbeCleanupResponse,
   type DevProbeLibrarySnapshotResponse,
   type DevPurgeProbeNoiseResponse,
+  type DevRunProbeBatchResponse,
   type DevSeedRecallProbeResponse
 } from '@/core/messaging/debug-messages'
 import { backdateMemorySavedAt } from '@/infrastructure/debug/memory-dev-backdate-saved-at'
 import type { BackdateMemorySavedAtInput } from '@/infrastructure/debug/memory-dev-backdate-saved-at'
+import { runProbeBatch } from '@/dev/probe/probe-batch-runner'
+import { readProbeBatchProgress } from '@/dev/probe/probe-batch-progress-storage'
 import { listProbeFixtureCatalog } from '@/dev/probe/probe-fixture-catalog'
 import { buildColdMemoryImpactReport } from '@/dev/probe/probe-cold-memory-impact'
 import {
@@ -29,6 +40,10 @@ import {
   measureRecallFallbackLatency
 } from '@/dev/probe/probe-cold-memory-latency'
 import { buildProbeLibrarySnapshot } from '@/dev/probe/probe-library-snapshot'
+import {
+  getProbeRunRecord,
+  listProbeRunHistorySummaries
+} from '@/dev/probe/probe-run-history-storage'
 import { cleanupProbeLibrary } from '@/dev/probe/recall-probe-cleanup-service'
 import { purgeProbeNoiseFromLibrary } from '@/dev/probe/recall-probe-purge-service'
 import { seedRecallProbeCorpus } from '@/dev/probe/recall-probe-seed-service'
@@ -195,6 +210,115 @@ export async function handleDebugBackgroundMessage(
         const failed: DevColdMemoryLatencyResponse = {
           ok: false,
           errorCode: 'DEV_COLD_MEMORY_LATENCY_FAILED',
+          ...(error instanceof Error ? { error: error.message } : {})
+        }
+        return failed
+      }
+    }
+    case 'DEV_RUN_PROBE_BATCH': {
+      try {
+        const parsed = parseRunProbeBatchPayload(message.payload)
+        const result = await runProbeBatch(parsed)
+        const ok: DevRunProbeBatchResponse = {
+          ok: true,
+          runId: result.runId,
+          report: result.report
+        }
+        return ok
+      } catch (error) {
+        const failed: DevRunProbeBatchResponse = {
+          ok: false,
+          errorCode: 'DEV_PROBE_BATCH_FAILED',
+          ...(error instanceof Error ? { error: error.message } : {})
+        }
+        return failed
+      }
+    }
+    case 'DEV_GET_PROBE_BATCH_PROGRESS': {
+      try {
+        const progress = await readProbeBatchProgress()
+        const ok: DevGetProbeBatchProgressResponse = { ok: true, progress }
+        return ok
+      } catch (error) {
+        const failed: DevGetProbeBatchProgressResponse = {
+          ok: false,
+          errorCode: 'DEV_PROBE_BATCH_PROGRESS_FAILED',
+          ...(error instanceof Error ? { error: error.message } : {})
+        }
+        return failed
+      }
+    }
+    case 'DEV_LIST_PROBE_RUNS': {
+      try {
+        const runs = await listProbeRunHistorySummaries()
+        const ok: DevListProbeRunsResponse = { ok: true, runs }
+        return ok
+      } catch (error) {
+        const failed: DevListProbeRunsResponse = {
+          ok: false,
+          errorCode: 'DEV_PROBE_RUNS_FAILED',
+          ...(error instanceof Error ? { error: error.message } : {})
+        }
+        return failed
+      }
+    }
+    case 'DEV_GET_PROBE_RUN': {
+      try {
+        const parsed = parseGetProbeRunPayload(message.payload)
+        const record = await getProbeRunRecord(parsed.runId)
+        if (!record) {
+          const missing: DevGetProbeRunResponse = {
+            ok: false,
+            errorCode: 'DEV_PROBE_RUN_NOT_FOUND',
+            error: `未找到运行 ${parsed.runId}`
+          }
+          return missing
+        }
+        const ok: DevGetProbeRunResponse = {
+          ok: true,
+          runId: record.runId,
+          report: record.report
+        }
+        return ok
+      } catch (error) {
+        const failed: DevGetProbeRunResponse = {
+          ok: false,
+          errorCode: 'DEV_PROBE_RUNS_FAILED',
+          ...(error instanceof Error ? { error: error.message } : {})
+        }
+        return failed
+      }
+    }
+    case 'DEV_DIFF_PROBE_RUNS': {
+      try {
+        const parsed = parseDiffProbeRunsPayload(message.payload)
+        const before = await getProbeRunRecord(parsed.beforeRunId)
+        const after = await getProbeRunRecord(parsed.afterRunId)
+        if (!before || !after) {
+          const missing: DevDiffProbeRunsResponse = {
+            ok: false,
+            errorCode: 'DEV_PROBE_RUN_NOT_FOUND',
+            error: !before ? `未找到运行 ${parsed.beforeRunId}` : `未找到运行 ${parsed.afterRunId}`
+          }
+          return missing
+        }
+        const diff = diffProbeBatchAggregates({
+          beforeRunId: before.runId,
+          afterRunId: after.runId,
+          before: before.report.aggregates,
+          after: after.report.aggregates
+        })
+        const ok: DevDiffProbeRunsResponse = {
+          ok: true,
+          beforeRunId: diff.beforeRunId,
+          afterRunId: diff.afterRunId,
+          rows: diff.rows
+        }
+        return ok
+      } catch (error) {
+        const failed: DevDiffProbeRunsResponse = {
+          ok: false,
+          errorCode: 'DEV_PROBE_DIFF_FAILED',
           ...(error instanceof Error ? { error: error.message } : {})
         }
         return failed

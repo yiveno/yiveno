@@ -11,10 +11,13 @@
 
 import {
   parseProbeCleanupPayload,
+  parseRunProbeBatchPayload,
   parseSeedRecallProbePayload,
   type ProbeCleanupPayload,
+  type RunProbeBatchPayload,
   type SeedRecallProbePayload
 } from '@/core/messaging/debug-messages'
+import { runProbeBatch } from '@/dev/probe/probe-batch-runner'
 import { cleanupProbeLibrary } from '@/dev/probe/recall-probe-cleanup-service'
 import {
   PROBE_OMNIBOX_COPY_PASTE_LINES,
@@ -38,6 +41,10 @@ type ProbeDebugHost = {
       payload?: Partial<ProbeCleanupPayload>
     ) => Promise<Awaited<ReturnType<typeof cleanupProbeLibrary>>>
     runProbeOmniboxSmoke?: () => Promise<Awaited<ReturnType<typeof runProbeOmniboxSmoke>>>
+    /** 数据驱动批量探针（精选 + diversity 带线索）；≠ 11 条 smoke */
+    runProbeBatch?: (
+      payload?: RunProbeBatchPayload
+    ) => Promise<Awaited<ReturnType<typeof runProbeBatch>>>
     /** 手测文档 §4 复制块（含 `yi ` 前缀） */
     probeOmniboxCopyPaste?: readonly string[]
     /**
@@ -99,12 +106,24 @@ export function exposeRecallProbeSeedDebug(): void {
       }
       return report
     },
+    runProbeBatch: async (payload?: RunProbeBatchPayload) => {
+      const parsed = parseRunProbeBatchPayload(payload ?? {})
+      const result = await runProbeBatch(parsed)
+      console.info('[yiveno] 批量探针完成', {
+        runId: result.runId,
+        total: result.report.aggregates.total,
+        top1Rate: result.report.aggregates.top1Rate,
+        inTop3Rate: result.report.aggregates.inTop3Rate,
+        unmappedCount: result.report.aggregates.unmappedCount
+      })
+      return result
+    },
     probeOmniboxCopyPaste: PROBE_OMNIBOX_COPY_PASTE_LINES,
     recallProbe: async input => recallProbe(input),
     inspectMemory: async input => inspectMemoryByUrlOrTitle(input),
     listMemoryIndexStatus: async () => listMemoryIndexStatus()
   }
   console.info(
-    '[yiveno] DEV：优先打开 Probe Console；SW 可用 yiveno.seedRecallProbe · cleanupProbe · purgeProbeNoise · runProbeOmniboxSmoke() · recallProbe({clue,entry}) · inspectMemory({needle}) · listMemoryIndexStatus()'
+    '[yiveno] DEV：优先打开 Probe Console；SW 可用 yiveno.seedRecallProbe · cleanupProbe · purgeProbeNoise · runProbeBatch() · runProbeOmniboxSmoke() · recallProbe({clue,entry}) · inspectMemory({needle}) · listMemoryIndexStatus()'
   )
 }

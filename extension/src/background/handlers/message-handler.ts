@@ -235,7 +235,12 @@ async function dispatchBackgroundMessage(
     case 'DEV_PROBE_LIBRARY_SNAPSHOT':
     case 'DEV_LIST_PROBE_FIXTURES':
     case 'DEV_COLD_MEMORY_IMPACT':
-    case 'DEV_COLD_MEMORY_LATENCY': {
+    case 'DEV_COLD_MEMORY_LATENCY':
+    case 'DEV_RUN_PROBE_BATCH':
+    case 'DEV_GET_PROBE_BATCH_PROGRESS':
+    case 'DEV_LIST_PROBE_RUNS':
+    case 'DEV_GET_PROBE_RUN':
+    case 'DEV_DIFF_PROBE_RUNS': {
       // 扩展 SW 禁止动态 import()（HTML 规范）；须静态 import + prod stub。
       if (!import.meta.env.DEV) {
         return {

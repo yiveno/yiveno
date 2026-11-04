@@ -26,6 +26,12 @@ import {
 } from '@/core/memory/create-memory-item'
 import type { SeedRecallProbePayload } from '@/core/messaging/debug-messages'
 import {
+  clearProbeKeyIdMap,
+  mergeProbeKeyIdMap,
+  replaceProbeKeyIdMap,
+  type ProbeSeedContext
+} from '@/dev/probe/probe-key-id-map-storage'
+import {
   getCurrentOwnerId,
   getOrCreateLocalProfile
 } from '@/infrastructure/identity/local-profile-service'
@@ -34,6 +40,12 @@ import { keywordIndexRepository } from '@/infrastructure/indexeddb/keyword-index
 import { memoryItemRepository } from '@/infrastructure/indexeddb/memory-item-repository'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
+
+/** 种库单条：稳定 probe key + MemoryItem id。 */
+export type ProbeSeededRef = {
+  key: string
+  memoryItemId: string
+}
 
 /**
  * 历史沙盒夹标题（仅清理兼容；种库不再创建）。
@@ -163,7 +175,7 @@ async function seedBookmark(
   parentId: string,
   seed: RecallProbeBookmarkSeed,
   options: { enrich: boolean }
-): Promise<string> {
+): Promise<ProbeSeededRef> {
   const chromeCreatedAt = daysAgoIso(seed.daysAgo)
   const node = await chrome.bookmarks.create({
     parentId,
@@ -193,13 +205,13 @@ async function seedBookmark(
     scheduleAsyncMemoryLlmEnrichment(item.id)
     scheduleAsyncMemoryEmbedding(item.id)
   }
-  return seed.key
+  return { key: seed.key, memoryItemId: item.id }
 }
 
 /** 精选摘录：走 capture 路径以调度 enrichment / embedding。 */
-async function seedExcerptCurated(seed: RecallProbeExcerptSeed): Promise<string> {
+async function seedExcerptCurated(seed: RecallProbeExcerptSeed): Promise<ProbeSeededRef> {
   const createdAt = daysAgoIso(seed.daysAgo)
-  await memoryItemService.captureTextExcerpt({
+  const item = await memoryItemService.captureTextExcerpt({
     payload: {
       pageTitle: seed.pageTitle,
       sourceUrl: seed.sourceUrl,
@@ -214,13 +226,13 @@ async function seedExcerptCurated(seed: RecallProbeExcerptSeed): Promise<string>
       : {}),
     now: () => createdAt
   })
-  return seed.key
+  return { key: seed.key, memoryItemId: item.id }
 }
 
-/** 噪声摘录：直写、不烧配额。 */
-async function seedExcerptQuiet(seed: RecallProbeExcerptSeed): Promise<string> {
+/** 噪声 / 半仿真摘录：直写、不烧配额。 */
+async function seedExcerptQuiet(seed: RecallProbeExcerptSeed): Promise<ProbeSeededRef> {
   const createdAt = daysAgoIso(seed.daysAgo)
-  await memoryItemRepository.createTextExcerpt({
+  const item = await memoryItemRepository.createTextExcerpt({
     payload: {
       pageTitle: seed.pageTitle,
       sourceUrl: seed.sourceUrl,
@@ -235,19 +247,22 @@ async function seedExcerptQuiet(seed: RecallProbeExcerptSeed): Promise<string> {
       : {}),
     now: () => createdAt
   })
-  return seed.key
+  return { key: seed.key, memoryItemId: item.id }
 }
 
 /**
  * 压力轮：书签直写 Memory（不经 Chrome API），分批 putMany + 标 dirty。
  * 调用方须在整次种库结束后 ensureReadyForOwner 重建倒排。
  */
-async function seedBookmarksBulkMemoryOnly(seeds: RecallProbeBookmarkSeed[]): Promise<number> {
+async function seedBookmarksBulkMemoryOnly(
+  seeds: RecallProbeBookmarkSeed[]
+): Promise<ProbeSeededRef[]> {
   if (seeds.length === 0) {
-    return 0
+    return []
   }
   const [ownerId, profile] = await Promise.all([getCurrentOwnerId(), getOrCreateLocalProfile()])
   const batchSize = MEMORY_ITEM_BULK_IMPORT_BATCH_SIZE
+  const refs: ProbeSeededRef[] = []
   for (let offset = 0; offset < seeds.length; offset += batchSize) {
     const chunk = seeds.slice(offset, offset + batchSize)
     const items = chunk.map(seed =>
@@ -270,22 +285,26 @@ async function seedBookmarksBulkMemoryOnly(seeds: RecallProbeBookmarkSeed[]): Pr
       })
     )
     await memoryItemRepository.putMany(items)
+    for (let i = 0; i < chunk.length; i += 1) {
+      refs.push({ key: chunk[i]!.key, memoryItemId: items[i]!.id })
+    }
     logger.info('DevProbe', '压力轮书签批写入', {
       written: Math.min(offset + chunk.length, seeds.length),
       total: seeds.length
     })
     await yieldToEventLoop()
   }
-  return seeds.length
+  return refs
 }
 
 /** 压力轮：摘录分批 putMany。 */
-async function seedExcerptsBulkQuiet(seeds: RecallProbeExcerptSeed[]): Promise<number> {
+async function seedExcerptsBulkQuiet(seeds: RecallProbeExcerptSeed[]): Promise<ProbeSeededRef[]> {
   if (seeds.length === 0) {
-    return 0
+    return []
   }
   const [ownerId, profile] = await Promise.all([getCurrentOwnerId(), getOrCreateLocalProfile()])
   const batchSize = MEMORY_ITEM_BULK_IMPORT_BATCH_SIZE
+  const refs: ProbeSeededRef[] = []
   for (let offset = 0; offset < seeds.length; offset += batchSize) {
     const chunk = seeds.slice(offset, offset + batchSize)
     const items = chunk.map(seed =>
@@ -309,13 +328,16 @@ async function seedExcerptsBulkQuiet(seeds: RecallProbeExcerptSeed[]): Promise<n
       })
     )
     await memoryItemRepository.putMany(items)
+    for (let i = 0; i < chunk.length; i += 1) {
+      refs.push({ key: chunk[i]!.key, memoryItemId: items[i]!.id })
+    }
     logger.info('DevProbe', '压力轮摘录批写入', {
       written: Math.min(offset + chunk.length, seeds.length),
       total: seeds.length
     })
     await yieldToEventLoop()
   }
-  return seeds.length
+  return refs
 }
 
 /** 将总数按画像均分（余数给前列画像）。 */
@@ -333,7 +355,7 @@ function splitCountAcrossPersonas(
 
 /**
  * 种入探针语料。
- * @returns 统计与探针 key 列表（仅精选，不含噪声/多样性）
+ * @returns 统计、精选 probeKeys，以及全量 key→id 映射条数（精选+半仿真+干扰）
  */
 export async function seedRecallProbeCorpus(payload: SeedRecallProbePayload): Promise<{
   persona: string[]
@@ -347,12 +369,16 @@ export async function seedRecallProbeCorpus(payload: SeedRecallProbePayload): Pr
   indexRebuilt: boolean
   wipedChromeFolders: number
   clearedMemoryCount: number
+  /** 仅精选稳定键（配方对照仍用此字段） */
   probeKeys: string[]
+  /** 全量映射条数（精选 + diversity + noise） */
+  mappedCount: number
 }> {
   if (!import.meta.env.DEV) {
     throw new Error('seedRecallProbeCorpus 仅允许 DEV 构建')
   }
 
+  const fillerSeed = payload.fillerSeed ?? DEFAULT_PROBE_FILLER_SEED
   const startedAt = flowStart('DevProbe', '种入召回探针语料', {
     personas: payload.personas,
     replace: payload.replace,
@@ -361,7 +387,7 @@ export async function seedRecallProbeCorpus(payload: SeedRecallProbePayload): Pr
     diversityExcerptCount: payload.diversityExcerptCount,
     noiseBookmarkCount: payload.noiseBookmarkCount,
     noiseExcerptCount: payload.noiseExcerptCount,
-    fillerSeed: payload.fillerSeed ?? DEFAULT_PROBE_FILLER_SEED
+    fillerSeed
   })
 
   try {
@@ -376,6 +402,7 @@ export async function seedRecallProbeCorpus(payload: SeedRecallProbePayload): Pr
       })
       clearedMemoryCount = existing.length
       await memoryItemRepository.replaceOwnerItems(ownerId, [])
+      await clearProbeKeyIdMap()
       logger.info('DevProbe', '已清空 Chrome 书签子树与本地 Memory', {
         wipedChromeFolders,
         clearedMemoryCount
@@ -391,7 +418,8 @@ export async function seedRecallProbeCorpus(payload: SeedRecallProbePayload): Pr
       scatterFolders: scatterFolderIds.length
     })
 
-    const probeKeys: string[] = []
+    const curatedRefs: ProbeSeededRef[] = []
+    const fillerRefs: ProbeSeededRef[] = []
     let bookmarkCount = 0
     let excerptCount = 0
     const memoryOnlyFill = payload.chromeBookmarkSync === 'curated_only'
@@ -402,18 +430,17 @@ export async function seedRecallProbeCorpus(payload: SeedRecallProbePayload): Pr
       for (const bm of corpus.bookmarks) {
         const parentId = pickBookmarkParentId(curatedBmIndex, barId, personaFolders)
         curatedBmIndex += 1
-        probeKeys.push(await seedBookmark(parentId, bm, { enrich: payload.enrichCurated }))
+        curatedRefs.push(await seedBookmark(parentId, bm, { enrich: payload.enrichCurated }))
         bookmarkCount += 1
       }
       for (const ex of corpus.excerpts) {
-        probeKeys.push(
+        curatedRefs.push(
           payload.enrichCurated ? await seedExcerptCurated(ex) : await seedExcerptQuiet(ex)
         )
         excerptCount += 1
       }
     }
 
-    const fillerSeed = payload.fillerSeed ?? DEFAULT_PROBE_FILLER_SEED
     const bmSplits = splitCountAcrossPersonas(payload.diversityBookmarkCount, personaIds)
     const exSplits = splitCountAcrossPersonas(payload.diversityExcerptCount, personaIds)
 
@@ -437,22 +464,42 @@ export async function seedRecallProbeCorpus(payload: SeedRecallProbePayload): Pr
     })
 
     if (memoryOnlyFill) {
-      await seedBookmarksBulkMemoryOnly([...diversityBookmarks, ...noiseBookmarks])
-      await seedExcerptsBulkQuiet([...diversityExcerpts, ...noiseExcerpts])
+      fillerRefs.push(
+        ...(await seedBookmarksBulkMemoryOnly([...diversityBookmarks, ...noiseBookmarks]))
+      )
+      fillerRefs.push(...(await seedExcerptsBulkQuiet([...diversityExcerpts, ...noiseExcerpts])))
     } else {
       let fillerBmIndex = 0
       for (const bm of [...diversityBookmarks, ...noiseBookmarks]) {
         const parentId = pickBookmarkParentId(fillerBmIndex, barId, scatterFolderIds)
         fillerBmIndex += 1
-        await seedBookmark(parentId, bm, { enrich: false })
+        fillerRefs.push(await seedBookmark(parentId, bm, { enrich: false }))
       }
       for (const ex of diversityExcerpts) {
-        await seedExcerptQuiet(ex)
+        fillerRefs.push(await seedExcerptQuiet(ex))
       }
       for (const ex of noiseExcerpts) {
-        await seedExcerptQuiet(ex)
+        fillerRefs.push(await seedExcerptQuiet(ex))
       }
     }
+
+    const allRefs = [...curatedRefs, ...fillerRefs]
+    const entries: Record<string, string> = {}
+    for (const ref of allRefs) {
+      entries[ref.key] = ref.memoryItemId
+    }
+    const seedContext: ProbeSeedContext = {
+      ...(payload.recipeId ? { recipeId: payload.recipeId } : {}),
+      personas: personaIds,
+      fillerSeed,
+      diversityBookmarkCount: diversityBookmarks.length,
+      diversityExcerptCount: diversityExcerpts.length,
+      noiseBookmarkCount: noiseBookmarks.length,
+      noiseExcerptCount: noiseExcerpts.length
+    }
+    const mapStore = payload.replace
+      ? await replaceProbeKeyIdMap({ entries, seedContext })
+      : await mergeProbeKeyIdMap({ entries, seedContext })
 
     const ownerId = await getCurrentOwnerId()
     const indexReady = await keywordIndexRepository.ensureReadyForOwner(ownerId)
@@ -469,7 +516,8 @@ export async function seedRecallProbeCorpus(payload: SeedRecallProbePayload): Pr
       indexRebuilt: indexReady.rebuilt,
       wipedChromeFolders,
       clearedMemoryCount,
-      probeKeys
+      probeKeys: curatedRefs.map(ref => ref.key),
+      mappedCount: Object.keys(mapStore.entries).length
     }
     flowOk('DevProbe', '种入召回探针语料', startedAt, {
       bookmarkCount,
@@ -479,7 +527,8 @@ export async function seedRecallProbeCorpus(payload: SeedRecallProbePayload): Pr
       noiseBookmarkCount: result.noiseBookmarkCount,
       noiseExcerptCount: result.noiseExcerptCount,
       chromeBookmarkSync: result.chromeBookmarkSync,
-      indexRebuilt: result.indexRebuilt
+      indexRebuilt: result.indexRebuilt,
+      mappedCount: result.mappedCount
     })
     return result
   } catch (error) {

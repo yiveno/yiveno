@@ -5,7 +5,8 @@
 > **语料 / Console UI：** monorepo 包 `@yiveno/probe`（`packages/yiveno-probe`，见 [ADR-009](../architecture/decisions/ADR-009-yiveno-probe-package.md)）。  
 > **挂载壳：** `extension/src/dev/probe-console/`（仅入口 + 扩展样式；**物理隔离**于产品 `pages/`；**不进** `manifest` / CWS `build:prod`）。  
 > **Chrome / IDB 桥：** `extension/src/dev/probe/`（seed / purge / snapshot / DEV handler）。  
-> **定位：** 测试工作台——**写入测试数据 + 清理**（预设写入 / 按选项批量删）。评审 / 对拍 UI 暂不接 Console。  
+> **定位：** 测试工作台——**写入测试数据 + 清理 + 批量探针跑分**（预设写入 / 按选项批量删 / 数据驱动 runner + 运行历史 diff）。
+
 > **辅入口：** Service Worker `globalThis.yiveno.*`（MCP / 无 UI 脚本；盘点 / 夹具仍可走消息或 SW）。  
 > **非范围：** 生产用户能力、`recall-eval` / `omnibox-eval` CI 夹具（保留 core，勿并进工作台主路径）。  
 > **禁止：** 用本工具对外宣称 §5.9 Beta / 种子 TTE 达标。维护者本机即测试场（书签已自备备份）；种库/清空按用户点名执行，不做沙盒式「防污染」护栏。  
@@ -22,12 +23,13 @@
 3. **入口（推荐）：** 任意产品页顶栏（Side Panel / Memory / Settings）右侧 **「Test workbench (DEV)」**（包裹盒图标）→ 打开或聚焦 `probe-console.html`  
    **辅：** 地址栏 `chrome-extension://<id>/probe-console.html`（扩展 id 见详情页；SW 启动日志也会打印完整 URL）
 
-| 能力             | 说明                                                                                                                                     |
-| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| **写入测试数据** | 选预设 → `DEV_SEED_RECALL_PROBE`；参数可调（含**半仿真/干扰随机种子** `fillerSeed`：本地过程随机、可复现）；本机预设保存 + JSON 导入导出 |
-| **清理**         | 一键：清除半仿真与干扰 · 清除全部测试条目 · 清空整库；选项可组合范围 / 类型 / Chrome → `DEV_PROBE_CLEANUP`                               |
+| 能力             | 说明                                                                                                                                                                                  |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **写入测试数据** | 选预设 → `DEV_SEED_RECALL_PROBE`；参数可调（含**半仿真/干扰随机种子** `fillerSeed`：本地过程随机、可复现）；本机预设保存 + JSON 导入导出；种库持久化全量 probe key→MemoryItem id 映射 |
+| **运行探针**     | `DEV_RUN_PROBE_BATCH`：精选全部 suggestedClues + 已种库 diversity 带线索条目；`entry=omnibox`；`judgeProbeNeighborhood(k=3)`；历史与两次运行指标 diff                                 |
+| **清理**         | 一键：清除半仿真与干扰 · 清除全部测试条目 · 清空整库；选项可组合范围 / 类型 / Chrome → `DEV_PROBE_CLEANUP`（同步剪枝 key→id 映射）                                                    |
 
-盘点（`DEV_PROBE_LIBRARY_SNAPSHOT`）/ 夹具列表（`DEV_LIST_PROBE_FIXTURES`）/ 回溯等仍在 DEV 消息与 SW 辅入口；**不在 Console UI**。
+盘点（`DEV_PROBE_LIBRARY_SNAPSHOT`）/ 夹具列表（`DEV_LIST_PROBE_FIXTURES`）/ 回溯等仍在 DEV 消息与 SW 辅入口；**不在 Console UI**。11 条 Omnibox smoke（`runProbeOmniboxSmoke`）保留作手测对齐，**不是**数据驱动 runner。
 
 `DEV_PURGE_PROBE_NOISE` 仍可用（等价于清除半仿真与无关干扰 + 移除 Probe 文件夹）。
 
@@ -48,14 +50,14 @@
 
 ## 2. 代码维护入口
 
-| 层级                  | 路径                                                 | 职责                                                                           |
-| --------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------ |
-| **语料 / Console UI** | `packages/yiveno-probe`（`@yiveno/probe`）           | 画像语料、预设、配方、邻域 helpers、Probe Console（造数 UI）                   |
-| **Chrome / IDB 桥**   | `extension/src/dev/probe/`                           | seed / purge / snapshot / 夹具 DEV 门禁 / SW expose / `DEV_*` handler          |
-| **挂载壳**            | `extension/src/dev/probe-console/`                   | `probe-console.html` 入口 + 扩展样式；`open-probe-console-page.ts`（顶栏打开） |
-| **消息 schema**       | `extension/src/core/messaging/debug-messages.ts`     | Zod；`DEV_*`（契约面，非语料）                                                 |
-| **登记册**            | `docs/engineering/background-message-types.registry` | `bun run doc:check`                                                            |
-| **构建隔离**          | `vite/build-options.ts` + `scripts/clean-dist.cjs`   | 仅 development 产出 `probe-console.html`                                       |
+| 层级                  | 路径                                                 | 职责                                                                                  |
+| --------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| **语料 / Console UI** | `packages/yiveno-probe`（`@yiveno/probe`）           | 画像语料、预设、配方、邻域 helpers、用例展开/聚合/diff、Probe Console（造数+跑分 UI） |
+| **Chrome / IDB 桥**   | `extension/src/dev/probe/`                           | seed / purge / batch runner / 映射与运行历史 / snapshot / SW expose / `DEV_*` handler |
+| **挂载壳**            | `extension/src/dev/probe-console/`                   | `probe-console.html` 入口 + 扩展样式；`open-probe-console-page.ts`（顶栏打开）        |
+| **消息 schema**       | `extension/src/core/messaging/debug-messages.ts`     | Zod；`DEV_*`（契约面，非语料）                                                        |
+| **登记册**            | `docs/engineering/background-message-types.registry` | `bun run doc:check`                                                                   |
+| **构建隔离**          | `vite/build-options.ts` + `scripts/clean-dist.cjs`   | 仅 development 产出 `probe-console.html`                                              |
 
 ### 新增能力清单（维护者）
 
@@ -75,6 +77,7 @@
 | `yiveno.purgeProbeNoise()`                   | `async`             | 清除噪声/多样性层    | 同上 → purge-service                                             | [TTE checklist](./TTE-种子用户研究-checklist.md)                |
 | `yiveno.backdateMemorySavedAt(input)`        | `async`             | 回溯保存时刻         | `infrastructure/debug/expose-memory-dev-debug.ts`                | 冷却手测；禁冒充 Beta                                           |
 | `yiveno.runProbeOmniboxSmoke()`              | `async`             | Omnibox 11 条冒烟    | `src/dev/probe/recall-probe-omnibox-smoke.ts`                    | Omnibox 手测 §2.1                                               |
+| `yiveno.runProbeBatch(payload?)`             | `async`             | 数据驱动批量探针     | `src/dev/probe/probe-batch-runner.ts`                            | 本文 §0；≠ smoke                                                |
 | `yiveno.probeOmniboxCopyPaste`               | `readonly string[]` | 地址栏复制块         | 同上                                                             | 同上 §4.1–4.2                                                   |
 | `yiveno.listRecallTelemetryEvents()`         | `async`             | TTE + 体验遥测缓冲   | `expose-recall-telemetry-debug.ts`                               | R4-Phase-E；产品文档 §5.9 / §7.0                                |
 | `yiveno.summarizeVisibleProgressTelemetry()` | `async`             | 可见进展放弃率等汇总 | 同上（`summarize-visible-progress-telemetry`）                   | §7.0 体验；**禁**冒充 §5.9                                      |
@@ -85,7 +88,7 @@
 
 **门禁：** 上表全部仅 DEV；`vite build --mode production` 不挂载、不产出 Probe Console。
 
-**消息（Console / sendMessage）：** `DEV_SEED_RECALL_PROBE` · `DEV_PROBE_CLEANUP` · `DEV_PURGE_PROBE_NOISE` · `DEV_BACKDATE_MEMORY_SAVED_AT` · `DEV_PROBE_LIBRARY_SNAPSHOT` · `DEV_LIST_PROBE_FIXTURES`
+**消息（Console / sendMessage）：** `DEV_SEED_RECALL_PROBE` · `DEV_PROBE_CLEANUP` · `DEV_PURGE_PROBE_NOISE` · `DEV_RUN_PROBE_BATCH` · `DEV_GET_PROBE_BATCH_PROGRESS` · `DEV_LIST_PROBE_RUNS` · `DEV_GET_PROBE_RUN` · `DEV_DIFF_PROBE_RUNS` · `DEV_BACKDATE_MEMORY_SAVED_AT` · `DEV_PROBE_LIBRARY_SNAPSHOT` · `DEV_LIST_PROBE_FIXTURES`
 
 **SW 硬约束：** Service Worker 禁止动态 `import()`。bootstrap 门闩在 `bootstrap-ready.ts`；listeners / DEV handler 须**静态** import（勿再为「破环」写 `await import(...)`）。
 
@@ -147,7 +150,7 @@ await yiveno.seedRecallProbe({
 | knowledge_worker | `notion page about expense policy for meals and travel` | `notion-expense`        |
 | knowledge_worker | `notes doc where I wrote wait on vendor SSO reply`      | `ex-pure-note-standup`  |
 
-**返回关注：** `bookmarkCount`（精选）、`indexRebuilt: true`、`probeKeys`（精选稳定键）。
+**返回关注：** `bookmarkCount`（精选）、`indexRebuilt: true`、`probeKeys`（精选稳定键）、`mappedCount`（精选+半仿真+干扰全量 key→id 映射条数；存 `chrome.storage.local` `yiveno.dev.probeKeyIdMap.v1`）。
 
 **语料源：** `@yiveno/probe` → `packages/yiveno-probe/src/corpus/`。
 
@@ -261,14 +264,19 @@ await yiveno.backdateMemorySavedAt({
 
 ## 5. Background 消息（DEV）
 
-| type                           | payload                           | 响应                               | 说明                                             |
-| ------------------------------ | --------------------------------- | ---------------------------------- | ------------------------------------------------ |
-| `DEV_SEED_RECALL_PROBE`        | `Partial<SeedRecallProbePayload>` | `DevSeedRecallProbeResponse`       | 与 `yiveno.seedRecallProbe` 同实现               |
-| `DEV_PROBE_CLEANUP`            | `ProbeCleanupPayload`             | `DevProbeCleanupResponse`          | 按层/类型/Chrome 选项批量清理                    |
-| `DEV_PURGE_PROBE_NOISE`        | —                                 | `DevPurgeProbeNoiseResponse`       | 与 `yiveno.purgeProbeNoise` 同实现（噪声层快捷） |
-| `DEV_BACKDATE_MEMORY_SAVED_AT` | `BackdateMemorySavedAtPayload`    | `DevBackdateMemorySavedAtResponse` | 与 `yiveno.backdateMemorySavedAt` 同实现         |
-| `DEV_PROBE_LIBRARY_SNAPSHOT`   | —                                 | `DevProbeLibrarySnapshotResponse`  | Probe Console 库盘点                             |
-| `DEV_LIST_PROBE_FIXTURES`      | `{ personas? }`                   | `DevListProbeFixturesResponse`     | 精选夹具目录（不写库）                           |
+| type                           | payload                           | 响应                               | 说明                                              |
+| ------------------------------ | --------------------------------- | ---------------------------------- | ------------------------------------------------- |
+| `DEV_SEED_RECALL_PROBE`        | `Partial<SeedRecallProbePayload>` | `DevSeedRecallProbeResponse`       | 与 `yiveno.seedRecallProbe` 同实现；写全量 key→id |
+| `DEV_PROBE_CLEANUP`            | `ProbeCleanupPayload`             | `DevProbeCleanupResponse`          | 按层/类型/Chrome 选项批量清理；剪枝映射           |
+| `DEV_PURGE_PROBE_NOISE`        | —                                 | `DevPurgeProbeNoiseResponse`       | 与 `yiveno.purgeProbeNoise` 同实现（噪声层快捷）  |
+| `DEV_RUN_PROBE_BATCH`          | `RunProbeBatchPayload?`           | `DevRunProbeBatchResponse`         | 数据驱动批量跑分；持久化运行记录                  |
+| `DEV_GET_PROBE_BATCH_PROGRESS` | —                                 | `DevGetProbeBatchProgressResponse` | Console 轮询进度                                  |
+| `DEV_LIST_PROBE_RUNS`          | —                                 | `DevListProbeRunsResponse`         | 运行历史摘要                                      |
+| `DEV_GET_PROBE_RUN`            | `{ runId }`                       | `DevGetProbeRunResponse`           | 单次完整报告                                      |
+| `DEV_DIFF_PROBE_RUNS`          | `{ beforeRunId, afterRunId }`     | `DevDiffProbeRunsResponse`         | 两次聚合指标 diff                                 |
+| `DEV_BACKDATE_MEMORY_SAVED_AT` | `BackdateMemorySavedAtPayload`    | `DevBackdateMemorySavedAtResponse` | 与 `yiveno.backdateMemorySavedAt` 同实现          |
+| `DEV_PROBE_LIBRARY_SNAPSHOT`   | —                                 | `DevProbeLibrarySnapshotResponse`  | Probe Console 库盘点                              |
+| `DEV_LIST_PROBE_FIXTURES`      | `{ personas? }`                   | `DevListProbeFixturesResponse`     | 精选夹具目录（不写库）                            |
 
 生产构建：`errorCode: 'DEV_ONLY'`。
 
