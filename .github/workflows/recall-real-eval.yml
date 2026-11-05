@@ -1,23 +1,24 @@
 # Recall 真实模型评测（非 PR 默认门禁）
 #
 # 动机：CI `test:must` / `test:run` 只守确定性替身（规则 parse、fake embed）。
-# 托管模型升级、prompt 改动、Worker embed 模型变更对真实解析率 / BGE 消融的影响，
-# 须另跑本 workflow；禁止把真实 LLM/BGE 塞进每次 PR。
+# Worker embed 模型变更对 BGE 消融的影响，须另跑本 workflow；
+# 禁止把真实 BGE 塞进每次 PR。
 #
 # 触发：
-#   - workflow_dispatch（改 prompt / AI_HOSTED_MODEL* / embed / 发版前）
-#   - schedule：每周一 06:00 UTC（≈北京 14:00）跑 both，作「人忘了跑」的兜底
+#   - workflow_dispatch（改 embed / 发版前）
+#   - schedule：每周一 06:00 UTC（≈北京 14:00）跑消融，作「人忘了跑」的兜底
 # 与 CI 分计：红 ≠ 挡 PR；红 = 真实评测回归/质量退化，须人工判读。
 #
 # 门禁：
-#   - parse-gold 默认 vs_baseline（已知 31/35 残差绿；新增 must 回归才红）
 #   - 消融默认 vs_baseline（对照 B2 real-run；召回/MRR/nDCG 不得降、negFP 不得升）
 #
 # 仓库 Secrets：
-#   - DEEPSEEK_API_KEY 或 PARSE_GOLD_LLM_API_KEY（parse-gold）
 #   - 消融鉴权：SUPABASE_URL + SUPABASE_ANON_KEY + SUPABASE_SERVICE_ROLE_KEY（推荐）
 #     或短期 RETRIEVAL_ABLATION_ACCESS_TOKEN
 #   - 可选 RETRIEVAL_ABLATION_API_BASE / RETRIEVAL_ABLATION_USER_EMAIL
+#
+# 说明：理解层定死 clue 批跑（原 `parse-gold:llm` / parse-gold must）已退役；
+# 理解试跑 / 验收：`cd extension && bun run nlu:try -- "<真实 clue>"`。
 
 name: Recall Real Eval
 
@@ -28,30 +29,10 @@ on:
         description: '评测套件'
         type: choice
         options:
-          - parse-gold-llm
           - retrieval-ablation-real
-          - both
-        default: both
-      model:
-        description: 'PARSE_GOLD_LLM_MODEL（空则用脚本默认 / AI_HOSTED_MODEL）'
-        required: false
-        default: 'deepseek-v4-flash'
-      gate:
-        description: 'PARSE_GOLD_LLM_GATE'
-        type: choice
-        options:
-          - must
-          - all
-        default: must
-      gate_mode:
-        description: 'parse-gold 门禁：vs_baseline=对照快照变差才红；absolute=任一 must 回归即红'
-        type: choice
-        options:
-          - vs_baseline
-          - absolute
-        default: vs_baseline
+        default: retrieval-ablation-real
   schedule:
-    # 每周一 06:00 UTC · 兜底抽检 both（Secrets 未配会红，提醒配齐）
+    # 每周一 06:00 UTC · 兜底抽检消融（Secrets 未配会红，提醒配齐）
     - cron: '0 6 * * 1'
 
 permissions:
@@ -61,62 +42,9 @@ env:
   BUN_VERSION: latest
 
 jobs:
-  parse-gold-llm:
-    name: parse-gold:llm (real)
-    if: ${{ github.event_name == 'schedule' || inputs.suite == 'parse-gold-llm' || inputs.suite == 'both' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          lfs: true
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
-        with:
-          bun-version: ${{ env.BUN_VERSION }}
-
-      - name: Install
-        run: bun install --frozen-lockfile
-
-      - name: Require LLM API key secret
-        env:
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-          PARSE_GOLD_LLM_API_KEY: ${{ secrets.PARSE_GOLD_LLM_API_KEY }}
-        run: |
-          set -euo pipefail
-          if [ -z "${PARSE_GOLD_LLM_API_KEY:-}" ] && [ -z "${DEEPSEEK_API_KEY:-}" ]; then
-            echo "缺少 Actions Secret：DEEPSEEK_API_KEY 或 PARSE_GOLD_LLM_API_KEY"
-            exit 1
-          fi
-
-      - name: Run parse-gold:llm
-        working-directory: extension
-        env:
-          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-          PARSE_GOLD_LLM_API_KEY: ${{ secrets.PARSE_GOLD_LLM_API_KEY }}
-          PARSE_GOLD_LLM_MODEL: ${{ inputs.model || 'deepseek-v4-flash' }}
-          PARSE_GOLD_LLM_GATE: ${{ inputs.gate || 'must' }}
-          PARSE_GOLD_LLM_GATE_MODE: ${{ inputs.gate_mode || 'vs_baseline' }}
-          PARSE_GOLD_LLM_COMPAT: deepseek
-          PARSE_GOLD_GIT_SHA: ${{ github.sha }}
-          PARSE_GOLD_LLM_JSON_OUT: ${{ github.workspace }}/parse-gold-llm-report.json
-          PARSE_GOLD_LLM_BASELINE_PATH: docs/audits/snapshots/2026-10-30-parse-gold-deepseek-v4-flash-field-v1.json
-        run: bun run parse-gold:llm
-
-      - name: Upload parse-gold report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: parse-gold-llm-${{ github.run_id }}
-          path: parse-gold-llm-report.json
-          if-no-files-found: ignore
-          retention-days: 30
-
   retrieval-ablation-real:
     name: retrieval-ablation:real (BGE)
-    if: ${{ github.event_name == 'schedule' || inputs.suite == 'retrieval-ablation-real' || inputs.suite == 'both' }}
+    if: ${{ github.event_name == 'schedule' || inputs.suite == 'retrieval-ablation-real' }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:

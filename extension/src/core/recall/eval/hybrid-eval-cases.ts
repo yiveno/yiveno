@@ -20,14 +20,18 @@ import type { HybridEvalItemId } from '@/core/recall/eval/hybrid-eval-ids'
 import { HYBRID_EVAL_IDS } from '@/core/recall/eval/hybrid-eval-ids'
 import { HYBRID_EVAL_ANCHORS } from '@/core/recall/eval/hybrid-eval-corpus'
 
-export type HybridEvalGate = 'must' | 'stretch'
+/** Hybrid eval 门禁：must 挡 CI；stretch 仅汇报。 */
+export type HybridEvalGate =
+  | 'must' // 必过
+  | 'stretch' // 拉伸
 
 export type HybridEvalExpectation =
-  | { kind: 'no_match' }
-  | { kind: 'top1'; expectedId: HybridEvalItemId }
-  | { kind: 'in_topk'; expectedId: HybridEvalItemId; k?: number }
+  | { kind: 'no_match' } // 应无命中
+  | { kind: 'top1'; expectedId: HybridEvalItemId } // Top Pick = expectedId
+  | { kind: 'in_topk'; expectedId: HybridEvalItemId; k?: number } // 前 k 含 expectedId
 
 export interface HybridEvalCase {
+  /** 用例稳定 id */
   id: string
   /** 用户提交口语线索（单轮）。 */
   clue: string
@@ -42,7 +46,9 @@ export interface HybridEvalCase {
   currentTabDomain?: string
   /** 模拟本会话排除的 MemoryItem id。 */
   dismissedIds?: readonly HybridEvalItemId[]
+  /** must 挡门禁 / stretch 仅汇报 */
   gate: HybridEvalGate
+  /** 期望命中形态 */
   expectation: HybridEvalExpectation
   /** 中文备注：为何这样出题；对应 R0/R4/ADR-011 等契约。 */
   note: string

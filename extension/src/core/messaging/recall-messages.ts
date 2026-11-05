@@ -39,23 +39,34 @@ export const recallDialogContextSchema = z.object({
 
 export type RecallDialogContext = z.infer<typeof recallDialogContextSchema>
 
-/** Recall 来源（用于 activeRecallId 命名空间隔离）。 */
+/**
+ * Recall 来源（用于 activeRecallId 命名空间隔离）。
+ * - sidepanel：Side Panel 主壳
+ * - omnibox：地址栏
+ * - extension-page：扩展内页（Settings 等）
+ */
 export const RECALL_SOURCE = {
-  sidepanel: 'sidepanel',
-  omnibox: 'omnibox',
-  extensionPage: 'extension-page'
+  sidepanel: 'sidepanel', // Side Panel
+  omnibox: 'omnibox', // Omnibox
+  extensionPage: 'extension-page' // 扩展内页
 } as const
 
 export type RecallSource = (typeof RECALL_SOURCE)[keyof typeof RECALL_SOURCE]
 
 const recallWithCluePayloadSchema = z.object({
+  /** 用户本轮 clue 原文 */
   clue: z.string().min(1).max(RECALL_CLUE_MAX_CHARS),
+  /** 多轮会话上下文（Omnibox 通常不传） */
   context: recallDialogContextSchema.optional(),
   /**
    * 来源标记（用于 active recall 命名空间隔离，避免 Side Panel cancel Omnibox）。
    * Side Panel / Omnibox / 扩展页各自独立追踪；UI 层填。
    */
-  source: z.enum([RECALL_SOURCE.sidepanel, RECALL_SOURCE.omnibox, RECALL_SOURCE.extensionPage]),
+  source: z.enum([
+    RECALL_SOURCE.sidepanel, // Side Panel
+    RECALL_SOURCE.omnibox, // Omnibox
+    RECALL_SOURCE.extensionPage // 扩展内页
+  ]),
   /**
    * 本轮请求 id。SW 用它做 in-flight 追踪：
    * - 同 source 收到新 RECALL_WITH_CLUE 自动覆盖 activeRecallId
@@ -73,13 +84,18 @@ const recallWithCluePayloadSchema = z.object({
 
 /** Recall 主动取消信号。Side Panel 提交新 clue 时同步发出，旧 in-flight 早退。 */
 const recallCancelPayloadSchema = z.object({
-  source: z.enum([RECALL_SOURCE.sidepanel, RECALL_SOURCE.omnibox, RECALL_SOURCE.extensionPage]),
+  source: z.enum([
+    RECALL_SOURCE.sidepanel, // Side Panel
+    RECALL_SOURCE.omnibox, // Omnibox
+    RECALL_SOURCE.extensionPage // 扩展内页
+  ]),
+  /** 要取消的 in-flight recallId */
   recallId: z.string().min(1).max(64)
 })
 
 /** Recall 面向 UI 的稳定错误码。 */
 export const RecallErrorCodeSchema = z.enum([
-  'RECALL_FAILED' // 找回流水线失败
+  'RECALL_FAILED' // Recall 流水线失败
 ])
 
 export type RecallErrorCode = z.infer<typeof RecallErrorCodeSchema>
@@ -142,14 +158,18 @@ export type ClueUrlDisplaySource =
   | 'none' // 无标题，回退缩短 URL
 
 export type ResolveClueUrlDisplayEntry = {
+  /** 请求中的规范化 URL */
   url: string
+  /** 解析到的展示标题；无则 null（UI 回退缩短 URL） */
   title: string | null
+  /** 标题来源：本机库 / 打开中的 tab / 无 */
   source: ClueUrlDisplaySource
 }
 
 export type ResolveClueUrlDisplayResponse =
   | {
       ok: true
+      /** 与请求 urls 对齐的解析结果 */
       entries: ResolveClueUrlDisplayEntry[]
     }
   | {
@@ -166,12 +186,15 @@ export type RecallBackgroundMessage =
 
 export type RecallSuccessResponse = {
   ok: true
+  /** 邻域结果（Top Pick / 弱候选 / no_match） */
   result: RecallResult
 }
 
 export type RecallErrorResponse = {
   ok: false
+  /** 稳定错误码（UI 经 t() 展示） */
   errorCode: RecallErrorCode
+  /** 开发者向细节；禁止当 UI 分支依据 */
   error?: string
 }
 
@@ -180,6 +203,7 @@ export type RecallBackgroundResponse = RecallSuccessResponse | RecallErrorRespon
 /** Recall 取消响应（Side Panel → SW → Side Panel；Side Panel 通常不再消费）。 */
 export type RecallCancelResponse = {
   ok: true
+  /** 是否清掉了匹配的 in-flight recallId */
   cleared: boolean
 }
 

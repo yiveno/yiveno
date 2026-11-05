@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest'
 
-import { PARSE_GOLD_CASES } from '@/core/recall/eval/parse-gold-cases'
 import { selectClueProcessingDisposition } from '@/core/recall/understand/select-clue-processing-disposition'
 
 describe('selectClueProcessingDisposition', () => {
@@ -74,12 +73,5 @@ describe('selectClueProcessingDisposition', () => {
       disposition: 'reject_noise',
       rejectReason: 'keyboard_mash'
     })
-  })
-
-  it('parse-gold 全量 must 放行（防误伤真实线索）', () => {
-    const rejected = PARSE_GOLD_CASES.filter(
-      item => selectClueProcessingDisposition(item.clue).disposition === 'reject_noise'
-    )
-    expect(rejected.map(item => item.id)).toEqual([])
   })
 })

@@ -42,7 +42,8 @@ function summarizeParseGoldResults(caseResults: ParseGoldCaseResult[]): ParseGol
 }
 
 /**
- * 用规则 parser 跑理解层金标（固定时钟）。
+ * 用规则 parser 跑历史金标表（固定时钟）。
+ * **不再**作 CI must；理解试跑请用 `bun run nlu:try`。
  * 可换同步解析器（如注入 fixture）。
  */
 export function runParseGold(

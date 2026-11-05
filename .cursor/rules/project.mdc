@@ -178,9 +178,9 @@ pre-push **不跑** ESLint、全仓 typecheck；extension 变更时跑 **build +
 | **PR**        | `typecheck:ci` + build 内 `vue-tsc -b`（app+node+vitest） | `lint:check` | `i18n:check` + `doc:check` | `knip`              | extension `test:run` + **显式 `test:must`**（eval 目录地板）+ worker `test` |
 | **push main** | 同上                                   | 同上         | `i18n:check` + `doc:check` | `knip`              | 同上                                                                     |
 | **每周一**    | —                                      | —            | —                          | `knip.yml` 定时复检 | —                                                                        |
-| **手动**      | —                                      | —            | —                          | —                   | **Recall Real Eval**（`workflow_dispatch`）：真实 `parse-gold:llm` / `retrieval-ablation:real`；**不**挡 PR |
+| **手动**      | —                                      | —            | —                          | —                   | **Recall Real Eval**（`workflow_dispatch`）：真实 `retrieval-ablation:real`；本机 NLU 试跑 `nlu:try`；**不**挡 PR |
 
-**CI vs 真实模型（Normative 工程口径）：** PR/main CI 只守**确定性替身**（规则 parse、fake/mock embed、`recall-eval` must）。真实评测走 `.github/workflows/recall-real-eval.yml`（`workflow_dispatch` + 每周一 cron；**不**挡 PR）。parse-gold / 消融均默认 `vs_baseline`（只防退步）；消融另有指标质量阈值（召回不得降、negFP 不得升）。鉴权：`SUPABASE_*` mint 或短期 Bearer（≠ DeepSeek Key）。
+**CI vs 真实模型（Normative 工程口径）：** PR/main CI 只守**确定性替身**（机制单测、fake/mock embed、`recall-eval` must 等）。真实 BGE 消融走 `.github/workflows/recall-real-eval.yml`（`workflow_dispatch` + 每周一 cron；**不**挡 PR）；消融默认 `vs_baseline`（召回不得降、negFP 不得升）。鉴权：`SUPABASE_*` mint 或短期 Bearer。**理解验收底线：** 任何试听懂 / 槽位核对必须真实输入 clue → `cd extension && bun run nlu:try -- "<clue>"`；定死口语金标批跑（原 `parse-gold` must / `parse-gold:llm`）**已退役**，禁止再加回 CI。
 
 #### 本地命令
 

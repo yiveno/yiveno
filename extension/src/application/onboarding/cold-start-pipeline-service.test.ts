@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const {
   ensureChromeBookmarksImportedMock,
   getChromeBookmarkImportStatusMock,
+  scheduleEnsureChromeBookmarksImportedIfNeededMock,
   ensureMemoryEnrichmentBackfilledMock,
   runSilentMemoryEmbeddingMaintenanceMock,
   scheduleSilentMemoryEmbeddingMaintenanceMock,
@@ -16,6 +17,7 @@ const {
 } = vi.hoisted(() => ({
   ensureChromeBookmarksImportedMock: vi.fn(),
   getChromeBookmarkImportStatusMock: vi.fn(),
+  scheduleEnsureChromeBookmarksImportedIfNeededMock: vi.fn(),
   ensureMemoryEnrichmentBackfilledMock: vi.fn(),
   runSilentMemoryEmbeddingMaintenanceMock: vi.fn(),
   scheduleSilentMemoryEmbeddingMaintenanceMock: vi.fn(),
@@ -30,7 +32,8 @@ const {
 
 vi.mock('@/application/capture/import-chrome-bookmarks-service', () => ({
   ensureChromeBookmarksImported: ensureChromeBookmarksImportedMock,
-  getChromeBookmarkImportStatus: getChromeBookmarkImportStatusMock
+  getChromeBookmarkImportStatus: getChromeBookmarkImportStatusMock,
+  scheduleEnsureChromeBookmarksImportedIfNeeded: scheduleEnsureChromeBookmarksImportedIfNeededMock
 }))
 
 vi.mock('@/application/memory/ensure-memory-enrichment-backfill', () => ({
@@ -104,7 +107,7 @@ describe('runColdStartPipeline', () => {
     readInstallOnboardingDoneMock.mockResolvedValue(true)
   })
 
-  it('存量已导入且引导已完成 → migrated_existing，不跑 import', async () => {
+  it('存量已导入且引导已完成 → migrated_existing；门禁跳过但仍会话补洞', async () => {
     readChromeStorageLocalMock.mockResolvedValue(null)
     getChromeBookmarkImportStatusMock.mockResolvedValue({
       status: 'completed',
@@ -118,11 +121,43 @@ describe('runColdStartPipeline', () => {
 
     expect(state.status).toBe('ready')
     expect(state.releaseReason).toBe('migrated_existing')
+    // 全屏 import 阶段不跑；ready 路径仍调度 ensure 补洞
     expect(ensureChromeBookmarksImportedMock).not.toHaveBeenCalled()
+    expect(scheduleEnsureChromeBookmarksImportedIfNeededMock).toHaveBeenCalledWith(
+      'cold_start_migrated_or_ready'
+    )
     expect(scheduleSilentMemoryEmbeddingMaintenanceMock).toHaveBeenCalled()
     expect(writeChromeStorageLocalMock).toHaveBeenCalledWith(
       COLD_START_PIPELINE_STORAGE_KEY,
       expect.objectContaining({ status: 'ready' })
+    )
+  })
+
+  it('已 ready 早退时仍调度书签补洞', async () => {
+    readChromeStorageLocalMock.mockResolvedValue({
+      version: 1,
+      status: 'ready',
+      stage: 'done',
+      releaseReason: 'ingest_disabled',
+      importImportedCount: 0,
+      rulesScanned: 0,
+      rulesUpdated: 0,
+      aiEmbedAttempted: 0,
+      aiEmbedWritten: 0,
+      aiLlmEnqueued: 0,
+      startedAt: '2026-10-15T17:03:19.821Z',
+      readyAt: '2026-10-15T17:03:19.830Z'
+    })
+
+    const promise = runColdStartPipeline()
+    await vi.runAllTimersAsync()
+    const state = await promise
+
+    expect(state.status).toBe('ready')
+    expect(state.releaseReason).toBe('ingest_disabled')
+    // migrateExistingIfEligible 对已 ready 直接返回 → 走 migrated 分支
+    expect(scheduleEnsureChromeBookmarksImportedIfNeededMock).toHaveBeenCalledWith(
+      'cold_start_migrated_or_ready'
     )
   })
 

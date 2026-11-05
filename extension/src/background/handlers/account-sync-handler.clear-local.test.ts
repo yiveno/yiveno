@@ -11,7 +11,8 @@ const {
   updateUserSettingsMock,
   syncListenersMock,
   clearRecallOutcomePairsMock,
-  clearRecallTelemetryEventsMock
+  clearRecallTelemetryEventsMock,
+  resetChromeBookmarkImportAfterLocalClearMock
 } = vi.hoisted(() => ({
   getAccountBindingMock: vi.fn(),
   getOrCreateLocalProfileMock: vi.fn(),
@@ -23,7 +24,8 @@ const {
   updateUserSettingsMock: vi.fn(),
   syncListenersMock: vi.fn(),
   clearRecallOutcomePairsMock: vi.fn(),
-  clearRecallTelemetryEventsMock: vi.fn()
+  clearRecallTelemetryEventsMock: vi.fn(),
+  resetChromeBookmarkImportAfterLocalClearMock: vi.fn()
 }))
 
 vi.mock('@/infrastructure/identity/local-profile-service', () => ({
@@ -56,6 +58,10 @@ vi.mock('@/infrastructure/settings/user-settings-service', () => ({
 
 vi.mock('@/background/listeners/chrome-bookmark-sync', () => ({
   syncChromeBookmarkSyncListenersWithIngestSetting: syncListenersMock
+}))
+
+vi.mock('@/application/capture/import-chrome-bookmarks-service', () => ({
+  resetChromeBookmarkImportAfterLocalClear: resetChromeBookmarkImportAfterLocalClearMock
 }))
 
 vi.mock('@/infrastructure/storage/recall-outcome-pairs-storage', () => ({
@@ -91,6 +97,7 @@ describe('handleClearLocalMemory', () => {
     syncListenersMock.mockResolvedValue(undefined)
     clearRecallOutcomePairsMock.mockResolvedValue(undefined)
     clearRecallTelemetryEventsMock.mockResolvedValue(undefined)
+    resetChromeBookmarkImportAfterLocalClearMock.mockResolvedValue(undefined)
   })
 
   it('清除本机条目并关闭书签灌库，不依赖 Chrome bookmarks API', async () => {
@@ -107,6 +114,7 @@ describe('handleClearLocalMemory', () => {
     expect(clearRecallTelemetryEventsMock).toHaveBeenCalledOnce()
     expect(updateUserSettingsMock).toHaveBeenCalledWith({ chromeBookmarkIngestEnabled: false })
     expect(syncListenersMock).toHaveBeenCalledWith(false)
+    expect(resetChromeBookmarkImportAfterLocalClearMock).toHaveBeenCalledOnce()
     expect(patchSyncPrefsMock).not.toHaveBeenCalled()
   })
 

@@ -187,17 +187,17 @@ bun run env:check:prod
 
 ## GitHub Actions · Recall 真实评测 Secrets
 
-> **用途：** 手动 workflow [`.github/workflows/recall-real-eval.yml`](../.github/workflows/recall-real-eval.yml)（`workflow_dispatch`）。  
-> **与 PR CI 分计：** 日常 CI 只跑确定性 `test:must`；真实 LLM / BGE **不**进每次 PR。  
+> **用途：** 手动 workflow [`.github/workflows/recall-real-eval.yml`](../.github/workflows/recall-real-eval.yml)（`workflow_dispatch`；现仅 BGE 消融）。  
+> **与 PR CI 分计：** 日常 CI 只跑确定性 `test:must`；真实 BGE **不**进每次 PR。  
+> **本机 NLU 试跑（Recall 理解阶段）：** `cd extension && bun run nlu:try -- "<clue>"` → 产品同款 `understandRecallClue`；可选 `DEEPSEEK_API_KEY` / `PARSE_GOLD_LLM_API_KEY` 等注入与 `yiveno.dev.clueLlm` 同源 completer（CLI 不走 Chrome 托管登录态）。规则强制：`bun run nlu:try:rules -- "<clue>"`（`NLU_TRY_FORCE_MODE=lexical`）。  
 > **配置位置：** 仓库 Settings → Secrets and variables → Actions。
 
-| Secret                                                             | 用途                                                                            | 必填                   |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------------------- | ---------------------- |
-| `DEEPSEEK_API_KEY` 或 `PARSE_GOLD_LLM_API_KEY`                     | `parse-gold:llm` 调上游聊天补全                                                 | 跑 parse-gold 时二选一 |
-| `SUPABASE_URL` + `SUPABASE_ANON_KEY` + `SUPABASE_SERVICE_ROLE_KEY` | 消融 job 内 **mint** 短期会话（与本机脚本同源；**推荐**，不过期）               | 跑消融时与下行二选一   |
-| `RETRIEVAL_ABLATION_ACCESS_TOKEN`                                  | 消融用短期 **登录 Bearer**（会过期；仅当不想把 service role 放进 Actions 时用） | 跑消融时与上行二选一   |
-| `RETRIEVAL_ABLATION_API_BASE`                                      | embed API 基址；未设默认 `https://api.yiveno.com`                               | 可选                   |
-| `RETRIEVAL_ABLATION_USER_EMAIL`                                    | mint 目标邮箱；默认 `retrieval-ablation-local@yiveno.dev`                       | 可选                   |
+| Secret                                                             | 用途                                                                            | 必填                 |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------------------- | -------------------- |
+| `SUPABASE_URL` + `SUPABASE_ANON_KEY` + `SUPABASE_SERVICE_ROLE_KEY` | 消融 job 内 **mint** 短期会话（与本机脚本同源；**推荐**，不过期）               | 跑消融时与下行二选一 |
+| `RETRIEVAL_ABLATION_ACCESS_TOKEN`                                  | 消融用短期 **登录 Bearer**（会过期；仅当不想把 service role 放进 Actions 时用） | 跑消融时与上行二选一 |
+| `RETRIEVAL_ABLATION_API_BASE`                                      | embed API 基址；未设默认 `https://api.yiveno.com`                               | 可选                 |
+| `RETRIEVAL_ABLATION_USER_EMAIL`                                    | mint 目标邮箱；默认 `retrieval-ablation-local@yiveno.dev`                       | 可选                 |
 
 ### 消融鉴权是什么
 
@@ -215,10 +215,10 @@ BGE 消融要打 **Yiveno Worker** `POST /api/ai/embed`（鉴权后才出真实�
 
 **门禁：**
 
-- **parse-gold：** workflow 默认 `vs_baseline`——对照 field-v1 快照；已知 31/35 残差绿，**新增** must 回归才红（只防退步）。本地默认 `absolute`。
 - **消融：** workflow 默认 `RETRIEVAL_ABLATION_GATE_MODE=vs_baseline`——对照 `docs/audits/2026-10-L2召回消融-real-run-b2-aligned.json` 主口径 include；召回/MRR/nDCG 不得降、negFP 不得升。本地默认 `off`（仅测量）。
+- **理解层：** 验收 / 试跑 = `cd extension && bun run nlu:try -- "<真实 clue>"`；定死 `PARSE_GOLD_CASES` 批跑 must **已退役**。`test:must` 仍跑 eval 目录机制与其它套件，**不**再绿金标口语全表。
 
-**触发：** `workflow_dispatch`（改 prompt / 模型 / 发版前）+ **每周一 06:00 UTC cron** 跑 `both`（人忘了跑的兜底；Secrets 未配会红）。**不**挡 PR。
+**触发：** `workflow_dispatch`（改 embed / 发版前）+ **每周一 06:00 UTC cron** 跑消融（人忘了跑的兜底；Secrets 未配会红）。**不**挡 PR。
 
 ## 禁止事项
 

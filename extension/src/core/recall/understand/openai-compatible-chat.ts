@@ -12,11 +12,23 @@ export interface OpenAiCompatibleChatMessage {
 }
 
 /** 离线 / 直连 profile：决定请求体字段与 completions path 拼接。 */
-export type OpenAiCompatibleChatCompat = 'deepseek' | 'openai' | 'dashscope'
+/**
+ * OpenAI 兼容厂商配置档（补全 URL / 请求体差异）。
+ * - deepseek：DeepSeek 官方兼容
+ * - openai：OpenAI 官方
+ * - dashscope：阿里云百炼兼容模式
+ */
+export type OpenAiCompatibleChatCompat =
+  | 'deepseek' // DeepSeek
+  | 'openai' // OpenAI
+  | 'dashscope' // 百炼 DashScope
 
 export interface OpenAiCompatibleChatConfig {
+  /** API Key */
   apiKey: string
+  /** API 基址（如 https://api.deepseek.com） */
   baseUrl: string
+  /** 模型 id */
   model: string
   temperature?: number
   maxTokens?: number

@@ -207,15 +207,18 @@ export function meanNdcgAtK(
   }
 }
 
-/** 槽位字段检查名（仅金标声明的字段进入分母）。 */
+/**
+ * parse-gold 字段级一致率统计的槽位名。
+ * 仅金标声明的字段进入分母。
+ */
 export type SlotAgreementField =
-  | 'timeLabel'
-  | 'objectTypes'
-  | 'behaviorHints'
-  | 'noteHint'
-  | 'contentTerms'
-  | 'confidence'
-  | 'excludeContentTerms'
+  | 'timeLabel' // 相对时间标签
+  | 'objectTypes' // 对象类型
+  | 'behaviorHints' // 行为提示
+  | 'noteHint' // 附注指向
+  | 'contentTerms' // 内容词
+  | 'confidence' // 解析置信度
+  | 'excludeContentTerms' // 明确排除词
 
 /** 正向槽：时间 / 类型 / 行为 / 附注 / 正词 / 置信度。 */
 export const SLOT_AGREEMENT_POSITIVE_FIELDS = [

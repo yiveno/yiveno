@@ -13,10 +13,14 @@ export const THIRD_PARTY_CORPUS_IMPORT_MAX_ITEMS = 50
 
 /** 解析后的第三方书签行（写库前）。 */
 export type ParsedThirdPartyBookmark = {
+  /** 源系统稳定 id */
   remoteId: string
+  /** 标题 */
   title: string
+  /** URL */
   url: string
   /** ISO；来自导出时间戳 */
   createdAt?: string
+  /** 源附注 / 描述（可写入 clues.note） */
   note?: string
 }

@@ -31,7 +31,12 @@ export const RecallFramingBucketSchema = z.object({
 export type RecallFramingBucket = z.infer<typeof RecallFramingBucketSchema>
 
 export const RecallFramingAmbiguitySchema = z.object({
-  kind: z.enum(['site', 'note', 'token', 'type_mix']),
+  kind: z.enum([
+    'site', // 按站点澄清
+    'note', // 按附注澄清
+    'token', // 按内容词澄清
+    'type_mix' // 按类型混桶澄清
+  ]),
   /** 静态澄清句 i18n key。 */
   promptKey: z.string().min(1),
   /** type_mix 时对象类型 slug（如 video）。 */
@@ -44,7 +49,12 @@ export const RecallFramingUnderstoodSchema = z.object({
   objectTypes: z.array(z.string()),
   timeLabel: z.string().optional(),
   /** high=Within；low=Around（ADR-011） */
-  timeConfidence: z.enum(['high', 'low']).optional(),
+  timeConfidence: z
+    .enum([
+      'high', // 时间硬筛
+      'low' // 时间软排
+    ])
+    .optional(),
   contentTerms: z.array(z.string()),
   behaviorHints: z.array(z.string()),
   noteHint: z.boolean(),
@@ -81,7 +91,12 @@ export type RecallFramingCandidateFacts = z.infer<typeof RecallFramingCandidateF
 export const RecallFramingGuessFactsSchema = z.object({
   kind: z.literal('guess'),
   understood: RecallFramingUnderstoodSchema,
-  emptyKind: z.enum(['constrained_none', 'unconstrained']).optional()
+  emptyKind: z
+    .enum([
+      'constrained_none', // 强约束下库空
+      'unconstrained' // 模糊空
+    ])
+    .optional()
 })
 
 /** no_match · 缺主题（H-topic）：未检索，只问一问。 */

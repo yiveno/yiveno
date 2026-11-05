@@ -21,8 +21,8 @@ const server = await createServer({
 })
 
 try {
-  const mod = await server.ssrLoadModule('/scripts/run-parse-gold-llm.ts')
-  await mod.runParseGoldLlmCli()
+  const mod = await server.ssrLoadModule('/scripts/nlu-try.ts')
+  await mod.runNluTryCli()
 } catch (error) {
   console.error(error instanceof Error ? error.stack || error.message : error)
   process.exitCode = 1

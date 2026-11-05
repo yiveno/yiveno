@@ -35,10 +35,15 @@ export const RecallRelativeTimeLabelSchema = z.enum([
  * 不含绝对时间窗：由确定性代码用 nowMs + timeLabel 生成 timeRange。
  */
 export const LlmParsedClueProposalSchema = z.object({
+  /** 相对时间标签；null = 明确无时间；缺省 = 模型未填 */
   timeLabel: RecallRelativeTimeLabelSchema.nullable().optional(),
+  /** 对象类型；null = 明确无类型；缺省 = 未填 */
   objectTypes: z.array(RecallObjectTypeSchema).nullable().optional(),
+  /** 行为提示；null = 明确无；缺省 = 未填 */
   behaviorHints: z.array(RecallBehaviorHintSchema).nullable().optional(),
+  /** true = 指向附注 */
   noteHint: z.boolean().optional(),
+  /** 内容检索词（模型提议；经 map 再落地） */
   contentTerms: z.array(z.string()),
   /**
    * 用户明确要求排除的内容词（与 contentTerms 互斥）。

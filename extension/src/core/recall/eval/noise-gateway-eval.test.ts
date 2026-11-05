@@ -18,7 +18,7 @@ describe('noise-gateway-eval', () => {
     expect(buildSynthNoiseGatewayCases().length).toBeGreaterThanOrEqual(40)
   })
 
-  it('must：零误伤 + 硬噪音必拦（含 parse-gold / 合成）', () => {
+  it('must：人手金标零误伤 + 合成硬噪音必拦', () => {
     const report = runNoiseGatewayEval()
 
     if (report.must.failed.length > 0) {
@@ -29,7 +29,8 @@ describe('noise-gateway-eval', () => {
     }
 
     expect(report.must.passed).toBe(report.must.total)
-    expect(report.must.total).toBeGreaterThanOrEqual(50)
+    // 人手 must + 合成硬噪音；不再并入 PARSE_GOLD_CASES
+    expect(report.must.total).toBeGreaterThanOrEqual(40)
   })
 
   it('stretch：汇报灰区（不挡门禁）', () => {

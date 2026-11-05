@@ -12,8 +12,11 @@ import type { RecallVisibleProgressStage } from '@/core/recall/visible-progress'
 
 /** 单次召回命中项。 */
 export interface RecallMatch {
+  /** 命中的 MemoryItem */
   item: MemoryItem
+  /** 排序分（越高越靠前） */
   score: number
+  /** 命中字段名（title / note / excerpt 等）；供 Explain */
   matchedFields: string[]
   /** 同键折叠组；仅 totalCount≥2 时出现。 */
   duplicateGroup?: RecallDuplicateGroup
@@ -49,9 +52,11 @@ export type RecallEmptyKind =
   | 'unconstrained' // 模糊空 / 仍需线索
   | 'missing_topic' // 缺主题，未检索
 
-/** 关键词 Filter 召回结果。 */
+/** 关键词 Filter / Hybrid 召回结果（UI 与 eval 共用）。 */
 export interface RecallResult {
+  /** 结果形态：Top Pick / 弱邻域 / 无命中 */
   outcome: RecallOutcome
+  /** 建议首项；need_a_clue / no_match 时可为 null */
   topPick: RecallMatch | null
   /**
    * 排序池中除头名外的其余项（可多于首屏；UI 用 totalRankedCount + 分页展示）。
@@ -87,11 +92,17 @@ export interface RecallResult {
    * - environment：§7.1 环境弱芯片（无 LLM 芯片时才挂）
    */
   assistantFollowUp?: {
+    /** 文案来源：模型 NLG | §7.1 环境弱芯片 */
     source: 'llm' | 'environment' // 模型生成 | 环境弱芯片
+    /** 追问正文（已门禁） */
     text: string
+    /** 可点补线索芯片 */
     suggestions: Array<{
+      /** 芯片稳定 id */
       id: string
+      /** 展示文案 */
       label: string
+      /** 点选后写入 composer / 提交的 clue 片段 */
       value: string
     }>
   }
@@ -100,8 +111,11 @@ export interface RecallResult {
    * Phase A：规则模板；facts 供 UI 续展时重渲染计数。
    */
   recallFraming?: {
+    /** Framing 文案来源 */
     source: 'rules' | 'llm' // 规则模板 | LLM 润色
+    /** 展示正文 */
     text: string
+    /** 闭集事实（重渲染 / eval） */
     facts: RecallFramingFacts
   }
   /**
@@ -123,7 +137,7 @@ export interface RecallResult {
   understandSource?: ClueUnderstandingSource
 }
 
-/** UI 展示用的 MemoryItem 摘要。 */
+/** UI 展示用的 MemoryItem 摘要（可见面；非存储契约）。 */
 export interface MemoryItemDisplay {
   /**
    * 主标题。
@@ -135,11 +149,13 @@ export interface MemoryItemDisplay {
    * 书签：域名。摘录：出处（页名 · 域名），不是标题。
    */
   subtitle: string
+  /** 打开原文用的 URL */
   url: string
   /** 摘录正文（主内容）；书签无。 */
   excerpt?: string
   /** 用户自拟附注（`clues.note`）；无则省略。 */
   note?: string
+  /** 类型标签（已 i18n，如 Bookmark / Excerpt） */
   typeLabel: string
 }
 

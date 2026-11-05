@@ -32,14 +32,20 @@ export type RecallDialogState = {
 }
 
 export type MergeRecallDialogTurnInput = {
+  /** 上一轮合并结果；首轮为 null */
   accumulated: ParsedRecallClue | null
+  /** 本轮 `understandRecallClue` 产出的 parsed（Hybrid 的 currentParsed） */
   currentParsed: ParsedRecallClue
+  /** 本轮之前已发送的用户原文（有序） */
   priorUserUtterances: readonly string[]
+  /** 本轮用户原文 */
   currentUtterance: string
 }
 
 export type MergeRecallDialogTurnResult = {
+  /** 合并后的 ParsedRecallClue（供 topic / Filter / Hybrid） */
   merged: ParsedRecallClue
+  /** 首轮 initial 或补充 refine */
   mergeMode: RecallDialogMergeMode
   /** 合并后的有效原文（空格拼接 prior + 本轮）。 */
   effectiveRaw: string

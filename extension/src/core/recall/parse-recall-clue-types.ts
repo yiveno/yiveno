@@ -88,8 +88,14 @@ export type RecallTimeConfidence = z.infer<typeof RecallTimeConfidenceSchema>
  */
 export const RecallTopicSchema = z.object({
   terms: z.array(z.string()),
-  source: z.enum(['content', 'goal']),
-  strength: z.enum(['strong', 'weak']),
+  source: z.enum([
+    'content', // 内容大意（C）
+    'goal' // 当时目标 / 附注指向（G）
+  ]),
+  strength: z.enum([
+    'strong', // 强：≥1 具体内容词
+    'weak' // 弱：仅附注指向等
+  ]),
   /**
    * Topic embedding 向量（Gap 5 · D3-C 语义化）。
    * 由 `deriveTopicEmbedding` 产出；undefined 时 topicLookup 走词法路径。
@@ -136,6 +142,7 @@ export type TopicDescriptor = z.infer<typeof TopicDescriptorSchema>
  * 由 orchestrate-keyword-recall / HybridRecallBackend 消费。
  */
 export const ParsedRecallClueSchema = z.object({
+  /** 本轮（或合并后）线索原文 */
   raw: z.string(),
   /**
    * Recall 主题锚（H-topic · 根节点）；Recall 的必要条件。
@@ -143,11 +150,15 @@ export const ParsedRecallClueSchema = z.object({
    * 缺省时由 `deriveRecallTopic` 从 contentTerms / noteHint 派生。
    */
   topic: RecallTopicSchema.optional(),
+  /** 相对时间闭合窗；无则不按时间硬筛/软排 */
   timeRange: RecallTimeRangeSchema.optional(),
   /** 有 timeRange 时必有；high=硬筛，low=软排（ADR-011）。 */
   timeConfidence: RecallTimeConfidenceSchema.optional(),
+  /** 对象类型闭集（可多选）；缺省 = 未听出类型 */
   objectTypes: z.array(RecallObjectTypeSchema).optional(),
+  /** 行为提示闭集；缺省 = 无行为槽 */
   behaviorHints: z.array(RecallBehaviorHintSchema).optional(),
+  /** true = 线索指向附注（MemoryItem.clues.note） */
   noteHint: z.boolean().optional(),
   /** 剥掉时间/类型/行为/附注指向词与填充词后的检索词。 */
   contentTerms: z.array(z.string()),
@@ -157,6 +168,7 @@ export const ParsedRecallClueSchema = z.object({
    * 与 contentTerms 互斥（同词保留正词、移出本槽）；检索侧对命中词面的候选硬过滤。
    */
   excludeContentTerms: z.array(z.string()).optional(),
+  /** 解析整体置信度；编排据此决定直给 / 弱邻域 / 追问 */
   confidence: RecallClueConfidenceSchema
 })
 

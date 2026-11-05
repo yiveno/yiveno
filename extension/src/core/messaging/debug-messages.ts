@@ -44,7 +44,12 @@ const seedRecallProbePayloadSchema = z.object({
    * - all：精选 + 多样性 + 噪声均写 Chrome（质量轮；万级极慢）
    * - curated_only：仅精选写 Chrome；多样性/噪声直写 Memory（压力轮 ~20k）
    */
-  chromeBookmarkSync: z.enum(['all', 'curated_only']).default('all'),
+  chromeBookmarkSync: z
+    .enum([
+      'all', // 精选+半仿真都写 Chrome 书签
+      'curated_only' // 仅精选写 Chrome 书签
+    ])
+    .default('all'),
   /**
    * 是否对精选条调度 LLM enrichment（烧配额；质量轮默认开）。
    * 噪声 / 多样性条永不调度。
@@ -130,7 +135,13 @@ const probeCleanupPayloadSchema = z
     /** 清当前 owner 全部 Memory（优先于上两层） */
     allMemory: z.boolean().default(false),
     /** 类型过滤 */
-    types: z.enum(['all', 'bookmark', 'text_excerpt']).default('all'),
+    types: z
+      .enum([
+        'all', // 全部类型
+        'bookmark', // 仅书签
+        'text_excerpt' // 仅摘录
+      ])
+      .default('all'),
     /** 移除种库主题文件夹（含历史「Yiveno Probe」；wipe 开启时可不设） */
     removeProbeFolder: z.boolean().default(false),
     /** 清空 Chrome 各书签根下全部子树（危险；整库清理常用） */

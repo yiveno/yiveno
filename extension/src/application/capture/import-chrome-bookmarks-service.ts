@@ -1,6 +1,7 @@
 import type { ChromeBookmarkImportState } from '@/core/memory/chrome-bookmark-import-state'
 import {
   bulkPutChromeBookmarkLeaves,
+  clearChromeBookmarkImportState,
   readChromeBookmarkImportState,
   upsertChromeBookmarkLeaves,
   writeChromeBookmarkImportState
@@ -18,9 +19,50 @@ function yieldToEventLoop(): Promise<void> {
 
 let importInFlight: Promise<ChromeBookmarkImportState> | null = null
 
+/** 本 SW 会话是否已调度过「灌库开 → ensure 补洞」（避免 status 轮询重复全量 reconcile）。 */
+let ensureHoleHealScheduledThisSwSession = false
+
 /** 读取当前 Chrome 书签导入进度（不触发导入）。 */
 export async function getChromeBookmarkImportStatus(): Promise<ChromeBookmarkImportState | null> {
   return readChromeBookmarkImportState()
+}
+
+/**
+ * 灌库开启时，每 SW 会话最多调度一次 ensure（completed → reconcile；未完成 → 续跑 bulk）。
+ * 堵住：Memory 被清空/丢库后 import 仍标 completed、冷启动 ready 早退不再补洞。
+ */
+export function scheduleEnsureChromeBookmarksImportedIfNeeded(reason: string): void {
+  if (ensureHoleHealScheduledThisSwSession) {
+    return
+  }
+  ensureHoleHealScheduledThisSwSession = true
+  void (async () => {
+    try {
+      const settings = await getUserSettings()
+      if (!settings.chromeBookmarkIngestEnabled) {
+        // 关灌库：允许本会话稍后开启时再调度
+        ensureHoleHealScheduledThisSwSession = false
+        return
+      }
+      await ensureChromeBookmarksImported()
+      logger.info('ChromeBookmarkImport', '会话级书签补洞 ensure 完成', { reason })
+    } catch (error) {
+      ensureHoleHealScheduledThisSwSession = false
+      logger.warn('ChromeBookmarkImport', '会话级书签补洞 ensure 失败', { reason, error })
+    }
+  })()
+}
+
+/** 清本机记忆时抹掉导入进度，便于重新开启后整树 bulk。 */
+export async function resetChromeBookmarkImportAfterLocalClear(): Promise<void> {
+  await clearChromeBookmarkImportState()
+  ensureHoleHealScheduledThisSwSession = false
+  logger.info('ChromeBookmarkImport', '已清除书签导入进度（随清本机记忆）')
+}
+
+/** 测试用：重置会话级补洞调度标记。 */
+export function resetChromeBookmarkImportHoleHealForTests(): void {
+  ensureHoleHealScheduledThisSwSession = false
 }
 
 /**

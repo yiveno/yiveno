@@ -14,7 +14,10 @@ import {
   parseGenerateGettingStartedClueSamplesPayload,
   parseImportThirdPartyCorpusPayload
 } from '@/core/messaging/import-messages'
-import { getChromeBookmarkImportStatus } from '@/application/capture/import-chrome-bookmarks-service'
+import {
+  getChromeBookmarkImportStatus,
+  scheduleEnsureChromeBookmarksImportedIfNeeded
+} from '@/application/capture/import-chrome-bookmarks-service'
 import {
   ThirdPartyCorpusImportError,
   getThirdPartyCorpusImportStatus,
@@ -37,6 +40,8 @@ export async function handleGetChromeBookmarkImportStatus(): Promise<ChromeBookm
   const startedAt = flowStart('Import', '读取书签导入状态')
   try {
     const state = await getChromeBookmarkImportStatus()
+    // Side Panel / GS 读状态时顺便会话级补洞（灌库开且 Memory 被掏空后的 completed 残留）
+    scheduleEnsureChromeBookmarksImportedIfNeeded('import_status_read')
     flowOk('Import', '读取书签导入状态', startedAt, {
       status: state?.status ?? null,
       importedCount: state?.importedCount ?? null,

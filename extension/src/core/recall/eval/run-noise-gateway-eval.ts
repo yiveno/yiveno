@@ -1,4 +1,3 @@
-import { PARSE_GOLD_CASES } from '@/core/recall/eval/parse-gold-cases'
 import {
   NOISE_GATEWAY_HAND_CASES,
   type NoiseGatewayCase,
@@ -58,19 +57,12 @@ export function judgeNoiseGatewayCase(
 }
 
 /**
- * 组装默认评测集：人手金标 + parse-gold 防误伤 + 合成硬噪音。
+ * 组装默认评测集：人手噪音金标 + 合成硬噪音。
+ * 不再并入 PARSE_GOLD_CASES（定死口语批跑已退役；理解试跑走 `nlu:try`）。
  */
 export function buildNoiseGatewayEvalCases(): NoiseGatewayCase[] {
-  const fromParseGold: NoiseGatewayCase[] = PARSE_GOLD_CASES.map(item => ({
-    id: `parse-gold:${item.id}`,
-    clue: item.clue,
-    gate: 'must' as const,
-    expect: { disposition: 'proceed' as const },
-    note: `parse-gold 防误伤：${item.note}`
-  }))
-
   const synth = buildSynthNoiseGatewayCases({ seed: 20260731, countPerFamily: 24 })
-  return [...NOISE_GATEWAY_HAND_CASES, ...fromParseGold, ...synth]
+  return [...NOISE_GATEWAY_HAND_CASES, ...synth]
 }
 
 /**

@@ -31,6 +31,7 @@ export type RecallEvalGate =
   | 'stretch' // 拉伸：仅汇报
 
 export interface RecallEvalCase {
+  /** 用例稳定 id */
   id: string
   /** 模拟用户提交的 clue（单轮；多轮时等于 dialogTurns 最后一句） */
   clue: string
@@ -41,8 +42,11 @@ export interface RecallEvalCase {
   dialogTurns?: string[]
   /** 本会话硬排除的 MemoryItem id（模拟 dismiss）。 */
   dismissedIds?: RecallEvalItemId[]
+  /** 线索画像档位（具体 / 半模糊 / …） */
   clueClass: RecallEvalClueClass
+  /** must 挡门禁 / stretch 仅汇报 */
   gate: RecallEvalGate
+  /** 期望命中形态 */
   expectation: RecallEvalExpectation
   /** 中文说明：为何这样出题 */
   note: string

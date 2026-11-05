@@ -6,13 +6,12 @@ import type {
 } from '@/core/recall/parse-recall-clue-types'
 
 /**
- * 门禁级别。
- * - must：当前规则 parser 必须通过（回归基线）
- * - stretch：理想理解金标；规则可失败，供后续 LLM 对比（不挡 CI）
+ * 历史金标门禁标签（**不再**挡 CI）。
+ * - must / stretch：仅作档案字段；理解试跑与验收改为真实输入 `bun run nlu:try`
  */
 export type ParseGoldGate =
-  | 'must' // 必过：挡门禁
-  | 'stretch' // 拉伸：仅汇报
+  | 'must' // 档案：曾作必过
+  | 'stretch' // 档案：曾作拉伸汇报
 
 /**
  * 理想槽位（人工金标）。
@@ -51,8 +50,12 @@ export interface ParseGoldCase {
 }
 
 /**
- * 理解层金标：口语 → ParsedRecallClue 槽位。
- * 与 recall-eval（线索 → 命中 MemoryItem id）正交；本集只量解析。
+ * 理解层历史金标表（口语 → 槽位期望）。
+ *
+ * **退役（2026-11-06）：** 不再作为 CI must 批跑定死 clue。
+ * 理解验收 / 试跑：维护者真实输入 → `cd extension && bun run nlu:try -- "<clue>"`。
+ * CI 只守机制单测（lexicon / exclude / map proposal 等），不守本表。
+ * 本表保留供离线对照、审计快照与 `compare-parse-gold` 库函数；勿再加「全表 must 绿」门禁。
  */
 export const PARSE_GOLD_CASES: ParseGoldCase[] = [
   // —— must：产品文档 P0 典型语料 + 规则已覆盖 ——

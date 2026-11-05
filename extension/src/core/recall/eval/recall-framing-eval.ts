@@ -11,7 +11,10 @@ import { recallByKeywordWithParsedClue } from '@/core/recall/orchestrate-keyword
 import type { RecallFramingCandidateFacts } from '@/core/recall/recall-framing-facts'
 import type { RecallResult } from '@/core/recall/recall-result'
 
-export type RecallFramingEvalGate = 'must' | 'stretch'
+/** Framing eval 门禁。 */
+export type RecallFramingEvalGate =
+  | 'must' // 必过
+  | 'stretch' // 拉伸
 
 export type RecallFramingEvalCase = {
   id: string

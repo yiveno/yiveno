@@ -216,7 +216,14 @@ interface RecallToken {
  * - default：Side Panel / 通用（裸 open 偏低，防连环排查污染）
  * - omnibox：快跳略抬 open / 近因 / settled（仍受 {@link RECALL_BEHAVIOR_BOOST_CAP}）
  */
-export type RecallBehaviorProfile = 'default' | 'omnibox'
+/**
+ * 召回打分行为档。
+ * - default：Side Panel / 完整轨
+ * - omnibox：地址栏轨（更偏本地 / 词面）
+ */
+export type RecallBehaviorProfile =
+  | 'default' // Side Panel 默认
+  | 'omnibox' // Omnibox
 
 /** 打分可选时钟（eval 固定 now，避免近因漂移）与行为档。 */
 export interface RecallScoreOptions {

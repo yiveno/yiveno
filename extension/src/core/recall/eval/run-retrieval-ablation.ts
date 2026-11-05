@@ -72,7 +72,11 @@ import type { RecallMatch } from '@/core/recall/recall-result'
 /** 与 hybrid-recall-backend 内 HYBRID_KEYWORD_POOL 对齐（评测侧常量，防循环依赖）。 */
 const HYBRID_KEYWORD_POOL = 100
 
-export type RetrievalAblationStrategy = 'keyword' | 'semantic' | 'hybrid'
+/** 消融策略臂。 */
+export type RetrievalAblationStrategy =
+  | 'keyword' // 仅关键词
+  | 'semantic' // 仅语义
+  | 'hybrid' // 融合
 
 /**
  * 真实 Embedding 客户端（须打 Worker `/api/ai/embed` · bge-m3）。

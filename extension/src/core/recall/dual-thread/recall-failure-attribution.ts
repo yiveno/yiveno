@@ -53,7 +53,13 @@ export const RecallFailureAttributionSchema = z.object({
   /** 细码（可多） */
   detailCodes: z.array(RecallFailureDetailCodeSchema).max(12).default([]),
   /** 标注者对主阶段的信心 */
-  confidence: z.enum(['high', 'medium', 'low']).default('medium'),
+  confidence: z
+    .enum([
+      'high', // 高
+      'medium', // 中
+      'low' // 低
+    ])
+    .default('medium'),
   /** 短备注（禁止贴私人 clue / URL；≤200） */
   detailNotes: z.string().max(200).optional(),
   /** 是否已知 gold 在库内 */

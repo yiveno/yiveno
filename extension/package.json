@@ -24,7 +24,8 @@
     "test": "vitest",
     "test:run": "vitest run",
     "test:must": "vitest run src/core/recall/eval",
-    "parse-gold:llm": "bun scripts/run-parse-gold-llm.mjs",
+    "nlu:try": "bun scripts/nlu-try.mjs",
+    "nlu:try:rules": "NLU_TRY_FORCE_MODE=lexical bun scripts/nlu-try.mjs",
     "retrieval-ablation:real": "bun scripts/run-retrieval-ablation-real.mjs",
     "i18n:check": "bun scripts/check-i18n-keys.mjs",
     "clean": "bun scripts/clean-dist.cjs"

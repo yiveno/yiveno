@@ -68,7 +68,12 @@ export function rankedIdsFromRecallResult(result: RecallResult | null | undefine
   return ids
 }
 
-export type EvalExpectationKindForObservation = 'top1' | 'in_topk' | 'need_a_clue' | 'no_match'
+/** 观察失败时期望形态（与 recall-eval expectation.kind 对齐）。 */
+export type EvalExpectationKindForObservation =
+  | 'top1' // 期望 Top1
+  | 'in_topk' // 期望进 top-k
+  | 'need_a_clue' // 期望弱邻域
+  | 'no_match' // 期望无命中
 
 export interface ObserveEvalFailureInput {
   /** 用例是否已判定失败；通过则返回 not_applicable */

@@ -22,9 +22,13 @@ export type NoiseGatewayExpect =
     }
 
 export interface NoiseGatewayCase {
+  /** 用例稳定 id */
   id: string
+  /** 输入线索原文 */
   clue: string
+  /** must 挡门禁 / stretch 仅汇报 */
   gate: NoiseGatewayGate
+  /** 期望网关结论 */
   expect: NoiseGatewayExpect
   /** 中文：出题意图 */
   note: string

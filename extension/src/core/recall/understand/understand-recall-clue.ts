@@ -40,18 +40,32 @@ export interface UnderstandRecallClueResult {
   disposition: ClueProcessingDisposition
   /** reject 时非 null。 */
   rejectReason: ClueProcessingRejectReason | null
+  /**
+   * 理解模式（词面 vs 语义）。
+   * 由 `selectClueUnderstandingMode` 或 `forceMode` 决定；与 `source` 不同（source=实际引擎）。
+   */
   mode: ClueUnderstandingMode
+  /**
+   * 实际产出 `parsed` 的引擎。
+   * Hybrid 写入 `pipelineTiming.understandSource` / 遥测。
+   */
   source: ClueUnderstandingSource
+  /**
+   * 结构化检索约束。
+   * Hybrid 下一环：`currentParsed: understood.parsed` → `mergeRecallDialogTurn`。
+   * 网关拒绝时为占位空结构（confidence low、无 terms）。
+   */
   parsed: ParsedRecallClue
-  /** Filter 检索词面（`buildFilterClueFromParsed`；供调试）。 */
+  /** Filter 检索词面（`buildFilterClueFromParsed`；供调试；检索主输入仍是 parsed）。 */
   filterClue: string
 }
 
 export interface UnderstandRecallClueOptions {
+  /** 解析时钟；缺省 Date.now()（相对时间窗依赖） */
   nowMs?: number
   /** 注入 LLM 补全；缺省则只能走规则。 */
   complete?: LlmChatCompleter
-  /** 强制模式（单测 / 调试）。 */
+  /** 强制模式（单测 / Omnibox lexical / 调试）。 */
   forceMode?: ClueUnderstandingMode
   /** 流水线追踪（由 application 注入 logger）。 */
   trace?: ClueFlowTrace

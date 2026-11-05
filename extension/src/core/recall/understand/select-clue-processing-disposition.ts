@@ -26,7 +26,9 @@ export type ClueProcessingRejectReason =
   | 'keyboard_mash' // 键盘砸键 / 字母糊
 
 export interface ClueProcessingDecision {
+  /** 网关结论：reject_noise | proceed */
   disposition: ClueProcessingDisposition
+  /** reject 时非 null；proceed 时为 null */
   rejectReason: ClueProcessingRejectReason | null
 }
 

@@ -27,9 +27,13 @@ export const RecallPipelineTimingSchema = z.object({
 
 export type RecallPipelineTiming = z.infer<typeof RecallPipelineTimingSchema>
 
+/** 遥测事件公共头。 */
 const telemetryBaseSchema = z.object({
+  /** 一次找会话 / 任务 id */
   taskId: z.uuid(),
+  /** 本轮请求追踪 id */
   traceId: z.uuid(),
+  /** 事件时间（ISO） */
   at: z.iso.datetime()
 })
 
@@ -49,9 +53,16 @@ export const RecallWaitAbandonReasonSchema = z.enum([
 
 /** 可见进展快照（放弃 / 出结果时附带）。 */
 export const RecallWaitProgressSnapshotSchema = z.object({
+  /** 是否已揭示进度文案（过 500ms 门槛） */
   progressRevealed: z.boolean(),
+  /** 本轮等待已过毫秒 */
   waitElapsedMs: z.number().int().nonnegative(),
+  /** 等待期间到达的最高阶段 */
   peakStage: RecallWaitPeakStageSchema.optional(),
+  /**
+   * understanding 等待梯级 1–4（§7.0）。
+   * 1=初文案；2≥4s；3≥8s；4≥10s 软预期 rules_fallback
+   */
   understandingTier: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional()
 })
 
@@ -86,7 +97,11 @@ export const RecallTelemetryEventSchema = z.discriminatedUnion('type', [
   }),
   telemetryBaseSchema.extend({
     type: z.literal('result_rendered'),
-    outcome: z.enum(['top_pick', 'need_a_clue', 'no_match']),
+    outcome: z.enum([
+      'top_pick', // 有 Top Pick 建议
+      'need_a_clue', // 弱邻域，需补线索
+      'no_match' // 无命中
+    ]),
     resultCount: z.number().int().nonnegative(),
     pipelineTiming: RecallPipelineTimingSchema.optional(),
     /** 可见进展快照（体验 A/B；可选） */
@@ -108,17 +123,29 @@ export const RecallTelemetryEventSchema = z.discriminatedUnion('type', [
   }),
   telemetryBaseSchema.extend({
     type: z.literal('user_confirmed'),
-    label: z.enum(['target', 'none_in_results', 'absent', 'unknown']),
-    confidence: z.enum(['strong', 'medium_high', 'medium', 'medium_low']).optional(),
+    label: z.enum([
+      'target', // 目标条目
+      'none_in_results', // 以上都不是
+      'absent', // 库内没有
+      'unknown' // 未知
+    ]),
+    confidence: z
+      .enum([
+        'strong', // 强
+        'medium_high', // 中高
+        'medium', // 中
+        'medium_low' // 中低
+      ])
+      .optional(),
     source: z.enum([
-      'mark',
-      'dismiss',
-      'no_match',
-      'exit_prompt',
-      'settled_single',
-      'settled_last',
-      'copy',
-      'unresolved'
+      'mark', // 兼容旧落盘；不再由 UI 产生
+      'dismiss', // dismiss
+      'no_match', // no_match 出口
+      'exit_prompt', // 出口条
+      'settled_single', // C1 单条 settled
+      'settled_last', // C2 末条 settled
+      'copy', // 复制等弱确认
+      'unresolved' // 未决议
     ]),
     memoryItemId: z.uuid().optional()
   }),

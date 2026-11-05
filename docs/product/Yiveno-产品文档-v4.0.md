@@ -791,7 +791,7 @@ NA 分立：`a while ago` / `some time ago` → 数周；`a while back` → `few
 - **已删除：** 「词面优先 Gate B 挡口语」与「lexical miss 后再升一次 LLM」双扫——有模型则一次听懂。
 - **不做本里程碑内：** 全库喂模型、模型写库、开放闲聊。
 - **开发 / 正式 LLM：** Cloudflare `POST /api/ai/hosted/complete`（登录 Free/Pro 月+日配额）或开发 `clue/complete` / `yiveno.dev.clueLlm`；关 AI 或未登录 → 规则降级。
-- **验收：** 「听懂」must eval + parse-gold；Recall 用户可感变更补 `recall-eval` must 或 §5 手动步骤。
+- **验收：** 「听懂」= 维护者真实输入 clue 跑 `cd extension && bun run nlu:try -- "<clue>"`（走产品同款 `understandRecallClue` 理解阶段；有 Key 时注入与 `yiveno.dev.clueLlm` 同源 completer）。**禁止**定死口语金标批跑冒充理解验收。Recall 用户可感变更仍补 `recall-eval` must 或 §5 手动步骤。CI 对理解层只守机制单测（lexicon / exclude / map proposal 等），不守历史 `PARSE_GOLD_CASES` 全表。
 
 #### 隐患清单与规避（决策自检）
 
@@ -1045,7 +1045,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 4. 未标「已上线」的能力不得用 MCP 抽测记录或文案暗示可用。
 5. **CI vs 真实模型（工程门禁 · 与 §5.9 分计）：**
    - PR / `main` CI：`test:run` **加**显式 `bun run test:must`（`extension/src/core/recall/eval`；另有 eval `*.test.ts` 数量地板）。守的是**确定性替身**（规则 parse、fake/mock embed、工厂 must）。
-   - **真实评测（Recall Real Eval · 不挡 PR）：** 真实 LLM / BGE **不**进每次 PR。改 prompt / `AI_HOSTED_MODEL*` / embed 前跑 `.github/workflows/recall-real-eval.yml`（`workflow_dispatch` + 每周一 UTC cron 兜底；需 Actions Secrets）。parse-gold 默认 `vs_baseline`（field-v1 · 已知 must **31/35** 残差绿，**仅新增**回归才红；可选 `absolute`）。BGE 消融默认 `vs_baseline`（对照 B2 real-run；召回/MRR/nDCG 不得降、negFP 不得升）。鉴权：`SUPABASE_*` mint 或短期 access token（≠ DeepSeek Key；见 `docs/ENVIRONMENT.md`）。**有意取舍：** vs_baseline 只防退步、不逼进步；红须人工判读后再合模型/prompt。
+   - **真实评测（Recall Real Eval · 不挡 PR）：** 真实 BGE **不**进每次 PR。改 embed 前跑 `.github/workflows/recall-real-eval.yml`（`workflow_dispatch` + 每周一 UTC cron 兜底；需 Actions Secrets；仅消融）。BGE 消融默认 `vs_baseline`（对照 B2 real-run；召回/MRR/nDCG 不得降、negFP 不得升）。鉴权：`SUPABASE_*` mint 或短期 access token（见 `docs/ENVIRONMENT.md`）。**理解验收：** 真实输入 `bun run nlu:try`；定死 `PARSE_GOLD_CASES` 批跑 must **已退役**（原 `parse-gold:llm` CLI 亦已移除）。**有意取舍：** 消融 vs_baseline 只防退步；红须人工判读后再合模型。
 
 ---
 
@@ -1853,10 +1853,10 @@ Chrome API / 选区
   - **关 AI + 模型说明（Normative）**：Settings「AI」提供 `aiFeaturesEnabled`（默认开）；关闭后线索 LLM completer 清空、Capture LLM enrichment 跳过；页内说明 Worker 路径与数据平面边界。**开 AI ≠ C 层内容留存授权。**
   - **服务条款（Normative）**：官网 `/terms`（美式英语）；页脚 / 登录 / Settings 可外链。
   - **书签灌库开关（Normative）**：Settings「保存」与 Getting Started 共用 `chromeBookmarkIngestEnabled`（**默认关**；须用户明示打开）。Settings 开关面向用户文案用 **同步**（持续状态：本机库 ↔ 本浏览器书签增删改）；GS 按钮仍用 **Import**（一次性同意）。**用户可见 bulk 主进度 = GS Bookmarks tab**；Settings 打开开关仍触发 `ensureChromeBookmarksImported`（Skip GS 后的后路），**不**在 Side Panel 顶栏展示导入细条。关闭后**卸载** `bookmarks.on*` 监听、跳过 bulk 导入与增量写入，并拒绝 `CAPTURE_BOOKMARK`；**不删除**已灌入的书签 Memory；重新开启后重新挂监听并补跑 / 续跑 bulk（含 reconcile 补洞）。**禁止**写成云记忆 sync。
-  - **书签库与 Chrome 对账（Normative）**：**Chrome 书签树 = 壳权威**（单向 Chrome → IndexedDB；**禁止**写回 / 改写 / 删除原生书签；**禁止** Settings 暴露「修复」类用户操作）。增量靠 `bookmarks.on*`；holes-only reconcile 只补「Chrome 有、Memory 无」。**full repair**（后台自动）：对当前全部 http(s) 叶子 upsert（同 `chromeBookmarkId` 含软删则同 id 复活；保留 `clues.note` 与行为计数）；软删带 `chromeBookmarkId` 且已不在 Chrome 树的孤儿；**不动**无 `chromeBookmarkId` 的第三方导入书签。触发：① 灌库已完成时每个 SW 会话最多自动 full repair 一次（其后 finalize 仍走 holes）；② 灌库开启时挂 **每日** `chrome.alarms` 对账（关灌库则清闹钟）。**禁止**暗示云同步书签或双向合并。
+  - **书签库与 Chrome 对账（Normative）**：**Chrome 书签树 = 壳权威**（单向 Chrome → IndexedDB；**禁止**写回 / 改写 / 删除原生书签；**禁止** Settings 暴露「修复」类用户操作）。增量靠 `bookmarks.on*`；holes-only reconcile 只补「Chrome 有、Memory 无」。**full repair**（后台自动）：对当前全部 http(s) 叶子 upsert（同 `chromeBookmarkId` 含软删则同 id 复活；保留 `clues.note` 与行为计数）；软删带 `chromeBookmarkId` 且已不在 Chrome 树的孤儿；**不动**无 `chromeBookmarkId` 的第三方导入书签。触发：① 灌库已完成时每个 SW 会话最多自动 full repair 一次（其后 finalize 仍走 holes）；② 灌库开启时挂 **每日** `chrome.alarms` 对账（关灌库则清闹钟）；③ 冷启动已 `ready` / 读导入状态时，灌库开则每 SW 会话最多一次 `ensureChromeBookmarksImported`（堵 Memory 被掏空后 import 仍 `completed`、门禁早退漏补洞）。**禁止**暗示云同步书签或双向合并。
 - **数据处置（Normative · Settings「数据与隐私」）**：
   - **Backup 整库导出**（§5.5.1）：导出当前 owner 本机全部 Memory（含软删、`clues` 全字段，即 L1+L2+L3）为 JSON（`EXPORT_LOCAL_MEMORY`）；不含孤儿桶（孤儿仍走账户与同步导出）。**Portable 可迁移原料未上线前，本条即用户主权导出的唯一必需路径。**
-  - **清除本机记忆**（`CLEAR_LOCAL_MEMORY`）：硬清当前 owner 本机 IndexedDB Memory；**不得**改写/删除 Chrome 原生书签；成功后关闭书签灌库并卸载监听；若云同步开着则关闭同步并提示云端副本需另行删除；**并清除**本机 Outcome 对缓冲与 TTE 遥测环（`yiveno.recallOutcomePairs` / `yiveno.recallTelemetry`）。二次确认。
+  - **清除本机记忆**（`CLEAR_LOCAL_MEMORY`）：硬清当前 owner 本机 IndexedDB Memory；**不得**改写/删除 Chrome 原生书签；成功后关闭书签灌库并卸载监听；**并清除** Chrome 书签导入进度（`yiveno:chrome_bookmark_import`），避免 Memory 已空仍标 `completed` 导致再开灌库漏灌；若云同步开着则关闭同步并提示云端副本需另行删除；**并清除**本机 Outcome 对缓冲与 TTE 遥测环（`yiveno.recallOutcomePairs` / `yiveno.recallTelemetry`）。二次确认。
   - **Outcome 软调开关**（`recallOutcomePairSoftAdjustEnabled`，默认开）：关闭后 Hybrid **跳过**本机 Outcome 对软升/降权；对缓冲仍可累积直至清除；**不**锁死 Recall。与「清除适应信号」互补（暂停 vs 清空）。Omnibox 本就不走 Outcome。
   - **清除本机 Recall 适应信号**（`CLEAR_LOCAL_RECALL_ADAPTATION`）：仅清除 Outcome 对缓冲 + TTE 遥测环；**不**删 Memory、**不**改 `openCount` 等条目字段、**不**关灌库/同步。用于重置 A 层软排学习而不毁库。二次确认。Recall 主链须仍可用。
   - **删除云端记忆**：登录后可一键删除该账号云端 `memory_items` 与 `memory_sync_backups`；默认**不**清本机 IndexedDB；成功后关闭云同步并清定时闹钟。二次确认。
@@ -2699,6 +2699,8 @@ RecallOutcomeEvent {
 
 | 日期       | 变更                                                                                                                                                                                                                                                                                                       |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-06 | **书签灌库空洞自愈：** Memory 已空但 import 仍 `completed` / 冷启动 ready 早退时，会话级 `ensure` 补洞；`CLEAR_LOCAL_MEMORY` 顺带清导入进度；堵 Side Panel「已开同步仍空库」与 Library「未进入记忆」并存                                                                                                   |
+| 2026-11-06 | **理解验收改真实输入：** 移除 `parse-gold:llm` CLI 与 `parse-gold.test.ts` 定死 clue must；噪音网关不再并入 PARSE_GOLD_CASES；验收 = `bun run nlu:try`；CI 仅守机制单测；`recall-real-eval.yml` 仅 BGE 消融                                                                                                |
 | 2026-11-03 | **Settings「数据」与「隐私」合并：** 侧栏单分区「数据与隐私」`privacy`；旧 `?section=data` 映射；披露/MCP/政策与导入备份适应清除同页                                                                                                                                                                       |
 | 2026-11-04 | **真实评测补洞：** 消融 `vs_baseline` 质量阈值（召回不得降 / negFP 不得升）；Recall Real Eval 每周一 UTC cron 兜底；parse-gold vs_baseline 已知 31/35 残差仍为有意只防退步                                                                                                                                 |
 | 2026-11-04 | **parse-gold 真实评测 vs_baseline：** 对照 field-v1 快照，已知 31/35 残差绿、新增 must 回归才红；消融鉴权口径写入 ENVIRONMENT（Worker Bearer ≠ DeepSeek Key）                                                                                                                                              |

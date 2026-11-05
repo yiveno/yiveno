@@ -14,7 +14,10 @@ import type {
 /** 浮点比较容差（11 题一档约 0.09，ε 远小于一档）。 */
 export const RETRIEVAL_ABLATION_METRIC_EPSILON = 1e-6
 
-export type AblationGatedMetricKind = 'higher_better' | 'lower_better'
+/** 消融门禁指标方向：越高越好 / 越低越好。 */
+export type AblationGatedMetricKind =
+  | 'higher_better' // 召回 / MRR / nDCG 等
+  | 'lower_better' // 负例误报率等
 
 export type AblationGatedMetricId =
   | `${RetrievalAblationStrategy}.recallAt1`

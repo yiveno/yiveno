@@ -13,6 +13,7 @@ import {
 import { memoryItemRepository } from '@/infrastructure/indexeddb/memory-item-repository'
 import {
   readChromeStorageLocal,
+  removeChromeStorageLocal,
   writeChromeStorageLocal
 } from '@/infrastructure/storage/chrome-storage-local'
 
@@ -120,4 +121,12 @@ export async function writeChromeBookmarkImportState(
   state: ChromeBookmarkImportState
 ): Promise<void> {
   await writeChromeStorageLocal(CHROME_BOOKMARK_IMPORT_STORAGE_KEY, state)
+}
+
+/**
+ * 清除导入进度（清本机记忆后须调用）。
+ * 避免 Memory 已空但仍标 completed，导致 ensure 只 reconcile、冷启动 ready 早退永久漏灌。
+ */
+export async function clearChromeBookmarkImportState(): Promise<void> {
+  await removeChromeStorageLocal(CHROME_BOOKMARK_IMPORT_STORAGE_KEY)
 }

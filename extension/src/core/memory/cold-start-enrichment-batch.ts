@@ -20,10 +20,15 @@ export const ColdStartEnrichmentBatchStatusSchema = z.enum([
 ])
 
 export const ColdStartEnrichmentBatchSchema = z.object({
+  /** 本批稳定 id */
   batchId: z.string().min(1),
+  /** 本批入队任务总数 */
   total: z.number().int().nonnegative(),
+  /** 已结算条数（成功/失败/清空均计入） */
   settled: z.number().int().nonnegative(),
+  /** 批次状态 */
   status: ColdStartEnrichmentBatchStatusSchema,
+  /** 最近更新时间（ISO） */
   updatedAt: z.string().datetime()
 })
 

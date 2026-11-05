@@ -15,6 +15,7 @@ import {
   summarizeOrphanOwnerBuckets
 } from '@/application/identity/orphan-owner-buckets'
 import { clearAccountLibraryOnSignOut } from '@/application/identity/clear-account-library-on-sign-out'
+import { resetChromeBookmarkImportAfterLocalClear } from '@/application/capture/import-chrome-bookmarks-service'
 import { filterCloudSyncableMemoryItems } from '@/core/memory/cloud-syncable-memory-item'
 import { mergeMemoryItemsByUpdatedAt } from '@/core/memory/merge-memory-items-by-updated-at'
 import { selectMemoryItemsToPush } from '@/core/memory/select-memory-items-to-push'
@@ -1625,6 +1626,8 @@ export async function handleClearLocalMemory(): Promise<ClearLocalMemoryResponse
 
     await updateUserSettings({ chromeBookmarkIngestEnabled: false })
     await syncChromeBookmarkSyncListenersWithIngestSetting(false)
+    // Memory 已空：抹掉 completed 导入进度，避免再开灌库时误以为已灌满
+    await resetChromeBookmarkImportAfterLocalClear()
 
     const syncPrefs = await getSyncPrefs()
     let syncDisabled = false

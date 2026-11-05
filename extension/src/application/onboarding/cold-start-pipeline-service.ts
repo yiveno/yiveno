@@ -6,7 +6,8 @@
 
 import {
   ensureChromeBookmarksImported,
-  getChromeBookmarkImportStatus
+  getChromeBookmarkImportStatus,
+  scheduleEnsureChromeBookmarksImportedIfNeeded
 } from '@/application/capture/import-chrome-bookmarks-service'
 import { ensureMemoryEnrichmentBackfilled } from '@/application/memory/ensure-memory-enrichment-backfill'
 import {
@@ -391,10 +392,11 @@ export async function runColdStartPipeline(): Promise<ColdStartPipelineState> {
     try {
       const migrated = await migrateExistingIfEligible()
       if (migrated?.status === 'ready') {
-        // 门禁跳过，但规则/embed 缺口仍静默补
+        // 门禁跳过，但规则/embed/书签缺口仍静默补（Memory 空但 import completed 的洞）
         void ensureMemoryEnrichmentBackfilled().catch(error => {
           logger.error('ColdStart', '存量迁移后规则回填失败', error)
         })
+        scheduleEnsureChromeBookmarksImportedIfNeeded('cold_start_migrated_or_ready')
         scheduleSilentMemoryEmbeddingMaintenance('cold_start_migrated', 2800)
         flowOk('ColdStart', '冷启动 pipeline', startedAt, {
           releaseReason: migrated.releaseReason ?? 'migrated_existing'
@@ -404,6 +406,7 @@ export async function runColdStartPipeline(): Promise<ColdStartPipelineState> {
 
       const current = await readColdStartPipelineState()
       if (current?.status === 'ready' && current.version >= COLD_START_PIPELINE_VERSION) {
+        scheduleEnsureChromeBookmarksImportedIfNeeded('cold_start_already_ready')
         scheduleSilentMemoryEmbeddingMaintenance('cold_start_already_ready', 2800)
         flowOk('ColdStart', '冷启动 pipeline', startedAt, { releaseReason: current.releaseReason })
         return current

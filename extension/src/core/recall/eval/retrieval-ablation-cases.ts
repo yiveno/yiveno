@@ -11,7 +11,10 @@ import {
   type RetrievalAblationItemId
 } from '@/core/recall/eval/retrieval-ablation-ids'
 
-export type RetrievalAblationGate = 'measure' | 'negative'
+/** 消融门禁：measure=正例测量；negative=负例（误报）。 */
+export type RetrievalAblationGate =
+  | 'measure' // 正例测量
+  | 'negative' // 负例
 
 /** 场景标签（覆盖矩阵用）。 */
 export type RetrievalAblationScenario =
@@ -29,14 +32,15 @@ export type RetrievalAblationScenario =
  * - miss：期望目标**不**进入前 K（负例；**不用** Recall@K 当质量分）
  */
 export type RetrievalAblationExpectation =
-  | { kind: 'hit'; expectedId: RetrievalAblationItemId }
-  | { kind: 'miss'; expectedId: RetrievalAblationItemId; k?: number }
+  | { kind: 'hit'; expectedId: RetrievalAblationItemId } // 目标应进候选
+  | { kind: 'miss'; expectedId: RetrievalAblationItemId; k?: number } // 目标不应进前 K
 
 export interface RetrievalAblationCase {
+  /** 用例稳定 id */
   id: string
   /** 仅展示 / 拼 embedding 文本；不用于重新理解 */
   clueForDisplay: string
-  /** 固定理解快照（所有策略共用） */
+  /** 固定理解快照（所有策略共用；故意跳过 live NLU） */
   goldParsed: ParsedRecallClue
   /**
    * 写入 Worker embed 的 clue 文本。
@@ -44,17 +48,20 @@ export interface RetrievalAblationCase {
    * 显式给出时覆盖（便于对照生产拼接）。
    */
   clueEmbeddingText?: string
+  /** 命中期望 */
   expectation: RetrievalAblationExpectation
+  /** measure 正例 / negative 负例 */
   gate: RetrievalAblationGate
+  /** 场景标签（覆盖矩阵） */
   scenario: RetrievalAblationScenario
   /** 金标是否可能争议；ambiguous 不据此换模型/算法 */
-  labelConfidence: 'clear' | 'ambiguous'
+  labelConfidence: 'clear' | 'ambiguous' // 清晰 | 歧义
   /**
    * 金标复核状态。
    * - stable：常规 clear/ambiguous
    * - pending_review：标签暂维持，人工复核中；**禁止**因策略输出改标签
    */
-  goldReviewStatus?: 'stable' | 'pending_review'
+  goldReviewStatus?: 'stable' | 'pending_review' // 稳定 | 待复核
   /** 判定依据（预期目标为什么是这一条） */
   judgmentZh: string
   /** 歧义说明（仅 ambiguous） */
