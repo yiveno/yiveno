@@ -30,7 +30,12 @@ export {
   DIVERSITY_PACKS
 } from './diversity'
 export { buildNoiseBookmarkSeeds, buildNoiseExcerptSeeds } from './noise'
-export { buildClusterBookmarkSeeds, buildClusterExcerptSeeds, listProbeClusters } from './clusters'
+export {
+  buildClusterBookmarkSeeds,
+  buildClusterExcerptSeeds,
+  getClusterMemberDisambiguationClue,
+  listProbeClusters
+} from './clusters'
 export type { ProbeClusterMeta } from './clusters'
 export { PROBE_NEGATIVE_CLUES } from './negatives'
 export type { ProbeNegativeClue } from './negatives'
@@ -40,6 +45,7 @@ export {
   generateDiversityClues,
   generateForcedClue
 } from './clue-gen'
+export { pickZipfWeighted, planDaysAgoSequence, sampleSkewedDaysAgo } from './distribution'
 export {
   DEFAULT_PROBE_FILLER_SEED,
   createMulberry32,

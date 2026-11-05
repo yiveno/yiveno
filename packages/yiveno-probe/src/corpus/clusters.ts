@@ -1,11 +1,13 @@
 /**
  * 同主题混淆组：同 subject、3–5 成员、消歧线索 + 组级 ambiguous。
  * 成员 seed 与 listProbeClusters 元信息同 seed/计数严格对齐。
+ * 组内 host / titlePrefix / noteTemplate 不放回抽样，保证消歧文本可区分。
  */
 
 import { generateDiversityClues } from './clue-gen'
+import { sampleSkewedDaysAgo } from './distribution'
 import { DIVERSITY_PACKS } from './diversity'
-import { DEFAULT_PROBE_FILLER_SEED, rngForFillerItem } from './prng'
+import { DEFAULT_PROBE_FILLER_SEED, rngForFillerItem, type SeededRng } from './prng'
 import type {
   ProbeTypedClue,
   RecallProbeBookmarkSeed,
@@ -30,16 +32,29 @@ function resolveSeed(options?: ProbeClusterBuildOptions): number {
   return options?.seed ?? DEFAULT_PROBE_FILLER_SEED
 }
 
-function memberCount(rng: ReturnType<typeof rngForFillerItem>): number {
+function memberCount(rng: SeededRng): number {
   return 3 + rng.nextInt(3) // 3–5
 }
 
-function uniqueDaysAgo(rng: ReturnType<typeof rngForFillerItem>, count: number): number[] {
+/** 组内不放回：洗牌池副本后按序分配。 */
+function shuffleCopy<T>(rng: SeededRng, list: readonly T[]): T[] {
+  const copy = [...list]
+  for (let i = copy.length - 1; i > 0; i -= 1) {
+    const j = rng.nextInt(i + 1)
+    const tmp = copy[i]!
+    copy[i] = copy[j]!
+    copy[j] = tmp
+  }
+  return copy
+}
+
+/** 偏斜抽样去重；组内天数两两不同（组本身即簇，不做爆发）。 */
+function uniqueDaysAgo(rng: SeededRng, count: number): number[] {
   const days: number[] = []
   let guard = 0
   while (days.length < count && guard < 80) {
     guard += 1
-    const d = 1 + rng.nextInt(400)
+    const d = sampleSkewedDaysAgo(rng)
     if (!days.includes(d)) {
       days.push(d)
     }
@@ -71,14 +86,16 @@ function draftClusterMembers(
   const subject = rng.pick(pack.subjects)
   const n = memberCount(rng)
   const days = uniqueDaysAgo(rng, n)
+  // 组级不放回：hosts≥10 / prefixes≥10 / noteTemplates=6 ≥ 成员上限 5
+  const hosts = shuffleCopy(rng, pack.hosts)
+  const prefixes = shuffleCopy(rng, pack.titlePrefixes)
+  const notes = shuffleCopy(rng, pack.noteTemplates)
   const clusterId = `clu-${kind === 'bookmark' ? 'bm' : 'ex'}-${persona}-${clusterIndex}`
   const members: ClusterMemberDraft[] = []
   for (let m = 0; m < n; m += 1) {
-    const memberRng = rngForFillerItem(seed, `clu-${kind}-m`, clusterIndex * 10 + m, persona)
-    const host = memberRng.pick(pack.hosts)
-    const prefix = memberRng.pick(pack.titlePrefixes)
-    const noteBase = memberRng.pick(pack.noteTemplates)
-    const note = `${noteBase} · cluster ${clusterIndex} member ${m}`
+    const host = hosts[m]!
+    const prefix = prefixes[m]!
+    const note = notes[m]!
     const title = `${prefix} ${subject}`
     members.push({
       key: `${clusterId}-${m}`,
@@ -93,6 +110,15 @@ function draftClusterMembers(
   return { clusterId, subject, members }
 }
 
+/** 完整 hostname（仅去 www.），避免 developer.mozilla / developer.chrome 撞标签。 */
+function hostLabelFull(host: string): string {
+  try {
+    return new URL(host).hostname.replace(/^www\./, '') || 'that site'
+  } catch {
+    return 'that site'
+  }
+}
+
 function disambiguationClue(
   member: ClusterMemberDraft,
   persona: RecallProbePersonaId,
@@ -103,7 +129,7 @@ function disambiguationClue(
   const mode = rng.nextInt(3)
   if (mode === 0) {
     return {
-      text: `item where I noted ${member.note.split(' · ')[0]}`,
+      text: `item where I noted ${member.note}`,
       type: 'note'
     }
   }
@@ -119,14 +145,8 @@ function disambiguationClue(
       type: 'temporal'
     }
   }
-  let hostShort = 'that site'
-  try {
-    hostShort = new URL(member.host).hostname.replace(/^www\./, '').split('.')[0] || hostShort
-  } catch {
-    // ignore
-  }
   return {
-    text: `write-up I kept on ${hostShort}`,
+    text: `write-up I kept on ${hostLabelFull(member.host)}`,
     type: 'paraphrase'
   }
 }
@@ -136,6 +156,19 @@ function ambiguousForSubject(subject: string): ProbeTypedClue {
     text: `something I saved about ${subject}`,
     type: 'ambiguous'
   }
+}
+
+/**
+ * 成员消歧线索 = clues 最后一条。
+ * 契约：buildCluster* 必须把 disambiguationClue append 在 clues 末尾。
+ */
+export function getClusterMemberDisambiguationClue(member: {
+  clues: readonly ProbeTypedClue[]
+}): ProbeTypedClue | undefined {
+  if (member.clues.length === 0) {
+    return undefined
+  }
+  return member.clues[member.clues.length - 1]
 }
 
 /** 混淆组书签成员（每组 3–5；clusterCount = 组数）。 */
@@ -208,7 +241,7 @@ export function buildClusterExcerptSeeds(
         key: member.key,
         pageTitle: member.title,
         sourceUrl: `${member.host}/cluster-excerpt/${member.key}`,
-        selectedText: `${snippet} (cluster ${c} m${m})`,
+        selectedText: snippet,
         daysAgo: member.daysAgo,
         note: member.note,
         clues: [...baseClues, disambig]

@@ -5,6 +5,7 @@
  */
 
 import { generateDiversityClues } from './clue-gen'
+import { pickZipfWeighted, planDaysAgoSequence } from './distribution'
 import { DEFAULT_PROBE_FILLER_SEED, rngForFillerItem, type SeededRng } from './prng'
 import type { RecallProbePersonaId } from './types'
 import type { RecallProbeBookmarkSeed, RecallProbeExcerptSeed } from './types'
@@ -20,9 +21,18 @@ export type DiversityHostPack = {
   titlePrefixes: readonly string[]
   subjects: readonly string[]
   noteTemplates: readonly string[]
+  /**
+   * 与 noteTemplates 下标一一对应的口语 hint（线索锚，≠ 附注原文）。
+   * 长度必须等于 noteTemplates。
+   */
+  noteHints: readonly string[]
   excerptSnippets: readonly string[]
   /** 保存理由 / 场景片段（线索生成用；≥8） */
   sceneFragments: readonly string[]
+  /** 摘录正文中段（≥8；三段组合） */
+  excerptMiddles: readonly string[]
+  /** 摘录正文收束句（≥8；三段组合） */
+  excerptClosers: readonly string[]
 }
 
 export const DIVERSITY_PACKS: Record<RecallProbePersonaId, DiversityHostPack> = {
@@ -73,6 +83,14 @@ export const DIVERSITY_PACKS: Record<RecallProbePersonaId, DiversityHostPack> = 
       'compare with last grant draft',
       'flag for methods appendix'
     ],
+    noteHints: [
+      'to cite in my weekly research digest',
+      'to cross-check the methods section later',
+      'as a possible lead for an interview guide',
+      'to park for my lit review cluster',
+      'to compare with the last grant draft',
+      'to flag for the methods appendix'
+    ],
     excerptSnippets: [
       'The sample frame still undercounts informal archives that never enter the catalog.',
       'Causal claims collapse when the diary window is shorter than the policy cycle.',
@@ -90,6 +108,26 @@ export const DIVERSITY_PACKS: Record<RecallProbePersonaId, DiversityHostPack> = 
       'ahead of the commute home',
       'for the Sunday desk tidy',
       'before the evening train ride'
+    ],
+    excerptMiddles: [
+      'That gap shows up again when teams skip the pilot codebook.',
+      'Readers notice when the claim outruns the evidence window.',
+      'The diary entries only make sense next to the policy calendar.',
+      'Without a migration log the codes silently fork mid-study.',
+      'A concrete scene beats another abstract trait question.',
+      'Informal archives stay invisible until someone indexes them.',
+      'The quote dashboard looks busy while verification stays thin.',
+      'Secondary digests rarely keep the reader annotation layer.'
+    ],
+    excerptClosers: [
+      'I kept this for the methods appendix rewrite.',
+      'Worth pairing with the grant draft comparison later.',
+      'Parked beside the interview guide prompts.',
+      'Useful when the lit review cluster gets dense.',
+      'Hold for the visiting scholar brief.',
+      'Check again before the panel dry run.',
+      'Bring to Friday office hours if stuck.',
+      'Flag if the next digest needs a shorter claim.'
     ]
   },
   creator: {
@@ -139,6 +177,14 @@ export const DIVERSITY_PACKS: Record<RecallProbePersonaId, DiversityHostPack> = 
       'park for brand kit refresh',
       'show in next design review'
     ],
+    noteHints: [
+      'to reuse the spacing rhythm in a client deck',
+      'to steal a contrast pair for dark UI',
+      'to teach this in Friday critique',
+      'to compare with onboarding flow v3',
+      'to park for a brand kit refresh',
+      'to show in the next design review'
+    ],
     excerptSnippets: [
       'Hierarchy that whispers beats decoration that shouts for attention.',
       'Empty states fail when they apologize instead of offering the next action.',
@@ -156,6 +202,26 @@ export const DIVERSITY_PACKS: Record<RecallProbePersonaId, DiversityHostPack> = 
       'ahead of the evening bus home',
       'for the rainy-day tidy stack',
       'before the morning coffee walk'
+    ],
+    excerptMiddles: [
+      'The next action should sit above the apology copy.',
+      'Spacing rhythm only works when the deck mirrors the product.',
+      'Contrast pairs fail when dark UI ignores text roles.',
+      'Navigation labels rot before anyone files a ticket.',
+      'Motion that only sells brand leaves structure unexplained.',
+      'Critique sticks when it names the decision, not the junior.',
+      'Empty states need a verb, not a shrug illustration.',
+      'Density is fine if every pixel still answers a question.'
+    ],
+    excerptClosers: [
+      'Reuse this in the next client deck pass.',
+      'Park for the brand kit refresh pile.',
+      'Show in Friday critique if time allows.',
+      'Compare with onboarding flow v3 tomorrow.',
+      'Hold for the gallery night talk notes.',
+      'Sketch beside the kitchen table mock.',
+      'Bring to the studio open house board.',
+      'Check before the morning coffee walk.'
     ]
   },
   developer: {
@@ -205,6 +271,14 @@ export const DIVERSITY_PACKS: Record<RecallProbePersonaId, DiversityHostPack> = 
       'paste into oncall wiki',
       'check after next deploy'
     ],
+    noteHints: [
+      'to link from the onboarding doc',
+      'as a postmortem follow-up',
+      'to cut CI minutes with this',
+      'to verify before the payments cutover',
+      'to paste into the oncall wiki',
+      'to check after the next deploy'
+    ],
     excerptSnippets: [
       'Retries without a stable request key turn timeouts into duplicate charges.',
       'Sequential reads can beat fancy plans when the hot set still fits in memory.',
@@ -222,6 +296,26 @@ export const DIVERSITY_PACKS: Record<RecallProbePersonaId, DiversityHostPack> = 
       'ahead of the Sunday desk reset',
       'for the commute playlist swap',
       'before the morning coffee refill'
+    ],
+    excerptMiddles: [
+      'Idempotency only helps when every client path sends the key.',
+      'Hot-set reads still beat fancy plans under real load.',
+      'Branch-scoped caches miss after a different checkout ref.',
+      'SW handlers must stay registered or the worker sleeps mid-task.',
+      'EXPLAIN is a hint until production agrees with the plan.',
+      'Timeouts without stable keys become duplicate charges.',
+      'Alarm handlers need a re-register path after SW restart.',
+      'Matrix jobs fill disks when artifact retention is unbounded.'
+    ],
+    excerptClosers: [
+      'Link from the onboarding doc when ready.',
+      'Paste into the oncall wiki tonight.',
+      'Verify before the payments cutover.',
+      'Check after the next deploy window.',
+      'Bring to the brown-bag lunch talk.',
+      'Park for the mentor circle notes.',
+      'Hold beside the weekend errand list.',
+      'Revisit after the Sunday desk reset.'
     ]
   },
   student: {
@@ -271,6 +365,14 @@ export const DIVERSITY_PACKS: Record<RecallProbePersonaId, DiversityHostPack> = 
       'add to Anki tonight',
       'check before quiz window'
     ],
+    noteHints: [
+      'to review before the midterm',
+      'to cite in the lab report',
+      'to ask the TA in office hours',
+      'to park for the final essay cluster',
+      'to add to Anki tonight',
+      'to check before the quiz window'
+    ],
     excerptSnippets: [
       'Definitions stick when you restate them in your own words before the quiz window.',
       'Worked examples fail when you only copy the last line instead of the decision tree.',
@@ -288,6 +390,26 @@ export const DIVERSITY_PACKS: Record<RecallProbePersonaId, DiversityHostPack> = 
       'ahead of the weekend kitchen tidy',
       'for the hallway bulletin glance',
       'before the morning alarm snooze'
+    ],
+    excerptMiddles: [
+      'Restate the definition before the quiz window closes.',
+      'Worked examples fail when you only copy the last line.',
+      'DOI checks still need a human on wrong editions.',
+      'Spaced decks beat one long cram across chapters.',
+      'Office hours help when you bring the stuck step.',
+      'Lab prep notes matter more than the pretty plot.',
+      'Flashcards stick when the prompt asks for a scene.',
+      'Syllabus scraps drift unless you date the edition.'
+    ],
+    excerptClosers: [
+      'Review before the midterm block.',
+      'Cite in the lab report draft.',
+      'Ask the TA in office hours.',
+      'Add to Anki tonight.',
+      'Park for the final essay cluster.',
+      'Check before the quiz window.',
+      'Hold for the advising appointment.',
+      'Bring on the evening bus home.'
     ]
   },
   knowledge_worker: {
@@ -337,6 +459,14 @@ export const DIVERSITY_PACKS: Record<RecallProbePersonaId, DiversityHostPack> = 
       'forward to ops channel',
       'confirm owner before standup'
     ],
+    noteHints: [
+      'to send before month-end close',
+      'to ping legal after the dry run',
+      'to block focus Friday',
+      'to compare with the last QBR deck',
+      'to forward to the ops channel',
+      'to confirm the owner before standup'
+    ],
     excerptSnippets: [
       'Approvals stall when the owner is Consulted on paper but never named in the thread.',
       'Travel exceptions need a written reason; chat thumbs-up is not an audit trail.',
@@ -354,6 +484,26 @@ export const DIVERSITY_PACKS: Record<RecallProbePersonaId, DiversityHostPack> = 
       'ahead of the evening commute home',
       'for the wellness flyer stack',
       'before the holiday shutdown notice'
+    ],
+    excerptMiddles: [
+      'Approvals stall when Consulted never becomes a named owner.',
+      'Travel exceptions need a written reason, not a chat thumb.',
+      'Paused status still surfaces urgent DMs first.',
+      'All-hands bury renewals under hiring theater.',
+      'RACI fails when Responsible is a team emoji.',
+      'Meals and travel fight when they live on different pages.',
+      'Focus Friday only works if the calendar block is real.',
+      'Month-end close needs the owner confirmed before standup.'
+    ],
+    excerptClosers: [
+      'Send before month-end close.',
+      'Ping legal after the dry run.',
+      'Block focus Friday on the calendar.',
+      'Forward to the ops channel.',
+      'Compare with the last QBR deck.',
+      'Confirm the owner before standup.',
+      'Hold for the charity drive kickoff.',
+      'Check before the holiday shutdown notice.'
     ]
   }
 }
@@ -420,16 +570,23 @@ export function buildDiversityBookmarkSeeds(
 ): RecallProbeBookmarkSeed[] {
   const { keyPrefix, seed } = resolveOptions(keyPrefixOrOptions, maybeOptions, `div-bm-${persona}`)
   const pack = DIVERSITY_PACKS[persona]
+  const daysPlan = planDaysAgoSequence(seed, 'days-bm', persona, count)
   const out: RecallProbeBookmarkSeed[] = []
   for (let i = 0; i < count; i += 1) {
     const rng = rngForFillerItem(seed, 'div-bm', i, persona)
     const host = rng.pick(pack.hosts)
     const prefix = rng.pick(pack.titlePrefixes)
-    const subject = rng.pick(pack.subjects)
-    const daysAgo = 1 + rng.nextInt(400)
+    const subject = pickZipfWeighted(rng, pack.subjects)
+    const daysAgo = daysPlan[i]!
     const weak = rng.next() < 0.07
     const withNote = weak || rng.next() < 0.16
-    const note = withNote ? `${rng.pick(pack.noteTemplates)} (#${i + 1})` : undefined
+    let note: string | undefined
+    let noteHint: string | undefined
+    if (withNote) {
+      const noteIdx = rng.nextInt(pack.noteTemplates.length)
+      note = `${pack.noteTemplates[noteIdx]!} (#${i + 1})`
+      noteHint = pack.noteHints[noteIdx]!
+    }
     const title = weak ? rng.pick(WEAK_TITLES) : `${prefix} ${subject}`
     const clues = generateDiversityClues({
       persona,
@@ -441,7 +598,8 @@ export function buildDiversityBookmarkSeeds(
       daysAgo,
       host,
       sceneFragments: pack.sceneFragments,
-      ...(note ? { note } : {})
+      ...(note ? { note } : {}),
+      ...(noteHint ? { noteHint } : {})
     })
     out.push({
       key: `${keyPrefix}-${i}`,
@@ -467,23 +625,33 @@ export function buildDiversityExcerptSeeds(
 ): RecallProbeExcerptSeed[] {
   const { keyPrefix, seed } = resolveOptions(keyPrefixOrOptions, maybeOptions, `div-ex-${persona}`)
   const pack = DIVERSITY_PACKS[persona]
+  const daysPlan = planDaysAgoSequence(seed, 'days-ex', persona, count)
   const out: RecallProbeExcerptSeed[] = []
   for (let i = 0; i < count; i += 1) {
     const rng = rngForFillerItem(seed, 'div-ex', i, persona)
     const host = rng.pick(pack.hosts)
-    const snippet = rng.pick(pack.excerptSnippets)
-    const daysAgo = 2 + rng.nextInt(300)
+    const opener = rng.pick(pack.excerptSnippets)
+    const middle = rng.pick(pack.excerptMiddles)
+    const closer = rng.pick(pack.excerptClosers)
+    const selectedText = `${opener} ${middle} ${closer}`
+    const daysAgo = daysPlan[i]!
     const weakPage = rng.next() < 0.1
     const withNote = weakPage || rng.next() < 0.18
-    const note = withNote ? `${rng.pick(pack.noteTemplates)} excerpt ${i + 1}` : undefined
-    // rng 消耗顺序须与改造前逐字一致（弱页只 pick WEAK；否则 prefix 再 subject）
+    let note: string | undefined
+    let noteHint: string | undefined
+    if (withNote) {
+      const noteIdx = rng.nextInt(pack.noteTemplates.length)
+      note = `${pack.noteTemplates[noteIdx]!} excerpt ${i + 1}`
+      noteHint = pack.noteHints[noteIdx]!
+    }
+    // 弱页只 pick WEAK；否则 prefix 再 Zipf subject（rng 顺位）
     let pageTitle: string
     let subject = ''
     if (weakPage) {
       pageTitle = rng.pick(WEAK_TITLES)
     } else {
       const prefix = rng.pick(pack.titlePrefixes)
-      subject = rng.pick(pack.subjects)
+      subject = pickZipfWeighted(rng, pack.subjects)
       pageTitle = `${prefix} ${subject}`
     }
     const clues = generateDiversityClues({
@@ -496,13 +664,14 @@ export function buildDiversityExcerptSeeds(
       daysAgo,
       host,
       sceneFragments: pack.sceneFragments,
-      ...(note ? { note } : {})
+      ...(note ? { note } : {}),
+      ...(noteHint ? { noteHint } : {})
     })
     out.push({
       key: `${keyPrefix}-${i}`,
       pageTitle,
       sourceUrl: `${host}/excerpt/${pathSlug(rng, i)}`,
-      selectedText: `${snippet} (div ${i + 1})`,
+      selectedText,
       daysAgo,
       ...(note ? { note } : {}),
       clues

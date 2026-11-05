@@ -7,6 +7,7 @@ import { listProbeFixtureCatalog } from '../catalog/fixture-catalog'
 import {
   buildClusterBookmarkSeeds,
   buildClusterExcerptSeeds,
+  getClusterMemberDisambiguationClue,
   listProbeClusters
 } from '../corpus/clusters'
 import { buildDiversityBookmarkSeeds, buildDiversityExcerptSeeds } from '../corpus/diversity'
@@ -138,7 +139,7 @@ export function buildProbeBatchCasePlan(input: BuildProbeBatchCasePlanInput): Pr
       })
       for (const bm of bookmarks) {
         const clusterId = bm.key.replace(/-\d+$/, '')
-        const disambig = bm.clues[bm.clues.length - 1]
+        const disambig = getClusterMemberDisambiguationClue(bm)
         if (!disambig) {
           continue
         }
@@ -160,7 +161,7 @@ export function buildProbeBatchCasePlan(input: BuildProbeBatchCasePlanInput): Pr
       })
       for (const ex of excerpts) {
         const clusterId = ex.key.replace(/-\d+$/, '')
-        const disambig = ex.clues[ex.clues.length - 1]
+        const disambig = getClusterMemberDisambiguationClue(ex)
         if (!disambig) {
           continue
         }
@@ -211,6 +212,7 @@ export function buildProbeBatchCasePlan(input: BuildProbeBatchCasePlanInput): Pr
       out.push({
         caseId: neg.key,
         clue: neg.clue,
+        // 占位 clueType：类型必填仅作展示；aggregate 不把负例计入 byClueType
         clueType: 'associative',
         expectedKey: '',
         persona: neg.persona,

@@ -48,7 +48,7 @@ describe('probe filler procedural RNG', () => {
     expect(a.every(x => x.clues.length >= 1)).toBe(true)
   })
 
-  it('diversity URL 保留 yiveno-div 指纹', () => {
+  it('diversity URL 保留 yiveno-div 指纹；摘录无 (div N) 后缀', () => {
     const rows = buildDiversityBookmarkSeeds('researcher', 12, { seed: 3 })
     for (const row of rows) {
       expect(row.url).toMatch(/yiveno-div|yivenoDiv/i)
@@ -56,7 +56,7 @@ describe('probe filler procedural RNG', () => {
     const excerpts = buildDiversityExcerptSeeds('creator', 8, { seed: 3 })
     for (const row of excerpts) {
       expect(row.sourceUrl).toMatch(/yiveno-div|yivenoDiv/i)
-      expect(row.selectedText).toMatch(/\(div \d+\)$/)
+      expect(row.selectedText).not.toMatch(/\(div \d+\)$/)
     }
   })
 
