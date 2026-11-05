@@ -138,6 +138,8 @@ export type ClueGenItemMeta = {
   title: string
   subject: string
   note?: string | undefined
+  /** 与 noteTemplates 对应的口语 hint（note 型线索锚；≠ 附注原文） */
+  noteHint?: string | undefined
   daysAgo: number
   host?: string | undefined
   sceneFragments: readonly string[]
@@ -152,11 +154,12 @@ const TEMPORAL_PHRASES = [
   'from a couple weeks back'
 ] as const
 
-const NOTE_REWRITES = [
-  'the page I annotated for later follow-up',
-  'bookmark where I left a private reminder',
-  'clip I tagged with my own follow-up note',
-  'item I marked with a short personal cue'
+/** note 线索脚手架（须拼 noteHint；不得整段复制 note 原文）。 */
+const NOTE_SCAFFOLDS = [
+  (hint: string) => `the page I noted ${hint}`,
+  (hint: string) => `bookmark where I left a reminder ${hint}`,
+  (hint: string) => `clip I tagged ${hint}`,
+  (hint: string) => `item I marked ${hint}`
 ] as const
 
 function hostLabel(host: string | undefined): string {
@@ -244,11 +247,15 @@ function buildParaphrase(rng: SeededRng, meta: ClueGenItemMeta): string {
 }
 
 function buildNoteClue(rng: SeededRng, meta: ClueGenItemMeta): string {
+  const hint = meta.noteHint?.trim()
+  if (hint && hint.length > 0) {
+    const scaffold = rng.pick([...NOTE_SCAFFOLDS])
+    return scaffold(hint)
+  }
+  // 无 hint 时退回场景化通用句（cluster 消歧 note 不走此路径）
   const corpus = `${meta.title} ${meta.subject} ${meta.note ?? ''}`
   const scene = pickScene(rng, meta.sceneFragments, corpus)
-  // 场景化改写：指向 note 语义，不整段复制 note 原文
-  const base = rng.pick(NOTE_REWRITES)
-  return `${base} ${scene}`
+  return `bookmark where I left a private reminder ${scene}`
 }
 
 function buildVerbatim(meta: ClueGenItemMeta): string {
@@ -268,13 +275,15 @@ function assertOverlapRules(clue: ProbeTypedClue, meta: ClueGenItemMeta): void {
       throw new Error(`clue-gen ${clue.type} 与条目内容词重叠：${hit.join(',')} · ${clue.text}`)
     }
   }
+  if (clue.type === 'paraphrase' || clue.type === 'note') {
+    if (meta.note && clue.text.includes(meta.note)) {
+      throw new Error(`clue-gen ${clue.type} 含 note 原文子串`)
+    }
+  }
   if (clue.type === 'paraphrase') {
     const subject = meta.subject.trim().toLowerCase()
     if (subject.length >= 4 && clue.text.toLowerCase().includes(subject)) {
       throw new Error(`clue-gen paraphrase 含完整 subject：${meta.subject}`)
-    }
-    if (meta.note && clue.text.includes(meta.note)) {
-      throw new Error('clue-gen paraphrase 含 note 原文子串')
     }
   }
 }

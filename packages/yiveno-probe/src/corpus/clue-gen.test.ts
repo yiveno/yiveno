@@ -82,6 +82,7 @@ describe('clue-gen overlap red lines', () => {
       title: 'Lab memo: attention metrics in newsrooms',
       subject: 'attention metrics in newsrooms',
       note: 'cite in weekly research digest (#4)',
+      noteHint: 'to cite in my weekly research digest',
       daysAgo: 12,
       host: pack.hosts[0],
       sceneFragments: pack.sceneFragments
@@ -89,4 +90,44 @@ describe('clue-gen overlap red lines', () => {
     expect(clues.some(c => c.type === 'note')).toBe(true)
     expect(clues.length).toBeGreaterThanOrEqual(2)
   })
+
+  it('noteHint 不同 → note 线索不同；且不含完整 note 原文', () => {
+    const pack = DIVERSITY_PACKS.developer
+    const base = {
+      persona: 'developer' as const,
+      kind: 'bookmark' as const,
+      index: 0,
+      seed: 11,
+      title: 'Runbook: idempotent payment retries',
+      subject: 'idempotent payment retries',
+      note: 'cut CI minutes with this (#1)',
+      daysAgo: 9,
+      host: pack.hosts[0],
+      sceneFragments: pack.sceneFragments
+    }
+    const a = generateForcedNoteClue({
+      ...base,
+      noteHint: 'to cut CI minutes with this'
+    })
+    const b = generateForcedNoteClue({
+      ...base,
+      noteHint: 'to paste into the oncall wiki'
+    })
+    expect(a.text).not.toEqual(b.text)
+    expect(a.text.includes(base.note)).toBe(false)
+    expect(b.text.includes(base.note)).toBe(false)
+  })
 })
+
+/** 测试辅助：强制生成 note 型线索。 */
+function generateForcedNoteClue(meta: Parameters<typeof generateDiversityClues>[0]): {
+  text: string
+  type: string
+} {
+  const clues = generateDiversityClues(meta)
+  const note = clues.find(c => c.type === 'note')
+  if (!note) {
+    throw new Error('期望生成 note 型线索')
+  }
+  return note
+}

@@ -121,6 +121,31 @@ describe('isProbeNoiseOrDiversityItem', () => {
     ).toBe(true)
   })
 
+  it('无脚手架后缀的 cluster 书签仍靠 URL 识别为 filler', () => {
+    expect(
+      isProbeNoiseOrDiversityItem(
+        bookmark({
+          url: 'https://docs.github.com/en/yiveno-div/cluster/clu-bm-developer-0-1',
+          title: 'Runbook: idempotent payment retries',
+          note: 'link from onboarding doc'
+        })
+      )
+    ).toBe(true)
+  })
+
+  it('无脚手架后缀的 cluster 摘录仍靠 URL 识别为 filler', () => {
+    expect(
+      isProbeNoiseOrDiversityItem(
+        excerpt({
+          sourceUrl:
+            'https://www.figma.com/community/yiveno-div/cluster-excerpt/clu-ex-creator-0-0',
+          selectedText: 'Hierarchy that whispers beats decoration that shouts for attention.',
+          note: 'reuse spacing rhythm in client deck'
+        })
+      )
+    ).toBe(true)
+  })
+
   it('保留精选 developer 书签附注', () => {
     expect(
       isProbeNoiseOrDiversityItem(

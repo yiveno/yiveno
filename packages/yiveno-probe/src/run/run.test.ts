@@ -94,6 +94,8 @@ describe('aggregateProbeBatchResults', () => {
     expect(agg.negatives.total).toBe(1)
     expect(agg.negatives.falsePositiveCount).toBe(1)
     expect(agg.byClueType.ambiguous?.in_topk).toBe(1)
+    // 负例不进 byClueType（即使 case.clueType 为 associative）
+    expect(agg.byClueType.associative).toBeUndefined()
     expect(agg.cases.map(r => r.verdict)[0]).toBe('false_positive')
   })
 
@@ -164,6 +166,56 @@ describe('sortProbeResultsFailuresFirst', () => {
 })
 
 describe('diffProbeBatchAggregates', () => {
+  it('clueType top1Rate 用 judged 分母（忽略 unmapped）', () => {
+    const before = aggregateProbeBatchResults([
+      stubResult({
+        caseId: '1',
+        verdict: 'top1',
+        persona: 'developer',
+        source: 'curated',
+        clueType: 'verbatim',
+        latencyMs: 5
+      }),
+      stubResult({
+        caseId: '2',
+        verdict: 'unmapped',
+        persona: 'developer',
+        source: 'curated',
+        clueType: 'verbatim',
+        expectedId: null,
+        latencyMs: 1
+      })
+    ])
+    const after = aggregateProbeBatchResults([
+      stubResult({
+        caseId: '1',
+        verdict: 'top1',
+        persona: 'developer',
+        source: 'curated',
+        clueType: 'verbatim',
+        latencyMs: 5
+      }),
+      stubResult({
+        caseId: '2',
+        verdict: 'miss',
+        persona: 'developer',
+        source: 'curated',
+        clueType: 'verbatim',
+        latencyMs: 8
+      })
+    ])
+    // before：judged=1 → top1Rate=1；after：judged=2 → top1Rate=0.5
+    const diff = diffProbeBatchAggregates({
+      beforeRunId: 'b',
+      afterRunId: 'a',
+      before,
+      after
+    })
+    const row = diff.rows.find(r => r.metric === 'clueType.verbatim.top1Rate')
+    expect(row?.before).toBeCloseTo(1)
+    expect(row?.after).toBeCloseTo(0.5)
+  })
+
   it('产出 rate / latency delta', () => {
     const base = aggregateProbeBatchResults([
       stubResult({

@@ -13,11 +13,18 @@ function pushRate(rows: ProbeRunDiffRow[], metric: string, before: number, after
   })
 }
 
-function groupTop1Rate(group: { total: number; top1: number } | undefined): number | null {
-  if (!group || group.total === 0) {
+/** clueType 行：与主指标对齐，分母 = judged（top1+in_topk+miss）；为 0 则跳过。 */
+function groupJudgedTop1Rate(
+  group: { top1: number; in_topk: number; miss: number } | undefined
+): number | null {
+  if (!group) {
     return null
   }
-  return group.top1 / group.total
+  const judged = group.top1 + group.in_topk + group.miss
+  if (judged === 0) {
+    return null
+  }
+  return group.top1 / judged
 }
 
 /**
@@ -45,8 +52,8 @@ export function diffProbeBatchAggregates(input: {
   const afterTypes = input.after.byClueType ?? {}
   const typeKeys = new Set([...Object.keys(beforeTypes), ...Object.keys(afterTypes)])
   for (const type of [...typeKeys].sort()) {
-    const beforeRate = groupTop1Rate(beforeTypes[type])
-    const afterRate = groupTop1Rate(afterTypes[type])
+    const beforeRate = groupJudgedTop1Rate(beforeTypes[type])
+    const afterRate = groupJudgedTop1Rate(afterTypes[type])
     if (beforeRate === null || afterRate === null) {
       continue
     }

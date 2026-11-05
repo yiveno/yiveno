@@ -116,7 +116,10 @@ export function aggregateProbeBatchResults(
     latencies.push(row.latencyMs)
     bumpGroup((byPersona[row.persona] ??= emptyGroup()), row.verdict)
     bumpGroup((bySource[row.source] ??= emptyGroup()), row.verdict)
-    bumpGroup((byClueType[row.clueType] ??= emptyGroup()), row.verdict)
+    // 负例不计入 byClueType（占位 clueType 仅展示；避免污染类型 top1 率）
+    if (row.source !== 'negative') {
+      bumpGroup((byClueType[row.clueType] ??= emptyGroup()), row.verdict)
+    }
 
     switch (row.verdict) {
       case 'top1':
