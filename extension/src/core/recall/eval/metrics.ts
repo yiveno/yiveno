@@ -550,38 +550,3 @@ export function summarizeSlotAgreementForParseGold(
     aggregate: aggregateSlotAgreement(perCase.map(row => row.slotAgreement))
   }
 }
-
-/** 控制台一行：正/负主口径 + overall 辅助。 */
-export function formatSlotAgreementAggregateSummary(aggregate: {
-  protocol: SlotAgreementProtocol
-  positive: SlotAgreementAggregateBucket
-  negative: SlotAgreementAggregateBucket
-  overall: SlotAgreementAggregateBucket
-}): string {
-  const fmtMean = (bucket: SlotAgreementAggregateBucket): string => {
-    if (bucket.mean === null) {
-      return `NA (n=${bucket.denominator})`
-    }
-    return `${bucket.mean.toFixed(3)} (n=${bucket.denominator})`
-  }
-  const fmtField = (bucket: SlotAgreementAggregateBucket, field: SlotAgreementField): string => {
-    const hit = bucket.perFieldHitRate[field]
-    if (!hit) {
-      return `${field}=NA`
-    }
-    const rate = hit.hitRate === null ? 'NA' : hit.hitRate.toFixed(3)
-    return `${field}=${rate}(${hit.passedCount}/${hit.declaredCount})`
-  }
-  const positiveFields = SLOT_AGREEMENT_POSITIVE_FIELDS.map(f =>
-    fmtField(aggregate.positive, f)
-  ).join(' ')
-  const negativeFields = SLOT_AGREEMENT_NEGATIVE_FIELDS.map(f =>
-    fmtField(aggregate.negative, f)
-  ).join(' ')
-  return [
-    `[parse-gold] slotAgreement protocol=${aggregate.protocol} (field-level; not term P/R/F1)`,
-    `[parse-gold] slotAgreement positive mean=${fmtMean(aggregate.positive)} | ${positiveFields}`,
-    `[parse-gold] slotAgreement negative mean=${fmtMean(aggregate.negative)} | ${negativeFields}`,
-    `[parse-gold] slotAgreement overall  mean=${fmtMean(aggregate.overall)} (auxiliary)`
-  ].join('\n')
-}

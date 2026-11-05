@@ -60,11 +60,6 @@ export async function resetChromeBookmarkImportAfterLocalClear(): Promise<void> 
   logger.info('ChromeBookmarkImport', '已清除书签导入进度（随清本机记忆）')
 }
 
-/** 测试用：重置会话级补洞调度标记。 */
-export function resetChromeBookmarkImportHoleHealForTests(): void {
-  ensureHoleHealScheduledThisSwSession = false
-}
-
 /**
  * 确保 Chrome 书签已导入到 IndexedDB。
  * 首次 bulk putMany；续传 upsert 防重复；完成后跳过。

@@ -90,29 +90,3 @@ export async function compareParseGoldWithLlm(
     stretchStillFailing
   }
 }
-
-/** 控制台摘要（CLI 用）。 */
-export function formatParseGoldCompareSummary(report: ParseGoldCompareReport): string {
-  const lines = [
-    `[parse-gold] rules must ${report.rules.must.passed}/${report.rules.must.total} | stretch ${report.rules.stretch.passed}/${report.rules.stretch.total}`,
-    `[parse-gold] llm   must ${report.llm.must.passed}/${report.llm.must.total} | stretch ${report.llm.stretch.passed}/${report.llm.stretch.total}`,
-    `[parse-gold] stretch lifted by llm: ${report.stretchLiftedByLlm.length ? report.stretchLiftedByLlm.join(', ') : '(none)'}`,
-    `[parse-gold] must regressed by llm: ${report.mustRegressedByLlm.length ? report.mustRegressedByLlm.join(', ') : '(none)'}`,
-    `[parse-gold] stretch still failing: ${report.stretchStillFailing.length ? report.stretchStillFailing.join(', ') : '(none)'}`
-  ]
-
-  if (report.llm.must.failed.length > 0) {
-    lines.push('[parse-gold] llm must failures:')
-    for (const item of report.llm.must.failed) {
-      lines.push(`  - ${item.caseId}: ${item.detail}`)
-    }
-  }
-  if (report.llm.stretch.failed.length > 0) {
-    lines.push('[parse-gold] llm stretch failures:')
-    for (const item of report.llm.stretch.failed) {
-      lines.push(`  - ${item.caseId}: ${item.detail}`)
-    }
-  }
-
-  return lines.join('\n')
-}

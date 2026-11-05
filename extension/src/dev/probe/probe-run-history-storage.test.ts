@@ -38,7 +38,7 @@ describe('probe-run-history-storage M2 fields', () => {
   })
 
   it('append → get 保留 clueType / cluster / negative 聚合', async () => {
-    const { appendProbeRunRecord, getProbeRunRecord } =
+    const { appendProbeRunRecord, getProbeRunRecord, parseProbeBatchReportForStorage } =
       await import('@/dev/probe/probe-run-history-storage')
 
     const report: ProbeBatchReport = {
@@ -162,6 +162,10 @@ describe('probe-run-history-storage M2 fields', () => {
         latencyMs: { p50: 10, p95: 12 }
       }
     }
+
+    const parsed = parseProbeBatchReportForStorage(report)
+    expect(parsed.aggregates.clusters?.anyHitRate).toBe(1)
+    expect(parsed.cases[0]?.clueType).toBe('ambiguous')
 
     const written = await appendProbeRunRecord(report)
     const read = await getProbeRunRecord(written.runId)

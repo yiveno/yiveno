@@ -16,7 +16,10 @@ import {
 } from '@yiveno/probe'
 import { recallService } from '@/application/recall/recall-service'
 import type { MemoryItem } from '@/core/memory/memory-item'
-import { writeProbeBatchProgress } from '@/dev/probe/probe-batch-progress-storage'
+import {
+  clearProbeBatchProgress,
+  writeProbeBatchProgress
+} from '@/dev/probe/probe-batch-progress-storage'
 import { readProbeKeyIdMap } from '@/dev/probe/probe-key-id-map-storage'
 import { appendProbeRunRecord } from '@/dev/probe/probe-run-history-storage'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
@@ -89,6 +92,8 @@ export async function runProbeBatch(input: RunProbeBatchInput = {}): Promise<{
     })
 
     const runIdPreview = `${recipeId}__${fillerSeed}__${startedAtMs}`
+    // 新批次前清旧进度，避免 Console 读到上一轮残片
+    await clearProbeBatchProgress()
     await writeProbeBatchProgress({
       runId: runIdPreview,
       phase: 'running',
