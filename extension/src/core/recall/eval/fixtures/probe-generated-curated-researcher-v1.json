@@ -1,0 +1,638 @@
+{
+  "meta": {
+    "id": "probe-generated-curated-researcher-v1",
+    "version": 1,
+    "generatedNote": "由 @yiveno/probe buildProbeGeneratedFixture 生成；仅精选、无 diversity/负例，供 CI 关键词路径门禁。",
+    "personas": ["researcher"],
+    "fillerSeed": 20260906,
+    "refreshHint": "cd extension && bun run probe-eval:export-fixture（重写 JSON 基线）后跑 vitest probe-generated-eval",
+    "baseline": {
+      "top1Rate": 0.8478,
+      "inTop3Rate": 0.9783,
+      "judged": 46
+    }
+  },
+  "items": [
+    {
+      "key": "atlantic-attention",
+      "kind": "bookmark",
+      "persona": "researcher",
+      "title": "The Attention Economy Is a Lie",
+      "url": "https://www.theatlantic.com/yiveno-probe/attention-economy-myth/",
+      "daysAgo": 45,
+      "note": "use for intro on focus vs metrics"
+    },
+    {
+      "key": "newyorker-memory",
+      "kind": "bookmark",
+      "persona": "researcher",
+      "title": "How Memory Works",
+      "url": "https://www.newyorker.com/magazine/2023/05/15/how-memory-works",
+      "daysAgo": 120
+    },
+    {
+      "key": "nature-climate",
+      "kind": "bookmark",
+      "persona": "researcher",
+      "title": "Climate tipping points are closer than we thought",
+      "url": "https://www.nature.com/articles/d41586-023-00000-0",
+      "daysAgo": 20,
+      "note": "cite in climate brief"
+    },
+    {
+      "key": "stratechery-aggregation",
+      "kind": "bookmark",
+      "persona": "researcher",
+      "title": "Aggregation Theory",
+      "url": "https://stratechery.com/2015/aggregation-theory/",
+      "daysAgo": 200
+    },
+    {
+      "key": "aeon-boredom",
+      "kind": "bookmark",
+      "persona": "researcher",
+      "title": "The joy of being bored",
+      "url": "https://aeon.co/essays/the-joy-of-being-bored",
+      "daysAgo": 8
+    },
+    {
+      "key": "wired-privacy",
+      "kind": "bookmark",
+      "persona": "researcher",
+      "title": "Your Phone Is Listening. Sort Of.",
+      "url": "https://www.wired.com/story/phone-listening-ads-privacy/",
+      "daysAgo": 3
+    },
+    {
+      "key": "ft-remote-work",
+      "kind": "bookmark",
+      "persona": "researcher",
+      "title": "The surprising science of remote work",
+      "url": "https://www.ft.com/content/remote-work-science-2024",
+      "daysAgo": 60,
+      "note": "compare with my notes on hybrid teams"
+    },
+    {
+      "key": "guardian-misinfo",
+      "kind": "bookmark",
+      "persona": "researcher",
+      "title": "How misinformation spreads online",
+      "url": "https://www.theguardian.com/technology/2024/misinformation-spreads",
+      "daysAgo": 15
+    },
+    {
+      "key": "ssrn-preprint",
+      "kind": "bookmark",
+      "persona": "researcher",
+      "title": "Working Paper: Measuring Trust in News",
+      "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1234567",
+      "daysAgo": 30
+    },
+    {
+      "key": "jstor-library",
+      "kind": "bookmark",
+      "persona": "researcher",
+      "title": "Public Libraries and Civic Life",
+      "url": "https://www.jstor.org/stable/10.1086/000000",
+      "daysAgo": 90
+    },
+    {
+      "key": "substack-newsletter",
+      "kind": "bookmark",
+      "persona": "researcher",
+      "title": "Why note-taking apps fail researchers",
+      "url": "https://example.substack.com/p/why-note-taking-apps-fail",
+      "daysAgo": 5,
+      "note": "disagree with section 3"
+    },
+    {
+      "key": "arxiv-retrieval",
+      "kind": "bookmark",
+      "persona": "researcher",
+      "title": "Dense Passage Retrieval for Open-Domain QA",
+      "url": "https://arxiv.org/abs/2004.04906",
+      "daysAgo": 400
+    },
+    {
+      "key": "weak-title-grant",
+      "kind": "bookmark",
+      "persona": "researcher",
+      "title": "Untitled document",
+      "url": "https://docs.google.com/document/d/yivenoProbeGrantNotes01",
+      "daysAgo": 11,
+      "note": "NSF grant narrative outline — revise budget table"
+    },
+    {
+      "key": "weak-title-interview",
+      "kind": "bookmark",
+      "persona": "researcher",
+      "title": "Notes",
+      "url": "https://notion.so/yiveno-probe-interview-notes",
+      "daysAgo": 16,
+      "note": "interview: ask about cross-source save friction"
+    },
+    {
+      "key": "excerpt-attention-quote",
+      "kind": "excerpt",
+      "persona": "researcher",
+      "title": "The Attention Economy Is a Lie",
+      "url": "https://www.theatlantic.com/yiveno-probe/attention-economy-myth/",
+      "daysAgo": 44,
+      "selectedText": "What we call the attention economy is often just a metrics economy wearing a psychological costume.",
+      "note": "perfect pull quote for talk"
+    },
+    {
+      "key": "excerpt-memory-palace",
+      "kind": "excerpt",
+      "persona": "researcher",
+      "title": "How Memory Works",
+      "url": "https://www.newyorker.com/magazine/2023/05/15/how-memory-works",
+      "daysAgo": 118,
+      "selectedText": "A memory palace works because place and sequence hitch a ride on an older navigation system.",
+      "note": "link to method of loci"
+    },
+    {
+      "key": "excerpt-tipping",
+      "kind": "excerpt",
+      "persona": "researcher",
+      "title": "Climate tipping points are closer than we thought",
+      "url": "https://www.nature.com/articles/d41586-023-00000-0",
+      "daysAgo": 19,
+      "selectedText": "Once ice-sheet collapse begins, local feedbacks can outrun policy cycles by decades."
+    },
+    {
+      "key": "excerpt-boredom",
+      "kind": "excerpt",
+      "persona": "researcher",
+      "title": "The joy of being bored",
+      "url": "https://aeon.co/essays/the-joy-of-being-bored",
+      "daysAgo": 7,
+      "selectedText": "Boredom is not empty time; it is unstructured time that still belongs to you.",
+      "note": "use in newsletter opener"
+    },
+    {
+      "key": "excerpt-misinfo",
+      "kind": "excerpt",
+      "persona": "researcher",
+      "title": "How misinformation spreads online",
+      "url": "https://www.theguardian.com/technology/2024/misinformation-spreads",
+      "daysAgo": 14,
+      "selectedText": "Shares travel farther than corrections because outrage is a better forwarding heuristic than accuracy."
+    },
+    {
+      "key": "excerpt-remote",
+      "kind": "excerpt",
+      "persona": "researcher",
+      "title": "The surprising science of remote work",
+      "url": "https://www.ft.com/content/remote-work-science-2024",
+      "daysAgo": 58,
+      "selectedText": "Weak-tie conversations collapse first when offices go fully remote, then innovation metrics follow.",
+      "note": "hybrid teams slide"
+    },
+    {
+      "key": "excerpt-dpr",
+      "kind": "excerpt",
+      "persona": "researcher",
+      "title": "Dense Passage Retrieval for Open-Domain QA",
+      "url": "https://arxiv.org/abs/2004.04906",
+      "daysAgo": 390,
+      "selectedText": "Retrieving then reading remains competitive when the reader is strong and the corpus is noisy."
+    },
+    {
+      "key": "excerpt-libraries",
+      "kind": "excerpt",
+      "persona": "researcher",
+      "title": "Public Libraries and Civic Life",
+      "url": "https://www.jstor.org/stable/10.1086/000000",
+      "daysAgo": 88,
+      "selectedText": "The library desk remains one of the last places where a stranger can ask a hard question for free.",
+      "note": "civic infrastructure angle"
+    },
+    {
+      "key": "excerpt-pure-note",
+      "kind": "excerpt",
+      "persona": "researcher",
+      "title": "Home",
+      "url": "https://example.org/yiveno-probe-home-clip",
+      "daysAgo": 22,
+      "selectedText": "Generic paragraph without distinctive topic words here.",
+      "note": "parked for lit review on verification rituals"
+    }
+  ],
+  "cases": [
+    {
+      "caseId": "atlantic-attention#0",
+      "clue": "that atlantic piece about attention I bookmarked for an intro",
+      "clueType": "note",
+      "expectedKey": "atlantic-attention",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "atlantic-attention#1",
+      "clue": "the article about attention economy from a while ago",
+      "clueType": "temporal",
+      "expectedKey": "atlantic-attention",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "newyorker-memory#0",
+      "clue": "the new yorker essay on how memory works",
+      "clueType": "verbatim",
+      "expectedKey": "newyorker-memory",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "newyorker-memory#1",
+      "clue": "magazine piece about memory I saved months ago",
+      "clueType": "temporal",
+      "expectedKey": "newyorker-memory",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "nature-climate#0",
+      "clue": "nature article on climate tipping points I noted for a brief",
+      "clueType": "note",
+      "expectedKey": "nature-climate",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "nature-climate#1",
+      "clue": "that climate tipping points piece I saved a few weeks ago",
+      "clueType": "note",
+      "expectedKey": "nature-climate",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "stratechery-aggregation#0",
+      "clue": "stratechery aggregation theory bookmark",
+      "clueType": "verbatim",
+      "expectedKey": "stratechery-aggregation",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "stratechery-aggregation#1",
+      "clue": "that old aggregation theory essay",
+      "clueType": "verbatim",
+      "expectedKey": "stratechery-aggregation",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "aeon-boredom#0",
+      "clue": "aeon essay about boredom from last week",
+      "clueType": "temporal",
+      "expectedKey": "aeon-boredom",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "aeon-boredom#1",
+      "clue": "something I saved about the joy of being bored",
+      "clueType": "verbatim",
+      "expectedKey": "aeon-boredom",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "wired-privacy#0",
+      "clue": "wired story about phones listening that I just saved",
+      "clueType": "paraphrase",
+      "expectedKey": "wired-privacy",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "wired-privacy#1",
+      "clue": "the privacy article from a few days ago",
+      "clueType": "temporal",
+      "expectedKey": "wired-privacy",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "ft-remote-work#0",
+      "clue": "ft article on remote work science",
+      "clueType": "verbatim",
+      "expectedKey": "ft-remote-work",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "ft-remote-work#1",
+      "clue": "financial times piece about remote work I annotated",
+      "clueType": "note",
+      "expectedKey": "ft-remote-work",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "guardian-misinfo#0",
+      "clue": "guardian article about misinformation",
+      "clueType": "verbatim",
+      "expectedKey": "guardian-misinfo",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "guardian-misinfo#1",
+      "clue": "how misinformation spreads — that bookmark",
+      "clueType": "verbatim",
+      "expectedKey": "guardian-misinfo",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "ssrn-preprint#0",
+      "clue": "ssrn working paper on trust in news",
+      "clueType": "verbatim",
+      "expectedKey": "ssrn-preprint",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "ssrn-preprint#1",
+      "clue": "that preprint about measuring trust",
+      "clueType": "verbatim",
+      "expectedKey": "ssrn-preprint",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "jstor-library#0",
+      "clue": "jstor article on public libraries",
+      "clueType": "verbatim",
+      "expectedKey": "jstor-library",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "jstor-library#1",
+      "clue": "academic paper about libraries and civic life",
+      "clueType": "verbatim",
+      "expectedKey": "jstor-library",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "substack-newsletter#0",
+      "clue": "substack about note-taking apps failing researchers",
+      "clueType": "verbatim",
+      "expectedKey": "substack-newsletter",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "substack-newsletter#1",
+      "clue": "newsletter where I disagreed with section 3",
+      "clueType": "note",
+      "expectedKey": "substack-newsletter",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "arxiv-retrieval#0",
+      "clue": "arxiv dense passage retrieval paper",
+      "clueType": "verbatim",
+      "expectedKey": "arxiv-retrieval",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "arxiv-retrieval#1",
+      "clue": "that old DPR paper on arxiv",
+      "clueType": "ambiguous",
+      "expectedKey": "arxiv-retrieval",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "weak-title-grant#0",
+      "clue": "the untitled doc where I noted NSF grant narrative",
+      "clueType": "note",
+      "expectedKey": "weak-title-grant",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "weak-title-grant#1",
+      "clue": "page with my note about revising the budget table",
+      "clueType": "note",
+      "expectedKey": "weak-title-grant",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "weak-title-interview#0",
+      "clue": "notes page where I wrote interview ask about cross-source save friction",
+      "clueType": "note",
+      "expectedKey": "weak-title-interview",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "weak-title-interview#1",
+      "clue": "the note about interview questions on save friction",
+      "clueType": "note",
+      "expectedKey": "weak-title-interview",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "bookmark"
+    },
+    {
+      "caseId": "excerpt-attention-quote#0",
+      "clue": "the quote I saved about metrics economy wearing a costume",
+      "clueType": "note",
+      "expectedKey": "excerpt-attention-quote",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "excerpt"
+    },
+    {
+      "caseId": "excerpt-attention-quote#1",
+      "clue": "excerpt where I wrote perfect pull quote for talk",
+      "clueType": "note",
+      "expectedKey": "excerpt-attention-quote",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "excerpt"
+    },
+    {
+      "caseId": "excerpt-memory-palace#0",
+      "clue": "excerpt about memory palace and navigation",
+      "clueType": "verbatim",
+      "expectedKey": "excerpt-memory-palace",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "excerpt"
+    },
+    {
+      "caseId": "excerpt-memory-palace#1",
+      "clue": "the line I highlighted about method of loci",
+      "clueType": "note",
+      "expectedKey": "excerpt-memory-palace",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "excerpt"
+    },
+    {
+      "caseId": "excerpt-tipping#0",
+      "clue": "nature excerpt about ice-sheet collapse outrunning policy",
+      "clueType": "paraphrase",
+      "expectedKey": "excerpt-tipping",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "excerpt"
+    },
+    {
+      "caseId": "excerpt-tipping#1",
+      "clue": "the climate paragraph I clipped about feedbacks",
+      "clueType": "paraphrase",
+      "expectedKey": "excerpt-tipping",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "excerpt"
+    },
+    {
+      "caseId": "excerpt-boredom#0",
+      "clue": "aeon excerpt saying boredom is unstructured time",
+      "clueType": "paraphrase",
+      "expectedKey": "excerpt-boredom",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "excerpt"
+    },
+    {
+      "caseId": "excerpt-boredom#1",
+      "clue": "clip I noted for newsletter opener about boredom",
+      "clueType": "note",
+      "expectedKey": "excerpt-boredom",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "excerpt"
+    },
+    {
+      "caseId": "excerpt-misinfo#0",
+      "clue": "guardian clip about outrage forwarding heuristic",
+      "clueType": "paraphrase",
+      "expectedKey": "excerpt-misinfo",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "excerpt"
+    },
+    {
+      "caseId": "excerpt-misinfo#1",
+      "clue": "excerpt on why shares beat corrections",
+      "clueType": "paraphrase",
+      "expectedKey": "excerpt-misinfo",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "excerpt"
+    },
+    {
+      "caseId": "excerpt-remote#0",
+      "clue": "ft excerpt about weak-tie conversations collapsing",
+      "clueType": "paraphrase",
+      "expectedKey": "excerpt-remote",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "excerpt"
+    },
+    {
+      "caseId": "excerpt-remote#1",
+      "clue": "remote work clip I marked for hybrid teams slide",
+      "clueType": "note",
+      "expectedKey": "excerpt-remote",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "excerpt"
+    },
+    {
+      "caseId": "excerpt-dpr#0",
+      "clue": "arxiv excerpt about retrieving then reading",
+      "clueType": "paraphrase",
+      "expectedKey": "excerpt-dpr",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "excerpt"
+    },
+    {
+      "caseId": "excerpt-dpr#1",
+      "clue": "DPR paper quote on noisy corpus",
+      "clueType": "paraphrase",
+      "expectedKey": "excerpt-dpr",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "excerpt"
+    },
+    {
+      "caseId": "excerpt-libraries#0",
+      "clue": "jstor excerpt about library desk and hard questions",
+      "clueType": "paraphrase",
+      "expectedKey": "excerpt-libraries",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "excerpt"
+    },
+    {
+      "caseId": "excerpt-libraries#1",
+      "clue": "clip about civic infrastructure and libraries",
+      "clueType": "note",
+      "expectedKey": "excerpt-libraries",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "excerpt"
+    },
+    {
+      "caseId": "excerpt-pure-note#0",
+      "clue": "excerpt I annotated for lit review on verification rituals",
+      "clueType": "note",
+      "expectedKey": "excerpt-pure-note",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "excerpt"
+    },
+    {
+      "caseId": "excerpt-pure-note#1",
+      "clue": "the clip where my note mentions verification rituals",
+      "clueType": "note",
+      "expectedKey": "excerpt-pure-note",
+      "persona": "researcher",
+      "source": "curated",
+      "kind": "excerpt"
+    }
+  ]
+}

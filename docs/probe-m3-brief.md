@@ -1,5 +1,7 @@
 # 任务：测试工作台里程碑 3 —— 分布真实性（时近偏斜 / Zipf 主题 / 会话爆发 / 摘录组合）+ M2 审核 LOW 前置修复
 
+> **状态：** 进行中（2026-11-07）— M3 **代码已合 main**；精选路径真机已抽（总 Brief）；**diversity 分布真机**未另种大批量库；M4 见总 Brief；**禁止**移入 `docs/archive/` / `docs/audits/`
+
 ## 背景与现状（已核查的事实，不要推翻重查）
 
 - 里程碑 1、2 已落地并通过独立审核：分支 `feat/probe-workbench-runner`，提交链 `36b3eaaf`（main）→ `754400f9`（M1）→ `0ff792ac`（M2 第 0 节）→ `e568dd24`（M2）。批量 runner、类型化线索、混淆组、负例、报告三节（byClueType / clusters / negatives）均已就位。

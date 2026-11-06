@@ -1,5 +1,7 @@
 # 任务：测试工作台里程碑 2 —— 生成即标注（线索类型 / 零重叠线索 / 混淆组 / 负例）+ 两处前置修复
 
+> **状态：** 进行中（2026-11-07）— M2 **代码已合 main**；精选路径真机已抽（见 `probe-workbench-brief`：byType/neg 已出数）；**禁止**移入 `docs/archive/` / `docs/audits/`
+
 ## 背景与现状（已核查的事实，不要推翻重查）
 
 - 里程碑 1 已落地：分支 `feat/probe-workbench-runner`，提交 `754400f9`。批量 runner 在 `extension/src/dev/probe/probe-batch-runner.ts`；纯逻辑在 `packages/yiveno-probe/src/run/`（types / case-plan / aggregate / diff，均有单测）；运行记录存 chrome.storage.local（`extension/src/dev/probe/probe-run-history-storage.ts`，键 `yiveno.dev.probeRunHistory.v1`，其中的 Zod schema 手工复制了一份 `@yiveno/probe` 的报告类型）；key→id 映射在 `probe-key-id-map-storage.ts`（含 seedContext）；Console 在 `packages/yiveno-probe/src/console/`。

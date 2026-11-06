@@ -1,7 +1,8 @@
 # Task Brief · ADR-021 波次 2 · 本机快跳标识
 
-> **状态：** 已完成（2026-11-06）  
-> **前置：** 波次 1 叙事标清已完成
+> **状态：** 已完成（2026-11-07 验收）  
+> **前置：** 波次 1 叙事标清已完成  
+> **验收记录：** `extension/src` 无 `omnibox_offline`；`omnibox_local` 已接线；`browser-online` / omnibox-entry 相关单测绿
 
 ---
 

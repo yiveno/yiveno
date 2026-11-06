@@ -1,5 +1,10 @@
 # 任务：把 Yiveno 测试工作台从“种库器”升级为“可记录的召回评测闭环”
 
+> **状态：** 进行中（2026-11-07）— M1–M4 **代码已合/已落盘**；**精选种库真机已验**（见下）；diversity/cluster 大批量种库真机仍可另抽  
+> **真机抽测（2026-11-07 · MCP Probe Console · curated-clean）：** 种库 书签30+摘录18 · 映射48 · unmapped0 → 批量跑分 n=108 · top1 72.9% · in-top3 79.2% · miss 20.8% · neg FP 75% (n=12) · p50 35ms · 历史可落盘；路径接线通过（不冒充 §5.9）  
+> **M4：** `probe-generated-curated-researcher-v1.json` + `probe-generated-eval` 离线关键词基线门禁；刷新 `cd extension && bun run probe-eval:export-fixture`  
+> **落点：** 留在 `docs/` 根（任务单）；**禁止**移入 `docs/archive/` 或 `docs/audits/`（非审计报告）
+
 ## 背景与现状（已核查的事实，不要推翻重查）
 
 - 工作台 UI 在 `packages/yiveno-probe/src/console/ProbeConsole.vue`，文件头自述只有“写入测试数据 + 清理”两件事；种库后没有批量跑线索、没有打分、没有运行历史。

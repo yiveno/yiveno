@@ -1,7 +1,8 @@
 # Task Brief · ADR-021 波次 4 · 可选清债（原清单 B）
 
-> **状态：** 已完成（2026-11-06）  
-> **前置：** 波次 1–3 已完成
+> **状态：** 已完成（2026-11-07 验收）  
+> **前置：** 波次 1–3 已完成  
+> **验收记录：** lexicon 越界 surface 已删旁注；`shouldOmitClueLlmCompleterWhenBrowserOffline`；MCP Side Panel 断网薄条可见（「你已离线 — 只在本机…」/ placeholder「云端理解不可用」）；browser-online / omnibox-entry / select-mode 单测绿
 
 ---
 
