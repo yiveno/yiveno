@@ -9,9 +9,9 @@ import type { RecallVisibleProgressStage } from '@/core/recall/visible-progress'
  * 仅新增 backend，不改 UI / handlers / core 的主链路。
  */
 /**
- * Recall 入口（ADR-007）。
- * - sidepanel：完整 Hybrid + 理解 + framing（默认）
- * - omnibox：离线字段快跳（规则 parse + Filter ± 条目 embedding 融合）
+ * Recall 入口（ADR-007 · ADR-021）。
+ * - sidepanel：完整 Hybrid + 理解 + framing（默认；履约假定在线）
+ * - omnibox：本机快跳（规则 parse + Filter；无向量/LLM；延迟与壳约束，非离线产品）
  * - mcp：本机 MCP；与 sidepanel 同轨（调用方显式传或省略默认）
  */
 export type RecallEntryPoint = 'sidepanel' | 'omnibox' | 'mcp'

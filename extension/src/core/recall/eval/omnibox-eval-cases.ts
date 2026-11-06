@@ -6,7 +6,7 @@ import type {
 } from '@/core/recall/eval/recall-eval-cases'
 
 /**
- * Omnibox 离线快跳轨 must 夹具（ADR-007）。
+ * Omnibox 本机快跳轨 must 评测用例（ADR-007 · ADR-021）。
  * 仅具体锚点 + R0 负例；不含多轮 / need_a_clue / 逛一簇（属 Side Panel 契约）。
  */
 export interface OmniboxEvalCase {

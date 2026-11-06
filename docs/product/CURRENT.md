@@ -6,7 +6,7 @@
 > **权威链：** [`Yiveno-术语表.md`](./Yiveno-术语表.md) → 本文 → [`Yiveno-产品文档-v4.0.md`](./Yiveno-产品文档-v4.0.md) §0 → [`Yiveno-改版计划-v1.md`](./Yiveno-改版计划-v1.md) 对应波次。  
 > **架构决策（不可重议）：** [`../architecture/decisions/`](../architecture/decisions/)
 
-**最后更新：** 2026-11-03
+**最后更新：** 2026-11-06
 
 ---
 
@@ -42,10 +42,11 @@
 - 用体验反馈（放弃率↓）冒充 §5.9 / 真实库 TTE 质量达标；工程探针与种子 TTE **分计**
 - **用「先造摘录再召回」冒充 Getting Started 主证明**（与书签首召口径冲突）
 - 卡上神谕文案 / Artifacts 式图表主路径 / 卡上工具条堆砌
+- **为「完全离线找开放页」扩 sprint / 加深离线壳**（ADR-021：业务默认在线；离线仅薄适配）
 
 ## 已冻结决策（勿重议）
 
-见 [`docs/architecture/decisions/`](../architecture/decisions/)：Side Panel 主壳、clue 术语、邻域非神谕、LLM 数据平面边界、禁止灰名单通解、**ADR-010 理解流水线**、**ADR-011 时间置信度分层**、**ADR-012 find things 双关为后手（非固定路线；终局壁垒=私有增量+习惯；翻牌未启用）**、**ADR-016 双线程（明线找东西 · 暗线记忆探索 · 反馈非真理；目标层禁系统自改）**、**ADR-020 Chromium 双店同包（Chrome + Edge；大陆主路径 Edge）**。
+见 [`docs/architecture/decisions/`](../architecture/decisions/)：Side Panel 主壳、clue 术语、邻域非神谕、LLM 数据平面边界、禁止灰名单通解、**ADR-010 理解流水线**、**ADR-011 时间置信度分层**、**ADR-012 find things 双关为后手（非固定路线；终局壁垒=私有增量+习惯；翻牌未启用）**、**ADR-016 双线程（明线找东西 · 暗线记忆探索 · 反馈非真理；目标层禁系统自改）**、**ADR-020 Chromium 双店同包（Chrome + Edge；大陆主路径 Edge）**、**ADR-021 在线默认 · 离线仅薄适配（非离线优先；Omnibox/规则≠离线产品）**。
 
 **定位速记（ADR-012 + §0.1 哲学）：** 对外始终「那个找东西的 / find things」；当前履约 _Find what you saved_；双关/翻牌是**后手，视发展再定**（可以≠必须）；终局壁垒=不愿迁走的私有增量与习惯，不是 Search→Memory 跳跃。**产品哲学（对内）：** 人机认知协同 · 机记人想（_Let humans think. Let computers remember._）——**不得**替代对外主 slogan，**不得**暗示「想起来就一定找得到」。愿景可大；**当前 Normative 履约面**仍是主动 Capture 痕迹 → 高置信邻域；**勿**用愿景/终局叙事放松 §5.9。
 

@@ -589,7 +589,7 @@ Yiveno **本质是个性化检索系统**：今天的摘录与书签是两个**�
 ```
 
 - **LLM（核心）：** 把随意口语变成**可执行约束**；这是用户选 Yiveno 的唯一可扩展理由（见 §0.1.0）。
-- **规则 parser：** 无模型 / 失败 / 关 AI 时的降级；**禁止**按个例无限扩词典当主面。
+- **规则 parser：** 闭集槽位接地 + Omnibox lexical + 无模型/失败/关 AI 时的降级垫片（§0.1.4）；**禁止**按个例无限扩词典当听懂主面，**禁止**当离线主 NLU。
 - **Embedding：** 语义近邻补缝；不单独承担对象理解。
 - **Enrichment：** Capture 后补可问字段；LLM enrichment 只出待校验提议。
 - **「喜欢」类词：** 理解层识别偏好意图；具体条目靠行为信号，不能只靠拆词。
@@ -782,16 +782,16 @@ NA 分立：`a while ago` / `some time ago` → 数周；`a while back` → `few
   → 有 completer：默认**单次** LLM → Zod → 锚定映射 → ParsedRecallClue（失败降级规则）
        例外：纯 URL 等可走规则（省配额）
        条件二次 LLM：仅 ADR-010 门禁触发（host 归一 / gist 重抽 / Zod 重试）；**非默认**
-  → 无 completer：规则 parseRecallClue
+  → 无 completer：规则 parseRecallClue（mode=lexical 降级垫片；§0.1.4）
   → buildFilterClueFromParsed → keyword Filter；**timeConfidence=high 则硬过滤；low 则软排不硬空**；类型等可软排
   → Hybrid（有向量则 RRF）
 ```
 
 - **网关：** 只答「要不要花资源」（硬噪音）；禁止用 LLM 判噪音。
 - **已删除：** 「词面优先 Gate B 挡口语」与「lexical miss 后再升一次 LLM」双扫——有模型则一次听懂。
-- **不做本里程碑内：** 全库喂模型、模型写库、开放闲聊。
-- **开发 / 正式 LLM：** Cloudflare `POST /api/ai/hosted/complete`（登录 Free/Pro 月+日配额）或开发 `clue/complete` / `yiveno.dev.clueLlm`；关 AI 或未登录 → 规则降级。
-- **验收：** 「听懂」= 维护者真实输入 clue 跑 `cd extension && bun run nlu:try -- "<clue>"`（走产品同款 `understandRecallClue` 理解阶段；有 Key 时注入与 `yiveno.dev.clueLlm` 同源 completer）。**禁止**定死口语金标批跑冒充理解验收。Recall 用户可感变更仍补 `recall-eval` must 或 §5 手动步骤。CI 对理解层只守机制单测（lexicon / exclude / map proposal 等），不守历史 `PARSE_GOLD_CASES` 全表。
+- **不做本里程碑内：** 全库喂模型、模型写库、开放闲聊；**不**用规则词典扩面冒充听懂主路径。
+- **开发 / 正式 LLM：** Cloudflare `POST /api/ai/hosted/complete`（登录 Free/Pro 月+日配额）或开发 `clue/complete` / `yiveno.dev.clueLlm`；关 AI 或未登录 → 规则降级垫片。
+- **验收：** 「听懂」= 维护者真实输入 clue 跑 `cd extension && bun run nlu:try -- "<clue>"`（有 Key → LLM 主路径）。`nlu:try:rules` 仅诊断闭集接地 / Omnibox lexical / 降级垫片，**不作**听懂验收。**禁止**定死口语金标批跑冒充理解验收。Recall 用户可感变更仍补 `recall-eval` must 或 §5 手动步骤。CI 对理解层只守机制单测（lexicon / exclude / map proposal 等），不守历史 `PARSE_GOLD_CASES` 全表。
 
 #### 隐患清单与规避（决策自检）
 
@@ -860,6 +860,27 @@ Yiveno 同时承载两条相互促进、**不互相替代**的线程：
 > **一句话：** 用户看得见的信息与系统当真的信息是两套准则——可见面可读（芯片 / host·path / 短标签）；契约面完整（message、IDB、prior utterances、Filter、导航 href）。禁止用展示缩短污染传输，也禁止把长机器串当密集 UI 主文案。  
 > **实现锚：** `formatCluePlainForUserDisplay` / `clue-url-display` / composer 芯片。核查表：原则 §4（Recall）· §4.1（Library/Settings）· §4.2（官网/GEO）。
 
+### 0.1.4 在线默认 · 离线薄适配（Normative · 2026-11-06）
+
+> **ADR：** [`ADR-021-online-default-thin-offline.md`](../architecture/decisions/ADR-021-online-default-thin-offline.md)。
+
+**一句话：** Yiveno **业务履约默认用户在线**；离线只做**基本适配**，不当主体验、不当架构主约束、不当 sprint 扩面理由。
+
+| 默认                                                       | 薄适配（允许）                                                                        | 禁止                                                                 |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| 有网：托管理解 / embed / 打开原文按在线设计                | `onLine === false` 时 omit 线索 LLM、顶栏本机提示、IDB 仍可读（摘录卡可扫读已存正文） | 「完全断网仍能爽找并打开网页」当主路径或排期主因                     |
+| 弱网 / 配额 / API 失败 → 诚实 `rules_fallback`（在线降级） | Omnibox **本机快跳**（ADR-007：延迟与成本，**不是**离线产品叙事）                     | 为离线堆第二套理解/检索产品；用离线叙事压过 §5.9 / 结果卡 / 在线听懂 |
+
+**与规则层（三角色 · 闭集）：**
+
+| 角色                 | 是                                                                                 | 否                                       |
+| -------------------- | ---------------------------------------------------------------------------------- | ---------------------------------------- |
+| **闭集槽位接地**     | 时间 / 类型 / 行为 / 附注 surface → 枚举；规则 parse 与 LLM grounding **共用**词典 | 内容同义、专名、缩写灰名单冒充听懂       |
+| **Omnibox 本机快跳** | `forceMode: lexical`（延迟与壳；ADR-007）                                          | Side Panel 听懂主路径；离线产品叙事      |
+| **降级垫片**         | 无 completer / LLM 失败 `rules_fallback` / 断网 omit LLM                           | 第二套口语 NLU；为「更懂」无限扩 surface |
+
+`parseRecallClue` 只服务上表三角色；口语听懂主引擎仍是 LLM（§0.1.0 / M1）。
+
 ### 0.2 MUST
 
 1. UI → 只经 `background-client` / `chrome.runtime.sendMessage`；shape：`{ scope: 'background', type, payload? }`。
@@ -878,6 +899,7 @@ Yiveno 同时承载两条相互促进、**不互相替代**的线程：
 ### 0.3 MUST NOT
 
 - 偏离 §0.1 / §0.1.1：用功能堆砌、管理回潮、开放式闲聊、AI 主卖点、**生活小助手叙事**、**「好像啥都做」的平台叙事**、或**通用 AI Search / 「找文件更准」当长期护城河叙事**替代「那个找东西的」；**禁止**无痕迹厚度时提前主打「人生记忆产品」或启用 ADR-012 翻牌句；**禁止**用「人机认知协同 / 重构信息交互层」愿景替代当前履约面，或把哲学句写成对外主 slogan / 「想起来就一定找得到」。
+- 偏离 §0.1.4 / ADR-021：把「完全离线找开放页」当主体验或 sprint 主因；用离线叙事压过在线听懂 / §5.9 / 结果卡；把规则层或 Omnibox 快跳包装成离线优先产品。
 - 以查阅类书签找、书签自动归文件夹/智能整理 Chrome 树为主卖点或主 demo（被 Google / 整理器逻辑压死；见 §0.1.1）。
 - 把独立空白笔记创作做成可用主路径或 UI 暗示已有笔记库（Notion 赛道；见 §0.4）。
 - 恢复旧双面板书签树、**侧边栏管理页**（书签树/整理中心）、AI 智能重构/聚类主卖点、以「管理书签」为中心的 UI。  
@@ -964,7 +986,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 | LocalProfile / ownerId              | 已上线                                         | 未登录可用；登录后 `ownerId=accountId`                                                                                                                                                                                                                                                                                                                  |
 | Settings                            | 已上线（最小+账户同步）                        | `options_ui`；左侧分区导航（与记忆库同构）+ `?section=`；快捷键；账户/云同步；隐私/AI 占位                                                                                                                                                                                                                                                              |
 | Offscreen                           | 占位                                           | 预留本地 embedding；当前 Pro 走 Worker AI，未启用 Offscreen                                                                                                                                                                                                                                                                                             |
-| Omnibox 找                          | 已上线                                         | 关键词 `yi`；`entry: omnibox` 离线快跳（规则 + 本机字段 Filter + 结构化约束 + soft rank；ADR-007 §6 天花板；**无**查询侧静态缩写字典）；**无向量融合**；**单次无会话**；换赛道 **点 CTA**（无命中单独行 / 有命中末行；非 Tip）→ prefill + Side Panel 完整 Recall                                                                                        |
+| Omnibox 找                          | 已上线                                         | 关键词 `yi`；`entry: omnibox` 本机快跳（规则 + 本机字段 Filter + 结构化约束 + soft rank；ADR-007 §6 天花板；**无**查询侧静态缩写字典）；**无向量融合**；**单次无会话**；换赛道 **点 CTA**（无命中单独行 / 有命中末行；非 Tip）→ prefill + Side Panel 完整 Recall                                                                                        |
 | 快捷键找                            | 已上线                                         | `_execute_action`（默认 `Alt+Shift+Y`）与点图标开 Side Panel                                                                                                                                                                                                                                                                                            |
 | 快捷键打开记忆库                    | 已上线                                         | `open_library`（默认 `Alt+Shift+L`）                                                                                                                                                                                                                                                                                                                    |
 | 快捷键打开设置                      | 已上线                                         | `open_settings`（无默认建议键；Chrome 最多 4 个 suggested_key，可自绑）                                                                                                                                                                                                                                                                                 |
@@ -1009,7 +1031,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 | Chrome 书签导入 + 增量 sync               | ✓    | —    | —   | ✓    | import/sync 服务单测；真机 sync 手测                                                        |
 | LocalProfile / ownerId                    | ✓    | —    | —   | —    | `local-profile*`                                                                            |
 | Settings（最小）                          | ✓    | —    | ✓   | ✓    | MCP：打开 `settings.html`                                                                   |
-| Omnibox 找                                | ✓    | ✓    | —   | ✓    | ADR-007 离线快跳（无向量融合）；§5.10.8 手测 + `omnibox_must` + `omnibox-recall-entry` 单测 |
+| Omnibox 找                                | ✓    | ✓    | —   | ✓    | ADR-007 本机快跳（无向量融合）；§5.10.8 手测 + `omnibox_must` + `omnibox-recall-entry` 单测 |
 | 快捷键找（开 Side Panel）                 | ✓    | —    | —   | ✓    | 真机按键/点图标开 Panel                                                                     |
 | 快捷键打开记忆库                          | ✓    | —    | —   | ✓    | 同上                                                                                        |
 | 快捷键打开设置                            | ✓    | —    | —   | ✓    | 同上                                                                                        |
@@ -1282,6 +1304,8 @@ schema：`extension/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 - **Capture-first 空态：** 仅当引导未完成且**无可召库存**（无书签且无摘录）时展示；**仅有书签**时走普通 Idle。
 - **书签 bulk 入口（Normative · 2026-09-14）：** **主路径** = GS Bookmarks 授权；**后路** = Settings 开 `chromeBookmarkIngestEnabled`。Side Panel **不再**展示书签 bulk 导入顶栏细条。冷启动门禁 Import 阶段 = 工程等待/幂等 `ensure` 对齐，**不是**二次授权导入课。
 - **空库燃料反馈（Normative · 2026-10-28）：** Side Panel 在 **库空** 时按 `chromeBookmarkIngestEnabled` × 导入状态分流 Idle / 空库 `no_match` 文案（未开灌库 / 同步中 / 已开仍空）；未开灌库时正文 **「同步书签 / Sync bookmarks」为可点链接**（及 Idle CTA）→ Settings 保存分区 `#chrome-bookmark-ingest`（开关文案 = **持续同步**本机书签，非一次性「导入」按钮）；GS 主路径 CTA 仍为 _Import my bookmarks_（一次性同意）。**禁止**静默灌库；**禁止**有库 `no_match` 误说「请先导入/同步」；**禁止**把 Side Panel 做成 bulk 进度课；**禁止**与云记忆 sync 文案混淆。实现：`resolveRecallShellBookmarkFuel` + `recall-shell-empty-copy` + `focusOrOpenSettingsTab({ hash })`。
+- **空库态可见刷新（Normative · 2026-11-06）：** Side Panel **可见**且开着时，库成员变化须立刻重探库空/非空并刷新 Capture-first / 空态文案——含 **划存入库存** 与 **删光 / 清库变空**；**禁止**依赖关壳重开或 `visibilitychange` 才更新。实现：`chrome.storage.onChanged` 听 `yiveno.excerptCaptureCount`（划存）与 `yiveno.memoryLibraryRevision`（划存 / 删摘录 / `CLEAR_LOCAL_MEMORY`）；**不**另造库变更总线。灌库完成 / 冷启动 ready 仍走既有轮询 → `probeMemoryLibrary`。
+- **记忆库列表可见刷新（Normative · 2026-11-06）：** Library **可见**时摘录列表须跟进划存/删除（切回页签或页仍开着）；回前台 `visibilitychange` **静默重拉当前 Tab**（摘录重拉 / 书签树仍防抖）；并听 `yiveno.memoryLibraryRevision`。**禁止**仅依赖整页刷新才看到新摘录；**禁止**回前台只刷书签树、摘录 Tab 仍陈旧。
 
 #### 5.8.1 冷启动双表面与进度门禁（Normative · 2026-08）
 
@@ -1342,7 +1366,7 @@ schema：`extension/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 ### 5.3 Phase A（Omnibox / 快捷键）验收
 
-1. Omnibox 触发后走 **离线快跳轨**（`entry: omnibox`：规则 parse + 本机字段 Filter + 结构化约束 + 佐证门 + 个人 soft rank + 短锚字段权重；壳层 ≤6 + Tip + CTA 接力；**无**查询侧静态缩写字典 / 向量融合 / Outcome 软调 / LLM；天花板见 ADR-007 §6）；Side Panel 走完整 Hybrid + 理解。仍经同一 `recallService`，**禁止**第二套 Filter 实现。
+1. Omnibox 触发后走 **本机快跳轨**（`entry: omnibox`：规则 parse + 本机字段 Filter + 结构化约束 + 佐证门 + 个人 soft rank + 短锚字段权重；壳层 ≤6 + Tip + CTA 接力；**无**查询侧静态缩写字典 / 向量融合 / Outcome 软调 / LLM；天花板见 ADR-007 §6）；Side Panel 走完整 Hybrid + 理解。仍经同一 `recallService`，**禁止**第二套 Filter 实现。
 2. 不引入第二套搜索/筛选实现。
 3. Omnibox / 快捷键 §1 状态已更新（快捷键开 Side Panel = R-shell 目标）。
 4. Omnibox 入口为单次命中：建议列表 Memory 行 → 打开 URL；**换赛道**须点 CTA 行（无命中单独 CTA，或有命中时末行「Not what you wanted? Open Side Panel」；均非 default Tip）→ 写 `yiveno.recallPrefill` + 开 Side Panel 并自动提交完整 Recall（ADR-007 接力）；Omnibox 本身仍无追问/会话。
@@ -1525,7 +1549,7 @@ schema：`extension/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 2. Explain 理由**不得**用置信百分比或「AI 认为」替代字段级解释。
 3. 仍遵守 §5.8 C：无 Agent、无「帮你决定现在干嘛」。
 
-#### 5.10.8 Omnibox 离线快跳（ADR-007）
+#### 5.10.8 Omnibox 本机快跳（ADR-007）
 
 > **复制即用输入表：** [`docs/engineering/Omnibox-手测步骤.md`](../engineering/Omnibox-手测步骤.md) **§4**（对齐本地探针种库）  
 > **自动化 must：** `omnibox-eval.test.ts`（§5.11.5）
@@ -1652,7 +1676,7 @@ schema：`extension/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 > **实现：** `omnibox-eval-cases.ts` · `run-omnibox-eval.ts` · `omnibox-eval.test.ts`  
 > **手测：** §5.10.8 · [`Omnibox-手测步骤.md`](../engineering/Omnibox-手测步骤.md)
 
-Omnibox **离线快跳轨**专用 must（与 Side Panel `recall-eval` 正交）：
+Omnibox **本机快跳轨**专用 must（与 Side Panel `recall-eval` 正交）：
 
 | 约束 | 说明                                                                              |
 | ---- | --------------------------------------------------------------------------------- |
@@ -1760,7 +1784,7 @@ Settings「隐私」摘要与官网 `/privacy` 须与本节 L1–L3 口径一致
 | `settings.html`  | 已进 `options_ui`（`open_in_tab: true`）                                                                                                                                                     |
 | content script   | 已注册；`content-selection-toolbar.js`（http/https）；划选浮层「用这段来找」（不必先存）→ `OPEN_RECALL_SHELL`（payload 预填 `autoSubmit:false`；SW 写 session）；composer 可见可改、不自动发 |
 | offscreen 源码   | **刻意占位**（`extension/src/offscreen/` + vite 入口 + `public/offscreen.html`）；manifest **未**注册 `offscreen` permission；embedding / 无 DOM 任务接入前不启用；勿当已上线能力            |
-| Omnibox          | 已注册；keyword `yi`；`entry: omnibox` 离线快跳；单次无会话（ADR-007）                                                                                                                       |
+| Omnibox          | 已注册；keyword `yi`；`entry: omnibox` 本机快跳；单次无会话（ADR-007）                                                                                                                       |
 | `commands`       | 已注册；找 `Alt+Shift+Y`；记忆库 `Alt+Shift+L`；划词保存 `Alt+Shift+E`；划词附注 `Alt+Shift+N`；设置无默认建议键（均可改）                                                                   |
 
 ### 5.7 Dodo Pro 订阅全流程验收（手动 · Normative）
@@ -1928,7 +1952,7 @@ Chrome API / 选区
 | 入口                             | 会话                                                                               |
 | -------------------------------- | ---------------------------------------------------------------------------------- |
 | **Side Panel**（Normative 主壳） | 有会话：`accumulated` + `dismissedIds`；`RECALL_WITH_CLUE.context`；新会话按钮清空 |
-| Omnibox                          | **无会话**；`entry: omnibox` 离线快跳；不传 context（ADR-007）                     |
+| Omnibox                          | **无会话**；`entry: omnibox` 本机快跳；不传 context（ADR-007）                     |
 | Action Popup                     | **退役**；不再承载多轮                                                             |
 
 **合并权威（core 槽位 merge，非 UI 拼串）：**
@@ -1960,7 +1984,9 @@ Chrome API / 选区
 
 #### Side Panel 壳级离线态（Normative · 2026-10-14 · 体验 · 已接线）
 
-**为何做：** 离线时云端线索理解（hosted / clue LLM）不可用，本机规则 / IndexedDB 找仍可用。用户应在**打开 Side Panel 时**就知道当前是本机模式，而不是发 clue 后空等或误以为产品坏了。
+**定位（ADR-021 · 2026-11-06）：** **薄适配**，非离线产品支柱。业务默认在线；本壳只避免空等云端与误报故障感，**禁止**再加深为离线专属召回体验。
+
+**为何做：** 离线时云端线索理解（hosted / clue LLM）不可用，本机规则 / IndexedDB 仍可读。用户应在**打开 Side Panel 时**就知道当前是本机模式，而不是发 clue 后空等或误以为产品坏了。
 
 **信号：** 挂载读 `navigator.onLine`；监听 `online` / `offline`。仅 **`onLine === false`** 时展示。
 
@@ -2002,7 +2028,7 @@ Chrome API / 选区
 - **禁止**文案「Thinking…」/「思考中」及任何内心独白、链式推理外露。
 - **&lt;500ms 不展示**阶段 UI（可保持极轻脉冲或无文案）；仅慢请求才渐进出现，避免闪烁。
 - 阶段切换必须来自 **真实 pipeline 信号**（如 `RecallFlow` / backend 进度事件）；禁止定时器假推进。
-- Omnibox 离线快跳路径不适用完整三阶段秀（ADR-007）；本 Normative 主指 Side Panel。
+- Omnibox 本机快跳路径不适用完整三阶段秀（ADR-007）；本 Normative 主指 Side Panel。
 
 **understanding 等待梯级（在线弱网 · Normative · 2026-10-15 · 已接线）：**
 
@@ -2699,6 +2725,12 @@ RecallOutcomeEvent {
 
 | 日期       | 变更                                                                                                                                                                                                                                                                                                       |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-06 | **空库态 / 记忆库可见刷新：** Side Panel 听 count+revision 重探空态；Library 回前台静默重拉 + 听 revision；不另造总线；§5.8                                                                                                                                                                                |
+| 2026-11-06 | **ADR-021 波次4 可选清债：** lexicon 删越界（story/playlist/recording/裸 login；opened recently/just opened）；`shouldOmitClueLlmCompleterWhenBrowserOffline`；Side Panel 断网壳注释对齐；不改 i18n                                                                                                        |
+| 2026-11-06 | **ADR-021 波次3 规则层定位：** §0.1.4 三角色表；无 completer 时 mode 一律 lexical（删伪 semantic 启发式）；`parseRecallClue`/lexicon/`nlu:try:rules` 钉「接地·快跳·垫片」                                                                                                                                  |
+| 2026-11-06 | **ADR-021 波次2 标识：** flow log mode `omnibox_offline` → `omnibox_local`；`browser-online` 注释钉薄适配；图 id `runtime.omnibox-offline-recall` 仍历史名（宿主已注）                                                                                                                                     |
+| 2026-11-06 | **ADR-021 波次1 叙事标清：** Omnibox「离线快跳」→「本机快跳」；规则≠离线主 NLU；壳级离线=薄适配                                                                                                                                                                                                            |
+| 2026-11-06 | **ADR-021 在线默认 · 离线薄适配：** 业务履约默认有网；离线只做基本适配；§0.1.4；Omnibox/规则不作离线产品叙事；禁止为断网找开放页扩 sprint                                                                                                                                                                  |
 | 2026-11-06 | **书签灌库空洞自愈：** Memory 已空但 import 仍 `completed` / 冷启动 ready 早退时，会话级 `ensure` 补洞；`CLEAR_LOCAL_MEMORY` 顺带清导入进度；堵 Side Panel「已开同步仍空库」与 Library「未进入记忆」并存                                                                                                   |
 | 2026-11-06 | **理解验收改真实输入：** 移除 `parse-gold:llm` CLI 与 `parse-gold.test.ts` 定死 clue must；噪音网关不再并入 PARSE_GOLD_CASES；验收 = `bun run nlu:try`；CI 仅守机制单测；`recall-real-eval.yml` 仅 BGE 消融                                                                                                |
 | 2026-11-03 | **Settings「数据」与「隐私」合并：** 侧栏单分区「数据与隐私」`privacy`；旧 `?section=data` 映射；披露/MCP/政策与导入备份适应清除同页                                                                                                                                                                       |

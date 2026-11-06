@@ -89,6 +89,7 @@ import {
 import { clearRecallTelemetryEvents } from '@/infrastructure/analytics/recall-telemetry-store'
 import { updateUserSettings } from '@/infrastructure/settings/user-settings-service'
 import { clearRecallOutcomePairs } from '@/infrastructure/storage/recall-outcome-pairs-storage'
+import { bumpMemoryLibraryRevision } from '@/infrastructure/storage/memory-library-revision-storage'
 import { syncChromeBookmarkSyncListenersWithIngestSetting } from '@/background/listeners/chrome-bookmark-sync'
 import {
   ackCurrentPrivacyNotice,
@@ -1623,6 +1624,9 @@ export async function handleClearLocalMemory(): Promise<ClearLocalMemoryResponse
 
     await memoryItemRepository.replaceOwnerItems(ownerId, [])
     await clearLocalRecallAdaptationBuffers()
+    void bumpMemoryLibraryRevision().catch(error => {
+      logger.warn('Data', '库修订信号更新失败', error)
+    })
 
     await updateUserSettings({ chromeBookmarkIngestEnabled: false })
     await syncChromeBookmarkSyncListenersWithIngestSetting(false)

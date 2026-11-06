@@ -1,7 +1,8 @@
 /**
  * Recall 应用服务（UI/消息入口）。
  *
- * 入口分轨（ADR-007）：Side Panel / MCP = 完整 Hybrid；Omnibox = 离线字段快跳。
+ * 入口分轨（ADR-007 + ADR-021）：Side Panel / MCP = 完整 Hybrid（默认在线理解）；
+ * Omnibox = 本机快跳（延迟/成本；非离线产品叙事）。
  * Free/Pro 召回质量同档；Pro 差异在同步与 LLM 配额。
  */
 import { HybridRecallBackend } from '@/application/recall/backends/hybrid-recall-backend'
@@ -17,7 +18,8 @@ export class RecallService {
     const entry = options?.entry ?? 'sidepanel'
     const startedAt = flowStart('Recall', '选型后端')
     flowOk('Recall', '选型后端', startedAt, {
-      mode: entry === 'omnibox' ? 'omnibox_offline' : 'hybrid',
+      // omnibox_local = 本机快跳轨（ADR-007 · ADR-021）；非 LLM / 非 Hybrid
+      mode: entry === 'omnibox' ? 'omnibox_local' : 'hybrid',
       entry
     })
     return hybridBackend.recallWithClue(clue, options)

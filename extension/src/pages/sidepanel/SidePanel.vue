@@ -97,11 +97,13 @@ import {
 import {
   consumeRecallPrefill,
   consumeRecallPrefillWithRetry,
+  EXCERPT_CAPTURE_COUNT_LOCAL_KEY,
   markFirstRecallOpenDone,
   parseRecallPrefillStorageValue,
   readExcerptCaptureCount,
   RECALL_PREFILL_SESSION_KEY
 } from '@/infrastructure/storage/first-recall-onboarding-storage'
+import { MEMORY_LIBRARY_REVISION_LOCAL_KEY } from '@/infrastructure/storage/memory-library-revision-storage'
 import {
   markInstallOnboardingDone,
   readInstallOnboardingDone
@@ -412,7 +414,7 @@ const websiteConnectBusy = ref(false)
 const websiteConnectError = ref('')
 /** 被别处挤掉后的原因说明（无 Connect；Dismiss 只清 displaced 标记） */
 const showExtensionDisplacedBanner = ref(false)
-/** 壳级离线：本机找回可用、云端理解不可用（不可 dismiss；恢复在线自动隐） */
+/** 壳级断网薄适配（ADR-021）：本机库可读、云端理解不可用（不可 dismiss；恢复在线自动隐） */
 const isBrowserOnline = ref(readBrowserOnline())
 const showOfflineBanner = computed(() => !isBrowserOnline.value)
 /** 驱动轻条 TTL 到期重算。 */
@@ -558,7 +560,7 @@ const composerPlaceholder = computed(() => {
   }
 
   const isIdle = latestAssistant === null
-  // 离线空闲：本机模式 placeholder，加深「云端读法不可用」印象（非换肤）
+  // 断网薄适配空闲：本机模式 placeholder（ADR-021；非换肤、非离线产品）
   if (showOfflineBanner.value && isIdle) {
     return t('sidepanel_offline_composer_placeholder')
   }
@@ -1088,6 +1090,39 @@ function handleRecallPrefillStorageChanged(
       // 忽略：预填消费失败不挡主壳
     }
   })()
+}
+
+/**
+ * 库成员变更信号：划存 bump `excerptCaptureCount` / `memoryLibraryRevision`；删除 / 清库 bump revision。
+ * Panel 一直开着时无 visibilitychange，须靠此把空态 / Capture-first 对齐到最新库态。
+ * 仅可见时刷 DOM（与 ADR-019 可见门禁同向）；不可见留给回前台 probe。
+ */
+function handleLibraryMembershipStorageChanged(
+  changes: Record<string, chrome.storage.StorageChange>,
+  areaName: string
+): void {
+  if (areaName !== 'local') {
+    return
+  }
+  const membershipTouched =
+    EXCERPT_CAPTURE_COUNT_LOCAL_KEY in changes || MEMORY_LIBRARY_REVISION_LOCAL_KEY in changes
+  if (!membershipTouched) {
+    return
+  }
+  if (document.visibilityState !== 'visible') {
+    return
+  }
+  void loadOnboardingState()
+  void probeMemoryLibrary()
+}
+
+/** Side Panel 共用的 storage.onChanged：session 预填 + local 库成员信号。 */
+function handleSidePanelStorageChanged(
+  changes: Record<string, chrome.storage.StorageChange>,
+  areaName: string
+): void {
+  handleRecallPrefillStorageChanged(changes, areaName)
+  handleLibraryMembershipStorageChanged(changes, areaName)
 }
 
 watch(showColdStartGate, (blocked, wasBlocked) => {
@@ -2023,7 +2058,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
 
     const highlightClue = response.result.effectiveClue ?? response.result.clue
     const resultIds = collectResultIdsFromRecall(response.result)
-    /** rules_fallback 结果轻提示；离线 omit（rules）不叠 */
+    /** rules_fallback 结果轻提示；断网 omit LLM（source=rules）不叠 */
     const deeperReadingTipFields =
       response.result.understandSource === 'rules_fallback'
         ? { deeperReadingTip: t('sidepanel_recall_deeper_reading_unavailable') }
@@ -2397,7 +2432,7 @@ function handleRecallVisibleProgressPush(message: unknown): void {
 
 onMounted(() => {
   chrome.runtime.onMessage.addListener(handleRecallVisibleProgressPush)
-  chrome.storage.onChanged.addListener(handleRecallPrefillStorageChanged)
+  chrome.storage.onChanged.addListener(handleSidePanelStorageChanged)
   isBrowserOnline.value = readBrowserOnline()
   stopBrowserOnline = subscribeBrowserOnline(online => {
     isBrowserOnline.value = online
@@ -2447,7 +2482,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   chrome.runtime.onMessage.removeListener(handleRecallVisibleProgressPush)
-  chrome.storage.onChanged.removeListener(handleRecallPrefillStorageChanged)
+  chrome.storage.onChanged.removeListener(handleSidePanelStorageChanged)
   clearRecallVisibleProgressUi()
   clearColdStartPostReleaseBannerExpiry()
   void handlePanelCloseOutcome()
@@ -3002,7 +3037,7 @@ onUnmounted(() => {
   background: var(--surface-white);
 }
 
-/* 离线条：本机模式加强（非故障红、非整壳换肤） */
+/* 断网薄适配条（ADR-021）：本机提示加强；非故障红、非整壳换肤、非离线产品 */
 .recall-website-connect--offline {
   align-items: flex-start;
   padding-right: var(--space-sm);

@@ -1,7 +1,8 @@
 /**
  * 理解层：任意线索 → ParsedRecallClue（交给 Filter 的精确约束）。
- * 有 LLM completer：默认一次 LLM 听懂（纯 URL 等例外走规则）；失败降级规则。
- * 不碰数据平面。见产品 §0.1.0。
+ * 履约默认在线（ADR-021）：有 LLM completer → 默认一次 LLM 听懂；失败 → `rules_fallback`。
+ * 规则/`forceMode: lexical` = 闭集槽位接地 + Omnibox 本机快跳 + 降级垫片（§0.1.4 三角色）。
+ * **不是**离线主 NLU，也不是第二套口语听懂引擎。不碰数据平面。见产品 §0.1.0 / §0.1.4。
  */
 
 import { buildFilterClueFromParsed } from '@/core/recall/orchestrate-keyword-recall'

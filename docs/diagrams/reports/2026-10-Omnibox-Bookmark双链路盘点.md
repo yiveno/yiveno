@@ -50,7 +50,7 @@ downstream:
 
 ```text
 Omnibox text
- → recallService（mode 标 omnibox_offline）
+ → recallService（mode 标 omnibox_local；旧称 omnibox_offline）
  → HybridRecallBackend(entry=omnibox)
       · 无 dialog context / 无可见进展
       · understand：forceMode lexical，不注入 LLM completer

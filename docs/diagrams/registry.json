@@ -258,7 +258,7 @@
       "id": "runtime.omnibox-offline-recall",
       "kind": "sequence",
       "status": "implemented",
-      "title": "Omnibox 离线快跳（entry=omnibox · ADR-007）",
+      "title": "Omnibox 本机快跳（entry=omnibox · ADR-007 · ≠离线产品）",
       "doc": "docs/architecture/Yiveno-运行时架构流程-v1.md",
       "codePaths": [
         "extension/src/background/listeners/omnibox.ts",

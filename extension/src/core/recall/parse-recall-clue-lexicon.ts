@@ -1,12 +1,12 @@
 /**
- * P0 口语线索词典：时间 / 对象类型 / 行为 / 附注指向。
+ * 闭集槽位词典：时间 / 对象类型 / 行为 / 附注指向。
  *
- * **角色：** 产品语言 → 闭集枚举（规则 parse + LLM grounding 共用唯一词表）。
- * **不是**全场景内容理解 / 同义扩词通解；残差留给字面与 Hybrid（ADR-005）。
+ * **角色（ADR-021）：** 产品语言 → 闭集枚举；规则 parse 与 LLM grounding **共用**唯一词表。
+ * **允许扩：** 仅产品文档已明示的闭集槽位新 surface（全用户同一规则）。
+ * **禁止：** 内容/专名/同义灰名单冒充听懂；把本表当第二套口语 NLU 养大（ADR-005）。
  *
- * 规范见产品文档 §0.1.1「市场语言与 Recall Language Strategy」：
- * T1 英语为 parser 一级语料；surface 优先真实用户口语，而非开发者/技术文档用语。
- * 内部 canonical 一律英文 slug；其它语言仅作 alias（本文件 P0 暂不含 alias）。
+ * 规范见产品文档 §0.1.1「市场语言与 Recall Language Strategy」+ §0.1.4 规则层角色：
+ * T1 英语为一级语料；surface 优先真实用户口语；canonical 一律英文 slug。
  */
 
 import type { RecallBehaviorHint, RecallObjectType } from '@/core/recall/parse-recall-clue-types'
@@ -93,7 +93,14 @@ export const RECALL_TIME_LEXICON: RecallLexiconEntry<RecallRelativeTimeLabel>[] 
   { surface: 'long ago', value: 'long_ago' }
 ]
 
-/** 对象类型词：口语 + 常见同义说法。 */
+/**
+ * 对象类型词：闭集 objectType 的用户口语 surface（§0.1.4 槽位接地）。
+ *
+ * 审计（2026-11-06 · ADR-021 波次4）：
+ * - **已删：** `story`（体裁≠类型）；`playlist`/`recording`（≠ song）；裸 `login`（易把登录页钉成 password）
+ * - **保留：** 形态变体（poetry/poems）；产品格式口语（docs/readme/tutorial→article）；
+ *   `youtube`/`youtube video` = **线索侧**视频类型口语，≠ 条目 enrichment 的 host→类型表（ADR-005）
+ */
 export const RECALL_OBJECT_TYPE_LEXICON: RecallLexiconEntry<RecallObjectType>[] = [
   // poem
   { surface: 'poetry', value: 'poem' },
@@ -110,7 +117,6 @@ export const RECALL_OBJECT_TYPE_LEXICON: RecallLexiconEntry<RecallObjectType>[] 
   { surface: 'articles', value: 'article' },
   { surface: 'article', value: 'article' },
   { surface: 'tutorial', value: 'article' },
-  { surface: 'story', value: 'article' },
   { surface: 'readme', value: 'article' },
   { surface: 'blog', value: 'article' },
   { surface: 'docs', value: 'article' },
@@ -118,15 +124,13 @@ export const RECALL_OBJECT_TYPE_LEXICON: RecallLexiconEntry<RecallObjectType>[] 
   { surface: 'essay', value: 'article' },
 
   // song
-  { surface: 'playlist', value: 'song' },
-  { surface: 'recording', value: 'song' },
   { surface: 'tracks', value: 'song' },
   { surface: 'track', value: 'song' },
   { surface: 'songs', value: 'song' },
   { surface: 'song', value: 'song' },
   { surface: 'music', value: 'song' },
 
-  // video（与 song 分立：YouTube 等站不得再标成 song；movie/film 口语归 video）
+  // video（与 song 分立：movie/film 口语归 video）
   { surface: 'youtube video', value: 'video' },
   { surface: 'movies', value: 'video' },
   { surface: 'movie', value: 'video' },
@@ -161,10 +165,9 @@ export const RECALL_OBJECT_TYPE_LEXICON: RecallLexiconEntry<RecallObjectType>[] 
   { surface: 'site', value: 'page' },
   { surface: 'page', value: 'page' },
 
-  // password
+  // password（勿加裸 login：登录页 ≠ 密码条目）
   { surface: 'credentials', value: 'password' },
   { surface: 'login info', value: 'password' },
-  { surface: 'login', value: 'password' },
   { surface: 'password', value: 'password' },
 
   // quote
@@ -180,7 +183,10 @@ export const RECALL_OBJECT_TYPE_LEXICON: RecallLexiconEntry<RecallObjectType>[] 
   { surface: 'bookmark', value: 'bookmark' }
 ]
 
-/** 行为词：用户描述「怎么用/看到哪」时的自然说法。 */
+/**
+ * 行为词：闭集 behaviorHint 口语。
+ * 审计：已删 `opened recently` / `just opened`（近因 ≠ often_opened；近因靠时间槽/ soft rank）。
+ */
 export const RECALL_BEHAVIOR_LEXICON: RecallLexiconEntry<RecallBehaviorHint>[] = [
   // half_read
   { surface: "didn't finish reading", value: 'half_read' },
@@ -197,7 +203,7 @@ export const RECALL_BEHAVIOR_LEXICON: RecallLexiconEntry<RecallBehaviorHint>[] =
   { surface: 'did not finish', value: 'half_read' },
   { surface: 'not finished', value: 'half_read' },
 
-  // often_opened
+  // often_opened（频次；非「刚打开」）
   { surface: 'played on repeat', value: 'often_opened' },
   { surface: 'listened to a lot', value: 'often_opened' },
   { surface: 'kept opening', value: 'often_opened' },
@@ -208,8 +214,6 @@ export const RECALL_BEHAVIOR_LEXICON: RecallLexiconEntry<RecallBehaviorHint>[] =
   { surface: 'kept playing', value: 'often_opened' },
   { surface: 'played a lot', value: 'often_opened' },
   { surface: 'on repeat', value: 'often_opened' },
-  { surface: 'opened recently', value: 'often_opened' },
-  { surface: 'just opened', value: 'often_opened' },
 
   // recently_saved
   { surface: 'recently collected', value: 'recently_saved' },

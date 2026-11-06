@@ -29,6 +29,7 @@ import { isSavablePageUrl } from '@/infrastructure/browser/active-tab-reader'
 import { flowFail, flowOk, flowStart, previewText } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
 import { bumpExcerptCaptureCount } from '@/infrastructure/storage/first-recall-onboarding-storage'
+import { bumpMemoryLibraryRevision } from '@/infrastructure/storage/memory-library-revision-storage'
 
 function resolveMemoryErrorCode(error: unknown, fallback: MemoryErrorCode): MemoryErrorCode {
   if (isCodedError(error)) {
@@ -112,6 +113,9 @@ export async function handleCaptureTextExcerpt(
     void bumpExcerptCaptureCount().catch(error => {
       logger.warn('Capture', '摘录计数更新失败', error)
     })
+    void bumpMemoryLibraryRevision().catch(error => {
+      logger.warn('Capture', '库修订信号更新失败', error)
+    })
     flowOk('Capture', '捕获摘录', startedAt, {
       id: item.id,
       entry: input.captureEntry ?? 'context_menu',
@@ -188,6 +192,9 @@ export async function handleDeleteMemoryItem(payload: unknown): Promise<MemoryBa
       flowOk('Memory', '删除条目', startedAt, { id: input.id, found: false })
       return toErrorResponse('MEMORY_NOT_FOUND')
     }
+    void bumpMemoryLibraryRevision().catch(error => {
+      logger.warn('Memory', '库修订信号更新失败', error)
+    })
     flowOk('Memory', '删除条目', startedAt, { id: item.id })
     return { ok: true, item }
   } catch (error) {

@@ -5,8 +5,8 @@
  *   Side Panel / Hybrid → `understandRecallClue`（噪音网关 → 模式 → LLM|规则 → 降级）
  *
  * 用法：
- *   cd extension && bun run nlu:try -- "last week coffee bookmark"
- *   cd extension && bun run nlu:try:rules -- "…"   # 强制规则（lexical）
+ *   cd extension && bun run nlu:try -- "last week coffee bookmark"   # 默认主路径（有 Key → LLM）
+ *   cd extension && bun run nlu:try:rules -- "…"   # 规则垫片 / Omnibox lexical 诊断（≠听懂验收）
  *
  * Completer（有 Key 时）：与 Settings 开发直连 `yiveno.dev.clueLlm` 同源工厂
  * `createOpenAiCompatibleCompleter`（非另写一套解析）。Node CLI 读不到 Chrome 登录态，
@@ -16,7 +16,7 @@
  *   PARSE_GOLD_LLM_API_KEY | DEEPSEEK_API_KEY | OPENAI_API_KEY | DASHSCOPE_API_KEY
  *   PARSE_GOLD_LLM_BASE_URL / PARSE_GOLD_LLM_MODEL / PARSE_GOLD_LLM_COMPAT
  *   NLU_TRY_NOW_MS — 固定时钟毫秒；缺省 = Date.now()
- *   NLU_TRY_FORCE_MODE=lexical — 强制规则（对齐 Omnibox forceMode）
+ *   NLU_TRY_FORCE_MODE=lexical — 强制规则（对齐 Omnibox / 降级垫片；非主路径听懂验收）
  */
 
 import { existsSync, readFileSync } from 'node:fs'
@@ -240,10 +240,12 @@ export async function runNluTryCli(): Promise<void> {
       `[nlu:try] stage=understandRecallClue completer=dev-direct compat=${compat} model=${model} key=${apiKeySource} path=${completionsUrl}`
     )
   } else if (forceMode === 'lexical') {
-    console.info('[nlu:try] stage=understandRecallClue forceMode=lexical（无 LLM，对齐 Omnibox）')
+    console.info(
+      '[nlu:try] stage=understandRecallClue forceMode=lexical（规则垫片/Omnibox 诊断；≠听懂验收）'
+    )
   } else {
     console.info(
-      '[nlu:try] stage=understandRecallClue completer=none（无 Key → 与产品无 completer 时同：规则）'
+      '[nlu:try] stage=understandRecallClue completer=none（无 Key → 降级垫片 rules；mode=lexical）'
     )
   }
 

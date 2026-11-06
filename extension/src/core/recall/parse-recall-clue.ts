@@ -1,6 +1,8 @@
 /**
- * 将用户口语线索解析为结构化约束（P0 · 纯规则，无 LLM / embedding）。
- * 当前仅提供解析能力，不接入召回后端。
+ * 规则解析：用户线索 → 结构化约束（纯规则，无 LLM / embedding）。
+ *
+ * **定位（ADR-021）：** 闭集槽位接地 + Omnibox 本机快跳 + 无模型/失败/断网时的降级垫片。
+ * **不是**口语听懂主引擎，也不是离线主 NLU；主路径听懂见 `understandRecallClue` + LLM。
  */
 
 import { applyRuleExcludeToContentTerms } from '@/core/recall/exclude-content-terms'

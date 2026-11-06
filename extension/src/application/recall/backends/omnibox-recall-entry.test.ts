@@ -107,7 +107,7 @@ describe('HybridRecallBackend · entry omnibox', () => {
     expect(requestWorkerEmbeddingsMock).not.toHaveBeenCalled()
   })
 
-  it('Side Panel 离线：有 completer 也不注入理解层', async () => {
+  it('Side Panel 断网薄适配：有 completer 也不注入理解层', async () => {
     readBrowserOnlineMock.mockReturnValue(false)
     const completer = vi.fn()
     getClueLlmCompleterMock.mockReturnValue(completer)

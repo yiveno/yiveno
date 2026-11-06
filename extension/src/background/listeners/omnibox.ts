@@ -140,7 +140,7 @@ async function recordOpenBestEffort(memoryItemId: string | null | undefined): Pr
 }
 
 /**
- * Omnibox 输入变化：离线查找轨（规则 parse + 本机 Filter；无查询侧静态缩写字典），映射为原生建议。
+ * Omnibox 输入变化：本机快跳轨（规则 parse + 本机 Filter；无查询侧静态缩写字典；ADR-007/021），映射为原生建议。
  *
  * **suggest 只调用一次（硬约束）：** Chromium 对单次 `onInputChanged` 的 `suggest`
  * 回调历史上按 one-shot 消费；若在异步 Recall 前先 `suggest([])`，后续真实结果会被丢弃，

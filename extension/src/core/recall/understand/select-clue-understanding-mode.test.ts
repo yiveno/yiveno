@@ -11,7 +11,7 @@ describe('selectClueUnderstandingMode', () => {
     expect(selectClueUnderstandingMode('github.com/cqw')).toBe('lexical')
   })
 
-  it('with completer: oral clues and short proper nouns stay semantic', () => {
+  it('有 completer：非 URL 一律 semantic（一次听懂）', () => {
     expect(
       selectClueUnderstandingMode('The movie that I watched yesterday', {
         hasLlmCompleter: true
@@ -26,9 +26,10 @@ describe('selectClueUnderstandingMode', () => {
     ).toBe('semantic')
   })
 
-  it('without completer: short proper nouns stay lexical; longer oral clues are semantic', () => {
+  it('无 completer：一律 lexical（降级垫片；禁止伪 semantic）', () => {
     expect(selectClueUnderstandingMode('Cloudflare Workers')).toBe('lexical')
-    expect(selectClueUnderstandingMode('The movie that I watched yesterday')).toBe('semantic')
-    expect(selectClueUnderstandingMode('the movie from day before yesterday')).toBe('semantic')
+    expect(selectClueUnderstandingMode('The movie that I watched yesterday')).toBe('lexical')
+    expect(selectClueUnderstandingMode('the movie from day before yesterday')).toBe('lexical')
+    expect(selectClueUnderstandingMode('')).toBe('lexical')
   })
 })

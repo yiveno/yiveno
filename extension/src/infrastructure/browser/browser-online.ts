@@ -1,5 +1,6 @@
 /**
- * 浏览器在线态：Side Panel 壳级离线条 + SW 离线跳过线索 LLM。
+ * 浏览器在线态（ADR-021 薄适配）：Side Panel 壳级断网条 + SW 断网时省略线索 LLM。
+ * 不是离线产品支柱；履约仍默认在线。
  * UI 用 window；Background 用 SW global——各自订阅，不经 message 同步。
  */
 
@@ -31,7 +32,10 @@ export function subscribeBrowserOnline(listener: (online: boolean) => void): () 
   }
 }
 
-/** 离线时是否应省略线索 LLM completer（走本机规则理解）。 */
-export function shouldOmitClueLlmCompleterWhenOffline(online: boolean): boolean {
+/**
+ * 断网薄适配：`navigator.onLine === false` 时省略线索 LLM completer（走本机规则，避免空等云端）。
+ * 弱网/配额失败另走 `rules_fallback`，与本函数分计。
+ */
+export function shouldOmitClueLlmCompleterWhenBrowserOffline(online: boolean): boolean {
   return !online
 }

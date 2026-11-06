@@ -1,8 +1,9 @@
-# ADR-007: Omnibox = 离线字段快跳；Side Panel = 完整 Recall
+# ADR-007: Omnibox = 本机快跳；Side Panel = 完整 Recall
 
 - **状态：** 已接受
 - **日期：** 2026-08-29
 - **决策者：** 产品 + 维护者
+- **读法（ADR-021 · 2026-11-06）：** 文中历史「offline / 离线」指 **不调云理解的本机 lookup 轨**（延迟与成本），**不是** Yiveno 离线优先产品。履约默认在线见 [ADR-021](./ADR-021-online-default-thin-offline.md)。
 
 ## 背景
 
@@ -17,10 +18,10 @@ Side Panel 仍是自然语言找、邻域与非神谕承诺的 Normative 主壳�
 ## 决定
 
 1. **入口分轨（仍经 `recallService`，非第二套 UI 消息）：**
-   - **`entry: 'omnibox'`** → **离线查找轨**（Omnibox offline lookup）
+   - **`entry: 'omnibox'`** → **本机快跳轨**（历史名 Omnibox offline lookup；**非**产品离线优先——见 [ADR-021](./ADR-021-online-default-thin-offline.md)）
    - **默认 / Side Panel** → **完整 Recall 轨**（现有 Hybrid + 理解 + framing 等）
 
-2. **Omnibox 离线查找轨（Normative）：**
+2. **Omnibox 本机快跳轨（Normative；旧称「离线查找轨」）：**
    - **目标用户：** 已明确记得要找什么、能提供**关键字/片段/域名/标题词**等锚点；快捷键唤起地址栏快速命中即走。
    - **理解：** 仅规则 parser（`forceMode: lexical`）；**禁止**托管/直连 LLM 听懂（§0.1.0 NLU 不挡 Omnibox 快跳）。
    - **检索：** 本机字段 Filter（标题、摘录正文、附注、URL/域名等）+ 结构化约束（时间 high/low、类型、附注指向）+ 内容佐证门（仅本次必修）。缩写/形态靠**索引侧**通用机制（CamelCase / 多词首字母入倒排等），**禁止**查询侧静态缩写→规范形字典（如 js→javascript、cf→cloudflare）——与 ADR-005 对齐；字典盖不住的残差诚实 miss 或换 Side Panel。
@@ -87,6 +88,6 @@ Side Panel 仍是自然语言找、邻域与非神谕承诺的 Normative 主壳�
 
 ## 相关
 
-- ADR-001（主壳）、ADR-003（邻域）、ADR-004（LLM 边界）、ADR-005（灰名单）
-- 产品文档 §0.5、§5.3、§5.10.1（Omnibox ECS 仍须五要素 suggest）、§3.1 Omnibox 条数
+- ADR-001（主壳）、ADR-003（邻域）、ADR-004（LLM 边界）、ADR-005（灰名单）、**ADR-021（在线默认 · 本 ADR 非离线产品叙事）**
+- 产品文档 §0.1.4、§0.5、§5.3、§5.10.1（Omnibox ECS 仍须五要素 suggest）、§3.1 Omnibox 条数
 - 代码：`recall-backend.ts`、`hybrid-recall-backend.ts`、`omnibox.ts`、`omnibox-suggest.ts`（`OMNIBOX_SUGGEST_LIMIT`）、`keyword-filter.ts`（`behaviorProfile` / 形态缩写）

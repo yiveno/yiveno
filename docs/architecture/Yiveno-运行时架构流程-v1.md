@@ -5,7 +5,7 @@
 > **Recall 登记图（2026-10-30）：** `runtime.recall-sidepanel-sequence` / `runtime.dismiss-feedback-sequence` 已对照 Hybrid 实现语义同步；报告见 [`docs/diagrams/reports/2026-10-Recall图表语义同步.md`](../diagrams/reports/2026-10-Recall图表语义同步.md)。  
 > **Capture / Open 登记图（2026-10-31）：** `runtime.capture-excerpt-sequence` / `runtime.open-record-sequence` 已逐边对照实现；报告见 [`docs/diagrams/reports/2026-10-Capture-Open图表语义复审.md`](../diagrams/reports/2026-10-Capture-Open图表语义复审.md)。  
 > **Outcome 多通道总览（2026-10-31）：** `recall.outcome-settlement-channels`（§7.2）；报告见 [`docs/diagrams/reports/2026-10-Outcome-Settlement图表补齐.md`](../diagrams/reports/2026-10-Outcome-Settlement图表补齐.md)。
-> **Omnibox 离线快跳（2026-10-31）：** `runtime.omnibox-offline-recall`（§3.5 · ADR-007）；初登见 [`docs/diagrams/reports/2026-10-Omnibox-Offline-Recall图表补齐.md`](../diagrams/reports/2026-10-Omnibox-Offline-Recall图表补齐.md)；第十六阶段语义复核见 [`docs/diagrams/reports/2026-10-Omnibox-Offline-Recall语义复核.md`](../diagrams/reports/2026-10-Omnibox-Offline-Recall语义复核.md)。
+> **Omnibox 本机快跳（2026-10-31 · 读法 ADR-021）：** `runtime.omnibox-offline-recall`（§3.5 · ADR-007；图 id 历史名含 offline＝本机 lookup，≠离线产品）；初登见 [`docs/diagrams/reports/2026-10-Omnibox-Offline-Recall图表补齐.md`](../diagrams/reports/2026-10-Omnibox-Offline-Recall图表补齐.md)；第十六阶段语义复核见 [`docs/diagrams/reports/2026-10-Omnibox-Offline-Recall语义复核.md`](../diagrams/reports/2026-10-Omnibox-Offline-Recall语义复核.md)。
 > **书签 Chrome→IDB 灌库（2026-10-31）：** `runtime.bookmark-chrome-ingest`（§3.1.1 · ≠ 划词 Capture · 不上云）；报告见 [`docs/diagrams/reports/2026-10-Bookmark-Chrome-Ingest图表补齐.md`](../diagrams/reports/2026-10-Bookmark-Chrome-Ingest图表补齐.md)。  
 > **仍以代码 + 产品文档 / ADR / registry 为准**的部分：完整 message 清单、Hybrid 算法细节、Settings/云同步/Account 深路径。  
 > 漂移记录：[`docs/audits/2026-10-运行时架构文档与实现漂移.md`](../audits/2026-10-运行时架构文档与实现漂移.md)。  
@@ -106,7 +106,7 @@ flowchart LR
 | 登录迁移门闸（无主摘录） | `auth.login-migration-gate`           | [`docs/AUTH_GUIDE.md`](../AUTH_GUIDE.md)（ADR-018）       |
 | Pro 摘录云同步           | `sync.excerpt-cloud-pro-gate`         | [ADR-017](./decisions/ADR-017-cloud-sync-excerpt-only.md) |
 | 书签 Chrome→IDB          | `runtime.bookmark-chrome-ingest`      | 本文 §3.1.1                                               |
-| Omnibox 离线快跳         | `runtime.omnibox-offline-recall`      | 本文 §3.5                                                 |
+| Omnibox 本机快跳         | `runtime.omnibox-offline-recall`      | 本文 §3.5（ADR-021：非离线产品）                          |
 | Outcome 结算             | `recall.outcome-settlement-channels`  | 本文 §3.4.1                                               |
 | 划词 Capture             | `runtime.capture-excerpt-sequence`    | 本文 §3.1                                                 |
 | Side Panel Recall        | `runtime.recall-sidepanel-sequence`   | 本文 §3.2                                                 |
@@ -235,13 +235,13 @@ flowchart LR
   - 契约：`recallWithClue(clue, options?) → Promise<RecallResult>`（含 `entry` 等）
 - **当前主实现：** `extension/src/application/recall/backends/hybrid-recall-backend.ts`
   - 含关键词候选 +（有向量时）语义近邻 / RRF 融合、内容佐证门、时间置信度、异步 Topic Embedding 等；细节以该文件与产品文档 / ADR 为准
-- **已移除：** 独立的 `keyword-recall-backend.ts`（关键词仍作为 Hybrid 降级 / Omnibox 离线分轨内的能力，不是并列「当前主 backend」）
+- **已移除：** 独立的 `keyword-recall-backend.ts`（关键词仍作为 Hybrid 降级 / Omnibox 本机快跳分轨内的能力，不是并列「当前主 backend」）
 
 入口接管：
 
 - `extension/src/application/recall/recall-service.ts`
   - 直接 `new HybridRecallBackend()` 并委托
-  - Side Panel / MCP → 完整 Hybrid；Omnibox → 同 backend 的 `entry: 'omnibox'` 离线快跳（ADR-007）
+  - Side Panel / MCP → 完整 Hybrid；Omnibox → 同 backend 的 `entry: 'omnibox'` 本机快跳（ADR-007 · ADR-021）
 
 若再拆新 backend / 改 outcome 规则（仍建议）：
 
@@ -805,7 +805,7 @@ Listener 直调（无 UI messaging）仍算运行时入口：`omnibox` / `contex
 | 功能                        | UI / 入口                                     | Background / listener                                        | 领域/服务                                               | 持久化                      |
 | --------------------------- | --------------------------------------------- | ------------------------------------------------------------ | ------------------------------------------------------- | --------------------------- |
 | Recall（Hybrid）            | `recallWithClue()`                            | `handleRecallWithClue`                                       | `HybridRecallBackend` + core                            | 读：`listForKeywordRecall`  |
-| Omnibox 离线找              | （无 UI）                                     | `listeners/omnibox` → `recallWithClue({ entry: 'omnibox' })` | 同 backend lexical 分轨                                 | 读候选；打开时写 open       |
+| Omnibox 本机快跳            | （无 UI）                                     | `listeners/omnibox` → `recallWithClue({ entry: 'omnibox' })` | 同 backend lexical 分轨                                 | 读候选；打开时写 open       |
 | dismiss                     | `recordRecallDismiss()` + 会话 `dismissedIds` | `handleRecordRecallDismiss`                                  | 硬排除 + `recordDismiss`                                | 写 dismiss 字段             |
 | settle（§7.2）              | `recordRecallSettle()`                        | memory-handler settle                                        | Outcome 正例计数                                        | 见产品文档 §7.2             |
 | 打开行为                    | `recordMemoryOpen()`                          | `handleRecordMemoryOpen` / Omnibox `recordOpen`              | `recordOpen`                                            | 写 openCount / lastOpenedAt |

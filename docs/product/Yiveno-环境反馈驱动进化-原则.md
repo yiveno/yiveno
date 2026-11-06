@@ -130,20 +130,20 @@ M(t+1) = U(M(t), X(t), F(t))
 
 ### 3.1 已实现（可当真）
 
-| 能力                                  | 证据（路径 / 文档）                                          | 与本原则的关系                                                 |
-| ------------------------------------- | ------------------------------------------------------------ | -------------------------------------------------------------- |
-| 邻域交付、非神谕                      | ADR-003；产品 §0.1.1 / §7                                    | 目标稳定：履约=邻域命中，非唯一答案崇拜                        |
-| LLM 理解 → Zod → 确定性 Filter/Hybrid | ADR-004 / ADR-010；`understand-recall-clue` / Hybrid backend | 手段可演进；数据平面不交给模型乱写                             |
-| 禁止内容灰名单通解                    | ADR-005                                                      | 防「捷径假进化」                                               |
-| Omnibox 离线快跳 vs Side Panel 完整轨 | ADR-007                                                      | 质量—延迟分轨；Omnibox **禁** Outcome 软调 / Hybrid            |
-| 相对时间置信度分层                    | ADR-011                                                      | 策略层已有人工钉死的硬/软分流                                  |
-| Outcome 标签空间与置信分级            | §7.2；`recall-outcome.ts` / `commit-recall-outcome`          | **强/弱/unknown** 已建模；explore ≠ settle                     |
-| Outcome 对本机软升/降权               | §7.2 P3；`apply-stored-outcome-pairs.ts`                     | **薄参数/记忆适应**（clue fingerprint → target）；非策略选择器 |
-| 行为 soft rank（settled 优先）        | `computeBehaviorBoost`；Omnibox 用 `settledCount`            | 个人履约信号进排序；受 cap                                     |
-| TTE 七事件 + `pipelineTiming`         | §5.9；`recall-telemetry.ts`                                  | 观测分割：understand / candidateLoad / retrieve                |
-| 独立离线评估                          | `recall-eval` / hybrid / parse-gold / framing / omnibox eval | **独立于日常点击**的质量尺                                     |
-| 内容佐证门 + 硬筛空窗 soft 回退       | ADR-011 相关；Outcome 正例须佐证                             | 防弱反馈把假阳性钉死                                           |
-| 命题先验纪律                          | §0.1.0；改版 R0                                              | 与本原则同向（见 §1.3）                                        |
+| 能力                                  | 证据（路径 / 文档）                                          | 与本原则的关系                                                    |
+| ------------------------------------- | ------------------------------------------------------------ | ----------------------------------------------------------------- |
+| 邻域交付、非神谕                      | ADR-003；产品 §0.1.1 / §7                                    | 目标稳定：履约=邻域命中，非唯一答案崇拜                           |
+| LLM 理解 → Zod → 确定性 Filter/Hybrid | ADR-004 / ADR-010；`understand-recall-clue` / Hybrid backend | 手段可演进；数据平面不交给模型乱写                                |
+| 禁止内容灰名单通解                    | ADR-005                                                      | 防「捷径假进化」                                                  |
+| Omnibox 本机快跳 vs Side Panel 完整轨 | ADR-007 · ADR-021                                            | 质量—延迟分轨（非离线产品）；Omnibox **禁** Outcome 软调 / Hybrid |
+| 相对时间置信度分层                    | ADR-011                                                      | 策略层已有人工钉死的硬/软分流                                     |
+| Outcome 标签空间与置信分级            | §7.2；`recall-outcome.ts` / `commit-recall-outcome`          | **强/弱/unknown** 已建模；explore ≠ settle                        |
+| Outcome 对本机软升/降权               | §7.2 P3；`apply-stored-outcome-pairs.ts`                     | **薄参数/记忆适应**（clue fingerprint → target）；非策略选择器    |
+| 行为 soft rank（settled 优先）        | `computeBehaviorBoost`；Omnibox 用 `settledCount`            | 个人履约信号进排序；受 cap                                        |
+| TTE 七事件 + `pipelineTiming`         | §5.9；`recall-telemetry.ts`                                  | 观测分割：understand / candidateLoad / retrieve                   |
+| 独立离线评估                          | `recall-eval` / hybrid / parse-gold / framing / omnibox eval | **独立于日常点击**的质量尺                                        |
+| 内容佐证门 + 硬筛空窗 soft 回退       | ADR-011 相关；Outcome 正例须佐证                             | 防弱反馈把假阳性钉死                                              |
+| 命题先验纪律                          | §0.1.0；改版 R0                                              | 与本原则同向（见 §1.3）                                           |
 
 ### 3.2 已存在但未充分利用
 

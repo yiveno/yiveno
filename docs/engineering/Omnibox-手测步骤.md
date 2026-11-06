@@ -1,4 +1,4 @@
-# Omnibox 离线快跳 · 手测步骤（ADR-007）
+# Omnibox 本机快跳 · 手测步骤（ADR-007 · ADR-021）
 
 > **Normative 摘要：** [`Yiveno-产品文档-v4.0.md`](../product/Yiveno-产品文档-v4.0.md) **§5.10.8**。  
 > **架构：** [`ADR-007`](../architecture/decisions/ADR-007-omnibox-offline-lookup.md)。  
@@ -153,7 +153,7 @@ that chrome extension migration guide I bookmarked
 
 复现 `yi chrome extension migration` 后，在 `chrome://extensions/?errors=<id>` 或 SW 控制台查找：
 
-- `Omnibox 离线查找：流水线结束`
+- `Omnibox 本机快跳：流水线结束`
 - `understandSource: rules`（非 `llm`）
 - `outcome: top_pick`（具体锚点）
 - **无** framing NLG 成功路径

@@ -35,7 +35,7 @@ function emptyNoMatch(clue: string): RecallResult {
 }
 
 /**
- * 跑 Omnibox 离线快跳轨 eval（对齐 ADR-007）：
+ * 跑 Omnibox 本机快跳轨 eval（对齐 ADR-007 · ADR-021）：
  * - `understandRecallClue` + `forceMode: lexical`（无 LLM completer）
  * - 单轮、无 context / framing
  * - 关键词 Filter（与 HybridRecallBackend Omnibox 分支同契约；无静态缩写字典）

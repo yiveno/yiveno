@@ -55,6 +55,7 @@ import {
   selectAllDetailExportItems,
   toggleDetailExportSelection as toggleDetailExportSelectionSet
 } from '@/infrastructure/recall/detail-export-selection'
+import { MEMORY_LIBRARY_REVISION_LOCAL_KEY } from '@/infrastructure/storage/memory-library-revision-storage'
 
 defineOptions({ name: 'LibraryPage' })
 
@@ -369,11 +370,58 @@ function handleUiPushMessage(message: unknown): void {
   scheduleBookmarkTreeRefresh()
 }
 
-function handleDocumentVisibilityChange(): void {
+/**
+ * 可见时静默对齐当前 Tab（摘录重拉 / 书签树防抖刷新）。
+ * 划存后切回 Library、或页仍开着时靠 revision 信号；勿只刷书签树。
+ */
+function refreshVisibleLibraryPanel(): void {
   if (document.visibilityState !== 'visible') {
     return
   }
-  scheduleBookmarkTreeRefresh()
+  if (showingBookmarkTree.value) {
+    scheduleBookmarkTreeRefresh()
+    return
+  }
+  void refreshExcerptListSilent()
+}
+
+/** 摘录 Tab 静默重拉：不闪 loading，失败保留旧列表。 */
+async function refreshExcerptListSilent(): Promise<void> {
+  if (showingBookmarkTree.value) {
+    return
+  }
+  try {
+    const response = await listMemoryItems({
+      type: 'text_excerpt',
+      limit: LIBRARY_LIST_LIMIT
+    })
+    if (!response.ok || !('items' in response)) {
+      return
+    }
+    items.value = response.items
+    rebuildListRows()
+    if (loadState.value !== 'ready') {
+      loadState.value = 'ready'
+    }
+    errorMessage.value = ''
+  } catch {
+    // 忽略：静默刷新失败不打断浏览
+  }
+}
+
+function handleDocumentVisibilityChange(): void {
+  refreshVisibleLibraryPanel()
+}
+
+/** 划存 / 删摘录 / 清库 bump 的库修订信号 → 可见时静默对齐列表。 */
+function handleLibraryRevisionStorageChanged(
+  changes: Record<string, chrome.storage.StorageChange>,
+  areaName: string
+): void {
+  if (areaName !== 'local' || !(MEMORY_LIBRARY_REVISION_LOCAL_KEY in changes)) {
+    return
+  }
+  refreshVisibleLibraryPanel()
 }
 
 async function loadExcerptList() {
@@ -449,6 +497,13 @@ function closeDeleteConfirm() {
   deleteConfirmError.value = ''
 }
 
+/** 删除成功（或已不存在）后关确认框；不可走 closeDeleteConfirm（其在 deletingId 占用时会拒关）。 */
+function dismissDeleteConfirmAfterSuccess(): void {
+  deleteConfirmOpen.value = false
+  pendingDeleteId.value = null
+  deleteConfirmError.value = ''
+}
+
 async function confirmDeleteExcerpt() {
   const id = pendingDeleteId.value
   if (!id || deletingId.value) {
@@ -460,12 +515,19 @@ async function confirmDeleteExcerpt() {
   try {
     const response = await deleteMemoryItem({ id })
     if (!response.ok) {
+      // 首点已删成、弹窗未关时再点：服务端 NOT_FOUND；列表已空，应关框而非卡死再报错
+      if (response.errorCode === 'MEMORY_NOT_FOUND') {
+        items.value = items.value.filter(item => item.id !== id)
+        rebuildListRows()
+        dismissDeleteConfirmAfterSuccess()
+        return
+      }
       deleteConfirmError.value = tMemoryError(response.errorCode)
       return
     }
     items.value = items.value.filter(item => item.id !== id)
     rebuildListRows()
-    closeDeleteConfirm()
+    dismissDeleteConfirmAfterSuccess()
   } catch {
     deleteConfirmError.value = t('library_delete_failed')
   } finally {
@@ -565,11 +627,13 @@ watch(
 
 onMounted(() => {
   chrome.runtime.onMessage.addListener(handleUiPushMessage)
+  chrome.storage.onChanged.addListener(handleLibraryRevisionStorageChanged)
   document.addEventListener('visibilitychange', handleDocumentVisibilityChange)
 })
 
 onUnmounted(() => {
   chrome.runtime.onMessage.removeListener(handleUiPushMessage)
+  chrome.storage.onChanged.removeListener(handleLibraryRevisionStorageChanged)
   document.removeEventListener('visibilitychange', handleDocumentVisibilityChange)
   if (bookmarkTreeRefreshTimer !== null) {
     clearTimeout(bookmarkTreeRefreshTimer)

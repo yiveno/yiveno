@@ -57,7 +57,7 @@ export type AssistantTurn = {
   understandingEcho?: RecallUnderstandingEchoChip[]
   /**
    * LLM 失败/超时降级后的结果轻提示（已翻译）。
-   * 仅 `rules_fallback`；离线 omit（`rules`）不叠。
+   * 仅 `rules_fallback`；断网 omit LLM（source=`rules`）不叠。
    */
   deeperReadingTip?: string
   allowDismiss: boolean

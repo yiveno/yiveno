@@ -345,7 +345,7 @@ export const APP_ICON_NODES: Record<AppIconName, readonly AppIconNode[]> = {
     ['path', { d: 'M12 9v4' }],
     ['path', { d: 'M12 17h.01' }]
   ] as const,
-  // Lucide WifiOff：离线条模式披露（壳级 offline）
+  // Lucide WifiOff：断网薄适配条披露（ADR-021；非离线产品）
   wifi_off: [
     ['path', { d: 'M12 20h.01' }],
     ['path', { d: 'M8.5 16.429a5 5 0 0 1 7 0' }],

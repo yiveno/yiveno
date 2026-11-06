@@ -9,7 +9,7 @@ import { createRecallFlowTrace } from '@/application/recall/create-recall-flow-t
 import { getClueLlmCompleter } from '@/application/recall/clue-llm-completer-registry'
 import {
   readBrowserOnline,
-  shouldOmitClueLlmCompleterWhenOffline
+  shouldOmitClueLlmCompleterWhenBrowserOffline
 } from '@/infrastructure/browser/browser-online'
 import type { RecallBackend, RecallWithClueOptions } from '@/application/recall/recall-backend'
 import type { RecallVisibleProgressStage } from '@/core/recall/visible-progress'
@@ -800,15 +800,17 @@ export class HybridRecallBackend implements RecallBackend {
       currentTabDomain: currentTabDomain ?? null
     })
 
-    // Omnibox 本就本地；离线时 Side Panel 也省略 LLM（本机规则），避免空等云端
+    // Omnibox：本机快跳，从不挂线索 LLM。Side Panel：仅 navigator 断网时薄适配省略 LLM（ADR-021），避免空等云端
     const browserOnline = readBrowserOnline()
-    const omitClueLlmForOffline =
-      !isOmniboxEntry && shouldOmitClueLlmCompleterWhenOffline(browserOnline)
-    if (omitClueLlmForOffline) {
-      trace('info', '离线：跳过线索 LLM，走规则理解', { entry, browserOnline: false })
+    const omitClueLlmForBrowserOffline =
+      !isOmniboxEntry && shouldOmitClueLlmCompleterWhenBrowserOffline(browserOnline)
+    if (omitClueLlmForBrowserOffline) {
+      trace('info', '断网薄适配：跳过线索 LLM，走规则理解', { entry, browserOnline: false })
     }
     const complete =
-      isOmniboxEntry || omitClueLlmForOffline ? undefined : (getClueLlmCompleter() ?? undefined)
+      isOmniboxEntry || omitClueLlmForBrowserOffline
+        ? undefined
+        : (getClueLlmCompleter() ?? undefined)
     const visibleProgressStages: RecallVisibleProgressStage[] = []
     const reportProgress = (stage: RecallVisibleProgressStage) => {
       if (isOmniboxEntry) {
@@ -988,7 +990,7 @@ export class HybridRecallBackend implements RecallBackend {
       effectiveParsedForFraming = finalized.effectiveParsed
       timeSoftReopen = finalized.timeSoftReopen
     } else if (isOmniboxEntry) {
-      // Omnibox 离线快跳（ADR-007）：已知锚点 → 纯本地关键词路径（无 Hybrid / 无向量 / 无 Outcome）。
+      // Omnibox 本机快跳（ADR-007 · ADR-021）：已知锚点 → 纯本地关键词（无 Hybrid / 无向量 / 无 Outcome）。
       // 不做查询侧静态缩写字典扩词（ADR-005）；缩写/口语残差 → Side Panel。
       const finalized = await finalizeKeywordResult(
         normalizedClue,
@@ -1056,7 +1058,7 @@ export class HybridRecallBackend implements RecallBackend {
         usedHybrid,
         ...(timeSoftReopen ? { timeSoftReopen: true } : {})
       }
-      trace('info', 'Omnibox 离线查找：流水线结束', {
+      trace('info', 'Omnibox 本机快跳：流水线结束', {
         durationMs: pipelineTiming.totalMs,
         usedHybrid,
         timeSoftReopen,

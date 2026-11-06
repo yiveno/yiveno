@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
   readBrowserOnline,
-  shouldOmitClueLlmCompleterWhenOffline,
+  shouldOmitClueLlmCompleterWhenBrowserOffline,
   subscribeBrowserOnline
 } from '@/infrastructure/browser/browser-online'
 
@@ -55,8 +55,8 @@ describe('browser-online', () => {
     expect(listeners.get('offline')?.size ?? 0).toBe(0)
   })
 
-  it('shouldOmitClueLlmCompleterWhenOffline：仅离线省略', () => {
-    expect(shouldOmitClueLlmCompleterWhenOffline(false)).toBe(true)
-    expect(shouldOmitClueLlmCompleterWhenOffline(true)).toBe(false)
+  it('shouldOmitClueLlmCompleterWhenBrowserOffline：仅断网省略', () => {
+    expect(shouldOmitClueLlmCompleterWhenBrowserOffline(false)).toBe(true)
+    expect(shouldOmitClueLlmCompleterWhenBrowserOffline(true)).toBe(false)
   })
 })

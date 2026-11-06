@@ -59,10 +59,10 @@ describe('understandRecallClue', () => {
     )
   })
 
-  it('无 completer → 规则（口语也降级）', async () => {
+  it('无 completer → 规则垫片（口语也 lexical，禁止伪 semantic）', async () => {
     const result = await understandRecallClue('The movie that I watched yesterday')
     expect(result.disposition).toBe('proceed')
-    expect(result.mode).toBe('semantic')
+    expect(result.mode).toBe('lexical')
     expect(result.source).toBe('rules')
   })
 
