@@ -12,7 +12,7 @@
  * 适用边界：
  * - 缓存键**不含** model；切换 completer / 换模型时**不**自动失效。
  *   调用方须 `clearLlmParseCache()`，或 `parseRecallClueWithLlm({ useCache: false })`。
- * - `compareParseGoldWithLlm` 默认清缓存且 `useCache: false`（离线换模不串提案）。
+ * - 离线换模 / 评测注入 completer 时须 `useCache: false` 或先 `clearLlmParseCache()`，避免串提案。
  * - 生产路径：`clue-llm-completer-registry` 装配时机稳定；换配置时 registry 侧应清缓存。
  */
 

@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
-import { compareParseGoldWithLlm } from '@/core/recall/eval/compare-parse-gold'
 import {
   extractJsonObjectText,
   parseJsonObjectFromLlmText
 } from '@/core/recall/understand/extract-llm-json'
 import { mapLlmProposalToParsedClue } from '@/core/recall/understand/map-llm-proposal-to-parsed'
 import { PARSE_GOLD_NOW_MS } from '@/core/recall/eval/parse-gold-now'
+import { parseRecallClue } from '@/core/recall/parse-recall-clue'
 import { parseRecallClueWithLlm } from '@/core/recall/understand/parse-recall-clue-with-llm'
 import type { LlmChatCompleter } from '@/core/recall/understand/parse-recall-clue-with-llm'
 
@@ -172,8 +172,8 @@ describe('mapLlmProposalToParsedClue', () => {
   })
 })
 
-describe('parseRecallClueWithLlm + compare（mock）', () => {
-  it('mock：verse 主词典 must 与既有 must 同过且不回归', async () => {
+describe('parseRecallClueWithLlm · verse 主词典（mock）', () => {
+  it('mock：verse 线索映射为 poem；规则路径同认 poem', async () => {
     const complete: LlmChatCompleter = async messages => {
       const user = messages.find(item => item.role === 'user')?.content ?? ''
       const clue = user.replace(/^Clue:\n/, '')
@@ -189,16 +189,6 @@ describe('parseRecallClueWithLlm + compare（mock）', () => {
         })
       }
 
-      // 其余：尽量贴合规则已会的槽位（测 harness，非真模型能力）
-      if (clue === 'yesterday saved a poem about Li Bai') {
-        return JSON.stringify({
-          timeLabel: 'yesterday',
-          objectTypes: ['poem'],
-          contentTerms: ['li', 'bai'],
-          confidence: 'high'
-        })
-      }
-
       return JSON.stringify({
         timeLabel: null,
         objectTypes: null,
@@ -207,44 +197,13 @@ describe('parseRecallClueWithLlm + compare（mock）', () => {
       })
     }
 
-    const subset = [
-      {
-        id: 'p0-time-type-entity-li-bai',
-        clue: 'yesterday saved a poem about Li Bai',
-        gate: 'must' as const,
-        expect: {
-          timeLabel: 'yesterday' as const,
-          objectTypes: ['poem' as const],
-          contentTermsMustInclude: ['li', 'bai'],
-          contentTermsExact: true,
-          confidence: 'high' as const
-        },
-        note: 'subset must'
-      },
-      {
-        id: 'must-verse-as-poem',
-        clue: 'that Li Bai verse from the other day',
-        gate: 'must' as const,
-        expect: {
-          timeLabel: 'recent' as const,
-          objectTypes: ['poem' as const],
-          contentTermsMustInclude: ['li', 'bai'],
-          contentTermsMustExclude: ['verse'],
-          confidence: 'high' as const
-        },
-        note: 'subset must · verse 主词典'
-      }
-    ]
-
-    const parsed = await parseRecallClueWithLlm(subset[1]!.clue, { complete })
+    const clue = 'that Li Bai verse from the other day'
+    const parsed = await parseRecallClueWithLlm(clue, { complete })
     expect(parsed.objectTypes).toEqual(['poem'])
     expect(parsed.contentTerms).toEqual(['li', 'bai'])
 
-    const report = await compareParseGoldWithLlm({ cases: subset, complete })
-    // verse 已并入主词典：规则与 LLM 均过 must；无 stretch 抬升叙事
-    expect(report.stretchLiftedByLlm).toEqual([])
-    expect(report.mustRegressedByLlm).toEqual([])
-    expect(report.llm.must.passed).toBe(2)
-    expect(report.rules.must.passed).toBe(2)
+    // 规则路径：verse 已并入主词典 → poem（不再依赖已退役 compare-parse-gold）
+    const rules = parseRecallClue(clue, { nowMs: PARSE_GOLD_NOW_MS })
+    expect(rules.objectTypes).toContain('poem')
   })
 })

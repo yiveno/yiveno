@@ -1,4 +1,4 @@
-import type { ParseGoldCase, ParseGoldSlots } from '@/core/recall/eval/parse-gold-cases'
+import type { ParseGoldSlots } from '@/core/recall/eval/parse-gold-cases'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 
 function sortedCopy(values: string[]): string[] {
@@ -127,16 +127,4 @@ export function diffParseGoldSlots(parsed: ParsedRecallClue, expect: ParseGoldSl
   }
 
   return failures
-}
-
-/** 判定单条金标是否通过。 */
-export function judgeParseGoldCase(
-  goldCase: ParseGoldCase,
-  parsed: ParsedRecallClue
-): { passed: boolean; detail: string } {
-  const failures = diffParseGoldSlots(parsed, goldCase.expect)
-  if (failures.length === 0) {
-    return { passed: true, detail: '槽位对齐金标' }
-  }
-  return { passed: false, detail: failures.join('；') }
 }

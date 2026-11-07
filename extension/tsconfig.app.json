@@ -60,9 +60,6 @@
     "vitest.config.mts",
 
     // 生成的类型文件
-    ".vue-global-types",
-
-    // 离线 CLI 报告（node:fs/crypto；由 scripts + vitest 覆盖，勿进扩展 app 图）
-    "src/core/recall/eval/parse-gold-llm-report.ts"
+    ".vue-global-types"
   ]
 }
