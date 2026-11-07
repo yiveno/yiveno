@@ -38,7 +38,8 @@ vi.mock('@/infrastructure/identity/auth-session-service', () => ({
   getAuthSession: vi.fn(async () => null)
 }))
 
-vi.mock('@/application/recall/apply-stored-outcome-pairs', () => ({
+vi.mock('@/application/recall/apply-recall-context', () => ({
+  applyPageContextToMatches: vi.fn((matches: unknown[]) => matches),
   applyStoredOutcomePairsToMatches: vi.fn(async (matches: unknown[]) => matches)
 }))
 

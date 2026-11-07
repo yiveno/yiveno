@@ -55,8 +55,17 @@ export function sortIdsByRrf(lists: string[][], k = 60): string[] {
     .map(([id]) => id)
 }
 
+/** Hybrid 关键词召回池（再与向量融合）。 */
+export const HYBRID_KEYWORD_POOL = 100
+
 /** Hybrid 语义近邻：从全扫描集取 Top-K（不限关键词池）。 */
 export const HYBRID_SEMANTIC_NEIGHBOR_LIMIT = 24
+
+/**
+ * keyword miss 时扩大的 semantic 候选 K（默认 24 会让 rank>24 永远进不了 RRF）。
+ * 仅当 keyword pool 完全空时启用；cos 本就全量，扩 limit 只多取尾部。
+ */
+export const HYBRID_SEMANTIC_NEIGHBOR_LIMIT_EXPANDED = 100
 
 /** 过低余弦视为噪声，不进入融合。 */
 export const HYBRID_MIN_COSINE_SIMILARITY = 0.28

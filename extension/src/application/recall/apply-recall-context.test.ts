@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
-import { applyPageContextToMatches } from '@/application/recall/apply-page-context-to-matches'
-import { CURRENT_TAB_DOMAIN_BOOST } from '@/application/recall/apply-current-tab-domain-boost'
+import {
+  applyPageContextToMatches,
+  CURRENT_TAB_DOMAIN_BOOST
+} from '@/application/recall/apply-recall-context'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import type { RecallMatch } from '@/core/recall/recall-result'
 

@@ -4,7 +4,10 @@
  */
 
 import { memoryItemService } from '@/application/memory/memory-item-service'
-import { applyStoredOutcomePairsToMatches } from '@/application/recall/apply-stored-outcome-pairs'
+import {
+  applyPageContextToMatches,
+  applyStoredOutcomePairsToMatches
+} from '@/application/recall/apply-recall-context'
 import { createRecallFlowTrace } from '@/application/recall/create-recall-flow-trace'
 import { getClueLlmCompleter } from '@/application/recall/clue-llm-completer-registry'
 import {
@@ -13,7 +16,6 @@ import {
 } from '@/infrastructure/browser/browser-online'
 import type { RecallBackend, RecallWithClueOptions } from '@/application/recall/recall-backend'
 import type { RecallVisibleProgressStage } from '@/core/recall/visible-progress'
-import { applyPageContextToMatches } from '@/application/recall/apply-page-context-to-matches'
 import type { PageContextMode } from '@/core/recall/page-context-mode'
 import { filterMemoryItemsBySourceScope } from '@/core/recall/recall-source-scope'
 import { RECALL_SCAN_LIMIT } from '@/application/recall/backends/recall-scan-limit'
@@ -39,6 +41,9 @@ import {
   type NarrowExampleSource
 } from '@/core/recall/extract-composer-narrow-examples'
 import {
+  HYBRID_KEYWORD_POOL,
+  HYBRID_SEMANTIC_NEIGHBOR_LIMIT,
+  HYBRID_SEMANTIC_NEIGHBOR_LIMIT_EXPANDED,
   preferKeywordLeaderInHybridFusion,
   rankIdsByCosineToQuery,
   scoreFromCosineSimilarity,
@@ -89,18 +94,6 @@ import { understandRecallClue } from '@/core/recall/understand/understand-recall
 import { requestWorkerEmbeddings } from '@/infrastructure/ai/embed-api-client'
 import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
 import { t } from '@/infrastructure/i18n/t'
-
-/** Hybrid 关键词召回池（再与向量融合）。 */
-const HYBRID_KEYWORD_POOL = 100
-
-/**
- * 实验二修复（2026-09-20）：keyword miss 时扩大的 semantic 候选 K。
- * 默认 24 在 keyword miss 场景下会导致 rank > 24 的正确项永远无法进入 RRF fusion。
- * 仅当 keyword pool 完全空时启用更大 K，覆盖「仅靠 embedding 召回」的窄场景。
- * cos 计算本就全量；扩 limit 仅多取尾部几个候选，无新增计算成本。
- */
-const HYBRID_SEMANTIC_NEIGHBOR_LIMIT_EXPANDED = 100
-const HYBRID_SEMANTIC_NEIGHBOR_LIMIT = 24
 
 function attachDialogMeta(
   result: RecallResult,

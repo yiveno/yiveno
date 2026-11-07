@@ -64,7 +64,7 @@ export const RECALL_ADAPTATION_CONFIG: RecallAdaptationConfig = RecallAdaptation
       id: 'outcome_pair_soft_adjust',
       layer: 'param',
       summaryZh: '本机 Outcome 对升/降权（须内容佐证）',
-      codeAnchor: 'extension/src/application/recall/apply-stored-outcome-pairs.ts',
+      codeAnchor: 'extension/src/application/recall/apply-recall-context.ts',
       rollbackHint: '关闭或回退 applyOutcomePairScoreAdjustments 权重',
       evalGate: 'must + Outcome 正例佐证护栏；Omnibox 禁止',
       omniboxForbidden: true
