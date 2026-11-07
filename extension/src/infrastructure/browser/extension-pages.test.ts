@@ -6,7 +6,7 @@ vi.mock('@/infrastructure/browser/extension-tab', () => ({
   focusOrOpenSettingsTab: focusOrOpenSettingsTabMock
 }))
 
-import { openExtensionOptionsPage } from '@/infrastructure/browser/options-page'
+import { openExtensionOptionsPage } from '@/infrastructure/browser/extension-pages'
 
 describe('openExtensionOptionsPage', () => {
   it('走 focusOrOpenSettingsTab，不用 openOptionsPage 堆重复 Tab', async () => {

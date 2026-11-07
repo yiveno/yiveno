@@ -48,25 +48,14 @@ import {
   type RecallUnderstandingEchoChip
 } from '@/core/recall/format-recall-understanding-echo'
 import { formatRecallVisibleProgressBasis } from '@/core/recall/format-recall-visible-progress-basis'
-import type { RecallWaitProgressSnapshot } from '@/core/recall/recall-telemetry'
 import {
   selectBasisKindsForResultCopy,
   selectRecallVisibleProgressBasisKinds
 } from '@/core/recall/visible-progress-basis'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
-import {
-  advanceRecallVisibleProgress,
-  messageKeyForUnderstandingWaitTier,
-  RECALL_VISIBLE_PROGRESS_MESSAGE_KEYS,
-  RECALL_VISIBLE_PROGRESS_REVEAL_MS,
-  RECALL_VISIBLE_PROGRESS_STAGE_MIN_DWELL_MS,
-  selectUnderstandingWaitTier,
-  shouldRevealRecallVisibleProgress,
-  type RecallVisibleProgressStage
-} from '@/core/recall/visible-progress'
 import { parseRecallVisibleProgressMessage } from '@/core/messaging/ui-messages'
 import { tRecallError } from '@/infrastructure/i18n/background-error'
-import { openGettingStartedPage } from '@/infrastructure/browser/getting-started-page'
+import { openGettingStartedPage } from '@/infrastructure/browser/extension-pages'
 import { focusOrOpenSettingsTab } from '@/infrastructure/browser/extension-tab'
 import { SETTINGS_HASH_CHROME_BOOKMARK_INGEST } from '@/core/settings/settings-sections'
 import type { RecallShellTextSegment } from '@/core/recall/recall-shell-empty-copy'
@@ -153,6 +142,7 @@ import {
 } from '@/application/recall/commit-recall-outcome'
 import { createRecallTelemetryRecorder } from '@/infrastructure/analytics/recall-telemetry-recorder'
 import { toRecallMatchCard } from '@/pages/sidepanel/recall-match-card'
+import { useRecallVisibleProgress } from '@/pages/sidepanel/use-recall-visible-progress'
 
 defineOptions({ name: 'SidePanelPage' })
 
@@ -176,227 +166,28 @@ const clue = ref('')
 const clueInputRef = ref<InstanceType<typeof RecallComposer> | null>(null)
 /** 有旧结果时后台刷新，避免拆掉列表 DOM。 */
 const isRecallRefreshing = ref(false)
-/** §7.0 可见进展：本轮 progressRequestId 与阶段（慢请求才揭示）。 */
-const recallProgressRequestId = ref<string | null>(null)
-const recallProgressStartedAt = ref(0)
-const recallProgressRevealed = ref(false)
-const recallProgressCurrent = ref<RecallVisibleProgressStage | null>(null)
-const recallProgressCompleted = ref<RecallVisibleProgressStage[]>([])
-/** 驱动 understanding 等待梯级文案随 elapsed 更新。 */
-const recallProgressNowMs = ref(0)
-let recallProgressRevealTimer: ReturnType<typeof setTimeout> | null = null
-let recallProgressTickTimer: ReturnType<typeof setInterval> | null = null
-/** 阶段展示队列：真实已发生，但 pacing 以免后两步一闪而过。 */
-const recallProgressStageQueue: RecallVisibleProgressStage[] = []
-let recallProgressQueueFlushing = false
-let recallProgressQueueWaiters: Array<() => void> = []
 const errorMessage = ref('')
 
-function stopRecallProgressTick(): void {
-  if (recallProgressTickTimer !== null) {
-    clearInterval(recallProgressTickTimer)
-    recallProgressTickTimer = null
-  }
-}
+/** §5.9 TTE 七事件 + §7.0 wait_abandoned 本机录制（与 Outcome 会话同寿）。 */
+const recallTelemetry = createRecallTelemetryRecorder()
 
-function startRecallProgressTick(): void {
-  stopRecallProgressTick()
-  recallProgressNowMs.value = Date.now()
-  recallProgressTickTimer = setInterval(() => {
-    recallProgressNowMs.value = Date.now()
-  }, 400)
-}
-
-/** 当前 active 阶段文案 key（understanding 可升等待梯级）。 */
-function activeProgressMessageKey(stage: RecallVisibleProgressStage): string {
-  if (stage === 'understanding') {
-    const elapsed = Math.max(0, recallProgressNowMs.value - recallProgressStartedAt.value)
-    return messageKeyForUnderstandingWaitTier(selectUnderstandingWaitTier(elapsed))
+const {
+  recallProgressRequestId,
+  recallProgressStartedAt,
+  recallPendingSteps,
+  recallPendingLabel,
+  clearRecallVisibleProgressUi,
+  startRecallVisibleProgressUi,
+  enqueueRecallVisibleProgressStage,
+  enqueueMissingVisibleProgressStages,
+  finishRecallVisibleProgressUi,
+  snapshotWaitProgress,
+  recordVisibleProgressWaitAbandoned
+} = useRecallVisibleProgress({
+  isRecallRefreshing,
+  recordWaitAbandoned: input => {
+    recallTelemetry.recordWaitAbandoned(input)
   }
-  return RECALL_VISIBLE_PROGRESS_MESSAGE_KEYS[stage]
-}
-
-function sleepMs(ms: number): Promise<void> {
-  return new Promise(resolve => {
-    setTimeout(resolve, ms)
-  })
-}
-
-function settleRecallProgressQueueWaiters(): void {
-  const waiters = recallProgressQueueWaiters
-  recallProgressQueueWaiters = []
-  for (const resolve of waiters) {
-    resolve()
-  }
-}
-
-function clearRecallVisibleProgressUi(): void {
-  if (recallProgressRevealTimer !== null) {
-    clearTimeout(recallProgressRevealTimer)
-    recallProgressRevealTimer = null
-  }
-  stopRecallProgressTick()
-  recallProgressStageQueue.length = 0
-  recallProgressQueueFlushing = false
-  settleRecallProgressQueueWaiters()
-  recallProgressRequestId.value = null
-  recallProgressStartedAt.value = 0
-  recallProgressNowMs.value = 0
-  recallProgressRevealed.value = false
-  recallProgressCurrent.value = null
-  recallProgressCompleted.value = []
-}
-
-function startRecallVisibleProgressUi(progressRequestId: string): void {
-  clearRecallVisibleProgressUi()
-  recallProgressRequestId.value = progressRequestId
-  recallProgressStartedAt.value = Date.now()
-  startRecallProgressTick()
-  recallProgressRevealTimer = setTimeout(() => {
-    if (recallProgressRequestId.value !== progressRequestId) {
-      return
-    }
-    if (shouldRevealRecallVisibleProgress(Date.now() - recallProgressStartedAt.value)) {
-      recallProgressRevealed.value = true
-    }
-  }, RECALL_VISIBLE_PROGRESS_REVEAL_MS)
-}
-
-function applyRecallVisibleProgressStageNow(stage: RecallVisibleProgressStage): void {
-  const advanced = advanceRecallVisibleProgress(
-    recallProgressCurrent.value,
-    stage,
-    recallProgressCompleted.value
-  )
-  recallProgressCurrent.value = advanced.current
-  recallProgressCompleted.value = advanced.completed
-  if (
-    !recallProgressRevealed.value &&
-    shouldRevealRecallVisibleProgress(Date.now() - recallProgressStartedAt.value)
-  ) {
-    recallProgressRevealed.value = true
-  }
-}
-
-async function flushRecallVisibleProgressQueue(): Promise<void> {
-  if (recallProgressQueueFlushing) {
-    await new Promise<void>(resolve => {
-      recallProgressQueueWaiters.push(resolve)
-    })
-    return
-  }
-  recallProgressQueueFlushing = true
-  try {
-    while (recallProgressStageQueue.length > 0) {
-      const stage = recallProgressStageQueue.shift()
-      if (!stage) {
-        break
-      }
-      applyRecallVisibleProgressStageNow(stage)
-      await sleepMs(RECALL_VISIBLE_PROGRESS_STAGE_MIN_DWELL_MS)
-    }
-  } finally {
-    recallProgressQueueFlushing = false
-    settleRecallProgressQueueWaiters()
-  }
-}
-
-function enqueueRecallVisibleProgressStage(stage: RecallVisibleProgressStage): void {
-  recallProgressStageQueue.push(stage)
-  void flushRecallVisibleProgressQueue()
-}
-
-/** 结果带回的阶段列表：补上推送竞态丢失的后半段（不立刻 flush，交给 finish）。 */
-function enqueueMissingVisibleProgressStages(
-  stages: readonly RecallVisibleProgressStage[] | undefined
-): void {
-  if (!stages || stages.length === 0) {
-    return
-  }
-  const seen = new Set<RecallVisibleProgressStage>([
-    ...recallProgressCompleted.value,
-    ...(recallProgressCurrent.value ? [recallProgressCurrent.value] : []),
-    ...recallProgressStageQueue
-  ])
-  for (const stage of stages) {
-    if (seen.has(stage)) {
-      continue
-    }
-    seen.add(stage)
-    recallProgressStageQueue.push(stage)
-  }
-}
-
-/** 结果已回：排空真实阶段队列后再撤 pending，避免只看见 understanding。 */
-async function finishRecallVisibleProgressUi(): Promise<void> {
-  await flushRecallVisibleProgressQueue()
-  clearRecallVisibleProgressUi()
-}
-
-const recallPendingSteps = computed(() => {
-  if (!isRecallRefreshing.value || !recallProgressRevealed.value) {
-    return []
-  }
-  // 依赖 tick，使 understanding 梯级文案随 elapsed 更新
-  void recallProgressNowMs.value
-  const steps: Array<{ label: string; active: boolean }> = []
-  for (const stage of recallProgressCompleted.value) {
-    steps.push({
-      label: t(RECALL_VISIBLE_PROGRESS_MESSAGE_KEYS[stage]),
-      active: false
-    })
-  }
-  if (recallProgressCurrent.value) {
-    steps.push({
-      label: t(activeProgressMessageKey(recallProgressCurrent.value)),
-      active: true
-    })
-  }
-  return steps
-})
-
-/** 本轮等待快照（放弃 / 出结果体验度量；与 §5.9 分计）。 */
-function snapshotWaitProgress(): RecallWaitProgressSnapshot {
-  const startedAt = recallProgressStartedAt.value
-  const elapsedMs = startedAt > 0 ? Math.max(0, Date.now() - startedAt) : 0
-  const peakStage =
-    recallProgressCurrent.value ??
-    (recallProgressCompleted.value.length > 0
-      ? recallProgressCompleted.value[recallProgressCompleted.value.length - 1]
-      : undefined)
-  const understandingTier =
-    recallProgressCurrent.value === 'understanding'
-      ? selectUnderstandingWaitTier(elapsedMs)
-      : undefined
-  return {
-    progressRevealed: recallProgressRevealed.value,
-    waitElapsedMs: elapsedMs,
-    ...(peakStage ? { peakStage } : {}),
-    ...(understandingTier !== undefined ? { understandingTier } : {})
-  }
-}
-
-/** 等待中放弃：关 Panel / 新找（改发 clue 由 beginClue 记 superseded）。 */
-function recordVisibleProgressWaitAbandoned(reason: 'panel_close' | 'new_find'): void {
-  if (!isRecallRefreshing.value) {
-    return
-  }
-  recallTelemetry.recordWaitAbandoned({
-    reason,
-    waitProgress: snapshotWaitProgress()
-  })
-}
-
-const recallPendingLabel = computed(() => {
-  if (!isRecallRefreshing.value) {
-    return t('popup_recall_pending')
-  }
-  void recallProgressNowMs.value
-  if (recallProgressRevealed.value && recallProgressCurrent.value) {
-    return t(activeProgressMessageKey(recallProgressCurrent.value))
-  }
-  // &lt;500ms：不展示阶段文案（仅脉冲）
-  return ''
 })
 
 const importState = ref<ChromeBookmarkImportState | null>(null)
@@ -441,8 +232,6 @@ const dialogState = ref<RecallDialogState>({
 
 /** §7.2 Outcome 会话信号（与 dialog 同寿；关 Panel / New find 结算后重置）。 */
 const outcomeSession = ref<RecallOutcomeSessionState>(createRecallOutcomeSessionState())
-/** §5.9 TTE 七事件 + §7.0 wait_abandoned 本机录制（与 Outcome 会话同寿）。 */
-const recallTelemetry = createRecallTelemetryRecorder()
 /** 出口条（通道 D）：仅同场 New find 前出示（不跨次打开补问）。 */
 const showOutcomeExitStrip = ref(false)
 /** 出口条出示期间暂存的 Omnibox 预填线索。 */

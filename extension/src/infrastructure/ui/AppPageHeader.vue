@@ -3,8 +3,8 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 import { SUBSCRIPTION_SNAPSHOT_STORAGE_KEY } from '@/core/identity/subscription-snapshot'
 import { watchAuthSessionStorage } from '@/infrastructure/auth/watch-auth-session-storage'
-import { openExtensionLibraryPage } from '@/infrastructure/browser/library-page'
-import { openExtensionOptionsPage } from '@/infrastructure/browser/options-page'
+import { openExtensionLibraryPage } from '@/infrastructure/browser/extension-pages'
+import { openExtensionOptionsPage } from '@/infrastructure/browser/extension-pages'
 import { openWebsiteAccountPage } from '@/infrastructure/browser/website-page'
 import { t } from '@/infrastructure/i18n/t'
 import {

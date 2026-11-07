@@ -14,7 +14,7 @@ import {
   recordMemoryOpen,
   updateMemoryNote
 } from '@/infrastructure/messaging/background-client'
-import { openExtensionLibraryPage } from '@/infrastructure/browser/library-page'
+import { openExtensionLibraryPage } from '@/infrastructure/browser/extension-pages'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
 

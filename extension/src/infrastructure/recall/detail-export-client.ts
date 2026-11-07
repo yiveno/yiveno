@@ -2,8 +2,10 @@ import type {
   ExportDetailExportSuccessResponse,
   MemoryErrorCode
 } from '@/core/messaging/memory-messages'
-import { copyTextToClipboard } from '@/infrastructure/browser/copy-text'
-import { downloadTextFile } from '@/infrastructure/browser/download-text-file'
+import {
+  copyTextToClipboard,
+  downloadTextFile
+} from '@/infrastructure/browser/clipboard-and-download'
 import { exportDetailExport } from '@/infrastructure/messaging/background-client'
 
 function isExportDetailExportSuccess(
