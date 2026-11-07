@@ -128,7 +128,7 @@ https://yiveno.com/privacy
 
 ## Review Notes
 
-- Same MV3 ZIP as Chrome Web Store submission (`bun run build:extension:prod` strips localhost Worker host).
+- Same MV3 ZIP as Chrome Web Store submission (`bun run --cwd extension build:prod` strips localhost Worker host).
 - Do not claim “Chrome-only” in Edge listing copy.
 - Local-first library; neighborhood Recall, not oracle single answer.
 - Manual ZIP sideload is **not** the mainland primary path (ADR-020).

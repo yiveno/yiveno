@@ -188,7 +188,7 @@ https://yiveno.com
 - **Local-first:** Memories stay in IndexedDB until the user enables cloud sync.
 - **Not a bookmark manager primary pitch:** Bookmark import is optional; core value is Capture + Recall from personal traces.
 - **Recall delivers a neighborhood, not a single oracle answer:** Store copy must not promise “always picks the right one.”
-- **`localhost:8787` host permission:** Present in dev `public/manifest.json` only. **`bun run build:extension:prod`** / `cd extension && bun run pack:store`（`NODE_ENV=production`）strips it from repo-root `dist/manifest.json` via `clean-dist` before store upload. ZIP 落在 `extension/yiveno-extension-store.zip`（CWS 与 Edge 同包 · ADR-020）。
+- **`localhost:8787` host permission:** Present in dev `public/manifest.json` only. **`bun run --cwd extension build:prod`** / `cd extension && bun run pack:store`（`NODE_ENV=production`）strips it from repo-root `dist/manifest.json` via `clean-dist` before store upload. ZIP 落在 `extension/yiveno-extension-store.zip`（CWS 与 Edge 同包 · ADR-020）。
 - **Dual store:** Same ZIP for Chrome Web Store and Microsoft Edge Add-ons; listing metadata split across this file and `EDGEADDONS.md`.
 - **Store screenshots / promo tiles:** Screenshot 1–3 + promo tiles ready (see Graphics table). Capture toolbar still pending; prefer re-shoot Side Panel/Library on a daily library before public listing.
 - **MCP beta:** Read-only MCP exists; not marketed as a primary user feature in the listing.

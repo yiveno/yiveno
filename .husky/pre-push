@@ -207,7 +207,7 @@ if [ -n "$ERRORS" ]; then
   echo "   cd worker && bun test    # worker 单测"
   echo "   bun run knip              # 全仓 Knip"
   echo "   bun run knip:extension           # 仅 extension Knip"
-  echo "   bun run knip:worker           # 仅 worker Knip"
+  echo "   bunx knip -D . --workspace worker           # 仅 worker Knip"
   echo "   bun run typecheck         # 类型检查（CI 也会跑）"
   echo "   bun run lint:check        # 代码质量检查（CI 也会跑）"
   echo "   bun run doc:check         # 文档漂移 / session-boot 同步（docs·rules·scripts 变更时）"

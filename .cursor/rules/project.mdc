@@ -158,7 +158,7 @@ Agent 指令（原文）：
 | 层级           | 触发时机     | 职责                                                                                                                         | 命令                                                                                                                                                                                                   |
 | -------------- | ------------ | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | **pre-commit** | `git commit` | 暂存区快修：ESLint fix + Stylelint + Prettier（含 `.vue`）                                                                   | `lint-staged`（`max-warnings 0`；忽略 `worker/worker-configuration.d.ts`）                                                                                                                            |
-| **pre-push**   | `git push`   | 按变更：extension 构建 + **test:run** / worker typecheck+test / website·packages typecheck / **doc:check** / Knip | `build:extension`（`vue-tsc -b`：app+node+vitest）+ `test:run`；`typecheck:worker` + `bun test`；`typecheck:web`；packages `typecheck`；`doc:check`；`knip:*` |
+| **pre-push**   | `git push`   | 按变更：extension 构建 + **test:run** / worker typecheck+test / website·packages typecheck / **doc:check** / Knip | `build:extension`（`vue-tsc -b`：app+node+vitest）+ `test:run`；`typecheck:worker` + `bun test`；`typecheck:web`；packages `typecheck`；`doc:check`；`knip` / workspace |
 | **CI**         | PR / push    | 权威只读门禁：typecheck、lint、i18n、test、build                                                                             | 见下表                                                                                                                                                                                                 |
 
 pre-push **不跑** ESLint、全仓 typecheck；extension 变更时跑 **build + test:run**（build 内 `vue-tsc -b` = app+node+vitest，与 IDE solution 同图）；worker / website / `packages/*` 分别跑对应 typecheck；`docs/` / `.cursor/rules/` / `scripts/` 变更时跑 **doc:check**。`.vue` lint 由 pre-commit 与 CI 覆盖。`knip.json` / 根 `package.json` 变更时 pre-push 跑全仓 `knip`。
@@ -188,7 +188,7 @@ pre-push **不跑** ESLint、全仓 typecheck；extension 变更时跑 **build +
 - 三端并行：`bun run watch` / `bun run dev`（mprocs）或 `bun run watch:stream`（混流）；扩展重建后需 `chrome://extensions` 刷新
 - 合并前 / 发布前：`bun run typecheck:force`、`bun run lint:check`、`bun run i18n:check`、`bun run doc:check`、`bun run test:run`（extension+worker）、`bun run knip`
 - 品牌视觉发版：改 `docs/design/brand-assets/` → `bun run sync:brand-assets`（见 `docs/design/brand-asset-release-checklist.md`）；母本走 Git LFS，clone 后 `bun run setup:git-lfs`（ADR-006）
-- Knip 分 workspace：`knip:extension` / `knip:worker` / `knip:web`；仅结构项：`knip:fast`；全量报告：`knip:report`
+- Knip：`knip` / `knip:extension`；其它 workspace：`bunx knip -D . --workspace <name>`；结构项 / 全量报告用 knip CLI 参数（见 `scripts/README.md`）
 - Knip 装在根 `devDependencies`（`bun run knip` → `bunx knip -D .`）。zod 4 起与 knip `zod/mini` 兼容，已不再用 `.cache/knip-runner` 隔离安装。
 
 ### MCP 真机实测（硬规则）

@@ -7,7 +7,7 @@
 
 procs:
   extension:
-    shell: bun run watch:extension
+    shell: bun run --cwd extension build:watch
     stop: SIGTERM
   worker:
     shell: bun run dev:worker

@@ -89,7 +89,7 @@ jobs:
       - name: Install
         run: bun install --frozen-lockfile
 
-      # CI 用 development build（含 vue-tsc -b）；发版用本地/手动 build:extension:prod
+      # CI 用 development build（含 vue-tsc -b）；发版用本地/手动 bun run --cwd extension build:prod
       - name: Build extension
         run: cd extension && bun run build
 

@@ -130,9 +130,9 @@ bun run docs:diagram-impact --base HEAD --id runtime.omnibox-offline-recall
 ```bash
 bun run knip              # 分 workspace
 bun run knip:extension           # 仅 extension
-bun run knip:worker           # 仅 worker
-bun run knip:web          # 仅 website
-bun run knip:report       # 全量报告，不 exit 1
+bunx knip -D . --workspace worker           # 仅 worker
+bunx knip -D . --workspace website          # 仅 website
+bunx knip -D . --no-exit-code       # 全量报告，不 exit 1
 ```
 
 **CI：** push / PR 时执行（`.github/workflows/ci.yml`）。

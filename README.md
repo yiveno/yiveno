@@ -59,7 +59,7 @@ bun run watch:stream          # concurrently 混流日志（无 TUI 时用）
 # 或者单独启动
 bun run dev:worker              # Worker (Cloudflare - 端口 8787)
 bun run dev:web             # 官网 (Astro - 端口 3001)
-bun run watch:extension            # 扩展 vite build --watch（改完后 chrome://extensions 刷新）
+bun run --cwd extension build:watch            # 扩展 vite build --watch（改完后 chrome://extensions 刷新）
 bun run dev:extension              # 扩展 Vite 开发服务器（页面级调试；MV3 仍以 dist watch 为准）
 ```
 
@@ -70,7 +70,7 @@ brew install mprocs
 # 或：https://github.com/pvolok/mprocs/releases （darwin-aarch64 等）
 ```
 
-> **扩展热更新**：`watch:extension` / `watch` 的 extension 进程是 `vite build --watch`，不是浏览器 HMR。content IIFE **按需**重打（仅触及 `content` / `core` / `infrastructure` 时）；收尾日志含 `content=` / `finalize=` ms。每次「dist 已更新」后到 `chrome://extensions` 刷新本扩展再验。
+> **扩展热更新**：`bun run --cwd extension build:watch` / `watch` 的 extension 进程是 `vite build --watch`，不是浏览器 HMR。content IIFE **按需**重打（仅触及 `content` / `core` / `infrastructure` 时）；收尾日志含 `content=` / `finalize=` ms。每次「dist 已更新」后到 `chrome://extensions` 刷新本扩展再验。
 
 ### 环境变量
 
@@ -111,7 +111,7 @@ bun run env:check:prod
 bun run build:prod
 
 # 仅构建扩展
-bun run build:extension:prod
+bun run --cwd extension build:prod
 
 # 构建产物位置: ./dist/（扩展）
 # 官网产物: ./website/dist/
@@ -263,7 +263,7 @@ UI → `background-client` → SW handler → application → core。未引入 P
 bun run watch                 # 扩展 watch + Worker + 官网（mprocs 分栏）
 bun run dev                   # 同 watch
 bun run watch:stream          # 同上，concurrently 混流
-bun run watch:extension              # 仅扩展 build --watch（重建后 chrome://extensions 刷新）
+bun run --cwd extension build:watch              # 仅扩展 build --watch（重建后 chrome://extensions 刷新）
 bun run dev:extension                # 仅扩展 Vite 开发服务器
 bun run dev:worker                # 仅 Worker - 端口 8787)
 bun run dev:web               # 仅官网 (Astro - 端口 3001)
@@ -271,8 +271,8 @@ bun run dev:web               # 仅官网 (Astro - 端口 3001)
 bun run build                 # 开发 profile 全量构建
 bun run build:prod            # 生产 profile 全量构建
 bun run build:extension              # 仅构建扩展 (development)
-bun run build:extension:prod         # 仅构建扩展 (production)
-bun run build:web:prod        # 仅构建官网 (production)
+bun run --cwd extension build:prod         # 仅构建扩展 (production)
+bun run --cwd website build:prod        # 仅构建官网 (production)
 
 # 🧪 类型检查
 bun run typecheck             # 全 workspace（extension=vue-tsc -b：app+node+vitest，与 IDE 同图）
@@ -290,7 +290,7 @@ bun run deploy:web            # 构建官网
 
 # 🗄️ 数据库
 bun run db:start              # 启动本地 Supabase
-bun run db:reset              # 重置本地数据库
+bun run --cwd worker db:reset # 重置本地数据库
 
 # 🧹 清理
 bun run clean                 # 清理各 workspace 缓存
@@ -321,7 +321,7 @@ bun run dev                   # Wrangler 本地开发
 bun run deploy                # 部署到 Cloudflare Worker
 bun run test                  # Bun 单元测试
 bun run db:start              # 启动本地 Supabase
-bun run db:reset              # 重置本地数据库
+bun run --cwd worker db:reset # 重置本地数据库
 ```
 
 ---
@@ -378,7 +378,7 @@ bun run db:reset              # 重置本地数据库
 3. ✅ ESLint 增强修复
 4. ✅ 自动重新暂存修复后的文件
 
-类型检查不在 pre-commit：日常用 `bun run typecheck`（extension=`vue-tsc -b` 整图 app+node+vitest，与 Cursor TS 语言服务同图）。推送时 extension 经 `build:extension`（含同图 vue-tsc），worker / website / `packages/*` 按变更跑对应 typecheck。根 `build` / `build:prod` 先全量 `env:sync` 一次再走各端 `*:compile`。Cursor Problems 里的 ESLint 项不属于 typecheck，看 `bun run lint:check`。改 `extension/tsconfig*.json` 后请 Restart TS Server。CI 见 `.github/workflows/ci.yml`。
+类型检查不在 pre-commit：日常用 `bun run typecheck`（extension=`vue-tsc -b` 整图 app+node+vitest，与 Cursor TS 语言服务同图）。推送时 extension 经 `build:extension`（含同图 vue-tsc），worker / website / `packages/*` 按变更跑对应 typecheck。根 `build` / `build:prod` 先全量 `env:sync:dev` 一次再走各端 `*:compile`。Cursor Problems 里的 ESLint 项不属于 typecheck，看 `bun run lint:check`。改 `extension/tsconfig*.json` 后请 Restart TS Server。CI 见 `.github/workflows/ci.yml`。
 
 **注意**: 只有无法自动修复的问题才会阻止提交。
 
@@ -422,7 +422,7 @@ cd extension && bun run test   # 交互式 Vitest
 
 ```bash
 # 1. 生产构建
-bun run build:extension:prod
+bun run --cwd extension build:prod
 
 # 2. 打包扩展 (手动)
 cd dist
@@ -454,7 +454,7 @@ bunx wrangler deployments list
 
 ### 提交PR前
 
-1. ✅ 确保测试通过: `bun run test:extension && bun run test:worker`
+1. ✅ 确保测试通过: `bun run test && bun run --cwd worker test`
 2. ✅ 确保代码检查通过: `bun run lint:check`
 3. ✅ 确保类型检查通过: `bun run typecheck:force`
 4. ✅ 确保构建成功: `bun run build:prod`
