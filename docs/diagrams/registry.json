@@ -213,7 +213,7 @@
       "doc": "docs/architecture/decisions/ADR-017-cloud-sync-excerpt-only.md",
       "codePaths": [
         "extension/src/background/handlers/account-sync-handler.ts",
-        "extension/src/core/memory/cloud-syncable-memory-item.ts",
+        "extension/src/core/memory/memory-item-type.ts",
         "extension/src/core/memory/select-memory-items-to-push.ts",
         "extension/src/core/identity/sync-prefs.ts",
         "extension/src/infrastructure/identity/sync-prefs-service.ts",

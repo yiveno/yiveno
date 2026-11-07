@@ -3,20 +3,9 @@
  * 登录主路径：打开官网 → external handoff 写入 session（扩展不做 OAuth）。
  */
 
-import {
-  deleteLoginMigrationExcerpts,
-  exportLoginMigrationExcerpts,
-  importLoginMigration,
-  summarizeLoginMigrationForCurrentBinding
-} from '@/application/identity/login-migration'
-import {
-  clearOrphanOwnerBuckets,
-  exportOrphanOwnerBuckets,
-  summarizeOrphanOwnerBuckets
-} from '@/application/identity/orphan-owner-buckets'
+import { summarizeOrphanOwnerBuckets } from '@/application/identity/orphan-owner-buckets'
 import { clearAccountLibraryOnSignOut } from '@/application/identity/clear-account-library-on-sign-out'
-import { resetChromeBookmarkImportAfterLocalClear } from '@/application/capture/import-chrome-bookmarks-service'
-import { filterCloudSyncableMemoryItems } from '@/core/memory/cloud-syncable-memory-item'
+import { filterCloudSyncableMemoryItems } from '@/core/memory/memory-item-type'
 import { mergeMemoryItemsByUpdatedAt } from '@/core/memory/merge-memory-items-by-updated-at'
 import { selectMemoryItemsToPush } from '@/core/memory/select-memory-items-to-push'
 import type {
@@ -25,30 +14,17 @@ import type {
   AuthSignInResponse,
   AuthSignOutMode,
   AuthSignOutResponse,
-  ClearLocalMemoryResponse,
-  ClearLocalRecallAdaptationResponse,
-  ClearOrphanOwnersResponse,
-  DeleteAccountResponse,
-  DeleteCloudMemoryResponse,
-  ExportLocalMemoryResponse,
-  ExportOrphanOwnersResponse,
   GetAuthStateResponse,
-  GetLoginMigrationStatusResponse,
-  LoginMigrationAction,
   ProbeWebsiteSignedInResponse,
-  ResolveLoginMigrationResponse,
-  GetSubscriptionStatusResponse,
   GetSyncStatusResponse,
   RefreshAuthProfileResponse,
-  RestoreLatestSyncBackupResponse,
-  AckPrivacyNoticeResponse,
   RunIncrementalMemorySyncResponse,
   SetSyncEnabledResponse,
   SetMcpReadOnlyResponse,
   SyncReplaceWithLocalResponse,
-  SyncReplaceWithRemoteResponse
+  SyncReplaceWithRemoteResponse,
+  RestoreLatestSyncBackupResponse
 } from '@/core/messaging/account-sync-messages'
-import { MemoryItemSchema, type MemoryItem } from '@/core/memory/memory-item'
 import { putMcpReadOnlyRemote } from '@/infrastructure/mcp/mcp-api-client'
 import {
   clearAuthValidationTimestamp,
@@ -67,7 +43,7 @@ import {
   beginSuppressDisplacedNotice,
   endSuppressDisplacedNotice
 } from '@/infrastructure/storage/suppress-displaced-notice-storage'
-import { refreshAuthProfileFields, refreshAuthSession } from '@/infrastructure/auth/extension-oauth'
+import { refreshAuthProfileFields } from '@/infrastructure/auth/extension-oauth'
 import {
   clearAuthSession,
   getAuthSession,
@@ -76,26 +52,15 @@ import {
 import {
   clearAccountBinding,
   getAccountBinding,
-  getOrCreateLocalProfile,
-  setAccountBinding
+  getOrCreateLocalProfile
 } from '@/infrastructure/identity/local-profile-service'
 import { getSyncPrefs, patchSyncPrefs } from '@/infrastructure/identity/sync-prefs-service'
 import {
   clearSubscriptionSnapshot,
-  getSubscriptionSnapshot,
   isProActiveFromSnapshot,
   refreshSubscriptionSnapshot
 } from '@/infrastructure/identity/subscription-service'
-import { clearRecallTelemetryEvents } from '@/infrastructure/analytics/recall-telemetry-store'
-import { updateUserSettings } from '@/infrastructure/settings/user-settings-service'
-import { clearRecallOutcomePairs } from '@/infrastructure/storage/recall-outcome-pairs-storage'
-import { bumpMemoryLibraryRevision } from '@/infrastructure/storage/memory-library-revision-storage'
-import { syncChromeBookmarkSyncListenersWithIngestSetting } from '@/background/listeners/chrome-bookmark-sync'
-import {
-  ackCurrentPrivacyNotice,
-  clearPrivacyPrefs,
-  getPrivacyPrefs
-} from '@/infrastructure/identity/privacy-prefs-service'
+import { getPrivacyPrefs } from '@/infrastructure/identity/privacy-prefs-service'
 import { hasAckedCurrentPrivacyNotice } from '@/core/identity/privacy-prefs'
 import { memoryItemRepository } from '@/infrastructure/indexeddb/memory-item-repository'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
@@ -103,8 +68,7 @@ import { logger } from '@/infrastructure/logging/logger'
 import {
   getWebsiteBaseUrl,
   openWebsiteAccountConnectPage,
-  openWebsiteLoginPage,
-  openWebsiteLogoutFromExtension
+  openWebsiteLoginPage
 } from '@/infrastructure/browser/website-page'
 import {
   beginUiBridgeConnectWait,
@@ -114,8 +78,6 @@ import {
 } from '@/background/listeners/ui-bridge'
 import { AUTH_SESSION_STORAGE_KEY } from '@/core/identity/auth-session'
 import {
-  deleteRemoteAccount,
-  deleteRemoteCloudMemory,
   fetchRemoteSyncStatus,
   pullRemoteMemoryItems,
   pushRemoteMemoryItems,
@@ -123,75 +85,17 @@ import {
   restoreRemoteFromLatestBackup
 } from '@/infrastructure/messaging/memory-sync-api-client'
 import { ensureMemoryCloudSyncAlarm } from '@/infrastructure/sync/memory-cloud-sync-alarm'
-
-/** access token 提前刷新余量（秒），避免边界过期。 */
-const ACCESS_TOKEN_REFRESH_SKEW_SEC = 60
+import {
+  finishSignOutSession,
+  flushAccountExcerptsToCloud,
+  parseCloudItems,
+  requireAccessToken
+} from '@/background/handlers/account-sync-shared'
 
 /** 增量同步互斥，避免闹钟与手动触发并发写。 */
 let incrementalSyncInFlight: Promise<RunIncrementalMemorySyncResponse> | null = null
 
 /** 确保有可用 access token（未过期则复用；过期才 refresh，并保留头像等展示字段）。 */
-async function requireAccessToken(): Promise<{ accessToken: string; userId: string } | null> {
-  const session = await getAuthSession()
-  if (!session) {
-    return null
-  }
-
-  const nowSec = Math.floor(Date.now() / 1000)
-  const stillValid =
-    session.expiresAt != null && session.expiresAt > nowSec + ACCESS_TOKEN_REFRESH_SKEW_SEC
-  if (stillValid) {
-    return { accessToken: session.accessToken, userId: session.userId }
-  }
-
-  const refreshed = await refreshAuthSession(session.refreshToken, {
-    ...(session.email ? { email: session.email } : {}),
-    ...(session.avatarUrl ? { avatarUrl: session.avatarUrl } : {}),
-    ...(session.displayName ? { displayName: session.displayName } : {})
-  })
-  if (refreshed) {
-    await setAuthSession(refreshed)
-    // refresh 后若 binding 缺失则补写（防御）
-    const binding = await getAccountBinding()
-    if (!binding) {
-      await setAccountBinding({
-        accountId: refreshed.userId,
-        boundAt: new Date().toISOString()
-      })
-    }
-    return { accessToken: refreshed.accessToken, userId: refreshed.userId }
-  }
-
-  // refresh 失败时仍尝试旧 token（调用方会收到 API 401）
-  return { accessToken: session.accessToken, userId: session.userId }
-}
-
-function parseCloudItems(rawItems: MemoryItem[]): MemoryItem[] {
-  const items: MemoryItem[] = []
-  let dropped = 0
-  for (const raw of rawItems) {
-    const parsed = MemoryItemSchema.safeParse(raw)
-    if (parsed.success) {
-      items.push(parsed.data)
-    } else {
-      dropped += 1
-    }
-  }
-  if (dropped > 0) {
-    logger.warn('MemorySync', '云端条目 Zod 校验丢弃', {
-      rawCount: rawItems.length,
-      kept: items.length,
-      dropped
-    })
-  }
-  return items
-}
-
-/**
- * AUTH_SIGN_IN — 打开官网登录页并带上 extension_id。
- * 真正写入 AccountBinding 由官网 handoff 完成。
- * **未登录 / Settings Sign in** 用本入口；已登录 Connect 软条用 {@link handleAuthConnectWebsite}。
- */
 export async function handleAuthSignIn(): Promise<AuthSignInResponse> {
   const startedAt = flowStart('Auth', 'AUTH_SIGN_IN（打开官网）')
   try {
@@ -398,75 +302,6 @@ export async function handleProbeWebsiteSignedIn(): Promise<ProbeWebsiteSignedIn
 /**
  * 结束登录态：清 session / binding，并关闭同步开关。
  * 不修改 IndexedDB（由调用方按 mode 先行处理）。
- */
-async function finishSignOutSession(): Promise<void> {
-  // 先读 session（清本机前）：有 revoke token 走卸载接口；否则 Bearer 释放租约
-  const sessionBeforeClear = await getAuthSession()
-  let remoteReleased = false
-  try {
-    remoteReleased = await clearExtensionUninstallRevoke({
-      revokeRemote: true,
-      ...(sessionBeforeClear?.accessToken
-        ? { accessTokenFallback: sessionBeforeClear.accessToken }
-        : {})
-    })
-  } catch (error) {
-    logger.warn('Auth', '退出时卸载 revoke / 清 token 失败', error)
-  }
-  // 远程租约已释放才清 lastLease；失败保留 → 同机 Connect 可静默认领
-  if (remoteReleased) {
-    try {
-      await clearLastExtensionLeaseSessionId()
-    } catch (error) {
-      logger.warn('Auth', '退出后清 lastLeaseSessionId 失败', error)
-    }
-  }
-  await clearAuthSession()
-  await clearAccountBinding()
-  await clearSubscriptionSnapshot()
-  await patchSyncPrefs({ enabled: false })
-  await ensureMemoryCloudSyncAlarm(false)
-  await clearAuthValidationTimestamp()
-  try {
-    await ensureAuthSessionLeaseAlarm(false)
-  } catch (error) {
-    logger.warn('Auth', '退出后清除租约探测闹钟失败', error)
-  }
-  // 扩展退出**不**清官网会话（与 Connect 显式接通对称：各自只退自己）
-}
-
-/**
- * 将当前账号桶摘录 flush 到云端（ADR-017 面）。
- * 失败抛错；调用方决定是否仍退出。
- */
-async function flushAccountExcerptsToCloud(accountId: string): Promise<number> {
-  const items = await memoryItemRepository.listAllByOwnerId(accountId, {
-    includeDeleted: true
-  })
-  const outbound = filterCloudSyncableMemoryItems(items)
-  if (outbound.length === 0) {
-    return 0
-  }
-  const token = await requireAccessToken()
-  if (!token) {
-    throw new Error('SYNC_NOT_AUTHENTICATED')
-  }
-  const result = await replaceRemoteWithLocalItems(token.accessToken, outbound, {
-    allowDestructiveShrink: true
-  })
-  await patchSyncPrefs({
-    enabled: true,
-    lastPushedAt: new Date().toISOString()
-  })
-  return result.written
-}
-
-/**
- * AUTH_SIGN_OUT（ADR-018 · 口径 A）
- * - keep_local：默认——书签回本地档，删除账号桶其余 Memory（摘录等）后退出
- * - flush_then_keep：先 flush 摘录上云，失败则不退出；成功后再同 keep_local 清账号桶
- * - clear_local：整桶清空账号桶（含已归属书签，不回迁）后退出
- * - sync_then_clear_local：遗留路径——先覆盖云端再清账号桶
  */
 export async function handleAuthSignOut(mode: AuthSignOutMode): Promise<AuthSignOutResponse> {
   const startedAt = flowStart('Auth', 'AUTH_SIGN_OUT', { mode })
@@ -1321,73 +1156,10 @@ export async function handleSyncReplaceWithRemote(): Promise<SyncReplaceWithRemo
   }
 }
 
-/** GET_LOGIN_MIGRATION_STATUS — 登录后是否须弹迁移门闸（ADR-018）。 */
-export async function handleGetLoginMigrationStatus(): Promise<GetLoginMigrationStatusResponse> {
-  const startedAt = flowStart('Identity', 'GET_LOGIN_MIGRATION_STATUS')
-  try {
-    const summary = await summarizeLoginMigrationForCurrentBinding()
-    flowOk('Identity', 'GET_LOGIN_MIGRATION_STATUS', startedAt, {
-      pending: summary.pending,
-      excerptCount: summary.excerptCount
-    })
-    return {
-      ok: true,
-      pending: summary.pending,
-      excerptCount: summary.excerptCount,
-      sourceOwnerIds: summary.sourceOwnerIds,
-      localBookmarkCount: summary.localBookmarkCount
-    }
-  } catch (error) {
-    flowFail('Identity', 'GET_LOGIN_MIGRATION_STATUS', startedAt, error)
-    return {
-      ok: false,
-      errorCode: 'LOGIN_MIGRATION_STATUS_FAILED',
-      ...(error instanceof Error ? { error: error.message } : {})
-    }
-  }
-}
-
-/** RESOLVE_LOGIN_MIGRATION — Import / Export / Delete 三选一。 */
-export async function handleResolveLoginMigration(
-  action: LoginMigrationAction
-): Promise<ResolveLoginMigrationResponse> {
-  const startedAt = flowStart('Identity', 'RESOLVE_LOGIN_MIGRATION', { action })
-  try {
-    const binding = await getAccountBinding()
-    if (!binding) {
-      return { ok: false, errorCode: 'SYNC_NOT_AUTHENTICATED' }
-    }
-    const accountId = binding.accountId
-
-    if (action === 'import') {
-      const result = await importLoginMigration(accountId)
-      flowOk('Identity', 'RESOLVE_LOGIN_MIGRATION', startedAt, { action, ...result })
-      return { ok: true, action: 'import', ...result }
-    }
-    if (action === 'export') {
-      const items = await exportLoginMigrationExcerpts(accountId)
-      flowOk('Identity', 'RESOLVE_LOGIN_MIGRATION', startedAt, {
-        action,
-        itemCount: items.length
-      })
-      return { ok: true, action: 'export', items }
-    }
-    const deleted = await deleteLoginMigrationExcerpts(accountId)
-    flowOk('Identity', 'RESOLVE_LOGIN_MIGRATION', startedAt, { action, ...deleted })
-    return { ok: true, action: 'delete', ...deleted }
-  } catch (error) {
-    flowFail('Identity', 'RESOLVE_LOGIN_MIGRATION', startedAt, error)
-    return {
-      ok: false,
-      errorCode: 'LOGIN_MIGRATION_FAILED',
-      ...(error instanceof Error ? { error: error.message } : {})
-    }
-  }
-}
-
 /**
  * RESTORE_LATEST_SYNC_BACKUP — 恢复云端最近一次 replace 前快照，再拉回本机。
  * 用于误开同步把云端盖小后的自救。
+ * 留在本文件：依赖 {@link handleSyncReplaceWithRemote}，避免与 library 模块循环引用。
  */
 export async function handleRestoreLatestSyncBackup(): Promise<RestoreLatestSyncBackupResponse> {
   const startedAt = flowStart('MemorySync', 'RESTORE_LATEST_SYNC_BACKUP')
@@ -1429,314 +1201,16 @@ export async function handleRestoreLatestSyncBackup(): Promise<RestoreLatestSync
   }
 }
 
-/** EXPORT_ORPHAN_OWNERS — 导出换号残留桶（含软删） */
-export async function handleExportOrphanOwners(): Promise<ExportOrphanOwnersResponse> {
-  const startedAt = flowStart('Identity', 'EXPORT_ORPHAN_OWNERS')
-  try {
-    const items = await exportOrphanOwnerBuckets()
-    const orphanBucketCount = new Set(items.map(item => item.ownerId)).size
-    flowOk('Identity', 'EXPORT_ORPHAN_OWNERS', startedAt, {
-      orphanBucketCount,
-      itemCount: items.length
-    })
-    return {
-      ok: true,
-      orphanBucketCount,
-      items
-    }
-  } catch (error) {
-    flowFail('Identity', 'EXPORT_ORPHAN_OWNERS', startedAt, error)
-    return {
-      ok: false,
-      errorCode: 'ORPHAN_EXPORT_FAILED',
-      ...(error instanceof Error ? { error: error.message } : {})
-    }
-  }
-}
-
-/** CLEAR_ORPHAN_OWNERS — 硬删换号残留桶 */
-export async function handleClearOrphanOwners(): Promise<ClearOrphanOwnersResponse> {
-  const startedAt = flowStart('Identity', 'CLEAR_ORPHAN_OWNERS')
-  try {
-    const result = await clearOrphanOwnerBuckets()
-    flowOk('Identity', 'CLEAR_ORPHAN_OWNERS', startedAt, result)
-    return { ok: true, ...result }
-  } catch (error) {
-    flowFail('Identity', 'CLEAR_ORPHAN_OWNERS', startedAt, error)
-    return {
-      ok: false,
-      errorCode: 'ORPHAN_CLEAR_FAILED',
-      ...(error instanceof Error ? { error: error.message } : {})
-    }
-  }
-}
-
-/** ACK_PRIVACY_NOTICE — 确认当前版本隐私说明 */
-export async function handleAckPrivacyNotice(): Promise<AckPrivacyNoticeResponse> {
-  const startedAt = flowStart('Privacy', 'ACK_PRIVACY_NOTICE')
-  try {
-    const prefs = await ackCurrentPrivacyNotice()
-    flowOk('Privacy', 'ACK_PRIVACY_NOTICE', startedAt, {
-      noticeAckedAt: prefs.noticeAckedAt,
-      noticeAckedVersion: prefs.noticeAckedVersion
-    })
-    return {
-      ok: true,
-      privacyNoticeAcked: true,
-      noticeAckedAt: prefs.noticeAckedAt!
-    }
-  } catch (error) {
-    flowFail('Privacy', 'ACK_PRIVACY_NOTICE', startedAt, error)
-    return {
-      ok: false,
-      errorCode: 'PRIVACY_ACK_FAILED',
-      ...(error instanceof Error ? { error: error.message } : {})
-    }
-  }
-}
-
-/**
- * DELETE_CLOUD_MEMORY — 删除云端 Memory + backups；关同步；不动本机 IDB。
- */
-export async function handleDeleteCloudMemory(): Promise<DeleteCloudMemoryResponse> {
-  const startedAt = flowStart('Privacy', 'DELETE_CLOUD_MEMORY')
-  try {
-    const token = await requireAccessToken()
-    if (!token) {
-      return { ok: false, errorCode: 'SYNC_NOT_AUTHENTICATED' }
-    }
-
-    const result = await deleteRemoteCloudMemory(token.accessToken)
-    await patchSyncPrefs({ enabled: false })
-    await ensureMemoryCloudSyncAlarm(false)
-
-    flowOk('Privacy', 'DELETE_CLOUD_MEMORY', startedAt, result)
-    return { ok: true, ...result }
-  } catch (error) {
-    flowFail('Privacy', 'DELETE_CLOUD_MEMORY', startedAt, error)
-    return {
-      ok: false,
-      errorCode: 'CLOUD_DELETE_FAILED',
-      ...(error instanceof Error ? { error: error.message } : {})
-    }
-  }
-}
-
-/**
- * DELETE_ACCOUNT — 注销 Auth + 清云端 Memory；清本机 accountId 桶；退登。
- * 不动 localProfileId；订阅/支付由服务端按政策保留。
- */
-export async function handleDeleteAccount(): Promise<DeleteAccountResponse> {
-  const startedAt = flowStart('Privacy', 'DELETE_ACCOUNT')
-  try {
-    const binding = await getAccountBinding()
-    const token = await requireAccessToken()
-    if (!binding || !token) {
-      return { ok: false, errorCode: 'SYNC_NOT_AUTHENTICATED' }
-    }
-
-    const remote = await deleteRemoteAccount(token.accessToken)
-
-    const items = await memoryItemRepository.listAllByOwnerId(binding.accountId, {
-      includeDeleted: true
-    })
-    const clearedLocalCount = items.length
-    await memoryItemRepository.replaceOwnerItems(binding.accountId, [])
-
-    await clearPrivacyPrefs()
-    await finishSignOutSession()
-    // 注销账号：本浏览器官网会话也应清掉（与普通「只退扩展」解耦不同）
-    try {
-      await openWebsiteLogoutFromExtension()
-    } catch (error) {
-      logger.warn('Privacy', '删除账号后打开官网 /logout 失败', error)
-    }
-
-    flowOk('Privacy', 'DELETE_ACCOUNT', startedAt, {
-      ...remote,
-      clearedLocalCount
-    })
-    return {
-      ok: true,
-      deletedItems: remote.deletedItems,
-      deletedBackups: remote.deletedBackups,
-      clearedLocalCount
-    }
-  } catch (error) {
-    flowFail('Privacy', 'DELETE_ACCOUNT', startedAt, error)
-    return {
-      ok: false,
-      errorCode: 'ACCOUNT_DELETE_FAILED',
-      ...(error instanceof Error ? { error: error.message } : {})
-    }
-  }
-}
-
-/**
- * EXPORT_LOCAL_MEMORY — 导出当前 owner 本机全部 Memory（含软删）。
- */
-export async function handleExportLocalMemory(): Promise<ExportLocalMemoryResponse> {
-  const startedAt = flowStart('Privacy', 'EXPORT_LOCAL_MEMORY')
-  try {
-    const ownerId =
-      (await getAccountBinding())?.accountId ?? (await getOrCreateLocalProfile()).localProfileId
-    const items = await memoryItemRepository.listAllByOwnerId(ownerId, {
-      includeDeleted: true
-    })
-    flowOk('Privacy', 'EXPORT_LOCAL_MEMORY', startedAt, {
-      ownerId,
-      itemCount: items.length
-    })
-    return { ok: true, ownerId, items }
-  } catch (error) {
-    flowFail('Privacy', 'EXPORT_LOCAL_MEMORY', startedAt, error)
-    return {
-      ok: false,
-      errorCode: 'LOCAL_EXPORT_FAILED',
-      ...(error instanceof Error ? { error: error.message } : {})
-    }
-  }
-}
-
-/**
- * 清本机 Outcome 对 + TTE 环（A 层缓冲；不碰 Memory）。
- * CLEAR_LOCAL_MEMORY / CLEAR_LOCAL_RECALL_ADAPTATION 共用。
- */
-async function clearLocalRecallAdaptationBuffers(): Promise<void> {
-  await clearRecallOutcomePairs()
-  await clearRecallTelemetryEvents()
-}
-
-/**
- * CLEAR_LOCAL_MEMORY — 硬清当前 owner 本机 Memory。
- * 不动 Chrome 原生书签；关书签灌库；若同步开着则关同步（云端副本需用户另删）；
- * 并清 Outcome 对 / TTE 环。
- */
-export async function handleClearLocalMemory(): Promise<ClearLocalMemoryResponse> {
-  const startedAt = flowStart('Data', 'CLEAR_LOCAL_MEMORY')
-  try {
-    const ownerId =
-      (await getAccountBinding())?.accountId ?? (await getOrCreateLocalProfile()).localProfileId
-    const existing = await memoryItemRepository.listAllByOwnerId(ownerId, {
-      includeDeleted: true
-    })
-    const clearedCount = existing.length
-
-    await memoryItemRepository.replaceOwnerItems(ownerId, [])
-    await clearLocalRecallAdaptationBuffers()
-    void bumpMemoryLibraryRevision().catch(error => {
-      logger.warn('Data', '库修订信号更新失败', error)
-    })
-
-    await updateUserSettings({ chromeBookmarkIngestEnabled: false })
-    await syncChromeBookmarkSyncListenersWithIngestSetting(false)
-    // Memory 已空：抹掉 completed 导入进度，避免再开灌库时误以为已灌满
-    await resetChromeBookmarkImportAfterLocalClear()
-
-    const syncPrefs = await getSyncPrefs()
-    let syncDisabled = false
-    if (syncPrefs.enabled) {
-      await patchSyncPrefs({ enabled: false })
-      await ensureMemoryCloudSyncAlarm(false)
-      syncDisabled = true
-    }
-
-    flowOk('Data', 'CLEAR_LOCAL_MEMORY', startedAt, {
-      ownerId,
-      clearedCount,
-      syncDisabled
-    })
-    logger.info('Data', '已清除本机记忆（未改 Chrome 原生书签）', {
-      ownerId,
-      clearedCount,
-      syncDisabled
-    })
-    return {
-      ok: true,
-      ownerId,
-      clearedCount,
-      bookmarkIngestDisabled: true,
-      syncDisabled
-    }
-  } catch (error) {
-    flowFail('Data', 'CLEAR_LOCAL_MEMORY', startedAt, error)
-    return {
-      ok: false,
-      errorCode: 'LOCAL_CLEAR_FAILED',
-      ...(error instanceof Error ? { error: error.message } : {})
-    }
-  }
-}
-
-/**
- * CLEAR_LOCAL_RECALL_ADAPTATION — 仅清 Outcome 对 + TTE 环，保留记忆库。
- */
-export async function handleClearLocalRecallAdaptation(): Promise<ClearLocalRecallAdaptationResponse> {
-  const startedAt = flowStart('Data', 'CLEAR_LOCAL_RECALL_ADAPTATION')
-  try {
-    await clearLocalRecallAdaptationBuffers()
-    flowOk('Data', 'CLEAR_LOCAL_RECALL_ADAPTATION', startedAt, {
-      outcomePairsCleared: true,
-      telemetryCleared: true
-    })
-    logger.info('Data', '已清除本机 Recall 适应信号（未改记忆库）')
-    return {
-      ok: true,
-      outcomePairsCleared: true,
-      telemetryCleared: true
-    }
-  } catch (error) {
-    flowFail('Data', 'CLEAR_LOCAL_RECALL_ADAPTATION', startedAt, error)
-    return {
-      ok: false,
-      errorCode: 'LOCAL_RECALL_ADAPTATION_CLEAR_FAILED',
-      ...(error instanceof Error ? { error: error.message } : {})
-    }
-  }
-}
-
-function buildSubscriptionUrls(accountId: string | null): {
-  upgradeUrl: string | null
-  manageUrl: string | null
-} {
-  return {
-    upgradeUrl: accountId ? `${getWebsiteBaseUrl()}/pricing` : null,
-    manageUrl: `${getWebsiteBaseUrl()}/account`
-  }
-}
-
-/**
- * GET_SUBSCRIPTION_STATUS — 读本机订阅快照；无缓存或 refresh 时拉 Worker。
- */
-export async function handleGetSubscriptionStatus(payload?: {
-  refresh?: boolean
-}): Promise<GetSubscriptionStatusResponse> {
-  const startedAt = flowStart('Subscription', 'GET_SUBSCRIPTION_STATUS', {
-    refresh: Boolean(payload?.refresh)
-  })
-  try {
-    const binding = await getAccountBinding()
-    let snapshot = await getSubscriptionSnapshot()
-    if (!snapshot || payload?.refresh) {
-      snapshot = await refreshSubscriptionSnapshot({ force: Boolean(payload?.refresh) })
-    }
-    const urls = buildSubscriptionUrls(binding?.accountId ?? null)
-    flowOk('Subscription', 'GET_SUBSCRIPTION_STATUS', startedAt, {
-      isPro: snapshot.isPro,
-      tier: snapshot.tier
-    })
-    return {
-      ok: true,
-      snapshot,
-      upgradeUrl: urls.upgradeUrl,
-      manageUrl: urls.manageUrl
-    }
-  } catch (error) {
-    flowFail('Subscription', 'GET_SUBSCRIPTION_STATUS', startedAt, error)
-    return {
-      ok: false,
-      errorCode: 'SUBSCRIPTION_STATUS_FAILED',
-      ...(error instanceof Error ? { error: error.message } : {})
-    }
-  }
-}
+export {
+  handleGetLoginMigrationStatus,
+  handleResolveLoginMigration,
+  handleExportOrphanOwners,
+  handleClearOrphanOwners,
+  handleAckPrivacyNotice,
+  handleDeleteCloudMemory,
+  handleDeleteAccount,
+  handleExportLocalMemory,
+  handleClearLocalMemory,
+  handleClearLocalRecallAdaptation,
+  handleGetSubscriptionStatus
+} from '@/background/handlers/account-library-handlers'

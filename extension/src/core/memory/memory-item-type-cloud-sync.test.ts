@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   filterCloudSyncableMemoryItems,
   isCloudSyncableMemoryItem
-} from '@/core/memory/cloud-syncable-memory-item'
+} from '@/core/memory/memory-item-type'
 import type { MemoryItem } from '@/core/memory/memory-item'
 
 const owner = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
