@@ -1,11 +1,11 @@
 ---
 created: 2026-10-06
-updated: 2026-10-06
+updated: 2026-11-08T06:49:02+08:00
 author: agent:cursor
 scope: docs/architecture/decisions
 status: 已接受
 upstream: ADR-001（Side Panel 主壳）, ADR-003（邻域非神谕）, ADR-005（禁止灰名单）, ADR-010（理解流水线）, ADR-011（时间置信度）, ADR-014（Topic 两种来源 · D1-B 退化弱 Topic）
-downstream: docs/product/Yiveno-产品文档-v4.0.md §7.05, docs/product/Recall-Request-模型与Discovery边界-草案.md §6 D3-C, docs/audits/Recall-主线与文档对齐-2026-10.md, extension/src/core/recall/topic-embedding.ts, extension/src/core/recall/topic-embedding.test.ts, extension/src/core/recall/recall-topic.ts, extension/src/core/recall/topic-lookup.ts, extension/src/core/recall/topic-lookup.test.ts, extension/src/core/recall/parse-recall-clue-types.ts, extension/src/core/recall/orchestrate-keyword-recall.ts, extension/src/application/recall/backends/hybrid-recall-backend.ts, recall-eval must
+downstream: docs/product/Yiveno-产品文档-v4.0.md §7.05, docs/product/Recall-Request-模型与Discovery边界.md §6 D3-C, docs/audits/Recall-主线与文档对齐-2026-10.md, extension/src/core/recall/topic-embedding.ts, extension/src/core/recall/topic-embedding.test.ts, extension/src/core/recall/recall-topic.ts, extension/src/core/recall/topic-lookup.ts, extension/src/core/recall/topic-lookup.test.ts, extension/src/core/recall/parse-recall-clue-types.ts, extension/src/core/recall/orchestrate-keyword-recall.ts, extension/src/application/recall/backends/hybrid-recall-backend.ts, recall-eval must
 ---
 
 # ADR-015: Topic 终态 = 语义表示（D3-C 裁决 + Gap 4/5 落地）
@@ -138,7 +138,7 @@ ADR-014 落地后，Topic 已是 Recall 的**必要条件判定器**，并允许
 
 ## 引用
 
-- [`docs/product/Recall-Request-模型与Discovery边界-草案.md` §6 D3-C](../../product/Recall-Request-模型与Discovery边界-草案.md)（Normative 正文）
+- [`docs/product/Recall-Request-模型与Discovery边界.md` §6 D3-C](../../product/Recall-Request-模型与Discovery边界.md)（Normative 正文）
 - [`docs/product/Yiveno-产品文档-v4.0.md` §7.05 Gap 5 段](../../product/Yiveno-产品文档-v4.0.md)
 - [`docs/audits/Recall-主线与文档对齐-2026-10.md`](../../audits/Recall-主线与文档对齐-2026-10.md)（对齐轮审计）
 - ADR-001 / ADR-003 / ADR-005 / ADR-010 / ADR-011 / ADR-014

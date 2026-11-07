@@ -1749,7 +1749,7 @@ Omnibox **本机快跳轨**专用 must（与 Side Panel `recall-eval` 正交）�
 
 #### 数据用途授权三层（A/B/C · Normative）
 
-> **详表与本机链路对照：** [`Yiveno-数据授权与本机反馈链路-草案.md`](./Yiveno-数据授权与本机反馈链路-草案.md)（细节权威；与本文冲突时以**本节 + `/privacy`** 为准）。  
+> **详表与本机链路对照：** [`Yiveno-数据授权与本机反馈链路.md`](./Yiveno-数据授权与本机反馈链路.md)（细节权威；与本文冲突时以**本节 + `/privacy`** 为准）。  
 > **勿与上表 L1–L3 混淆：** L1–L3 = **归属**；A/B/C = **用途授权**。
 
 | 层                          | 含义                                                                                  | 默认                                       | 与现有开关                                         |
@@ -2270,7 +2270,7 @@ Chrome API / 选区
 
 ### 7.05 Recall Request 模型与 Discovery 边界（Normative · 2026-10-06 · D1 已裁决）
 
-**完整 Normative 正文：** `docs/product/Recall-Request-模型与Discovery边界-草案.md`（已晋升，状态 = Normative）。
+**完整 Normative 正文：** `docs/product/Recall-Request-模型与Discovery边界.md`（已晋升，状态 = Normative）。
 
 > **主语：** 本节解决的是 **Recall 的问题边界**（什么算 Recall / 什么不算），不是新增一个产品功能。Topic 在其中是"必要条件判定器"，而非"产品核心基线"。
 
@@ -2737,7 +2737,7 @@ RecallOutcomeEvent {
 | 2026-11-04 | **真实评测补洞：** 消融 `vs_baseline` 质量阈值（召回不得降 / negFP 不得升）；Recall Real Eval 每周一 UTC cron 兜底；parse-gold vs_baseline 已知 31/35 残差仍为有意只防退步                                                                                                                                 |
 | 2026-11-04 | **parse-gold 真实评测 vs_baseline：** 对照 field-v1 快照，已知 31/35 残差绿、新增 must 回归才红；消融鉴权口径写入 ENVIRONMENT（Worker Bearer ≠ DeepSeek Key）                                                                                                                                              |
 | 2026-11-03 | **CI 显式 `test:must` + 真实模型评测 workflow：** PR/main CI 加 `test:must` 与 eval 测试文件地板；真实 `parse-gold:llm` / `retrieval-ablation:real` 走 `recall-real-eval.yml`（`workflow_dispatch`，不挡 PR）；§1.1 合入门禁第 5 条                                                                        |
-| 2026-11-03 | **数据用途授权 A/B/C + 本机适应控制：** §5.5.1 短锚；`/privacy` §2.8；Settings 隐私 bullet；`CLEAR_LOCAL_RECALL_ADAPTATION`；`recallOutcomePairSoftAdjustEnabled` 暂停软调；清库顺带清 Outcome/TTE；细节 `Yiveno-数据授权与本机反馈链路-草案.md`                                                           |
+| 2026-11-03 | **数据用途授权 A/B/C + 本机适应控制：** §5.5.1 短锚；`/privacy` §2.8；Settings 隐私 bullet；`CLEAR_LOCAL_RECALL_ADAPTATION`；`recallOutcomePairSoftAdjustEnabled` 暂停软调；清库顺带清 Outcome/TTE；细节 `Yiveno-数据授权与本机反馈链路.md`                                                                |
 | 2026-11-02 | **Composer 浮底去白带 + 细滚动条：** 去掉浮底外实色渐变遮罩；半透明仅在 composer 壳；会话滚动条细轨贴边；§7.0 / 设计标准                                                                                                                                                                                   |
 | 2026-11-02 | **Composer ChatGPT 式浮底：** 上下分行；四周留白浮在会话上；半透明毛玻璃下可透出滚动内容；§5.2.1 / §7.0 / 设计标准；与 §5.9 **分计**                                                                                                                                                                       |
 | 2026-11-02 | **Side Panel 会话滚动跳转：** composer 固底；单枚浮钮箭头旋转切换置顶/到底；黏底跟随；§7.0 交互 9；与 §5.9 **分计**                                                                                                                                                                                        |
@@ -2836,7 +2836,7 @@ RecallOutcomeEvent {
 | 2026-10-08 | **Omnibox 建议条数解耦：** `OMNIBOX_SUGGEST_LIMIT=6`（`omnibox-suggest.ts`），不再复用 Side Panel `RECALL_RESULT_PAGE_SIZE`；无分页 one-shot；§3.1 + ADR-007                                                                                                                                               |
 | 2026-10-08 | **Omnibox 边界内打磨 + 天花板：** soft rank（`settledCount`/`behaviorProfile:omnibox`）+ 短锚字段权重 + Tip/CTA 文案；ADR-007 **§6 能力天花板**（Indexed Fuzzy 字典后于 2026-10-30 拆除）                                                                                                                  |
 | 2026-10-08 | **Omnibox 有命中末行换赛道：** Memory ≤5 + 末行 `omnibox_switch_track` CTA（handoff）；总 ≤6；与无命中 CTA 同路径接力 Side Panel；§3.1 + ADR-007                                                                                                                                                           |
-| 2026-10-06 | **Recall Request 模型晋升 Normative（D1 已裁决）：** §7.05 + 完整正文 `Recall-Request-模型与Discovery边界-草案.md`；D1 选 D1-B（退化弱 Topic）：Preference-driven 路径（`objectTypes`+`timeRange`）保留为弱 Topic；Topic 两种来源写进 Normative；P1–P3 落地阶段明确；§5.9 / §7.0 / ADR-011 引用对齐        |
+| 2026-10-06 | **Recall Request 模型晋升 Normative（D1 已裁决）：** §7.05 + 完整正文 `Recall-Request-模型与Discovery边界.md`；D1 选 D1-B（退化弱 Topic）：Preference-driven 路径（`objectTypes`+`timeRange`）保留为弱 Topic；Topic 两种来源写进 Normative；P1–P3 落地阶段明确；§5.9 / §7.0 / ADR-011 引用对齐             |
 | 2026-10-06 | **Gap 2 修复：** Framing 层 Topic 独立表述已加（三处）；① `RecallFramingUnderstood.topicTerms`（独立于 contentTerms 的独立 fact）；② `extractComposerNarrowExamples` 新增 `topicTerms` 参数（末尾追加独立 topic 示例）；③ LLM Framing prompt 透传 `topicTerms` fact；§7.05 Framing 表 P1 栏 + 现状差距更新 |
 | 2026-10-06 | **Gap 3 修复：** `RecallResult.topic` 字段（窄子集 `displayName`+`tokens`）已加；`parsed.topic` 存在时填充；TopicDescriptor 在 `core/recall/parse-recall-clue-types.ts` 定义；§7.05 现状差距更新                                                                                                           |
 | 2026-10-06 | **Gap 5 落地（依 D3-C）：** Topic embedding 路径真实接入；`deriveTopicEmbedding` + `withRecallTopicAsync` + topicLookup embedding 路径；仅登录态可用；降级词法；不跨出 Gap 5                                                                                                                               |

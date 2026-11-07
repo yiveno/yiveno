@@ -1,6 +1,6 @@
 ---
 created: 2026-11-03T02:45:12+0800
-updated: 2026-11-03T23:48:22+08:00
+updated: 2026-11-08T06:49:02+08:00
 author: agent:cursor
 scope: 用户数据授权三层口径 + 本机反馈链路对照；A/B/C 已晋升产品文档短锚
 status: normative-detail

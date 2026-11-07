@@ -1,6 +1,6 @@
 ---
 created: 2026-10-09T17:44:23+08:00
-updated: 2026-11-03T02:45:12+0800
+updated: 2026-11-08T06:49:02+08:00
 author: agent:cursor
 scope: 双线程下的工程子集——环境反馈驱动的手段适应、实现映射与 R5 分期
 status: engineering-subset
@@ -10,7 +10,7 @@ upstream:
   - docs/architecture/decisions/ADR-016-environment-feedback-evolution.md
 downstream:
   - docs/product/Yiveno-改版计划-v1.md · R5
-  - docs/product/Yiveno-数据授权与本机反馈链路-草案.md（用户授权面 A/B/C · 草案）
+  - docs/product/Yiveno-数据授权与本机反馈链路.md（用户授权面 A/B/C · 细节权威）
   - 未来受控参数/策略适应实现（须过双线程原则 + 本文件前置条件）
 ---
 
@@ -138,7 +138,7 @@ M(t+1) = U(M(t), X(t), F(t))
 | Omnibox 本机快跳 vs Side Panel 完整轨 | ADR-007 · ADR-021                                            | 质量—延迟分轨（非离线产品）；Omnibox **禁** Outcome 软调 / Hybrid |
 | 相对时间置信度分层                    | ADR-011                                                      | 策略层已有人工钉死的硬/软分流                                     |
 | Outcome 标签空间与置信分级            | §7.2；`recall-outcome.ts` / `commit-recall-outcome`          | **强/弱/unknown** 已建模；explore ≠ settle                        |
-| Outcome 对本机软升/降权               | §7.2 P3；`apply-stored-outcome-pairs.ts`                     | **薄参数/记忆适应**（clue fingerprint → target）；非策略选择器    |
+| Outcome 对本机软升/降权               | §7.2 P3；`apply-recall-context.ts`（Outcome 对）             | **薄参数/记忆适应**（clue fingerprint → target）；非策略选择器    |
 | 行为 soft rank（settled 优先）        | `computeBehaviorBoost`；Omnibox 用 `settledCount`            | 个人履约信号进排序；受 cap                                        |
 | TTE 七事件 + `pipelineTiming`         | §5.9；`recall-telemetry.ts`                                  | 观测分割：understand / candidateLoad / retrieve                   |
 | 独立离线评估                          | `recall-eval` / hybrid / parse-gold / framing / omnibox eval | **独立于日常点击**的质量尺                                        |
@@ -288,7 +288,7 @@ clue → understand → candidate load / keyword filter
 - 改本文件（工程映射 / R5 分期）→ 勿另立北极星；冲突时以双线程正文为准。
 - 改近周执行 → 只改 **CURRENT** / 改版计划 R5 状态，**不要**把愿景写进 §1「已上线」。
 - 实现任一自适应能力 → 同批改产品文档状态表、must 或 §5 步骤，并标明适应层（参数/策略）。
-- 改**用户可见数据授权**（本机适应 / 匿名改进 / AI 内容留存）→ 先改 [`Yiveno-数据授权与本机反馈链路-草案.md`](./Yiveno-数据授权与本机反馈链路-草案.md)，晋升后再写入产品文档隐私段与官网 `/privacy`；**禁止**与本文件手段适应分期抢北极星。
+- 改**用户可见数据授权**（本机适应 / 匿名改进 / AI 内容留存）→ 先改 [`Yiveno-数据授权与本机反馈链路.md`](./Yiveno-数据授权与本机反馈链路.md)，晋升后再写入产品文档隐私段与官网 `/privacy`；**禁止**与本文件手段适应分期抢北极星。
 
 ---
 
