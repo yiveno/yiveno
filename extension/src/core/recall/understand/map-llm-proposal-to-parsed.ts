@@ -1,4 +1,4 @@
-import type { LlmParsedClueProposal } from '@/core/recall/understand/llm-parsed-clue-proposal'
+import type { LlmParsedClueProposalInput } from '@/core/recall/understand/llm-parsed-clue-proposal'
 import {
   dropMisleadingNoteContentTerm,
   groundBehaviorHints,
@@ -30,7 +30,7 @@ import {
  */
 export function mapLlmProposalToParsedClue(
   clue: string,
-  proposal: LlmParsedClueProposal,
+  proposal: LlmParsedClueProposalInput,
   nowMs: number
 ): ParsedRecallClue {
   const raw = clue.trim()
@@ -111,6 +111,10 @@ export function mapLlmProposalToParsedClue(
     ...(hasObject ? { objectTypes } : {}),
     ...(hasBehavior ? { behaviorHints } : {}),
     ...(noteHint ? { noteHint } : {}),
-    ...(excludeContentTerms.length > 0 ? { excludeContentTerms } : {})
+    ...(excludeContentTerms.length > 0 ? { excludeContentTerms } : {}),
+    ...(proposal.intent === 'chitchat' ? { intent: 'chitchat' as const } : {}),
+    ...(proposal.intent === 'chitchat' && proposal.assistantReply?.trim()
+      ? { assistantReply: proposal.assistantReply.trim().slice(0, 280) }
+      : {})
   })
 }

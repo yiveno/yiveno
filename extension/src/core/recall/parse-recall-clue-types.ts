@@ -68,6 +68,18 @@ export const RecallClueConfidenceSchema = z.enum([
 export type RecallClueConfidence = z.infer<typeof RecallClueConfidenceSchema>
 
 /**
+ * 用户意图（仅 LLM 路径产出）。
+ * - recall：找东西（哪怕含糊）
+ * - chitchat：闲聊 / 寒暄 / 与找东西无关
+ */
+export const RecallClueIntentSchema = z.enum([
+  'recall', // 找东西
+  'chitchat' // 闲聊
+])
+
+export type RecallClueIntent = z.infer<typeof RecallClueIntentSchema>
+
+/**
  * 相对时间约束置信度（ADR-011 · 由 timeLabel 确定性派生）。
  * - high：日历级口语 → 硬筛 timeRange
  * - low：糊时间印象 → 软排加分，禁止仅因时间硬空
@@ -169,7 +181,11 @@ export const ParsedRecallClueSchema = z.object({
    */
   excludeContentTerms: z.array(z.string()).optional(),
   /** 解析整体置信度；编排据此决定直给 / 弱邻域 / 追问 */
-  confidence: RecallClueConfidenceSchema
+  confidence: RecallClueConfidenceSchema,
+  /** 用户意图；缺省 = recall（规则路径不产意图） */
+  intent: RecallClueIntentSchema.optional(),
+  /** intent=chitchat 时的自然回复（LLM 生成，同 clue 语言）；其余缺省 */
+  assistantReply: z.string().optional()
 })
 
 export type ParsedRecallClue = z.infer<typeof ParsedRecallClueSchema>

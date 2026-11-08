@@ -23,6 +23,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
+import { INTENT_EVAL_MUST } from '../src/core/recall/eval/intent-eval-cases'
 import type { ParsedRecallClue } from '../src/core/recall/parse-recall-clue-types'
 import {
   resolveOpenAiCompatibleChatCompletionsUrl,
@@ -131,6 +132,8 @@ function formatParsedSlots(parsed: ParsedRecallClue): NluTryParsedSlotsView {
     contentTerms: parsed.contentTerms,
     excludeContentTerms: parsed.excludeContentTerms ?? [],
     confidence: parsed.confidence,
+    intent: parsed.intent ?? 'recall',
+    assistantReply: parsed.assistantReply ?? null,
     topic: parsed.topic
       ? {
           terms: parsed.topic.terms,
@@ -152,6 +155,14 @@ function formatNextStageHandoff(result: UnderstandRecallClueResult): NluTryNextS
       reason: result.rejectReason,
       payload: null,
       note: '噪音网关拒绝：Hybrid 不拿 parsed，流水线在理解阶段结束'
+    }
+  }
+  if (result.parsed.intent === 'chitchat') {
+    return {
+      continues: false,
+      next: 'end_chitchat_reply',
+      payload: { assistantReply: result.parsed.assistantReply ?? null },
+      note: '闲聊短路：Hybrid 不拿 parsed、不调 embedding、不进检索'
     }
   }
   return {
@@ -200,7 +211,7 @@ export async function runNluTryCli(): Promise<void> {
   const clue = resolveClueFromArgv(process.argv)
   if (!clue) {
     console.error(
-      '用法: bun run nlu:try -- "<口语线索>"\n例: bun run nlu:try -- "bookmark about coffee last week"\n走产品同款 understandRecallClue（Recall 理解阶段）'
+      `用法: bun run nlu:try -- "<口语线索>"\n例: bun run nlu:try -- "bookmark about coffee last week"\n走产品同款 understandRecallClue（Recall 理解阶段）\n闲聊意图金标 ${INTENT_EVAL_MUST.length} 条见 intent-eval-cases.ts（live 逐条验收）`
     )
     process.exitCode = 1
     return

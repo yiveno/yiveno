@@ -228,6 +228,10 @@ export function buildRecallFramingFacts(
     if (result.emptyKind === 'rejected_noise') {
       return null
     }
+    // Gate A+ 闲聊短路：无 Framing（自然回复由 UI 消费 assistantReply）
+    if (result.emptyKind === 'chitchat') {
+      return null
+    }
     if (!result.relatedGuess) {
       return null
     }

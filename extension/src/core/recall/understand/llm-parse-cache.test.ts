@@ -12,6 +12,7 @@ const baseProposal = {
   timeLabel: null,
   objectTypes: null,
   contentTerms: ['cloudflare', 'workers'],
+  intent: 'recall' as const,
   confidence: 'high' as const
 }
 

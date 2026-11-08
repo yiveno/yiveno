@@ -3,6 +3,7 @@ import { z } from 'zod'
 import {
   RecallBehaviorHintSchema,
   RecallClueConfidenceSchema,
+  RecallClueIntentSchema,
   RecallObjectTypeSchema
 } from '@/core/recall/parse-recall-clue-types'
 
@@ -50,8 +51,22 @@ export const LlmParsedClueProposalSchema = z.object({
    * null/缺省 = 无线索内排除；禁止把 not sure / don't remember 等不确定表达写入本槽。
    */
   excludeContentTerms: z.array(z.string()).nullable().optional(),
+  /**
+   * 用户意图；缺省 = recall；不确定时模型必须选 recall。
+   * （本字段不进检索，只供后端短路判断。）
+   */
+  intent: RecallClueIntentSchema.optional().default('recall'),
+  /**
+   * intent=chitchat 时的自然回复（与 clue 同语言，短 + 往 recall 引）。
+   * 仅 chitchat 时有效；recall 时必须为空。
+   * 长度由 map 层截断（不靠 schema max，避免整单解析失败）。
+   */
+  assistantReply: z.string().nullable().optional(),
   /** 仅作提示；map 时会按槽位重算 */
   confidence: RecallClueConfidenceSchema.optional().default('low')
 })
 
+/** schema.parse 之后的提案（含 default 填充）。 */
 export type LlmParsedClueProposal = z.infer<typeof LlmParsedClueProposalSchema>
+/** 传入 map / 测试字面量用的输入形（intent 等可缺省）。 */
+export type LlmParsedClueProposalInput = z.input<typeof LlmParsedClueProposalSchema>

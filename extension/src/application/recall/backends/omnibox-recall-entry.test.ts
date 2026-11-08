@@ -137,4 +137,33 @@ describe('HybridRecallBackend · entry omnibox', () => {
     expect(result.parsed).toBeUndefined()
     expect(requestWorkerEmbeddingsMock).not.toHaveBeenCalled()
   })
+
+  it('闲聊意图短路：no_match + emptyKind chitchat，不附 parsed、不调 embedding、不扫库', async () => {
+    const { memoryItemService } = await import('@/application/memory/memory-item-service')
+    const reply = '天气不错——有想找的东西吗？'
+    understandRecallClueMock.mockResolvedValue({
+      disposition: 'proceed',
+      rejectReason: null,
+      mode: 'semantic',
+      source: 'llm',
+      parsed: {
+        raw: '今天天气不错',
+        contentTerms: [],
+        confidence: 'low',
+        intent: 'chitchat',
+        assistantReply: reply
+      },
+      filterClue: ''
+    })
+
+    const backend = new HybridRecallBackend()
+    const result = await backend.recallWithClue('今天天气不错', { entry: 'sidepanel' })
+
+    expect(result.outcome).toBe('no_match')
+    expect(result.emptyKind).toBe('chitchat')
+    expect(result.assistantReply).toBe(reply)
+    expect(result.parsed).toBeUndefined()
+    expect(requestWorkerEmbeddingsMock).not.toHaveBeenCalled()
+    expect(memoryItemService.listForKeywordRecall).not.toHaveBeenCalled()
+  })
 })

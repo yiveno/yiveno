@@ -843,6 +843,33 @@ export class HybridRecallBackend implements RecallBackend {
       }
     }
 
+    // Gate A+：闲聊意图短路（须 intent + 非空回复双全；缺一则 fail-open 走正常 recall）
+    if (understood.parsed.intent === 'chitchat' && understood.parsed.assistantReply?.trim()) {
+      const pipelineTiming: RecallPipelineTiming = {
+        understandMs,
+        candidateLoadMs: 0,
+        retrieveMs: 0,
+        totalMs: Date.now() - pipelineStartedAt,
+        understandSource: understood.source
+      }
+      trace('info', 'Recall：闲聊意图短路', {
+        clue: normalizedClue,
+        understandSource: understood.source
+      })
+      return {
+        outcome: 'no_match',
+        topPick: null,
+        alsoPossible: [],
+        totalRankedCount: 0,
+        clue: normalizedClue,
+        emptyKind: 'chitchat',
+        assistantReply: understood.parsed.assistantReply.trim(),
+        pipelineTiming,
+        understandSource: understood.source,
+        visibleProgressStages: [...visibleProgressStages]
+      }
+    }
+
     const merge = mergeRecallDialogTurn({
       accumulated,
       currentParsed: understood.parsed,

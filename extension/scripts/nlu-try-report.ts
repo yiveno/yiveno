@@ -10,6 +10,7 @@ import type { ClueProcessingRejectReason } from '../src/core/recall/understand/s
 import type {
   RecallBehaviorHint,
   RecallClueConfidence,
+  RecallClueIntent,
   RecallObjectType,
   RecallTimeConfidence
 } from '../src/core/recall/parse-recall-clue-types'
@@ -42,6 +43,10 @@ export type NluTryParsedSlotsView = {
   excludeContentTerms: string[]
   /** 解析置信度 high / medium / low */
   confidence: RecallClueConfidence
+  /** 用户意图；缺省按 recall */
+  intent: RecallClueIntent
+  /** intent=chitchat 时的自然回复；其余 null */
+  assistantReply: string | null
   /**
    * 主题锚摘要；null = 未派生或无可展示 topic。
    * （完整 `ParsedRecallClue.topic` 可含 embedding，此处不打印）
@@ -77,6 +82,7 @@ export type NluTryHandoffMeta = {
  *
  * 产品真接手点（`hybrid-recall-backend`）：
  * - `reject_noise` → 直接 `no_match`，不进 merge/检索
+ * - `intent=chitchat` + 非空回复 → `emptyKind=chitchat` 短路，不进 merge/检索
  * - 否则 `currentParsed: understood.parsed` → `mergeRecallDialogTurn` → topic → retrieve
  */
 export type NluTryNextStageHandoff =
@@ -89,6 +95,16 @@ export type NluTryNextStageHandoff =
       reason: ClueProcessingRejectReason | null
       /** 无 payload：Hybrid 不接收 parsed */
       payload: null
+      /** 给人看的一句说明 */
+      note: string
+    }
+  | {
+      /** 是否继续进入下一阶段 */
+      continues: false
+      /** 闲聊短路终局 */
+      next: 'end_chitchat_reply'
+      /** 仅自然回复；Hybrid 不拿 parsed */
+      payload: { assistantReply: string | null }
       /** 给人看的一句说明 */
       note: string
     }

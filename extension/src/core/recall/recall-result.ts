@@ -47,12 +47,14 @@ export type RecallOutcome =
  * - unconstrained：约束不足或无法判定约束空
  * - missing_topic：无主题锚（H-topic 必填；未进检索，直接追问主题）
  * - rejected_noise：Gate A 拒绝的硬噪音；未进理解/检索，直接给专属提示
+ * - chitchat：闲聊 / 寒暄；未进检索，自然回复并引回找东西
  */
 export type RecallEmptyKind =
   | 'constrained_none' // 强约束下库空
   | 'unconstrained' // 模糊空 / 仍需线索
   | 'missing_topic' // 缺主题，未检索
   | 'rejected_noise' // Gate A 拒绝的硬噪音；未进理解/检索，直接给专属提示
+  | 'chitchat' // 闲聊意图短路；未进检索
 
 /** 关键词 Filter / Hybrid 召回结果（UI 与 eval 共用）。 */
 export interface RecallResult {
@@ -83,6 +85,8 @@ export interface RecallResult {
   effectiveClue?: string
   /** 仅 outcome=no_match 时有意义。 */
   emptyKind?: RecallEmptyKind
+  /** intent=chitchat 时的自然回复（LLM 生成）；其余缺省。UI 直接渲染，不走文案 key。 */
+  assistantReply?: string
   /**
    * 疑似记错时的最近同类真实条目；非 Top Pick。
    * 仅 emptyKind=constrained_none 且库内确有同类时出现。

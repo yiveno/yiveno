@@ -170,6 +170,92 @@ describe('mapLlmProposalToParsedClue', () => {
     expect(parsed.timeRange?.label).toBe('few_months_ago')
     expect(parsed.contentTerms).toEqual(expect.arrayContaining(['public', 'libraries']))
   })
+
+  it('chitchat 提议 → intent 为 chitchat，assistantReply 原样透传', () => {
+    const reply = 'Yeah, lovely day — looking for something you saved?'
+    const parsed = mapLlmProposalToParsedClue(
+      'nice weather today',
+      {
+        timeLabel: null,
+        objectTypes: [],
+        behaviorHints: [],
+        contentTerms: [],
+        intent: 'chitchat',
+        assistantReply: reply,
+        confidence: 'low'
+      },
+      PARSE_GOLD_NOW_MS
+    )
+    expect(parsed.intent).toBe('chitchat')
+    expect(parsed.assistantReply).toBe(reply)
+  })
+
+  it('recall 提议 → 无 intent 字段、无 assistantReply', () => {
+    const parsed = mapLlmProposalToParsedClue(
+      'yesterday poem',
+      {
+        timeLabel: 'yesterday',
+        objectTypes: ['poem'],
+        contentTerms: [],
+        intent: 'recall',
+        confidence: 'medium'
+      },
+      PARSE_GOLD_NOW_MS
+    )
+    expect(parsed.intent).toBeUndefined()
+    expect(parsed.assistantReply).toBeUndefined()
+  })
+
+  it('recall 提议带多余 assistantReply → 回复被剥掉', () => {
+    const parsed = mapLlmProposalToParsedClue(
+      'yesterday poem',
+      {
+        timeLabel: 'yesterday',
+        objectTypes: ['poem'],
+        contentTerms: [],
+        intent: 'recall',
+        assistantReply: 'Should not appear',
+        confidence: 'medium'
+      },
+      PARSE_GOLD_NOW_MS
+    )
+    expect(parsed.intent).toBeUndefined()
+    expect(parsed.assistantReply).toBeUndefined()
+  })
+
+  it('chitchat 提议无 assistantReply → intent 为 chitchat、无 reply', () => {
+    const parsed = mapLlmProposalToParsedClue(
+      'hello',
+      {
+        timeLabel: null,
+        objectTypes: [],
+        contentTerms: [],
+        intent: 'chitchat',
+        confidence: 'low'
+      },
+      PARSE_GOLD_NOW_MS
+    )
+    expect(parsed.intent).toBe('chitchat')
+    expect(parsed.assistantReply).toBeUndefined()
+  })
+
+  it('超长 reply（>280 字符）→ 截断到 280 字符', () => {
+    const longReply = 'a'.repeat(300)
+    const parsed = mapLlmProposalToParsedClue(
+      'hello',
+      {
+        timeLabel: null,
+        objectTypes: [],
+        contentTerms: [],
+        intent: 'chitchat',
+        assistantReply: longReply,
+        confidence: 'low'
+      },
+      PARSE_GOLD_NOW_MS
+    )
+    expect(parsed.assistantReply).toBe('a'.repeat(280))
+    expect(parsed.assistantReply?.length).toBe(280)
+  })
 })
 
 describe('parseRecallClueWithLlm · verse 主词典（mock）', () => {
@@ -205,5 +291,23 @@ describe('parseRecallClueWithLlm · verse 主词典（mock）', () => {
     // 规则路径：verse 已并入主词典 → poem（不再依赖已退役 compare-parse-gold）
     const rules = parseRecallClue(clue, { nowMs: PARSE_GOLD_NOW_MS })
     expect(rules.objectTypes).toContain('poem')
+  })
+
+  it('mock：chitchat JSON → intent chitchat + 非空 assistantReply', async () => {
+    const complete: LlmChatCompleter = async () =>
+      JSON.stringify({
+        timeLabel: null,
+        objectTypes: [],
+        behaviorHints: [],
+        noteHint: false,
+        contentTerms: [],
+        intent: 'chitchat',
+        assistantReply: '天气是不错——有什么想找的吗？',
+        confidence: 'low'
+      })
+
+    const parsed = await parseRecallClueWithLlm('今天天气不错', { complete })
+    expect(parsed.intent).toBe('chitchat')
+    expect(parsed.assistantReply?.trim().length).toBeGreaterThan(0)
   })
 })
