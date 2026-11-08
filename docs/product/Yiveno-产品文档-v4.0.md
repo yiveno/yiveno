@@ -2271,6 +2271,8 @@ Chrome API / 选区
 
 **本切片不做：** 多轮开放闲聊（闲聊仅单次短路引回找东西）；无候选时的规则缺槽问卷。§7.1 环境芯片 / Hybrid 已另见 Phase B 接线说明。
 
+**LLM 回复军规（Normative · 2026-11-09）：Yiveno 是自然的人，不是工具。** 身份与边界定死，措辞不重复。定死的是——它是谁（Yiveno，帮用户找保存过的东西）、它是干什么的、它绝不干什么（不编造库里有什么、不接多轮闲聊、一次只引回一次）；不定死的是——它每次具体怎么说。同一输入的回复不得逐字重复。固定文案只允许出现在非对话类的硬状态提示（如 Gate A 噪音拒绝的 `popup_reply_miss_rejected_noise`），不得出现在 LLM 自然回复里。
+
 ### 7.05 Recall Request 模型与 Discovery 边界（Normative · 2026-10-06 · D1 已裁决）
 
 **完整 Normative 正文：** `docs/product/Recall-Request-模型与Discovery边界.md`（已晋升，状态 = Normative）。
