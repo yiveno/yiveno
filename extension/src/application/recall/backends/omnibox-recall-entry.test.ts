@@ -120,4 +120,21 @@ describe('HybridRecallBackend · entry omnibox', () => {
     expect(call.complete).toBeUndefined()
     expect(call.forceMode).toBeUndefined()
   })
+
+  it('Gate A 拒绝：no_match + emptyKind rejected_noise，且不附 parsed', async () => {
+    understandRecallClueMock.mockResolvedValue({
+      disposition: 'reject_noise',
+      rejectReason: 'keyboard_mash',
+      source: 'rules'
+    })
+
+    const backend = new HybridRecallBackend()
+    const result = await backend.recallWithClue('asdfg aksdjhaksjhd', { entry: 'sidepanel' })
+
+    expect(result.outcome).toBe('no_match')
+    expect(result.emptyKind).toBe('rejected_noise')
+    expect(result.topPick).toBeNull()
+    expect(result.parsed).toBeUndefined()
+    expect(requestWorkerEmbeddingsMock).not.toHaveBeenCalled()
+  })
 })

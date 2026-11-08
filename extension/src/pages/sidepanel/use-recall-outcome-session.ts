@@ -181,6 +181,9 @@ export function useRecallOutcomeSession(
     /** 本轮 LLM 理解失败已降级规则时，空结果须绑定「简化理解」以免像单纯没找着 */
     usedRulesFallback?: boolean
   }): { text: string; textSegments?: RecallShellTextSegment[] } {
+    if (input.emptyKind === 'rejected_noise') {
+      return { text: t('popup_reply_miss_rejected_noise') }
+    }
     if (input.emptyKind === 'constrained_none') {
       return {
         text: input.hasRelatedGuess

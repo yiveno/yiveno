@@ -46,11 +46,13 @@ export type RecallOutcome =
  * - constrained_none：时间+类型等强约束下库内无痕迹（事实空）
  * - unconstrained：约束不足或无法判定约束空
  * - missing_topic：无主题锚（H-topic 必填；未进检索，直接追问主题）
+ * - rejected_noise：Gate A 拒绝的硬噪音；未进理解/检索，直接给专属提示
  */
 export type RecallEmptyKind =
   | 'constrained_none' // 强约束下库空
   | 'unconstrained' // 模糊空 / 仍需线索
   | 'missing_topic' // 缺主题，未检索
+  | 'rejected_noise' // Gate A 拒绝的硬噪音；未进理解/检索，直接给专属提示
 
 /** 关键词 Filter / Hybrid 召回结果（UI 与 eval 共用）。 */
 export interface RecallResult {

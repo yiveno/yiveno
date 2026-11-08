@@ -224,6 +224,10 @@ export function buildRecallFramingFacts(
     if (result.emptyKind === 'missing_topic') {
       return { kind: 'missing_topic' }
     }
+    // Gate A 噪音拒绝：无 Framing（专属 miss 文案由 UI 消费 emptyKind）
+    if (result.emptyKind === 'rejected_noise') {
+      return null
+    }
     if (!result.relatedGuess) {
       return null
     }

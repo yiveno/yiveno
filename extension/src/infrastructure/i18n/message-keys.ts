@@ -197,6 +197,7 @@ export const MESSAGE_KEYS = [
   'popup_reply_uncertain',
   'popup_reply_miss',
   'popup_reply_miss_after_simpler_pass',
+  'popup_reply_miss_rejected_noise',
   'popup_reply_after_dismiss',
   'popup_session_status_continuing',
   'popup_session_status_continuing_threaded',

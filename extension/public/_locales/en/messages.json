@@ -845,6 +845,9 @@
   "popup_reply_miss_after_simpler_pass": {
     "message": "Nothing close enough with that simpler on-device reading. Try another detail that stuck with you."
   },
+  "popup_reply_miss_rejected_noise": {
+    "message": "That didn't look like a memory clue. Try describing what you remember — what it was about, or when you saw it."
+  },
   "popup_session_status_continuing": {
     "message": "Still refining this find — not a new one."
   },

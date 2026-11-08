@@ -836,6 +836,7 @@ export class HybridRecallBackend implements RecallBackend {
         alsoPossible: [],
         totalRankedCount: 0,
         clue: normalizedClue,
+        emptyKind: 'rejected_noise',
         pipelineTiming,
         understandSource: understood.source,
         visibleProgressStages: [...visibleProgressStages]
