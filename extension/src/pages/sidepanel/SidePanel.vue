@@ -8,30 +8,7 @@ import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
 import { watchAuthSessionStorage } from '@/infrastructure/auth/watch-auth-session-storage'
 import { watchWebsiteAuthUiStorage } from '@/infrastructure/auth/watch-website-auth-ui-storage'
 import { readWebsiteAuthUiState } from '@/infrastructure/auth/website-auth-ui-storage'
-import type { ChromeBookmarkImportState } from '@/core/memory/chrome-bookmark-import-state'
-import {
-  shouldShowColdStartGate,
-  shouldShowColdStartPostReleaseBanner,
-  COLD_START_POST_RELEASE_BANNER_TTL_MS,
-  type ColdStartPipelineState
-} from '@/core/memory/cold-start-pipeline-state'
-import {
-  coldStartEnrichmentBatchProgressRatio,
-  type ColdStartEnrichmentBatch
-} from '@/core/memory/cold-start-enrichment-batch'
-import { shouldShowCaptureFirstRecallShell } from '@/core/capture/install-onboarding'
-import {
-  getRecallShellIdleEmptyCopy,
-  getRecallShellNoMatchCopy,
-  resolveRecallShellBookmarkFuel,
-  shouldShowRecallEmptyImportCta,
-  shouldShowRecallEmptySetupCta,
-  type RecallShellLibraryState
-} from '@/core/recall/recall-shell-empty-copy'
-import { getTimeOfDayGreeting } from '@/core/recall/time-of-day-greeting'
-import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
 import { RECALL_RESULT_PAGE_SIZE } from '@/core/recall/build-recall-result'
-import { resolveNextRecallVisibleCount } from '@/core/recall/recall-result-visible-count'
 import { computeComposerPlaceholder } from '@/core/recall/compute-composer-placeholder'
 import { extractComposerNarrowExamples } from '@/core/recall/extract-composer-narrow-examples'
 import { resolveThreadFindTitle } from '@/core/recall/resolve-thread-anchor-label'
@@ -41,78 +18,34 @@ import {
   shouldOfferThreadPivotConfirm
 } from '@/core/recall/should-offer-thread-pivot-confirm'
 import { renderRecallFraming } from '@/core/recall/render-recall-framing'
-import type { RecallFramingFacts } from '@/core/recall/recall-framing-facts'
-import {
-  formatRecallUnderstandingEchoChips,
-  recallUnderstandingEchoSourceFromParsed,
-  type RecallUnderstandingEchoChip
-} from '@/core/recall/format-recall-understanding-echo'
-import { formatRecallVisibleProgressBasis } from '@/core/recall/format-recall-visible-progress-basis'
-import {
-  selectBasisKindsForResultCopy,
-  selectRecallVisibleProgressBasisKinds
-} from '@/core/recall/visible-progress-basis'
-import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import { parseRecallVisibleProgressMessage } from '@/core/messaging/ui-messages'
 import { tRecallError } from '@/infrastructure/i18n/background-error'
-import { openGettingStartedPage } from '@/infrastructure/browser/extension-pages'
-import { focusOrOpenSettingsTab } from '@/infrastructure/browser/extension-tab'
-import { SETTINGS_HASH_CHROME_BOOKMARK_INGEST } from '@/core/settings/settings-sections'
-import type { RecallShellTextSegment } from '@/core/recall/recall-shell-empty-copy'
 import { t } from '@/infrastructure/i18n/t'
-import {
-  readColdStartPostReleaseBannerDismissedReadyAt,
-  writeColdStartPostReleaseBannerDismissedReadyAt
-} from '@/infrastructure/storage/cold-start-post-release-banner-storage'
+import { commitRecallOutcome } from '@/application/recall/commit-recall-outcome'
 import {
   authConnectWebsite,
   cancelRecall,
   fetchAuthState,
-  fetchChromeBookmarkImportStatus,
-  fetchColdStartStatus,
-  fetchUserSettings,
-  listMemoryItems,
-  navigateActiveTab,
   getRecallPageContext,
   probeWebsiteSignedIn,
-  recallWithClue,
-  recordMemoryOpen,
-  recordRecallDismiss
+  recallWithClue
 } from '@/infrastructure/messaging/background-client'
 import {
   clearExtensionDisplacedNotice,
   readExtensionDisplacedNotice
 } from '@/infrastructure/storage/extension-displaced-notice-storage'
 import {
-  consumeRecallPrefill,
   consumeRecallPrefillWithRetry,
-  EXCERPT_CAPTURE_COUNT_LOCAL_KEY,
-  markFirstRecallOpenDone,
-  parseRecallPrefillStorageValue,
-  readExcerptCaptureCount,
-  RECALL_PREFILL_SESSION_KEY
+  markFirstRecallOpenDone
 } from '@/infrastructure/storage/first-recall-onboarding-storage'
-import { MEMORY_LIBRARY_REVISION_LOCAL_KEY } from '@/infrastructure/storage/memory-library-revision-storage'
-import {
-  markInstallOnboardingDone,
-  readInstallOnboardingDone
-} from '@/infrastructure/storage/install-onboarding-storage'
 import { readBrowserOnline, subscribeBrowserOnline } from '@/infrastructure/browser/browser-online'
 import { subscribeActiveTabNavigation } from '@/infrastructure/browser/subscribe-active-tab-navigation'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import DetailExportBar from '@/infrastructure/ui/DetailExportBar.vue'
 import DetailExportBarDock from '@/infrastructure/ui/DetailExportBarDock.vue'
 import AppToastHost from '@/infrastructure/ui/AppToastHost.vue'
-import { useAppToast } from '@/infrastructure/ui/use-app-toast'
 import LoginMigrationDialog from '@/pages/shared/LoginMigrationDialog.vue'
 import { useLoginMigrationDialog } from '@/pages/shared/use-login-migration-dialog'
-import {
-  copyDetailExportToClipboard,
-  downloadDetailExport
-} from '@/infrastructure/recall/detail-export-client'
-import { toggleDetailExportSelection as toggleDetailExportSelectionSet } from '@/infrastructure/recall/detail-export-selection'
-import { tMemoryError } from '@/infrastructure/i18n/memory-error'
-import { type RecallCardModel } from '@/pages/sidepanel/RecallResultCard.vue'
 import RecallConversation from '@/pages/sidepanel/components/RecallConversation.vue'
 import RecallComposer from '@/pages/sidepanel/components/RecallComposer.vue'
 import RecallPageContextControls from '@/pages/sidepanel/components/RecallPageContextControls.vue'
@@ -121,28 +54,21 @@ import { resolvePageContextMode } from '@/core/recall/page-context-mode'
 import type { RecallSourceScope } from '@/core/recall/recall-source-scope'
 import { createAssistantTurn } from '@/pages/sidepanel/build-assistant-turn'
 import type { ConversationTurn, AssistantTurn } from '@/pages/sidepanel/recall-conversation-types'
-import {
-  createRecallShellScrollListener,
-  readRecallShellScrollState,
-  resolveRecallShellScrollJumpDirection,
-  scheduleRecallShellScrollChildToStart,
-  scheduleRecallShellScrollToBottom,
-  scrollRecallShellToBottom,
-  scrollRecallShellToTop,
-  type RecallShellScrollJumpDirection,
-  type RecallShellScrollState
-} from '@/pages/sidepanel/recall-shell-scroll'
+import { useRecallShellScroll } from '@/pages/sidepanel/use-recall-shell-scroll'
 import type { RecallDialogState } from '@/core/recall/merge-recall-dialog-turn'
-import {
-  commitRecallOutcome,
-  createRecallOutcomeSessionState,
-  shouldOfferRecallOutcomeExitPrompt,
-  withFinalizedLastOpenDwell,
-  type RecallOutcomeSessionState
-} from '@/application/recall/commit-recall-outcome'
+import { shouldOfferRecallOutcomeExitPrompt } from '@/application/recall/commit-recall-outcome'
 import { createRecallTelemetryRecorder } from '@/infrastructure/analytics/recall-telemetry-recorder'
-import { toRecallMatchCard } from '@/pages/sidepanel/recall-match-card'
 import { useRecallVisibleProgress } from '@/pages/sidepanel/use-recall-visible-progress'
+import { useSidepanelColdStart } from '@/pages/sidepanel/use-sidepanel-cold-start'
+import { useRecallOutcomeSession } from '@/pages/sidepanel/use-recall-outcome-session'
+import { useDetailExport } from '@/pages/sidepanel/use-detail-export'
+import { useRecallResultCards } from '@/pages/sidepanel/use-recall-result-cards'
+import {
+  formatRankedReplyText,
+  resolveUnderstandingEchoChips,
+  resolveListReplyText,
+  toMatchCard
+} from '@/pages/sidepanel/recall-result-card-helpers'
 
 defineOptions({ name: 'SidePanelPage' })
 
@@ -159,8 +85,6 @@ const {
   runLoginMigrationExport,
   runLoginMigrationImport
 } = useLoginMigrationDialog()
-
-const recallDetailPageUrl = chrome.runtime.getURL('detail.html')
 
 const clue = ref('')
 const clueInputRef = ref<InstanceType<typeof RecallComposer> | null>(null)
@@ -190,14 +114,6 @@ const {
   }
 })
 
-const importState = ref<ChromeBookmarkImportState | null>(null)
-/** 书签灌库开关（空库文案分流；默认关与 UserSettings 一致）。 */
-const bookmarkIngestEnabled = ref(false)
-const coldStartState = ref<ColdStartPipelineState | null>(null)
-/** 本轮冷启动 LLM enrichment 批次进度。 */
-const coldStartEnrichmentBatch = ref<ColdStartEnrichmentBatch | null>(null)
-/** 本会话关闭放行后轻条时绑定的 readyAt。 */
-const coldStartPostReleaseDismissedReadyAt = ref<string | null>(null)
 /** 官网已登录 → 是否同步连到本扩展（仅此用途；与被挤掉说明分开） */
 const showWebsiteConnectBanner = ref(false)
 const websiteConnectBusy = ref(false)
@@ -208,20 +124,52 @@ const showExtensionDisplacedBanner = ref(false)
 /** 壳级断网薄适配（ADR-021）：本机库可读、云端理解不可用（不可 dismiss；恢复在线自动隐） */
 const isBrowserOnline = ref(readBrowserOnline())
 const showOfflineBanner = computed(() => !isBrowserOnline.value)
-/** 驱动轻条 TTL 到期重算。 */
-const coldStartBannerNowMs = ref(Date.now())
-let coldStartBannerExpiryTimer: ReturnType<typeof setTimeout> | null = null
-/**
- * Getting Started Try it 预填：门禁未放行时挂起，ready 后再自动提交（§5.8.1 首召质量）。
- */
-const pendingGsPrefillRecall = ref<string | null>(null)
-const libraryState = ref<RecallShellLibraryState>('unknown')
-const excerptCaptureCount = ref(0)
-const installOnboardingDone = ref(true)
-const skipOnboardingBusy = ref(false)
 const lastSentClue = ref('')
 /** 登录展示名；未登录或无名则空，问候退化为仅时段。 */
 const accountDisplayName = ref('')
+
+/** handleSendTurn 定义前占位；定义后改写，供预填自动提交。 */
+let autoSubmitPrefillClue: (clueText: string) => void = () => {}
+
+const {
+  libraryState,
+  skipOnboardingBusy,
+  showColdStartGate,
+  coldStartGateState,
+  showColdStartPostReleaseBanner,
+  coldStartEnrichmentProgressRatio,
+  coldStartPostReleaseBannerLabel,
+  showColdStartEnrichmentProgressBar,
+  bookmarkFuel,
+  captureFirstMode,
+  idleEmptyCopy,
+  showEmptyImportCta,
+  showEmptySetupCta,
+  idleGreeting,
+  applyRecallPrefillClue,
+  handleRecallPrefillStorageChanged,
+  handleLibraryMembershipStorageChanged,
+  loadOnboardingState,
+  handleSkipOnboarding,
+  handleOpenGettingStarted,
+  handleOpenBookmarkIngestSettings,
+  probeMemoryLibrary,
+  refreshBookmarkIngestSetting,
+  startImportPolling,
+  stopImportPolling,
+  startColdStartPolling,
+  stopColdStartPolling,
+  clearColdStartPostReleaseBannerExpiry,
+  dismissColdStartPostReleaseBanner,
+  hydrateColdStartPostReleaseDismissed
+} = useSidepanelColdStart({
+  clue,
+  clueInputRef,
+  accountDisplayName,
+  onAutoSubmitPrefill: clueText => {
+    autoSubmitPrefillClue(clueText)
+  }
+})
 
 /** Side Panel 会话：槽位 accumulated + 本会话否定 id（关闭 Panel 即丢，P0）。 */
 const dialogState = ref<RecallDialogState>({
@@ -230,14 +178,27 @@ const dialogState = ref<RecallDialogState>({
   dismissedIds: []
 })
 
-/** §7.2 Outcome 会话信号（与 dialog 同寿；关 Panel / New find 结算后重置）。 */
-const outcomeSession = ref<RecallOutcomeSessionState>(createRecallOutcomeSessionState())
-/** 出口条（通道 D）：仅同场 New find 前出示（不跨次打开补问）。 */
-const showOutcomeExitStrip = ref(false)
-/** 出口条出示期间暂存的 Omnibox 预填线索。 */
-const pendingPrefillAfterExit = ref<string | null>(null)
-/** 关 Panel 结算只做一次（onUnmounted）。 */
-let outcomeCloseHandled = false
+/** handleCompleteNewFindSession 定义前占位；定义后改写，供出口条回调。 */
+let completeNewFindSessionFn: (reason: string) => void | Promise<void> = () => {}
+
+const {
+  outcomeSession,
+  showOutcomeExitStrip,
+  pendingPrefillAfterExit,
+  markOutcomeCloseHandled,
+  handleOutcomeExitFound,
+  handleOutcomeExitNone,
+  handleOutcomeExitSkip,
+  finalizeOpenDwell,
+  flushOutcomeSession,
+  collectResultIdsFromRecall,
+  resolveMissAssistantCopy,
+  resetOutcomeSession
+} = useRecallOutcomeSession({
+  bookmarkFuel,
+  recallTelemetry,
+  onCompleteNewFindSession: reason => completeNewFindSessionFn(reason)
+})
 
 /** 软岔路口：发送前确认 Keep refining / Start new。 */
 const showThreadPivotStrip = ref(false)
@@ -257,49 +218,40 @@ const recallSourceScope = ref<RecallSourceScope>('all')
 const conversationTurns = ref<ConversationTurn[]>([])
 let turnSeq = 0
 
+const {
+  selectedDetailExportIds,
+  detailExportMode,
+  detailExportExporting,
+  detailExportSelectedCount,
+  showDetailExportBar,
+  hasRecallResultCards,
+  enterDetailExportMode,
+  handleToggleDetailExportSelection,
+  clearDetailExportSelection,
+  runDetailExportAction
+} = useDetailExport({
+  conversationTurns,
+  outcomeSession
+})
+
 const recallBodyRef = ref<HTMLElement | null>(null)
 /** 浮底 composer 栈（含出口条 / 导出条）；量高给会话区底 padding，内容可滚到半透明壳下。 */
 const recallFloatDockRef = ref<HTMLElement | null>(null)
 const recallScrollRegionRef = ref<HTMLElement | null>(null)
-/** 靠近底部时跟随新消息；用户上翻后暂停。 */
-const stickToBottom = ref(true)
-/** 单一跳转钮朝向：down=到底、up=置顶；null=隐藏。 */
-const scrollJumpDirection = ref<RecallShellScrollJumpDirection | null>(null)
-let recallBodyResizeObserver: ResizeObserver | null = null
-let recallFloatDockResizeObserver: ResizeObserver | null = null
 
-/** 浮底高度 → CSS 变量，供 body 底垫与跳转钮定位。 */
-function syncRecallFloatDockClearance(): void {
-  const dock = recallFloatDockRef.value
-  const region = recallScrollRegionRef.value
-  if (!region) {
-    return
-  }
-  const height = dock ? Math.ceil(dock.getBoundingClientRect().height) : 0
-  // 跳转钮与浮底之间再留一小段空隙
-  const clearance = Math.max(96, height + 12)
-  region.style.setProperty('--recall-dock-clearance', `${clearance}px`)
-}
-
-function applyRecallShellScrollState(state: RecallShellScrollState): void {
-  stickToBottom.value = state.nearBottom
-  scrollJumpDirection.value = resolveRecallShellScrollJumpDirection(state)
-}
-
-function syncRecallShellScrollState(): void {
-  const element = recallBodyRef.value
-  if (!element) {
-    scrollJumpDirection.value = null
-    return
-  }
-  applyRecallShellScrollState(readRecallShellScrollState(element))
-}
-
-const scrollJumpLabel = computed(() =>
-  scrollJumpDirection.value === 'up'
-    ? t('sidepanel_scroll_to_top')
-    : t('sidepanel_scroll_to_bottom')
-)
+const {
+  stickToBottom,
+  scrollJumpDirection,
+  scrollJumpLabel,
+  recallShellScrollListener,
+  handleScrollJump
+} = useRecallShellScroll({
+  recallBodyRef,
+  recallFloatDockRef,
+  recallScrollRegionRef,
+  conversationTurns,
+  isRecallRefreshing
+})
 
 /** 有气泡或 dialog 槽位时视为活动线程（可 New find）。 */
 const hasActiveFindSession = computed(() => {
@@ -386,143 +338,30 @@ const composerPlaceholder = computed(() => {
   return t(result.messageKey, result.messageArgs)
 })
 
-const recallShellScrollListener = createRecallShellScrollListener(applyRecallShellScrollState)
-
-function scrollRecallToBottom(): void {
-  scheduleRecallShellScrollToBottom(
-    () => recallBodyRef.value,
-    () => stickToBottom.value
-  )
-  requestAnimationFrame(() => {
-    syncRecallShellScrollState()
-  })
-}
-
-/** 最新助手轮是否带可点选邻域卡（有卡时滚锚点，勿盲黏底把首卡顶出视口）。 */
-function latestAssistantHasResultCards(): boolean {
-  for (let index = conversationTurns.value.length - 1; index >= 0; index -= 1) {
-    const turn = conversationTurns.value[index]
-    if (!turn || turn.role !== 'assistant') {
-      continue
-    }
-    if (turn.primaryCard || turn.relatedGuessCard || (turn.candidateCards?.length ?? 0) > 0) {
-      return true
-    }
-    return false
-  }
-  return false
-}
-
-function lastNeighborhoodAnchor(): HTMLElement | null {
-  const root = recallBodyRef.value
-  if (!root) {
-    return null
-  }
-  const anchors = root.querySelectorAll<HTMLElement>('[data-recall-neighborhood-anchor]')
-  return anchors.length > 0 ? (anchors.item(anchors.length - 1) ?? null) : null
-}
-
-/**
- * 会话更新后滚动：
- * - 等待态：黏底（看见进展）
- * - 有邻域卡：取消黏底并滚到邻域锚点（避免迟到的 scrollToBottom 把首卡顶出视口）
- * - 无卡终局：仍黏底（若用户未上滚）
- * 用户已上滚且无「有卡需对位」时不抢滚动。
- */
-function scrollRecallAfterConversationUpdate(): void {
-  if (isRecallRefreshing.value) {
-    if (stickToBottom.value) {
-      scrollRecallToBottom()
-    }
-    return
-  }
-  if (latestAssistantHasResultCards()) {
-    // 先关黏底，让等待期已排队的 scheduleRecallShellScrollToBottom 在 rAF 里 no-op
-    stickToBottom.value = false
-    scheduleRecallShellScrollChildToStart(
-      () => recallBodyRef.value,
-      () => lastNeighborhoodAnchor(),
-      () => !isRecallRefreshing.value
-    )
-    requestAnimationFrame(() => {
-      syncRecallShellScrollState()
-    })
-    return
-  }
-  if (stickToBottom.value) {
-    scrollRecallToBottom()
-  }
-}
-
-function handleScrollJump(): void {
-  if (scrollJumpDirection.value === 'up') {
-    scrollRecallShellToTop(recallBodyRef.value)
-    stickToBottom.value = false
-  } else if (scrollJumpDirection.value === 'down') {
-    stickToBottom.value = true
-    scrollRecallShellToBottom(recallBodyRef.value)
-  } else {
-    return
-  }
-  requestAnimationFrame(() => {
-    syncRecallShellScrollState()
-  })
-}
-
-watch(
-  () => [conversationTurns.value.length, isRecallRefreshing.value] as const,
-  async () => {
-    await nextTick()
-    // 邻域卡挂载可能再晚一拍；多等一帧 DOM，减少锚点 query 空窗
-    await nextTick()
-    scrollRecallAfterConversationUpdate()
-    syncRecallShellScrollState()
-  }
-)
-
-watch(recallBodyRef, (element, _previous, onCleanup) => {
-  recallBodyResizeObserver?.disconnect()
-  recallBodyResizeObserver = null
-  if (!element) {
-    scrollJumpDirection.value = null
-    return
-  }
-  syncRecallShellScrollState()
-  if (typeof ResizeObserver === 'undefined') {
-    return
-  }
-  recallBodyResizeObserver = new ResizeObserver(() => {
-    syncRecallShellScrollState()
-  })
-  recallBodyResizeObserver.observe(element)
-  onCleanup(() => {
-    recallBodyResizeObserver?.disconnect()
-    recallBodyResizeObserver = null
-  })
-})
-
-watch(recallFloatDockRef, (element, _previous, onCleanup) => {
-  recallFloatDockResizeObserver?.disconnect()
-  recallFloatDockResizeObserver = null
-  syncRecallFloatDockClearance()
-  if (!element || typeof ResizeObserver === 'undefined') {
-    return
-  }
-  recallFloatDockResizeObserver = new ResizeObserver(() => {
-    syncRecallFloatDockClearance()
-    syncRecallShellScrollState()
-  })
-  recallFloatDockResizeObserver.observe(element)
-  onCleanup(() => {
-    recallFloatDockResizeObserver?.disconnect()
-    recallFloatDockResizeObserver = null
-  })
-})
-
 function nextTurnId(): string {
   turnSeq += 1
   return String(turnSeq)
 }
+
+const {
+  expandedDuplicateGroupId,
+  handleShowMoreMatches,
+  toggleDuplicateGroup,
+  handleCardOpen,
+  handleEvidenceVisible,
+  handleDismissCandidates
+} = useRecallResultCards({
+  conversationTurns,
+  dialogState,
+  outcomeSession,
+  clue,
+  errorMessage,
+  clueInputRef,
+  threadFindTitleDisplay,
+  recallTelemetry,
+  finalizeOpenDwell,
+  nextTurnId
+})
 
 /** 续找时附带 session status；首轮 / 新会话后首轮不带。 */
 function continuingContextStatus(
@@ -582,7 +421,7 @@ async function completeNewFindSession(reason: string): Promise<void> {
     accumulated: null,
     dismissedIds: []
   }
-  outcomeSession.value = createRecallOutcomeSessionState()
+  resetOutcomeSession()
   recallTelemetry.clearActiveTask()
   conversationTurns.value = []
   clue.value = ''
@@ -606,6 +445,8 @@ async function completeNewFindSession(reason: string): Promise<void> {
     void handleSendTurn(pendingPrefill, { skipPivotCheck: true })
   }
 }
+
+completeNewFindSessionFn = (reason: string) => completeNewFindSession(reason)
 
 /** 刷新当前浏览页域名（展示用；用户开关不因短暂无 http 页被清掉）。 */
 async function refreshPageContextDomain(): Promise<void> {
@@ -674,236 +515,8 @@ watch(
   { immediate: true }
 )
 
-/** 出口条：Found it（默认最后一次 open）。 */
-function handleOutcomeExitFound(): void {
-  const opens = outcomeSession.value.opens
-  const lastId = opens.length > 0 ? opens[opens.length - 1]?.id : null
-  if (!lastId) {
-    void completeNewFindSession('exit_skip')
-    return
-  }
-  outcomeSession.value = {
-    ...outcomeSession.value,
-    exitChoice: 'found',
-    exitFoundId: lastId
-  }
-  void completeNewFindSession('exit_found')
-}
-
-/** 出口条：None of these。 */
-function handleOutcomeExitNone(): void {
-  outcomeSession.value = {
-    ...outcomeSession.value,
-    exitChoice: 'none',
-    exitFoundId: null
-  }
-  void completeNewFindSession('exit_none')
-}
-
-/** 出口条：跳过 → unknown。 */
-function handleOutcomeExitSkip(): void {
-  void completeNewFindSession('exit_skip')
-}
-
-/** 给最后一次 explore open 补 dwell（C1/C2）。 */
-function finalizeOpenDwell(): void {
-  outcomeSession.value = {
-    ...outcomeSession.value,
-    opens: withFinalizedLastOpenDwell(outcomeSession.value.opens)
-  }
-}
-
-/** §7.2：结算当前 Outcome 会话（best-effort）。 */
-async function flushOutcomeSession(reason: string, sessionStopped: boolean): Promise<void> {
-  finalizeOpenDwell()
-  const state = outcomeSession.value
-  const hasSignal =
-    state.resultIds.length > 0 ||
-    state.opens.length > 0 ||
-    state.dismissedPending ||
-    state.sawNoMatchFinal ||
-    state.exitChoice !== null ||
-    state.effectiveClue.trim().length > 0
-  if (!hasSignal) {
-    return
-  }
-  try {
-    const result = await commitRecallOutcome({ state, sessionStopped, reason })
-    if (result.settleWritten) {
-      outcomeSession.value = {
-        ...outcomeSession.value,
-        settleWriteDone: true
-      }
-    }
-    recallTelemetry.recordUserConfirmed({
-      label: result.event.label,
-      source: result.event.source,
-      ...(result.event.confidence ? { confidence: result.event.confidence } : {}),
-      ...(result.event.targetId ? { memoryItemId: result.event.targetId } : {})
-    })
-  } catch {
-    // 忽略：结算失败不挡 New find / 关 Panel
-  }
-}
-
-function collectResultIdsFromRecall(result: {
-  topPick: RecallMatch | null
-  alsoPossible: RecallMatch[]
-}): string[] {
-  const ids: string[] = []
-  if (result.topPick) {
-    ids.push(result.topPick.item.id)
-  }
-  for (const match of result.alsoPossible) {
-    ids.push(match.item.id)
-  }
-  return [...new Set(ids)]
-}
-
-/** 无候选 miss：诚实终局文案（无问卷芯片）；空库可带「导入」深链片段。 */
-function resolveMissAssistantCopy(input: {
-  emptyKind?: string
-  hasRelatedGuess: boolean
-  library: RecallShellLibraryState
-  clue: string
-  /** 本轮 LLM 理解失败已降级规则时，空结果须绑定「简化理解」以免像单纯没找着 */
-  usedRulesFallback?: boolean
-}): { text: string; textSegments?: RecallShellTextSegment[] } {
-  if (input.emptyKind === 'constrained_none') {
-    return {
-      text: input.hasRelatedGuess
-        ? t('popup_followup_miss_constrained_empty_with_guess')
-        : t('popup_followup_miss_constrained_empty')
-    }
-  }
-  if (input.library === 'empty') {
-    const copy = getRecallShellNoMatchCopy(
-      { library: 'empty', clue: input.clue, bookmarkFuel: bookmarkFuel.value },
-      t
-    )
-    const titleAndBody: RecallShellTextSegment[] = [
-      { kind: 'text', text: `${copy.title} ` },
-      ...(copy.bodySegments ?? [{ kind: 'text' as const, text: copy.body }])
-    ]
-    return {
-      text: `${copy.title} ${copy.body}`,
-      ...(copy.bodySegments ? { textSegments: titleAndBody } : {})
-    }
-  }
-  return {
-    text: input.usedRulesFallback ? t('popup_reply_miss_after_simpler_pass') : t('popup_reply_miss')
-  }
-}
-
-let importPollTimer: ReturnType<typeof setInterval> | null = null
-let coldStartPollTimer: ReturnType<typeof setInterval> | null = null
 /** 递增以丢弃过期找回响应，避免慢请求覆盖新线索结果。 */
 let recallRequestId = 0
-
-const showColdStartGate = computed(() => {
-  if (coldStartState.value?.status === 'ready') {
-    return false
-  }
-  if (shouldShowColdStartGate(coldStartState.value)) {
-    return true
-  }
-  // 首次引导未完成且门禁未就绪：pipeline 尚未落盘时也先挡主壳（修复重装后只见 Capture-first）
-  if (!installOnboardingDone.value && coldStartState.value === null) {
-    return true
-  }
-  // pipeline 尚未落盘时：导入已在跑则仍挡主壳
-  const importStatus = importState.value?.status
-  return coldStartState.value === null && (importStatus === 'running' || importStatus === 'pending')
-})
-
-/** 门禁已放行时冲刷 GS / Omnibox 预填自动 Recall。 */
-function tryFlushPendingGsPrefillRecall(): void {
-  if (showColdStartGate.value) {
-    return
-  }
-  const pending = pendingGsPrefillRecall.value
-  if (!pending) {
-    return
-  }
-  pendingGsPrefillRecall.value = null
-  clue.value = pending
-  void handleSendTurn(pending, { skipPivotCheck: true })
-}
-
-/**
- * 消费预填进 composer。
- * - autoSubmit true：GS Try it / Omnibox 接力 → 门禁后自动提交
- * - autoSubmit false：选区富线索 → 只预填可改，不自动发
- */
-function applyRecallPrefillClue(prefill: string, options?: { autoSubmit?: boolean }): void {
-  const trimmed = prefill.trim()
-  if (!trimmed) {
-    return
-  }
-  clue.value = trimmed
-  if (options?.autoSubmit === false) {
-    pendingGsPrefillRecall.value = null
-    void nextTick(() => {
-      clueInputRef.value?.focus()
-    })
-    return
-  }
-  pendingGsPrefillRecall.value = trimmed
-  tryFlushPendingGsPrefillRecall()
-}
-
-/**
- * Panel 已开时仍接收新的 `yiveno.recallPrefill`（Omnibox → Side Panel 接力）。
- * 只消费 session 写入；清除 / 空串忽略。
- */
-function handleRecallPrefillStorageChanged(
-  changes: Record<string, chrome.storage.StorageChange>,
-  areaName: string
-): void {
-  if (areaName !== 'session') {
-    return
-  }
-  const change = changes[RECALL_PREFILL_SESSION_KEY]
-  // 载荷为 { clue, autoSubmit }；兼容旧版纯字符串。清空 / 非法值忽略。
-  if (!change || !parseRecallPrefillStorageValue(change.newValue)) {
-    return
-  }
-  void (async () => {
-    try {
-      const payload = await consumeRecallPrefill()
-      if (!payload) {
-        return
-      }
-      applyRecallPrefillClue(payload.clue, { autoSubmit: payload.autoSubmit })
-    } catch {
-      // 忽略：预填消费失败不挡主壳
-    }
-  })()
-}
-
-/**
- * 库成员变更信号：划存 bump `excerptCaptureCount` / `memoryLibraryRevision`；删除 / 清库 bump revision。
- * Panel 一直开着时无 visibilitychange，须靠此把空态 / Capture-first 对齐到最新库态。
- * 仅可见时刷 DOM（与 ADR-019 可见门禁同向）；不可见留给回前台 probe。
- */
-function handleLibraryMembershipStorageChanged(
-  changes: Record<string, chrome.storage.StorageChange>,
-  areaName: string
-): void {
-  if (areaName !== 'local') {
-    return
-  }
-  const membershipTouched =
-    EXCERPT_CAPTURE_COUNT_LOCAL_KEY in changes || MEMORY_LIBRARY_REVISION_LOCAL_KEY in changes
-  if (!membershipTouched) {
-    return
-  }
-  if (document.visibilityState !== 'visible') {
-    return
-  }
-  void loadOnboardingState()
-  void probeMemoryLibrary()
-}
 
 /** Side Panel 共用的 storage.onChanged：session 预填 + local 库成员信号。 */
 function handleSidePanelStorageChanged(
@@ -912,530 +525,6 @@ function handleSidePanelStorageChanged(
 ): void {
   handleRecallPrefillStorageChanged(changes, areaName)
   handleLibraryMembershipStorageChanged(changes, areaName)
-}
-
-watch(showColdStartGate, (blocked, wasBlocked) => {
-  if (wasBlocked && !blocked) {
-    tryFlushPendingGsPrefillRecall()
-  }
-})
-
-/** 门禁展示用状态：优先 pipeline；否则用 import / 首装占位。 */
-const coldStartGateState = computed((): ColdStartPipelineState | null => {
-  if (coldStartState.value) {
-    return coldStartState.value
-  }
-  const imp = importState.value
-  if (imp && (imp.status === 'running' || imp.status === 'pending')) {
-    return {
-      version: 1,
-      status: 'running',
-      stage: 'import',
-      importImportedCount: imp.importedCount,
-      ...(imp.totalCount !== undefined ? { importTotalCount: imp.totalCount } : {}),
-      rulesScanned: 0,
-      rulesUpdated: 0,
-      aiEmbedAttempted: 0,
-      aiEmbedWritten: 0,
-      aiLlmEnqueued: 0
-    }
-  }
-  if (showColdStartGate.value) {
-    return {
-      version: 1,
-      status: 'pending',
-      stage: 'idle',
-      importImportedCount: 0,
-      rulesScanned: 0,
-      rulesUpdated: 0,
-      aiEmbedAttempted: 0,
-      aiEmbedWritten: 0,
-      aiLlmEnqueued: 0
-    }
-  }
-  return null
-})
-
-/** 门禁已放行：后台加厚轻条（不挡 Recall）。 */
-const showColdStartPostReleaseBanner = computed(() => {
-  if (showColdStartGate.value) {
-    return false
-  }
-  return shouldShowColdStartPostReleaseBanner({
-    state: coldStartState.value,
-    nowMs: coldStartBannerNowMs.value,
-    dismissedReadyAt: coldStartPostReleaseDismissedReadyAt.value,
-    enrichmentBatch: coldStartEnrichmentBatch.value
-  })
-})
-
-const coldStartEnrichmentProgressRatio = computed(() => {
-  const batch = coldStartEnrichmentBatch.value
-  if (!batch || batch.total <= 0) {
-    return 0
-  }
-  return coldStartEnrichmentBatchProgressRatio(batch)
-})
-
-const coldStartPostReleaseBannerLabel = computed(() => {
-  const batch = coldStartEnrichmentBatch.value
-  if (batch?.status === 'paused_quota') {
-    return t('cold_start_post_release_banner_paused', [String(batch.settled), String(batch.total)])
-  }
-  if (batch && batch.total > 0 && batch.status === 'running') {
-    return t('cold_start_post_release_banner_progress', [
-      String(batch.settled),
-      String(batch.total)
-    ])
-  }
-  return t('cold_start_post_release_banner')
-})
-
-const showColdStartEnrichmentProgressBar = computed(() => {
-  const batch = coldStartEnrichmentBatch.value
-  return Boolean(batch && batch.total > 0 && batch.status !== 'cleared')
-})
-
-/**
- * 空库燃料态：灌库开关 × 导入状态 → Idle / no_match 文案分流。
- * 主进度仍在 GS；此处只反馈「为何找不到」。
- */
-const bookmarkFuel = computed(() =>
-  resolveRecallShellBookmarkFuel({
-    bookmarkIngestEnabled: bookmarkIngestEnabled.value,
-    importStatus: importState.value?.status ?? null
-  })
-)
-
-/** 书签库存：导入计数；库已 ready 且无摘录计数时视为至少有书签可召（防 Capture-first 误伤）。 */
-const captureFirstBookmarkCount = computed(() => {
-  const imported = importState.value?.importedCount ?? 0
-  if (imported > 0) {
-    return imported
-  }
-  if (libraryState.value === 'ready' && excerptCaptureCount.value === 0) {
-    return 1
-  }
-  return 0
-})
-
-const captureFirstMode = computed(() =>
-  shouldShowCaptureFirstRecallShell({
-    excerptCaptureCount: excerptCaptureCount.value,
-    bookmarkCount: captureFirstBookmarkCount.value,
-    installOnboardingDone: installOnboardingDone.value
-  })
-)
-
-const idleEmptyCopy = computed(() =>
-  getRecallShellIdleEmptyCopy(libraryState.value, t, {
-    captureFirst: captureFirstMode.value,
-    bookmarkFuel: bookmarkFuel.value
-  })
-)
-
-/** 空库 + 未开灌库：Idle 展示导入书签 CTA。 */
-const showEmptyImportCta = computed(() =>
-  shouldShowRecallEmptyImportCta({
-    library: libraryState.value,
-    captureFirst: captureFirstMode.value,
-    bookmarkFuel: bookmarkFuel.value
-  })
-)
-
-/** 空库 + 已开灌库但仍空：Idle 回 GS 软后路。 */
-const showEmptySetupCta = computed(() =>
-  shouldShowRecallEmptySetupCta({
-    library: libraryState.value,
-    captureFirst: captureFirstMode.value,
-    bookmarkFuel: bookmarkFuel.value
-  })
-)
-
-/** 空线程时占位问候：按时段，有名则带名。 */
-const idleGreeting = computed(() =>
-  getTimeOfDayGreeting(t, {
-    ...(accountDisplayName.value ? { displayName: accountDisplayName.value } : {})
-  })
-)
-
-/** 当前展开的重复组代表 id；同时只展开一组。 */
-const expandedDuplicateGroupId = ref<string | null>(null)
-
-const selectedDetailExportIds = ref<Set<string>>(new Set())
-/** Detail export 多选模式：默认关，点 Export 后才显示勾选框。 */
-const detailExportMode = ref(false)
-const detailExportExporting = ref(false)
-
-const { success: showToastSuccess, error: showToastError } = useAppToast()
-
-const detailExportSelectedCount = computed(() => selectedDetailExportIds.value.size)
-const showDetailExportBar = computed(() => detailExportMode.value)
-
-/** 当前线程是否有可导出的结果卡（非空态 / 纯追问）。 */
-const hasRecallResultCards = computed(() =>
-  conversationTurns.value.some(turn => {
-    if (turn.role !== 'assistant') {
-      return false
-    }
-    return Boolean(
-      turn.primaryCard || turn.relatedGuessCard || (turn.candidateCards?.length ?? 0) > 0
-    )
-  })
-)
-
-function enterDetailExportMode(): void {
-  detailExportMode.value = true
-}
-
-function exitDetailExportMode(): void {
-  detailExportMode.value = false
-  selectedDetailExportIds.value = new Set()
-}
-
-function handleToggleDetailExportSelection(id: string): void {
-  selectedDetailExportIds.value = toggleDetailExportSelectionSet(selectedDetailExportIds.value, id)
-}
-
-function clearDetailExportSelection(): void {
-  exitDetailExportMode()
-}
-
-async function runDetailExportAction(
-  format: 'json' | 'markdown',
-  channel: 'copy' | 'download'
-): Promise<void> {
-  if (detailExportExporting.value) {
-    return
-  }
-  detailExportExporting.value = true
-  try {
-    const ids = [...selectedDetailExportIds.value]
-    const result =
-      channel === 'copy'
-        ? await copyDetailExportToClipboard(ids, format)
-        : await downloadDetailExport(ids, format)
-    if (!result.ok) {
-      showToastError(tMemoryError(result.errorCode))
-      return
-    }
-    showToastSuccess(
-      channel === 'copy' ? t('detail_export_copy_success') : t('detail_export_download_success')
-    )
-    const firstId = ids[0]
-    if (firstId) {
-      outcomeSession.value = {
-        ...outcomeSession.value,
-        copiedOrPackedId: firstId
-      }
-    }
-  } catch {
-    showToastError(t('error_detail_export_operation_failed'))
-  } finally {
-    detailExportExporting.value = false
-  }
-}
-
-/** 助手轮次当前可见的候选卡（Show more 截取）。 */
-function visibleCandidateCards(turn: AssistantTurn): RecallCardModel[] {
-  const cards = turn.candidateCards ?? []
-  const limit = turn.visibleCount ?? cards.length
-  return cards.slice(0, Math.max(0, limit))
-}
-
-/** 排序短名单回复文案：报总数 N，并标明当前展示区间。 */
-function formatRankedReplyText(total: number, visible: number): string {
-  if (total <= 0) {
-    return t('popup_reply_confident')
-  }
-  const shown = Math.min(visible, total)
-  if (shown >= total) {
-    return t('popup_reply_ranked_all', [String(total)])
-  }
-  return t('popup_reply_ranked_partial', [String(total), '1', String(shown)])
-}
-
-/** 有真实槽位时生成理解回声芯片；无则 undefined。 */
-function resolveUnderstandingEchoChips(
-  parsed: ParsedRecallClue | undefined
-): RecallUnderstandingEchoChip[] | undefined {
-  const source = recallUnderstandingEchoSourceFromParsed(parsed)
-  if (!source) {
-    return undefined
-  }
-  const chips = formatRecallUnderstandingEchoChips(source, t)
-  return chips.length > 0 ? chips : undefined
-}
-
-/** 列表级 Framing 文案；有理解回声时省略 P1 / 「主要依据」；有卡时省略 P6（卡前计数承接）。 */
-function resolveListReplyText(
-  result: RecallResult,
-  total: number,
-  visibleCount: number,
-  fallback: string,
-  options: { omitUnderstood?: boolean; omitCounts?: boolean } = {}
-): { text: string; recallFramingFacts?: RecallFramingFacts } {
-  const omitUnderstood = options.omitUnderstood === true
-  const omitCounts = options.omitCounts === true
-  const facts = result.recallFraming?.facts
-  let text: string
-  if (facts) {
-    text = renderFramingWithShownCount(facts, total, visibleCount, {
-      omitUnderstood,
-      omitCounts
-    })
-  } else if (result.recallFraming?.text.trim() && !omitUnderstood) {
-    text = result.recallFraming.text
-  } else if (omitCounts) {
-    // 无 facts 且卡前已报计数：勿再塞纯计数 fallback
-    text = ''
-  } else {
-    text = fallback
-  }
-
-  // 有 Heard as：仅保留回声未覆盖的 source；无回声：完整 Mainly based on
-  {
-    const framingForBasis = facts ?? result.recallFraming?.facts
-    const basisKinds = selectBasisKindsForResultCopy(
-      selectRecallVisibleProgressBasisKinds({
-        ...(result.parsed !== undefined ? { parsed: result.parsed } : {}),
-        ...(framingForBasis !== undefined ? { framingFacts: framingForBasis } : {})
-      }),
-      { omitEchoOverlap: omitUnderstood }
-    )
-    const basis = formatRecallVisibleProgressBasis(basisKinds, t)
-    if (basis) {
-      text = `${text} ${basis}`
-    }
-  }
-
-  if (facts) {
-    return { text, recallFramingFacts: facts }
-  }
-  if (result.recallFraming?.facts) {
-    return { text, recallFramingFacts: result.recallFraming.facts }
-  }
-  return { text }
-}
-
-function renderFramingWithShownCount(
-  facts: RecallFramingFacts,
-  total: number,
-  shown: number,
-  options: { omitUnderstood?: boolean; omitCounts?: boolean } = {}
-): string {
-  if (facts.kind !== 'candidates') {
-    return renderRecallFraming(facts, t, options)
-  }
-  return renderRecallFraming(
-    {
-      ...facts,
-      counts: { total, shown: Math.min(shown, total) }
-    },
-    t,
-    options
-  )
-}
-
-/** Show more：再展一页或展开剩余全部，并刷新文案区间。 */
-function handleShowMoreMatches(turnId: string, mode: 'page' | 'all' = 'page'): void {
-  conversationTurns.value = conversationTurns.value.map(turn => {
-    if (turn.role !== 'assistant' || turn.id !== turnId) {
-      return turn
-    }
-    const total = turn.candidateCards?.length ?? 0
-    if (total === 0) {
-      return turn
-    }
-    const currentVisible = turn.visibleCount ?? RECALL_RESULT_PAGE_SIZE
-    const nextVisible = resolveNextRecallVisibleCount(currentVisible, total, mode)
-    const rankedTotal = turn.rankedTotalCount ?? total
-    const omitUnderstood = (turn.understandingEcho?.length ?? 0) > 0
-    const hasCards =
-      Boolean(turn.primaryCard) ||
-      Boolean(turn.relatedGuessCard) ||
-      (turn.candidateCards?.length ?? 0) > 0
-    const nextText =
-      turn.recallFramingFacts !== undefined
-        ? renderFramingWithShownCount(turn.recallFramingFacts, rankedTotal, nextVisible, {
-            omitUnderstood,
-            omitCounts: hasCards
-          })
-        : hasCards
-          ? turn.text
-          : turn.tone === 'confident'
-            ? formatRankedReplyText(rankedTotal, nextVisible)
-            : turn.text
-    return {
-      ...turn,
-      visibleCount: nextVisible,
-      ...(turn.tone === 'confident' || turn.recallFramingFacts !== undefined
-        ? { text: nextText }
-        : {})
-    }
-  })
-}
-
-function toMatchCard(
-  match: RecallMatch,
-  resultClue: string,
-  options: { includeSiblings?: boolean; rank?: number } = {}
-): RecallCardModel {
-  return toRecallMatchCard(match, resultClue, t, {
-    ...options,
-    detailPageUrl: recallDetailPageUrl
-  })
-}
-
-function toggleDuplicateGroup(cardId: string): void {
-  expandedDuplicateGroupId.value = expandedDuplicateGroupId.value === cardId ? null : cardId
-}
-
-function handleCardOpen(payload: {
-  id: string
-  url: string
-  openInNewTab: boolean
-  rank?: number
-}): void {
-  handleRecallResultOpen(payload.id, payload.url, payload.openInNewTab, payload.rank)
-}
-
-function handleEvidenceVisible(payload: {
-  memoryItemId: string
-  rank: number
-  ecs: number
-  reasonCodes?: string[]
-  anchor?: string
-}): void {
-  recallTelemetry.recordEvidenceVisible(payload)
-}
-
-/** 「都不是这些」：写否定反馈，保留 accumulated，会话 dismissedIds 并集后再请补线索。 */
-async function handleDismissCandidates(): Promise<void> {
-  const lastAssistant = [...conversationTurns.value]
-    .reverse()
-    .find((turn): turn is AssistantTurn => turn.role === 'assistant' && turn.allowDismiss)
-
-  if (!lastAssistant) {
-    return
-  }
-
-  const ids = [
-    ...(lastAssistant.primaryCard ? [lastAssistant.primaryCard.id] : []),
-    ...visibleCandidateCards(lastAssistant).map(c => c.id)
-  ]
-
-  if (ids.length > 0) {
-    dialogState.value = {
-      ...dialogState.value,
-      dismissedIds: [...new Set([...dialogState.value.dismissedIds, ...ids])]
-    }
-    outcomeSession.value = {
-      ...outcomeSession.value,
-      dismissedPending: true,
-      sawNoMatchFinal: false,
-      resultIds: ids
-    }
-    void recordRecallDismiss({ ids }).catch(() => {
-      // 忽略：反馈失败不阻塞继续补线索
-    })
-    void commitRecallOutcome({
-      state: outcomeSession.value,
-      reason: 'dismiss'
-    })
-      .then(result => {
-        if (result.settleWritten) {
-          outcomeSession.value = {
-            ...outcomeSession.value,
-            settleWriteDone: true
-          }
-        }
-        recallTelemetry.recordUserConfirmed({
-          label: result.event.label,
-          source: result.event.source,
-          ...(result.event.confidence ? { confidence: result.event.confidence } : {}),
-          ...(result.event.targetId ? { memoryItemId: result.event.targetId } : {})
-        })
-      })
-      .catch(() => {
-        // 忽略：Outcome 日志失败不挡 dismiss
-      })
-  }
-
-  conversationTurns.value = conversationTurns.value.map(turn => {
-    if (turn.role === 'assistant' && turn.id === lastAssistant.id) {
-      return { ...turn, allowDismiss: false }
-    }
-    return turn
-  })
-
-  conversationTurns.value.push({
-    id: nextTurnId(),
-    role: 'user',
-    text: t('popup_dismiss_candidates')
-  })
-
-  conversationTurns.value.push({
-    id: nextTurnId(),
-    role: 'assistant',
-    tone: 'miss',
-    text: t('popup_reply_after_dismiss'),
-    contextStatus: threadFindTitleDisplay.value
-      ? t('popup_session_status_continuing_threaded', threadFindTitleDisplay.value)
-      : t('popup_session_status_continuing'),
-    allowDismiss: false
-  })
-
-  errorMessage.value = ''
-  clue.value = ''
-  await nextTick()
-  clueInputRef.value?.focus()
-}
-
-/** 打开结果：默认当前活动标签；⌘/Ctrl+点击新开。写 explore open（§7.2：≠ settled）。 */
-function handleRecallResultOpen(
-  memoryItemId: string,
-  openUrl: string,
-  openInNewTab = false,
-  rank?: number
-): void {
-  recallTelemetry.recordSourceOpened({
-    memoryItemId,
-    ...(rank !== undefined ? { rank } : {})
-  })
-  void markFirstRecallOpenDone().catch(() => {
-    // 忽略：引导标记失败不影响打开
-  })
-  finalizeOpenDwell()
-  outcomeSession.value = {
-    ...outcomeSession.value,
-    opens: [...outcomeSession.value.opens, { id: memoryItemId, at: new Date().toISOString() }]
-  }
-  void navigateActiveTab({
-    url: openUrl,
-    disposition: openInNewTab ? 'newForegroundTab' : 'currentTab'
-  }).catch(() => {
-    // 忽略：导航失败不打断会话；用户可再点
-  })
-  if (openUrl.includes('/detail.html')) {
-    return
-  }
-  void recordMemoryOpen({ id: memoryItemId }).catch(() => {
-    // 忽略：打开记录失败不影响用户跳转
-  })
-}
-
-async function loadOnboardingState(): Promise<void> {
-  try {
-    const [captureCount, onboardingDone] = await Promise.all([
-      readExcerptCaptureCount(),
-      readInstallOnboardingDone()
-    ])
-    excerptCaptureCount.value = captureCount
-    installOnboardingDone.value = onboardingDone
-  } catch {
-    // 忽略：默认不展示 Capture-first，避免阻塞 Side Panel 首屏
-  }
 }
 
 /** 读取展示名供空态问候；无展示名时用邮箱本地段。失败不阻塞主路径。 */
@@ -1537,197 +626,6 @@ async function dismissExtensionDisplacedBanner(): Promise<void> {
     await clearExtensionDisplacedNotice()
   } catch {
     // 忽略：本地已隐藏
-  }
-}
-
-async function handleSkipOnboarding(): Promise<void> {
-  if (skipOnboardingBusy.value) {
-    return
-  }
-  skipOnboardingBusy.value = true
-  try {
-    await markInstallOnboardingDone()
-    installOnboardingDone.value = true
-  } finally {
-    skipOnboardingBusy.value = false
-  }
-}
-
-function handleOpenGettingStarted(): void {
-  void openGettingStartedPage()
-}
-
-/** 空库「导入书签」→ Settings 保存分区书签灌库开关。 */
-function handleOpenBookmarkIngestSettings(): void {
-  void focusOrOpenSettingsTab({ hash: SETTINGS_HASH_CHROME_BOOKMARK_INGEST })
-}
-
-async function probeMemoryLibrary() {
-  try {
-    const response = await listMemoryItems({ limit: 1 })
-    if (!response.ok || !('total' in response)) {
-      libraryState.value = 'unknown'
-      return
-    }
-    libraryState.value = response.total > 0 ? 'ready' : 'empty'
-  } catch {
-    libraryState.value = 'unknown'
-  }
-}
-
-/** 读取书签灌库开关；失败保持现值，不阻塞空态。 */
-async function refreshBookmarkIngestSetting(): Promise<void> {
-  try {
-    const response = await fetchUserSettings()
-    if (!response.ok) {
-      return
-    }
-    bookmarkIngestEnabled.value = response.settings.chromeBookmarkIngestEnabled
-    // 用户在 GS 刚打开开关时，确保导入轮询已启动
-    if (bookmarkIngestEnabled.value && !importPollTimer) {
-      startImportPolling()
-    }
-  } catch {
-    // 忽略：缺省关，文案走 ingest_off
-  }
-}
-
-async function refreshImportStatus() {
-  const response = await fetchChromeBookmarkImportStatus()
-  if (!response.ok) {
-    return
-  }
-  importState.value = response.state
-
-  // 无持久化记录视为终态：从未启动过导入 / 外部清掉 storage 都不该让 Side Panel 持续敲
-  if (
-    !response.state ||
-    response.state.status === 'completed' ||
-    response.state.status === 'failed'
-  ) {
-    stopImportPolling()
-    if (response.state?.status === 'completed') {
-      void probeMemoryLibrary()
-    }
-  }
-}
-
-function startImportPolling() {
-  if (importPollTimer) {
-    return
-  }
-  void refreshImportStatus()
-  importPollTimer = setInterval(() => {
-    void refreshImportStatus()
-  }, 500)
-}
-
-function stopImportPolling() {
-  if (importPollTimer) {
-    clearInterval(importPollTimer)
-    importPollTimer = null
-  }
-}
-
-async function refreshColdStartStatus() {
-  const response = await fetchColdStartStatus()
-  if (!response.ok) {
-    return
-  }
-  coldStartState.value = response.state
-  coldStartEnrichmentBatch.value = response.enrichmentBatch
-  scheduleColdStartPostReleaseBannerExpiry()
-  tryFlushPendingGsPrefillRecall()
-  const batchActive =
-    response.enrichmentBatch?.status === 'running' &&
-    response.enrichmentBatch.settled < response.enrichmentBatch.total
-  if (response.state?.status === 'ready' || response.state?.status === 'failed') {
-    if (!batchActive) {
-      stopColdStartPolling()
-    } else if (!coldStartPollTimer) {
-      startColdStartPolling()
-    }
-    if (response.state.status === 'ready') {
-      void probeMemoryLibrary()
-    }
-  }
-}
-
-function clearColdStartPostReleaseBannerExpiry() {
-  if (coldStartBannerExpiryTimer) {
-    clearTimeout(coldStartBannerExpiryTimer)
-    coldStartBannerExpiryTimer = null
-  }
-}
-
-/** 轻条仍在 TTL 内（且无活跃批次）时预约到期刷新。 */
-function scheduleColdStartPostReleaseBannerExpiry() {
-  clearColdStartPostReleaseBannerExpiry()
-  coldStartBannerNowMs.value = Date.now()
-  const state = coldStartState.value
-  const readyAt = state?.readyAt
-  if (!state || state.status !== 'ready' || !readyAt) {
-    return
-  }
-  if (
-    !shouldShowColdStartPostReleaseBanner({
-      state,
-      nowMs: coldStartBannerNowMs.value,
-      dismissedReadyAt: coldStartPostReleaseDismissedReadyAt.value,
-      enrichmentBatch: coldStartEnrichmentBatch.value
-    })
-  ) {
-    return
-  }
-  // 有真实批次进行中：靠轮询更新，不靠 TTL 定时器
-  const batch = coldStartEnrichmentBatch.value
-  if (batch && (batch.status === 'running' || batch.status === 'paused_quota')) {
-    return
-  }
-  const readyMs = Date.parse(readyAt)
-  if (!Number.isFinite(readyMs)) {
-    return
-  }
-  const remaining = readyMs + COLD_START_POST_RELEASE_BANNER_TTL_MS - coldStartBannerNowMs.value
-  if (remaining <= 0) {
-    return
-  }
-  coldStartBannerExpiryTimer = setTimeout(() => {
-    coldStartBannerNowMs.value = Date.now()
-    coldStartBannerExpiryTimer = null
-  }, remaining + 50)
-}
-
-async function dismissColdStartPostReleaseBanner() {
-  const readyAt = coldStartState.value?.readyAt
-  if (readyAt) {
-    coldStartPostReleaseDismissedReadyAt.value = readyAt
-    try {
-      await writeColdStartPostReleaseBannerDismissedReadyAt(readyAt)
-    } catch {
-      // 会话写失败仍本地隐藏
-    }
-  } else {
-    // 无 readyAt 时用本地强制隐藏（不应出现；兜底）
-    coldStartPostReleaseDismissedReadyAt.value = '__force_hidden__'
-  }
-  clearColdStartPostReleaseBannerExpiry()
-}
-
-function startColdStartPolling() {
-  if (coldStartPollTimer) {
-    return
-  }
-  void refreshColdStartStatus()
-  coldStartPollTimer = setInterval(() => {
-    void refreshColdStartStatus()
-  }, 400)
-}
-
-function stopColdStartPolling() {
-  if (coldStartPollTimer) {
-    clearInterval(coldStartPollTimer)
-    coldStartPollTimer = null
   }
 }
 
@@ -2116,6 +1014,10 @@ async function handleSendTurn(
   await commitSendTurn(trimmed)
 }
 
+autoSubmitPrefillClue = (clueText: string) => {
+  void handleSendTurn(clueText, { skipPivotCheck: true })
+}
+
 /** 真正推入用户气泡并召回（已过软岔路口或芯片跳过）。 */
 async function commitSendTurn(trimmedClue: string): Promise<void> {
   const trimmed = trimmedClue.trim()
@@ -2181,10 +1083,9 @@ function handleCorrectUnderstanding(value: string): void {
  * Chrome 无法拦截原生关闭；跨次问「上次找没找到」无上下文、易错愕。
  */
 async function handlePanelCloseOutcome(): Promise<void> {
-  if (outcomeCloseHandled) {
+  if (!markOutcomeCloseHandled()) {
     return
   }
-  outcomeCloseHandled = true
   recordVisibleProgressWaitAbandoned('panel_close')
   finalizeOpenDwell()
   await flushOutcomeSession('panel_close', true)
@@ -2258,15 +1159,7 @@ onMounted(() => {
   void refreshPageContextDomain()
   startImportPolling()
   startColdStartPolling()
-  void (async () => {
-    try {
-      coldStartPostReleaseDismissedReadyAt.value =
-        await readColdStartPostReleaseBannerDismissedReadyAt()
-      scheduleColdStartPostReleaseBannerExpiry()
-    } catch {
-      // 忽略：无 dismiss 记录不阻塞
-    }
-  })()
+  void hydrateColdStartPostReleaseDismissed()
 })
 
 onUnmounted(() => {
