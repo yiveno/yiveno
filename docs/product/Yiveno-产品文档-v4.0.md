@@ -2250,13 +2250,15 @@ Chrome API / 选区
 | **无相关**（`no_match`，含 `constrained_none`） | 无可点选相关候选  | 诚实终局；可选猜测卡；**无**追问芯片；**无**缩短再试                        |
 | **缺主题**（`no_match` · `missing_topic`）      | clue 无主题锚     | **未进检索**；明示缺主题 + 只问一问「这是关于什么的？」；**无**猜测卡       |
 | **噪音拒绝**（`no_match` · `rejected_noise`）   | Gate A 判定硬噪音 | **未进理解/检索**；专属提示，不回显原 clue；**无**猜测卡                    |
+| **闲聊**（`no_match` · `chitchat`）             | 意图非找东西      | **未进检索**；自然回复并引回找东西；**无**猜测卡；不计入 no_match 结算      |
 
 **流水线：**
 
 ```text
 本轮 clue + context（priorUserUtterances / accumulated / dismissedIds）
   → 网关对本轮（硬噪音仍拒）
-  → understand(本轮) → ParsedRecallClue_current
+  → understand(本轮) → ParsedRecallClue_current（同次 LLM 含意图）
+  → 意图为闲聊（chitchat）→ 短路返回自然回复（emptyKind=chitchat），不进检索、不计结算
   → merge(accumulated, current) → ParsedRecallClue_merged
   → 本轮无主题锚且非约束邻域（H-topic）→ 未进检索，emptyKind=missing_topic（明示缺主题 + 只问一问）
   → 排除 dismissedIds → keyword Filter + 软加权；有 timeRange 则硬过滤
@@ -2267,7 +2269,7 @@ Chrome API / 选区
 
 **LLM Framing 润色（Normative · 已接线）：** 宽邻域 `top_pick`（N≥6）或 `need_a_clue` 时，在规则 Framing 事实之上润色 P1–P5；`chip.value` 须为稳定英文；计入 `POST /api/ai/hosted/complete` 同桶；门禁不过 → 规则模板。未登录 / 关 AI / 配额尽 → 同降级。**窄** `top_pick` 跳过 LLM 以省配额。
 
-**本切片不做：** 开放闲聊；无候选时的规则缺槽问卷。§7.1 环境芯片 / Hybrid 已另见 Phase B 接线说明。
+**本切片不做：** 多轮开放闲聊（闲聊仅单次短路引回找东西）；无候选时的规则缺槽问卷。§7.1 环境芯片 / Hybrid 已另见 Phase B 接线说明。
 
 ### 7.05 Recall Request 模型与 Discovery 边界（Normative · 2026-10-06 · D1 已裁决）
 

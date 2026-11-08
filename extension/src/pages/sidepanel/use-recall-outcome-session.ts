@@ -55,6 +55,8 @@ export type UseRecallOutcomeSessionResult = {
     library: RecallShellLibraryState
     clue: string
     usedRulesFallback?: boolean
+    /** intent=chitchat 时的模型原文回复；有则直接渲染 */
+    assistantReply?: string
   }) => { text: string; textSegments?: RecallShellTextSegment[] }
   resetOutcomeSession: () => void
 }
@@ -180,9 +182,14 @@ export function useRecallOutcomeSession(
     clue: string
     /** 本轮 LLM 理解失败已降级规则时，空结果须绑定「简化理解」以免像单纯没找着 */
     usedRulesFallback?: boolean
+    /** intent=chitchat 时的模型原文回复；有则直接渲染 */
+    assistantReply?: string
   }): { text: string; textSegments?: RecallShellTextSegment[] } {
     if (input.emptyKind === 'rejected_noise') {
       return { text: t('popup_reply_miss_rejected_noise') }
+    }
+    if (input.emptyKind === 'chitchat' && input.assistantReply?.trim()) {
+      return { text: input.assistantReply.trim() }
     }
     if (input.emptyKind === 'constrained_none') {
       return {

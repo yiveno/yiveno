@@ -760,6 +760,14 @@ async function runRecall(trimmedClue: string): Promise<void> {
         dismissedPending: false,
         sawNoMatchFinal: false
       }
+    } else if (response.result.emptyKind === 'chitchat') {
+      // 闲聊短路：不是一次没找到的 recall，不计入 no_match 结算
+      outcomeSession.value = {
+        ...outcomeSession.value,
+        effectiveClue: highlightClue,
+        resultIds,
+        dismissedPending: false
+      }
     } else {
       outcomeSession.value = {
         ...outcomeSession.value,
@@ -886,7 +894,10 @@ async function runRecall(trimmedClue: string): Promise<void> {
         hasRelatedGuess: relatedGuess !== null,
         library: libraryState.value,
         clue: highlightClue,
-        usedRulesFallback
+        usedRulesFallback,
+        ...(response.result.assistantReply !== undefined
+          ? { assistantReply: response.result.assistantReply }
+          : {})
       })
       const understandingEcho = resolveUnderstandingEchoChips(response.result.parsed)
       const omitUnderstood = Boolean(understandingEcho)
