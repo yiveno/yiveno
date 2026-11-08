@@ -167,6 +167,22 @@ function isKeyboardMash(raw: string): boolean {
     return true
   }
 
+  // 多段乱输：去空白后整串仍符合单串判定（P0 噪声防御）。
+  // - 重复分支加 5+ 辅音簇条件：纯靠低多样性会误伤真短语（sweet street / deer street / free street 去空白后 unique 比 ≤ 0.5）。
+  // - 邻接分支阈值 0.7、下限 12 字母：能走到本分支的真短语邻接比实测最高 0.4（sweet dreams），邻接分支拦住的乱输最低 0.73（asdf zxcv qwer）。注意邻接是曼哈顿距离（对角不算），不要按切比雪夫重算。
+  if (hasWhitespace) {
+    if (
+      letters.length >= 10 &&
+      isRepetitiveMash(letters) &&
+      /[bcdfghjklmnpqrstvwxz]{5,}/i.test(letters)
+    ) {
+      return true
+    }
+    if (letters.length >= 12 && keyboardAdjacentRatio(letters) >= 0.7) {
+      return true
+    }
+  }
+
   if (!hasWhitespace) {
     // 超长无空白字母串：硬噪音
     if (letters.length >= 28) {
