@@ -2258,7 +2258,7 @@ Chrome API / 选区
 本轮 clue + context（priorUserUtterances / accumulated / dismissedIds）
   → 网关对本轮（硬噪音仍拒）
   → understand(本轮) → ParsedRecallClue_current（同次 LLM 含意图）
-  → 意图为闲聊（chitchat）→ 短路返回自然回复（emptyKind=chitchat），不进检索、不计结算
+  → 意图为闲聊（chitchat）→ 第二次调用生成自然回复（temperature 0.8；解析仍为同次调用 temperature 0），短路返回（emptyKind=chitchat），不进检索、不计结算
   → merge(accumulated, current) → ParsedRecallClue_merged
   → 本轮无主题锚且非约束邻域（H-topic）→ 未进检索，emptyKind=missing_topic（明示缺主题 + 只问一问）
   → 排除 dismissedIds → keyword Filter + 软加权；有 timeRange 则硬过滤
@@ -2266,6 +2266,8 @@ Chrome API / 选区
   → 有候选：build RecallFramingFacts → 规则模板气泡；宽邻域 top_pick / need_a_clue 可 LLM 润色 P1–P5（同 clue 配额桶）+ 规则 P6 计数；芯片仍仅 need_a_clue
   → 返回 outcome + parsed(merged) + effectiveClue（+ emptyKind / relatedGuess / recallFraming / assistantFollowUp）
 ```
+
+闲聊每条现在占 2 次 LLM 调用（解析 + 回复），0 embedding，0 扫库。
 
 **LLM Framing 润色（Normative · 已接线）：** 宽邻域 `top_pick`（N≥6）或 `need_a_clue` 时，在规则 Framing 事实之上润色 P1–P5；`chip.value` 须为稳定英文；计入 `POST /api/ai/hosted/complete` 同桶；门禁不过 → 规则模板。未登录 / 关 AI / 配额尽 → 同降级。**窄** `top_pick` 跳过 LLM 以省配额。
 

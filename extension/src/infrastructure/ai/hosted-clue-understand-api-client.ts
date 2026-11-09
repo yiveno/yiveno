@@ -68,7 +68,7 @@ export function createHostedClueUnderstandApiCompleter(
         body: JSON.stringify({
           messages,
           maxTokens,
-          temperature: 0,
+          temperature: options.temperature ?? 0,
           taskKind
         }),
         signal: AbortSignal.timeout(CLUE_LLM_COMPLETE_TIMEOUT_MS)

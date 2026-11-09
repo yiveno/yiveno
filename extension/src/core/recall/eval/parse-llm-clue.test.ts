@@ -1,14 +1,17 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 
 import {
   extractJsonObjectText,
   parseJsonObjectFromLlmText
 } from '@/core/recall/understand/extract-llm-json'
+import { clearLlmParseCache, setCachedLlmParse } from '@/core/recall/understand/llm-parse-cache'
+import { LlmParsedClueProposalSchema } from '@/core/recall/understand/llm-parsed-clue-proposal'
 import { mapLlmProposalToParsedClue } from '@/core/recall/understand/map-llm-proposal-to-parsed'
 import { PARSE_GOLD_NOW_MS } from '@/core/recall/eval/parse-gold-now'
 import { parseRecallClue } from '@/core/recall/parse-recall-clue'
 import { parseRecallClueWithLlm } from '@/core/recall/understand/parse-recall-clue-with-llm'
 import type { LlmChatCompleter } from '@/core/recall/understand/parse-recall-clue-with-llm'
+import type { LlmChatCompleteOptions } from '@/core/recall/understand/ai-chat-task-kind'
 
 describe('extract-llm-json', () => {
   it('剥 markdown 围栏', () => {
@@ -309,5 +312,164 @@ describe('parseRecallClueWithLlm · verse 主词典（mock）', () => {
     const parsed = await parseRecallClueWithLlm('今天天气不错', { complete })
     expect(parsed.intent).toBe('chitchat')
     expect(parsed.assistantReply?.trim().length).toBeGreaterThan(0)
+  })
+})
+
+describe('parseRecallClueWithLlm · 闲聊回复第二次调用', () => {
+  beforeEach(() => {
+    clearLlmParseCache()
+  })
+
+  afterEach(() => {
+    clearLlmParseCache()
+  })
+
+  const chitchatProposalJson = (assistantReply: string) =>
+    JSON.stringify({
+      timeLabel: null,
+      objectTypes: [],
+      behaviorHints: [],
+      noteHint: false,
+      contentTerms: [],
+      intent: 'chitchat',
+      assistantReply,
+      confidence: 'low'
+    })
+
+  it('chitchat 新解析调 2 次，第 2 次 temperature 0.8，返回第 2 次回复', async () => {
+    const calls: Array<{
+      options: LlmChatCompleteOptions
+      messages: Array<{ role: string; content: string }>
+    }> = []
+    const freshReply = '阳光挺好的——要找你存过的什么吗？'
+    const complete: LlmChatCompleter = async (messages, options) => {
+      calls.push({ options, messages })
+      if (calls.length === 1) {
+        return chitchatProposalJson('天气不错哦，想找点什么吗？')
+      }
+      return freshReply
+    }
+
+    const parsed = await parseRecallClueWithLlm('今天天气不错', { complete })
+    expect(calls).toHaveLength(2)
+    expect(calls[1]?.options).toEqual({ taskKind: 'nlu', temperature: 0.8 })
+    expect(parsed.intent).toBe('chitchat')
+    expect(parsed.assistantReply).toBe(freshReply)
+  })
+
+  it('缓存命中 chitchat 也调第 2 次，prompt 含缓存回复作换说法提示', async () => {
+    const cachedReply = '天气不错哦，想找点什么吗？'
+    const freshReply = '挺暖和的——有存过的东西要找吗？'
+    const clue = '今天天气不错'
+    setCachedLlmParse(
+      clue,
+      LlmParsedClueProposalSchema.parse({
+        timeLabel: null,
+        objectTypes: [],
+        behaviorHints: [],
+        noteHint: false,
+        contentTerms: [],
+        intent: 'chitchat',
+        assistantReply: cachedReply,
+        confidence: 'low'
+      })
+    )
+
+    let callCount = 0
+    let replyMessages: Array<{ role: string; content: string }> = []
+    const complete: LlmChatCompleter = async (messages, options) => {
+      callCount += 1
+      expect(options).toEqual({ taskKind: 'nlu', temperature: 0.8 })
+      replyMessages = messages
+      return freshReply
+    }
+
+    const parsed = await parseRecallClueWithLlm(clue, { complete })
+    expect(callCount).toBe(1)
+    expect(replyMessages.some(m => m.content.includes(cachedReply))).toBe(true)
+    expect(replyMessages.some(m => m.content.includes('say it differently'))).toBe(true)
+    expect(parsed.assistantReply).toBe(freshReply)
+  })
+
+  it('回复调用抛错/超时/空回复时回落提议原回复，解析不抛错', async () => {
+    const originalReply = '天气不错——有想找的吗？'
+
+    const makeFailing = (second: () => Promise<string>): LlmChatCompleter => {
+      let n = 0
+      return async () => {
+        n += 1
+        if (n === 1) {
+          return chitchatProposalJson(originalReply)
+        }
+        return second()
+      }
+    }
+
+    const errorParsed = await parseRecallClueWithLlm('今天天气不错', {
+      complete: makeFailing(async () => {
+        throw new Error('boom')
+      }),
+      useCache: false
+    })
+    expect(errorParsed.intent).toBe('chitchat')
+    expect(errorParsed.assistantReply).toBe(originalReply)
+
+    const timeoutErr = new Error('aborted')
+    timeoutErr.name = 'TimeoutError'
+    const timeoutParsed = await parseRecallClueWithLlm('今天天气不错', {
+      complete: makeFailing(async () => {
+        throw timeoutErr
+      }),
+      useCache: false
+    })
+    expect(timeoutParsed.assistantReply).toBe(originalReply)
+
+    const emptyParsed = await parseRecallClueWithLlm('今天天气不错', {
+      complete: makeFailing(async () => '   '),
+      useCache: false
+    })
+    expect(emptyParsed.assistantReply).toBe(originalReply)
+  })
+
+  it('recall 输入只调 1 次（无第 2 次调用）', async () => {
+    let callCount = 0
+    const complete: LlmChatCompleter = async (_messages, options) => {
+      callCount += 1
+      expect(options).toEqual({ taskKind: 'nlu' })
+      return JSON.stringify({
+        timeLabel: 'yesterday',
+        objectTypes: ['poem'],
+        behaviorHints: null,
+        noteHint: false,
+        contentTerms: [],
+        intent: 'recall',
+        confidence: 'medium'
+      })
+    }
+
+    const parsed = await parseRecallClueWithLlm('yesterday poem', {
+      complete,
+      useCache: false
+    })
+    expect(callCount).toBe(1)
+    expect(parsed.intent).toBeUndefined()
+    expect(parsed.objectTypes).toEqual(['poem'])
+  })
+
+  it('回复调用的 messages 含身份行与 clue 原文', async () => {
+    let replyMessages: Array<{ role: string; content: string }> = []
+    const complete: LlmChatCompleter = async (messages, options) => {
+      if (options.temperature === 0.8) {
+        replyMessages = messages
+        return '换个说法——要找存过的东西吗？'
+      }
+      return chitchatProposalJson('原回复')
+    }
+
+    await parseRecallClueWithLlm('今天天气不错', { complete, useCache: false })
+    const system = replyMessages.find(m => m.role === 'system')?.content ?? ''
+    const user = replyMessages.find(m => m.role === 'user')?.content ?? ''
+    expect(system).toContain('You are Yiveno')
+    expect(user).toBe('Clue:\n今天天气不错')
   })
 })

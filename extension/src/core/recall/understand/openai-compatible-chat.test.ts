@@ -4,6 +4,7 @@ import {
   completeOpenAiCompatibleChatDetailed,
   resolveOpenAiCompatibleChatCompletionsUrl
 } from './openai-compatible-chat'
+import { createOpenAiCompatibleCompleter } from './parse-recall-clue-with-llm'
 
 const messages = [{ role: 'user' as const, content: 'parse this' }]
 const originalFetch = globalThis.fetch
@@ -112,5 +113,20 @@ describe('completeOpenAiCompatibleChatDetailed request profiles', () => {
     expect(body).not.toHaveProperty('reasoning_effort')
     expect(body).not.toHaveProperty('enable_thinking')
     expect(body).not.toHaveProperty('max_completion_tokens')
+  })
+})
+
+describe('createOpenAiCompatibleCompleter temperature 透传', () => {
+  it('options.temperature 覆盖 config.temperature', async () => {
+    const fetchMock = mockFetch()
+    const complete = createOpenAiCompatibleCompleter({
+      apiKey: 'test',
+      baseUrl: 'https://api.deepseek.com',
+      model: 'deepseek-chat',
+      temperature: 0
+    })
+    await complete(messages, { taskKind: 'nlu', temperature: 0.8 })
+    const body = JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string)
+    expect(body.temperature).toBe(0.8)
   })
 })

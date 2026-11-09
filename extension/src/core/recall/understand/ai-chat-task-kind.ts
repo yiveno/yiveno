@@ -18,6 +18,8 @@ export type AiChatTaskKind = (typeof AI_CHAT_TASK_KINDS)[number]
 /** completer 调用选项（须声明 taskKind，便于服务端观测/路由）。 */
 export type LlmChatCompleteOptions = {
   taskKind: AiChatTaskKind
+  /** 本次调用的 temperature；不传则各 completer 用各自默认值（解析为 0）。 */
+  temperature?: number
 }
 
 /**
