@@ -4,6 +4,7 @@ import {
   extractJsonObjectText,
   parseJsonObjectFromLlmText
 } from '@/core/recall/understand/extract-llm-json'
+import { buildChitchatReplyMessages } from '@/core/recall/understand/build-chitchat-reply-prompt'
 import { clearLlmParseCache, setCachedLlmParse } from '@/core/recall/understand/llm-parse-cache'
 import { LlmParsedClueProposalSchema } from '@/core/recall/understand/llm-parsed-clue-proposal'
 import { mapLlmProposalToParsedClue } from '@/core/recall/understand/map-llm-proposal-to-parsed'
@@ -471,5 +472,44 @@ describe('parseRecallClueWithLlm · 闲聊回复第二次调用', () => {
     const user = replyMessages.find(m => m.role === 'user')?.content ?? ''
     expect(system).toContain('You are Yiveno')
     expect(user).toBe('Clue:\n今天天气不错')
+  })
+
+  it('回复 prompt 的 system 含身份 Yiveno / 奇忆 / finds things', () => {
+    const messages = buildChitchatReplyMessages('你叫什么')
+    const system = messages.find(m => m.role === 'system')?.content ?? ''
+    expect(system).toContain('Yiveno')
+    expect(system).toContain('奇忆')
+    expect(system).toContain('finds things')
+  })
+
+  it('回复 prompt 含乱写诚实规则与禁脑补', () => {
+    const messages = buildChitchatReplyMessages('啊上课了大街上')
+    const system = messages.find(m => m.role === 'system')?.content ?? ''
+    expect(system).toContain('Incoherent, accidental, voice-mess, or nonsense')
+    expect(system).toContain('do not invent a mood')
+    expect(system).toContain('啊上课了大街上')
+    expect(system).toContain('你今天挺忙')
+  })
+
+  it('身份提问走回复调用且 system 含奇忆', async () => {
+    const calls: Array<{
+      options: LlmChatCompleteOptions
+      messages: Array<{ role: string; content: string }>
+    }> = []
+    const identityReply = '我是奇忆，帮你找你想要的东西——想到什么就说。'
+    const complete: LlmChatCompleter = async (messages, options) => {
+      calls.push({ options, messages })
+      if (calls.length === 1) {
+        return chitchatProposalJson('我是找东西的。')
+      }
+      return identityReply
+    }
+
+    const parsed = await parseRecallClueWithLlm('你叫什么', { complete, useCache: false })
+    expect(calls).toHaveLength(2)
+    const replySystem = calls[1]?.messages.find(m => m.role === 'system')?.content ?? ''
+    expect(replySystem).toContain('奇忆')
+    expect(parsed.intent).toBe('chitchat')
+    expect(parsed.assistantReply).toBe(identityReply)
   })
 })

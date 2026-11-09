@@ -29,5 +29,15 @@ export const INTENT_EVAL_MUST: IntentEvalCase[] = [
   { id: 'r07', clue: 'that song I kept listening to', expectedIntent: 'recall' },
   { id: 'r08', clue: '今天天气不错，顺便找找昨天的诗', expectedIntent: 'recall' },
   { id: 'r09', clue: '昨天天气不错，我看到一首诗', expectedIntent: 'recall' },
-  { id: 'r10', clue: 'hello, find me that poem from yesterday', expectedIntent: 'recall' }
+  { id: 'r10', clue: 'hello, find me that poem from yesterday', expectedIntent: 'recall' },
+  { id: 'c11', clue: '你是什么', expectedIntent: 'chitchat' },
+  { id: 'c12', clue: '你是谁', expectedIntent: 'chitchat' },
+  { id: 'c13', clue: '你叫什么', expectedIntent: 'chitchat' },
+  { id: 'c14', clue: '你会干什么', expectedIntent: 'chitchat' },
+  { id: 'c15', clue: '介绍下自己', expectedIntent: 'chitchat' },
+  { id: 'c16', clue: 'what are you', expectedIntent: 'chitchat' },
+  { id: 'c17', clue: 'who are you', expectedIntent: 'chitchat' },
+  { id: 'c18', clue: 'what can you do', expectedIntent: 'chitchat' },
+  { id: 'r11', clue: '你是什么时候保存的那篇文章', expectedIntent: 'recall' },
+  { id: 'r12', clue: '介绍一下昨天那首诗', expectedIntent: 'recall' }
 ]
