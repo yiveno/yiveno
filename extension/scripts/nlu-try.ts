@@ -157,12 +157,16 @@ function formatNextStageHandoff(result: UnderstandRecallClueResult): NluTryNextS
       note: '噪音网关拒绝：Hybrid 不拿 parsed，流水线在理解阶段结束'
     }
   }
-  if (result.parsed.intent === 'chitchat') {
+  if (
+    result.parsed.intent === 'chitchat' ||
+    result.parsed.intent === 'question' ||
+    result.parsed.intent === 'instruction'
+  ) {
     return {
       continues: false,
       next: 'end_chitchat_reply',
       payload: { assistantReply: result.parsed.assistantReply ?? null },
-      note: '闲聊短路：Hybrid 不拿 parsed、不调 embedding、不进检索'
+      note: '非召回短路：Hybrid 不拿 parsed、不调 embedding、不进检索'
     }
   }
   return {

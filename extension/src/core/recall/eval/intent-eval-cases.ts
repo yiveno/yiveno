@@ -6,7 +6,7 @@
 export interface IntentEvalCase {
   id: string
   clue: string
-  expectedIntent: 'recall' | 'chitchat'
+  expectedIntent: 'recall' | 'chitchat' | 'question' | 'instruction'
 }
 
 export const INTENT_EVAL_MUST: IntentEvalCase[] = [
@@ -39,5 +39,13 @@ export const INTENT_EVAL_MUST: IntentEvalCase[] = [
   { id: 'c17', clue: 'who are you', expectedIntent: 'chitchat' },
   { id: 'c18', clue: 'what can you do', expectedIntent: 'chitchat' },
   { id: 'r11', clue: '你是什么时候保存的那篇文章', expectedIntent: 'recall' },
-  { id: 'r12', clue: '介绍一下昨天那首诗', expectedIntent: 'recall' }
+  { id: 'r12', clue: '介绍一下昨天那首诗', expectedIntent: 'recall' },
+  { id: 'q01', clue: '法国首都是哪？', expectedIntent: 'question' },
+  { id: 'q02', clue: '今天星期几？', expectedIntent: 'question' },
+  { id: 'q03', clue: "what's the capital of Japan?", expectedIntent: 'question' },
+  { id: 'q04', clue: '水在多少度结冰？', expectedIntent: 'question' },
+  { id: 'i01', clue: '提醒我下午三点打电话', expectedIntent: 'instruction' },
+  { id: 'i02', clue: '写首诗', expectedIntent: 'instruction' },
+  { id: 'i03', clue: '把书签全删了', expectedIntent: 'instruction' },
+  { id: 'i04', clue: '翻译这句话', expectedIntent: 'instruction' }
 ]

@@ -843,8 +843,12 @@ export class HybridRecallBackend implements RecallBackend {
       }
     }
 
-    // Gate A+：闲聊意图短路（须 intent + 非空回复双全；缺一则 fail-open 走正常 recall）
-    if (understood.parsed.intent === 'chitchat' && understood.parsed.assistantReply?.trim()) {
+    // Gate A+：非召回意图短路（须 intent + 非空回复双全；缺一则 fail-open 走正常 recall）
+    const isNonRecallIntent =
+      understood.parsed.intent === 'chitchat' ||
+      understood.parsed.intent === 'question' ||
+      understood.parsed.intent === 'instruction'
+    if (isNonRecallIntent && understood.parsed.assistantReply?.trim()) {
       const pipelineTiming: RecallPipelineTiming = {
         understandMs,
         candidateLoadMs: 0,
@@ -852,7 +856,7 @@ export class HybridRecallBackend implements RecallBackend {
         totalMs: Date.now() - pipelineStartedAt,
         understandSource: understood.source
       }
-      trace('info', 'Recall：闲聊意图短路', {
+      trace('info', 'Recall：非召回意图短路', {
         clue: normalizedClue,
         understandSource: understood.source
       })

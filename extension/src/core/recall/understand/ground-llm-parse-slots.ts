@@ -87,9 +87,7 @@ export function dropMisleadingNoteContentTerm(normalizedClue: string, terms: str
 
 /** 线索中的四位公历年份 token（1900–2099），作内容词而非「我何时保存」。 */
 function extractCalendarYearTokens(normalizedClue: string): string[] {
-  return normalizedClue
-    .split(/[^a-z0-9\u3400-\u9fff]+/)
-    .filter(token => /^(19|20)\d{2}$/.test(token))
+  return normalizedClue.split(/[^\p{L}\p{N}]+/u).filter(token => /^(19|20)\d{2}$/.test(token))
 }
 
 /**
@@ -184,7 +182,7 @@ export function stripGroundedSurfacesFromTerms(
 
   const addSurfaceTokens = (surface: string) => {
     const tokens = normalizeRecallText(surface)
-      .split(/[^a-z0-9\u3400-\u9fff]+/)
+      .split(/[^\p{L}\p{N}]+/u)
       .filter(Boolean)
     for (const token of tokens) {
       blocklist.add(token)
@@ -219,7 +217,7 @@ export function stripGroundedSurfacesFromTerms(
     }
   }
 
-  // 常见虚词（与规则 filler 对齐的一小撮），防 from/at/the 残留
+  // 常见虚词（与规则 filler 对齐的一小撮），防 from/at/the / 中文指示词残留
   for (const filler of [
     'from',
     'at',
@@ -234,7 +232,13 @@ export function stripGroundedSurfacesFromTerms(
     'watching',
     'watch',
     'viewed',
-    'saved'
+    'saved',
+    '那个',
+    '这个',
+    '帮我找',
+    '找一下',
+    '我想找',
+    '找找'
   ]) {
     blocklist.add(filler)
   }

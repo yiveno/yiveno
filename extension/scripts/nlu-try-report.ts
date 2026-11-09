@@ -45,7 +45,7 @@ export type NluTryParsedSlotsView = {
   confidence: RecallClueConfidence
   /** 用户意图；缺省按 recall */
   intent: RecallClueIntent
-  /** intent=chitchat 时的自然回复；其余 null */
+  /** intent=chitchat|question|instruction 时的自然回复；recall 时 null */
   assistantReply: string | null
   /**
    * 主题锚摘要；null = 未派生或无可展示 topic。
@@ -82,7 +82,7 @@ export type NluTryHandoffMeta = {
  *
  * 产品真接手点（`hybrid-recall-backend`）：
  * - `reject_noise` → 直接 `no_match`，不进 merge/检索
- * - `intent=chitchat` + 非空回复 → `emptyKind=chitchat` 短路，不进 merge/检索
+ * - `intent=chitchat|question|instruction` + 非空回复 → `emptyKind=chitchat` 短路，不进 merge/检索
  * - 否则 `currentParsed: understood.parsed` → `mergeRecallDialogTurn` → topic → retrieve
  */
 export type NluTryNextStageHandoff =

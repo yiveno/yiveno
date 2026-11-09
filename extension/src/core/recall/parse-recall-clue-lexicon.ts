@@ -90,7 +90,25 @@ export const RECALL_TIME_LEXICON: RecallLexiconEntry<RecallRelativeTimeLabel>[] 
   { surface: 'a long time ago', value: 'long_ago' },
   { surface: 'some time ago', value: 'a_while_ago' },
   { surface: 'a while ago', value: 'a_while_ago' },
-  { surface: 'long ago', value: 'long_ago' }
+  { surface: 'long ago', value: 'long_ago' },
+
+  // 中文 surface（与英文同权；不新增槽位）
+  { surface: '昨天', value: 'yesterday' },
+  { surface: '今天', value: 'today' },
+  { surface: '前天', value: 'day_before_yesterday' },
+  { surface: '上周', value: 'last_week' },
+  { surface: '最近几天', value: 'recent' },
+  { surface: '前几天', value: 'recent' },
+  { surface: '前些天', value: 'recent' },
+  { surface: '最近', value: 'recent' },
+  { surface: '上个月', value: 'last_month' },
+  { surface: '一个月前', value: 'last_month' },
+  { surface: '几个月前', value: 'few_months_ago' },
+  { surface: '前几个月', value: 'few_months_ago' },
+  { surface: '很久以前', value: 'long_ago' },
+  { surface: '好久以前', value: 'long_ago' },
+  { surface: '前一阵', value: 'a_while_ago' },
+  { surface: '前段时间', value: 'a_while_ago' }
 ]
 
 /**
@@ -180,7 +198,40 @@ export const RECALL_OBJECT_TYPE_LEXICON: RecallLexiconEntry<RecallObjectType>[] 
 
   // bookmark（语料类型；匹配 MemoryItem.type，勿与 page/article 主题混淆）
   { surface: 'bookmarks', value: 'bookmark' },
-  { surface: 'bookmark', value: 'bookmark' }
+  { surface: 'bookmark', value: 'bookmark' },
+
+  // 中文 surface（与英文同权；不新增槽位）
+  // 刻意不加裸「歌」（误伤歌颂）；不加「收藏」（会抢行为「刚收藏」）
+  { surface: '诗', value: 'poem' },
+  { surface: '诗歌', value: 'poem' },
+  { surface: '诗句', value: 'poem' },
+  { surface: '文章', value: 'article' },
+  { surface: '博客', value: 'article' },
+  { surface: '帖子', value: 'article' },
+  { surface: '散文', value: 'article' },
+  { surface: '歌曲', value: 'song' },
+  { surface: '歌词', value: 'song' },
+  { surface: '唱歌', value: 'song' },
+  { surface: '听歌', value: 'song' },
+  { surface: '音乐', value: 'song' },
+  { surface: '视频', value: 'video' },
+  { surface: '电影', value: 'video' },
+  { surface: '影片', value: 'video' },
+  { surface: '代码', value: 'code' },
+  { surface: '代码片段', value: 'code' },
+  { surface: '源码', value: 'code' },
+  { surface: '命令', value: 'command' },
+  { surface: '指令', value: 'command' },
+  { surface: '页面', value: 'page' },
+  { surface: '网页', value: 'page' },
+  { surface: '网站', value: 'page' },
+  { surface: '链接', value: 'page' },
+  { surface: '密码', value: 'password' },
+  { surface: '口令', value: 'password' },
+  { surface: '引文', value: 'quote' },
+  { surface: '摘录', value: 'quote' },
+  { surface: '金句', value: 'quote' },
+  { surface: '书签', value: 'bookmark' }
 ]
 
 /**
@@ -224,7 +275,22 @@ export const RECALL_BEHAVIOR_LEXICON: RecallLexiconEntry<RecallBehaviorHint>[] =
   { surface: 'just saved', value: 'recently_saved' },
   { surface: 'just stored', value: 'recently_saved' },
   { surface: 'newly saved', value: 'recently_saved' },
-  { surface: 'newly collected', value: 'recently_saved' }
+  { surface: 'newly collected', value: 'recently_saved' },
+
+  // 中文 surface（与英文同权；不新增槽位）
+  { surface: '没看完', value: 'half_read' },
+  { surface: '没读完', value: 'half_read' },
+  { surface: '看了一半', value: 'half_read' },
+  { surface: '读了一半', value: 'half_read' },
+  { surface: '常听', value: 'often_opened' },
+  { surface: '经常听', value: 'often_opened' },
+  { surface: '反复听', value: 'often_opened' },
+  { surface: '经常看', value: 'often_opened' },
+  { surface: '反复看', value: 'often_opened' },
+  { surface: '刚保存', value: 'recently_saved' },
+  { surface: '刚收藏', value: 'recently_saved' },
+  { surface: '刚存', value: 'recently_saved' },
+  { surface: '刚刚保存', value: 'recently_saved' }
 ]
 
 /** 附注指向词：命中则 noteHint=true。 */
@@ -238,7 +304,16 @@ export const RECALL_NOTE_HINT_LEXICON: RecallLexiconEntry<'note'>[] = [
   { surface: 'i wrote', value: 'note' },
   { surface: 'i noted', value: 'note' },
   { surface: 'annotation', value: 'note' },
-  { surface: 'note', value: 'note' }
+  { surface: 'note', value: 'note' },
+
+  // 中文 surface（刻意不加裸「笔记」，避免误伤「笔记本」）
+  { surface: '我的笔记', value: 'note' },
+  { surface: '做的笔记', value: 'note' },
+  { surface: '记笔记', value: 'note' },
+  { surface: '备注', value: 'note' },
+  { surface: '批注', value: 'note' },
+  { surface: '我写的', value: 'note' },
+  { surface: '我记的', value: 'note' }
 ]
 
 /**
@@ -312,5 +387,14 @@ export const RECALL_CLUE_FILLER_SURFACES: string[] = [
   'a',
   'an',
   'my',
-  'i'
+  'i',
+
+  // 中文起手式 / 指示词
+  '帮我找',
+  '找一下',
+  '我想找',
+  '帮我找一下',
+  '那个',
+  '这个',
+  '找找'
 ]

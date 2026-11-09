@@ -83,14 +83,10 @@ function keyboardAdjacentRatio(letters: string): number {
   return counted === 0 ? 0 : adjacent / counted
 }
 
-/** 低字符多样性或整段重复单元（如 asdasd / 123123）。 */
-function isRepetitiveMash(token: string): boolean {
+/** 整段由短单元重复构成（如 asdasd / ababab）。 */
+function hasRepeatedUnit(token: string): boolean {
   if (token.length < 6) {
     return false
-  }
-  const uniqueRatio = new Set(token).size / token.length
-  if (uniqueRatio <= 0.5) {
-    return true
   }
   const maxUnit = Math.floor(token.length / 2)
   for (let unitLen = 2; unitLen <= maxUnit; unitLen += 1) {
@@ -103,6 +99,19 @@ function isRepetitiveMash(token: string): boolean {
     }
   }
   return false
+}
+
+/** 字符多样性低（unique 比 ≤ 0.5）。 */
+function hasLowDiversity(token: string): boolean {
+  if (token.length < 6) {
+    return false
+  }
+  return new Set(token).size / token.length <= 0.5
+}
+
+/** 低字符多样性或整段重复单元（如 asdasd / 123123）。 */
+function isRepetitiveMash(token: string): boolean {
+  return hasRepeatedUnit(token) || hasLowDiversity(token)
 }
 
 function isDigitMash(raw: string): boolean {
@@ -163,7 +172,11 @@ function isKeyboardMash(raw: string): boolean {
     return false
   }
 
-  if (tokens.every(token => /^[a-z]+$/i.test(token) && isRepetitiveMash(token))) {
+  // 多词全糊才走本分支；单 token 由下方收紧分支判定（否则 sweetest/banana 低多样性会被误拦）
+  if (
+    tokens.length >= 2 &&
+    tokens.every(token => /^[a-z]+$/i.test(token) && isRepetitiveMash(token))
+  ) {
     return true
   }
 
@@ -192,11 +205,17 @@ function isKeyboardMash(raw: string): boolean {
     if (letters.length >= 12 && keyboardAdjacentRatio(letters) >= 0.45) {
       return true
     }
-    if (letters.length >= 10 && isRepetitiveMash(letters)) {
+    // 无空白长串重复：须含拉丁（砸键盘现象）；纯中文叠字如「哈哈哈哈哈哈哈」放行
+    if (letters.length >= 10 && /[a-z]/i.test(letters) && isRepetitiveMash(letters)) {
       return true
     }
-    // 短串但整段重复（asdasd）
-    if (tokens.length === 1 && isRepetitiveMash(tokens[0]!)) {
+    // 短串但整段重复（asdasd）：须含拉丁；低多样性须同时高邻接（sweetest/banana 是真词）
+    if (
+      tokens.length === 1 &&
+      /[a-z]/i.test(tokens[0]!) &&
+      (hasRepeatedUnit(tokens[0]!) ||
+        (hasLowDiversity(tokens[0]!) && keyboardAdjacentRatio(tokens[0]!) >= 0.45))
+    ) {
       return true
     }
     // 分号等切开后每段都不像正常词，且整体邻接偏高

@@ -112,8 +112,8 @@ export function mapLlmProposalToParsedClue(
     ...(hasBehavior ? { behaviorHints } : {}),
     ...(noteHint ? { noteHint } : {}),
     ...(excludeContentTerms.length > 0 ? { excludeContentTerms } : {}),
-    ...(proposal.intent === 'chitchat' ? { intent: 'chitchat' as const } : {}),
-    ...(proposal.intent === 'chitchat' && proposal.assistantReply?.trim()
+    ...(proposal.intent !== 'recall' ? { intent: proposal.intent } : {}),
+    ...(proposal.intent !== 'recall' && proposal.assistantReply?.trim()
       ? { assistantReply: proposal.assistantReply.trim().slice(0, 280) }
       : {})
   })

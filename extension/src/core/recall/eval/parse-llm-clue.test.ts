@@ -314,6 +314,183 @@ describe('parseRecallClueWithLlm · verse 主词典（mock）', () => {
     expect(parsed.intent).toBe('chitchat')
     expect(parsed.assistantReply?.trim().length).toBeGreaterThan(0)
   })
+
+  it('mock：越枚举 timeLabel 容错，chitchat intent + reply 保留', async () => {
+    const reply = 'Last summer vibes — looking for something you saved?'
+    let calls = 0
+    const complete: LlmChatCompleter = async () => {
+      calls += 1
+      if (calls === 1) {
+        return JSON.stringify({
+          timeLabel: 'last_summer',
+          objectTypes: [],
+          behaviorHints: [],
+          noteHint: false,
+          contentTerms: [],
+          intent: 'chitchat',
+          assistantReply: reply,
+          confidence: 'low'
+        })
+      }
+      return reply
+    }
+
+    const parsed = await parseRecallClueWithLlm('last summer vibes', {
+      complete,
+      useCache: false
+    })
+    expect(parsed.intent).toBe('chitchat')
+    expect(parsed.assistantReply).toBe(reply)
+    expect(parsed.timeRange).toBeUndefined()
+  })
+
+  it('mock：objectTypes 含坏元素整字段丢弃，contentTerms 保留', async () => {
+    const complete: LlmChatCompleter = async () =>
+      JSON.stringify({
+        timeLabel: null,
+        objectTypes: ['poem', 'spreadsheet'],
+        behaviorHints: null,
+        noteHint: false,
+        contentTerms: ['poem'],
+        confidence: 'low'
+      })
+
+    const parsed = await parseRecallClueWithLlm('find that thing', {
+      complete,
+      useCache: false
+    })
+    expect(parsed.objectTypes).toBeUndefined()
+    expect(parsed.contentTerms).toEqual(['poem'])
+  })
+
+  it('mock：越枚举 intent「search」回落 recall', async () => {
+    const complete: LlmChatCompleter = async () =>
+      JSON.stringify({
+        timeLabel: null,
+        objectTypes: null,
+        behaviorHints: null,
+        noteHint: false,
+        contentTerms: ['cloudflare'],
+        intent: 'search',
+        confidence: 'low'
+      })
+
+    const parsed = await parseRecallClueWithLlm('cloudflare workers', {
+      complete,
+      useCache: false
+    })
+    expect(parsed.intent).toBeUndefined()
+    expect(parsed.contentTerms).toEqual(['cloudflare'])
+  })
+
+  it('mock：中文「昨天的诗」grounding 保留 poem + yesterday', async () => {
+    const complete: LlmChatCompleter = async () =>
+      JSON.stringify({
+        timeLabel: 'yesterday',
+        objectTypes: ['poem'],
+        behaviorHints: null,
+        noteHint: false,
+        contentTerms: ['诗'],
+        confidence: 'high'
+      })
+
+    const parsed = await parseRecallClueWithLlm('昨天的诗', { complete, useCache: false })
+    expect(parsed.objectTypes).toEqual(['poem'])
+    expect(parsed.timeRange?.label).toBe('yesterday')
+  })
+
+  it('mock：中文「昨天没看完的文章」grounding 保留 half_read', async () => {
+    const complete: LlmChatCompleter = async () =>
+      JSON.stringify({
+        timeLabel: 'yesterday',
+        objectTypes: ['article'],
+        behaviorHints: ['half_read'],
+        noteHint: false,
+        contentTerms: [],
+        confidence: 'medium'
+      })
+
+    const parsed = await parseRecallClueWithLlm('昨天没看完的文章', {
+      complete,
+      useCache: false
+    })
+    expect(parsed.behaviorHints).toEqual(['half_read'])
+  })
+
+  it('mock：事实问题 → intent question + 回答含巴黎', async () => {
+    const reply = '巴黎。——你之前有没有存过法国相关的东西？'
+    let calls = 0
+    const complete: LlmChatCompleter = async () => {
+      calls += 1
+      if (calls === 1) {
+        return JSON.stringify({
+          timeLabel: null,
+          objectTypes: [],
+          behaviorHints: [],
+          noteHint: false,
+          contentTerms: [],
+          intent: 'question',
+          assistantReply: reply,
+          confidence: 'low'
+        })
+      }
+      return reply
+    }
+    const parsed = await parseRecallClueWithLlm('法国首都是哪？', { complete, useCache: false })
+    expect(parsed.intent).toBe('question')
+    expect(parsed.assistantReply).toContain('巴黎')
+  })
+
+  it('mock：指令 → intent instruction + 边界回复', async () => {
+    const reply = '这个我做不了，我只负责帮你找东西——你想找什么？'
+    let calls = 0
+    const complete: LlmChatCompleter = async () => {
+      calls += 1
+      if (calls === 1) {
+        return JSON.stringify({
+          timeLabel: null,
+          objectTypes: [],
+          behaviorHints: [],
+          noteHint: false,
+          contentTerms: [],
+          intent: 'instruction',
+          assistantReply: reply,
+          confidence: 'low'
+        })
+      }
+      return reply
+    }
+    const parsed = await parseRecallClueWithLlm('提醒我下午三点打电话', {
+      complete,
+      useCache: false
+    })
+    expect(parsed.intent).toBe('instruction')
+    expect(parsed.assistantReply).toContain('做不了')
+  })
+
+  it('mock：破坏性指令 → intent instruction + 明确不删', async () => {
+    const reply = '我不会删东西——不过你想找什么，我可以帮你找。'
+    let calls = 0
+    const complete: LlmChatCompleter = async () => {
+      calls += 1
+      if (calls === 1) {
+        return JSON.stringify({
+          timeLabel: null,
+          objectTypes: [],
+          behaviorHints: [],
+          noteHint: false,
+          contentTerms: [],
+          intent: 'instruction',
+          assistantReply: reply,
+          confidence: 'low'
+        })
+      }
+      return reply
+    }
+    const parsed = await parseRecallClueWithLlm('把书签全删了', { complete, useCache: false })
+    expect(parsed.intent).toBe('instruction')
+    expect(parsed.assistantReply).toContain('不会删')
+  })
 })
 
 describe('parseRecallClueWithLlm · 闲聊回复第二次调用', () => {
@@ -475,7 +652,7 @@ describe('parseRecallClueWithLlm · 闲聊回复第二次调用', () => {
   })
 
   it('回复 prompt 的 system 含身份 Yiveno / 奇忆 / finds things', () => {
-    const messages = buildChitchatReplyMessages('你叫什么')
+    const messages = buildChitchatReplyMessages('你叫什么', { intent: 'chitchat' })
     const system = messages.find(m => m.role === 'system')?.content ?? ''
     expect(system).toContain('Yiveno')
     expect(system).toContain('奇忆')
@@ -483,7 +660,7 @@ describe('parseRecallClueWithLlm · 闲聊回复第二次调用', () => {
   })
 
   it('回复 prompt 含乱写诚实规则与禁脑补', () => {
-    const messages = buildChitchatReplyMessages('啊上课了大街上')
+    const messages = buildChitchatReplyMessages('啊上课了大街上', { intent: 'chitchat' })
     const system = messages.find(m => m.role === 'system')?.content ?? ''
     expect(system).toContain('Incoherent, accidental, voice-mess, or nonsense')
     expect(system).toContain('do not invent a mood')

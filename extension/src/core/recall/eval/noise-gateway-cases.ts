@@ -339,6 +339,41 @@ export const NOISE_GATEWAY_HAND_CASES: NoiseGatewayCase[] = [
     expect: { disposition: 'proceed' },
     note: '含重复字母真词'
   },
+  {
+    id: 'proceed-zh-laugh-mash',
+    clue: '哈哈哈哈哈哈哈',
+    gate: 'must',
+    expect: { disposition: 'proceed' },
+    note: '中文叠字自然表达，非砸键盘'
+  },
+  {
+    id: 'proceed-zh-cry-mash',
+    clue: '呜呜呜呜呜呜',
+    gate: 'must',
+    expect: { disposition: 'proceed' },
+    note: '中文叠字自然表达，非砸键盘'
+  },
+  {
+    id: 'proceed-zh-ah-mash',
+    clue: '啊啊啊啊啊啊啊啊啊啊',
+    gate: 'must',
+    expect: { disposition: 'proceed' },
+    note: '中文叠字自然表达，非砸键盘'
+  },
+  {
+    id: 'proceed-word-sweetest',
+    clue: 'sweetest',
+    gate: 'must',
+    expect: { disposition: 'proceed' },
+    note: '低多样性真词（邻接不足）不得当砸键'
+  },
+  {
+    id: 'proceed-word-banana',
+    clue: 'banana',
+    gate: 'must',
+    expect: { disposition: 'proceed' },
+    note: '低多样性真词（邻接为 0）不得当砸键'
+  },
 
   // —— stretch：灰区（可漏拦；用于观察阈值） ——
   {

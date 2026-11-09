@@ -63,6 +63,16 @@ describe('extractContentTerms', () => {
   it('extracts mixed Latin tokens and path-like fragments', () => {
     expect(extractContentTerms('  Li Bai RAG docs/api ')).toEqual(['li', 'bai', 'rag', 'docs/api'])
   })
+
+  it('提韩/俄/阿词（Unicode 字母）', () => {
+    expect(extractContentTerms('어제 본 시')).toEqual(['어제', '본', '시'])
+    expect(extractContentTerms('статья про космос').length).toBeGreaterThan(0)
+    expect(extractContentTerms('مقال عن الفضاء').length).toBeGreaterThan(0)
+  })
+
+  it('提日文假名汉字整串（不再按 CJK 块错切）', () => {
+    expect(extractContentTerms('昨日読んだ記事')).toEqual(['昨日読んだ記事'])
+  })
 })
 
 describe('parseRecallClue', () => {
@@ -326,5 +336,16 @@ describe('parseRecallClue', () => {
     expect(parsed.timeRange?.label).toBe('yesterday')
     expect(parsed.objectTypes).toEqual(['video'])
     expect(parsed.contentTerms).toEqual([])
+  })
+
+  it('中文「昨天的诗」→ yesterday + poem', () => {
+    const parsed = parseRecallClue('昨天的诗', { nowMs: NOW_MS })
+    expect(parsed.timeRange?.label).toBe('yesterday')
+    expect(parsed.objectTypes).toContain('poem')
+  })
+
+  it('中文「昨天没看完的文章」→ half_read', () => {
+    const parsed = parseRecallClue('昨天没看完的文章', { nowMs: NOW_MS })
+    expect(parsed.behaviorHints).toContain('half_read')
   })
 })

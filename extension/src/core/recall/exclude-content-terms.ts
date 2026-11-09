@@ -4,7 +4,7 @@
  * 执行：候选对任一有效排除词有库内词面命中 → **硬过滤**（见 filterMatchesByExcludeContentTerms）。
  *
  * 匹配契约（exclude 专用 · **不正**用 content 佐证的裸 includes）：
- * - 字段按 `[^a-z0-9]+` 切分（连字符为边界：day-hike → day + hike）
+ * - 字段按 `[^\p{L}\p{N}]+` 切分（连字符为边界：day-hike → day + hike）
  * - 单词排除项：token 等于 term / 其屈折，或 token 的屈折集与排除屈折集相交
  *   （hiking→hike 命中；hikers→hiker 不与 hike 相交 → 不误杀）
  * - 连字符短语：连续 token 对齐各段（day-hike ≡ day hike）
@@ -26,7 +26,7 @@ function extractTermsFromSpan(span: string): string[] {
   }
   const terms: string[] = []
   const seen = new Set<string>()
-  const pattern = /[a-z0-9][a-z0-9._/-]*|[\u3400-\u9fff]+/g
+  const pattern = /[\p{L}\p{N}][\p{L}\p{N}._/-]*/gu
   let match: RegExpExecArray | null
   while ((match = pattern.exec(normalized)) !== null) {
     const token = match[0]
@@ -251,13 +251,14 @@ function termAppearsBeforeIndex(
     return false
   }
   const head = normalizedClue.slice(0, beforeIndex)
-  const compactHead = head.replace(/[^a-z0-9\u3400-\u9fff]+/g, '')
-  const compactTerm = term.replace(/[^a-z0-9\u3400-\u9fff]+/g, '')
+  const compactHead = head.replace(/[^\p{L}\p{N}]+/gu, '')
+  const compactTerm = term.replace(/[^\p{L}\p{N}]+/gu, '')
   if (compactTerm.length >= 2 && compactHead.includes(compactTerm)) {
     return true
   }
   return new RegExp(
-    `(?:^|[^a-z0-9])${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:[^a-z0-9]|$)`
+    `(?:^|[^\\p{L}\\p{N}])${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:[^\\p{L}\\p{N}]|$)`,
+    'u'
   ).test(head)
 }
 
@@ -296,13 +297,13 @@ export function applyRuleExcludeToContentTerms(
   })
 }
 
-/** 字段 → 小写字母数字 token（`-` / 空白 / 标点均为边界）。 */
+/** 字段 → Unicode 字母数字 token（`-` / 空白 / 标点均为边界）。 */
 export function tokenizeForExcludeMatch(text: string): string[] {
   const normalized = normalizeRecallText(text)
   if (!normalized.trim()) {
     return []
   }
-  return normalized.split(/[^a-z0-9]+/).filter(Boolean)
+  return normalized.split(/[^\p{L}\p{N}]+/u).filter(Boolean)
 }
 
 /** 排除词自身的屈折闭包（含原词）。 */

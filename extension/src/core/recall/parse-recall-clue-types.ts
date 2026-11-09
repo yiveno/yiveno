@@ -71,10 +71,14 @@ export type RecallClueConfidence = z.infer<typeof RecallClueConfidenceSchema>
  * 用户意图（仅 LLM 路径产出）。
  * - recall：找东西（哪怕含糊）
  * - chitchat：闲聊 / 寒暄 / 与找东西无关
+ * - question：事实问题（有直接答案，非找东西）
+ * - instruction：指令 / 生成 / 提醒 / 删除（做不了的事）
  */
 export const RecallClueIntentSchema = z.enum([
   'recall', // 找东西
-  'chitchat' // 闲聊
+  'chitchat', // 闲聊
+  'question', // 事实问题
+  'instruction' // 指令 / 生成 / 提醒 / 删除
 ])
 
 export type RecallClueIntent = z.infer<typeof RecallClueIntentSchema>
@@ -184,7 +188,7 @@ export const ParsedRecallClueSchema = z.object({
   confidence: RecallClueConfidenceSchema,
   /** 用户意图；缺省 = recall（规则路径不产意图） */
   intent: RecallClueIntentSchema.optional(),
-  /** intent=chitchat 时的自然回复（LLM 生成，同 clue 语言）；其余缺省 */
+  /** intent=chitchat|question|instruction 时的自然回复（LLM 生成，同 clue 语言）；recall 时缺省 */
   assistantReply: z.string().optional()
 })
 

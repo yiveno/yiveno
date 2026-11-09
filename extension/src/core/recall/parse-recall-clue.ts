@@ -262,7 +262,7 @@ export function extractContentTerms(residue: string): string[] {
 
   const terms: string[] = []
   const seen = new Set<string>()
-  const pattern = /[a-z0-9][a-z0-9._/-]*|[\u3400-\u9fff]+/g
+  const pattern = /[\p{L}\p{N}][\p{L}\p{N}._/-]*/gu
   let match: RegExpExecArray | null
   while ((match = pattern.exec(normalized)) !== null) {
     const token = match[0]
