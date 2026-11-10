@@ -3,8 +3,8 @@
  * 供 i18n:check 全量扫描与启动门禁复用。
  */
 
-/** 整词 Search（大小写不敏感）。 */
-export const FORBIDDEN_PRODUCT_SURFACE_LABEL_PATTERN = /\bsearch\b/i
+/** 整词 Search 及其动词形态（大小写不敏感）；research 等不命中。 */
+export const FORBIDDEN_PRODUCT_SURFACE_LABEL_PATTERN = /\bsearch(?:es|ed|ing)?\b/i
 
 export interface ProductSurfaceLabelViolation {
   key: string

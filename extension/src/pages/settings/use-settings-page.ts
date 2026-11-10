@@ -150,6 +150,7 @@ export function useSettingsPage() {
 
   const {
     dismissDeleteAfterExport,
+    dismissLoginMigration,
     loginMigrationBookmarkCount,
     loginMigrationDeleteAfterExportOpen,
     loginMigrationError,
@@ -1331,6 +1332,7 @@ export function useSettingsPage() {
     settingsSectionTabsId,
     settingsState,
     dismissDeleteAfterExport,
+    dismissLoginMigration,
     loginMigrationBookmarkCount,
     loginMigrationDeleteAfterExportOpen,
     loginMigrationError,

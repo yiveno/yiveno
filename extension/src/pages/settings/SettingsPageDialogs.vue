@@ -25,6 +25,7 @@ const {
   dataWorking,
   deleteAccountDialogOpen,
   dismissDeleteAfterExport,
+  dismissLoginMigration,
   loginMigrationBookmarkCount,
   loginMigrationDeleteAfterExportOpen,
   loginMigrationError,
@@ -58,6 +59,7 @@ const {
     @import="runLoginMigrationImport"
     @export="runLoginMigrationExport"
     @delete="runLoginMigrationDelete"
+    @later="dismissLoginMigration"
     @dismiss-delete-after-export="dismissDeleteAfterExport"
     @confirm-delete-after-export="runLoginMigrationDelete"
   />

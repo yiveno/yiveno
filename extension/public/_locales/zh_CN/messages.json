@@ -510,11 +510,20 @@
       }
     }
   },
+  "popup_thread_pivot_prompt_no_title": {
+    "message": "看起来像新的一次找。继续细化这次，还是开始新的？"
+  },
   "popup_thread_pivot_continue": {
     "message": "继续细化"
   },
   "popup_thread_pivot_new": {
     "message": "开始新的"
+  },
+  "popup_thread_pivot_edit": {
+    "message": "改一下"
+  },
+  "popup_thread_pivot_dismiss": {
+    "message": "算了"
   },
   "popup_env_chip_just_saved": {
     "message": "刚保存"
@@ -1434,14 +1443,19 @@
   "settings_login_migration_copy": {
     "message": "你在未登录时保存过一些摘录。请选择如何处理 — 我们不会悄悄合并。"
   },
-  "settings_login_migration_counts": {
-    "message": "待决定的未登录摘录：$EXCERPTS$。导入将保留在记忆库中的本机书签：$BOOKMARKS$。",
+  "settings_login_migration_counts_excerpts": {
+    "message": "待决定的未登录摘录：$EXCERPTS$",
     "placeholders": {
       "EXCERPTS": {
         "content": "$1"
-      },
+      }
+    }
+  },
+  "settings_login_migration_counts_bookmarks": {
+    "message": "导入将保留在记忆库中的本机书签：$BOOKMARKS$",
+    "placeholders": {
       "BOOKMARKS": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -1462,6 +1476,9 @@
   },
   "settings_login_migration_delete_hint": {
     "message": "丢弃这些本机摘录；书签不动"
+  },
+  "settings_login_migration_later": {
+    "message": "稍后再说"
   },
   "settings_login_migration_import_done": {
     "message": "已导入 $1 条摘录，并保留 $2 个本机书签在记忆库中",
@@ -1491,7 +1508,18 @@
     }
   },
   "settings_login_migration_must_choose": {
-    "message": "请选择导入、导出或删除以继续"
+    "message": "请选择导入、导出、删除，或稍后再说"
+  },
+  "settings_login_migration_delete_confirm_title": {
+    "message": "删除这些摘录？"
+  },
+  "settings_login_migration_delete_confirm_body": {
+    "message": "这会立即删除本机 $1 条摘录。你的书签不受影响。",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
   },
   "settings_login_migration_delete_after_export_title": {
     "message": "删除未导入的副本？"

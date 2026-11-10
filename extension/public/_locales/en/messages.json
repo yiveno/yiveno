@@ -510,11 +510,20 @@
       }
     }
   },
+  "popup_thread_pivot_prompt_no_title": {
+    "message": "Looks like a new find. Keep refining this one, or start fresh?"
+  },
   "popup_thread_pivot_continue": {
     "message": "Keep refining"
   },
   "popup_thread_pivot_new": {
     "message": "Start new"
+  },
+  "popup_thread_pivot_edit": {
+    "message": "Edit it"
+  },
+  "popup_thread_pivot_dismiss": {
+    "message": "Discard it"
   },
   "popup_env_chip_just_saved": {
     "message": "Just saved"
@@ -640,7 +649,7 @@
     "message": "Still working — if this keeps taking, we'll use a simpler on-device reading…"
   },
   "sidepanel_recall_clue_truncated": {
-    "message": "That clue was long, so I only searched the first part."
+    "message": "That clue was long, so I only used the first part to find it."
   },
   "sidepanel_recall_deeper_reading_unavailable": {
     "message": "Couldn't get a deeper reading — used a simpler on-device pass."
@@ -1437,14 +1446,19 @@
   "settings_login_migration_copy": {
     "message": "You saved some excerpts while signed out. Choose what to do with them for this account — we won’t merge them quietly."
   },
-  "settings_login_migration_counts": {
-    "message": "Signed-out excerpts to decide: $EXCERPTS$. Local bookmarks that Import will keep with your library: $BOOKMARKS$.",
+  "settings_login_migration_counts_excerpts": {
+    "message": "Signed-out excerpts to decide: $EXCERPTS$",
     "placeholders": {
       "EXCERPTS": {
         "content": "$1"
-      },
+      }
+    }
+  },
+  "settings_login_migration_counts_bookmarks": {
+    "message": "Local bookmarks that Import will keep with your library: $BOOKMARKS$",
+    "placeholders": {
       "BOOKMARKS": {
-        "content": "$2"
+        "content": "$1"
       }
     }
   },
@@ -1465,6 +1479,9 @@
   },
   "settings_login_migration_delete_hint": {
     "message": "Discard these excerpts on this device; bookmarks are left alone"
+  },
+  "settings_login_migration_later": {
+    "message": "Decide later"
   },
   "settings_login_migration_import_done": {
     "message": "Imported $1 excerpts and kept $2 local bookmarks with your library",
@@ -1494,7 +1511,18 @@
     }
   },
   "settings_login_migration_must_choose": {
-    "message": "Pick Import, Export, or Delete to continue"
+    "message": "Pick Import, Export, Delete, or Decide later"
+  },
+  "settings_login_migration_delete_confirm_title": {
+    "message": "Delete these excerpts?"
+  },
+  "settings_login_migration_delete_confirm_body": {
+    "message": "This deletes $1 excerpts on this device right away. Your bookmarks stay untouched.",
+    "placeholders": {
+      "1": {
+        "content": "$1"
+      }
+    }
   },
   "settings_login_migration_delete_after_export_title": {
     "message": "Delete the unimported copies?"

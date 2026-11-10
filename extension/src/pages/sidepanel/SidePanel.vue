@@ -74,6 +74,7 @@ defineOptions({ name: 'SidePanelPage' })
 
 const {
   dismissDeleteAfterExport,
+  dismissLoginMigration,
   loginMigrationBookmarkCount,
   loginMigrationDeleteAfterExportOpen,
   loginMigrationError,
@@ -986,6 +987,9 @@ async function runRecall(trimmedClue: string): Promise<void> {
         ...contextStatusFields
       })
     )
+    void nextTick(() => {
+      clueInputRef.value?.focus()
+    })
   }
 }
 
@@ -1059,6 +1063,11 @@ async function commitSendTurn(trimmedClue: string): Promise<void> {
   // 发送后清空输入，避免 no_match 文案仍依赖输入态
   clue.value = ''
 
+  // 发送瞬间钉回编辑器，便于改发；出口条 early-return 不走此路径
+  void nextTick(() => {
+    clueInputRef.value?.focus()
+  })
+
   expandedDuplicateGroupId.value = null
   await runRecall(trimmed)
 }
@@ -1082,6 +1091,21 @@ async function handleThreadPivotNew(): Promise<void> {
     return
   }
   await commitSendTurn(pending)
+}
+
+/** 软岔路口：把暂存线索放回输入框，不发送。 */
+function handleThreadPivotEdit(): void {
+  const pending = pendingPivotClue.value ?? ''
+  clearThreadPivotStrip()
+  clue.value = pending
+  void nextTick(() => {
+    clueInputRef.value?.focus()
+  })
+}
+
+/** 软岔路口：丢弃暂存，不发送。 */
+function handleThreadPivotDismiss(): void {
+  clearThreadPivotStrip()
 }
 
 /** 追问芯片：点击即发送一轮（稳定英文 value / 当前 locale label）；跳过软岔路口。 */
@@ -1214,6 +1238,7 @@ onUnmounted(() => {
     @import="runLoginMigrationImport"
     @export="runLoginMigrationExport"
     @delete="runLoginMigrationDelete"
+    @later="dismissLoginMigration"
     @dismiss-delete-after-export="dismissDeleteAfterExport"
     @confirm-delete-after-export="runLoginMigrationDelete"
   />
@@ -1475,20 +1500,37 @@ onUnmounted(() => {
         </div>
 
         <div
-          v-if="showThreadPivotStrip && threadFindTitleDisplay"
+          v-if="showThreadPivotStrip"
           class="recall-thread-pivot"
           role="group"
-          :aria-label="t('popup_thread_pivot_prompt', threadFindTitle || '')"
+          :aria-label="
+            threadFindTitleDisplay
+              ? t('popup_thread_pivot_prompt', threadFindTitle || '')
+              : t('popup_thread_pivot_prompt_no_title')
+          "
         >
           <p class="recall-thread-pivot__prompt">
-            {{ t('popup_thread_pivot_prompt', threadFindTitleDisplay) }}
+            {{
+              threadFindTitleDisplay
+                ? t('popup_thread_pivot_prompt', threadFindTitleDisplay)
+                : t('popup_thread_pivot_prompt_no_title')
+            }}
           </p>
+          <pre v-if="pendingPivotClue" class="recall-thread-pivot__pending">{{
+            pendingPivotClue
+          }}</pre>
           <div class="recall-thread-pivot__actions">
             <AppButton type="button" variant="filled" @click="handleThreadPivotContinue">
               {{ t('popup_thread_pivot_continue') }}
             </AppButton>
             <AppButton type="button" variant="outlined" @click="handleThreadPivotNew">
               {{ t('popup_thread_pivot_new') }}
+            </AppButton>
+            <AppButton type="button" variant="outlined" @click="handleThreadPivotEdit">
+              {{ t('popup_thread_pivot_edit') }}
+            </AppButton>
+            <AppButton type="button" variant="text" @click="handleThreadPivotDismiss">
+              {{ t('popup_thread_pivot_dismiss') }}
             </AppButton>
           </div>
         </div>
@@ -1684,6 +1726,23 @@ onUnmounted(() => {
   font-size: 13px;
   line-height: 1.4;
   color: var(--on-surface);
+  overflow-wrap: anywhere;
+}
+
+.recall-thread-pivot__pending {
+  box-sizing: border-box;
+  max-height: 7.2em;
+  margin: 0;
+  padding: var(--space-xs) var(--space-sm);
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+  color: var(--on-surface-muted);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.45;
+  white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 

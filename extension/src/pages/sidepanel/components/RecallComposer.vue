@@ -356,8 +356,11 @@ function handleKeydown(event: KeyboardEvent): void {
   if (props.disabled) {
     return
   }
-  // Enter 发送；Shift+Enter 换行
+  // Enter 发送；Shift+Enter 换行；IME 组字中不拦截（避免拼音选词误发）
   if (event.key === 'Enter' && !event.shiftKey) {
+    if (event.isComposing || isComposing) {
+      return
+    }
     event.preventDefault()
     // 发送前收文末 URL 芯片（手打完整 URL 的收口）
     syncModelFromEditor({ chipTrailing: true, formatUrls: true })
@@ -761,7 +764,7 @@ defineExpose({ focus })
           :disabled="props.disabled"
           @click="handleCancelVoice"
         >
-          <AppIcon name="close" size="16px" />
+          {{ t('sidepanel_voice_cancel') }}
         </button>
         <slot v-else name="leading" />
         <div class="recall-composer-toolbar__end">
@@ -1005,15 +1008,18 @@ defineExpose({ focus })
   flex-shrink: 0;
   justify-content: center;
   align-items: center;
-  width: 32px;
-  height: 32px;
+  min-height: 32px;
   margin: 0;
-  padding: 0;
+  padding: 0 var(--space-sm);
   border: 0;
   border-radius: var(--radius-full);
   color: var(--on-surface-muted);
   background: color-mix(in srgb, var(--ink) 5%, transparent);
   cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.2;
+  white-space: nowrap;
   transition:
     background-color 140ms ease-out,
     color 140ms ease-out;

@@ -21,6 +21,11 @@ export function useLoginMigrationDialog() {
   const loginMigrationBookmarkCount = ref(0)
   /** Export 后提示是否删除未导入副本 */
   const loginMigrationDeleteAfterExportOpen = ref(false)
+  /**
+   * 本页内存态：用户点「稍后再说」/ Esc 后本会话不再弹。
+   * composable 随页面挂载重建 → Side Panel 与设置页各有一份，进设置会再提醒。
+   */
+  const loginMigrationDismissed = ref(false)
 
   function downloadMigrationExportJson(items: unknown[]): void {
     const blob = new Blob(
@@ -35,7 +40,7 @@ export function useLoginMigrationDialog() {
     URL.revokeObjectURL(url)
   }
 
-  /** 已登录时盘点；有未归属摘录则弹窗。 */
+  /** 已登录时盘点；有未归属摘录则弹窗（本页已 dismiss 则不重开）。 */
   async function refreshLoginMigrationGate(): Promise<void> {
     try {
       const response = await fetchLoginMigrationStatus()
@@ -46,13 +51,21 @@ export function useLoginMigrationDialog() {
       loginMigrationBookmarkCount.value = response.localBookmarkCount
       if (response.pending) {
         loginMigrationError.value = ''
-        loginMigrationOpen.value = true
+        if (!loginMigrationDismissed.value) {
+          loginMigrationOpen.value = true
+        }
       } else {
         loginMigrationOpen.value = false
       }
     } catch {
       // 门闸失败不阻断主 UI
     }
+  }
+
+  /** 稍后再说 / Esc：关本次；下次进 Side Panel 或设置页再提醒。 */
+  function dismissLoginMigration(): void {
+    loginMigrationOpen.value = false
+    loginMigrationDismissed.value = true
   }
 
   async function runLoginMigrationImport(): Promise<void> {
@@ -144,6 +157,7 @@ export function useLoginMigrationDialog() {
 
   return {
     dismissDeleteAfterExport,
+    dismissLoginMigration,
     loginMigrationBookmarkCount,
     loginMigrationDeleteAfterExportOpen,
     loginMigrationError,

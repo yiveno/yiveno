@@ -19,8 +19,11 @@ function loadEnMessages(): Record<string, { message?: string }> {
 }
 
 describe('product-surface-label-policy', () => {
-  it('findProductSurfaceLabelViolation 整词 Search 才命中', () => {
+  it('findProductSurfaceLabelViolation 命中 search 动词形态，research 不命中', () => {
     expect(findProductSurfaceLabelViolation('Search memories')).toBe('Search')
+    expect(findProductSurfaceLabelViolation('she searches the library')).toBe('searches')
+    expect(findProductSurfaceLabelViolation('I only searched the first part')).toBe('searched')
+    expect(findProductSurfaceLabelViolation('still searching')).toBe('searching')
     expect(findProductSurfaceLabelViolation('research notes')).toBeNull()
     expect(findProductSurfaceLabelViolation('Find again')).toBeNull()
   })
@@ -38,13 +41,21 @@ describe('product-surface-label-policy', () => {
   it('scanEnMessagesForProductSurfaceViolations 检出违规 key', () => {
     const violations = scanEnMessagesForProductSurfaceViolations({
       ok_key: { message: 'Find it' },
-      bad_key: { message: 'Search your library' }
+      bad_key: { message: 'Search your library' },
+      searched_key: {
+        message: 'That clue was long, so I only searched the first part.'
+      }
     })
     expect(violations).toEqual([
       {
         key: 'bad_key',
         message: 'Search your library',
         matched: 'Search'
+      },
+      {
+        key: 'searched_key',
+        message: 'That clue was long, so I only searched the first part.',
+        matched: 'searched'
       }
     ])
   })

@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { ref, watch } from 'vue'
+
 import AppButton from '@/infrastructure/ui/AppButton.vue'
 import AppConfirmModal from '@/infrastructure/ui/AppConfirmModal.vue'
 import AppModal from '@/infrastructure/ui/AppModal.vue'
@@ -6,7 +8,7 @@ import { t } from '@/infrastructure/i18n/t'
 
 defineOptions({ name: 'LoginMigrationDialog' })
 
-defineProps<{
+const props = defineProps<{
   open: boolean
   loading: boolean
   error: string
@@ -19,9 +21,38 @@ const emit = defineEmits<{
   import: []
   export: []
   delete: []
+  later: []
   dismissDeleteAfterExport: []
   confirmDeleteAfterExport: []
 }>()
+
+/** Delete 二次确认（与「导出后删」分开）。 */
+const deleteConfirmOpen = ref(false)
+
+watch(
+  () => props.open,
+  open => {
+    if (!open) {
+      deleteConfirmOpen.value = false
+    }
+  }
+)
+
+function openDeleteConfirm(): void {
+  if (props.loading) {
+    return
+  }
+  deleteConfirmOpen.value = true
+}
+
+function dismissDeleteConfirm(): void {
+  deleteConfirmOpen.value = false
+}
+
+function confirmDelete(): void {
+  deleteConfirmOpen.value = false
+  emit('delete')
+}
 </script>
 
 <template>
@@ -29,12 +60,16 @@ const emit = defineEmits<{
     :open="open"
     :title="t('settings_login_migration_title')"
     :loading="loading"
-    :close-on-escape="false"
+    :close-on-escape="true"
     size="md"
+    @close="emit('later')"
   >
     <p class="settings-section-copy">{{ t('settings_login_migration_copy') }}</p>
     <p class="settings-sync-counts">
-      {{ t('settings_login_migration_counts', [String(excerptCount), String(bookmarkCount)]) }}
+      {{ t('settings_login_migration_counts_excerpts', [String(excerptCount)]) }}
+    </p>
+    <p class="settings-sync-counts">
+      {{ t('settings_login_migration_counts_bookmarks', [String(bookmarkCount)]) }}
     </p>
 
     <div class="settings-sign-out-options">
@@ -48,14 +83,30 @@ const emit = defineEmits<{
       </AppButton>
       <p class="settings-sign-out-option-hint">{{ t('settings_login_migration_export_hint') }}</p>
 
-      <AppButton type="button" :disabled="loading" variant="outlined" @click="emit('delete')">
+      <AppButton type="button" :disabled="loading" variant="outlined" @click="openDeleteConfirm">
         {{ t('settings_login_migration_delete') }}
       </AppButton>
       <p class="settings-sign-out-option-hint">{{ t('settings_login_migration_delete_hint') }}</p>
+
+      <AppButton type="button" :disabled="loading" variant="text" @click="emit('later')">
+        {{ t('settings_login_migration_later') }}
+      </AppButton>
     </div>
 
     <template v-if="error" #error>{{ error }}</template>
   </AppModal>
+
+  <AppConfirmModal
+    :open="deleteConfirmOpen"
+    :title="t('settings_login_migration_delete_confirm_title')"
+    :body="t('settings_login_migration_delete_confirm_body', [String(excerptCount)])"
+    :cancel-label="t('settings_sign_out_cancel')"
+    :confirm-label="t('settings_login_migration_delete')"
+    confirm-tone="danger"
+    :loading="loading"
+    @close="dismissDeleteConfirm"
+    @confirm="confirmDelete"
+  />
 
   <AppConfirmModal
     :open="deleteAfterExportOpen"
