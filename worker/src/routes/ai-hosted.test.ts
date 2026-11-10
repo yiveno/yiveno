@@ -271,7 +271,7 @@ describe('hosted ai routes', () => {
     expect(response.status).toBe(200)
     const data = (await response.json()) as { model: string; limit: number }
     expect(data.model).toBe('deepseek-v4-flash')
-    expect(data.limit).toBe(2000)
+    expect(data.limit).toBe(1000)
   })
 
   test('handleHostedQuota returns free tier limit when not pro', async () => {

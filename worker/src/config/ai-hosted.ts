@@ -12,7 +12,7 @@ export const AI_HOSTED_DEFAULT_MODEL = 'deepseek-v4-flash'
 export const AI_HOSTED_FREE_MONTHLY_QUOTA = 60
 
 /** Pro：每月 Clue LLM 次数（Normative 起步值） */
-export const AI_HOSTED_PRO_MONTHLY_QUOTA = 2000
+export const AI_HOSTED_PRO_MONTHLY_QUOTA = 1000
 
 /** 登录 Free：日软盖 */
 export const AI_HOSTED_FREE_DAILY_CAP = 10

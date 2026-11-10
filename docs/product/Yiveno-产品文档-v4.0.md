@@ -1254,7 +1254,7 @@ schema：`extension/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 | --------- | -------------------- | ------------- | -------------------------- |
 | 未登录    | 0（仅规则）          | —             | —                          |
 | 登录 Free | **60 次/月**         | **10 次/日**  | 降级规则理解，**不禁止找** |
-| Pro       | **2 000 次/月**      | **120 次/日** | 同左                       |
+| Pro       | **1 000 次/月**      | **120 次/日** | 同左                       |
 
 计量：一次成功的 `POST /api/ai/hosted/complete` = 1；正式路径须登录 Bearer。`/api/ai/clue/complete` 仅开发/兜底（IP 日配额）。Enrichment 月配额（Free 30 / Pro 500）后续接线；此前仍走现有 IP 日配额。
 
@@ -2741,6 +2741,7 @@ RecallOutcomeEvent {
 
 | 日期       | 变更                                                                                                                                                                                                                                                                                                       |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-10 | **Pro 托管 LLM 月配额口径统一为 1000/月：** §5.1 Normative 表 Pro Clue LLM **1 000 次/月**（日软盖 120 不变）；对齐 Worker 常量与 `wrangler.toml` `AI_HOSTED_MONTHLY_QUOTA`；Free 60/月·日盖 10 不动                                                                                                       |
 | 2026-11-06 | **空库态 / 记忆库可见刷新：** Side Panel 听 count+revision 重探空态；Library 回前台静默重拉 + 听 revision；不另造总线；§5.8                                                                                                                                                                                |
 | 2026-11-06 | **ADR-021 波次4 可选清债：** lexicon 删越界（story/playlist/recording/裸 login；opened recently/just opened）；`shouldOmitClueLlmCompleterWhenBrowserOffline`；Side Panel 断网壳注释对齐；不改 i18n                                                                                                        |
 | 2026-11-06 | **ADR-021 波次3 规则层定位：** §0.1.4 三角色表；无 completer 时 mode 一律 lexical（删伪 semantic 启发式）；`parseRecallClue`/lexicon/`nlu:try:rules` 钉「接地·快跳·垫片」                                                                                                                                  |
