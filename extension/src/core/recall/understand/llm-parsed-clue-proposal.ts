@@ -40,6 +40,11 @@ export const LlmParsedClueProposalSchema = z.object({
   timeLabel: RecallRelativeTimeLabelSchema.nullable().optional().catch(undefined),
   /** 对象类型；null = 明确无类型；缺省 = 未填；数组含坏元素 → 整字段置空 */
   objectTypes: z.array(RecallObjectTypeSchema).nullable().optional().catch(undefined),
+  /**
+   * 未知对象类型的原文词（如“播客”“菜谱”）；只进 contentTerms，永不进硬筛。
+   * R7：10 类闭集装不下时填这里；非法值（超长/非字符串）→ 置空本字段，不丢整单。
+   */
+  objectTypeOther: z.string().min(1).max(40).nullable().optional().catch(undefined),
   /** 行为提示；null = 明确无；缺省 = 未填；数组含坏元素 → 整字段置空 */
   behaviorHints: z.array(RecallBehaviorHintSchema).nullable().optional().catch(undefined),
   /** true = 指向附注；非布尔 → 置空 */

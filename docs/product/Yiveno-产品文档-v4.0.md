@@ -668,8 +668,8 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 **Canonical 规则（Normative · 实现约束）：**
 
-1. **对象类型**：内部 slug 与主检索词面用英文（`poem` / `article` / `song` / `code` / `video` …），不用「诗 / 文章 / 歌 / 视频」等本地化词当 canonical。
-2. **时间 / 行为 / 附注指向**：parser 词典仅维护英文 surface（`yesterday` / `last week` / `half read` / `my note` …）；不再为中文等 locale 保留 alias。
+1. **对象类型**：内部 slug 与主检索词面用英文（`poem` / `article` / `song` / `code` / `video` …），不用「诗 / 文章 / 歌 / 视频」等本地化词当 canonical。闭集 **10 类**装不下时（播客 / 菜谱等），LLM 填 `objectTypeOther` 原文词 → 只进 `contentTerms`，**永不**进 `objectTypes` 硬筛（R7）。
+2. **时间 / 行为 / 附注指向**：parser 词典仅维护英文 surface（`yesterday` / `last week` / `half read` / `my note` …）；不再为中文等 locale 保留 alias。相对时间 **9 标签**装不下时（绝对日期 / 季节 / 事件），`timeLabel` 留空，表达留在 `contentTerms`（R7 · prompt 出口，无新槽）。
 3. **实体**：规则 enrichment **不**写专名 allowlist；`entities` 仅来自 LLM enrichment 提议、用户附注或其它明示路径；写入时 canonical 仍统一英文（如 `Li Bai`）。禁止主题/实体硬编码 seed 冒充通解。
 4. **追问芯片**：`label` 本地化展示；**点击填入 composer 的 `value` 用稳定英文**（或稳定 canonical token），保证跨 locale 下 parser 行为一致。
 5. **单测与验收语料**：以**英语真实口语**为唯一主路径；不再保留中文 Recall alias 回归用例。
@@ -695,7 +695,8 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 | 仅刚存（无类型）          | `just saved`                                      | recently_saved；近因邻域（书签+摘录）               |
 | 零锚点（禁主 demo）       | `i feel bored` / `put a few songs i like`         | 无可靠记忆锚点；不得当助手推荐                      |
 
-**相对时间标签闭集（Normative · 与 `RecallRelativeTimeLabel` / lexicon 对齐 · ADR-011）：**
+**相对时间标签闭集（Normative · 与 `RecallRelativeTimeLabel` / lexicon 对齐 · ADR-011）：**  
+绝对日期 / 季节 / 事件（「去年夏天」「2024年3月」「世界杯期间」）**不要**就近套入下表 9 标签；`timeLabel` 留空，表达留在 `contentTerms`（R7 · prompt 出口）。
 
 | label                                          | 口语例（非穷举）                        | 滚动窗（相对「今天」UTC 日界） | **timeConfidence** | Filter                       |
 | ---------------------------------------------- | --------------------------------------- | ------------------------------ | ------------------ | ---------------------------- |
@@ -2142,16 +2143,16 @@ Chrome API / 选区
 
 **Composer contenteditable + URL 可视链接（Normative · 2026-11-02 · 体验）：**
 
-| 规则         | 要求                                                                                                                                                                                                                                                                                                                                   |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **编辑器**   | Side Panel clue 输入为 **contenteditable**（`role=textbox` · `aria-multiline`）；Enter 发送、Shift+Enter 换行；空态用 `data-placeholder`（**不用** textarea `placeholder` / `field-sizing`）。壳内 **上下分行**（上行编辑 / 下行工具条）；壳底半透明 + blur（设计标准）                                                                |
-| **长度门禁** | 与 `RECALL_WITH_CLUE.clue` 同上限 **500** 字符（`RECALL_CLUE_MAX_CHARS` · UTF-16 码元／JS `.length`）；键入 / 粘贴 / 听写 **物理拦截**（可写入部分截断）；超限 toast tip（节流）；**禁止**仅靠发送时 Zod 才失败                                                                                                                        |
-| **URL 芯片** | `http(s)://` 与裸 `www.` → 原子芯片；**仅**粘贴扫描收芯片 + blur/发送收文末完整 URL；**键入 / IME 过程不格式化**（保持纯文本，避免 `www.baidu.` 中途成气泡）；芯片后可继续键入（ce=false 后保底插入点；粘连中文等不吞进 URL）                                                                                                          |
-| **标题解析** | 粘贴瞬间先缩短 host/path（不阻塞）；异步 `RESOLVE_CLUE_URL_DISPLAY`：**本机库标题优先** → **打开中 tab 标题** → 保持缩短；SW 按 owner 缓存库 URL→title；**禁止**联网抓页标题/OG。芯片文案 **CSS 限宽 + ellipsis**（约 `10.5rem`）；悬停 `title` 与 `aria-label` **始终完整 URL**（不用页面标题冒充 tooltip）；病态超长另有字符安全上限 |
-| **契约**     | `RECALL_WITH_CLUE` / 用户气泡 / 听写 model **仍为纯字符串**（芯片序列化为完整 http(s) URL）；用户气泡与 composer **同形**渲染（气泡同样异步 enrich）                                                                                                                                                                                   |
-| **打开**     | 点芯片 → **新开前台标签**（contenteditable 内 mousedown 防抢 caret）；Shift+点击 → 当前活动标签；**仅** http(s)                                                                                                                                                                                                                        |
-| **禁止**     | Markdown / 加粗斜体 / 代码块 / @mention；`javascript:` 等非 http(s)；用 TipTap/ProseMirror 等重型编辑器冒充本切片；粘贴同步等待标题                                                                                                                                                                                                    |
-| **与 §5.9**  | **分计**                                                                                                                                                                                                                                                                                                                               |
+| 规则         | 要求                                                                                                                                                                                                                                                                                                                                                                                              |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **编辑器**   | Side Panel clue 输入为 **contenteditable**（`role=textbox` · `aria-multiline`）；Enter 发送、Shift+Enter 换行；空态用 `data-placeholder`（**不用** textarea `placeholder` / `field-sizing`）。壳内 **上下分行**（上行编辑 / 下行工具条）；壳底半透明 + blur（设计标准）                                                                                                                           |
+| **长度门禁** | 与 `RECALL_WITH_CLUE.clue` 同上限 **10000** 字符（`RECALL_CLUE_MAX_CHARS` · UTF-16 码元／JS `.length`）；键入 / 粘贴 / 听写 **物理拦截**（可写入部分截断）；超限 toast tip（节流）；**禁止**仅靠发送时 Zod 才失败。**R9（2026-11-09）**：本上限只是「允许粘贴进来」的硬顶；理解层另设 `MAX_RECALL_CLUE_LENGTH`（2000），超长只按前 2000 字符检索并挂轻提示（`sidepanel_recall_clue_truncated`）。 |
+| **URL 芯片** | `http(s)://` 与裸 `www.` → 原子芯片；**仅**粘贴扫描收芯片 + blur/发送收文末完整 URL；**键入 / IME 过程不格式化**（保持纯文本，避免 `www.baidu.` 中途成气泡）；芯片后可继续键入（ce=false 后保底插入点；粘连中文等不吞进 URL）                                                                                                                                                                     |
+| **标题解析** | 粘贴瞬间先缩短 host/path（不阻塞）；异步 `RESOLVE_CLUE_URL_DISPLAY`：**本机库标题优先** → **打开中 tab 标题** → 保持缩短；SW 按 owner 缓存库 URL→title；**禁止**联网抓页标题/OG。芯片文案 **CSS 限宽 + ellipsis**（约 `10.5rem`）；悬停 `title` 与 `aria-label` **始终完整 URL**（不用页面标题冒充 tooltip）；病态超长另有字符安全上限                                                            |
+| **契约**     | `RECALL_WITH_CLUE` / 用户气泡 / 听写 model **仍为纯字符串**（芯片序列化为完整 http(s) URL）；用户气泡与 composer **同形**渲染（气泡同样异步 enrich）                                                                                                                                                                                                                                              |
+| **打开**     | 点芯片 → **新开前台标签**（contenteditable 内 mousedown 防抢 caret）；Shift+点击 → 当前活动标签；**仅** http(s)                                                                                                                                                                                                                                                                                   |
+| **禁止**     | Markdown / 加粗斜体 / 代码块 / @mention；`javascript:` 等非 http(s)；用 TipTap/ProseMirror 等重型编辑器冒充本切片；粘贴同步等待标题                                                                                                                                                                                                                                                               |
+| **与 §5.9**  | **分计**                                                                                                                                                                                                                                                                                                                                                                                          |
 
 **Composer 双通道（Normative · Placeholder × 追问芯片 · 2026-08-26）：**
 
@@ -2258,7 +2259,7 @@ Chrome API / 选区
 本轮 clue + context（priorUserUtterances / accumulated / dismissedIds）
   → 网关对本轮（硬噪音仍拒）
   → understand(本轮) → ParsedRecallClue_current（同次 LLM 含意图）
-  → 意图为闲聊（chitchat）→ 第二次调用生成自然回复（temperature 0.8；解析仍为同次调用 temperature 0），短路返回（emptyKind=chitchat），不进检索、不计结算
+  → 意图为非召回（chitchat / question / instruction）→ 第二次调用生成自然回复（temperature 0.8；解析仍为同次调用 temperature 0），短路返回（emptyKind=chitchat），不进检索、不计结算
   → merge(accumulated, current) → ParsedRecallClue_merged
   → 本轮无主题锚且非约束邻域（H-topic）→ 未进检索，emptyKind=missing_topic（明示缺主题 + 只问一问）
   → 排除 dismissedIds → keyword Filter + 软加权；有 timeRange 则硬过滤
@@ -2267,7 +2268,7 @@ Chrome API / 选区
   → 返回 outcome + parsed(merged) + effectiveClue（+ emptyKind / relatedGuess / recallFraming / assistantFollowUp）
 ```
 
-闲聊每条现在占 2 次 LLM 调用（解析 + 回复），0 embedding，0 扫库。
+非召回意图（chitchat / question / instruction）每条现在占 2 次 LLM 调用（解析 + 回复），0 embedding，0 扫库。
 
 **LLM Framing 润色（Normative · 已接线）：** 宽邻域 `top_pick`（N≥6）或 `need_a_clue` 时，在规则 Framing 事实之上润色 P1–P5；`chip.value` 须为稳定英文；计入 `POST /api/ai/hosted/complete` 同桶；门禁不过 → 规则模板。未登录 / 关 AI / 配额尽 → 同降级。**窄** `top_pick` 跳过 LLM 以省配额。
 
@@ -2276,6 +2277,8 @@ Chrome API / 选区
 **LLM 回复军规（Normative · 2026-11-09）：Yiveno 是自然的人，不是工具。** 身份与边界定死，措辞不重复。定死的是——它是谁（Yiveno，帮用户找保存过的东西）、它是干什么的、它绝不干什么（不编造库里有什么、不接多轮闲聊、一次只引回一次）；不定死的是——它每次具体怎么说。同一输入的回复不得逐字重复。固定文案只允许出现在非对话类的硬状态提示（如 Gate A 噪音拒绝的 `popup_reply_miss_rejected_noise`），不得出现在 LLM 自然回复里。
 
 > **非找东西类输入（R8，2026-11-09）**：事实问题简短回答后引回找东西（不知道就直说不知道，不编造）；指令/生成/提醒/删除类输入明确说做不了并引回找东西；破坏性措辞（删书签）明确说“我不会删东西”。身份与边界定死，措辞不重复。
+
+> **失败路径（R5）：** LLM 失败、无 completer、断网时走规则解析，解析后做一次最小意图判断（问号、既有非召回词面、中文指令/删除词面），判为非召回时给一句诚实降级回复（“理解服务现在连不上……”），不进检索。判断高精确、fail-open：不确定一律走召回；问候与天气/心情陈述在失败路径暂不拦截，退化为诚实 no_match。Omnibox 不应用本判断。Top Pick 的降级标记待产品决定。
 
 **闲聊回复按输入质地选语气（Normative · 2026-11-09）：** 二次回复调用（`build-chitchat-reply-prompt`）须区分——真问候 / 身份提问可轻接再引回；真寒暄或情绪评论可轻接再引回；**语无伦次、误触、听不清、乱写残片**须温和诚实点出「不太像找东西的线索 / 好像有点乱」，再引回找东西。**禁止**从乱写脑补心情、活动或场景（反例：把「啊上课了大街上」说成「你今天挺忙」）。软糊乱写仍走 `emptyKind: chitchat`（Gate A 硬噪音仍用固定文案，不扩网关）。
 

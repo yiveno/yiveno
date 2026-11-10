@@ -19,6 +19,10 @@ import {
   type RecallBehaviorProfile
 } from '@/core/recall/keyword-filter'
 import {
+  looksLikeAssistantImperativeClue,
+  looksLikeNonRecallLifeRequest
+} from '@/core/recall/non-recall-clue-surfaces'
+import {
   effectiveContentTermsForRecall,
   filterMatchesByContentTermCorroboration,
   parsedClueForTimeSoftReopen,
@@ -170,153 +174,17 @@ export function injectTopic(result: RecallResult, parsed: ParsedRecallClue): Rec
 }
 
 /**
- * 零锚点助手发令词面（闭合产品枚举）：无真实记忆锚时须诚实 no_match，禁止当推荐引擎。
- */
-const ASSISTANT_IMPERATIVE_SURFACES = [
-  'i feel bored',
-  "i'm bored",
-  'feel bored',
-  'recommend a',
-  'recommend me',
-  'suggest a',
-  'suggest me',
-  'pick something',
-  'something fun',
-  'for me',
-  'play some',
-  'put on some'
-] as const
-
-/**
- * 生活助手 / 非找回意图（闭合产品枚举）。
- * Yiveno 不是天气/点餐/摘要/行程/写码助理；无线索记忆锚时一律诚实空。
- * 须先于「有内容词则放行」判定，否则 summarize/plan/write 会被 LLM 残留词扫库。
- */
-const NON_RECALL_LIFE_SURFACES = [
-  'what is the weather',
-  'whats the weather',
-  "what's the weather",
-  'weather going to be',
-  'weather tomorrow',
-  'order me some',
-  'order me a',
-  'order some pizza',
-  'order a pizza',
-  'for dinner',
-  'what time is it',
-  'translate this',
-  'write me an email',
-  'send an email',
-  // 摘要 / 行程规划 / 写码：助手任务，不是找回
-  'summarize the',
-  'summarize this',
-  'summarize latest',
-  'summarize for me',
-  'plan a trip',
-  'plan a weekend',
-  'plan me a',
-  'write a python',
-  'write a script',
-  'write me a script',
-  'write a program',
-  'generate a script',
-  'generate code'
-] as const
-
-/**
- * 记忆找回锚词面：出现则不作「生活助手」拦截（如「weather article I saved」仍可找回）。
- */
-const MEMORY_RECALL_ANCHOR_SURFACES = [
-  'saved',
-  'bookmarked',
-  'bookmark',
-  'I noted',
-  'i noted',
-  'my note',
-  'left a note',
-  'excerpt',
-  'clip I',
-  'I highlighted',
-  'i highlighted',
-  'I bookmarked',
-  'i bookmarked',
-  'from last',
-  'a while ago',
-  'few days ago',
-  'the other day',
-  'I read',
-  'i read'
-] as const
-
-function isAsciiWordCharForSurface(char: string | undefined): boolean {
-  return Boolean(char && /[a-z0-9]/.test(char))
-}
-
-/** 规范化线索是否含某 surface（ASCII 词边界）。 */
-function normalizedClueHasSurface(normalized: string, surface: string): boolean {
-  const needle = normalizeRecallText(surface)
-  if (!needle) {
-    return false
-  }
-  let fromIndex = 0
-  while (fromIndex < normalized.length) {
-    const index = normalized.indexOf(needle, fromIndex)
-    if (index < 0) {
-      return false
-    }
-    const before = normalized[index - 1]
-    const after = normalized[index + needle.length]
-    if (!isAsciiWordCharForSurface(before) && !isAsciiWordCharForSurface(after)) {
-      return true
-    }
-    fromIndex = index + 1
-  }
-  return false
-}
-
-function clueHasAnySurface(clue: string, surfaces: readonly string[]): boolean {
-  const normalized = normalizeRecallText(clue)
-  return surfaces.some(surface => normalizedClueHasSurface(normalized, surface))
-}
-
-/** 线索是否含助手发令词面（ASCII 词边界）。 */
-export function looksLikeAssistantImperativeClue(clue: string): boolean {
-  return clueHasAnySurface(clue, ASSISTANT_IMPERATIVE_SURFACES)
-}
-
-/**
- * 生活助手请求（天气/点餐/摘要/行程/写码等）且无线索记忆锚 → 非 Recall。
- * 有 saved/bookmarked/note 等锚时放行，避免误伤「weather article I saved」。
- */
-export function looksLikeNonRecallLifeRequest(clue: string): boolean {
-  if (clueHasAnySurface(clue, MEMORY_RECALL_ANCHOR_SURFACES)) {
-    return false
-  }
-  return clueHasAnySurface(clue, NON_RECALL_LIFE_SURFACES)
-}
-
-/**
- * 助手发令里可残留、但仍视为「无强记忆锚」的词（如 bored）。
- * 与弱偏好表分工：bored 须能进 Filter 找回「being bored」类标题；发令句另拦。
- */
-const ASSISTANT_MOOD_ONLY_CONTENT_TERMS = new Set(['bored'])
-
-/**
- * 零锚点 / 非找回：生活助手意图，或助手发令且无强内容锚，或无有效内容词且无约束 → 不扫库。
+ * 零锚点 / 非找回：生活助手意图，或助手发令且无有效内容词，或无有效内容词且无约束 → 不扫库。
  */
 export function shouldSkipRecallAsZeroAnchor(clue: string, parsed: ParsedRecallClue): boolean {
   if (looksLikeNonRecallLifeRequest(clue)) {
     return true
   }
   const effectiveTerms = effectiveContentTermsForRecall(parsed)
-  // 助手发令（i feel bored / recommend…）优先：仅 mood 残留词（bored）不得放行扫库
-  if (looksLikeAssistantImperativeClue(clue)) {
-    const strongTerms = effectiveTerms.filter(
-      term => !ASSISTANT_MOOD_ONLY_CONTENT_TERMS.has(normalizeRecallText(term))
-    )
-    if (strongTerms.length === 0) {
-      return true
-    }
+  // 助手发令优先：无有效内容词时不得放行扫库。情绪词（如 bored）若是唯一内容词，
+  // 按正常召回处理（有相关条目就找，没有就诚实 no_match），不再为单个词单列集合。
+  if (looksLikeAssistantImperativeClue(clue) && effectiveTerms.length === 0) {
+    return true
   }
   if (effectiveTerms.length > 0) {
     return false

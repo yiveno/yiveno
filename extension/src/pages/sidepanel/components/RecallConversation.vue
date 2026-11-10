@@ -478,6 +478,9 @@ function neighborhoodCountLabel(turn: AssistantTurn): string | null {
           <p v-if="turn.deeperReadingTip" class="assistant-turn-deeper-tip" role="status">
             {{ turn.deeperReadingTip }}
           </p>
+          <p v-if="turn.clueTruncatedTip" class="assistant-turn-deeper-tip" role="status">
+            {{ turn.clueTruncatedTip }}
+          </p>
           <!-- 无卡：Framing/文案仍在上（空结果/错误主读）；有卡：先卡后说明书 -->
           <p
             v-if="!hasAssistantResultCards(turn) && hasAssistantCopy(turn)"

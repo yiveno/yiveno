@@ -557,7 +557,8 @@ describe('recallByKeywordWithParsedClue', () => {
     expect(result.topPick?.item.id).toBe(target.id)
   })
 
-  it('i feel bored 发令：即使库有 boredom 标题仍诚实 no_match', () => {
+  it('i feel bored：情绪词按正常召回，库有 boredom 标题可命中', () => {
+    // 不再把 bored 单列剥掉；发令句若残留有效内容词则按正常召回处理
     const boredom = createBookmarkMemoryItem({
       ownerId: OWNER,
       sourceLocalProfileId: PROFILE,
@@ -567,11 +568,11 @@ describe('recallByKeywordWithParsedClue', () => {
         domain: 'aeon.co'
       }
     })
-    expect(
-      recallByKeywordWithParsedClue([boredom], 'i feel bored pick something fun for me', {
-        nowMs: NOW_MS
-      }).outcome
-    ).toBe('no_match')
+    const result = recallByKeywordWithParsedClue([boredom], 'i feel bored', {
+      nowMs: NOW_MS
+    })
+    expect(result.outcome).toBe('top_pick')
+    expect(result.topPick?.item.id).toBe(boredom.id)
   })
 
   it('非找回生活助手：天气 / 点餐 → no_match；有记忆锚的 weather 线索仍可扫', () => {

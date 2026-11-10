@@ -141,6 +141,12 @@ export interface RecallResult {
    * `rules_fallback` 时 Side Panel 可展示 deeper-reading 轻提示。
    */
   understandSource?: ClueUnderstandingSource
+  /**
+   * 本轮线索是否因超长被截断（R9）。
+   * true 时理解层只用了原文前 `MAX_RECALL_CLUE_LENGTH` 字符；
+   * Side Panel 据此挂轻提示。缺省 = 未截断。
+   */
+  clueTruncated?: boolean
 }
 
 /** UI 展示用的 MemoryItem 摘要（可见面；非存储契约）。 */

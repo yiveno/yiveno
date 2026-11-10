@@ -639,6 +639,9 @@
   "popup_recall_progress_understanding_fallback_soon": {
     "message": "还在处理 — 若再久等，会先用更简单的本机理解…"
   },
+  "sidepanel_recall_clue_truncated": {
+    "message": "线索太长，我只按前面部分找。"
+  },
   "sidepanel_recall_deeper_reading_unavailable": {
     "message": "没拿到更深层理解 — 已改用更简单的本机通道。"
   },
@@ -844,6 +847,9 @@
   },
   "popup_reply_miss_after_simpler_pass": {
     "message": "用更简单的本机理解后，还是没有足够接近的结果。试试另一个你记得住的细节。"
+  },
+  "popup_reply_miss_missing_topic": {
+    "message": "我还不知道你要找什么。这是关于什么的？告诉我主题或名字，我再帮你找。"
   },
   "popup_reply_miss_rejected_noise": {
     "message": "这看起来不像一条找东西的线索。试着描述你记得的内容，比如它讲什么、什么时候看到的。"

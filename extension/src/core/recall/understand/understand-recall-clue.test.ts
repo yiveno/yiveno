@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { understandRecallClue } from '@/core/recall/understand/understand-recall-clue'
 import type { LlmChatCompleter } from '@/core/recall/understand/parse-recall-clue-with-llm'
+import {
+  MAX_RECALL_CLUE_LENGTH,
+  understandRecallClue
+} from '@/core/recall/understand/understand-recall-clue'
 
 describe('understandRecallClue', () => {
   it('纯 URL + completer → 仍走规则（省配额）', async () => {
@@ -114,5 +117,51 @@ describe('understandRecallClue', () => {
     expect(result.disposition).toBe('proceed')
     expect(result.source).toBe('rules_fallback')
     expect(result.filterClue.length).toBeGreaterThan(0)
+  })
+
+  it('超长线索截断到 2000 字符并标记（规则路径）', async () => {
+    // 前 2000 字符内放一个 Marker，2000 字符后放另一个；截断后只应见到前者
+    const head = 'yesterday I read an article about memory. '.repeat(45) // 约 1980 字符
+    const headMarker = 'headmarkerword'
+    const tailMarker = 'tailmarkerword'
+    const clue = `${head}${headMarker} ${'filler '.repeat(400)}${tailMarker}`
+    expect(clue.length).toBeGreaterThan(MAX_RECALL_CLUE_LENGTH)
+
+    const result = await understandRecallClue(clue)
+    expect(result.clueTruncated).toBe(true)
+    expect(result.parsed.raw.length).toBe(2000)
+    expect(result.parsed.contentTerms).toContain(headMarker)
+    expect(result.parsed.contentTerms).not.toContain(tailMarker)
+  })
+
+  it('正常长度线索不截断', async () => {
+    const result = await understandRecallClue('昨天的诗')
+    expect(result.clueTruncated).toBe(false)
+    expect(result.parsed.raw).toBe('昨天的诗')
+  })
+
+  it('超长线索进 LLM 时 prompt 只含前 2000 字符', async () => {
+    const seenMessages: Array<{ role: string; content: string }> = []
+    const complete: LlmChatCompleter = async messages => {
+      seenMessages.push(...messages)
+      return JSON.stringify({
+        timeLabel: null,
+        objectTypes: null,
+        contentTerms: ['article'],
+        confidence: 'high'
+      })
+    }
+    const headMarker = 'headmarkerword'
+    const tailMarker = 'tailmarkerword'
+    const clue = `${'yesterday article '.repeat(110)}${headMarker} ${'filler '.repeat(400)}${tailMarker}`
+    expect(clue.length).toBeGreaterThan(MAX_RECALL_CLUE_LENGTH)
+
+    // forceMode: 'semantic' 强制走 LLM（不依赖 mode 判定对超长文本的分类）
+    const result = await understandRecallClue(clue, { complete, forceMode: 'semantic' })
+    expect(result.clueTruncated).toBe(true)
+    expect(result.source).toBe('llm')
+    const promptText = seenMessages.map(m => m.content).join('\n')
+    expect(promptText).toContain(headMarker)
+    expect(promptText).not.toContain(tailMarker)
   })
 })

@@ -172,6 +172,11 @@ export const ParsedRecallClueSchema = z.object({
   timeConfidence: RecallTimeConfidenceSchema.optional(),
   /** 对象类型闭集（可多选）；缺省 = 未听出类型 */
   objectTypes: z.array(RecallObjectTypeSchema).optional(),
+  /**
+   * 未知对象类型的原文词（如“播客”“菜谱”）；只进 contentTerms，永不进硬筛。
+   * R7：10 类闭集装不下时，模型填这里、不要猜枚举。
+   */
+  objectTypeOther: z.string().min(1).max(40).optional(),
   /** 行为提示闭集；缺省 = 无行为槽 */
   behaviorHints: z.array(RecallBehaviorHintSchema).optional(),
   /** true = 线索指向附注（MemoryItem.clues.note） */

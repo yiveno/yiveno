@@ -26,6 +26,7 @@
     "test:must": "vitest run src/core/recall/eval",
     "nlu:try": "bun scripts/nlu-try.mjs",
     "nlu:try:rules": "NLU_TRY_FORCE_MODE=lexical bun scripts/nlu-try.mjs",
+    "pressure:try": "bun scripts/pressure-try.mjs",
     "probe-eval:export-fixture": "bun scripts/export-probe-eval-fixture.mjs",
     "retrieval-ablation:real": "bun scripts/run-retrieval-ablation-real.mjs",
     "i18n:check": "bun scripts/check-i18n-keys.mjs",

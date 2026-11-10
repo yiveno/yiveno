@@ -60,6 +60,11 @@ export type AssistantTurn = {
    * 仅 `rules_fallback`；断网 omit LLM（source=`rules`）不叠。
    */
   deeperReadingTip?: string
+  /**
+   * 线索超长截断后的轻提示（已翻译）。
+   * 仅 `clueTruncated`；与 `deeperReadingTip` 可叠加（两者独立）。
+   */
+  clueTruncatedTip?: string
   allowDismiss: boolean
 }
 

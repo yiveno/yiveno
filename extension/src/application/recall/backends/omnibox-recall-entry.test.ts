@@ -59,6 +59,7 @@ describe('HybridRecallBackend · entry omnibox', () => {
       rejectReason: null,
       mode: 'lexical',
       source: 'rules',
+      clueTruncated: false,
       parsed: {
         raw: 'Manifest V3',
         contentTerms: ['manifest', 'v3'],
@@ -125,7 +126,11 @@ describe('HybridRecallBackend · entry omnibox', () => {
     understandRecallClueMock.mockResolvedValue({
       disposition: 'reject_noise',
       rejectReason: 'keyboard_mash',
-      source: 'rules'
+      mode: 'lexical',
+      source: 'rejected_noise',
+      clueTruncated: false,
+      parsed: { raw: 'asdfg aksdjhaksjhd', contentTerms: [], confidence: 'low' },
+      filterClue: ''
     })
 
     const backend = new HybridRecallBackend()
@@ -146,6 +151,7 @@ describe('HybridRecallBackend · entry omnibox', () => {
       rejectReason: null,
       mode: 'semantic',
       source: 'llm',
+      clueTruncated: false,
       parsed: {
         raw: '今天天气不错',
         contentTerms: [],

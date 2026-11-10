@@ -113,10 +113,11 @@ export const OMNIBOX_EVAL_CASES: OmniboxEvalCase[] = [
   },
   {
     id: 'omnibox-negative-bored-pick',
-    clue: 'i feel bored pick something fun for me',
+    // 与 recall-eval r0 对齐：去掉 bored 内容词，只锁纯发令零锚
+    clue: 'pick something fun for me',
     clueClass: 'negative',
     expectation: { kind: 'no_match' },
-    note: '无聊发令非找回'
+    note: '纯助手发令零锚非找回（bored 作内容词时按正常召回）'
   }
 ]
 

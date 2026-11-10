@@ -750,6 +750,11 @@ async function runRecall(trimmedClue: string): Promise<void> {
       response.result.understandSource === 'rules_fallback'
         ? { deeperReadingTip: t('sidepanel_recall_deeper_reading_unavailable') }
         : {}
+    /** 超长线索截断轻提示；与 deeperReadingTip 可叠加 */
+    const clueTruncatedTipFields =
+      response.result.clueTruncated === true
+        ? { clueTruncatedTip: t('sidepanel_recall_clue_truncated') }
+        : {}
 
     if (response.result.outcome === 'top_pick' || response.result.outcome === 'need_a_clue') {
       outcomeSession.value = {
@@ -828,6 +833,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
           text: listReply.text,
           ...contextStatusFields,
           ...deeperReadingTipFields,
+          ...clueTruncatedTipFields,
           ...(understandingEcho ? { understandingEcho } : {}),
           candidateCards: rankedCards,
           visibleCount,
@@ -870,6 +876,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
           text: listReply.text,
           ...contextStatusFields,
           ...deeperReadingTipFields,
+          ...clueTruncatedTipFields,
           ...(understandingEcho ? { understandingEcho } : {}),
           candidateCards,
           visibleCount,
@@ -929,6 +936,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
           ...(emptyFuelSegments && preferEmptyFuelCopy ? { textSegments: emptyFuelSegments } : {}),
           ...contextStatusFields,
           ...deeperReadingTipFields,
+          ...clueTruncatedTipFields,
           ...(understandingEcho ? { understandingEcho } : {}),
           ...('recallFramingFacts' in missReply && missReply.recallFramingFacts !== undefined
             ? { recallFramingFacts: missReply.recallFramingFacts }

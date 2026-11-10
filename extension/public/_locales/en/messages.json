@@ -639,6 +639,9 @@
   "popup_recall_progress_understanding_fallback_soon": {
     "message": "Still working — if this keeps taking, we'll use a simpler on-device reading…"
   },
+  "sidepanel_recall_clue_truncated": {
+    "message": "That clue was long, so I only searched the first part."
+  },
   "sidepanel_recall_deeper_reading_unavailable": {
     "message": "Couldn't get a deeper reading — used a simpler on-device pass."
   },
@@ -844,6 +847,9 @@
   },
   "popup_reply_miss_after_simpler_pass": {
     "message": "Nothing close enough with that simpler on-device reading. Try another detail that stuck with you."
+  },
+  "popup_reply_miss_missing_topic": {
+    "message": "I don't know what to look for yet. What's this about? Tell me a topic or a name, and I'll look for it."
   },
   "popup_reply_miss_rejected_noise": {
     "message": "That didn't look like a memory clue. Try describing what you remember — what it was about, or when you saw it."

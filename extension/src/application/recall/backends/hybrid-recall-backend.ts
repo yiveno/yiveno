@@ -817,7 +817,7 @@ export class HybridRecallBackend implements RecallBackend {
     const understandStartedAt = Date.now()
     const understood = await understandRecallClue(normalizedClue, {
       ...(complete ? { complete } : {}),
-      ...(isOmniboxEntry ? { forceMode: 'lexical' as const } : {}),
+      ...(isOmniboxEntry ? { forceMode: 'lexical' as const, skipRulesIntent: true } : {}),
       trace
     })
     const understandMs = Date.now() - understandStartedAt
@@ -839,6 +839,7 @@ export class HybridRecallBackend implements RecallBackend {
         emptyKind: 'rejected_noise',
         pipelineTiming,
         understandSource: understood.source,
+        clueTruncated: understood.clueTruncated,
         visibleProgressStages: [...visibleProgressStages]
       }
     }
@@ -870,6 +871,7 @@ export class HybridRecallBackend implements RecallBackend {
         assistantReply: understood.parsed.assistantReply.trim(),
         pipelineTiming,
         understandSource: understood.source,
+        clueTruncated: understood.clueTruncated,
         visibleProgressStages: [...visibleProgressStages]
       }
     }
@@ -930,6 +932,7 @@ export class HybridRecallBackend implements RecallBackend {
         relatedGuess: null,
         pipelineTiming,
         understandSource: understood.source,
+        clueTruncated: understood.clueTruncated,
         visibleProgressStages: [...visibleProgressStages]
       }
     }
@@ -1094,7 +1097,8 @@ export class HybridRecallBackend implements RecallBackend {
       return {
         ...withMeta,
         pipelineTiming,
-        understandSource: understood.source
+        understandSource: understood.source,
+        clueTruncated: understood.clueTruncated
       }
     }
 
@@ -1157,6 +1161,7 @@ export class HybridRecallBackend implements RecallBackend {
       ...withFollowUp,
       pipelineTiming,
       understandSource: understood.source,
+      clueTruncated: understood.clueTruncated,
       visibleProgressStages: [...visibleProgressStages]
     }
   }

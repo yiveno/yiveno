@@ -198,6 +198,9 @@ export function useRecallOutcomeSession(
           : t('popup_followup_miss_constrained_empty')
       }
     }
+    if (input.emptyKind === 'missing_topic') {
+      return { text: t('popup_reply_miss_missing_topic') }
+    }
     if (input.library === 'empty') {
       const copy = getRecallShellNoMatchCopy(
         { library: 'empty', clue: input.clue, bookmarkFuel: bookmarkFuel.value },

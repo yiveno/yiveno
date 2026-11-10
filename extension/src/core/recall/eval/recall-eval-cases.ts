@@ -206,11 +206,12 @@ export const RECALL_EVAL_CASES: RecallEvalCase[] = [
   },
   {
     id: 'r0-zero-anchor-bored-pick',
-    clue: 'i feel bored pick something fun for me',
+    // 线索去掉 bored 内容词：情绪词不再单列拦截；本 case 只锁「纯发令零锚 → no_match」
+    clue: 'pick something fun for me',
     clueClass: 'negative',
     gate: 'must',
     expectation: { kind: 'no_match' },
-    note: 'R0：无聊助手发令 → 诚实空，禁扫库编造（即使 corpus 有 boredom 标题）'
+    note: 'R0：纯助手发令零锚 → 诚实空；bored 作内容词时按正常召回（见 r1-being-bored-title）'
   },
   {
     id: 'r1-being-bored-title',

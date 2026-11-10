@@ -73,14 +73,41 @@ export function groundBehaviorHints(
   return kept.size > 0 ? [...kept] : undefined
 }
 
-/** 电影/书名等固定短语里的 note（如 million pound note）不是检索词，避免误命中 NotebookLM。 */
+/** 货币单位（闭类）+ bank（bank note 固定词）。 */
+const CURRENCY_NOTE_PRECEDING_WORDS = [
+  'pound',
+  'pounds',
+  'dollar',
+  'dollars',
+  'euro',
+  'euros',
+  'yen',
+  'yuan',
+  'franc',
+  'francs',
+  'rupee',
+  'rupees',
+  'won',
+  'peso',
+  'pesos',
+  'bank' // bank note（纸币）固定词
+] as const
+
+/** 货币名词里的 note（如 five pound note / dollar note）不是检索词，避免误命中 NotebookLM。 */
 export function dropMisleadingNoteContentTerm(normalizedClue: string, terms: string[]): string[] {
   if (!terms.includes('note')) {
     return terms
   }
-  const titlePhrases = ['million pound note', 'pound note', 'bank note']
-  if (titlePhrases.some(phrase => normalizedClue.includes(phrase))) {
-    return terms.filter(term => term !== 'note')
+  const tokens = normalizedClue.split(/[^a-z0-9]+/)
+  const noteIndex = tokens.indexOf('note')
+  if (noteIndex > 0) {
+    const prev = tokens[noteIndex - 1]
+    if (
+      typeof prev === 'string' &&
+      ((CURRENCY_NOTE_PRECEDING_WORDS as readonly string[]).includes(prev) || /^\d+$/.test(prev))
+    ) {
+      return terms.filter(term => term !== 'note')
+    }
   }
   return terms
 }

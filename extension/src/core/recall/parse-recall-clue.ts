@@ -406,6 +406,13 @@ export function reinforceBookmarkObjectType(
   return objectTypes
 }
 
+/**
+ * 近期副词 × 保存动词（组合生成，不再逐条枚举副词+动词；须相邻，避免 just 作填充词时误触发）。
+ * 两个表各自是小闭类，组合数 = 5 × 6，新副词/动词只加一个词，不加 N 条组合。
+ */
+const RECENTLY_SAVED_PATTERN =
+  /\b(recently|just|newly|freshly|lately)\s+(saved|stored|collected|bookmarked|archived|kept)\b/
+
 /** 时间词先占 recently 时，仍识别 collected/just saved 等为 recently_saved。 */
 export function reinforceRecentlySavedBehavior(
   normalizedClue: string,
@@ -415,9 +422,7 @@ export function reinforceRecentlySavedBehavior(
     return behaviorHints
   }
   if (
-    /\b(recently collected|just collected|newly collected|just saved|just stored|just bookmarked|newly saved)\b/.test(
-      normalizedClue
-    ) ||
+    RECENTLY_SAVED_PATTERN.test(normalizedClue) ||
     (/\bcollected\b/.test(normalizedClue) && /\bbookmarks?\b/.test(normalizedClue))
   ) {
     return [...behaviorHints, 'recently_saved']

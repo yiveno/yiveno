@@ -30,6 +30,9 @@ export const GENERIC_NON_TOPIC_TERMS = new Set([
   'thing',
   'things',
   'stuff',
+  // 口语泛指名词（thing 的同类，泛指名词闭类成员；若此类口语词持续新增，
+  // 说明闭类已不够用，应改走模型 hasTopic 位，见审计 R6）
+  'thingy',
   'item',
   'items',
   'anything',
@@ -115,14 +118,33 @@ export const GENERIC_NON_TOPIC_TERMS = new Set([
 ])
 
 /**
+ * 中文指示词 + 泛指名词构造（R6）：「那/这 × 玩意儿/东西/啥/玩意/事儿」。
+ * 构造而非枚举：2 个指示词 × 5 个泛指名词 = 10 种组合，由小部件生成；
+ * 新泛指名词只加一侧，不随例子线性增长。整词锚定（^…$）：带多余助词的
+ * 词面 fail-open 当主题（安全方向，宁可多检索一次，不错拦一次召回）。
+ */
+const CHINESE_GENERIC_DEMONSTRATIVE_PATTERN = /^(那|这)(玩意儿|东西|啥|玩意|事儿)$/
+
+/**
+ * 某内容词是否泛指（不构成主题锚）。
+ * - 拉丁词面：GENERIC_NON_TOPIC_TERMS 精确命中（原有逻辑）。
+ * - 中文词面：上表精确命中，或指示词 + 泛指名词构造。
+ */
+export function isGenericTopicTerm(term: string): boolean {
+  const normalized = normalizeRecallText(term)
+  if (GENERIC_NON_TOPIC_TERMS.has(normalized)) {
+    return true
+  }
+  return CHINESE_GENERIC_DEMONSTRATIVE_PATTERN.test(normalized)
+}
+
+/**
  * 派生 Recall 主题（根节点）。
  * 有主题 = 有效内容词中至少一个非泛词（source=content），或附注指向（source=goal）。
  * 无主题（仅来源/时间/行为/感受/泛词）→ null（候选集无法缩小，返回什么都是错的）。
  */
 export function deriveRecallTopic(parsed: ParsedRecallClue): RecallTopic | null {
-  const terms = effectiveContentTermsForRecall(parsed).filter(
-    term => !GENERIC_NON_TOPIC_TERMS.has(normalizeRecallText(term))
-  )
+  const terms = effectiveContentTermsForRecall(parsed).filter(term => !isGenericTopicTerm(term))
   if (terms.length > 0) {
     return { terms, source: 'content', strength: 'strong' }
   }

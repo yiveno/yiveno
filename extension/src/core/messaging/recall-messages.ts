@@ -9,8 +9,11 @@ import type { BackgroundMessageScope } from '@/core/messaging/constants'
 /**
  * 单条 recall clue 最大字符数（契约 ∪ composer 物理上限）。
  * UI 键入/粘贴/听写须在此拦住；与 Zod `clue.max` 同值。
+ * R9：须 **大于** 理解层 `MAX_RECALL_CLUE_LENGTH`（2000），否则超长粘贴在
+ * composer/契约层就被夹到 ≤2000，理解层截断标志永远不亮、用户看不到轻提示。
+ * 理解层仍只按前 2000 检索；本常量只是「允许粘贴进来」的硬顶。
  */
-export const RECALL_CLUE_MAX_CHARS = 500
+export const RECALL_CLUE_MAX_CHARS = 10_000
 
 /** Side Panel 多轮会话上下文（Omnibox 不传）。 */
 export const recallDialogContextSchema = z.object({

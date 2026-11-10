@@ -26,6 +26,7 @@ export function createAssistantTurn(input: {
   recallFramingFacts?: RecallFramingFacts
   understandingEcho?: RecallUnderstandingEchoChip[]
   deeperReadingTip?: string
+  clueTruncatedTip?: string
   allowDismiss?: boolean
 }): ConversationTurn {
   return {
@@ -57,6 +58,7 @@ export function createAssistantTurn(input: {
       ? {}
       : { understandingEcho: input.understandingEcho }),
     ...(input.deeperReadingTip === undefined ? {} : { deeperReadingTip: input.deeperReadingTip }),
+    ...(input.clueTruncatedTip === undefined ? {} : { clueTruncatedTip: input.clueTruncatedTip }),
     allowDismiss: input.allowDismiss ?? false
   }
 }

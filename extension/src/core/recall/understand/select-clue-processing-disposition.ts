@@ -56,6 +56,9 @@ const KEY_POS = (() => {
   return map
 })()
 
+/** CJK 字母（汉 / 平假名 / 片假名）：这些文字天生不用空格分词。 */
+const CJK_LETTERS = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}]/u
+
 function lettersOnly(raw: string): string {
   return raw.replace(/[^\p{L}]/gu, '')
 }
@@ -197,8 +200,11 @@ function isKeyboardMash(raw: string): boolean {
   }
 
   if (!hasWhitespace) {
-    // 超长无空白字母串：硬噪音
-    if (letters.length >= 28) {
+    // 超长无空白字母串：硬噪音——但只对拉丁串生效。
+    // 中文/日文天生不用空格，任何 ≥28 字的中文线索都会撞上这条（R10 压测 p07，
+    // 探针 8 已证实）；含 CJK 字母即豁免本分支，宁可漏拦、不误伤（Gate A 保守原则）。
+    // 韩文用空格分词，不豁免；混合串含任一 CJK 即豁免（fail-open 安全方向）。
+    if (letters.length >= 28 && !CJK_LETTERS.test(letters)) {
       return true
     }
     // 中长无空白 + 高键盘邻接 或 重复单元

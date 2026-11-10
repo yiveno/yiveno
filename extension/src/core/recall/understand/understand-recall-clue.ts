@@ -8,6 +8,7 @@
 import { buildFilterClueFromParsed } from '@/core/recall/orchestrate-keyword-recall'
 import { parseRecallClue } from '@/core/recall/parse-recall-clue'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
+import { classifyRulesClueIntent } from '@/core/recall/understand/classify-rules-clue-intent'
 import { type ClueFlowTrace, noopClueFlowTrace } from '@/core/recall/understand/clue-flow-trace'
 import {
   parseRecallClueWithLlm,
@@ -22,6 +23,14 @@ import {
   selectClueUnderstandingMode,
   type ClueUnderstandingMode
 } from '@/core/recall/understand/select-clue-understanding-mode'
+
+/**
+ * 线索输入上限（R9 · H10）：字符数。
+ * 正常线索 < 200 字符；2000 是 10 倍余量，够一段长描述，又足以 bound
+ * LLM prompt（约 500–1000 tokens）、缓存键、contentTerms。
+ * 超长只取前 2000 字符（head-only）；用户提示见 `clueTruncated`。
+ */
+export const MAX_RECALL_CLUE_LENGTH = 2000
 
 /**
  * 实际用来产出结构的引擎。
@@ -52,6 +61,12 @@ export interface UnderstandRecallClueResult {
    */
   source: ClueUnderstandingSource
   /**
+   * 本轮线索是否因超长被截断（R9）。
+   * true 时 `parsed.raw` 只是原文前 `MAX_RECALL_CLUE_LENGTH` 字符；
+   * 后端透传到 `RecallResult.clueTruncated`，UI 挂轻提示。
+   */
+  clueTruncated: boolean
+  /**
    * 结构化检索约束。
    * Hybrid 下一环：`currentParsed: understood.parsed` → `mergeRecallDialogTurn`。
    * 网关拒绝时为占位空结构（confidence low、无 terms）。
@@ -68,10 +83,35 @@ export interface UnderstandRecallClueOptions {
   complete?: LlmChatCompleter
   /** 强制模式（单测 / Omnibox lexical / 调试）。 */
   forceMode?: ClueUnderstandingMode
+  /**
+   * Omnibox 专用：跳过规则路径非召回意图判断（缺省 false）。
+   * `nlu:try:rules` 与单测不传。
+   */
+  skipRulesIntent?: boolean
   /** 流水线追踪（由 application 注入 logger）。 */
   trace?: ClueFlowTrace
   /** 单测：跳过网关，强制 proceed。 */
   skipNoiseGateway?: boolean
+}
+
+/** 规则解析后补非召回 intent + 降级回复；skip 时原样返回。 */
+function applyRulesIntent(
+  raw: string,
+  parsed: ParsedRecallClue,
+  skip: boolean
+): { parsed: ParsedRecallClue; rulesIntent: string | null; rulesIntentSignal: string | null } {
+  if (skip) {
+    return { parsed, rulesIntent: null, rulesIntentSignal: null }
+  }
+  const judged = classifyRulesClueIntent(raw, parsed)
+  if (!judged) {
+    return { parsed, rulesIntent: null, rulesIntentSignal: null }
+  }
+  return {
+    parsed: { ...parsed, intent: judged.intent, assistantReply: judged.assistantReply },
+    rulesIntent: judged.intent,
+    rulesIntentSignal: judged.signal
+  }
 }
 
 function summarizeParsed(parsed: ParsedRecallClue): Record<string, unknown> {
@@ -99,7 +139,9 @@ export async function understandRecallClue(
   clue: string,
   options: UnderstandRecallClueOptions = {}
 ): Promise<UnderstandRecallClueResult> {
-  const raw = clue.trim()
+  const trimmed = clue.trim()
+  const clueTruncated = trimmed.length > MAX_RECALL_CLUE_LENGTH
+  const raw = clueTruncated ? trimmed.slice(0, MAX_RECALL_CLUE_LENGTH) : trimmed
   const nowMs = options.nowMs ?? Date.now()
   const trace = options.trace ?? noopClueFlowTrace
   const hasCompleter = Boolean(options.complete)
@@ -113,13 +155,15 @@ export async function understandRecallClue(
       disposition: 'reject_noise',
       rejectReason: decision.rejectReason,
       clue: raw,
-      clueLength: raw.length
+      clueLength: raw.length,
+      clueTruncated
     })
     return {
       disposition: 'reject_noise',
       rejectReason: decision.rejectReason,
       mode: 'lexical',
       source: 'rejected_noise',
+      clueTruncated,
       parsed: emptyRejectedParsed(raw),
       filterClue: ''
     }
@@ -131,21 +175,32 @@ export async function understandRecallClue(
   trace('info', '理解层：开始', {
     clue: raw,
     clueLength: raw.length,
+    clueTruncated,
+    ...(clueTruncated ? { originalClueLength: trimmed.length } : {}),
     disposition: 'proceed',
     mode,
     forceMode: options.forceMode ?? null,
     hasLlmCompleter: hasCompleter
   })
 
+  const skipRulesIntent = options.skipRulesIntent === true
+
   // 无 completer，或强制/判定为 lexical（如纯 URL）→ 规则
   if (!options.complete || mode === 'lexical') {
     const reason = !options.complete ? 'no_llm_completer' : 'mode_lexical'
-    const parsed = parseRecallClue(raw, { nowMs })
+    const rawParsed = parseRecallClue(raw, { nowMs })
+    const { parsed, rulesIntent, rulesIntentSignal } = applyRulesIntent(
+      raw,
+      rawParsed,
+      skipRulesIntent
+    )
     const filterClue = buildFilterClueFromParsed(parsed)
     trace('info', '理解层：走规则', {
       reason,
       source: 'rules',
       filterClue,
+      rulesIntent,
+      rulesIntentSignal,
       ...summarizeParsed(parsed)
     })
     return {
@@ -153,6 +208,7 @@ export async function understandRecallClue(
       rejectReason: null,
       mode,
       source: 'rules',
+      clueTruncated,
       parsed,
       filterClue
     }
@@ -176,17 +232,25 @@ export async function understandRecallClue(
       rejectReason: null,
       mode,
       source: 'llm',
+      clueTruncated,
       parsed,
       filterClue
     }
   } catch (error) {
-    const parsed = parseRecallClue(raw, { nowMs })
+    const rawParsed = parseRecallClue(raw, { nowMs })
+    const { parsed, rulesIntent, rulesIntentSignal } = applyRulesIntent(
+      raw,
+      rawParsed,
+      skipRulesIntent
+    )
     const filterClue = buildFilterClueFromParsed(parsed)
     trace('warn', '理解层：LLM 失败，降级规则', {
       source: 'rules_fallback',
       error: error instanceof Error ? error.message : String(error),
       errorName: error instanceof Error ? error.name : typeof error,
       filterClue,
+      rulesIntent,
+      rulesIntentSignal,
       ...summarizeParsed(parsed)
     })
     return {
@@ -194,6 +258,7 @@ export async function understandRecallClue(
       rejectReason: null,
       mode,
       source: 'rules_fallback',
+      clueTruncated,
       parsed,
       filterClue
     }
