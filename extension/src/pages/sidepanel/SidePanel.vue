@@ -10,7 +10,10 @@ import { watchWebsiteAuthUiStorage } from '@/infrastructure/auth/watch-website-a
 import { readWebsiteAuthUiState } from '@/infrastructure/auth/website-auth-ui-storage'
 import { RECALL_RESULT_PAGE_SIZE } from '@/core/recall/build-recall-result'
 import { computeComposerPlaceholder } from '@/core/recall/compute-composer-placeholder'
-import { extractComposerNarrowExamples } from '@/core/recall/extract-composer-narrow-examples'
+import {
+  extractComposerNarrowExamples,
+  extractMissNarrowExamples
+} from '@/core/recall/extract-composer-narrow-examples'
 import { resolveThreadFindTitle } from '@/core/recall/resolve-thread-anchor-label'
 import { formatCluePlainForUserDisplay } from '@/core/recall/clue-plain-url'
 import {
@@ -217,6 +220,67 @@ const pageContextOnlySite = ref(false)
 const recallSourceScope = ref<RecallSourceScope>('all')
 
 const conversationTurns = ref<ConversationTurn[]>([])
+
+/** 出口条多开时当前选中的认领 id（默认最后一次 open）。 */
+const selectedExitFoundId = ref<string | null>(null)
+
+/**
+ * 出口条候选：opens 按 id 去重保序，标题从会话卡按 id 查（title → subtitle）。
+ */
+const outcomeExitCandidates = computed(() => {
+  const titleById = new Map<string, string>()
+  for (const turn of conversationTurns.value) {
+    if (turn.role !== 'assistant') {
+      continue
+    }
+    const cards = [turn.primaryCard, turn.relatedGuessCard, ...(turn.candidateCards ?? [])]
+    for (const card of cards) {
+      if (!card || titleById.has(card.id)) {
+        continue
+      }
+      const title = card.title.trim() || card.subtitle.trim()
+      if (title) {
+        titleById.set(card.id, title)
+      }
+    }
+  }
+  const seen = new Set<string>()
+  const out: Array<{ id: string; title: string | null }> = []
+  for (const open of outcomeSession.value.opens) {
+    if (seen.has(open.id)) {
+      continue
+    }
+    seen.add(open.id)
+    out.push({ id: open.id, title: titleById.get(open.id) ?? null })
+  }
+  return out
+})
+
+/** 出口条可展示标题的候选（无 title/subtitle 的不进选择列表）。 */
+const outcomeExitDisplayCandidates = computed(() =>
+  outcomeExitCandidates.value.filter(
+    (candidate): candidate is { id: string; title: string } =>
+      typeof candidate.title === 'string' && candidate.title.length > 0
+  )
+)
+
+const outcomeExitPromptText = computed(() => {
+  const all = outcomeExitCandidates.value
+  const displayable = outcomeExitDisplayCandidates.value
+  if (all.length === 1 && displayable.length === 1 && displayable[0]) {
+    return t('popup_outcome_exit_prompt_with_title', displayable[0].title)
+  }
+  if (all.length >= 2 && displayable.length > 0) {
+    return t('popup_outcome_exit_pick_prompt')
+  }
+  return t('popup_outcome_exit_prompt')
+})
+
+const showOutcomeExitPickList = computed(() => {
+  const all = outcomeExitCandidates.value
+  const displayable = outcomeExitDisplayCandidates.value
+  return all.length >= 2 && displayable.length > 0
+})
 let turnSeq = 0
 
 const {
@@ -402,6 +466,8 @@ function startNewFindSession(): void {
   }
   finalizeOpenDwell()
   if (shouldOfferRecallOutcomeExitPrompt(outcomeSession.value)) {
+    const opens = outcomeSession.value.opens
+    selectedExitFoundId.value = opens.length > 0 ? (opens[opens.length - 1]?.id ?? null) : null
     showOutcomeExitStrip.value = true
     return
   }
@@ -411,6 +477,7 @@ function startNewFindSession(): void {
 /** 结算 Outcome 并重置会话 UI。 */
 async function completeNewFindSession(reason: string): Promise<void> {
   showOutcomeExitStrip.value = false
+  selectedExitFoundId.value = null
   clearThreadPivotStrip()
   recordVisibleProgressWaitAbandoned('new_find')
   await flushOutcomeSession(reason, true)
@@ -824,7 +891,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
         response.result,
         total,
         visibleCount,
-        formatRankedReplyText(total, visibleCount),
+        formatRankedReplyText(total, visibleCount, 'top_pick'),
         { omitUnderstood: Boolean(understandingEcho), omitCounts: rankedCards.length > 0 }
       )
       conversationTurns.value.push(
@@ -867,7 +934,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
         response.result,
         total,
         visibleCount,
-        formatRankedReplyText(total, visibleCount),
+        formatRankedReplyText(total, visibleCount, 'need_a_clue'),
         { omitUnderstood: Boolean(understandingEcho), omitCounts: candidateCards.length > 0 }
       )
       conversationTurns.value.push(
@@ -929,6 +996,32 @@ async function runRecall(trimmedClue: string): Promise<void> {
                   recallFramingFacts: response.result.recallFraming.facts
                 }
               : missFallback
+      const relatedGuessCard = relatedGuess
+        ? toMatchCard(relatedGuess, highlightClue, { rank: 0 })
+        : null
+      const missEmptyKind = response.result.emptyKind
+      const missNarrowBlocked =
+        missEmptyKind === 'missing_topic' ||
+        missEmptyKind === 'rejected_noise' ||
+        missEmptyKind === 'chitchat'
+      const missNarrowWords =
+        relatedGuessCard && !missNarrowBlocked
+          ? extractMissNarrowExamples({
+              guessCard: relatedGuessCard,
+              clueText: highlightClue,
+              ...(response.result.parsed?.topic?.terms
+                ? { topicTerms: response.result.parsed.topic.terms }
+                : {})
+            })
+          : []
+      const missNarrowSuggestions =
+        missNarrowWords.length > 0
+          ? missNarrowWords.map((word, index) => ({
+              id: `miss-narrow-${index}`,
+              label: t('popup_miss_narrow_chip', word),
+              value: `${highlightClue} ${word}`
+            }))
+          : undefined
       conversationTurns.value.push(
         createAssistantTurn({
           id: nextTurnId(),
@@ -942,12 +1035,13 @@ async function runRecall(trimmedClue: string): Promise<void> {
           ...('recallFramingFacts' in missReply && missReply.recallFramingFacts !== undefined
             ? { recallFramingFacts: missReply.recallFramingFacts }
             : {}),
-          ...(relatedGuess
+          ...(relatedGuessCard
             ? {
-                relatedGuessCard: toMatchCard(relatedGuess, highlightClue, { rank: 0 }),
+                relatedGuessCard,
                 relatedGuessLabel: t('popup_related_guess_label')
               }
-            : {})
+            : {}),
+          ...(missNarrowSuggestions ? { suggestions: missNarrowSuggestions } : {})
         })
       )
     }
@@ -1002,9 +1096,12 @@ async function handleSendTurn(
   options?: { skipPivotCheck?: boolean }
 ): Promise<void> {
   const trimmed = (overrideClue ?? clue.value).trim()
-  // 等待中允许改发 clue（取消上一轮）；出口条仍挡发送
-  if (!trimmed || showOutcomeExitStrip.value) {
+  if (!trimmed) {
     return
+  }
+  // 出口条开着时先按 skip 结算并重置会话，再继续本轮发送（线索不丢）
+  if (showOutcomeExitStrip.value) {
+    await completeNewFindSession('exit_skip')
   }
 
   // 确认条已开：再发送只更新暂存线索，仍等用户点选
@@ -1481,13 +1578,54 @@ onUnmounted(() => {
           v-if="showOutcomeExitStrip"
           class="recall-outcome-exit"
           role="group"
-          :aria-label="t('popup_outcome_exit_prompt')"
+          :aria-label="outcomeExitPromptText"
         >
-          <p class="recall-outcome-exit__prompt">
-            {{ t('popup_outcome_exit_prompt') }}
-          </p>
+          <div class="recall-outcome-exit__header">
+            <p class="recall-outcome-exit__prompt">
+              {{ outcomeExitPromptText }}
+            </p>
+            <AppIconButton
+              type="button"
+              :title="t('popup_outcome_exit_close')"
+              :aria-label="t('popup_outcome_exit_close')"
+              @click="handleOutcomeExitSkip"
+            >
+              <AppIcon name="close" size="16px" />
+            </AppIconButton>
+          </div>
+          <div
+            v-if="showOutcomeExitPickList"
+            class="recall-outcome-exit__picks"
+            role="listbox"
+            :aria-label="t('popup_outcome_exit_pick_prompt')"
+          >
+            <button
+              v-for="candidate in outcomeExitDisplayCandidates"
+              :key="candidate.id"
+              type="button"
+              class="recall-outcome-exit__pick"
+              role="option"
+              :aria-pressed="selectedExitFoundId === candidate.id"
+              :aria-selected="selectedExitFoundId === candidate.id"
+              @click="selectedExitFoundId = candidate.id"
+            >
+              {{ candidate.title }}
+            </button>
+          </div>
           <div class="recall-outcome-exit__actions">
-            <AppButton type="button" variant="filled" @click="handleOutcomeExitFound">
+            <AppButton
+              type="button"
+              variant="filled"
+              @click="
+                handleOutcomeExitFound(
+                  showOutcomeExitPickList
+                    ? (selectedExitFoundId ?? undefined)
+                    : outcomeExitDisplayCandidates.length === 1
+                      ? outcomeExitDisplayCandidates[0]?.id
+                      : undefined
+                )
+              "
+            >
               {{ t('popup_outcome_exit_found') }}
             </AppButton>
             <AppButton type="button" variant="outlined" @click="handleOutcomeExitNone">
@@ -1562,7 +1700,6 @@ onUnmounted(() => {
               :voiceStartLabel="t('sidepanel_voice_start')"
               :voiceStopLabel="t('sidepanel_voice_stop')"
               :voiceUnavailableLabel="t('sidepanel_voice_unavailable')"
-              :disabled="showOutcomeExitStrip"
               :prominent="isComposerProminent"
               @send="handleSendTurn"
             >
@@ -1573,7 +1710,6 @@ onUnmounted(() => {
                   :only-this-site="pageContextOnlySite"
                   :source-scope="recallSourceScope"
                   :expanded="pageContextExpanded"
-                  :disabled="showOutcomeExitStrip"
                   :toggle-label="t('sidepanel_recall_settings_toggle')"
                   :dismiss-label="t('sidepanel_recall_settings_dismiss')"
                   :combine-label="t('sidepanel_page_context_combine')"
@@ -1705,6 +1841,46 @@ onUnmounted(() => {
   background: color-mix(in srgb, var(--surface-chrome) 88%, transparent);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
+}
+
+.recall-outcome-exit__header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-xs);
+  min-width: 0;
+}
+
+.recall-outcome-exit__header .recall-outcome-exit__prompt {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.recall-outcome-exit__picks {
+  display: grid;
+  gap: var(--space-2xs);
+  min-width: 0;
+}
+
+.recall-outcome-exit__pick {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--ink) 3%, transparent);
+  color: var(--on-surface);
+  font: inherit;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.recall-outcome-exit__pick[aria-pressed='true'] {
+  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
+  background: color-mix(in srgb, var(--primary) 10%, transparent);
 }
 
 .recall-thread-pivot {

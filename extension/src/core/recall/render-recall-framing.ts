@@ -161,17 +161,22 @@ export function renderRecallFramingRulesBody(
   const includeUnderstood = options.omitUnderstood !== true
 
   if (facts.kind === 'missing_topic') {
-    return translate('framing_guess_missing_topic')
+    // 与 miss 层 R11 长版同一句，避免 Framing / miss 分流两套文案
+    return translate('popup_reply_miss_missing_topic')
   }
 
   if (facts.kind === 'guess') {
+    if (facts.emptyKind === 'constrained_none') {
+      // with-guess 版 miss 文案已含「只是猜测，不是答案」，勿再拼 disclaimer
+      const parts = [
+        ...(includeUnderstood ? [renderUnderstood(facts.understood, translate)] : []),
+        translate('popup_followup_miss_constrained_empty_with_guess')
+      ]
+      return joinSentences(parts)
+    }
     const parts = [
       ...(includeUnderstood ? [renderUnderstood(facts.understood, translate)] : []),
-      translate(
-        facts.emptyKind === 'constrained_none'
-          ? 'framing_guess_constrained_none'
-          : 'framing_guess_unconstrained'
-      ),
+      translate('framing_guess_unconstrained'),
       translate('framing_guess_disclaimer')
     ]
     return joinSentences(parts)

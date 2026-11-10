@@ -768,8 +768,29 @@
   "popup_dismiss_candidates": {
     "message": "None of these"
   },
+  "popup_dismiss_note_all": {
+    "message": "Ruled out all $1 candidates from this round.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "50"
+      }
+    }
+  },
   "popup_outcome_exit_prompt": {
     "message": "Did you find what you were looking for?"
+  },
+  "popup_outcome_exit_prompt_with_title": {
+    "message": "Did you find \"$1\"?",
+    "placeholders": {
+      "title": {
+        "content": "$1",
+        "example": "Modern JavaScript Tutorial"
+      }
+    }
+  },
+  "popup_outcome_exit_pick_prompt": {
+    "message": "Which one did you find?"
   },
   "popup_outcome_exit_found": {
     "message": "Found it"
@@ -779,6 +800,9 @@
   },
   "popup_outcome_exit_skip": {
     "message": "Skip"
+  },
+  "popup_outcome_exit_close": {
+    "message": "Dismiss"
   },
   "popup_reply_confident": {
     "message": "Here’s what fits best in your library:"
@@ -809,6 +833,32 @@
       }
     }
   },
+  "popup_reply_ranked_weak_partial": {
+    "message": "$total$ weak matches · showing $from$–$to$:",
+    "placeholders": {
+      "total": {
+        "content": "$1",
+        "example": "12"
+      },
+      "from": {
+        "content": "$2",
+        "example": "1"
+      },
+      "to": {
+        "content": "$3",
+        "example": "5"
+      }
+    }
+  },
+  "popup_reply_ranked_weak_all": {
+    "message": "$total$ weak matches:",
+    "placeholders": {
+      "total": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
   "popup_show_more_matches": {
     "message": "Show more"
   },
@@ -827,6 +877,15 @@
       "count": {
         "content": "$1",
         "example": "6"
+      }
+    }
+  },
+  "popup_recall_visible_cap_note": {
+    "message": "Only the first $1 are shown.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "20"
       }
     }
   },
@@ -898,6 +957,15 @@
   },
   "popup_related_guess_label": {
     "message": "Guess (not the answer)"
+  },
+  "popup_miss_narrow_chip": {
+    "message": "Add \"$1\"",
+    "placeholders": {
+      "word": {
+        "content": "$1",
+        "example": "async"
+      }
+    }
   },
   "recall_card_saved": {
     "message": "Saved $time$",
@@ -2643,17 +2711,11 @@
       }
     }
   },
-  "framing_guess_constrained_none": {
-    "message": "Nothing in your library matched those constraints."
-  },
   "framing_guess_unconstrained": {
     "message": "Nothing in your library matched this clue."
   },
   "framing_guess_disclaimer": {
     "message": "The item below is only a guess — not the answer."
-  },
-  "framing_guess_missing_topic": {
-    "message": "Tell me what topic it is about, and I will look."
   },
   "framing_object_poem": {
     "message": "poem"

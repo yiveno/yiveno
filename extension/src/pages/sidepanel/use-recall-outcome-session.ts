@@ -40,7 +40,8 @@ export type UseRecallOutcomeSessionResult = {
   /** 关 Panel 结算只做一次。 */
   markOutcomeCloseHandled: () => boolean
   resetOutcomeCloseHandled: () => void
-  handleOutcomeExitFound: () => void
+  /** 出口条 Found it；可选 foundId 认领指定 open（须在 opens 内，否则回落最后一次）。 */
+  handleOutcomeExitFound: (foundId?: string) => void
   handleOutcomeExitNone: () => void
   handleOutcomeExitSkip: () => void
   finalizeOpenDwell: () => void
@@ -88,18 +89,21 @@ export function useRecallOutcomeSession(
     outcomeCloseHandled = false
   }
 
-  /** 出口条：Found it（默认最后一次 open）。 */
-  function handleOutcomeExitFound(): void {
+  /** 出口条：Found it（传 id 认领该条；不传或非法 id 回落最后一次 open）。 */
+  function handleOutcomeExitFound(foundId?: string): void {
     const opens = outcomeSession.value.opens
     const lastId = opens.length > 0 ? opens[opens.length - 1]?.id : null
-    if (!lastId) {
+    const openIds = new Set(opens.map(open => open.id))
+    const claimId =
+      foundId !== undefined && foundId.length > 0 && openIds.has(foundId) ? foundId : lastId
+    if (!claimId) {
       void onCompleteNewFindSession('exit_skip')
       return
     }
     outcomeSession.value = {
       ...outcomeSession.value,
       exitChoice: 'found',
-      exitFoundId: lastId
+      exitFoundId: claimId
     }
     void onCompleteNewFindSession('exit_found')
   }

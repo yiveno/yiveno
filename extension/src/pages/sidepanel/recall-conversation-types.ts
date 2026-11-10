@@ -65,6 +65,10 @@ export type AssistantTurn = {
    * 仅 `clueTruncated`；与 `deeperReadingTip` 可叠加（两者独立）。
    */
   clueTruncatedTip?: string
+  /**
+   * 系统样式轻提示行（已翻译）：记录一次 dismiss 动作，不伪造用户发言。
+   */
+  systemNote?: string
   allowDismiss: boolean
 }
 

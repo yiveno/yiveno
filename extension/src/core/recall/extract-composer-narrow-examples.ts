@@ -377,3 +377,80 @@ export function extractComposerNarrowExamples(input: ExtractComposerNarrowExampl
 
   return picked.slice(0, NARROW_EXAMPLE_MAX)
 }
+
+/** miss 细化芯片最多条数（单条 guess，不作池切割排序）。 */
+export const MISS_NARROW_EXAMPLE_MAX = 2
+
+/**
+ * miss 轮猜卡字段子集（与结果卡 title/excerpt/note/subtitle 同构；core 不依赖 pages）。
+ */
+export type MissNarrowGuessSource = {
+  title: string
+  subtitle: string
+  excerpt?: string
+  note?: string
+}
+
+export type ExtractMissNarrowExamplesInput = {
+  guessCard: MissNarrowGuessSource
+  /** 用户本轮线索（小写比对，避免重复举）。 */
+  clueText: string
+  /** Topic 独立词面（Gap 2）；合格时追加到末尾。 */
+  topicTerms?: readonly string[]
+}
+
+/**
+ * 从单条 relatedGuess 抽 0～2 个拉丁细化词（grounded；无池 df 门）。
+ * 词源优先级：title → excerpt → note → subtitle；抽不出则 []（含中文-only）。
+ */
+export function extractMissNarrowExamples(input: ExtractMissNarrowExamplesInput): string[] {
+  const blocked = clueTokenSet(input.clueText)
+  const picked: string[] = []
+  const pickedLower = new Set<string>()
+
+  const pushToken = (token: string): void => {
+    if (picked.length >= MISS_NARROW_EXAMPLE_MAX) {
+      return
+    }
+    const key = token.toLowerCase()
+    if (blocked.has(key) || pickedLower.has(key) || isBlockedExampleToken(key)) {
+      return
+    }
+    pickedLower.add(key)
+    picked.push(token)
+  }
+
+  const absorbField = (text: string): void => {
+    if (picked.length >= MISS_NARROW_EXAMPLE_MAX) {
+      return
+    }
+    const tokens = new Set<string>()
+    collectLatinTokens(text, tokens)
+    for (const token of tokens) {
+      pushToken(token)
+      if (picked.length >= MISS_NARROW_EXAMPLE_MAX) {
+        return
+      }
+    }
+  }
+
+  const card = input.guessCard
+  absorbField(card.title)
+  absorbField(card.excerpt ?? '')
+  absorbField(card.note ?? '')
+  absorbField(card.subtitle)
+
+  const topicTerms = input.topicTerms ?? []
+  for (const term of topicTerms) {
+    if (picked.length >= MISS_NARROW_EXAMPLE_MAX) {
+      break
+    }
+    const value = term.trim()
+    if (!value) {
+      continue
+    }
+    pushToken(value)
+  }
+
+  return picked.slice(0, MISS_NARROW_EXAMPLE_MAX)
+}

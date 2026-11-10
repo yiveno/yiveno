@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   extractComposerNarrowExamples,
+  extractMissNarrowExamples,
   NARROW_EXAMPLE_TYPE_DOMINANCE_MAX,
   scoreNarrowExampleDocFreq,
   type NarrowExampleSource
@@ -319,5 +320,54 @@ describe('extractComposerNarrowExamples', () => {
     })
     // 空数组 topicTerms 等价于不传；unique 有 df=2，应被选入
     expect(examples).toContain('unique')
+  })
+})
+
+describe('extractMissNarrowExamples', () => {
+  it('从 guess 标题取词，排除 clue 已有词与禁词', () => {
+    const examples = extractMissNarrowExamples({
+      guessCard: {
+        title: 'Kubernetes async javascript guide',
+        subtitle: 'example.com',
+        excerpt: 'Promises and async patterns'
+      },
+      clueText: 'javascript guide'
+    })
+    expect(examples[0]).toBe('kubernetes')
+    expect(examples).toContain('async')
+    expect(examples).not.toContain('javascript')
+    expect(examples).not.toContain('guide')
+    expect(examples).not.toContain('com')
+    expect(examples.length).toBeLessThanOrEqual(2)
+  })
+
+  it('抽不出合格词时返回空数组', () => {
+    expect(
+      extractMissNarrowExamples({
+        guessCard: { title: '只有中文标题', subtitle: '', excerpt: '中文摘录' },
+        clueText: '随便找找'
+      })
+    ).toEqual([])
+    expect(
+      extractMissNarrowExamples({
+        guessCard: { title: 'guide docs', subtitle: 'www.com', excerpt: 'home about' },
+        clueText: 'guide docs home'
+      })
+    ).toEqual([])
+  })
+
+  it('最多 2 个且去重', () => {
+    const examples = extractMissNarrowExamples({
+      guessCard: {
+        title: 'Kubernetes kubernetes',
+        subtitle: 'cncf.io',
+        excerpt: 'Kubernetes helm charts',
+        note: 'Kubernetes notes'
+      },
+      clueText: 'cluster'
+    })
+    expect(examples.length).toBeLessThanOrEqual(2)
+    expect(new Set(examples).size).toBe(examples.length)
+    expect(examples[0]).toBe('kubernetes')
   })
 })

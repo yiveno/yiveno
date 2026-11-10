@@ -22,8 +22,7 @@ import type { createRecallTelemetryRecorder } from '@/infrastructure/analytics/r
 import type { ConversationTurn, AssistantTurn } from '@/pages/sidepanel/recall-conversation-types'
 import {
   formatRankedReplyText,
-  renderFramingWithShownCount,
-  visibleCandidateCards
+  renderFramingWithShownCount
 } from '@/pages/sidepanel/recall-result-card-helpers'
 
 export type UseRecallResultCardsOptions = {
@@ -157,9 +156,11 @@ export function useRecallResultCards(
       return
     }
 
+    // 全池否定：取 candidateCards 全量（非 visible 切片）。
+    // relatedGuessCard 仅 miss 轮出现；dismiss 只在 allowDismiss 的 top_pick/need_a_clue 轮，故不纳入。
     const ids = [
       ...(lastAssistant.primaryCard ? [lastAssistant.primaryCard.id] : []),
-      ...visibleCandidateCards(lastAssistant).map(c => c.id)
+      ...(lastAssistant.candidateCards ?? []).map(c => c.id)
     ]
 
     if (ids.length > 0) {
@@ -208,15 +209,10 @@ export function useRecallResultCards(
 
     conversationTurns.value.push({
       id: nextTurnId(),
-      role: 'user',
-      text: t('popup_dismiss_candidates')
-    })
-
-    conversationTurns.value.push({
-      id: nextTurnId(),
       role: 'assistant',
       tone: 'miss',
       text: t('popup_reply_after_dismiss'),
+      systemNote: t('popup_dismiss_note_all', String(ids.length)),
       contextStatus: threadFindTitleDisplay.value
         ? t('popup_session_status_continuing_threaded', threadFindTitleDisplay.value)
         : t('popup_session_status_continuing'),

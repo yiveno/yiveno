@@ -2,7 +2,10 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import AppButton from '@/infrastructure/ui/AppButton.vue'
 
-import { RECALL_RESULT_PAGE_SIZE } from '@/core/recall/build-recall-result'
+import {
+  RECALL_RESULT_MAX_VISIBLE_DOM,
+  RECALL_RESULT_PAGE_SIZE
+} from '@/core/recall/build-recall-result'
 import {
   recallObjectTypeLabelKey,
   recallTimeLabelMessageKey,
@@ -24,7 +27,10 @@ import {
   sliceVisibleConversationTurns
 } from '@/pages/sidepanel/recall-conversation-turn-window'
 import type { ConversationTurn, AssistantTurn } from '@/pages/sidepanel/recall-conversation-types'
-import type { RecallCardModel } from '@/pages/sidepanel/RecallResultCard.vue'
+import {
+  formatRankedReplyText,
+  visibleCandidateCards
+} from '@/pages/sidepanel/recall-result-card-helpers'
 import ClueFormattedText from '@/pages/sidepanel/composer/ClueFormattedText.vue'
 import RecallResultCard from '@/pages/sidepanel/RecallResultCard.vue'
 import { t } from '@/infrastructure/i18n/t'
@@ -167,13 +173,6 @@ function handleToggleExpand(cardId: string): void {
 
 function onShowMoreClick(turnId: string, mode: ShowMoreMode): void {
   emit('showMore', turnId, mode)
-}
-
-/** 当前轮次可见候选。 */
-function visibleCardsFor(turn: AssistantTurn): RecallCardModel[] {
-  const cards = turn.candidateCards ?? []
-  const limit = turn.visibleCount ?? cards.length
-  return cards.slice(0, Math.max(0, limit))
 }
 
 function remainingCount(turn: AssistantTurn): number {
@@ -351,6 +350,7 @@ function shownNeighborhoodCardCount(turn: AssistantTurn): number {
 /**
  * 卡前邻域计数（承接 Framing P6）。
  * 有卡时说明书不再拼计数，避免「先卡后 Framing」把 N 埋到卡后。
+ * need_a_clue（tone=uncertain）走弱版文案，与 formatRankedReplyText 同源。
  */
 function neighborhoodCountLabel(turn: AssistantTurn): string | null {
   const total = turn.rankedTotalCount
@@ -358,10 +358,23 @@ function neighborhoodCountLabel(turn: AssistantTurn): string | null {
     return null
   }
   const shown = Math.min(shownNeighborhoodCardCount(turn), total)
-  if (shown >= total) {
-    return t('popup_reply_ranked_all', [String(total)])
+  return formatRankedReplyText(total, shown, turn.tone === 'uncertain' ? 'need_a_clue' : 'top_pick')
+}
+
+/**
+ * DOM 软顶提示：visibleCount 已到 cap 且池内仍有未挂载条。
+ * $1 取 visibleCount（候选 DOM cap），不含 top_pick 头卡。
+ */
+function visibleCapNoteLabel(turn: AssistantTurn): string | null {
+  const visible = turn.visibleCount ?? 0
+  const rankedTotal = turn.rankedTotalCount ?? 0
+  if (visible < RECALL_RESULT_MAX_VISIBLE_DOM) {
+    return null
   }
-  return t('popup_reply_ranked_partial', [String(total), '1', String(shown)])
+  if (rankedTotal <= shownNeighborhoodCardCount(turn)) {
+    return null
+  }
+  return t('popup_recall_visible_cap_note', String(visible))
 }
 </script>
 
@@ -396,6 +409,9 @@ function neighborhoodCountLabel(turn: AssistantTurn): string | null {
       <template v-else>
         <div class="assistant-turn">
           <p v-if="turn.contextStatus" class="assistant-turn-status">{{ turn.contextStatus }}</p>
+          <p v-if="turn.systemNote" class="assistant-turn-system-note" role="status">
+            {{ turn.systemNote }}
+          </p>
           <p
             v-if="turn.understandingEcho && turn.understandingEcho.length > 0"
             class="assistant-turn-echo"
@@ -568,7 +584,7 @@ function neighborhoodCountLabel(turn: AssistantTurn): string | null {
                 {{ turn.candidateSectionLabel }}
               </p>
               <ol class="assistant-turn-candidates">
-                <li v-for="(item, index) in visibleCardsFor(turn)" :key="item.id">
+                <li v-for="(item, index) in visibleCandidateCards(turn)" :key="item.id">
                   <RecallResultCard
                     :card="item"
                     :result-dom-id="`conversation-candidate-${turn.id}-${index}`"
@@ -589,18 +605,30 @@ function neighborhoodCountLabel(turn: AssistantTurn): string | null {
                   />
                 </li>
               </ol>
-              <div v-if="canShowMore(turn)" class="assistant-turn-show-more">
-                <AppButton
-                  v-if="canShowMorePage(turn)"
-                  type="button"
-                  variant="text"
-                  @click="onShowMoreClick(turn.id, 'page')"
+              <div
+                v-if="canShowMore(turn) || visibleCapNoteLabel(turn)"
+                class="assistant-turn-show-more"
+              >
+                <div v-if="canShowMore(turn)" class="assistant-turn-show-more__actions">
+                  <AppButton
+                    v-if="canShowMorePage(turn)"
+                    type="button"
+                    variant="text"
+                    @click="onShowMoreClick(turn.id, 'page')"
+                  >
+                    {{ showMoreCountLabel(RECALL_RESULT_PAGE_SIZE) }}
+                  </AppButton>
+                  <AppButton type="button" variant="text" @click="onShowMoreClick(turn.id, 'all')">
+                    {{ showAllCountLabel(remainingCount(turn)) }}
+                  </AppButton>
+                </div>
+                <p
+                  v-if="visibleCapNoteLabel(turn)"
+                  class="assistant-turn-neighborhood-count"
+                  role="status"
                 >
-                  {{ showMoreCountLabel(RECALL_RESULT_PAGE_SIZE) }}
-                </AppButton>
-                <AppButton type="button" variant="text" @click="onShowMoreClick(turn.id, 'all')">
-                  {{ showAllCountLabel(remainingCount(turn)) }}
-                </AppButton>
+                  {{ visibleCapNoteLabel(turn) }}
+                </p>
               </div>
             </div>
           </div>
@@ -837,6 +865,17 @@ function neighborhoodCountLabel(turn: AssistantTurn): string | null {
 }
 
 .assistant-turn-status {
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--on-surface-muted);
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
+}
+
+.assistant-turn-system-note {
   min-width: 0;
   max-width: 100%;
   margin: 0;
@@ -1177,11 +1216,17 @@ function neighborhoodCountLabel(turn: AssistantTurn): string | null {
 }
 
 .assistant-turn-show-more {
+  display: grid;
+  gap: var(--space-2xs);
+  justify-items: start;
+  padding-top: var(--space-2xs);
+}
+
+.assistant-turn-show-more__actions {
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-start;
   gap: var(--space-xs) var(--space-sm);
-  padding-top: var(--space-2xs);
 }
 
 @keyframes recall-result-card-enter {

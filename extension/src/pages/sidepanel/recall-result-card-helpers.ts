@@ -30,15 +30,24 @@ export function visibleCandidateCards(turn: AssistantTurn): RecallCardModel[] {
 }
 
 /** 排序短名单回复文案：报总数 N，并标明当前展示区间。 */
-export function formatRankedReplyText(total: number, visible: number): string {
+export function formatRankedReplyText(
+  total: number,
+  visible: number,
+  outcome?: 'top_pick' | 'need_a_clue'
+): string {
   if (total <= 0) {
     return t('popup_reply_confident')
   }
   const shown = Math.min(visible, total)
+  const weak = outcome === 'need_a_clue'
   if (shown >= total) {
-    return t('popup_reply_ranked_all', [String(total)])
+    return t(weak ? 'popup_reply_ranked_weak_all' : 'popup_reply_ranked_all', [String(total)])
   }
-  return t('popup_reply_ranked_partial', [String(total), '1', String(shown)])
+  return t(weak ? 'popup_reply_ranked_weak_partial' : 'popup_reply_ranked_partial', [
+    String(total),
+    '1',
+    String(shown)
+  ])
 }
 
 /** 有真实槽位时生成理解回声芯片；无则 undefined。 */

@@ -16,7 +16,11 @@ const translate = (key: string, subs?: string | string[]) => {
     framing_p4_weak: 'Nothing here is strong enough to pin down yet.',
     framing_p6_partial: '$1 related · showing $2–$3:',
     framing_object_video: 'video',
-    framing_guess_missing_topic: 'Tell me what topic it is about, and I will look.',
+    popup_reply_miss_missing_topic:
+      "I don't know what to look for yet. What's this about? Tell me a topic or a name, and I'll look for it.",
+    popup_followup_miss_constrained_empty_with_guess:
+      'Nothing in your library matches that time and type. If you might have the day wrong, here’s your most recent similar save — a guess, not the answer.',
+    framing_guess_unconstrained: 'Nothing close enough turned up in your library.',
     framing_guess_disclaimer: 'The item below is only a guess — not the answer.'
   }
   let text = table[key] ?? key
@@ -141,7 +145,31 @@ describe('renderRecallFraming', () => {
 
   it('missing_topic 只问一问缺主题，不带猜测免责句', () => {
     const text = renderRecallFraming({ kind: 'missing_topic' }, translate)
-    expect(text).toBe('Tell me what topic it is about, and I will look.')
+    expect(text).toBe(
+      "I don't know what to look for yet. What's this about? Tell me a topic or a name, and I'll look for it."
+    )
     expect(text).not.toContain('only a guess')
+  })
+
+  it('constrained_none + guess 用 with-guess miss 文案，不重复 disclaimer', () => {
+    const text = renderRecallFraming(
+      {
+        kind: 'guess',
+        emptyKind: 'constrained_none',
+        understood: {
+          objectTypes: [],
+          contentTerms: [],
+          behaviorHints: [],
+          noteHint: false
+        }
+      },
+      translate,
+      { omitUnderstood: true }
+    )
+    expect(text).toBe(
+      'Nothing in your library matches that time and type. If you might have the day wrong, here’s your most recent similar save — a guess, not the answer.'
+    )
+    expect(text).not.toContain('The item below is only a guess')
+    expect(text.match(/a guess, not the answer/g)?.length ?? 0).toBe(1)
   })
 })

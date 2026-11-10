@@ -768,8 +768,29 @@
   "popup_dismiss_candidates": {
     "message": "都不是"
   },
+  "popup_dismiss_note_all": {
+    "message": "已排除本轮全部 $1 条候选。",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "50"
+      }
+    }
+  },
   "popup_outcome_exit_prompt": {
     "message": "找到你要找的了吗？"
+  },
+  "popup_outcome_exit_prompt_with_title": {
+    "message": "找到「$1」了吗？",
+    "placeholders": {
+      "title": {
+        "content": "$1",
+        "example": "现代 JavaScript 教程"
+      }
+    }
+  },
+  "popup_outcome_exit_pick_prompt": {
+    "message": "找到的是哪一条？"
   },
   "popup_outcome_exit_found": {
     "message": "找到了"
@@ -779,6 +800,9 @@
   },
   "popup_outcome_exit_skip": {
     "message": "跳过"
+  },
+  "popup_outcome_exit_close": {
+    "message": "关闭"
   },
   "popup_reply_confident": {
     "message": "记忆库里最贴合的是这些："
@@ -809,6 +833,32 @@
       }
     }
   },
+  "popup_reply_ranked_weak_partial": {
+    "message": "共 $total$ 条弱候选 · 显示 $from$–$to$：",
+    "placeholders": {
+      "total": {
+        "content": "$1",
+        "example": "12"
+      },
+      "from": {
+        "content": "$2",
+        "example": "1"
+      },
+      "to": {
+        "content": "$3",
+        "example": "5"
+      }
+    }
+  },
+  "popup_reply_ranked_weak_all": {
+    "message": "共 $total$ 条弱候选：",
+    "placeholders": {
+      "total": {
+        "content": "$1",
+        "example": "4"
+      }
+    }
+  },
   "popup_show_more_matches": {
     "message": "显示更多"
   },
@@ -827,6 +877,15 @@
       "count": {
         "content": "$1",
         "example": "6"
+      }
+    }
+  },
+  "popup_recall_visible_cap_note": {
+    "message": "仅显示前 $1 条。",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "20"
       }
     }
   },
@@ -898,6 +957,15 @@
   },
   "popup_related_guess_label": {
     "message": "猜测（不是答案）"
+  },
+  "popup_miss_narrow_chip": {
+    "message": "加上「$1」",
+    "placeholders": {
+      "word": {
+        "content": "$1",
+        "example": "async"
+      }
+    }
   },
   "recall_card_saved": {
     "message": "保存于 $time$",
@@ -2640,17 +2708,11 @@
       }
     }
   },
-  "framing_guess_constrained_none": {
-    "message": "记忆库中没有符合这些约束的条目。"
-  },
   "framing_guess_unconstrained": {
     "message": "记忆库中没有匹配此线索的条目。"
   },
   "framing_guess_disclaimer": {
     "message": "下方条目只是猜测 — 不是答案。"
-  },
-  "framing_guess_missing_topic": {
-    "message": "告诉我是关于什么主题的，我再找。"
   },
   "framing_object_poem": {
     "message": "诗"

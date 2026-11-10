@@ -27,6 +27,8 @@ export function createAssistantTurn(input: {
   understandingEcho?: RecallUnderstandingEchoChip[]
   deeperReadingTip?: string
   clueTruncatedTip?: string
+  /** 系统样式轻提示行（dismiss 等）；不伪造用户发言 */
+  systemNote?: string
   allowDismiss?: boolean
 }): ConversationTurn {
   return {
@@ -59,6 +61,7 @@ export function createAssistantTurn(input: {
       : { understandingEcho: input.understandingEcho }),
     ...(input.deeperReadingTip === undefined ? {} : { deeperReadingTip: input.deeperReadingTip }),
     ...(input.clueTruncatedTip === undefined ? {} : { clueTruncatedTip: input.clueTruncatedTip }),
+    ...(input.systemNote === undefined ? {} : { systemNote: input.systemNote }),
     allowDismiss: input.allowDismiss ?? false
   }
 }
