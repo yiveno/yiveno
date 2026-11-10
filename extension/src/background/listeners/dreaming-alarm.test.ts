@@ -76,7 +76,8 @@ describe('dreaming-alarm listener', () => {
     onAlarm({
       name: DREAMING_ALARM_NAME,
       scheduledTime: Date.now(),
-      periodInMinutes: 1440
+      periodInMinutes: 1440,
+      persistAcrossSessions: true
     })
 
     await vi.waitFor(() => {
