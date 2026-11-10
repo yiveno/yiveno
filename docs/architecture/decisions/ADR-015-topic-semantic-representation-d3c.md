@@ -1,11 +1,11 @@
 ---
 created: 2026-10-06
-updated: 2026-11-08T06:49:02+08:00
+updated: 2026-11-10T10:14:35+08:00
 author: agent:cursor
 scope: docs/architecture/decisions
 status: 已接受
 upstream: ADR-001（Side Panel 主壳）, ADR-003（邻域非神谕）, ADR-005（禁止灰名单）, ADR-010（理解流水线）, ADR-011（时间置信度）, ADR-014（Topic 两种来源 · D1-B 退化弱 Topic）
-downstream: docs/product/Yiveno-产品文档-v4.0.md §7.05, docs/product/Recall-Request-模型与Discovery边界.md §6 D3-C, docs/audits/Recall-主线与文档对齐-2026-10.md, extension/src/core/recall/topic-embedding.ts, extension/src/core/recall/topic-embedding.test.ts, extension/src/core/recall/recall-topic.ts, extension/src/core/recall/topic-lookup.ts, extension/src/core/recall/topic-lookup.test.ts, extension/src/core/recall/parse-recall-clue-types.ts, extension/src/core/recall/orchestrate-keyword-recall.ts, extension/src/application/recall/backends/hybrid-recall-backend.ts, recall-eval must
+downstream: docs/product/Yiveno-产品文档-v4.0.md §7.05, docs/product/Recall-Request-模型与Discovery边界.md §6 D3-C, docs/audits/Recall-主线与文档对齐-2026-10.md, extension/src/core/recall/topic-embedding.ts, extension/src/core/recall/topic-embedding.test.ts, extension/src/core/recall/recall-topic.ts, extension/src/core/recall/topic-lookup.ts, extension/src/core/recall/topic-lookup.test.ts, extension/src/core/recall/parse-recall-clue-types.ts, extension/src/core/recall/orchestrate-keyword-recall.ts, extension/src/application/recall/backends/hybrid-recall-backend.ts, recall-eval must, ADR-022（dreaming 派生表）
 ---
 
 # ADR-015: Topic 终态 = 语义表示（D3-C 裁决 + Gap 4/5 落地）
@@ -94,7 +94,7 @@ ADR-014 落地后，Topic 已是 Recall 的**必要条件判定器**，并允许
 - **不**在 UI 层暴露 `embedding` 字段（`RecallResult.topic.embedding` 透传但 UI 不消费——留作未来"Topic 用 semantic"标识或类似 UI 形态）。
 - **不**改 Hybrid 后端 `fuseHybridMatches` 自身——仅改 Recall 编排层入口（`withRecallTopicAsync` 替换）。
 - **不**新增 entity index——本轮仅 embedding 真实路径 + 词法 fallback；entity 是中期目标。
-- **不**改 IndexedDB schema（embedding 字段在内存层，不持久化到 MemoryItem）。
+- **不**改 `memory_items` 行形状以持久化 Topic embedding（Topic 向量仍在内存层；条目 Capture 向量走既有 `clues.embedding` 写回）。**允许**独立派生 store（见 [ADR-022](./ADR-022-dreaming-derived-stores.md)：`memory_notes` / meta；命题向量不写进源条目）。
 
 ## 拒绝的替代方案
 
@@ -133,7 +133,7 @@ ADR-014 落地后，Topic 已是 Recall 的**必要条件判定器**，并允许
 
 - ⚠️ **UI 不消费 `RecallResult.topic.embedding`**：本轮 RecallResult 已透传，UI 层未消费（不做本轮 Out 范围）。未来 UI 可用此字段展示「Topic 用 semantic」或类似信息。
 - ⚠️ **entity index 未接入**：中期目标（草案 §3 + §6 D3-C 演进路径），本轮仅 embedding 真实路径 + 词法 fallback。
-- ⚠️ **embedding 未持久化到 IndexedDB**：本轮 embedding 在内存层，Recall 退出即丢；下一步评估是否做 `MemoryItem.embedding` 持久化（需 ADR 评审）。
+- ⚠️ **Topic embedding 未持久化到 IndexedDB**：本轮 Topic 向量在内存层，Recall 退出即丢。**禁止**为此改 `memory_items` 行形状；条目 Capture 向量仍走既有 `clues.embedding`；dreaming 命题派生见 [ADR-022](./ADR-022-dreaming-derived-stores.md)。
 - ⚠️ **`deriveTopicEmbeddingSync` 接口保留未调**：未来扩展点（如每 token 单独 embedding 再平均），本轮直接用单次 embedding 拼接文本。
 
 ## 引用

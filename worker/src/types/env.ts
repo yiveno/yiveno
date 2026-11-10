@@ -50,6 +50,13 @@ export type Env = Cloudflare.Env & {
   AI_HOSTED_MODEL_NLG?: string
   AI_HOSTED_MODEL_ENRICHMENT?: string
   AI_HOSTED_MODEL_GS_SAMPLES?: string
+  AI_HOSTED_MODEL_DREAMING?: string
+  /** Dreaming Free 日/月调用上限覆盖 */
+  AI_DREAMING_FREE_DAILY_CAP?: string
+  AI_DREAMING_FREE_MONTHLY_QUOTA?: string
+  /** Dreaming Pro 日/月调用上限覆盖 */
+  AI_DREAMING_PRO_DAILY_CAP?: string
+  AI_DREAMING_PRO_MONTHLY_QUOTA?: string
   /**
    * 聊天补全 Provider：deepseek（默认）。未知值 → 503 ai_provider_unsupported。
    * 换厂商时加 adapter + 改此变量，业务 handler 不改。

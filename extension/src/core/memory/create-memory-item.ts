@@ -1,3 +1,4 @@
+import { buildCaptureDreamingPreprocess } from '@/core/dreaming/capture-dreaming-preprocess'
 import type { CaptureEntry } from '@/core/memory/capture-entry'
 import type { MemoryCluesInput } from '@/core/memory/clues'
 import {
@@ -124,8 +125,32 @@ function withEnrichment(
 /** 创建 Bookmark MemoryItem（纯函数，不含持久化）。 */
 export function createBookmarkMemoryItem(input: BookmarkBuildInput): BookmarkMemoryItem {
   const now = resolveNow(input.now)
+  const id = crypto.randomUUID()
   const domain = input.payload.domain ?? extractDomainFromUrl(input.payload.url)
   const payload = BookmarkPayloadSchema.parse({ ...input.payload, domain })
+
+  // Dreaming 预处理：withEnrichment 之前算去重/折叠键（零网络；不写 clues）
+  const draftBeforeEnrichment: BookmarkMemoryItem = {
+    id,
+    ownerId: input.ownerId,
+    sourceLocalProfileId: input.sourceLocalProfileId,
+    type: 'bookmark',
+    payload,
+    clues: buildClues(
+      input.clues,
+      {
+        title: payload.title,
+        sourceUrl: payload.url,
+        domain: payload.domain
+      },
+      input.captureEntry
+    ),
+    createdAt: payload.chromeCreatedAt ?? now,
+    updatedAt: now,
+    deletedAt: null
+  }
+  buildCaptureDreamingPreprocess(draftBeforeEnrichment)
+
   const clues = withEnrichment(input.clues, {
     title: payload.title,
     url: payload.url,
@@ -139,11 +164,7 @@ export function createBookmarkMemoryItem(input: BookmarkBuildInput): BookmarkMem
   }
 
   return {
-    id: crypto.randomUUID(),
-    ownerId: input.ownerId,
-    sourceLocalProfileId: input.sourceLocalProfileId,
-    type: 'bookmark',
-    payload,
+    ...draftBeforeEnrichment,
     clues: buildClues(
       cluesWithBookmarkType,
       {
@@ -152,35 +173,26 @@ export function createBookmarkMemoryItem(input: BookmarkBuildInput): BookmarkMem
         domain: payload.domain
       },
       input.captureEntry
-    ),
-    // Chrome 书签：createdAt = 用户星标时间（dateAdded），不是灌库时刻
-    createdAt: payload.chromeCreatedAt ?? now,
-    updatedAt: now,
-    deletedAt: null
+    )
   }
 }
 
 /** 创建 Text Excerpt MemoryItem（纯函数，不含持久化）。 */
 export function createTextExcerptMemoryItem(input: TextExcerptBuildInput): TextExcerptMemoryItem {
   const now = resolveNow(input.now)
+  const id = crypto.randomUUID()
   const domain = input.payload.domain ?? extractDomainFromUrl(input.payload.sourceUrl)
   const payload = TextExcerptPayloadSchema.parse({ ...input.payload, domain })
-  const clues = withEnrichment(input.clues, {
-    title: payload.pageTitle,
-    text: payload.selectedText,
-    url: payload.sourceUrl,
-    domain: payload.domain,
-    ...(input.clues?.note !== undefined ? { note: input.clues.note } : {})
-  })
 
-  return {
-    id: crypto.randomUUID(),
+  // Dreaming 预处理：withEnrichment 之前算去重/折叠键（零网络；不写 clues）
+  const draftBeforeEnrichment: TextExcerptMemoryItem = {
+    id,
     ownerId: input.ownerId,
     sourceLocalProfileId: input.sourceLocalProfileId,
     type: 'text_excerpt',
     payload,
     clues: buildClues(
-      clues,
+      input.clues,
       {
         title: payload.pageTitle,
         textExcerpt: payload.selectedText,
@@ -192,6 +204,29 @@ export function createTextExcerptMemoryItem(input: TextExcerptBuildInput): TextE
     createdAt: now,
     updatedAt: now,
     deletedAt: null
+  }
+  buildCaptureDreamingPreprocess(draftBeforeEnrichment)
+
+  const clues = withEnrichment(input.clues, {
+    title: payload.pageTitle,
+    text: payload.selectedText,
+    url: payload.sourceUrl,
+    domain: payload.domain,
+    ...(input.clues?.note !== undefined ? { note: input.clues.note } : {})
+  })
+
+  return {
+    ...draftBeforeEnrichment,
+    clues: buildClues(
+      clues,
+      {
+        title: payload.pageTitle,
+        textExcerpt: payload.selectedText,
+        sourceUrl: payload.sourceUrl,
+        domain: payload.domain
+      },
+      input.captureEntry
+    )
   }
 }
 

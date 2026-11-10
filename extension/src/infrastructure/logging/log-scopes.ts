@@ -25,6 +25,7 @@ export const LOG_SCOPES = [
   'DetailExport', // Memory detail export 导出
   'DevMemory', // DEV：Memory 调试（如回溯 savedAt）
   'DevProbe', // DEV：召回探针种库 / 清理 / 盘点
+  'Dreaming', // 夜间命题编译 / 派生表 / 死链巡检
   'Embed', // Worker embed HTTP 请求
   'ExtensionTab', // 打开扩展页标签
   'Identity', // 本地身份 / owner 桶 / 归并

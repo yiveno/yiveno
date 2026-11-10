@@ -1735,12 +1735,12 @@ Omnibox **本机快跳轨**专用 must（与 Side Panel `recall-eval` 正交）�
 
 #### 三层数据归属
 
-| 层                  | 范围                                                                                                                         | 归属                                                          | 导出 / 删除                                           |
-| ------------------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- | ----------------------------------------------------- |
-| **L1 用户内容**     | Capture 摘录、`clues.note`、来源 URL / 标题 / 域名；经用户授权开启的书签灌库条目                                             | **用户**                                                      | Backup 必含；Portable 必含核心字段                    |
-| **L2 库内行为**     | `openCount` / `lastOpenedAt`、`dismissCount` / `lastDismissedAt`；条目 `createdAt` / `updatedAt` / 软删标记                  | **用户**（用户与自家资料库的交互史，非 Yiveno 独立知识资产）  | Backup 含；Portable **默认不含**                      |
-| **L3 条目级派生**   | 规则 / LLM enrichment（`tags` / `keywords` / `entities` / `summary`）；条目 `embedding` 及 `embeddingModel` / `embeddingDim` | **随条目走**（该条记忆的可检索形态，存于用户本机 / 用户云桶） | Backup 含；Portable **默认不含**（竞品可重算）        |
-| **— Yiveno 服务层** | 去标识化聚合统计；不可个体化的全站模型；未持久化的一次性 LLM 推理产物                                                        | **Yiveno**                                                    | **不属于**用户 export；删账号时切断与个体的可关联副本 |
+| 层                  | 范围                                                                                                                                                                                                                          | 归属                                                                   | 导出 / 删除                                                                       |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| **L1 用户内容**     | Capture 摘录、`clues.note`、来源 URL / 标题 / 域名；经用户授权开启的书签灌库条目                                                                                                                                              | **用户**                                                               | Backup 必含；Portable 必含核心字段                                                |
+| **L2 库内行为**     | `openCount` / `lastOpenedAt`、`dismissCount` / `lastDismissedAt`；条目 `createdAt` / `updatedAt` / 软删标记                                                                                                                   | **用户**（用户与自家资料库的交互史，非 Yiveno 独立知识资产）           | Backup 含；Portable **默认不含**                                                  |
+| **L3 条目级派生**   | 规则 / LLM enrichment（`tags` / `keywords` / `entities` / `summary`）；条目 `embedding` 及 `embeddingModel` / `embeddingDim`；**dreaming 原子命题**（IndexedDB `memory_notes` + 行内引用 / 可选命题向量；见 §7.05 / ADR-022） | **随条目走**（该条记忆的可检索形态，存于用户本机；命题 v1 **不上云**） | Backup 含；Portable **默认不含**（竞品可重算）；`CLEAR_LOCAL_MEMORY` 连带清命题表 |
+| **— Yiveno 服务层** | 去标识化聚合统计；不可个体化的全站模型；未持久化的一次性 LLM 推理产物                                                                                                                                                         | **Yiveno**                                                             | **不属于**用户 export；删账号时切断与个体的可关联副本                             |
 
 **Normative 铁律：**
 
@@ -1881,9 +1881,9 @@ Chrome API / 选区
   - **书签库与 Chrome 对账（Normative）**：**Chrome 书签树 = 壳权威**（单向 Chrome → IndexedDB；**禁止**写回 / 改写 / 删除原生书签；**禁止** Settings 暴露「修复」类用户操作）。增量靠 `bookmarks.on*`；holes-only reconcile 只补「Chrome 有、Memory 无」。**full repair**（后台自动）：对当前全部 http(s) 叶子 upsert（同 `chromeBookmarkId` 含软删则同 id 复活；保留 `clues.note` 与行为计数）；软删带 `chromeBookmarkId` 且已不在 Chrome 树的孤儿；**不动**无 `chromeBookmarkId` 的第三方导入书签。触发：① 灌库已完成时每个 SW 会话最多自动 full repair 一次（其后 finalize 仍走 holes）；② 灌库开启时挂 **每日** `chrome.alarms` 对账（关灌库则清闹钟）；③ 冷启动已 `ready` / 读导入状态时，灌库开则每 SW 会话最多一次 `ensureChromeBookmarksImported`（堵 Memory 被掏空后 import 仍 `completed`、门禁早退漏补洞）。**禁止**暗示云同步书签或双向合并。
 - **数据处置（Normative · Settings「数据与隐私」）**：
   - **Backup 整库导出**（§5.5.1）：导出当前 owner 本机全部 Memory（含软删、`clues` 全字段，即 L1+L2+L3）为 JSON（`EXPORT_LOCAL_MEMORY`）；不含孤儿桶（孤儿仍走账户与同步导出）。**Portable 可迁移原料未上线前，本条即用户主权导出的唯一必需路径。**
-  - **清除本机记忆**（`CLEAR_LOCAL_MEMORY`）：硬清当前 owner 本机 IndexedDB Memory；**不得**改写/删除 Chrome 原生书签；成功后关闭书签灌库并卸载监听；**并清除** Chrome 书签导入进度（`yiveno:chrome_bookmark_import`），避免 Memory 已空仍标 `completed` 导致再开灌库漏灌；若云同步开着则关闭同步并提示云端副本需另行删除；**并清除**本机 Outcome 对缓冲与 TTE 遥测环（`yiveno.recallOutcomePairs` / `yiveno.recallTelemetry`）。二次确认。
+  - **清除本机记忆**（`CLEAR_LOCAL_MEMORY`）：硬清当前 owner 本机 IndexedDB Memory（含 L3：`memory_notes` / `memory_notes_meta`，经 `replaceOwnerItems` 连带）；**不得**改写/删除 Chrome 原生书签；成功后关闭书签灌库并卸载监听；**并清除** Chrome 书签导入进度（`yiveno:chrome_bookmark_import`），避免 Memory 已空仍标 `completed` 导致再开灌库漏灌；若云同步开着则关闭同步并提示云端副本需另行删除；**并清除**本机 Outcome 对缓冲与 TTE 遥测环（`yiveno.recallOutcomePairs` / `yiveno.recallTelemetry`）。二次确认。
   - **Outcome 软调开关**（`recallOutcomePairSoftAdjustEnabled`，默认开）：关闭后 Hybrid **跳过**本机 Outcome 对软升/降权；对缓冲仍可累积直至清除；**不**锁死 Recall。与「清除适应信号」互补（暂停 vs 清空）。Omnibox 本就不走 Outcome。
-  - **清除本机 Recall 适应信号**（`CLEAR_LOCAL_RECALL_ADAPTATION`）：仅清除 Outcome 对缓冲 + TTE 遥测环；**不**删 Memory、**不**改 `openCount` 等条目字段、**不**关灌库/同步。用于重置 A 层软排学习而不毁库。二次确认。Recall 主链须仍可用。
+  - **清除本机 Recall 适应信号**（`CLEAR_LOCAL_RECALL_ADAPTATION`）：仅清除 Outcome 对缓冲 + TTE 遥测环；**不**删 Memory、**不**清 `memory_notes`、**不**改 `openCount` 等条目字段、**不**关灌库/同步。用于重置 A 层软排学习而不毁库。二次确认。Recall 主链须仍可用。
   - **删除云端记忆**：登录后可一键删除该账号云端 `memory_items` 与 `memory_sync_backups`；默认**不**清本机 IndexedDB；成功后关闭云同步并清定时闹钟。二次确认。
   - **删除账号**（与「仅退出」/「仅删云端」分开）：登录后强确认 → Worker 删云端 Memory/backups 并用 service role **注销 Supabase Auth 用户** → 扩展清本机当前 `accountId` 桶（**不动** `localProfileId` 身份；该桶若仍有未归并数据则保留）→ 清 session/binding/同步/隐私 ack → 打开官网 `/logout`。订阅/支付行可按法律保留、不再可登录关联（不暗示可恢复账号）。
 - **禁止回潮**：旧管理页 / **侧边栏书签整理中心** / 书签树编辑 / AI 自动整理进 build 或 manifest。  
@@ -2288,6 +2288,21 @@ Chrome API / 选区
 ### 7.05 Recall Request 模型与 Discovery 边界（Normative · 2026-10-06 · D1 已裁决）
 
 **完整 Normative 正文：** `docs/product/Recall-Request-模型与Discovery边界.md`（已晋升，状态 = Normative）。
+
+#### Dreaming 派生表 `memory_notes`（Normative · 2026-11-10 · ADR-022）
+
+> **主语：** 夜间 / 本机维护产出的**原子命题**是 L3 派生，**不是**事实源；ECS 卡面仍以原文摘录为锚。命题只作检索候选 / 排序信号，不得冒充原文。
+
+| 项           | 口径                                                                                                                                         |
+| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| **存储**     | IndexedDB `YivenoMemoryDB` v5：`memory_notes` + `memory_notes_meta`（独立派生 store；**不**改 `memory_items` 行形状）                        |
+| **归属**     | L3；随条目走；Backup **必须含**；Portable **默认不含**；删账号 / `CLEAR_LOCAL_MEMORY` **连带清除**；`CLEAR_LOCAL_RECALL_ADAPTATION` **不清** |
+| **同步**     | **v1 本地-only**，不进云同步面（ADR-017 工作集仍仅 `text_excerpt` MemoryItem）；换机后本地重算。若要同步须另开 ADR                           |
+| **引用门**   | 每命题必须带 `sourceMemoryItemId` + 行内 `sourceQuote` 或合法 `sourceSpan`；无引用不入库                                                     |
+| **硬约束**   | dreaming **只写派生表**，永不改用户原文；增量-only；命题不参与 `hasRecallTopicAnchor`；默认不进 Omnibox 候选                                 |
+| **触发语义** | `chrome.alarms` 周期 1440 分钟（自创建起计，**无**固定墙钟）；浏览器关闭时不跑（ADR-021 薄本机维护，非第二套离线产品）                       |
+
+**现状（2026-11-10）：** store / meta / 游标 / 闹钟脚手架已接线；**夜间编译暗线已接线**（`dreaming` taskKind + `/api/ai/dreaming/complete` peek-then-commit 批 8；独立配额 Free 5/日·20/月、Pro 30/日·300/月；超 cap 延后；关 AI / 未登录跳过；孤儿扫）。**Recall 优先读尚未进主路径**——须过离线评估 + 设计五问（ADR-016）后方可接线。
 
 > **主语：** 本节解决的是 **Recall 的问题边界**（什么算 Recall / 什么不算），不是新增一个产品功能。Topic 在其中是"必要条件判定器"，而非"产品核心基线"。
 
@@ -2742,6 +2757,7 @@ RecallOutcomeEvent {
 
 | 日期       | 变更                                                                                                                                                                                                                                                                                                       |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-10 | **ADR-022 Dreaming 派生表：** §5.5.1 L3 增列 `memory_notes`；§7.05 增派生表口径（Backup 含 / Portable 默认不含 / v1 本地-only / 无引用不入库 / `CLEAR_LOCAL_MEMORY` 连带清）；IDB v5 只建 store；不进 Recall 主路径直至离线评估通过                                                                        |
 | 2026-11-10 | **Pro 托管 LLM 月配额口径统一为 1000/月：** §5.1 Normative 表 Pro Clue LLM **1 000 次/月**（日软盖 120 不变）；对齐 Worker 常量与 `wrangler.toml` `AI_HOSTED_MONTHLY_QUOTA`；Free 60/月·日盖 10 不动                                                                                                       |
 | 2026-11-06 | **空库态 / 记忆库可见刷新：** Side Panel 听 count+revision 重探空态；Library 回前台静默重拉 + 听 revision；不另造总线；§5.8                                                                                                                                                                                |
 | 2026-11-06 | **ADR-021 波次4 可选清债：** lexicon 删越界（story/playlist/recording/裸 login；opened recently/just opened）；`shouldOmitClueLlmCompleterWhenBrowserOffline`；Side Panel 断网壳注释对齐；不改 i18n                                                                                                        |

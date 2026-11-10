@@ -25,7 +25,7 @@ alwaysApply: true
 **能力速查：** Side Panel Recall、Hybrid、倒排 Phase 1、ECS 卡面、detail export、只读 MCP beta、Raindrop/Pocket 导入、TTE 本机埋点、Dodo Pro 门禁等（详表 `产品文档 §1`）。§5.9 **Beta**（种子用户真实库：TTE-V P50≤12s / Success@180≥75% / ECS≥92% 等）；**无种子 study 数据前不得对外宣称 Beta 达标**；MCP **不对用户主宣传**。进行中：**结果卡/结果态体验**（扫读·入场·打开原文·先卡后 Framing·P6 卡前·邻域锚点滚动 **已接线**）；Getting Started / 可见进展 / 理解回声 / 分面原则 **薄维护**；**CN-NA i18n**（官网长文/账号定价双 locale）；§5.9 质量闭环**主动扩面暂停**（回归可修）；**ADR-021 已验收**；**Probe M1–M4 主路径已收口**（diversity 大批量真机可选）。
 <!-- SYNC:IDE_BOOT:END -->
 
-## 冻结（勿重议 · ADR-001–005 · ADR-010–012 · ADR-016–021）
+## 冻结（勿重议 · ADR-001–005 · ADR-010–012 · ADR-016–022）
 
 - **GitHub Org `yiveno`** · 主仓 `yiveno/yiveno`（品牌产品交付仓，非个人实验项目）；对外站点 `yiveno.com`
 - Recall **主壳 = Side Panel**；`pages/popup` 已退役；关 Panel 丢会话；**New find** 清线程
@@ -42,6 +42,7 @@ alwaysApply: true
 - **同浏览器 UI 桥（ADR-019）：** Port 同步登录 UI / 资料展示；禁止 Port 传 token；可见才刷 DOM；官网→扩展 mint+handoff；扩展→官网 `/auth/from-extension` + `website-session`
 - **Chromium 双店（ADR-020）：** 同包上 CWS + Edge Add-ons；ID 分离；大陆桌面主路径 Edge；书签本机不跨浏览器合并；禁止侧载 ZIP 当主 CTA
 - **在线默认（ADR-021 / §0.1.4）：** 业务履约默认有网；离线仅薄适配；禁止为「断网找开放页」扩 sprint；Omnibox/规则≠离线产品叙事
+- **Dreaming 派生表（ADR-022）：** `memory_notes` / meta 为独立 IDB store（v5）；L3；Backup 含；v1 本地-only 不上云；只写派生永不改用户原文；无引用不入库；`CLEAR_LOCAL_MEMORY` 连带清；未过离线评估前不进 Recall 主路径
 
 ## 架构铁律（开机必记）
 

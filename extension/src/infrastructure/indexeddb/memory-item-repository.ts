@@ -24,7 +24,12 @@ import {
 } from '@/infrastructure/indexeddb/constants'
 import { initializeMemoryDatabase } from '@/infrastructure/indexeddb/memory-db'
 import { keywordIndexRepository } from '@/infrastructure/indexeddb/keyword-index-repository'
+import { buildCaptureDreamingPreprocess } from '@/core/dreaming/capture-dreaming-preprocess'
+import { dreamingDuplicateGroupRepository } from '@/infrastructure/indexeddb/dreaming-duplicate-group-repository'
+import { memoryNotesMetaRepository } from '@/infrastructure/indexeddb/memory-notes-meta-repository'
+import { memoryNotesRepository } from '@/infrastructure/indexeddb/memory-notes-repository'
 import { indexedDBManager, requestToPromise } from '@/infrastructure/indexeddb/manager'
+import { logger } from '@/infrastructure/logging/logger'
 import {
   extractDocumentIndexTokens,
   sameTokenSet
@@ -824,6 +829,10 @@ export class MemoryItemRepository {
     })
 
     await keywordIndexRepository.clearOwnerIndex(ownerId)
+    // L3 派生：memory_notes / duplicate-groups 随条目走；清库 / 云覆盖须连带清（ADR-022）
+    await memoryNotesRepository.clearOwnerNotes(ownerId)
+    await memoryNotesMetaRepository.clearOwnerMeta(ownerId)
+    await dreamingDuplicateGroupRepository.clearOwnerGroups(ownerId)
 
     return items.filter(item => item.ownerId === ownerId).length
   }
@@ -918,6 +927,19 @@ export class MemoryItemRepository {
       })
       if (!applied.applied) {
         await keywordIndexRepository.markDirty(validated.ownerId)
+      }
+    }
+
+    // Dreaming：duplicate-group 只标不删；软删行仍可保留链接供夜间重挂
+    if (validated.deletedAt == null) {
+      try {
+        await dreamingDuplicateGroupRepository.upsertLink(buildCaptureDreamingPreprocess(validated))
+      } catch (error) {
+        // 派生失败不得挡主写路径
+        logger.warn('Dreaming', 'duplicate-group 写入失败（主条目已落库）', {
+          itemId: validated.id,
+          error: error instanceof Error ? error.message : String(error)
+        })
       }
     }
   }

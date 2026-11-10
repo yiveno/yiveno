@@ -49,7 +49,7 @@
 
 ## 已冻结决策（勿重议）
 
-见 [`docs/architecture/decisions/`](../architecture/decisions/)：Side Panel 主壳、clue 术语、邻域非神谕、LLM 数据平面边界、禁止灰名单通解、**ADR-010 理解流水线**、**ADR-011 时间置信度分层**、**ADR-012 find things 双关为后手（非固定路线；终局壁垒=私有增量+习惯；翻牌未启用）**、**ADR-016 双线程（明线找东西 · 暗线记忆探索 · 反馈非真理；目标层禁系统自改）**、**ADR-020 Chromium 双店同包（Chrome + Edge；大陆主路径 Edge）**、**ADR-021 在线默认 · 离线仅薄适配（非离线优先；Omnibox/规则≠离线产品）**。
+见 [`docs/architecture/decisions/`](../architecture/decisions/)：Side Panel 主壳、clue 术语、邻域非神谕、LLM 数据平面边界、禁止灰名单通解、**ADR-010 理解流水线**、**ADR-011 时间置信度分层**、**ADR-012 find things 双关为后手（非固定路线；终局壁垒=私有增量+习惯；翻牌未启用）**、**ADR-016 双线程（明线找东西 · 暗线记忆探索 · 反馈非真理；目标层禁系统自改）**、**ADR-020 Chromium 双店同包（Chrome + Edge；大陆主路径 Edge）**、**ADR-021 在线默认 · 离线仅薄适配（非离线优先；Omnibox/规则≠离线产品）**、**ADR-022 Dreaming 派生表（独立 IDB store；L3；v1 本地-only；不改用户原文）**。
 
 **定位速记（ADR-012 + §0.1 哲学）：** 对外始终「那个找东西的 / find things」；当前履约 _Find what you saved_；双关/翻牌是**后手，视发展再定**（可以≠必须）；终局壁垒=不愿迁走的私有增量与习惯，不是 Search→Memory 跳跃。**产品哲学（对内）：** 人机认知协同 · 机记人想（_Let humans think. Let computers remember._）——**不得**替代对外主 slogan，**不得**暗示「想起来就一定找得到」。愿景可大；**当前 Normative 履约面**仍是主动 Capture 痕迹 → 高置信邻域；**勿**用愿景/终局叙事放松 §5.9。
 

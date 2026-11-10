@@ -7,11 +7,16 @@ import {
   MEMORY_ITEM_INDEX_BY_OWNER_CHROME_BOOKMARK,
   MEMORY_ITEM_INDEX_BY_OWNER_TYPE_UPDATED,
   MEMORY_ITEM_INDEX_BY_OWNER_UPDATED,
-  MEMORY_ITEM_STORE
+  MEMORY_ITEM_STORE,
+  DREAMING_DUPLICATE_GROUP_STORE,
+  MEMORY_NOTES_INDEX_BY_OWNER_SOURCE,
+  MEMORY_NOTES_INDEX_BY_OWNER_UPDATED,
+  MEMORY_NOTES_META_STORE,
+  MEMORY_NOTES_STORE
 } from '@/infrastructure/indexeddb/constants'
 import type { IndexedDBDefinition } from '@/infrastructure/indexeddb/manager'
 
-/** 创建或升级 memory_items 表与索引；v4 增加倒排 store。 */
+/** 创建或升级 memory_items 表与索引；v4 倒排；v5 dreaming 派生表。 */
 function upgradeMemoryDatabase(
   database: IDBDatabase,
   transaction: IDBTransaction,
@@ -49,6 +54,29 @@ function upgradeMemoryDatabase(
     }
     if (!database.objectStoreNames.contains(KEYWORD_INDEX_META_STORE)) {
       database.createObjectStore(KEYWORD_INDEX_META_STORE, { keyPath: 'ownerId' })
+    }
+  }
+
+  // v5：只建 store/索引，不做记录回填 / 全库扫描（ADR-022）。
+  if (oldVersion < 5) {
+    if (!database.objectStoreNames.contains(MEMORY_NOTES_STORE)) {
+      const notesStore = database.createObjectStore(MEMORY_NOTES_STORE, { keyPath: 'id' })
+      notesStore.createIndex(
+        MEMORY_NOTES_INDEX_BY_OWNER_SOURCE,
+        ['ownerId', 'sourceMemoryItemId'],
+        {
+          unique: false
+        }
+      )
+      notesStore.createIndex(MEMORY_NOTES_INDEX_BY_OWNER_UPDATED, ['ownerId', 'updatedAt'], {
+        unique: false
+      })
+    }
+    if (!database.objectStoreNames.contains(MEMORY_NOTES_META_STORE)) {
+      database.createObjectStore(MEMORY_NOTES_META_STORE, { keyPath: 'ownerId' })
+    }
+    if (!database.objectStoreNames.contains(DREAMING_DUPLICATE_GROUP_STORE)) {
+      database.createObjectStore(DREAMING_DUPLICATE_GROUP_STORE, { keyPath: 'id' })
     }
   }
 }

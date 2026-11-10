@@ -1,8 +1,8 @@
 /** Yiveno Memory DB 常量。 */
 export const MEMORY_DATABASE_NAME = 'YivenoMemoryDB' as const
 
-/** v4：关键词倒排 posting + 索引元数据（预过滤候选）。 */
-export const MEMORY_DATABASE_VERSION = 4 as const
+/** v5：dreaming 派生表 `memory_notes` + `memory_notes_meta`（ADR-022）。 */
+export const MEMORY_DATABASE_VERSION = 5 as const
 
 export const MEMORY_ITEM_STORE = 'memory_items' as const
 
@@ -11,6 +11,26 @@ export const KEYWORD_POSTING_STORE = 'keyword_postings' as const
 
 /** 每 owner 一条：是否 dirty / 上次重建。 */
 export const KEYWORD_INDEX_META_STORE = 'keyword_index_meta' as const
+
+/**
+ * Dreaming 原子命题派生表（L3；不进云同步面；Backup 须含）。
+ * 只写派生，永不改 `memory_items` 行。
+ */
+export const MEMORY_NOTES_STORE = 'memory_notes' as const
+
+/** 每 owner 一条：dreaming run 游标 / dirty / schema。 */
+export const MEMORY_NOTES_META_STORE = 'memory_notes_meta' as const
+
+/**
+ * Capture 去重键 → 多源链接（只标不删；同一 foldKey 一组）。
+ */
+export const DREAMING_DUPLICATE_GROUP_STORE = 'dreaming_duplicate_groups' as const
+
+/** ownerId + sourceMemoryItemId，按源查命题。 */
+export const MEMORY_NOTES_INDEX_BY_OWNER_SOURCE = 'by_owner_source' as const
+
+/** ownerId + updatedAt，增量扫命题。 */
+export const MEMORY_NOTES_INDEX_BY_OWNER_UPDATED = 'by_owner_updated' as const
 
 /** 倒排 meta.schemaVersion；与 posting 格式联动，升则强制 rebuild。 */
 export const KEYWORD_INDEX_SCHEMA_VERSION = 2 as const

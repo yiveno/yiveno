@@ -10,7 +10,8 @@ export const AI_CHAT_TASK_KINDS = [
   'follow_up_nlg', // 追问 NLG
   'narrow_polish', // Narrow 举例润色
   'enrichment', // enrichment（若经同一 completer）
-  'gs_samples' // GS 示意 clue
+  'gs_samples', // GS 示意 clue
+  'dreaming' // 夜间命题编译（ADR-022；批量 peek-then-commit）
 ] as const
 
 export type AiChatTaskKind = (typeof AI_CHAT_TASK_KINDS)[number]
@@ -31,7 +32,8 @@ export const AI_CHAT_TASK_MAX_TOKENS: Record<AiChatTaskKind, number> = {
   follow_up_nlg: 256,
   narrow_polish: 128,
   enrichment: 400,
-  gs_samples: 400
+  gs_samples: 400,
+  dreaming: 1200
 }
 
 /** 解析某任务应传的 maxTokens。 */

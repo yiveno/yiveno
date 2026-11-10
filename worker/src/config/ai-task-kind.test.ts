@@ -13,6 +13,7 @@ describe('parseAiChatTaskKind', () => {
     expect(parseAiChatTaskKind('framing_nlg')).toBe('framing_nlg')
     expect(parseAiChatTaskKind('follow_up_nlg')).toBe('follow_up_nlg')
     expect(parseAiChatTaskKind('narrow_polish')).toBe('narrow_polish')
+    expect(parseAiChatTaskKind('dreaming')).toBe('dreaming')
   })
 
   test('缺省 / 未知 → nlu（兼容旧客户端）', () => {
