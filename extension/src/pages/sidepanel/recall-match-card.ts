@@ -1,7 +1,11 @@
 import type { TranslateFn } from '@/core/i18n/translate'
 import type { RecallMatch } from '@/core/recall/recall-result'
 import { getMemoryItemDisplay } from '@/core/recall/recall-result'
-import { explainRecallMatch } from '@/core/recall/explain-recall-match'
+import {
+  explainRecallMatch,
+  getRecallMatchFieldShortLabel,
+  truncateRecallExplainText
+} from '@/core/recall/explain-recall-match'
 import { buildRecallCardHighlightParts } from '@/core/recall/highlight-recall-text'
 import { formatRecallSavedTime } from '@/core/recall/format-recall-saved-time'
 import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
@@ -30,7 +34,13 @@ export function toRecallMatchCard(
     {
       clue: resultClue,
       matchedFields: match.matchedFields,
-      item: match.item
+      item: match.item,
+      ...(match.noteProvenance
+        ? {
+            noteMatchedTerms: match.noteProvenance.matchedTerms,
+            soleNoteCorroboration: match.noteProvenance.soleCorroboration
+          }
+        : {})
     },
     t
   )
@@ -100,6 +110,16 @@ export function toRecallMatchCard(
       ? { duplicateTotalCount, duplicateLabel }
       : {}),
     ...(siblings && siblings.length > 0 ? { siblings } : {}),
+    // Q1（已决策）：命题文本 1 行、≤200 字符，置于源摘录之下，前缀 memory_note 字段短标签。
+    // sourceQuote 不另起行，走既有 evidence anchor。
+    ...(match.noteProvenance
+      ? {
+          noteProvenanceLine: {
+            label: getRecallMatchFieldShortLabel('memory_note', t),
+            text: truncateRecallExplainText(match.noteProvenance.propositionText, 200)
+          }
+        }
+      : {}),
     ...(options.rank !== undefined ? { telemetryRank: options.rank } : {})
   }
 }

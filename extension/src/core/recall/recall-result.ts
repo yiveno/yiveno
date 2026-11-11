@@ -10,6 +10,28 @@ import type { RecallPipelineTiming } from '@/core/recall/recall-telemetry'
 import type { ClueUnderstandingSource } from '@/core/recall/understand/understand-recall-clue'
 import type { RecallVisibleProgressStage } from '@/core/recall/visible-progress'
 
+/**
+ * 命题出处（随 RecallMatch 走；设计稿 §1.1 + 本批扩展）。
+ * 可选——无命题命中的匹配不受影响。
+ * propositionText / propositionIndex 是本批对设计稿形状的扩展（设计稿缺口）。
+ */
+export interface NoteProvenance {
+  /** 命题行 id（`${ownerId}\0${sourceMemoryItemId}\0${index}`）。 */
+  noteId: string
+  /** 命题的源条目 id。 */
+  sourceMemoryItemId: string
+  /** 命题命中的 effective content terms。 */
+  matchedTerms: string[]
+  /** 该源条目无任何字面佐证、仅靠命题锚通过佐证门时为 true。 */
+  soleCorroboration: boolean
+  /** 命题文本（≤400；卡面展示时再截到 200）。 */
+  propositionText: string
+  /** 命题 topicAnchor（虚拟字段计分用；拼进虚拟字段文本）。 */
+  topicAnchor: string[]
+  /** 命题在源下的序号（组级继承并列决胜：取最小）。 */
+  propositionIndex: number
+}
+
 /** 单次召回命中项。 */
 export interface RecallMatch {
   /** 命中的 MemoryItem */
@@ -20,6 +42,8 @@ export interface RecallMatch {
   matchedFields: string[]
   /** 同键折叠组；仅 totalCount≥2 时出现。 */
   duplicateGroup?: RecallDuplicateGroup
+  /** 命题出处（有命题命中时才出现）。 */
+  noteProvenance?: NoteProvenance
 }
 
 /** Recall 结果中同键重复组（代表项外挂）。 */

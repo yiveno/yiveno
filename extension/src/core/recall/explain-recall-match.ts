@@ -22,6 +22,7 @@ const FIELD_LABEL_KEYS: Record<string, string> = {
   keywords: 'explain_field_keywords',
   tags: 'explain_field_tags',
   note: 'explain_field_note',
+  memory_note: 'explain_field_memory_note',
   embedding: 'explain_field_embedding',
   hybridRrf: 'explain_field_hybrid_rrf',
   constraint_neighborhood: 'explain_field_constraint_neighborhood'
@@ -38,6 +39,7 @@ const FIELD_SHORT_LABEL_KEYS: Record<string, string> = {
   keywords: 'explain_field_short_keywords',
   tags: 'explain_field_short_tags',
   note: 'explain_field_short_note',
+  memory_note: 'explain_field_short_memory_note',
   embedding: 'explain_field_short_embedding',
   hybridRrf: 'explain_field_short_hybrid_rrf',
   constraint_neighborhood: 'explain_field_short_constraint_neighborhood'
@@ -54,6 +56,8 @@ const FIELD_PRIORITY: Record<string, number> = {
   url: 10,
   keywords: 12,
   tags: 12,
+  /** 命题命中：与虚拟字段权重 12 一致（Explain 优先级 = 评分权重）。 */
+  memory_note: 12,
   note: 26,
   /** 语义近邻：弱于主文词面，但仍可作唯一主因。 */
   embedding: 15,
@@ -90,10 +94,22 @@ export function getRecallMatchFieldShortLabel(field: string, translate: Translat
   return key ? translate(key) : field
 }
 
-/** 按权重选主因字段（matchedFields 顺序为辅）。 */
-export function pickPrimaryMatchedField(matchedFields: string[]): string | null {
+/**
+ * 按权重选主因字段（matchedFields 顺序为辅）。
+ * sole-corroboration 规则（设计稿 §8.1，独立于权重）：memory_note 在场且该条目无字面佐证时，
+ * primary 强制为 memory_note——否则权重 12 会输给 embedding 15，Explain 会把「语义相关」写成主因，
+ * 而实际上让它通过佐证门的是命题。
+ */
+export function pickPrimaryMatchedField(
+  matchedFields: string[],
+  options?: { soleNoteCorroboration?: boolean }
+): string | null {
   if (matchedFields.length === 0) {
     return null
+  }
+
+  if (options?.soleNoteCorroboration && matchedFields.includes('memory_note')) {
+    return 'memory_note'
   }
 
   let best = matchedFields[0]!
@@ -130,10 +146,18 @@ export function findMatchedClueToken(input: {
   clue: string
   primaryField: string
   item?: MemoryItem
+  /** 命题命中的 matchedTerms（primaryField 为 memory_note 时用）。 */
+  noteMatchedTerms?: string[]
 }): string | null {
   const tokens = tokenizeRecallClue(input.clue)
   if (tokens.length === 0) {
     return null
+  }
+
+  // memory_note：token 取命题的 matchedTerms[0]。命题文本不在 collectFilterIndexFields 里，
+  // 不加此分支会回退到线索首个 token，造成错误归因。无 matchedTerms 时返回 null（不编造）。
+  if (input.primaryField === 'memory_note') {
+    return input.noteMatchedTerms?.[0] ?? null
   }
 
   const sortedTokens = [...tokens].sort((a, b) => b.length - a.length)
@@ -160,11 +184,20 @@ export function explainRecallMatch(
     clue: string
     matchedFields: string[]
     item?: MemoryItem
+    /** 命题命中的 matchedTerms（primaryField 为 memory_note 时用）。 */
+    noteMatchedTerms?: string[]
+    /** 该匹配是否仅靠命题锚通过佐证门（sole-corroboration 规则用）。 */
+    soleNoteCorroboration?: boolean
   },
   translate: TranslateFn
 ): RecallMatchExplanation {
   const uniqueFields = [...new Set(input.matchedFields)]
-  const primaryField = pickPrimaryMatchedField(uniqueFields)
+  const primaryField = pickPrimaryMatchedField(
+    uniqueFields,
+    input.soleNoteCorroboration === undefined
+      ? undefined
+      : { soleNoteCorroboration: input.soleNoteCorroboration }
+  )
 
   if (!primaryField) {
     const related = translate('explain_content_related')
@@ -184,7 +217,8 @@ export function explainRecallMatch(
           const token = findMatchedClueToken({
             clue: input.clue,
             primaryField,
-            ...optionalItem(input.item)
+            ...optionalItem(input.item),
+            ...(input.noteMatchedTerms ? { noteMatchedTerms: input.noteMatchedTerms } : {})
           })
           return token
             ? translate('explain_reason_field_contains', [

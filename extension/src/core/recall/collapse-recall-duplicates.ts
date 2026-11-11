@@ -10,8 +10,9 @@ import {
   serializeMemoryFoldKey,
   type MemoryFoldKey
 } from '@/core/memory/derive-memory-duplicate-key'
+import { itemCorroboratesContentTerms } from '@/core/recall/content-term-corroboration'
 import type { MemoryItem } from '@/core/memory/memory-item'
-import type { RecallDuplicateGroup, RecallMatch } from '@/core/recall/recall-result'
+import type { NoteProvenance, RecallDuplicateGroup, RecallMatch } from '@/core/recall/recall-result'
 
 /** @deprecated 使用 MemoryFoldKey；保留 Recall 模块别名。 */
 export type RecallDuplicateKey = MemoryFoldKey
@@ -111,8 +112,46 @@ export function compareRecallDuplicateMembers(a: RecallMatch, b: RecallMatch): n
   return a.item.id.localeCompare(b.item.id)
 }
 
+/**
+ * 组级继承（设计稿 §3.2）：代表项继承组内最优命题出处。
+ * 最优 = 匹配词数最多；并列取 propositionIndex 最小。
+ * soleCorroboration 按代表项重算（同一判定函数）；无 terms 可算时沿用继承出处的标记。
+ */
+function inheritBestNoteProvenance(
+  members: RecallMatch[],
+  representative: RecallMatch,
+  noteMatchTerms?: readonly string[]
+): RecallMatch {
+  let best: NoteProvenance | null = null
+  for (const member of members) {
+    const provenance = member.noteProvenance
+    if (!provenance) {
+      continue
+    }
+    if (
+      !best ||
+      provenance.matchedTerms.length > best.matchedTerms.length ||
+      (provenance.matchedTerms.length === best.matchedTerms.length &&
+        provenance.propositionIndex < best.propositionIndex)
+    ) {
+      best = provenance
+    }
+  }
+  if (!best) {
+    return representative
+  }
+  const soleCorroboration =
+    noteMatchTerms && noteMatchTerms.length > 0
+      ? !itemCorroboratesContentTerms(representative.item, noteMatchTerms)
+      : best.soleCorroboration
+  return { ...representative, noteProvenance: { ...best, soleCorroboration } }
+}
+
 /** 从组员中选出代表（不修改入参顺序语义；返回排序后首项）。 */
-export function pickDuplicateRepresentative(members: RecallMatch[]): RecallMatch {
+export function pickDuplicateRepresentative(
+  members: RecallMatch[],
+  noteMatchTerms?: readonly string[]
+): RecallMatch {
   if (members.length === 0) {
     throw new Error('pickDuplicateRepresentative: members 不能为空')
   }
@@ -121,7 +160,7 @@ export function pickDuplicateRepresentative(members: RecallMatch[]): RecallMatch
   if (!first) {
     throw new Error('pickDuplicateRepresentative: 排序结果为空')
   }
-  return first
+  return inheritBestNoteProvenance(sorted, first, noteMatchTerms)
 }
 
 function stripDuplicateGroup(match: RecallMatch): RecallMatch {
@@ -131,7 +170,8 @@ function stripDuplicateGroup(match: RecallMatch): RecallMatch {
   return {
     item: match.item,
     score: match.score,
-    matchedFields: match.matchedFields
+    matchedFields: match.matchedFields,
+    ...(match.noteProvenance ? { noteProvenance: match.noteProvenance } : {})
   }
 }
 
@@ -141,7 +181,7 @@ function stripDuplicateGroup(match: RecallMatch): RecallMatch {
  */
 export function collapseRecallMatches(
   matches: RecallMatch[],
-  options: { limit?: number } = {}
+  options: { limit?: number; noteMatchTerms?: readonly string[] } = {}
 ): RecallMatch[] {
   const limit = options.limit ?? 6
   if (limit <= 0 || matches.length === 0) {
@@ -171,10 +211,8 @@ export function collapseRecallMatches(
     }
 
     const sorted = [...members].sort(compareRecallDuplicateMembers)
-    const representative = sorted[0]
-    if (!representative) {
-      continue
-    }
+    // 代表选取经 pickDuplicateRepresentative（含组级命题出处继承）；members 非空时不抛错。
+    const representative = pickDuplicateRepresentative(sorted, options.noteMatchTerms)
 
     if (sorted.length < 2) {
       collapsed.push(representative)

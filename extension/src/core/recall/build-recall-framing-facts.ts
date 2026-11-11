@@ -60,24 +60,38 @@ function inferRetrievalPath(pool: RecallMatch[]): RecallFramingRetrievalPath {
 
   let neighborhoodCount = 0
   let hybridCount = 0
+  let memoryNoteCount = 0
 
   for (const match of sample) {
-    const primary = pickPrimaryMatchedField(match.matchedFields)
+    const soleNoteCorroboration = match.noteProvenance?.soleCorroboration
+    const primary = pickPrimaryMatchedField(
+      match.matchedFields,
+      soleNoteCorroboration === undefined ? undefined : { soleNoteCorroboration }
+    )
     if (primary === 'constraint_neighborhood') {
       neighborhoodCount += 1
     } else if (primary === 'embedding' || primary === 'hybridRrf') {
       hybridCount += 1
+    } else if (primary === 'memory_note') {
+      memoryNoteCount += 1
     }
   }
 
   const total = sample.length
   const neighborhoodRatio = neighborhoodCount / total
   const hybridRatio = hybridCount / total
+  const memoryNoteRatio = memoryNoteCount / total
 
+  if (memoryNoteRatio >= 0.5) {
+    return 'memory_note'
+  }
   if (neighborhoodRatio >= NEIGHBORHOOD_PATH_RATIO) {
     return 'constraint_neighborhood'
   }
   if (hybridRatio > 0 && neighborhoodRatio > 0.15) {
+    return 'mixed'
+  }
+  if (hybridRatio > 0 && memoryNoteRatio > 0.15) {
     return 'mixed'
   }
   if (hybridRatio > 0) {

@@ -9,6 +9,7 @@ import {
   recallMatchConflictsWithTopPick
 } from '@/core/recall/collapse-recall-duplicates'
 import { itemCorroboratesContentTerms } from '@/core/recall/content-term-corroboration'
+import type { NoteMatchSet } from '@/core/recall/note-match'
 import type { TopicDescriptor } from '@/core/recall/parse-recall-clue-types'
 import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
 import type { MemoryItem } from '@/core/memory/memory-item'
@@ -49,13 +50,16 @@ export function filterKeywordMatchesBeforeCollapse(
     nowMs?: number
     minScore?: number
     behaviorProfile?: RecallBehaviorProfile
+    /** 命题命中集（Phase 4）；约束邻域与 Omnibox 路径不传。 */
+    noteMatches?: NoteMatchSet
   } = {}
 ): RecallMatch[] {
   const scoreOpts = {
     limit: Math.max(items.length, 1),
     ...(options.nowMs === undefined ? {} : { nowMs: options.nowMs }),
     ...(options.minScore === undefined ? {} : { minScore: options.minScore }),
-    ...(options.behaviorProfile === undefined ? {} : { behaviorProfile: options.behaviorProfile })
+    ...(options.behaviorProfile === undefined ? {} : { behaviorProfile: options.behaviorProfile }),
+    ...(options.noteMatches === undefined ? {} : { noteMatches: options.noteMatches })
   }
 
   return filterMemoryItemsByKeyword(items, clue, scoreOpts)
@@ -112,13 +116,21 @@ export function buildRankedRecallPool(
 export function buildRecallResult(
   clue: string,
   collapsedGroups: RecallMatch[],
-  options?: { contentTerms?: readonly string[]; topic?: TopicDescriptor }
+  options?: {
+    contentTerms?: readonly string[]
+    topic?: TopicDescriptor
+    /** 命题命中集（Phase 4）；约束邻域与 Omnibox 路径不传。 */
+    noteMatches?: NoteMatchSet
+  }
 ): RecallResult {
   const contentTerms = options?.contentTerms
   const topic = options?.topic
+  const noteMatches = options?.noteMatches
   const groups =
     contentTerms && contentTerms.length > 0
-      ? collapsedGroups.filter(match => itemCorroboratesContentTerms(match.item, contentTerms))
+      ? collapsedGroups.filter(match =>
+          itemCorroboratesContentTerms(match.item, contentTerms, noteMatches)
+        )
       : collapsedGroups
 
   if (groups.length === 0) {
@@ -131,10 +143,11 @@ export function buildRecallResult(
   }
 
   // 安全带：有 contentTerms 却无佐证（漏网）→ 诚实空
+  // 命题锚定的条目不是「未佐证」，不触发安全带（同一判定、同一集）。
   if (
     contentTerms &&
     contentTerms.length > 0 &&
-    !itemCorroboratesContentTerms(best.item, contentTerms)
+    !itemCorroboratesContentTerms(best.item, contentTerms, noteMatches)
   ) {
     return emptyRecallResult(clue, topic)
   }

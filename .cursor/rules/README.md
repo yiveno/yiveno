@@ -29,6 +29,7 @@
 | `dev-chinese-plain.mdc`    | 沟通 **附录**（鉴权词表等）            | 本仓对照表变更                            |
 | `testing-real-library.mdc` | 维护者真库测试偏好                     | 维护者偏好变更                            |
 | `mcp-chrome-tab-reuse.mdc` | Chrome DevTools MCP **开页先复用标签** | MCP 开页堆重复标签 / 真机流程变更         |
+| `collaboration.mdc`        | 三方协作契约（用户 / Muse / Cursor）   | 分工变更                                  |
 
 > **当前 AI 工具 = Cursor**。其它 IDE 薄指针按 ADR-013 §7。
 

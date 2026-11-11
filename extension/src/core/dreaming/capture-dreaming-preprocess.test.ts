@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import {
-  buildCaptureDreamingPreprocess,
-  buildDreamingDuplicateGroupId
-} from '@/core/dreaming/capture-dreaming-preprocess'
+import { buildCaptureDreamingPreprocess } from '@/core/dreaming/capture-dreaming-preprocess'
 import { createTextExcerptMemoryItem } from '@/core/memory/create-memory-item'
 import { serializeMemoryFoldKey, getMemoryFoldKey } from '@/core/memory/derive-memory-duplicate-key'
 
@@ -25,7 +22,7 @@ describe('capture-dreaming-preprocess', () => {
     })
     const link = buildCaptureDreamingPreprocess(item)
     expect(link.foldKey).toBe(serializeMemoryFoldKey(getMemoryFoldKey(item)))
-    expect(link.id).toBe(buildDreamingDuplicateGroupId(OWNER, link.foldKey))
+    expect(link.id).toBe(`${OWNER}\0${link.foldKey}`)
     expect(link.sourceMemoryItemId).toBe(item.id)
     expect(link.enrichmentReuseKey).toMatch(/^enrich:e:/)
   })

@@ -84,6 +84,7 @@ export function truncateRecallTelemetryAnchor(raw: string): string {
 /**
  * TTE 七事件 + 体验 `wait_abandoned`（§5.9 最小埋点 ∪ §7.0 可见进展度量）。
  * `wait_abandoned` **不得**计入 Success@180 / TTE 达标。
+ * `dreaming_note_hit` 是 Dreaming 观察事件（Phase 4），与 TTE 分计，不改现有事件 schema。
  */
 export const RecallTelemetryEventSchema = z.discriminatedUnion('type', [
   telemetryBaseSchema.extend({
@@ -148,6 +149,14 @@ export const RecallTelemetryEventSchema = z.discriminatedUnion('type', [
       'unresolved' // 未决议
     ]),
     memoryItemId: z.uuid().optional()
+  }),
+  telemetryBaseSchema.extend({
+    type: z.literal('dreaming_note_hit'),
+    noteId: z.string(),
+    sourceMemoryItemId: z.uuid(),
+    rank: z.number().int().nonnegative(),
+    matchedTermsCount: z.number().int().nonnegative(),
+    soleCorroboration: z.boolean()
   }),
   telemetryBaseSchema.extend({
     type: z.literal('task_timeout'),

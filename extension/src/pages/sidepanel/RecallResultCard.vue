@@ -48,6 +48,11 @@ export interface RecallCardModel {
   reasonLine?: string
   /** 匹配字段键（TTE reason codes） */
   reasonCodes?: string[]
+  /**
+   * 命题转述行（Q1，已决策）：label 为 memory_note 字段短标签，text 为命题文本（≤200 字符）。
+   * 仅命题命中的卡有此字段。
+   */
+  noteProvenanceLine?: { label: string; text: string }
   /** 候选排序位（TTE rank） */
   telemetryRank?: number
 }
@@ -301,6 +306,14 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
         >
           <RecallHighlightText :parts="card.titleParts" />
         </component>
+        <p
+          v-if="card.noteProvenanceLine"
+          class="recall-card-note"
+          :class="{ 'recall-card-note--compact': compact }"
+        >
+          <span class="recall-card-note-label">{{ card.noteProvenanceLine.label }}</span>
+          {{ card.noteProvenanceLine.text }}
+        </p>
         <div
           v-if="card.itemKind === 'text_excerpt' && card.subtitle"
           class="recall-card-provenance-row"

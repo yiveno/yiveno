@@ -28,6 +28,7 @@ import {
   parsedClueForTimeSoftReopen,
   shouldAttemptTimeSoftReopen
 } from '@/core/recall/content-term-corroboration'
+import type { NoteMatchSet } from '@/core/recall/note-match'
 import { filterMatchesByExcludeContentTerms } from '@/core/recall/exclude-content-terms'
 import { hasRecallTopicAnchor, withRecallTopic } from '@/core/recall/recall-topic'
 import { mergeTopicLookupWithKeywordMatches, topicLookup } from '@/core/recall/topic-lookup'
@@ -85,6 +86,11 @@ export interface OrchestrateKeywordRecallOptions {
    * Side Panel / 默认不传。
    */
   behaviorProfile?: RecallBehaviorProfile
+  /**
+   * 命题命中集（Phase 4）；Omnibox 档位下会被忽略（见 recallByKeywordWithParsedClue）。
+   * 约束邻域分支不传。
+   */
+  noteMatches?: NoteMatchSet
 }
 
 /** 对象类型 → 条目证据词面（跳过 clueOnly；用于 MemoryItem 类型弱匹配）。 */
@@ -565,7 +571,8 @@ export function applyParsedClueScoreBoosts(
 export function applyTimeFilterThenContentCorroborationWithSoftReopen(
   scoredMatches: RecallMatch[],
   parsed: ParsedRecallClue,
-  nowMs: number = Date.now()
+  nowMs: number = Date.now(),
+  noteMatches?: NoteMatchSet
 ): {
   matches: RecallMatch[]
   effectiveParsed: ParsedRecallClue
@@ -573,7 +580,11 @@ export function applyTimeFilterThenContentCorroborationWithSoftReopen(
 } {
   const hardTimed = filterMatchesByParsedTimeRange(scoredMatches, parsed, nowMs)
   const corroborationTerms = effectiveContentTermsForRecall(parsed)
-  let corroborated = filterMatchesByContentTermCorroboration(hardTimed, corroborationTerms)
+  let corroborated = filterMatchesByContentTermCorroboration(
+    hardTimed,
+    corroborationTerms,
+    noteMatches
+  )
   // 明确排除：词面命中任一 excludeContentTerms → 硬剔除（不因排除空池做时间 soft 回退）
   corroborated = filterMatchesByExcludeContentTerms(corroborated, parsed.excludeContentTerms)
   if (!shouldAttemptTimeSoftReopen(parsed, corroborated.length)) {
@@ -581,7 +592,7 @@ export function applyTimeFilterThenContentCorroborationWithSoftReopen(
   }
   const softParsed = parsedClueForTimeSoftReopen(parsed)
   const softTimed = filterMatchesByParsedTimeRange(scoredMatches, softParsed, nowMs)
-  corroborated = filterMatchesByContentTermCorroboration(softTimed, corroborationTerms)
+  corroborated = filterMatchesByContentTermCorroboration(softTimed, corroborationTerms, noteMatches)
   corroborated = filterMatchesByExcludeContentTerms(corroborated, softParsed.excludeContentTerms)
   return {
     matches: corroborated,
@@ -699,12 +710,22 @@ export function recallByKeywordWithParsedClue(
 
   const filterClue = buildFilterClueFromParsed(parsed)
 
+  // Phase 4：Omnibox 档位忽略 noteMatches（纵深防御；主防线是 recallWithClue 的 !isOmniboxEntry 守卫）。
+  const effectiveNoteMatches =
+    options.behaviorProfile === 'omnibox' ? undefined : options.noteMatches
+
   const scored = filterKeywordMatchesBeforeCollapse(items, filterClue, {
     nowMs,
-    ...(options.behaviorProfile ? { behaviorProfile: options.behaviorProfile } : {})
+    ...(options.behaviorProfile ? { behaviorProfile: options.behaviorProfile } : {}),
+    ...(effectiveNoteMatches ? { noteMatches: effectiveNoteMatches } : {})
   }).map(match => applyParsedClueScoreBoosts(match, parsed, nowMs))
   const { matches, effectiveParsed, timeSoftReopen } =
-    applyTimeFilterThenContentCorroborationWithSoftReopen(scored, parsed, nowMs)
+    applyTimeFilterThenContentCorroborationWithSoftReopen(
+      scored,
+      parsed,
+      nowMs,
+      effectiveNoteMatches
+    )
 
   // soft 回退时用 softParsed 再叠一次时间软加分（窗内 +12）
   const rescored = timeSoftReopen
@@ -719,10 +740,12 @@ export function recallByKeywordWithParsedClue(
   })
 
   const collapsed = collapseRecallMatches(rescored, {
-    limit: poolLimit + RECALL_COLLAPSE_BACKFILL_EXTRA
+    limit: poolLimit + RECALL_COLLAPSE_BACKFILL_EXTRA,
+    ...(effectiveNoteMatches ? { noteMatchTerms: effectiveContentTermsForRecall(parsed) } : {})
   })
   const result = buildRecallResult(raw, collapsed, {
-    contentTerms: effectiveContentTermsForRecall(parsed)
+    contentTerms: effectiveContentTermsForRecall(parsed),
+    ...(effectiveNoteMatches ? { noteMatches: effectiveNoteMatches } : {})
   })
   const withTopic = injectTopic(result, parsed)
   if (!timeSoftReopen) {

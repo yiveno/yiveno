@@ -59,7 +59,9 @@ export const MemoryNotesMetaSchema = z.object({
   lastDreamRunId: z.string().nullable(),
   /** 本 run 已处理到的源 id；空串 = 尚未推进。 */
   lastCursor: z.string(),
-  lastRunAt: z.string().datetime().nullable()
+  lastRunAt: z.string().datetime().nullable(),
+  /** 命题级命中计数（设计稿 §9.2；自有计数，不得复用 settledCount）。旧行缺省时默认为 {}。 */
+  noteHitCounts: z.record(z.string(), z.number().int().nonnegative()).default({})
 })
 
 export type MemoryNotesMeta = z.infer<typeof MemoryNotesMetaSchema>
@@ -74,7 +76,8 @@ export function createEmptyMemoryNotesMeta(ownerId: string): MemoryNotesMeta {
     dirty: true,
     lastDreamRunId: null,
     lastCursor: '',
-    lastRunAt: null
+    lastRunAt: null,
+    noteHitCounts: {}
   }
 }
 

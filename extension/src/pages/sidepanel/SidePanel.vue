@@ -1059,6 +1059,26 @@ async function runRecall(trimmedClue: string): Promise<void> {
       waitProgress: completedWaitProgress
     })
 
+    // Dreaming Phase 4：命题命中遥测（只记渲染到的卡；rank 按渲染顺序，topPick 为 0）。
+    // noteId 即命题行 id，不含命题文本。现有 Recall 指标的触发条件不变。
+    const renderedMatches = [
+      ...(response.result.topPick ? [response.result.topPick] : []),
+      ...response.result.alsoPossible
+    ]
+    renderedMatches.forEach((match, index) => {
+      const provenance = match.noteProvenance
+      if (!provenance) {
+        return
+      }
+      recallTelemetry.recordDreamingNoteHit({
+        noteId: provenance.noteId,
+        sourceMemoryItemId: provenance.sourceMemoryItemId,
+        rank: index,
+        matchedTermsCount: provenance.matchedTerms.length,
+        soleCorroboration: provenance.soleCorroboration
+      })
+    })
+
     void probeMemoryLibrary()
     void nextTick(() => {
       clueInputRef.value?.focus()

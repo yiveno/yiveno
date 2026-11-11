@@ -76,6 +76,25 @@ export class MemoryNotesMetaRepository {
     await this.putMeta({ ...existing, dirty: true })
   }
 
+  /**
+   * 命题级命中计数 +1（设计稿 §9.2；自有 store，不得复用 settledCount）。
+   * fail-open：写库失败只记日志，不抛错、不挡 Recall。
+   */
+  async recordNoteHit(ownerId: string, noteId: string): Promise<void> {
+    try {
+      const existing = await this.getOrCreateMeta(ownerId)
+      const noteHitCounts = { ...existing.noteHitCounts }
+      noteHitCounts[noteId] = (noteHitCounts[noteId] ?? 0) + 1
+      await this.putMeta({ ...existing, noteHitCounts })
+    } catch (error) {
+      logger.warn('Dreaming', '命题命中计数写入失败', {
+        ownerId,
+        noteId,
+        error: error instanceof Error ? error.message : String(error)
+      })
+    }
+  }
+
   /** meta 健康：schema 匹配且未 dirty（builtAt 可空——首次 run 前仍算可续跑）。 */
   async isSchemaCurrent(ownerId: string): Promise<boolean> {
     const meta = await this.getMeta(ownerId)

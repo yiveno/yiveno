@@ -5,6 +5,7 @@ export const RecallFramingRetrievalPathSchema = z.enum([
   'literal', // 字面 / 字段命中为主
   'constraint_neighborhood', // 类型/时间邻域为主
   'hybrid', // 语义 / RRF 参与
+  'memory_note', // 命题转述命中为主
   'mixed' // 邻域与字面/语义混合
 ])
 

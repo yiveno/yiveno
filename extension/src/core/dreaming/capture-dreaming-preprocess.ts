@@ -23,8 +23,8 @@ export type DreamingDuplicateGroupLink = {
   sourceMemoryItemId: string
 }
 
-/** 构建 duplicate-group 主键。 */
-export function buildDreamingDuplicateGroupId(ownerId: string, foldKey: string): string {
+/** 构建 duplicate-group 主键（仅本文件内用，不导出）。 */
+function buildDreamingDuplicateGroupId(ownerId: string, foldKey: string): string {
   return `${ownerId}\0${foldKey}`
 }
 

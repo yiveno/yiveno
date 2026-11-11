@@ -7,6 +7,7 @@ import type { OmniboxEvalCase } from '@/core/recall/eval/omnibox-eval-cases'
 import { toRecallEvalMustCase } from '@/core/recall/eval/omnibox-eval-cases'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import { excludeDismissedMemoryItems } from '@/core/recall/merge-recall-dialog-turn'
+import type { NoteMatchSet } from '@/core/recall/note-match'
 import {
   recallByKeywordWithParsedClue,
   shouldSkipRecallAsZeroAnchor
@@ -39,10 +40,12 @@ function emptyNoMatch(clue: string): RecallResult {
  * - `understandRecallClue` + `forceMode: lexical`（无 LLM completer）
  * - 单轮、无 context / framing
  * - 关键词 Filter（与 HybridRecallBackend Omnibox 分支同契约；无静态缩写字典）
+ * @param options.noteMatches 命题命中集（Dreaming Phase 4）；Omnibox 档位下会被忽略（不变性测）
  */
 export async function runOmniboxEval(
   cases: OmniboxEvalCase[],
-  corpus: MemoryItem[] = buildRecallEvalCorpus()
+  corpus: MemoryItem[] = buildRecallEvalCorpus(),
+  options?: { noteMatches?: NoteMatchSet }
 ): Promise<OmniboxEvalReport> {
   const caseResults: OmniboxEvalCaseResult[] = []
 
@@ -63,7 +66,8 @@ export async function runOmniboxEval(
       result = recallByKeywordWithParsedClue(items, clue, {
         nowMs: RECALL_EVAL_NOW_MS,
         parsed: understood.parsed,
-        behaviorProfile: 'omnibox'
+        behaviorProfile: 'omnibox',
+        ...(options?.noteMatches ? { noteMatches: options.noteMatches } : {})
       })
       result = {
         ...result,

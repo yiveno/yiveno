@@ -185,6 +185,30 @@ export function createRecallTelemetryRecorder() {
     })
   }
 
+  /** 命题命中（Dreaming 观察事件；与 TTE 分计）。 */
+  function recordDreamingNoteHit(input: {
+    noteId: string
+    sourceMemoryItemId: string
+    rank: number
+    matchedTermsCount: number
+    soleCorroboration: boolean
+  }): void {
+    if (!active) {
+      return
+    }
+    emit({
+      type: 'dreaming_note_hit',
+      taskId: active.taskId,
+      traceId: active.traceId,
+      noteId: input.noteId,
+      sourceMemoryItemId: input.sourceMemoryItemId,
+      rank: input.rank,
+      matchedTermsCount: input.matchedTermsCount,
+      soleCorroboration: input.soleCorroboration,
+      at: nowIso()
+    })
+  }
+
   /** 证据卡进入视口（DOM mount）。 */
   function recordEvidenceVisible(input: {
     memoryItemId: string
@@ -254,6 +278,7 @@ export function createRecallTelemetryRecorder() {
   return {
     beginClue,
     recordResultRendered,
+    recordDreamingNoteHit,
     recordEvidenceVisible,
     recordSourceOpened,
     recordUserConfirmed,

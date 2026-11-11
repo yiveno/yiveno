@@ -11,6 +11,7 @@ import {
   excludeDismissedMemoryItems,
   mergeDialogUtterances
 } from '@/core/recall/merge-recall-dialog-turn'
+import type { NoteMatchSet } from '@/core/recall/note-match'
 import { recallByKeywordWithParsedClue } from '@/core/recall/orchestrate-keyword-recall'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import type { RecallResult } from '@/core/recall/recall-result'
@@ -134,10 +135,12 @@ export function parseDialogTurnsToMerged(
  * 对线索集跑一轮 Recall eval（对齐线上主路径：口语解析 + 可选多轮 merge + 关键词 Filter）。
  * @param cases 用例；默认由调用方传入 RECALL_EVAL_CASES
  * @param corpus 记忆库；默认 buildRecallEvalCorpus()
+ * @param options.noteMatchesByCase 按用例 id 注入命题命中集（Dreaming Phase 4 eval；缺省不传）
  */
 export function runRecallEval(
   cases: RecallEvalCase[],
-  corpus: MemoryItem[] = buildRecallEvalCorpus()
+  corpus: MemoryItem[] = buildRecallEvalCorpus(),
+  options?: { noteMatchesByCase?: ReadonlyMap<string, NoteMatchSet> }
 ): RecallEvalReport {
   const caseResults: RecallEvalCaseResult[] = cases.map(evalCase => {
     const turns =
@@ -149,10 +152,12 @@ export function runRecallEval(
       RECALL_EVAL_NOW_MS
     )
     const items = excludeDismissedMemoryItems(corpus, evalCase.dismissedIds)
+    const noteMatches = options?.noteMatchesByCase?.get(evalCase.id)
     const result = attachEvalMeta(
       recallByKeywordWithParsedClue(items, currentClue, {
         nowMs: RECALL_EVAL_NOW_MS,
-        parsed: merged
+        parsed: merged,
+        ...(noteMatches ? { noteMatches } : {})
       }),
       { parsed: merged, effectiveClue: effectiveRaw, clue: currentClue }
     )

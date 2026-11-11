@@ -29,3 +29,11 @@ export const DREAMING_COMPILE_BATCH_SIZE = 8 as const
 
 /** 单次 alarm tick 最多处理批次数（有界，防 SW 被杀中途丢太多）。 */
 export const DREAMING_COMPILE_MAX_BATCHES_PER_TICK = 3 as const
+
+/**
+ * Phase 4 优先读总开关（默认 OFF）。
+ * OFF 时查询行为与 Phase 0 基线一致：不扫 note、不合并候选、不加虚拟字段分、不走命题佐证。
+ * 只能由 Stage 4 的显式一步翻为 true（评估通过后）；其余任何阶段不得翻开。
+ * 注意：这里用普通 boolean，不用 `as const false`——Stage 4 要改的就是这一行字面量。
+ */
+export const DREAMING_PREFER_READ_ENABLED: boolean = false

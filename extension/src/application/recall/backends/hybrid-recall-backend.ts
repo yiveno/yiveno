@@ -4,10 +4,13 @@
  */
 
 import { memoryItemService } from '@/application/memory/memory-item-service'
+import { mergeNoteMatchesForRecall } from '@/application/recall/note-match-merge'
 import {
   applyPageContextToMatches,
   applyStoredOutcomePairsToMatches
 } from '@/application/recall/apply-recall-context'
+import { DREAMING_PREFER_READ_ENABLED } from '@/core/dreaming/dreaming-constants'
+import type { NoteMatchSet } from '@/core/recall/note-match'
 import { createRecallFlowTrace } from '@/application/recall/create-recall-flow-trace'
 import { getClueLlmCompleter } from '@/application/recall/clue-llm-completer-registry'
 import {
@@ -93,6 +96,7 @@ import { completeRecallFramingNlgWithLlm } from '@/core/recall/understand/comple
 import { understandRecallClue } from '@/core/recall/understand/understand-recall-clue'
 import { requestWorkerEmbeddings } from '@/infrastructure/ai/embed-api-client'
 import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
+import { memoryNotesMetaRepository } from '@/infrastructure/indexeddb/memory-notes-meta-repository'
 import { t } from '@/infrastructure/i18n/t'
 
 function attachDialogMeta(
@@ -137,12 +141,15 @@ async function finalizeKeywordResult(
     skipOutcomePairs?: boolean
     /** Omnibox 快跳：略抬 open / 近因 / settled（ADR-007） */
     behaviorProfile?: 'omnibox'
+    /** 命题命中集（Phase 4）；约束邻域与 Omnibox 分支不传。 */
+    noteMatches?: NoteMatchSet
   }
 ): Promise<{ result: RecallResult; effectiveParsed: ParsedRecallClue; timeSoftReopen: boolean }> {
   const base = recallByKeywordWithParsedClue(items, displayClue, {
     candidateLimit: RECALL_RESULT_POOL_LIMIT,
     parsed,
-    ...(options?.behaviorProfile ? { behaviorProfile: options.behaviorProfile } : {})
+    ...(options?.behaviorProfile ? { behaviorProfile: options.behaviorProfile } : {}),
+    ...(options?.noteMatches ? { noteMatches: options.noteMatches } : {})
   })
   const effectiveParsed = base.parsed ?? parsed
   const timeSoftReopen =
@@ -172,11 +179,16 @@ async function finalizeKeywordResult(
     : await applyStoredOutcomePairsToMatches(matches, pairClue, {
         contentTerms: corroborationTerms
       })
-  const corroborated = filterMatchesByContentTermCorroboration(withPairs, corroborationTerms)
+  const corroborated = filterMatchesByContentTermCorroboration(
+    withPairs,
+    corroborationTerms,
+    options?.noteMatches
+  )
   return {
     result: injectTopic(
       buildRecallResult(displayClue, corroborated, {
         contentTerms: corroborationTerms,
+        ...(options?.noteMatches ? { noteMatches: options.noteMatches } : {}),
         ...(base.topic
           ? {
               topic: {
@@ -598,6 +610,8 @@ export async function fuseHybridMatches(input: {
   pageContextMode?: PageContextMode
   currentTabDomain?: string
   trace: ReturnType<typeof createRecallFlowTrace>
+  /** 命题命中集（Phase 4）；由 recallWithClue 传入。 */
+  noteMatches?: NoteMatchSet
 }): Promise<{
   result: RecallResult
   effectiveParsed: ParsedRecallClue
@@ -609,12 +623,16 @@ export async function fuseHybridMatches(input: {
     return null
   }
 
+  const corroborationTerms = effectiveContentTermsForRecall(input.parsed)
+
   // 先全量打分再折叠到 Hybrid 关键词池，避免重复书签占满 HYBRID_KEYWORD_POOL
   const keywordScored = collapseRecallMatches(
-    filterKeywordMatchesBeforeCollapse(input.items, input.filterClue)
+    filterKeywordMatchesBeforeCollapse(input.items, input.filterClue, {
+      ...(input.noteMatches ? { noteMatches: input.noteMatches } : {})
+    })
       .map(match => applyParsedClueScoreBoosts(match, input.parsed))
       .filter(match => !isGenericOnlyHitAgainstSpecificClue(input.filterClue, match.item)),
-    { limit: HYBRID_KEYWORD_POOL }
+    { limit: HYBRID_KEYWORD_POOL, noteMatchTerms: corroborationTerms }
   )
 
   const embeddedCandidates = input.items.flatMap(item => {
@@ -686,15 +704,18 @@ export async function fuseHybridMatches(input: {
     })
 
   let fused = fuseWithParsed(input.parsed)
-  const corroborationTerms = effectiveContentTermsForRecall(input.parsed)
   // Hybrid 排序：soft penalty 保留语义候选（contentTerms 误判不 hard-veto 正确近邻）。
   // soft 回退触发必须以**硬佐证**空为准——禁止用 soft 池长冒充「窗非空」导致假 no_match（诚实失败 P0）。
   // 交付仍经 buildRecallResult 硬滤；硬滤后空 → return null 降级全库关键词。
-  let softRanked = softPenalizeMatchesByContentTermCorroboration(fused, corroborationTerms)
+  let softRanked = softPenalizeMatchesByContentTermCorroboration(
+    fused,
+    corroborationTerms,
+    input.noteMatches
+  )
   // 明确排除硬过滤（与 keyword 同规；软佐证不保证排除，故此处硬切）
   softRanked = filterMatchesByExcludeContentTerms(softRanked, input.parsed.excludeContentTerms)
   const hardCorroboratedCount = filterMatchesByExcludeContentTerms(
-    filterMatchesByContentTermCorroboration(fused, corroborationTerms),
+    filterMatchesByContentTermCorroboration(fused, corroborationTerms, input.noteMatches),
     input.parsed.excludeContentTerms
   ).length
   let effectiveParsed = input.parsed
@@ -704,12 +725,16 @@ export async function fuseHybridMatches(input: {
     timeSoftReopen = true
     effectiveParsed = parsedClueForTimeSoftReopen(input.parsed)
     fused = fuseWithParsed(effectiveParsed)
-    softRanked = softPenalizeMatchesByContentTermCorroboration(fused, corroborationTerms)
+    softRanked = softPenalizeMatchesByContentTermCorroboration(
+      fused,
+      corroborationTerms,
+      input.noteMatches
+    )
     softRanked = filterMatchesByExcludeContentTerms(softRanked, effectiveParsed.excludeContentTerms)
     input.trace('info', 'Hybrid：硬佐证空窗，已做一次时间 soft 回退', {
       afterSoftCount: softRanked.length,
       afterHardCount: filterMatchesByExcludeContentTerms(
-        filterMatchesByContentTermCorroboration(fused, corroborationTerms),
+        filterMatchesByContentTermCorroboration(fused, corroborationTerms, input.noteMatches),
         effectiveParsed.excludeContentTerms
       ).length
     })
@@ -729,14 +754,20 @@ export async function fuseHybridMatches(input: {
     contentTerms: corroborationTerms
   })
   // 与上一步同源 soft penalty；交付硬滤在 buildRecallResult。
-  let afterPairs = softPenalizeMatchesByContentTermCorroboration(withPairs, corroborationTerms)
+  let afterPairs = softPenalizeMatchesByContentTermCorroboration(
+    withPairs,
+    corroborationTerms,
+    input.noteMatches
+  )
   afterPairs = filterMatchesByExcludeContentTerms(afterPairs, effectiveParsed.excludeContentTerms)
 
   const collapsed = collapseRecallMatches(afterPairs, {
-    limit: RECALL_RESULT_POOL_LIMIT + RECALL_COLLAPSE_BACKFILL_EXTRA
+    limit: RECALL_RESULT_POOL_LIMIT + RECALL_COLLAPSE_BACKFILL_EXTRA,
+    noteMatchTerms: corroborationTerms
   })
   const result = buildRecallResult(input.displayClue, collapsed, {
-    contentTerms: corroborationTerms
+    contentTerms: corroborationTerms,
+    ...(input.noteMatches ? { noteMatches: input.noteMatches } : {})
   })
   // 交付硬滤后空邻域 → 降级关键词（soft 回退后仍无词面佐证、或仅噪音 soft 池）
   if (result.outcome === 'no_match') {
@@ -946,7 +977,18 @@ export class HybridRecallBackend implements RecallBackend {
     })
     const candidateLoadMs = Date.now() - candidateLoadStartedAt
     const listedItems = listedResult.items
-    let items = excludeDismissedMemoryItems(listedItems, dismissedIds)
+    // Dreaming Phase 4：命题合并（仅非 Omnibox 入口）。
+    // 合并点在 excludeDismissedMemoryItems 之前：命题合并进来的条目同样过 dismiss 过滤与 sourceScope 过滤。
+    const noteMerge = isOmniboxEntry
+      ? { items: listedItems, noteMatches: new Map() as NoteMatchSet, ownerId: null }
+      : await mergeNoteMatchesForRecall({
+          listedItems,
+          listedSource: listedResult.source,
+          contentTerms: effectiveContentTermsForRecall(merged),
+          preferReadEnabled: DREAMING_PREFER_READ_ENABLED
+        })
+    const noteMatches: NoteMatchSet = noteMerge.noteMatches
+    let items = excludeDismissedMemoryItems(noteMerge.items, dismissedIds)
     const sourceScope = isOmniboxEntry ? 'all' : (context?.sourceScope ?? 'all')
     if (sourceScope !== 'all') {
       const before = items.length
@@ -1045,7 +1087,8 @@ export class HybridRecallBackend implements RecallBackend {
           clueEmbeddingText,
           pageContextMode,
           ...(currentTabDomain !== undefined ? { currentTabDomain } : {}),
-          trace
+          trace,
+          ...(noteMatches.size > 0 ? { noteMatches } : {})
         })) ?? null
 
       if (hybrid) {
@@ -1059,7 +1102,10 @@ export class HybridRecallBackend implements RecallBackend {
           items,
           merged,
           { mode: pageContextMode, currentTabDomain },
-          pairClue
+          pairClue,
+          {
+            ...(noteMatches.size > 0 ? { noteMatches } : {})
+          }
         )
         result = finalized.result
         effectiveParsedForFraming = finalized.effectiveParsed
@@ -1075,6 +1121,23 @@ export class HybridRecallBackend implements RecallBackend {
       parsed: effectiveParsedForFraming,
       effectiveClue: merge.effectiveRaw
     })
+
+    // Dreaming Phase 4：命题级命中计数（设计稿 §9.2；记在自有 store，不得复用 settledCount）。
+    // 在后端计数（Side Panel 没有 ownerId）；fail-open：计数失败只记日志，不挡响应。
+    if (noteMerge.ownerId) {
+      const countedMatches = [...(result.topPick ? [result.topPick] : []), ...result.alsoPossible]
+      for (const match of countedMatches) {
+        const provenance = match.noteProvenance
+        if (!provenance) {
+          continue
+        }
+        await memoryNotesMetaRepository
+          .recordNoteHit(noteMerge.ownerId, provenance.noteId)
+          .catch(() => {
+            // recordNoteHit 内部已记日志；此处不再抛错。
+          })
+      }
+    }
 
     if (isOmniboxEntry) {
       const pipelineTiming: RecallPipelineTiming = {

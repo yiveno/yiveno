@@ -7,6 +7,7 @@
 
 import type { MemoryItem } from '@/core/memory/memory-item'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
+import type { NoteMatchSet } from '@/core/recall/note-match'
 import type { RecallMatch } from '@/core/recall/recall-result'
 import {
   collectFilterIndexFields,
@@ -115,7 +116,7 @@ export function normalizeContentTermsForCorroboration(
  * 单字段是否词面命中 contentTerm（与 keyword-filter exact 路径对齐：
  * 包含、compact、拉丁屈折、host www 变体；无同义词表）。
  */
-function fieldCorroboratesTerm(originalField: string, term: string): boolean {
+export function fieldCorroboratesTerm(originalField: string, term: string): boolean {
   const fieldText = normalizeRecallText(originalField)
   const compactField = compactRecallText(originalField)
   const compactTerm = compactRecallText(term)
@@ -152,13 +153,20 @@ function fieldCorroboratesTerm(originalField: string, term: string): boolean {
   return false
 }
 
-/** 条目索引字段是否对任一 contentTerm 有词面佐证。 */
+/**
+ * 条目索引字段是否对任一 contentTerm 有词面佐证，或有命题锚（设计稿 §2.1 选 A）。
+ * noteMatches 有该源 id 即通过（第 0 条 + 七条件已在构建集时验过，此处只查集）。
+ */
 export function itemCorroboratesContentTerms(
   item: MemoryItem,
-  contentTerms: readonly string[] | undefined
+  contentTerms: readonly string[] | undefined,
+  noteMatches?: NoteMatchSet
 ): boolean {
   const terms = normalizeContentTermsForCorroboration(contentTerms)
   if (terms.length === 0) {
+    return true
+  }
+  if (noteMatches?.has(item.id)) {
     return true
   }
   const fields = collectFilterIndexFields(item)
@@ -170,13 +178,14 @@ export function itemCorroboratesContentTerms(
  */
 export function filterMatchesByContentTermCorroboration(
   matches: RecallMatch[],
-  contentTerms: readonly string[] | undefined
+  contentTerms: readonly string[] | undefined,
+  noteMatches?: NoteMatchSet
 ): RecallMatch[] {
   const terms = normalizeContentTermsForCorroboration(contentTerms)
   if (terms.length === 0) {
     return matches
   }
-  return matches.filter(match => itemCorroboratesContentTerms(match.item, terms))
+  return matches.filter(match => itemCorroboratesContentTerms(match.item, terms, noteMatches))
 }
 
 /**
@@ -194,14 +203,15 @@ export const HYBRID_CORROBORATION_SOFT_PENALTY = 8
 
 export function softPenalizeMatchesByContentTermCorroboration(
   matches: RecallMatch[],
-  contentTerms: readonly string[] | undefined
+  contentTerms: readonly string[] | undefined,
+  noteMatches?: NoteMatchSet
 ): RecallMatch[] {
   const terms = normalizeContentTermsForCorroboration(contentTerms)
   if (terms.length === 0 || matches.length === 0) {
     return matches
   }
   return matches.map(match => {
-    if (itemCorroboratesContentTerms(match.item, terms)) {
+    if (itemCorroboratesContentTerms(match.item, terms, noteMatches)) {
       return match
     }
     const penalizedScore = Math.max(1, match.score - HYBRID_CORROBORATION_SOFT_PENALTY)

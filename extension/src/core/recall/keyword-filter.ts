@@ -1,6 +1,8 @@
 import type { MemoryItem } from '@/core/memory/memory-item'
 import { isShellBookmarkTitle, weakAnchorScorePenalty } from '@/core/memory/corpus-quality-gate'
+import type { NoteMatchSet } from '@/core/recall/note-match'
 import type { RecallMatch } from '@/core/recall/recall-result'
+import { logger } from '@/infrastructure/logging/logger'
 import {
   CONTENT_COVERAGE_RATIO_SCALE,
   CONTENT_COVERAGE_TERM_MIN_LEN,
@@ -625,6 +627,82 @@ function scoreFactorForKind(kind: TokenKind): number {
 }
 
 /**
+ * 匹配词 kind 归类（与字段打分共用 {@link scoreFactorForKind}）。
+ * 多词 content term（含空格 bigram）按 ngram；单词按 term（exact 系数 1.0）。
+ */
+function classifyMatchedTermKind(term: string): TokenKind {
+  const normalized = normalizeRecallText(term)
+  if (!normalized) {
+    return 'term'
+  }
+  if (/\s/.test(normalized)) {
+    return 'ngram'
+  }
+  return 'term'
+}
+
+/** 命题虚拟字段权重（与 keywords/tags 同档；不改 keyword-filter-weights.ts）。 */
+const MEMORY_NOTE_VIRTUAL_FIELD_WEIGHT = 12
+
+/**
+ * 命题虚拟字段分（设计稿 §5.3）。
+ * 虚拟字段文本 = 命题 text + `\n` + topicAnchor 拼串；权重 12。
+ * 不参与 CONTENT_MULTI_TERM_HIT_BONUS / 覆盖率 / PRIMARY / NOTE_MULTI 加成。
+ * 验收形态：单 bigram → 10；双 exact term → 24。
+ */
+export function scoreNoteVirtualField(
+  virtualText: string,
+  matchedTerms: readonly string[]
+): number {
+  if (!virtualText.trim() || matchedTerms.length === 0) {
+    return 0
+  }
+  const fieldText = normalizeRecallText(virtualText)
+  const compactField = compactRecallText(virtualText)
+  let exactScore = 0
+  let ngramFieldHits = 0
+
+  for (const rawTerm of matchedTerms) {
+    const token = normalizeRecallText(rawTerm)
+    if (!token) {
+      continue
+    }
+    const compactToken = compactRecallText(token)
+    const kind = classifyMatchedTermKind(token)
+    if (!exactTokenHit(fieldText, compactField, token, compactToken, virtualText)) {
+      // 门已命中、打分器未归类命中：按 exact 计并 warn（不应发生）
+      logger.warn('Dreaming', '命题虚拟字段计分：门命中但 exactTokenHit 未命中，按 exact 计', {
+        termPreview: token.slice(0, 40)
+      })
+      exactScore += MEMORY_NOTE_VIRTUAL_FIELD_WEIGHT
+      continue
+    }
+    exactScore += MEMORY_NOTE_VIRTUAL_FIELD_WEIGHT * scoreFactorForKind(kind)
+    if (kind === 'ngram') {
+      ngramFieldHits += 1
+    }
+  }
+
+  if (ngramFieldHits > 0 && exactScore > 0) {
+    // 与既有字段路径一致：按命中字段数给 NGRAM_FIELD_BONUS（虚拟字段计 1 个字段）
+    exactScore += NGRAM_FIELD_BONUS
+  }
+  return exactScore
+}
+
+/** 命题虚拟字段文本（text + topicAnchor）。 */
+export function buildNoteVirtualFieldText(input: {
+  propositionText: string
+  topicAnchor: readonly string[]
+}): string {
+  const anchors = input.topicAnchor.map(anchor => anchor.trim()).filter(Boolean)
+  if (anchors.length === 0) {
+    return input.propositionText
+  }
+  return `${input.propositionText}\n${anchors.join(' ')}`
+}
+
+/**
  * 行为加权：仅在已有词面命中时使用。
  * - openCount：explore「看过」（默认偏低；omnibox 略抬）
  * - settledCount：§7.2 履约正例（常开/确认过的记忆；此前未进本函数）
@@ -1089,6 +1167,8 @@ export function filterMemoryItemsByKeyword(
     minScore?: number
     nowMs?: number
     behaviorProfile?: RecallBehaviorProfile
+    /** 命题命中集（Phase 4）；omnibox 档位忽略。 */
+    noteMatches?: NoteMatchSet
   } = {}
 ): RecallMatch[] {
   const limit = options.limit ?? 6
@@ -1099,9 +1179,29 @@ export function filterMemoryItemsByKeyword(
   }
   // 整表只分词一次，避免 N 次重复 tokenize
   const tokens = tokenizeRecallClueDetailed(clue)
+  // 纵深防御：omnibox 忽略 noteMatches（与 orchestrate 同理）
+  const noteMatches = options.behaviorProfile === 'omnibox' ? undefined : options.noteMatches
 
   return items
-    .map(item => scoreMemoryItemWithTokens(item, tokens, scoreOptions, clue))
+    .map(item => {
+      const base = scoreMemoryItemWithTokens(item, tokens, scoreOptions, clue)
+      const provenance = noteMatches?.get(item.id)
+      if (!provenance) {
+        return base
+      }
+      // 虚拟字段分必须在 minScore 截断前加上，否则零字面命中源永远进不了池。
+      const virtualText = buildNoteVirtualFieldText({
+        propositionText: provenance.propositionText,
+        topicAnchor: provenance.topicAnchor
+      })
+      const noteScore = scoreNoteVirtualField(virtualText, provenance.matchedTerms)
+      return {
+        ...base,
+        score: base.score + noteScore,
+        matchedFields: [...base.matchedFields, 'memory_note'],
+        noteProvenance: provenance
+      }
+    })
     .filter(match => match.score >= minScore)
     .sort((left, right) => {
       if (right.score !== left.score) {

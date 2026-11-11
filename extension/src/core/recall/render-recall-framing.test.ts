@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
+import { buildRecallFramingFacts } from '@/core/recall/build-recall-framing-facts'
+import { createTextExcerptMemoryItem } from '@/core/memory/create-memory-item'
 import { renderRecallFraming } from '@/core/recall/render-recall-framing'
 import type { RecallFramingCandidateFacts } from '@/core/recall/recall-framing-facts'
+import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
+import { buildMemoryNoteId } from '@/infrastructure/indexeddb/memory-notes-types'
 
 const translate = (key: string, subs?: string | string[]) => {
   const table: Record<string, string> = {
@@ -171,5 +175,94 @@ describe('renderRecallFraming', () => {
     )
     expect(text).not.toContain('The item below is only a guess')
     expect(text.match(/a guess, not the answer/g)?.length ?? 0).toBe(1)
+  })
+
+  it('memory_note 路径渲染 framing_p2_memory_note 文案', () => {
+    const localTranslate = (key: string, subs?: string | string[]) => {
+      if (key === 'framing_p2_memory_note') {
+        return 'A restated note of what you saved shaped this list.'
+      }
+      return translate(key, subs)
+    }
+    const facts: RecallFramingCandidateFacts = {
+      kind: 'candidates',
+      understood: {
+        objectTypes: [],
+        contentTerms: ['rottnest'],
+        behaviorHints: [],
+        noteHint: false
+      },
+      retrievalPath: 'memory_note',
+      buckets: [],
+      stance: 'confident_neighborhood',
+      counts: { total: 1, shown: 1 },
+      isWideNeighborhood: false
+    }
+    expect(renderRecallFraming(facts, localTranslate)).toContain(
+      'A restated note of what you saved shaped this list.'
+    )
+  })
+
+  it('hybrid > 0 且 memory_note > 0.15 → mixed', () => {
+    const ownerId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+    const profile = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
+    const makeItem = (id: string) => {
+      const item = createTextExcerptMemoryItem({
+        ownerId,
+        sourceLocalProfileId: profile,
+        payload: {
+          selectedText: `excerpt body ${id}`,
+          sourceUrl: `https://example.com/${id}`,
+          pageTitle: 'Page',
+          domain: 'example.com'
+        },
+        captureEntry: 'context_menu'
+      })
+      return { ...item, id }
+    }
+    const noteMatch = (id: string): RecallMatch => ({
+      item: makeItem(id),
+      score: 24,
+      matchedFields: ['memory_note'],
+      noteProvenance: {
+        noteId: buildMemoryNoteId(ownerId, id, 0),
+        sourceMemoryItemId: id,
+        matchedTerms: ['rottnest'],
+        soleCorroboration: true,
+        propositionText: 'Rottnest restated',
+        topicAnchor: [],
+        propositionIndex: 0
+      }
+    })
+    const embeddingMatch = (id: string): RecallMatch => ({
+      item: makeItem(id),
+      score: 20,
+      matchedFields: ['embedding']
+    })
+    // 样本 5：memory_note×1 + embedding×1 → memoryNoteRatio 0.2、hybridRatio 0.2 → mixed
+    const pool: RecallMatch[] = [
+      noteMatch('11111111-1111-4111-8111-111111111201'),
+      embeddingMatch('11111111-1111-4111-8111-111111111202'),
+      embeddingMatch('11111111-1111-4111-8111-111111111203'),
+      embeddingMatch('11111111-1111-4111-8111-111111111204'),
+      embeddingMatch('11111111-1111-4111-8111-111111111205')
+    ]
+    const result: RecallResult = {
+      outcome: 'top_pick',
+      topPick: pool[0]!,
+      alsoPossible: pool.slice(1),
+      totalRankedCount: pool.length,
+      clue: 'rottnest',
+      parsed: {
+        raw: 'rottnest',
+        contentTerms: ['rottnest'],
+        confidence: 'medium'
+      }
+    }
+    const facts = buildRecallFramingFacts(result)
+    expect(facts?.kind).toBe('candidates')
+    if (facts?.kind === 'candidates') {
+      expect(facts.retrievalPath).toBe('mixed')
+    }
   })
 })

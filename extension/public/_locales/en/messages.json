@@ -2410,6 +2410,9 @@
   "explain_field_note": {
     "message": "note"
   },
+  "explain_field_memory_note": {
+    "message": "restated note"
+  },
   "explain_field_embedding": {
     "message": "related meaning"
   },
@@ -2448,6 +2451,9 @@
   },
   "explain_field_short_note": {
     "message": "note"
+  },
+  "explain_field_short_memory_note": {
+    "message": "restated note"
   },
   "explain_field_short_embedding": {
     "message": "meaning"
@@ -2599,6 +2605,9 @@
   },
   "framing_p2_hybrid": {
     "message": "Wording and related meaning shaped this list."
+  },
+  "framing_p2_memory_note": {
+    "message": "A restated note of what you saved shaped this list."
   },
   "framing_p2_mixed": {
     "message": "Type and wording both shaped this list."

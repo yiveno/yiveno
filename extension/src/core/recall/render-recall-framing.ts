@@ -83,6 +83,7 @@ function renderRetrievalPath(path: RecallFramingRetrievalPath, translate: Transl
     literal: 'framing_p2_literal',
     constraint_neighborhood: 'framing_p2_constraint',
     hybrid: 'framing_p2_hybrid',
+    memory_note: 'framing_p2_memory_note',
     mixed: 'framing_p2_mixed'
   }
   return translate(keyByPath[path])

@@ -2407,6 +2407,9 @@
   "explain_field_note": {
     "message": "附注"
   },
+  "explain_field_memory_note": {
+    "message": "转述"
+  },
   "explain_field_embedding": {
     "message": "相关含义"
   },
@@ -2445,6 +2448,9 @@
   },
   "explain_field_short_note": {
     "message": "附注"
+  },
+  "explain_field_short_memory_note": {
+    "message": "转述"
   },
   "explain_field_short_embedding": {
     "message": "含义"
@@ -2596,6 +2602,9 @@
   },
   "framing_p2_hybrid": {
     "message": "措辞与相关含义共同形成了这份列表。"
+  },
+  "framing_p2_memory_note": {
+    "message": "对你保存内容的一句转述形成了这份列表。"
   },
   "framing_p2_mixed": {
     "message": "类型与措辞共同形成了这份列表。"
