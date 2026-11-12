@@ -154,6 +154,33 @@ export const SELECTION_TOOLBAR_COMPONENT_CSS = `
     outline: 2px solid var(--focus-ring);
     outline-offset: 1px;
   }
+  .note-actions {
+    display: flex;
+    gap: 6px;
+    justify-content: flex-end;
+    margin-top: 6px;
+  }
+  .note-action-button {
+    margin: 0;
+    padding: 6px 12px;
+    border: none;
+    border-radius: var(--radius-full);
+    font: 600 13px/1.2 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    color: var(--accent-hover);
+    background: transparent;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .note-action-button:hover:not(:disabled) {
+    background: var(--yiveno-primary-alpha-10);
+  }
+  .note-action-button--primary {
+    color: var(--on-accent);
+    background: var(--accent);
+  }
+  .note-action-button--primary:hover:not(:disabled) {
+    background: var(--accent-hover);
+  }
   .is-hidden {
     display: none !important;
   }

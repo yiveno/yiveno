@@ -170,6 +170,8 @@ export type MemoryBackgroundMessage =
 export type MemoryItemSuccessResponse = {
   ok: true
   item: MemoryItem
+  /** 摘录保存去重命中已存未删条目时为 true（可选，后向兼容） */
+  duplicate?: boolean
 }
 
 export type MemoryItemListSuccessResponse = {

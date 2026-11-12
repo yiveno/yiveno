@@ -1,14 +1,17 @@
 import {
   isSelectionToolbarStatusLocked,
   shouldDismissToolbarOnScroll,
+  shouldRepositionToolbarOnScroll,
   type SelectionToolbarUiMode
 } from '@/content/selection-toolbar/selection-toolbar-guards'
 
-/** 滚动收起：rAF 合并，附注模式与状态锁定时不收起。 */
+/** 滚动：rAF 合并；操作态收起，附注态跟随重定位，锁定时不动。 */
 export function createSelectionToolbarScrollDismissHandler(input: {
   getUiMode: () => SelectionToolbarUiMode
   getButtonState: () => Parameters<typeof isSelectionToolbarStatusLocked>[0]
   onDismiss: () => void
+  /** 附注模式下滚动跟随选区（按快照锚点重定位） */
+  onReposition?: () => void
   requestAnimationFrame?: (callback: FrameRequestCallback) => number
   cancelAnimationFrame?: (handle: number) => void
 }): { onScroll: () => void; cancel: () => void } {
@@ -35,13 +38,23 @@ export function createSelectionToolbarScrollDismissHandler(input: {
         return
       }
       const statusLocked = isSelectionToolbarStatusLocked(input.getButtonState())
+      const uiMode = input.getUiMode()
       if (
         shouldDismissToolbarOnScroll({
           statusLocked,
-          uiMode: input.getUiMode()
+          uiMode
         })
       ) {
         input.onDismiss()
+        return
+      }
+      if (
+        shouldRepositionToolbarOnScroll({
+          statusLocked,
+          uiMode
+        })
+      ) {
+        input.onReposition?.()
       }
     })
   }

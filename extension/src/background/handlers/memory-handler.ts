@@ -31,7 +31,8 @@ import { logger } from '@/infrastructure/logging/logger'
 import { bumpExcerptCaptureCount } from '@/infrastructure/storage/first-recall-onboarding-storage'
 import { bumpMemoryLibraryRevision } from '@/infrastructure/storage/memory-library-revision-storage'
 
-function resolveMemoryErrorCode(error: unknown, fallback: MemoryErrorCode): MemoryErrorCode {
+/** 将未知错误归约为 MemoryErrorCode（右键失败页内反馈等复用）。 */
+export function resolveMemoryErrorCode(error: unknown, fallback: MemoryErrorCode): MemoryErrorCode {
   if (isCodedError(error)) {
     const parsed = MemoryErrorCodeSchema.safeParse(error.errorCode)
     if (parsed.success) {
@@ -98,7 +99,7 @@ export async function handleCaptureTextExcerpt(
       })
       return toErrorResponse('CAPTURE_UNSAVABLE_PAGE')
     }
-    const item = await memoryItemService.captureTextExcerpt({
+    const { item, duplicate } = await memoryItemService.captureTextExcerpt({
       payload: {
         selectedText: input.selectedText,
         sourceUrl: input.sourceUrl,
@@ -109,20 +110,23 @@ export async function handleCaptureTextExcerpt(
       ...optionalProp('clues', input.note ? { note: input.note } : undefined),
       captureEntry: input.captureEntry ?? 'context_menu'
     })
-    void flashActionBadge('success')
-    void bumpExcerptCaptureCount().catch(error => {
-      logger.warn('Capture', '摘录计数更新失败', error)
-    })
-    void bumpMemoryLibraryRevision().catch(error => {
-      logger.warn('Capture', '库修订信号更新失败', error)
-    })
+    if (!duplicate) {
+      void flashActionBadge('success')
+      void bumpExcerptCaptureCount().catch(error => {
+        logger.warn('Capture', '摘录计数更新失败', error)
+      })
+      void bumpMemoryLibraryRevision().catch(error => {
+        logger.warn('Capture', '库修订信号更新失败', error)
+      })
+    }
     flowOk('Capture', '捕获摘录', startedAt, {
       id: item.id,
       entry: input.captureEntry ?? 'context_menu',
       textPreview: previewText(input.selectedText),
-      hasNote: Boolean(input.note)
+      hasNote: Boolean(input.note),
+      duplicate
     })
-    return { ok: true, item }
+    return duplicate ? { ok: true, item, duplicate: true } : { ok: true, item }
   } catch (error) {
     flowFail('Capture', '捕获摘录', startedAt, error)
     void flashActionBadge('error')

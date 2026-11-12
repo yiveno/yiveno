@@ -107,6 +107,9 @@
   "selection_toolbar_saved": {
     "message": "已保存到 Yiveno"
   },
+  "selection_toolbar_saved_duplicate": {
+    "message": "已经保存过了"
+  },
   "selection_toolbar_saved_hint": {
     "message": "用这段来找：「$1」— 打开后可先改再发",
     "placeholders": {

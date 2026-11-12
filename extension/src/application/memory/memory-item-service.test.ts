@@ -47,7 +47,10 @@ describe('MemoryItemService LLM enrichment 调度', () => {
       sourceLocalProfileId: 'p',
       payload: { title: 'excerpt-like', url: 'https://example.com/e' }
     })
-    vi.mocked(memoryItemRepository.createTextExcerpt).mockResolvedValue(item as never)
+    vi.mocked(memoryItemRepository.createTextExcerpt).mockResolvedValue({
+      item: item as never,
+      duplicate: false
+    })
     const service = new MemoryItemService(memoryItemRepository)
     await service.captureTextExcerpt({
       ownerId: 'o',

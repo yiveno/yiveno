@@ -981,7 +981,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 | Side Panel 对话式找                 | 已上线（R-shell）                              | 主壳；composer / 邻域 / 追问；关 Panel 丢会话（P0）；见 §7.0                                                                                                                                                                                                                                                                                            |
 | Action Popup 作对话主壳             | 已退役                                         | 无 `default_popup`；`pages/popup` 已删除                                                                                                                                                                                                                                                                                                                |
 | 右键保存选区                        | 已上线                                         | Text Excerpt；非书签的主动 Capture                                                                                                                                                                                                                                                                                                                      |
-| 划词保存浮层                        | 已上线                                         | Content Script；可直存或「添加附注」后写入 `clues.note`；Settings 可关；默认开                                                                                                                                                                                                                                                                          |
+| 划词保存浮层                        | 已上线                                         | Content Script；可直存或「添加附注」后写入 `clues.note`；Settings 可关；默认开；存成后给「用这段来找」入口（预填开 Side Panel，不自动发）                                                                                                                                                                                                               |
 | 书签/摘录事后附注                   | 已上线                                         | `UPDATE_MEMORY_NOTE`；书签树编辑；仅本地 `clues.note`，不同步 Chrome                                                                                                                                                                                                                                                                                    |
 | Chrome 书签导入 + 增量 sync         | 已上线                                         | 书签唯一写入主路径；原生加书签 → onCreated 同步；upsert 保留 note                                                                                                                                                                                                                                                                                       |
 | LocalProfile / ownerId              | 已上线                                         | 未登录可用；登录后 `ownerId=accountId`                                                                                                                                                                                                                                                                                                                  |
@@ -1120,11 +1120,11 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 - 空状态：无记忆时引导保存或等待导入，不空白报错。
 - 受限页（`chrome://` 等）保存失败 → 明确文案。
 - 无选区 → 不提供「保存选区」。
-- 重复数据：**库内** MVP 允许并存（含重复 URL / 相同摘录正文）。**Recall 结果层**须折叠展示（见下）。
+- 重复数据：摘录保存时按（ownerId、sourceUrl、归一化正文）去重；**归一化正文** = `selectedText` trim 后截断至 10_000 字符（与 `normalizeTextExcerptSelection` / 仓库去重键一致；不做空白折叠或大小写折叠）。命中已存未删条目时返回该条目、不新建（本次附注仅在已存条目无附注时补写）；书签仍按 chromeId upsert。**Recall 结果层**仍须折叠展示（见 §3.1；折叠键是另一套——摘录折叠键为 `selectedText.trim()`、不拼 sourceUrl，跨页同句会折）。
 
 ### 3.1 Recall 重复折叠（Normative）
 
-- **范围：** 仅找东西主壳 / Omnibox 共用的 Recall 结果；不写入去重、不改记忆库树/列表。
+- **范围：** 仅找东西主壳 / Omnibox 共用的 Recall 结果；折叠本身不写入去重（保存时去重见 §3）、不改记忆库树/列表。
 - **书签键：** 规范化完整 URL（host 小写并去 `www.`；去默认端口；非根 path 去尾 `/`；保留 protocol / query / hash）。**不同 path 仍为不同键。** 禁止复用会去掉 hash 的 sync 归一化。
 - **摘录键：** `payload.selectedText.trim()` 全等；**不**拼 `sourceUrl`（跨页同句会折——已接受）。
 - **跨类型：** 书签 ↔ 摘录永不互折。
@@ -1145,7 +1145,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 
 ### 3.1.1 派生字段复用键（Normative · enrichment / embedding）
 
-**目的：** 同内容多条 MemoryItem（库内并存）时，**不重复**打 Worker LLM enrichment / embed；库内不去重、不合并条目。最终线索 = **多层组装**，不是整包不可拆 blob。
+**目的：** 同内容多条 MemoryItem（库内并存）时，**不重复**打 Worker LLM enrichment / embed；**已入库条目不合并、不删除**（本小节只管派生字段复用，不是 §3 保存时去重）。最终线索 = **多层组装**，不是整包不可拆 blob。
 
 **单一真相源：**
 
@@ -2411,7 +2411,7 @@ Chrome API / 选区
 **按模块渐进顺序（未标「已上线」不得暗示可用）：**
 
 1. 产品内信号（最近存 / 开 / 上次线索）— **behaviorHints 软加权已上线**；会话「最近打开」信号仍可加厚
-2. 选区预填 — **已接线**：划选浮层 **「用这段来找」**（与保存并列；**不要求先存**）→ content 发 `OPEN_RECALL_SHELL`（payload `{ clue, autoSubmit:false }`）→ **SW 先开火开壳、再写** `yiveno.recallPrefill`（与 Omnibox 同手势铁律；避免 content 先写 session 与 Panel mount 竞态）→ composer 填入可改线索、**不**自动提交。Panel **已开**时仍写预填并由 storage 监听消费；开壳 API 失败但预填已写入时仍 ok、**不**谎报「打不开」。语义：用眼前文字当 clue 找**库里已有**痕迹，不是「找刚划的这段」。存成反馈只表达进库，不再叠同一 CTA。Getting Started / Omnibox 仍为 `autoSubmit:true`。预填截断 `RECALL_PREFILL_CLUE_MAX=120`。Getting Started 页不展示此钮（独立 Step 2）。
+2. 选区预填 — **已接线**：划选浮层 **「用这段来找」**（与保存并列；**不要求先存**）→ content 发 `OPEN_RECALL_SHELL`（payload `{ clue, autoSubmit:false }`）→ **SW 先开火开壳、再写** `yiveno.recallPrefill`（与 Omnibox 同手势铁律；避免 content 先写 session 与 Panel mount 竞态）→ composer 填入可改线索、**不**自动提交。Panel **已开**时仍写预填并由 storage 监听消费；开壳 API 失败但预填已写入时仍 ok、**不**谎报「打不开」。语义：用眼前文字当 clue 找**库里已有**痕迹，不是「找刚划的这段」。**存成反馈**亦给同一入口（hint +「用这段来找」；预填刚存正文、不自动发；约 5s 可读可点；Getting Started 页存成反馈不展示此钮）。操作态划选钮与存成后钮共用开壳预填。Getting Started / Omnibox 仍为 `autoSubmit:true`。预填截断 `RECALL_PREFILL_CLUE_MAX=120`。Getting Started 页操作态亦不展示划选「用这段来找」（独立 Step 2）。
 3. 追问芯片（刚存的 / 刚打开过的）— **有信号才挂**（信号接线渐进）。属 **弱通道**。与 LLM 芯片同屏时 **不抢主**。**禁止** dismiss 后 site/quote/note/type 固定银行（已废）。**禁止**再以「Related to this site」把 host 当 clue 发出。
 4. **页上下文 + 来源范围 — 已上线**：composer 工具条左侧 **Recall settings** 图标 → 向上悬浮面板（默认收起；展开时蒙版挡住其余区域，点蒙版或 Esc 收起）。页上下文与来源类型分两排，中间分隔线。页上下文双可选归一为 `pageContextMode`：
    - **none**（默认双关）：当前域名**不参与**检索（**不**静默同域加成）。

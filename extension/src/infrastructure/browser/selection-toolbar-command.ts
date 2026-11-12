@@ -21,9 +21,14 @@ export const SELECTION_TOOLBAR_CONTENT_SCRIPT_FILE = 'content-selection-toolbar.
 const INJECT_RETRY_ATTEMPTS = 10
 const INJECT_RETRY_DELAY_MS = 50
 
+export type DispatchSelectionToolbarIgnoredReason =
+  | 'no_selection' // 无选区
+  | 'unsavable_page' // 不可存页面
+  | 'no_active_tab' // 无活动标签或 URL
+
 export type DispatchSelectionToolbarResult =
   | { status: 'ok' }
-  | { status: 'ignored' }
+  | { status: 'ignored'; reason: DispatchSelectionToolbarIgnoredReason }
   | { status: 'command_failed' }
   | { status: 'no_receiver' }
 
@@ -87,8 +92,11 @@ export async function dispatchSelectionToolbarCommand(
   const tabId = tab?.id
   const url = tab?.url
 
-  if (tabId === undefined || !url || !isSavablePageUrl(url)) {
-    return { status: 'ignored' }
+  if (tabId === undefined || !url) {
+    return { status: 'ignored', reason: 'no_active_tab' }
+  }
+  if (!isSavablePageUrl(url)) {
+    return { status: 'ignored', reason: 'unsavable_page' }
   }
 
   let response = await runCommandViaPageApi(tabId, type)
@@ -111,7 +119,7 @@ export async function dispatchSelectionToolbarCommand(
   }
 
   if ('skipped' in response && response.skipped) {
-    return { status: 'ignored' }
+    return { status: 'ignored', reason: 'no_selection' }
   }
 
   if (!response.ok) {
@@ -120,4 +128,34 @@ export async function dispatchSelectionToolbarCommand(
   }
 
   return { status: 'ok' }
+}
+
+/**
+ * 通知页内划词浮层展示保存失败原因。
+ * 返回 true 表示页内已展示；无接收端 / 抛错 / 无响应 → false（调用方再闪 badge）。
+ */
+export async function notifySelectionToolbarError(
+  tabId: number,
+  errorCode: string
+): Promise<boolean> {
+  try {
+    const response = await chrome.tabs.sendMessage(tabId, {
+      scope: 'content',
+      type: 'SHOW_SELECTION_ERROR',
+      errorCode
+    })
+    return (
+      typeof response === 'object' &&
+      response !== null &&
+      'shown' in response &&
+      (response as { shown: unknown }).shown === true
+    )
+  } catch (error) {
+    logger.warn('Commands', '划词失败页内通知未送达', {
+      tabId,
+      errorCode,
+      error: error instanceof Error ? error.message : String(error)
+    })
+    return false
+  }
 }

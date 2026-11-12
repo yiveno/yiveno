@@ -64,12 +64,13 @@ describe('dreaming-duplicate-group-repository', () => {
       domain: 'example.com'
     }
 
-    const first = await memoryItemRepository.createTextExcerpt({
+    const { item: first } = await memoryItemRepository.createTextExcerpt({
       payload,
       captureEntry: 'context_menu'
     })
-    const second = await memoryItemRepository.createTextExcerpt({
-      payload,
+    // 同正文不同页：保存去重不合并，但 Dreaming 折叠键仍同（不拼 sourceUrl）
+    const { item: second } = await memoryItemRepository.createTextExcerpt({
+      payload: { ...payload, sourceUrl: 'https://example.com/g-other' },
       captureEntry: 'context_menu'
     })
 

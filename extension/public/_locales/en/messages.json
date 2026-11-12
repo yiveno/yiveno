@@ -107,6 +107,9 @@
   "selection_toolbar_saved": {
     "message": "Saved to Yiveno"
   },
+  "selection_toolbar_saved_duplicate": {
+    "message": "Already saved to Yiveno"
+  },
   "selection_toolbar_saved_hint": {
     "message": "Find with this: “$1” — edit in Recall before sending",
     "placeholders": {

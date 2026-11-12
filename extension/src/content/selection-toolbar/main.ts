@@ -8,10 +8,14 @@ import {
 import { captureTextExcerpt, openRecallShell } from '@/infrastructure/messaging/background-client'
 import {
   computeSelectionToolbarAnchor,
+  matchNoteDraft,
+  resolveScrolledSelectionAnchor,
   resolveSelectionAnchorRect,
   SELECTION_TOOLBAR_SHOW_DELAY_MS,
+  shouldEvaluateSelectionOnChange,
   shouldHideToolbarOnEmptySelection,
-  shouldShowSelectionToolbar
+  shouldShowSelectionToolbar,
+  shouldStashNoteDraft
 } from '@/content/selection-toolbar/selection-toolbar-logic'
 import {
   isSelectionToolbarStatusLocked,
@@ -20,9 +24,11 @@ import {
 import { createSelectionToolbarScrollDismissHandler } from '@/content/selection-toolbar/selection-toolbar-scroll'
 import {
   parseContentSelectionCommandMessage,
+  parseContentSelectionErrorMessage,
   SELECTION_TOOLBAR_KEEPALIVE_PORT,
   SELECTION_TOOLBAR_PAGE_API_KEY,
   type ContentSelectionCommandResponse,
+  type ContentSelectionErrorResponse,
   type SelectionToolbarCommandType,
   type SelectionToolbarPageApi
 } from '@/core/messaging/content-messages'
@@ -45,8 +51,8 @@ import { getSelectionToolbarShadowStyles } from '@/content/selection-toolbar/sel
 
 const TOOLBAR_HOST_ID = 'yiveno-selection-toolbar-host'
 const NOTE_MAX_LENGTH = 500
-/** 存成抓住感展示时长。 */
-const SAVED_FEEDBACK_HIDE_MS = 2400
+/** 存成抓住感展示时长（含「用这段来找」按钮可读可点窗口）。 */
+const SAVED_FEEDBACK_HIDE_MS = 5000
 
 /** 划词浮层 UI 模式。 */
 type ToolbarUiMode =
@@ -62,6 +68,9 @@ interface PendingSelectionCapture {
   contextBefore?: string
   contextAfter?: string
   anchorRect: { top: number; left: number; width: number; height: number }
+  /** 快照时的滚动量（附注滚动跟随用） */
+  scrollX: number
+  scrollY: number
 }
 
 let toolbarEnabled = DEFAULT_USER_SETTINGS.selectionToolbarEnabled
@@ -69,21 +78,34 @@ let showTimer: ReturnType<typeof setTimeout> | null = null
 let hideTimer: ReturnType<typeof setTimeout> | null = null
 let hostElement: HTMLElement | null = null
 let shadowRoot: ShadowRoot | null = null
+/** 浮层外壳（量 offsetWidth 做防溢出钳制） */
+let shellElement: HTMLElement | null = null
 let actionsRow: HTMLElement | null = null
 let notePanel: HTMLElement | null = null
-/** 存成后的抓住感面板（预览 + 可选找回引导）。 */
+/** 存成后的抓住感面板（预览 + 「用这段来找」入口）。 */
 let savedFeedbackPanel: HTMLElement | null = null
 let savedPreviewEl: HTMLElement | null = null
 let savedHintEl: HTMLElement | null = null
+let savedRecallButton: HTMLButtonElement | null = null
 let saveButton: HTMLButtonElement | null = null
 /** 划选「用这段来找」：选区当 clue 预填 composer，不要求先存。 */
 let findButton: HTMLButtonElement | null = null
 let noteButton: HTMLButtonElement | null = null
 let noteInput: HTMLTextAreaElement | null = null
+let noteSaveButton: HTMLButtonElement | null = null
+let noteCancelButton: HTMLButtonElement | null = null
 let statusButton: HTMLButtonElement | null = null
 let uiMode: ToolbarUiMode = 'actions'
 let buttonState: ToolbarButtonState = 'idle'
 let pendingCapture: PendingSelectionCapture | null = null
+/** 附注草稿：Esc/失焦/滚动出视口时 stash，同选区重开附注时恢复 */
+let pendingNoteDraft: { selectedText: string; note: string } | null = null
+/** 存成后「用这段来找」用的正文（保存成功后已清页内选区） */
+let lastSavedSelectionText: string | null = null
+/** 鼠标按下中（拖拽选词过程中 selectionchange 不评估展示） */
+let mouseDown = false
+/** 最近一次选区类按键时间（键盘唤出守卫） */
+let lastSelectionKeyDownAt: number | null = null
 /** 扩展热重载后旧 content script 仍存活时置 true，停止一切 Chrome API / DOM 交互 */
 let tornDown = false
 let listenersRegistered = false
@@ -91,6 +113,17 @@ let listenersRegistered = false
 let keepalivePort: chrome.runtime.Port | null = null
 /** 页面是否正因历史导航停在 bfcache（port 已被 Chrome 主动断开）。 */
 let pageFrozenInBfCache = false
+
+const SELECTION_KEY_NAMES = [
+  'ArrowLeft',
+  'ArrowRight',
+  'ArrowUp',
+  'ArrowDown',
+  'Home',
+  'End',
+  'PageUp',
+  'PageDown'
+] as const
 
 /**
  * 扩展重载后 `chrome.runtime.id` 会变为 undefined；
@@ -207,6 +240,8 @@ function capturePendingSelection(): void {
   pendingCapture = {
     selectedText,
     anchorRect,
+    scrollX: window.scrollX,
+    scrollY: window.scrollY,
     ...(context?.contextBefore ? { contextBefore: context.contextBefore } : {}),
     ...(context?.contextAfter ? { contextAfter: context.contextAfter } : {})
   }
@@ -405,7 +440,33 @@ function ensureToolbarHost(): void {
     }, 0)
   })
 
-  notePanel.append(noteInput)
+  const noteActions = document.createElement('div')
+  noteActions.className = 'note-actions'
+
+  noteSaveButton = document.createElement('button')
+  noteSaveButton.type = 'button'
+  noteSaveButton.className = 'note-action-button note-action-button--primary'
+  noteSaveButton.textContent = safeT('selection_toolbar_note_save') ?? 'Save'
+  noteSaveButton.addEventListener('mousedown', preserveSelectionOnMouseDown)
+  noteSaveButton.addEventListener('click', event => {
+    event.preventDefault()
+    event.stopPropagation()
+    void handleSaveClick({ withNote: true })
+  })
+
+  noteCancelButton = document.createElement('button')
+  noteCancelButton.type = 'button'
+  noteCancelButton.className = 'note-action-button'
+  noteCancelButton.textContent = safeT('selection_toolbar_note_cancel') ?? 'Cancel'
+  noteCancelButton.addEventListener('mousedown', preserveSelectionOnMouseDown)
+  noteCancelButton.addEventListener('click', event => {
+    event.preventDefault()
+    event.stopPropagation()
+    closeNotePanel()
+  })
+
+  noteActions.append(noteSaveButton, noteCancelButton)
+  notePanel.append(noteInput, noteActions)
 
   savedFeedbackPanel = document.createElement('div')
   savedFeedbackPanel.className = 'saved-feedback'
@@ -414,12 +475,22 @@ function ensureToolbarHost(): void {
   savedHintEl = document.createElement('p')
   savedHintEl.className = 'saved-hint'
   savedHintEl.classList.add('is-hidden')
-  savedFeedbackPanel.append(savedPreviewEl, savedHintEl)
+  savedRecallButton = document.createElement('button')
+  savedRecallButton.type = 'button'
+  savedRecallButton.className = 'saved-recall-button is-hidden'
+  savedRecallButton.textContent = safeT('selection_toolbar_try_recall') ?? findLabel
+  savedRecallButton.addEventListener('mousedown', preserveSelectionOnMouseDown)
+  savedRecallButton.addEventListener('click', event => {
+    event.preventDefault()
+    event.stopPropagation()
+    void handleSavedRecallClick()
+  })
+  savedFeedbackPanel.append(savedPreviewEl, savedHintEl, savedRecallButton)
 
-  const shell = document.createElement('div')
-  shell.className = 'shell'
-  shell.append(actionsRow, notePanel, savedFeedbackPanel)
-  shadowRoot.append(style, shell)
+  shellElement = document.createElement('div')
+  shellElement.className = 'shell'
+  shellElement.append(actionsRow, notePanel, savedFeedbackPanel)
+  shadowRoot.append(style, shellElement)
   document.documentElement.appendChild(hostElement)
   uiMode = 'actions'
   buttonState = 'idle'
@@ -496,15 +567,84 @@ function showStatus(state: 'saving' | 'saved' | 'error', label: string): void {
   )
 }
 
-/** 展示存成抓住感：预览正文（找东西入口在划选菜单，不绑存成后）。 */
-function showSavedFeedback(input: { preview: string }): void {
+/**
+ * 展示存成抓住感：预览正文 + 存成后「用这段来找」入口（预填开 Side Panel，不自动发）。
+ * GS 页例外：hint/按钮隐藏（试找走独立 Step 2）。
+ */
+function showSavedFeedback(input: { preview: string; savedText?: string }): void {
   if (!savedFeedbackPanel || !savedPreviewEl || !savedHintEl) {
     return
   }
   savedPreviewEl.textContent = input.preview
-  savedHintEl.textContent = ''
-  savedHintEl.classList.add('is-hidden')
+  const onGettingStarted = isGettingStartedPageUrl(window.location.href)
+  const textForPrefill = input.savedText ?? input.preview
+  lastSavedSelectionText = input.savedText ?? textForPrefill
+  const prefill = buildRecallPrefillClue(textForPrefill)
+
+  if (onGettingStarted || !savedRecallButton) {
+    savedHintEl.textContent = ''
+    savedHintEl.classList.add('is-hidden')
+    if (savedRecallButton) {
+      savedRecallButton.classList.add('is-hidden')
+    }
+  } else {
+    try {
+      if (prefill) {
+        savedHintEl.textContent = t('selection_toolbar_saved_hint', [prefill])
+        savedRecallButton.title = t('selection_toolbar_try_recall_aria', [prefill])
+        savedRecallButton.setAttribute(
+          'aria-label',
+          t('selection_toolbar_try_recall_aria', [prefill])
+        )
+      } else {
+        savedHintEl.textContent = ''
+        savedRecallButton.title = t('selection_toolbar_try_recall_aria_generic')
+        savedRecallButton.setAttribute('aria-label', t('selection_toolbar_try_recall_aria_generic'))
+      }
+    } catch {
+      savedHintEl.textContent = ''
+    }
+    if (prefill) {
+      savedHintEl.classList.remove('is-hidden')
+      savedRecallButton.classList.remove('is-hidden')
+    } else {
+      savedHintEl.classList.add('is-hidden')
+      savedRecallButton.classList.add('is-hidden')
+    }
+  }
   savedFeedbackPanel.classList.add('is-open')
+}
+
+/** 预填开 Side Panel（不自动发）；成功收起浮层，失败报错。 */
+async function openRecallWithPrefill(prefill: string): Promise<boolean> {
+  try {
+    // 预填交给 SW：先开火开壳再写 session（content 先 await storage 会丢手势且与 Panel mount 竞态）。
+    const response = await openRecallShell({ clue: prefill, autoSubmit: false })
+    if (!ensureLiveContext()) {
+      return false
+    }
+    if (response?.ok) {
+      hideToolbar()
+      return true
+    }
+    const failed = safeT('selection_toolbar_open_recall_failed')
+    if (failed !== null) {
+      showStatus('error', failed)
+    }
+    scheduleHideToolbar(3200)
+    return false
+  } catch (error) {
+    if (isContextInvalidatedError(error) || !isExtensionContextValid()) {
+      teardown()
+      return false
+    }
+    const failed = safeT('selection_toolbar_open_recall_failed')
+    if (failed !== null) {
+      showStatus('error', failed)
+    }
+    scheduleHideToolbar(3200)
+    return false
+  }
 }
 
 /**
@@ -533,36 +673,31 @@ async function handleFindWithSelectionClick(): Promise<void> {
   }
 
   findButton.disabled = true
-  try {
-    // 预填交给 SW：先开火开壳再写 session（content 先 await storage 会丢手势且与 Panel mount 竞态）。
-    // Panel 已开时 SW 开壳失败但预填已写仍返回 ok。
-    const response = await openRecallShell({ clue: prefill, autoSubmit: false })
-    if (!ensureLiveContext()) {
-      return
-    }
-    if (response?.ok) {
-      hideToolbar()
-      return
-    }
-    const failed = safeT('selection_toolbar_open_recall_failed')
-    if (failed !== null) {
-      showStatus('error', failed)
-    }
+  const ok = await openRecallWithPrefill(prefill)
+  if (!ok && findButton) {
     findButton.disabled = false
-    scheduleHideToolbar(3200)
-  } catch (error) {
-    if (isContextInvalidatedError(error) || !isExtensionContextValid()) {
-      teardown()
-      return
-    }
-    const failed = safeT('selection_toolbar_open_recall_failed')
-    if (failed !== null) {
-      showStatus('error', failed)
-    }
-    if (findButton) {
-      findButton.disabled = false
-    }
-    scheduleHideToolbar(3200)
+  }
+}
+
+/** 存成后「用这段来找」：用 lastSavedSelectionText 预填开壳（页内选区已清）。 */
+async function handleSavedRecallClick(): Promise<void> {
+  if (!ensureLiveContext() || buttonState === 'saving') {
+    return
+  }
+  const text = lastSavedSelectionText
+  if (!text) {
+    return
+  }
+  const prefill = buildRecallPrefillClue(text)
+  if (!prefill) {
+    return
+  }
+  if (savedRecallButton) {
+    savedRecallButton.disabled = true
+  }
+  const ok = await openRecallWithPrefill(prefill)
+  if (!ok && savedRecallButton) {
+    savedRecallButton.disabled = false
   }
 }
 
@@ -577,6 +712,13 @@ function hideSavedFeedback(): void {
     savedHintEl.textContent = ''
     savedHintEl.classList.add('is-hidden')
   }
+  if (savedRecallButton) {
+    savedRecallButton.classList.add('is-hidden')
+    savedRecallButton.disabled = false
+    savedRecallButton.removeAttribute('title')
+    savedRecallButton.removeAttribute('aria-label')
+  }
+  lastSavedSelectionText = null
 }
 
 function resetActionsView(): void {
@@ -607,6 +749,13 @@ function resetActionsView(): void {
   if (notePanel) {
     notePanel.classList.remove('is-open')
   }
+  // 收起前 stash 非空附注草稿（所有收起路径经此；保存成功前会先清 noteInput）
+  if (noteInput && shouldStashNoteDraft(noteInput.value)) {
+    pendingNoteDraft = {
+      selectedText: pendingCapture?.selectedText ?? '',
+      note: noteInput.value
+    }
+  }
   if (noteInput) {
     noteInput.value = ''
   }
@@ -630,6 +779,18 @@ function openNotePanel(): void {
       scheduleHideToolbar(1600)
     }
     return
+  }
+
+  // 同选区恢复草稿；不同选区丢弃旧草稿
+  const restored = matchNoteDraft(pendingNoteDraft, pendingCapture.selectedText)
+  if (restored !== null) {
+    noteInput.value = restored
+    pendingNoteDraft = null
+    const len = restored.length
+    noteInput.setSelectionRange(len, len)
+  } else {
+    pendingNoteDraft = null
+    noteInput.value = ''
   }
 
   uiMode = 'note'
@@ -658,10 +819,36 @@ function positionToolbar(
   if (!hostElement) {
     return
   }
-  const anchor = computeSelectionToolbarAnchor(rect, { estimatedHeight })
+  // 先显示再量宽：display:none 时 offsetWidth 为 0
   hostElement.style.display = 'block'
+  const toolbarWidth = shellElement?.offsetWidth || 320
+  const anchor = computeSelectionToolbarAnchor(rect, {
+    estimatedHeight,
+    viewportWidth: window.innerWidth,
+    viewportHeight: window.innerHeight,
+    toolbarWidth
+  })
   hostElement.style.top = `${anchor.top}px`
   hostElement.style.left = `${anchor.left}px`
+}
+
+/** 附注模式滚动：按快照锚点跟随；滚出视口则收起（走草稿 stash）。 */
+function repositionNoteToolbar(): void {
+  if (uiMode !== 'note' || !pendingCapture) {
+    return
+  }
+  const next = resolveScrolledSelectionAnchor({
+    snapshotRect: pendingCapture.anchorRect,
+    snapshotScroll: { x: pendingCapture.scrollX, y: pendingCapture.scrollY },
+    currentScroll: { x: window.scrollX, y: window.scrollY },
+    viewportWidth: window.innerWidth,
+    viewportHeight: window.innerHeight
+  })
+  if (!next) {
+    closeNotePanel()
+    return
+  }
+  positionToolbar(next, 120)
 }
 
 function hideToolbar(): void {
@@ -780,9 +967,16 @@ async function handleSaveClick(
       return false
     }
 
-    const saved = safeT('selection_toolbar_saved')
+    const isDuplicate = response && 'duplicate' in response && response.duplicate === true
+    const saved = isDuplicate
+      ? safeT('selection_toolbar_saved_duplicate')
+      : safeT('selection_toolbar_saved')
     if (saved === null) {
       return false
+    }
+    // 保存成功：先清附注输入，避免 resetActionsView stash 已存附注
+    if (noteInput) {
+      noteInput.value = ''
     }
     // 先切到 saved 态再清选区，避免 selectionchange 在 idle 时立刻 hideToolbar
     showStatus('saved', saved)
@@ -796,8 +990,8 @@ async function handleSaveClick(
     } catch {
       // storage 失败不影响抓住感主文案
     }
-    // 存成只反馈「进库」；「用这段来找」在划选菜单，不绑存后
-    showSavedFeedback({ preview })
+    // 存成后给「用这段来找」入口（预填开 Side Panel，不自动发）
+    showSavedFeedback({ preview, savedText: selectedText })
 
     clearPageSelection()
     clearPendingCapture()
@@ -867,11 +1061,49 @@ async function handleShortcutOpenNote(): Promise<ContentSelectionCommandResponse
   return { ok: true }
 }
 
+/** 右键等路径失败：页内浮层展示具体原因（浮层关闭时不强弹）。 */
+function handleShowSelectionError(errorCode: string): boolean {
+  if (!ensureLiveContext() || !toolbarEnabled) {
+    return false
+  }
+  ensureToolbarHost()
+  if (!hostElement) {
+    return false
+  }
+  resetActionsView()
+  const liveRect = getSelectionRect()
+  const anchor = liveRect
+    ? { top: liveRect.top, left: liveRect.left, width: liveRect.width, height: liveRect.height }
+    : (pendingCapture?.anchorRect ?? { top: 80, left: 80, width: 40, height: 20 })
+  positionToolbar(anchor, 36)
+
+  let message: string
+  if (isMemoryErrorCode(errorCode)) {
+    try {
+      message = tMemoryError(errorCode)
+    } catch {
+      message = safeT('selection_toolbar_failed') ?? 'Failed'
+    }
+  } else {
+    message = safeT('selection_toolbar_failed') ?? 'Failed'
+  }
+  showStatus('error', message)
+  scheduleHideToolbar(1800)
+  return true
+}
+
 function handleRuntimeMessage(
   message: unknown,
   _sender: chrome.runtime.MessageSender,
-  sendResponse: (response: ContentSelectionCommandResponse) => void
+  sendResponse: (response: ContentSelectionCommandResponse | ContentSelectionErrorResponse) => void
 ): boolean {
+  const errorMessage = parseContentSelectionErrorMessage(message)
+  if (errorMessage) {
+    const shown = handleShowSelectionError(errorMessage.errorCode)
+    sendResponse({ shown })
+    return false
+  }
+
   const command = parseContentSelectionCommandMessage(message)
   if (!command) {
     return false
@@ -956,13 +1188,22 @@ function isStatusFeedbackLocked(): boolean {
 const scrollDismiss = createSelectionToolbarScrollDismissHandler({
   getUiMode: () => uiMode,
   getButtonState: () => buttonState,
-  onDismiss: () => hideToolbar()
+  onDismiss: () => hideToolbar(),
+  onReposition: () => repositionNoteToolbar()
 })
 
 function handleScroll(): void {
   runGuarded(() => {
     scrollDismiss.onScroll()
   })
+}
+
+function handleMouseDownTracker(): void {
+  mouseDown = true
+}
+
+function handleMouseUpTracker(): void {
+  mouseDown = false
 }
 
 function handleMouseUp(event: MouseEvent): void {
@@ -991,6 +1232,13 @@ function handleDocumentMouseDown(event: MouseEvent): void {
 
 function handleKeyDown(event: KeyboardEvent): void {
   runGuarded(() => {
+    const isSelectionArrow =
+      event.shiftKey && (SELECTION_KEY_NAMES as readonly string[]).includes(event.key)
+    const isSelectAll = (event.ctrlKey || event.metaKey) && (event.key === 'a' || event.key === 'A')
+    if (isSelectionArrow || isSelectAll) {
+      lastSelectionKeyDownAt = Date.now()
+    }
+
     if (event.key !== 'Escape') {
       return
     }
@@ -1014,7 +1262,20 @@ function handleSelectionChange(): void {
     if (isStatusFeedbackLocked()) {
       return
     }
-    if (getSelectedText()) {
+    const text = getSelectedText()
+    if (text) {
+      if (
+        shouldEvaluateSelectionOnChange({
+          mouseDown,
+          msSinceSelectionKeyDown:
+            lastSelectionKeyDownAt === null ? null : Date.now() - lastSelectionKeyDownAt,
+          enabled: toolbarEnabled,
+          selectedText: text,
+          isSavablePage: isSavablePageUrl(window.location.href)
+        })
+      ) {
+        evaluateSelectionAndMaybeShow()
+      }
       return
     }
     // 勿在 delay / 快照撑起展示期间因短暂空选区取消弹出（与 evaluateSelection 快照策略一致）
@@ -1217,7 +1478,9 @@ function teardown(): void {
 
   if (listenersRegistered) {
     document.removeEventListener('mouseup', handleMouseUp, true)
+    document.removeEventListener('mouseup', handleMouseUpTracker, true)
     document.removeEventListener('mousedown', handleDocumentMouseDown, true)
+    document.removeEventListener('mousedown', handleMouseDownTracker, true)
     document.removeEventListener('keydown', handleKeyDown, true)
     window.removeEventListener('scroll', handleScroll, true)
     document.removeEventListener('selectionchange', handleSelectionChange)
@@ -1239,18 +1502,26 @@ function teardown(): void {
   hostElement?.remove()
   hostElement = null
   shadowRoot = null
+  shellElement = null
   actionsRow = null
   notePanel = null
   savedFeedbackPanel = null
   savedPreviewEl = null
   savedHintEl = null
+  savedRecallButton = null
   saveButton = null
   findButton = null
   noteButton = null
   noteInput = null
+  noteSaveButton = null
+  noteCancelButton = null
   statusButton = null
   uiMode = 'actions'
   buttonState = 'idle'
+  pendingNoteDraft = null
+  lastSavedSelectionText = null
+  mouseDown = false
+  lastSelectionKeyDownAt = null
   clearPendingCapture()
 }
 
@@ -1260,7 +1531,9 @@ function registerListeners(): void {
   }
 
   document.addEventListener('mouseup', handleMouseUp, true)
+  document.addEventListener('mouseup', handleMouseUpTracker, true)
   document.addEventListener('mousedown', handleDocumentMouseDown, true)
+  document.addEventListener('mousedown', handleMouseDownTracker, true)
   document.addEventListener('keydown', handleKeyDown, true)
   window.addEventListener('scroll', handleScroll, true)
   document.addEventListener('selectionchange', handleSelectionChange)

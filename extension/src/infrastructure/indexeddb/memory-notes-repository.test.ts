@@ -72,7 +72,7 @@ describe('memory_notes · v5 + 引用门 + 游标续跑', () => {
   })
 
   it('新库跑满 v1–v5：含 memory_notes / meta，且 memory_items 可写', async () => {
-    const item = await memoryItemRepository.createTextExcerpt({
+    const { item } = await memoryItemRepository.createTextExcerpt({
       payload: {
         selectedText: 'dreaming migration smoke excerpt',
         sourceUrl: 'https://example.com/dream',

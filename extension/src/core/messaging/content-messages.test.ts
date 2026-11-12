@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import {
   parseContentSelectionCommandMessage,
+  parseContentSelectionErrorMessage,
   isContentScopedMessage
 } from '@/core/messaging/content-messages'
 
@@ -28,5 +29,32 @@ describe('content-messages', () => {
     expect(parseContentSelectionCommandMessage({ scope: 'content', type: 'UNKNOWN' })).toBeNull()
     expect(isContentScopedMessage({ scope: 'content', type: 'x' })).toBe(true)
     expect(isContentScopedMessage({ scope: 'background', type: 'x' })).toBe(false)
+  })
+
+  it('解析 SHOW_SELECTION_ERROR', () => {
+    expect(
+      parseContentSelectionErrorMessage({
+        scope: 'content',
+        type: 'SHOW_SELECTION_ERROR',
+        errorCode: 'CAPTURE_UNSAVABLE_PAGE'
+      })
+    ).toEqual({
+      scope: 'content',
+      type: 'SHOW_SELECTION_ERROR',
+      errorCode: 'CAPTURE_UNSAVABLE_PAGE'
+    })
+    expect(
+      parseContentSelectionErrorMessage({
+        scope: 'content',
+        type: 'SELECTION_SAVE'
+      })
+    ).toBeNull()
+    expect(
+      parseContentSelectionErrorMessage({
+        scope: 'background',
+        type: 'SHOW_SELECTION_ERROR',
+        errorCode: 'x'
+      })
+    ).toBeNull()
   })
 })

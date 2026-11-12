@@ -50,12 +50,26 @@ export class MemoryItemService {
     return this.repository.upsertBookmarkFromThirdPartyCorpus(input)
   }
 
-  /** 捕获选中文本为 Text Excerpt MemoryItem；落库后异步稀疏 LLM enrichment + Pro embedding。 */
-  async captureTextExcerpt(input: CreateTextExcerptInput): Promise<MemoryItem> {
-    const item = await this.repository.createTextExcerpt(input)
-    scheduleAsyncMemoryLlmEnrichment(item.id)
-    scheduleAsyncMemoryEmbedding(item.id)
-    return item
+  /**
+   * 捕获选中文本为 Text Excerpt MemoryItem；落库后异步稀疏 LLM enrichment + Pro embedding。
+   * 命中保存去重时跳过 enrichment/embedding（已存条目落库时已调度过，不重复烧配额）。
+   * 重复且本次带附注、已存条目无附注 → 补写附注；已存已有附注则保留原附注。
+   */
+  async captureTextExcerpt(
+    input: CreateTextExcerptInput
+  ): Promise<{ item: MemoryItem; duplicate: boolean }> {
+    const created = await this.repository.createTextExcerpt(input)
+    if (created.duplicate) {
+      const note = input.clues?.note?.trim()
+      if (note && !created.item.clues.note?.trim()) {
+        const updated = await this.repository.updateNote(created.item.id, note)
+        return { item: updated ?? created.item, duplicate: true }
+      }
+      return created
+    }
+    scheduleAsyncMemoryLlmEnrichment(created.item.id)
+    scheduleAsyncMemoryEmbedding(created.item.id)
+    return created
   }
 
   /** 列出当前用户的 MemoryItem。 */

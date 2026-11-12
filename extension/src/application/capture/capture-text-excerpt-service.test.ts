@@ -75,13 +75,14 @@ describe('capture-text-excerpt-service', () => {
   })
 
   it('captureTextExcerptFromContextMenu 写入 Text Excerpt', async () => {
-    const item = await captureTextExcerptFromContextMenu({
+    const { item, duplicate } = await captureTextExcerptFromContextMenu({
       selectionText: 'key paragraph',
       sourceUrl: 'https://example.com/article',
       pageTitle: 'Article page',
       tabId: 1
     })
 
+    expect(duplicate).toBe(false)
     expect(item.type).toBe('text_excerpt')
     if (item.type === 'text_excerpt') {
       expect(item.payload.selectedText).toBe('key paragraph')
@@ -99,5 +100,24 @@ describe('capture-text-excerpt-service', () => {
         pageTitle: 'Extensions'
       })
     ).rejects.toThrow('CAPTURE_UNSAVABLE_PAGE')
+  })
+
+  it('duplicate 透传', async () => {
+    const first = await captureTextExcerptFromContextMenu({
+      selectionText: 'key paragraph',
+      sourceUrl: 'https://example.com/article',
+      pageTitle: 'Article page',
+      tabId: 1
+    })
+    expect(first.duplicate).toBe(false)
+
+    const second = await captureTextExcerptFromContextMenu({
+      selectionText: 'key paragraph',
+      sourceUrl: 'https://example.com/article',
+      pageTitle: 'Article page',
+      tabId: 1
+    })
+    expect(second.duplicate).toBe(true)
+    expect(second.item.id).toBe(first.item.id)
   })
 })

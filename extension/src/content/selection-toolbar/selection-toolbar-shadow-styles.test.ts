@@ -29,4 +29,12 @@ describe('selection-toolbar-shadow-styles', () => {
     expect(styles).toContain('.toolbar {')
     expect(styles).toContain('var(--accent)')
   })
+
+  it('附注按钮样式存在且只用 var()，无硬编码 hex', () => {
+    expect(SELECTION_TOOLBAR_COMPONENT_CSS).toContain('.note-actions')
+    expect(SELECTION_TOOLBAR_COMPONENT_CSS).toContain('.note-action-button--primary')
+    expect(SELECTION_TOOLBAR_COMPONENT_CSS).toContain('var(--on-accent)')
+    expect(SELECTION_TOOLBAR_COMPONENT_CSS).toContain('var(--accent)')
+    expect(SELECTION_TOOLBAR_COMPONENT_CSS).not.toMatch(/#[0-9a-f]{3,8}/i)
+  })
 })

@@ -1,4 +1,5 @@
 import { optionalProp } from '@/core/common/optional-props'
+import { TEXT_EXCERPT_SELECTED_TEXT_MAX_LENGTH } from '@/core/capture/text-excerpt-selection'
 import { normalizeBookmarkSyncUrl } from '@/core/memory/bookmark-library-tree'
 import type { SupportedMemoryItemType } from '@/core/memory/memory-item-type'
 import {
@@ -7,6 +8,14 @@ import {
   type CreateBookmarkInput,
   type CreateTextExcerptInput
 } from '@/core/memory/create-memory-item'
+
+/**
+ * 摘录保存去重用的正文归一化：trim + 10_000 截断。
+ * 与 `normalizeTextExcerptSelection` 对齐，保证浮层 / 右键 / 快捷键三路同一键。
+ */
+function normalizeExcerptDedupeText(selectedText: string): string {
+  return selectedText.trim().slice(0, TEXT_EXCERPT_SELECTED_TEXT_MAX_LENGTH)
+}
 import { mergeUniqueStrings } from '@/core/memory/enrich-memory-clues'
 import { resolveMemoryItemSavedAtIso } from '@/core/memory/memory-item-saved-at'
 import { MemoryItemSchema, safeParseMemoryItem, type MemoryItem } from '@/core/memory/memory-item'
@@ -64,11 +73,80 @@ export class MemoryItemRepository {
     return item
   }
 
-  /** 写入 Text Excerpt MemoryItem。 */
-  async createTextExcerpt(input: CreateTextExcerptInput): Promise<MemoryItem> {
-    const item = await this.buildTextExcerptItem(input)
-    await this.put(item)
-    return item
+  /**
+   * 写入 Text Excerpt MemoryItem（find-or-create）。
+   * 去重键：(ownerId, sourceUrl, normalizedText)；
+   * normalizedText = trim + 10_000 截断（与 `normalizeTextExcerptSelection` 一致；不做空白/大小写折叠）。
+   * sourceUrl 用存储原值精确匹配（不做 canonicalize；不同 #hash 视为不同出处）。
+   * **不要**复用 Dreaming 折叠键（折叠键不拼 sourceUrl，跨页同句会折）。
+   * 软删行不参与匹配（删除是明确意图，重存应建新条）。
+   */
+  async createTextExcerpt(
+    input: CreateTextExcerptInput
+  ): Promise<{ item: MemoryItem; duplicate: boolean }> {
+    const candidate = await this.buildTextExcerptItem(input)
+    if (candidate.type !== 'text_excerpt') {
+      throw new Error('createTextExcerpt 期望 text_excerpt')
+    }
+    const normalizedText = normalizeExcerptDedupeText(candidate.payload.selectedText)
+    const sourceUrl = candidate.payload.sourceUrl
+
+    await this.ensureReady()
+
+    // 同一 readwrite 事务内先查后写，防并发重复保存竞态
+    const found = await indexedDBManager.withTransaction(
+      MEMORY_ITEM_STORE,
+      'readwrite',
+      async transaction => {
+        const store = transaction.objectStore(MEMORY_ITEM_STORE)
+        const index = store.index(MEMORY_ITEM_INDEX_BY_OWNER_TYPE_UPDATED)
+        const range = IDBKeyRange.bound(
+          [candidate.ownerId, 'text_excerpt', ''],
+          [candidate.ownerId, 'text_excerpt', '\uffff']
+        )
+
+        const existing = await new Promise<MemoryItem | null>((resolve, reject) => {
+          const request = index.openCursor(range, 'prev')
+          request.onsuccess = () => {
+            const cursor = request.result
+            if (!cursor) {
+              resolve(null)
+              return
+            }
+            const item = safeParseMemoryItem(cursor.value)
+            if (
+              item &&
+              item.type === 'text_excerpt' &&
+              item.deletedAt == null &&
+              item.payload.sourceUrl === sourceUrl &&
+              normalizeExcerptDedupeText(item.payload.selectedText) === normalizedText
+            ) {
+              resolve(item)
+              return
+            }
+            cursor.continue()
+          }
+          request.onerror = () => reject(request.error ?? new Error('IndexedDB 游标读取失败'))
+        })
+
+        if (existing) {
+          // 命中：不 put、不写倒排、不写 duplicate-group（落库时已写过）
+          return { item: existing, duplicate: true as const }
+        }
+
+        // 未命中：事务内落库；token diff / dreaming 在事务外走 put 同款副作用
+        await requestToPromise(store.put(MemoryItemSchema.parse(candidate)))
+        return { item: candidate, duplicate: false as const }
+      }
+    )
+
+    if (found.duplicate) {
+      return found
+    }
+
+    // 复用 put 的 token-diff + dreaming-link 副作用（新建路径；无 previous）
+    await this.applyPutSideEffects(found.item, null)
+    return found
   }
 
   /** 按 ID 读取；ownerId 不匹配或已软删时返回 null（除非 includeDeleted）。 */
@@ -909,14 +987,26 @@ export class MemoryItemRepository {
     const validated = MemoryItemSchema.parse(item)
 
     const previous = await this.getById(validated.id, validated.ownerId, { includeDeleted: true })
-    const previousTokens = previous ? extractDocumentIndexTokens(previous) : []
-    const nextTokens = extractDocumentIndexTokens(validated)
-    const tokensChanged = !sameTokenSet(previousTokens, nextTokens)
 
     await indexedDBManager.withTransaction(MEMORY_ITEM_STORE, 'readwrite', async transaction => {
       const store = transaction.objectStore(MEMORY_ITEM_STORE)
       await requestToPromise(store.put(validated))
     })
+
+    await this.applyPutSideEffects(validated, previous)
+  }
+
+  /**
+   * put 事务外副作用：倒排 token diff + Dreaming duplicate-group 链接。
+   * createTextExcerpt 新建路径与 put 共用，避免两套不一致写路径。
+   */
+  private async applyPutSideEffects(
+    validated: MemoryItem,
+    previous: MemoryItem | null
+  ): Promise<void> {
+    const previousTokens = previous ? extractDocumentIndexTokens(previous) : []
+    const nextTokens = extractDocumentIndexTokens(validated)
+    const tokensChanged = !sameTokenSet(previousTokens, nextTokens)
 
     if (tokensChanged) {
       const applied = await keywordIndexRepository.applyItemTokenDiff({

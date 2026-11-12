@@ -22,7 +22,7 @@ export interface CaptureTextExcerptFromPageInput {
 /** 从页面选区捕获 Text Excerpt（右键 / 划词浮层等共用）。 */
 export async function captureTextExcerptFromPage(
   input: CaptureTextExcerptFromPageInput
-): Promise<MemoryItem> {
+): Promise<{ item: MemoryItem; duplicate: boolean }> {
   const startedAt = flowStart('Capture', '页面选区捕获', {
     entry: input.captureEntry,
     tabId: input.tabId ?? null,
@@ -67,7 +67,7 @@ export async function captureTextExcerptFromPage(
       throw new CodedError('CAPTURE_EMPTY_SELECTION')
     }
 
-    const item = await memoryItemService.captureTextExcerpt({
+    const result = await memoryItemService.captureTextExcerpt({
       payload: {
         selectedText: selection.selectedText,
         sourceUrl: input.sourceUrl,
@@ -78,11 +78,12 @@ export async function captureTextExcerptFromPage(
       captureEntry: input.captureEntry
     })
     flowOk('Capture', '页面选区捕获', startedAt, {
-      id: item.id,
+      id: result.item.id,
       entry: input.captureEntry,
-      textPreview: previewText(selection.selectedText)
+      textPreview: previewText(selection.selectedText),
+      duplicate: result.duplicate
     })
-    return item
+    return result
   } catch (error) {
     flowFail('Capture', '页面选区捕获', startedAt, error, {
       entry: input.captureEntry
@@ -101,7 +102,7 @@ export interface CaptureTextExcerptFromContextMenuInput {
 /** 从右键选区捕获 Text Excerpt MemoryItem。 */
 export async function captureTextExcerptFromContextMenu(
   input: CaptureTextExcerptFromContextMenuInput
-): Promise<MemoryItem> {
+): Promise<{ item: MemoryItem; duplicate: boolean }> {
   return captureTextExcerptFromPage({
     ...input,
     captureEntry: 'context_menu'

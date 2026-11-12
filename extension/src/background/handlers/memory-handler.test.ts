@@ -14,6 +14,8 @@ import {
   handleUpdateMemoryNote
 } from '@/background/handlers/memory-handler'
 import { resetMemoryDatabaseInitializationForTests } from '@/infrastructure/indexeddb/memory-db'
+import { EXCERPT_CAPTURE_COUNT_LOCAL_KEY } from '@/infrastructure/storage/first-recall-onboarding-storage'
+import { MEMORY_LIBRARY_REVISION_LOCAL_KEY } from '@/infrastructure/storage/memory-library-revision-storage'
 
 type StorageMap = Record<string, unknown>
 
@@ -133,6 +135,52 @@ describe('memory-handler', () => {
     }
     expect(response.item.type).toBe('text_excerpt')
     expect(response.item.clues.note).toBe('want to revisit this')
+  })
+
+  it('handleCaptureTextExcerpt 重复响应带 duplicate 且不闪 success badge', async () => {
+    const payload = {
+      selectedText: 'duplicate capture excerpt for badge skip',
+      sourceUrl: 'https://example.com/dup-capture',
+      pageTitle: 'Dup'
+    }
+    const first = await handleCaptureTextExcerpt(payload)
+    expect(first.ok).toBe(true)
+    expect(chrome.action.setBadgeText).toHaveBeenCalled()
+    // 首次写入会异步 bump 计数/修订；等微任务落地后再清 mock
+    await vi.waitFor(() => {
+      const bumpCalls = vi.mocked(chrome.storage.local.set).mock.calls.filter(([items]) => {
+        const record = items as Record<string, unknown>
+        return (
+          EXCERPT_CAPTURE_COUNT_LOCAL_KEY in record || MEMORY_LIBRARY_REVISION_LOCAL_KEY in record
+        )
+      })
+      expect(bumpCalls.length).toBeGreaterThan(0)
+    })
+    vi.mocked(chrome.action.setBadgeText).mockClear()
+    vi.mocked(chrome.action.setBadgeBackgroundColor).mockClear()
+    vi.mocked(chrome.storage.local.set).mockClear()
+
+    const second = await handleCaptureTextExcerpt(payload)
+    expect(second.ok).toBe(true)
+    if (!second.ok || !('item' in second)) {
+      return
+    }
+    expect(second.duplicate).toBe(true)
+    if (first.ok && 'item' in first) {
+      expect(second.item.id).toBe(first.item.id)
+    }
+    expect(chrome.action.setBadgeText).not.toHaveBeenCalled()
+    // 重复路径不 bump 摘录计数 / 库修订信号
+    await new Promise<void>(resolve => {
+      queueMicrotask(() => resolve())
+    })
+    const bumpOnDuplicate = vi.mocked(chrome.storage.local.set).mock.calls.filter(([items]) => {
+      const record = items as Record<string, unknown>
+      return (
+        EXCERPT_CAPTURE_COUNT_LOCAL_KEY in record || MEMORY_LIBRARY_REVISION_LOCAL_KEY in record
+      )
+    })
+    expect(bumpOnDuplicate).toHaveLength(0)
   })
 
   it('handleUpdateMemoryNote 可为书签事后补注', async () => {

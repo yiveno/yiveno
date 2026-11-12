@@ -3,8 +3,10 @@ import { optionalProp } from '@/core/common/optional-props'
 import { USER_SETTINGS_STORAGE_KEY } from '@/core/settings/user-settings'
 import { captureTextExcerptFromContextMenu } from '@/application/capture/capture-text-excerpt-service'
 import { ensureBackgroundBootstrapped } from '@/background/bootstrap-ready'
+import { resolveMemoryErrorCode } from '@/background/handlers/memory-handler'
 import { flashActionBadge } from '@/infrastructure/browser/action-badge'
 import { isSavablePageUrl } from '@/infrastructure/browser/active-tab-reader'
+import { notifySelectionToolbarError } from '@/infrastructure/browser/selection-toolbar-command'
 import { initUiLocaleFromSettings, t } from '@/infrastructure/i18n/t'
 import { logger } from '@/infrastructure/logging/logger'
 
@@ -101,17 +103,20 @@ export async function handleContextMenuClick(
     throw new CodedError('CAPTURE_UNSAVABLE_PAGE')
   }
 
-  const item = await captureTextExcerptFromContextMenu({
+  const { item, duplicate } = await captureTextExcerptFromContextMenu({
     selectionText,
     sourceUrl,
     pageTitle: tab?.title ?? '',
     ...optionalProp('tabId', tab?.id)
   })
 
-  void flashActionBadge('success')
+  if (!duplicate) {
+    void flashActionBadge('success')
+  }
   logger.info('ContextMenu', '选区已保存为 Text Excerpt', {
     memoryItemId: item.id,
-    sourceUrl
+    sourceUrl,
+    duplicate
   })
 }
 
@@ -125,9 +130,17 @@ export function registerContextMenuListeners(): void {
   chrome.contextMenus.onClicked.addListener((info, tab) => {
     void ensureBackgroundBootstrapped()
       .then(() => handleContextMenuClick(info, tab))
-      .catch(error => {
+      .catch(async error => {
         logger.error('ContextMenu', '保存选区失败', error)
-        void flashActionBadge('error')
+        const code = resolveMemoryErrorCode(error, 'MEMORY_OPERATION_FAILED')
+        const tabId = tab?.id
+        let shown = false
+        if (tabId !== undefined) {
+          shown = await notifySelectionToolbarError(tabId, code)
+        }
+        if (!shown) {
+          void flashActionBadge('error')
+        }
       })
   })
 

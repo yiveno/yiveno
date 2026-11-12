@@ -34,6 +34,19 @@ const contentSelectionCommandSchema = z.object({
 /** SW → 划词浮层：快捷键触发保存 / 打开附注面板。 */
 export type ContentSelectionCommandMessage = z.infer<typeof contentSelectionCommandSchema>
 
+const contentSelectionErrorSchema = z.object({
+  scope: z.literal(CONTENT_MESSAGE_SCOPE),
+  type: z.literal('SHOW_SELECTION_ERROR'),
+  errorCode: z.string()
+})
+
+/** SW → 划词浮层：右键等路径失败时在页内展示原因（errorCode 跨边界不校验枚举）。 */
+export type ContentSelectionErrorMessage = z.infer<typeof contentSelectionErrorSchema>
+
+export type ContentSelectionErrorResponse = {
+  shown: boolean
+}
+
 export type ContentSelectionCommandSuccessResponse = {
   ok: true
   /** 无选区等：已忽略，调用方勿当失败提示 */
@@ -60,6 +73,13 @@ export function parseContentSelectionCommandMessage(
   value: unknown
 ): ContentSelectionCommandMessage | null {
   const parsed = contentSelectionCommandSchema.safeParse(value)
+  return parsed.success ? parsed.data : null
+}
+
+export function parseContentSelectionErrorMessage(
+  value: unknown
+): ContentSelectionErrorMessage | null {
+  const parsed = contentSelectionErrorSchema.safeParse(value)
   return parsed.success ? parsed.data : null
 }
 

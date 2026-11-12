@@ -36,9 +36,37 @@ describe('dispatchSelectionToolbarCommand', () => {
     ] as never)
 
     await expect(dispatchSelectionToolbarCommand('SELECTION_SAVE')).resolves.toEqual({
-      status: 'ignored'
+      status: 'ignored',
+      reason: 'no_selection'
     })
     expect(chrome.action.setBadgeText).not.toHaveBeenCalled()
+  })
+
+  it('三种 ignored 原因可区分', async () => {
+    vi.mocked(chrome.tabs.query).mockResolvedValueOnce([] as never)
+    await expect(dispatchSelectionToolbarCommand('SELECTION_SAVE')).resolves.toEqual({
+      status: 'ignored',
+      reason: 'no_active_tab'
+    })
+
+    vi.mocked(chrome.tabs.query).mockResolvedValueOnce([
+      { id: 7, url: 'chrome://extensions', title: 'Ext' }
+    ] as never)
+    await expect(dispatchSelectionToolbarCommand('SELECTION_SAVE')).resolves.toEqual({
+      status: 'ignored',
+      reason: 'unsavable_page'
+    })
+
+    vi.mocked(chrome.tabs.query).mockResolvedValueOnce([
+      { id: 7, url: 'https://example.com', title: 'Example' }
+    ] as never)
+    vi.mocked(chrome.scripting.executeScript).mockResolvedValueOnce([
+      { result: { ok: true, skipped: true } }
+    ] as never)
+    await expect(dispatchSelectionToolbarCommand('SELECTION_SAVE')).resolves.toEqual({
+      status: 'ignored',
+      reason: 'no_selection'
+    })
   })
 
   it('页内 API 可用时直接成功', async () => {

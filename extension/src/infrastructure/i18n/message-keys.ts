@@ -33,6 +33,7 @@ export const MESSAGE_KEYS = [
   'page_title_getting_started',
   'selection_toolbar_saving',
   'selection_toolbar_saved',
+  'selection_toolbar_saved_duplicate',
   'selection_toolbar_saved_hint',
   'selection_toolbar_saved_hint_generic',
   'selection_toolbar_try_recall',

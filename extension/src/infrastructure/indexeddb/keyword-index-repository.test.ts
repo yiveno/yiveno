@@ -58,7 +58,7 @@ describe('keyword-index-repository', () => {
   })
 
   it('rebuild 后可按线索查出摘录 id', async () => {
-    const item = await memoryItemRepository.createTextExcerpt({
+    const { item } = await memoryItemRepository.createTextExcerpt({
       payload: {
         selectedText: 'env:sync:prod release checklist',
         sourceUrl: 'https://docs.example.com/deploy',
@@ -82,7 +82,7 @@ describe('keyword-index-repository', () => {
   })
 
   it('健康索引下 applyItemTokenDiff 增量可查新词、旧词可消失', async () => {
-    const created = await memoryItemRepository.createTextExcerpt({
+    const { item: created } = await memoryItemRepository.createTextExcerpt({
       payload: {
         selectedText: 'first draft mentions only apple',
         sourceUrl: 'https://example.com/a',
@@ -123,7 +123,7 @@ describe('keyword-index-repository', () => {
   })
 
   it('索引不健康时 applyItemTokenDiff 返回 applied=false', async () => {
-    const created = await memoryItemRepository.createTextExcerpt({
+    const { item: created } = await memoryItemRepository.createTextExcerpt({
       payload: {
         selectedText: 'item before rebuild',
         sourceUrl: 'https://example.com/b',
@@ -143,7 +143,7 @@ describe('keyword-index-repository', () => {
   })
 
   it('健康索引下 applyItemTokenDiffs 批量增量可查多条新词', async () => {
-    const first = await memoryItemRepository.createTextExcerpt({
+    const { item: first } = await memoryItemRepository.createTextExcerpt({
       payload: {
         selectedText: 'batch alpha only has watermelon',
         sourceUrl: 'https://example.com/batch-a',
@@ -152,7 +152,7 @@ describe('keyword-index-repository', () => {
       },
       captureEntry: 'context_menu'
     })
-    const second = await memoryItemRepository.createTextExcerpt({
+    const { item: second } = await memoryItemRepository.createTextExcerpt({
       payload: {
         selectedText: 'batch beta only has grape',
         sourceUrl: 'https://example.com/batch-b',
@@ -200,7 +200,7 @@ describe('keyword-index-repository', () => {
   })
 
   it('健康索引下 putMany 批内增量保持健康且可查新词', async () => {
-    const created = await memoryItemRepository.createTextExcerpt({
+    const { item: created } = await memoryItemRepository.createTextExcerpt({
       payload: {
         selectedText: 'before putMany only lemon',
         sourceUrl: 'https://example.com/put-many',

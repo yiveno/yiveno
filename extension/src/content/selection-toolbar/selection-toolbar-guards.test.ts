@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import {
   isSelectionToolbarStatusLocked,
-  shouldDismissToolbarOnScroll
+  shouldDismissToolbarOnScroll,
+  shouldRepositionToolbarOnScroll
 } from '@/content/selection-toolbar/selection-toolbar-guards'
 
 describe('selection-toolbar-guards', () => {
@@ -38,5 +39,26 @@ describe('selection-toolbar-guards', () => {
         uiMode: 'actions'
       })
     ).toBe(true)
+  })
+
+  it('shouldRepositionToolbarOnScroll 附注模式应跟随、锁定时不跟随', () => {
+    expect(
+      shouldRepositionToolbarOnScroll({
+        statusLocked: false,
+        uiMode: 'note'
+      })
+    ).toBe(true)
+    expect(
+      shouldRepositionToolbarOnScroll({
+        statusLocked: true,
+        uiMode: 'note'
+      })
+    ).toBe(false)
+    expect(
+      shouldRepositionToolbarOnScroll({
+        statusLocked: false,
+        uiMode: 'actions'
+      })
+    ).toBe(false)
   })
 })

@@ -46,8 +46,10 @@ export function registerCommandListeners(): void {
 
   registerExtensionCommandHandler('save_selection', async () => {
     const result = await dispatchSelectionToolbarCommand('SELECTION_SAVE')
-    // ignored：无选区等，静默；no_receiver：无法到达划词脚本
+    // ignored：无选区 / 无活动标签静默；不可存页闪 !；no_receiver：无法到达划词脚本
     if (result.status === 'no_receiver') {
+      await flashActionBadge('error')
+    } else if (result.status === 'ignored' && result.reason === 'unsavable_page') {
       await flashActionBadge('error')
     }
   })
@@ -55,6 +57,8 @@ export function registerCommandListeners(): void {
   registerExtensionCommandHandler('save_selection_with_note', async () => {
     const result = await dispatchSelectionToolbarCommand('SELECTION_OPEN_NOTE')
     if (result.status === 'no_receiver') {
+      await flashActionBadge('error')
+    } else if (result.status === 'ignored' && result.reason === 'unsavable_page') {
       await flashActionBadge('error')
     }
   })

@@ -43,6 +43,28 @@ describe('createSelectionToolbarScrollDismissHandler', () => {
     expect(onDismiss).not.toHaveBeenCalled()
   })
 
+  it('附注模式滚动调 onReposition 不调 onDismiss', () => {
+    const onDismiss = vi.fn()
+    const onReposition = vi.fn()
+    const held: FrameRequestCallback[] = []
+    const { onScroll } = createSelectionToolbarScrollDismissHandler({
+      getUiMode: () => 'note',
+      getButtonState: () => 'idle',
+      onDismiss,
+      onReposition,
+      requestAnimationFrame: cb => {
+        held.push(cb)
+        return 1
+      },
+      cancelAnimationFrame: () => {}
+    })
+
+    onScroll()
+    held[0]!(0)
+    expect(onReposition).toHaveBeenCalledOnce()
+    expect(onDismiss).not.toHaveBeenCalled()
+  })
+
   it('cancel 取消待执行的 rAF', () => {
     const onDismiss = vi.fn()
     const held: FrameRequestCallback[] = []

@@ -77,7 +77,7 @@ describe('memory-item-repository', () => {
   })
 
   it('createTextExcerpt 与其他 owner 隔离', async () => {
-    const item = await memoryItemRepository.createTextExcerpt({
+    const { item } = await memoryItemRepository.createTextExcerpt({
       payload: {
         selectedText: '一段文字',
         sourceUrl: 'https://example.com/article',
@@ -219,5 +219,108 @@ describe('memory-item-repository', () => {
     expect(underNew).toHaveLength(1)
     expect(underNew[0]?.id).toBe(created.id)
     expect(underNew[0]?.sourceLocalProfileId).toBe(localProfile.localProfileId)
+  })
+
+  it('createTextExcerpt 同页同文重复返回已有条目且不新增行', async () => {
+    const payload = {
+      selectedText: '  same excerpt body for dedupe  ',
+      sourceUrl: 'https://example.com/dedupe',
+      pageTitle: 'Dedupe'
+    }
+    const first = await memoryItemRepository.createTextExcerpt({
+      payload,
+      captureEntry: 'selection_toolbar'
+    })
+    expect(first.duplicate).toBe(false)
+
+    const second = await memoryItemRepository.createTextExcerpt({
+      payload,
+      captureEntry: 'selection_toolbar'
+    })
+    expect(second.duplicate).toBe(true)
+    expect(second.item.id).toBe(first.item.id)
+
+    const listed = await memoryItemRepository.listByOwner({ type: 'text_excerpt' })
+    expect(listed).toHaveLength(1)
+  })
+
+  it('createTextExcerpt >10k 浮层全文与右键截断跨路径去重命中', async () => {
+    const sourceUrl = 'https://example.com/over-10k-cross-path'
+    const fullText = `${'A'.repeat(10_000)}X`
+    expect(fullText.length).toBe(10_001)
+    const truncated = fullText.trim().slice(0, 10_000)
+    expect(truncated.length).toBe(10_000)
+
+    // 浮层路径：不经 normalizeTextExcerptSelection，正文可超 10_000
+    const first = await memoryItemRepository.createTextExcerpt({
+      payload: {
+        selectedText: fullText,
+        sourceUrl,
+        pageTitle: 'Over 10k'
+      },
+      captureEntry: 'selection_toolbar'
+    })
+    expect(first.duplicate).toBe(false)
+    if (first.item.type === 'text_excerpt') {
+      expect(first.item.payload.selectedText.length).toBe(10_001)
+    }
+
+    // 右键路径：上游已 trim + 10_000 截断
+    const second = await memoryItemRepository.createTextExcerpt({
+      payload: {
+        selectedText: truncated,
+        sourceUrl,
+        pageTitle: 'Over 10k'
+      },
+      captureEntry: 'context_menu'
+    })
+    expect(second.duplicate).toBe(true)
+    expect(second.item.id).toBe(first.item.id)
+    expect(await memoryItemRepository.listByOwner({ type: 'text_excerpt' })).toHaveLength(1)
+  })
+
+  it('createTextExcerpt 不同 sourceUrl 建新条', async () => {
+    const text = 'shared body across pages for save dedupe'
+    const a = await memoryItemRepository.createTextExcerpt({
+      payload: {
+        selectedText: text,
+        sourceUrl: 'https://example.com/a',
+        pageTitle: 'A'
+      },
+      captureEntry: 'selection_toolbar'
+    })
+    const b = await memoryItemRepository.createTextExcerpt({
+      payload: {
+        selectedText: text,
+        sourceUrl: 'https://example.com/b',
+        pageTitle: 'B'
+      },
+      captureEntry: 'selection_toolbar'
+    })
+    expect(a.duplicate).toBe(false)
+    expect(b.duplicate).toBe(false)
+    expect(a.item.id).not.toBe(b.item.id)
+    expect(await memoryItemRepository.listByOwner({ type: 'text_excerpt' })).toHaveLength(2)
+  })
+
+  it('createTextExcerpt 软删行不匹配，重存建新条', async () => {
+    const payload = {
+      selectedText: 'soft-deleted then re-saved excerpt',
+      sourceUrl: 'https://example.com/soft',
+      pageTitle: 'Soft'
+    }
+    const first = await memoryItemRepository.createTextExcerpt({
+      payload,
+      captureEntry: 'selection_toolbar'
+    })
+    await memoryItemRepository.softDelete(first.item.id)
+
+    const again = await memoryItemRepository.createTextExcerpt({
+      payload,
+      captureEntry: 'selection_toolbar'
+    })
+    expect(again.duplicate).toBe(false)
+    expect(again.item.id).not.toBe(first.item.id)
+    expect(await memoryItemRepository.listByOwner({ type: 'text_excerpt' })).toHaveLength(1)
   })
 })

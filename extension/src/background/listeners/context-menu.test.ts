@@ -1,9 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const ensureBackgroundBootstrappedMock = vi.hoisted(() => vi.fn(async () => undefined))
+const notifySelectionToolbarErrorMock = vi.hoisted(() => vi.fn(async () => false))
 
 vi.mock('@/background/bootstrap-ready', () => ({
   ensureBackgroundBootstrapped: ensureBackgroundBootstrappedMock
+}))
+
+vi.mock('@/infrastructure/browser/selection-toolbar-command', () => ({
+  notifySelectionToolbarError: notifySelectionToolbarErrorMock
 }))
 
 import 'fake-indexeddb/auto'
@@ -210,5 +215,30 @@ describe('context-menu listener', () => {
         pageUrl: 'chrome://extensions'
       } as chrome.contextMenus.OnClickData)
     ).rejects.toMatchObject({ errorCode: 'CAPTURE_UNSAVABLE_PAGE' })
+  })
+
+  it('onClicked 失败时调 notifySelectionToolbarError；返回 false 时闪 badge', async () => {
+    notifySelectionToolbarErrorMock.mockResolvedValueOnce(false)
+    registerContextMenuListeners()
+    const handler = (
+      chrome as unknown as ReturnType<typeof createChromeMock>
+    ).__getOnClickedHandler()
+    expect(handler).not.toBeNull()
+
+    handler?.(
+      {
+        menuItemId: CONTEXT_MENU_SAVE_SELECTION_ID,
+        selectionText: 'secret',
+        pageUrl: 'chrome://extensions'
+      } as chrome.contextMenus.OnClickData,
+      { id: 42, title: 'Ext', url: 'chrome://extensions' } as chrome.tabs.Tab
+    )
+
+    await vi.waitFor(() => {
+      expect(notifySelectionToolbarErrorMock).toHaveBeenCalledWith(42, 'CAPTURE_UNSAVABLE_PAGE')
+    })
+    await vi.waitFor(() => {
+      expect(chrome.action.setBadgeText).toHaveBeenCalled()
+    })
   })
 })

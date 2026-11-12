@@ -8,7 +8,11 @@ export interface SelectionToolbarAnchor {
   left: number
 }
 
-/** 根据选区矩形计算浮层位置（viewport 坐标，供 fixed 定位）。 */
+/**
+ * 根据选区矩形计算浮层位置（viewport 坐标，供 fixed 定位）。
+ * 可选 viewportWidth / viewportHeight / toolbarWidth：按实测宽度钳制中心点，防右/底溢出。
+ * 缺省时行为与旧版一致（仅左侧 Math.max(8, centerX)）。
+ */
 export function computeSelectionToolbarAnchor(
   rect: {
     top: number
@@ -16,14 +20,47 @@ export function computeSelectionToolbarAnchor(
     width: number
     height: number
   },
-  options: { estimatedHeight?: number } = {}
+  options: {
+    estimatedHeight?: number
+    viewportWidth?: number
+    viewportHeight?: number
+    toolbarWidth?: number
+  } = {}
 ): SelectionToolbarAnchor {
   const toolbarOffset = 8
   const estimatedToolbarHeight = options.estimatedHeight ?? 36
   const topAbove = rect.top - estimatedToolbarHeight - toolbarOffset
-  const top = topAbove >= 8 ? topAbove : rect.top + rect.height + toolbarOffset
+  const topBelow = rect.top + rect.height + toolbarOffset
 
-  const left = Math.max(8, rect.left + rect.width / 2)
+  let top: number
+  if (options.viewportHeight !== undefined) {
+    const viewportHeight = options.viewportHeight
+    if (topAbove >= 8) {
+      top = topAbove
+    } else if (topBelow + estimatedToolbarHeight <= viewportHeight - 8) {
+      top = topBelow
+    } else {
+      top = Math.max(8, viewportHeight - estimatedToolbarHeight - 8)
+    }
+  } else {
+    top = topAbove >= 8 ? topAbove : topBelow
+  }
+
+  const centerX = rect.left + rect.width / 2
+  const width = options.toolbarWidth ?? 320
+  let left: number
+  if (options.viewportWidth !== undefined) {
+    const viewportWidth = options.viewportWidth
+    if (width >= viewportWidth - 16) {
+      left = viewportWidth / 2
+    } else {
+      const minLeft = width / 2 + 8
+      const maxLeft = viewportWidth - width / 2 - 8
+      left = Math.min(Math.max(centerX, minLeft), maxLeft)
+    }
+  } else {
+    left = Math.max(8, centerX)
+  }
 
   return { top, left }
 }
@@ -38,6 +75,30 @@ export function shouldShowSelectionToolbar(input: {
     return false
   }
   return input.selectedText.trim().length > 0
+}
+
+/**
+ * selectionchange 时是否应评估展示（键盘选区唤出）。
+ * 鼠标拖拽中途不评估；只认 1000ms 内的选区类按键（防程序化选区 / contenteditable 打字误弹）。
+ */
+export function shouldEvaluateSelectionOnChange(input: {
+  mouseDown: boolean
+  msSinceSelectionKeyDown: number | null
+  enabled: boolean
+  selectedText: string
+  isSavablePage: boolean
+}): boolean {
+  if (input.mouseDown) {
+    return false
+  }
+  if (input.msSinceSelectionKeyDown === null || input.msSinceSelectionKeyDown > 1000) {
+    return false
+  }
+  return shouldShowSelectionToolbar({
+    enabled: input.enabled,
+    selectedText: input.selectedText,
+    isSavablePage: input.isSavablePage
+  })
 }
 
 /**
@@ -60,6 +121,56 @@ export function shouldHideToolbarOnEmptySelection(input: {
     return false
   }
   return true
+}
+
+/** 附注草稿：非空 trim 才应 stash。 */
+export function shouldStashNoteDraft(noteText: string): boolean {
+  return noteText.trim().length > 0
+}
+
+/**
+ * 草稿与当前选区是否匹配。
+ * 匹配则返回草稿正文；否则 null（属另一段选区，应丢弃）。
+ */
+export function matchNoteDraft(
+  draft: { selectedText: string; note: string } | null,
+  selectedText: string
+): string | null {
+  if (!draft) {
+    return null
+  }
+  if (draft.selectedText !== selectedText) {
+    return null
+  }
+  return draft.note
+}
+
+/**
+ * 按滚动差值把快照锚点换算到当前 viewport。
+ * 完全出视口时返回 null（调用方应收起附注面板并保留草稿）。
+ */
+export function resolveScrolledSelectionAnchor(input: {
+  snapshotRect: SelectionAnchorRect
+  snapshotScroll: { x: number; y: number }
+  currentScroll: { x: number; y: number }
+  viewportWidth: number
+  viewportHeight: number
+}): SelectionAnchorRect | null {
+  const left = input.snapshotRect.left + input.snapshotScroll.x - input.currentScroll.x
+  const top = input.snapshotRect.top + input.snapshotScroll.y - input.currentScroll.y
+  const right = left + input.snapshotRect.width
+  const bottom = top + input.snapshotRect.height
+
+  if (bottom < 0 || top > input.viewportHeight || right < 0 || left > input.viewportWidth) {
+    return null
+  }
+
+  return {
+    top,
+    left,
+    width: input.snapshotRect.width,
+    height: input.snapshotRect.height
+  }
 }
 
 /** 选区锚点矩形（viewport 坐标）；无有效矩形时返回 null。 */

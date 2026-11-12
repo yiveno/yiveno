@@ -214,7 +214,7 @@ async function seedBookmark(
 /** 精选摘录：走 capture 路径以调度 enrichment / embedding。 */
 async function seedExcerptCurated(seed: RecallProbeExcerptSeed): Promise<ProbeSeededRef> {
   const createdAt = daysAgoIso(seed.daysAgo)
-  const item = await memoryItemService.captureTextExcerpt({
+  const { item } = await memoryItemService.captureTextExcerpt({
     payload: {
       pageTitle: seed.pageTitle,
       sourceUrl: seed.sourceUrl,
@@ -235,7 +235,7 @@ async function seedExcerptCurated(seed: RecallProbeExcerptSeed): Promise<ProbeSe
 /** 噪声 / 半仿真摘录：直写、不烧配额。 */
 async function seedExcerptQuiet(seed: RecallProbeExcerptSeed): Promise<ProbeSeededRef> {
   const createdAt = daysAgoIso(seed.daysAgo)
-  const item = await memoryItemRepository.createTextExcerpt({
+  const { item } = await memoryItemRepository.createTextExcerpt({
     payload: {
       pageTitle: seed.pageTitle,
       sourceUrl: seed.sourceUrl,

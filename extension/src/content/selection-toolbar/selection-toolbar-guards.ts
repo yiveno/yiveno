@@ -25,3 +25,14 @@ export function shouldDismissToolbarOnScroll(input: {
   }
   return true
 }
+
+/**
+ * 页面滚动时是否应按快照锚点跟随重定位。
+ * 与 shouldDismissToolbarOnScroll 互斥：操作态收起，附注态跟随，锁定时两者都不动。
+ */
+export function shouldRepositionToolbarOnScroll(input: {
+  statusLocked: boolean
+  uiMode: SelectionToolbarUiMode
+}): boolean {
+  return !input.statusLocked && input.uiMode === 'note'
+}
