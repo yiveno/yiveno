@@ -15,6 +15,7 @@ vi.mock('@/infrastructure/indexeddb/memory-item-repository', () => ({
     upsertBookmarkFromChrome: vi.fn(),
     getByChromeBookmarkId: vi.fn(),
     listByOwner: vi.fn(),
+    countActiveByOwner: vi.fn(),
     getManyByIds: vi.fn()
   }
 }))
@@ -39,6 +40,13 @@ import { memoryItemRepository } from '@/infrastructure/indexeddb/memory-item-rep
 describe('MemoryItemService LLM enrichment 调度', () => {
   afterEach(() => {
     vi.clearAllMocks()
+  })
+
+  it('countActive 透传 countActiveByOwner', async () => {
+    vi.mocked(memoryItemRepository.countActiveByOwner).mockResolvedValue(42)
+    const service = new MemoryItemService(memoryItemRepository)
+    await expect(service.countActive('text_excerpt')).resolves.toBe(42)
+    expect(memoryItemRepository.countActiveByOwner).toHaveBeenCalledWith('text_excerpt')
   })
 
   it('captureTextExcerpt 落库后调度异步 enrichment', async () => {

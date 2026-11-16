@@ -11,6 +11,7 @@ import {
   getOrCreateLocalProfile
 } from '@/infrastructure/identity/local-profile-service'
 import { memoryItemRepository } from '@/infrastructure/indexeddb/memory-item-repository'
+import { readChromeBookmarkDeleteTombstoneIds } from '@/infrastructure/storage/chrome-bookmark-delete-tombstone-storage'
 import {
   readChromeStorageLocal,
   removeChromeStorageLocal,
@@ -43,23 +44,29 @@ export async function buildBookmarkItemsFromChromeLeaves(
   )
 }
 
-/** 批量写入 Chrome 书签叶子（单事务 per batch）。 */
+/** 批量写入 Chrome 书签叶子（单事务 per batch；一次读墓碑集并内存过滤）。 */
 export async function bulkPutChromeBookmarkLeaves(
   leaves: ChromeBookmarkLeaf[],
   startOffset = 0,
   onBatchComplete?: (importedCount: number) => Promise<void>
 ): Promise<number> {
   let importedCount = startOffset
+  const tombstones = await readChromeBookmarkDeleteTombstoneIds()
 
   for (
     let offset = startOffset;
     offset < leaves.length;
     offset += MEMORY_ITEM_BULK_IMPORT_BATCH_SIZE
   ) {
-    const slice = leaves.slice(offset, offset + MEMORY_ITEM_BULK_IMPORT_BATCH_SIZE)
-    const items = await buildBookmarkItemsFromChromeLeaves(slice)
-    await memoryItemRepository.putMany(items)
-    importedCount = offset + slice.length
+    const slice = leaves
+      .slice(offset, offset + MEMORY_ITEM_BULK_IMPORT_BATCH_SIZE)
+      .filter(leaf => !tombstones.has(leaf.chromeBookmarkId))
+    if (slice.length > 0) {
+      const items = await buildBookmarkItemsFromChromeLeaves(slice)
+      await memoryItemRepository.putMany(items)
+    }
+    // 进度仍按 Chrome 叶子扫描位点计（与导入状态机一致），不因墓碑过滤回退
+    importedCount = offset + Math.min(MEMORY_ITEM_BULK_IMPORT_BATCH_SIZE, leaves.length - offset)
     if (onBatchComplete) {
       await onBatchComplete(importedCount)
     }

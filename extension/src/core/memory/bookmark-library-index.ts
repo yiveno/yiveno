@@ -128,6 +128,9 @@ function mapChromeNodeToIndex(
     if (!isHttpUrl(url)) {
       return null
     }
+    if (ctx.options.tombstonedChromeBookmarkIds?.has(node.id)) {
+      return null
+    }
     const memoryItemId = resolveMemoryItemId(
       node.id,
       url,

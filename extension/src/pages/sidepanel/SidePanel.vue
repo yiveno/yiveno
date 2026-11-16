@@ -61,6 +61,7 @@ import { useRecallShellScroll } from '@/pages/sidepanel/use-recall-shell-scroll'
 import type { RecallDialogState } from '@/core/recall/merge-recall-dialog-turn'
 import { shouldOfferRecallOutcomeExitPrompt } from '@/application/recall/commit-recall-outcome'
 import { createRecallTelemetryRecorder } from '@/infrastructure/analytics/recall-telemetry-recorder'
+import { bucketSemanticNoteScore } from '@/core/recall/semantic-note-score-bucket'
 import { useRecallVisibleProgress } from '@/pages/sidepanel/use-recall-visible-progress'
 import { useSidepanelColdStart } from '@/pages/sidepanel/use-sidepanel-cold-start'
 import { useRecallOutcomeSession } from '@/pages/sidepanel/use-recall-outcome-session'
@@ -1075,7 +1076,11 @@ async function runRecall(trimmedClue: string): Promise<void> {
         sourceMemoryItemId: provenance.sourceMemoryItemId,
         rank: index,
         matchedTermsCount: provenance.matchedTerms.length,
-        soleCorroboration: provenance.soleCorroboration
+        soleCorroboration: provenance.soleCorroboration,
+        matchKind: provenance.matchKind ?? 'literal',
+        ...(provenance.matchKind === 'semantic' && provenance.semanticScore != null
+          ? { semanticScoreBucket: bucketSemanticNoteScore(provenance.semanticScore) }
+          : {})
       })
     })
 

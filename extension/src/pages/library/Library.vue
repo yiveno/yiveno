@@ -12,6 +12,12 @@ import {
   computeBookmarkLibraryStructureHash,
   patchBookmarkNoteInIndex
 } from '@/core/memory/bookmark-library-index'
+import {
+  CHROME_BOOKMARK_IMPORT_STORAGE_KEY,
+  ChromeBookmarkImportStateSchema,
+  getChromeBookmarkImportPercent,
+  type ChromeBookmarkImportState
+} from '@/core/memory/chrome-bookmark-import-state'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import type { SupportedMemoryItemType } from '@/core/memory/memory-item-type'
 import {
@@ -19,7 +25,8 @@ import {
   LIBRARY_LIST_LIMIT,
   LIBRARY_TYPE_TABS,
   parseLibraryTypeFromLocationSearch,
-  resolveLibraryTypeTab
+  resolveLibraryTypeTab,
+  shouldShowLibraryListCapNote
 } from '@/core/memory/library-tabs'
 import { parseChromeBookmarkTreeChangedMessage } from '@/core/messaging/ui-messages'
 import { tImportError } from '@/infrastructure/i18n/background-error'
@@ -28,15 +35,18 @@ import { tMemoryError } from '@/infrastructure/i18n/memory-error'
 import {
   deleteMemoryItem,
   fetchBookmarkLibraryTree,
+  fetchChromeBookmarkImportStatus,
   listMemoryItems,
   recordMemoryOpen,
   updateMemoryNote
 } from '@/infrastructure/messaging/background-client'
+import AppLinearProgress from '@/infrastructure/ui/AppLinearProgress.vue'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
 import type { AppIconName } from '@/infrastructure/ui/icons/icon-paths'
 import BookmarkLibraryTree from '@/pages/library/BookmarkLibraryTree.vue'
 import ExcerptLibraryList from '@/pages/library/ExcerptLibraryList.vue'
+import { isLibraryBookmarkImporting } from '@/pages/library/library-bookmark-import-ui'
 import {
   buildExcerptLibraryListRows,
   collectBookmarkExportableMemoryIds,
@@ -73,10 +83,14 @@ const activeType = ref<SupportedMemoryItemType>(
 const loadState = ref<LoadState>('loading')
 const errorMessage = ref('')
 const items = shallowRef<MemoryItem[]>([])
+/** 摘录 Tab：LIST 返回的全库活条目总数（可大于已加载条数）。 */
+const excerptTotal = ref(0)
 const listRows = shallowRef<ExcerptLibraryListRow[]>([])
 const bookmarkIndex = shallowRef<BookmarkLibraryIndex | null>(null)
 const bookmarkStructureHash = ref('')
 const bookmarkSyncReady = ref(false)
+/** Chrome 书签导入状态（与树并行拉取；storage 事件驱动刷新）。 */
+const bookmarkImportState = ref<ChromeBookmarkImportState | null>(null)
 const deletingId = ref<string | null>(null)
 let bookmarkTreeRefreshTimer: ReturnType<typeof setTimeout> | null = null
 let bookmarkTreeRefreshInFlight = false
@@ -91,6 +105,8 @@ const noteEditorTitle = ref('')
 const noteEditorDraft = ref('')
 const deleteConfirmOpen = ref(false)
 const pendingDeleteId = ref<string | null>(null)
+/** 确认框文案：摘录 vs 书签（仅删 Yiveno 记忆）。 */
+const pendingDeleteKind = ref<'excerpt' | 'bookmark'>('excerpt')
 const deleteConfirmError = ref('')
 
 const selectedDetailExportIds = shallowRef<Set<string>>(new Set())
@@ -124,6 +140,60 @@ const exportableDetailExportIds = computed(() => {
 function rebuildListRows(): void {
   listRows.value = buildExcerptLibraryListRows(items.value)
 }
+
+const showExcerptListCapNote = computed(() =>
+  shouldShowLibraryListCapNote(excerptTotal.value, listRows.value.length)
+)
+
+const excerptListCapNoteLabel = computed(() => {
+  if (!showExcerptListCapNote.value) {
+    return ''
+  }
+  return t('library_list_visible_cap_note', [
+    String(listRows.value.length),
+    String(excerptTotal.value)
+  ])
+})
+
+const bookmarkImporting = computed(() =>
+  isLibraryBookmarkImporting(bookmarkImportState.value?.status)
+)
+
+const bookmarkImportPercent = computed(() => {
+  const state = bookmarkImportState.value
+  if (!state) {
+    return undefined
+  }
+  if (!state.totalCount || state.totalCount <= 0) {
+    return state.status === 'completed' ? 1 : undefined
+  }
+  return getChromeBookmarkImportPercent(state) / 100
+})
+
+const bookmarkImportDetailLine = computed(() => {
+  const state = bookmarkImportState.value
+  if (!state) {
+    return t('library_bookmark_import_progress_indeterminate')
+  }
+  if (state.totalCount && state.totalCount > 0) {
+    return t('library_bookmark_import_progress_detail', [
+      String(state.importedCount),
+      String(state.totalCount)
+    ])
+  }
+  return t('library_bookmark_import_progress_indeterminate')
+})
+
+const showBookmarkImportWaiting = computed(
+  () => bookmarkImporting.value && (!bookmarkIndex.value || bookmarkIndex.value.bookmarkCount === 0)
+)
+
+const showBookmarkImportProgress = computed(
+  () =>
+    bookmarkImporting.value &&
+    !bookmarkSyncReady.value &&
+    (bookmarkIndex.value?.bookmarkCount ?? 0) > 0
+)
 
 function bumpDetailExportSelectionRevision(): void {
   detailExportSelectionRevision.value += 1
@@ -281,13 +351,27 @@ async function runDetailExportAction(
  * 拉取书签树。
  * @param options.silent 为 true 时不切到 loading（SW 推送 / 页签回前台刷新）。
  */
+async function refreshBookmarkImportState(): Promise<void> {
+  try {
+    const importRes = await fetchChromeBookmarkImportStatus()
+    if (importRes.ok) {
+      bookmarkImportState.value = importRes.state
+    }
+  } catch {
+    // 忽略：导入状态探测失败不打断树浏览
+  }
+}
+
 async function loadBookmarkTree(options: { silent?: boolean } = {}) {
   if (!options.silent) {
     loadState.value = 'loading'
   }
-  const response = await fetchBookmarkLibraryTree({
-    clientHash: bookmarkStructureHash.value || undefined
-  })
+  const [response] = await Promise.all([
+    fetchBookmarkLibraryTree({
+      clientHash: bookmarkStructureHash.value || undefined
+    }),
+    refreshBookmarkImportState()
+  ])
   if (!response.ok) {
     if (!options.silent || loadState.value !== 'ready') {
       loadState.value = 'error'
@@ -399,6 +483,7 @@ async function refreshExcerptListSilent(): Promise<void> {
       return
     }
     items.value = response.items
+    excerptTotal.value = response.total
     rebuildListRows()
     if (loadState.value !== 'ready') {
       loadState.value = 'ready'
@@ -418,7 +503,23 @@ function handleLibraryRevisionStorageChanged(
   changes: Record<string, chrome.storage.StorageChange>,
   areaName: string
 ): void {
-  if (areaName !== 'local' || !(MEMORY_LIBRARY_REVISION_LOCAL_KEY in changes)) {
+  if (areaName !== 'local') {
+    return
+  }
+  if (CHROME_BOOKMARK_IMPORT_STORAGE_KEY in changes) {
+    const parsed = ChromeBookmarkImportStateSchema.safeParse(
+      changes[CHROME_BOOKMARK_IMPORT_STORAGE_KEY]?.newValue
+    )
+    if (parsed.success) {
+      bookmarkImportState.value = parsed.data
+    } else {
+      void refreshBookmarkImportState()
+    }
+    if (showingBookmarkTree.value) {
+      scheduleBookmarkTreeRefresh()
+    }
+  }
+  if (!(MEMORY_LIBRARY_REVISION_LOCAL_KEY in changes)) {
     return
   }
   refreshVisibleLibraryPanel()
@@ -433,6 +534,7 @@ async function loadExcerptList() {
     loadState.value = 'error'
     errorMessage.value = tMemoryError(response.errorCode)
     items.value = []
+    excerptTotal.value = 0
     listRows.value = []
     return
   }
@@ -440,11 +542,13 @@ async function loadExcerptList() {
     loadState.value = 'error'
     errorMessage.value = t('library_invalid_response')
     items.value = []
+    excerptTotal.value = 0
     listRows.value = []
     return
   }
 
   items.value = response.items
+  excerptTotal.value = response.total
   rebuildListRows()
   loadState.value = 'ready'
 }
@@ -463,6 +567,7 @@ async function loadPanel() {
     loadState.value = 'error'
     errorMessage.value = t('library_load_failed')
     items.value = []
+    excerptTotal.value = 0
     listRows.value = []
     bookmarkIndex.value = null
     bookmarkStructureHash.value = ''
@@ -479,11 +584,12 @@ function syncActiveTypeToUrl(type: SupportedMemoryItemType) {
   }
 }
 
-function openDeleteConfirm(id: string) {
+function openDeleteConfirm(id: string, kind: 'excerpt' | 'bookmark') {
   if (deletingId.value) {
     return
   }
   pendingDeleteId.value = id
+  pendingDeleteKind.value = kind
   deleteConfirmError.value = ''
   deleteConfirmOpen.value = true
 }
@@ -504,8 +610,28 @@ function dismissDeleteConfirmAfterSuccess(): void {
   deleteConfirmError.value = ''
 }
 
-async function confirmDeleteExcerpt() {
+const deleteConfirmTitle = computed(() =>
+  pendingDeleteKind.value === 'bookmark'
+    ? t('library_delete_bookmark_aria')
+    : t('library_delete_excerpt_aria')
+)
+
+const deleteConfirmBody = computed(() =>
+  pendingDeleteKind.value === 'bookmark'
+    ? t('library_delete_bookmark_confirm')
+    : t('library_delete_confirm')
+)
+
+/** 从本地摘录列表静默移除一行（删成功 / NOT_FOUND）。 */
+function removeExcerptRowLocally(id: string): void {
+  items.value = items.value.filter(item => item.id !== id)
+  excerptTotal.value = Math.max(0, excerptTotal.value - 1)
+  rebuildListRows()
+}
+
+async function confirmDeleteMemoryItem() {
   const id = pendingDeleteId.value
+  const kind = pendingDeleteKind.value
   if (!id || deletingId.value) {
     return
   }
@@ -517,16 +643,23 @@ async function confirmDeleteExcerpt() {
     if (!response.ok) {
       // 首点已删成、弹窗未关时再点：服务端 NOT_FOUND；列表已空，应关框而非卡死再报错
       if (response.errorCode === 'MEMORY_NOT_FOUND') {
-        items.value = items.value.filter(item => item.id !== id)
-        rebuildListRows()
+        if (kind === 'excerpt') {
+          removeExcerptRowLocally(id)
+        } else {
+          scheduleBookmarkTreeRefresh()
+        }
         dismissDeleteConfirmAfterSuccess()
         return
       }
       deleteConfirmError.value = tMemoryError(response.errorCode)
       return
     }
-    items.value = items.value.filter(item => item.id !== id)
-    rebuildListRows()
+    if (kind === 'excerpt') {
+      removeExcerptRowLocally(id)
+    } else {
+      // 墓碑已写入；重拉树以隐藏行（revision 信号也会触发，这里主动一把更稳）
+      scheduleBookmarkTreeRefresh()
+    }
     dismissDeleteConfirmAfterSuccess()
   } catch {
     deleteConfirmError.value = t('library_delete_failed')
@@ -536,7 +669,11 @@ async function confirmDeleteExcerpt() {
 }
 
 async function handleDeleteExcerpt(id: string) {
-  openDeleteConfirm(id)
+  openDeleteConfirm(id, 'excerpt')
+}
+
+function handleDeleteBookmark(id: string) {
+  openDeleteConfirm(id, 'bookmark')
 }
 
 function openNoteEditor(payload: { memoryItemId: string; title: string; note: string }) {
@@ -706,25 +843,63 @@ onUnmounted(() => {
           </div>
 
           <template v-else-if="showingBookmarkTree">
-            <div v-if="!bookmarkIndex || bookmarkIndex.bookmarkCount === 0" class="library-empty">
+            <div v-if="showBookmarkImportWaiting" class="library-empty" role="status">
+              <p class="library-empty-title">{{ t('library_bookmark_importing_title') }}</p>
+              <p class="library-empty-copy">{{ t('library_bookmark_importing_body') }}</p>
+              <p class="library-import-detail">{{ bookmarkImportDetailLine }}</p>
+              <AppLinearProgress
+                v-if="bookmarkImportPercent === undefined"
+                class="library-import-bar"
+                :aria-label="t('library_bookmark_import_progress_aria')"
+              />
+              <AppLinearProgress
+                v-else
+                class="library-import-bar"
+                :value="bookmarkImportPercent"
+                :aria-label="t('library_bookmark_import_progress_aria')"
+              />
+            </div>
+            <div
+              v-else-if="!bookmarkIndex || bookmarkIndex.bookmarkCount === 0"
+              class="library-empty"
+            >
               <p class="library-empty-title">{{ activeTab.emptyTitle }}</p>
               <p class="library-empty-copy">{{ activeTab.emptyBody }}</p>
             </div>
             <div v-else class="library-bookmark-tree-host">
+              <div v-if="showBookmarkImportProgress" class="library-import-banner" role="status">
+                <p class="library-import-detail">{{ bookmarkImportDetailLine }}</p>
+                <AppLinearProgress
+                  v-if="bookmarkImportPercent === undefined"
+                  class="library-import-bar"
+                  :aria-label="t('library_bookmark_import_progress_aria')"
+                />
+                <AppLinearProgress
+                  v-else
+                  class="library-import-bar"
+                  :value="bookmarkImportPercent"
+                  :aria-label="t('library_bookmark_import_progress_aria')"
+                />
+              </div>
               <BookmarkLibraryTree
                 :index="bookmarkIndex"
                 :show-unsynced-flags="bookmarkSyncReady"
                 :show-detail-export-selection="detailExportMode"
                 :selected-detail-export-ids="selectedDetailExportIds"
                 :detail-export-selection-revision="detailExportSelectionRevision"
+                :deleting-id="deletingId"
                 @edit-note="openNoteEditor"
                 @open-bookmark="handleOpenBookmark"
                 @toggle-detail-export-selection="handleToggleDetailExportSelection"
+                @delete-bookmark="handleDeleteBookmark"
               />
             </div>
           </template>
 
           <template v-else>
+            <p v-if="showExcerptListCapNote" class="library-list-cap-note" role="status">
+              {{ excerptListCapNoteLabel }}
+            </p>
             <div v-if="listRows.length === 0" class="library-empty">
               <p class="library-empty-title">{{ activeTab.emptyTitle }}</p>
               <p class="library-empty-copy">{{ activeTab.emptyBody }}</p>
@@ -780,15 +955,15 @@ onUnmounted(() => {
 
     <AppConfirmModal
       :open="deleteConfirmOpen"
-      :title="t('library_delete_excerpt_aria')"
-      :body="t('library_delete_confirm')"
+      :title="deleteConfirmTitle"
+      :body="deleteConfirmBody"
       :cancel-label="t('selection_toolbar_note_cancel')"
-      :confirm-label="t('library_delete_excerpt_aria')"
+      :confirm-label="deleteConfirmTitle"
       confirm-tone="danger"
       :error="deleteConfirmError || undefined"
       :loading="deletingId !== null"
       @close="closeDeleteConfirm"
-      @confirm="confirmDeleteExcerpt"
+      @confirm="confirmDeleteMemoryItem"
     />
 
     <DetailExportBarDock :visible="showDetailExportBar" class="library-detail-export-slot">
@@ -946,6 +1121,14 @@ onUnmounted(() => {
   min-height: 0;
 }
 
+.library-list-cap-note {
+  flex-shrink: 0;
+  margin: 0 0 var(--space-sm);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--on-surface-muted);
+}
+
 .library-status,
 .library-error {
   margin: 0;
@@ -980,6 +1163,25 @@ onUnmounted(() => {
   font-size: 13px;
   line-height: 1.5;
   color: var(--on-surface-muted);
+}
+
+.library-import-banner {
+  flex-shrink: 0;
+  display: grid;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
+}
+
+.library-import-detail {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--on-surface-muted);
+}
+
+.library-import-bar {
+  width: 100%;
+  max-width: 20rem;
 }
 
 .library-note-dialog-target {

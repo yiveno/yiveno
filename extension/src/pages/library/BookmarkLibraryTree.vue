@@ -30,6 +30,8 @@ const props = defineProps<{
   showDetailExportSelection?: boolean
   /** 多选 revision，配合 v-memo 减少无关行重绘。 */
   detailExportSelectionRevision?: number
+  /** 正在删除的 MemoryItem id */
+  deletingId?: string | null | undefined
 }>()
 
 defineEmits<{
@@ -48,6 +50,7 @@ defineEmits<{
     }
   ]
   toggleDetailExportSelection: [memoryItemId: string]
+  deleteBookmark: [memoryItemId: string]
 }>()
 
 const VIRTUAL_OVERSCAN = 8
@@ -162,7 +165,7 @@ function bookmarkRowMemoDeps(row: (typeof renderedRows.value)[number]): unknown[
 </script>
 
 <template>
-  <div ref="scrollContainerRef" class="bookmark-tree-scroll" role="tree" @scroll="handleScroll">
+  <div ref="scrollContainerRef" class="bookmark-tree-scroll" role="list" @scroll="handleScroll">
     <div class="bookmark-tree-spacer" :style="{ height: `${rowMetrics.totalHeight}px` }">
       <div
         class="bookmark-tree-window"
@@ -181,10 +184,12 @@ function bookmarkRowMemoDeps(row: (typeof renderedRows.value)[number]): unknown[
               : false
           "
           :detail-export-selection-disabled="row.kind === 'bookmark' && !row.memoryItemId"
+          :deleting-id="deletingId"
           @toggle-folder="toggleFolder"
           @edit-note="$emit('editNote', $event)"
           @open-bookmark="$emit('openBookmark', $event)"
           @toggle-detail-export-selection="$emit('toggleDetailExportSelection', $event)"
+          @delete-bookmark="$emit('deleteBookmark', $event)"
         />
       </div>
     </div>

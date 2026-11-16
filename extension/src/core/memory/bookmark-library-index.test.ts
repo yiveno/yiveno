@@ -60,6 +60,39 @@ describe('bookmark-library-index', () => {
     })
   })
 
+  it('墓碑 chromeId 跳过叶子（隐藏行）', () => {
+    const index = mapChromeBookmarkTreeToLibraryIndex(
+      [
+        {
+          id: '0',
+          title: '',
+          children: [
+            {
+              id: '1',
+              title: 'Bar',
+              children: [
+                { id: '10', title: 'Keep', url: 'https://keep.example' },
+                { id: '11', title: 'Tomb', url: 'https://tomb.example' }
+              ]
+            }
+          ]
+        }
+      ],
+      new Map([
+        ['10', '11111111-1111-4111-8111-111111111111'],
+        ['11', '22222222-2222-4222-8222-222222222222']
+      ]),
+      {
+        unnamedFolderTitle: 'Unnamed',
+        tombstonedChromeBookmarkIds: new Set(['11'])
+      }
+    )
+    expect(index.bookmarkCount).toBe(1)
+    expect(index.nodes.filter(node => node.kind === 'bookmark').map(node => node.chromeId)).toEqual(
+      ['10']
+    )
+  })
+
   it('未同步 Memory 时回退 Chrome dateAdded 作为 savedAt', () => {
     const index = mapChromeBookmarkTreeToLibraryIndex(
       [

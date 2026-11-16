@@ -28,6 +28,7 @@ import { flashActionBadge } from '@/infrastructure/browser/action-badge'
 import { isSavablePageUrl } from '@/infrastructure/browser/active-tab-reader'
 import { flowFail, flowOk, flowStart, previewText } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
+import { addChromeBookmarkDeleteTombstone } from '@/infrastructure/storage/chrome-bookmark-delete-tombstone-storage'
 import { bumpExcerptCaptureCount } from '@/infrastructure/storage/first-recall-onboarding-storage'
 import { bumpMemoryLibraryRevision } from '@/infrastructure/storage/memory-library-revision-storage'
 
@@ -139,16 +140,20 @@ export async function handleListMemoryItems(payload: unknown): Promise<MemoryBac
   const startedAt = flowStart('Memory', '列出条目')
   try {
     const options = parseListMemoryItemsPayload(payload)
-    const items = await memoryItemService.list({
-      ...optionalProp('type', options?.type),
-      ...optionalProp('limit', options?.limit)
-    })
+    const [items, total] = await Promise.all([
+      memoryItemService.list({
+        ...optionalProp('type', options?.type),
+        ...optionalProp('limit', options?.limit)
+      }),
+      memoryItemService.countActive(options?.type)
+    ])
     flowOk('Memory', '列出条目', startedAt, {
       count: items.length,
+      total,
       type: options?.type ?? null,
       limit: options?.limit ?? null
     })
-    return { ok: true, items, total: items.length }
+    return { ok: true, items, total }
   } catch (error) {
     flowFail('Memory', '列出条目', startedAt, error)
     return toErrorResponse('MEMORY_OPERATION_FAILED', error)
@@ -173,7 +178,7 @@ export async function handleGetMemoryItem(payload: unknown): Promise<MemoryBackg
   }
 }
 
-/** 软删 MemoryItem（仅允许 text_excerpt）。 */
+/** 软删 MemoryItem（摘录 / 书签；书签仅删 Yiveno 记忆，不动 Chrome，并写墓碑防同步复活）。 */
 export async function handleDeleteMemoryItem(payload: unknown): Promise<MemoryBackgroundResponse> {
   const startedAt = flowStart('Memory', '删除条目')
   try {
@@ -183,23 +188,23 @@ export async function handleDeleteMemoryItem(payload: unknown): Promise<MemoryBa
       flowOk('Memory', '删除条目', startedAt, { id: input.id, found: false })
       return toErrorResponse('MEMORY_NOT_FOUND')
     }
-    if (existing.type !== 'text_excerpt') {
-      flowOk('Memory', '删除条目', startedAt, {
-        id: input.id,
-        errorCode: 'MEMORY_DELETE_BOOKMARK_FORBIDDEN'
-      })
-      return toErrorResponse('MEMORY_DELETE_BOOKMARK_FORBIDDEN')
-    }
 
     const item = await memoryItemService.softDelete(input.id)
     if (!item) {
       flowOk('Memory', '删除条目', startedAt, { id: input.id, found: false })
       return toErrorResponse('MEMORY_NOT_FOUND')
     }
+
+    if (existing.type === 'bookmark' && existing.payload.chromeBookmarkId) {
+      await addChromeBookmarkDeleteTombstone(existing.payload.chromeBookmarkId)
+    }
+
+    invalidateBookmarkSyncAlignmentCache()
+    invalidateBookmarkLibraryTreeOnChromeChange()
     void bumpMemoryLibraryRevision().catch(error => {
       logger.warn('Memory', '库修订信号更新失败', error)
     })
-    flowOk('Memory', '删除条目', startedAt, { id: item.id })
+    flowOk('Memory', '删除条目', startedAt, { id: item.id, type: item.type })
     return { ok: true, item }
   } catch (error) {
     flowFail('Memory', '删除条目', startedAt, error)

@@ -201,6 +201,36 @@ describe('memory-item-repository', () => {
     ).toHaveLength(1)
   })
 
+  it('upsertBookmarkFromChrome 墓碑 id 跳过复活且不清 deletedAt', async () => {
+    const { addChromeBookmarkDeleteTombstone } =
+      await import('@/infrastructure/storage/chrome-bookmark-delete-tombstone-storage')
+    const created = await memoryItemRepository.createBookmark({
+      payload: {
+        title: '墓碑书签',
+        url: 'https://tomb.example.com/a',
+        chromeBookmarkId: 'chrome-tomb-1'
+      },
+      captureEntry: 'sync',
+      now: () => '2026-07-22T06:00:00.000Z'
+    })
+    await memoryItemRepository.softDelete(created.id)
+    await addChromeBookmarkDeleteTombstone('chrome-tomb-1')
+
+    const skipped = await memoryItemRepository.upsertBookmarkFromChrome({
+      payload: {
+        title: '应被挡',
+        url: 'https://tomb.example.com/a',
+        chromeBookmarkId: 'chrome-tomb-1'
+      },
+      captureEntry: 'sync',
+      now: () => '2026-07-22T07:00:00.000Z'
+    })
+
+    expect(skipped.id).toBe(created.id)
+    expect(skipped.deletedAt).toBeTruthy()
+    expect(await memoryItemRepository.getByChromeBookmarkId('chrome-tomb-1')).toBeNull()
+  })
+
   it('remapOwnerId 迁移归属并保留 sourceLocalProfileId', async () => {
     const created = await memoryItemRepository.createBookmark({
       payload: { title: 'Remap', url: 'https://remap.example.com' },

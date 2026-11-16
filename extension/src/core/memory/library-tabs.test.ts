@@ -5,7 +5,8 @@ import {
   DEFAULT_LIBRARY_TYPE,
   LIBRARY_TYPE_TABS,
   parseLibraryTypeFromLocationSearch,
-  resolveLibraryTypeTab
+  resolveLibraryTypeTab,
+  shouldShowLibraryListCapNote
 } from '@/core/memory/library-tabs'
 
 describe('library-tabs', () => {
@@ -32,5 +33,11 @@ describe('library-tabs', () => {
     expect(buildLibraryTypeLocationSearch('text_excerpt')).toBe('')
     expect(buildLibraryTypeLocationSearch('bookmark')).toBe('?type=bookmark')
     expect(buildLibraryTypeLocationSearch('text_excerpt', '?type=bookmark&x=1')).toBe('?x=1')
+  })
+
+  it('shouldShowLibraryListCapNote 仅当总数大于已加载时为真', () => {
+    expect(shouldShowLibraryListCapNote(200, 200)).toBe(false)
+    expect(shouldShowLibraryListCapNote(201, 200)).toBe(true)
+    expect(shouldShowLibraryListCapNote(0, 0)).toBe(false)
   })
 })

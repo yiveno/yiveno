@@ -117,6 +117,26 @@ describe('memory-handler', () => {
     expect(response.items[0]?.payload).toMatchObject({ title: 'First' })
   })
 
+  it('handleListMemoryItems 的 total 是活条目全量计数而非 items.length', async () => {
+    for (let index = 0; index < 3; index += 1) {
+      const captured = await handleCaptureTextExcerpt({
+        selectedText: `list total excerpt ${index}`,
+        sourceUrl: `https://list-total.example.com/${index}`,
+        pageTitle: `T${index}`
+      })
+      expect(captured.ok).toBe(true)
+    }
+
+    const response = await handleListMemoryItems({ type: 'text_excerpt', limit: 2 })
+    expect(response.ok).toBe(true)
+    if (!response.ok || !('items' in response)) {
+      return
+    }
+    expect(response.items).toHaveLength(2)
+    expect(response.total).toBe(3)
+    expect(response.total).not.toBe(response.items.length)
+  })
+
   it('handleCaptureBookmark 拒绝非法 payload', async () => {
     const response = await handleCaptureBookmark({ title: '', url: 'not-a-url' })
     expect(response.ok).toBe(false)
@@ -243,22 +263,34 @@ describe('memory-handler', () => {
     expect(fetched.ok).toBe(false)
   })
 
-  it('handleDeleteMemoryItem 拒绝删除书签', async () => {
-    const captured = await handleCaptureBookmark({
-      title: 'Keep in Chrome',
-      url: 'https://bookmark.example.com'
-    })
-    expect(captured.ok).toBe(true)
-    if (!captured.ok || !('item' in captured)) {
-      return
-    }
+  it('handleDeleteMemoryItem 允许删书签并写墓碑、失效缓存', async () => {
+    const alignmentCache = await import('@/application/memory/bookmark-sync-alignment-cache')
+    const importHandler = await import('@/background/handlers/import-handler')
+    const alignmentSpy = vi.spyOn(alignmentCache, 'invalidateBookmarkSyncAlignmentCache')
+    const treeSpy = vi.spyOn(importHandler, 'invalidateBookmarkLibraryTreeOnChromeChange')
 
-    const deleted = await handleDeleteMemoryItem({ id: captured.item.id })
-    expect(deleted.ok).toBe(false)
-    if (deleted.ok) {
+    const { memoryItemService } = await import('@/application/memory/memory-item-service')
+    const item = await memoryItemService.upsertBookmarkFromChrome({
+      payload: {
+        title: 'Keep in Chrome',
+        url: 'https://bookmark.example.com',
+        chromeBookmarkId: 'chrome-del-1'
+      },
+      captureEntry: 'sync'
+    })
+
+    const deleted = await handleDeleteMemoryItem({ id: item.id })
+    expect(deleted.ok).toBe(true)
+    if (!deleted.ok || !('item' in deleted)) {
       return
     }
-    expect(deleted.errorCode).toBe('MEMORY_DELETE_BOOKMARK_FORBIDDEN')
+    expect(deleted.item.deletedAt).toBeTruthy()
+
+    const { readChromeBookmarkDeleteTombstoneIds } =
+      await import('@/infrastructure/storage/chrome-bookmark-delete-tombstone-storage')
+    expect((await readChromeBookmarkDeleteTombstoneIds()).has('chrome-del-1')).toBe(true)
+    expect(alignmentSpy).toHaveBeenCalled()
+    expect(treeSpy).toHaveBeenCalled()
   })
 
   it('handleRecordRecallDismiss 写回 dismissCount', async () => {

@@ -11,6 +11,7 @@ import {
 } from '@/application/recall/backends/recall-scan-limit'
 import type { CreateBookmarkInput, CreateTextExcerptInput } from '@/core/memory/create-memory-item'
 import type { MemoryItem } from '@/core/memory/memory-item'
+import type { SupportedMemoryItemType } from '@/core/memory/memory-item-type'
 import {
   buildFilterClueFromParsed,
   shouldRecallByConstraintNeighborhood
@@ -75,6 +76,11 @@ export class MemoryItemService {
   /** 列出当前用户的 MemoryItem。 */
   async list(options: ListMemoryItemsOptions = {}): Promise<MemoryItem[]> {
     return this.repository.listByOwner(options)
+  }
+
+  /** 统计当前用户未软删条目数（可按 type 过滤）。 */
+  async countActive(type?: SupportedMemoryItemType): Promise<number> {
+    return this.repository.countActiveByOwner(type)
   }
 
   /**

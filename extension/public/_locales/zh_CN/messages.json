@@ -1923,6 +1923,19 @@
   "library_loading": {
     "message": "加载中…"
   },
+  "library_list_visible_cap_note": {
+    "message": "仅显示前 $1 条，共 $2 条。",
+    "placeholders": {
+      "visible": {
+        "content": "$1",
+        "example": "200"
+      },
+      "total": {
+        "content": "$2",
+        "example": "320"
+      }
+    }
+  },
   "library_retry": {
     "message": "重试"
   },
@@ -1940,6 +1953,37 @@
   },
   "library_delete_excerpt_aria": {
     "message": "删除摘录"
+  },
+  "library_delete_bookmark_aria": {
+    "message": "从 Yiveno 移除"
+  },
+  "library_delete_bookmark_confirm": {
+    "message": "从 Yiveno 记忆中移除这条书签？Chrome 里的书签不会动。本机不会再把它导回来。"
+  },
+  "library_bookmark_importing_title": {
+    "message": "正在导入书签…"
+  },
+  "library_bookmark_importing_body": {
+    "message": "Yiveno 正在把 Chrome 书签写入本记忆库。书签很多时可能要一会儿。"
+  },
+  "library_bookmark_import_progress_detail": {
+    "message": "$imported$ / $total$",
+    "placeholders": {
+      "imported": {
+        "content": "$1",
+        "example": "120"
+      },
+      "total": {
+        "content": "$2",
+        "example": "800"
+      }
+    }
+  },
+  "library_bookmark_import_progress_indeterminate": {
+    "message": "正在处理…"
+  },
+  "library_bookmark_import_progress_aria": {
+    "message": "书签导入进度"
   },
   "library_bookmark_unsynced": {
     "message": "未进入记忆"
@@ -2007,7 +2051,7 @@
     "message": "全选"
   },
   "detail_export_select_all_hint": {
-    "message": "选中此列表全部条目"
+    "message": "选中已加载的全部条目"
   },
   "detail_export_invert_selection": {
     "message": "反选"
@@ -2122,9 +2166,6 @@
   },
   "error_memory_not_found": {
     "message": "找不到这条记忆。可能已删除。"
-  },
-  "error_memory_delete_bookmark_forbidden": {
-    "message": "请在本浏览器中删除书签；Yiveno 会自动同步。"
   },
   "error_memory_operation_failed": {
     "message": "没能完成。请再试一次。"

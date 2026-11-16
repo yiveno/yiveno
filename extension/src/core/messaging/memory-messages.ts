@@ -65,7 +65,6 @@ const recordRecallSettlePayloadSchema = z.object({
 /** Memory 操作面向 UI 的稳定错误码。 */
 export const MemoryErrorCodeSchema = z.enum([
   'MEMORY_NOT_FOUND', // 条目不存在
-  'MEMORY_DELETE_BOOKMARK_FORBIDDEN', // 禁止删书签类 Memory（应走 Chrome 书签）
   'MEMORY_OPERATION_FAILED', // 通用 Memory 操作失败
   'CAPTURE_UNSAVABLE_PAGE', // 当前页不可存
   'CAPTURE_EMPTY_SELECTION', // 无有效选区
@@ -106,7 +105,7 @@ export type GetMemoryItemMessage = {
   payload: z.infer<typeof getMemoryItemPayloadSchema>
 }
 
-/** 软删 MemoryItem（当前仅允许 text_excerpt）。 */
+/** 软删 MemoryItem（摘录 / 书签；书签仅删 Yiveno 记忆）。 */
 export type DeleteMemoryItemMessage = {
   scope: BackgroundMessageScope
   type: 'DELETE_MEMORY_ITEM'

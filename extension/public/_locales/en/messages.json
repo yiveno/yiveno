@@ -1926,6 +1926,19 @@
   "library_loading": {
     "message": "Loading…"
   },
+  "library_list_visible_cap_note": {
+    "message": "Showing the first $1 of $2.",
+    "placeholders": {
+      "visible": {
+        "content": "$1",
+        "example": "200"
+      },
+      "total": {
+        "content": "$2",
+        "example": "320"
+      }
+    }
+  },
   "library_retry": {
     "message": "Retry"
   },
@@ -1943,6 +1956,37 @@
   },
   "library_delete_excerpt_aria": {
     "message": "Delete excerpt"
+  },
+  "library_delete_bookmark_aria": {
+    "message": "Remove from Yiveno"
+  },
+  "library_delete_bookmark_confirm": {
+    "message": "Remove this bookmark from Yiveno memory? Your Chrome bookmark stays. Yiveno won’t import it again on this device."
+  },
+  "library_bookmark_importing_title": {
+    "message": "Importing bookmarks…"
+  },
+  "library_bookmark_importing_body": {
+    "message": "Yiveno is bringing your Chrome bookmarks into this library. This can take a moment on a large set."
+  },
+  "library_bookmark_import_progress_detail": {
+    "message": "$imported$ / $total$",
+    "placeholders": {
+      "imported": {
+        "content": "$1",
+        "example": "120"
+      },
+      "total": {
+        "content": "$2",
+        "example": "800"
+      }
+    }
+  },
+  "library_bookmark_import_progress_indeterminate": {
+    "message": "Working on it…"
+  },
+  "library_bookmark_import_progress_aria": {
+    "message": "Bookmark import progress"
   },
   "library_bookmark_unsynced": {
     "message": "Not in memory"
@@ -2010,7 +2054,7 @@
     "message": "Select all"
   },
   "detail_export_select_all_hint": {
-    "message": "Select all items in this list"
+    "message": "Select all loaded items"
   },
   "detail_export_invert_selection": {
     "message": "Invert selection"
@@ -2125,9 +2169,6 @@
   },
   "error_memory_not_found": {
     "message": "This memory was not found. It may have been deleted."
-  },
-  "error_memory_delete_bookmark_forbidden": {
-    "message": "Delete bookmarks in this browser; Yiveno will sync automatically."
   },
   "error_memory_operation_failed": {
     "message": "Couldn’t finish that. Try again."

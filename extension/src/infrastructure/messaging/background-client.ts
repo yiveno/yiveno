@@ -182,7 +182,7 @@ export async function getMemoryItem(
   return sendBackgroundMessage<MemoryBackgroundResponse>(message)
 }
 
-/** 软删 MemoryItem（当前仅摘录）。 */
+/** 软删 MemoryItem（摘录 / 书签；书签仅删 Yiveno 记忆，不动 Chrome）。 */
 export async function deleteMemoryItem(
   payload: DeleteMemoryItemMessage['payload']
 ): Promise<MemoryBackgroundResponse> {

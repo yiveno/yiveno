@@ -28,6 +28,7 @@
 | [ADR-020](./ADR-020-chromium-dual-store-edge.md)          | Chromium 双店同包（Chrome + Edge）；大陆主路径 Edge                   | 已接受   |
 | [ADR-021](./ADR-021-online-default-thin-offline.md)       | 在线默认 · 离线仅薄适配（非离线优先产品）                             | 已接受   |
 | [ADR-022](./ADR-022-dreaming-derived-stores.md)           | Dreaming 派生表（独立 IDB store；L3；v1 本地-only）                   | 已接受   |
+| [ADR-023](./ADR-023-chrome-bookmark-delete-tombstone.md)  | 书签删除墓碑（用户删除优先于 Chrome 权威同步）                        | 已接受   |
 
 **新增 ADR：** 先写本文目录 + 文件，再在产品文档 / `CURRENT.md` 引用。
 

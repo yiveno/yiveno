@@ -132,6 +132,7 @@ function excerptRowMemoDeps(row: ExcerptLibraryListRow): unknown[] {
         >
           <AppLibraryItemCard
             :href="row.href"
+            :activate-aria-label="row.excerpt || row.title || row.subtitle"
             :detail-export-active="detailExportMode"
             :detail-export-selected="isDetailExportSelected(row.id)"
             fill-height

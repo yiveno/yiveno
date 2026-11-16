@@ -71,6 +71,8 @@ export interface MapChromeBookmarkTreeOptions {
   noteByMemoryId?: ReadonlyMap<string, string>
   /** MemoryItem.id → 保存/创建时刻 ISO */
   savedAtByMemoryId?: ReadonlyMap<string, string>
+  /** Yiveno 侧已删书签的 chromeBookmarkId；映射时跳过这些叶子（隐藏行） */
+  tombstonedChromeBookmarkIds?: ReadonlySet<string>
 }
 
 export function mapChromeBookmarkTreeToLibraryForest(
@@ -116,6 +118,9 @@ function mapChromeNode(
   const url = node.url?.trim()
   if (url) {
     if (!isHttpUrl(url)) {
+      return null
+    }
+    if (options.tombstonedChromeBookmarkIds?.has(node.id)) {
       return null
     }
     const memoryItemId = resolveMemoryItemId(

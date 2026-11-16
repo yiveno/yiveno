@@ -1,3 +1,4 @@
+import { CodedError } from '@/core/common/coded-error'
 import { optionalProp } from '@/core/common/optional-props'
 import { TEXT_EXCERPT_SELECTED_TEXT_MAX_LENGTH } from '@/core/capture/text-excerpt-selection'
 import { normalizeBookmarkSyncUrl } from '@/core/memory/bookmark-library-tree'
@@ -40,6 +41,7 @@ import { memoryNotesMetaRepository } from '@/infrastructure/indexeddb/memory-not
 import { memoryNotesRepository } from '@/infrastructure/indexeddb/memory-notes-repository'
 import { indexedDBManager, requestToPromise } from '@/infrastructure/indexeddb/manager'
 import { logger } from '@/infrastructure/logging/logger'
+import { readChromeBookmarkDeleteTombstoneIds } from '@/infrastructure/storage/chrome-bookmark-delete-tombstone-storage'
 import {
   extractDocumentIndexTokens,
   sameTokenSet
@@ -212,6 +214,7 @@ export class MemoryItemRepository {
   /**
    * 从 Chrome 书签 upsert Bookmark MemoryItem。
    * 已存在（含软删）则同 id 更新标题/URL 并清 deletedAt；不存在则新建。
+   * 若 chromeBookmarkId 在墓碑集中：不复活、不新建（用户 Yiveno 侧删除优先于 Chrome 仍在）。
    */
   async upsertBookmarkFromChrome(input: CreateBookmarkInput): Promise<MemoryItem> {
     const chromeBookmarkId = input.payload.chromeBookmarkId
@@ -222,6 +225,16 @@ export class MemoryItemRepository {
     const existing = await this.getByChromeBookmarkId(chromeBookmarkId, undefined, {
       includeDeleted: true
     })
+
+    const tombstones = await readChromeBookmarkDeleteTombstoneIds()
+    if (tombstones.has(chromeBookmarkId)) {
+      logger.info('Memory', 'upsert 跳过墓碑书签（不复活/不新建）', { chromeBookmarkId })
+      if (existing && existing.type === 'bookmark') {
+        return existing
+      }
+      throw new CodedError('CHROME_BOOKMARK_TOMBSTONED', 'chrome bookmark tombstoned')
+    }
+
     if (!existing || existing.type !== 'bookmark') {
       return this.createBookmark({
         ...input,

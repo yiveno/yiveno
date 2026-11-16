@@ -40,6 +40,7 @@ import {
 import { getBookmarkSyncAlignmentCached } from '@/application/memory/bookmark-sync-alignment-cache'
 import { t } from '@/infrastructure/i18n/t'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
+import { readChromeBookmarkDeleteTombstoneIds } from '@/infrastructure/storage/chrome-bookmark-delete-tombstone-storage'
 
 /** 返回 Chrome 书签导入进度。 */
 export async function handleGetChromeBookmarkImportStatus(): Promise<ChromeBookmarkImportStatusResponse> {
@@ -160,10 +161,11 @@ export async function handleGetBookmarkLibraryTree(
 ): Promise<GetBookmarkLibraryTreeResponse> {
   const startedAt = flowStart('Import', '读取书签目录树')
   try {
-    const [chromeTree, alignment, importState] = await Promise.all([
+    const [chromeTree, alignment, importState, tombstonedChromeBookmarkIds] = await Promise.all([
       chrome.bookmarks.getTree(),
       getBookmarkSyncAlignmentCached(),
-      getChromeBookmarkImportStatus()
+      getChromeBookmarkImportStatus(),
+      readChromeBookmarkDeleteTombstoneIds()
     ])
 
     const index = mapChromeBookmarkTreeToLibraryIndex(
@@ -173,7 +175,8 @@ export async function handleGetBookmarkLibraryTree(
         unnamedFolderTitle: t('library_folder_unnamed'),
         memoryIdByUrl: alignment.byUrl,
         noteByMemoryId: alignment.noteByMemoryId,
-        savedAtByMemoryId: alignment.savedAtByMemoryId
+        savedAtByMemoryId: alignment.savedAtByMemoryId,
+        tombstonedChromeBookmarkIds
       }
     )
 

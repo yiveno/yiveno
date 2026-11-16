@@ -10,6 +10,8 @@ const props = withDefaults(
     href?: string | undefined
     /** 原生 title（书签悬停等） */
     linkTitle?: string | undefined
+    /** 可激活用 aria-label（标题文本；role=button 所需） */
+    activateAriaLabel?: string | undefined
     /** detail export 多选模式 */
     detailExportActive?: boolean
     detailExportSelected?: boolean
@@ -30,7 +32,7 @@ function handleSurfaceActivate(event: MouseEvent): void {
 }
 
 function handleSurfaceKeydown(event: KeyboardEvent): void {
-  if (event.key !== 'Enter') {
+  if (event.key !== 'Enter' && event.key !== ' ') {
     return
   }
   event.preventDefault()
@@ -48,7 +50,6 @@ function handleSurfaceKeydown(event: KeyboardEvent): void {
         props.detailExportActive === true && props.detailExportSelected === true
     }"
     :title="props.linkTitle"
-    :aria-selected="props.detailExportActive ? props.detailExportSelected === true : undefined"
     role="group"
   >
     <div
@@ -57,6 +58,11 @@ function handleSurfaceKeydown(event: KeyboardEvent): void {
         'app-library-item-card__body--interactive':
           props.detailExportActive === true || Boolean(props.href)
       }"
+      role="button"
+      :aria-label="props.activateAriaLabel || props.linkTitle || undefined"
+      :aria-pressed="
+        props.detailExportActive === true ? props.detailExportSelected === true : undefined
+      "
       :tabindex="props.detailExportActive || props.href ? 0 : undefined"
       @click="handleSurfaceActivate"
       @keydown="handleSurfaceKeydown"
@@ -83,6 +89,7 @@ function handleSurfaceKeydown(event: KeyboardEvent): void {
           v-if="$slots.actions && props.detailExportActive !== true"
           class="lib-item-row__end lib-item-actions"
           @click.stop
+          @keydown.stop
         >
           <slot name="actions" />
         </div>

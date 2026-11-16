@@ -21,6 +21,8 @@ const props = defineProps<{
   detailExportSelectionDisabled?: boolean
   /** 为 true 时点书签行切换 detail export 选中 */
   showDetailExportSelection?: boolean
+  /** 正在删除的 MemoryItem id（禁用删钮） */
+  deletingId?: string | null | undefined
 }>()
 
 const emit = defineEmits<{
@@ -40,6 +42,7 @@ const emit = defineEmits<{
     }
   ]
   toggleDetailExportSelection: [memoryItemId: string]
+  deleteBookmark: [memoryItemId: string]
 }>()
 
 /** 行高留给虚拟列表 stride；缩进步长交给 CSS（--library-tree-indent-step × --tree-depth）。 */
@@ -95,6 +98,15 @@ function handleEditNote(event: Event) {
   })
 }
 
+function handleDeleteBookmark(event: Event) {
+  event.preventDefault()
+  event.stopPropagation()
+  if (props.row.kind !== 'bookmark' || !props.row.memoryItemId) {
+    return
+  }
+  emit('deleteBookmark', props.row.memoryItemId)
+}
+
 function handleBookmarkActivate(event: MouseEvent | KeyboardEvent) {
   if (props.row.kind !== 'bookmark' || !props.row.url) {
     return
@@ -138,6 +150,7 @@ function handleBookmarkActivate(event: MouseEvent | KeyboardEvent) {
 <template>
   <div
     class="tree-row"
+    role="listitem"
     :class="row.kind === 'bookmark' ? 'tree-row--bookmark' : 'tree-row--folder'"
     :style="rowStyle"
   >
@@ -163,6 +176,7 @@ function handleBookmarkActivate(event: MouseEvent | KeyboardEvent) {
       fill-height
       :href="row.url"
       :link-title="bookmarkTooltip"
+      :activate-aria-label="bookmarkTitleDisplay"
       :detail-export-active="showDetailExportSelection === true"
       :detail-export-selected="detailExportSelected === true"
       @activate="handleBookmarkActivate"
@@ -198,6 +212,16 @@ function handleBookmarkActivate(event: MouseEvent | KeyboardEvent) {
           @click="handleEditNote"
         >
           <AppIcon name="edit_note" size="20px" />
+        </AppIconButton>
+        <AppIconButton
+          type="button"
+          tone="danger"
+          :title="t('library_delete_bookmark_aria')"
+          :aria-label="t('library_delete_bookmark_aria')"
+          :disabled="deletingId === row.memoryItemId"
+          @click="handleDeleteBookmark"
+        >
+          <AppIcon name="delete" size="20px" />
         </AppIconButton>
       </template>
     </AppLibraryItemCard>

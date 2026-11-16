@@ -82,4 +82,23 @@ describe('chrome-bookmark-bulk-import', () => {
     })
     expect(stored).toHaveLength(leaves.length)
   })
+
+  it('bulkPutChromeBookmarkLeaves 过滤墓碑叶子', async () => {
+    const { addChromeBookmarkDeleteTombstone } =
+      await import('@/infrastructure/storage/chrome-bookmark-delete-tombstone-storage')
+    await addChromeBookmarkDeleteTombstone('2')
+    const leaves = createLeaves(3)
+    await bulkPutChromeBookmarkLeaves(leaves)
+    const stored = await memoryItemRepository.listByOwner({
+      type: 'bookmark',
+      limit: Number.MAX_SAFE_INTEGER
+    })
+    expect(stored).toHaveLength(2)
+    const chromeIds = stored.map(item =>
+      item.type === 'bookmark' ? item.payload.chromeBookmarkId : null
+    )
+    expect(chromeIds).toContain('1')
+    expect(chromeIds).toContain('3')
+    expect(chromeIds).not.toContain('2')
+  })
 })

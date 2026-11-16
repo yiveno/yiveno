@@ -64,3 +64,8 @@ export function buildLibraryTypeLocationSearch(
 
 /** 单次列表拉取上限。 */
 export const LIBRARY_LIST_LIMIT = 200
+
+/** 仅当库内总数大于已加载条数时显示截断说明（与 Side Panel 可见上限语义一致）。 */
+export function shouldShowLibraryListCapNote(total: number, loaded: number): boolean {
+  return total > loaded
+}
