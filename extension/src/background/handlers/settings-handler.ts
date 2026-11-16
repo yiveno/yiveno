@@ -9,6 +9,7 @@ import { resumeAsyncMemoryEmbeddingAfterAuth } from '@/application/memory/schedu
 import { resumeAsyncMemoryLlmEnrichmentAfterQuota } from '@/application/memory/schedule-async-memory-llm-enrichment'
 import { refreshClueLlmCompleterFromDevConfig } from '@/application/recall/refresh-clue-llm-completer'
 import { syncChromeBookmarkSyncListenersWithIngestSetting } from '@/background/listeners/chrome-bookmark-sync'
+import { ensureLinkStatusSweepAlarm } from '@/infrastructure/sync/link-status-sweep-alarm'
 import { fetchHostedQuota } from '@/infrastructure/ai/hosted-quota-api-client'
 import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
 import {
@@ -58,6 +59,9 @@ export async function handleUpdateUserSettings(
     if (typeof parsed.aiFeaturesEnabled === 'boolean') {
       patch.aiFeaturesEnabled = parsed.aiFeaturesEnabled
     }
+    if (typeof parsed.linkStatusSweepEnabled === 'boolean') {
+      patch.linkStatusSweepEnabled = parsed.linkStatusSweepEnabled
+    }
     if (typeof parsed.chromeBookmarkIngestEnabled === 'boolean') {
       patch.chromeBookmarkIngestEnabled = parsed.chromeBookmarkIngestEnabled
     }
@@ -79,6 +83,10 @@ export async function handleUpdateUserSettings(
         resumeAsyncMemoryLlmEnrichmentAfterQuota()
         resumeAsyncMemoryEmbeddingAfterAuth()
       }
+    }
+    if (typeof patch.linkStatusSweepEnabled === 'boolean') {
+      // 巡检开关：挂/卸独立闹钟（不联动 AI）
+      await ensureLinkStatusSweepAlarm(patch.linkStatusSweepEnabled)
     }
     if (typeof patch.chromeBookmarkIngestEnabled === 'boolean') {
       // 关：立刻卸 bookmarks.* 监听；开：挂监听并补跑导入/reconcile

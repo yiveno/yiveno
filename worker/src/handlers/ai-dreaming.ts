@@ -80,6 +80,11 @@ export async function handleDreamingComplete(
   const provider = resolveAiChatProvider(env)
 
   let rawText: string
+  let completionUsage: {
+    tokensUsed?: number
+    promptTokens?: number
+    completionTokens?: number
+  } = {}
   try {
     const completion = await provider.complete(env, {
       model,
@@ -92,6 +97,13 @@ export async function handleDreamingComplete(
       ]
     })
     rawText = completion.text
+    completionUsage = {
+      ...(completion.tokensUsed !== undefined ? { tokensUsed: completion.tokensUsed } : {}),
+      ...(completion.promptTokens !== undefined ? { promptTokens: completion.promptTokens } : {}),
+      ...(completion.completionTokens !== undefined
+        ? { completionTokens: completion.completionTokens }
+        : {})
+    }
   } catch (error) {
     logError(error, { path: '/api/ai/dreaming/complete', userId, model })
     return errorJson({ error: 'provider_failed' }, 502, origin)
@@ -124,7 +136,10 @@ export async function handleDreamingComplete(
     resultCount: results.length,
     durationMs: Date.now() - startedAt,
     used: snapshot.used,
-    limit: snapshot.limit
+    limit: snapshot.limit,
+    tokensUsed: completionUsage.tokensUsed ?? null,
+    promptTokens: completionUsage.promptTokens ?? null,
+    completionTokens: completionUsage.completionTokens ?? null
   })
 
   return okJson(
@@ -133,6 +148,9 @@ export async function handleDreamingComplete(
       model,
       provider: provider.id,
       taskKind,
+      tokensUsed: completionUsage.tokensUsed,
+      promptTokens: completionUsage.promptTokens,
+      completionTokens: completionUsage.completionTokens,
       quota: {
         used: snapshot.used,
         limit: snapshot.limit,

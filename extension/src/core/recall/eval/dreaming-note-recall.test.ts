@@ -66,7 +66,8 @@ vi.mock('@/core/recall/understand/understand-recall-clue', () => ({
 }))
 
 vi.mock('@/application/recall/clue-llm-completer-registry', () => ({
-  getClueLlmCompleter: vi.fn(() => undefined)
+  getClueLlmCompleter: vi.fn(() => undefined),
+  getClueLlmCompleterDetailed: vi.fn(() => undefined)
 }))
 
 vi.mock('@/infrastructure/browser/browser-online', async importOriginal => {

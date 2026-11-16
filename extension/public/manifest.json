@@ -22,7 +22,9 @@
   "host_permissions": [
     "https://*.supabase.co/*",
     "http://localhost:8787/*",
-    "https://api.yiveno.com/*"
+    "https://api.yiveno.com/*",
+    "http://*/*",
+    "https://*/*"
   ],
   "externally_connectable": {
     "matches": [

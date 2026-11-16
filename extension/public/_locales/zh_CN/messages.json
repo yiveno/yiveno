@@ -1225,6 +1225,9 @@
   "settings_privacy_bullet_ai": {
     "message": "AI：线索理解可能调用模型；默认不会发送你的完整记忆库。"
   },
+  "settings_privacy_bullet_link_sweep": {
+    "message": "链接巡检：每周由你的浏览器直接请求你存过的网站；URL 不经过 Yiveno 服务器。可在 AI 分区随时关闭。"
+  },
   "settings_privacy_bullet_not_collected": {
     "message": "不收集：浏览历史、剪贴板读取、你未 Capture 的页面，或作为个人导出的去标识聚合产品分析。"
   },
@@ -1356,6 +1359,12 @@
   },
   "settings_ai_toggle_hint": {
     "message": "关闭：仅用规则理解线索；保存时不做 AI 建议。"
+  },
+  "settings_link_sweep_toggle": {
+    "message": "每周检查已存链接"
+  },
+  "settings_link_sweep_toggle_hint": {
+    "message": "关闭：不做每周链接巡检。失效链接只在找东西时降权，绝不删除。"
   },
   "settings_ai_model_note": {
     "message": "请求如何路由："

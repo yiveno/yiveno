@@ -13,10 +13,12 @@ import {
 } from '@/core/recall/build-recall-result'
 import { collapseRecallMatches } from '@/core/recall/collapse-recall-duplicates'
 import {
+  applyStalePenaltiesToMatches,
   filterMemoryItemsByKeyword,
   normalizeRecallText,
   RECALL_TOP_PICK_MIN_SCORE,
-  type RecallBehaviorProfile
+  type RecallBehaviorProfile,
+  type RecallLinkStatusHint
 } from '@/core/recall/keyword-filter'
 import {
   looksLikeAssistantImperativeClue,
@@ -91,6 +93,8 @@ export interface OrchestrateKeywordRecallOptions {
    * 约束邻域分支不传。
    */
   noteMatches?: NoteMatchSet
+  /** 死链巡检结论；Omnibox 档位忽略。 */
+  linkStatusByItemId?: ReadonlyMap<string, RecallLinkStatusHint>
 }
 
 /** 对象类型 → 条目证据词面（跳过 clueOnly；用于 MemoryItem 类型弱匹配）。 */
@@ -669,8 +673,15 @@ export function recallByKeywordWithParsedClue(
     // 为避免重复计算，先用约束邻域获取过滤后的 pool。
     const constraintPool = getConstraintFilteredPool(items, parsed, nowMs)
 
-    const constraintMatches = recallMatchesByConstraintNeighborhood(items, parsed, nowMs).map(
-      match => applyParsedClueScoreBoosts(match, parsed, nowMs)
+    const constraintLinkStatus =
+      options.behaviorProfile === 'omnibox' ? undefined : options.linkStatusByItemId
+
+    const constraintMatches = applyStalePenaltiesToMatches(
+      recallMatchesByConstraintNeighborhood(items, parsed, nowMs).map(match =>
+        applyParsedClueScoreBoosts(match, parsed, nowMs)
+      ),
+      constraintLinkStatus,
+      options.behaviorProfile
     )
 
     // TopicLookup：约束邻域池中补充 topic 相关条目（并集 · 不删现有）。
@@ -714,10 +725,14 @@ export function recallByKeywordWithParsedClue(
   const effectiveNoteMatches =
     options.behaviorProfile === 'omnibox' ? undefined : options.noteMatches
 
+  const effectiveLinkStatus =
+    options.behaviorProfile === 'omnibox' ? undefined : options.linkStatusByItemId
+
   const scored = filterKeywordMatchesBeforeCollapse(items, filterClue, {
     nowMs,
     ...(options.behaviorProfile ? { behaviorProfile: options.behaviorProfile } : {}),
-    ...(effectiveNoteMatches ? { noteMatches: effectiveNoteMatches } : {})
+    ...(effectiveNoteMatches ? { noteMatches: effectiveNoteMatches } : {}),
+    ...(effectiveLinkStatus ? { linkStatusByItemId: effectiveLinkStatus } : {})
   }).map(match => applyParsedClueScoreBoosts(match, parsed, nowMs))
   const { matches, effectiveParsed, timeSoftReopen } =
     applyTimeFilterThenContentCorroborationWithSoftReopen(

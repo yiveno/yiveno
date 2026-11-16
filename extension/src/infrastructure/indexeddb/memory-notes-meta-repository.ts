@@ -4,6 +4,7 @@
 
 import { DREAMING_SCHEMA_VERSION } from '@/core/dreaming/dreaming-constants'
 import type { DreamRunCursor } from '@/core/dreaming/dream-run-cursor'
+import type { LlmChatUsage } from '@/core/recall/understand/llm-chat-usage'
 import { MEMORY_NOTES_META_STORE } from '@/infrastructure/indexeddb/constants'
 import { initializeMemoryDatabase } from '@/infrastructure/indexeddb/memory-db'
 import {
@@ -90,6 +91,35 @@ export class MemoryNotesMetaRepository {
       logger.warn('Dreaming', '命题命中计数写入失败', {
         ownerId,
         noteId,
+        error: error instanceof Error ? error.message : String(error)
+      })
+    }
+  }
+
+  /**
+   * Q7：累计夜间编译 usage（花费/节省比分子）。
+   * fail-open；仅累加非 null 字段；禁止用 prompt+completion 推算 total。
+   * 不升 schemaVersion（可选字段 + default，同 noteHitCounts）。
+   */
+  async recordCompileUsage(ownerId: string, usage: LlmChatUsage): Promise<void> {
+    try {
+      const hasAny =
+        usage.promptTokens != null || usage.completionTokens != null || usage.totalTokens != null
+      if (!hasAny) {
+        return
+      }
+      const existing = await this.getOrCreateMeta(ownerId)
+      await this.putMeta({
+        ...existing,
+        compilePromptTokensTotal: existing.compilePromptTokensTotal + (usage.promptTokens ?? 0),
+        compileCompletionTokensTotal:
+          existing.compileCompletionTokensTotal + (usage.completionTokens ?? 0),
+        compileTotalTokensTotal: existing.compileTotalTokensTotal + (usage.totalTokens ?? 0),
+        compileUsageCallCount: existing.compileUsageCallCount + 1
+      })
+    } catch (error) {
+      logger.warn('Dreaming', '编译 usage 累计写入失败', {
+        ownerId,
         error: error instanceof Error ? error.message : String(error)
       })
     }

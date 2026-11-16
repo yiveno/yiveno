@@ -209,6 +209,9 @@ export async function compileMemoryNotesTick(): Promise<CompileMemoryNotesTickRe
       break
     }
 
+    // Q7：累计编译 prompt/completion token（与 commitRunCursor 串行，避免丢更新）
+    await memoryNotesMetaRepository.recordCompileUsage(ownerId, llm.usage)
+
     const bySource = new Map(llm.results.map(row => [row.sourceId, row.propositions]))
     for (const item of items) {
       const propositions = bySource.get(item.id) ?? []

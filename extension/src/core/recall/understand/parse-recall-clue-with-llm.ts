@@ -10,11 +10,13 @@ import { LlmParsedClueProposalSchema } from '@/core/recall/understand/llm-parsed
 import { mapLlmProposalToParsedClue } from '@/core/recall/understand/map-llm-proposal-to-parsed'
 import {
   completeOpenAiCompatibleChat,
+  completeOpenAiCompatibleChatDetailed,
   type OpenAiCompatibleChatConfig
 } from '@/core/recall/understand/openai-compatible-chat'
 import { PARSE_GOLD_NOW_MS } from '@/core/recall/eval/parse-gold-now'
 import type { ParsedRecallClue, RecallClueIntent } from '@/core/recall/parse-recall-clue-types'
 import type { LlmChatCompleteOptions } from '@/core/recall/understand/ai-chat-task-kind'
+import type { LlmChatDetailedResult } from '@/core/recall/understand/llm-chat-usage'
 import type { LlmParsedClueProposal } from '@/core/recall/understand/llm-parsed-clue-proposal'
 
 /** 非召回意图：走二次回复 + 短路，不进检索。 */
@@ -30,9 +32,20 @@ export type LlmChatCompleter = (
   options: LlmChatCompleteOptions
 ) => Promise<string>
 
+/**
+ * 带 usage 的补全入口（Q7 离线评估计量；旧 `complete` 仍返回 string）。
+ * 仅 parse / framing 计量点接此入口；narrow / follow-up 不接。
+ */
+export type LlmChatCompleterDetailed = (
+  messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
+  options: LlmChatCompleteOptions
+) => Promise<LlmChatDetailedResult>
+
 export interface ParseRecallClueWithLlmOptions {
   nowMs?: number
   complete: LlmChatCompleter
+  /** 有则走 detailed 并记 prompt/completion token 到 trace（Q7）。 */
+  completeDetailed?: LlmChatCompleterDetailed
   trace?: ClueFlowTrace
   /**
    * 是否读写 `llm-parse-cache`（默认 true，生产路径）。
@@ -144,11 +157,26 @@ export async function parseRecallClueWithLlm(
   })
 
   const startedAt = Date.now()
-  const text = await options.complete(messages, { taskKind: 'nlu' })
+  let text: string
+  let promptTokens: number | null = null
+  let completionTokens: number | null = null
+  let totalTokens: number | null = null
+  if (options.completeDetailed) {
+    const detailed = await options.completeDetailed(messages, { taskKind: 'nlu' })
+    text = detailed.text
+    promptTokens = detailed.usage.promptTokens
+    completionTokens = detailed.usage.completionTokens
+    totalTokens = detailed.usage.totalTokens
+  } else {
+    text = await options.complete(messages, { taskKind: 'nlu' })
+  }
   trace('info', 'LLM 解析：completer 返回', {
     durationMs: Date.now() - startedAt,
     textLength: text.length,
-    textPreview: text.length > 240 ? `${text.slice(0, 240)}…` : text
+    textPreview: text.length > 240 ? `${text.slice(0, 240)}…` : text,
+    promptTokens,
+    completionTokens,
+    totalTokens
   })
 
   const rawJson = parseJsonObjectFromLlmText(text)
@@ -213,5 +241,21 @@ export function createOpenAiCompatibleCompleter(
       temperature === undefined ? config : { ...config, temperature },
       messages
     )
+  }
+}
+
+/**
+ * 开发直连 detailed completer（保留 usage；经 Detailed，不经只返回 text 的薄包装）。
+ */
+export function createOpenAiCompatibleCompleterDetailed(
+  config: OpenAiCompatibleChatConfig
+): LlmChatCompleterDetailed {
+  return async (messages, options) => {
+    const temperature = options.temperature ?? config.temperature
+    const detailed = await completeOpenAiCompatibleChatDetailed(
+      temperature === undefined ? config : { ...config, temperature },
+      messages
+    )
+    return { text: detailed.text, usage: detailed.usage }
   }
 }

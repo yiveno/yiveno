@@ -9,7 +9,9 @@ export const EXTENSION_LOCAL_DEV_API_HOST_PERMISSION = 'http://localhost:8787/*'
 /** 商店 / production dist 允许的 host_permissions。 */
 export const EXTENSION_CWS_HOST_PERMISSIONS_PRODUCTION = [
   'https://*.supabase.co/*',
-  'https://api.yiveno.com/*'
+  'https://api.yiveno.com/*',
+  'http://*/*',
+  'https://*/*'
 ] as const
 
 /** 源码 public/manifest.json（开发 unpacked）允许的 host_permissions。 */

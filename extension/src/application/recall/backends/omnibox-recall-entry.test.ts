@@ -3,11 +3,13 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const {
   understandRecallClueMock,
   getClueLlmCompleterMock,
+  getClueLlmCompleterDetailedMock,
   requestWorkerEmbeddingsMock,
   readBrowserOnlineMock
 } = vi.hoisted(() => ({
   understandRecallClueMock: vi.fn(),
   getClueLlmCompleterMock: vi.fn(),
+  getClueLlmCompleterDetailedMock: vi.fn(),
   requestWorkerEmbeddingsMock: vi.fn(),
   readBrowserOnlineMock: vi.fn(() => true)
 }))
@@ -17,7 +19,8 @@ vi.mock('@/core/recall/understand/understand-recall-clue', () => ({
 }))
 
 vi.mock('@/application/recall/clue-llm-completer-registry', () => ({
-  getClueLlmCompleter: getClueLlmCompleterMock
+  getClueLlmCompleter: getClueLlmCompleterMock,
+  getClueLlmCompleterDetailed: getClueLlmCompleterDetailedMock
 }))
 
 vi.mock('@/infrastructure/browser/browser-online', async importOriginal => {
@@ -54,6 +57,7 @@ describe('HybridRecallBackend · entry omnibox', () => {
     vi.clearAllMocks()
     readBrowserOnlineMock.mockReturnValue(true)
     getClueLlmCompleterMock.mockReturnValue(vi.fn())
+    getClueLlmCompleterDetailedMock.mockReturnValue(null)
     understandRecallClueMock.mockResolvedValue({
       disposition: 'proceed',
       rejectReason: null,

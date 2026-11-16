@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-import { createClueUnderstandApiCompleter } from './clue-understand-api-client'
+import {
+  createClueUnderstandApiCompleter,
+  createClueUnderstandApiCompleterDetailed
+} from './clue-understand-api-client'
 
 const messages = [{ role: 'user' as const, content: 'hi' }]
 const originalFetch = globalThis.fetch
@@ -29,5 +32,35 @@ describe('createClueUnderstandApiCompleter temperature 透传', () => {
     await complete(messages, { taskKind: 'nlu' })
     const bodyDefault = JSON.parse(fetchMock.mock.calls[1]?.[1]?.body as string)
     expect(bodyDefault.temperature).toBe(0)
+  })
+})
+
+describe('createClueUnderstandApiCompleterDetailed', () => {
+  it('透传 Worker 拆分 prompt/completion token', async () => {
+    const fetchMock = vi.fn().mockImplementation(
+      async () =>
+        new Response(
+          JSON.stringify({
+            text: 'ok',
+            tokensUsed: 18,
+            promptTokens: 10,
+            completionTokens: 8
+          }),
+          {
+            status: 200,
+            headers: { 'content-type': 'application/json' }
+          }
+        )
+    )
+    globalThis.fetch = fetchMock as typeof fetch
+
+    const detailed = createClueUnderstandApiCompleterDetailed('http://localhost:8787')
+    const result = await detailed(messages, { taskKind: 'nlu' })
+    expect(result.text).toBe('ok')
+    expect(result.usage).toEqual({
+      promptTokens: 10,
+      completionTokens: 8,
+      totalTokens: 18
+    })
   })
 })

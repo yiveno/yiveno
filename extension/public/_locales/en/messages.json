@@ -1228,6 +1228,9 @@
   "settings_privacy_bullet_ai": {
     "message": "AI: clue understanding may call a model; your full library is not sent by default."
   },
+  "settings_privacy_bullet_link_sweep": {
+    "message": "Link check: weekly requests go from your browser to sites you saved; URLs are not sent to Yiveno servers. Turn off anytime in AI settings."
+  },
   "settings_privacy_bullet_not_collected": {
     "message": "Not collected: browsing history, clipboard reads, pages you did not capture, or de-identified aggregate product analytics as your personal export."
   },
@@ -1359,6 +1362,12 @@
   },
   "settings_ai_toggle_hint": {
     "message": "Off: understand clues with rules only; no AI suggestions when you save."
+  },
+  "settings_link_sweep_toggle": {
+    "message": "Check saved links weekly"
+  },
+  "settings_link_sweep_toggle_hint": {
+    "message": "Off: skip weekly link checks. Broken links are only ranked lower in Recall — never deleted."
   },
   "settings_ai_model_note": {
     "message": "How requests are routed:"

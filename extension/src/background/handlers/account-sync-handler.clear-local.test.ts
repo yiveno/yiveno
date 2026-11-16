@@ -92,6 +92,7 @@ describe('handleClearLocalMemory', () => {
     updateUserSettingsMock.mockResolvedValue({
       selectionToolbarEnabled: true,
       aiFeaturesEnabled: true,
+      linkStatusSweepEnabled: true,
       chromeBookmarkIngestEnabled: false
     })
     syncListenersMock.mockResolvedValue(undefined)

@@ -15,6 +15,11 @@ export const UserSettingsSchema = z.object({
    */
   aiFeaturesEnabled: z.boolean().default(true),
   /**
+   * 是否每周本机巡检书签/摘录 URL 死链（只降权、不删除）。
+   * 不联动 aiFeaturesEnabled（巡检不调模型）；默认开。
+   */
+  linkStatusSweepEnabled: z.boolean().default(true),
+  /**
    * 是否把 Chrome 书签灌入本机 Memory（首次 bulk + 原生增删改增量）。
    * 关闭后卸载 bookmarks.* 监听、停止新写入与增量同步，不删除已灌入条目。
    */
@@ -43,6 +48,7 @@ export const UserSettingsSchema = z.object({
 export const UserSettingsPatchSchema = z.object({
   selectionToolbarEnabled: z.boolean().optional(),
   aiFeaturesEnabled: z.boolean().optional(),
+  linkStatusSweepEnabled: z.boolean().optional(),
   chromeBookmarkIngestEnabled: z.boolean().optional(),
   mcpReadOnlyEnabled: z.boolean().optional(),
   recallOutcomePairSoftAdjustEnabled: z.boolean().optional(),
@@ -55,6 +61,7 @@ export type UserSettings = z.infer<typeof UserSettingsSchema>
 export const DEFAULT_USER_SETTINGS: UserSettings = {
   selectionToolbarEnabled: true,
   aiFeaturesEnabled: true,
+  linkStatusSweepEnabled: true,
   chromeBookmarkIngestEnabled: false,
   mcpReadOnlyEnabled: false,
   recallOutcomePairSoftAdjustEnabled: true,

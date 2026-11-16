@@ -117,7 +117,7 @@ describe('hosted ai routes', () => {
         new Response(
           JSON.stringify({
             choices: [{ message: { content: '{"folders":[]}' } }],
-            usage: { total_tokens: 42 }
+            usage: { prompt_tokens: 30, completion_tokens: 12, total_tokens: 42 }
           }),
           { status: 200, headers: { 'content-type': 'application/json' } }
         )
@@ -144,12 +144,18 @@ describe('hosted ai routes', () => {
         provider: string
         model: string
         taskKind: string
+        tokensUsed?: number
+        promptTokens?: number
+        completionTokens?: number
         quota: { used: number; limit: number }
       }
       expect(data.text).toBe('{"folders":[]}')
       expect(data.provider).toBe('hosted')
       expect(data.model).toBe('deepseek-v4-flash')
       expect(data.taskKind).toBe('nlu')
+      expect(data.tokensUsed).toBe(42)
+      expect(data.promptTokens).toBe(30)
+      expect(data.completionTokens).toBe(12)
       expect(data.quota.used).toBe(1)
       expect(await kv.get(monthKey)).toBe('1')
       expect(fetchMock).toHaveBeenCalled()

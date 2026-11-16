@@ -11,6 +11,7 @@ import { registerContextMenuListeners } from '@/background/listeners/context-men
 import { registerAuthSessionLeaseAlarmListener } from '@/background/listeners/auth-session-lease-alarm'
 import { registerChromeBookmarkRepairAlarmListener } from '@/background/listeners/chrome-bookmark-repair-alarm'
 import { registerDreamingAlarmListener } from '@/background/listeners/dreaming-alarm'
+import { registerLinkStatusSweepAlarmListener } from '@/background/listeners/link-status-sweep-alarm'
 import { registerMemoryCloudSyncAlarmListener } from '@/background/listeners/memory-cloud-sync-alarm'
 import { registerOmniboxListeners } from '@/background/listeners/omnibox'
 import { registerSelectionToolbarKeepaliveListener } from '@/background/listeners/selection-toolbar-keepalive'
@@ -76,6 +77,7 @@ async function bootstrapBackground(): Promise<void> {
     registerMemoryCloudSyncAlarmListener()
     registerChromeBookmarkRepairAlarmListener()
     registerDreamingAlarmListener()
+    registerLinkStatusSweepAlarmListener()
     registerAuthSessionLeaseAlarmListener()
     // 订阅变更 → 线索 LLM 重挂（通过事件机制，避免 infrastructure → application 跨层依赖）
     // Set-based listener，不会重复注册（SW 重启不会累积）

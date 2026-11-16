@@ -5,13 +5,15 @@ const {
   updateUserSettingsMock,
   ensureChromeBookmarksImportedMock,
   refreshClueLlmCompleterFromDevConfigMock,
-  syncChromeBookmarkSyncListenersWithIngestSettingMock
+  syncChromeBookmarkSyncListenersWithIngestSettingMock,
+  ensureLinkStatusSweepAlarmMock
 } = vi.hoisted(() => ({
   getUserSettingsMock: vi.fn(),
   updateUserSettingsMock: vi.fn(),
   ensureChromeBookmarksImportedMock: vi.fn(async () => undefined),
   refreshClueLlmCompleterFromDevConfigMock: vi.fn(async () => undefined),
-  syncChromeBookmarkSyncListenersWithIngestSettingMock: vi.fn(async () => undefined)
+  syncChromeBookmarkSyncListenersWithIngestSettingMock: vi.fn(async () => undefined),
+  ensureLinkStatusSweepAlarmMock: vi.fn(async () => undefined)
 }))
 
 vi.mock('@/infrastructure/settings/user-settings-service', () => ({
@@ -32,6 +34,10 @@ vi.mock('@/background/listeners/chrome-bookmark-sync', () => ({
     syncChromeBookmarkSyncListenersWithIngestSettingMock
 }))
 
+vi.mock('@/infrastructure/sync/link-status-sweep-alarm', () => ({
+  ensureLinkStatusSweepAlarm: ensureLinkStatusSweepAlarmMock
+}))
+
 import {
   handleGetUserSettings,
   handleUpdateUserSettings
@@ -40,6 +46,7 @@ import {
 const fullSettings = {
   selectionToolbarEnabled: true,
   aiFeaturesEnabled: true,
+  linkStatusSweepEnabled: true,
   chromeBookmarkIngestEnabled: true,
   mcpReadOnlyEnabled: false,
   recallOutcomePairSoftAdjustEnabled: true,

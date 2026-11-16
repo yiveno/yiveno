@@ -1,8 +1,8 @@
 /** Yiveno Memory DB 常量。 */
 export const MEMORY_DATABASE_NAME = 'YivenoMemoryDB' as const
 
-/** v5：dreaming 派生表 `memory_notes` + `memory_notes_meta`（ADR-022）。 */
-export const MEMORY_DATABASE_VERSION = 5 as const
+/** v6：死链巡检派生表 `memory_link_status`（可重算；不进 Backup）。 */
+export const MEMORY_DATABASE_VERSION = 6 as const
 
 export const MEMORY_ITEM_STORE = 'memory_items' as const
 
@@ -25,6 +25,15 @@ export const MEMORY_NOTES_META_STORE = 'memory_notes_meta' as const
  * Capture 去重键 → 多源链接（只标不删；同一 foldKey 一组）。
  */
 export const DREAMING_DUPLICATE_GROUP_STORE = 'dreaming_duplicate_groups' as const
+
+/**
+ * 死链巡检状态（独立派生；不进 Backup；不进 `clues`）。
+ * keyPath = id（`${ownerId}\0${sourceMemoryItemId}`）。
+ */
+export const MEMORY_LINK_STATUS_STORE = 'memory_link_status' as const
+
+/** ownerId + lastCheckedAt，未检查优先排队。 */
+export const MEMORY_LINK_STATUS_INDEX_BY_OWNER_CHECKED = 'by_owner_checked' as const
 
 /** ownerId + sourceMemoryItemId，按源查命题。 */
 export const MEMORY_NOTES_INDEX_BY_OWNER_SOURCE = 'by_owner_source' as const

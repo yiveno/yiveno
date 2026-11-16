@@ -148,6 +148,8 @@ export async function handleHostedComplete(
       providerId: result.providerId,
       latencyMs: Date.now() - startedAt,
       tokensUsed: result.tokensUsed ?? null,
+      promptTokens: result.promptTokens ?? null,
+      completionTokens: result.completionTokens ?? null,
       textLength: result.text.length,
       outcome: 'ok'
     })
@@ -160,6 +162,8 @@ export async function handleHostedComplete(
         model: result.model,
         taskKind,
         tokensUsed: result.tokensUsed,
+        promptTokens: result.promptTokens,
+        completionTokens: result.completionTokens,
         quota: {
           tier: quotaResult.snapshot.tier,
           used: quotaResult.snapshot.used,

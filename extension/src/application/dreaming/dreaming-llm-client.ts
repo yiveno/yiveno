@@ -6,6 +6,7 @@
 import { z } from 'zod'
 
 import { DREAMING_COMPILE_BATCH_SIZE } from '@/core/dreaming/dreaming-constants'
+import { parseLlmChatUsage, type LlmChatUsage } from '@/core/recall/understand/llm-chat-usage'
 import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
 import { logger } from '@/infrastructure/logging/logger'
 
@@ -24,7 +25,10 @@ const DreamingCompleteResponseSchema = z.object({
   results: z.array(ResultRowSchema),
   model: z.string().optional(),
   error: z.string().optional(),
-  deferred: z.boolean().optional()
+  deferred: z.boolean().optional(),
+  tokensUsed: z.number().optional(),
+  promptTokens: z.number().optional(),
+  completionTokens: z.number().optional()
 })
 
 export type DreamingCompileSourceInput = {
@@ -43,6 +47,7 @@ export type DreamingCompileClientResult =
         propositions: Array<{ text: string; sourceQuote: string; topicAnchor: string[] }>
       }>
       model: string | null
+      usage: LlmChatUsage
     }
   | { ok: false; deferred: true; errorCode: string }
   | { ok: false; deferred: false; errorCode: string }
@@ -133,6 +138,7 @@ export async function requestDreamingCompileBatch(
   return {
     ok: true,
     model: parsed.data.model ?? null,
+    usage: parseLlmChatUsage(parsed.data),
     results: parsed.data.results.map(row => ({
       sourceId: row.sourceId,
       propositions: row.propositions.map(prop => ({

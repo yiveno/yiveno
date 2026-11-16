@@ -113,7 +113,9 @@ function syncExtensionPublicAssets() {
 /** production dist：剔除 localhost Worker host（与 extension-manifest-profile.ts 同步）。 */
 const EXTENSION_CWS_HOST_PERMISSIONS_PRODUCTION = [
   'https://*.supabase.co/*',
-  'https://api.yiveno.com/*'
+  'https://api.yiveno.com/*',
+  'http://*/*',
+  'https://*/*'
 ]
 
 function applyDistManifestHostProfile(distManifestPath) {

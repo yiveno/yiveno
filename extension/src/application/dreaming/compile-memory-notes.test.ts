@@ -43,14 +43,18 @@ vi.mock('@/infrastructure/indexeddb/memory-notes-repository', () => ({
 vi.mock('@/infrastructure/indexeddb/memory-notes-meta-repository', () => ({
   memoryNotesMetaRepository: {
     readRunCursor: vi.fn(async () => null),
-    commitRunCursor: vi.fn(async () => undefined)
+    commitRunCursor: vi.fn(async () => undefined),
+    recordCompileUsage: vi.fn(async () => undefined)
   }
 }))
 
 import { requestDreamingCompileBatch } from '@/application/dreaming/dreaming-llm-client'
 import { compileMemoryNotesTick } from '@/application/dreaming/compile-memory-notes'
+import { createBookmarkMemoryItem } from '@/core/memory/create-memory-item'
 import { getUserSettings } from '@/infrastructure/settings/user-settings-service'
+import { memoryItemRepository } from '@/infrastructure/indexeddb/memory-item-repository'
 import { memoryNotesMetaRepository } from '@/infrastructure/indexeddb/memory-notes-meta-repository'
+import { memoryNotesRepository } from '@/infrastructure/indexeddb/memory-notes-repository'
 
 describe('compile-memory-notes', () => {
   beforeEach(() => {
@@ -91,5 +95,45 @@ describe('compile-memory-notes', () => {
     // 缺口为空时不会 deferred；此处断言 mock 契约仍可用
     expect(result.skipped).toBe(false)
     expect(requestDreamingCompileBatch).not.toHaveBeenCalled()
+  })
+
+  it('成功路径：非空缺口 → 调 LLM 且 await recordCompileUsage', async () => {
+    const ownerId = '11111111-1111-4111-8111-111111111111'
+    const item = createBookmarkMemoryItem({
+      ownerId,
+      sourceLocalProfileId: '22222222-2222-4222-8222-222222222222',
+      payload: { title: 'Compile gap source', url: 'https://example.com/gap' },
+      now: () => '2026-07-22T06:00:00.000Z'
+    })
+    vi.mocked(memoryItemRepository.listByOwner).mockResolvedValue([item])
+    vi.mocked(memoryItemRepository.getById).mockResolvedValue(item)
+    vi.mocked(memoryNotesRepository.listBySource).mockResolvedValue([])
+    vi.mocked(requestDreamingCompileBatch).mockResolvedValue({
+      ok: true,
+      model: 'test-model',
+      usage: { promptTokens: 12, completionTokens: 34, totalTokens: 46 },
+      results: [
+        {
+          sourceId: item.id,
+          propositions: [
+            {
+              text: 'gap proposition',
+              sourceQuote: 'Compile gap source',
+              topicAnchor: ['gap']
+            }
+          ]
+        }
+      ]
+    })
+
+    const result = await compileMemoryNotesTick()
+
+    expect(result.skipped).toBe(false)
+    expect(requestDreamingCompileBatch).toHaveBeenCalledTimes(1)
+    expect(memoryNotesMetaRepository.recordCompileUsage).toHaveBeenCalledWith(ownerId, {
+      promptTokens: 12,
+      completionTokens: 34,
+      totalTokens: 46
+    })
   })
 })

@@ -61,7 +61,18 @@ export const MemoryNotesMetaSchema = z.object({
   lastCursor: z.string(),
   lastRunAt: z.string().datetime().nullable(),
   /** 命题级命中计数（设计稿 §9.2；自有计数，不得复用 settledCount）。旧行缺省时默认为 {}。 */
-  noteHitCounts: z.record(z.string(), z.number().int().nonnegative()).default({})
+  noteHitCounts: z.record(z.string(), z.number().int().nonnegative()).default({}),
+  /**
+   * Q7：夜间编译累计 prompt token（花费/节省比分子）。
+   * 可选 + default(0)：旧行可解析，不升 DREAMING_SCHEMA_VERSION（同 noteHitCounts）。
+   */
+  compilePromptTokensTotal: z.number().int().nonnegative().default(0),
+  /** Q7：夜间编译累计 completion token。 */
+  compileCompletionTokensTotal: z.number().int().nonnegative().default(0),
+  /** Q7：夜间编译累计 total token（仅上游返回 total 时累加；禁止用 prompt+completion 推算）。 */
+  compileTotalTokensTotal: z.number().int().nonnegative().default(0),
+  /** Q7：成功拿到任一 usage 数字的编译调用次数（均值分母）。 */
+  compileUsageCallCount: z.number().int().nonnegative().default(0)
 })
 
 export type MemoryNotesMeta = z.infer<typeof MemoryNotesMetaSchema>
@@ -77,7 +88,11 @@ export function createEmptyMemoryNotesMeta(ownerId: string): MemoryNotesMeta {
     lastDreamRunId: null,
     lastCursor: '',
     lastRunAt: null,
-    noteHitCounts: {}
+    noteHitCounts: {},
+    compilePromptTokensTotal: 0,
+    compileCompletionTokensTotal: 0,
+    compileTotalTokensTotal: 0,
+    compileUsageCallCount: 0
   }
 }
 

@@ -154,10 +154,22 @@ export type RecallBehaviorProfile =
   | 'default' // Side Panel 默认
   | 'omnibox' // Omnibox
 
+/**
+ * 死链巡检结论（打分侧只读 hint；不进 MemoryItem.clues）。
+ * Omnibox 路径不得消费。
+ */
+export type RecallLinkStatusHint = {
+  linkStatus: 'ok' | 'stale' | 'unknown'
+  consecutiveFailures: number
+  firstStaleAt?: string
+}
+
 /** 打分可选时钟（eval 固定 now，避免近因漂移）与行为档。 */
 export interface RecallScoreOptions {
   nowMs?: number
   behaviorProfile?: RecallBehaviorProfile
+  /** 死链巡检 map；Omnibox 忽略。 */
+  linkStatusByItemId?: ReadonlyMap<string, RecallLinkStatusHint>
 }
 
 /** 归一化筛选文本。 */
@@ -627,10 +639,17 @@ function scoreFactorForKind(kind: TokenKind): number {
 }
 
 /**
- * 匹配词 kind 归类（与字段打分共用 {@link scoreFactorForKind}）。
- * 多词 content term（含空格 bigram）按 ngram；单词按 term（exact 系数 1.0）。
+ * 已命中 content term 的形态归类（供命题虚拟字段计分；**不是** query token 的 tokenizer kind）。
+ *
+ * 契约（与 tokenizer 语义不相等，禁止统一）：
+ * - 输入 = 门已命中的 content term 字符串，不是 query 侧 token
+ * - 归一化后含空白 → `ngram`（系数 0.5）；否则 → `term`（系数 1.0）
+ * - **永不**返回 `phrase`（多词短语在此按 ngram，不像 tokenizer 整句 phrase）
+ * - 空串 / 归一化空 → 兜底 `term`
+ *
+ * 与字段打分共用 {@link scoreFactorForKind}。
  */
-function classifyMatchedTermKind(term: string): TokenKind {
+export function classifyMatchedTermKind(term: string): TokenKind {
   const normalized = normalizeRecallText(term)
   if (!normalized) {
     return 'term'
@@ -824,6 +843,62 @@ export function computeDismissPenalty(item: MemoryItem): number {
     return 0
   }
   return Math.min(RECALL_DISMISS_PENALTY_CAP, Math.floor(Math.log2(dismissCount + 1) * 4))
+}
+
+/**
+ * 死链降权（打分层，非过滤）：仅 `linkStatus === 'stale'`。
+ * D-5：Omnibox 档位永远 0。cap 对齐 dismiss（10）。
+ * 只降权、不删候选——避免 `constrained_none` 误判库空。
+ */
+export function computeStalePenalty(
+  hint: RecallLinkStatusHint | undefined,
+  behaviorProfile?: RecallBehaviorProfile
+): number {
+  if (behaviorProfile === 'omnibox') {
+    return 0
+  }
+  if (hint == null || hint.linkStatus !== 'stale') {
+    return 0
+  }
+  const failures = hint.consecutiveFailures
+  if (failures <= 0) {
+    return 0
+  }
+  return Math.min(RECALL_DISMISS_PENALTY_CAP, Math.floor(Math.log2(failures + 1) * 4))
+}
+
+/**
+ * 对已打分候选补死链罚（约束邻域 / 语义 fuse 等未走 scoreMemoryItemWithTokens 的路径）。
+ * Omnibox 或无 map 时原样返回。
+ * `skipItemIds`：已在 keyword 打分层扣过罚的 id（Hybrid fuse 补罚时跳过，避免双扣）。
+ */
+export function applyStalePenaltiesToMatches(
+  matches: RecallMatch[],
+  linkStatusByItemId: ReadonlyMap<string, RecallLinkStatusHint> | undefined,
+  behaviorProfile?: RecallBehaviorProfile,
+  skipItemIds?: ReadonlySet<string>
+): RecallMatch[] {
+  if (
+    behaviorProfile === 'omnibox' ||
+    linkStatusByItemId == null ||
+    linkStatusByItemId.size === 0
+  ) {
+    return matches
+  }
+  return matches.map(match => {
+    if (skipItemIds?.has(match.item.id)) {
+      return match
+    }
+    if (match.score <= 0) {
+      return match
+    }
+    const penalty = computeStalePenalty(linkStatusByItemId.get(match.item.id), behaviorProfile)
+    if (penalty <= 0) {
+      return match
+    }
+    const next = match.score - penalty
+    return { ...match, score: next < 0 ? 0 : next }
+  })
 }
 
 /** 码点长度（不按语种分词；emoji / 组合字符比 `string.length` 更稳）。 */
@@ -1037,6 +1112,8 @@ function scoreMemoryItemWithTokens(
     score += computeCaseFitBoost(originalClue, primaryOriginals)
     score += computeBehaviorBoost(item, options)
     score -= computeDismissPenalty(item)
+    // 死链降权（D-5：Omnibox 门禁在 computeStalePenalty 内）
+    score -= computeStalePenalty(options.linkStatusByItemId?.get(item.id), behaviorProfile)
     // 弱锚点（空壳书签等）降权：避免「只有 URL 回显标题」假装高置信可找回
     score -= weakAnchorScorePenalty(item)
     if (score < 0) {
@@ -1169,13 +1246,19 @@ export function filterMemoryItemsByKeyword(
     behaviorProfile?: RecallBehaviorProfile
     /** 命题命中集（Phase 4）；omnibox 档位忽略。 */
     noteMatches?: NoteMatchSet
+    /** 死链巡检结论；omnibox 档位忽略。 */
+    linkStatusByItemId?: ReadonlyMap<string, RecallLinkStatusHint>
   } = {}
 ): RecallMatch[] {
   const limit = options.limit ?? 6
   const minScore = options.minScore ?? RECALL_MIN_MATCH_SCORE
+  // 纵深防御：omnibox 忽略死链罚分
+  const linkStatusByItemId =
+    options.behaviorProfile === 'omnibox' ? undefined : options.linkStatusByItemId
   const scoreOptions: RecallScoreOptions = {
     ...(options.nowMs === undefined ? {} : { nowMs: options.nowMs }),
-    ...(options.behaviorProfile === undefined ? {} : { behaviorProfile: options.behaviorProfile })
+    ...(options.behaviorProfile === undefined ? {} : { behaviorProfile: options.behaviorProfile }),
+    ...(linkStatusByItemId === undefined ? {} : { linkStatusByItemId })
   }
   // 整表只分词一次，避免 N 次重复 tokenize
   const tokens = tokenizeRecallClueDetailed(clue)

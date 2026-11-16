@@ -25,6 +25,7 @@ const {
   accountEmail,
   activeSection,
   aiFeaturesEnabled,
+  linkStatusSweepEnabled,
   chromeBookmarkIngestEnabled,
   commandRows,
   commandsError,
@@ -32,6 +33,7 @@ const {
   dataWorking,
   exportWorking,
   handleAiFeaturesToggle,
+  handleLinkStatusSweepToggle,
   handleChromeBookmarkIngestToggle,
   handleClearLocalMemory,
   handleClearLocalRecallAdaptation,
@@ -68,6 +70,7 @@ const {
   restoringSyncBackup,
   runningIncrementalSync,
   savingAiFeatures,
+  savingLinkStatusSweep,
   savingChromeBookmarkIngest,
   savingMcpReadOnly,
   savingRecallOutcomeSoftAdjust,
@@ -374,6 +377,7 @@ const {
           <li>{{ t('settings_privacy_bullet_cloud') }}</li>
           <li>{{ t('settings_privacy_bullet_account') }}</li>
           <li>{{ t('settings_privacy_bullet_ai') }}</li>
+          <li>{{ t('settings_privacy_bullet_link_sweep') }}</li>
           <li>{{ t('settings_privacy_bullet_not_collected') }}</li>
         </ul>
       </details>
@@ -648,6 +652,19 @@ const {
           :disabled="savingAiFeatures || settingsState !== 'ready'"
           :aria-label="t('settings_ai_toggle')"
           @update:model-value="handleAiFeaturesToggle"
+        />
+      </div>
+
+      <div class="settings-toggle settings-card-stack--spaced">
+        <div class="settings-toggle-copy">
+          <span class="settings-toggle-title">{{ t('settings_link_sweep_toggle') }}</span>
+          <span class="settings-toggle-hint">{{ t('settings_link_sweep_toggle_hint') }}</span>
+        </div>
+        <AppSwitch
+          :model-value="linkStatusSweepEnabled"
+          :disabled="savingLinkStatusSweep || settingsState !== 'ready'"
+          :aria-label="t('settings_link_sweep_toggle')"
+          @update:model-value="handleLinkStatusSweepToggle"
         />
       </div>
 

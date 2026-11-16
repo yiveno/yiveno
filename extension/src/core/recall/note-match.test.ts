@@ -14,7 +14,11 @@ import {
   DREAMING_EVAL_OWNER_ID,
   makeDreamingEvalNote
 } from '@/core/recall/eval/dreaming-eval-corpus'
-import { buildNoteVirtualFieldText, scoreNoteVirtualField } from '@/core/recall/keyword-filter'
+import {
+  buildNoteVirtualFieldText,
+  classifyMatchedTermKind,
+  scoreNoteVirtualField
+} from '@/core/recall/keyword-filter'
 import { buildNoteMatchSet, findNoteMatchesForQuery } from '@/core/recall/note-match'
 import type { MemoryItem } from '@/core/memory/memory-item'
 
@@ -173,5 +177,19 @@ describe('note-match', () => {
       topicAnchor: note.topicAnchor
     })
     expect(scoreNoteVirtualField(virtualText, ['rottnest', 'quokka'])).toBe(24)
+  })
+})
+
+describe('classifyMatchedTermKind 契约', () => {
+  it('空串兜底 → term', () => {
+    expect(classifyMatchedTermKind('')).toBe('term')
+  })
+
+  it('含空白多词 → ngram（永不 phrase）', () => {
+    expect(classifyMatchedTermKind('rottnest island')).toBe('ngram')
+  })
+
+  it('单词 → term', () => {
+    expect(classifyMatchedTermKind('rottnest')).toBe('term')
   })
 })

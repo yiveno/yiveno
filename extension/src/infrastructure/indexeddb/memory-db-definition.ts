@@ -9,6 +9,8 @@ import {
   MEMORY_ITEM_INDEX_BY_OWNER_UPDATED,
   MEMORY_ITEM_STORE,
   DREAMING_DUPLICATE_GROUP_STORE,
+  MEMORY_LINK_STATUS_INDEX_BY_OWNER_CHECKED,
+  MEMORY_LINK_STATUS_STORE,
   MEMORY_NOTES_INDEX_BY_OWNER_SOURCE,
   MEMORY_NOTES_INDEX_BY_OWNER_UPDATED,
   MEMORY_NOTES_META_STORE,
@@ -16,7 +18,7 @@ import {
 } from '@/infrastructure/indexeddb/constants'
 import type { IndexedDBDefinition } from '@/infrastructure/indexeddb/manager'
 
-/** 创建或升级 memory_items 表与索引；v4 倒排；v5 dreaming 派生表。 */
+/** 创建或升级 memory_items 表与索引；v4 倒排；v5 dreaming；v6 死链巡检。 */
 function upgradeMemoryDatabase(
   database: IDBDatabase,
   transaction: IDBTransaction,
@@ -77,6 +79,20 @@ function upgradeMemoryDatabase(
     }
     if (!database.objectStoreNames.contains(DREAMING_DUPLICATE_GROUP_STORE)) {
       database.createObjectStore(DREAMING_DUPLICATE_GROUP_STORE, { keyPath: 'id' })
+    }
+  }
+
+  // v6：只建 store/索引，不做记录回填（死链状态可重算）。
+  if (oldVersion < 6) {
+    if (!database.objectStoreNames.contains(MEMORY_LINK_STATUS_STORE)) {
+      const linkStore = database.createObjectStore(MEMORY_LINK_STATUS_STORE, { keyPath: 'id' })
+      linkStore.createIndex(
+        MEMORY_LINK_STATUS_INDEX_BY_OWNER_CHECKED,
+        ['ownerId', 'lastCheckedAt'],
+        {
+          unique: false
+        }
+      )
     }
   }
 }

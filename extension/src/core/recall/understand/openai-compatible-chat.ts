@@ -5,6 +5,7 @@
  */
 
 import { CLUE_LLM_COMPLETE_TIMEOUT_MS } from '@/core/recall/understand/clue-llm-timeout'
+import { parseLlmChatUsage, type LlmChatUsage } from '@/core/recall/understand/llm-chat-usage'
 
 export interface OpenAiCompatibleChatMessage {
   role: 'system' | 'user' | 'assistant'
@@ -54,11 +55,7 @@ interface ChatCompletionsResponse {
 }
 
 /** API 返回的 token 用量；字段缺失则为 null（记 MISSING，禁止推算）。 */
-export interface OpenAiCompatibleChatUsage {
-  promptTokens: number | null
-  completionTokens: number | null
-  totalTokens: number | null
-}
+export type OpenAiCompatibleChatUsage = LlmChatUsage
 
 /** 带墙钟与 usage 的补全结果（eval / 离线对比用）。 */
 export interface OpenAiCompatibleChatDetailedResult {
@@ -67,17 +64,6 @@ export interface OpenAiCompatibleChatDetailedResult {
   latencyMs: number
   /** 响应无 usage 时各字段为 null */
   usage: OpenAiCompatibleChatUsage
-}
-
-function parseUsage(raw: ChatCompletionsResponse['usage']): OpenAiCompatibleChatUsage {
-  if (!raw || typeof raw !== 'object') {
-    return { promptTokens: null, completionTokens: null, totalTokens: null }
-  }
-  return {
-    promptTokens: typeof raw.prompt_tokens === 'number' ? raw.prompt_tokens : null,
-    completionTokens: typeof raw.completion_tokens === 'number' ? raw.completion_tokens : null,
-    totalTokens: typeof raw.total_tokens === 'number' ? raw.total_tokens : null
-  }
 }
 
 /**
@@ -152,7 +138,7 @@ export async function completeOpenAiCompatibleChatDetailed(
   return {
     text,
     latencyMs,
-    usage: parseUsage(payload.usage)
+    usage: parseLlmChatUsage(payload.usage)
   }
 }
 

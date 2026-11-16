@@ -86,6 +86,7 @@ export function useSettingsPage() {
   const selectionToolbarEnabled = ref(true)
   const chromeBookmarkIngestEnabled = ref(false)
   const aiFeaturesEnabled = ref(true)
+  const linkStatusSweepEnabled = ref(true)
   const mcpReadOnlyEnabled = ref(false)
   const recallOutcomePairSoftAdjustEnabled = ref(true)
   const uiLocalePreference = ref<UiLocalePreference>('system')
@@ -94,6 +95,7 @@ export function useSettingsPage() {
   const savingSelectionToolbar = ref(false)
   const savingChromeBookmarkIngest = ref(false)
   const savingAiFeatures = ref(false)
+  const savingLinkStatusSweep = ref(false)
   const savingMcpReadOnly = ref(false)
   const savingRecallOutcomeSoftAdjust = ref(false)
   const savingUiLocale = ref(false)
@@ -308,6 +310,7 @@ export function useSettingsPage() {
       selectionToolbarEnabled.value = response.settings.selectionToolbarEnabled
       chromeBookmarkIngestEnabled.value = response.settings.chromeBookmarkIngestEnabled
       aiFeaturesEnabled.value = response.settings.aiFeaturesEnabled
+      linkStatusSweepEnabled.value = response.settings.linkStatusSweepEnabled
       mcpReadOnlyEnabled.value = response.settings.mcpReadOnlyEnabled
       recallOutcomePairSoftAdjustEnabled.value =
         response.settings.recallOutcomePairSoftAdjustEnabled
@@ -375,6 +378,26 @@ export function useSettingsPage() {
       settingsError.value = t('settings_error_update')
     } finally {
       savingAiFeatures.value = false
+    }
+  }
+
+  /** 死链巡检开关（不联动 AI；关则卸闹钟）。 */
+  async function handleLinkStatusSweepToggle(nextValue: boolean) {
+    savingLinkStatusSweep.value = true
+    settingsError.value = ''
+
+    try {
+      const response = await updateUserSettings({ linkStatusSweepEnabled: nextValue })
+      if (!response.ok) {
+        settingsError.value = tSettingsError(response.errorCode)
+        return
+      }
+
+      linkStatusSweepEnabled.value = response.settings.linkStatusSweepEnabled
+    } catch {
+      settingsError.value = t('settings_error_update')
+    } finally {
+      savingLinkStatusSweep.value = false
     }
   }
 
@@ -1235,6 +1258,7 @@ export function useSettingsPage() {
     aiFeaturesEnabled,
     awaitingShortcutsReturn,
     chromeBookmarkIngestEnabled,
+    linkStatusSweepEnabled,
     closeConfirmDialog,
     closeDeleteAccountDialog,
     closeSignOutDialog,
@@ -1264,6 +1288,7 @@ export function useSettingsPage() {
     executeRestoreLatestSyncBackup,
     exportWorking,
     handleAiFeaturesToggle,
+    handleLinkStatusSweepToggle,
     handleChromeBookmarkIngestToggle,
     handleClearLocalMemory,
     handleClearLocalRecallAdaptation,
@@ -1317,6 +1342,7 @@ export function useSettingsPage() {
     runThirdPartyCorpusImport,
     runningIncrementalSync,
     savingAiFeatures,
+    savingLinkStatusSweep,
     savingChromeBookmarkIngest,
     savingMcpReadOnly,
     savingRecallOutcomeSoftAdjust,

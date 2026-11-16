@@ -12,7 +12,8 @@ import { classifyRulesClueIntent } from '@/core/recall/understand/classify-rules
 import { type ClueFlowTrace, noopClueFlowTrace } from '@/core/recall/understand/clue-flow-trace'
 import {
   parseRecallClueWithLlm,
-  type LlmChatCompleter
+  type LlmChatCompleter,
+  type LlmChatCompleterDetailed
 } from '@/core/recall/understand/parse-recall-clue-with-llm'
 import {
   selectClueProcessingDisposition,
@@ -81,6 +82,8 @@ export interface UnderstandRecallClueOptions {
   nowMs?: number
   /** 注入 LLM 补全；缺省则只能走规则。 */
   complete?: LlmChatCompleter
+  /** Q7：带 usage 的补全；有则 parse 记 prompt/completion token。 */
+  completeDetailed?: LlmChatCompleterDetailed
   /** 强制模式（单测 / Omnibox lexical / 调试）。 */
   forceMode?: ClueUnderstandingMode
   /**
@@ -219,6 +222,7 @@ export async function understandRecallClue(
     const parsed = await parseRecallClueWithLlm(raw, {
       nowMs,
       complete: options.complete,
+      ...(options.completeDetailed ? { completeDetailed: options.completeDetailed } : {}),
       trace
     })
     const filterClue = buildFilterClueFromParsed(parsed)

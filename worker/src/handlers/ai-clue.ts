@@ -176,6 +176,8 @@ export async function handleClueComplete(request: Request, env: Env): Promise<Re
       providerId: result.providerId,
       model: result.model || resolveHostedModel(env),
       tokensUsed: result.tokensUsed,
+      promptTokens: result.promptTokens ?? null,
+      completionTokens: result.completionTokens ?? null,
       textLength: result.text.length,
       quotaUsed: quota.used,
       quotaLimit: quota.limit,
@@ -191,6 +193,8 @@ export async function handleClueComplete(request: Request, env: Env): Promise<Re
         model: result.model || resolveHostedModel(env),
         taskKind,
         tokensUsed: result.tokensUsed,
+        promptTokens: result.promptTokens,
+        completionTokens: result.completionTokens,
         quota: {
           used: quota.used,
           limit: quota.limit,

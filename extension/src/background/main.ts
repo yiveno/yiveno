@@ -15,6 +15,7 @@ import { registerUiBridgeListener } from '@/background/listeners/ui-bridge'
 import { registerCommandListeners } from '@/background/listeners/commands'
 import { registerChromeBookmarkRepairAlarmListener } from '@/background/listeners/chrome-bookmark-repair-alarm'
 import { registerDreamingAlarmListener } from '@/background/listeners/dreaming-alarm'
+import { registerLinkStatusSweepAlarmListener } from '@/background/listeners/link-status-sweep-alarm'
 import { registerMemoryCloudSyncAlarmListener } from '@/background/listeners/memory-cloud-sync-alarm'
 import { registerOmniboxListeners } from '@/background/listeners/omnibox'
 import { registerSelectionToolbarKeepaliveListener } from '@/background/listeners/selection-toolbar-keepalive'
@@ -54,6 +55,7 @@ registerContextMenuListeners()
 registerMemoryCloudSyncAlarmListener()
 registerChromeBookmarkRepairAlarmListener()
 registerDreamingAlarmListener()
+registerLinkStatusSweepAlarmListener()
 
 // SW 冷启动：尽早配置图标开 Side Panel，不等待 DB/bootstrap（chrome-extensions Rule 2）
 void ensureSidePanelOpensOnActionClick().catch(error => {

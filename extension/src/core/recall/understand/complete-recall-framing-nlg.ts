@@ -18,7 +18,10 @@ import {
   mapLlmFollowUpProposal,
   type MappedLlmFollowUp
 } from '@/core/recall/understand/map-llm-follow-up-proposal'
-import type { LlmChatCompleter } from '@/core/recall/understand/parse-recall-clue-with-llm'
+import type {
+  LlmChatCompleter,
+  LlmChatCompleterDetailed
+} from '@/core/recall/understand/parse-recall-clue-with-llm'
 
 export type CompleteRecallFramingNlgInput = {
   clue: string
@@ -28,6 +31,8 @@ export type CompleteRecallFramingNlgInput = {
   rulesBaseline: string
   weakCandidateTitles?: string[]
   complete: LlmChatCompleter
+  /** Q7：带 usage 的补全；有则记 prompt/completion token 到 trace。 */
+  completeDetailed?: LlmChatCompleterDetailed
   trace?: ClueFlowTrace
 }
 
@@ -55,9 +60,24 @@ export async function completeRecallFramingNlgWithLlm(
     factsKind: input.facts.kind
   })
 
-  const rawText = await input.complete(messages, { taskKind: 'framing_nlg' })
+  let rawText: string
+  let promptTokens: number | null = null
+  let completionTokens: number | null = null
+  let totalTokens: number | null = null
+  if (input.completeDetailed) {
+    const detailed = await input.completeDetailed(messages, { taskKind: 'framing_nlg' })
+    rawText = detailed.text
+    promptTokens = detailed.usage.promptTokens
+    completionTokens = detailed.usage.completionTokens
+    totalTokens = detailed.usage.totalTokens
+  } else {
+    rawText = await input.complete(messages, { taskKind: 'framing_nlg' })
+  }
   trace('info', 'LLM Framing：completer 返回', {
-    preview: rawText.slice(0, 120)
+    preview: rawText.slice(0, 120),
+    promptTokens,
+    completionTokens,
+    totalTokens
   })
 
   const rawJson = parseJsonObjectFromLlmText(rawText)

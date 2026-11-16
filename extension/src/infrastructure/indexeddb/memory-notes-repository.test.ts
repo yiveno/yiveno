@@ -93,7 +93,7 @@ describe('memory_notes · v5 + 引用门 + 游标续跑', () => {
       }
     )
     expect(storeNames).toBe(true)
-    expect(MEMORY_DATABASE_VERSION).toBe(5)
+    expect(MEMORY_DATABASE_VERSION).toBe(6)
     expect(MEMORY_DATABASE_NAME).toBe('YivenoMemoryDB')
   })
 
@@ -237,5 +237,25 @@ describe('memory_notes · v5 + 引用门 + 游标续跑', () => {
     // 模拟「下次 tick」：同 run 续跑，不应把 lastCursor 清掉
     const again = await memoryNotesMetaRepository.readRunCursor(ownerId)
     expect(again?.lastCursor).toBe('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')
+  })
+
+  it('Q7：recordCompileUsage 按 owner 累计且不升 schemaVersion', async () => {
+    const ownerId = localProfile.localProfileId
+    await memoryNotesMetaRepository.recordCompileUsage(ownerId, {
+      promptTokens: 100,
+      completionTokens: 20,
+      totalTokens: 120
+    })
+    await memoryNotesMetaRepository.recordCompileUsage(ownerId, {
+      promptTokens: 50,
+      completionTokens: null,
+      totalTokens: null
+    })
+    const meta = await memoryNotesMetaRepository.getOrCreateMeta(ownerId)
+    expect(meta.compilePromptTokensTotal).toBe(150)
+    expect(meta.compileCompletionTokensTotal).toBe(20)
+    expect(meta.compileTotalTokensTotal).toBe(120)
+    expect(meta.compileUsageCallCount).toBe(2)
+    expect(meta.schemaVersion).toBe(1)
   })
 })

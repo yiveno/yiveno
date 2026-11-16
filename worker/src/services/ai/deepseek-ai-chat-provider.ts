@@ -31,6 +31,8 @@ interface DeepSeekChatResponse {
     }
   }>
   usage?: {
+    prompt_tokens?: number
+    completion_tokens?: number
     total_tokens?: number
   }
   error?: {
@@ -158,12 +160,15 @@ export const deepseekAiChatProvider: AiChatProvider = {
       throw new Error(`deepseek_empty_response:${finishReason}`)
     }
 
+    const usage = payload.usage
     return {
       text,
       model,
       providerId: PROVIDER_ID,
-      ...(payload.usage?.total_tokens !== undefined
-        ? { tokensUsed: payload.usage.total_tokens }
+      ...(usage?.total_tokens !== undefined ? { tokensUsed: usage.total_tokens } : {}),
+      ...(usage?.prompt_tokens !== undefined ? { promptTokens: usage.prompt_tokens } : {}),
+      ...(usage?.completion_tokens !== undefined
+        ? { completionTokens: usage.completion_tokens }
         : {})
     }
   }
@@ -182,7 +187,13 @@ export async function completeWithDeepSeek(
     disableThinking?: boolean
     messages?: AiChatMessage[]
   }
-): Promise<{ text: string; model: string; tokensUsed?: number }> {
+): Promise<{
+  text: string
+  model: string
+  tokensUsed?: number
+  promptTokens?: number
+  completionTokens?: number
+}> {
   const result = await deepseekAiChatProvider.complete(env, {
     prompt,
     ...(options?.messages ? { messages: options.messages } : {}),
@@ -193,6 +204,8 @@ export async function completeWithDeepSeek(
   return {
     text: result.text,
     model: result.model,
-    ...(result.tokensUsed !== undefined ? { tokensUsed: result.tokensUsed } : {})
+    ...(result.tokensUsed !== undefined ? { tokensUsed: result.tokensUsed } : {}),
+    ...(result.promptTokens !== undefined ? { promptTokens: result.promptTokens } : {}),
+    ...(result.completionTokens !== undefined ? { completionTokens: result.completionTokens } : {})
   }
 }

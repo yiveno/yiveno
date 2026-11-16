@@ -52,6 +52,11 @@ export function filterKeywordMatchesBeforeCollapse(
     behaviorProfile?: RecallBehaviorProfile
     /** 命题命中集（Phase 4）；约束邻域与 Omnibox 路径不传。 */
     noteMatches?: NoteMatchSet
+    /** 死链巡检结论；Omnibox 路径忽略。 */
+    linkStatusByItemId?: ReadonlyMap<
+      string,
+      import('@/core/recall/keyword-filter').RecallLinkStatusHint
+    > // 类型与 keyword-filter.RecallLinkStatusHint 对齐
   } = {}
 ): RecallMatch[] {
   const scoreOpts = {
@@ -59,7 +64,10 @@ export function filterKeywordMatchesBeforeCollapse(
     ...(options.nowMs === undefined ? {} : { nowMs: options.nowMs }),
     ...(options.minScore === undefined ? {} : { minScore: options.minScore }),
     ...(options.behaviorProfile === undefined ? {} : { behaviorProfile: options.behaviorProfile }),
-    ...(options.noteMatches === undefined ? {} : { noteMatches: options.noteMatches })
+    ...(options.noteMatches === undefined ? {} : { noteMatches: options.noteMatches }),
+    ...(options.linkStatusByItemId === undefined
+      ? {}
+      : { linkStatusByItemId: options.linkStatusByItemId })
   }
 
   return filterMemoryItemsByKeyword(items, clue, scoreOpts)

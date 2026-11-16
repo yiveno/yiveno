@@ -36,7 +36,12 @@ export type AiChatCompleteResult = {
   model: string
   /** Provider 稳定 id，如 deepseek */
   providerId: string
+  /** 合计 token（兼容旧字段；缺省不推算）。 */
   tokensUsed?: number
+  /** prompt 侧 token；上游未返回则缺省。 */
+  promptTokens?: number
+  /** completion 侧 token；上游未返回则缺省。 */
+  completionTokens?: number
 }
 
 /**

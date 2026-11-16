@@ -12,7 +12,10 @@ import {
 import { DREAMING_PREFER_READ_ENABLED } from '@/core/dreaming/dreaming-constants'
 import type { NoteMatchSet } from '@/core/recall/note-match'
 import { createRecallFlowTrace } from '@/application/recall/create-recall-flow-trace'
-import { getClueLlmCompleter } from '@/application/recall/clue-llm-completer-registry'
+import {
+  getClueLlmCompleter,
+  getClueLlmCompleterDetailed
+} from '@/application/recall/clue-llm-completer-registry'
 import {
   readBrowserOnline,
   shouldOmitClueLlmCompleterWhenBrowserOffline
@@ -52,7 +55,12 @@ import {
   scoreFromCosineSimilarity,
   sortIdsByRrf
 } from '@/core/recall/hybrid-fusion'
-import { isGenericOnlyHitAgainstSpecificClue } from '@/core/recall/keyword-filter'
+import {
+  applyStalePenaltiesToMatches,
+  isGenericOnlyHitAgainstSpecificClue,
+  type RecallLinkStatusHint
+} from '@/core/recall/keyword-filter'
+import { loadLinkStatusHintsByItemId } from '@/application/recall/load-link-status-hints'
 import {
   excludeDismissedMemoryItems,
   mergeRecallDialogTurn
@@ -143,13 +151,18 @@ async function finalizeKeywordResult(
     behaviorProfile?: 'omnibox'
     /** 命题命中集（Phase 4）；约束邻域与 Omnibox 分支不传。 */
     noteMatches?: NoteMatchSet
+    /** 死链巡检；Omnibox 忽略。 */
+    linkStatusByItemId?: ReadonlyMap<string, RecallLinkStatusHint>
   }
 ): Promise<{ result: RecallResult; effectiveParsed: ParsedRecallClue; timeSoftReopen: boolean }> {
+  const linkStatusByItemId =
+    options?.behaviorProfile === 'omnibox' ? undefined : options?.linkStatusByItemId
   const base = recallByKeywordWithParsedClue(items, displayClue, {
     candidateLimit: RECALL_RESULT_POOL_LIMIT,
     parsed,
     ...(options?.behaviorProfile ? { behaviorProfile: options.behaviorProfile } : {}),
-    ...(options?.noteMatches ? { noteMatches: options.noteMatches } : {})
+    ...(options?.noteMatches ? { noteMatches: options.noteMatches } : {}),
+    ...(linkStatusByItemId ? { linkStatusByItemId } : {})
   })
   const effectiveParsed = base.parsed ?? parsed
   const timeSoftReopen =
@@ -217,6 +230,8 @@ export function fuseKeywordAndSemanticPools(input: {
   parsed: ParsedRecallClue
   pageContextMode?: PageContextMode
   currentTabDomain?: string
+  /** 死链罚 map：语义-only 在 fuse 补罚；关键词池 id 已在打分层扣过，跳过。 */
+  linkStatusByItemId?: ReadonlyMap<string, RecallLinkStatusHint>
 }): RecallMatch[] {
   return fuseScoredPools(input)
 }
@@ -228,6 +243,8 @@ function fuseScoredPools(input: {
   parsed: ParsedRecallClue
   pageContextMode?: PageContextMode
   currentTabDomain?: string
+  /** 死链罚：仅对语义-only 候选补（keyword 池 id 已在打分层扣过）。 */
+  linkStatusByItemId?: ReadonlyMap<string, RecallLinkStatusHint>
 }): RecallMatch[] {
   const keywordTimed = filterMatchesByParsedTimeRange(input.keywordMatches, input.parsed)
   const semanticTimed = filterMatchesByParsedTimeRange(input.semanticMatches, input.parsed)
@@ -306,13 +323,21 @@ function fuseScoredPools(input: {
       currentTabDomain: input.currentTabDomain
     }
   )
-  withPageContext.sort((left, right) => {
+  // 语义-only 候选未走 keyword 打分：在 fuse 后补死链罚（跳过 keyword 池已扣 id；D-5）
+  const keywordScoredIds = new Set(input.keywordMatches.map(match => match.item.id))
+  const withStale = applyStalePenaltiesToMatches(
+    withPageContext,
+    input.linkStatusByItemId,
+    'default',
+    keywordScoredIds
+  )
+  withStale.sort((left, right) => {
     if (right.score !== left.score) {
       return right.score - left.score
     }
     return right.item.updatedAt.localeCompare(left.item.updatedAt)
   })
-  return withPageContext
+  return withStale
 }
 
 function collectWeakCandidateTitles(result: RecallResult): string[] {
@@ -345,6 +370,7 @@ async function attachRecallFramingLlmPolish(
   result: RecallResult,
   input: {
     complete: NonNullable<ReturnType<typeof getClueLlmCompleter>>
+    completeDetailed?: NonNullable<ReturnType<typeof getClueLlmCompleterDetailed>>
     clue: string
     parsed: ParsedRecallClue
     trace: ReturnType<typeof createRecallFlowTrace>
@@ -366,6 +392,7 @@ async function attachRecallFramingLlmPolish(
       rulesBaseline,
       weakCandidateTitles: collectWeakCandidateTitles(result),
       complete: input.complete,
+      ...(input.completeDetailed ? { completeDetailed: input.completeDetailed } : {}),
       trace: input.trace
     })
 
@@ -612,6 +639,8 @@ export async function fuseHybridMatches(input: {
   trace: ReturnType<typeof createRecallFlowTrace>
   /** 命题命中集（Phase 4）；由 recallWithClue 传入。 */
   noteMatches?: NoteMatchSet
+  /** 死链巡检；Side Panel 轨。 */
+  linkStatusByItemId?: ReadonlyMap<string, RecallLinkStatusHint>
 }): Promise<{
   result: RecallResult
   effectiveParsed: ParsedRecallClue
@@ -628,7 +657,8 @@ export async function fuseHybridMatches(input: {
   // 先全量打分再折叠到 Hybrid 关键词池，避免重复书签占满 HYBRID_KEYWORD_POOL
   const keywordScored = collapseRecallMatches(
     filterKeywordMatchesBeforeCollapse(input.items, input.filterClue, {
-      ...(input.noteMatches ? { noteMatches: input.noteMatches } : {})
+      ...(input.noteMatches ? { noteMatches: input.noteMatches } : {}),
+      ...(input.linkStatusByItemId ? { linkStatusByItemId: input.linkStatusByItemId } : {})
     })
       .map(match => applyParsedClueScoreBoosts(match, input.parsed))
       .filter(match => !isGenericOnlyHitAgainstSpecificClue(input.filterClue, match.item)),
@@ -700,7 +730,8 @@ export async function fuseHybridMatches(input: {
       semanticMatches: semanticScored,
       parsed,
       pageContextMode: input.pageContextMode ?? 'none',
-      ...(input.currentTabDomain !== undefined ? { currentTabDomain: input.currentTabDomain } : {})
+      ...(input.currentTabDomain !== undefined ? { currentTabDomain: input.currentTabDomain } : {}),
+      ...(input.linkStatusByItemId ? { linkStatusByItemId: input.linkStatusByItemId } : {})
     })
 
   let fused = fuseWithParsed(input.parsed)
@@ -835,6 +866,8 @@ export class HybridRecallBackend implements RecallBackend {
       isOmniboxEntry || omitClueLlmForBrowserOffline
         ? undefined
         : (getClueLlmCompleter() ?? undefined)
+    const completeDetailed =
+      complete == null ? undefined : (getClueLlmCompleterDetailed() ?? undefined)
     const visibleProgressStages: RecallVisibleProgressStage[] = []
     const reportProgress = (stage: RecallVisibleProgressStage) => {
       if (isOmniboxEntry) {
@@ -848,6 +881,7 @@ export class HybridRecallBackend implements RecallBackend {
     const understandStartedAt = Date.now()
     const understood = await understandRecallClue(normalizedClue, {
       ...(complete ? { complete } : {}),
+      ...(completeDetailed ? { completeDetailed } : {}),
       ...(isOmniboxEntry ? { forceMode: 'lexical' as const, skipRulesIntent: true } : {}),
       trace
     })
@@ -988,6 +1022,10 @@ export class HybridRecallBackend implements RecallBackend {
           preferReadEnabled: DREAMING_PREFER_READ_ENABLED
         })
     const noteMatches: NoteMatchSet = noteMerge.noteMatches
+    // 死链 hint：仅 Side Panel；Omnibox 不读（D-5）
+    const linkStatusByItemId = isOmniboxEntry
+      ? new Map<string, RecallLinkStatusHint>()
+      : await loadLinkStatusHintsByItemId()
     let items = excludeDismissedMemoryItems(noteMerge.items, dismissedIds)
     const sourceScope = isOmniboxEntry ? 'all' : (context?.sourceScope ?? 'all')
     if (sourceScope !== 'all') {
@@ -1054,7 +1092,10 @@ export class HybridRecallBackend implements RecallBackend {
         items,
         merged,
         { mode: pageContextMode, currentTabDomain },
-        pairClue
+        pairClue,
+        {
+          ...(linkStatusByItemId.size > 0 ? { linkStatusByItemId } : {})
+        }
       )
       result = finalized.result
       effectiveParsedForFraming = finalized.effectiveParsed
@@ -1088,7 +1129,8 @@ export class HybridRecallBackend implements RecallBackend {
           pageContextMode,
           ...(currentTabDomain !== undefined ? { currentTabDomain } : {}),
           trace,
-          ...(noteMatches.size > 0 ? { noteMatches } : {})
+          ...(noteMatches.size > 0 ? { noteMatches } : {}),
+          ...(linkStatusByItemId.size > 0 ? { linkStatusByItemId } : {})
         })) ?? null
 
       if (hybrid) {
@@ -1104,7 +1146,8 @@ export class HybridRecallBackend implements RecallBackend {
           { mode: pageContextMode, currentTabDomain },
           pairClue,
           {
-            ...(noteMatches.size > 0 ? { noteMatches } : {})
+            ...(noteMatches.size > 0 ? { noteMatches } : {}),
+            ...(linkStatusByItemId.size > 0 ? { linkStatusByItemId } : {})
           }
         )
         result = finalized.result
@@ -1179,6 +1222,7 @@ export class HybridRecallBackend implements RecallBackend {
     const withFramingLlm = complete
       ? await attachRecallFramingLlmPolish(withFraming, {
           complete,
+          ...(completeDetailed ? { completeDetailed } : {}),
           clue: normalizedClue,
           parsed: effectiveParsedForFraming,
           trace

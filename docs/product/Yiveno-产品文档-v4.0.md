@@ -2304,6 +2304,22 @@ Chrome API / 选区
 
 **现状（2026-11-10）：** store / meta / 游标 / 闹钟脚手架已接线；**夜间编译暗线已接线**（`dreaming` taskKind + `/api/ai/dreaming/complete` peek-then-commit 批 8；独立配额 Free 5/日·20/月、Pro 30/日·300/月；超 cap 延后；关 AI / 未登录跳过；孤儿扫）。**Recall 优先读尚未进主路径**——须过离线评估 + 设计五问（ADR-016）后方可接线。
 
+#### Dreaming Phase 5 · 每周死链巡检（Normative · 2026-11-12）
+
+> **主语：** 扩展侧对本机已存 URL 做可达性巡检；结论只进派生表，**只降权、不删除**；不改用户原文 / `dismissCount` / `updatedAt` / `deletedAt`。
+
+| 项                   | 口径                                                                                                                                                                                                                                                                                  |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **存储**             | IndexedDB `YivenoMemoryDB` **v6**：独立 store `memory_link_status`（字段：`sourceMemoryItemId` / `linkStatus`=`ok\|stale\|unknown` / `lastCheckedAt` / `firstStaleAt?` / `consecutiveFailures`）。**不进** `clues`；**不进 Backup**（可重算）                                         |
+| **通道**             | 请求从用户浏览器直连其存过的站点；URL **不经** Yiveno 服务器                                                                                                                                                                                                                          |
+| **升 stale**         | 连续 **2** 次明确死链失败；巡检失败（离线/超时）标 `unknown`，**不得**标 `stale`；无检查记录优先排队，不得当 stale                                                                                                                                                                    |
+| **降权**             | 打分层 `computeStalePenalty`（cap 对齐 dismiss=10）；仅词面分 `> 0` 时扣；**D-5：Omnibox 门禁**（`behaviorProfile === 'omnibox'` 不罚）；Hybrid 关键词打分层扣一次、语义-only 在 fuse 补一次；约束邻域同罚。**已知限制：** Topic 补充项（约束邻域）在罚分之后合并，目前不参与死链罚分 |
+| **触发**             | 独立闹钟 `yiveno.link_status_sweep`，周期 **10080** 分钟；**不**搭同步闹钟；开关关时不建闹钟或不跑                                                                                                                                                                                    |
+| **开关**             | Settings AI 分区、`aiFeaturesEnabled` 下方；字段 `linkStatusSweepEnabled`，**默认开**；**不**联动 `aiFeaturesEnabled`（巡检不调模型）                                                                                                                                                 |
+| **披露**             | Settings 隐私摘要加一条 bullet（`settings_privacy_bullet_link_sweep`）；`PRIVACY_NOTICE_VERSION` **保持 4**（不递增、不弹确认框）；官网 `/privacy` 本波不动                                                                                                                           |
+| **host_permissions** | 宽通配 `http://*/*` + `https://*/*`（另见 `CHROMEWEBSTORE.md`）                                                                                                                                                                                                                       |
+| **覆盖**             | 书签取 `payload.url`；摘录取 `payload.sourceUrl` 与 `clues.sourceUrl`（建条目同值）；单 tick 限流分批                                                                                                                                                                                 |
+
 > **主语：** 本节解决的是 **Recall 的问题边界**（什么算 Recall / 什么不算），不是新增一个产品功能。Topic 在其中是"必要条件判定器"，而非"产品核心基线"。
 
 **摘要：**

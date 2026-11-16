@@ -37,3 +37,24 @@ export const DREAMING_COMPILE_MAX_BATCHES_PER_TICK = 3 as const
  * 注意：这里用普通 boolean，不用 `as const false`——Stage 4 要改的就是这一行字面量。
  */
 export const DREAMING_PREFER_READ_ENABLED: boolean = false
+
+/** 死链巡检 chrome.alarms 名（独立；不搭同步 / dreaming 便车）。 */
+export const LINK_STATUS_SWEEP_ALARM_NAME = 'yiveno.link_status_sweep' as const
+
+/**
+ * 死链巡检周期（分钟）= 7 天。
+ * Chrome 周期闹钟从创建时刻起计，无固定墙钟。
+ */
+export const LINK_STATUS_SWEEP_ALARM_PERIOD_MINUTES = 10080 as const
+
+/** 连续「死链」失败达到此次数才升 `stale`（网络/超时不算）。 */
+export const LINK_STATUS_STALE_FAILURE_THRESHOLD = 2 as const
+
+/** 单次 tick 最多 HEAD/探测条数（书签可达万级；参照回填节流）。 */
+export const LINK_STATUS_SWEEP_BATCH_LIMIT = 40 as const
+
+/** 任务间距毫秒（节流）。 */
+export const LINK_STATUS_SWEEP_GAP_MS = 450 as const
+
+/** 单 URL 探测超时毫秒。 */
+export const LINK_STATUS_CHECK_TIMEOUT_MS = 8_000 as const

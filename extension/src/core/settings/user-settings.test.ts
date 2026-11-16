@@ -10,6 +10,7 @@ describe('user-settings', () => {
   it('默认开启划词浮层与 AI；书签灌库默认关（须明示同意）', () => {
     expect(DEFAULT_USER_SETTINGS.selectionToolbarEnabled).toBe(true)
     expect(DEFAULT_USER_SETTINGS.aiFeaturesEnabled).toBe(true)
+    expect(DEFAULT_USER_SETTINGS.linkStatusSweepEnabled).toBe(true)
     expect(DEFAULT_USER_SETTINGS.chromeBookmarkIngestEnabled).toBe(false)
     expect(DEFAULT_USER_SETTINGS.recallOutcomePairSoftAdjustEnabled).toBe(true)
   })
@@ -18,6 +19,7 @@ describe('user-settings', () => {
     expect(mergeUserSettings(DEFAULT_USER_SETTINGS, { selectionToolbarEnabled: false })).toEqual({
       selectionToolbarEnabled: false,
       aiFeaturesEnabled: true,
+      linkStatusSweepEnabled: true,
       chromeBookmarkIngestEnabled: false,
       mcpReadOnlyEnabled: false,
       recallOutcomePairSoftAdjustEnabled: true,
@@ -29,6 +31,7 @@ describe('user-settings', () => {
     expect(parseUserSettings({ selectionToolbarEnabled: false })).toEqual({
       selectionToolbarEnabled: false,
       aiFeaturesEnabled: true,
+      linkStatusSweepEnabled: true,
       chromeBookmarkIngestEnabled: false,
       mcpReadOnlyEnabled: false,
       recallOutcomePairSoftAdjustEnabled: true,
