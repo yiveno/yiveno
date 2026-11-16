@@ -1,6 +1,7 @@
 import type { AccountSyncErrorCode } from '@/core/messaging/account-sync-messages'
 import type { CommandsErrorCode } from '@/core/messaging/commands-messages'
 import type { ImportErrorCode } from '@/core/messaging/import-messages'
+import type { LocalMemoryImportErrorCode } from '@/core/memory/local-memory-import-error'
 import type { ThirdPartyCorpusImportErrorCode } from '@/core/memory/third-party-corpus-import-state'
 import type { RecallErrorCode } from '@/core/messaging/recall-messages'
 import type { SettingsErrorCode } from '@/core/messaging/settings-messages'
@@ -74,6 +75,14 @@ const THIRD_PARTY_IMPORT_ERROR_MESSAGE_KEYS: Record<ThirdPartyCorpusImportErrorC
   THIRD_PARTY_IMPORT_FAILED: 'error_third_party_import_failed'
 }
 
+const LOCAL_MEMORY_IMPORT_ERROR_MESSAGE_KEYS: Record<LocalMemoryImportErrorCode, MessageKey> = {
+  LOCAL_IMPORT_INVALID_FORMAT: 'error_local_import_invalid_format',
+  LOCAL_IMPORT_UNSUPPORTED_VERSION: 'error_local_import_unsupported_version',
+  LOCAL_IMPORT_EMPTY: 'error_local_import_empty',
+  LOCAL_IMPORT_IN_PROGRESS: 'error_local_import_in_progress',
+  LOCAL_IMPORT_FAILED: 'error_local_import_failed'
+}
+
 /** Settings errorCode → 用户文案。 */
 export function tSettingsError(errorCode: SettingsErrorCode): string {
   return t(SETTINGS_ERROR_MESSAGE_KEYS[errorCode])
@@ -102,4 +111,9 @@ export function tCommandsError(errorCode: CommandsErrorCode): string {
 /** 第三方语料导入 errorCode → 用户文案。 */
 export function tThirdPartyImportError(errorCode: ThirdPartyCorpusImportErrorCode): string {
   return t(THIRD_PARTY_IMPORT_ERROR_MESSAGE_KEYS[errorCode])
+}
+
+/** 本地 Backup 恢复 errorCode → 用户文案。 */
+export function tLocalMemoryImportError(errorCode: LocalMemoryImportErrorCode): string {
+  return t(LOCAL_MEMORY_IMPORT_ERROR_MESSAGE_KEYS[errorCode])
 }

@@ -20,6 +20,10 @@ function bindPocketFileInput(el: Element | ComponentPublicInstance | null): void
   page.pocketFileInputRef.value = el as HTMLInputElement | null
 }
 
+function bindRestoreFileInput(el: Element | ComponentPublicInstance | null): void {
+  page.restoreFileInputRef.value = el as HTMLInputElement | null
+}
+
 const {
   accountDisplayName,
   accountEmail,
@@ -46,8 +50,10 @@ const {
   handleOpenShortcutsPage,
   handlePickPocketImportFile,
   handlePickRaindropImportFile,
+  handlePickRestoreBackupFile,
   handlePocketFileSelected,
   handleRaindropFileSelected,
+  handleRestoreBackupFileSelected,
   handleRestoreLatestSyncBackup,
   handleRunIncrementalSync,
   handleSelectionToolbarToggle,
@@ -67,6 +73,7 @@ const {
   orphanBucketCount,
   orphanWorking,
   privacyPolicyUrl,
+  restoreWorking,
   restoringSyncBackup,
   runningIncrementalSync,
   savingAiFeatures,
@@ -449,7 +456,13 @@ const {
               />
               <AppButton
                 type="button"
-                :disabled="thirdPartyImportWorking || dataWorking || exportWorking || signingOut"
+                :disabled="
+                  thirdPartyImportWorking ||
+                  restoreWorking ||
+                  dataWorking ||
+                  exportWorking ||
+                  signingOut
+                "
                 :title="t('settings_data_import_raindrop')"
                 variant="outlined"
                 @click="handlePickRaindropImportFile"
@@ -476,7 +489,13 @@ const {
               />
               <AppButton
                 type="button"
-                :disabled="thirdPartyImportWorking || dataWorking || exportWorking || signingOut"
+                :disabled="
+                  thirdPartyImportWorking ||
+                  restoreWorking ||
+                  dataWorking ||
+                  exportWorking ||
+                  signingOut
+                "
                 :title="t('settings_data_import_pocket')"
                 variant="outlined"
                 @click="handlePickPocketImportFile"
@@ -501,7 +520,13 @@ const {
             >
               <AppButton
                 type="button"
-                :disabled="exportWorking || dataWorking || thirdPartyImportWorking || signingOut"
+                :disabled="
+                  exportWorking ||
+                  restoreWorking ||
+                  dataWorking ||
+                  thirdPartyImportWorking ||
+                  signingOut
+                "
                 :title="t('settings_privacy_export')"
                 variant="outlined"
                 @click="handleExportLocalMemory"
@@ -510,6 +535,39 @@ const {
                   exportWorking
                     ? t('settings_privacy_working')
                     : t('settings_privacy_export_action')
+                }}
+              </AppButton>
+            </SettingsActionRow>
+            <SettingsActionRow
+              surface="embedded"
+              :title="t('settings_privacy_restore')"
+              :subtitle="t('settings_privacy_restore_hint')"
+            >
+              <input
+                :ref="bindRestoreFileInput"
+                type="file"
+                class="settings-file-input"
+                accept=".json,application/json"
+                :aria-label="t('settings_privacy_restore')"
+                @change="handleRestoreBackupFileSelected"
+              />
+              <AppButton
+                type="button"
+                :disabled="
+                  restoreWorking ||
+                  exportWorking ||
+                  dataWorking ||
+                  thirdPartyImportWorking ||
+                  signingOut
+                "
+                :title="t('settings_privacy_restore')"
+                variant="outlined"
+                @click="handlePickRestoreBackupFile"
+              >
+                {{
+                  restoreWorking
+                    ? t('settings_privacy_working')
+                    : t('settings_privacy_restore_action')
                 }}
               </AppButton>
             </SettingsActionRow>
@@ -544,7 +602,13 @@ const {
             >
               <AppButton
                 type="button"
-                :disabled="dataWorking || exportWorking || thirdPartyImportWorking || signingOut"
+                :disabled="
+                  dataWorking ||
+                  exportWorking ||
+                  thirdPartyImportWorking ||
+                  restoreWorking ||
+                  signingOut
+                "
                 :title="t('settings_data_clear_recall_adaptation')"
                 variant="outlined"
                 @click="handleClearLocalRecallAdaptation"
@@ -570,7 +634,13 @@ const {
             >
               <AppButton
                 type="button"
-                :disabled="dataWorking || exportWorking || thirdPartyImportWorking || signingOut"
+                :disabled="
+                  dataWorking ||
+                  exportWorking ||
+                  thirdPartyImportWorking ||
+                  restoreWorking ||
+                  signingOut
+                "
                 :title="t('settings_data_clear_local')"
                 variant="outlined"
                 tone="danger"

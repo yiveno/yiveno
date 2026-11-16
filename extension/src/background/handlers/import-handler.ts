@@ -7,17 +7,23 @@ import type {
   ColdStartStatusResponse,
   GenerateGettingStartedClueSamplesResponse,
   GetBookmarkLibraryTreeResponse,
+  ImportLocalMemoryResponse,
   ImportThirdPartyCorpusResponse,
   ThirdPartyCorpusImportStatusResponse
 } from '@/core/messaging/import-messages'
 import {
   parseGenerateGettingStartedClueSamplesPayload,
+  parseImportLocalMemoryPayload,
   parseImportThirdPartyCorpusPayload
 } from '@/core/messaging/import-messages'
 import {
   getChromeBookmarkImportStatus,
   scheduleEnsureChromeBookmarksImportedIfNeeded
 } from '@/application/capture/import-chrome-bookmarks-service'
+import {
+  LocalMemoryImportError,
+  importLocalMemoryBackup
+} from '@/application/capture/import-local-memory-service'
 import {
   ThirdPartyCorpusImportError,
   getThirdPartyCorpusImportStatus,
@@ -249,6 +255,31 @@ export async function handleImportThirdPartyCorpus(
     return {
       ok: false,
       errorCode: 'THIRD_PARTY_IMPORT_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/** 恢复本地 Backup JSON（含 L3）。 */
+export async function handleImportLocalMemory(
+  payload: unknown
+): Promise<ImportLocalMemoryResponse> {
+  const startedAt = flowStart('Import', '本地 Backup 恢复')
+  try {
+    const input = parseImportLocalMemoryPayload(payload)
+    const result = await importLocalMemoryBackup({ content: input.content })
+    invalidateBookmarkLibraryTreeOnChromeChange()
+    flowOk('Import', '本地 Backup 恢复', startedAt, result)
+    return { ok: true, ...result }
+  } catch (error) {
+    if (error instanceof LocalMemoryImportError) {
+      flowFail('Import', '本地 Backup 恢复', startedAt, error)
+      return { ok: false, errorCode: error.errorCode, error: error.message }
+    }
+    flowFail('Import', '本地 Backup 恢复', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'LOCAL_IMPORT_FAILED',
       ...(error instanceof Error ? { error: error.message } : {})
     }
   }

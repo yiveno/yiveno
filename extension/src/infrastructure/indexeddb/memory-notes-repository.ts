@@ -116,6 +116,47 @@ export class MemoryNotesRepository {
   }
 
   /**
+   * Backup 恢复：整行 put，保留 id / 时间戳 / schemaVersion。
+   * 仍做 schema + 引用门校验；失败返回 null（计入 skippedNotes）。
+   */
+  async putNoteRecord(record: MemoryNoteRecord): Promise<MemoryNoteRecord | null> {
+    await this.ensureReady()
+
+    if (
+      !hasMemoryNoteSourceCitation({
+        sourceQuote: record.sourceQuote,
+        ...(record.sourceSpan != null ? { sourceSpan: record.sourceSpan } : {})
+      })
+    ) {
+      logger.warn('Dreaming', 'Backup 恢复命题无引用，丢弃', {
+        id: record.id,
+        sourceMemoryItemId: record.sourceMemoryItemId
+      })
+      return null
+    }
+
+    const parsed = MemoryNoteRecordSchema.safeParse(record)
+    if (!parsed.success) {
+      logger.warn('Dreaming', 'Backup 恢复命题 schema 校验失败，丢弃', {
+        id: record.id,
+        sourceMemoryItemId: record.sourceMemoryItemId,
+        issues: parsed.error.issues.slice(0, 3)
+      })
+      return null
+    }
+
+    await indexedDBManager.withTransaction(MEMORY_NOTES_STORE, 'readwrite', async transaction => {
+      await requestToPromise(transaction.objectStore(MEMORY_NOTES_STORE).put(parsed.data))
+    })
+
+    logger.info('Dreaming', 'Backup 恢复命题已写入', {
+      id: parsed.data.id,
+      sourceMemoryItemId: parsed.data.sourceMemoryItemId
+    })
+    return parsed.data
+  }
+
+  /**
    * 写入一条命题。无引用 / 超长 / 序号越界 → 拒绝并打日志，不入库。
    * @returns 写入成功的行；拒绝时 null
    */

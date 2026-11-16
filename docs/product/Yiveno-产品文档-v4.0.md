@@ -1763,16 +1763,17 @@ Omnibox **本机快跳轨**专用 must（与 Side Panel `recall-eval` 正交）�
 
 #### 两层导出
 
-| 层           | 名称       | 状态                                                        | 用途                             | 字段原则                                                                                           |
-| ------------ | ---------- | ----------------------------------------------------------- | -------------------------------- | -------------------------------------------------------------------------------------------------- |
-| **Backup**   | 整库备份   | **已上线**（Settings「数据与隐私」· `EXPORT_LOCAL_MEMORY`） | 换机、灾备、换号恢复、用户主权   | 当前 owner 全部 `MemoryItem`（含软删、`clues` 全字段）；**不含**孤儿桶（孤儿仍走账户与同步区导出） |
-| **Portable** | 可迁移原料 | **目标 · 未上线**                                           | 迁到其他工具；减轻跨产品搬运体积 | L1 核心（摘录 + note + 来源 + 时间戳等）；**默认不含** L2 行为、L3 embedding；enrichment 可选剥离  |
+| 层           | 名称       | 状态                                                                                | 用途                             | 字段原则                                                                                                                                                                                                                                                                                                |
+| ------------ | ---------- | ----------------------------------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Backup**   | 整库备份   | **已上线**（Settings「数据与隐私」· `EXPORT_LOCAL_MEMORY` / `IMPORT_LOCAL_MEMORY`） | 换机、灾备、换号恢复、用户主权   | 当前 owner 全部 `MemoryItem`（含软删、`clues` 全字段）+ `memory_notes`（命题 + 行内引用 + 可选命题向量）+ `memory_notes_meta`（schemaVersion + 游标字段 + 编译累计）；**不含**孤儿桶、**不含** `memory_link_status`（可重算）、**不含** `dreaming_duplicate_groups`（已知限制：恢复后重复摘录不再折叠） |
+| **Portable** | 可迁移原料 | **目标 · 未上线**                                                                   | 迁到其他工具；减轻跨产品搬运体积 | L1 核心（摘录 + note + 来源 + 时间戳等）；**默认不含** L2 行为、L3 embedding；enrichment 可选剥离                                                                                                                                                                                                       |
 
 **Normative：**
 
 - Portable **不得替代** Backup；两者并存时 **Backup 始终为一等公民**。
 - **Detail export**（§5.10.4）= 多选带来源详情导出，**不是**整库 Portable，**不能**冒充 Backup。
 - 护城河 **不得**建立在拒绝 Backup；须用「同份 Portable 在竞品侧 Recall 是否仍明显更差」+ 习惯入口验证（§0 竞争边界）。
+- **Backup 恢复（已上线）：** Settings「数据与隐私」Backup 组选 JSON → `IMPORT_LOCAL_MEMORY`。语义为 **merge/upsert（按 id · newer-wins；平局备份胜）**，不做 replace。孤儿命题（源不在恢复后 `memory_items`，含软删源可导入）跳过；游标字段重置（`lastDreamRunId` / `lastCursor` / `lastRunAt`）；跨 owner 文件**重归属**到当前 owner（命题 id 重建、`noteHitCounts` 键重映射）；历史无 `formatVersion` 文件按 v1 接受（仅条目亦可）。**勿与云同步换机混淆：** 云同步 v1 本地-only → 换机后本地重算命题；Backup 恢复 → 命题随文件回来，不重算。
 
 Settings「隐私」摘要与官网 `/privacy` 须与本节 L1–L3 口径一致；正文重大变更时同步更新 `privacyNoticeVersion` ack 文案（见 §6 隐私 P0）。
 
@@ -1880,7 +1881,7 @@ Chrome API / 选区
   - **书签灌库开关（Normative）**：Settings「保存」与 Getting Started 共用 `chromeBookmarkIngestEnabled`（**默认关**；须用户明示打开）。Settings 开关面向用户文案用 **同步**（持续状态：本机库 ↔ 本浏览器书签增删改）；GS 按钮仍用 **Import**（一次性同意）。**用户可见 bulk 主进度 = GS Bookmarks tab**；Settings 打开开关仍触发 `ensureChromeBookmarksImported`（Skip GS 后的后路），**不**在 Side Panel 顶栏展示导入细条。关闭后**卸载** `bookmarks.on*` 监听、跳过 bulk 导入与增量写入，并拒绝 `CAPTURE_BOOKMARK`；**不删除**已灌入的书签 Memory；重新开启后重新挂监听并补跑 / 续跑 bulk（含 reconcile 补洞）。**禁止**写成云记忆 sync。
   - **书签库与 Chrome 对账（Normative）**：**Chrome 书签树 = 壳权威**（单向 Chrome → IndexedDB；**禁止**写回 / 改写 / 删除原生书签；**禁止** Settings 暴露「修复」类用户操作）。增量靠 `bookmarks.on*`；holes-only reconcile 只补「Chrome 有、Memory 无」。**full repair**（后台自动）：对当前全部 http(s) 叶子 upsert（同 `chromeBookmarkId` 含软删则同 id 复活；保留 `clues.note` 与行为计数）；软删带 `chromeBookmarkId` 且已不在 Chrome 树的孤儿；**不动**无 `chromeBookmarkId` 的第三方导入书签。触发：① 灌库已完成时每个 SW 会话最多自动 full repair 一次（其后 finalize 仍走 holes）；② 灌库开启时挂 **每日** `chrome.alarms` 对账（关灌库则清闹钟）；③ 冷启动已 `ready` / 读导入状态时，灌库开则每 SW 会话最多一次 `ensureChromeBookmarksImported`（堵 Memory 被掏空后 import 仍 `completed`、门禁早退漏补洞）。**禁止**暗示云同步书签或双向合并。
 - **数据处置（Normative · Settings「数据与隐私」）**：
-  - **Backup 整库导出**（§5.5.1）：导出当前 owner 本机全部 Memory（含软删、`clues` 全字段，即 L1+L2+L3）为 JSON（`EXPORT_LOCAL_MEMORY`）；不含孤儿桶（孤儿仍走账户与同步导出）。**Portable 可迁移原料未上线前，本条即用户主权导出的唯一必需路径。**
+  - **Backup 整库导出 / 恢复**（§5.5.1）：导出当前 owner 本机全部 Memory（含软删、`clues` 全字段）+ L3 `memory_notes` / `memory_notes_meta` 为 JSON（`EXPORT_LOCAL_MEMORY`）；Settings 可经 `IMPORT_LOCAL_MEMORY` 恢复（merge/upsert）。不含孤儿桶（孤儿仍走账户与同步导出）。**Portable 可迁移原料未上线前，本条即用户主权导出的唯一必需路径。**
   - **清除本机记忆**（`CLEAR_LOCAL_MEMORY`）：硬清当前 owner 本机 IndexedDB Memory（含 L3：`memory_notes` / `memory_notes_meta`，经 `replaceOwnerItems` 连带）；**不得**改写/删除 Chrome 原生书签；成功后关闭书签灌库并卸载监听；**并清除** Chrome 书签导入进度（`yiveno:chrome_bookmark_import`），避免 Memory 已空仍标 `completed` 导致再开灌库漏灌；若云同步开着则关闭同步并提示云端副本需另行删除；**并清除**本机 Outcome 对缓冲与 TTE 遥测环（`yiveno.recallOutcomePairs` / `yiveno.recallTelemetry`）。二次确认。
   - **Outcome 软调开关**（`recallOutcomePairSoftAdjustEnabled`，默认开）：关闭后 Hybrid **跳过**本机 Outcome 对软升/降权；对缓冲仍可累积直至清除；**不**锁死 Recall。与「清除适应信号」互补（暂停 vs 清空）。Omnibox 本就不走 Outcome。
   - **清除本机 Recall 适应信号**（`CLEAR_LOCAL_RECALL_ADAPTATION`）：仅清除 Outcome 对缓冲 + TTE 遥测环；**不**删 Memory、**不**清 `memory_notes`、**不**改 `openCount` 等条目字段、**不**关灌库/同步。用于重置 A 层软排学习而不毁库。二次确认。Recall 主链须仍可用。
@@ -2293,16 +2294,16 @@ Chrome API / 选区
 
 > **主语：** 夜间 / 本机维护产出的**原子命题**是 L3 派生，**不是**事实源；ECS 卡面仍以原文摘录为锚。命题只作检索候选 / 排序信号，不得冒充原文。
 
-| 项           | 口径                                                                                                                                         |
-| ------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| **存储**     | IndexedDB `YivenoMemoryDB` v5：`memory_notes` + `memory_notes_meta`（独立派生 store；**不**改 `memory_items` 行形状）                        |
-| **归属**     | L3；随条目走；Backup **必须含**；Portable **默认不含**；删账号 / `CLEAR_LOCAL_MEMORY` **连带清除**；`CLEAR_LOCAL_RECALL_ADAPTATION` **不清** |
-| **同步**     | **v1 本地-only**，不进云同步面（ADR-017 工作集仍仅 `text_excerpt` MemoryItem）；换机后本地重算。若要同步须另开 ADR                           |
-| **引用门**   | 每命题必须带 `sourceMemoryItemId` + 行内 `sourceQuote` 或合法 `sourceSpan`；无引用不入库                                                     |
-| **硬约束**   | dreaming **只写派生表**，永不改用户原文；增量-only；命题不参与 `hasRecallTopicAnchor`；默认不进 Omnibox 候选                                 |
-| **触发语义** | `chrome.alarms` 周期 1440 分钟（自创建起计，**无**固定墙钟）；浏览器关闭时不跑（ADR-021 薄本机维护，非第二套离线产品）                       |
+| 项           | 口径                                                                                                                                                                                |
+| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **存储**     | IndexedDB `YivenoMemoryDB` v5：`memory_notes` + `memory_notes_meta`（独立派生 store；**不**改 `memory_items` 行形状）                                                               |
+| **归属**     | L3；随条目走；Backup **必须含**；Portable **默认不含**；删账号 / `CLEAR_LOCAL_MEMORY` **连带清除**；`CLEAR_LOCAL_RECALL_ADAPTATION` **不清**                                        |
+| **同步**     | **v1 本地-only**，不进云同步面（ADR-017 工作集仍仅 `text_excerpt` MemoryItem）；**云同步换机**后本地重算。**Backup 恢复**命题随文件回来、不重算（§5.5.1）。若要云同步命题须另开 ADR |
+| **引用门**   | 每命题必须带 `sourceMemoryItemId` + 行内 `sourceQuote` 或合法 `sourceSpan`；无引用不入库                                                                                            |
+| **硬约束**   | dreaming **只写派生表**，永不改用户原文；增量-only；命题不参与 `hasRecallTopicAnchor`；默认不进 Omnibox 候选                                                                        |
+| **触发语义** | `chrome.alarms` 周期 1440 分钟（自创建起计，**无**固定墙钟）；浏览器关闭时不跑（ADR-021 薄本机维护，非第二套离线产品）                                                              |
 
-**现状（2026-11-10）：** store / meta / 游标 / 闹钟脚手架已接线；**夜间编译暗线已接线**（`dreaming` taskKind + `/api/ai/dreaming/complete` peek-then-commit 批 8；独立配额 Free 5/日·20/月、Pro 30/日·300/月；超 cap 延后；关 AI / 未登录跳过；孤儿扫）。**Recall 优先读尚未进主路径**——须过离线评估 + 设计五问（ADR-016）后方可接线。
+**现状（2026-11-16）：** store / meta / 游标 / 闹钟脚手架已接线；**夜间编译暗线已接线**（`dreaming` taskKind + `/api/ai/dreaming/complete` peek-then-commit 批 8；独立配额 Free 5/日·20/月、Pro 30/日·300/月；超 cap 延后；关 AI / 未登录跳过；孤儿扫）。**Backup 现含 L3**（`EXPORT_LOCAL_MEMORY` 导出 `memory_notes` + `memory_notes_meta`）+ **恢复已上线**（`IMPORT_LOCAL_MEMORY` · merge/upsert · 游标重置 · 跨 owner 重归属；见 §5.5.1）。**Recall 优先读尚未进主路径**——须过离线评估 + 设计五问（ADR-016）后方可接线。
 
 #### Dreaming Phase 5 · 每周死链巡检（Normative · 2026-11-12）
 

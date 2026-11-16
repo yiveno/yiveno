@@ -48,6 +48,7 @@ import {
   handleGetColdStartStatus,
   handleGenerateGettingStartedClueSamples,
   handleGetThirdPartyCorpusImportStatus,
+  handleImportLocalMemory,
   handleImportThirdPartyCorpus
 } from '@/background/handlers/import-handler'
 import { parseGetBookmarkLibraryTreePayload } from '@/core/messaging/import-messages'
@@ -204,6 +205,8 @@ async function dispatchBackgroundMessage(
       return handleGenerateGettingStartedClueSamples(message.payload)
     case 'IMPORT_THIRD_PARTY_CORPUS':
       return handleImportThirdPartyCorpus(message.payload)
+    case 'IMPORT_LOCAL_MEMORY':
+      return handleImportLocalMemory(message.payload)
     case 'GET_THIRD_PARTY_CORPUS_IMPORT_STATUS':
       return handleGetThirdPartyCorpusImportStatus()
     case 'GET_BOOKMARK_LIBRARY_TREE':

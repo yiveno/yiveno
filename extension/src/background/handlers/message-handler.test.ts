@@ -2,6 +2,26 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const ensureBackgroundBootstrappedMock = vi.hoisted(() => vi.fn(async () => undefined))
 const handleOpenRecallShellMock = vi.hoisted(() => vi.fn(async () => ({ ok: true as const })))
+const handleImportLocalMemoryMock = vi.hoisted(() =>
+  vi.fn(
+    async (): Promise<
+      | {
+          ok: true
+          restoredItems: number
+          skippedItems: number
+          restoredNotes: number
+          skippedNotes: number
+        }
+      | { ok: false; errorCode: 'LOCAL_IMPORT_INVALID_FORMAT'; error: string }
+    > => ({
+      ok: true,
+      restoredItems: 1,
+      skippedItems: 0,
+      restoredNotes: 0,
+      skippedNotes: 0
+    })
+  )
+)
 
 vi.mock('@/background/bootstrap-ready', () => ({
   ensureBackgroundBootstrapped: ensureBackgroundBootstrappedMock
@@ -14,6 +34,16 @@ vi.mock('@/background/handlers/commands-handler', async () => {
   return {
     ...actual,
     handleOpenRecallShell: handleOpenRecallShellMock
+  }
+})
+
+vi.mock('@/background/handlers/import-handler', async () => {
+  const actual = await vi.importActual<typeof import('@/background/handlers/import-handler')>(
+    '@/background/handlers/import-handler'
+  )
+  return {
+    ...actual,
+    handleImportLocalMemory: handleImportLocalMemoryMock
   }
 })
 
@@ -104,5 +134,64 @@ describe('handleBackgroundMessage', () => {
       { tabId: 3, windowId: 9 },
       { clue: 'unsaturated substrate', autoSubmit: false }
     )
+  })
+
+  it('IMPORT_LOCAL_MEMORY 分发到 handleImportLocalMemory', async () => {
+    handleImportLocalMemoryMock.mockResolvedValueOnce({
+      ok: true,
+      restoredItems: 2,
+      skippedItems: 1,
+      restoredNotes: 3,
+      skippedNotes: 0
+    })
+    const sendResponse = vi.fn()
+    const payload = { content: '{"formatVersion":1,"ownerId":"x","items":[]}' }
+    const handled = handleBackgroundMessage(
+      {
+        scope: BACKGROUND_MESSAGE_SCOPE,
+        type: 'IMPORT_LOCAL_MEMORY',
+        payload
+      },
+      sendResponse
+    )
+    expect(handled).toBe(true)
+    await vi.waitFor(() => {
+      expect(sendResponse).toHaveBeenCalledTimes(1)
+    })
+    expect(ensureBackgroundBootstrappedMock).toHaveBeenCalled()
+    expect(handleImportLocalMemoryMock).toHaveBeenCalledWith(payload)
+    expect(sendResponse.mock.calls[0]?.[0]).toEqual({
+      ok: true,
+      restoredItems: 2,
+      skippedItems: 1,
+      restoredNotes: 3,
+      skippedNotes: 0
+    })
+  })
+
+  it('IMPORT_LOCAL_MEMORY service 抛错 → 类型化错误响应', async () => {
+    handleImportLocalMemoryMock.mockResolvedValueOnce({
+      ok: false,
+      errorCode: 'LOCAL_IMPORT_INVALID_FORMAT',
+      error: 'LOCAL_IMPORT_INVALID_FORMAT'
+    })
+    const sendResponse = vi.fn()
+    const handled = handleBackgroundMessage(
+      {
+        scope: BACKGROUND_MESSAGE_SCOPE,
+        type: 'IMPORT_LOCAL_MEMORY',
+        payload: { content: '{' }
+      },
+      sendResponse
+    )
+    expect(handled).toBe(true)
+    await vi.waitFor(() => {
+      expect(sendResponse).toHaveBeenCalledTimes(1)
+    })
+    expect(sendResponse.mock.calls[0]?.[0]).toEqual({
+      ok: false,
+      errorCode: 'LOCAL_IMPORT_INVALID_FORMAT',
+      error: 'LOCAL_IMPORT_INVALID_FORMAT'
+    })
   })
 })

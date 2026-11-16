@@ -1134,6 +1134,21 @@
   "error_third_party_import_failed": {
     "message": "Could not import that file"
   },
+  "error_local_import_invalid_format": {
+    "message": "That file doesn’t look like a Yiveno backup we can read"
+  },
+  "error_local_import_unsupported_version": {
+    "message": "This backup was made with a newer Yiveno—update the extension and try again"
+  },
+  "error_local_import_empty": {
+    "message": "That backup has nothing to restore"
+  },
+  "error_local_import_in_progress": {
+    "message": "A restore is already running—wait for it to finish"
+  },
+  "error_local_import_failed": {
+    "message": "Could not restore that backup"
+  },
   "settings_data_clear_local": {
     "message": "Clear local memory"
   },
@@ -1284,6 +1299,29 @@
     "placeholders": {
       "COUNT": {
         "content": "$1"
+      }
+    }
+  },
+  "settings_privacy_restore": {
+    "message": "Restore backup"
+  },
+  "settings_privacy_restore_hint": {
+    "message": "Merge a Yiveno backup JSON into this library. Newer local items stay; missing ones come back, including Dreaming notes when present."
+  },
+  "settings_privacy_restore_action": {
+    "message": "Restore"
+  },
+  "settings_privacy_restore_done": {
+    "message": "Restored $ITEMS$ memories and $NOTES$ notes (skipped $SKIPPED$)",
+    "placeholders": {
+      "ITEMS": {
+        "content": "$1"
+      },
+      "NOTES": {
+        "content": "$2"
+      },
+      "SKIPPED": {
+        "content": "$3"
       }
     }
   },

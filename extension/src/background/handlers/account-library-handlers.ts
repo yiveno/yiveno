@@ -45,6 +45,8 @@ import {
   clearPrivacyPrefs
 } from '@/infrastructure/identity/privacy-prefs-service'
 import { memoryItemRepository } from '@/infrastructure/indexeddb/memory-item-repository'
+import { memoryNotesMetaRepository } from '@/infrastructure/indexeddb/memory-notes-meta-repository'
+import { memoryNotesRepository } from '@/infrastructure/indexeddb/memory-notes-repository'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
 import {
@@ -270,7 +272,8 @@ export async function handleDeleteAccount(): Promise<DeleteAccountResponse> {
 }
 
 /**
- * EXPORT_LOCAL_MEMORY — 导出当前 owner 本机全部 Memory（含软删）。
+ * EXPORT_LOCAL_MEMORY — 导出当前 owner 本机全部 Memory（含软删）+ L3 命题/meta。
+ * notes/meta 读取失败则整次失败（fail-closed，避免残缺 Backup）。
  */
 export async function handleExportLocalMemory(): Promise<ExportLocalMemoryResponse> {
   const startedAt = flowStart('Privacy', 'EXPORT_LOCAL_MEMORY')
@@ -280,11 +283,20 @@ export async function handleExportLocalMemory(): Promise<ExportLocalMemoryRespon
     const items = await memoryItemRepository.listAllByOwnerId(ownerId, {
       includeDeleted: true
     })
+    // limit 先 count 再一次扫完，避开同 updatedAt 开区间分页丢行
+    const noteCount = await memoryNotesRepository.countByOwner(ownerId)
+    const memoryNotes =
+      noteCount === 0
+        ? []
+        : await memoryNotesRepository.listByOwnerUpdated({ ownerId, limit: noteCount })
+    const memoryNotesMeta = await memoryNotesMetaRepository.getMeta(ownerId)
     flowOk('Privacy', 'EXPORT_LOCAL_MEMORY', startedAt, {
       ownerId,
-      itemCount: items.length
+      itemCount: items.length,
+      noteCount: memoryNotes.length,
+      hasMeta: memoryNotesMeta != null
     })
-    return { ok: true, ownerId, items }
+    return { ok: true, ownerId, items, memoryNotes, memoryNotesMeta }
   } catch (error) {
     flowFail('Privacy', 'EXPORT_LOCAL_MEMORY', startedAt, error)
     return {

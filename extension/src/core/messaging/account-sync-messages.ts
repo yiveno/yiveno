@@ -5,6 +5,10 @@ import type { SubscriptionSnapshot } from '@/core/identity/subscription-snapshot
 import type { SyncPrefs } from '@/core/identity/sync-prefs'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import type { BackgroundMessageScope } from '@/core/messaging/constants'
+import type {
+  MemoryNoteRecord,
+  MemoryNotesMeta
+} from '@/infrastructure/indexeddb/memory-notes-types'
 
 /** 账户 / 同步面向 UI 的稳定错误码。 */
 export const AccountSyncErrorCodeSchema = z.enum([
@@ -490,6 +494,10 @@ export type ExportLocalMemoryResponse =
       ok: true
       ownerId: string
       items: MemoryItem[]
+      /** Dreaming L3 命题（Backup 须含；ADR-022）。 */
+      memoryNotes: MemoryNoteRecord[]
+      /** L3 meta（从未编译过则为 null）。 */
+      memoryNotesMeta: MemoryNotesMeta | null
     }
   | {
       ok: false

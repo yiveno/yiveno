@@ -48,6 +48,8 @@ import type {
   GetChromeBookmarkImportStatusMessage,
   GetColdStartStatusMessage,
   GetBookmarkLibraryTreeMessage,
+  ImportLocalMemoryMessage,
+  ImportLocalMemoryResponse,
   ImportThirdPartyCorpusMessage,
   ImportThirdPartyCorpusResponse
 } from '@/core/messaging/import-messages'
@@ -271,6 +273,18 @@ export async function importThirdPartyCorpus(
     payload
   }
   return sendBackgroundMessage<ImportThirdPartyCorpusResponse>(message)
+}
+
+/** 恢复本地 Backup JSON（含 L3）。 */
+export async function importLocalMemory(
+  payload: ImportLocalMemoryMessage['payload']
+): Promise<ImportLocalMemoryResponse> {
+  const message: ImportLocalMemoryMessage = {
+    scope: 'background',
+    type: 'IMPORT_LOCAL_MEMORY',
+    payload
+  }
+  return sendBackgroundMessage<ImportLocalMemoryResponse>(message)
 }
 
 /** 查询冷启动三阶段门禁进度。 */

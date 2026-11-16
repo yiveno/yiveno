@@ -4,6 +4,7 @@ import type { BookmarkLibraryIndex } from '@/core/memory/bookmark-library-index'
 import type { ChromeBookmarkImportState } from '@/core/memory/chrome-bookmark-import-state'
 import type { ColdStartEnrichmentBatch } from '@/core/memory/cold-start-enrichment-batch'
 import type { ColdStartPipelineState } from '@/core/memory/cold-start-pipeline-state'
+import type { LocalMemoryImportErrorCode } from '@/core/memory/local-memory-import-error'
 import type { ThirdPartyCorpusImportErrorCodeSchema } from '@/core/memory/third-party-corpus-import-state'
 import { type ThirdPartyCorpusImportState } from '@/core/memory/third-party-corpus-import-state'
 import { ThirdPartyCorpusSourceSchema } from '@/core/memory/third-party-corpus-source'
@@ -160,6 +161,35 @@ export type ImportThirdPartyCorpusErrorResponse = {
 export type ImportThirdPartyCorpusResponse =
   ImportThirdPartyCorpusSuccessResponse | ImportThirdPartyCorpusErrorResponse
 
+/** Chrome sendMessage 上限 64MiB；50M 字符对典型 Backup JSON 安全。 */
+const importLocalMemoryPayloadSchema = z.object({
+  content: z.string().min(1).max(50_000_000)
+})
+
+/** 恢复本地 Backup JSON（含 L3 · Settings「数据与隐私」）。 */
+export type ImportLocalMemoryMessage = {
+  scope: BackgroundMessageScope
+  type: 'IMPORT_LOCAL_MEMORY'
+  payload: z.infer<typeof importLocalMemoryPayloadSchema>
+}
+
+export type ImportLocalMemorySuccessResponse = {
+  ok: true
+  restoredItems: number
+  skippedItems: number
+  restoredNotes: number
+  skippedNotes: number
+}
+
+export type ImportLocalMemoryErrorResponse = {
+  ok: false
+  errorCode: LocalMemoryImportErrorCode
+  error?: string
+}
+
+export type ImportLocalMemoryResponse =
+  ImportLocalMemorySuccessResponse | ImportLocalMemoryErrorResponse
+
 /** 查询第三方语料导入进度。 */
 export type GetThirdPartyCorpusImportStatusMessage = {
   scope: BackgroundMessageScope
@@ -186,6 +216,7 @@ export type ImportBackgroundMessage =
   | GetColdStartStatusMessage
   | GenerateGettingStartedClueSamplesMessage
   | ImportThirdPartyCorpusMessage
+  | ImportLocalMemoryMessage
   | GetThirdPartyCorpusImportStatusMessage
 
 export type ImportBackgroundResponse =
@@ -194,10 +225,15 @@ export type ImportBackgroundResponse =
   | ColdStartStatusResponse
   | GenerateGettingStartedClueSamplesResponse
   | ImportThirdPartyCorpusResponse
+  | ImportLocalMemoryResponse
   | ThirdPartyCorpusImportStatusResponse
 
 export function parseImportThirdPartyCorpusPayload(value: unknown) {
   return importThirdPartyCorpusPayloadSchema.parse(value)
+}
+
+export function parseImportLocalMemoryPayload(value: unknown) {
+  return importLocalMemoryPayloadSchema.parse(value)
 }
 
 export function parseGenerateGettingStartedClueSamplesPayload(value: unknown): {

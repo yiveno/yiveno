@@ -36,6 +36,7 @@ import {
   setMcpReadOnly,
   runIncrementalMemorySync,
   updateUserSettings,
+  importLocalMemory,
   importThirdPartyCorpus
 } from '@/infrastructure/messaging/background-client'
 import { watchAuthSessionStorage } from '@/infrastructure/auth/watch-auth-session-storage'
@@ -43,6 +44,7 @@ import { useLoginMigrationDialog } from '@/pages/shared/use-login-migration-dial
 import {
   tAccountSyncError,
   tCommandsError,
+  tLocalMemoryImportError,
   tSettingsError,
   tThirdPartyImportError
 } from '@/infrastructure/i18n/background-error'
@@ -125,8 +127,10 @@ export function useSettingsPage() {
   const dataError = ref('')
   const exportWorking = ref(false)
   const thirdPartyImportWorking = ref(false)
+  const restoreWorking = ref(false)
   const raindropFileInputRef = ref<HTMLInputElement | null>(null)
   const pocketFileInputRef = ref<HTMLInputElement | null>(null)
+  const restoreFileInputRef = ref<HTMLInputElement | null>(null)
 
   /** 官网隐私政策 / 服务条款全文 URL。 */
   const privacyPolicyUrl = `${getWebsiteBaseUrl()}/privacy`
@@ -576,15 +580,23 @@ export function useSettingsPage() {
     URL.revokeObjectURL(url)
   }
 
-  /** 下载当前 owner 本机记忆 JSON。 */
-  function downloadLocalMemoryExportJson(ownerId: string, items: unknown[]): void {
+  /** 下载当前 owner 本机记忆 JSON（含 L3；formatVersion 仅文件信封，不进 SW 响应）。 */
+  function downloadLocalMemoryExportJson(
+    ownerId: string,
+    items: unknown[],
+    memoryNotes: unknown[],
+    memoryNotesMeta: unknown
+  ): void {
     const blob = new Blob(
       [
         JSON.stringify(
           {
+            formatVersion: 1,
             exportedAt: new Date().toISOString(),
             ownerId,
-            items
+            items,
+            memoryNotes,
+            memoryNotesMeta
           },
           null,
           2
@@ -922,7 +934,7 @@ export function useSettingsPage() {
   }
 
   async function handleExportLocalMemory() {
-    if (exportWorking.value || dataWorking.value) {
+    if (exportWorking.value || dataWorking.value || restoreWorking.value) {
       return
     }
     exportWorking.value = true
@@ -932,7 +944,12 @@ export function useSettingsPage() {
         showToastError(tAccountSyncError(response.errorCode))
         return
       }
-      downloadLocalMemoryExportJson(response.ownerId, response.items)
+      downloadLocalMemoryExportJson(
+        response.ownerId,
+        response.items,
+        response.memoryNotes,
+        response.memoryNotesMeta
+      )
       showToastSuccess(t('settings_privacy_export_done', [String(response.items.length)]))
     } catch {
       showToastError(t('settings_error_local_export'))
@@ -943,7 +960,12 @@ export function useSettingsPage() {
 
   /** 触发 Raindrop 导出文件选择。 */
   function handlePickRaindropImportFile(): void {
-    if (thirdPartyImportWorking.value || dataWorking.value || exportWorking.value) {
+    if (
+      thirdPartyImportWorking.value ||
+      dataWorking.value ||
+      exportWorking.value ||
+      restoreWorking.value
+    ) {
       return
     }
     raindropFileInputRef.value?.click()
@@ -951,10 +973,62 @@ export function useSettingsPage() {
 
   /** 触发 Pocket 导出文件选择。 */
   function handlePickPocketImportFile(): void {
-    if (thirdPartyImportWorking.value || dataWorking.value || exportWorking.value) {
+    if (
+      thirdPartyImportWorking.value ||
+      dataWorking.value ||
+      exportWorking.value ||
+      restoreWorking.value
+    ) {
       return
     }
     pocketFileInputRef.value?.click()
+  }
+
+  /** 触发本地 Backup 恢复文件选择。 */
+  function handlePickRestoreBackupFile(): void {
+    if (
+      restoreWorking.value ||
+      thirdPartyImportWorking.value ||
+      dataWorking.value ||
+      exportWorking.value
+    ) {
+      return
+    }
+    restoreFileInputRef.value?.click()
+  }
+
+  /** 读取所选 Backup JSON 并恢复（merge/upsert）。 */
+  async function handleRestoreBackupFileSelected(event: Event): Promise<void> {
+    const input = event.target
+    if (!(input instanceof HTMLInputElement)) {
+      return
+    }
+    const file = input.files?.[0]
+    input.value = ''
+    if (!file || restoreWorking.value) {
+      return
+    }
+    restoreWorking.value = true
+    try {
+      const content = await file.text()
+      const response = await importLocalMemory({ content })
+      if (!response.ok) {
+        showToastError(tLocalMemoryImportError(response.errorCode))
+        return
+      }
+      const skipped = response.skippedItems + response.skippedNotes
+      showToastSuccess(
+        t('settings_privacy_restore_done', [
+          String(response.restoredItems),
+          String(response.restoredNotes),
+          String(skipped)
+        ])
+      )
+    } catch {
+      showToastError(t('error_local_import_failed'))
+    } finally {
+      restoreWorking.value = false
+    }
   }
 
   /** 读取所选文件并导入为第三方语料（§5.10.6）。 */
@@ -962,7 +1036,7 @@ export function useSettingsPage() {
     source: 'raindrop' | 'pocket',
     file: File | undefined
   ): Promise<void> {
-    if (!file || thirdPartyImportWorking.value) {
+    if (!file || thirdPartyImportWorking.value || restoreWorking.value) {
       return
     }
     thirdPartyImportWorking.value = true
@@ -1012,6 +1086,7 @@ export function useSettingsPage() {
       dataWorking.value ||
       exportWorking.value ||
       thirdPartyImportWorking.value ||
+      restoreWorking.value ||
       signingOut.value
     ) {
       return
@@ -1026,6 +1101,7 @@ export function useSettingsPage() {
       dataWorking.value ||
       exportWorking.value ||
       thirdPartyImportWorking.value ||
+      restoreWorking.value ||
       signingOut.value
     ) {
       return
@@ -1287,6 +1363,7 @@ export function useSettingsPage() {
     executePrivacySyncEnable,
     executeRestoreLatestSyncBackup,
     exportWorking,
+    restoreWorking,
     handleAiFeaturesToggle,
     handleLinkStatusSweepToggle,
     handleChromeBookmarkIngestToggle,
@@ -1302,7 +1379,9 @@ export function useSettingsPage() {
     handleOpenShortcutsPage,
     handlePickPocketImportFile,
     handlePickRaindropImportFile,
+    handlePickRestoreBackupFile,
     handlePocketFileSelected,
+    handleRestoreBackupFileSelected,
     handlePopState,
     handleRaindropFileSelected,
     handleRestoreLatestSyncBackup,
@@ -1334,6 +1413,7 @@ export function useSettingsPage() {
     privacyNoticeAcked,
     privacyPolicyUrl,
     raindropFileInputRef,
+    restoreFileInputRef,
     refreshCommandsIfReturnedFromShortcuts,
     refreshSyncContextOnVisible,
     refreshSyncStatus,

@@ -239,6 +239,80 @@ describe('memory_notes · v5 + 引用门 + 游标续跑', () => {
     expect(again?.lastCursor).toBe('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa')
   })
 
+  it('putNoteRecord 成功保留 id / 时间戳', async () => {
+    const { item } = await memoryItemRepository.createTextExcerpt({
+      payload: {
+        selectedText: 'raw put preserves timestamps excerpt',
+        sourceUrl: 'https://example.com/raw-put',
+        pageTitle: 'Raw',
+        domain: 'example.com'
+      },
+      captureEntry: 'context_menu'
+    })
+    const createdAt = '2026-01-01T00:00:00.000Z'
+    const updatedAt = '2026-01-02T00:00:00.000Z'
+    const id = [localProfile.localProfileId, item.id, '0'].join('\u0000')
+    const written = await memoryNotesRepository.putNoteRecord({
+      id,
+      ownerId: localProfile.localProfileId,
+      sourceMemoryItemId: item.id,
+      sourceType: 'text_excerpt',
+      text: 'Raw put keeps audit timestamps intact for restore.',
+      sourceQuote: 'audit timestamps',
+      topicAnchor: [],
+      dreamRunId: 'dream_raw',
+      version: 1,
+      schemaVersion: 1,
+      sourceUpdatedAt: item.updatedAt,
+      createdAt,
+      updatedAt
+    })
+    expect(written).not.toBeNull()
+    expect(written?.id).toBe(id)
+    expect(written?.createdAt).toBe(createdAt)
+    expect(written?.updatedAt).toBe(updatedAt)
+    const loaded = await memoryNotesRepository.getById(id)
+    expect(loaded?.createdAt).toBe(createdAt)
+  })
+
+  it('putNoteRecord 无引用 → 拒绝', async () => {
+    const rejected = await memoryNotesRepository.putNoteRecord({
+      id: [localProfile.localProfileId, SOURCE_ID, '0'].join('\u0000'),
+      ownerId: localProfile.localProfileId,
+      sourceMemoryItemId: SOURCE_ID,
+      sourceType: 'text_excerpt',
+      text: 'No citation should be rejected by restore raw-put.',
+      sourceQuote: '   ',
+      topicAnchor: [],
+      dreamRunId: 'dream_no_cite',
+      version: 1,
+      schemaVersion: 1,
+      sourceUpdatedAt: '2026-01-01T00:00:00.000Z',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z'
+    })
+    expect(rejected).toBeNull()
+  })
+
+  it('putNoteRecord schema 失败 → 拒绝', async () => {
+    const rejected = await memoryNotesRepository.putNoteRecord({
+      id: '',
+      ownerId: localProfile.localProfileId,
+      sourceMemoryItemId: SOURCE_ID,
+      sourceType: 'text_excerpt',
+      text: 'Schema invalid id',
+      sourceQuote: 'Schema invalid',
+      topicAnchor: [],
+      dreamRunId: 'dream_bad_schema',
+      version: 1,
+      schemaVersion: 1,
+      sourceUpdatedAt: '2026-01-01T00:00:00.000Z',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z'
+    })
+    expect(rejected).toBeNull()
+  })
+
   it('Q7：recordCompileUsage 按 owner 累计且不升 schemaVersion', async () => {
     const ownerId = localProfile.localProfileId
     await memoryNotesMetaRepository.recordCompileUsage(ownerId, {

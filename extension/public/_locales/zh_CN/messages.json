@@ -1131,6 +1131,21 @@
   "error_third_party_import_failed": {
     "message": "无法导入该文件"
   },
+  "error_local_import_invalid_format": {
+    "message": "这个文件不像可读的 Yiveno 备份"
+  },
+  "error_local_import_unsupported_version": {
+    "message": "这份备份来自更新版 Yiveno——请升级扩展后再试"
+  },
+  "error_local_import_empty": {
+    "message": "这份备份里没有可恢复的内容"
+  },
+  "error_local_import_in_progress": {
+    "message": "已有恢复在进行——请等它完成"
+  },
+  "error_local_import_failed": {
+    "message": "无法恢复该备份"
+  },
   "settings_data_clear_local": {
     "message": "清空本机记忆"
   },
@@ -1281,6 +1296,29 @@
     "placeholders": {
       "COUNT": {
         "content": "$1"
+      }
+    }
+  },
+  "settings_privacy_restore": {
+    "message": "恢复备份"
+  },
+  "settings_privacy_restore_hint": {
+    "message": "把一份 Yiveno 备份 JSON 合并进本库。本地更新的条目保留；缺的会补回来，含文件里的 Dreaming 命题。"
+  },
+  "settings_privacy_restore_action": {
+    "message": "恢复"
+  },
+  "settings_privacy_restore_done": {
+    "message": "已恢复 $ITEMS$ 条记忆、$NOTES$ 条命题（跳过 $SKIPPED$ 条）",
+    "placeholders": {
+      "ITEMS": {
+        "content": "$1"
+      },
+      "NOTES": {
+        "content": "$2"
+      },
+      "SKIPPED": {
+        "content": "$3"
       }
     }
   },
