@@ -4,7 +4,7 @@ import { handleBackgroundMessage } from '@/background/handlers/message-handler'
 import { ensureSidePanelOpensOnActionClick } from '@/infrastructure/browser/side-panel'
 import {
   attachChromeBookmarkSyncListenersAtStartup,
-  syncChromeBookmarkSyncListenersWithIngestSetting
+  syncChromeBookmarkSyncListenersWithSyncSetting
 } from '@/background/listeners/chrome-bookmark-sync'
 import {
   registerContextMenuItems,
@@ -61,9 +61,9 @@ registerLinkStatusSweepAlarmListener()
 void ensureSidePanelOpensOnActionClick().catch(error => {
   logger.error('SidePanel', 'SW 入口 setPanelBehavior 失败', error)
 })
-// 同步挂上监听，消除读 Settings 前的空窗；关灌库时 sync 会再卸下
+// 同步挂上监听，消除读 Settings 前的空窗；关持续同步时 sync 会再卸下
 attachChromeBookmarkSyncListenersAtStartup()
-void syncChromeBookmarkSyncListenersWithIngestSetting().catch(error => {
+void syncChromeBookmarkSyncListenersWithSyncSetting().catch(error => {
   logger.warn('Background', '启动时同步书签监听失败，将由 bootstrap 重试', error)
 })
 

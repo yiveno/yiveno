@@ -31,6 +31,7 @@ const {
   aiFeaturesEnabled,
   linkStatusSweepEnabled,
   chromeBookmarkIngestEnabled,
+  chromeBookmarkSyncEnabled,
   commandRows,
   commandsError,
   commandsState,
@@ -38,7 +39,8 @@ const {
   exportWorking,
   handleAiFeaturesToggle,
   handleLinkStatusSweepToggle,
-  handleChromeBookmarkIngestToggle,
+  handleChromeBookmarkSyncToggle,
+  handleReimportChromeBookmarks,
   handleClearLocalMemory,
   handleClearLocalRecallAdaptation,
   handleClearOrphans,
@@ -78,7 +80,9 @@ const {
   runningIncrementalSync,
   savingAiFeatures,
   savingLinkStatusSweep,
-  savingChromeBookmarkIngest,
+  savingChromeBookmarkSync,
+  reimportChromeBookmarksBusy,
+  reimportChromeBookmarksDone,
   savingMcpReadOnly,
   savingRecallOutcomeSoftAdjust,
   savingSelectionToolbar,
@@ -139,18 +143,40 @@ const {
           <div :id="SETTINGS_HASH_CHROME_BOOKMARK_INGEST" class="settings-toggle">
             <div class="settings-toggle-copy">
               <span class="settings-toggle-title">{{
-                t('settings_toggle_chrome_bookmark_ingest')
+                t('settings_toggle_chrome_bookmark_sync')
               }}</span>
               <span class="settings-toggle-hint">{{
-                t('settings_toggle_chrome_bookmark_ingest_hint')
+                t('settings_toggle_chrome_bookmark_sync_hint')
               }}</span>
             </div>
             <AppSwitch
-              :aria-label="t('settings_toggle_chrome_bookmark_ingest')"
-              :model-value="chromeBookmarkIngestEnabled"
-              :disabled="savingChromeBookmarkIngest"
-              @update:model-value="handleChromeBookmarkIngestToggle"
+              :aria-label="t('settings_toggle_chrome_bookmark_sync')"
+              :model-value="chromeBookmarkSyncEnabled"
+              :disabled="savingChromeBookmarkSync"
+              @update:model-value="handleChromeBookmarkSyncToggle"
             />
+          </div>
+          <div v-if="chromeBookmarkIngestEnabled" class="settings-toggle">
+            <div class="settings-toggle-copy">
+              <span class="settings-toggle-title">{{
+                t('settings_action_reimport_chrome_bookmarks')
+              }}</span>
+              <span class="settings-toggle-hint">{{
+                t('settings_action_reimport_chrome_bookmarks_hint')
+              }}</span>
+              <span v-if="reimportChromeBookmarksDone" class="settings-toggle-hint" role="status">
+                {{ t('settings_reimport_chrome_bookmarks_done') }}
+              </span>
+            </div>
+            <AppButton
+              type="button"
+              variant="tonal"
+              :disabled="reimportChromeBookmarksBusy"
+              :aria-label="t('settings_action_reimport_chrome_bookmarks')"
+              @click="handleReimportChromeBookmarks"
+            >
+              {{ t('settings_action_reimport_chrome_bookmarks') }}
+            </AppButton>
           </div>
         </div>
       </template>

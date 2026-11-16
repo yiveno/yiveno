@@ -5,6 +5,7 @@ import {
 import type {
   ChromeBookmarkImportStatusResponse,
   ColdStartStatusResponse,
+  EnsureChromeBookmarksImportedResponse,
   GenerateGettingStartedClueSamplesResponse,
   GetBookmarkLibraryTreeResponse,
   ImportLocalMemoryResponse,
@@ -17,6 +18,7 @@ import {
   parseImportThirdPartyCorpusPayload
 } from '@/core/messaging/import-messages'
 import {
+  ensureChromeBookmarksImported,
   getChromeBookmarkImportStatus,
   scheduleEnsureChromeBookmarksImportedIfNeeded
 } from '@/application/capture/import-chrome-bookmarks-service'
@@ -41,6 +43,27 @@ import { getBookmarkSyncAlignmentCached } from '@/application/memory/bookmark-sy
 import { t } from '@/infrastructure/i18n/t'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { readChromeBookmarkDeleteTombstoneIds } from '@/infrastructure/storage/chrome-bookmark-delete-tombstone-storage'
+
+/** Settings「重新导入」：跑 ensure（ingest 已开时 bulk / completed 时 finalize）。 */
+export async function handleEnsureChromeBookmarksImported(): Promise<EnsureChromeBookmarksImportedResponse> {
+  const startedAt = flowStart('Import', '重新导入 Chrome 书签')
+  try {
+    const state = await ensureChromeBookmarksImported()
+    flowOk('Import', '重新导入 Chrome 书签', startedAt, {
+      status: state.status,
+      importedCount: state.importedCount,
+      totalCount: state.totalCount ?? null
+    })
+    return { ok: true, state }
+  } catch (error) {
+    flowFail('Import', '重新导入 Chrome 书签', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'IMPORT_STATUS_READ_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
 
 /** 返回 Chrome 书签导入进度。 */
 export async function handleGetChromeBookmarkImportStatus(): Promise<ChromeBookmarkImportStatusResponse> {

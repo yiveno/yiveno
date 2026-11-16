@@ -7,11 +7,12 @@ import {
 } from '@/core/settings/user-settings'
 
 describe('user-settings', () => {
-  it('默认开启划词浮层与 AI；书签灌库默认关（须明示同意）', () => {
+  it('默认开启划词浮层与 AI；书签导入与同步默认关', () => {
     expect(DEFAULT_USER_SETTINGS.selectionToolbarEnabled).toBe(true)
     expect(DEFAULT_USER_SETTINGS.aiFeaturesEnabled).toBe(true)
     expect(DEFAULT_USER_SETTINGS.linkStatusSweepEnabled).toBe(true)
     expect(DEFAULT_USER_SETTINGS.chromeBookmarkIngestEnabled).toBe(false)
+    expect(DEFAULT_USER_SETTINGS.chromeBookmarkSyncEnabled).toBe(false)
     expect(DEFAULT_USER_SETTINGS.recallOutcomePairSoftAdjustEnabled).toBe(true)
   })
 
@@ -21,6 +22,7 @@ describe('user-settings', () => {
       aiFeaturesEnabled: true,
       linkStatusSweepEnabled: true,
       chromeBookmarkIngestEnabled: false,
+      chromeBookmarkSyncEnabled: false,
       mcpReadOnlyEnabled: false,
       recallOutcomePairSoftAdjustEnabled: true,
       uiLocalePreference: 'system'
@@ -33,11 +35,39 @@ describe('user-settings', () => {
       aiFeaturesEnabled: true,
       linkStatusSweepEnabled: true,
       chromeBookmarkIngestEnabled: false,
+      chromeBookmarkSyncEnabled: false,
       mcpReadOnlyEnabled: false,
       recallOutcomePairSoftAdjustEnabled: true,
       uiLocalePreference: 'system'
     })
     expect(parseUserSettings({ selectionToolbarEnabled: 'yes' })).toEqual(DEFAULT_USER_SETTINGS)
     expect(parseUserSettings({ uiLocalePreference: 'zh_CN' }).uiLocalePreference).toBe('zh_CN')
+  })
+
+  it('存量缺 sync 且 ingest 开 → sync 真', () => {
+    expect(parseUserSettings({ chromeBookmarkIngestEnabled: true }).chromeBookmarkSyncEnabled).toBe(
+      true
+    )
+  })
+
+  it('存量缺 sync 且 ingest 关 → sync 假', () => {
+    expect(
+      parseUserSettings({ chromeBookmarkIngestEnabled: false }).chromeBookmarkSyncEnabled
+    ).toBe(false)
+  })
+
+  it('存量已有 sync 值时不被 ingest 覆盖', () => {
+    expect(
+      parseUserSettings({
+        chromeBookmarkIngestEnabled: true,
+        chromeBookmarkSyncEnabled: false
+      }).chromeBookmarkSyncEnabled
+    ).toBe(false)
+    expect(
+      parseUserSettings({
+        chromeBookmarkIngestEnabled: false,
+        chromeBookmarkSyncEnabled: true
+      }).chromeBookmarkSyncEnabled
+    ).toBe(true)
   })
 })

@@ -57,7 +57,7 @@ vi.mock('@/infrastructure/settings/user-settings-service', () => ({
 }))
 
 vi.mock('@/background/listeners/chrome-bookmark-sync', () => ({
-  syncChromeBookmarkSyncListenersWithIngestSetting: syncListenersMock
+  syncChromeBookmarkSyncListenersWithSyncSetting: syncListenersMock
 }))
 
 vi.mock('@/application/capture/import-chrome-bookmarks-service', () => ({
@@ -113,7 +113,10 @@ describe('handleClearLocalMemory', () => {
     expect(replaceOwnerItemsMock).toHaveBeenCalledWith('local-1', [])
     expect(clearRecallOutcomePairsMock).toHaveBeenCalledOnce()
     expect(clearRecallTelemetryEventsMock).toHaveBeenCalledOnce()
-    expect(updateUserSettingsMock).toHaveBeenCalledWith({ chromeBookmarkIngestEnabled: false })
+    expect(updateUserSettingsMock).toHaveBeenCalledWith({
+      chromeBookmarkIngestEnabled: false,
+      chromeBookmarkSyncEnabled: false
+    })
     expect(syncListenersMock).toHaveBeenCalledWith(false)
     expect(resetChromeBookmarkImportAfterLocalClearMock).toHaveBeenCalledOnce()
     expect(patchSyncPrefsMock).not.toHaveBeenCalled()

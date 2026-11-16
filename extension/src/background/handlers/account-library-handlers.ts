@@ -39,7 +39,7 @@ import {
 } from '@/infrastructure/identity/subscription-service'
 import { updateUserSettings } from '@/infrastructure/settings/user-settings-service'
 import { bumpMemoryLibraryRevision } from '@/infrastructure/storage/memory-library-revision-storage'
-import { syncChromeBookmarkSyncListenersWithIngestSetting } from '@/background/listeners/chrome-bookmark-sync'
+import { syncChromeBookmarkSyncListenersWithSyncSetting } from '@/background/listeners/chrome-bookmark-sync'
 import {
   ackCurrentPrivacyNotice,
   clearPrivacyPrefs
@@ -328,8 +328,11 @@ export async function handleClearLocalMemory(): Promise<ClearLocalMemoryResponse
       logger.warn('Data', '库修订信号更新失败', error)
     })
 
-    await updateUserSettings({ chromeBookmarkIngestEnabled: false })
-    await syncChromeBookmarkSyncListenersWithIngestSetting(false)
+    await updateUserSettings({
+      chromeBookmarkIngestEnabled: false,
+      chromeBookmarkSyncEnabled: false
+    })
+    await syncChromeBookmarkSyncListenersWithSyncSetting(false)
     // Memory 已空：抹掉 completed 导入进度，避免再开灌库时误以为已灌满
     await resetChromeBookmarkImportAfterLocalClear()
 

@@ -22,6 +22,7 @@ import {
   handleChromeBookmarkChanged,
   handleChromeBookmarkCreated,
   handleChromeBookmarkRemoved,
+  isChromeBookmarkIncrementalSyncEnabled,
   reconcileChromeBookmarksWithMemory,
   repairChromeBookmarksWithMemory,
   resetPendingChromeBookmarkSyncForTests
@@ -157,7 +158,8 @@ describe('chrome-bookmark-sync-service', () => {
         [CHROME_BOOKMARK_IMPORT_STORAGE_KEY]: completedImportState,
         [USER_SETTINGS_STORAGE_KEY]: {
           ...DEFAULT_USER_SETTINGS,
-          chromeBookmarkIngestEnabled: true
+          chromeBookmarkIngestEnabled: true,
+          chromeBookmarkSyncEnabled: true
         }
       })
     )
@@ -269,7 +271,8 @@ describe('chrome-bookmark-sync-service', () => {
       },
       [USER_SETTINGS_STORAGE_KEY]: {
         ...DEFAULT_USER_SETTINGS,
-        chromeBookmarkIngestEnabled: true
+        chromeBookmarkIngestEnabled: true,
+        chromeBookmarkSyncEnabled: true
       }
     })
     vi.stubGlobal('chrome', chromeMock)
@@ -292,7 +295,7 @@ describe('chrome-bookmark-sync-service', () => {
     expect(items).toHaveLength(1)
   })
 
-  it('关闭书签灌库时跳过 created（不入队）', async () => {
+  it('关闭书签同步时跳过 created（不入队）', async () => {
     const { USER_SETTINGS_STORAGE_KEY: userSettingsStorageKey } =
       await import('@/core/settings/user-settings')
     vi.stubGlobal(
@@ -303,7 +306,8 @@ describe('chrome-bookmark-sync-service', () => {
         [userSettingsStorageKey]: {
           selectionToolbarEnabled: true,
           aiFeaturesEnabled: true,
-          chromeBookmarkIngestEnabled: false
+          chromeBookmarkIngestEnabled: true,
+          chromeBookmarkSyncEnabled: false
         }
       })
     )
@@ -331,7 +335,8 @@ describe('chrome-bookmark-sync-service', () => {
       },
       [USER_SETTINGS_STORAGE_KEY]: {
         ...DEFAULT_USER_SETTINGS,
-        chromeBookmarkIngestEnabled: true
+        chromeBookmarkIngestEnabled: true,
+        chromeBookmarkSyncEnabled: true
       }
     })
     vi.stubGlobal('chrome', chromeMock)
@@ -366,7 +371,8 @@ describe('chrome-bookmark-sync-service', () => {
       [CHROME_BOOKMARK_IMPORT_STORAGE_KEY]: completedImportState,
       [USER_SETTINGS_STORAGE_KEY]: {
         ...DEFAULT_USER_SETTINGS,
-        chromeBookmarkIngestEnabled: true
+        chromeBookmarkIngestEnabled: true,
+        chromeBookmarkSyncEnabled: true
       }
     })
     chromeMock.__bookmarks.set('20', {
@@ -399,7 +405,8 @@ describe('chrome-bookmark-sync-service', () => {
       [CHROME_BOOKMARK_IMPORT_STORAGE_KEY]: completedImportState,
       [USER_SETTINGS_STORAGE_KEY]: {
         ...DEFAULT_USER_SETTINGS,
-        chromeBookmarkIngestEnabled: true
+        chromeBookmarkIngestEnabled: true,
+        chromeBookmarkSyncEnabled: true
       }
     })
     for (let index = 30; index < 35; index += 1) {
@@ -507,20 +514,37 @@ describe('chrome-bookmark-sync-service', () => {
     expect(thirdParty).toBeTruthy()
   })
 
-  it('full repair 灌库关闭时跳过', async () => {
+  it('full repair 同步关闭时跳过', async () => {
     const chromeMock = createChromeMock({
       [LOCAL_PROFILE_STORAGE_KEY]: localProfile,
       [CHROME_BOOKMARK_IMPORT_STORAGE_KEY]: completedImportState,
       [USER_SETTINGS_STORAGE_KEY]: {
         ...DEFAULT_USER_SETTINGS,
-        chromeBookmarkIngestEnabled: false
+        chromeBookmarkIngestEnabled: true,
+        chromeBookmarkSyncEnabled: false
       }
     })
     vi.stubGlobal('chrome', chromeMock)
 
     const result = await repairChromeBookmarksWithMemory({ force: true })
     expect(result.skipped).toBe(true)
-    expect(result.reason).toBe('ingest_disabled')
+    expect(result.reason).toBe('sync_disabled')
+  })
+
+  it('isChromeBookmarkIncrementalSyncEnabled：须 sync 开且导入 completed', async () => {
+    expect(await isChromeBookmarkIncrementalSyncEnabled()).toBe(true)
+
+    const chromeMock = createChromeMock({
+      [LOCAL_PROFILE_STORAGE_KEY]: localProfile,
+      [CHROME_BOOKMARK_IMPORT_STORAGE_KEY]: completedImportState,
+      [USER_SETTINGS_STORAGE_KEY]: {
+        ...DEFAULT_USER_SETTINGS,
+        chromeBookmarkIngestEnabled: true,
+        chromeBookmarkSyncEnabled: false
+      }
+    })
+    vi.stubGlobal('chrome', chromeMock)
+    expect(await isChromeBookmarkIncrementalSyncEnabled()).toBe(false)
   })
 
   it('full repair 同 SW 会话自动路径只跑一次；force 可再跑', async () => {

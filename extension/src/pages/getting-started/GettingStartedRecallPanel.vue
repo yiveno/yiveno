@@ -204,7 +204,7 @@ defineExpose({
           </div>
           <AppButton
             type="button"
-            variant="tonal"
+            variant="filled"
             class="gs-recall__oral-try"
             @click="handleTrySidePanel"
           >

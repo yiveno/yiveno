@@ -26,6 +26,26 @@ export type GetChromeBookmarkImportStatusMessage = {
   type: 'GET_CHROME_BOOKMARK_IMPORT_STATUS'
 }
 
+/** 重新跑 Chrome 书签一次性导入 / ensure（Settings「重新导入」）。 */
+export type EnsureChromeBookmarksImportedMessage = {
+  scope: BackgroundMessageScope
+  type: 'ENSURE_CHROME_BOOKMARKS_IMPORTED'
+}
+
+export type EnsureChromeBookmarksImportedSuccessResponse = {
+  ok: true
+  state: ChromeBookmarkImportState
+}
+
+export type EnsureChromeBookmarksImportedErrorResponse = {
+  ok: false
+  errorCode: ImportErrorCode
+  error?: string
+}
+
+export type EnsureChromeBookmarksImportedResponse =
+  EnsureChromeBookmarksImportedSuccessResponse | EnsureChromeBookmarksImportedErrorResponse
+
 export type ChromeBookmarkImportStatusSuccessResponse = {
   ok: true
   state: ChromeBookmarkImportState | null
@@ -212,6 +232,7 @@ export type ThirdPartyCorpusImportStatusResponse =
 
 export type ImportBackgroundMessage =
   | GetChromeBookmarkImportStatusMessage
+  | EnsureChromeBookmarksImportedMessage
   | GetBookmarkLibraryTreeMessage
   | GetColdStartStatusMessage
   | GenerateGettingStartedClueSamplesMessage
@@ -221,6 +242,7 @@ export type ImportBackgroundMessage =
 
 export type ImportBackgroundResponse =
   | ChromeBookmarkImportStatusResponse
+  | EnsureChromeBookmarksImportedResponse
   | GetBookmarkLibraryTreeResponse
   | ColdStartStatusResponse
   | GenerateGettingStartedClueSamplesResponse

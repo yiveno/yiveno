@@ -1434,12 +1434,6 @@
   "settings_toggle_selection_toolbar_hint": {
     "message": "Shows “Save to Yiveno” after you select text"
   },
-  "settings_toggle_chrome_bookmark_ingest": {
-    "message": "Sync browser bookmarks to your local library"
-  },
-  "settings_toggle_chrome_bookmark_ingest_hint": {
-    "message": "Off by default. When on, imports bookmarks into your library and keeps them in sync. Turn off to stop syncing; what’s already in your library stays."
-  },
   "settings_section_shortcuts": {
     "message": "Shortcuts"
   },
@@ -2264,7 +2258,7 @@
     "message": "Bring your bookmarks to Yiveno so you can find them later, even when you don’t remember exactly what they’re called."
   },
   "getting_started_consent_cta": {
-    "message": "Import my bookmarks"
+    "message": "Agree and import"
   },
   "getting_started_consent_failed": {
     "message": "Couldn’t start that just now. Try again."
@@ -2885,5 +2879,44 @@
   },
   "command_shortcut_unset": {
     "message": "Not set"
+  },
+  "getting_started_consent_detail_what": {
+    "message": "Yiveno reads your Chrome bookmarks (titles, URLs, folders) and imports them into the library on this device."
+  },
+  "getting_started_consent_detail_local": {
+    "message": "Your bookmarks stay on this device. They are never uploaded or shared with anyone."
+  },
+  "getting_started_consent_detail_onetime": {
+    "message": "This is a one-time import. Bookmarks you add later won't come in automatically unless you turn on sync."
+  },
+  "getting_started_consent_detail_control": {
+    "message": "You can delete imported bookmarks from Yiveno at any time — that won't touch your Chrome bookmarks."
+  },
+  "getting_started_sync_suggest_title": {
+    "message": "Keep your bookmarks in sync?"
+  },
+  "getting_started_sync_suggest_body": {
+    "message": "New bookmarks you save in Chrome will appear in Yiveno automatically, and deleted ones will be removed — so Recall keeps finding what you saved recently. Sync stays on this device; nothing is uploaded."
+  },
+  "getting_started_sync_suggest_enable": {
+    "message": "Turn on sync"
+  },
+  "getting_started_sync_suggest_dismiss": {
+    "message": "No thanks"
+  },
+  "settings_toggle_chrome_bookmark_sync": {
+    "message": "Sync Chrome bookmarks to the local library"
+  },
+  "settings_toggle_chrome_bookmark_sync_hint": {
+    "message": "When on, imports your current bookmarks and keeps them in sync. When off, sync stops; imported content stays."
+  },
+  "settings_action_reimport_chrome_bookmarks": {
+    "message": "Re-import bookmarks"
+  },
+  "settings_action_reimport_chrome_bookmarks_hint": {
+    "message": "Pull in bookmarks added in Chrome since the last import. Bookmarks you deleted in Yiveno won't come back."
+  },
+  "settings_reimport_chrome_bookmarks_done": {
+    "message": "Re-import complete."
   }
 }

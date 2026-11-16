@@ -126,14 +126,7 @@ onUnmounted(() => {
 
 <template>
   <div class="gs-excerpts">
-    <template v-if="libraryPhase === 'empty'">
-      <div class="gs-excerpts__empty">
-        <p class="gs-excerpts__frame">{{ t('getting_started_excerpt_frame') }}</p>
-        <h2 class="gs-excerpts__empty-title">{{ t('getting_started_excerpt_empty_title') }}</h2>
-        <p class="gs-excerpts__empty-body">{{ t('getting_started_excerpt_empty_body') }}</p>
-      </div>
-      <GettingStartedPassage />
-    </template>
+    <GettingStartedPassage v-if="libraryPhase === 'empty'" />
 
     <GettingStartedRecallPanel
       v-else
@@ -161,34 +154,6 @@ onUnmounted(() => {
 <style scoped>
 .gs-excerpts {
   display: grid;
-  gap: var(--space-lg);
-}
-
-.gs-excerpts__empty {
-  display: grid;
-  gap: var(--space-2xs);
-}
-
-.gs-excerpts__frame {
-  margin: 0;
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.4;
-  color: var(--on-surface-muted);
-}
-
-.gs-excerpts__empty-title {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 1.35;
-}
-
-.gs-excerpts__empty-body {
-  max-width: 42ch;
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--on-surface-muted);
+  gap: var(--space-md);
 }
 </style>

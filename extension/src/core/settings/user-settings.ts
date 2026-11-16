@@ -20,10 +20,15 @@ export const UserSettingsSchema = z.object({
    */
   linkStatusSweepEnabled: z.boolean().default(true),
   /**
-   * 是否把 Chrome 书签灌入本机 Memory（首次 bulk + 原生增删改增量）。
-   * 关闭后卸载 bookmarks.* 监听、停止新写入与增量同步，不删除已灌入条目。
+   * 是否已授权一次性把 Chrome 书签导入本机 Memory（GS / Settings 重新导入）。
+   * 与持续同步（chromeBookmarkSyncEnabled）分开；关开关不删除已导入条目。
    */
   chromeBookmarkIngestEnabled: z.boolean().default(false),
+  /**
+   * 是否持续同步 Chrome 书签（bookmarks.* 增量监听 + repair alarm + reconcile 门禁）。
+   * 与一次性导入授权（chromeBookmarkIngestEnabled）分开；默认关。
+   */
+  chromeBookmarkSyncEnabled: z.boolean().default(false),
   /**
    * 只读 MCP beta（§5.10.5）：关闭后本机 MCP_RECALL_EVIDENCE 与云端 /api/mcp 均拒绝。
    */
@@ -50,6 +55,7 @@ export const UserSettingsPatchSchema = z.object({
   aiFeaturesEnabled: z.boolean().optional(),
   linkStatusSweepEnabled: z.boolean().optional(),
   chromeBookmarkIngestEnabled: z.boolean().optional(),
+  chromeBookmarkSyncEnabled: z.boolean().optional(),
   mcpReadOnlyEnabled: z.boolean().optional(),
   recallOutcomePairSoftAdjustEnabled: z.boolean().optional(),
   uiLocalePreference: z.enum(['system', 'en', 'zh_CN']).optional()
@@ -63,6 +69,7 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   aiFeaturesEnabled: true,
   linkStatusSweepEnabled: true,
   chromeBookmarkIngestEnabled: false,
+  chromeBookmarkSyncEnabled: false,
   mcpReadOnlyEnabled: false,
   recallOutcomePairSoftAdjustEnabled: true,
   uiLocalePreference: 'system' satisfies UiLocalePreference
@@ -79,7 +86,16 @@ export function mergeUserSettings(
 /** 安全解析存储值；失败时回退默认。 */
 export function parseUserSettings(value: unknown): UserSettings {
   if (value && typeof value === 'object') {
-    const merged = { ...DEFAULT_USER_SETTINGS, ...(value as Record<string, unknown>) }
+    const raw = value as Record<string, unknown>
+    const merged: Record<string, unknown> = { ...DEFAULT_USER_SETTINGS, ...raw }
+    // 存量缺少 sync 时：sync = ingest（以前开着灌库的升级后同步保持开；关着的保持关）
+    if (!('chromeBookmarkSyncEnabled' in raw)) {
+      const ingest =
+        typeof raw.chromeBookmarkIngestEnabled === 'boolean'
+          ? raw.chromeBookmarkIngestEnabled
+          : DEFAULT_USER_SETTINGS.chromeBookmarkIngestEnabled
+      merged.chromeBookmarkSyncEnabled = ingest
+    }
     const parsed = UserSettingsSchema.safeParse(merged)
     if (parsed.success) {
       return parsed.data

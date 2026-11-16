@@ -14,6 +14,7 @@ import {
   recordMemoryOpen,
   updateMemoryNote
 } from '@/infrastructure/messaging/background-client'
+import { isOpenableExternalSourceUrl } from '@/infrastructure/browser/active-tab-reader'
 import { openExtensionLibraryPage } from '@/infrastructure/browser/extension-pages'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
@@ -44,6 +45,12 @@ const excerpt = computed((): TextExcerptMemoryItem | null => {
 })
 
 const noteText = computed(() => excerpt.value?.clues.note?.trim() || '')
+
+/** Getting Started 等扩展页出处：可存库，但不展示「打开原文」。 */
+const showOpenSource = computed(() => {
+  const url = excerpt.value?.payload.sourceUrl
+  return Boolean(url && isOpenableExternalSourceUrl(url))
+})
 
 const createdAtLabel = computed(() => {
   const raw = excerpt.value?.createdAt
@@ -337,6 +344,7 @@ onMounted(() => {
 
       <div class="detail-actions">
         <AppButton
+          v-if="showOpenSource"
           :href="excerpt.payload.sourceUrl"
           target="_blank"
           rel="noopener noreferrer"

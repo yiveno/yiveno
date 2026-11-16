@@ -17,7 +17,7 @@ import {
   areChromeBookmarkSyncListenersRegistered,
   registerChromeBookmarkSyncListeners,
   resetChromeBookmarkSyncListenersForTests,
-  syncChromeBookmarkSyncListenersWithIngestSetting,
+  syncChromeBookmarkSyncListenersWithSyncSetting,
   unregisterChromeBookmarkSyncListeners
 } from '@/background/listeners/chrome-bookmark-sync'
 import * as actionBadge from '@/infrastructure/browser/action-badge'
@@ -75,16 +75,16 @@ describe('chrome-bookmark-sync listener', () => {
     expect(areChromeBookmarkSyncListenersRegistered()).toBe(false)
   })
 
-  it('syncChromeBookmarkSyncListenersWithIngestSetting(false) 卸载监听并清对账闹钟', async () => {
+  it('syncChromeBookmarkSyncListenersWithSyncSetting(false) 卸载监听并清对账闹钟', async () => {
     registerChromeBookmarkSyncListeners()
-    await syncChromeBookmarkSyncListenersWithIngestSetting(false)
+    await syncChromeBookmarkSyncListenersWithSyncSetting(false)
     expect(areChromeBookmarkSyncListenersRegistered()).toBe(false)
     expect(chrome.bookmarks.onCreated.removeListener).toHaveBeenCalled()
     expect(ensureChromeBookmarkRepairAlarmMock).toHaveBeenCalledWith(false)
   })
 
-  it('syncChromeBookmarkSyncListenersWithIngestSetting(true) 注册监听并挂对账闹钟', async () => {
-    await syncChromeBookmarkSyncListenersWithIngestSetting(true)
+  it('syncChromeBookmarkSyncListenersWithSyncSetting(true) 注册监听并挂对账闹钟', async () => {
+    await syncChromeBookmarkSyncListenersWithSyncSetting(true)
     expect(areChromeBookmarkSyncListenersRegistered()).toBe(true)
     expect(chrome.bookmarks.onCreated.addListener).toHaveBeenCalled()
     expect(ensureChromeBookmarkRepairAlarmMock).toHaveBeenCalledWith(true)

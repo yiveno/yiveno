@@ -35,7 +35,10 @@ async function selectPassage(): Promise<void> {
 
 <template>
   <section class="gs-passage" :aria-label="t('getting_started_passage_aria')">
-    <p class="gs-passage__lead">{{ t('getting_started_passage_lead') }}</p>
+    <div class="gs-passage__intro">
+      <p class="gs-passage__context">{{ t('getting_started_excerpt_empty_body') }}</p>
+      <p class="gs-passage__lead">{{ t('getting_started_passage_lead') }}</p>
+    </div>
     <article ref="passageRef" class="gs-passage__body" tabindex="0">
       <p class="gs-passage__line">{{ t('getting_started_passage_line_1') }}</p>
       <p class="gs-passage__line gs-passage__line--break">
@@ -54,10 +57,9 @@ async function selectPassage(): Promise<void> {
       </p>
     </article>
     <div class="gs-passage__actions">
-      <AppButton type="button" variant="tonal" @click="selectPassage">
+      <AppButton type="button" variant="filled" @click="selectPassage">
         {{ t('getting_started_passage_select') }}
       </AppButton>
-      <p class="gs-passage__hint">{{ t('getting_started_passage_hint') }}</p>
     </div>
   </section>
 </template>
@@ -68,6 +70,12 @@ async function selectPassage(): Promise<void> {
   gap: var(--space-sm);
 }
 
+.gs-passage__intro {
+  display: grid;
+  gap: var(--space-2xs);
+}
+
+.gs-passage__context,
 .gs-passage__lead {
   max-width: 42ch;
   margin: 0;
@@ -105,15 +113,6 @@ async function selectPassage(): Promise<void> {
 
 .gs-passage__actions {
   display: grid;
-  gap: var(--space-2xs);
   justify-items: start;
-}
-
-.gs-passage__hint {
-  max-width: 40ch;
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.45;
-  color: var(--on-surface-muted);
 }
 </style>

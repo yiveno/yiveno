@@ -22,3 +22,16 @@ export function isSavablePageUrl(url: string): boolean {
     return false
   }
 }
+
+/**
+ * 是否适合「打开原文」：仅公网 http(s)。
+ * Getting Started 等 chrome-extension 出处可保存，但再开扩展页无意义，UI 应隐藏按钮。
+ */
+export function isOpenableExternalSourceUrl(url: string): boolean {
+  try {
+    const parsed = new URL(url)
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:'
+  } catch {
+    return false
+  }
+}

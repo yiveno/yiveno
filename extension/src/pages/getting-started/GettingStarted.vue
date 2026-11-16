@@ -124,12 +124,18 @@ onUnmounted(() => {
         :aria-labelledby="activeTabButtonId"
         tabindex="0"
       >
-        <GettingStartedBookmarksPanel v-if="activeTab === 'bookmarks'" />
+        <GettingStartedBookmarksPanel
+          v-if="activeTab === 'bookmarks'"
+          :skip-continue-label="hasLibrarySeed ? '' : t('getting_started_continue_without')"
+          :skip-continue-busy="continueBusy"
+          @skip-continue="handleContinue"
+        />
         <GettingStartedExcerptsPanel v-else />
       </section>
     </div>
 
-    <footer class="getting-started__footer">
+    <!-- 书签未授权：软出口在授权卡内；摘录 tab 不放页底 Continue；有库种后页底强出口 -->
+    <footer v-if="hasLibrarySeed" class="getting-started__footer">
       <AppButton
         type="button"
         :variant="hasLibrarySeed ? 'tonal' : 'text'"

@@ -6,7 +6,7 @@ const {
   getCurrentOwnerIdMock,
   getOrCreateLocalProfileMock,
   initializeMemoryDatabaseMock,
-  syncChromeBookmarkSyncListenersWithIngestSettingMock,
+  syncChromeBookmarkSyncListenersWithSyncSettingMock,
   registerContextMenuListenersMock,
   registerOmniboxListenersMock,
   registerCommandListenersMock,
@@ -21,7 +21,7 @@ const {
     schemaVersion: 1
   })),
   initializeMemoryDatabaseMock: vi.fn(async () => undefined),
-  syncChromeBookmarkSyncListenersWithIngestSettingMock: vi.fn(async () => undefined),
+  syncChromeBookmarkSyncListenersWithSyncSettingMock: vi.fn(async () => undefined),
   registerContextMenuListenersMock: vi.fn(),
   registerOmniboxListenersMock: vi.fn(),
   registerCommandListenersMock: vi.fn(),
@@ -37,8 +37,7 @@ vi.mock('@/infrastructure/browser/side-panel', () => ({
 }))
 
 vi.mock('@/background/listeners/chrome-bookmark-sync', () => ({
-  syncChromeBookmarkSyncListenersWithIngestSetting:
-    syncChromeBookmarkSyncListenersWithIngestSettingMock
+  syncChromeBookmarkSyncListenersWithSyncSetting: syncChromeBookmarkSyncListenersWithSyncSettingMock
 }))
 
 vi.mock('@/background/listeners/context-menu', () => ({
@@ -102,7 +101,7 @@ describe('ensureBackgroundBootstrapped', () => {
 
     expect(ensureSidePanelOpensOnActionClickMock).toHaveBeenCalledTimes(1)
     expect(initializeMemoryDatabaseMock).toHaveBeenCalledTimes(1)
-    expect(syncChromeBookmarkSyncListenersWithIngestSettingMock).toHaveBeenCalledTimes(1)
+    expect(syncChromeBookmarkSyncListenersWithSyncSettingMock).toHaveBeenCalledTimes(1)
     expect(registerContextMenuListenersMock).toHaveBeenCalledTimes(1)
     expect(registerOmniboxListenersMock).toHaveBeenCalledTimes(1)
     expect(registerCommandListenersMock).toHaveBeenCalledTimes(1)

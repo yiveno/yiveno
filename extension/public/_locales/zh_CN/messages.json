@@ -1431,12 +1431,6 @@
   "settings_toggle_selection_toolbar_hint": {
     "message": "选中文本后显示「保存到 Yiveno」"
   },
-  "settings_toggle_chrome_bookmark_ingest": {
-    "message": "同步本浏览器书签到本机记忆库"
-  },
-  "settings_toggle_chrome_bookmark_ingest_hint": {
-    "message": "默认关闭。开启后导入书签进记忆库，并保持同步。关闭后将停止同步，记忆库已有内容将保留。"
-  },
   "settings_section_shortcuts": {
     "message": "快捷键"
   },
@@ -2261,7 +2255,7 @@
     "message": "把书签带到 Yiveno，即使记不清名字，之后也能找到。"
   },
   "getting_started_consent_cta": {
-    "message": "导入我的书签"
+    "message": "同意并导入"
   },
   "getting_started_consent_failed": {
     "message": "刚才没能开始。请再试一次。"
@@ -2885,5 +2879,44 @@
   },
   "settings_language_system_hint": {
     "message": "跟随浏览器语言（中文浏览器默认简体中文）。"
+  },
+  "getting_started_consent_detail_what": {
+    "message": "Yiveno 会读取你的 Chrome 书签（标题、网址、文件夹），导入到这台设备上的本机库。"
+  },
+  "getting_started_consent_detail_local": {
+    "message": "书签只存在这台设备上，不上传、不分享给第三方。"
+  },
+  "getting_started_consent_detail_onetime": {
+    "message": "这是一次性导入；之后新增的书签不会自动进来，除非另外开启同步。"
+  },
+  "getting_started_consent_detail_control": {
+    "message": "随时可以在 Yiveno 里删除已导入的书签，不动 Chrome 里的原书签。"
+  },
+  "getting_started_sync_suggest_title": {
+    "message": "建议开启同步，让书签库保持最新"
+  },
+  "getting_started_sync_suggest_body": {
+    "message": "以后在 Chrome 里新增的书签会自动进入 Yiveno，删除的也会同步移除，Recall 才能找到你最近存的东西。同步只在本地进行，不上传。"
+  },
+  "getting_started_sync_suggest_enable": {
+    "message": "开启同步"
+  },
+  "getting_started_sync_suggest_dismiss": {
+    "message": "不用了"
+  },
+  "settings_toggle_chrome_bookmark_sync": {
+    "message": "同步 Chrome 书签到本机记忆库"
+  },
+  "settings_toggle_chrome_bookmark_sync_hint": {
+    "message": "开启后将导入现有书签并保持同步；关闭后停止同步，已导入的内容保留。"
+  },
+  "settings_action_reimport_chrome_bookmarks": {
+    "message": "重新导入书签"
+  },
+  "settings_action_reimport_chrome_bookmarks_hint": {
+    "message": "补导上次导入后新增的书签；在 Yiveno 里删除过的不再导回。"
+  },
+  "settings_reimport_chrome_bookmarks_done": {
+    "message": "重新导入完成。"
   }
 }

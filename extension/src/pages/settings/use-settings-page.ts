@@ -22,6 +22,7 @@ import {
   clearOrphanOwners,
   deleteAccount,
   deleteCloudMemory,
+  ensureChromeBookmarksImportedMessage,
   exportLocalMemory,
   exportOrphanOwners,
   fetchAuthState,
@@ -86,7 +87,9 @@ export function useSettingsPage() {
   const awaitingShortcutsReturn = ref(false)
 
   const selectionToolbarEnabled = ref(true)
+  /** 只读：是否已授权一次性导入（控制「重新导入」显隐）。 */
   const chromeBookmarkIngestEnabled = ref(false)
+  const chromeBookmarkSyncEnabled = ref(false)
   const aiFeaturesEnabled = ref(true)
   const linkStatusSweepEnabled = ref(true)
   const mcpReadOnlyEnabled = ref(false)
@@ -95,7 +98,10 @@ export function useSettingsPage() {
   const settingsState = ref<SettingsLoadState>('loading')
   const settingsError = ref('')
   const savingSelectionToolbar = ref(false)
-  const savingChromeBookmarkIngest = ref(false)
+  const savingChromeBookmarkSync = ref(false)
+  const reimportChromeBookmarksBusy = ref(false)
+  const reimportChromeBookmarksDone = ref(false)
+  let reimportDoneTimer: ReturnType<typeof setTimeout> | null = null
   const savingAiFeatures = ref(false)
   const savingLinkStatusSweep = ref(false)
   const savingMcpReadOnly = ref(false)
@@ -313,6 +319,7 @@ export function useSettingsPage() {
 
       selectionToolbarEnabled.value = response.settings.selectionToolbarEnabled
       chromeBookmarkIngestEnabled.value = response.settings.chromeBookmarkIngestEnabled
+      chromeBookmarkSyncEnabled.value = response.settings.chromeBookmarkSyncEnabled
       aiFeaturesEnabled.value = response.settings.aiFeaturesEnabled
       linkStatusSweepEnabled.value = response.settings.linkStatusSweepEnabled
       mcpReadOnlyEnabled.value = response.settings.mcpReadOnlyEnabled
@@ -345,23 +352,55 @@ export function useSettingsPage() {
     }
   }
 
-  /** Chrome 书签灌库开关（bulk + 增量）。 */
-  async function handleChromeBookmarkIngestToggle(nextValue: boolean) {
-    savingChromeBookmarkIngest.value = true
+  /** Chrome 书签持续同步开关（开时会导入现有书签并挂监听）。 */
+  async function handleChromeBookmarkSyncToggle(nextValue: boolean) {
+    savingChromeBookmarkSync.value = true
     settingsError.value = ''
 
     try {
-      const response = await updateUserSettings({ chromeBookmarkIngestEnabled: nextValue })
+      const response = await updateUserSettings({ chromeBookmarkSyncEnabled: nextValue })
       if (!response.ok) {
         settingsError.value = tSettingsError(response.errorCode)
         return
       }
 
+      chromeBookmarkSyncEnabled.value = response.settings.chromeBookmarkSyncEnabled
       chromeBookmarkIngestEnabled.value = response.settings.chromeBookmarkIngestEnabled
     } catch {
       settingsError.value = t('settings_error_update')
     } finally {
-      savingChromeBookmarkIngest.value = false
+      savingChromeBookmarkSync.value = false
+    }
+  }
+
+  /** 重新导入 Chrome 书签（一次性 ensure；尊重墓碑）。 */
+  async function handleReimportChromeBookmarks() {
+    if (reimportChromeBookmarksBusy.value || !chromeBookmarkIngestEnabled.value) {
+      return
+    }
+    reimportChromeBookmarksBusy.value = true
+    reimportChromeBookmarksDone.value = false
+    settingsError.value = ''
+    if (reimportDoneTimer !== null) {
+      clearTimeout(reimportDoneTimer)
+      reimportDoneTimer = null
+    }
+
+    try {
+      const response = await ensureChromeBookmarksImportedMessage()
+      if (!response.ok) {
+        settingsError.value = t('settings_error_update')
+        return
+      }
+      reimportChromeBookmarksDone.value = true
+      reimportDoneTimer = setTimeout(() => {
+        reimportChromeBookmarksDone.value = false
+        reimportDoneTimer = null
+      }, 2500)
+    } catch {
+      settingsError.value = t('settings_error_update')
+    } finally {
+      reimportChromeBookmarksBusy.value = false
     }
   }
 
@@ -1119,6 +1158,7 @@ export function useSettingsPage() {
         return false
       }
       chromeBookmarkIngestEnabled.value = false
+      chromeBookmarkSyncEnabled.value = false
       if (response.syncDisabled) {
         syncEnabled.value = false
         showToastSuccess(
@@ -1334,6 +1374,7 @@ export function useSettingsPage() {
     aiFeaturesEnabled,
     awaitingShortcutsReturn,
     chromeBookmarkIngestEnabled,
+    chromeBookmarkSyncEnabled,
     linkStatusSweepEnabled,
     closeConfirmDialog,
     closeDeleteAccountDialog,
@@ -1366,7 +1407,8 @@ export function useSettingsPage() {
     restoreWorking,
     handleAiFeaturesToggle,
     handleLinkStatusSweepToggle,
-    handleChromeBookmarkIngestToggle,
+    handleChromeBookmarkSyncToggle,
+    handleReimportChromeBookmarks,
     handleClearLocalMemory,
     handleClearLocalRecallAdaptation,
     handleClearOrphans,
@@ -1423,7 +1465,9 @@ export function useSettingsPage() {
     runningIncrementalSync,
     savingAiFeatures,
     savingLinkStatusSweep,
-    savingChromeBookmarkIngest,
+    savingChromeBookmarkSync,
+    reimportChromeBookmarksBusy,
+    reimportChromeBookmarksDone,
     savingMcpReadOnly,
     savingRecallOutcomeSoftAdjust,
     savingSelectionToolbar,

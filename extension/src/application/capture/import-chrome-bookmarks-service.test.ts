@@ -133,7 +133,18 @@ describe('import-chrome-bookmarks-service', () => {
     }
   })
 
-  it('已完成后再次调用跳过 bulk，但仍 reconcile', async () => {
+  it('已完成后再次调用跳过 bulk；sync 开时仍 reconcile', async () => {
+    vi.stubGlobal(
+      'chrome',
+      createChromeMock({
+        [LOCAL_PROFILE_STORAGE_KEY]: localProfile,
+        [USER_SETTINGS_STORAGE_KEY]: {
+          ...DEFAULT_USER_SETTINGS,
+          chromeBookmarkIngestEnabled: true,
+          chromeBookmarkSyncEnabled: true
+        }
+      })
+    )
     await ensureChromeBookmarksImported()
     const getTree = chrome.bookmarks.getTree as ReturnType<typeof vi.fn>
     const bulkSpy = vi.spyOn(bulkImport, 'bulkPutChromeBookmarkLeaves')
@@ -147,6 +158,38 @@ describe('import-chrome-bookmarks-service', () => {
       // completed 路径走 reconcile，会再读一次 Chrome 树
       expect(getTree).toHaveBeenCalled()
     } finally {
+      bulkSpy.mockRestore()
+    }
+  })
+
+  it('空树直接 completed，不写 running、不调 bulk', async () => {
+    const writeSpy = vi.spyOn(bulkImport, 'writeChromeBookmarkImportState')
+    const bulkSpy = vi.spyOn(bulkImport, 'bulkPutChromeBookmarkLeaves')
+    try {
+      vi.stubGlobal(
+        'chrome',
+        createChromeMock({
+          [LOCAL_PROFILE_STORAGE_KEY]: localProfile,
+          [USER_SETTINGS_STORAGE_KEY]: {
+            ...DEFAULT_USER_SETTINGS,
+            chromeBookmarkIngestEnabled: true
+          }
+        })
+      )
+      ;(chrome.bookmarks.getTree as ReturnType<typeof vi.fn>).mockResolvedValue([
+        { id: '0', title: '', children: [] }
+      ])
+
+      const state = await ensureChromeBookmarksImported()
+      expect(state.status).toBe('completed')
+      expect(state.importedCount).toBe(0)
+      expect(state.totalCount).toBe(0)
+      expect(bulkSpy).not.toHaveBeenCalled()
+      const statuses = writeSpy.mock.calls.map(call => (call[0] as { status: string }).status)
+      expect(statuses).not.toContain('running')
+      expect(statuses).toContain('completed')
+    } finally {
+      writeSpy.mockRestore()
       bulkSpy.mockRestore()
     }
   })

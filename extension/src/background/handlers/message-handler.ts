@@ -43,6 +43,7 @@ import {
   handleOpenRecallShell
 } from '@/background/handlers/commands-handler'
 import {
+  handleEnsureChromeBookmarksImported,
   handleGetBookmarkLibraryTree,
   handleGetChromeBookmarkImportStatus,
   handleGetColdStartStatus,
@@ -199,6 +200,8 @@ async function dispatchBackgroundMessage(
       return handleMcpRecallEvidence(message.payload)
     case 'GET_CHROME_BOOKMARK_IMPORT_STATUS':
       return handleGetChromeBookmarkImportStatus()
+    case 'ENSURE_CHROME_BOOKMARKS_IMPORTED':
+      return handleEnsureChromeBookmarksImported()
     case 'GET_COLD_START_STATUS':
       return handleGetColdStartStatus()
     case 'GENERATE_GETTING_STARTED_CLUE_SAMPLES':

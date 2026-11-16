@@ -2,7 +2,7 @@ import {
   handleChromeBookmarkChanged,
   handleChromeBookmarkCreated,
   handleChromeBookmarkRemoved,
-  isChromeBookmarkIngestEnabled
+  isChromeBookmarkSyncEnabled
 } from '@/application/capture/chrome-bookmark-sync-service'
 import { ensureChromeBookmarkRepairAlarm } from '@/infrastructure/sync/chrome-bookmark-repair-alarm'
 import { ensureBackgroundBootstrapped } from '@/background/bootstrap-ready'
@@ -40,7 +40,7 @@ function onBookmarkCreated(id: string, bookmark: chrome.bookmarks.BookmarkTreeNo
       void flashActionBadge('error')
     })
     .finally(() => {
-      // 目录改名等不进 Memory，仍须刷新记忆库只读树（仅灌库开启时本监听才挂着）
+      // 目录改名等不进 Memory，仍须刷新记忆库只读树（仅同步开启时本监听才挂着）
       notifyBookmarkLibraryTreeRefresh()
     })
 }
@@ -86,7 +86,7 @@ function onBookmarkMoved(
 
 /**
  * SW 入口同步挂上书签监听，消除异步读 Settings 前的空窗。
- * 灌库关闭时由 {@link syncChromeBookmarkSyncListenersWithIngestSetting} 再卸下；
+ * 同步关闭时由 {@link syncChromeBookmarkSyncListenersWithSyncSetting} 再卸下；
  * 写入路径仍经 {@link handleChromeBookmarkCreated} 内门禁。
  */
 export function attachChromeBookmarkSyncListenersAtStartup(): void {
@@ -95,7 +95,7 @@ export function attachChromeBookmarkSyncListenersAtStartup(): void {
 
 /**
  * 注册 Chrome 书签增量同步监听器。
- * 灌库关闭时应调用 {@link unregisterChromeBookmarkSyncListeners}，不得常驻监听。
+ * 同步关闭时应调用 {@link unregisterChromeBookmarkSyncListeners}，不得常驻监听。
  */
 export function registerChromeBookmarkSyncListeners(): void {
   if (listenersRegistered) {
@@ -112,7 +112,7 @@ export function registerChromeBookmarkSyncListeners(): void {
 }
 
 /**
- * 卸载书签增量监听：关闭「将 Chrome 书签写入记忆」后调用。
+ * 卸载书签增量监听：关闭持续同步后调用。
  * 卸载后不再处理新增/变更，也不再推送记忆库热更新。
  */
 export function unregisterChromeBookmarkSyncListeners(): void {
@@ -126,7 +126,7 @@ export function unregisterChromeBookmarkSyncListeners(): void {
   chrome.bookmarks.onMoved.removeListener(onBookmarkMoved)
   listenersRegistered = false
 
-  logger.info('ChromeBookmarkSync', '书签增量监听器已卸载（灌库关闭）')
+  logger.info('ChromeBookmarkSync', '书签增量监听器已卸载（同步关闭）')
 }
 
 /** 当前是否已挂上书签增量监听（测试 / 诊断用）。 */
@@ -135,14 +135,14 @@ export function areChromeBookmarkSyncListenersRegistered(): boolean {
 }
 
 /**
- * 按灌库开关挂/卸监听。
+ * 按同步开关挂/卸监听。
  * @param enabled 显式传入时跳过读 Settings（Settings 更新路径用）。
  */
-export async function syncChromeBookmarkSyncListenersWithIngestSetting(
+export async function syncChromeBookmarkSyncListenersWithSyncSetting(
   enabled?: boolean
 ): Promise<void> {
-  const ingestEnabled = enabled ?? (await isChromeBookmarkIngestEnabled())
-  if (ingestEnabled) {
+  const syncEnabled = enabled ?? (await isChromeBookmarkSyncEnabled())
+  if (syncEnabled) {
     registerChromeBookmarkSyncListeners()
     await ensureChromeBookmarkRepairAlarm(true)
     return

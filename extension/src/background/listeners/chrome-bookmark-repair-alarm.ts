@@ -4,7 +4,7 @@
 
 import { ensureBackgroundBootstrapped } from '@/background/bootstrap-ready'
 import {
-  isChromeBookmarkIngestEnabled,
+  isChromeBookmarkSyncEnabled,
   repairChromeBookmarksWithMemory
 } from '@/application/capture/chrome-bookmark-sync-service'
 import {
@@ -20,7 +20,7 @@ async function ensureBootstrapReady(): Promise<void> {
   await ensureBackgroundBootstrapped()
 }
 
-/** 注册 alarms.onAlarm；启动时按灌库开关对齐闹钟。 */
+/** 注册 alarms.onAlarm；启动时按同步开关对齐闹钟。 */
 export function registerChromeBookmarkRepairAlarmListener(): void {
   if (registered) {
     return
@@ -36,9 +36,9 @@ export function registerChromeBookmarkRepairAlarmListener(): void {
     }
     void ensureBootstrapReady()
       .then(async () => {
-        if (!(await isChromeBookmarkIngestEnabled())) {
+        if (!(await isChromeBookmarkSyncEnabled())) {
           await ensureChromeBookmarkRepairAlarm(false)
-          logger.info('ChromeBookmarkSync', '定时对账已跳过（灌库已关，并清除闹钟）')
+          logger.info('ChromeBookmarkSync', '定时对账已跳过（同步已关，并清除闹钟）')
           return
         }
         // force：不受「本 SW 会话已跑过」限制，保证每日真正对账
@@ -62,7 +62,7 @@ export function registerChromeBookmarkRepairAlarmListener(): void {
   registered = true
   logger.info('ChromeBookmarkSync', '书签每日对账闹钟监听已注册')
 
-  void isChromeBookmarkIngestEnabled()
+  void isChromeBookmarkSyncEnabled()
     .then(enabled => ensureChromeBookmarkRepairAlarm(enabled))
     .catch(error => {
       logger.warn('ChromeBookmarkSync', '启动时对齐书签对账闹钟失败', error)

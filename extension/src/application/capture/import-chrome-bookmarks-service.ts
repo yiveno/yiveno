@@ -28,7 +28,9 @@ export async function getChromeBookmarkImportStatus(): Promise<ChromeBookmarkImp
 }
 
 /**
- * 灌库开启时，每 SW 会话最多调度一次 ensure（completed → reconcile；未完成 → 续跑 bulk）。
+ * 导入已授权时，每 SW 会话最多调度一次 ensure（completed → finalize；未完成 → 续跑 bulk）。
+ * 门仍查 ingest（一次性导入授权）：ingest 开 + sync 关时仍须补洞/续传，避免空库残留；
+ * finalize 内 reconcile/repair 另受 sync 门禁，不会在未同意同步时拉新书签。
  * 堵住：Memory 被清空/丢库后 import 仍标 completed、冷启动 ready 早退不再补洞。
  */
 export function scheduleEnsureChromeBookmarksImportedIfNeeded(reason: string): void {
@@ -40,7 +42,7 @@ export function scheduleEnsureChromeBookmarksImportedIfNeeded(reason: string): v
     try {
       const settings = await getUserSettings()
       if (!settings.chromeBookmarkIngestEnabled) {
-        // 关灌库：允许本会话稍后开启时再调度
+        // 未授权导入：允许本会话稍后授权时再调度
         ensureHoleHealScheduledThisSwSession = false
         return
       }
@@ -114,16 +116,27 @@ async function runChromeBookmarkImport(
     previousStatus: existing?.status ?? null
   })
 
-  await writeChromeBookmarkImportState({
-    status: 'running',
-    importedCount: startOffset,
-    totalCount: existing?.totalCount,
-    startedAt
-  })
-
   try {
     const leaves = await readChromeBookmarkLeaves()
     totalCount = leaves.length
+
+    // 空树：直接 completed，不写 running、不调 bulk put（UI 最多闪一轮轮询）
+    if (totalCount === 0) {
+      const completed: ChromeBookmarkImportState = {
+        status: 'completed',
+        importedCount: 0,
+        totalCount: 0,
+        startedAt,
+        completedAt: new Date().toISOString()
+      }
+      await writeChromeBookmarkImportState(completed)
+      await finalizeChromeBookmarkSyncAfterImport()
+      logger.info('ChromeBookmarkImport', '书签 bulk 导入已完成（空树 fast-path）', {
+        importedCount: 0,
+        totalCount: 0
+      })
+      return completed
+    }
 
     await writeChromeBookmarkImportState({
       status: 'running',
@@ -132,7 +145,7 @@ async function runChromeBookmarkImport(
       startedAt
     })
 
-    if (startOffset >= totalCount && totalCount > 0) {
+    if (startOffset >= totalCount) {
       const completed: ChromeBookmarkImportState = {
         status: 'completed',
         importedCount: totalCount,

@@ -5,7 +5,7 @@ import {
   ensureBackgroundBootstrapped,
   resetBackgroundBootstrapForTests
 } from '@/background/bootstrap-ready'
-import { syncChromeBookmarkSyncListenersWithIngestSetting } from '@/background/listeners/chrome-bookmark-sync'
+import { syncChromeBookmarkSyncListenersWithSyncSetting } from '@/background/listeners/chrome-bookmark-sync'
 import { registerCommandListeners } from '@/background/listeners/commands'
 import { registerContextMenuListeners } from '@/background/listeners/context-menu'
 import { registerAuthSessionLeaseAlarmListener } from '@/background/listeners/auth-session-lease-alarm'
@@ -68,7 +68,7 @@ async function bootstrapBackground(): Promise<void> {
     await initializeMemoryDatabase()
 
     // 按灌库开关挂/卸书签监听（关则完全不听 Chrome bookmarks.*）
-    await syncChromeBookmarkSyncListenersWithIngestSetting()
+    await syncChromeBookmarkSyncListenersWithSyncSetting()
     // 与 main.ts 入口重复注册；幂等，确保 bootstrap 路径也挂上
     registerContextMenuListeners()
     registerOmniboxListeners()

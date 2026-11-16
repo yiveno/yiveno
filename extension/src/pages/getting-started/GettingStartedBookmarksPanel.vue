@@ -21,9 +21,14 @@ import {
   readFirstRecallOpenDone,
   writeRecallPrefill
 } from '@/infrastructure/storage/first-recall-onboarding-storage'
-import { markInstallOnboardingDone } from '@/infrastructure/storage/install-onboarding-storage'
+import {
+  markInstallOnboardingDone,
+  readSyncSuggestionDismissed,
+  writeSyncSuggestionDismissed
+} from '@/infrastructure/storage/install-onboarding-storage'
 import AppButton from '@/infrastructure/ui/AppButton.vue'
 import AppLinearProgress from '@/infrastructure/ui/AppLinearProgress.vue'
+import { shouldShowChromeBookmarkSyncSuggestion } from '@/pages/getting-started/chrome-bookmark-sync-suggestion'
 import {
   deriveGettingStartedProgress,
   isGettingStartedInventorySettling,
@@ -35,15 +40,43 @@ import { useGettingStartedInPageRecall } from '@/pages/getting-started/use-getti
 
 defineOptions({ name: 'GettingStartedBookmarksPanel' })
 
-/** 书签灌库产品同意（与 settings.chromeBookmarkIngestEnabled 同步）。 */
+const props = withDefaults(
+  defineProps<{
+    /** 授权卡旁「不导入，继续」文案（仅 need_consent）。 */
+    skipContinueLabel?: string
+    skipContinueBusy?: boolean
+  }>(),
+  {
+    skipContinueLabel: '',
+    skipContinueBusy: false
+  }
+)
+
+const emit = defineEmits<{
+  /** 授权卡旁软出口：不导入并继续进产品 */
+  'skip-continue': []
+}>()
+
+/** 书签一次性导入授权（与 settings.chromeBookmarkIngestEnabled 同步）。 */
 const bookmarkConsent = ref(false)
 const consentBusy = ref(false)
 const consentError = ref('')
+/** 持续同步开关（与 settings.chromeBookmarkSyncEnabled 同步）。 */
+const bookmarkSyncEnabled = ref(false)
+const syncSuggestionDismissed = ref(false)
+const syncSuggestBusy = ref(false)
 /** 未同意前不展示召回区。 */
 const libraryPhase = ref<GettingStartedLibraryPhase>('ready')
 const oralClues = ref<string[]>([])
 const oralCluesGenerating = ref(false)
 const importState = ref<ChromeBookmarkImportState | null>(null)
+
+const consentDetailKeys = [
+  'getting_started_consent_detail_what',
+  'getting_started_consent_detail_local',
+  'getting_started_consent_detail_onetime',
+  'getting_started_consent_detail_control'
+] as const
 
 let inventoryPollTimer: ReturnType<typeof setInterval> | null = null
 let oralCluesRequestId = 0
@@ -86,6 +119,15 @@ const showRecall = computed(
   () =>
     bookmarkConsent.value &&
     (consentUiPhase.value === 'authorized' || consentUiPhase.value === 'failed')
+)
+
+const showSyncSuggestion = computed(() =>
+  shouldShowChromeBookmarkSyncSuggestion({
+    importCompleted: importState.value?.status === 'completed',
+    syncEnabled: bookmarkSyncEnabled.value,
+    dismissed: syncSuggestionDismissed.value,
+    libraryPhase: libraryPhase.value
+  })
 )
 
 const importDetailLine = computed(() => {
@@ -132,14 +174,16 @@ async function loadConsentFromSettings(): Promise<void> {
     const response = await fetchUserSettings()
     if (response.ok) {
       bookmarkConsent.value = response.settings.chromeBookmarkIngestEnabled
+      bookmarkSyncEnabled.value = response.settings.chromeBookmarkSyncEnabled
     }
   } catch (error) {
-    logger.warn('Onboarding', '读取灌库同意失败（保持关）', { error })
+    logger.warn('Onboarding', '读取导入同意失败（保持关）', { error })
     bookmarkConsent.value = false
+    bookmarkSyncEnabled.value = false
   }
 }
 
-/** 明示授权并启动灌库（Settings 开同键会 ensureChromeBookmarksImported）。失败可再点重试。 */
+/** 明示授权一次性导入（不碰 sync）。失败可再点重试。 */
 async function handleAuthorize(): Promise<void> {
   if (consentBusy.value) {
     return
@@ -150,20 +194,60 @@ async function handleAuthorize(): Promise<void> {
     const response = await updateUserSettings({ chromeBookmarkIngestEnabled: true })
     if (!response.ok) {
       consentError.value = t('getting_started_consent_failed')
-      logger.warn('Onboarding', '写入灌库同意失败', { errorCode: response.errorCode })
+      logger.warn('Onboarding', '写入导入同意失败', { errorCode: response.errorCode })
       return
     }
     bookmarkConsent.value = response.settings.chromeBookmarkIngestEnabled
-    logger.info('Onboarding', '书签灌库已授权，开始导入', { enabled: bookmarkConsent.value })
+    bookmarkSyncEnabled.value = response.settings.chromeBookmarkSyncEnabled
+    logger.info('Onboarding', '书签导入已授权，开始一次性导入', { enabled: bookmarkConsent.value })
     if (bookmarkConsent.value) {
       libraryPhase.value = 'importing'
       void refreshInventory()
     }
   } catch (error) {
     consentError.value = t('getting_started_consent_failed')
-    logger.warn('Onboarding', '写入灌库同意异常', { error })
+    logger.warn('Onboarding', '写入导入同意异常', { error })
   } finally {
     consentBusy.value = false
+  }
+}
+
+/** 开启持续同步建议。 */
+async function handleEnableSyncSuggestion(): Promise<void> {
+  if (syncSuggestBusy.value) {
+    return
+  }
+  syncSuggestBusy.value = true
+  try {
+    const response = await updateUserSettings({ chromeBookmarkSyncEnabled: true })
+    if (!response.ok) {
+      logger.warn('Onboarding', '开启书签同步失败', { errorCode: response.errorCode })
+      return
+    }
+    bookmarkSyncEnabled.value = response.settings.chromeBookmarkSyncEnabled
+    bookmarkConsent.value = response.settings.chromeBookmarkIngestEnabled
+    logger.info('Onboarding', 'GS 已开启书签同步', { enabled: bookmarkSyncEnabled.value })
+  } catch (error) {
+    logger.warn('Onboarding', '开启书签同步异常', { error })
+  } finally {
+    syncSuggestBusy.value = false
+  }
+}
+
+/** 关掉同步建议卡（持久 dismissal）。 */
+async function handleDismissSyncSuggestion(): Promise<void> {
+  if (syncSuggestBusy.value) {
+    return
+  }
+  syncSuggestBusy.value = true
+  try {
+    await writeSyncSuggestionDismissed()
+    syncSuggestionDismissed.value = true
+    logger.info('Onboarding', 'GS 书签同步建议已关掉')
+  } catch (error) {
+    logger.warn('Onboarding', '写入同步建议 dismissal 失败', { error })
+  } finally {
+    syncSuggestBusy.value = false
   }
 }
 
@@ -350,6 +434,7 @@ function stopInventoryPolling(): void {
 
 onMounted(() => {
   void (async () => {
+    syncSuggestionDismissed.value = await readSyncSuggestionDismissed()
     await loadConsentFromSettings()
     await syncRecallDoneFlag()
     if (bookmarkConsent.value) {
@@ -377,21 +462,35 @@ onUnmounted(() => {
     <section class="gs-bookmarks__consent" :aria-label="t('getting_started_consent_aria')">
       <template v-if="consentUiPhase === 'need_consent'">
         <div class="gs-bookmarks__consent-copy">
-          <p class="gs-bookmarks__frame">{{ t('getting_started_bookmarks_frame') }}</p>
           <h2 class="gs-bookmarks__consent-title">{{ t('getting_started_consent_title') }}</h2>
           <p class="gs-bookmarks__consent-body">{{ t('getting_started_consent_body') }}</p>
+          <ul class="gs-bookmarks__consent-details">
+            <li v-for="key in consentDetailKeys" :key="key">{{ t(key) }}</li>
+          </ul>
           <p v-if="consentError" class="gs-bookmarks__consent-error" role="alert">
             {{ consentError }}
           </p>
-          <AppButton
-            type="button"
-            variant="filled"
-            class="gs-bookmarks__consent-cta"
-            :disabled="consentBusy"
-            @click="handleAuthorize"
-          >
-            {{ t('getting_started_consent_cta') }}
-          </AppButton>
+          <div class="gs-bookmarks__consent-actions">
+            <AppButton
+              type="button"
+              variant="filled"
+              class="gs-bookmarks__consent-cta"
+              :disabled="consentBusy || props.skipContinueBusy"
+              @click="handleAuthorize"
+            >
+              {{ t('getting_started_consent_cta') }}
+            </AppButton>
+            <AppButton
+              v-if="props.skipContinueLabel"
+              type="button"
+              variant="text"
+              class="gs-bookmarks__consent-skip"
+              :disabled="consentBusy || props.skipContinueBusy"
+              @click="emit('skip-continue')"
+            >
+              {{ props.skipContinueLabel }}
+            </AppButton>
+          </div>
         </div>
       </template>
 
@@ -448,6 +547,35 @@ onUnmounted(() => {
       </template>
     </section>
 
+    <section
+      v-if="showSyncSuggestion"
+      class="gs-bookmarks__sync-suggest"
+      :aria-label="t('getting_started_sync_suggest_title')"
+    >
+      <div class="gs-bookmarks__consent-copy">
+        <h2 class="gs-bookmarks__consent-title">{{ t('getting_started_sync_suggest_title') }}</h2>
+        <p class="gs-bookmarks__consent-body">{{ t('getting_started_sync_suggest_body') }}</p>
+        <div class="gs-bookmarks__sync-suggest-actions">
+          <AppButton
+            type="button"
+            variant="filled"
+            :disabled="syncSuggestBusy"
+            @click="handleEnableSyncSuggestion"
+          >
+            {{ t('getting_started_sync_suggest_enable') }}
+          </AppButton>
+          <AppButton
+            type="button"
+            variant="text"
+            :disabled="syncSuggestBusy"
+            @click="handleDismissSyncSuggestion"
+          >
+            {{ t('getting_started_sync_suggest_dismiss') }}
+          </AppButton>
+        </div>
+      </div>
+    </section>
+
     <div v-if="showRecall" class="gs-bookmarks__recall">
       <GettingStartedRecallPanel
         v-model:clue="clueDraft"
@@ -493,14 +621,6 @@ onUnmounted(() => {
   justify-items: start;
 }
 
-.gs-bookmarks__frame {
-  margin: 0;
-  font-size: 13px;
-  font-weight: 500;
-  line-height: 1.4;
-  color: var(--on-surface-muted);
-}
-
 .gs-bookmarks__consent-title {
   margin: 0;
   font-size: 15px;
@@ -517,6 +637,31 @@ onUnmounted(() => {
   text-wrap: pretty;
 }
 
+.gs-bookmarks__consent-details {
+  display: grid;
+  gap: var(--space-2xs);
+  margin: 0;
+  padding-left: 1.15em;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--on-surface-muted);
+  text-wrap: pretty;
+}
+
+.gs-bookmarks__sync-suggest {
+  padding: var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-white);
+}
+
+.gs-bookmarks__sync-suggest-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: var(--space-2xs);
+}
+
 .gs-bookmarks__consent-error {
   margin: 0;
   font-size: 13px;
@@ -524,8 +669,17 @@ onUnmounted(() => {
   color: var(--danger);
 }
 
-.gs-bookmarks__consent-cta {
+.gs-bookmarks__consent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
   margin-top: var(--space-2xs);
+}
+
+.gs-bookmarks__consent-cta,
+.gs-bookmarks__consent-skip {
+  margin: 0;
 }
 
 .gs-bookmarks__consent-bar {

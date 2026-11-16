@@ -42,6 +42,8 @@ import type {
 import type {
   ChromeBookmarkImportStatusResponse,
   ColdStartStatusResponse,
+  EnsureChromeBookmarksImportedMessage,
+  EnsureChromeBookmarksImportedResponse,
   GenerateGettingStartedClueSamplesMessage,
   GenerateGettingStartedClueSamplesResponse,
   GetBookmarkLibraryTreeResponse,
@@ -261,6 +263,15 @@ export async function fetchChromeBookmarkImportStatus(): Promise<ChromeBookmarkI
     type: 'GET_CHROME_BOOKMARK_IMPORT_STATUS'
   }
   return sendBackgroundMessage<ChromeBookmarkImportStatusResponse>(message)
+}
+
+/** Settings：重新导入 Chrome 书签（ensure）。 */
+export async function ensureChromeBookmarksImportedMessage(): Promise<EnsureChromeBookmarksImportedResponse> {
+  const message: EnsureChromeBookmarksImportedMessage = {
+    scope: 'background',
+    type: 'ENSURE_CHROME_BOOKMARKS_IMPORTED'
+  }
+  return sendBackgroundMessage<EnsureChromeBookmarksImportedResponse>(message)
 }
 
 /** 导入 Raindrop / Pocket 导出文件（§5.10.6）。 */

@@ -45,15 +45,21 @@ let pendingHydratePromise: Promise<void> | null = null
 /** 本 SW 会话是否已跑过 full repair（自动路径每会话最多一次）。 */
 let fullRepairDoneThisSwSession = false
 
-/** 用户是否允许书签灌库（Settings）。 */
+/** 用户是否已授权一次性书签导入（GS / Settings 重新导入）。 */
 export async function isChromeBookmarkIngestEnabled(): Promise<boolean> {
   const settings = await getUserSettings()
   return settings.chromeBookmarkIngestEnabled
 }
 
-/** 增量同步是否已启用（灌库开 + 全量导入完成）。 */
+/** 用户是否开启持续书签同步（bookmarks.* / repair / reconcile）。 */
+export async function isChromeBookmarkSyncEnabled(): Promise<boolean> {
+  const settings = await getUserSettings()
+  return settings.chromeBookmarkSyncEnabled
+}
+
+/** 增量同步是否已启用（同步开 + 全量导入完成）。 */
 export async function isChromeBookmarkIncrementalSyncEnabled(): Promise<boolean> {
-  if (!(await isChromeBookmarkIngestEnabled())) {
+  if (!(await isChromeBookmarkSyncEnabled())) {
     return false
   }
   const state = await readChromeBookmarkImportState()
@@ -176,8 +182,8 @@ export async function syncChromeBookmarkRemoved(chromeBookmarkId: string): Promi
 export async function handleChromeBookmarkCreated(
   node: chrome.bookmarks.BookmarkTreeNode
 ): Promise<{ captured: boolean }> {
-  if (!(await isChromeBookmarkIngestEnabled())) {
-    logger.info('ChromeBookmarkSync', 'created 已跳过（用户关闭书签灌库）', {
+  if (!(await isChromeBookmarkSyncEnabled())) {
+    logger.info('ChromeBookmarkSync', 'created 已跳过（用户关闭书签同步）', {
       chromeBookmarkId: node.id
     })
     return { captured: false }
@@ -205,8 +211,8 @@ export async function handleChromeBookmarkCreated(
 
 /** 处理 Chrome bookmarks.onChanged。 */
 export async function handleChromeBookmarkChanged(chromeBookmarkId: string): Promise<void> {
-  if (!(await isChromeBookmarkIngestEnabled())) {
-    logger.info('ChromeBookmarkSync', 'changed 已跳过（用户关闭书签灌库）', { chromeBookmarkId })
+  if (!(await isChromeBookmarkSyncEnabled())) {
+    logger.info('ChromeBookmarkSync', 'changed 已跳过（用户关闭书签同步）', { chromeBookmarkId })
     return
   }
 
@@ -237,8 +243,8 @@ export async function handleChromeBookmarkChanged(chromeBookmarkId: string): Pro
 
 /** 处理 Chrome bookmarks.onRemoved。 */
 export async function handleChromeBookmarkRemoved(chromeBookmarkId: string): Promise<void> {
-  if (!(await isChromeBookmarkIngestEnabled())) {
-    logger.info('ChromeBookmarkSync', 'removed 已跳过（用户关闭书签灌库）', { chromeBookmarkId })
+  if (!(await isChromeBookmarkSyncEnabled())) {
+    logger.info('ChromeBookmarkSync', 'removed 已跳过（用户关闭书签同步）', { chromeBookmarkId })
     return
   }
 
@@ -327,8 +333,8 @@ export async function reconcileChromeBookmarksWithMemory(): Promise<{
   upserted: number
   skipped: boolean
 }> {
-  if (!(await isChromeBookmarkIngestEnabled())) {
-    logger.info('ChromeBookmarkSync', 'reconcile 已跳过（用户关闭书签灌库）')
+  if (!(await isChromeBookmarkSyncEnabled())) {
+    logger.info('ChromeBookmarkSync', 'reconcile 已跳过（用户关闭书签同步）')
     return { upserted: 0, skipped: true }
   }
 
@@ -399,13 +405,13 @@ export async function repairChromeBookmarksWithMemory(options: { force?: boolean
   upserted: number
   softDeleted: number
   skipped: boolean
-  reason?: 'ingest_disabled' | 'import_incomplete' | 'quota_exhausted' | 'already_done_this_session'
+  reason?: 'sync_disabled' | 'import_incomplete' | 'quota_exhausted' | 'already_done_this_session'
 }> {
   const force = options.force ?? false
 
-  if (!(await isChromeBookmarkIngestEnabled())) {
-    logger.info('ChromeBookmarkSync', 'full repair 已跳过（用户关闭书签灌库）')
-    return { upserted: 0, softDeleted: 0, skipped: true, reason: 'ingest_disabled' }
+  if (!(await isChromeBookmarkSyncEnabled())) {
+    logger.info('ChromeBookmarkSync', 'full repair 已跳过（用户关闭书签同步）')
+    return { upserted: 0, softDeleted: 0, skipped: true, reason: 'sync_disabled' }
   }
 
   const importState = await readChromeBookmarkImportState()
@@ -523,7 +529,7 @@ export async function finalizeChromeBookmarkSyncAfterImport(): Promise<void> {
     if (repair.skipped && repair.reason === 'already_done_this_session') {
       await reconcileChromeBookmarksWithMemory()
     } else if (repair.skipped) {
-      // ingest 关 / 导入未完成 / 配额：仍尝试 holes（门禁相同则也会 skip）
+      // sync 关 / 导入未完成 / 配额：仍尝试 holes（门禁相同则也会 skip）
       await reconcileChromeBookmarksWithMemory()
     }
   }

@@ -50,6 +50,7 @@ describe('runAsyncMemoryLlmEnrichment', () => {
       aiFeaturesEnabled: true,
       linkStatusSweepEnabled: true,
       chromeBookmarkIngestEnabled: true,
+      chromeBookmarkSyncEnabled: false,
       mcpReadOnlyEnabled: false,
       recallOutcomePairSoftAdjustEnabled: true,
       uiLocalePreference: 'system'
@@ -62,6 +63,7 @@ describe('runAsyncMemoryLlmEnrichment', () => {
       aiFeaturesEnabled: false,
       linkStatusSweepEnabled: true,
       chromeBookmarkIngestEnabled: true,
+      chromeBookmarkSyncEnabled: false,
       mcpReadOnlyEnabled: false,
       recallOutcomePairSoftAdjustEnabled: true,
       uiLocalePreference: 'system'

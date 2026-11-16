@@ -5,14 +5,14 @@ const {
   updateUserSettingsMock,
   ensureChromeBookmarksImportedMock,
   refreshClueLlmCompleterFromDevConfigMock,
-  syncChromeBookmarkSyncListenersWithIngestSettingMock,
+  syncChromeBookmarkSyncListenersWithSyncSettingMock,
   ensureLinkStatusSweepAlarmMock
 } = vi.hoisted(() => ({
   getUserSettingsMock: vi.fn(),
   updateUserSettingsMock: vi.fn(),
   ensureChromeBookmarksImportedMock: vi.fn(async () => undefined),
   refreshClueLlmCompleterFromDevConfigMock: vi.fn(async () => undefined),
-  syncChromeBookmarkSyncListenersWithIngestSettingMock: vi.fn(async () => undefined),
+  syncChromeBookmarkSyncListenersWithSyncSettingMock: vi.fn(async () => undefined),
   ensureLinkStatusSweepAlarmMock: vi.fn(async () => undefined)
 }))
 
@@ -30,8 +30,7 @@ vi.mock('@/application/capture/import-chrome-bookmarks-service', () => ({
 }))
 
 vi.mock('@/background/listeners/chrome-bookmark-sync', () => ({
-  syncChromeBookmarkSyncListenersWithIngestSetting:
-    syncChromeBookmarkSyncListenersWithIngestSettingMock
+  syncChromeBookmarkSyncListenersWithSyncSetting: syncChromeBookmarkSyncListenersWithSyncSettingMock
 }))
 
 vi.mock('@/infrastructure/sync/link-status-sweep-alarm', () => ({
@@ -48,6 +47,7 @@ const fullSettings = {
   aiFeaturesEnabled: true,
   linkStatusSweepEnabled: true,
   chromeBookmarkIngestEnabled: true,
+  chromeBookmarkSyncEnabled: false,
   mcpReadOnlyEnabled: false,
   recallOutcomePairSoftAdjustEnabled: true,
   uiLocalePreference: 'system' as const
@@ -56,11 +56,10 @@ const fullSettings = {
 describe('settings-handler', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    getUserSettingsMock.mockResolvedValue(fullSettings)
   })
 
   it('handleGetUserSettings 返回当前设置', async () => {
-    getUserSettingsMock.mockResolvedValue(fullSettings)
-
     const response = await handleGetUserSettings()
     expect(response).toEqual({
       ok: true,
@@ -81,10 +80,10 @@ describe('settings-handler', () => {
     })
     expect(updateUserSettingsMock).toHaveBeenCalledWith({ selectionToolbarEnabled: false })
     expect(ensureChromeBookmarksImportedMock).not.toHaveBeenCalled()
-    expect(syncChromeBookmarkSyncListenersWithIngestSettingMock).not.toHaveBeenCalled()
+    expect(syncChromeBookmarkSyncListenersWithSyncSettingMock).not.toHaveBeenCalled()
   })
 
-  it('重新开启书签灌库时挂监听并 ensure 导入', async () => {
+  it('开启书签导入授权时只跑导入不挂监听', async () => {
     updateUserSettingsMock.mockResolvedValue({
       ...fullSettings,
       chromeBookmarkIngestEnabled: true
@@ -93,19 +92,42 @@ describe('settings-handler', () => {
     const response = await handleUpdateUserSettings({ chromeBookmarkIngestEnabled: true })
     expect(response.ok).toBe(true)
     expect(updateUserSettingsMock).toHaveBeenCalledWith({ chromeBookmarkIngestEnabled: true })
-    expect(syncChromeBookmarkSyncListenersWithIngestSettingMock).toHaveBeenCalledWith(true)
+    expect(ensureChromeBookmarksImportedMock).toHaveBeenCalledTimes(1)
+    expect(syncChromeBookmarkSyncListenersWithSyncSettingMock).not.toHaveBeenCalled()
+  })
+
+  it('开启书签同步时挂监听并 ensure；若 ingest 未开则一并置 ingest', async () => {
+    getUserSettingsMock.mockResolvedValue({
+      ...fullSettings,
+      chromeBookmarkIngestEnabled: false,
+      chromeBookmarkSyncEnabled: false
+    })
+    updateUserSettingsMock.mockResolvedValue({
+      ...fullSettings,
+      chromeBookmarkIngestEnabled: true,
+      chromeBookmarkSyncEnabled: true
+    })
+
+    const response = await handleUpdateUserSettings({ chromeBookmarkSyncEnabled: true })
+    expect(response.ok).toBe(true)
+    expect(updateUserSettingsMock).toHaveBeenCalledWith({
+      chromeBookmarkSyncEnabled: true,
+      chromeBookmarkIngestEnabled: true
+    })
+    expect(syncChromeBookmarkSyncListenersWithSyncSettingMock).toHaveBeenCalledWith(true)
     expect(ensureChromeBookmarksImportedMock).toHaveBeenCalledTimes(1)
   })
 
-  it('关闭书签灌库时卸载监听且不触发导入', async () => {
+  it('关闭书签同步时卸载监听且不改 ingest、不触发导入', async () => {
     updateUserSettingsMock.mockResolvedValue({
       ...fullSettings,
-      chromeBookmarkIngestEnabled: false
+      chromeBookmarkSyncEnabled: false
     })
 
-    const response = await handleUpdateUserSettings({ chromeBookmarkIngestEnabled: false })
+    const response = await handleUpdateUserSettings({ chromeBookmarkSyncEnabled: false })
     expect(response.ok).toBe(true)
-    expect(syncChromeBookmarkSyncListenersWithIngestSettingMock).toHaveBeenCalledWith(false)
+    expect(updateUserSettingsMock).toHaveBeenCalledWith({ chromeBookmarkSyncEnabled: false })
+    expect(syncChromeBookmarkSyncListenersWithSyncSettingMock).toHaveBeenCalledWith(false)
     expect(ensureChromeBookmarksImportedMock).not.toHaveBeenCalled()
   })
 
@@ -126,6 +148,6 @@ describe('settings-handler', () => {
       recallOutcomePairSoftAdjustEnabled: false
     })
     expect(refreshClueLlmCompleterFromDevConfigMock).not.toHaveBeenCalled()
-    expect(syncChromeBookmarkSyncListenersWithIngestSettingMock).not.toHaveBeenCalled()
+    expect(syncChromeBookmarkSyncListenersWithSyncSettingMock).not.toHaveBeenCalled()
   })
 })

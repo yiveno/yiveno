@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 
 import type { RecallHighlightPart } from '@/core/recall/highlight-recall-text'
+import { isOpenableExternalSourceUrl } from '@/infrastructure/browser/active-tab-reader'
 import { getChromeFaviconUrl } from '@/infrastructure/browser/chrome-favicon'
 import { t } from '@/infrastructure/i18n/t'
 import type { AppIconName } from '@/infrastructure/ui/icons/icon-paths'
@@ -364,7 +365,12 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
 
       <!-- 次要热区：在 <a> 外，避免可交互嵌套；减「详情再点打开原文」一步 -->
       <button
-        v-if="card.itemKind === 'text_excerpt' && card.sourceUrl && !showDetailExportSelection"
+        v-if="
+          card.itemKind === 'text_excerpt' &&
+          card.sourceUrl &&
+          isOpenableExternalSourceUrl(card.sourceUrl) &&
+          !showDetailExportSelection
+        "
         type="button"
         class="recall-card-open-source"
         :title="t('detail_open_source')"
@@ -506,7 +512,10 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
         </a>
         <button
           v-if="
-            sibling.itemKind === 'text_excerpt' && sibling.sourceUrl && !showDetailExportSelection
+            sibling.itemKind === 'text_excerpt' &&
+            sibling.sourceUrl &&
+            isOpenableExternalSourceUrl(sibling.sourceUrl) &&
+            !showDetailExportSelection
           "
           type="button"
           class="recall-card-open-source recall-card-open-source--sibling"
