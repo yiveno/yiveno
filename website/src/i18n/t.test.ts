@@ -13,7 +13,7 @@ describe('website i18n t()', () => {
   test('zh_CN 键返回中文', () => {
     expect(t('uninstall.done.closeHint', 'zh_CN')).toBe(zh['uninstall.done.closeHint'])
     expect(t('uninstall.feedback.title', 'zh_CN')).toBe('是什么让你离开？')
-    expect(t('footer.support', 'zh_CN')).toBe('支持')
+    expect(t('faq.lede_contact', 'zh_CN')).toBe('联系')
   })
 
   test('en / zh 键集合对称', () => {
@@ -76,7 +76,7 @@ describe('website i18n t()', () => {
     expect(t('home.geo.title_html', 'zh_CN')).toContain('home-kicker-em')
   })
 
-  test('pricing / account / support / legal 壳键中英齐全', () => {
+  test('pricing / account / faq contact / legal 壳键中英齐全', () => {
     const keys = [
       'pricing.title',
       'pricing.pro.subscribe',
@@ -84,8 +84,8 @@ describe('website i18n t()', () => {
       'account.sign_out',
       'account.upgrade',
       'account.checkout.pending',
-      'support.title',
-      'support.bugs.title',
+      'faq.contact.title',
+      'faq.contact.bugs.title',
       'privacy.title',
       'privacy.translation_note',
       'terms.title',
@@ -97,7 +97,7 @@ describe('website i18n t()', () => {
     }
     expect(t('pricing.title', 'zh_CN')).toBe('定价')
     expect(t('account.sign_out', 'zh_CN')).toBe('退出登录')
-    expect(t('support.title', 'zh_CN')).toBe('支持')
+    expect(t('faq.contact.title', 'zh_CN')).toBe('联系')
     expect(t('privacy.translation_note', 'zh_CN')).toMatch(/英文/)
   })
 })

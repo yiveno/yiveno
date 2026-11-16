@@ -42,6 +42,8 @@ import type {
 import type {
   ChromeBookmarkImportStatusResponse,
   ColdStartStatusResponse,
+  DeleteThirdPartyCorpusBySourceMessage,
+  DeleteThirdPartyCorpusBySourceResponse,
   EnsureChromeBookmarksImportedMessage,
   EnsureChromeBookmarksImportedResponse,
   GenerateGettingStartedClueSamplesMessage,
@@ -50,10 +52,12 @@ import type {
   GetChromeBookmarkImportStatusMessage,
   GetColdStartStatusMessage,
   GetBookmarkLibraryTreeMessage,
+  GetThirdPartyCorpusSummaryMessage,
   ImportLocalMemoryMessage,
   ImportLocalMemoryResponse,
   ImportThirdPartyCorpusMessage,
-  ImportThirdPartyCorpusResponse
+  ImportThirdPartyCorpusResponse,
+  ThirdPartyCorpusSummaryResponse
 } from '@/core/messaging/import-messages'
 import type {
   ListMemoryItemsMessage,
@@ -284,6 +288,27 @@ export async function importThirdPartyCorpus(
     payload
   }
   return sendBackgroundMessage<ImportThirdPartyCorpusResponse>(message)
+}
+
+/** 读取两来源第三方语料条数与最近导入状态。 */
+export async function fetchThirdPartyCorpusSummary(): Promise<ThirdPartyCorpusSummaryResponse> {
+  const message: GetThirdPartyCorpusSummaryMessage = {
+    scope: 'background',
+    type: 'GET_THIRD_PARTY_CORPUS_SUMMARY'
+  }
+  return sendBackgroundMessage<ThirdPartyCorpusSummaryResponse>(message)
+}
+
+/** 按来源硬删全部第三方导入副本。 */
+export async function deleteThirdPartyCorpusBySource(
+  payload: DeleteThirdPartyCorpusBySourceMessage['payload']
+): Promise<DeleteThirdPartyCorpusBySourceResponse> {
+  const message: DeleteThirdPartyCorpusBySourceMessage = {
+    scope: 'background',
+    type: 'DELETE_THIRD_PARTY_CORPUS_BY_SOURCE',
+    payload
+  }
+  return sendBackgroundMessage<DeleteThirdPartyCorpusBySourceResponse>(message)
 }
 
 /** 恢复本地 Backup JSON（含 L3）。 */

@@ -24,6 +24,17 @@ export const ThirdPartyCorpusImportStateSchema = z.object({
 
 export type ThirdPartyCorpusImportState = z.infer<typeof ThirdPartyCorpusImportStateSchema>
 
+/**
+ * 按来源保存的导入状态 map（storage 值形态）。
+ * 旧格式为单条 State；读路径负责迁移。
+ */
+export const ThirdPartyCorpusImportStatesSchema = z.object({
+  raindrop: ThirdPartyCorpusImportStateSchema.optional(),
+  pocket: ThirdPartyCorpusImportStateSchema.optional()
+})
+
+export type ThirdPartyCorpusImportStates = z.infer<typeof ThirdPartyCorpusImportStatesSchema>
+
 export const ThirdPartyCorpusImportErrorCodeSchema = z.enum([
   'THIRD_PARTY_IMPORT_INVALID_FORMAT', // 无法识别导出格式
   'THIRD_PARTY_IMPORT_EMPTY', // 导出无有效条目

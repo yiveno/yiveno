@@ -38,8 +38,16 @@ import {
   runIncrementalMemorySync,
   updateUserSettings,
   importLocalMemory,
-  importThirdPartyCorpus
+  importThirdPartyCorpus,
+  fetchThirdPartyCorpusSummary,
+  deleteThirdPartyCorpusBySource
 } from '@/infrastructure/messaging/background-client'
+import {
+  ThirdPartyCorpusImportErrorCodeSchema,
+  type ThirdPartyCorpusImportState
+} from '@/core/memory/third-party-corpus-import-state'
+import type { ThirdPartyCorpusSource } from '@/core/memory/third-party-corpus-source'
+import { formatLibrarySavedAt } from '@/infrastructure/i18n/format-library-saved-at'
 import { watchAuthSessionStorage } from '@/infrastructure/auth/watch-auth-session-storage'
 import { useLoginMigrationDialog } from '@/pages/shared/use-login-migration-dialog'
 import {
@@ -133,14 +141,31 @@ export function useSettingsPage() {
   const dataError = ref('')
   const exportWorking = ref(false)
   const thirdPartyImportWorking = ref(false)
+  const thirdPartyDeleteWorking = ref(false)
+  /** 两来源条数 + 最近导入状态；加载失败时为 null（仍可导入）。 */
+  type ThirdPartySourceSummaryView = {
+    count: number
+    lastImport: ThirdPartyCorpusImportState | null
+  }
+  type ThirdPartyCorpusSummaryView = {
+    raindrop: ThirdPartySourceSummaryView
+    pocket: ThirdPartySourceSummaryView
+  }
+  const thirdPartyCorpusSummary = ref<ThirdPartyCorpusSummaryView | null>(null)
+  const pendingThirdPartyDeleteSource = ref<ThirdPartyCorpusSource | null>(null)
   const restoreWorking = ref(false)
   const raindropFileInputRef = ref<HTMLInputElement | null>(null)
   const pocketFileInputRef = ref<HTMLInputElement | null>(null)
   const restoreFileInputRef = ref<HTMLInputElement | null>(null)
 
   /** 官网隐私政策 / 服务条款全文 URL。 */
-  const privacyPolicyUrl = `${getWebsiteBaseUrl()}/privacy`
-  const termsOfServiceUrl = `${getWebsiteBaseUrl()}/terms`
+  const websiteBaseUrl = getWebsiteBaseUrl()
+  const privacyPolicyUrl = `${websiteBaseUrl}/privacy`
+  const termsOfServiceUrl = `${websiteBaseUrl}/terms`
+  const pricingUrl = `${websiteBaseUrl}/pricing`
+  const faqUrl = `${websiteBaseUrl}/faq`
+  /** Support 已并入 FAQ Contact（官网 `/support` 软跳同锚点） */
+  const supportUrl = `${websiteBaseUrl}/faq#contact`
 
   const signOutDialogOpen = ref(false)
   const deleteAccountDialogOpen = ref(false)
@@ -152,6 +177,7 @@ export function useSettingsPage() {
     | 'clear_orphans'
     | 'privacy_sync'
     | 'restore_backup'
+    | 'delete_third_party'
 
   const confirmDialogAction = ref<SettingsConfirmAction | null>(null)
   const confirmDialogError = ref('')
@@ -246,9 +272,54 @@ export function useSettingsPage() {
       if (section === 'ai') {
         void loadHostedQuota()
       }
+      if (section === 'third_party') {
+        void loadThirdPartyCorpusSummary()
+      }
     },
     { immediate: true }
   )
+
+  /** 加载第三方语料两来源摘要；失败时置 null，不弹错。 */
+  async function loadThirdPartyCorpusSummary(): Promise<void> {
+    try {
+      const response = await fetchThirdPartyCorpusSummary()
+      if (!response.ok) {
+        thirdPartyCorpusSummary.value = null
+        return
+      }
+      thirdPartyCorpusSummary.value = response.sources
+    } catch {
+      thirdPartyCorpusSummary.value = null
+    }
+  }
+
+  /** 状态行文案：未导入 / 条数+上次导入 / 失败可见。 */
+  function thirdPartySourceStatusCopy(source: ThirdPartyCorpusSource): string {
+    const summary = thirdPartyCorpusSummary.value?.[source]
+    if (!summary || (summary.count === 0 && summary.lastImport == null)) {
+      return t('settings_third_party_not_imported')
+    }
+    const lastImport = summary.lastImport
+    if (lastImport?.status === 'failed') {
+      const parsedCode = ThirdPartyCorpusImportErrorCodeSchema.safeParse(lastImport.errorCode)
+      const failLabel = parsedCode.success
+        ? tThirdPartyImportError(parsedCode.data)
+        : t('error_third_party_import_failed')
+      const countPart =
+        summary.count > 0 ? `${t('settings_third_party_count', [String(summary.count)])} · ` : ''
+      return `${countPart}${failLabel}`
+    }
+    const parts = [t('settings_third_party_count', [String(summary.count)])]
+    if (lastImport) {
+      const dateLabel = formatLibrarySavedAt(lastImport.finishedAt ?? lastImport.startedAt)
+      if (dateLabel) {
+        parts.push(
+          t('settings_third_party_last_import', [dateLabel, String(lastImport.importedCount)])
+        )
+      }
+    }
+    return parts.join(' · ')
+  }
 
   async function loadCommands(options?: { quiet?: boolean }) {
     const quiet = options?.quiet === true
@@ -843,6 +914,8 @@ export function useSettingsPage() {
         return t('settings_sync_toggle')
       case 'restore_backup':
         return t('settings_sync_restore_backup')
+      case 'delete_third_party':
+        return t('settings_third_party_delete_all')
       default:
         return ''
     }
@@ -865,6 +938,12 @@ export function useSettingsPage() {
         return t('settings_privacy_sync_confirm')
       case 'restore_backup':
         return t('settings_sync_restore_backup_confirm')
+      case 'delete_third_party': {
+        const source = pendingThirdPartyDeleteSource.value
+        const count = source ? (thirdPartyCorpusSummary.value?.[source]?.count ?? 0) : 0
+        const sourceLabel = source === 'pocket' ? 'Pocket' : 'Raindrop'
+        return t('settings_third_party_delete_confirm', [String(count), sourceLabel])
+      }
       default:
         return ''
     }
@@ -875,7 +954,8 @@ export function useSettingsPage() {
     return action === 'clear_local' ||
       action === 'clear_recall_adaptation' ||
       action === 'delete_cloud' ||
-      action === 'clear_orphans'
+      action === 'clear_orphans' ||
+      action === 'delete_third_party'
       ? 'danger'
       : 'default'
   })
@@ -892,6 +972,8 @@ export function useSettingsPage() {
         return savingSync.value
       case 'restore_backup':
         return restoringSyncBackup.value
+      case 'delete_third_party':
+        return thirdPartyDeleteWorking.value
       default:
         return false
     }
@@ -904,6 +986,7 @@ export function useSettingsPage() {
     confirmDialogAction.value = null
     confirmDialogError.value = ''
     pendingSyncEnable.value = null
+    pendingThirdPartyDeleteSource.value = null
   }
 
   async function executePrivacySyncEnable(): Promise<boolean> {
@@ -963,6 +1046,9 @@ export function useSettingsPage() {
       case 'restore_backup':
         ok = await executeRestoreLatestSyncBackup()
         break
+      case 'delete_third_party':
+        ok = await executeDeleteThirdPartyCorpus()
+        break
       default:
         break
     }
@@ -970,6 +1056,41 @@ export function useSettingsPage() {
     if (ok) {
       closeConfirmDialog()
     }
+  }
+
+  /** 确认框：按来源硬删第三方导入。 */
+  async function executeDeleteThirdPartyCorpus(): Promise<boolean> {
+    const source = pendingThirdPartyDeleteSource.value
+    if (!source) {
+      return false
+    }
+    thirdPartyDeleteWorking.value = true
+    try {
+      const response = await deleteThirdPartyCorpusBySource({ source })
+      if (!response.ok) {
+        confirmDialogError.value = t('error_third_party_import_failed')
+        return false
+      }
+      showToastSuccess(t('settings_third_party_delete_done', [String(response.deletedCount)]))
+      await loadThirdPartyCorpusSummary()
+      return true
+    } catch {
+      confirmDialogError.value = t('error_third_party_import_failed')
+      return false
+    } finally {
+      thirdPartyDeleteWorking.value = false
+    }
+  }
+
+  /** 打开按来源删除确认框。 */
+  function handleDeleteThirdPartyCorpus(source: ThirdPartyCorpusSource): void {
+    const count = thirdPartyCorpusSummary.value?.[source]?.count ?? 0
+    if (count <= 0 || thirdPartyDeleteWorking.value || thirdPartyImportWorking.value) {
+      return
+    }
+    pendingThirdPartyDeleteSource.value = source
+    confirmDialogError.value = ''
+    confirmDialogAction.value = 'delete_third_party'
   }
 
   async function handleExportLocalMemory() {
@@ -1092,6 +1213,7 @@ export function useSettingsPage() {
           source === 'raindrop' ? 'Raindrop' : 'Pocket'
         ])
       )
+      await loadThirdPartyCorpusSummary()
     } catch {
       showToastError(t('error_third_party_import_failed'))
     } finally {
@@ -1412,6 +1534,7 @@ export function useSettingsPage() {
     handleClearLocalMemory,
     handleClearLocalRecallAdaptation,
     handleClearOrphans,
+    handleDeleteThirdPartyCorpus,
     handleRecallOutcomePairSoftAdjustToggle,
     handleDeleteCloudMemory,
     handleDocumentVisibilityChange,
@@ -1440,6 +1563,7 @@ export function useSettingsPage() {
     loadHostedQuota,
     loadSubscriptionStatus,
     loadSyncContext,
+    loadThirdPartyCorpusSummary,
     loadUserSettings,
     mcpReadOnlyEnabled,
     recallOutcomePairSoftAdjustEnabled,
@@ -1451,10 +1575,14 @@ export function useSettingsPage() {
     orphanBucketCount,
     orphanWorking,
     pendingSyncEnable,
+    pendingThirdPartyDeleteSource,
     pocketFileInputRef,
     privacyNoticeAcked,
+    faqUrl,
+    pricingUrl,
     privacyPolicyUrl,
     raindropFileInputRef,
+    supportUrl,
     restoreFileInputRef,
     refreshCommandsIfReturnedFromShortcuts,
     refreshSyncContextOnVisible,
@@ -1508,7 +1636,10 @@ export function useSettingsPage() {
     syncLocalProfileOwnerCount,
     syncRemoteCount,
     termsOfServiceUrl,
+    thirdPartyCorpusSummary,
+    thirdPartyDeleteWorking,
     thirdPartyImportWorking,
+    thirdPartySourceStatusCopy,
     t
   }
 }

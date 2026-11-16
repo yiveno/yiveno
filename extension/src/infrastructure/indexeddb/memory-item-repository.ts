@@ -20,6 +20,7 @@ function normalizeExcerptDedupeText(selectedText: string): string {
 import { mergeUniqueStrings } from '@/core/memory/enrich-memory-clues'
 import { resolveMemoryItemSavedAtIso } from '@/core/memory/memory-item-saved-at'
 import { MemoryItemSchema, safeParseMemoryItem, type MemoryItem } from '@/core/memory/memory-item'
+import type { ThirdPartyCorpusSource } from '@/core/memory/third-party-corpus-source'
 import {
   getCurrentOwnerId,
   getOrCreateLocalProfile
@@ -956,6 +957,33 @@ export class MemoryItemRepository {
    */
   async putEnrichmentClues(item: MemoryItem): Promise<void> {
     await this.put(item)
+  }
+
+  /**
+   * 统计当前 owner 下指定第三方来源、未软删的 bookmark 条数。
+   * 沿用第三方 upsert 的 list+内存过滤（单次导入量小，不建索引）。
+   */
+  async countActiveByCorpusSource(source: ThirdPartyCorpusSource): Promise<number> {
+    const items = await this.listByOwner({ type: 'bookmark', limit: 5000 })
+    return items.filter(
+      item =>
+        item.deletedAt == null && item.type === 'bookmark' && item.payload.corpusSource === source
+    ).length
+  }
+
+  /**
+   * 硬删当前 owner 下指定第三方来源的全部未软删 bookmark。
+   * 关联清理跟随 {@link hardDeleteMany}（条目本体含 enrichment/embedding；倒排 token 清空）。
+   */
+  async hardDeleteByCorpusSource(source: ThirdPartyCorpusSource): Promise<number> {
+    const items = await this.listByOwner({ type: 'bookmark', limit: 5000 })
+    const ids = items
+      .filter(
+        item =>
+          item.deletedAt == null && item.type === 'bookmark' && item.payload.corpusSource === source
+      )
+      .map(item => item.id)
+    return this.hardDeleteMany(ids)
   }
 
   /**

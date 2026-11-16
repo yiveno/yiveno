@@ -210,25 +210,59 @@ export type ImportLocalMemoryErrorResponse = {
 export type ImportLocalMemoryResponse =
   ImportLocalMemorySuccessResponse | ImportLocalMemoryErrorResponse
 
-/** 查询第三方语料导入进度。 */
-export type GetThirdPartyCorpusImportStatusMessage = {
+/** 单来源摘要（条数 + 最近导入状态）。 */
+export type ThirdPartyCorpusSourceSummaryPayload = {
+  count: number
+  lastImport: ThirdPartyCorpusImportState | null
+}
+
+/** 查询两来源第三方语料条数与最近导入状态。 */
+export type GetThirdPartyCorpusSummaryMessage = {
   scope: BackgroundMessageScope
-  type: 'GET_THIRD_PARTY_CORPUS_IMPORT_STATUS'
+  type: 'GET_THIRD_PARTY_CORPUS_SUMMARY'
 }
 
-export type ThirdPartyCorpusImportStatusSuccessResponse = {
+export type ThirdPartyCorpusSummarySuccessResponse = {
   ok: true
-  state: ThirdPartyCorpusImportState | null
+  sources: {
+    raindrop: ThirdPartyCorpusSourceSummaryPayload
+    pocket: ThirdPartyCorpusSourceSummaryPayload
+  }
 }
 
-export type ThirdPartyCorpusImportStatusErrorResponse = {
+export type ThirdPartyCorpusSummaryErrorResponse = {
   ok: false
   errorCode: ImportErrorCode
   error?: string
 }
 
-export type ThirdPartyCorpusImportStatusResponse =
-  ThirdPartyCorpusImportStatusSuccessResponse | ThirdPartyCorpusImportStatusErrorResponse
+export type ThirdPartyCorpusSummaryResponse =
+  ThirdPartyCorpusSummarySuccessResponse | ThirdPartyCorpusSummaryErrorResponse
+
+const deleteThirdPartyCorpusBySourcePayloadSchema = z.object({
+  source: ThirdPartyCorpusSourceSchema
+})
+
+/** 按来源硬删全部第三方导入副本。 */
+export type DeleteThirdPartyCorpusBySourceMessage = {
+  scope: BackgroundMessageScope
+  type: 'DELETE_THIRD_PARTY_CORPUS_BY_SOURCE'
+  payload: z.infer<typeof deleteThirdPartyCorpusBySourcePayloadSchema>
+}
+
+export type DeleteThirdPartyCorpusBySourceSuccessResponse = {
+  ok: true
+  deletedCount: number
+}
+
+export type DeleteThirdPartyCorpusBySourceErrorResponse = {
+  ok: false
+  errorCode: ImportErrorCode
+  error?: string
+}
+
+export type DeleteThirdPartyCorpusBySourceResponse =
+  DeleteThirdPartyCorpusBySourceSuccessResponse | DeleteThirdPartyCorpusBySourceErrorResponse
 
 export type ImportBackgroundMessage =
   | GetChromeBookmarkImportStatusMessage
@@ -238,7 +272,8 @@ export type ImportBackgroundMessage =
   | GenerateGettingStartedClueSamplesMessage
   | ImportThirdPartyCorpusMessage
   | ImportLocalMemoryMessage
-  | GetThirdPartyCorpusImportStatusMessage
+  | GetThirdPartyCorpusSummaryMessage
+  | DeleteThirdPartyCorpusBySourceMessage
 
 export type ImportBackgroundResponse =
   | ChromeBookmarkImportStatusResponse
@@ -248,10 +283,15 @@ export type ImportBackgroundResponse =
   | GenerateGettingStartedClueSamplesResponse
   | ImportThirdPartyCorpusResponse
   | ImportLocalMemoryResponse
-  | ThirdPartyCorpusImportStatusResponse
+  | ThirdPartyCorpusSummaryResponse
+  | DeleteThirdPartyCorpusBySourceResponse
 
 export function parseImportThirdPartyCorpusPayload(value: unknown) {
   return importThirdPartyCorpusPayloadSchema.parse(value)
+}
+
+export function parseDeleteThirdPartyCorpusBySourcePayload(value: unknown) {
+  return deleteThirdPartyCorpusBySourcePayloadSchema.parse(value)
 }
 
 export function parseImportLocalMemoryPayload(value: unknown) {

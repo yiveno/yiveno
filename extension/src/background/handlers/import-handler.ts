@@ -5,14 +5,16 @@ import {
 import type {
   ChromeBookmarkImportStatusResponse,
   ColdStartStatusResponse,
+  DeleteThirdPartyCorpusBySourceResponse,
   EnsureChromeBookmarksImportedResponse,
   GenerateGettingStartedClueSamplesResponse,
   GetBookmarkLibraryTreeResponse,
   ImportLocalMemoryResponse,
   ImportThirdPartyCorpusResponse,
-  ThirdPartyCorpusImportStatusResponse
+  ThirdPartyCorpusSummaryResponse
 } from '@/core/messaging/import-messages'
 import {
+  parseDeleteThirdPartyCorpusBySourcePayload,
   parseGenerateGettingStartedClueSamplesPayload,
   parseImportLocalMemoryPayload,
   parseImportThirdPartyCorpusPayload
@@ -28,7 +30,8 @@ import {
 } from '@/application/capture/import-local-memory-service'
 import {
   ThirdPartyCorpusImportError,
-  getThirdPartyCorpusImportStatus,
+  deleteThirdPartyCorpusBySource,
+  getThirdPartyCorpusSummary,
   importThirdPartyCorpusExport
 } from '@/application/capture/import-third-party-corpus-service'
 import { generateGettingStartedClueSamples } from '@/application/onboarding/generate-getting-started-clue-samples'
@@ -311,18 +314,42 @@ export async function handleImportLocalMemory(
   }
 }
 
-/** 读取第三方语料导入进度。 */
-export async function handleGetThirdPartyCorpusImportStatus(): Promise<ThirdPartyCorpusImportStatusResponse> {
-  const startedAt = flowStart('Import', '读取第三方导入状态')
+/** 读取两来源第三方语料条数与最近导入状态。 */
+export async function handleGetThirdPartyCorpusSummary(): Promise<ThirdPartyCorpusSummaryResponse> {
+  const startedAt = flowStart('Import', '读取第三方语料摘要')
   try {
-    const state = await getThirdPartyCorpusImportStatus()
-    flowOk('Import', '读取第三方导入状态', startedAt, {
-      status: state?.status ?? null,
-      source: state?.source ?? null
+    const sources = await getThirdPartyCorpusSummary()
+    flowOk('Import', '读取第三方语料摘要', startedAt, {
+      raindropCount: sources.raindrop.count,
+      pocketCount: sources.pocket.count
     })
-    return { ok: true, state }
+    return { ok: true, sources }
   } catch (error) {
-    flowFail('Import', '读取第三方导入状态', startedAt, error)
+    flowFail('Import', '读取第三方语料摘要', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'IMPORT_STATUS_READ_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/** 按来源硬删全部第三方导入副本。 */
+export async function handleDeleteThirdPartyCorpusBySource(
+  payload: unknown
+): Promise<DeleteThirdPartyCorpusBySourceResponse> {
+  const startedAt = flowStart('Import', '按来源删除第三方语料')
+  try {
+    const input = parseDeleteThirdPartyCorpusBySourcePayload(payload)
+    const result = await deleteThirdPartyCorpusBySource(input.source)
+    invalidateBookmarkLibraryTreeOnChromeChange()
+    flowOk('Import', '按来源删除第三方语料', startedAt, {
+      source: input.source,
+      deletedCount: result.deletedCount
+    })
+    return { ok: true, deletedCount: result.deletedCount }
+  } catch (error) {
+    flowFail('Import', '按来源删除第三方语料', startedAt, error)
     return {
       ok: false,
       errorCode: 'IMPORT_STATUS_READ_FAILED',

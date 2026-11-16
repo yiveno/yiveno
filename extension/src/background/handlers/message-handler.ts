@@ -43,12 +43,13 @@ import {
   handleOpenRecallShell
 } from '@/background/handlers/commands-handler'
 import {
+  handleDeleteThirdPartyCorpusBySource,
   handleEnsureChromeBookmarksImported,
   handleGetBookmarkLibraryTree,
   handleGetChromeBookmarkImportStatus,
   handleGetColdStartStatus,
   handleGenerateGettingStartedClueSamples,
-  handleGetThirdPartyCorpusImportStatus,
+  handleGetThirdPartyCorpusSummary,
   handleImportLocalMemory,
   handleImportThirdPartyCorpus
 } from '@/background/handlers/import-handler'
@@ -210,8 +211,10 @@ async function dispatchBackgroundMessage(
       return handleImportThirdPartyCorpus(message.payload)
     case 'IMPORT_LOCAL_MEMORY':
       return handleImportLocalMemory(message.payload)
-    case 'GET_THIRD_PARTY_CORPUS_IMPORT_STATUS':
-      return handleGetThirdPartyCorpusImportStatus()
+    case 'GET_THIRD_PARTY_CORPUS_SUMMARY':
+      return handleGetThirdPartyCorpusSummary()
+    case 'DELETE_THIRD_PARTY_CORPUS_BY_SOURCE':
+      return handleDeleteThirdPartyCorpusBySource(message.payload)
     case 'GET_BOOKMARK_LIBRARY_TREE':
       return handleGetBookmarkLibraryTree(parseGetBookmarkLibraryTreePayload(message.payload))
     case 'GET_EXTENSION_COMMANDS':

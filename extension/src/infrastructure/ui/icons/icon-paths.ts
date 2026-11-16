@@ -9,6 +9,7 @@ export type AppIconNode = readonly [tag: string, attrs: Readonly<Record<string, 
 export const APP_ICON_NAMES = [
   'account_circle',
   'arrow_downward',
+  'arrow_up_right',
   'arrow_upward',
   'bookmark',
   'bookmark_add',
@@ -42,6 +43,7 @@ export const APP_ICON_NAMES = [
   'refresh',
   'shuffle',
   'settings',
+  'shield_user',
   'stacks',
   'triangle_alert',
   'wifi_off'
@@ -56,6 +58,7 @@ export const APP_ICON_VIEW_BOX = '0 0 24 24'
 export const APP_ICON_LUCIDE_SOURCE: Record<AppIconName, string> = {
   account_circle: 'CircleUser',
   arrow_downward: 'ArrowDown',
+  arrow_up_right: 'ArrowUpRight',
   arrow_upward: 'ArrowUp',
   bookmark: 'Bookmark',
   bookmark_add: 'BookmarkPlus',
@@ -89,6 +92,7 @@ export const APP_ICON_LUCIDE_SOURCE: Record<AppIconName, string> = {
   refresh: 'RefreshCw',
   shuffle: 'Shuffle',
   settings: 'Settings',
+  shield_user: 'ShieldUser',
   stacks: 'Layers',
   triangle_alert: 'TriangleAlert',
   wifi_off: 'WifiOff'
@@ -107,6 +111,11 @@ export const APP_ICON_NODES: Record<AppIconName, readonly AppIconNode[]> = {
   arrow_downward: [
     ['path', { d: 'm19 12-7 7-7-7' }],
     ['path', { d: 'M12 5v14' }]
+  ] as const,
+  /** Lucide ArrowUpRight：外链 / 新开页通识箭头（非 ExternalLink 方框款） */
+  arrow_up_right: [
+    ['path', { d: 'M7 7h10v10' }],
+    ['path', { d: 'M7 17 17 7' }]
   ] as const,
   arrow_upward: [
     ['path', { d: 'm5 12 7-7 7 7' }],
@@ -329,6 +338,17 @@ export const APP_ICON_NODES: Record<AppIconName, readonly AppIconNode[]> = {
       }
     ],
     ['circle', { cx: '12', cy: '12', r: '3' }]
+  ] as const,
+  // Lucide ShieldUser：Settings 隐私顶栏说明卡
+  shield_user: [
+    [
+      'path',
+      {
+        d: 'M20 13c0 5-3.5 7.5-7.55 8.95a1 1 0 0 1-.9 0C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z'
+      }
+    ],
+    ['path', { d: 'M6.376 18.91a6 6 0 0 1 11.249.003' }],
+    ['circle', { cx: '12', cy: '11', r: '4' }]
   ] as const,
   stacks: [
     [

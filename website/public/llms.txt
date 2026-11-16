@@ -18,13 +18,13 @@ Yiveno is a Chromium browser extension (Microsoft Edge and Google Chrome) for pe
 ## Canonical pages
 
 - Home: https://yiveno.com/
-- FAQ: https://yiveno.com/faq
+- FAQ (includes Contact): https://yiveno.com/faq
 - Pricing: https://yiveno.com/pricing
-- Support: https://yiveno.com/support
 - Privacy: https://yiveno.com/privacy
 - Terms: https://yiveno.com/terms
 - GitHub org: https://github.com/yiveno
 
 ## Optional
 
-- Full FAQ answers: https://yiveno.com/faq
+- Contact (same page as FAQ): https://yiveno.com/faq#contact
+- Legacy /support redirects to FAQ Contact

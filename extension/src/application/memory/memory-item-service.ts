@@ -12,6 +12,7 @@ import {
 import type { CreateBookmarkInput, CreateTextExcerptInput } from '@/core/memory/create-memory-item'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import type { SupportedMemoryItemType } from '@/core/memory/memory-item-type'
+import type { ThirdPartyCorpusSource } from '@/core/memory/third-party-corpus-source'
 import {
   buildFilterClueFromParsed,
   shouldRecallByConstraintNeighborhood
@@ -49,6 +50,16 @@ export class MemoryItemService {
   /** 第三方语料导出 upsert（§5.10.6；不调度 LLM，与 bulk 书签一致）。 */
   async upsertBookmarkFromThirdPartyCorpus(input: CreateBookmarkInput): Promise<MemoryItem> {
     return this.repository.upsertBookmarkFromThirdPartyCorpus(input)
+  }
+
+  /** 统计指定第三方来源的未软删 bookmark 条数。 */
+  async countActiveByCorpusSource(source: ThirdPartyCorpusSource): Promise<number> {
+    return this.repository.countActiveByCorpusSource(source)
+  }
+
+  /** 硬删指定第三方来源的全部未软删 bookmark。 */
+  async hardDeleteByCorpusSource(source: ThirdPartyCorpusSource): Promise<number> {
+    return this.repository.hardDeleteByCorpusSource(source)
   }
 
   /**

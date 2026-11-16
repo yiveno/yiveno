@@ -109,7 +109,6 @@ export const zh = {
   'nav.aria_primary': '主导航',
   'footer.pricing': '定价',
   'footer.faq': '常见问题',
-  'footer.support': '支持',
   'footer.privacy': '隐私',
   'footer.terms': '条款',
   'footer.tagline': '· 找到你存过的。',
@@ -177,28 +176,6 @@ export const zh = {
   'account.checkout.failed': '付款未成功。你可以再试一次「升级到 Pro」。',
   'account.checkout.error': '无法开始结账，请再试一次。',
   'account.date.unknown': '未知',
-
-  'support.meta.title': '支持 · Yiveno',
-  'support.meta.description':
-    'Yiveno 帮助：缺陷、账号、账单与安装相关问题请发邮件。我们通过 support@yiveno.com 回复。',
-  'support.title': '支持',
-  'support.lede_before': '需要回复？发邮件给我们。不需要回复的产品想法，请用',
-  'support.lede_mid': '；或在卸载扩展时用可选表单。短问答见',
-  'support.lede_faq': '常见问题',
-  'support.lede_after': '。',
-  'support.bugs.title': '缺陷与账号帮助',
-  'support.bugs.body_before': '东西坏了、登不进去、同步问题或账单疑问：',
-  'support.bugs.hint':
-    '请写明你试过什么、浏览器（Edge 或 Chrome）与版本，以及扩展版本（如有）——说清楚一次，我们好一次回完。',
-  'support.install.title': '安装可得性',
-  'support.install.body_before':
-    'Yiveno 尚未上架公开的 Chrome 网上应用店或 Microsoft Edge 加载项。若希望公开上架时收到通知，请发邮件到',
-  'support.install.body_after': '，主题写 "Install notify"。',
-  'support.ideas.title': '产品想法',
-  'support.ideas.body_before': '功能想法或「为什么离开」类留言（不期待回复）：',
-  'support.privacy.title': '隐私',
-  'support.privacy.body_before': '隐私相关问题：',
-  'support.privacy.policy': '隐私政策',
 
   'privacy.meta.title': '隐私政策 · Yiveno',
   'privacy.meta.description':
@@ -304,11 +281,27 @@ export const zh = {
 
   'faq.meta.title': '常见问题 · Yiveno',
   'faq.meta.description':
-    'Yiveno 是什么、不是什么，Recall 怎么工作，隐私默认，Free / Pro，以及商店上架状态。',
+    'Yiveno 是什么与不是什么、Recall 怎么工作、隐私默认、Free / Pro、商店上架状态，以及如何联系我们。',
   'faq.title': '常见问题',
   'faq.lede_before': '关于「找到你存过的东西」的短答。遇到 bug 或账号问题，见',
-  'faq.lede_support': '支持',
+  'faq.lede_contact': '联系',
   'faq.lede_after': '。',
+  'faq.contact.title': '联系',
+  'faq.contact.lede_before': '需要回复？发邮件给我们。不需要回复的产品想法，请用',
+  'faq.contact.lede_after': '；或在卸载扩展时用可选表单。',
+  'faq.contact.bugs.title': '缺陷与账号帮助',
+  'faq.contact.bugs.body_before': '东西坏了、登不进去、同步问题或账单疑问：',
+  'faq.contact.bugs.hint':
+    '请写明你试过什么、浏览器（Edge 或 Chrome）与版本，以及扩展版本（如有）——说清楚一次，我们好一次回完。',
+  'faq.contact.install.title': '安装可得性',
+  'faq.contact.install.body_before':
+    'Yiveno 尚未上架公开的 Chrome 网上应用店或 Microsoft Edge 加载项。若希望公开上架时收到通知，请发邮件到',
+  'faq.contact.install.body_after': '，主题写 "Install notify"。',
+  'faq.contact.ideas.title': '产品想法',
+  'faq.contact.ideas.body_before': '功能想法或「为什么离开」类留言（不期待回复）：',
+  'faq.contact.privacy.title': '隐私',
+  'faq.contact.privacy.body_before': '隐私相关问题：',
+  'faq.contact.privacy.policy': '隐私政策',
   'faq.what_is.q': 'Yiveno 是什么？',
   'faq.what_is.a':
     'Yiveno 就是那个找到你存过的东西的。轻轻存下页面或段落，再说出你记得的内容来找。它给出一小份相近列表——你来选。它是面向 Microsoft Edge 与 Google Chrome 的 Chromium 浏览器扩展。',

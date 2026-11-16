@@ -1039,6 +1039,59 @@
   "settings_tab_capture": {
     "message": "保存"
   },
+  "settings_tab_third_party": {
+    "message": "第三方数据"
+  },
+  "settings_third_party_intro": {
+    "message": "从 Raindrop、Pocket 等服务导入你保存的内容，并在同一处管理它们。导入的条目只存在本机，不会同步到 Chrome 书签。"
+  },
+  "settings_third_party_count": {
+    "message": "已导入 $COUNT$ 条",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_third_party_last_import": {
+    "message": "上次导入 $DATE$ · $COUNT$ 条",
+    "placeholders": {
+      "DATE": {
+        "content": "$1"
+      },
+      "COUNT": {
+        "content": "$2"
+      }
+    }
+  },
+  "settings_third_party_not_imported": {
+    "message": "尚未导入"
+  },
+  "settings_third_party_delete_all": {
+    "message": "删除全部导入"
+  },
+  "settings_third_party_delete_all_hint": {
+    "message": "只删除 Yiveno 里的导入副本，不动原服务里的数据。再次导入同一文件会重新带回来。"
+  },
+  "settings_third_party_delete_confirm": {
+    "message": "确定要删除全部 $COUNT$ 条从 $SOURCE$ 导入的内容吗？此操作无法撤销。",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      },
+      "SOURCE": {
+        "content": "$2"
+      }
+    }
+  },
+  "settings_third_party_delete_done": {
+    "message": "已删除 $COUNT$ 条",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
+  },
   "settings_tab_shortcuts": {
     "message": "快捷键"
   },
@@ -1047,6 +1100,12 @@
   },
   "settings_tab_privacy": {
     "message": "数据与隐私"
+  },
+  "settings_tab_help": {
+    "message": "帮助与支持"
+  },
+  "settings_tab_legal": {
+    "message": "法律信息"
   },
   "settings_tab_ai": {
     "message": "AI"
@@ -1077,9 +1136,6 @@
   },
   "settings_placeholder_privacy": {
     "message": "隐私选项尚未开放。"
-  },
-  "settings_data_group_bring_in": {
-    "message": "导入"
   },
   "settings_data_group_backup": {
     "message": "备份"
@@ -1202,7 +1258,16 @@
     "message": "清除本机 Recall 适应信号失败"
   },
   "settings_privacy_intro": {
-    "message": "了解 Yiveno 如何处理你的记忆，以及导入、备份、本机 Recall 适应与清除。本浏览器书签不会被改动。"
+    "message": "了解 Yiveno 如何处理你的记忆，以及备份、本机 Recall 适应与清除。本浏览器书签不会被改动。"
+  },
+  "settings_privacy_banner_title": {
+    "message": "我们重视你的隐私"
+  },
+  "settings_privacy_banner_body": {
+    "message": "了解我们为保护你的信息隐私和安全而采取的措施。"
+  },
+  "settings_privacy_banner_learn_more": {
+    "message": "详细了解"
   },
   "settings_mcp_toggle": {
     "message": "只读 MCP（beta）"
@@ -1215,36 +1280,6 @@
   },
   "settings_mcp_remote_sync_failed": {
     "message": "无法将 MCP 开关同步到云端。本机设置已保存——联网后再试。"
-  },
-  "settings_privacy_details_summary": {
-    "message": "Yiveno 存什么、谁拥有、我们发送什么"
-  },
-  "settings_privacy_bullet_local": {
-    "message": "本机：摘录、附注、书签、打开/忽略信号，以及让 Recall 工作的辅助数据。"
-  },
-  "settings_privacy_bullet_adaptation": {
-    "message": "本机 Recall 排序可能使用 Outcome 对与打开信号；它们留在本机。数据 → 清除本机 Recall 适应信号可重置这些缓冲且不删库。开启 AI 做理解 ≠ 授权把内容留存做质量评估。默认不上传送去标识的产品分析。"
-  },
-  "settings_privacy_bullet_ownership": {
-    "message": "你拥有 Capture 的内容与库内使用历史；Recall 辅助数据随条目存在，不作为单独的 Yiveno 资产。"
-  },
-  "settings_privacy_bullet_export": {
-    "message": "完整备份导出（数据分区）始终可用 — 这是产品责任，不是付费功能。"
-  },
-  "settings_privacy_bullet_cloud": {
-    "message": "云端（可选）：开启同步后，摘录会随账号同步，并存储在美国（美东 / 俄亥俄）。书签仍来自本机浏览器导入。"
-  },
-  "settings_privacy_bullet_account": {
-    "message": "账号：登录用于身份与可选同步。Yiveno 由杭州的个人运营（日后可能成为杭州公司）。"
-  },
-  "settings_privacy_bullet_ai": {
-    "message": "AI：线索理解可能调用模型；默认不会发送你的完整记忆库。"
-  },
-  "settings_privacy_bullet_link_sweep": {
-    "message": "链接巡检：每周由你的浏览器直接请求你存过的网站；URL 不经过 Yiveno 服务器。可在 AI 分区随时关闭。"
-  },
-  "settings_privacy_bullet_not_collected": {
-    "message": "不收集：浏览历史、剪贴板读取、你未 Capture 的页面，或作为个人导出的去标识聚合产品分析。"
   },
   "settings_privacy_ack": {
     "message": "我已了解本说明"
@@ -1259,7 +1294,7 @@
     "message": "当前说明版本：尚未确认（开启同步前必须确认）"
   },
   "settings_privacy_sync_confirm": {
-    "message": "开启云同步会将本机摘录与账号对齐（可能上传）。已同步摘录存储在美国（美东 / 俄亥俄）。书签仍留在本机浏览器。请确认已阅读设置中的隐私说明。继续？"
+    "message": "开启云同步会将本机摘录与账号对齐（可能上传）。已同步摘录存储在美国（美东 / 俄亥俄）。书签仍留在本机浏览器。请确认已阅读隐私政策。继续？"
   },
   "settings_privacy_open_sync": {
     "message": "打开账号与同步"
@@ -1267,20 +1302,20 @@
   "settings_privacy_open_policy": {
     "message": "阅读完整隐私政策"
   },
-  "settings_privacy_open_policy_hint": {
-    "message": "Yiveno 网站上的完整说明。"
+  "settings_legal_link_pricing": {
+    "message": "定价"
   },
-  "settings_privacy_open_policy_action": {
-    "message": "阅读"
+  "settings_legal_link_support": {
+    "message": "支持"
   },
-  "settings_privacy_open_terms": {
-    "message": "阅读服务条款"
+  "settings_legal_link_privacy": {
+    "message": "隐私政策"
   },
-  "settings_privacy_open_terms_hint": {
-    "message": "Yiveno 网站上的条款。"
+  "settings_legal_link_terms": {
+    "message": "服务条款"
   },
-  "settings_privacy_open_terms_action": {
-    "message": "阅读"
+  "settings_legal_link_faq": {
+    "message": "常见问题"
   },
   "settings_privacy_export": {
     "message": "导出完整备份"

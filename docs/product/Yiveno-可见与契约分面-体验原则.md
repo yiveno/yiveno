@@ -116,7 +116,7 @@ downstream:
 | W3  | FAQ 可见 Q&A                  | 人读问答；无堆长 https 主句                               | `FAQ_ENTRIES` = 正文 + `FAQPage` JSON-LD 同源                   | ✅（既有 · 无缺口） |
 | W4  | 首页 JSON-LD / OG / canonical | meta 短描述                                               | `CANONICAL_ORIGIN` 绝对 URL；Offer 无假 InStock                 | ✅（既有 · 无缺口） |
 | W5  | `llms.txt` / sitemap / robots | （agent 读）                                              | 绝对 canonical 页列表；与公开路由一致                           | ✅（既有 · 无缺口） |
-| W6  | Support / Privacy / Terms 链  | 动作/页名或联系邮箱（控件职责即出示联系方式）             | `mailto:` / 站内 path / 绝对外链完整                            | ✅（既有 · 无缺口） |
+| W6  | FAQ Contact / Privacy / Terms | 动作/页名或联系邮箱（控件职责即出示联系方式）             | `mailto:` / `/faq#contact` / 绝对外链完整；旧 `/support` 软跳   | ✅（既有 · 无缺口） |
 
 **本波不做：** 官网营销大段重写；不把 Library 行做成 URL 芯片；不把 `llms.txt` 绝对 URL「缩短」进 UI。
 

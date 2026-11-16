@@ -1039,6 +1039,59 @@
   "settings_tab_capture": {
     "message": "Capture"
   },
+  "settings_tab_third_party": {
+    "message": "Third-party data"
+  },
+  "settings_third_party_intro": {
+    "message": "Bring in what you saved in Raindrop, Pocket, and other services, and manage it all in one place. Imported items stay on this device and never touch your Chrome bookmarks."
+  },
+  "settings_third_party_count": {
+    "message": "$COUNT$ items imported",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_third_party_last_import": {
+    "message": "Last import $DATE$ · $COUNT$ items",
+    "placeholders": {
+      "DATE": {
+        "content": "$1"
+      },
+      "COUNT": {
+        "content": "$2"
+      }
+    }
+  },
+  "settings_third_party_not_imported": {
+    "message": "Not imported yet"
+  },
+  "settings_third_party_delete_all": {
+    "message": "Delete all imports"
+  },
+  "settings_third_party_delete_all_hint": {
+    "message": "Only removes the imported copies in Yiveno; your data in the original service stays untouched. Importing the same file again will bring them back."
+  },
+  "settings_third_party_delete_confirm": {
+    "message": "Delete all $COUNT$ items imported from $SOURCE$? This can't be undone.",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      },
+      "SOURCE": {
+        "content": "$2"
+      }
+    }
+  },
+  "settings_third_party_delete_done": {
+    "message": "Deleted $COUNT$ items",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
+  },
   "settings_tab_shortcuts": {
     "message": "Shortcuts"
   },
@@ -1047,6 +1100,12 @@
   },
   "settings_tab_privacy": {
     "message": "Data & privacy"
+  },
+  "settings_tab_help": {
+    "message": "Help & support"
+  },
+  "settings_tab_legal": {
+    "message": "Legal"
   },
   "settings_tab_ai": {
     "message": "AI"
@@ -1080,9 +1139,6 @@
   },
   "settings_placeholder_privacy": {
     "message": "Privacy options are not available yet."
-  },
-  "settings_data_group_bring_in": {
-    "message": "Bring in"
   },
   "settings_data_group_backup": {
     "message": "Backup"
@@ -1205,7 +1261,16 @@
     "message": "Failed to clear on-device recall adaptation"
   },
   "settings_privacy_intro": {
-    "message": "How Yiveno handles your memories, plus import, backup, on-device recall adaptation, and remove. Browser bookmarks stay untouched."
+    "message": "How Yiveno handles your memories, plus backup, on-device recall adaptation, and remove. Browser bookmarks stay untouched."
+  },
+  "settings_privacy_banner_title": {
+    "message": "We value your privacy"
+  },
+  "settings_privacy_banner_body": {
+    "message": "Learn about the measures we take to protect your information privacy and security."
+  },
+  "settings_privacy_banner_learn_more": {
+    "message": "Learn more"
   },
   "settings_mcp_toggle": {
     "message": "Read-only MCP (beta)"
@@ -1218,36 +1283,6 @@
   },
   "settings_mcp_remote_sync_failed": {
     "message": "Couldn't sync the MCP switch to the cloud. Local setting still saved—try again when you're online."
-  },
-  "settings_privacy_details_summary": {
-    "message": "What Yiveno stores, who owns it, and what we send"
-  },
-  "settings_privacy_bullet_local": {
-    "message": "On this device: excerpts, notes, bookmarks, open/dismiss signals, and helpers that make recall work."
-  },
-  "settings_privacy_bullet_adaptation": {
-    "message": "On-device recall ranking may use Outcome pairs and open signals; they stay on this device. Data → Clear on-device recall adaptation resets those buffers without deleting your library. Turning AI on for understanding is not permission to keep your content for quality review. We do not upload de-identified product analytics by default."
-  },
-  "settings_privacy_bullet_ownership": {
-    "message": "You own what you Capture and your in-library usage history; recall helpers stay with your items, not as separate Yiveno assets."
-  },
-  "settings_privacy_bullet_export": {
-    "message": "Full backup export (Data section) is always available — a product responsibility, not a paid feature."
-  },
-  "settings_privacy_bullet_cloud": {
-    "message": "Cloud (optional): after you turn sync on, excerpts sync with your account and are stored in the United States (East US / Ohio). Bookmarks stay on this device from browser bookmark import."
-  },
-  "settings_privacy_bullet_account": {
-    "message": "Account: sign-in for identity and optional sync. Yiveno is operated by an individual in Hangzhou, China (may later become a Hangzhou company)."
-  },
-  "settings_privacy_bullet_ai": {
-    "message": "AI: clue understanding may call a model; your full library is not sent by default."
-  },
-  "settings_privacy_bullet_link_sweep": {
-    "message": "Link check: weekly requests go from your browser to sites you saved; URLs are not sent to Yiveno servers. Turn off anytime in AI settings."
-  },
-  "settings_privacy_bullet_not_collected": {
-    "message": "Not collected: browsing history, clipboard reads, pages you did not capture, or de-identified aggregate product analytics as your personal export."
   },
   "settings_privacy_ack": {
     "message": "I understand this notice"
@@ -1262,7 +1297,7 @@
     "message": "Current notice version: not confirmed yet (required before turning sync on)"
   },
   "settings_privacy_sync_confirm": {
-    "message": "Turning on cloud sync aligns excerpts on this device with your account (and may upload). Synced excerpts are stored in the United States (East US / Ohio). Bookmarks stay local from this browser. Confirm you have read the privacy notice in Settings. Continue?"
+    "message": "Turning on cloud sync aligns excerpts on this device with your account (and may upload). Synced excerpts are stored in the United States (East US / Ohio). Bookmarks stay local from this browser. Confirm you have read the privacy policy. Continue?"
   },
   "settings_privacy_open_sync": {
     "message": "Open Account & Sync"
@@ -1270,20 +1305,20 @@
   "settings_privacy_open_policy": {
     "message": "Read full privacy policy"
   },
-  "settings_privacy_open_policy_hint": {
-    "message": "Full notice on the Yiveno website."
+  "settings_legal_link_pricing": {
+    "message": "Pricing"
   },
-  "settings_privacy_open_policy_action": {
-    "message": "Read"
+  "settings_legal_link_support": {
+    "message": "Support"
   },
-  "settings_privacy_open_terms": {
-    "message": "Read terms of service"
+  "settings_legal_link_privacy": {
+    "message": "Privacy policy"
   },
-  "settings_privacy_open_terms_hint": {
-    "message": "Terms on the Yiveno website."
+  "settings_legal_link_terms": {
+    "message": "Terms of service"
   },
-  "settings_privacy_open_terms_action": {
-    "message": "Read"
+  "settings_legal_link_faq": {
+    "message": "FAQ"
   },
   "settings_privacy_export": {
     "message": "Export full backup"

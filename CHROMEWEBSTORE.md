@@ -171,7 +171,7 @@ privacy@yiveno.com
 
 **Support URL / Email** [RECOMMENDED]
 
-mailto:support@yiveno.com · https://yiveno.com/support
+mailto:support@yiveno.com · https://yiveno.com/faq#contact
 
 **Homepage URL** [RECOMMENDED]
 

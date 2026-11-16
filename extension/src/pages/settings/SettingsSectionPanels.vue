@@ -44,6 +44,7 @@ const {
   handleClearLocalMemory,
   handleClearLocalRecallAdaptation,
   handleClearOrphans,
+  handleDeleteThirdPartyCorpus,
   handleRecallOutcomePairSoftAdjustToggle,
   handleDeleteCloudMemory,
   handleExportLocalMemory,
@@ -74,8 +75,11 @@ const {
   orphanActiveCount,
   orphanBucketCount,
   orphanWorking,
+  faqUrl,
+  pricingUrl,
   privacyPolicyUrl,
   restoreWorking,
+  supportUrl,
   restoringSyncBackup,
   runningIncrementalSync,
   savingAiFeatures,
@@ -101,7 +105,10 @@ const {
   syncRemoteCount,
   t,
   termsOfServiceUrl,
-  thirdPartyImportWorking
+  thirdPartyCorpusSummary,
+  thirdPartyDeleteWorking,
+  thirdPartyImportWorking,
+  thirdPartySourceStatusCopy
 } = inject<SettingsPageController>('settingsPage')!
 </script>
 
@@ -112,7 +119,6 @@ const {
         <h2 id="settings-capture-heading" class="settings-section-title">
           {{ t('settings_section_capture') }}
         </h2>
-        <p class="settings-section-copy">{{ t('settings_section_capture_copy') }}</p>
       </div>
 
       <p v-if="settingsState === 'loading'" class="settings-status" role="status">
@@ -129,9 +135,6 @@ const {
               <span class="settings-toggle-title">{{
                 t('settings_toggle_selection_toolbar')
               }}</span>
-              <span class="settings-toggle-hint">{{
-                t('settings_toggle_selection_toolbar_hint')
-              }}</span>
             </div>
             <AppSwitch
               :aria-label="t('settings_toggle_selection_toolbar')"
@@ -145,9 +148,6 @@ const {
               <span class="settings-toggle-title">{{
                 t('settings_toggle_chrome_bookmark_sync')
               }}</span>
-              <span class="settings-toggle-hint">{{
-                t('settings_toggle_chrome_bookmark_sync_hint')
-              }}</span>
             </div>
             <AppSwitch
               :aria-label="t('settings_toggle_chrome_bookmark_sync')"
@@ -160,9 +160,6 @@ const {
             <div class="settings-toggle-copy">
               <span class="settings-toggle-title">{{
                 t('settings_action_reimport_chrome_bookmarks')
-              }}</span>
-              <span class="settings-toggle-hint">{{
-                t('settings_action_reimport_chrome_bookmarks_hint')
               }}</span>
               <span v-if="reimportChromeBookmarksDone" class="settings-toggle-hint" role="status">
                 {{ t('settings_reimport_chrome_bookmarks_done') }}
@@ -186,13 +183,140 @@ const {
     </div>
   </template>
 
+  <template v-else-if="activeSection === 'third_party'">
+    <div class="settings-block" aria-labelledby="settings-third-party-heading">
+      <div class="settings-section-head">
+        <h2 id="settings-third-party-heading" class="settings-section-title">
+          {{ t('settings_tab_third_party') }}
+        </h2>
+      </div>
+
+      <section class="settings-group" :aria-label="t('settings_data_import_raindrop')">
+        <h3 class="settings-group__label">{{ t('settings_data_import_raindrop') }}</h3>
+        <div class="settings-group__card">
+          <SettingsActionRow surface="embedded" :title="t('settings_data_import_raindrop')">
+            <input
+              :ref="bindRaindropFileInput"
+              type="file"
+              class="settings-file-input"
+              accept=".html,.htm,.csv,.json,text/html,text/csv,application/json"
+              :aria-label="t('settings_data_import_raindrop')"
+              @change="handleRaindropFileSelected"
+            />
+            <AppButton
+              type="button"
+              :disabled="
+                thirdPartyImportWorking ||
+                restoreWorking ||
+                dataWorking ||
+                exportWorking ||
+                signingOut
+              "
+              :title="t('settings_data_import_raindrop')"
+              variant="outlined"
+              @click="handlePickRaindropImportFile"
+            >
+              {{
+                thirdPartyImportWorking
+                  ? t('settings_privacy_working')
+                  : t('settings_data_import_action')
+              }}
+            </AppButton>
+          </SettingsActionRow>
+          <p class="settings-section-copy settings-third-party-status" role="status">
+            {{ thirdPartySourceStatusCopy('raindrop') }}
+          </p>
+          <SettingsActionRow surface="embedded" :title="t('settings_third_party_delete_all')">
+            <AppButton
+              type="button"
+              variant="outlined"
+              :disabled="
+                (thirdPartyCorpusSummary?.raindrop.count ?? 0) <= 0 ||
+                thirdPartyDeleteWorking ||
+                thirdPartyImportWorking ||
+                dataWorking ||
+                signingOut
+              "
+              :title="t('settings_third_party_delete_all')"
+              @click="handleDeleteThirdPartyCorpus('raindrop')"
+            >
+              {{
+                thirdPartyDeleteWorking
+                  ? t('settings_privacy_working')
+                  : t('settings_third_party_delete_all')
+              }}
+            </AppButton>
+          </SettingsActionRow>
+        </div>
+      </section>
+
+      <section class="settings-group" :aria-label="t('settings_data_import_pocket')">
+        <h3 class="settings-group__label">{{ t('settings_data_import_pocket') }}</h3>
+        <div class="settings-group__card">
+          <SettingsActionRow surface="embedded" :title="t('settings_data_import_pocket')">
+            <input
+              :ref="bindPocketFileInput"
+              type="file"
+              class="settings-file-input"
+              accept=".html,.htm,text/html"
+              :aria-label="t('settings_data_import_pocket')"
+              @change="handlePocketFileSelected"
+            />
+            <AppButton
+              type="button"
+              :disabled="
+                thirdPartyImportWorking ||
+                restoreWorking ||
+                dataWorking ||
+                exportWorking ||
+                signingOut
+              "
+              :title="t('settings_data_import_pocket')"
+              variant="outlined"
+              @click="handlePickPocketImportFile"
+            >
+              {{
+                thirdPartyImportWorking
+                  ? t('settings_privacy_working')
+                  : t('settings_data_import_action')
+              }}
+            </AppButton>
+          </SettingsActionRow>
+          <p class="settings-section-copy settings-third-party-status" role="status">
+            {{ thirdPartySourceStatusCopy('pocket') }}
+          </p>
+          <SettingsActionRow surface="embedded" :title="t('settings_third_party_delete_all')">
+            <AppButton
+              type="button"
+              variant="outlined"
+              :disabled="
+                (thirdPartyCorpusSummary?.pocket.count ?? 0) <= 0 ||
+                thirdPartyDeleteWorking ||
+                thirdPartyImportWorking ||
+                dataWorking ||
+                signingOut
+              "
+              :title="t('settings_third_party_delete_all')"
+              @click="handleDeleteThirdPartyCorpus('pocket')"
+            >
+              {{
+                thirdPartyDeleteWorking
+                  ? t('settings_privacy_working')
+                  : t('settings_third_party_delete_all')
+              }}
+            </AppButton>
+          </SettingsActionRow>
+        </div>
+      </section>
+    </div>
+  </template>
+
   <template v-else-if="activeSection === 'shortcuts'">
     <div class="settings-block" aria-labelledby="settings-shortcuts-heading">
       <div class="settings-section-head">
         <h2 id="settings-shortcuts-heading" class="settings-section-title">
           {{ t('settings_section_shortcuts') }}
         </h2>
-        <p class="settings-section-copy">{{ t('settings_section_shortcuts_copy') }}</p>
       </div>
 
       <p v-if="commandsState === 'loading'" class="settings-status" role="status">
@@ -217,10 +341,7 @@ const {
           </li>
         </ul>
 
-        <SettingsActionRow
-          :title="t('settings_open_shortcuts')"
-          :subtitle="t('settings_shortcuts_open_hint')"
-        >
+        <SettingsActionRow :title="t('settings_open_shortcuts')">
           <AppButton
             type="button"
             :disabled="openingShortcuts"
@@ -248,7 +369,6 @@ const {
         <h2 id="settings-sync-heading" class="settings-section-title">
           {{ t('settings_section_sync') }}
         </h2>
-        <p class="settings-section-copy">{{ t('settings_section_sync_copy') }}</p>
       </div>
 
       <div
@@ -305,10 +425,7 @@ const {
           {{ t('settings_section_advanced') }}
         </h3>
         <div class="settings-card-stack">
-          <SettingsActionRow
-            :title="t('settings_sync_restore_backup')"
-            :subtitle="t('settings_sync_restore_backup_hint')"
-          >
+          <SettingsActionRow :title="t('settings_sync_restore_backup')">
             <AppButton
               type="button"
               :disabled="
@@ -381,44 +498,30 @@ const {
         <h2 id="settings-privacy-heading" class="settings-section-title">
           {{ t('settings_tab_privacy') }}
         </h2>
-        <p class="settings-section-copy">{{ t('settings_privacy_intro') }}</p>
       </div>
 
-      <details class="settings-details">
-        <summary class="settings-details__summary">
-          <span class="settings-details__summary-label">
-            {{ t('settings_privacy_details_summary') }}
-          </span>
-          <span class="settings-details__chevrons" aria-hidden="true">
-            <AppIcon
-              class="settings-details__chevron settings-details__chevron--down"
-              name="expand_more"
-              size="18px"
-            />
-            <AppIcon
-              class="settings-details__chevron settings-details__chevron--up"
-              name="chevron_up"
-              size="18px"
-            />
-          </span>
-        </summary>
-        <ul class="settings-details__list">
-          <li>{{ t('settings_privacy_bullet_local') }}</li>
-          <li>{{ t('settings_privacy_bullet_adaptation') }}</li>
-          <li>{{ t('settings_privacy_bullet_ownership') }}</li>
-          <li>{{ t('settings_privacy_bullet_export') }}</li>
-          <li>{{ t('settings_privacy_bullet_cloud') }}</li>
-          <li>{{ t('settings_privacy_bullet_account') }}</li>
-          <li>{{ t('settings_privacy_bullet_ai') }}</li>
-          <li>{{ t('settings_privacy_bullet_link_sweep') }}</li>
-          <li>{{ t('settings_privacy_bullet_not_collected') }}</li>
-        </ul>
-      </details>
+      <!-- 隐私说明卡置顶；完整披露正文在官网 /privacy -->
+      <aside class="settings-privacy-banner" aria-labelledby="settings-privacy-banner-title">
+        <AppIcon class="settings-privacy-banner__icon" name="shield_user" size="28px" />
+        <div class="settings-privacy-banner__copy">
+          <p id="settings-privacy-banner-title" class="settings-privacy-banner__title">
+            {{ t('settings_privacy_banner_title') }}
+          </p>
+          <a
+            class="settings-privacy-banner__link"
+            :href="privacyPolicyUrl"
+            :title="t('settings_privacy_open_policy')"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {{ t('settings_privacy_banner_learn_more') }}
+          </a>
+        </div>
+      </aside>
 
       <div class="settings-toggle settings-card-stack--spaced">
         <div class="settings-toggle-copy">
           <span class="settings-toggle-title">{{ t('settings_mcp_toggle') }}</span>
-          <span class="settings-toggle-hint">{{ t('settings_mcp_toggle_hint') }}</span>
         </div>
         <AppSwitch
           :model-value="mcpReadOnlyEnabled"
@@ -428,122 +531,13 @@ const {
         />
       </div>
 
-      <p v-if="mcpReadOnlyEnabled" class="settings-section-copy">
-        {{ t('settings_mcp_howto') }}
-      </p>
-
       <p v-if="settingsError" class="settings-error" role="alert">{{ settingsError }}</p>
 
       <div class="settings-card-stack settings-card-stack--spaced">
-        <SettingsActionRow
-          :title="t('settings_privacy_open_policy')"
-          :subtitle="t('settings_privacy_open_policy_hint')"
-        >
-          <AppButton
-            :href="privacyPolicyUrl"
-            :title="t('settings_privacy_open_policy')"
-            target="_blank"
-            rel="noopener noreferrer"
-            variant="outlined"
-          >
-            {{ t('settings_privacy_open_policy_action') }}
-          </AppButton>
-        </SettingsActionRow>
-        <SettingsActionRow
-          :title="t('settings_privacy_open_terms')"
-          :subtitle="t('settings_privacy_open_terms_hint')"
-        >
-          <AppButton
-            :href="termsOfServiceUrl"
-            :title="t('settings_privacy_open_terms')"
-            target="_blank"
-            rel="noopener noreferrer"
-            variant="outlined"
-          >
-            {{ t('settings_privacy_open_terms_action') }}
-          </AppButton>
-        </SettingsActionRow>
-
-        <section class="settings-group" :aria-label="t('settings_data_group_bring_in')">
-          <h3 class="settings-group__label">{{ t('settings_data_group_bring_in') }}</h3>
-          <div class="settings-group__card">
-            <SettingsActionRow
-              surface="embedded"
-              :title="t('settings_data_import_raindrop')"
-              :subtitle="t('settings_data_import_raindrop_hint')"
-            >
-              <input
-                :ref="bindRaindropFileInput"
-                type="file"
-                class="settings-file-input"
-                accept=".html,.htm,.csv,.json,text/html,text/csv,application/json"
-                :aria-label="t('settings_data_import_raindrop')"
-                @change="handleRaindropFileSelected"
-              />
-              <AppButton
-                type="button"
-                :disabled="
-                  thirdPartyImportWorking ||
-                  restoreWorking ||
-                  dataWorking ||
-                  exportWorking ||
-                  signingOut
-                "
-                :title="t('settings_data_import_raindrop')"
-                variant="outlined"
-                @click="handlePickRaindropImportFile"
-              >
-                {{
-                  thirdPartyImportWorking
-                    ? t('settings_privacy_working')
-                    : t('settings_data_import_action')
-                }}
-              </AppButton>
-            </SettingsActionRow>
-            <SettingsActionRow
-              surface="embedded"
-              :title="t('settings_data_import_pocket')"
-              :subtitle="t('settings_data_import_pocket_hint')"
-            >
-              <input
-                :ref="bindPocketFileInput"
-                type="file"
-                class="settings-file-input"
-                accept=".html,.htm,text/html"
-                :aria-label="t('settings_data_import_pocket')"
-                @change="handlePocketFileSelected"
-              />
-              <AppButton
-                type="button"
-                :disabled="
-                  thirdPartyImportWorking ||
-                  restoreWorking ||
-                  dataWorking ||
-                  exportWorking ||
-                  signingOut
-                "
-                :title="t('settings_data_import_pocket')"
-                variant="outlined"
-                @click="handlePickPocketImportFile"
-              >
-                {{
-                  thirdPartyImportWorking
-                    ? t('settings_privacy_working')
-                    : t('settings_data_import_action')
-                }}
-              </AppButton>
-            </SettingsActionRow>
-          </div>
-        </section>
-
         <section class="settings-group" :aria-label="t('settings_data_group_backup')">
           <h3 class="settings-group__label">{{ t('settings_data_group_backup') }}</h3>
           <div class="settings-group__card">
-            <SettingsActionRow
-              surface="embedded"
-              :title="t('settings_privacy_export')"
-              :subtitle="t('settings_privacy_export_hint')"
-            >
+            <SettingsActionRow surface="embedded" :title="t('settings_privacy_export')">
               <AppButton
                 type="button"
                 :disabled="
@@ -564,11 +558,7 @@ const {
                 }}
               </AppButton>
             </SettingsActionRow>
-            <SettingsActionRow
-              surface="embedded"
-              :title="t('settings_privacy_restore')"
-              :subtitle="t('settings_privacy_restore_hint')"
-            >
+            <SettingsActionRow surface="embedded" :title="t('settings_privacy_restore')">
               <input
                 :ref="bindRestoreFileInput"
                 type="file"
@@ -608,9 +598,6 @@ const {
                 <span class="settings-toggle-title">{{
                   t('settings_data_outcome_soft_adjust_toggle')
                 }}</span>
-                <span class="settings-toggle-hint">{{
-                  t('settings_data_outcome_soft_adjust_hint')
-                }}</span>
               </div>
               <AppSwitch
                 :model-value="recallOutcomePairSoftAdjustEnabled"
@@ -624,7 +611,6 @@ const {
             <SettingsActionRow
               surface="embedded"
               :title="t('settings_data_clear_recall_adaptation')"
-              :subtitle="t('settings_data_clear_recall_adaptation_hint')"
             >
               <AppButton
                 type="button"
@@ -656,7 +642,6 @@ const {
               surface="embedded"
               tone="danger"
               :title="t('settings_data_clear_local')"
-              :subtitle="t('settings_data_clear_local_hint')"
             >
               <AppButton
                 type="button"
@@ -684,7 +669,6 @@ const {
                 surface="embedded"
                 tone="danger"
                 :title="t('settings_privacy_delete_cloud')"
-                :subtitle="t('settings_privacy_delete_cloud_hint')"
               >
                 <AppButton
                   type="button"
@@ -705,7 +689,6 @@ const {
                 surface="embedded"
                 tone="danger"
                 :title="t('settings_privacy_delete_account')"
-                :subtitle="t('settings_privacy_delete_account_hint')"
               >
                 <AppButton
                   type="button"
@@ -729,19 +712,109 @@ const {
     </div>
   </template>
 
+  <template v-else-if="activeSection === 'help'">
+    <div class="settings-block" aria-labelledby="settings-help-heading">
+      <div class="settings-section-head">
+        <h2 id="settings-help-heading" class="settings-section-title">
+          {{ t('settings_tab_help') }}
+        </h2>
+      </div>
+
+      <!-- FAQ + Contact（官网 `/faq`；Support 软跳 `/faq#contact`） -->
+      <div class="settings-group">
+        <div class="settings-group__card">
+          <SettingsActionRow surface="embedded" :title="t('settings_legal_link_faq')">
+            <a
+              class="settings-external-link"
+              :href="faqUrl"
+              :title="t('settings_legal_link_faq')"
+              :aria-label="t('settings_legal_link_faq')"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <AppIcon name="arrow_up_right" size="18px" />
+            </a>
+          </SettingsActionRow>
+          <SettingsActionRow surface="embedded" :title="t('settings_legal_link_support')">
+            <a
+              class="settings-external-link"
+              :href="supportUrl"
+              :title="t('settings_legal_link_support')"
+              :aria-label="t('settings_legal_link_support')"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <AppIcon name="arrow_up_right" size="18px" />
+            </a>
+          </SettingsActionRow>
+        </div>
+      </div>
+    </div>
+  </template>
+
+  <template v-else-if="activeSection === 'legal'">
+    <div class="settings-block" aria-labelledby="settings-legal-heading">
+      <div class="settings-section-head">
+        <h2 id="settings-legal-heading" class="settings-section-title">
+          {{ t('settings_tab_legal') }}
+        </h2>
+      </div>
+
+      <!-- 定价 / 隐私政策 / 服务条款 -->
+      <div class="settings-group">
+        <div class="settings-group__card">
+          <SettingsActionRow surface="embedded" :title="t('settings_legal_link_pricing')">
+            <a
+              class="settings-external-link"
+              :href="pricingUrl"
+              :title="t('settings_legal_link_pricing')"
+              :aria-label="t('settings_legal_link_pricing')"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <AppIcon name="arrow_up_right" size="18px" />
+            </a>
+          </SettingsActionRow>
+          <SettingsActionRow surface="embedded" :title="t('settings_legal_link_privacy')">
+            <a
+              class="settings-external-link"
+              :href="privacyPolicyUrl"
+              :title="t('settings_legal_link_privacy')"
+              :aria-label="t('settings_legal_link_privacy')"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <AppIcon name="arrow_up_right" size="18px" />
+            </a>
+          </SettingsActionRow>
+          <SettingsActionRow surface="embedded" :title="t('settings_legal_link_terms')">
+            <a
+              class="settings-external-link"
+              :href="termsOfServiceUrl"
+              :title="t('settings_legal_link_terms')"
+              :aria-label="t('settings_legal_link_terms')"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <AppIcon name="arrow_up_right" size="18px" />
+            </a>
+          </SettingsActionRow>
+        </div>
+      </div>
+    </div>
+  </template>
+
   <template v-else-if="activeSection === 'ai'">
     <div class="settings-block" aria-labelledby="settings-ai-heading">
       <div class="settings-section-head">
         <h2 id="settings-ai-heading" class="settings-section-title">
           {{ t('settings_tab_ai') }}
         </h2>
-        <p class="settings-section-copy">{{ t('settings_ai_intro') }}</p>
       </div>
 
       <div class="settings-toggle">
         <div class="settings-toggle-copy">
           <span class="settings-toggle-title">{{ t('settings_ai_toggle') }}</span>
-          <span class="settings-toggle-hint">{{ t('settings_ai_toggle_hint') }}</span>
         </div>
         <AppSwitch
           :model-value="aiFeaturesEnabled"
@@ -754,7 +827,6 @@ const {
       <div class="settings-toggle settings-card-stack--spaced">
         <div class="settings-toggle-copy">
           <span class="settings-toggle-title">{{ t('settings_link_sweep_toggle') }}</span>
-          <span class="settings-toggle-hint">{{ t('settings_link_sweep_toggle_hint') }}</span>
         </div>
         <AppSwitch
           :model-value="linkStatusSweepEnabled"
@@ -805,23 +877,6 @@ const {
         </p>
       </div>
 
-      <div class="settings-card-stack settings-card-stack--spaced">
-        <SettingsActionRow
-          :title="t('settings_privacy_open_policy')"
-          :subtitle="t('settings_privacy_open_policy_hint')"
-        >
-          <AppButton
-            :href="privacyPolicyUrl"
-            :title="t('settings_privacy_open_policy')"
-            target="_blank"
-            rel="noopener noreferrer"
-            variant="outlined"
-          >
-            {{ t('settings_privacy_open_policy_action') }}
-          </AppButton>
-        </SettingsActionRow>
-      </div>
-
       <p v-if="settingsError" class="settings-error" role="alert">{{ settingsError }}</p>
     </div>
   </template>
@@ -832,7 +887,6 @@ const {
         <h2 id="settings-language-heading" class="settings-section-title">
           {{ t('settings_section_language') }}
         </h2>
-        <p class="settings-section-copy">{{ t('settings_section_language_copy') }}</p>
       </div>
 
       <fieldset

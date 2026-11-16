@@ -27,7 +27,7 @@
 - **Getting Started 启动设置（体验 / 冷启动）** — §5.8 **已接线**（薄维护）
 - **可见进展 / Composer URL 芯片 / 可见与契约分面 / 理解回声 / 冷启动轻条** — §7.0 / §0.1.3 / §5.8.1 **已接线**；与 §5.9 **分计**
 - （低优并行）CWS / Edge 产品 UI 截图 3–5；Recall 壳空态薄维护
-- **CN-NA i18n 补齐（并行薄项）** — 权威 [`Yiveno-国际化-CN-NA.md`](./Yiveno-国际化-CN-NA.md)；官网 Pricing/Account/Support/Privacy/Terms 双 locale；**不**开中文 Recall 质量 / RTL / 第三语言
+- **CN-NA i18n 补齐（并行薄项）** — 权威 [`Yiveno-国际化-CN-NA.md`](./Yiveno-国际化-CN-NA.md)；官网 Pricing/Account/FAQ（含 Contact）/Privacy/Terms 双 locale；**不**开中文 Recall 质量 / RTL / 第三语言
 - **Edge 双店（ADR-020）**：账号核验未完成；核验通过后首次提交 + `EDGE_ADDONS_LISTING_URL`
 - **未收口 / 薄维护（有 Brief · 勿误归档）：**
   - **ADR-021 波次 1–4** — **已验收**（2026-11-07）；Brief 留 `docs/product/` 备查

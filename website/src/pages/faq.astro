@@ -1,8 +1,8 @@
 ---
 /**
- * FAQ：答案优先短文，供人读 + GEO/FAQPage JSON-LD。
- * JSON-LD 权威仍是英文 `FAQ_ENTRIES`（爬虫 / GEO）。
- * 可见文案经 `data-yiveno-i18n` 按 locale 换；与 schema 在 zh 下允许分面（见 GEO 文档）。
+ * FAQ + Contact：答案优先短文（人读 + FAQPage JSON-LD）与邮件联系入口同页。
+ * JSON-LD 权威仍是英文 `FAQ_ENTRIES`（爬虫 / GEO）；联系区不进 schema。
+ * 旧 `/support` 软跳本页 `#contact`（`_redirects` 不能带 # fragment）。
  */
 import MainLayout from '../layouts/MainLayout.astro'
 import { en } from '../i18n/en'
@@ -18,6 +18,10 @@ const FAQ_VISIBLE = [
   { q: 'faq.pricing.q', a: 'faq.pricing.a' },
   { q: 'faq.install.q', a: 'faq.install.a' }
 ] as const
+
+const supportEmail = 'support@yiveno.com'
+const feedbackEmail = 'feedback@yiveno.com'
+const privacyEmail = 'privacy@yiveno.com'
 ---
 
 <MainLayout
@@ -33,8 +37,8 @@ const FAQ_VISIBLE = [
       </h1>
       <p class="page__lede">
         <span data-yiveno-i18n="faq.lede_before">{en['faq.lede_before']}</span>{' '}
-        <a href="/support" data-yiveno-i18n="faq.lede_support">
-          {en['faq.lede_support']}
+        <a href="#contact" data-yiveno-i18n="faq.lede_contact">
+          {en['faq.lede_contact']}
         </a>
         <span data-yiveno-i18n="faq.lede_after">{en['faq.lede_after']}</span>
       </p>
@@ -46,5 +50,55 @@ const FAQ_VISIBLE = [
         <p data-yiveno-i18n={entry.a}>{en[entry.a]}</p>
       </section>
     ))}
+
+    <section id="contact" class="page__section">
+      <h2 data-yiveno-i18n="faq.contact.title">{en['faq.contact.title']}</h2>
+      <p class="page__lede">
+        <span data-yiveno-i18n="faq.contact.lede_before">{en['faq.contact.lede_before']}</span>{' '}
+        <a href={`mailto:${feedbackEmail}`}>{feedbackEmail}</a>{' '}
+        <span data-yiveno-i18n="faq.contact.lede_after">{en['faq.contact.lede_after']}</span>
+      </p>
+
+      <h3 data-yiveno-i18n="faq.contact.bugs.title">{en['faq.contact.bugs.title']}</h3>
+      <p>
+        <span data-yiveno-i18n="faq.contact.bugs.body_before">
+          {en['faq.contact.bugs.body_before']}
+        </span>{' '}
+        <a href={`mailto:${supportEmail}?subject=Yiveno%20support`}>{supportEmail}</a>
+      </p>
+      <p class="page__hint" data-yiveno-i18n="faq.contact.bugs.hint">
+        {en['faq.contact.bugs.hint']}
+      </p>
+
+      <h3 data-yiveno-i18n="faq.contact.install.title">{en['faq.contact.install.title']}</h3>
+      <p>
+        <span data-yiveno-i18n="faq.contact.install.body_before">
+          {en['faq.contact.install.body_before']}
+        </span>{' '}
+        <a href={`mailto:${supportEmail}?subject=Yiveno%20install%20notify`}>{supportEmail}</a>{' '}
+        <span data-yiveno-i18n="faq.contact.install.body_after">
+          {en['faq.contact.install.body_after']}
+        </span>
+      </p>
+
+      <h3 data-yiveno-i18n="faq.contact.ideas.title">{en['faq.contact.ideas.title']}</h3>
+      <p>
+        <span data-yiveno-i18n="faq.contact.ideas.body_before">
+          {en['faq.contact.ideas.body_before']}
+        </span>{' '}
+        <a href={`mailto:${feedbackEmail}?subject=Yiveno%20feedback`}>{feedbackEmail}</a>
+      </p>
+
+      <h3 data-yiveno-i18n="faq.contact.privacy.title">{en['faq.contact.privacy.title']}</h3>
+      <p>
+        <span data-yiveno-i18n="faq.contact.privacy.body_before">
+          {en['faq.contact.privacy.body_before']}
+        </span>{' '}
+        <a href={`mailto:${privacyEmail}`}>{privacyEmail}</a>·
+        <a href="/privacy" data-yiveno-i18n="faq.contact.privacy.policy">
+          {en['faq.contact.privacy.policy']}
+        </a>
+      </p>
+    </section>
   </article>
 </MainLayout>

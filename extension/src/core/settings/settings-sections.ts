@@ -1,9 +1,12 @@
 /** 设置页左侧分区 id（与 `?section=` 一致）。 */
 export type SettingsSectionId =
   | 'capture' // 保存：划词浮层 / 书签灌库
+  | 'third_party' // 第三方数据：Raindrop / Pocket 导入与按来源管理
   | 'shortcuts' // 快捷键：展示绑定；改键跳转 Chrome 原生页
   | 'account_sync' // 账户与同步：同步 / 冲突 / 孤儿桶 / 退出
-  | 'privacy' // 数据与隐私：说明 / MCP / 政策外链 / 导入备份 / 本机适应 / 清除删除
+  | 'privacy' // 数据与隐私：说明卡 / MCP / 备份 / 本机适应 / 清除删除
+  | 'help' // 帮助与支持：FAQ / Contact（官网 `/faq` · `/faq#contact`）
+  | 'legal' // 法律信息：定价 / 隐私政策 / 服务条款外链
   | 'ai' // AI：开关与模型说明
   | 'language' // 界面语言：system / en / zh_CN
 
@@ -12,9 +15,12 @@ export interface SettingsSectionTabDef {
   id: SettingsSectionId
   labelKey:
     | 'settings_tab_capture'
+    | 'settings_tab_third_party'
     | 'settings_tab_shortcuts'
     | 'settings_tab_account_sync'
     | 'settings_tab_privacy'
+    | 'settings_tab_help'
+    | 'settings_tab_legal'
     | 'settings_tab_ai'
     | 'settings_tab_language'
 }
@@ -34,9 +40,12 @@ export const SETTINGS_SECTION_QUERY_KEY = 'section'
 /** 设置左侧分区定义（顺序即侧栏顺序）。 */
 export const SETTINGS_SECTION_TABS: readonly SettingsSectionTabDef[] = [
   { id: 'capture', labelKey: 'settings_tab_capture' },
+  { id: 'third_party', labelKey: 'settings_tab_third_party' },
   { id: 'shortcuts', labelKey: 'settings_tab_shortcuts' },
   { id: 'account_sync', labelKey: 'settings_tab_account_sync' },
   { id: 'privacy', labelKey: 'settings_tab_privacy' },
+  { id: 'help', labelKey: 'settings_tab_help' },
+  { id: 'legal', labelKey: 'settings_tab_legal' },
   { id: 'ai', labelKey: 'settings_tab_ai' },
   { id: 'language', labelKey: 'settings_tab_language' }
 ] as const

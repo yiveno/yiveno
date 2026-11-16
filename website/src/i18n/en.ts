@@ -118,7 +118,6 @@ export const en = {
   'nav.aria_primary': 'Primary',
   'footer.pricing': 'Pricing',
   'footer.faq': 'FAQ',
-  'footer.support': 'Support',
   'footer.privacy': 'Privacy',
   'footer.terms': 'Terms',
   'footer.tagline': '· Find what you saved.',
@@ -189,28 +188,6 @@ export const en = {
   'account.checkout.failed': "Payment didn't go through. You can try Upgrade to Pro again.",
   'account.checkout.error': 'Could not start checkout. Try again.',
   'account.date.unknown': 'Unknown',
-
-  'support.meta.title': 'Support · Yiveno',
-  'support.meta.description':
-    'Get help with Yiveno — bugs, account, billing, and install questions by email. We reply at support@yiveno.com.',
-  'support.title': 'Support',
-  'support.lede_before': 'Need a reply? Email us. For product ideas that don’t need a reply, use',
-  'support.lede_mid': 'or the optional form if you remove the extension. Short product answers:',
-  'support.lede_faq': 'FAQ',
-  'support.lede_after': '.',
-  'support.bugs.title': 'Bugs & account help',
-  'support.bugs.body_before': 'Something broken, can’t sign in, sync issues, or billing questions:',
-  'support.bugs.hint':
-    'Include what you tried, your browser (Edge or Chrome) and version, and the extension version if you can — one clear note helps us reply once.',
-  'support.install.title': 'Install availability',
-  'support.install.body_before':
-    'Yiveno is not listed on the public Chrome Web Store or Microsoft Edge Add-ons yet. If you want a notice when a public listing is available, email',
-  'support.install.body_after': 'with the subject "Install notify".',
-  'support.ideas.title': 'Product ideas',
-  'support.ideas.body_before': 'Feature ideas or “why I left” style notes (no reply expected):',
-  'support.privacy.title': 'Privacy',
-  'support.privacy.body_before': 'Privacy questions:',
-  'support.privacy.policy': 'Privacy Policy',
 
   'privacy.meta.title': 'Privacy Policy · Yiveno',
   'privacy.meta.description':
@@ -322,11 +299,29 @@ export const en = {
 
   'faq.meta.title': 'FAQ · Yiveno',
   'faq.meta.description':
-    "What Yiveno is and isn't, how Recall works, privacy defaults, Free vs Pro, and store listing status.",
+    "What Yiveno is and isn't, how Recall works, privacy defaults, Free vs Pro, store listing status, and how to contact us.",
   'faq.title': 'FAQ',
   'faq.lede_before': 'Short answers about finding what you saved. For bugs or account help, see',
-  'faq.lede_support': 'Support',
+  'faq.lede_contact': 'Contact',
   'faq.lede_after': '.',
+  'faq.contact.title': 'Contact',
+  'faq.contact.lede_before':
+    'Need a reply? Email us. For product ideas that don’t need a reply, use',
+  'faq.contact.lede_after': 'or the optional form if you remove the extension.',
+  'faq.contact.bugs.title': 'Bugs & account help',
+  'faq.contact.bugs.body_before':
+    'Something broken, can’t sign in, sync issues, or billing questions:',
+  'faq.contact.bugs.hint':
+    'Include what you tried, your browser (Edge or Chrome) and version, and the extension version if you can — one clear note helps us reply once.',
+  'faq.contact.install.title': 'Install availability',
+  'faq.contact.install.body_before':
+    'Yiveno is not listed on the public Chrome Web Store or Microsoft Edge Add-ons yet. If you want a notice when a public listing is available, email',
+  'faq.contact.install.body_after': 'with the subject "Install notify".',
+  'faq.contact.ideas.title': 'Product ideas',
+  'faq.contact.ideas.body_before': 'Feature ideas or “why I left” style notes (no reply expected):',
+  'faq.contact.privacy.title': 'Privacy',
+  'faq.contact.privacy.body_before': 'Privacy questions:',
+  'faq.contact.privacy.policy': 'Privacy Policy',
   'faq.what_is.q': 'What is Yiveno?',
   'faq.what_is.a':
     'Yiveno is the thing that finds what you saved. Capture pages or passages with low friction, then Recall by saying what you remember. It returns a short list of closest fits — you pick. It is a Chromium browser extension for Microsoft Edge and Google Chrome.',

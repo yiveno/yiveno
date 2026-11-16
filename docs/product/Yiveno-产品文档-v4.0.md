@@ -889,7 +889,7 @@ Yiveno 同时承载两条相互促进、**不互相替代**的线程：
 3. IndexedDB 只经 `indexedDBManager`（`extension/src/infrastructure/indexeddb/manager.ts`）。
 4. 领域类型以 Zod 为准：`extension/src/core/memory/*`；消息类型以 `extension/src/core/messaging/*` 为准。**禁止发明新 message `type` 字符串**，先改 schema 再接线。
 5. 对外文案：**筛选 / 找**；禁止 **搜索 / Search**（各 locale 译文均遵守）。
-6. 扩展用户可见文案：经 **`t()`**（`extension/src/infrastructure/i18n/`）+ **`_locales/en` 与 `_locales/zh_CN`**；偏好 `system`/`en`/`zh_CN`（`UserSettings.uiLocalePreference`）。**禁止**在代码中写死 UI 自然语言，也禁止 `getMessage(...) || '兜底文案'`。`core` 不直接调 `chrome.i18n`（注入 `t` 或返回 message key）。**官网 `website/`** 有独立 `i18n`（en/zh_CN；壳导航/页脚、卸载反馈、`/login`、**营销首页**、**FAQ 可见文案**、**Pricing / Account / Support** 经 `t()` / `data-yiveno-i18n`；**Privacy / Terms** 同 URL 双语正文，冲突以英文为准）。双市场八项轴与冻结见 [`Yiveno-国际化-CN-NA.md`](./Yiveno-国际化-CN-NA.md)。FAQ **JSON-LD** 仍英文 `FAQ_ENTRIES`（与 UI locale 分面，见 `Yiveno-官网GEO.md`）。开发者文档/注释可中文。Detail **导出** Markdown 时间戳固定 `en-US`（交换格式，非 UI locale）。
+6. 扩展用户可见文案：经 **`t()`**（`extension/src/infrastructure/i18n/`）+ **`_locales/en` 与 `_locales/zh_CN`**；偏好 `system`/`en`/`zh_CN`（`UserSettings.uiLocalePreference`）。**禁止**在代码中写死 UI 自然语言，也禁止 `getMessage(...) || '兜底文案'`。`core` 不直接调 `chrome.i18n`（注入 `t` 或返回 message key）。**官网 `website/`** 有独立 `i18n`（en/zh_CN；壳导航/页脚、卸载反馈、`/login`、**营销首页**、**FAQ（含 Contact 联系区）**、**Pricing / Account** 经 `t()` / `data-yiveno-i18n`；**Privacy / Terms** 同 URL 双语正文，冲突以英文为准）。旧 `/support` 软跳 `/faq#contact`。双市场八项轴与冻结见 [`Yiveno-国际化-CN-NA.md`](./Yiveno-国际化-CN-NA.md)。FAQ **JSON-LD** 仍英文 `FAQ_ENTRIES`（与 UI locale 分面，见 `Yiveno-官网GEO.md`）。开发者文档/注释可中文。Detail **导出** Markdown 时间戳固定 `en-US`（交换格式，非 UI locale）。
 7. `:hover|:focus|:active` 禁止 `translate` / `scale` / `rotate`；只用背景 / opacity / shadow / outline / state layer（浮层入场与 pop/shake 例外见 §3）。
 8. 实现范围以 **§1 状态表**为准；未标「已上线」= 不得当成已有行为，也不得在 UI 暗示已可用。
 9. 本机找：**关键词 + Hybrid**（有 embedding 则融合；无则降级关键词）；**不分 Free/Pro**。**理解层里程碑 M1**：允许「任意线索 → 精确检索约束」；门禁后口语可走 LLM（可关；失败/配额用尽降级规则）。不得全库喂模型，不得模型返回无真实 MemoryItem id 的答案。
@@ -1015,7 +1015,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 | 证据卡 Explain 全要素（ECS）        | 已上线（Side Panel + Omnibox）                 | 来源 + 保存时间 + 锚点 + 命中理由；见 §5.10.1                                                                                                                                                                                                                                                                                                           |
 | Detail export / copy-for-AI         | 已上线（Library + Side Panel）                 | Library / Recall 多选 ≥1 条 → 复制或下载 JSON + Markdown；§5.10.4 · ADR-008                                                                                                                                                                                                                                                                             |
 | 只读 MCP                            | 已上线（beta）                                 | Settings → 隐私开关；工具 `yiveno_recall_evidence` → detail export（1–5）；本机 `MCP_RECALL_EVIDENCE` / 云端 `GET\|POST /api/mcp/*`；关闭后本机与云端均拒绝；§5.10.5                                                                                                                                                                                    |
-| Raindrop / Pocket 迁移导入          | 已上线（文件导入）                             | Settings → 数据：Raindrop（HTML/CSV/JSON）与 Pocket（HTML）导出，≤50 条；`IMPORT_THIRD_PARTY_CORPUS`；§5.10.6 · R2 准入                                                                                                                                                                                                                                 |
+| Raindrop / Pocket 迁移导入          | 已上线（文件导入）                             | Settings → **第三方数据**（`third_party`）：Raindrop（HTML/CSV/JSON）与 Pocket（HTML）导出，≤50 条；按来源状态 + 一键硬删；`IMPORT_THIRD_PARTY_CORPUS` / `GET_THIRD_PARTY_CORPUS_SUMMARY` / `DELETE_THIRD_PARTY_CORPUS_BY_SOURCE`；§5.10.6 · R2 准入                                                                                                    |
 | TTE / Verified Retrieval 埋点       | 已上线（P0 本机）                              | 七事件 + `pipelineTiming` + ECS 打分 + `yiveno.recallTelemetry`；**未**达 §5.9 Beta 门槛、不对外宣称                                                                                                                                                                                                                                                    |
 | 轻管理余项（标签/失效链接/统计）    | 目标 · Phase D                                 | 摘录 / 书签 Memory 删除已上线（书签 D-3 + 墓碑）；其余标签/失效链接/统计仍目标                                                                                                                                                                                                                                                                          |
 
@@ -1094,7 +1094,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 - **Bookmark**：`title`, `url`, `domain`；可选 favicon / chromeBookmarkId / parentFolderId / chromeCreatedAt / **`corpusSource` + `remoteId`**（第三方导入幂等；Raindrop / Pocket）/ `sourceCreatedAt`
   - **附注（Normative）**：可事后写入 `clues.note`（仅存 Yiveno，不同步 Chrome）；记忆库书签树可展示/编辑——**给以后的自己留「这是干啥的 / 为啥存」**；Chrome sync upsert **必须保留**已有 note。
   - **召回**：与摘录共用 `clues.note` 强线索权重。
-  - **第三方导入（§5.10.6）**：Settings → 数据 → Raindrop / Pocket 导出文件；`captureEntry: import`；upsert 保留 note / 行为字段。
+  - **第三方导入（§5.10.6）**：Settings → 第三方数据 → Raindrop / Pocket 导出文件；`captureEntry: import`；upsert 保留 note / 行为字段；按来源可硬删本机副本。
 - **TextExcerpt**：`selectedText`, `sourceUrl`, `pageTitle`, `domain`；可选 contextBefore/After；捕获可选 `note` → `clues.note`（附注，≠ 独立 `note` 类型）；亦可事后 `UPDATE_MEMORY_NOTE`
   - **展示（Normative）**：无强制标题；`selectedText` 为主内容；有附注时列表/详情在正文与出处之间展示 `clues.note`；`pageTitle` / `domain` 仅作出处。用户自拟附注标题属后续能力，未上线前不得用页名冒充标题。
   - **召回（Normative）**：`clues.note` 为强线索字段（权重大于标题，计入主文命中加成）。
@@ -1535,14 +1535,17 @@ schema：`extension/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 #### 5.10.6 第三方导入 · Raindrop / Pocket（若标已上线）
 
-**入口（已上线）：** Settings → **数据** → **Import from Raindrop** / **Import from Pocket**。用户自选脱敏导出文件（HTML / CSV / JSON）；Background `IMPORT_THIRD_PARTY_CORPUS`；进度经 `GET_THIRD_PARTY_CORPUS_IMPORT_STATUS`。映射为 `bookmark` + `corpusSource`/`remoteId` 幂等 upsert；入库后同一 `recallService`。
+**入口（已上线）：** Settings → **第三方数据**（`?section=third_party`）→ Raindrop / Pocket 两张卡。每卡含：导入（自选脱敏导出文件 HTML / CSV / JSON）· **按来源状态**（活跃条数 + 上次导入时间/条数；失败可见 `errorCode`）· **删除全部导入**（硬删本机该来源副本；不动原服务与 Chrome 书签；清除该来源导入状态记录；同文件可再导入带回）。
+
+**消息：** `IMPORT_THIRD_PARTY_CORPUS`；摘要 `GET_THIRD_PARTY_CORPUS_SUMMARY`；按来源删除 `DELETE_THIRD_PARTY_CORPUS_BY_SOURCE`。导入状态按来源记于 `yiveno.thirdPartyCorpusImport`（map；旧单条自动迁移）。映射为 `bookmark` + `corpusSource`/`remoteId` 幂等 upsert；入库后同一 `recallService`。
 
 1. 准备 **脱敏** 导出文件（HTML/JSON/CSV，≤50 条）。
-2. Settings → 保存/数据 → 导入 → 进度可见；失败有 `errorCode`。
-3. 随机 3 条用 **口语线索** Recall → top-3 含导入项；Detail 可打开。
-4. **准入：** 须过 R2 `THIRD_PARTY_CORPUS_ADMISSION_CHECKS`；导入后走同一 `recallService`。
+2. Settings → 第三方数据 → 对应来源 → 导入；状态行显示条数/上次导入；失败有 `errorCode`。
+3. 可选：删除全部导入 → 确认 → 计数归零；再导入同一文件可带回。
+4. 随机 3 条用 **口语线索** Recall → top-3 含导入项；Detail 可打开。
+5. **准入：** 须过 R2 `THIRD_PARTY_CORPUS_ADMISSION_CHECKS`；导入后走同一 `recallService`。
 
-**通过（本机）：** 导入成功文案显示条数；Library 书签树可见；口语 Recall 能命中导入项。
+**通过（本机）：** 导入成功文案显示条数；状态行按来源更新；删除后计数归零且重导可回；Library 书签树可见；口语 Recall 能命中导入项。
 
 #### 5.10.7 反跑题（R4）
 
@@ -1719,15 +1722,18 @@ Omnibox **本机快跳轨**专用 must（与 Side Panel `recall-eval` 正交）�
 
 **布局（Normative）：** 与记忆库同构——**左侧竖导航 + 右侧单面板切换**；窄屏降级为顶部横排 chips。深链 `settings.html?section=<id>`（默认 `capture` 不写 query；旧 `usage` 映射到 `capture`）。
 
-| 分区（侧栏） | `section` id                    | 状态            | 说明                                                                                                                                                                                                                                                         |
-| ------------ | ------------------------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 保存         | `capture`                       | 已上线          | 划词浮层开关（默认开）；**Chrome 书签同步**开关 `chromeBookmarkSyncEnabled`（**默认关**；开=导入现有+持续 sync；关=卸监听，不删已有）+ ingest 已开时「重新导入」                                                                                             |
-| 快捷键       | `shortcuts`                     | 已上线          | 展示绑定；改键跳转 `chrome://extensions/shortcuts`                                                                                                                                                                                                           |
-| 账户与同步   | `account_sync`                  | 已上线          | 顶栏头像登录；**同步 = Pro+登录+开关**（面仅摘录 · ADR-017）；订阅升级（回焦自动对账）；禁止缩量盖云；孤儿桶；退出三选一；默认同步关                                                                                                                         |
-| 数据与隐私   | `privacy`（旧 `data` 映射至此） | 已上线（P0+P1） | **单分区：** 披露摘要（A/B/C · 主体·杭州个人 / 云区域 us-east-2）；MCP；`/privacy` `/terms`；导入 / 备份 / 本机 Recall 适应（Outcome 软调 + 清适应信号）；清除本机记忆（并清 Outcome/TTE；不动原生书签）；删云端；删账号。开同步前确认（ack v4）仍在同步路径 |
-| AI           | `ai`                            | 已上线          | **关 AI**；模型路径说明（线索理解 + enrichment；不碰数据平面）                                                                                                                                                                                               |
+| 分区（侧栏） | `section` id                    | 状态            | 说明                                                                                                                                                                                                                                                                                                                    |
+| ------------ | ------------------------------- | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 保存         | `capture`                       | 已上线          | 划词浮层开关（默认开）；**Chrome 书签同步**开关 `chromeBookmarkSyncEnabled`（**默认关**；开=导入现有+持续 sync；关=卸监听，不删已有）+ ingest 已开时「重新导入」                                                                                                                                                        |
+| 第三方数据   | `third_party`                   | 已上线          | Raindrop / Pocket 两卡：导入 + 按来源状态（条数 / 上次导入）+ 按来源硬删全部导入副本（不动原服务与 Chrome 书签；状态按来源清除；重导可回）；§5.10.6 · ADR-025                                                                                                                                                           |
+| 快捷键       | `shortcuts`                     | 已上线          | 展示绑定；改键跳转 `chrome://extensions/shortcuts`                                                                                                                                                                                                                                                                      |
+| 账户与同步   | `account_sync`                  | 已上线          | 顶栏头像登录；**同步 = Pro+登录+开关**（面仅摘录 · ADR-017）；订阅升级（回焦自动对账）；禁止缩量盖云；孤儿桶；退出三选一；默认同步关                                                                                                                                                                                    |
+| 数据与隐私   | `privacy`（旧 `data` 映射至此） | 已上线（P0+P1） | 顶置隐私说明卡（「详细了解」→ `/privacy`）；**数据控制：** MCP；备份 / 本机 Recall 适应（Outcome 软调 + 清适应信号）；清除本机记忆（并清 Outcome/TTE；不动原生书签）；删云端；删账号。分区/行面**无**副标题。开同步前确认（ack v4）仍在同步路径；第三方导入已迁至 `third_party`；FAQ/支持见 `help`；政策/条款见 `legal` |
+| 帮助与支持   | `help`                          | 已上线          | 官网 FAQ（`/faq`）+ 支持/联系（`/faq#contact`；旧 `/support` 软跳同锚点）；行右 ↗ 外链图标                                                                                                                                                                                                                              |
+| 法律信息     | `legal`                         | 已上线          | 官网外链列表（定价 / 隐私政策 / 服务条款）；完整 A/B/C 披露正文在官网 `/privacy`，Settings **不再**展开摘要列表                                                                                                                                                                                                         |
+| AI           | `ai`                            | 已上线          | **关 AI**；模型路径说明（线索理解 + enrichment；不碰数据平面）；**不**再挂隐私政策行（改走 `legal`）                                                                                                                                                                                                                    |
 
-**Normative：** 清除本机记忆**永远不得**调用 `chrome.bookmarks` 删除或改写用户原生书签。侧栏**禁止**再拆独立「数据」「隐私」双分区；禁「帮助改进 AI」总开关冒充 B/C。
+**Normative：** 清除本机记忆**永远不得**调用 `chrome.bookmarks` 删除或改写用户原生书签。侧栏**禁止**再把「数据」与「隐私」拆成两套数据处置分区（`privacy` 为数据控制 + 顶置隐私说明卡；`help` 收 FAQ/支持；`legal` 收定价与政策/条款外链；完整披露正文在 `/privacy`）；禁「帮助改进 AI」总开关冒充 B/C。
 
 ### 5.5.1 数据归属与导出（Normative）
 
@@ -1759,7 +1765,7 @@ Omnibox **本机快跳轨**专用 must（与 Side Panel `recall-eval` 正交）�
 | **B · 匿名产品改进**        | 经处理的聚合/诊断上送（无 clue 原文、无 memory id、无 URL 原文）                      | **关**；**今日无上云管道**                 | **禁止**未实现管道就放可开 UI 开关                 |
 | **C · AI 质量评估（内容）** | 可识别的 AI 请求/反馈及相关内容**留存**做质量评估                                     | **关**；不得由 A/B 或「AI 功能开」自动打开 | ≠ `aiFeaturesEnabled`（后者=交付推理，非留存授权） |
 
-**Normative：** Settings「隐私」摘要与官网 `/privacy` 须写明 A 本机、B 默认不上送、C 与关 AI 解耦。**禁止**单一「Help improve Yiveno」总开关把 A/B/C 揉成一把刀。
+**Normative：** 官网 `/privacy`（及 Settings「法律信息」外链入口）须写明 A 本机、B 默认不上送、C 与关 AI 解耦。**禁止**单一「Help improve Yiveno」总开关把 A/B/C 揉成一把刀。
 
 #### 两层导出
 
@@ -1775,7 +1781,7 @@ Omnibox **本机快跳轨**专用 must（与 Side Panel `recall-eval` 正交）�
 - 护城河 **不得**建立在拒绝 Backup；须用「同份 Portable 在竞品侧 Recall 是否仍明显更差」+ 习惯入口验证（§0 竞争边界）。
 - **Backup 恢复（已上线）：** Settings「数据与隐私」Backup 组选 JSON → `IMPORT_LOCAL_MEMORY`。语义为 **merge/upsert（按 id · newer-wins；平局备份胜）**，不做 replace。孤儿命题（源不在恢复后 `memory_items`，含软删源可导入）跳过；游标字段重置（`lastDreamRunId` / `lastCursor` / `lastRunAt`）；跨 owner 文件**重归属**到当前 owner（命题 id 重建、`noteHitCounts` 键重映射）；历史无 `formatVersion` 文件按 v1 接受（仅条目亦可）。**勿与云同步换机混淆：** 云同步 v1 本地-only → 换机后本地重算命题；Backup 恢复 → 命题随文件回来，不重算。
 
-Settings「隐私」摘要与官网 `/privacy` 须与本节 L1–L3 口径一致；正文重大变更时同步更新 `privacyNoticeVersion` ack 文案（见 §6 隐私 P0）。
+官网 `/privacy` 须与本节 L1–L3 口径一致；Settings「法律信息」提供外链入口（不再内嵌展开摘要）。正文重大变更时同步更新 `privacyNoticeVersion` ack 文案（见 §6 隐私 P0）。
 
 ### 5.6 扩展入口
 
@@ -1872,12 +1878,12 @@ Chrome API / 选区
   - **官网**账户页 Sign out：仅 `signOut({ scope: local })` + UI 桥否态；**不**踢扩展、不清扩展账号桶。
   - **被挤掉：** 尽力 flush；清账号桶；清凭证；本地档无主摘录保留（仍不踢官网）。
 - **隐私 P0（Normative）**：
-  - Settings「隐私」展示数据说明摘要（本机 Memory / **A 本机适应信号** / 可选云同步**仅摘录** / 账号 Auth / AI 经 Worker；**B** 默认不收集去标识聚合产品分析上送；**C** 未授权内容留存质量评估；不收集 History、未 Capture 全文、默认不上云；书签本机灌库不上云；云摘录托管区域与运营主体见下条）。口径见 **§5.5.1 A/B/C**。
+  - 官网 `/privacy` 展示数据说明全文（本机 Memory / **A 本机适应信号** / 可选云同步**仅摘录** / 账号 Auth / AI 经 Worker；**B** 默认不收集去标识聚合产品分析上送；**C** 未授权内容留存质量评估；不收集 History、未 Capture 全文、默认不上云；书签本机灌库不上云；云摘录托管区域与运营主体见下条）。Settings「数据与隐私」顶置说明卡外链 `/privacy`；「法律信息」提供政策/条款外链（含 `/privacy`）；「帮助与支持」提供 FAQ/联系；口径见 **§5.5.1 A/B/C**。
   - **开同步前**须确认当前隐私说明版本（`privacyNoticeVersion` ack）；未确认不得开启同步。关同步 ≠ 自动删云端。当前水位 **`PRIVACY_NOTICE_VERSION = 4`**（云区域 East US / Ohio · `us-east-2` + 主体披露；重大改文案须递增）。**仅澄清 A/B/C 披露、不同步确认弹窗正文时，不强制递增 ack。**
   - **运营与发布状态（Normative · 披露口径）**：**个人运营**（基地杭州；**尚未**注册公司；日后或迁杭州公司须同步改 `/privacy` `/terms`）。扩展为 **Chromium 双店同包**（Chrome Web Store + Microsoft Edge Add-ons · [ADR-020](../architecture/decisions/ADR-020-chromium-dual-store-edge.md)）：两店均 **尚未公开上架**；**无**真实商店安装用户、**尚未**向公众收费（Free/Pro / Dodo 可为产品接线，不得写成已有付费用户群）。上架后：**大陆桌面主 CTA → Edge Add-ons**；能访问 CWS 者仍可装 Chrome。生产云 Memory / Auth：**Supabase 主库 `us-east-2`（East US / Ohio）**。
-  - **官网隐私政策（Normative）**：`https://yiveno.com/privacy`（及同源部署的 `/privacy`）提供与当前实现对齐的**美式英语**正文；官网页脚与登录页、扩展 Settings「数据与隐私」须外链至此。正文重大变更时更新日期；扩展内同步确认文案重大变更时递增 `privacyNoticeVersion`。本页**不是**律师意见书；未上线能力不得写入为已提供。卸载落地页可选反馈（闭集原因 + 可选短留言）须在 `/privacy` 披露；**不**计入同步 ack 重大变更（不因此递增 `privacyNoticeVersion`），除非 Settings 同步确认文案本身改写。
+  - **官网隐私政策（Normative）**：`https://yiveno.com/privacy`（及同源部署的 `/privacy`）提供与当前实现对齐的**美式英语**正文；官网页脚与登录页、扩展 Settings「数据与隐私」说明卡「Learn more / 详细了解」须外链至此。正文重大变更时更新日期；扩展内同步确认文案重大变更时递增 `privacyNoticeVersion`。本页**不是**律师意见书；未上线能力不得写入为已提供。卸载落地页可选反馈（闭集原因 + 可选短留言）须在 `/privacy` 披露；**不**计入同步 ack 重大变更（不因此递增 `privacyNoticeVersion`），除非 Settings 同步确认文案本身改写。
   - **关 AI + 模型说明（Normative）**：Settings「AI」提供 `aiFeaturesEnabled`（默认开）；关闭后线索 LLM completer 清空、Capture LLM enrichment 跳过；页内说明 Worker 路径与数据平面边界。**开 AI ≠ C 层内容留存授权。**
-  - **服务条款（Normative）**：官网 `/terms`（美式英语）；页脚 / 登录 / Settings 可外链。
+  - **服务条款（Normative）**：官网 `/terms`（美式英语）；页脚 / 登录 / Settings「法律信息」可外链。
   - **书签导入 vs 持续同步（Normative · [ADR-024](../architecture/decisions/ADR-024-chrome-bookmark-ingest-vs-sync.md)）：** 两键分开，**均默认关**。`chromeBookmarkIngestEnabled` = **一次性导入授权记录**（GS「同意并导入」；关不删已导入；`CAPTURE_BOOKMARK` 仍须 ingest）。`chromeBookmarkSyncEnabled` = **持续同步**（`bookmarks.on*` + repair alarm + reconcile/repair 门禁）。Settings「保存」主开关 = sync（开时：若 ingest 未开则一并置 ingest 并 `ensure`；关时只卸监听，不动 ingest）。GS 导入完成后可建议开 sync（可 dismissal）。Settings「重新导入」→ `ENSURE_CHROME_BOOKMARKS_IMPORTED`（须 ingest；尊重墓碑）。**用户可见 bulk 主进度 = GS Bookmarks tab**；**不**在 Side Panel 顶栏展示导入细条。存量升级：缺 sync 字段时 `sync = ingest`。**禁止**写成云记忆 sync；**禁止**用一次性 Import CTA 暗开持续监听。
   - **书签库与 Chrome 对账（Normative）**：**Chrome 书签树 = 壳权威**（单向 Chrome → IndexedDB；**禁止**写回 / 改写 / 删除原生书签；**禁止** Settings 暴露「修复」类用户操作）。增量靠 `bookmarks.on*`（须 **sync 开**）；holes-only reconcile / full repair 门禁 = **sync 开 + 导入 completed**。**full repair**（后台自动）：对当前全部 http(s) 叶子 upsert（同 `chromeBookmarkId` 含软删则同 id 复活；保留 `clues.note` 与行为计数）；软删带 `chromeBookmarkId` 且已不在 Chrome 树的孤儿；**不动**无 `chromeBookmarkId` 的第三方导入书签；遇墓碑不复活（ADR-023）。触发：① sync 且导入已完成时每个 SW 会话最多自动 full repair 一次（其后 finalize 仍走 holes；sync 关则 skip）；② **sync 开**时挂 **每日** `chrome.alarms` 对账（关 sync 则清闹钟）；③ 冷启动已 `ready` / 读导入状态时，**ingest 开**则每 SW 会话最多一次 `ensureChromeBookmarksImported`（补洞/续传；finalize 内 reconcile 仍受 sync 门禁）。**禁止**暗示云同步书签或双向合并。
   - **书签删除与墓碑（Normative · D-3 · [ADR-023](../architecture/decisions/ADR-023-chrome-bookmark-delete-tombstone.md)）：** 记忆库可软删书签 Memory（与摘录同走 `DELETE_MEMORY_ITEM`）；**只删 Yiveno 记忆，不动 Chrome 原生书签**。删除时**先**把 `chromeBookmarkId` 写入本地墓碑（`yiveno:chrome_bookmark_tombstones`）**再**软删（避免「已软删、无墓碑」被 sync/repair 复活）；upsert / bulk 遇墓碑 **不复活、不新建**；书签树映射 **隐藏** 墓碑叶子（库内无反删除；与摘录删除无撤销一致）。墓碑 **本地-only**：换设备或清本地数据后丢失，该书签可从 Chrome 再导入（固有性质）。`PRIVACY_NOTICE_VERSION` 不因此递增。
@@ -2790,6 +2796,14 @@ RecallOutcomeEvent {
 
 | 日期       | 变更                                                                                                                                                                                                                                                                                                       |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-16 | **Settings 帮助与支持分区：** 新增侧栏 `help`（privacy 与 legal 之间）；FAQ + 支持/联系自 `legal` 迁入；`legal` 保留定价/隐私政策/服务条款                                                                                                                                                                 |
+| 2026-11-16 | **Settings 隐私说明卡回数据与隐私：** 「我们重视你的隐私」顶栏从 `legal` 迁回 `privacy` 分区顶部；`legal` 仅保留官网外链列表                                                                                                                                                                               |
+| 2026-11-16 | **Settings 法律信息外链列表：** 去掉可展开披露摘要；补定价/支持/隐私政策/服务条款/FAQ；条款行标题去「阅读」重复；完整披露归官网 `/privacy`                                                                                                                                                                 |
+| 2026-11-16 | **官网 FAQ 合并 Support：** `/faq` 底部 Contact（邮件路由）；页脚去掉独立 Support；旧 `/support` 软跳 `/faq#contact`；sitemap / `llms.txt` / 法务链同步                                                                                                                                                    |
+| 2026-11-16 | **Settings 法律信息分区：** 新增侧栏 `legal`（privacy 之后）；隐私说明卡 + 披露摘要 + `/terms` 自 `privacy`/`ai` 迁入；`privacy` 聚焦 MCP/备份/清除                                                                                                                                                        |
+| 2026-11-16 | **Settings 去副标题：** 各分区 intro、开关 hint、ActionRow 副标题、隐私卡正文一律不展示；状态行/折叠披露/确认弹窗保留                                                                                                                                                                                      |
+| 2026-11-16 | **Settings 隐私顶栏说明卡：** 「数据与隐私」分区顶置盾牌说明卡；「Learn more / 详细了解」外链官网 `/privacy`；原政策按钮行收敛到顶栏文字链                                                                                                                                                                 |
+| 2026-11-16 | **第三方数据独立分区（ADR-025）：** Settings `third_party`（capture 之后）；Raindrop/Pocket 按来源状态 + 硬删；导入状态 map；摘要/删除消息替换旧单条 STATUS                                                                                                                                                |
 | 2026-11-16 | **书签导入 vs 持续同步拆分（ADR-024）：** `chromeBookmarkIngestEnabled` 一次性授权；`chromeBookmarkSyncEnabled` 持续监听/对账；GS 详细授权 + 导入后建议 sync；Settings sync 开关 + 重新导入；默认双关；存量缺 sync 时 sync=ingest                                                                          |
 | 2026-11-16 | **记忆库 P1（非 Recall）：** 摘录列表 200 截断 + 真实 `total` 说明；书签删除 D-3 + 墓碑（ADR-023）；卡面 role/键盘；书签树假 `tree`→`list`；Library 导入进度事件驱动；列表时间非当年补年份                                                                                                                 |
 | 2026-11-10 | **ADR-022 Dreaming 派生表：** §5.5.1 L3 增列 `memory_notes`；§7.05 增派生表口径（Backup 含 / Portable 默认不含 / v1 本地-only / 无引用不入库 / `CLEAR_LOCAL_MEMORY` 连带清）；IDB v5 只建 store；不进 Recall 主路径直至离线评估通过                                                                        |

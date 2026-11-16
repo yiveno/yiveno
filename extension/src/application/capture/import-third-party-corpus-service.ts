@@ -11,9 +11,11 @@ import {
   type ThirdPartyCorpusExportFormat
 } from '@/core/memory/parse-third-party-corpus-export'
 import type { ThirdPartyCorpusImportErrorCode } from '@/core/memory/third-party-corpus-import-state'
+import type { ThirdPartyCorpusImportState } from '@/core/memory/third-party-corpus-import-state'
 import type { ThirdPartyCorpusSource } from '@/core/memory/third-party-corpus-source'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import {
+  clearThirdPartyCorpusImportState,
   readThirdPartyCorpusImportState,
   writeThirdPartyCorpusImportState
 } from '@/infrastructure/storage/third-party-corpus-import-storage'
@@ -37,12 +39,45 @@ function mapParseError(error: unknown): ThirdPartyCorpusImportError {
   return new ThirdPartyCorpusImportError('THIRD_PARTY_IMPORT_FAILED')
 }
 
-/** 读取第三方导入进度（不触发导入）。 */
-export async function getThirdPartyCorpusImportStatus() {
-  return readThirdPartyCorpusImportState()
+/** 单来源摘要：活跃条数 + 最近一次导入状态。 */
+export type ThirdPartyCorpusSourceSummary = {
+  count: number
+  lastImport: ThirdPartyCorpusImportState | null
 }
 
-/** 导入 Raindrop / Pocket 导出文件（≤50 条）。 */
+/** 两来源汇总（Settings「第三方数据」分区）。 */
+export type ThirdPartyCorpusSummary = {
+  raindrop: ThirdPartyCorpusSourceSummary
+  pocket: ThirdPartyCorpusSourceSummary
+}
+
+/** 读取两来源条数与最近导入状态。 */
+export async function getThirdPartyCorpusSummary(): Promise<ThirdPartyCorpusSummary> {
+  const [raindropCount, pocketCount, raindropLast, pocketLast] = await Promise.all([
+    memoryItemService.countActiveByCorpusSource('raindrop'),
+    memoryItemService.countActiveByCorpusSource('pocket'),
+    readThirdPartyCorpusImportState('raindrop'),
+    readThirdPartyCorpusImportState('pocket')
+  ])
+  return {
+    raindrop: { count: raindropCount, lastImport: raindropLast },
+    pocket: { count: pocketCount, lastImport: pocketLast }
+  }
+}
+
+/** 按来源硬删全部导入副本，并清除该来源导入状态。 */
+export async function deleteThirdPartyCorpusBySource(
+  source: ThirdPartyCorpusSource
+): Promise<{ deletedCount: number }> {
+  const startedAt = flowStart('ThirdPartyImport', '按来源删除', { source })
+  const deletedCount = await memoryItemService.hardDeleteByCorpusSource(source)
+  await clearThirdPartyCorpusImportState(source)
+  invalidateBookmarkSyncAlignmentCache()
+  flowOk('ThirdPartyImport', '按来源删除完成', startedAt, { source, deletedCount })
+  return { deletedCount }
+}
+
+/** 导入 Raindrop / Pocket 导出文件。 */
 export async function importThirdPartyCorpusExport(input: {
   source: ThirdPartyCorpusSource
   content: string
@@ -66,7 +101,7 @@ async function runImport(input: {
   const startedAt = flowStart('ThirdPartyImport', '开始', { source: input.source })
   const startedIso = new Date().toISOString()
 
-  await writeThirdPartyCorpusImportState({
+  await writeThirdPartyCorpusImportState(input.source, {
     status: 'running',
     source: input.source,
     importedCount: 0,
@@ -81,7 +116,7 @@ async function runImport(input: {
       ...(input.format ? { format: input.format } : {})
     })
 
-    await writeThirdPartyCorpusImportState({
+    await writeThirdPartyCorpusImportState(input.source, {
       status: 'running',
       source: input.source,
       importedCount: 0,
@@ -109,7 +144,7 @@ async function runImport(input: {
       importedCount += 1
 
       if (importedCount % 5 === 0 || importedCount === parsed.length) {
-        await writeThirdPartyCorpusImportState({
+        await writeThirdPartyCorpusImportState(input.source, {
           status: 'running',
           source: input.source,
           importedCount,
@@ -122,7 +157,7 @@ async function runImport(input: {
     invalidateBookmarkSyncAlignmentCache()
 
     const finishedAt = new Date().toISOString()
-    await writeThirdPartyCorpusImportState({
+    await writeThirdPartyCorpusImportState(input.source, {
       status: 'completed',
       source: input.source,
       importedCount,
@@ -140,7 +175,7 @@ async function runImport(input: {
     return { importedCount }
   } catch (error) {
     const mapped = mapParseError(error)
-    await writeThirdPartyCorpusImportState({
+    await writeThirdPartyCorpusImportState(input.source, {
       status: 'failed',
       source: input.source,
       importedCount: 0,

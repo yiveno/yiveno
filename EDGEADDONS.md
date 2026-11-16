@@ -116,7 +116,7 @@ https://yiveno.com/privacy
 
 **Contact Email:** privacy@yiveno.com
 
-**Support:** mailto:support@yiveno.com · https://yiveno.com/support
+**Support:** mailto:support@yiveno.com · https://yiveno.com/faq#contact
 
 **Homepage:** https://yiveno.com
 

@@ -30,6 +30,60 @@
   color: var(--on-surface-muted);
 }
 
+/** 隐私分区顶栏说明卡：盾牌图标 + 标题/说明 + 官网政策文字链 */
+.settings-privacy-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--surface-raised);
+}
+
+.settings-privacy-banner__icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--on-surface-muted);
+}
+
+.settings-privacy-banner__copy {
+  display: grid;
+  gap: var(--space-2xs);
+  min-width: 0;
+}
+
+.settings-privacy-banner__title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--on-surface);
+}
+
+.settings-privacy-banner__link {
+  justify-self: start;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--accent);
+  text-decoration: none;
+}
+
+.settings-privacy-banner__link:hover,
+.settings-privacy-banner__link:focus-visible {
+  color: var(--accent-hover);
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+  outline: none;
+}
+
+.settings-privacy-banner__link:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
 /** 设置页卡片纵向堆叠：块间距统一用 --space-sm */
 .settings-card-stack {
   display: flex;
@@ -74,6 +128,12 @@
 
 .settings-group__card .settings-toggle + .settings-action-row--embedded,
 .settings-group__card .settings-action-row--embedded + .settings-toggle {
+  border-top: 1px solid var(--border);
+}
+
+.settings-group__card .settings-third-party-status {
+  margin: 0;
+  padding: 8px 16px 12px;
   border-top: 1px solid var(--border);
 }
 
@@ -349,6 +409,40 @@
   font-size: 13px;
   font-weight: 600;
   color: var(--on-surface);
+}
+
+/** 官网外链行：右仅 ↗ 图标（无障碍靠 title + aria-label） */
+.settings-external-link {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 36px;
+  height: 36px;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-md, 8px);
+  color: var(--on-surface-muted);
+  background: transparent;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    color var(--motion-duration-fast) var(--motion-easing-standard),
+    background-color var(--motion-duration-fast) var(--motion-easing-standard);
+}
+
+.settings-external-link:hover {
+  color: var(--on-surface);
+  background: color-mix(
+    in srgb,
+    var(--on-surface) calc(var(--state-hover-opacity) * 100%),
+    transparent
+  );
+}
+
+.settings-external-link:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
 }
 
 .settings-language-option {

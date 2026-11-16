@@ -353,4 +353,83 @@ describe('memory-item-repository', () => {
     expect(again.item.id).not.toBe(first.item.id)
     expect(await memoryItemRepository.listByOwner({ type: 'text_excerpt' })).toHaveLength(1)
   })
+
+  it('countActiveByCorpusSource：0 / 部分来源 / 硬删后归零', async () => {
+    expect(await memoryItemRepository.countActiveByCorpusSource('raindrop')).toBe(0)
+
+    await memoryItemRepository.upsertBookmarkFromThirdPartyCorpus({
+      payload: {
+        title: 'RD 1',
+        url: 'https://raindrop.example/1',
+        corpusSource: 'raindrop',
+        remoteId: 'rd-1'
+      },
+      captureEntry: 'import'
+    })
+    await memoryItemRepository.upsertBookmarkFromThirdPartyCorpus({
+      payload: {
+        title: 'RD 2',
+        url: 'https://raindrop.example/2',
+        corpusSource: 'raindrop',
+        remoteId: 'rd-2'
+      },
+      captureEntry: 'import'
+    })
+    await memoryItemRepository.upsertBookmarkFromThirdPartyCorpus({
+      payload: {
+        title: 'PK 1',
+        url: 'https://pocket.example/1',
+        corpusSource: 'pocket',
+        remoteId: 'pk-1'
+      },
+      captureEntry: 'import'
+    })
+    await memoryItemRepository.createBookmark({
+      payload: { title: 'Chrome-ish', url: 'https://chrome.example/b' },
+      captureEntry: 'sync'
+    })
+
+    expect(await memoryItemRepository.countActiveByCorpusSource('raindrop')).toBe(2)
+    expect(await memoryItemRepository.countActiveByCorpusSource('pocket')).toBe(1)
+
+    const deleted = await memoryItemRepository.hardDeleteByCorpusSource('raindrop')
+    expect(deleted).toBe(2)
+    expect(await memoryItemRepository.countActiveByCorpusSource('raindrop')).toBe(0)
+    expect(await memoryItemRepository.countActiveByCorpusSource('pocket')).toBe(1)
+    expect(await memoryItemRepository.countActiveByOwner('bookmark')).toBe(2)
+  })
+
+  it('hardDeleteByCorpusSource 只删该来源，不动其他来源与无 corpusSource 书签', async () => {
+    await memoryItemRepository.upsertBookmarkFromThirdPartyCorpus({
+      payload: {
+        title: 'PK keep',
+        url: 'https://pocket.example/keep',
+        corpusSource: 'pocket',
+        remoteId: 'pk-keep'
+      },
+      captureEntry: 'import'
+    })
+    const chromeLike = await memoryItemRepository.createBookmark({
+      payload: {
+        title: 'Local bookmark',
+        url: 'https://local.example/b',
+        chromeBookmarkId: 'chrome-keep-1'
+      },
+      captureEntry: 'sync'
+    })
+    await memoryItemRepository.upsertBookmarkFromThirdPartyCorpus({
+      payload: {
+        title: 'RD drop',
+        url: 'https://raindrop.example/drop',
+        corpusSource: 'raindrop',
+        remoteId: 'rd-drop'
+      },
+      captureEntry: 'import'
+    })
+
+    expect(await memoryItemRepository.hardDeleteByCorpusSource('raindrop')).toBe(1)
+    expect(await memoryItemRepository.countActiveByCorpusSource('raindrop')).toBe(0)
+    expect(await memoryItemRepository.countActiveByCorpusSource('pocket')).toBe(1)
+    expect(await memoryItemRepository.getById(chromeLike.id)).not.toBeNull()
+  })
 })
