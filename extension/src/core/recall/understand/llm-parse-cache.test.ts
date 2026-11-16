@@ -84,4 +84,23 @@ describe('llm-parse-cache', () => {
     expect(getLlmParseCacheSize()).toBe(0)
     expect(getCachedLlmParse('a', { nowMs: 1001 })).toBeNull()
   })
+
+  it('换模：同 clue 先后写 A、B 后，A 条目 get 为 miss', () => {
+    setCachedLlmParse('same clue', baseProposal, { nowMs: 1000, model: 'model-a' })
+    setCachedLlmParse('other clue', baseProposal, { nowMs: 1001, model: 'model-b' })
+    // lastWrittenModel=B → 同 clue 的 A 条目作废
+    expect(getCachedLlmParse('same clue', { nowMs: 1002 })).toBeNull()
+  })
+
+  it('同模型连续写入与读取 → hit', () => {
+    setCachedLlmParse('same clue', baseProposal, { nowMs: 1000, model: 'model-a' })
+    setCachedLlmParse('same clue', baseProposal, { nowMs: 1001, model: 'model-a' })
+    expect(getCachedLlmParse('same clue', { nowMs: 1002 })).toEqual(baseProposal)
+  })
+
+  it('unknown 写入后被已知模型写入作废', () => {
+    setCachedLlmParse('same clue', baseProposal, { nowMs: 1000 })
+    setCachedLlmParse('other', baseProposal, { nowMs: 1001, model: 'model-b' })
+    expect(getCachedLlmParse('same clue', { nowMs: 1002 })).toBeNull()
+  })
 })

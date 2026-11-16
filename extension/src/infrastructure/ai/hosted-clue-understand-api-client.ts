@@ -140,7 +140,11 @@ async function requestHostedCompleteDetailed(
     textLength: text.length,
     outcome: 'ok'
   })
-  return { text, usage }
+  return {
+    text,
+    usage,
+    ...(payload.model !== undefined ? { model: payload.model } : {})
+  }
 }
 
 /**

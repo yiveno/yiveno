@@ -5,6 +5,7 @@
 
 import type { Env } from '../types/env'
 import { isDeepSeekAiGatewayEnabled, resolveHostedModel } from '../config/ai-hosted'
+import { resolveHostedModelForTask } from '../config/ai-task-kind'
 import { isAiChatProviderConfigured, resolveAiChatProvider } from '../services/ai/ai-chat-provider'
 import {
   EnrichmentCompleteRequestSchema,
@@ -112,10 +113,12 @@ export async function handleEnrichmentComplete(request: Request, env: Env): Prom
     return errorJson({ error: 'missing_memory_fields' }, 400, origin)
   }
 
+  const model = resolveHostedModelForTask(env, 'enrichment')
   const viaAiGateway = isDeepSeekAiGatewayEnabled(env)
   logInfo('enrichment_complete_start', {
     ip,
     providerId,
+    model,
     titleLength: body.title?.length ?? 0,
     textLength: body.text?.length ?? 0,
     hasRuleHints: Boolean(body.ruleHints),
@@ -151,6 +154,7 @@ export async function handleEnrichmentComplete(request: Request, env: Env): Prom
       maxTokens: 400,
       temperature: 0,
       disableThinking: true,
+      model,
       messages: [
         { role: 'system', content: buildEnrichmentSystemPrompt() },
         { role: 'user', content: buildEnrichmentUserPrompt(body) }

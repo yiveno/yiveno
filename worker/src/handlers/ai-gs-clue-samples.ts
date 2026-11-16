@@ -6,6 +6,7 @@
 
 import type { Env } from '../types/env'
 import { isDeepSeekAiGatewayEnabled, resolveHostedModel } from '../config/ai-hosted'
+import { resolveHostedModelForTask } from '../config/ai-task-kind'
 import { isAiChatProviderConfigured, resolveAiChatProvider } from '../services/ai/ai-chat-provider'
 import {
   GsClueSamplesCompleteRequestSchema,
@@ -120,10 +121,12 @@ export async function handleGsClueSamplesComplete(request: Request, env: Env): P
   }
 
   const { bookmark } = bodyParsed.data
+  const model = resolveHostedModelForTask(env, 'gs_samples')
   const viaAiGateway = isDeepSeekAiGatewayEnabled(env)
   logInfo('gs_clue_samples_start', {
     ip,
     providerId,
+    model,
     titleLength: bookmark.title.length,
     hasUrl: Boolean(bookmark.url?.trim()),
     hasDescription: Boolean(bookmark.description?.trim()),
@@ -159,6 +162,7 @@ export async function handleGsClueSamplesComplete(request: Request, env: Env): P
       maxTokens: 700,
       temperature: 0.4,
       disableThinking: true,
+      model,
       messages: [
         { role: 'system', content: buildGsClueSamplesSystemPrompt() },
         { role: 'user', content: buildGsClueSamplesUserPrompt(bookmark) }

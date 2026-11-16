@@ -157,4 +157,94 @@ describe('POST /api/ai/enrichment/complete', () => {
     )
     expect([400, 503]).toContain(response.status)
   })
+
+  test('AI_HOSTED_MODEL_ENRICHMENT 覆盖传入 provider.complete', async () => {
+    const fetchMock = mock(
+      async () =>
+        new Response(
+          JSON.stringify({
+            choices: [
+              {
+                message: {
+                  content: JSON.stringify({
+                    objectType: 'article',
+                    keywords: ['test'],
+                    entities: [],
+                    summary: 'override model path'
+                  })
+                },
+                finish_reason: 'stop'
+              }
+            ],
+            usage: { total_tokens: 10 }
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } }
+        )
+    )
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    try {
+      const { handleEnrichmentComplete } = await import('../handlers/ai-enrichment')
+      const response = await handleEnrichmentComplete(
+        new Request('http://localhost/api/ai/enrichment/complete', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ title: 'override model' })
+        }),
+        createBaseEnv({ AI_HOSTED_MODEL_ENRICHMENT: 'deepseek-chat' })
+      )
+      expect(response.status).toBe(200)
+      const firstFetchCall = fetchMock.mock.calls[0] as Parameters<typeof fetch> | undefined
+      const requestBody = JSON.parse(String(firstFetchCall?.[1]?.body)) as { model?: string }
+      expect(requestBody.model).toBe('deepseek-chat')
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test('未设分档 env 时 enrichment 走全局模型', async () => {
+    const fetchMock = mock(
+      async () =>
+        new Response(
+          JSON.stringify({
+            choices: [
+              {
+                message: {
+                  content: JSON.stringify({
+                    objectType: 'article',
+                    keywords: ['global'],
+                    entities: [],
+                    summary: 'global model path'
+                  })
+                },
+                finish_reason: 'stop'
+              }
+            ],
+            usage: { total_tokens: 10 }
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } }
+        )
+    )
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    try {
+      const { handleEnrichmentComplete } = await import('../handlers/ai-enrichment')
+      const response = await handleEnrichmentComplete(
+        new Request('http://localhost/api/ai/enrichment/complete', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ title: 'global model' })
+        }),
+        createBaseEnv()
+      )
+      expect(response.status).toBe(200)
+      const firstFetchCall = fetchMock.mock.calls[0] as Parameters<typeof fetch> | undefined
+      const requestBody = JSON.parse(String(firstFetchCall?.[1]?.body)) as { model?: string }
+      expect(requestBody.model).toBe('deepseek-v4-flash')
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
 })

@@ -49,7 +49,7 @@ export interface ParseRecallClueWithLlmOptions {
   trace?: ClueFlowTrace
   /**
    * 是否读写 `llm-parse-cache`（默认 true，生产路径）。
-   * 离线换模对比须 false：缓存键不含 model，避免串用他模 proposal。
+   * 离线换模对比仍须 false：切换后有最多一次陈旧命中窗口（见 llm-parse-cache）。
    */
   useCache?: boolean
 }
@@ -112,7 +112,8 @@ async function refreshChitchatReply(args: {
  *
  * 缓存策略：同 clue 5min 内复用 LLM proposal（时间相关字段仍按调用方 nowMs 重算）。
  * 非召回回复每次另调 temperature 0.8；缓存内回复仅作「上一句」提示与失败回落。
- * 见 `llm-parse-cache.ts`。换 completer / 换模型前须 `clearLlmParseCache()`，或设 `useCache: false`。
+ * 见 `llm-parse-cache.ts`。条目打写入模型标记，读取只采信与最近一次写入模型一致的条目；
+ * 手动 `clearLlmParseCache()` 仍可用于紧急复位；离线换模对比仍建议 `useCache: false`。
  */
 export async function parseRecallClueWithLlm(
   clue: string,
@@ -161,12 +162,15 @@ export async function parseRecallClueWithLlm(
   let promptTokens: number | null = null
   let completionTokens: number | null = null
   let totalTokens: number | null = null
+  /** detailed 路径透传的模型名；plain 路径不传，写入缓存按 unknown。 */
+  let model: string | undefined
   if (options.completeDetailed) {
     const detailed = await options.completeDetailed(messages, { taskKind: 'nlu' })
     text = detailed.text
     promptTokens = detailed.usage.promptTokens
     completionTokens = detailed.usage.completionTokens
     totalTokens = detailed.usage.totalTokens
+    model = detailed.model
   } else {
     text = await options.complete(messages, { taskKind: 'nlu' })
   }
@@ -207,8 +211,12 @@ export async function parseRecallClueWithLlm(
   }
 
   // 2) 写入 cache（不含时间戳；下次复用；非召回缓存回复仅作提示/回落）
+  // plain 路径不传 model → 缓存按 'unknown'；detailed 有则写入模型标记
   if (useCache) {
-    setCachedLlmParse(clue, proposal, { nowMs: Date.now() })
+    setCachedLlmParse(clue, proposal, {
+      nowMs: Date.now(),
+      ...(model !== undefined ? { model } : {})
+    })
   }
   trace('info', 'LLM 解析：Zod 提议通过', {
     timeLabel: proposal.timeLabel ?? null,
@@ -256,6 +264,7 @@ export function createOpenAiCompatibleCompleterDetailed(
       temperature === undefined ? config : { ...config, temperature },
       messages
     )
-    return { text: detailed.text, usage: detailed.usage }
+    // 直连 detailed 无上游 model 字段；用请求配置的 model 标记缓存隔离。
+    return { text: detailed.text, usage: detailed.usage, model: config.model }
   }
 }

@@ -63,4 +63,6 @@ export function parseLlmChatUsage(raw: LlmChatUsageRaw | null | undefined): LlmC
 export type LlmChatDetailedResult = {
   text: string
   usage: LlmChatUsage
+  /** 服务本次请求的模型名；上游未返回时缺失。 */
+  model?: string
 }

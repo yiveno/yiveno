@@ -118,4 +118,90 @@ describe('POST /api/ai/gs-clue-samples/complete', () => {
       globalThis.fetch = originalFetch
     }
   })
+
+  test('AI_HOSTED_MODEL_GS_SAMPLES 覆盖传入 provider.complete', async () => {
+    const fetchMock = mock(
+      async () =>
+        new Response(
+          JSON.stringify({
+            choices: [
+              {
+                message: { content: fourCluesJson },
+                finish_reason: 'stop'
+              }
+            ],
+            usage: { total_tokens: 80 }
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } }
+        )
+    )
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    try {
+      const { handleGsClueSamplesComplete } = await import('../handlers/ai-gs-clue-samples')
+      const response = await handleGsClueSamplesComplete(
+        new Request('http://localhost/api/ai/gs-clue-samples/complete', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            bookmark: {
+              title: 'Why AI Agents Need Long-Term Memory',
+              url: 'https://example.com/agents-memory'
+            }
+          })
+        }),
+        createBaseEnv({ AI_HOSTED_MODEL_GS_SAMPLES: 'deepseek-chat' })
+      )
+      expect(response.status).toBe(200)
+      const firstFetchCall = fetchMock.mock.calls[0] as Parameters<typeof fetch> | undefined
+      const requestBody = JSON.parse(String(firstFetchCall?.[1]?.body)) as { model?: string }
+      expect(requestBody.model).toBe('deepseek-chat')
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test('未设分档 env 时 gs_samples 走全局模型', async () => {
+    const fetchMock = mock(
+      async () =>
+        new Response(
+          JSON.stringify({
+            choices: [
+              {
+                message: { content: fourCluesJson },
+                finish_reason: 'stop'
+              }
+            ],
+            usage: { total_tokens: 80 }
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } }
+        )
+    )
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    try {
+      const { handleGsClueSamplesComplete } = await import('../handlers/ai-gs-clue-samples')
+      const response = await handleGsClueSamplesComplete(
+        new Request('http://localhost/api/ai/gs-clue-samples/complete', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            bookmark: {
+              title: 'Why AI Agents Need Long-Term Memory',
+              url: 'https://example.com/agents-memory'
+            }
+          })
+        }),
+        createBaseEnv()
+      )
+      expect(response.status).toBe(200)
+      const firstFetchCall = fetchMock.mock.calls[0] as Parameters<typeof fetch> | undefined
+      const requestBody = JSON.parse(String(firstFetchCall?.[1]?.body)) as { model?: string }
+      expect(requestBody.model).toBe('deepseek-v4-flash')
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
 })

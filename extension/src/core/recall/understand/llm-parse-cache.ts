@@ -9,11 +9,12 @@
  * - 不缓存：rules_fallback / rejected_noise（不走 LLM）。
  * - 单测可调 `LLM_PARSE_CACHE_TTL_MS` 缩短 TTL。
  *
- * 适用边界：
- * - 缓存键**不含** model；切换 completer / 换模型时**不**自动失效。
- *   调用方须 `clearLlmParseCache()`，或 `parseRecallClueWithLlm({ useCache: false })`。
- * - 离线换模 / 评测注入 completer 时须 `useCache: false` 或先 `clearLlmParseCache()`，避免串提案。
- * - 生产路径：`clue-llm-completer-registry` 装配时机稳定；换配置时 registry 侧应清缓存。
+ * 适用边界（模型隔离）：
+ * - 条目打写入模型标记；读取只采信与最近一次写入模型（`lastWrittenModel`）一致的条目。
+ * - 服务端换模型后：最多一次陈旧命中（同一 clue 在 TTL 内、切换后的第一次重复查询），
+ *   随后该次写入会更新 `lastWrittenModel`，旧模条目自愈失效。
+ * - 离线换模对比仍建议 `useCache: false`（或先 `clearLlmParseCache()`），避开陈旧命中窗口。
+ * - 生产路径：`clue-llm-completer-registry` 装配时机稳定；紧急复位可手动清缓存。
  */
 
 import type { LlmParsedClueProposal } from '@/core/recall/understand/llm-parsed-clue-proposal'
@@ -31,13 +32,21 @@ interface CacheEntry {
   proposal: LlmParsedClueProposal
   /** 写入时间（epoch ms）。 */
   insertedAt: number
+  /** 写入该条目的模型名；未知时为 `'unknown'`。 */
+  model: string
 }
 
 /** 内部缓存（模块级单例）。所有 remember 调用共享。 */
 const cache = new Map<string, CacheEntry>()
 
 /**
- * 查询缓存。命中返回 proposal；过期 / 未命中返回 null。
+ * 最近一次写入所用模型。读取时只采信与此一致的条目。
+ * 尚未有任何写入时为 null（缓存必空，不触发模型校验）。
+ */
+let lastWrittenModel: string | null = null
+
+/**
+ * 查询缓存。命中返回 proposal；过期 / 模型不一致 / 未命中返回 null。
  * 顺手清理过期与超容量项（lazy eviction）。
  */
 export function getCachedLlmParse(
@@ -64,6 +73,11 @@ export function getCachedLlmParse(
     cache.delete(normalized)
     return null
   }
+  // 模型校验：与最近一次写入模型不一致 → 作废（换模后自愈）
+  if (lastWrittenModel !== null && entry.model !== lastWrittenModel) {
+    cache.delete(normalized)
+    return null
+  }
 
   // LRU 提升：删旧位 + 加新位（Map 保留插入顺序）
   cache.delete(normalized)
@@ -82,12 +96,12 @@ export function getCachedLlmParse(
 
 /**
  * 写入缓存。容量满时丢最旧（LRU）。
- * 同 clue 命中后会刷新 insertedAt（视为复用）。
+ * 同 clue 命中后会刷新 insertedAt（视为复用）；同步更新 lastWrittenModel。
  */
 export function setCachedLlmParse(
   rawClue: string,
   proposal: LlmParsedClueProposal,
-  options: { nowMs?: number; maxEntries?: number } = {}
+  options: { nowMs?: number; maxEntries?: number; model?: string } = {}
 ): void {
   const normalized = rawClue.trim().toLowerCase()
   if (!normalized) {
@@ -95,6 +109,7 @@ export function setCachedLlmParse(
   }
   const now = options.nowMs ?? Date.now()
   const maxEntries = options.maxEntries ?? LLM_PARSE_CACHE_MAX_ENTRIES
+  const model = options.model ?? 'unknown'
 
   if (cache.has(normalized)) {
     cache.delete(normalized)
@@ -108,13 +123,16 @@ export function setCachedLlmParse(
   cache.set(normalized, {
     normalizedClue: normalized,
     proposal,
-    insertedAt: now
+    insertedAt: now,
+    model
   })
+  lastWrittenModel = model
 }
 
-/** 清空缓存。单测 / 切换 completer / 紧急复位使用。 */
+/** 清空缓存。单测 / 紧急复位使用；同时重置 lastWrittenModel。 */
 export function clearLlmParseCache(): void {
   cache.clear()
+  lastWrittenModel = null
 }
 
 /** 当前缓存大小（仅诊断 / 单测）。 */
