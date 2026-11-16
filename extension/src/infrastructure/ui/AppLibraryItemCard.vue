@@ -94,7 +94,10 @@ function handleSurfaceKeydown(event: KeyboardEvent): void {
       </div>
 
       <!-- 第三行：来源等信息 + 时间（space-between） -->
-      <div v-if="$slots.footer || $slots.time" class="lib-item-row lib-item-row--split">
+      <div
+        v-if="$slots.footer || $slots.time"
+        class="lib-item-row lib-item-row--split lib-item-row--footer"
+      >
         <div class="lib-item-row__start">
           <slot name="footer" />
         </div>
@@ -181,12 +184,23 @@ function handleSurfaceKeydown(event: KeyboardEvent): void {
   box-sizing: border-box;
   width: 100%;
   padding: var(--space-sm);
+  overflow: hidden;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
   transition:
     background var(--motion-duration-short) var(--motion-easing-standard),
     border-color var(--motion-duration-short) var(--motion-easing-standard);
+}
+
+/* 首行不低于 40px actions 覆盖层；与 bookmark-library-index 行高定额首行 min 对齐 */
+.app-library-item-card__body > .lib-item-row--split:first-of-type {
+  min-height: 40px;
+}
+
+/* 短内容时页脚贴底，与多行卡对齐（fill 行高时生效） */
+.app-library-item-card__body > .lib-item-row--footer {
+  margin-top: auto;
 }
 
 .app-library-item-card__body--interactive {
@@ -208,9 +222,11 @@ function handleSurfaceKeydown(event: KeyboardEvent): void {
   background: var(--surface-accent-soft);
 }
 
-.app-library-item-card__body:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
+/* 选择器需压过 selected 的 inset accent shadow（同权时靠后胜出） */
+.app-library-item-card .app-library-item-card__body:focus-visible {
+  /* 内嵌焦点环：不出 border-box，避免被虚拟列表 overflow:auto 裁切 */
+  outline: 2px solid transparent; /* forced-colors：box-shadow 被抑时仍可见 */
+  box-shadow: inset 0 0 0 2px var(--focus-ring);
 }
 
 .app-library-item-card__selected-mark {

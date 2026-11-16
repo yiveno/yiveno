@@ -215,7 +215,8 @@ function handleBookmarkActivate(event: MouseEvent | KeyboardEvent) {
   padding-left: calc(var(--tree-depth, 0) * var(--library-tree-indent-step));
   overflow: visible;
   content-visibility: auto;
-  contain-intrinsic-size: auto 80px;
+  /* 无附注卡片 stride = BOOKMARK_LIBRARY_ROW_HEIGHT + GAP = 93+8 */
+  contain-intrinsic-size: auto 101px;
 }
 
 .tree-row--folder {
@@ -249,8 +250,9 @@ function handleBookmarkActivate(event: MouseEvent | KeyboardEvent) {
 }
 
 .tree-folder:focus-visible {
-  outline: 2px solid var(--focus-ring);
-  outline-offset: 2px;
+  /* 内嵌焦点环：与 AppLibraryItemCard 一致，避免被滚动容器裁切 */
+  outline: 2px solid transparent; /* forced-colors 兜底 */
+  box-shadow: inset 0 0 0 2px var(--focus-ring);
 }
 
 .tree-chevron {

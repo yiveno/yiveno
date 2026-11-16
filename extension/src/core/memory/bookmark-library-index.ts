@@ -50,8 +50,20 @@ export interface BookmarkLibraryVisibleRow {
   expanded?: boolean
 }
 
-export const BOOKMARK_LIBRARY_ROW_HEIGHT = 76
-export const BOOKMARK_LIBRARY_ROW_HEIGHT_WITH_NOTE = 108
+/**
+ * 书签/摘录卡片虚拟行内容高（无附注）。
+ * 算式：卡片固定开销 26（padding 24 + border 2）
+ *   + max(2 行摘录 15×1.35×2=40.5, 首行 min 40) + gap 8 + 页脚 18
+ *   = 92.5 → 93。
+ * clamp 上限见 `library-item-card-content.css`（摘录 2 / 附注 2）。
+ */
+export const BOOKMARK_LIBRARY_ROW_HEIGHT = 93
+/**
+ * 书签/摘录卡片虚拟行内容高（有附注）。
+ * 算式：26 + 2 行摘录 40.5 + gap 8 + 2 行附注 13×1.45×2=37.7 + gap 8 + 页脚 18
+ *   = 138.2 → 139。
+ */
+export const BOOKMARK_LIBRARY_ROW_HEIGHT_WITH_NOTE = 139
 /** 文件夹行内容高（树节点，非卡片） */
 export const BOOKMARK_LIBRARY_FOLDER_ROW_HEIGHT = 32
 /**
