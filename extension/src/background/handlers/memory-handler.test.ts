@@ -293,6 +293,73 @@ describe('memory-handler', () => {
     expect(treeSpy).toHaveBeenCalled()
   })
 
+  it('handleDeleteMemoryItem 墓碑写失败时条目未软删', async () => {
+    const tombstoneStorage =
+      await import('@/infrastructure/storage/chrome-bookmark-delete-tombstone-storage')
+    const addSpy = vi
+      .spyOn(tombstoneStorage, 'addChromeBookmarkDeleteTombstone')
+      .mockRejectedValueOnce(new Error('storage full'))
+
+    const { memoryItemService } = await import('@/application/memory/memory-item-service')
+    const item = await memoryItemService.upsertBookmarkFromChrome({
+      payload: {
+        title: 'Tomb fail',
+        url: 'https://bookmark.example.com/tomb-fail',
+        chromeBookmarkId: 'chrome-tomb-fail-1'
+      },
+      captureEntry: 'sync'
+    })
+
+    const deleted = await handleDeleteMemoryItem({ id: item.id })
+    expect(deleted.ok).toBe(false)
+    expect(addSpy).toHaveBeenCalledWith('chrome-tomb-fail-1')
+
+    const fetched = await handleGetMemoryItem({ id: item.id })
+    expect(fetched.ok).toBe(true)
+    if (!fetched.ok || !('item' in fetched)) {
+      return
+    }
+    expect(fetched.item.deletedAt).toBeNull()
+    addSpy.mockRestore()
+  })
+
+  it('handleDeleteMemoryItem 书签：先写墓碑再软删', async () => {
+    const tombstoneStorage =
+      await import('@/infrastructure/storage/chrome-bookmark-delete-tombstone-storage')
+    const { memoryItemService } = await import('@/application/memory/memory-item-service')
+    const callOrder: string[] = []
+    const realAdd = tombstoneStorage.addChromeBookmarkDeleteTombstone
+    const wrapAdd = vi
+      .spyOn(tombstoneStorage, 'addChromeBookmarkDeleteTombstone')
+      .mockImplementation(async chromeBookmarkId => {
+        callOrder.push('tombstone')
+        await realAdd(chromeBookmarkId)
+      })
+    const realSoft = memoryItemService.softDelete.bind(memoryItemService)
+    const wrapSoft = vi.spyOn(memoryItemService, 'softDelete').mockImplementation(async id => {
+      callOrder.push('softDelete')
+      return realSoft(id)
+    })
+
+    const item = await memoryItemService.upsertBookmarkFromChrome({
+      payload: {
+        title: 'Order check',
+        url: 'https://bookmark.example.com/order',
+        chromeBookmarkId: 'chrome-order-1'
+      },
+      captureEntry: 'sync'
+    })
+
+    const deleted = await handleDeleteMemoryItem({ id: item.id })
+    expect(deleted.ok).toBe(true)
+    expect(callOrder).toEqual(['tombstone', 'softDelete'])
+    expect(
+      (await tombstoneStorage.readChromeBookmarkDeleteTombstoneIds()).has('chrome-order-1')
+    ).toBe(true)
+    wrapAdd.mockRestore()
+    wrapSoft.mockRestore()
+  })
+
   it('handleRecordRecallDismiss 写回 dismissCount', async () => {
     const captured = await handleCaptureBookmark({
       title: 'dismissible bookmark',

@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import {
   addChromeBookmarkDeleteTombstone,
+  clearChromeBookmarkDeleteTombstones,
   readChromeBookmarkDeleteTombstoneIds
 } from '@/infrastructure/storage/chrome-bookmark-delete-tombstone-storage'
 import { CHROME_BOOKMARK_TOMBSTONE_STORAGE_KEY } from '@/core/memory/chrome-bookmark-delete-tombstone'
@@ -24,6 +25,11 @@ function createChromeStorageMock(initial: StorageMap = {}) {
         }),
         set: vi.fn(async (items: StorageMap) => {
           Object.assign(store, items)
+        }),
+        remove: vi.fn(async (keys: string | string[]) => {
+          for (const key of Array.isArray(keys) ? keys : [keys]) {
+            delete store[key]
+          }
         })
       }
     }
@@ -49,5 +55,13 @@ describe('chrome-bookmark-delete-tombstone-storage', () => {
         chromeBookmarkIds: ['chrome-a', 'chrome-b']
       }
     })
+  })
+
+  it('clear 后集合为空', async () => {
+    await addChromeBookmarkDeleteTombstone('chrome-a')
+    expect((await readChromeBookmarkDeleteTombstoneIds()).size).toBe(1)
+    await clearChromeBookmarkDeleteTombstones()
+    expect((await readChromeBookmarkDeleteTombstoneIds()).size).toBe(0)
+    expect(chrome.storage.local.remove).toHaveBeenCalledWith(CHROME_BOOKMARK_TOMBSTONE_STORAGE_KEY)
   })
 })

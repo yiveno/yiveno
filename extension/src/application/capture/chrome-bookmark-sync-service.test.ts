@@ -25,7 +25,8 @@ import {
   isChromeBookmarkIncrementalSyncEnabled,
   reconcileChromeBookmarksWithMemory,
   repairChromeBookmarksWithMemory,
-  resetPendingChromeBookmarkSyncForTests
+  resetPendingChromeBookmarkSyncForTests,
+  syncChromeBookmarkNode
 } from '@/application/capture/chrome-bookmark-sync-service'
 import { scheduleAsyncMemoryEmbedding } from '@/application/memory/schedule-async-memory-embedding'
 import { scheduleSilentMemoryEmbeddingMaintenance } from '@/application/memory/ensure-memory-embedding-maintenance'
@@ -258,6 +259,34 @@ describe('chrome-bookmark-sync-service', () => {
     })
     expect(deleted).toHaveLength(1)
     expect(deleted[0]?.deletedAt).toBeTruthy()
+  })
+
+  it('墓碑命中已软删行时 syncChromeBookmarkNode 返回 captured:false', async () => {
+    const { addChromeBookmarkDeleteTombstone } =
+      await import('@/infrastructure/storage/chrome-bookmark-delete-tombstone-storage')
+    vi.mocked(scheduleAsyncMemoryEmbedding).mockClear()
+
+    const created = await memoryItemService.upsertBookmarkFromChrome({
+      payload: {
+        title: 'Tomb sync',
+        url: 'https://example.com/tomb-sync',
+        chromeBookmarkId: '10'
+      },
+      captureEntry: 'sync'
+    })
+    await memoryItemService.softDelete(created.id)
+    await addChromeBookmarkDeleteTombstone('10')
+
+    const result = await syncChromeBookmarkNode({
+      id: '10',
+      syncing: false,
+      title: 'Tomb sync',
+      url: 'https://example.com/tomb-sync',
+      parentId: '1'
+    })
+
+    expect(result).toEqual({ captured: false })
+    expect(scheduleAsyncMemoryEmbedding).not.toHaveBeenCalled()
   })
 
   it('导入未完成时入队，flush 后写入', async () => {

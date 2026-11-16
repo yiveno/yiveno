@@ -4,6 +4,7 @@ const {
   getCurrentOwnerIdMock,
   listAllByOwnerIdMock,
   putManyMock,
+  getByIdMock,
   putNoteRecordMock,
   countByOwnerMock,
   putMetaMock,
@@ -13,6 +14,7 @@ const {
   getCurrentOwnerIdMock: vi.fn(),
   listAllByOwnerIdMock: vi.fn(),
   putManyMock: vi.fn(),
+  getByIdMock: vi.fn(),
   putNoteRecordMock: vi.fn(),
   countByOwnerMock: vi.fn(),
   putMetaMock: vi.fn(),
@@ -33,6 +35,7 @@ vi.mock('@/infrastructure/indexeddb/memory-item-repository', () => ({
 
 vi.mock('@/infrastructure/indexeddb/memory-notes-repository', () => ({
   memoryNotesRepository: {
+    getById: getByIdMock,
     putNoteRecord: putNoteRecordMock,
     countByOwner: countByOwnerMock
   }
@@ -55,7 +58,8 @@ vi.mock('@/infrastructure/storage/memory-library-revision-storage', () => ({
 import {
   importLocalMemoryBackup,
   LocalMemoryImportError,
-  parsePropositionIndexFromNoteId
+  parsePropositionIndexFromNoteId,
+  splitNoteHitKey
 } from '@/application/capture/import-local-memory-service'
 import { buildMemoryNoteId } from '@/infrastructure/indexeddb/memory-notes-types'
 
@@ -144,6 +148,7 @@ describe('importLocalMemoryBackup', () => {
     getCurrentOwnerIdMock.mockResolvedValue(OWNER)
     listAllByOwnerIdMock.mockResolvedValue([])
     putManyMock.mockResolvedValue(undefined)
+    getByIdMock.mockResolvedValue(null)
     putNoteRecordMock.mockImplementation(async (record: unknown) => record)
     countByOwnerMock.mockResolvedValue(1)
     putMetaMock.mockResolvedValue(undefined)
@@ -389,6 +394,127 @@ describe('importLocalMemoryBackup', () => {
   it('parsePropositionIndexFromNoteId 解析第三段', () => {
     expect(parsePropositionIndexFromNoteId(buildMemoryNoteId(OWNER, ITEM_ID, 2))).toBe(2)
     expect(parsePropositionIndexFromNoteId('bad')).toBeNull()
+  })
+
+  it('命题 newer-wins：本地更新 → 跳过', async () => {
+    const noteId = buildMemoryNoteId(OWNER, ITEM_ID, 0)
+    getByIdMock.mockResolvedValue(
+      makeNote({ id: noteId, updatedAt: '2026-02-01T00:00:00.000Z', text: 'local newer' })
+    )
+    const result = await importLocalMemoryBackup({
+      content: JSON.stringify({
+        formatVersion: 1,
+        ownerId: OWNER,
+        items: [makeItem()],
+        memoryNotes: [makeNote({ updatedAt: '2026-01-01T00:00:00.000Z', text: 'file older' })]
+      })
+    })
+    expect(result.restoredNotes).toBe(0)
+    expect(result.skippedNotes).toBe(1)
+    expect(putNoteRecordMock).not.toHaveBeenCalled()
+  })
+
+  it('命题 newer-wins：备份更新 → 恢复', async () => {
+    const noteId = buildMemoryNoteId(OWNER, ITEM_ID, 0)
+    getByIdMock.mockResolvedValue(
+      makeNote({ id: noteId, updatedAt: '2026-01-01T00:00:00.000Z', text: 'local older' })
+    )
+    const result = await importLocalMemoryBackup({
+      content: JSON.stringify({
+        formatVersion: 1,
+        ownerId: OWNER,
+        items: [makeItem()],
+        memoryNotes: [makeNote({ updatedAt: '2026-02-01T00:00:00.000Z', text: 'file newer' })]
+      })
+    })
+    expect(result.restoredNotes).toBe(1)
+    expect(result.skippedNotes).toBe(0)
+    expect(putNoteRecordMock).toHaveBeenCalledOnce()
+    expect(putNoteRecordMock.mock.calls[0]?.[0].text).toBe('file newer')
+  })
+
+  it('命题 newer-wins：平局备份胜', async () => {
+    const noteId = buildMemoryNoteId(OWNER, ITEM_ID, 0)
+    getByIdMock.mockResolvedValue(
+      makeNote({ id: noteId, updatedAt: '2026-02-01T00:00:00.000Z', text: 'local tie' })
+    )
+    const result = await importLocalMemoryBackup({
+      content: JSON.stringify({
+        formatVersion: 1,
+        ownerId: OWNER,
+        items: [makeItem()],
+        memoryNotes: [makeNote({ updatedAt: '2026-02-01T00:00:00.000Z', text: 'file tie' })]
+      })
+    })
+    expect(result.restoredNotes).toBe(1)
+    expect(putNoteRecordMock).toHaveBeenCalledOnce()
+    expect(putNoteRecordMock.mock.calls[0]?.[0].text).toBe('file tie')
+  })
+
+  it('跨 owner 重映射保留 #literal 命中键后缀', async () => {
+    const foreignNote = makeNote({ ownerId: OTHER_OWNER })
+    const foreignMeta = makeMeta({
+      ownerId: OTHER_OWNER,
+      noteHitCounts: { [`${foreignNote.id}#literal`]: 4 }
+    })
+    await importLocalMemoryBackup({
+      content: JSON.stringify({
+        formatVersion: 1,
+        ownerId: OTHER_OWNER,
+        items: [makeItem({ ownerId: OTHER_OWNER })],
+        memoryNotes: [foreignNote],
+        memoryNotesMeta: foreignMeta
+      })
+    })
+    const putMeta = putMetaMock.mock.calls[0]?.[0]
+    const remappedId = buildMemoryNoteId(OWNER, ITEM_ID, 0)
+    expect(putMeta.noteHitCounts[`${remappedId}#literal`]).toBe(4)
+    expect(putMeta.noteHitCounts[foreignNote.id]).toBeUndefined()
+  })
+
+  it('跨 owner 重映射保留 #semantic 命中键后缀', async () => {
+    const foreignNote = makeNote({ ownerId: OTHER_OWNER })
+    const foreignMeta = makeMeta({
+      ownerId: OTHER_OWNER,
+      noteHitCounts: { [`${foreignNote.id}#semantic`]: 2 }
+    })
+    await importLocalMemoryBackup({
+      content: JSON.stringify({
+        formatVersion: 1,
+        ownerId: OTHER_OWNER,
+        items: [makeItem({ ownerId: OTHER_OWNER })],
+        memoryNotes: [foreignNote],
+        memoryNotesMeta: foreignMeta
+      })
+    })
+    const putMeta = putMetaMock.mock.calls[0]?.[0]
+    const remappedId = buildMemoryNoteId(OWNER, ITEM_ID, 0)
+    expect(putMeta.noteHitCounts[`${remappedId}#semantic`]).toBe(2)
+  })
+
+  it('跨 owner 旧格式裸命中键仍重映射', async () => {
+    const foreignNote = makeNote({ ownerId: OTHER_OWNER })
+    const foreignMeta = makeMeta({
+      ownerId: OTHER_OWNER,
+      noteHitCounts: { [foreignNote.id]: 7 }
+    })
+    await importLocalMemoryBackup({
+      content: JSON.stringify({
+        formatVersion: 1,
+        ownerId: OTHER_OWNER,
+        items: [makeItem({ ownerId: OTHER_OWNER })],
+        memoryNotes: [foreignNote],
+        memoryNotesMeta: foreignMeta
+      })
+    })
+    const putMeta = putMetaMock.mock.calls[0]?.[0]
+    expect(putMeta.noteHitCounts[buildMemoryNoteId(OWNER, ITEM_ID, 0)]).toBe(7)
+  })
+
+  it('splitNoteHitKey 拆后缀', () => {
+    expect(splitNoteHitKey('abc#literal')).toEqual({ noteId: 'abc', suffix: '#literal' })
+    expect(splitNoteHitKey('abc#semantic')).toEqual({ noteId: 'abc', suffix: '#semantic' })
+    expect(splitNoteHitKey('abc')).toEqual({ noteId: 'abc', suffix: '' })
   })
 })
 

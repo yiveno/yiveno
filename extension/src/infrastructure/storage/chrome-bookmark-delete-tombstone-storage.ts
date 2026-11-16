@@ -5,6 +5,7 @@ import {
 } from '@/core/memory/chrome-bookmark-delete-tombstone'
 import {
   readChromeStorageLocal,
+  removeChromeStorageLocal,
   writeChromeStorageLocal
 } from '@/infrastructure/storage/chrome-storage-local'
 
@@ -34,4 +35,9 @@ export async function addChromeBookmarkDeleteTombstone(chromeBookmarkId: string)
     chromeBookmarkIds: [...existing, id]
   }
   await writeChromeStorageLocal(CHROME_BOOKMARK_TOMBSTONE_STORAGE_KEY, next)
+}
+
+/** 清空全部墓碑（清本地数据时调用；文档 §6：清本地数据后墓碑丢失）。 */
+export async function clearChromeBookmarkDeleteTombstones(): Promise<void> {
+  await removeChromeStorageLocal(CHROME_BOOKMARK_TOMBSTONE_STORAGE_KEY)
 }

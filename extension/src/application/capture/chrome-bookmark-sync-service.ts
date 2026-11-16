@@ -166,6 +166,10 @@ export async function syncChromeBookmarkNode(
 
   const item = await memoryItemService.upsertBookmarkFromChrome(leafToUpsertInput(leaf))
   invalidateBookmarkSyncAlignmentCache()
+  // 墓碑命中时 upsert 返回已软删行（不复活、不新建）：视为未捕获，不闪角标、不调度 embedding
+  if (item.deletedAt != null) {
+    return { captured: false }
+  }
   return { captured: true, itemId: item.id }
 }
 

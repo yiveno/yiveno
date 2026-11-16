@@ -1,6 +1,6 @@
 ---
 created: 2026-11-16T15:48:22+08:00
-updated: 2026-11-16T15:48:22+08:00
+updated: 2026-11-16T21:03:18+08:00
 author: agent:cursor
 scope: docs/architecture/decisions
 status: 已接受
@@ -23,15 +23,15 @@ downstream: docs/product/Yiveno-产品文档-v4.0.md（书签删除 + 墓碑）,
 
 1. **删除语义（D-3）**：记忆库删除书签 Memory = 软删 Yiveno 行；**禁止**调用 `chrome.bookmarks.remove` / `.create` / `.update` / `.move`。
 2. **墓碑**：`chrome.storage.local` 键 `yiveno:chrome_bookmark_tombstones` 存已删书签的 `chromeBookmarkId` 集合（**不升 IDB 版本**；本地-only）。
-3. **写**：`handleDeleteMemoryItem` 对书签软删成功后写入墓碑；并失效书签对齐缓存与树缓存。
+3. **写**：`handleDeleteMemoryItem` 对书签**先写墓碑再软删**（墓碑失败则条目不动，可重试）；并失效书签对齐缓存与树缓存。
 4. **读（choke 点）**：`MemoryItemRepository.upsertBookmarkFromChrome` 遇墓碑 id → 不复活、不新建；`bulkPutChromeBookmarkLeaves` 一次读集合后内存过滤（唯一绕过 upsert 的 bulk 路径）。
 5. **树**：`handleGetBookmarkLibraryTree` 映射时跳过墓碑叶子（隐藏行）；库内无反删除入口（与摘录删除无撤销一致）。
 6. **对「Chrome 为权威」的例外**：用户显式删除优先于「Chrome 仍在 → 必须进库」。Chrome 仍是壳与原生书签的权威；Yiveno 记忆可拒绝再导入已墓碑 id。
+7. **清本地**：`CLEAR_LOCAL_MEMORY` **须**清墓碑（与产品文档 §6「清本地数据后丢失」一致）。
 
 ## 已知限制
 
 - 墓碑 **本地-only**：换设备 / 清本地数据后丢失，该书签会从 Chrome 重新导入（D-3 固有性质）。
-- `CLEAR_LOCAL_MEMORY` 等是否清墓碑：以产品文档当期 Normative 为准；本 ADR 不另开清除语义。
 
 ## 不做
 

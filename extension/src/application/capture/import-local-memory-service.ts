@@ -70,6 +70,18 @@ export function parsePropositionIndexFromNoteId(noteId: string): number | null {
   return index
 }
 
+/**
+ * 拆命中键为裸 noteId + 后缀（`#literal` / `#semantic` / ``）。
+ * 旧格式裸 noteId 无后缀，suffix 为 `''`。
+ */
+export function splitNoteHitKey(key: string): { noteId: string; suffix: string } {
+  const hashIndex = key.indexOf('#')
+  if (hashIndex === -1) {
+    return { noteId: key, suffix: '' }
+  }
+  return { noteId: key.slice(0, hashIndex), suffix: key.slice(hashIndex) }
+}
+
 /** 导入本地 Backup JSON（Settings 恢复）。 */
 export async function importLocalMemoryBackup(input: {
   content: string
@@ -179,6 +191,13 @@ async function runImport(input: { content: string }): Promise<LocalMemoryImportR
         ownerId: currentOwnerId
       }
 
+      // newer-wins：本地命题更新则跳过（平局备份胜，与条目路径一致）
+      const localNote = await memoryNotesRepository.getById(nextId)
+      if (localNote != null && localNote.updatedAt > record.updatedAt) {
+        skippedNotes += 1
+        continue
+      }
+
       const written = await memoryNotesRepository.putNoteRecord(record)
       if (written == null) {
         skippedNotes += 1
@@ -244,18 +263,21 @@ async function restoreMeta(input: {
   if (input.reown) {
     const remapped: Record<string, number> = {}
     for (const [oldId, count] of Object.entries(noteHitCounts)) {
-      const fromMap = input.noteIdRemap.get(oldId)
+      // Phase 4.1 键为 `${noteId}#literal|#semantic`；旧格式为裸 noteId
+      const { noteId: baseNoteId, suffix } = splitNoteHitKey(oldId)
+      const fromMap = input.noteIdRemap.get(baseNoteId)
       if (fromMap != null) {
-        remapped[fromMap] = count
+        remapped[fromMap + suffix] = count
         continue
       }
       // 未写入的命中键：仍按 id 三段重建到当前 owner，避免残留外号 id
-      const parts = oldId.split('\0')
+      const parts = baseNoteId.split('\0')
       if (parts.length >= 3) {
         const sourceMemoryItemId = parts[parts.length - 2]
-        const index = parsePropositionIndexFromNoteId(oldId)
+        const index = parsePropositionIndexFromNoteId(baseNoteId)
         if (sourceMemoryItemId && index != null) {
-          remapped[buildMemoryNoteId(input.currentOwnerId, sourceMemoryItemId, index)] = count
+          remapped[buildMemoryNoteId(input.currentOwnerId, sourceMemoryItemId, index) + suffix] =
+            count
           continue
         }
       }

@@ -12,7 +12,8 @@ const {
   syncListenersMock,
   clearRecallOutcomePairsMock,
   clearRecallTelemetryEventsMock,
-  resetChromeBookmarkImportAfterLocalClearMock
+  resetChromeBookmarkImportAfterLocalClearMock,
+  clearChromeBookmarkDeleteTombstonesMock
 } = vi.hoisted(() => ({
   getAccountBindingMock: vi.fn(),
   getOrCreateLocalProfileMock: vi.fn(),
@@ -25,7 +26,8 @@ const {
   syncListenersMock: vi.fn(),
   clearRecallOutcomePairsMock: vi.fn(),
   clearRecallTelemetryEventsMock: vi.fn(),
-  resetChromeBookmarkImportAfterLocalClearMock: vi.fn()
+  resetChromeBookmarkImportAfterLocalClearMock: vi.fn(),
+  clearChromeBookmarkDeleteTombstonesMock: vi.fn()
 }))
 
 vi.mock('@/infrastructure/identity/local-profile-service', () => ({
@@ -64,6 +66,10 @@ vi.mock('@/application/capture/import-chrome-bookmarks-service', () => ({
   resetChromeBookmarkImportAfterLocalClear: resetChromeBookmarkImportAfterLocalClearMock
 }))
 
+vi.mock('@/infrastructure/storage/chrome-bookmark-delete-tombstone-storage', () => ({
+  clearChromeBookmarkDeleteTombstones: clearChromeBookmarkDeleteTombstonesMock
+}))
+
 vi.mock('@/infrastructure/storage/recall-outcome-pairs-storage', () => ({
   clearRecallOutcomePairs: clearRecallOutcomePairsMock
 }))
@@ -99,6 +105,7 @@ describe('handleClearLocalMemory', () => {
     clearRecallOutcomePairsMock.mockResolvedValue(undefined)
     clearRecallTelemetryEventsMock.mockResolvedValue(undefined)
     resetChromeBookmarkImportAfterLocalClearMock.mockResolvedValue(undefined)
+    clearChromeBookmarkDeleteTombstonesMock.mockResolvedValue(undefined)
   })
 
   it('清除本机条目并关闭书签灌库，不依赖 Chrome bookmarks API', async () => {
@@ -119,7 +126,14 @@ describe('handleClearLocalMemory', () => {
     })
     expect(syncListenersMock).toHaveBeenCalledWith(false)
     expect(resetChromeBookmarkImportAfterLocalClearMock).toHaveBeenCalledOnce()
+    expect(clearChromeBookmarkDeleteTombstonesMock).toHaveBeenCalledOnce()
     expect(patchSyncPrefsMock).not.toHaveBeenCalled()
+  })
+
+  it('CLEAR_LOCAL_MEMORY 清书签删除墓碑', async () => {
+    await handleClearLocalMemory()
+    expect(clearChromeBookmarkDeleteTombstonesMock).toHaveBeenCalledOnce()
+    expect(resetChromeBookmarkImportAfterLocalClearMock).toHaveBeenCalledOnce()
   })
 
   it('同步开着时一并关闭同步', async () => {

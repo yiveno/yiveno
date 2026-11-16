@@ -39,6 +39,7 @@ import {
 } from '@/infrastructure/identity/subscription-service'
 import { updateUserSettings } from '@/infrastructure/settings/user-settings-service'
 import { bumpMemoryLibraryRevision } from '@/infrastructure/storage/memory-library-revision-storage'
+import { clearChromeBookmarkDeleteTombstones } from '@/infrastructure/storage/chrome-bookmark-delete-tombstone-storage'
 import { syncChromeBookmarkSyncListenersWithSyncSetting } from '@/background/listeners/chrome-bookmark-sync'
 import {
   ackCurrentPrivacyNotice,
@@ -310,7 +311,7 @@ export async function handleExportLocalMemory(): Promise<ExportLocalMemoryRespon
 /**
  * CLEAR_LOCAL_MEMORY — 硬清当前 owner 本机 Memory。
  * 不动 Chrome 原生书签；关书签灌库；若同步开着则关同步（云端副本需用户另删）；
- * 并清 Outcome 对 / TTE 环。
+ * 并清 Outcome 对 / TTE 环；并清书签删除墓碑（文档 §6：清本地数据后墓碑丢失）。
  */
 export async function handleClearLocalMemory(): Promise<ClearLocalMemoryResponse> {
   const startedAt = flowStart('Data', 'CLEAR_LOCAL_MEMORY')
@@ -335,6 +336,7 @@ export async function handleClearLocalMemory(): Promise<ClearLocalMemoryResponse
     await syncChromeBookmarkSyncListenersWithSyncSetting(false)
     // Memory 已空：抹掉 completed 导入进度，避免再开灌库时误以为已灌满
     await resetChromeBookmarkImportAfterLocalClear()
+    await clearChromeBookmarkDeleteTombstones()
 
     const syncPrefs = await getSyncPrefs()
     let syncDisabled = false

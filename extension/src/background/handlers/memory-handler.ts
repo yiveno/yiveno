@@ -189,14 +189,15 @@ export async function handleDeleteMemoryItem(payload: unknown): Promise<MemoryBa
       return toErrorResponse('MEMORY_NOT_FOUND')
     }
 
+    // 书签：先写墓碑再软删，避免「已软删、无墓碑」中间态被 sync/repair 复活
+    if (existing.type === 'bookmark' && existing.payload.chromeBookmarkId) {
+      await addChromeBookmarkDeleteTombstone(existing.payload.chromeBookmarkId)
+    }
+
     const item = await memoryItemService.softDelete(input.id)
     if (!item) {
       flowOk('Memory', '删除条目', startedAt, { id: input.id, found: false })
       return toErrorResponse('MEMORY_NOT_FOUND')
-    }
-
-    if (existing.type === 'bookmark' && existing.payload.chromeBookmarkId) {
-      await addChromeBookmarkDeleteTombstone(existing.payload.chromeBookmarkId)
     }
 
     invalidateBookmarkSyncAlignmentCache()
