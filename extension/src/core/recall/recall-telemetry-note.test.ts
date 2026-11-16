@@ -68,4 +68,25 @@ describe('recall-telemetry-note', () => {
     expect(dreamingCall!.soleCorroboration).toBe(true)
     expect(JSON.stringify(dreamingCall)).not.toMatch(/Quokka|sightings|proposition/)
   })
+
+  it('dreaming_note_hit 接受 matchKind + semanticScoreBucket（按 kind 区分）', () => {
+    const parsed = parseRecallTelemetryEvent({
+      type: 'dreaming_note_hit',
+      taskId: '11111111-1111-4111-8111-111111111111',
+      traceId: '22222222-2222-4222-8222-222222222222',
+      noteId: NOTE_ID,
+      sourceMemoryItemId: SOURCE_ID,
+      rank: 0,
+      matchedTermsCount: 0,
+      soleCorroboration: true,
+      matchKind: 'semantic',
+      semanticScoreBucket: '0.65_0.70',
+      at: '2026-11-16T12:00:00.000Z'
+    })
+    expect(parsed?.type).toBe('dreaming_note_hit')
+    if (parsed?.type === 'dreaming_note_hit') {
+      expect(parsed.matchKind).toBe('semantic')
+      expect(parsed.semanticScoreBucket).toBe('0.65_0.70')
+    }
+  })
 })

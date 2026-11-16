@@ -48,6 +48,18 @@ vi.mock('@/infrastructure/indexeddb/memory-notes-meta-repository', () => ({
   }
 }))
 
+vi.mock('@/infrastructure/indexeddb/memory-note-embedding-repository', () => ({
+  memoryNoteEmbeddingRepository: {
+    listBySource: vi.fn(async () => []),
+    deleteBySource: vi.fn(async () => 0),
+    putRecord: vi.fn(async () => null)
+  }
+}))
+
+vi.mock('@/application/dreaming/schedule-proposition-embeddings', () => ({
+  embedPropositionsForWrittenNotes: vi.fn(async () => ({ written: 0, reused: 0, skipped: 0 }))
+}))
+
 import { requestDreamingCompileBatch } from '@/application/dreaming/dreaming-llm-client'
 import { compileMemoryNotesTick } from '@/application/dreaming/compile-memory-notes'
 import { createBookmarkMemoryItem } from '@/core/memory/create-memory-item'

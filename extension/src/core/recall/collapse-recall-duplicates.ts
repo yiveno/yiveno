@@ -114,9 +114,29 @@ export function compareRecallDuplicateMembers(a: RecallMatch, b: RecallMatch): n
 
 /**
  * 组级继承（设计稿 §3.2）：代表项继承组内最优命题出处。
- * 最优 = 匹配词数最多；并列取 propositionIndex 最小。
+ * 最优 = 字面优先于语义；同种内匹配词数/相似度最多；并列取 propositionIndex 最小。
  * soleCorroboration 按代表项重算（同一判定函数）；无 terms 可算时沿用继承出处的标记。
  */
+function isBetterProvenance(next: NoteProvenance, best: NoteProvenance): boolean {
+  const nextKind = next.matchKind ?? 'literal'
+  const bestKind = best.matchKind ?? 'literal'
+  if (nextKind !== bestKind) {
+    return nextKind === 'literal'
+  }
+  if (nextKind === 'literal') {
+    if (next.matchedTerms.length !== best.matchedTerms.length) {
+      return next.matchedTerms.length > best.matchedTerms.length
+    }
+    return next.propositionIndex < best.propositionIndex
+  }
+  const nextScore = next.semanticScore ?? 0
+  const bestScore = best.semanticScore ?? 0
+  if (nextScore !== bestScore) {
+    return nextScore > bestScore
+  }
+  return next.propositionIndex < best.propositionIndex
+}
+
 function inheritBestNoteProvenance(
   members: RecallMatch[],
   representative: RecallMatch,
@@ -128,12 +148,7 @@ function inheritBestNoteProvenance(
     if (!provenance) {
       continue
     }
-    if (
-      !best ||
-      provenance.matchedTerms.length > best.matchedTerms.length ||
-      (provenance.matchedTerms.length === best.matchedTerms.length &&
-        provenance.propositionIndex < best.propositionIndex)
-    ) {
+    if (!best || isBetterProvenance(provenance, best)) {
       best = provenance
     }
   }

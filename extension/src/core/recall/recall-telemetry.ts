@@ -156,7 +156,14 @@ export const RecallTelemetryEventSchema = z.discriminatedUnion('type', [
     sourceMemoryItemId: z.uuid(),
     rank: z.number().int().nonnegative(),
     matchedTermsCount: z.number().int().nonnegative(),
-    soleCorroboration: z.boolean()
+    soleCorroboration: z.boolean(),
+    /** Phase 4.1：字面 / 语义；旧事件可缺省。 */
+    matchKind: z.enum(['literal', 'semantic']).optional(),
+    /**
+     * 语义相似度分桶（仅 semantic）：`lt_0.50` / `0.50_0.60` / … / `ge_0.80`。
+     * 不写原始浮点，便于聚合且降敏。
+     */
+    semanticScoreBucket: z.string().min(1).optional()
   }),
   telemetryBaseSchema.extend({
     type: z.literal('task_timeout'),

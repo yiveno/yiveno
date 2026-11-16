@@ -79,18 +79,25 @@ export class MemoryNotesMetaRepository {
 
   /**
    * 命题级命中计数 +1（设计稿 §9.2；自有 store，不得复用 settledCount）。
+   * Phase 4.1：按 matchKind 分键（`${noteId}#literal` / `${noteId}#semantic`），不得混同字面命中。
    * fail-open：写库失败只记日志，不抛错、不挡 Recall。
    */
-  async recordNoteHit(ownerId: string, noteId: string): Promise<void> {
+  async recordNoteHit(
+    ownerId: string,
+    noteId: string,
+    matchKind: 'literal' | 'semantic' = 'literal'
+  ): Promise<void> {
     try {
       const existing = await this.getOrCreateMeta(ownerId)
       const noteHitCounts = { ...existing.noteHitCounts }
-      noteHitCounts[noteId] = (noteHitCounts[noteId] ?? 0) + 1
+      const key = `${noteId}#${matchKind}`
+      noteHitCounts[key] = (noteHitCounts[key] ?? 0) + 1
       await this.putMeta({ ...existing, noteHitCounts })
     } catch (error) {
       logger.warn('Dreaming', '命题命中计数写入失败', {
         ownerId,
         noteId,
+        matchKind,
         error: error instanceof Error ? error.message : String(error)
       })
     }

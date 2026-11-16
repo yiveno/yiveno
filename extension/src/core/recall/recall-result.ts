@@ -20,7 +20,7 @@ export interface NoteProvenance {
   noteId: string
   /** 命题的源条目 id。 */
   sourceMemoryItemId: string
-  /** 命题命中的 effective content terms。 */
+  /** 命题命中的 effective content terms（语义独占可为空——不编造 token）。 */
   matchedTerms: string[]
   /** 该源条目无任何字面佐证、仅靠命题锚通过佐证门时为 true。 */
   soleCorroboration: boolean
@@ -30,6 +30,10 @@ export interface NoteProvenance {
   topicAnchor: string[]
   /** 命题在源下的序号（组级继承并列决胜：取最小）。 */
   propositionIndex: number
+  /** 字面（rule 0）或语义（rule 0b）；缺省按 literal 兼容旧构造。 */
+  matchKind?: 'literal' | 'semantic'
+  /** 语义命中相似度；字面命中不填。 */
+  semanticScore?: number
 }
 
 /** 单次召回命中项。 */

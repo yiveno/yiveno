@@ -19,11 +19,14 @@ import {
   requestDreamingCompileBatch,
   type DreamingCompileSourceInput
 } from '@/application/dreaming/dreaming-llm-client'
+import { embedPropositionsForWrittenNotes } from '@/application/dreaming/schedule-proposition-embeddings'
 import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
 import { getCurrentOwnerId } from '@/infrastructure/identity/local-profile-service'
 import { memoryItemRepository } from '@/infrastructure/indexeddb/memory-item-repository'
+import { memoryNoteEmbeddingRepository } from '@/infrastructure/indexeddb/memory-note-embedding-repository'
 import { memoryNotesMetaRepository } from '@/infrastructure/indexeddb/memory-notes-meta-repository'
 import { memoryNotesRepository } from '@/infrastructure/indexeddb/memory-notes-repository'
+import type { MemoryNoteRecord } from '@/infrastructure/indexeddb/memory-notes-types'
 import { getUserSettings } from '@/infrastructure/settings/user-settings-service'
 import { logger } from '@/infrastructure/logging/logger'
 
@@ -88,12 +91,26 @@ async function writePropositionsForSource(input: {
   item: MemoryItem
   dreamRunId: string
   propositions: Array<{ text: string; sourceQuote: string; topicAnchor: string[] }>
+  accessToken: string
 }): Promise<number> {
+  // 重算复用：先删后写前快照旧向量（文本+模型未变则跳过重烧）
+  const previousRows = await memoryNoteEmbeddingRepository.listBySource({
+    ownerId: input.ownerId,
+    sourceMemoryItemId: input.item.id
+  })
+  const previousByNoteId = new Map(previousRows.map(row => [row.id, row]))
+
   await memoryNotesRepository.deleteBySource({
     ownerId: input.ownerId,
     sourceMemoryItemId: input.item.id
   })
+  await memoryNoteEmbeddingRepository.deleteBySource({
+    ownerId: input.ownerId,
+    sourceMemoryItemId: input.item.id
+  })
+
   let written = 0
+  const writtenRows: MemoryNoteRecord[] = []
   const capped = input.propositions.slice(0, DREAMING_MAX_PROPOSITIONS_PER_SOURCE)
   for (let index = 0; index < capped.length; index += 1) {
     const prop = capped[index]!
@@ -110,8 +127,24 @@ async function writePropositionsForSource(input: {
     })
     if (row != null) {
       written += 1
+      writtenRows.push(row)
     }
   }
+
+  if (writtenRows.length > 0) {
+    await embedPropositionsForWrittenNotes({
+      accessToken: input.accessToken,
+      notes: writtenRows.map(row => ({
+        noteId: row.id,
+        ownerId: row.ownerId,
+        sourceMemoryItemId: row.sourceMemoryItemId,
+        text: row.text,
+        sourceQuote: row.sourceQuote
+      })),
+      previousByNoteId
+    })
+  }
+
   return written
 }
 
@@ -219,7 +252,8 @@ export async function compileMemoryNotesTick(): Promise<CompileMemoryNotesTickRe
         ownerId,
         item,
         dreamRunId: cursor.dreamRunId,
-        propositions
+        propositions,
+        accessToken: session.accessToken
       })
       cursor = advanceDreamRunCursor(cursor, item.id)
       processedSources += 1

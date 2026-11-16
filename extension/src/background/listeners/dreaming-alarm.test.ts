@@ -4,6 +4,15 @@ const ensureBackgroundBootstrappedMock = vi.hoisted(() => vi.fn(async () => unde
 const compileMemoryNotesTickMock = vi.hoisted(() =>
   vi.fn(async () => ({ processed: 0, written: 0, deferred: false }))
 )
+const backfillPropositionEmbeddingsTickMock = vi.hoisted(() =>
+  vi.fn(async () => ({
+    skipped: false,
+    scanned: 0,
+    written: 0,
+    reused: 0,
+    failed: 0
+  }))
+)
 const sweepOrphanMemoryNotesMock = vi.hoisted(() => vi.fn(async () => ({ removed: 0 })))
 const ensureDreamingAlarmMock = vi.hoisted(() => vi.fn(async () => undefined))
 
@@ -13,6 +22,10 @@ vi.mock('@/background/bootstrap-ready', () => ({
 
 vi.mock('@/application/dreaming/compile-memory-notes', () => ({
   compileMemoryNotesTick: compileMemoryNotesTickMock
+}))
+
+vi.mock('@/application/dreaming/schedule-proposition-embeddings', () => ({
+  backfillPropositionEmbeddingsTick: backfillPropositionEmbeddingsTickMock
 }))
 
 vi.mock('@/application/dreaming/sweep-orphan-memory-notes', () => ({
@@ -85,5 +98,31 @@ describe('dreaming-alarm listener', () => {
       expect(compileMemoryNotesTickMock).toHaveBeenCalled()
       expect(sweepOrphanMemoryNotesMock).toHaveBeenCalled()
     })
+  })
+
+  it('onAlarm tick 在编译后调用命题向量回填一次', async () => {
+    registerDreamingAlarmListener()
+
+    const onAlarm = (chrome.alarms.onAlarm.addListener as ReturnType<typeof vi.fn>).mock
+      .calls[0]?.[0] as (alarm: chrome.alarms.Alarm) => void
+
+    onAlarm({
+      name: DREAMING_ALARM_NAME,
+      scheduledTime: Date.now(),
+      periodInMinutes: 1440,
+      persistAcrossSessions: true
+    })
+
+    await vi.waitFor(() => {
+      expect(compileMemoryNotesTickMock).toHaveBeenCalledTimes(1)
+      expect(backfillPropositionEmbeddingsTickMock).toHaveBeenCalledTimes(1)
+      expect(sweepOrphanMemoryNotesMock).toHaveBeenCalledTimes(1)
+    })
+    // 顺序：编译 → 回填 → 孤儿扫
+    const compileOrder = compileMemoryNotesTickMock.mock.invocationCallOrder[0]!
+    const backfillOrder = backfillPropositionEmbeddingsTickMock.mock.invocationCallOrder[0]!
+    const orphanOrder = sweepOrphanMemoryNotesMock.mock.invocationCallOrder[0]!
+    expect(compileOrder).toBeLessThan(backfillOrder)
+    expect(backfillOrder).toBeLessThan(orphanOrder)
   })
 })

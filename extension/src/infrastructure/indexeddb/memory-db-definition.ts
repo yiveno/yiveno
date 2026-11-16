@@ -11,6 +11,8 @@ import {
   DREAMING_DUPLICATE_GROUP_STORE,
   MEMORY_LINK_STATUS_INDEX_BY_OWNER_CHECKED,
   MEMORY_LINK_STATUS_STORE,
+  MEMORY_NOTE_EMBEDDING_INDEX_BY_OWNER,
+  MEMORY_NOTE_EMBEDDING_STORE,
   MEMORY_NOTES_INDEX_BY_OWNER_SOURCE,
   MEMORY_NOTES_INDEX_BY_OWNER_UPDATED,
   MEMORY_NOTES_META_STORE,
@@ -18,7 +20,7 @@ import {
 } from '@/infrastructure/indexeddb/constants'
 import type { IndexedDBDefinition } from '@/infrastructure/indexeddb/manager'
 
-/** 创建或升级 memory_items 表与索引；v4 倒排；v5 dreaming；v6 死链巡检。 */
+/** 创建或升级 memory_items 表与索引；v4 倒排；v5 dreaming；v6 死链；v7 命题向量。 */
 function upgradeMemoryDatabase(
   database: IDBDatabase,
   transaction: IDBTransaction,
@@ -93,6 +95,16 @@ function upgradeMemoryDatabase(
           unique: false
         }
       )
+    }
+  }
+
+  // v7：命题向量独立 store（可重算；不进 Backup；build-only + contains guard）。
+  if (oldVersion < 7) {
+    if (!database.objectStoreNames.contains(MEMORY_NOTE_EMBEDDING_STORE)) {
+      const embedStore = database.createObjectStore(MEMORY_NOTE_EMBEDDING_STORE, {
+        keyPath: 'id'
+      })
+      embedStore.createIndex(MEMORY_NOTE_EMBEDDING_INDEX_BY_OWNER, 'ownerId', { unique: false })
     }
   }
 }

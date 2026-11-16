@@ -72,10 +72,11 @@ describe('note-match', () => {
 
   it('soleCorroboration 为 true（源无字面佐证）', () => {
     const note = buildDreamingDn1Note()
-    const set = buildSet([{ note, matchedTerms: ['rottnest', 'quokka'] }], itemsById, [
-      'rottnest',
-      'quokka'
-    ])
+    const set = buildSet(
+      [{ note, matchedTerms: ['rottnest', 'quokka'], matchKind: 'literal' }],
+      itemsById,
+      ['rottnest', 'quokka']
+    )
     expect(set.get(DREAMING_EVAL_IDS.dreamingRottnestExcerpt)?.soleCorroboration).toBe(true)
   })
 

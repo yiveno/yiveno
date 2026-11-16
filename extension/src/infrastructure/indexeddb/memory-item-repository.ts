@@ -37,6 +37,7 @@ import { keywordIndexRepository } from '@/infrastructure/indexeddb/keyword-index
 import { buildCaptureDreamingPreprocess } from '@/core/dreaming/capture-dreaming-preprocess'
 import { dreamingDuplicateGroupRepository } from '@/infrastructure/indexeddb/dreaming-duplicate-group-repository'
 import { memoryLinkStatusRepository } from '@/infrastructure/indexeddb/memory-link-status-repository'
+import { memoryNoteEmbeddingRepository } from '@/infrastructure/indexeddb/memory-note-embedding-repository'
 import { memoryNotesMetaRepository } from '@/infrastructure/indexeddb/memory-notes-meta-repository'
 import { memoryNotesRepository } from '@/infrastructure/indexeddb/memory-notes-repository'
 import { indexedDBManager, requestToPromise } from '@/infrastructure/indexeddb/manager'
@@ -921,8 +922,9 @@ export class MemoryItemRepository {
     })
 
     await keywordIndexRepository.clearOwnerIndex(ownerId)
-    // L3 派生：memory_notes / duplicate-groups / link_status 随条目走；清库 / 云覆盖须连带清
+    // L3 派生：memory_notes / embeddings / duplicate-groups / link_status 随条目走；清库 / 云覆盖须连带清
     await memoryNotesRepository.clearOwnerNotes(ownerId)
+    await memoryNoteEmbeddingRepository.clearOwner(ownerId)
     await memoryNotesMetaRepository.clearOwnerMeta(ownerId)
     await dreamingDuplicateGroupRepository.clearOwnerGroups(ownerId)
     await memoryLinkStatusRepository.clearOwner(ownerId)

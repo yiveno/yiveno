@@ -38,6 +38,26 @@ export const DREAMING_COMPILE_MAX_BATCHES_PER_TICK = 3 as const
  */
 export const DREAMING_PREFER_READ_ENABLED: boolean = false
 
+/**
+ * Phase 4.1 语义命题匹配子开关（默认 OFF）。
+ * 与 `DREAMING_PREFER_READ_ENABLED` **双重门控**：两者都 ON 时语义匹配才运行。
+ * 建造 ≠ 启用；本批不得翻开。硬线未过时保持暗线 OFF。
+ */
+export const DREAMING_SEMANTIC_NOTE_MATCH_ENABLED: boolean = false
+
+/**
+ * 语义命题入闸相似度阈值（rule 0b）。
+ * 由 Stage 3 合成评估扫阈值标定；**不得**沿用 Hybrid 预筛 0.28。
+ * 选定点 0.66：误报≤2% 内最大意译救援率（并列取更严）；见 `calibrate-semantic-note-threshold`。
+ */
+export const DREAMING_SEMANTIC_NOTE_MATCH_MIN_SIMILARITY = 0.66
+
+/** 命题向量生产：每请求最多文本条数（与 Worker `MAX_BATCH` 对齐）。 */
+export const DREAMING_PROPOSITION_EMBED_MAX_BATCH = 8 as const
+
+/** 命题向量回填：单次 tick 最多入队命题条数（按日桶 pacing，不超当日桶）。 */
+export const DREAMING_PROPOSITION_EMBED_BACKFILL_BATCH_LIMIT = 40 as const
+
 /** 死链巡检 chrome.alarms 名（独立；不搭同步 / dreaming 便车）。 */
 export const LINK_STATUS_SWEEP_ALARM_NAME = 'yiveno.link_status_sweep' as const
 

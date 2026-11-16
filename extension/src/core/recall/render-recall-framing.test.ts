@@ -231,7 +231,8 @@ describe('renderRecallFraming', () => {
         soleCorroboration: true,
         propositionText: 'Rottnest restated',
         topicAnchor: [],
-        propositionIndex: 0
+        propositionIndex: 0,
+        matchKind: 'literal'
       }
     })
     const embeddingMatch = (id: string): RecallMatch => ({

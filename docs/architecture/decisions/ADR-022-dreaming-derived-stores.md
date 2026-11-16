@@ -1,11 +1,11 @@
 ---
 created: 2026-11-10T10:14:35+08:00
-updated: 2026-11-10T10:14:35+08:00
+updated: 2026-11-16T16:10:00+08:00
 author: agent:cursor
 scope: docs/architecture/decisions
 status: 已接受
 upstream: ADR-015（Topic 语义表示）, ADR-016（双线程）, ADR-017（云同步仅摘录）, ADR-021（在线默认薄离线）, 产品文档 §5.5.1 / §5.8 / §7.05
-downstream: docs/product/Yiveno-产品文档-v4.0.md §5.5.1 / §7.05, extension/src/infrastructure/indexeddb/memory-notes-*.ts, extension/src/core/dreaming/*
+downstream: docs/product/Yiveno-产品文档-v4.0.md §5.5.1 / §7.05, extension/src/infrastructure/indexeddb/memory-notes-*.ts, extension/src/infrastructure/indexeddb/memory-note-embedding-*.ts, extension/src/core/dreaming/*
 ---
 
 # ADR-022: Dreaming 派生表（独立 IndexedDB store · 不改用户原文）
@@ -38,11 +38,11 @@ downstream: docs/product/Yiveno-产品文档-v4.0.md §5.5.1 / §7.05, extension
 
 ### 2. 预嵌向量存哪
 
-| 面                   | 决定                                                                                                                                                           |
-| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Capture 条目向量** | 继续走既有 `scheduleAsyncMemoryEmbedding` → `clues.embedding`（已存在；非本 ADR 新开字段）                                                                     |
-| **命题向量**         | 若需要，写在 `memory_notes` 行的 `embedding` / `embeddingModel` / `embeddingDim`（字段名对齐 clues 三件套；模型锁定 `@cf/baai/bge-m3`；**不得写死维度 1024**） |
-| **禁止**             | 为「Topic 预嵌持久化」新增 `memory_items` schema；把命题向量抄进源条目 `clues.embedding`                                                                       |
+| 面                        | 决定                                                                                                                                                                                                                                                                            |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Capture 条目向量**      | 继续走既有 `scheduleAsyncMemoryEmbedding` → `clues.embedding`（已存在；非本 ADR 新开字段）                                                                                                                                                                                      |
+| **命题向量（Phase 4.1）** | 独立 store `memory_note_embeddings`（IDB **v7** · build-only + contains guard）；运行时读为 `Float32Array`；模型锁定 `@cf/baai/bge-m3`；**不得写死维度 1024**；**不进 Backup**（可重算缓存，恢复后重建）。`memory_notes` 行上的可选 `embedding*` 字段保留兼容，生产写路径不填。 |
+| **禁止**                  | 为「Topic 预嵌持久化」新增 `memory_items` schema；把命题向量抄进源条目 `clues.embedding`；把命题向量塞进 Backup / 云同步面                                                                                                                                                      |
 
 ### 3. 登录门与 §5.8
 
@@ -71,8 +71,19 @@ downstream: docs/product/Yiveno-产品文档-v4.0.md §5.5.1 / §7.05, extension
 - 全量重嵌 / 全量重算；命题冒充原文作 ECS 锚；命题进 Omnibox 候选（默认）。
 - 死链巡检写 `clues` / 改 `deletedAt` / 做成管理页。
 
+### 7. 语义命题匹配入闸（Phase 4.1 · 2026-11-16 增补）
+
+| 项              | 决定                                                                                                                                                                           |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **证据标准**    | 字面 rule 0 之外新增 rule 0b：命题向量与查询向量余弦 ≥ 标定阈值 → 进入**同一** note-match 集（同集入闸）。七条件（存活 / 引用 / 池成员 / 过期 / exclude / 孤儿等）**不放松**。 |
+| **阈值**        | 合成评估扫阈值标定（**不得**沿用 Hybrid 预筛 `0.28`）；选定点写入 `DREAMING_SEMANTIC_NOTE_MATCH_MIN_SIMILARITY`；开关 ON 后用真实遥测复核。                                    |
+| **开关**        | `DREAMING_PREFER_READ_ENABLED` ∧ `DREAMING_SEMANTIC_NOTE_MATCH_ENABLED` 双重门控；本批两者均默认 **OFF**（建造 ≠ 启用）。                                                      |
+| **评分**        | 语义独占用 `scoreNoteSemanticVirtualField`（`12 × similarity`，上限 12）；**禁止**复用字面 `scoreNoteVirtualField`（会踩 `exactTokenHit` fallback）。                          |
+| **展示 / 遥测** | `matchKind` 贯穿 Explain / `dreaming_note_hit` / `noteHitCounts`（按 kind 分键）；路径名仍计 `memory_note`；「找到了」认领不区分路径。                                         |
+| **诚实出口**    | 误报 / 字面零回归 / 延迟硬线不过 → 语义子开关保持 OFF（暗线），评估报告仍交付。                                                                                                |
+
 ## 后果
 
-- 扩展 IndexedDB v5 起多两张表；旧库打开自动升级，既有 `memory_items` 行原样保留。
-- 夜间编译 / 优先读 / 死链降权分 Phase 落地；本 ADR 只钉**存储与归属边界**。
+- 扩展 IndexedDB v5 起多两张表；v6 死链；**v7 命题向量独立 store**；旧库打开自动升级，既有 `memory_items` 行原样保留。
+- 夜间编译 / 优先读 / 死链降权 / 语义命题匹配分 Phase 落地；本 ADR 钉**存储与归属边界** + **语义入闸证据标准**。
 - 闹钟为「浏览器开着时从创建起每 1440 分钟」；**无**固定墙钟；关浏览器不跑（ADR-021 薄本机维护，非第二套离线产品）。

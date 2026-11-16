@@ -922,7 +922,7 @@ Yiveno 同时承载两条相互促进、**不互相替代**的线程：
 
 ### 0.4 当前优先实现项（Phase A）
 
-**记忆库轻浏览已上线**（`library.html`；左侧类型 Tab，**默认摘录**）。摘录可软删；摘录详情、线索解释 / 空状态、Omnibox、快捷键、Settings、划词浮层已上线。对话式 Recall 语义闭环切片已上线（§7.0）。
+**记忆库轻浏览已上线**（`library.html`；左侧类型 Tab，**默认摘录**）。摘录 / 书签 Memory 均可软删（书签仅删 Yiveno、不动 Chrome · [ADR-023](../architecture/decisions/ADR-023-chrome-bookmark-delete-tombstone.md)）；摘录详情、线索解释 / 空状态、Omnibox、快捷键、Settings、划词浮层已上线。对话式 Recall 语义闭环切片已上线（§7.0）。
 
 **说明：** 页内左侧类型切换 ≠ 旧「侧边栏管理页」/书签树；禁止整理中心化回潮。Chrome **Side Panel Recall 主壳** ≠ 管理页（见下「入口能力差异」）。
 
@@ -1000,8 +1000,8 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 | Side Panel 壳级离线态               | **已上线**（体验）                             | §7.0：顶栏 soft accent + _On-device only_；composer 轻句 / 离线 idle placeholder；跳过线索 LLM；禁整壳换肤与在线「AI on」灯；与 §5.9 **分计**                                                                                                                                                                                                           |
 | 理解回声（结果态）                  | **已上线**（体验）                             | §7.0：`Heard as` + 真实 Parsed 槽位芯片；类型/时间可 Replace、内容词可 Exclude；有芯片时省略 Framing P1 / 泛化 Mainly based on；禁 CoT                                                                                                                                                                                                                  |
 | 摘录详情落地页                      | 已上线                                         | `detail.html?id=`；摘录打开详情；书签仍直开 URL；`GET_MEMORY_ITEM`                                                                                                                                                                                                                                                                                      |
-| 记忆库轻浏览                        | 已上线                                         | `library.html`；**默认摘录**；书签=Chrome 目录只读树；摘录/书签列表均展示**保存时间**（`createdAt` / `chromeCreatedAt`）；`?type=` 刷新保留                                                                                                                                                                                                             |
-| 摘录删除                            | 已上线                                         | 软删 `deletedAt`；记忆库列表 / 详情页；`DELETE_MEMORY_ITEM`；书签不经此删                                                                                                                                                                                                                                                                               |
+| 记忆库轻浏览                        | 已上线                                         | `library.html`；**默认摘录**；书签=Chrome 目录只读树（墓碑叶子隐藏）；摘录列表单次拉最新 **200** 条，`total`=活条目全量，超出时说明「仅显示前 N / 共 M」；导出全选=**已加载**口径；列表保存时间非当年补年份；导入 `pending`/`running` 时显示等待/进度（事件驱动，非轮询）                                                                               |
+| 摘录 / 书签删除                     | 已上线                                         | 软删 `deletedAt`；`DELETE_MEMORY_ITEM`；摘录：列表 / 详情；书签：**仅 Library**（D-3：不动 Chrome；写墓碑防同步复活 · [ADR-023](../architecture/decisions/ADR-023-chrome-bookmark-delete-tombstone.md)；无撤销）                                                                                                                                        |
 | Need A Clue / 否定反馈              | 已上线（并入对话）                             | 低置信 outcome + dismiss；会话内 dismissedIds 硬排除；追问模板基于合并后 parsed                                                                                                                                                                                                                                                                         |
 | 多源线索与权重（§7.1）              | 已上线（首批）                                 | **选区预填**（划选「用这段来找」、不必先存）；**页上下文开关**（Combine / Only this site → `pageContextMode`）；默认 none；`recently_saved`/`half_read`/`often_opened` 软加权；环境弱芯片（刚存/刚打开有信号才挂；**当前站芯片已退役**）                                                                                                                |
 | Composer 语音录入（dictation）      | **已上线**（体验）                             | Side Panel composer **麦克风图标** → Web Speech 转写进 clue；**插入点 = 点麦时光标**；听写壳波形 + 停止/取消；**约 12s 无转写自动 stop**（保留文案；`no-speech` 亦收壳）；**不**自动提交。无 SpeechRecognition 时隐藏按钮。遇 `not-allowed` → 壳内轻条。与 §5.9 **分计**                                                                                |
@@ -1017,7 +1017,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 | 只读 MCP                            | 已上线（beta）                                 | Settings → 隐私开关；工具 `yiveno_recall_evidence` → detail export（1–5）；本机 `MCP_RECALL_EVIDENCE` / 云端 `GET\|POST /api/mcp/*`；关闭后本机与云端均拒绝；§5.10.5                                                                                                                                                                                    |
 | Raindrop / Pocket 迁移导入          | 已上线（文件导入）                             | Settings → 数据：Raindrop（HTML/CSV/JSON）与 Pocket（HTML）导出，≤50 条；`IMPORT_THIRD_PARTY_CORPUS`；§5.10.6 · R2 准入                                                                                                                                                                                                                                 |
 | TTE / Verified Retrieval 埋点       | 已上线（P0 本机）                              | 七事件 + `pipelineTiming` + ECS 打分 + `yiveno.recallTelemetry`；**未**达 §5.9 Beta 门槛、不对外宣称                                                                                                                                                                                                                                                    |
-| 轻管理余项（标签/失效链接/统计）    | 目标 · Phase D                                 | 摘录删除已提前上线；书签仍只经 Chrome 同步软删                                                                                                                                                                                                                                                                                                          |
+| 轻管理余项（标签/失效链接/统计）    | 目标 · Phase D                                 | 摘录 / 书签 Memory 删除已上线（书签 D-3 + 墓碑）；其余标签/失效链接/统计仍目标                                                                                                                                                                                                                                                                          |
 
 ### 1.1 「已上线」验证归属（Normative）
 
@@ -1184,29 +1184,29 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 - `scope` 必须为 `'background'`（`BACKGROUND_MESSAGE_SCOPE`）。
 - **已登记 type（禁止擅自增删拼写）：**
 
-| type                                    | 用途                                                             |
-| --------------------------------------- | ---------------------------------------------------------------- |
-| `PING`                                  | 探活                                                             |
-| `GET_LOCAL_IDENTITY`                    | 本地身份 + ownerId                                               |
-| `CAPTURE_BOOKMARK`                      | 写入书签记忆（sync/内部）                                        |
-| `CAPTURE_TEXT_EXCERPT`                  | 写入摘录                                                         |
-| `LIST_MEMORY_ITEMS`                     | 列表                                                             |
-| `GET_MEMORY_ITEM`                       | 按 id 读取单条 MemoryItem                                        |
-| `DELETE_MEMORY_ITEM`                    | 软删 MemoryItem（当前仅摘录）                                    |
-| `UPDATE_MEMORY_NOTE`                    | 更新 `clues.note`（书签/摘录事后补注）                           |
-| `RECALL_WITH_CLUE`                      | 线索找（`context.pageContextMode` / `currentTabDomain` 见 §7.1） |
-| `GET_RECALL_PAGE_CONTEXT`               | composer 页上下文：读当前浏览页域名（展示用）                    |
-| `RESOLVE_CLUE_URL_DISPLAY`              | composer URL 芯片：本机库/打开中 tab 标题（不联网）              |
-| `GET_CHROME_BOOKMARK_IMPORT_STATUS`     | 导入进度                                                         |
-| `GET_COLD_START_STATUS`                 | 冷启动三阶段门禁进度（import / rules / AI）                      |
-| `GENERATE_GETTING_STARTED_CLUE_SAMPLES` | Getting Started 示意 clue（LLM×4 / 模板回退）                    |
-| `GET_BOOKMARK_LIBRARY_TREE`             | 记忆库书签目录树（只读）                                         |
-| `GET_EXTENSION_COMMANDS`                | 读取命令与快捷键绑定                                             |
-| `OPEN_CHROME_SHORTCUTS_PAGE`            | 打开 Chrome 快捷键设置页                                         |
-| `OPEN_RECALL_SHELL`                     | 打开/聚焦 Recall Side Panel                                      |
-| `NAVIGATE_ACTIVE_TAB`                   | 结果卡打开：默认当前活动标签；可新开                             |
-| `GET_USER_SETTINGS`                     | 读取用户设置                                                     |
-| `UPDATE_USER_SETTINGS`                  | 更新用户设置                                                     |
+| type                                    | 用途                                                                                          |
+| --------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `PING`                                  | 探活                                                                                          |
+| `GET_LOCAL_IDENTITY`                    | 本地身份 + ownerId                                                                            |
+| `CAPTURE_BOOKMARK`                      | 写入书签记忆（sync/内部）                                                                     |
+| `CAPTURE_TEXT_EXCERPT`                  | 写入摘录                                                                                      |
+| `LIST_MEMORY_ITEMS`                     | 列表                                                                                          |
+| `GET_MEMORY_ITEM`                       | 按 id 读取单条 MemoryItem                                                                     |
+| `DELETE_MEMORY_ITEM`                    | 软删 MemoryItem（摘录 / 书签；书签仅删 Yiveno 记忆，不动 Chrome，墓碑防同步重导入 · ADR-023） |
+| `UPDATE_MEMORY_NOTE`                    | 更新 `clues.note`（书签/摘录事后补注）                                                        |
+| `RECALL_WITH_CLUE`                      | 线索找（`context.pageContextMode` / `currentTabDomain` 见 §7.1）                              |
+| `GET_RECALL_PAGE_CONTEXT`               | composer 页上下文：读当前浏览页域名（展示用）                                                 |
+| `RESOLVE_CLUE_URL_DISPLAY`              | composer URL 芯片：本机库/打开中 tab 标题（不联网）                                           |
+| `GET_CHROME_BOOKMARK_IMPORT_STATUS`     | 导入进度                                                                                      |
+| `GET_COLD_START_STATUS`                 | 冷启动三阶段门禁进度（import / rules / AI）                                                   |
+| `GENERATE_GETTING_STARTED_CLUE_SAMPLES` | Getting Started 示意 clue（LLM×4 / 模板回退）                                                 |
+| `GET_BOOKMARK_LIBRARY_TREE`             | 记忆库书签目录树（只读）                                                                      |
+| `GET_EXTENSION_COMMANDS`                | 读取命令与快捷键绑定                                                                          |
+| `OPEN_CHROME_SHORTCUTS_PAGE`            | 打开 Chrome 快捷键设置页                                                                      |
+| `OPEN_RECALL_SHELL`                     | 打开/聚焦 Recall Side Panel                                                                   |
+| `NAVIGATE_ACTIVE_TAB`                   | 结果卡打开：默认当前活动标签；可新开                                                          |
+| `GET_USER_SETTINGS`                     | 读取用户设置                                                                                  |
+| `UPDATE_USER_SETTINGS`                  | 更新用户设置                                                                                  |
 
 新增能力：先改 `extension/src/core/messaging/*` + handler，再改 UI。
 
@@ -1217,7 +1217,6 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 | 域       | code                                                                                | 含义                             |
 | -------- | ----------------------------------------------------------------------------------- | -------------------------------- |
 | Memory   | `MEMORY_NOT_FOUND`                                                                  | 记忆不存在或已删                 |
-| Memory   | `MEMORY_DELETE_BOOKMARK_FORBIDDEN`                                                  | 书签不可经扩展软删               |
 | Memory   | `MEMORY_OPERATION_FAILED`                                                           | 其它 Memory 操作失败             |
 | Memory   | `CAPTURE_UNSAVABLE_PAGE`                                                            | 不可保存选区的页面               |
 | Memory   | `CAPTURE_EMPTY_SELECTION`                                                           | 选区为空                         |
@@ -1735,12 +1734,12 @@ Omnibox **本机快跳轨**专用 must（与 Side Panel `recall-eval` 正交）�
 
 #### 三层数据归属
 
-| 层                  | 范围                                                                                                                                                                                                                          | 归属                                                                   | 导出 / 删除                                                                       |
-| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| **L1 用户内容**     | Capture 摘录、`clues.note`、来源 URL / 标题 / 域名；经用户授权开启的书签灌库条目                                                                                                                                              | **用户**                                                               | Backup 必含；Portable 必含核心字段                                                |
-| **L2 库内行为**     | `openCount` / `lastOpenedAt`、`dismissCount` / `lastDismissedAt`；条目 `createdAt` / `updatedAt` / 软删标记                                                                                                                   | **用户**（用户与自家资料库的交互史，非 Yiveno 独立知识资产）           | Backup 含；Portable **默认不含**                                                  |
-| **L3 条目级派生**   | 规则 / LLM enrichment（`tags` / `keywords` / `entities` / `summary`）；条目 `embedding` 及 `embeddingModel` / `embeddingDim`；**dreaming 原子命题**（IndexedDB `memory_notes` + 行内引用 / 可选命题向量；见 §7.05 / ADR-022） | **随条目走**（该条记忆的可检索形态，存于用户本机；命题 v1 **不上云**） | Backup 含；Portable **默认不含**（竞品可重算）；`CLEAR_LOCAL_MEMORY` 连带清命题表 |
-| **— Yiveno 服务层** | 去标识化聚合统计；不可个体化的全站模型；未持久化的一次性 LLM 推理产物                                                                                                                                                         | **Yiveno**                                                             | **不属于**用户 export；删账号时切断与个体的可关联副本                             |
+| 层                  | 范围                                                                                                                                                                                                                                                     | 归属                                                                   | 导出 / 删除                                                                                                           |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| **L1 用户内容**     | Capture 摘录、`clues.note`、来源 URL / 标题 / 域名；经用户授权开启的书签灌库条目                                                                                                                                                                         | **用户**                                                               | Backup 必含；Portable 必含核心字段                                                                                    |
+| **L2 库内行为**     | `openCount` / `lastOpenedAt`、`dismissCount` / `lastDismissedAt`；条目 `createdAt` / `updatedAt` / 软删标记                                                                                                                                              | **用户**（用户与自家资料库的交互史，非 Yiveno 独立知识资产）           | Backup 含；Portable **默认不含**                                                                                      |
+| **L3 条目级派生**   | 规则 / LLM enrichment（`tags` / `keywords` / `entities` / `summary`）；条目 `embedding` 及 `embeddingModel` / `embeddingDim`；**dreaming 原子命题**（IndexedDB `memory_notes` + 行内引用；命题向量在独立 `memory_note_embeddings` · 见 §7.05 / ADR-022） | **随条目走**（该条记忆的可检索形态，存于用户本机；命题 v1 **不上云**） | Backup 含命题行/meta、**不含**命题向量 store（可重算）；Portable **默认不含**；`CLEAR_LOCAL_MEMORY` 连带清命题表+向量 |
+| **— Yiveno 服务层** | 去标识化聚合统计；不可个体化的全站模型；未持久化的一次性 LLM 推理产物                                                                                                                                                                                    | **Yiveno**                                                             | **不属于**用户 export；删账号时切断与个体的可关联副本                                                                 |
 
 **Normative 铁律：**
 
@@ -1763,10 +1762,10 @@ Omnibox **本机快跳轨**专用 must（与 Side Panel `recall-eval` 正交）�
 
 #### 两层导出
 
-| 层           | 名称       | 状态                                                                                | 用途                             | 字段原则                                                                                                                                                                                                                                                                                                |
-| ------------ | ---------- | ----------------------------------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Backup**   | 整库备份   | **已上线**（Settings「数据与隐私」· `EXPORT_LOCAL_MEMORY` / `IMPORT_LOCAL_MEMORY`） | 换机、灾备、换号恢复、用户主权   | 当前 owner 全部 `MemoryItem`（含软删、`clues` 全字段）+ `memory_notes`（命题 + 行内引用 + 可选命题向量）+ `memory_notes_meta`（schemaVersion + 游标字段 + 编译累计）；**不含**孤儿桶、**不含** `memory_link_status`（可重算）、**不含** `dreaming_duplicate_groups`（已知限制：恢复后重复摘录不再折叠） |
-| **Portable** | 可迁移原料 | **目标 · 未上线**                                                                   | 迁到其他工具；减轻跨产品搬运体积 | L1 核心（摘录 + note + 来源 + 时间戳等）；**默认不含** L2 行为、L3 embedding；enrichment 可选剥离                                                                                                                                                                                                       |
+| 层           | 名称       | 状态                                                                                | 用途                             | 字段原则                                                                                                                                                                                                                                                                                                                              |
+| ------------ | ---------- | ----------------------------------------------------------------------------------- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Backup**   | 整库备份   | **已上线**（Settings「数据与隐私」· `EXPORT_LOCAL_MEMORY` / `IMPORT_LOCAL_MEMORY`） | 换机、灾备、换号恢复、用户主权   | 当前 owner 全部 `MemoryItem`（含软删、`clues` 全字段）+ `memory_notes`（命题 + 行内引用）+ `memory_notes_meta`（schemaVersion + 游标字段 + 编译累计）；**不含**孤儿桶、**不含** `memory_link_status`（可重算）、**不含** `memory_note_embeddings`（可重算）、**不含** `dreaming_duplicate_groups`（已知限制：恢复后重复摘录不再折叠） |
+| **Portable** | 可迁移原料 | **目标 · 未上线**                                                                   | 迁到其他工具；减轻跨产品搬运体积 | L1 核心（摘录 + note + 来源 + 时间戳等）；**默认不含** L2 行为、L3 embedding；enrichment 可选剥离                                                                                                                                                                                                                                     |
 
 **Normative：**
 
@@ -1880,6 +1879,7 @@ Chrome API / 选区
   - **服务条款（Normative）**：官网 `/terms`（美式英语）；页脚 / 登录 / Settings 可外链。
   - **书签灌库开关（Normative）**：Settings「保存」与 Getting Started 共用 `chromeBookmarkIngestEnabled`（**默认关**；须用户明示打开）。Settings 开关面向用户文案用 **同步**（持续状态：本机库 ↔ 本浏览器书签增删改）；GS 按钮仍用 **Import**（一次性同意）。**用户可见 bulk 主进度 = GS Bookmarks tab**；Settings 打开开关仍触发 `ensureChromeBookmarksImported`（Skip GS 后的后路），**不**在 Side Panel 顶栏展示导入细条。关闭后**卸载** `bookmarks.on*` 监听、跳过 bulk 导入与增量写入，并拒绝 `CAPTURE_BOOKMARK`；**不删除**已灌入的书签 Memory；重新开启后重新挂监听并补跑 / 续跑 bulk（含 reconcile 补洞）。**禁止**写成云记忆 sync。
   - **书签库与 Chrome 对账（Normative）**：**Chrome 书签树 = 壳权威**（单向 Chrome → IndexedDB；**禁止**写回 / 改写 / 删除原生书签；**禁止** Settings 暴露「修复」类用户操作）。增量靠 `bookmarks.on*`；holes-only reconcile 只补「Chrome 有、Memory 无」。**full repair**（后台自动）：对当前全部 http(s) 叶子 upsert（同 `chromeBookmarkId` 含软删则同 id 复活；保留 `clues.note` 与行为计数）；软删带 `chromeBookmarkId` 且已不在 Chrome 树的孤儿；**不动**无 `chromeBookmarkId` 的第三方导入书签。触发：① 灌库已完成时每个 SW 会话最多自动 full repair 一次（其后 finalize 仍走 holes）；② 灌库开启时挂 **每日** `chrome.alarms` 对账（关灌库则清闹钟）；③ 冷启动已 `ready` / 读导入状态时，灌库开则每 SW 会话最多一次 `ensureChromeBookmarksImported`（堵 Memory 被掏空后 import 仍 `completed`、门禁早退漏补洞）。**禁止**暗示云同步书签或双向合并。
+  - **书签删除与墓碑（Normative · D-3 · [ADR-023](../architecture/decisions/ADR-023-chrome-bookmark-delete-tombstone.md)）：** 记忆库可软删书签 Memory（与摘录同走 `DELETE_MEMORY_ITEM`）；**只删 Yiveno 记忆，不动 Chrome 原生书签**。软删成功后把 `chromeBookmarkId` 写入本地墓碑（`yiveno:chrome_bookmark_tombstones`）；upsert / bulk 遇墓碑 **不复活、不新建**；书签树映射 **隐藏** 墓碑叶子（库内无反删除；与摘录删除无撤销一致）。墓碑 **本地-only**：换设备或清本地数据后丢失，该书签可从 Chrome 再导入（固有性质）。`PRIVACY_NOTICE_VERSION` 不因此递增。
 - **数据处置（Normative · Settings「数据与隐私」）**：
   - **Backup 整库导出 / 恢复**（§5.5.1）：导出当前 owner 本机全部 Memory（含软删、`clues` 全字段）+ L3 `memory_notes` / `memory_notes_meta` 为 JSON（`EXPORT_LOCAL_MEMORY`）；Settings 可经 `IMPORT_LOCAL_MEMORY` 恢复（merge/upsert）。不含孤儿桶（孤儿仍走账户与同步导出）。**Portable 可迁移原料未上线前，本条即用户主权导出的唯一必需路径。**
   - **清除本机记忆**（`CLEAR_LOCAL_MEMORY`）：硬清当前 owner 本机 IndexedDB Memory（含 L3：`memory_notes` / `memory_notes_meta`，经 `replaceOwnerItems` 连带）；**不得**改写/删除 Chrome 原生书签；成功后关闭书签灌库并卸载监听；**并清除** Chrome 书签导入进度（`yiveno:chrome_bookmark_import`），避免 Memory 已空仍标 `completed` 导致再开灌库漏灌；若云同步开着则关闭同步并提示云端副本需另行删除；**并清除**本机 Outcome 对缓冲与 TTE 遥测环（`yiveno.recallOutcomePairs` / `yiveno.recallTelemetry`）。二次确认。
@@ -2294,16 +2294,31 @@ Chrome API / 选区
 
 > **主语：** 夜间 / 本机维护产出的**原子命题**是 L3 派生，**不是**事实源；ECS 卡面仍以原文摘录为锚。命题只作检索候选 / 排序信号，不得冒充原文。
 
-| 项           | 口径                                                                                                                                                                                |
-| ------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **存储**     | IndexedDB `YivenoMemoryDB` v5：`memory_notes` + `memory_notes_meta`（独立派生 store；**不**改 `memory_items` 行形状）                                                               |
-| **归属**     | L3；随条目走；Backup **必须含**；Portable **默认不含**；删账号 / `CLEAR_LOCAL_MEMORY` **连带清除**；`CLEAR_LOCAL_RECALL_ADAPTATION` **不清**                                        |
-| **同步**     | **v1 本地-only**，不进云同步面（ADR-017 工作集仍仅 `text_excerpt` MemoryItem）；**云同步换机**后本地重算。**Backup 恢复**命题随文件回来、不重算（§5.5.1）。若要云同步命题须另开 ADR |
-| **引用门**   | 每命题必须带 `sourceMemoryItemId` + 行内 `sourceQuote` 或合法 `sourceSpan`；无引用不入库                                                                                            |
-| **硬约束**   | dreaming **只写派生表**，永不改用户原文；增量-only；命题不参与 `hasRecallTopicAnchor`；默认不进 Omnibox 候选                                                                        |
-| **触发语义** | `chrome.alarms` 周期 1440 分钟（自创建起计，**无**固定墙钟）；浏览器关闭时不跑（ADR-021 薄本机维护，非第二套离线产品）                                                              |
+| 项           | 口径                                                                                                                                                                                                |
+| ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **存储**     | IndexedDB `YivenoMemoryDB` v5：`memory_notes` + `memory_notes_meta`；**v7**：`memory_note_embeddings`（命题向量可重算缓存；**不进 Backup**；独立于字面扫描路径）                                    |
+| **归属**     | L3；随条目走；Backup **必须含**命题行 / meta；**不含**命题向量 store；Portable **默认不含**；删账号 / `CLEAR_LOCAL_MEMORY` **连带清除**（含向量 store）；`CLEAR_LOCAL_RECALL_ADAPTATION` **不清**   |
+| **同步**     | **v1 本地-only**，不进云同步面（ADR-017 工作集仍仅 `text_excerpt` MemoryItem）；**云同步换机**后本地重算。**Backup 恢复**命题随文件回来、不重算（§5.5.1）；向量恢复后回填。若要云同步命题须另开 ADR |
+| **引用门**   | 每命题必须带 `sourceMemoryItemId` + 行内 `sourceQuote` 或合法 `sourceSpan`；无引用不入库                                                                                                            |
+| **硬约束**   | dreaming **只写派生表**，永不改用户原文；增量-only；命题不参与 `hasRecallTopicAnchor`；默认不进 Omnibox 候选；命题文本**不得**进 `collectFilterIndexFields`                                         |
+| **触发语义** | `chrome.alarms` 周期 1440 分钟（自创建起计，**无**固定墙钟）；浏览器关闭时不跑（ADR-021 薄本机维护，非第二套离线产品）                                                                              |
 
-**现状（2026-11-16）：** store / meta / 游标 / 闹钟脚手架已接线；**夜间编译暗线已接线**（`dreaming` taskKind + `/api/ai/dreaming/complete` peek-then-commit 批 8；独立配额 Free 5/日·20/月、Pro 30/日·300/月；超 cap 延后；关 AI / 未登录跳过；孤儿扫）。**Backup 现含 L3**（`EXPORT_LOCAL_MEMORY` 导出 `memory_notes` + `memory_notes_meta`）+ **恢复已上线**（`IMPORT_LOCAL_MEMORY` · merge/upsert · 游标重置 · 跨 owner 重归属；见 §5.5.1）。**Recall 优先读尚未进主路径**——须过离线评估 + 设计五问（ADR-016）后方可接线。
+**现状（2026-11-16）：** store / meta / 游标 / 闹钟脚手架已接线；**夜间编译暗线已接线**（`dreaming` taskKind + `/api/ai/dreaming/complete` peek-then-commit 批 8；独立配额 Free 5/日·20/月、Pro 30/日·300/月；超 cap 延后；关 AI / 未登录跳过；孤儿扫）。**Backup 现含 L3**（`EXPORT_LOCAL_MEMORY` 导出 `memory_notes` + `memory_notes_meta`；**不含** `memory_note_embeddings`）+ **恢复已上线**（`IMPORT_LOCAL_MEMORY` · merge/upsert · 游标重置 · 跨 owner 重归属；见 §5.5.1）。**Recall 优先读尚未进主路径**（`DREAMING_PREFER_READ_ENABLED=false`）。
+
+#### 语义命题匹配（Phase 4.1 · Normative · 2026-11-16）
+
+> **主语：** 意译 / 跨语言线索与命题字面零重叠时，用向量相似度（rule 0b）与字面 rule 0 **同集入闸**；七条件不放松。建造 ≠ 启用。
+
+| 项                 | 口径                                                                                                                                                                    |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **向量生产**       | 编译后批量 ≤8 条/请求（Worker bge-m3）；输入文本 = §10 builder 契约（`text` + `\n` + `sourceQuote`，≤1000）；文本+模型未变则复用；回填按向量日桶 pacing；失败 fail-open |
+| **入闸**           | 相似度 ≥ `DREAMING_SEMANTIC_NOTE_MATCH_MIN_SIMILARITY`（合成评估标定；当前 **0.66**；**不得**沿用 Hybrid 0.28）→ 进同一 note-match 集；字面永远优先于语义               |
+| **开关**           | `DREAMING_PREFER_READ_ENABLED` ∧ `DREAMING_SEMANTIC_NOTE_MATCH_ENABLED` 双重门控；**两者默认 OFF**                                                                      |
+| **评分**           | `scoreNoteSemanticVirtualField`：`12 × similarity`，上限 12；禁止复用字面 `scoreNoteVirtualField`                                                                       |
+| **Explain / 遥测** | `matchKind` + 相似度分桶贯穿；`noteHitCounts` 按 kind 分键；卡面命题行照旧；「找到了」认领不区分路径                                                                    |
+| **诚实出口**       | 误报 / 字面零回归 / 延迟硬线不过 → 语义子开关保持 OFF（暗线）                                                                                                           |
+
+**向量 builder 契约（§10 · Phase 4.1 启用）：** 命题向量输入 = `text`（≤400）+ `\n` + `sourceQuote`（≤500），总量 ≤1000；**已接线**（不再是「v1 不调用」）。
 
 #### Dreaming Phase 5 · 每周死链巡检（Normative · 2026-11-12）
 
@@ -2774,6 +2789,7 @@ RecallOutcomeEvent {
 
 | 日期       | 变更                                                                                                                                                                                                                                                                                                       |
 | ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 2026-11-16 | **记忆库 P1（非 Recall）：** 摘录列表 200 截断 + 真实 `total` 说明；书签删除 D-3 + 墓碑（ADR-023）；卡面 role/键盘；书签树假 `tree`→`list`；Library 导入进度事件驱动；列表时间非当年补年份                                                                                                                 |
 | 2026-11-10 | **ADR-022 Dreaming 派生表：** §5.5.1 L3 增列 `memory_notes`；§7.05 增派生表口径（Backup 含 / Portable 默认不含 / v1 本地-only / 无引用不入库 / `CLEAR_LOCAL_MEMORY` 连带清）；IDB v5 只建 store；不进 Recall 主路径直至离线评估通过                                                                        |
 | 2026-11-10 | **Pro 托管 LLM 月配额口径统一为 1000/月：** §5.1 Normative 表 Pro Clue LLM **1 000 次/月**（日软盖 120 不变）；对齐 Worker 常量与 `wrangler.toml` `AI_HOSTED_MONTHLY_QUOTA`；Free 60/月·日盖 10 不动                                                                                                       |
 | 2026-11-06 | **空库态 / 记忆库可见刷新：** Side Panel 听 count+revision 重探空态；Library 回前台静默重拉 + 听 revision；不另造总线；§5.8                                                                                                                                                                                |

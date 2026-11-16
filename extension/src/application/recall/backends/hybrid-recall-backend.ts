@@ -9,7 +9,10 @@ import {
   applyPageContextToMatches,
   applyStoredOutcomePairsToMatches
 } from '@/application/recall/apply-recall-context'
-import { DREAMING_PREFER_READ_ENABLED } from '@/core/dreaming/dreaming-constants'
+import {
+  DREAMING_PREFER_READ_ENABLED,
+  DREAMING_SEMANTIC_NOTE_MATCH_ENABLED
+} from '@/core/dreaming/dreaming-constants'
 import type { NoteMatchSet } from '@/core/recall/note-match'
 import { createRecallFlowTrace } from '@/application/recall/create-recall-flow-trace'
 import {
@@ -633,6 +636,11 @@ export async function fuseHybridMatches(input: {
   parsed: ParsedRecallClue
   /** embedding 请求文本 */
   clueEmbeddingText: string
+  /**
+   * 可选：已算好的查询向量（Phase 4.1 语义命题匹配提前获取后复用）。
+   * 有则不再请求 Worker；无则照旧 embed。
+   */
+  queryVector?: number[] | null
   /** §7.1 页上下文；缺省 none（不静默同域加成） */
   pageContextMode?: PageContextMode
   currentTabDomain?: string
@@ -678,18 +686,22 @@ export async function fuseHybridMatches(input: {
   }
 
   let queryVector: number[]
-  try {
-    const embed = await requestWorkerEmbeddings(session.accessToken, [input.clueEmbeddingText])
-    const vector = embed.embeddings[0]
-    if (!vector?.length) {
+  if (input.queryVector != null && input.queryVector.length > 0) {
+    queryVector = input.queryVector
+  } else {
+    try {
+      const embed = await requestWorkerEmbeddings(session.accessToken, [input.clueEmbeddingText])
+      const vector = embed.embeddings[0]
+      if (!vector?.length) {
+        return null
+      }
+      queryVector = vector
+    } catch (error) {
+      input.trace('info', 'Hybrid：clue embed 失败，降级关键词', {
+        error: error instanceof Error ? error.message : String(error)
+      })
       return null
     }
-    queryVector = vector
-  } catch (error) {
-    input.trace('info', 'Hybrid：clue embed 失败，降级关键词', {
-      error: error instanceof Error ? error.message : String(error)
-    })
-    return null
   }
 
   const itemsById = new Map(input.items.map(item => [item.id, item]))
@@ -1011,6 +1023,34 @@ export class HybridRecallBackend implements RecallBackend {
     })
     const candidateLoadMs = Date.now() - candidateLoadStartedAt
     const listedItems = listedResult.items
+
+    const clueEmbeddingText = buildClueEmbeddingText({
+      effectiveClue: merge.effectiveRaw,
+      parsed: merged,
+      rawClue: normalizedClue
+    })
+
+    // Phase 4.1：语义命题匹配需要查询向量；排到 merge 之前，Hybrid 可复用（查询增量 0）。
+    let queryVector: number[] | null = null
+    const wantSemanticNoteMatch =
+      !isOmniboxEntry && DREAMING_PREFER_READ_ENABLED && DREAMING_SEMANTIC_NOTE_MATCH_ENABLED
+    if (wantSemanticNoteMatch) {
+      try {
+        const session = await getAuthSession()
+        if (session?.accessToken) {
+          const embed = await requestWorkerEmbeddings(session.accessToken, [clueEmbeddingText])
+          const vector = embed.embeddings[0]
+          if (vector?.length) {
+            queryVector = vector
+          }
+        }
+      } catch (error) {
+        trace('info', '语义命题：查询向量获取失败，字面照旧', {
+          error: error instanceof Error ? error.message : String(error)
+        })
+      }
+    }
+
     // Dreaming Phase 4：命题合并（仅非 Omnibox 入口）。
     // 合并点在 excludeDismissedMemoryItems 之前：命题合并进来的条目同样过 dismiss 过滤与 sourceScope 过滤。
     const noteMerge = isOmniboxEntry
@@ -1019,7 +1059,8 @@ export class HybridRecallBackend implements RecallBackend {
           listedItems,
           listedSource: listedResult.source,
           contentTerms: effectiveContentTermsForRecall(merged),
-          preferReadEnabled: DREAMING_PREFER_READ_ENABLED
+          preferReadEnabled: DREAMING_PREFER_READ_ENABLED,
+          ...(queryVector ? { queryVector } : {})
         })
     const noteMatches: NoteMatchSet = noteMerge.noteMatches
     // 死链 hint：仅 Side Panel；Omnibox 不读（D-5）
@@ -1037,12 +1078,6 @@ export class HybridRecallBackend implements RecallBackend {
         after: items.length
       })
     }
-
-    const clueEmbeddingText = buildClueEmbeddingText({
-      effectiveClue: merge.effectiveRaw,
-      parsed: merged,
-      rawClue: normalizedClue
-    })
 
     trace('info', 'Hybrid Recall：候选已加载', {
       candidateSource: listedResult.source,
@@ -1126,6 +1161,7 @@ export class HybridRecallBackend implements RecallBackend {
           filterClue: buildFilterClueFromParsed(merged),
           parsed: merged,
           clueEmbeddingText,
+          ...(queryVector ? { queryVector } : {}),
           pageContextMode,
           ...(currentTabDomain !== undefined ? { currentTabDomain } : {}),
           trace,
@@ -1175,7 +1211,7 @@ export class HybridRecallBackend implements RecallBackend {
           continue
         }
         await memoryNotesMetaRepository
-          .recordNoteHit(noteMerge.ownerId, provenance.noteId)
+          .recordNoteHit(noteMerge.ownerId, provenance.noteId, provenance.matchKind ?? 'literal')
           .catch(() => {
             // recordNoteHit 内部已记日志；此处不再抛错。
           })

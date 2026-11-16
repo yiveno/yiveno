@@ -68,8 +68,8 @@ describe('memory_link_status · v6 迁移', () => {
     }
   })
 
-  it('MEMORY_DATABASE_VERSION=6 且新库含 memory_link_status', async () => {
-    expect(MEMORY_DATABASE_VERSION).toBe(6)
+  it('MEMORY_DATABASE_VERSION≥6 且新库含 memory_link_status', async () => {
+    expect(MEMORY_DATABASE_VERSION).toBeGreaterThanOrEqual(6)
     const { item } = await memoryItemRepository.createTextExcerpt({
       payload: {
         selectedText: 'link status migration smoke',

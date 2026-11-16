@@ -3,8 +3,8 @@
  * 纯函数；不依赖 Chrome / IndexedDB。
  */
 
-/** 两向量余弦相似度；维度不一致或零向量 → 0。 */
-export function cosineSimilarity(left: number[], right: number[]): number {
+/** 两向量余弦相似度；维度不一致或零向量 → 0。支持 `number[]` / `Float32Array`。 */
+export function cosineSimilarity(left: ArrayLike<number>, right: ArrayLike<number>): number {
   if (left.length === 0 || left.length !== right.length) {
     return 0
   }

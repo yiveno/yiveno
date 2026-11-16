@@ -664,7 +664,19 @@ export function classifyMatchedTermKind(term: string): TokenKind {
 const MEMORY_NOTE_VIRTUAL_FIELD_WEIGHT = 12
 
 /**
- * 命题虚拟字段分（设计稿 §5.3）。
+ * 语义命题虚拟字段分（Phase 4.1）。
+ * **不得**复用 `scoreNoteVirtualField`（会踩 exactTokenHit fallback 地雷）。
+ * 初值 `12 × similarity`，上限 12；不参与多词/覆盖率/主文加成。
+ */
+export function scoreNoteSemanticVirtualField(similarity: number): number {
+  if (!Number.isFinite(similarity) || similarity <= 0) {
+    return 0
+  }
+  return Math.min(MEMORY_NOTE_VIRTUAL_FIELD_WEIGHT, MEMORY_NOTE_VIRTUAL_FIELD_WEIGHT * similarity)
+}
+
+/**
+ * 命题虚拟字段分（设计稿 §5.3 · 字面路径）。
  * 虚拟字段文本 = 命题 text + `\n` + topicAnchor 拼串；权重 12。
  * 不参与 CONTENT_MULTI_TERM_HIT_BONUS / 覆盖率 / PRIMARY / NOTE_MULTI 加成。
  * 验收形态：单 bigram → 10；双 exact term → 24。
@@ -1273,11 +1285,17 @@ export function filterMemoryItemsByKeyword(
         return base
       }
       // 虚拟字段分必须在 minScore 截断前加上，否则零字面命中源永远进不了池。
-      const virtualText = buildNoteVirtualFieldText({
-        propositionText: provenance.propositionText,
-        topicAnchor: provenance.topicAnchor
-      })
-      const noteScore = scoreNoteVirtualField(virtualText, provenance.matchedTerms)
+      // 语义路径用独立函数，避开 exactTokenHit fallback 刷屏/满权重误计。
+      const noteScore =
+        provenance.matchKind === 'semantic'
+          ? scoreNoteSemanticVirtualField(provenance.semanticScore ?? 0)
+          : scoreNoteVirtualField(
+              buildNoteVirtualFieldText({
+                propositionText: provenance.propositionText,
+                topicAnchor: provenance.topicAnchor
+              }),
+              provenance.matchedTerms
+            )
       return {
         ...base,
         score: base.score + noteScore,

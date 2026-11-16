@@ -192,6 +192,8 @@ export function createRecallTelemetryRecorder() {
     rank: number
     matchedTermsCount: number
     soleCorroboration: boolean
+    matchKind?: 'literal' | 'semantic'
+    semanticScoreBucket?: string
   }): void {
     if (!active) {
       return
@@ -205,6 +207,8 @@ export function createRecallTelemetryRecorder() {
       rank: input.rank,
       matchedTermsCount: input.matchedTermsCount,
       soleCorroboration: input.soleCorroboration,
+      ...(input.matchKind ? { matchKind: input.matchKind } : {}),
+      ...(input.semanticScoreBucket ? { semanticScoreBucket: input.semanticScoreBucket } : {}),
       at: nowIso()
     })
   }

@@ -1,19 +1,23 @@
 /**
- * Dreaming Phase 4：候选加载分流的命题合并（设计稿 §5）。
+ * Dreaming Phase 4 / 4.1：候选加载分流的命题合并（设计稿 §5）。
  * 调用点在 recallWithClue：listForKeywordRecall 返回之后、excludeDismissedMemoryItems 之前。
  * fail-open：ownerId 解析失败 / 扫描失败 / 取源失败 → 空集 + 日志，查询继续。
  */
 
-import { getCurrentOwnerId } from '@/infrastructure/identity/local-profile-service'
-import { memoryNotesMetaRepository } from '@/infrastructure/indexeddb/memory-notes-meta-repository'
 import { memoryItemService } from '@/application/memory/memory-item-service'
+import {
+  DREAMING_SEMANTIC_NOTE_MATCH_ENABLED,
+  DREAMING_SEMANTIC_NOTE_MATCH_MIN_SIMILARITY
+} from '@/core/dreaming/dreaming-constants'
+import type { MemoryItem } from '@/core/memory/memory-item'
 import {
   buildNoteMatchSet,
   findNoteMatchesForQuery,
   type NoteMatchCandidate,
   type NoteMatchSet
 } from '@/core/recall/note-match'
-import type { MemoryItem } from '@/core/memory/memory-item'
+import { getCurrentOwnerId } from '@/infrastructure/identity/local-profile-service'
+import { memoryNotesMetaRepository } from '@/infrastructure/indexeddb/memory-notes-meta-repository'
 import { logger } from '@/infrastructure/logging/logger'
 
 export interface NoteMergeResult {
@@ -30,7 +34,10 @@ export interface NoteMergeResult {
  * 跳过条件（任一满足即不扫，直接返回原池 + 空集）：
  * - effective content terms 为空；
  * - `memory_notes_meta` 的 itemCount == 0（该用户无命题，零成本跳过；读 meta 失败视为未知，不跳过）；
- * - 开关 DREAMING_PREFER_READ_ENABLED 为 false。
+ * - 开关 DREAMING_PREFER_READ_ENABLED 为 false（由 `preferReadEnabled` 传入）。
+ *
+ * 语义匹配双重门控：`preferReadEnabled` ON **且** 语义子开关 ON，且传入 queryVector；
+ * 否则只走字面。
  */
 export async function mergeNoteMatchesForRecall(input: {
   listedItems: MemoryItem[]
@@ -38,6 +45,12 @@ export async function mergeNoteMatchesForRecall(input: {
   listedSource: string
   contentTerms: readonly string[]
   preferReadEnabled: boolean
+  /** Hybrid 同路复用的查询向量；缺省 / 空 → 语义静默跳过。 */
+  queryVector?: ArrayLike<number> | null
+  /** 测试可覆盖语义子开关；缺省读常量。 */
+  semanticEnabled?: boolean
+  /** 测试可覆盖阈值。 */
+  semanticMinSimilarity?: number
 }): Promise<NoteMergeResult> {
   const empty: NoteMergeResult = { items: input.listedItems, noteMatches: new Map(), ownerId: null }
   if (!input.preferReadEnabled || input.contentTerms.length === 0) {
@@ -68,9 +81,22 @@ export async function mergeNoteMatchesForRecall(input: {
     })
   }
 
+  const allowSemantic =
+    (input.semanticEnabled ?? DREAMING_SEMANTIC_NOTE_MATCH_ENABLED) === true &&
+    input.queryVector != null &&
+    input.queryVector.length > 0
+
   const candidates: NoteMatchCandidate[] = await findNoteMatchesForQuery({
     ownerId,
-    contentTerms: input.contentTerms
+    contentTerms: input.contentTerms,
+    ...(allowSemantic
+      ? {
+          queryVector: input.queryVector,
+          semanticEnabled: true,
+          semanticMinSimilarity:
+            input.semanticMinSimilarity ?? DREAMING_SEMANTIC_NOTE_MATCH_MIN_SIMILARITY
+        }
+      : {})
   })
   if (candidates.length === 0) {
     return { ...empty, ownerId }

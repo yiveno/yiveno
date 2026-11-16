@@ -1,8 +1,11 @@
 /** Yiveno Memory DB 常量。 */
 export const MEMORY_DATABASE_NAME = 'YivenoMemoryDB' as const
 
-/** v6：死链巡检派生表 `memory_link_status`（可重算；不进 Backup）。 */
-export const MEMORY_DATABASE_VERSION = 6 as const
+/**
+ * v7：命题向量派生表 `memory_note_embeddings`（可重算缓存；不进 Backup；恢复后重建）。
+ * v6：死链巡检派生表 `memory_link_status`（可重算；不进 Backup）。
+ */
+export const MEMORY_DATABASE_VERSION = 7 as const
 
 export const MEMORY_ITEM_STORE = 'memory_items' as const
 
@@ -32,8 +35,17 @@ export const DREAMING_DUPLICATE_GROUP_STORE = 'dreaming_duplicate_groups' as con
  */
 export const MEMORY_LINK_STATUS_STORE = 'memory_link_status' as const
 
+/**
+ * 命题向量缓存（独立派生；可重算；不进 Backup）。
+ * keyPath = id（与 `memory_notes.id` 同形）。
+ */
+export const MEMORY_NOTE_EMBEDDING_STORE = 'memory_note_embeddings' as const
+
 /** ownerId + lastCheckedAt，未检查优先排队。 */
 export const MEMORY_LINK_STATUS_INDEX_BY_OWNER_CHECKED = 'by_owner_checked' as const
+
+/** ownerId，按归属枚举命题向量（回填 / 清库）。 */
+export const MEMORY_NOTE_EMBEDDING_INDEX_BY_OWNER = 'by_owner' as const
 
 /** ownerId + sourceMemoryItemId，按源查命题。 */
 export const MEMORY_NOTES_INDEX_BY_OWNER_SOURCE = 'by_owner_source' as const
