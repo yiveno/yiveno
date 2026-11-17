@@ -1022,7 +1022,7 @@
     }
   },
   "popup_recall_failed": {
-    "message": "Recall failed. Try again later."
+    "message": "The Recall service hit a temporary error. Please try again later."
   },
   "popup_navigate_tab_failed": {
     "message": "Couldn't open that page. Try again."
@@ -2953,5 +2953,98 @@
   },
   "settings_reimport_chrome_bookmarks_done": {
     "message": "Re-import complete."
+  },
+  "sidepanel_recall_deeper_reading_quota_monthly": {
+    "message": "This month's clue-help allowance is used up ($USED$/$LIMIT$). Using on-device rules instead. It resets next month.",
+    "placeholders": {
+      "USED": {
+        "content": "$1"
+      },
+      "LIMIT": {
+        "content": "$2"
+      }
+    }
+  },
+  "sidepanel_recall_deeper_reading_quota_monthly_no_numbers": {
+    "message": "This month's clue-help allowance is used up. Using on-device rules instead. It resets next month."
+  },
+  "sidepanel_recall_deeper_reading_quota_daily": {
+    "message": "Today's clue-help allowance is used up ($DAILY_USED$/$DAILY_LIMIT$). Using on-device rules instead. It resets tomorrow.",
+    "placeholders": {
+      "DAILY_USED": {
+        "content": "$1"
+      },
+      "DAILY_LIMIT": {
+        "content": "$2"
+      }
+    }
+  },
+  "sidepanel_recall_deeper_reading_quota_daily_no_numbers": {
+    "message": "Today's clue-help allowance is used up. Using on-device rules instead. It resets tomorrow."
+  },
+  "sidepanel_recall_deeper_reading_timeout": {
+    "message": "Cloud understanding timed out (no response in 12s). Using on-device rules instead."
+  },
+  "sidepanel_recall_deeper_reading_network": {
+    "message": "Can't reach the cloud understanding service. Using on-device rules instead. Check your connection and try again."
+  },
+  "sidepanel_recall_deeper_reading_auth": {
+    "message": "Your sign-in has expired, so cloud understanding isn't available. Using on-device rules instead. Please sign in again."
+  },
+  "sidepanel_recall_deeper_reading_provider_error": {
+    "message": "The cloud understanding service hit a temporary error. Using on-device rules instead. Try again later."
+  },
+  "sidepanel_recall_deeper_reading_not_configured": {
+    "message": "The cloud understanding service isn't configured. Using on-device rules instead."
+  },
+  "sidepanel_recall_deeper_reading_empty_response": {
+    "message": "Cloud understanding returned an empty result. Using on-device rules instead."
+  },
+  "popup_miss_bookmarks_not_imported_prefix": {
+    "message": "Also: your Chrome bookmarks haven't been imported yet, so bookmark content isn't findable right now. Please "
+  },
+  "popup_miss_bookmarks_not_imported_suffix": {
+    "message": " first, then come back and find it."
+  },
+  "popup_miss_bookmarks_importing": {
+    "message": "Also: your Chrome bookmarks are still importing. Try again once the import finishes."
+  },
+  "popup_recall_failed_offline": {
+    "message": "You're offline, and Recall needs a connection. Reconnect and try again."
+  },
+  "error_bookmark_import_read_failed": {
+    "message": "Couldn't read Chrome bookmarks. Check bookmark permission, then retry import."
+  },
+  "error_bookmark_import_write_failed": {
+    "message": "Couldn't save imported bookmarks to Yiveno storage. Free some space and retry."
+  },
+  "settings_error_sync_incremental_offline": {
+    "message": "You're offline, so incremental sync can't run. Reconnect and try again."
+  },
+  "settings_ai_quota_failed_offline": {
+    "message": "You're offline, so clue-help quota can't load. Reconnect and try again."
+  },
+  "settings_ai_quota_failed_server": {
+    "message": "Couldn't load clue-help quota from the server. Try again later."
+  },
+  "popup_miss_degraded_ai_off_prefix": {
+    "message": "Also: AI assistance is off, so this uses rules-only understanding with no semantic matching. Please "
+  },
+  "popup_miss_degraded_ai_off_link": {
+    "message": "open Settings to turn on AI assistance"
+  },
+  "popup_miss_degraded_not_signed_in_prefix": {
+    "message": "Also: you're not signed in, so this uses rules-only understanding with no semantic matching. Please "
+  },
+  "popup_miss_degraded_not_signed_in_link": {
+    "message": "open Settings to sign in"
+  },
+  "popup_miss_bookmarks_stale_prefix": {
+    "message": "Also: $COUNT$ new Chrome bookmarks haven't synced in yet (sync is off) — what you're looking for might be among them. Please ",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
   }
 }

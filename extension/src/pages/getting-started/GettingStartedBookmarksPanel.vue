@@ -6,6 +6,7 @@ import {
   type ChromeBookmarkImportState
 } from '@/core/memory/chrome-bookmark-import-state'
 import { parseChromeBookmarkTreeChangedMessage } from '@/core/messaging/ui-messages'
+import { tChromeBookmarkImportError } from '@/infrastructure/i18n/background-error'
 import { t } from '@/infrastructure/i18n/t'
 import { logger } from '@/infrastructure/logging/logger'
 import {
@@ -98,6 +99,15 @@ const importPercent = computed(() => {
  * 授权卡 UI 阶段：征求 → 导入中 → 已授权 → 失败可重试。
  * 关灌库只能去 Settings，本页不做 toggle。
  */
+/** 导入失败正文：有结构化 errorCode 则用诚实归因，否则 GS 通用兜底。 */
+const consentFailedBody = computed(() => {
+  const code = importState.value?.errorCode
+  if (code) {
+    return tChromeBookmarkImportError(code)
+  }
+  return t('getting_started_consent_failed_body')
+})
+
 const consentUiPhase = computed(() => {
   if (!bookmarkConsent.value) {
     return 'need_consent' as const
@@ -522,7 +532,7 @@ onUnmounted(() => {
           <h2 class="gs-bookmarks__consent-title">
             {{ t('getting_started_consent_failed_title') }}
           </h2>
-          <p class="gs-bookmarks__consent-body">{{ t('getting_started_consent_failed_body') }}</p>
+          <p class="gs-bookmarks__consent-body">{{ consentFailedBody }}</p>
           <AppButton
             type="button"
             variant="tonal"

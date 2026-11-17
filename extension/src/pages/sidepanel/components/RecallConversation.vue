@@ -73,6 +73,10 @@ const emit = defineEmits<{
   toggleDetailExportSelection: [memoryItemId: string]
   /** 空库「导入书签」→ Settings 书签灌库开关 */
   openBookmarkIngestSettings: []
+  /** miss 降级：Settings AI 分区 */
+  openAiSettings: []
+  /** miss 降级：Settings 账户与同步 */
+  openAccountSettings: []
 }>()
 
 /** 纠错菜单：`${turnId}::${chipId}`；null = 关闭。 */
@@ -515,6 +519,26 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
                 >
                   {{ segment.text }}
                 </button>
+                <button
+                  v-else-if="segment.kind === 'open_ai_settings'"
+                  type="button"
+                  class="assistant-turn-inline-link"
+                  :title="segment.text"
+                  :aria-label="segment.text"
+                  @click="emit('openAiSettings')"
+                >
+                  {{ segment.text }}
+                </button>
+                <button
+                  v-else-if="segment.kind === 'open_account_settings'"
+                  type="button"
+                  class="assistant-turn-inline-link"
+                  :title="segment.text"
+                  :aria-label="segment.text"
+                  @click="emit('openAccountSettings')"
+                >
+                  {{ segment.text }}
+                </button>
                 <template v-else>{{ segment.text }}</template>
               </template>
             </template>
@@ -650,6 +674,26 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
                   :title="t('popup_empty_import_bookmarks_aria')"
                   :aria-label="t('popup_empty_import_bookmarks_aria')"
                   @click="emit('openBookmarkIngestSettings')"
+                >
+                  {{ segment.text }}
+                </button>
+                <button
+                  v-else-if="segment.kind === 'open_ai_settings'"
+                  type="button"
+                  class="assistant-turn-inline-link"
+                  :title="segment.text"
+                  :aria-label="segment.text"
+                  @click="emit('openAiSettings')"
+                >
+                  {{ segment.text }}
+                </button>
+                <button
+                  v-else-if="segment.kind === 'open_account_settings'"
+                  type="button"
+                  class="assistant-turn-inline-link"
+                  :title="segment.text"
+                  :aria-label="segment.text"
+                  @click="emit('openAccountSettings')"
                 >
                   {{ segment.text }}
                 </button>

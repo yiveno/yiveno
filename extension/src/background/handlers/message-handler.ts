@@ -49,6 +49,7 @@ import {
   handleGetChromeBookmarkImportStatus,
   handleGetColdStartStatus,
   handleGenerateGettingStartedClueSamples,
+  handleGetBookmarkSyncStaleness,
   handleGetThirdPartyCorpusSummary,
   handleImportLocalMemory,
   handleImportThirdPartyCorpus
@@ -213,6 +214,8 @@ async function dispatchBackgroundMessage(
       return handleImportLocalMemory(message.payload)
     case 'GET_THIRD_PARTY_CORPUS_SUMMARY':
       return handleGetThirdPartyCorpusSummary()
+    case 'GET_BOOKMARK_SYNC_STALENESS':
+      return handleGetBookmarkSyncStaleness()
     case 'DELETE_THIRD_PARTY_CORPUS_BY_SOURCE':
       return handleDeleteThirdPartyCorpusBySource(message.payload)
     case 'GET_BOOKMARK_LIBRARY_TREE':

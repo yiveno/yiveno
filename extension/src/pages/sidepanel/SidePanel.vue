@@ -21,6 +21,12 @@ import {
   shouldOfferThreadPivotConfirm
 } from '@/core/recall/should-offer-thread-pivot-confirm'
 import { renderRecallFraming } from '@/core/recall/render-recall-framing'
+import { resolveDeeperReadingTip } from '@/core/recall/resolve-deeper-reading-tip'
+import { resolveRecallDegradedReason } from '@/core/recall/resolve-recall-degraded-reason'
+import {
+  resolveRecallFailedResponseCopy,
+  resolveRecallThrownCopy
+} from '@/pages/sidepanel/resolve-recall-failed-copy'
 import { parseRecallVisibleProgressMessage } from '@/core/messaging/ui-messages'
 import { tRecallError } from '@/infrastructure/i18n/background-error'
 import { t } from '@/infrastructure/i18n/t'
@@ -146,6 +152,10 @@ const {
   coldStartPostReleaseBannerLabel,
   showColdStartEnrichmentProgressBar,
   bookmarkFuel,
+  bookmarkCount,
+  signedIn,
+  aiFeaturesEnabled,
+  unsyncedBookmarkCount,
   captureFirstMode,
   idleEmptyCopy,
   showEmptyImportCta,
@@ -158,6 +168,8 @@ const {
   handleSkipOnboarding,
   handleOpenGettingStarted,
   handleOpenBookmarkIngestSettings,
+  handleOpenAiSettings,
+  handleOpenAccountSettings,
   probeMemoryLibrary,
   refreshBookmarkIngestSetting,
   startImportPolling,
@@ -201,6 +213,8 @@ const {
   resetOutcomeSession
 } = useRecallOutcomeSession({
   bookmarkFuel,
+  bookmarkCount,
+  unsyncedBookmarkCount,
   recallTelemetry,
   onCompleteNewFindSession: reason => completeNewFindSessionFn(reason)
 })
@@ -601,10 +615,12 @@ async function loadGreetingIdentity(): Promise<void> {
   try {
     const response = await fetchAuthState()
     if (!response.ok) {
+      signedIn.value = null
       accountDisplayName.value = ''
       void refreshWebsiteConnectBanner(false)
       return
     }
+    signedIn.value = response.signedIn
     void refreshWebsiteConnectBanner(response.signedIn)
     if (response.signedIn) {
       void refreshLoginMigrationGate()
@@ -618,6 +634,7 @@ async function loadGreetingIdentity(): Promise<void> {
     const localPart = email.includes('@') ? email.slice(0, email.indexOf('@')).trim() : ''
     accountDisplayName.value = localPart
   } catch {
+    signedIn.value = null
     accountDisplayName.value = ''
   }
 }
@@ -791,7 +808,13 @@ async function runRecall(trimmedClue: string): Promise<void> {
     }
     isRecallRefreshing.value = false
     if (!response.ok) {
-      errorMessage.value = tRecallError(response.errorCode)
+      // SW 返回 RECALL_FAILED：UI 侧能判离线则改用离线文案（handler 未必带 navigator）
+      errorMessage.value = resolveRecallFailedResponseCopy({
+        errorCode: response.errorCode,
+        browserOnline: readBrowserOnline(),
+        offlineMessage: t('popup_recall_failed_offline'),
+        mappedErrorMessage: tRecallError(response.errorCode)
+      })
       conversationTurns.value.push(
         createAssistantTurn({
           id: nextTurnId(),
@@ -814,11 +837,16 @@ async function runRecall(trimmedClue: string): Promise<void> {
 
     const highlightClue = response.result.effectiveClue ?? response.result.clue
     const resultIds = collectResultIdsFromRecall(response.result)
-    /** rules_fallback 结果轻提示；断网 omit LLM（source=rules）不叠 */
-    const deeperReadingTipFields =
+    /** rules_fallback 结果轻提示；按失败 kind 诚实归因；断网 omit LLM（source=rules）不叠 */
+    const deeperReadingTip =
       response.result.understandSource === 'rules_fallback'
-        ? { deeperReadingTip: t('sidepanel_recall_deeper_reading_unavailable') }
-        : {}
+        ? resolveDeeperReadingTip(
+            response.result.understandErrorKind ?? 'unknown',
+            t,
+            response.result.understandQuota
+          )
+        : null
+    const deeperReadingTipFields = deeperReadingTip !== null ? { deeperReadingTip } : {}
     /** 超长线索截断轻提示；与 deeperReadingTip 可叠加 */
     const clueTruncatedTipFields =
       response.result.clueTruncated === true
@@ -963,6 +991,12 @@ async function runRecall(trimmedClue: string): Promise<void> {
     } else {
       const relatedGuess = response.result.relatedGuess ?? null
       const usedRulesFallback = response.result.understandSource === 'rules_fallback'
+      const degradedReason = resolveRecallDegradedReason({
+        source: response.result.understandSource,
+        mode: response.result.understandMode,
+        signedIn: signedIn.value,
+        aiFeaturesEnabled: aiFeaturesEnabled.value
+      })
       const missFallback = resolveMissAssistantCopy({
         ...(response.result.emptyKind !== undefined
           ? { emptyKind: response.result.emptyKind }
@@ -973,7 +1007,8 @@ async function runRecall(trimmedClue: string): Promise<void> {
         usedRulesFallback,
         ...(response.result.assistantReply !== undefined
           ? { assistantReply: response.result.assistantReply }
-          : {})
+          : {}),
+        ...(degradedReason ? { degradedReason } : {})
       })
       const understandingEcho = resolveUnderstandingEchoChips(response.result.parsed)
       const omitUnderstood = Boolean(understandingEcho)
@@ -1097,7 +1132,12 @@ async function runRecall(trimmedClue: string): Promise<void> {
       return
     }
     isRecallRefreshing.value = false
-    errorMessage.value = t('popup_recall_failed')
+    // catch 路径：sendMessage 抛错；能判离线则说离线，否则收紧后的通用服务失败
+    errorMessage.value = resolveRecallThrownCopy({
+      browserOnline: readBrowserOnline(),
+      offlineMessage: t('popup_recall_failed_offline'),
+      onlineFailedMessage: t('popup_recall_failed')
+    })
     conversationTurns.value.push(
       createAssistantTurn({
         id: nextTurnId(),
@@ -1524,6 +1564,26 @@ onUnmounted(() => {
                   >
                     {{ segment.text }}
                   </button>
+                  <button
+                    v-else-if="segment.kind === 'open_ai_settings'"
+                    type="button"
+                    class="recall-empty-inline-link"
+                    :title="segment.text"
+                    :aria-label="segment.text"
+                    @click="handleOpenAiSettings"
+                  >
+                    {{ segment.text }}
+                  </button>
+                  <button
+                    v-else-if="segment.kind === 'open_account_settings'"
+                    type="button"
+                    class="recall-empty-inline-link"
+                    :title="segment.text"
+                    :aria-label="segment.text"
+                    @click="handleOpenAccountSettings"
+                  >
+                    {{ segment.text }}
+                  </button>
                   <template v-else>{{ segment.text }}</template>
                 </template>
               </template>
@@ -1576,6 +1636,8 @@ onUnmounted(() => {
           @use-suggestion="handleUseSuggestion"
           @correct-understanding="handleCorrectUnderstanding"
           @open-bookmark-ingest-settings="handleOpenBookmarkIngestSettings"
+          @open-ai-settings="handleOpenAiSettings"
+          @open-account-settings="handleOpenAccountSettings"
         />
       </div>
 

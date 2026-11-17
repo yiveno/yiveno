@@ -4,6 +4,10 @@
  */
 
 import { EXTENSION_OPTIONS_PAGE } from '@/core/extension/extension-options-contract'
+import {
+  buildSettingsSectionLocationSearch,
+  type SettingsSectionId
+} from '@/core/settings/settings-sections'
 import { focusOrOpenTab } from '@/infrastructure/browser/focus-or-open-tab'
 
 const LIBRARY_TAB_SESSION_KEY = 'yiveno.libraryTabId'
@@ -45,8 +49,33 @@ export async function focusOrOpenLibraryTab(): Promise<boolean> {
  * 快捷键 / 顶栏 / 空库「导入」：打开或切到设置页。
  * 与记忆库同路径：session → URL 扫描 → 新建；避免 openOptionsPage 重复开 Tab。
  * @param options.hash 不含 `#`；有则改址并对齐深链（滚到书签开关等）
+ * @param options.section Settings 分区 id（`?section=`）；与 hash 互斥时优先 section
  */
-export async function focusOrOpenSettingsTab(options?: { hash?: string }): Promise<boolean> {
+export async function focusOrOpenSettingsTab(options?: {
+  hash?: string
+  section?: SettingsSectionId
+}): Promise<boolean> {
+  const section = options?.section
+  if (section) {
+    const baseUrl = chrome.runtime.getURL(EXTENSION_OPTIONS_PAGE)
+    const search = buildSettingsSectionLocationSearch(section)
+    const targetUrl = `${baseUrl}${search}`
+    const result = await focusOrOpenTab({
+      targetUrl,
+      match: {
+        kind: 'urlPatterns',
+        patterns: buildExtensionPageTabQueryPattern(EXTENSION_OPTIONS_PAGE)
+      },
+      sessionKey: SETTINGS_TAB_SESSION_KEY,
+      canKeepExistingUrl: current => {
+        const expected = new URL(targetUrl)
+        return current.search === expected.search && current.hash === ''
+      },
+      logScope: 'ExtensionTab'
+    })
+    return result.status === 'focused' || result.status === 'created'
+  }
+
   const hashRaw = options?.hash?.trim() ?? ''
   const hash = hashRaw.replace(/^#/, '')
   if (!hash) {

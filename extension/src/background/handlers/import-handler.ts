@@ -3,6 +3,7 @@ import {
   mapChromeBookmarkTreeToLibraryIndex
 } from '@/core/memory/bookmark-library-index'
 import type {
+  BookmarkSyncStalenessResponse,
   ChromeBookmarkImportStatusResponse,
   ColdStartStatusResponse,
   DeleteThirdPartyCorpusBySourceResponse,
@@ -19,6 +20,7 @@ import {
   parseImportLocalMemoryPayload,
   parseImportThirdPartyCorpusPayload
 } from '@/core/messaging/import-messages'
+import { countUnsyncedChromeBookmarkLeaves } from '@/application/capture/chrome-bookmark-sync-staleness'
 import {
   ensureChromeBookmarksImported,
   getChromeBookmarkImportStatus,
@@ -326,6 +328,23 @@ export async function handleGetThirdPartyCorpusSummary(): Promise<ThirdPartyCorp
     return { ok: true, sources }
   } catch (error) {
     flowFail('Import', '读取第三方语料摘要', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'IMPORT_STATUS_READ_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/** 同步关时未进库的 Chrome 书签叶子数（只读计数）。 */
+export async function handleGetBookmarkSyncStaleness(): Promise<BookmarkSyncStalenessResponse> {
+  const startedAt = flowStart('Import', '读取书签同步 stale 计数')
+  try {
+    const unsyncedCount = await countUnsyncedChromeBookmarkLeaves()
+    flowOk('Import', '读取书签同步 stale 计数', startedAt, { unsyncedCount })
+    return { ok: true, unsyncedCount }
+  } catch (error) {
+    flowFail('Import', '读取书签同步 stale 计数', startedAt, error)
     return {
       ok: false,
       errorCode: 'IMPORT_STATUS_READ_FAILED',

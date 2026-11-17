@@ -11,6 +11,7 @@ import { refreshClueLlmCompleterFromDevConfig } from '@/application/recall/refre
 import { syncChromeBookmarkSyncListenersWithSyncSetting } from '@/background/listeners/chrome-bookmark-sync'
 import { ensureLinkStatusSweepAlarm } from '@/infrastructure/sync/link-status-sweep-alarm'
 import { fetchHostedQuota } from '@/infrastructure/ai/hosted-quota-api-client'
+import { readBrowserOnline } from '@/infrastructure/browser/browser-online'
 import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
 import {
   getUserSettings,
@@ -161,9 +162,10 @@ export async function handleGetAiHostedQuota(): Promise<GetAiHostedQuotaResponse
   } catch (error) {
     flowFail('Settings', '读取托管配额', startedAt, error)
     const debug = toErrorPayload(error)
+    const errorCode = readBrowserOnline() ? 'AI_HOSTED_QUOTA_FAILED' : 'AI_HOSTED_QUOTA_OFFLINE'
     return {
       ok: false,
-      errorCode: 'AI_HOSTED_QUOTA_FAILED',
+      errorCode,
       ...(debug ? { error: debug } : {})
     }
   }

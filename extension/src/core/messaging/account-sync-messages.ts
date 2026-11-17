@@ -29,6 +29,7 @@ export const AccountSyncErrorCodeSchema = z.enum([
   'SYNC_MERGE_FAILED', // 本机与云端并集合并失败
   'SYNC_RESTORE_BACKUP_FAILED', // 从云端备份恢复失败
   'SYNC_INCREMENTAL_FAILED', // 增量/定时同步失败
+  'SYNC_INCREMENTAL_OFFLINE', // 增量同步时浏览器离线
   'PRIVACY_NOTICE_REQUIRED', // 开同步前须确认隐私说明
   'PRIVACY_ACK_FAILED', // 确认隐私说明失败
   'CLOUD_DELETE_FAILED', // 删除云端记忆失败

@@ -166,6 +166,27 @@ describe('extension-tab', () => {
     })
   })
 
+  it('focusOrOpenSettingsTab 带 section 时改址到 ?section=', async () => {
+    tabsQuery.mockResolvedValue([
+      {
+        id: 88,
+        windowId: 2,
+        url: 'chrome-extension://test/settings.html'
+      } as chrome.tabs.Tab
+    ])
+    tabsGet.mockResolvedValue({
+      id: 88,
+      windowId: 2,
+      url: 'chrome-extension://test/settings.html'
+    } as chrome.tabs.Tab)
+
+    await focusOrOpenSettingsTab({ section: 'ai' })
+    expect(tabsUpdate).toHaveBeenCalledWith(88, {
+      url: 'chrome-extension://test/settings.html?section=ai',
+      active: true
+    })
+  })
+
   it('focusOrOpenLibraryTab tabs.create 失败时返回 false', async () => {
     tabsCreate.mockRejectedValue(new Error('quota'))
 

@@ -28,7 +28,10 @@ export type RecallShellBookmarkFuel =
 
 /** 空态正文片段：可内嵌「打开 Settings 书签开关」链接。 */
 export type RecallShellTextSegment =
-  { kind: 'text'; text: string } | { kind: 'open_bookmark_ingest_settings'; text: string }
+  | { kind: 'text'; text: string }
+  | { kind: 'open_bookmark_ingest_settings'; text: string }
+  | { kind: 'open_ai_settings'; text: string }
+  | { kind: 'open_account_settings'; text: string }
 
 export interface RecallShellEmptyCopy {
   title: string

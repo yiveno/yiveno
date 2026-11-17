@@ -116,9 +116,13 @@ async function runChromeBookmarkImport(
     previousStatus: existing?.status ?? null
   })
 
+  /** 失败归因阶段：读树 vs 写库（仅影响 errorCode，不改成功路径）。 */
+  let failurePhase: 'read' | 'write' = 'read'
+
   try {
     const leaves = await readChromeBookmarkLeaves()
     totalCount = leaves.length
+    failurePhase = 'write'
 
     // 空树：直接 completed，不写 running、不调 bulk put（UI 最多闪一轮轮询）
     if (totalCount === 0) {
@@ -197,16 +201,18 @@ async function runChromeBookmarkImport(
 
     return completed
   } catch (error) {
+    const errorCode =
+      failurePhase === 'read' ? 'BOOKMARK_IMPORT_READ_FAILED' : 'BOOKMARK_IMPORT_WRITE_FAILED'
     const failed: ChromeBookmarkImportState = {
       status: 'failed',
       importedCount,
       totalCount,
       startedAt,
-      errorCode: 'BOOKMARK_IMPORT_FAILED',
+      errorCode,
       ...(error instanceof Error ? { error: error.message } : {})
     }
     await writeChromeBookmarkImportState(failed)
-    logger.error('ChromeBookmarkImport', '书签导入失败', error)
+    logger.error('ChromeBookmarkImport', '书签导入失败', { errorCode, error })
     throw error
   }
 }

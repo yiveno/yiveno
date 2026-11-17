@@ -5,8 +5,12 @@ export const CHROME_BOOKMARK_IMPORT_STORAGE_KEY = 'yiveno:chrome_bookmark_import
 
 /** 书签导入失败面向 UI 的稳定错误码。 */
 export const ChromeBookmarkImportErrorCodeSchema = z.enum([
-  'BOOKMARK_IMPORT_FAILED' // 书签导入失败
+  'BOOKMARK_IMPORT_FAILED', // 书签导入失败（兜底）
+  'BOOKMARK_IMPORT_READ_FAILED', // 读 Chrome 书签树失败
+  'BOOKMARK_IMPORT_WRITE_FAILED' // 写入本机 Memory / storage 失败
 ])
+
+export type ChromeBookmarkImportErrorCode = z.infer<typeof ChromeBookmarkImportErrorCodeSchema>
 
 export const ChromeBookmarkImportStateSchema = z.object({
   status: z.enum([

@@ -34,6 +34,7 @@ import {
   writeColdStartPostReleaseBannerDismissedReadyAt
 } from '@/infrastructure/storage/cold-start-post-release-banner-storage'
 import {
+  fetchBookmarkSyncStaleness,
   fetchChromeBookmarkImportStatus,
   fetchColdStartStatus,
   fetchUserSettings,
@@ -103,7 +104,22 @@ export type UseSidepanelColdStartResult = {
   handleSkipOnboarding: () => Promise<void>
   handleOpenGettingStarted: () => void
   handleOpenBookmarkIngestSettings: () => void
+  /** miss 降级段：打开 Settings AI 分区。 */
+  handleOpenAiSettings: () => void
+  /** miss 降级段：打开 Settings 账户与同步分区。 */
+  handleOpenAccountSettings: () => void
   probeMemoryLibrary: () => Promise<void>
+  /** 本机书签语料条数；探测失败为 null。 */
+  bookmarkCount: Ref<number | null>
+  /**
+   * 登录态（由 SidePanel `loadGreetingIdentity` 写入，避免再 fetch）。
+   * `null` = 尚未得知。
+   */
+  signedIn: Ref<boolean | null>
+  /** AI 辅助开关；探测失败为 null。 */
+  aiFeaturesEnabled: Ref<boolean | null>
+  /** 同步关时未进库书签数；探测失败为 null。 */
+  unsyncedBookmarkCount: Ref<number | null>
   refreshBookmarkIngestSetting: () => Promise<void>
   startImportPolling: () => void
   stopImportPolling: () => void
@@ -138,6 +154,15 @@ export function useSidepanelColdStart(
    */
   const pendingGsPrefillRecall = ref<string | null>(null)
   const libraryState = ref<RecallShellLibraryState>('unknown')
+  /**
+   * 本机书签 Memory 条数（与 libraryState 分开：库可因摘录非空，但书签语料仍为 0）。
+   * `null` = 未探测或失败。
+   */
+  const bookmarkCount = ref<number | null>(null)
+  /** 由 SidePanel 问候身份探测写入；本 composable 不单独 fetchAuthState。 */
+  const signedIn = ref<boolean | null>(null)
+  const aiFeaturesEnabled = ref<boolean | null>(null)
+  const unsyncedBookmarkCount = ref<number | null>(null)
   const excerptCaptureCount = ref(0)
   const installOnboardingDone = ref(true)
   const skipOnboardingBusy = ref(false)
@@ -435,16 +460,53 @@ export function useSidepanelColdStart(
     void focusOrOpenSettingsTab({ hash: SETTINGS_HASH_CHROME_BOOKMARK_INGEST })
   }
 
+  function handleOpenAiSettings(): void {
+    void focusOrOpenSettingsTab({ section: 'ai' })
+  }
+
+  function handleOpenAccountSettings(): void {
+    void focusOrOpenSettingsTab({ section: 'account_sync' })
+  }
+
   async function probeMemoryLibrary() {
     try {
-      const response = await listMemoryItems({ limit: 1 })
-      if (!response.ok || !('total' in response)) {
+      const [allResponse, bookmarkResponse, settingsResponse, stalenessResponse] =
+        await Promise.all([
+          listMemoryItems({ limit: 1 }),
+          listMemoryItems({ type: 'bookmark', limit: 1 }),
+          fetchUserSettings(),
+          fetchBookmarkSyncStaleness()
+        ])
+      if (!allResponse.ok || !('total' in allResponse)) {
         libraryState.value = 'unknown'
-        return
+      } else {
+        libraryState.value = allResponse.total > 0 ? 'ready' : 'empty'
       }
-      libraryState.value = response.total > 0 ? 'ready' : 'empty'
+      // 书签计数失败不阻塞库态；miss 文案按「未知」跳过书签段
+      if (!bookmarkResponse.ok || !('total' in bookmarkResponse)) {
+        bookmarkCount.value = null
+      } else {
+        bookmarkCount.value = bookmarkResponse.total
+      }
+      if (settingsResponse.ok) {
+        aiFeaturesEnabled.value = settingsResponse.settings.aiFeaturesEnabled
+        bookmarkIngestEnabled.value = settingsResponse.settings.chromeBookmarkIngestEnabled
+        if (bookmarkIngestEnabled.value && !importPollTimer) {
+          startImportPolling()
+        }
+      } else {
+        aiFeaturesEnabled.value = null
+      }
+      if (stalenessResponse.ok) {
+        unsyncedBookmarkCount.value = stalenessResponse.unsyncedCount
+      } else {
+        unsyncedBookmarkCount.value = null
+      }
     } catch {
       libraryState.value = 'unknown'
+      bookmarkCount.value = null
+      aiFeaturesEnabled.value = null
+      unsyncedBookmarkCount.value = null
     }
   }
 
@@ -456,6 +518,7 @@ export function useSidepanelColdStart(
         return
       }
       bookmarkIngestEnabled.value = response.settings.chromeBookmarkIngestEnabled
+      aiFeaturesEnabled.value = response.settings.aiFeaturesEnabled
       // 用户在 GS 刚打开开关时，确保导入轮询已启动
       if (bookmarkIngestEnabled.value && !importPollTimer) {
         startImportPolling()
@@ -622,6 +685,10 @@ export function useSidepanelColdStart(
     coldStartPostReleaseDismissedReadyAt,
     pendingGsPrefillRecall,
     libraryState,
+    bookmarkCount,
+    signedIn,
+    aiFeaturesEnabled,
+    unsyncedBookmarkCount,
     excerptCaptureCount,
     installOnboardingDone,
     skipOnboardingBusy,
@@ -645,6 +712,8 @@ export function useSidepanelColdStart(
     handleSkipOnboarding,
     handleOpenGettingStarted,
     handleOpenBookmarkIngestSettings,
+    handleOpenAiSettings,
+    handleOpenAccountSettings,
     probeMemoryLibrary,
     refreshBookmarkIngestSetting,
     startImportPolling,

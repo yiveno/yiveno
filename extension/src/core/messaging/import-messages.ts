@@ -222,6 +222,29 @@ export type GetThirdPartyCorpusSummaryMessage = {
   type: 'GET_THIRD_PARTY_CORPUS_SUMMARY'
 }
 
+/**
+ * 查询 Chrome 未同步进库的书签叶子数（同步关 + 导入已完成时）。
+ * 只计数，不 upsert；面板打开时 cold-start 探针调用一次。
+ */
+export type GetBookmarkSyncStalenessMessage = {
+  scope: BackgroundMessageScope
+  type: 'GET_BOOKMARK_SYNC_STALENESS'
+}
+
+export type BookmarkSyncStalenessSuccessResponse = {
+  ok: true
+  unsyncedCount: number
+}
+
+export type BookmarkSyncStalenessErrorResponse = {
+  ok: false
+  errorCode: ImportErrorCode
+  error?: string
+}
+
+export type BookmarkSyncStalenessResponse =
+  BookmarkSyncStalenessSuccessResponse | BookmarkSyncStalenessErrorResponse
+
 export type ThirdPartyCorpusSummarySuccessResponse = {
   ok: true
   sources: {
@@ -273,6 +296,7 @@ export type ImportBackgroundMessage =
   | ImportThirdPartyCorpusMessage
   | ImportLocalMemoryMessage
   | GetThirdPartyCorpusSummaryMessage
+  | GetBookmarkSyncStalenessMessage
   | DeleteThirdPartyCorpusBySourceMessage
 
 export type ImportBackgroundResponse =
@@ -284,6 +308,7 @@ export type ImportBackgroundResponse =
   | ImportThirdPartyCorpusResponse
   | ImportLocalMemoryResponse
   | ThirdPartyCorpusSummaryResponse
+  | BookmarkSyncStalenessResponse
   | DeleteThirdPartyCorpusBySourceResponse
 
 export function parseImportThirdPartyCorpusPayload(value: unknown) {

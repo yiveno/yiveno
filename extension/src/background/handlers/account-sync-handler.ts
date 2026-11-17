@@ -25,6 +25,7 @@ import type {
   SyncReplaceWithRemoteResponse,
   RestoreLatestSyncBackupResponse
 } from '@/core/messaging/account-sync-messages'
+import { readBrowserOnline } from '@/infrastructure/browser/browser-online'
 import { putMcpReadOnlyRemote } from '@/infrastructure/mcp/mcp-api-client'
 import {
   clearAuthValidationTimestamp,
@@ -931,6 +932,10 @@ export async function handleIncrementalMemorySync(): Promise<RunIncrementalMemor
 async function runIncrementalMemorySync(): Promise<RunIncrementalMemorySyncResponse> {
   const startedAt = flowStart('MemorySync', 'INCREMENTAL_SYNC')
   try {
+    if (!readBrowserOnline()) {
+      return { ok: false, errorCode: 'SYNC_INCREMENTAL_OFFLINE' }
+    }
+
     const [binding, syncPrefs, profile, token] = await Promise.all([
       getAccountBinding(),
       getSyncPrefs(),

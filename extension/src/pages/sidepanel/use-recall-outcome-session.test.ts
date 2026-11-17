@@ -15,6 +15,8 @@ describe('handleOutcomeExitFound', () => {
     const onComplete = vi.fn()
     const { outcomeSession, handleOutcomeExitFound } = useRecallOutcomeSession({
       bookmarkFuel: ref('ingest_off'),
+      bookmarkCount: ref(null),
+      unsyncedBookmarkCount: ref(null),
       recallTelemetry: {
         recordUserConfirmed: vi.fn()
       } as never,
@@ -40,6 +42,8 @@ describe('handleOutcomeExitFound', () => {
     const onComplete = vi.fn()
     const { outcomeSession, handleOutcomeExitFound } = useRecallOutcomeSession({
       bookmarkFuel: ref('ingest_off'),
+      bookmarkCount: ref(null),
+      unsyncedBookmarkCount: ref(null),
       recallTelemetry: {
         recordUserConfirmed: vi.fn()
       } as never,

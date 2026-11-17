@@ -104,7 +104,10 @@ import {
 import type { RecallPipelineTiming } from '@/core/recall/recall-telemetry'
 import { completeComposerNarrowExamplePolishWithLlm } from '@/core/recall/understand/complete-composer-narrow-example-polish'
 import { completeRecallFramingNlgWithLlm } from '@/core/recall/understand/complete-recall-framing-nlg'
-import { understandRecallClue } from '@/core/recall/understand/understand-recall-clue'
+import {
+  understandRecallClue,
+  type UnderstandRecallClueResult
+} from '@/core/recall/understand/understand-recall-clue'
 import { requestWorkerEmbeddings } from '@/infrastructure/ai/embed-api-client'
 import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
 import { memoryNotesMetaRepository } from '@/infrastructure/indexeddb/memory-notes-meta-repository'
@@ -119,6 +122,28 @@ function attachDialogMeta(
     clue: meta.clue,
     parsed: meta.parsed,
     effectiveClue: meta.effectiveClue
+  }
+}
+
+/** 透传理解引擎 + 失败归因字段（不改判定；仅附加元数据）。 */
+function pickUnderstandAttributionFields(
+  understood: UnderstandRecallClueResult
+): Pick<
+  RecallResult,
+  | 'understandSource'
+  | 'understandMode'
+  | 'understandErrorKind'
+  | 'understandQuota'
+  | 'clueTruncated'
+> {
+  return {
+    understandSource: understood.source,
+    understandMode: understood.mode,
+    clueTruncated: understood.clueTruncated,
+    ...(understood.understandErrorKind
+      ? { understandErrorKind: understood.understandErrorKind }
+      : {}),
+    ...(understood.understandQuota ? { understandQuota: understood.understandQuota } : {})
   }
 }
 
@@ -915,8 +940,7 @@ export class HybridRecallBackend implements RecallBackend {
         clue: normalizedClue,
         emptyKind: 'rejected_noise',
         pipelineTiming,
-        understandSource: understood.source,
-        clueTruncated: understood.clueTruncated,
+        ...pickUnderstandAttributionFields(understood),
         visibleProgressStages: [...visibleProgressStages]
       }
     }
@@ -947,8 +971,7 @@ export class HybridRecallBackend implements RecallBackend {
         emptyKind: 'chitchat',
         assistantReply: understood.parsed.assistantReply.trim(),
         pipelineTiming,
-        understandSource: understood.source,
-        clueTruncated: understood.clueTruncated,
+        ...pickUnderstandAttributionFields(understood),
         visibleProgressStages: [...visibleProgressStages]
       }
     }
@@ -1008,8 +1031,7 @@ export class HybridRecallBackend implements RecallBackend {
         emptyKind: 'missing_topic',
         relatedGuess: null,
         pipelineTiming,
-        understandSource: understood.source,
-        clueTruncated: understood.clueTruncated,
+        ...pickUnderstandAttributionFields(understood),
         visibleProgressStages: [...visibleProgressStages]
       }
     }
@@ -1239,8 +1261,7 @@ export class HybridRecallBackend implements RecallBackend {
       return {
         ...withMeta,
         pipelineTiming,
-        understandSource: understood.source,
-        clueTruncated: understood.clueTruncated
+        ...pickUnderstandAttributionFields(understood)
       }
     }
 
@@ -1303,8 +1324,7 @@ export class HybridRecallBackend implements RecallBackend {
     return {
       ...withFollowUp,
       pipelineTiming,
-      understandSource: understood.source,
-      clueTruncated: understood.clueTruncated,
+      ...pickUnderstandAttributionFields(understood),
       visibleProgressStages: [...visibleProgressStages]
     }
   }

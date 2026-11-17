@@ -2,6 +2,7 @@ import type { AccountSyncErrorCode } from '@/core/messaging/account-sync-message
 import type { CommandsErrorCode } from '@/core/messaging/commands-messages'
 import type { ImportErrorCode } from '@/core/messaging/import-messages'
 import type { LocalMemoryImportErrorCode } from '@/core/memory/local-memory-import-error'
+import type { ChromeBookmarkImportErrorCode } from '@/core/memory/chrome-bookmark-import-state'
 import type { ThirdPartyCorpusImportErrorCode } from '@/core/memory/third-party-corpus-import-state'
 import type { RecallErrorCode } from '@/core/messaging/recall-messages'
 import type { SettingsErrorCode } from '@/core/messaging/settings-messages'
@@ -12,7 +13,8 @@ const SETTINGS_ERROR_MESSAGE_KEYS: Record<SettingsErrorCode, MessageKey> = {
   SETTINGS_READ_FAILED: 'settings_error_load',
   SETTINGS_UPDATE_FAILED: 'settings_error_update',
   AI_HOSTED_QUOTA_AUTH_REQUIRED: 'settings_ai_quota_sign_in',
-  AI_HOSTED_QUOTA_FAILED: 'settings_ai_quota_failed'
+  AI_HOSTED_QUOTA_FAILED: 'settings_ai_quota_failed_server',
+  AI_HOSTED_QUOTA_OFFLINE: 'settings_ai_quota_failed_offline'
 }
 
 const ACCOUNT_SYNC_ERROR_MESSAGE_KEYS: Record<AccountSyncErrorCode, MessageKey> = {
@@ -34,6 +36,7 @@ const ACCOUNT_SYNC_ERROR_MESSAGE_KEYS: Record<AccountSyncErrorCode, MessageKey> 
   SYNC_MERGE_FAILED: 'settings_error_sync_merge',
   SYNC_RESTORE_BACKUP_FAILED: 'settings_error_sync_restore_backup',
   SYNC_INCREMENTAL_FAILED: 'settings_error_sync_incremental',
+  SYNC_INCREMENTAL_OFFLINE: 'settings_error_sync_incremental_offline',
   PRIVACY_NOTICE_REQUIRED: 'settings_error_privacy_notice_required',
   PRIVACY_ACK_FAILED: 'settings_error_privacy_ack',
   CLOUD_DELETE_FAILED: 'settings_error_cloud_delete',
@@ -52,6 +55,13 @@ const ACCOUNT_SYNC_ERROR_MESSAGE_KEYS: Record<AccountSyncErrorCode, MessageKey> 
 const RECALL_ERROR_MESSAGE_KEYS: Record<RecallErrorCode, MessageKey> = {
   RECALL_FAILED: 'popup_recall_failed'
 }
+
+const CHROME_BOOKMARK_IMPORT_ERROR_MESSAGE_KEYS: Record<ChromeBookmarkImportErrorCode, MessageKey> =
+  {
+    BOOKMARK_IMPORT_FAILED: 'popup_import_failed_fallback',
+    BOOKMARK_IMPORT_READ_FAILED: 'error_bookmark_import_read_failed',
+    BOOKMARK_IMPORT_WRITE_FAILED: 'error_bookmark_import_write_failed'
+  }
 
 const IMPORT_ERROR_MESSAGE_KEYS: Record<ImportErrorCode, MessageKey> = {
   IMPORT_STATUS_READ_FAILED: 'error_import_status_read_failed',
@@ -96,6 +106,11 @@ export function tAccountSyncError(errorCode: AccountSyncErrorCode): string {
 /** Recall errorCode → 用户文案。 */
 export function tRecallError(errorCode: RecallErrorCode): string {
   return t(RECALL_ERROR_MESSAGE_KEYS[errorCode])
+}
+
+/** Chrome 书签导入 errorCode → 用户文案。 */
+export function tChromeBookmarkImportError(errorCode: ChromeBookmarkImportErrorCode): string {
+  return t(CHROME_BOOKMARK_IMPORT_ERROR_MESSAGE_KEYS[errorCode])
 }
 
 /** Import / 书签树 API errorCode → 用户文案。 */

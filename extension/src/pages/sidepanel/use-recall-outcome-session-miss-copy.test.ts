@@ -28,6 +28,8 @@ describe('resolveMissAssistantCopy · rejected_noise', () => {
   it('空库 + rejected_noise：专属文案，不回显 clue', () => {
     const { resolveMissAssistantCopy } = useRecallOutcomeSession({
       bookmarkFuel: ref('ingest_off'),
+      bookmarkCount: ref(null),
+      unsyncedBookmarkCount: ref(null),
       recallTelemetry: {
         recordUserConfirmed: vi.fn()
       } as never,
@@ -69,6 +71,8 @@ describe('resolveMissAssistantCopy · chitchat', () => {
   it('chitchat + 有 assistantReply → 返回该回复原文，不回显 clue', () => {
     const { resolveMissAssistantCopy } = useRecallOutcomeSession({
       bookmarkFuel: ref('ingest_off'),
+      bookmarkCount: ref(null),
+      unsyncedBookmarkCount: ref(null),
       recallTelemetry: {
         recordUserConfirmed: vi.fn()
       } as never,
@@ -93,6 +97,8 @@ describe('resolveMissAssistantCopy · chitchat', () => {
   it('chitchat + 无 assistantReply → 回落通用 miss 文案（不 crash）', () => {
     const { resolveMissAssistantCopy } = useRecallOutcomeSession({
       bookmarkFuel: ref('ingest_off'),
+      bookmarkCount: ref(null),
+      unsyncedBookmarkCount: ref(null),
       recallTelemetry: {
         recordUserConfirmed: vi.fn()
       } as never,
@@ -135,6 +141,8 @@ describe('resolveMissAssistantCopy · missing_topic', () => {
   it('missing_topic + 库 ready → 专属文案，不回显 clue', () => {
     const { resolveMissAssistantCopy } = useRecallOutcomeSession({
       bookmarkFuel: ref('ingest_off'),
+      bookmarkCount: ref(null),
+      unsyncedBookmarkCount: ref(null),
       recallTelemetry: {
         recordUserConfirmed: vi.fn()
       } as never,
@@ -159,6 +167,8 @@ describe('resolveMissAssistantCopy · missing_topic', () => {
   it('missing_topic + usedRulesFallback → 仍走专属文案（不回落 after_simpler_pass）', () => {
     const { resolveMissAssistantCopy } = useRecallOutcomeSession({
       bookmarkFuel: ref('ingest_off'),
+      bookmarkCount: ref(null),
+      unsyncedBookmarkCount: ref(null),
       recallTelemetry: {
         recordUserConfirmed: vi.fn()
       } as never,
@@ -179,6 +189,8 @@ describe('resolveMissAssistantCopy · missing_topic', () => {
   it('missing_topic + 空库 → 仍走专属文案（不走空库文案）', () => {
     const { resolveMissAssistantCopy } = useRecallOutcomeSession({
       bookmarkFuel: ref('ingest_off'),
+      bookmarkCount: ref(null),
+      unsyncedBookmarkCount: ref(null),
       recallTelemetry: {
         recordUserConfirmed: vi.fn()
       } as never,

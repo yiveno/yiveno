@@ -7,7 +7,8 @@ export const SettingsErrorCodeSchema = z.enum([
   'SETTINGS_READ_FAILED', // 读取设置失败
   'SETTINGS_UPDATE_FAILED', // 更新设置失败
   'AI_HOSTED_QUOTA_AUTH_REQUIRED', // 读托管配额须登录
-  'AI_HOSTED_QUOTA_FAILED' // 读托管配额失败
+  'AI_HOSTED_QUOTA_FAILED', // 读托管配额失败（服务端 / 未知）
+  'AI_HOSTED_QUOTA_OFFLINE' // 读托管配额时浏览器离线
 ])
 
 export type SettingsErrorCode = z.infer<typeof SettingsErrorCodeSchema>

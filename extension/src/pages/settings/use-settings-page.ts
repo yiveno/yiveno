@@ -58,6 +58,7 @@ import {
   tThirdPartyImportError
 } from '@/infrastructure/i18n/background-error'
 import { t } from '@/infrastructure/i18n/t'
+import { readBrowserOnline } from '@/infrastructure/browser/browser-online'
 import { getWebsiteBaseUrl } from '@/infrastructure/browser/website-page'
 import { useAppToast } from '@/infrastructure/ui/use-app-toast'
 import {
@@ -610,7 +611,9 @@ export function useSettingsPage() {
         String(response.quota.dailyLimit)
       ])
     } catch {
-      hostedQuotaError.value = t('settings_ai_quota_failed')
+      hostedQuotaError.value = readBrowserOnline()
+        ? t('settings_ai_quota_failed')
+        : t('settings_ai_quota_failed_offline')
     } finally {
       hostedQuotaLoading.value = false
     }
@@ -1338,7 +1341,11 @@ export function useSettingsPage() {
       )
       await refreshSyncStatus()
     } catch {
-      showToastError(t('settings_error_sync_incremental'))
+      showToastError(
+        readBrowserOnline()
+          ? t('settings_error_sync_incremental')
+          : t('settings_error_sync_incremental_offline')
+      )
     } finally {
       runningIncrementalSync.value = false
     }

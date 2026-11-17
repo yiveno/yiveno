@@ -1022,7 +1022,7 @@
     }
   },
   "popup_recall_failed": {
-    "message": "Recall 失败。请稍后再试。"
+    "message": "Recall 服务暂时出错，请稍后再试。"
   },
   "popup_navigate_tab_failed": {
     "message": "打不开那个页面。请再试一次。"
@@ -2953,5 +2953,98 @@
   },
   "settings_reimport_chrome_bookmarks_done": {
     "message": "重新导入完成。"
+  },
+  "sidepanel_recall_deeper_reading_quota_monthly": {
+    "message": "本月线索帮助次数已用完（$USED$/$LIMIT$），已改用本机规则理解。下月恢复。",
+    "placeholders": {
+      "USED": {
+        "content": "$1"
+      },
+      "LIMIT": {
+        "content": "$2"
+      }
+    }
+  },
+  "sidepanel_recall_deeper_reading_quota_monthly_no_numbers": {
+    "message": "本月线索帮助次数已用完，已改用本机规则理解。下月恢复。"
+  },
+  "sidepanel_recall_deeper_reading_quota_daily": {
+    "message": "今日线索帮助次数已用完（$DAILY_USED$/$DAILY_LIMIT$），已改用本机规则理解。明天恢复。",
+    "placeholders": {
+      "DAILY_USED": {
+        "content": "$1"
+      },
+      "DAILY_LIMIT": {
+        "content": "$2"
+      }
+    }
+  },
+  "sidepanel_recall_deeper_reading_quota_daily_no_numbers": {
+    "message": "今日线索帮助次数已用完，已改用本机规则理解。明天恢复。"
+  },
+  "sidepanel_recall_deeper_reading_timeout": {
+    "message": "云端理解超时（12 秒无响应），已改用本机规则理解。"
+  },
+  "sidepanel_recall_deeper_reading_network": {
+    "message": "连不上云端理解服务，已改用本机规则理解。请检查网络后重试。"
+  },
+  "sidepanel_recall_deeper_reading_auth": {
+    "message": "登录已过期，云端理解不可用，已改用本机规则理解。请重新登录。"
+  },
+  "sidepanel_recall_deeper_reading_provider_error": {
+    "message": "云端理解服务暂时出错，已改用本机规则理解。稍后再试。"
+  },
+  "sidepanel_recall_deeper_reading_not_configured": {
+    "message": "云端理解服务未配置，已改用本机规则理解。"
+  },
+  "sidepanel_recall_deeper_reading_empty_response": {
+    "message": "云端理解返回了空结果，已改用本机规则理解。"
+  },
+  "popup_miss_bookmarks_not_imported_prefix": {
+    "message": "另外：你的 Chrome 书签还没导入，书签类内容现在找不到。请先"
+  },
+  "popup_miss_bookmarks_not_imported_suffix": {
+    "message": "，再回来找。"
+  },
+  "popup_miss_bookmarks_importing": {
+    "message": "另外：你的 Chrome 书签还在导入中，导完后再试一次。"
+  },
+  "popup_recall_failed_offline": {
+    "message": "网络已断开，Recall 需要联网。请联网后再试。"
+  },
+  "error_bookmark_import_read_failed": {
+    "message": "读不了 Chrome 书签。请确认书签权限后重试导入。"
+  },
+  "error_bookmark_import_write_failed": {
+    "message": "导入的书签写不进 Yiveno 存储。请腾出一些空间后重试。"
+  },
+  "settings_error_sync_incremental_offline": {
+    "message": "网络已断开，无法做增量同步。请联网后再试。"
+  },
+  "settings_ai_quota_failed_offline": {
+    "message": "网络已断开，无法加载线索帮助配额。请联网后再试。"
+  },
+  "settings_ai_quota_failed_server": {
+    "message": "无法从服务器加载线索帮助配额。请稍后再试。"
+  },
+  "popup_miss_degraded_ai_off_prefix": {
+    "message": "另外：AI 辅助已关闭，当前只用规则理解，也不做语义匹配。请先"
+  },
+  "popup_miss_degraded_ai_off_link": {
+    "message": "打开设置，开启 AI 辅助"
+  },
+  "popup_miss_degraded_not_signed_in_prefix": {
+    "message": "另外：你还没登录，当前只用规则理解，也不做语义匹配。请先"
+  },
+  "popup_miss_degraded_not_signed_in_link": {
+    "message": "打开设置，登录账号"
+  },
+  "popup_miss_bookmarks_stale_prefix": {
+    "message": "另外：Chrome 里还有 $COUNT$ 条新书签没同步进来（同步已关闭），你要找的可能在其中。请先",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
   }
 }

@@ -6,9 +6,10 @@
 import { ref, type Ref } from 'vue'
 
 import type { RecallMatch } from '@/core/recall/recall-result'
+import type { RecallDegradedReason } from '@/core/recall/resolve-recall-degraded-reason'
 import {
   getRecallShellNoMatchCopy,
-  resolveRecallShellBookmarkFuel,
+  type RecallShellBookmarkFuel,
   type RecallShellLibraryState,
   type RecallShellTextSegment
 } from '@/core/recall/recall-shell-empty-copy'
@@ -23,7 +24,17 @@ import type { createRecallTelemetryRecorder } from '@/infrastructure/analytics/r
 
 export type UseRecallOutcomeSessionOptions = {
   /** 空库 miss 文案燃料态（来自冷启动簇）。 */
-  bookmarkFuel: Ref<ReturnType<typeof resolveRecallShellBookmarkFuel>>
+  bookmarkFuel: Ref<RecallShellBookmarkFuel>
+  /**
+   * 本机书签语料条数（`listMemoryItems({ type: 'bookmark' })` 的 total）。
+   * `null` = 尚未探测或探测失败（不追加书签相关 miss 段）。
+   */
+  bookmarkCount: Ref<number | null>
+  /**
+   * 同步关时未进库书签数。
+   * `null` = 未知（不追加 stale 段）。
+   */
+  unsyncedBookmarkCount: Ref<number | null>
   /** 与 Outcome 同寿的遥测录制器。 */
   recallTelemetry: ReturnType<typeof createRecallTelemetryRecorder>
   /**
@@ -58,15 +69,27 @@ export type UseRecallOutcomeSessionResult = {
     usedRulesFallback?: boolean
     /** intent=chitchat 时的模型原文回复；有则直接渲染 */
     assistantReply?: string
+    /** 本轮 in-Recall 降级原因（调用方用 resolveRecallDegradedReason 算好） */
+    degradedReason?: RecallDegradedReason
   }) => { text: string; textSegments?: RecallShellTextSegment[] }
   resetOutcomeSession: () => void
+}
+
+function joinMissSegments(segments: RecallShellTextSegment[]): string {
+  return segments.map(segment => segment.text).join('')
 }
 
 /** Side Panel Outcome 会话：出口条 / dwell / flush / miss 文案。 */
 export function useRecallOutcomeSession(
   options: UseRecallOutcomeSessionOptions
 ): UseRecallOutcomeSessionResult {
-  const { bookmarkFuel, recallTelemetry, onCompleteNewFindSession } = options
+  const {
+    bookmarkFuel,
+    bookmarkCount,
+    unsyncedBookmarkCount,
+    recallTelemetry,
+    onCompleteNewFindSession
+  } = options
 
   /** §7.2 Outcome 会话信号（与 dialog 同寿；关 Panel / New find 结算后重置）。 */
   const outcomeSession = ref<RecallOutcomeSessionState>(createRecallOutcomeSessionState())
@@ -188,6 +211,8 @@ export function useRecallOutcomeSession(
     usedRulesFallback?: boolean
     /** intent=chitchat 时的模型原文回复；有则直接渲染 */
     assistantReply?: string
+    /** 本轮 in-Recall 降级原因（调用方算好；专属 emptyKind / 空库不叠） */
+    degradedReason?: RecallDegradedReason
   }): { text: string; textSegments?: RecallShellTextSegment[] } {
     if (input.emptyKind === 'rejected_noise') {
       return { text: t('popup_reply_miss_rejected_noise') }
@@ -219,11 +244,84 @@ export function useRecallOutcomeSession(
         ...(copy.bodySegments ? { textSegments: titleAndBody } : {})
       }
     }
-    return {
-      text: input.usedRulesFallback
-        ? t('popup_reply_miss_after_simpler_pass')
-        : t('popup_reply_miss')
+
+    const baseText = input.usedRulesFallback
+      ? t('popup_reply_miss_after_simpler_pass')
+      : t('popup_reply_miss')
+
+    // 通用 miss 追加段（仅 library ready）；降级 + 未导入/stale
+    if (input.library !== 'ready') {
+      return { text: baseText }
     }
+
+    const segments: RecallShellTextSegment[] = [{ kind: 'text', text: `${baseText} ` }]
+    let appended = false
+
+    if (input.degradedReason === 'ai_off') {
+      segments.push(
+        { kind: 'text', text: t('popup_miss_degraded_ai_off_prefix') },
+        { kind: 'open_ai_settings', text: t('popup_miss_degraded_ai_off_link') },
+        // 后缀与书签未导入段共用（同「再回来找」口径）
+        { kind: 'text', text: t('popup_miss_bookmarks_not_imported_suffix') }
+      )
+      appended = true
+    } else if (input.degradedReason === 'not_signed_in') {
+      segments.push(
+        { kind: 'text', text: t('popup_miss_degraded_not_signed_in_prefix') },
+        { kind: 'open_account_settings', text: t('popup_miss_degraded_not_signed_in_link') },
+        { kind: 'text', text: t('popup_miss_bookmarks_not_imported_suffix') }
+      )
+      appended = true
+    }
+
+    // 库非空但书签语料为 0：追加导入/导入中说明（触发案例：youtube 找不到未导入书签）
+    if (bookmarkCount.value === 0) {
+      if (bookmarkFuel.value === 'ingest_off') {
+        if (appended) {
+          segments.push({ kind: 'text', text: ' ' })
+        }
+        segments.push(
+          { kind: 'text', text: t('popup_miss_bookmarks_not_imported_prefix') },
+          {
+            kind: 'open_bookmark_ingest_settings',
+            text: t('popup_empty_import_bookmarks')
+          },
+          { kind: 'text', text: t('popup_miss_bookmarks_not_imported_suffix') }
+        )
+        appended = true
+      } else if (bookmarkFuel.value === 'importing') {
+        if (appended) {
+          segments.push({ kind: 'text', text: ' ' })
+        }
+        segments.push({ kind: 'text', text: t('popup_miss_bookmarks_importing') })
+        appended = true
+      }
+      // ingest_on_empty：已开导入但本机无 Chrome 书签 → 不追加（「还没导入」是假话）
+    }
+
+    const unsynced = unsyncedBookmarkCount.value
+    if (unsynced != null && unsynced > 0) {
+      if (appended) {
+        segments.push({ kind: 'text', text: ' ' })
+      }
+      segments.push(
+        {
+          kind: 'text',
+          text: t('popup_miss_bookmarks_stale_prefix', [String(unsynced)])
+        },
+        {
+          kind: 'open_bookmark_ingest_settings',
+          text: t('popup_empty_import_bookmarks')
+        },
+        { kind: 'text', text: t('popup_miss_bookmarks_not_imported_suffix') }
+      )
+      appended = true
+    }
+
+    if (!appended) {
+      return { text: baseText }
+    }
+    return { text: joinMissSegments(segments), textSegments: segments }
   }
 
   function resetOutcomeSession(): void {

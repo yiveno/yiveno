@@ -52,11 +52,13 @@ import type {
   GetChromeBookmarkImportStatusMessage,
   GetColdStartStatusMessage,
   GetBookmarkLibraryTreeMessage,
+  GetBookmarkSyncStalenessMessage,
   GetThirdPartyCorpusSummaryMessage,
   ImportLocalMemoryMessage,
   ImportLocalMemoryResponse,
   ImportThirdPartyCorpusMessage,
   ImportThirdPartyCorpusResponse,
+  BookmarkSyncStalenessResponse,
   ThirdPartyCorpusSummaryResponse
 } from '@/core/messaging/import-messages'
 import type {
@@ -297,6 +299,15 @@ export async function fetchThirdPartyCorpusSummary(): Promise<ThirdPartyCorpusSu
     type: 'GET_THIRD_PARTY_CORPUS_SUMMARY'
   }
   return sendBackgroundMessage<ThirdPartyCorpusSummaryResponse>(message)
+}
+
+/** 同步关时未进库的 Chrome 书签叶子数（只读；面板打开探针一次）。 */
+export async function fetchBookmarkSyncStaleness(): Promise<BookmarkSyncStalenessResponse> {
+  const message: GetBookmarkSyncStalenessMessage = {
+    scope: 'background',
+    type: 'GET_BOOKMARK_SYNC_STALENESS'
+  }
+  return sendBackgroundMessage<BookmarkSyncStalenessResponse>(message)
 }
 
 /** 按来源硬删全部第三方导入副本。 */

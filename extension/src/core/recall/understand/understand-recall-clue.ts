@@ -9,6 +9,12 @@ import { buildFilterClueFromParsed } from '@/core/recall/orchestrate-keyword-rec
 import { parseRecallClue } from '@/core/recall/parse-recall-clue'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import { classifyRulesClueIntent } from '@/core/recall/understand/classify-rules-clue-intent'
+import {
+  resolveClueLlmFailureKindFromError,
+  resolveClueLlmFailureQuotaFromError,
+  type ClueLlmFailureKind,
+  type ClueLlmFailureQuotaSnapshot
+} from '@/core/recall/understand/clue-llm-failure-kind'
 import { type ClueFlowTrace, noopClueFlowTrace } from '@/core/recall/understand/clue-flow-trace'
 import {
   parseRecallClueWithLlm,
@@ -24,6 +30,8 @@ import {
   selectClueUnderstandingMode,
   type ClueUnderstandingMode
 } from '@/core/recall/understand/select-clue-understanding-mode'
+
+export type { ClueUnderstandingMode }
 
 /**
  * 线索输入上限（R9 · H10）：字符数。
@@ -75,6 +83,13 @@ export interface UnderstandRecallClueResult {
   parsed: ParsedRecallClue
   /** Filter 检索词面（`buildFilterClueFromParsed`；供调试；检索主输入仍是 parsed）。 */
   filterClue: string
+  /**
+   * LLM 失败降级时的原因（仅 `source === 'rules_fallback'`）。
+   * `rules` / `llm` 成功时不出现。
+   */
+  understandErrorKind?: ClueLlmFailureKind
+  /** 配额类失败时的快照（仅 quota_* kind）。 */
+  understandQuota?: ClueLlmFailureQuotaSnapshot
 }
 
 export interface UnderstandRecallClueOptions {
@@ -248,10 +263,14 @@ export async function understandRecallClue(
       skipRulesIntent
     )
     const filterClue = buildFilterClueFromParsed(parsed)
+    const understandErrorKind = resolveClueLlmFailureKindFromError(error)
+    const understandQuota = resolveClueLlmFailureQuotaFromError(error)
     trace('warn', '理解层：LLM 失败，降级规则', {
       source: 'rules_fallback',
       error: error instanceof Error ? error.message : String(error),
       errorName: error instanceof Error ? error.name : typeof error,
+      understandErrorKind,
+      ...(understandQuota ? { understandQuota } : {}),
       filterClue,
       rulesIntent,
       rulesIntentSignal,
@@ -264,7 +283,9 @@ export async function understandRecallClue(
       source: 'rules_fallback',
       clueTruncated,
       parsed,
-      filterClue
+      filterClue,
+      understandErrorKind,
+      ...(understandQuota ? { understandQuota } : {})
     }
   }
 }

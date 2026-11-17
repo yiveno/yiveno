@@ -1,9 +1,14 @@
 /**
  * Recall 线索理解：经 Cloudflare Worker 代理 DeepSeek（扩展不持有 API Key）。
+ * 失败抛 `HostedCompleteError`（带 kind），与 hosted client 对称；UI 只读 kind。
  */
 
 import { resolveClientMaxTokensForTask } from '@/core/recall/understand/ai-chat-task-kind'
 import type { LlmChatCompleteOptions } from '@/core/recall/understand/ai-chat-task-kind'
+import {
+  classifyClueLlmFailure,
+  HostedCompleteError
+} from '@/core/recall/understand/clue-llm-failure-kind'
 import { CLUE_LLM_COMPLETE_TIMEOUT_MS } from '@/core/recall/understand/clue-llm-timeout'
 import {
   parseLlmChatUsage,
@@ -80,29 +85,52 @@ async function requestClueCompleteDetailed(
         timeoutMs: CLUE_LLM_COMPLETE_TIMEOUT_MS,
         outcome: 'timeout'
       })
-    } else {
-      logger.error('ClueLlm', '代理请求网络失败', {
-        url,
-        taskKind,
-        durationMs,
-        outcome: 'network_error',
-        error: error instanceof Error ? error.message : String(error)
-      })
+      throw new HostedCompleteError('timeout', 'clue_complete_timeout')
     }
-    throw error
+    logger.error('ClueLlm', '代理请求网络失败', {
+      url,
+      taskKind,
+      durationMs,
+      outcome: 'network_error',
+      error: error instanceof Error ? error.message : String(error)
+    })
+    // 网络失败显式标 network；不经 classify 猜（无 status 时 classify 只给 unknown）
+    throw new HostedCompleteError(
+      'network',
+      error instanceof Error ? error.message : 'clue_complete_network'
+    )
   }
 
   const payload = (await response.json().catch(() => ({}))) as ClueCompleteApiResponse
   if (!response.ok) {
+    const workerError = typeof payload.error === 'string' ? payload.error : undefined
+    // clue 端点配额按 IP 按天（429 + quota_exceeded）；分类器同字段会误判为 quota_monthly。
+    // 无 dailyUsed/dailyLimit 快照字段 → 不带 quota，UI 走 quota_daily_no_numbers。
+    let kind
+    if (response.status === 429 && workerError === 'quota_exceeded') {
+      kind = 'quota_daily' as const
+    } else {
+      kind = classifyClueLlmFailure({
+        status: response.status,
+        ...(workerError !== undefined ? { workerError } : {})
+      })
+    }
     logger.warn('ClueLlm', '代理请求非 2xx', {
       url,
       taskKind,
       status: response.status,
       durationMs: Date.now() - startedAt,
       error: payload.error ?? response.statusText,
-      outcome: response.status === 429 ? 'quota' : 'http_error'
+      outcome: response.status === 429 ? 'quota' : 'http_error',
+      failureKind: kind
     })
-    throw new Error(payload.error || response.statusText || 'clue_complete_failed')
+    throw new HostedCompleteError(
+      kind,
+      workerError || response.statusText || 'clue_complete_failed',
+      {
+        status: response.status
+      }
+    )
   }
   const text = payload.text?.trim()
   if (!text) {
@@ -114,7 +142,9 @@ async function requestClueCompleteDetailed(
       model: payload.model,
       keys: Object.keys(payload)
     })
-    throw new Error('clue_complete_empty')
+    throw new HostedCompleteError('empty_response', 'clue_complete_empty', {
+      status: response.status
+    })
   }
 
   const usage = parseLlmChatUsage(payload)

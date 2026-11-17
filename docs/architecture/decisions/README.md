@@ -30,6 +30,8 @@
 | [ADR-022](./ADR-022-dreaming-derived-stores.md)           | Dreaming 派生表（独立 IDB store；L3；v1 本地-only）                   | 已接受   |
 | [ADR-023](./ADR-023-chrome-bookmark-delete-tombstone.md)  | 书签删除墓碑（用户删除优先于 Chrome 权威同步）                        | 已接受   |
 | [ADR-024](./ADR-024-chrome-bookmark-ingest-vs-sync.md)    | 书签一次性导入与持续同步拆分                                          | 已接受   |
+| [ADR-025](./ADR-025-third-party-data-section.md)          | 第三方数据独立分区与按来源管理                                        | 已接受   |
+| [ADR-026](./ADR-026-honest-attribution.md)                | 用户可见失败/空态/降级诚实归因                                        | 已接受   |
 
 **新增 ADR：** 先写本文目录 + 文件，再在产品文档 / `CURRENT.md` 引用。
 

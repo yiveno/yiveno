@@ -1,9 +1,15 @@
 /**
  * 托管线索理解：经 `/api/ai/hosted/complete`（Bearer；Free/Pro 月+日配额）。
+ * 失败抛 `HostedCompleteError`（带 kind），供 UI 诚实归因；日志文案保持原口径。
  */
 
 import { resolveClientMaxTokensForTask } from '@/core/recall/understand/ai-chat-task-kind'
 import { CLUE_LLM_COMPLETE_TIMEOUT_MS } from '@/core/recall/understand/clue-llm-timeout'
+import {
+  classifyClueLlmFailure,
+  HostedCompleteError,
+  type ClueLlmFailureQuotaSnapshot
+} from '@/core/recall/understand/clue-llm-failure-kind'
 import {
   parseLlmChatUsage,
   type LlmChatDetailedResult
@@ -24,11 +30,18 @@ export interface HostedCompleteApiResponse {
   tokensUsed?: number
   promptTokens?: number
   completionTokens?: number
+  /** 成功路径偶发嵌套配额；429 失败路径 Worker 用顶层 used/limit/daily*。 */
   quota?: {
     used?: number
     limit?: number
     remaining?: number
+    dailyUsed?: number
+    dailyLimit?: number
   }
+  used?: number
+  limit?: number
+  dailyUsed?: number
+  dailyLimit?: number
 }
 
 function resolveApiBaseUrl(): string {
@@ -39,6 +52,25 @@ function resolveApiBaseUrl(): string {
   return 'http://localhost:8787'
 }
 
+/** 从 Worker 429 响应抽取配额快照；缺字段则不返回（UI 退回无数字文案）。 */
+function readQuotaSnapshot(
+  payload: HostedCompleteApiResponse
+): ClueLlmFailureQuotaSnapshot | undefined {
+  const used = payload.used ?? payload.quota?.used
+  const limit = payload.limit ?? payload.quota?.limit
+  const dailyUsed = payload.dailyUsed ?? payload.quota?.dailyUsed
+  const dailyLimit = payload.dailyLimit ?? payload.quota?.dailyLimit
+  if (
+    typeof used !== 'number' ||
+    typeof limit !== 'number' ||
+    typeof dailyUsed !== 'number' ||
+    typeof dailyLimit !== 'number'
+  ) {
+    return undefined
+  }
+  return { used, limit, dailyUsed, dailyLimit }
+}
+
 async function requestHostedCompleteDetailed(
   url: string,
   accessTokenProvider: () => Promise<string | null>,
@@ -47,7 +79,7 @@ async function requestHostedCompleteDetailed(
 ): Promise<LlmChatDetailedResult> {
   const accessToken = await accessTokenProvider()
   if (!accessToken) {
-    throw new Error('hosted_missing_auth')
+    throw new HostedCompleteError('auth', 'hosted_missing_auth')
   }
 
   const taskKind = options.taskKind
@@ -89,29 +121,48 @@ async function requestHostedCompleteDetailed(
         timeoutMs: CLUE_LLM_COMPLETE_TIMEOUT_MS,
         outcome: 'timeout'
       })
-    } else {
-      logger.error('ClueLlm', '托管请求网络失败', {
-        url,
-        taskKind,
-        durationMs,
-        outcome: 'network_error',
-        error: error instanceof Error ? error.message : String(error)
-      })
+      throw new HostedCompleteError('timeout', 'hosted_complete_timeout')
     }
-    throw error
+    logger.error('ClueLlm', '托管请求网络失败', {
+      url,
+      taskKind,
+      durationMs,
+      outcome: 'network_error',
+      error: error instanceof Error ? error.message : String(error)
+    })
+    // 网络失败显式标 network；不经 classify 猜（无 status 时 classify 只给 unknown）
+    throw new HostedCompleteError(
+      'network',
+      error instanceof Error ? error.message : 'hosted_complete_network'
+    )
   }
 
   const payload = (await response.json().catch(() => ({}))) as HostedCompleteApiResponse
   if (!response.ok) {
+    const workerError = typeof payload.error === 'string' ? payload.error : undefined
+    const kind = classifyClueLlmFailure({
+      status: response.status,
+      ...(workerError !== undefined ? { workerError } : {})
+    })
     logger.warn('ClueLlm', '托管请求非 2xx', {
       url,
       taskKind,
       status: response.status,
       durationMs: Date.now() - startedAt,
       error: payload.error ?? response.statusText,
-      outcome: response.status === 429 ? 'quota' : 'http_error'
+      outcome: response.status === 429 ? 'quota' : 'http_error',
+      failureKind: kind
     })
-    throw new Error(payload.error || response.statusText || 'hosted_complete_failed')
+    const quota =
+      kind === 'quota_monthly' || kind === 'quota_daily' ? readQuotaSnapshot(payload) : undefined
+    throw new HostedCompleteError(
+      kind,
+      workerError || response.statusText || 'hosted_complete_failed',
+      {
+        status: response.status,
+        ...(quota ? { quota } : {})
+      }
+    )
   }
   const text = payload.text?.trim()
   if (!text) {
@@ -122,7 +173,9 @@ async function requestHostedCompleteDetailed(
       durationMs: Date.now() - startedAt,
       model: payload.model
     })
-    throw new Error('hosted_complete_empty')
+    throw new HostedCompleteError('empty_response', 'hosted_complete_empty', {
+      status: response.status
+    })
   }
 
   const usage = parseLlmChatUsage(payload)

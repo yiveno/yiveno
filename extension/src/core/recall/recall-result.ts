@@ -7,7 +7,14 @@ import type { TopicDescriptorSchema } from '@/core/recall/parse-recall-clue-type
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import type { RecallFramingFacts } from '@/core/recall/recall-framing-facts'
 import type { RecallPipelineTiming } from '@/core/recall/recall-telemetry'
-import type { ClueUnderstandingSource } from '@/core/recall/understand/understand-recall-clue'
+import type {
+  ClueLlmFailureKind,
+  ClueLlmFailureQuotaSnapshot
+} from '@/core/recall/understand/clue-llm-failure-kind'
+import type {
+  ClueUnderstandingMode,
+  ClueUnderstandingSource
+} from '@/core/recall/understand/understand-recall-clue'
 import type { RecallVisibleProgressStage } from '@/core/recall/visible-progress'
 
 /**
@@ -169,6 +176,18 @@ export interface RecallResult {
    * `rules_fallback` 时 Side Panel 可展示 deeper-reading 轻提示。
    */
   understandSource?: ClueUnderstandingSource
+  /**
+   * 理解模式（lexical / semantic 等；与 source 不同：mode=选型，source=实际引擎）。
+   * Side Panel in-Recall 降级段：lexical 轮次不叠 AI 关/未登录提示。
+   */
+  understandMode?: ClueUnderstandingMode
+  /**
+   * LLM 失败降级原因（仅 `understandSource === 'rules_fallback'`）。
+   * Side Panel deeper-reading tip 按 kind 分流。
+   */
+  understandErrorKind?: ClueLlmFailureKind
+  /** 配额类失败快照（仅 quota_* kind）。 */
+  understandQuota?: ClueLlmFailureQuotaSnapshot
   /**
    * 本轮线索是否因超长被截断（R9）。
    * true 时理解层只用了原文前 `MAX_RECALL_CLUE_LENGTH` 字符；
