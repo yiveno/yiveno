@@ -1,0 +1,8 @@
+# Cloudflare Pages (yiveno-website) · 控制台构建配置
+# 控制台构建只在仓库根查找 wrangler.toml；website/wrangler.toml 仅供本地 `wrangler pages deploy` 使用，不要动它。
+# 构建产物在 website/dist/，输出目录须写仓库根相对路径 website/dist（写 dist 会报 Output directory "dist" not found）。
+name = "yiveno-website"
+compatibility_date = "2026-07-31"
+pages_build_output_dir = "website/dist"
+[vars]
+GEO_CN_MARKET_LIVE = "true"

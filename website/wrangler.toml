@@ -1,4 +1,5 @@
 # Cloudflare Pages（yiveno-website）· 与 `bunx wrangler pages deploy dist` 同项目名
+# 注意：控制台构建的输出目录由仓库根 wrangler.toml 控制，本文件仅供本地 wrangler pages deploy 使用。
 name = "yiveno-website"
 compatibility_date = "2026-07-31"
 pages_build_output_dir = "dist"
