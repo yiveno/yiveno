@@ -3,6 +3,7 @@
  * 订阅/支付行不删，按法律可保留且不再可登录关联。
  */
 
+import { deleteAllDualThreadSketchesForUser } from './dual-thread-sketches'
 import { deleteAllCloudMemoryForOwner } from './memory-items'
 import { createSupabaseClient, hasSupabase } from './supabase'
 import type { Env } from '../types/env'
@@ -11,11 +12,12 @@ import { error as logErrorMessage, info } from '../utils/logger'
 export type DeleteAccountResult = {
   deletedItems: number
   deletedBackups: number
+  deletedDualThreadSketches: number
 }
 
 /**
- * 删除该用户云端 Memory/backups，并注销 Auth 用户。
- * memory_items / backups 对 auth.users 为 CASCADE；仍先显式删除以便返回计数。
+ * 删除该用户云端 Memory/backups / 暗线草图，并注销 Auth 用户。
+ * memory_items / backups / dual_thread_sketches 对 auth.users 为 CASCADE；仍先显式删除以便返回计数。
  */
 export async function deleteAccountForOwner(
   env: Env,
@@ -26,6 +28,7 @@ export async function deleteAccountForOwner(
   }
 
   const memory = await deleteAllCloudMemoryForOwner(env, userId)
+  const sketches = await deleteAllDualThreadSketchesForUser(env, userId)
 
   const supabase = createSupabaseClient(env)
   if (!supabase) {
@@ -44,7 +47,11 @@ export async function deleteAccountForOwner(
   info('[Account] 已删除账号', {
     userId,
     deletedItems: memory.deletedItems,
-    deletedBackups: memory.deletedBackups
+    deletedBackups: memory.deletedBackups,
+    deletedDualThreadSketches: sketches.deletedCount
   })
-  return memory
+  return {
+    ...memory,
+    deletedDualThreadSketches: sketches.deletedCount
+  }
 }

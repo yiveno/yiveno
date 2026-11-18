@@ -851,7 +851,7 @@ Yiveno 同时承载两条相互促进、**不互相替代**的线程：
 
 **设计五问：** 方案 / 新能力**必过**；纯修回归可 **N/A**。出口枚举：双赢 / 仅明线（仍算产品成功）/ 仅暗线（默认离线+研究记录，不损体验推用户）。全文五问与四边界见权威正文。
 
-**暗线基建口子（脚手架 · 非已懂人类）：** 失败归因枚举 / 适应旋钮登记 / 匿名汇总草图 / PR·doc:check 门禁 —— 见 [`暗线基建-失败归因与受控适应.md`](../engineering/暗线基建-失败归因与受控适应.md)。**禁止**把脚手架写成已上线自动进化。
+**暗线基建口子（脚手架 · 非已懂人类）：** 失败归因枚举 / 适应旋钮登记 / 匿名汇总草图 / PR·doc:check 门禁 —— 见 [`暗线基建-失败归因与受控适应.md`](../engineering/暗线基建-失败归因与受控适应.md)。**暗线同意开关（ADR-027 · 已接线）：** Settings `privacy`「本机适应」— `dualThreadLocalLearningEnabled`（本机分析+学习记录展示）与 `dualThreadContributeAggregatesEnabled`（匿名计数汇总上传，须本地学习开且登录；每日最多一次）；默认均 OFF；**暂不**自动调整检索行为；录制器无门禁。**禁止**把脚手架写成已上线自动进化。
 
 **钉死边界（摘要）：** 不为研究损体验；不把用户当未告知实验对象；行为数据 ≠ 人脑规律；非每项双重 KPI；命题先验与隐私不可被暗线话术替代。
 
@@ -1184,30 +1184,33 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 - `scope` 必须为 `'background'`（`BACKGROUND_MESSAGE_SCOPE`）。
 - **已登记 type（禁止擅自增删拼写）：**
 
-| type                                    | 用途                                                                                          |
-| --------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `PING`                                  | 探活                                                                                          |
-| `GET_LOCAL_IDENTITY`                    | 本地身份 + ownerId                                                                            |
-| `CAPTURE_BOOKMARK`                      | 写入书签记忆（sync/内部）                                                                     |
-| `CAPTURE_TEXT_EXCERPT`                  | 写入摘录                                                                                      |
-| `LIST_MEMORY_ITEMS`                     | 列表                                                                                          |
-| `GET_MEMORY_ITEM`                       | 按 id 读取单条 MemoryItem                                                                     |
-| `DELETE_MEMORY_ITEM`                    | 软删 MemoryItem（摘录 / 书签；书签仅删 Yiveno 记忆，不动 Chrome，墓碑防同步重导入 · ADR-023） |
-| `UPDATE_MEMORY_NOTE`                    | 更新 `clues.note`（书签/摘录事后补注）                                                        |
-| `RECALL_WITH_CLUE`                      | 线索找（`context.pageContextMode` / `currentTabDomain` 见 §7.1）                              |
-| `GET_RECALL_PAGE_CONTEXT`               | composer 页上下文：读当前浏览页域名（展示用）                                                 |
-| `RESOLVE_CLUE_URL_DISPLAY`              | composer URL 芯片：本机库/打开中 tab 标题（不联网）                                           |
-| `GET_CHROME_BOOKMARK_IMPORT_STATUS`     | 导入进度                                                                                      |
-| `ENSURE_CHROME_BOOKMARKS_IMPORTED`      | Settings 重新导入 Chrome 书签（ensure；须已授权 ingest）                                      |
-| `GET_COLD_START_STATUS`                 | 冷启动三阶段门禁进度（import / rules / AI）                                                   |
-| `GENERATE_GETTING_STARTED_CLUE_SAMPLES` | Getting Started 示意 clue（LLM×4 / 模板回退）                                                 |
-| `GET_BOOKMARK_LIBRARY_TREE`             | 记忆库书签目录树（只读）                                                                      |
-| `GET_EXTENSION_COMMANDS`                | 读取命令与快捷键绑定                                                                          |
-| `OPEN_CHROME_SHORTCUTS_PAGE`            | 打开 Chrome 快捷键设置页                                                                      |
-| `OPEN_RECALL_SHELL`                     | 打开/聚焦 Recall Side Panel                                                                   |
-| `NAVIGATE_ACTIVE_TAB`                   | 结果卡打开：默认当前活动标签；可新开                                                          |
-| `GET_USER_SETTINGS`                     | 读取用户设置                                                                                  |
-| `UPDATE_USER_SETTINGS`                  | 更新用户设置                                                                                  |
+| type                                      | 用途                                                                                          |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `PING`                                    | 探活                                                                                          |
+| `GET_LOCAL_IDENTITY`                      | 本地身份 + ownerId                                                                            |
+| `CAPTURE_BOOKMARK`                        | 写入书签记忆（sync/内部）                                                                     |
+| `CAPTURE_TEXT_EXCERPT`                    | 写入摘录                                                                                      |
+| `LIST_MEMORY_ITEMS`                       | 列表                                                                                          |
+| `GET_MEMORY_ITEM`                         | 按 id 读取单条 MemoryItem                                                                     |
+| `DELETE_MEMORY_ITEM`                      | 软删 MemoryItem（摘录 / 书签；书签仅删 Yiveno 记忆，不动 Chrome，墓碑防同步重导入 · ADR-023） |
+| `UPDATE_MEMORY_NOTE`                      | 更新 `clues.note`（书签/摘录事后补注）                                                        |
+| `RECALL_WITH_CLUE`                        | 线索找（`context.pageContextMode` / `currentTabDomain` 见 §7.1）                              |
+| `GET_RECALL_PAGE_CONTEXT`                 | composer 页上下文：读当前浏览页域名（展示用）                                                 |
+| `RESOLVE_CLUE_URL_DISPLAY`                | composer URL 芯片：本机库/打开中 tab 标题（不联网）                                           |
+| `GET_CHROME_BOOKMARK_IMPORT_STATUS`       | 导入进度                                                                                      |
+| `ENSURE_CHROME_BOOKMARKS_IMPORTED`        | Settings 重新导入 Chrome 书签（ensure；须已授权 ingest）                                      |
+| `GET_COLD_START_STATUS`                   | 冷启动三阶段门禁进度（import / rules / AI）                                                   |
+| `GENERATE_GETTING_STARTED_CLUE_SAMPLES`   | Getting Started 示意 clue（LLM×4 / 模板回退）                                                 |
+| `GET_BOOKMARK_LIBRARY_TREE`               | 记忆库书签目录树（只读）                                                                      |
+| `GET_EXTENSION_COMMANDS`                  | 读取命令与快捷键绑定                                                                          |
+| `OPEN_CHROME_SHORTCUTS_PAGE`              | 打开 Chrome 快捷键设置页                                                                      |
+| `OPEN_RECALL_SHELL`                       | 打开/聚焦 Recall Side Panel                                                                   |
+| `NAVIGATE_ACTIVE_TAB`                     | 结果卡打开：默认当前活动标签；可新开                                                          |
+| `GET_USER_SETTINGS`                       | 读取用户设置                                                                                  |
+| `UPDATE_USER_SETTINGS`                    | 更新用户设置                                                                                  |
+| `GET_DUAL_THREAD_LEARNING_STATUS`         | 暗线：学习记录草图 + 贡献状态（Settings privacy；ADR-027）                                    |
+| `DELETE_DUAL_THREAD_CONTRIBUTED_SKETCHES` | 暗线：删除已贡献匿名汇总                                                                      |
+| `MAYBE_UPLOAD_DUAL_THREAD_SKETCH`         | 暗线：按门禁尝试上传匿名汇总（启动 / Side Panel；失败静默）                                   |
 
 新增能力：先改 `extension/src/core/messaging/*` + handler，再改 UI。
 

@@ -22,6 +22,7 @@ import { dodoWebhookRouter } from './routes/webhooks-dodo'
 import { accountRouter } from './routes/account'
 import { memorySyncRouter } from './routes/memory-sync'
 import { mcpRouter } from './routes/mcp'
+import { researchRouter } from './routes/research'
 import { websiteRouter } from './routes/website'
 
 /** 创建 Hono 应用实例 */
@@ -41,7 +42,7 @@ export function createApp() {
         }
         return null
       },
-      allowMethods: ['GET', 'POST', 'PUT', 'OPTIONS'],
+      allowMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       allowHeaders: ['content-type', 'authorization'],
       credentials: true,
       maxAge: 86400
@@ -80,6 +81,9 @@ export function createApp() {
 
   // Phase C：Cloud Memory 同步（Supabase Auth Bearer）
   app.route('/api/memory/sync', memorySyncRouter)
+
+  // 暗线研究：匿名汇总草图接收端（Supabase Auth Bearer · 无 Pro 门禁）
+  app.route('/api/research', researchRouter)
 
   // 账户：删除账号等（Supabase Auth Bearer）
   app.route('/api/account', accountRouter)

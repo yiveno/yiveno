@@ -14,6 +14,8 @@ describe('user-settings', () => {
     expect(DEFAULT_USER_SETTINGS.chromeBookmarkIngestEnabled).toBe(false)
     expect(DEFAULT_USER_SETTINGS.chromeBookmarkSyncEnabled).toBe(false)
     expect(DEFAULT_USER_SETTINGS.recallOutcomePairSoftAdjustEnabled).toBe(true)
+    expect(DEFAULT_USER_SETTINGS.dualThreadLocalLearningEnabled).toBe(false)
+    expect(DEFAULT_USER_SETTINGS.dualThreadContributeAggregatesEnabled).toBe(false)
   })
 
   it('mergeUserSettings 合并局部更新', () => {
@@ -25,6 +27,8 @@ describe('user-settings', () => {
       chromeBookmarkSyncEnabled: false,
       mcpReadOnlyEnabled: false,
       recallOutcomePairSoftAdjustEnabled: true,
+      dualThreadLocalLearningEnabled: false,
+      dualThreadContributeAggregatesEnabled: false,
       uiLocalePreference: 'system'
     })
   })
@@ -38,10 +42,17 @@ describe('user-settings', () => {
       chromeBookmarkSyncEnabled: false,
       mcpReadOnlyEnabled: false,
       recallOutcomePairSoftAdjustEnabled: true,
+      dualThreadLocalLearningEnabled: false,
+      dualThreadContributeAggregatesEnabled: false,
       uiLocalePreference: 'system'
     })
     expect(parseUserSettings({ selectionToolbarEnabled: 'yes' })).toEqual(DEFAULT_USER_SETTINGS)
     expect(parseUserSettings({ uiLocalePreference: 'zh_CN' }).uiLocalePreference).toBe('zh_CN')
+  })
+
+  it('暗线同意 flag 缺省为 false', () => {
+    expect(parseUserSettings({}).dualThreadLocalLearningEnabled).toBe(false)
+    expect(parseUserSettings({}).dualThreadContributeAggregatesEnabled).toBe(false)
   })
 
   it('存量缺 sync 且 ingest 开 → sync 真', () => {

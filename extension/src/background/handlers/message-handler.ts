@@ -80,6 +80,11 @@ import {
   handleGetUserSettings,
   handleUpdateUserSettings
 } from '@/background/handlers/settings-handler'
+import {
+  handleDeleteDualThreadContributedSketches,
+  handleGetDualThreadLearningStatus,
+  handleMaybeUploadDualThreadSketch
+} from '@/background/handlers/dual-thread-handler'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
 import {
@@ -240,6 +245,12 @@ async function dispatchBackgroundMessage(
       return handleUpdateUserSettings(message.payload)
     case 'GET_AI_HOSTED_QUOTA':
       return handleGetAiHostedQuota()
+    case 'GET_DUAL_THREAD_LEARNING_STATUS':
+      return handleGetDualThreadLearningStatus()
+    case 'DELETE_DUAL_THREAD_CONTRIBUTED_SKETCHES':
+      return handleDeleteDualThreadContributedSketches()
+    case 'MAYBE_UPLOAD_DUAL_THREAD_SKETCH':
+      return handleMaybeUploadDualThreadSketch()
     case 'DEV_SEED_RECALL_PROBE':
     case 'DEV_PURGE_PROBE_NOISE':
     case 'DEV_PROBE_CLEANUP':

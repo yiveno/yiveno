@@ -32,6 +32,8 @@ import {
   fetchUserSettings,
   openChromeShortcutsPage,
   fetchAiHostedQuota,
+  fetchDualThreadLearningStatus,
+  deleteDualThreadContributedSketches,
   restoreLatestSyncBackup,
   setSyncEnabled,
   setMcpReadOnly,
@@ -42,6 +44,14 @@ import {
   fetchThirdPartyCorpusSummary,
   deleteThirdPartyCorpusBySource
 } from '@/infrastructure/messaging/background-client'
+import type { DualThreadAggregateSketch } from '@/core/recall/dual-thread/dual-thread-aggregate'
+import {
+  hasAnyFailureStageCounts,
+  resolveDualThreadContributeBlockReason,
+  resolveDualThreadContributionDisplay,
+  type DualThreadContributeBlockReason,
+  type DualThreadSketchUploadState
+} from '@/core/recall/dual-thread/dual-thread-consent'
 import {
   ThirdPartyCorpusImportErrorCodeSchema,
   type ThirdPartyCorpusImportState
@@ -103,6 +113,17 @@ export function useSettingsPage() {
   const linkStatusSweepEnabled = ref(true)
   const mcpReadOnlyEnabled = ref(false)
   const recallOutcomePairSoftAdjustEnabled = ref(true)
+  const dualThreadLocalLearningEnabled = ref(false)
+  const dualThreadContributeAggregatesEnabled = ref(false)
+  const dualThreadLearningSketch = ref<DualThreadAggregateSketch | null>(null)
+  const dualThreadUploadState = ref<DualThreadSketchUploadState>({
+    lastSuccessAtIso: null,
+    lastAttemptFailed: false
+  })
+  const dualThreadLearningLoading = ref(false)
+  const dualThreadLearningError = ref('')
+  const dualThreadDeleteWorking = ref(false)
+  const dualThreadDeleteError = ref('')
   const uiLocalePreference = ref<UiLocalePreference>('system')
   const settingsState = ref<SettingsLoadState>('loading')
   const settingsError = ref('')
@@ -115,6 +136,8 @@ export function useSettingsPage() {
   const savingLinkStatusSweep = ref(false)
   const savingMcpReadOnly = ref(false)
   const savingRecallOutcomeSoftAdjust = ref(false)
+  const savingDualThreadLocalLearning = ref(false)
+  const savingDualThreadContribute = ref(false)
   const savingUiLocale = ref(false)
   const hostedQuotaLoading = ref(false)
   const hostedQuotaText = ref('')
@@ -276,6 +299,9 @@ export function useSettingsPage() {
       if (section === 'third_party') {
         void loadThirdPartyCorpusSummary()
       }
+      if (section === 'privacy') {
+        void loadDualThreadLearningStatus()
+      }
     },
     { immediate: true }
   )
@@ -397,8 +423,14 @@ export function useSettingsPage() {
       mcpReadOnlyEnabled.value = response.settings.mcpReadOnlyEnabled
       recallOutcomePairSoftAdjustEnabled.value =
         response.settings.recallOutcomePairSoftAdjustEnabled
+      dualThreadLocalLearningEnabled.value = response.settings.dualThreadLocalLearningEnabled
+      dualThreadContributeAggregatesEnabled.value =
+        response.settings.dualThreadContributeAggregatesEnabled
       uiLocalePreference.value = response.settings.uiLocalePreference
       settingsState.value = 'ready'
+      if (activeSection.value === 'privacy') {
+        void loadDualThreadLearningStatus()
+      }
     } catch {
       settingsState.value = 'error'
       settingsError.value = t('settings_error_load')
@@ -561,6 +593,150 @@ export function useSettingsPage() {
       savingMcpReadOnly.value = false
     }
   }
+
+  /** privacy 分区：现场计算学习记录草图 + 贡献状态。 */
+  async function loadDualThreadLearningStatus() {
+    dualThreadLearningLoading.value = true
+    dualThreadLearningError.value = ''
+    try {
+      const response = await fetchDualThreadLearningStatus()
+      if (!response.ok) {
+        dualThreadLearningError.value = t('settings_dual_thread_status_failed')
+        dualThreadLearningSketch.value = null
+        return
+      }
+      dualThreadLocalLearningEnabled.value = response.localLearningEnabled
+      dualThreadContributeAggregatesEnabled.value = response.contributeEnabled
+      dualThreadLearningSketch.value = response.sketch
+      dualThreadUploadState.value = response.uploadState
+      if (response.signedIn !== signedIn.value) {
+        signedIn.value = response.signedIn
+      }
+    } catch {
+      dualThreadLearningError.value = t('settings_dual_thread_status_failed')
+      dualThreadLearningSketch.value = null
+    } finally {
+      dualThreadLearningLoading.value = false
+    }
+  }
+
+  /** 暗线·本地学习开关。 */
+  async function handleDualThreadLocalLearningToggle(nextValue: boolean) {
+    savingDualThreadLocalLearning.value = true
+    settingsError.value = ''
+    try {
+      const response = await updateUserSettings({ dualThreadLocalLearningEnabled: nextValue })
+      if (!response.ok) {
+        settingsError.value = tSettingsError(response.errorCode)
+        return
+      }
+      dualThreadLocalLearningEnabled.value = response.settings.dualThreadLocalLearningEnabled
+      if (!nextValue) {
+        dualThreadLearningSketch.value = null
+      } else {
+        await loadDualThreadLearningStatus()
+      }
+    } catch {
+      settingsError.value = t('settings_error_update')
+    } finally {
+      savingDualThreadLocalLearning.value = false
+    }
+  }
+
+  /** 暗线·贡献匿名汇总开关。 */
+  async function handleDualThreadContributeToggle(nextValue: boolean) {
+    savingDualThreadContribute.value = true
+    settingsError.value = ''
+    try {
+      const response = await updateUserSettings({
+        dualThreadContributeAggregatesEnabled: nextValue
+      })
+      if (!response.ok) {
+        settingsError.value = tSettingsError(response.errorCode)
+        return
+      }
+      dualThreadContributeAggregatesEnabled.value =
+        response.settings.dualThreadContributeAggregatesEnabled
+      if (nextValue) {
+        await loadDualThreadLearningStatus()
+      }
+    } catch {
+      settingsError.value = t('settings_error_update')
+    } finally {
+      savingDualThreadContribute.value = false
+    }
+  }
+
+  /** 删除已贡献的匿名汇总。 */
+  async function handleDeleteDualThreadContributedSketches() {
+    dualThreadDeleteWorking.value = true
+    dualThreadDeleteError.value = ''
+    try {
+      const response = await deleteDualThreadContributedSketches()
+      if (!response.ok) {
+        dualThreadDeleteError.value =
+          response.errorCode === 'DUAL_THREAD_DELETE_AUTH_REQUIRED'
+            ? t('settings_dual_thread_delete_auth_required')
+            : t('settings_dual_thread_delete_failed')
+        return
+      }
+      dualThreadUploadState.value = {
+        lastSuccessAtIso: null,
+        lastAttemptFailed: false
+      }
+      showToastSuccess(t('settings_dual_thread_delete_contributed_done'))
+    } catch {
+      dualThreadDeleteError.value = t('settings_dual_thread_delete_failed')
+    } finally {
+      dualThreadDeleteWorking.value = false
+    }
+  }
+
+  const dualThreadContributeBlockReason = computed<DualThreadContributeBlockReason>(() =>
+    resolveDualThreadContributeBlockReason({
+      localLearningEnabled: dualThreadLocalLearningEnabled.value,
+      signedIn: signedIn.value
+    })
+  )
+
+  const dualThreadContributeDisabled = computed(
+    () =>
+      dualThreadContributeBlockReason.value != null ||
+      savingDualThreadContribute.value ||
+      settingsState.value !== 'ready'
+  )
+
+  const dualThreadContributeGateText = computed(() => {
+    const reason = dualThreadContributeBlockReason.value
+    if (reason === 'need_local_learning') return t('settings_dual_thread_need_local_learning')
+    if (reason === 'need_sign_in') return t('settings_dual_thread_need_sign_in')
+    return ''
+  })
+
+  const dualThreadLastContributionText = computed(() => {
+    const display = resolveDualThreadContributionDisplay({
+      state: dualThreadUploadState.value,
+      now: new Date()
+    })
+    switch (display.kind) {
+      case 'failed':
+        return t('settings_dual_thread_last_contrib_failed')
+      case 'never':
+        return t('settings_dual_thread_last_contrib_never')
+      case 'today':
+        return t('settings_dual_thread_last_contrib_today')
+      case 'yesterday':
+        return t('settings_dual_thread_last_contrib_yesterday')
+      case 'date':
+        return t('settings_dual_thread_last_contrib_date', [display.isoDate])
+    }
+  })
+
+  const dualThreadLearningHasAttributions = computed(() => {
+    const sketch = dualThreadLearningSketch.value
+    if (!sketch) return false
+    return hasAnyFailureStageCounts(sketch.failureStageCounts)
+  })
 
   /**
    * 界面语言偏好；写入 storage 后整页 reload，使所有入口重新 `initUiLocaleFromSettings`。
@@ -1548,6 +1724,9 @@ export function useSettingsPage() {
     handleExportLocalMemory,
     handleExportOrphans,
     handleMcpReadOnlyToggle,
+    handleDualThreadLocalLearningToggle,
+    handleDualThreadContributeToggle,
+    handleDeleteDualThreadContributedSketches,
     handleOpenShortcutsPage,
     handlePickPocketImportFile,
     handlePickRaindropImportFile,
@@ -1574,6 +1753,17 @@ export function useSettingsPage() {
     loadUserSettings,
     mcpReadOnlyEnabled,
     recallOutcomePairSoftAdjustEnabled,
+    dualThreadLocalLearningEnabled,
+    dualThreadContributeAggregatesEnabled,
+    dualThreadLearningSketch,
+    dualThreadLearningLoading,
+    dualThreadLearningError,
+    dualThreadDeleteWorking,
+    dualThreadDeleteError,
+    dualThreadContributeDisabled,
+    dualThreadContributeGateText,
+    dualThreadLastContributionText,
+    dualThreadLearningHasAttributions,
     openDeleteAccountDialog,
     openShortcutsError,
     openSignOutDialog,
@@ -1605,6 +1795,8 @@ export function useSettingsPage() {
     reimportChromeBookmarksDone,
     savingMcpReadOnly,
     savingRecallOutcomeSoftAdjust,
+    savingDualThreadLocalLearning,
+    savingDualThreadContribute,
     savingSelectionToolbar,
     savingSync,
     savingUiLocale,

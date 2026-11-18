@@ -1236,6 +1236,106 @@
   "settings_data_outcome_soft_adjust_hint": {
     "message": "开启时，Yiveno 可用本机 Outcome 对软升/降权候选。关闭只暂停这一步——记忆库与找东西仍可用；对缓冲保留直至你清除。"
   },
+  "settings_dual_thread_local_learning_toggle": {
+    "message": "本地学习"
+  },
+  "settings_dual_thread_local_learning_intro_1": {
+    "message": "记录一直都在：Yiveno 本来就在本机记录找东西的过程（找没找到、用了多久），500 条滚动，只存本机，从不上传。这个开关管的是分析，不是记录。"
+  },
+  "settings_dual_thread_local_learning_intro_2": {
+    "message": "开了之后：Yiveno 会在本机分析这些记录，汇总成“找没找到、哪一步卡住、用了多久”，在下方展示给你看。"
+  },
+  "settings_dual_thread_local_learning_intro_3": {
+    "message": "不上传：分析全在本机完成，什么都不离开你的浏览器。"
+  },
+  "settings_dual_thread_local_learning_intro_4": {
+    "message": "当前边界：汇总只用于展示与研究记录，暂不自动调整检索行为；关了就停止分析，记录本身不受影响。"
+  },
+  "settings_dual_thread_contribute_toggle": {
+    "message": "贡献匿名汇总"
+  },
+  "settings_dual_thread_contribute_intro_1": {
+    "message": "分享什么：只分享汇总后的计数（找没找到的次数、失败环节分布、耗时分位），不含你的线索原文、条目内容、标题、链接。"
+  },
+  "settings_dual_thread_contribute_intro_2": {
+    "message": "给谁：只发给 Yiveno 的研究接收端，用于研究人类记忆与提取机制；不出售，不给第三方。"
+  },
+  "settings_dual_thread_contribute_intro_3": {
+    "message": "频率：每天最多一次；关了就不再发。"
+  },
+  "settings_dual_thread_contribute_intro_4": {
+    "message": "已分享的：关开关只停新上传，已发出的汇总还在服务器上；用下方“删除已贡献的汇总”可以全部删除。"
+  },
+  "settings_dual_thread_need_local_learning": {
+    "message": "请先开启本地学习，才能贡献汇总。"
+  },
+  "settings_dual_thread_need_sign_in": {
+    "message": "登录后才能贡献汇总。"
+  },
+  "settings_dual_thread_last_contrib_today": {
+    "message": "上次贡献：今天"
+  },
+  "settings_dual_thread_last_contrib_yesterday": {
+    "message": "上次贡献：昨天"
+  },
+  "settings_dual_thread_last_contrib_date": {
+    "message": "上次贡献：$1",
+    "placeholders": {
+      "DATE": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_dual_thread_last_contrib_never": {
+    "message": "上次贡献：从未"
+  },
+  "settings_dual_thread_last_contrib_failed": {
+    "message": "上次贡献：上次分享失败。"
+  },
+  "settings_dual_thread_delete_contributed": {
+    "message": "删除已贡献的汇总"
+  },
+  "settings_dual_thread_delete_contributed_action": {
+    "message": "删除已贡献的汇总"
+  },
+  "settings_dual_thread_delete_contributed_done": {
+    "message": "已删除贡献的汇总"
+  },
+  "settings_dual_thread_delete_auth_required": {
+    "message": "登录后才能删除已贡献的汇总。"
+  },
+  "settings_dual_thread_delete_failed": {
+    "message": "删除已贡献的汇总失败。"
+  },
+  "settings_dual_thread_status_failed": {
+    "message": "无法加载学习记录。"
+  },
+  "settings_dual_thread_learning_heading": {
+    "message": "学习记录"
+  },
+  "settings_dual_thread_learning_event_count": {
+    "message": "样本量（事件数）：$1",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_dual_thread_learning_outcomes": {
+    "message": "结果分布"
+  },
+  "settings_dual_thread_learning_confirms": {
+    "message": "确认分布"
+  },
+  "settings_dual_thread_learning_timing": {
+    "message": "耗时（毫秒）"
+  },
+  "settings_dual_thread_learning_failures": {
+    "message": "失败环节分布"
+  },
+  "settings_dual_thread_learning_no_attributions": {
+    "message": "暂无归因记录"
+  },
   "settings_data_clear_recall_adaptation": {
     "message": "清除本机 Recall 适应信号"
   },

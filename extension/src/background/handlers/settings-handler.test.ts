@@ -50,6 +50,8 @@ const fullSettings = {
   chromeBookmarkSyncEnabled: false,
   mcpReadOnlyEnabled: false,
   recallOutcomePairSoftAdjustEnabled: true,
+  dualThreadLocalLearningEnabled: false,
+  dualThreadContributeAggregatesEnabled: false,
   uiLocalePreference: 'system' as const
 }
 

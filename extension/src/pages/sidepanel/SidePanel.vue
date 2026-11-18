@@ -36,6 +36,7 @@ import {
   cancelRecall,
   fetchAuthState,
   getRecallPageContext,
+  maybeUploadDualThreadSketch,
   probeWebsiteSignedIn,
   recallWithClue
 } from '@/infrastructure/messaging/background-client'
@@ -1334,6 +1335,10 @@ onMounted(() => {
   })
   void nextTick(() => {
     clueInputRef.value?.focus()
+  })
+  // 暗线贡献：Side Panel 打开时按门禁检查一次（失败静默）
+  void maybeUploadDualThreadSketch().catch(() => {
+    // 忽略：上传失败不挡找东西
   })
   void loadOnboardingState()
   void loadGreetingIdentity()

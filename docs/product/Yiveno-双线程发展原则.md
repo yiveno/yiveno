@@ -1,6 +1,6 @@
 ---
 created: 2026-10-09T18:53:46+08:00
-updated: 2026-10-10T15:56:35+08:00
+updated: 2026-11-17T23:55:53+08:00
 author: agent:cursor
 scope: Yiveno 明线/暗线双线程发展原则（长期权威）
 status: normative-principles
@@ -148,15 +148,16 @@ Yiveno 同时承载两条**相互促进、但不互相替代**的发展线程：
 
 权威工程说明：[`暗线基建-失败归因与受控适应.md`](../engineering/暗线基建-失败归因与受控适应.md)
 
-| 口子             | 代码                                                                        | 状态                              |
-| ---------------- | --------------------------------------------------------------------------- | --------------------------------- |
-| 失败环节归因枚举 | `extension/src/core/recall/dual-thread/recall-failure-attribution.ts`       | schema + 填卡；**不**自动判因     |
-| 已知金标漏召检测 | 同文件 `assessKnownGoldRecallGap`                                           | 区分未存/候选漏/首屏外；须自备 id |
-| 受控适应旋钮登记 | `…/recall-adaptation-config.ts`                                             | 索引 + 回退/评估门；**不**自改值  |
-| 匿名汇总草图     | `…/dual-thread-aggregate.ts` + DEV `yiveno.exportDualThreadAggregateSketch` | 观测口子                          |
-| 门禁             | Task Brief 五问 · PR 模板 · `doc:check` 存在性                              | 已接                              |
+| 口子             | 代码                                                                        | 状态                                                                   |
+| ---------------- | --------------------------------------------------------------------------- | ---------------------------------------------------------------------- |
+| 失败环节归因枚举 | `extension/src/core/recall/dual-thread/recall-failure-attribution.ts`       | schema + 填卡；**不**自动判因                                          |
+| 已知金标漏召检测 | 同文件 `assessKnownGoldRecallGap`                                           | 区分未存/候选漏/首屏外；须自备 id                                      |
+| 受控适应旋钮登记 | `…/recall-adaptation-config.ts`                                             | 索引 + 回退/评估门；**不**自改值                                       |
+| 匿名汇总草图     | `…/dual-thread-aggregate.ts` + DEV `yiveno.exportDualThreadAggregateSketch` | 观测口子                                                               |
+| 暗线同意开关     | Settings flag + 学习记录展示 + `/api/research/sketch`（ADR-027）            | **已接线**：汇总计算 + 展示 + 分享接收端；**不**自动判因、**不**自改值 |
+| 门禁             | Task Brief 五问 · PR 模板 · `doc:check` 存在性                              | 已接                                                                   |
 
-**未做：** 在线自动适应、「已懂人类」、强制上传私人全文。
+**未做：** 在线自动适应、「已懂人类」、强制上传私人全文；旋钮自动调整（下一批）。
 
 ---
 

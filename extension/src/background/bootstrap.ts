@@ -1,4 +1,5 @@
 import { scheduleColdStartPipeline } from '@/application/onboarding/cold-start-pipeline-service'
+import { maybeUploadDualThreadSketch } from '@/application/recall/dual-thread-learning-service'
 import { refreshClueLlmCompleterFromDevConfig } from '@/application/recall/refresh-clue-llm-completer'
 import {
   bindBackgroundBootstrapRunner,
@@ -95,6 +96,10 @@ async function bootstrapBackground(): Promise<void> {
 
     // import → rules → AI 尽力；存量已导入则迁移 ready 并静默补缺口
     scheduleColdStartPipeline()
+    // 暗线贡献：启动时按门禁尝试上传一次（失败静默，不挡启动）
+    void maybeUploadDualThreadSketch().catch(error => {
+      logger.warn('Background', '暗线汇总上传检查失败（静默）', error)
+    })
     void logChromeStorageQuotaSample('bootstrap')
     flowOk('Background', 'bootstrap 完成', startedAt)
   } catch (error) {

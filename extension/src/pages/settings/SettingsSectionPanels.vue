@@ -50,6 +50,9 @@ const {
   handleExportLocalMemory,
   handleExportOrphans,
   handleMcpReadOnlyToggle,
+  handleDualThreadLocalLearningToggle,
+  handleDualThreadContributeToggle,
+  handleDeleteDualThreadContributedSketches,
   handleOpenShortcutsPage,
   handlePickPocketImportFile,
   handlePickRaindropImportFile,
@@ -68,6 +71,17 @@ const {
   hostedQuotaText,
   mcpReadOnlyEnabled,
   recallOutcomePairSoftAdjustEnabled,
+  dualThreadLocalLearningEnabled,
+  dualThreadContributeAggregatesEnabled,
+  dualThreadLearningSketch,
+  dualThreadLearningLoading,
+  dualThreadLearningError,
+  dualThreadDeleteWorking,
+  dualThreadDeleteError,
+  dualThreadContributeDisabled,
+  dualThreadContributeGateText,
+  dualThreadLastContributionText,
+  dualThreadLearningHasAttributions,
   openDeleteAccountDialog,
   openShortcutsError,
   openSignOutDialog,
@@ -89,6 +103,7 @@ const {
   reimportChromeBookmarksDone,
   savingMcpReadOnly,
   savingRecallOutcomeSoftAdjust,
+  savingDualThreadLocalLearning,
   savingSelectionToolbar,
   savingSync,
   savingUiLocale,
@@ -608,6 +623,163 @@ const {
                 @update:model-value="handleRecallOutcomePairSoftAdjustToggle"
               />
             </div>
+
+            <!-- 暗线·本地学习（ADR-027） -->
+            <div class="settings-dual-thread-block">
+              <div class="settings-toggle">
+                <div class="settings-toggle-copy">
+                  <span class="settings-toggle-title">{{
+                    t('settings_dual_thread_local_learning_toggle')
+                  }}</span>
+                </div>
+                <AppSwitch
+                  :model-value="dualThreadLocalLearningEnabled"
+                  :disabled="
+                    savingDualThreadLocalLearning || dataWorking || settingsState !== 'ready'
+                  "
+                  :aria-label="t('settings_dual_thread_local_learning_toggle')"
+                  @update:model-value="handleDualThreadLocalLearningToggle"
+                />
+              </div>
+              <ul
+                class="settings-dual-thread-intro"
+                :aria-label="t('settings_dual_thread_local_learning_toggle')"
+              >
+                <li>{{ t('settings_dual_thread_local_learning_intro_1') }}</li>
+                <li>{{ t('settings_dual_thread_local_learning_intro_2') }}</li>
+                <li>{{ t('settings_dual_thread_local_learning_intro_3') }}</li>
+                <li>{{ t('settings_dual_thread_local_learning_intro_4') }}</li>
+              </ul>
+              <div
+                v-if="dualThreadLocalLearningEnabled"
+                class="settings-dual-thread-learning"
+                aria-live="polite"
+              >
+                <h4 class="settings-dual-thread-learning__title">
+                  {{ t('settings_dual_thread_learning_heading') }}
+                </h4>
+                <p v-if="dualThreadLearningLoading" class="settings-toggle-hint">
+                  {{ t('settings_privacy_working') }}
+                </p>
+                <p v-else-if="dualThreadLearningError" class="settings-error" role="alert">
+                  {{ dualThreadLearningError }}
+                </p>
+                <template v-else-if="dualThreadLearningSketch">
+                  <p class="settings-toggle-hint">
+                    {{
+                      t('settings_dual_thread_learning_event_count', [
+                        String(dualThreadLearningSketch.telemetryEventCount)
+                      ])
+                    }}
+                  </p>
+                  <p class="settings-dual-thread-learning__label">
+                    {{ t('settings_dual_thread_learning_outcomes') }}
+                  </p>
+                  <ul class="settings-dual-thread-counts">
+                    <li
+                      v-for="(count, key) in dualThreadLearningSketch.resultOutcomeCounts"
+                      :key="`outcome-${key}`"
+                    >
+                      {{ key }}: {{ count }}
+                    </li>
+                  </ul>
+                  <p class="settings-dual-thread-learning__label">
+                    {{ t('settings_dual_thread_learning_confirms') }}
+                  </p>
+                  <ul class="settings-dual-thread-counts">
+                    <li
+                      v-for="(count, key) in dualThreadLearningSketch.confirmLabelCounts"
+                      :key="`confirm-${key}`"
+                    >
+                      {{ key }}: {{ count }}
+                    </li>
+                  </ul>
+                  <p class="settings-dual-thread-learning__label">
+                    {{ t('settings_dual_thread_learning_timing') }}
+                  </p>
+                  <p class="settings-toggle-hint">
+                    n={{ dualThreadLearningSketch.timingTotalMs?.n ?? 0 }} · p50={{
+                      dualThreadLearningSketch.timingTotalMs?.p50 ?? '—'
+                    }}
+                    · p90={{ dualThreadLearningSketch.timingTotalMs?.p90 ?? '—' }}
+                  </p>
+                  <p class="settings-dual-thread-learning__label">
+                    {{ t('settings_dual_thread_learning_failures') }}
+                  </p>
+                  <p v-if="!dualThreadLearningHasAttributions" class="settings-toggle-hint">
+                    {{ t('settings_dual_thread_learning_no_attributions') }}
+                  </p>
+                  <ul v-else class="settings-dual-thread-counts">
+                    <li
+                      v-for="(count, key) in dualThreadLearningSketch.failureStageCounts"
+                      :key="`fail-${key}`"
+                    >
+                      {{ key }}: {{ count }}
+                    </li>
+                  </ul>
+                </template>
+              </div>
+            </div>
+
+            <!-- 暗线·贡献匿名汇总（ADR-027） -->
+            <div class="settings-dual-thread-block">
+              <div class="settings-toggle">
+                <div class="settings-toggle-copy">
+                  <span class="settings-toggle-title">{{
+                    t('settings_dual_thread_contribute_toggle')
+                  }}</span>
+                </div>
+                <AppSwitch
+                  :model-value="dualThreadContributeAggregatesEnabled"
+                  :disabled="dualThreadContributeDisabled"
+                  :aria-label="t('settings_dual_thread_contribute_toggle')"
+                  @update:model-value="handleDualThreadContributeToggle"
+                />
+              </div>
+              <ul
+                class="settings-dual-thread-intro"
+                :aria-label="t('settings_dual_thread_contribute_toggle')"
+              >
+                <li>{{ t('settings_dual_thread_contribute_intro_1') }}</li>
+                <li>{{ t('settings_dual_thread_contribute_intro_2') }}</li>
+                <li>{{ t('settings_dual_thread_contribute_intro_3') }}</li>
+                <li>{{ t('settings_dual_thread_contribute_intro_4') }}</li>
+              </ul>
+              <p v-if="dualThreadContributeGateText" class="settings-toggle-hint" role="status">
+                {{ dualThreadContributeGateText }}
+              </p>
+              <p v-else class="settings-toggle-hint" role="status">
+                {{ dualThreadLastContributionText }}
+              </p>
+              <SettingsActionRow
+                surface="embedded"
+                :title="t('settings_dual_thread_delete_contributed')"
+              >
+                <AppButton
+                  type="button"
+                  :disabled="
+                    !signedIn ||
+                    dualThreadDeleteWorking ||
+                    dataWorking ||
+                    signingOut ||
+                    settingsState !== 'ready'
+                  "
+                  :title="t('settings_dual_thread_delete_contributed')"
+                  variant="outlined"
+                  @click="handleDeleteDualThreadContributedSketches"
+                >
+                  {{
+                    dualThreadDeleteWorking
+                      ? t('settings_privacy_working')
+                      : t('settings_dual_thread_delete_contributed_action')
+                  }}
+                </AppButton>
+              </SettingsActionRow>
+              <p v-if="dualThreadDeleteError" class="settings-error" role="alert">
+                {{ dualThreadDeleteError }}
+              </p>
+            </div>
+
             <SettingsActionRow
               surface="embedded"
               :title="t('settings_data_clear_recall_adaptation')"

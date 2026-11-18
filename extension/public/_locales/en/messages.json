@@ -1239,6 +1239,106 @@
   "settings_data_outcome_soft_adjust_hint": {
     "message": "When on, Yiveno may softly boost or demote matches using on-device Outcome pairs. Off pauses that only—your library and find still work; pairs stay until you clear them."
   },
+  "settings_dual_thread_local_learning_toggle": {
+    "message": "Learn locally"
+  },
+  "settings_dual_thread_local_learning_intro_1": {
+    "message": "Recording already happens: Yiveno already keeps a local log of your finding sessions (found or not, how long it took) — a 500-event rolling buffer, stored only on this device, never uploaded. This switch controls analysis, not recording."
+  },
+  "settings_dual_thread_local_learning_intro_2": {
+    "message": "When on: Yiveno analyzes those records on this device and shows you the summary — what was found, where it got stuck, how long it took."
+  },
+  "settings_dual_thread_local_learning_intro_3": {
+    "message": "Nothing leaves: the analysis runs entirely on this device."
+  },
+  "settings_dual_thread_local_learning_intro_4": {
+    "message": "Current limit: the summary is for display and research notes only; it does not yet change retrieval behavior. Turning it off stops the analysis; the local log is unaffected."
+  },
+  "settings_dual_thread_contribute_toggle": {
+    "message": "Contribute anonymous summaries"
+  },
+  "settings_dual_thread_contribute_intro_1": {
+    "message": "What is shared: only aggregated counts (how often things were found, failure-stage distribution, timing percentiles). No clue text, item content, titles, or links."
+  },
+  "settings_dual_thread_contribute_intro_2": {
+    "message": "Who receives it: only Yiveno's research endpoint, for studying human memory and retrieval. Never sold, never shared with third parties."
+  },
+  "settings_dual_thread_contribute_intro_3": {
+    "message": "Frequency: at most once a day; turning it off stops future uploads."
+  },
+  "settings_dual_thread_contribute_intro_4": {
+    "message": "Already shared: turning it off stops new uploads only. Use \"Delete contributed summaries\" below to remove what was already sent."
+  },
+  "settings_dual_thread_need_local_learning": {
+    "message": "Turn on local learning first."
+  },
+  "settings_dual_thread_need_sign_in": {
+    "message": "Sign in to contribute summaries."
+  },
+  "settings_dual_thread_last_contrib_today": {
+    "message": "Last contribution: today"
+  },
+  "settings_dual_thread_last_contrib_yesterday": {
+    "message": "Last contribution: yesterday"
+  },
+  "settings_dual_thread_last_contrib_date": {
+    "message": "Last contribution: $1",
+    "placeholders": {
+      "DATE": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_dual_thread_last_contrib_never": {
+    "message": "Last contribution: never"
+  },
+  "settings_dual_thread_last_contrib_failed": {
+    "message": "Last contribution: last upload failed."
+  },
+  "settings_dual_thread_delete_contributed": {
+    "message": "Delete contributed summaries"
+  },
+  "settings_dual_thread_delete_contributed_action": {
+    "message": "Delete contributed summaries"
+  },
+  "settings_dual_thread_delete_contributed_done": {
+    "message": "Contributed summaries deleted"
+  },
+  "settings_dual_thread_delete_auth_required": {
+    "message": "Sign in to delete contributed summaries."
+  },
+  "settings_dual_thread_delete_failed": {
+    "message": "Could not delete contributed summaries."
+  },
+  "settings_dual_thread_status_failed": {
+    "message": "Could not load learning summary."
+  },
+  "settings_dual_thread_learning_heading": {
+    "message": "Learning record"
+  },
+  "settings_dual_thread_learning_event_count": {
+    "message": "Events in sample: $1",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_dual_thread_learning_outcomes": {
+    "message": "Results"
+  },
+  "settings_dual_thread_learning_confirms": {
+    "message": "Confirmations"
+  },
+  "settings_dual_thread_learning_timing": {
+    "message": "Timing (ms)"
+  },
+  "settings_dual_thread_learning_failures": {
+    "message": "Failure stages"
+  },
+  "settings_dual_thread_learning_no_attributions": {
+    "message": "No attributions yet"
+  },
   "settings_data_clear_recall_adaptation": {
     "message": "Clear on-device recall adaptation"
   },

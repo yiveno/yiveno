@@ -84,6 +84,12 @@ export async function handleUpdateUserSettings(
     if (typeof parsed.recallOutcomePairSoftAdjustEnabled === 'boolean') {
       patch.recallOutcomePairSoftAdjustEnabled = parsed.recallOutcomePairSoftAdjustEnabled
     }
+    if (typeof parsed.dualThreadLocalLearningEnabled === 'boolean') {
+      patch.dualThreadLocalLearningEnabled = parsed.dualThreadLocalLearningEnabled
+    }
+    if (typeof parsed.dualThreadContributeAggregatesEnabled === 'boolean') {
+      patch.dualThreadContributeAggregatesEnabled = parsed.dualThreadContributeAggregatesEnabled
+    }
     if (parsed.uiLocalePreference !== undefined) {
       patch.uiLocalePreference = parsed.uiLocalePreference
     }

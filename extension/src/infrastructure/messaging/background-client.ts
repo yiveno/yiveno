@@ -87,6 +87,11 @@ import type {
   UpdateUserSettingsMessage,
   UpdateUserSettingsResponse
 } from '@/core/messaging/settings-messages'
+import type {
+  DeleteDualThreadContributedSketchesResponse,
+  GetDualThreadLearningStatusResponse,
+  MaybeUploadDualThreadSketchResponse
+} from '@/core/messaging/dual-thread-messages'
 
 /** 向 Background 发送消息并返回响应。 */
 export async function sendBackgroundMessage<TResponse extends BackgroundMessageResponse>(
@@ -619,6 +624,30 @@ export async function clearLocalRecallAdaptation(): Promise<ClearLocalRecallAdap
   return sendBackgroundMessage<ClearLocalRecallAdaptationResponse>({
     scope: 'background',
     type: 'CLEAR_LOCAL_RECALL_ADAPTATION'
+  })
+}
+
+/** 暗线：读取学习记录草图 + 贡献状态（Settings privacy）。 */
+export async function fetchDualThreadLearningStatus(): Promise<GetDualThreadLearningStatusResponse> {
+  return sendBackgroundMessage<GetDualThreadLearningStatusResponse>({
+    scope: 'background',
+    type: 'GET_DUAL_THREAD_LEARNING_STATUS'
+  })
+}
+
+/** 暗线：删除已贡献的匿名汇总。 */
+export async function deleteDualThreadContributedSketches(): Promise<DeleteDualThreadContributedSketchesResponse> {
+  return sendBackgroundMessage<DeleteDualThreadContributedSketchesResponse>({
+    scope: 'background',
+    type: 'DELETE_DUAL_THREAD_CONTRIBUTED_SKETCHES'
+  })
+}
+
+/** 暗线：按门禁尝试上传匿名汇总（启动 / Side Panel；失败静默）。 */
+export async function maybeUploadDualThreadSketch(): Promise<MaybeUploadDualThreadSketchResponse> {
+  return sendBackgroundMessage<MaybeUploadDualThreadSketchResponse>({
+    scope: 'background',
+    type: 'MAYBE_UPLOAD_DUAL_THREAD_SKETCH'
   })
 }
 

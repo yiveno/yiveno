@@ -34,6 +34,10 @@ import type {
   SettingsBackgroundMessage,
   SettingsBackgroundResponse
 } from '@/core/messaging/settings-messages'
+import type {
+  DualThreadBackgroundMessage,
+  DualThreadBackgroundResponse
+} from '@/core/messaging/dual-thread-messages'
 
 export { BACKGROUND_MESSAGE_SCOPE }
 
@@ -96,6 +100,7 @@ export type BackgroundMessage =
   | ImportBackgroundMessage
   | CommandsBackgroundMessage
   | SettingsBackgroundMessage
+  | DualThreadBackgroundMessage
   | AccountSyncBackgroundMessage
   | DebugBackgroundMessage
 
@@ -111,6 +116,7 @@ export type BackgroundMessageResponse =
   | ImportBackgroundResponse
   | CommandsBackgroundResponse
   | SettingsBackgroundResponse
+  | DualThreadBackgroundResponse
   | AccountSyncBackgroundResponse
   | DebugBackgroundResponse
   | BackgroundDispatchErrorResponse

@@ -39,6 +39,16 @@ export const UserSettingsSchema = z.object({
    */
   recallOutcomePairSoftAdjustEnabled: z.boolean().default(true),
   /**
+   * 暗线·本地学习：是否在本机分析遥测并展示学习记录（ADR-027）。
+   * 默认关；不控制遥测录制本身（录制始终本机环形缓冲）。
+   */
+  dualThreadLocalLearningEnabled: z.boolean().default(false),
+  /**
+   * 暗线·贡献匿名汇总：是否在同意后每日最多一次上传草图计数（ADR-027）。
+   * 默认关；须本地学习开 + 已登录才可启用上传；不含线索原文。
+   */
+  dualThreadContributeAggregatesEnabled: z.boolean().default(false),
+  /**
    * 界面语言偏好：system 跟浏览器；en / zh_CN 强制。
    * 只影响 UI 文案，不改变 Recall 线索理解语言策略。
    */
@@ -58,6 +68,8 @@ export const UserSettingsPatchSchema = z.object({
   chromeBookmarkSyncEnabled: z.boolean().optional(),
   mcpReadOnlyEnabled: z.boolean().optional(),
   recallOutcomePairSoftAdjustEnabled: z.boolean().optional(),
+  dualThreadLocalLearningEnabled: z.boolean().optional(),
+  dualThreadContributeAggregatesEnabled: z.boolean().optional(),
   uiLocalePreference: z.enum(['system', 'en', 'zh_CN']).optional()
 })
 
@@ -72,6 +84,8 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   chromeBookmarkSyncEnabled: false,
   mcpReadOnlyEnabled: false,
   recallOutcomePairSoftAdjustEnabled: true,
+  dualThreadLocalLearningEnabled: false,
+  dualThreadContributeAggregatesEnabled: false,
   uiLocalePreference: 'system' satisfies UiLocalePreference
 }
 
