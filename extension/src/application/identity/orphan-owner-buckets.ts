@@ -4,6 +4,8 @@
  * 禁止静默删除；盘点 / 导出 / 清除由设置页显式触发。
  */
 
+import { resetChromeBookmarkImportAfterLocalClear } from '@/application/capture/import-chrome-bookmarks-service'
+import { invalidateBookmarkSyncAlignmentCache } from '@/application/memory/bookmark-sync-alignment-cache'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import {
   getAccountBinding,
@@ -93,18 +95,34 @@ export async function clearOrphanOwnerBuckets(): Promise<{
   try {
     const summary = await summarizeOrphanOwnerBuckets()
     let clearedItems = 0
+    let clearedBookmarkRows = 0
     for (const ownerId of summary.orphanOwnerIds) {
       const before = await memoryItemRepository.listAllByOwnerId(ownerId, {
         includeDeleted: true
       })
+      clearedBookmarkRows += before.filter(item => item.type === 'bookmark').length
       await memoryItemRepository.replaceOwnerItems(ownerId, [])
       clearedItems += before.length
     }
+
+    // 清掉 ≥1 行后对齐缓存失效（书签「未进入记忆」依赖此缓存）
+    if (clearedItems > 0) {
+      invalidateBookmarkSyncAlignmentCache()
+    }
+
+    // 删了书签行却不碰导入状态 → Settings 仍显示「已导入 N 条」假陈述；与 CLEAR_LOCAL_MEMORY 同语义
+    if (clearedBookmarkRows > 0) {
+      await resetChromeBookmarkImportAfterLocalClear()
+    }
+
     const result = {
       clearedBuckets: summary.orphanOwnerIds.length,
       clearedItems
     }
-    flowOk('Identity', '清除孤儿 owner 桶', startedAt, result)
+    flowOk('Identity', '清除孤儿 owner 桶', startedAt, {
+      ...result,
+      clearedBookmarkRows
+    })
     return result
   } catch (error) {
     flowFail('Identity', '清除孤儿 owner 桶', startedAt, error)

@@ -159,9 +159,9 @@ describe('extension-tab', () => {
       url: 'chrome-extension://test/settings.html?section=data'
     } as chrome.tabs.Tab)
 
-    await focusOrOpenSettingsTab({ hash: 'chrome-bookmark-ingest' })
+    await focusOrOpenSettingsTab({ hash: 'chrome-bookmark-sync' })
     expect(tabsUpdate).toHaveBeenCalledWith(88, {
-      url: 'chrome-extension://test/settings.html#chrome-bookmark-ingest',
+      url: 'chrome-extension://test/settings.html#chrome-bookmark-sync',
       active: true
     })
   })

@@ -4,6 +4,7 @@
  * Free/Pro 均可（Worker 日配额分档）；未登录跳过。
  */
 
+import { invalidateBookmarkSyncAlignmentCache } from '@/application/memory/bookmark-sync-alignment-cache-state'
 import {
   isIndexedDbQuotaExceededError,
   markIndexedDbWriteQuotaExhausted
@@ -118,6 +119,10 @@ async function freeQuotaByDroppingSyncBookmarks(
     return 0
   }
   const dropped = await repository.hardDeleteMany(victims.map(item => item.id))
+  if (dropped > 0) {
+    // 物理删书签行后对齐表失效（与孤儿清空 clearedItems>0 同款门控）
+    invalidateBookmarkSyncAlignmentCache()
+  }
   logger.warn('MemoryEmbed', '配额满：已物理删除无附注 sync 书签以腾空间', {
     dropped,
     candidate: victims.length
@@ -380,6 +385,14 @@ export async function collectMissingEmbeddingItemsForTests(
   limit: number
 ): Promise<{ missing: MemoryItem[]; scanned: number; excerptEnqueued: number }> {
   return collectMissingEmbeddingItems(repository, limit)
+}
+
+/** 测试用：暴露配额驱逐写回路径（不改生产签名）。 */
+export async function putEmbeddingWithQuotaRetryForTests(
+  repository: MemoryItemRepository,
+  nextItem: MemoryItem
+): Promise<{ ok: true } | { ok: false; quota: boolean }> {
+  return putEmbeddingWithQuotaRetry(repository, nextItem)
 }
 
 /**

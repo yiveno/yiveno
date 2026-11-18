@@ -415,9 +415,13 @@ describe('chrome-bookmark-sync-service', () => {
 
     expect(await memoryItemRepository.listByOwner({ type: 'bookmark' })).toHaveLength(0)
 
+    const alignmentCache = await import('@/application/memory/bookmark-sync-alignment-cache')
+    const invalidateSpy = vi.spyOn(alignmentCache, 'invalidateBookmarkSyncAlignmentCache')
+
     const result = await reconcileChromeBookmarksWithMemory()
     expect(result.skipped).toBe(false)
     expect(result.upserted).toBe(2)
+    expect(invalidateSpy).toHaveBeenCalled()
 
     const items = await memoryItemRepository.listByOwner({ type: 'bookmark' })
     expect(items).toHaveLength(2)
@@ -426,6 +430,7 @@ describe('chrome-bookmark-sync-service', () => {
       .map(item => (item.type === 'bookmark' ? item.payload.chromeBookmarkId : undefined))
       .sort()
     expect(chromeIds).toEqual(['10', '20'])
+    invalidateSpy.mockRestore()
   })
 
   it('reconcile 配额耗尽时只记一次并中止后续 upsert', async () => {

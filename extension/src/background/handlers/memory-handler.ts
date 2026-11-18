@@ -74,6 +74,8 @@ export async function handleCaptureBookmark(payload: unknown): Promise<MemoryBac
       },
       captureEntry: input.captureEntry ?? 'popup'
     })
+    // Capture 新建书签写入 byUrl/note/savedAt 对齐表，须失效
+    invalidateBookmarkSyncAlignmentCache()
     flowOk('Capture', '捕获书签', startedAt, {
       id: item.id,
       entry: input.captureEntry ?? 'popup',

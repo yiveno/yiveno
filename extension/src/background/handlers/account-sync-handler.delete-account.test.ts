@@ -12,7 +12,8 @@ const {
   clearPrivacyPrefsMock,
   ensureMemoryCloudSyncAlarmMock,
   clearSubscriptionSnapshotMock,
-  openWebsiteLogoutFromExtensionMock
+  openWebsiteLogoutFromExtensionMock,
+  invalidateBookmarkSyncAlignmentCacheMock
 } = vi.hoisted(() => ({
   clearAuthSessionMock: vi.fn(),
   getAccountBindingMock: vi.fn(),
@@ -25,7 +26,8 @@ const {
   clearPrivacyPrefsMock: vi.fn(),
   ensureMemoryCloudSyncAlarmMock: vi.fn(),
   clearSubscriptionSnapshotMock: vi.fn(),
-  openWebsiteLogoutFromExtensionMock: vi.fn()
+  openWebsiteLogoutFromExtensionMock: vi.fn(),
+  invalidateBookmarkSyncAlignmentCacheMock: vi.fn()
 }))
 
 vi.mock('@/infrastructure/identity/auth-session-service', () => ({
@@ -109,6 +111,10 @@ vi.mock('@/infrastructure/logging/flow-log', () => ({
   flowFail: vi.fn()
 }))
 
+vi.mock('@/application/memory/bookmark-sync-alignment-cache', () => ({
+  invalidateBookmarkSyncAlignmentCache: invalidateBookmarkSyncAlignmentCacheMock
+}))
+
 import { handleDeleteAccount } from '@/background/handlers/account-sync-handler'
 
 const accountId = '22222222-2222-4222-8222-222222222222'
@@ -155,6 +161,7 @@ describe('handleDeleteAccount', () => {
     })
     expect(deleteRemoteAccountMock).toHaveBeenCalledWith('at')
     expect(replaceOwnerItemsMock).toHaveBeenCalledWith(accountId, [])
+    expect(invalidateBookmarkSyncAlignmentCacheMock).toHaveBeenCalledOnce()
     expect(clearPrivacyPrefsMock).toHaveBeenCalled()
     expect(clearAuthSessionMock).toHaveBeenCalled()
     expect(clearAccountBindingMock).toHaveBeenCalled()

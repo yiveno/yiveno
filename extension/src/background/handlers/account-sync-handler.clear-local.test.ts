@@ -13,7 +13,8 @@ const {
   clearRecallOutcomePairsMock,
   clearRecallTelemetryEventsMock,
   resetChromeBookmarkImportAfterLocalClearMock,
-  clearChromeBookmarkDeleteTombstonesMock
+  clearChromeBookmarkDeleteTombstonesMock,
+  invalidateBookmarkSyncAlignmentCacheMock
 } = vi.hoisted(() => ({
   getAccountBindingMock: vi.fn(),
   getOrCreateLocalProfileMock: vi.fn(),
@@ -27,7 +28,8 @@ const {
   clearRecallOutcomePairsMock: vi.fn(),
   clearRecallTelemetryEventsMock: vi.fn(),
   resetChromeBookmarkImportAfterLocalClearMock: vi.fn(),
-  clearChromeBookmarkDeleteTombstonesMock: vi.fn()
+  clearChromeBookmarkDeleteTombstonesMock: vi.fn(),
+  invalidateBookmarkSyncAlignmentCacheMock: vi.fn()
 }))
 
 vi.mock('@/infrastructure/identity/local-profile-service', () => ({
@@ -64,6 +66,10 @@ vi.mock('@/background/listeners/chrome-bookmark-sync', () => ({
 
 vi.mock('@/application/capture/import-chrome-bookmarks-service', () => ({
   resetChromeBookmarkImportAfterLocalClear: resetChromeBookmarkImportAfterLocalClearMock
+}))
+
+vi.mock('@/application/memory/bookmark-sync-alignment-cache', () => ({
+  invalidateBookmarkSyncAlignmentCache: invalidateBookmarkSyncAlignmentCacheMock
 }))
 
 vi.mock('@/infrastructure/storage/chrome-bookmark-delete-tombstone-storage', () => ({
@@ -126,6 +132,7 @@ describe('handleClearLocalMemory', () => {
     })
     expect(syncListenersMock).toHaveBeenCalledWith(false)
     expect(resetChromeBookmarkImportAfterLocalClearMock).toHaveBeenCalledOnce()
+    expect(invalidateBookmarkSyncAlignmentCacheMock).toHaveBeenCalledOnce()
     expect(clearChromeBookmarkDeleteTombstonesMock).toHaveBeenCalledOnce()
     expect(patchSyncPrefsMock).not.toHaveBeenCalled()
   })

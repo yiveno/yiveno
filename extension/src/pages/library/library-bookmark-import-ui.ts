@@ -13,3 +13,17 @@ export function isLibraryBookmarkImportFailed(
 ): boolean {
   return status === 'failed'
 }
+
+/**
+ * Library「重新导入」是否应拦在发 ENSURE 之前。
+ * `undefined` = 设置读取失败 → fail-open（不拦）。
+ * 不自动开 ingest（ADR-024）；只归因到知情同意门关闭。
+ */
+export function resolveLibraryBookmarkRetryBlockedReason(
+  ingestEnabled: boolean | undefined
+): 'ingest_off' | null {
+  if (ingestEnabled === false) {
+    return 'ingest_off'
+  }
+  return null
+}

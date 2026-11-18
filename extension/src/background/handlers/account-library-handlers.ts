@@ -13,6 +13,7 @@ import {
   exportOrphanOwnerBuckets
 } from '@/application/identity/orphan-owner-buckets'
 import { resetChromeBookmarkImportAfterLocalClear } from '@/application/capture/import-chrome-bookmarks-service'
+import { invalidateBookmarkSyncAlignmentCache } from '@/application/memory/bookmark-sync-alignment-cache'
 import type {
   ClearLocalMemoryResponse,
   ClearLocalRecallAdaptationResponse,
@@ -242,6 +243,8 @@ export async function handleDeleteAccount(): Promise<DeleteAccountResponse> {
     })
     const clearedLocalCount = items.length
     await memoryItemRepository.replaceOwnerItems(binding.accountId, [])
+    // 清掉账号桶后对齐表失效（与 CLEAR_LOCAL_MEMORY 同款）
+    invalidateBookmarkSyncAlignmentCache()
 
     await clearPrivacyPrefs()
     await finishSignOutSession()
@@ -324,6 +327,8 @@ export async function handleClearLocalMemory(): Promise<ClearLocalMemoryResponse
     const clearedCount = existing.length
 
     await memoryItemRepository.replaceOwnerItems(ownerId, [])
+    // 清掉书签行后对齐表失效（与库修订信号并列）
+    invalidateBookmarkSyncAlignmentCache()
     await clearLocalRecallAdaptationBuffers()
     void bumpMemoryLibraryRevision().catch(error => {
       logger.warn('Data', '库修订信号更新失败', error)

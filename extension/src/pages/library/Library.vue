@@ -37,6 +37,7 @@ import {
   ensureChromeBookmarksImportedMessage,
   fetchBookmarkLibraryTree,
   fetchChromeBookmarkImportStatus,
+  fetchUserSettings,
   listMemoryItems,
   recordMemoryOpen,
   updateMemoryNote
@@ -49,7 +50,8 @@ import BookmarkLibraryTree from '@/pages/library/BookmarkLibraryTree.vue'
 import ExcerptLibraryList from '@/pages/library/ExcerptLibraryList.vue'
 import {
   isLibraryBookmarkImportFailed,
-  isLibraryBookmarkImporting
+  isLibraryBookmarkImporting,
+  resolveLibraryBookmarkRetryBlockedReason
 } from '@/pages/library/library-bookmark-import-ui'
 import {
   buildExcerptLibraryListRows,
@@ -555,13 +557,28 @@ async function loadMoreExcerpts(): Promise<void> {
   }
 }
 
-/** 书签导入失败后重试：复用 ENSURE_CHROME_BOOKMARKS_IMPORTED。 */
+/** 书签导入失败后重试：ingest OFF 时只 toast 指路；否则复用 ENSURE。 */
 async function retryBookmarkImport(): Promise<void> {
   if (retryingBookmarkImport.value) {
     return
   }
   retryingBookmarkImport.value = true
   try {
+    // 读设置失败 → fail-open 仍发 ENSURE；明确 OFF 才拦（ADR-024 不替用户开开关）
+    let ingestEnabled: boolean | undefined
+    try {
+      const settingsResponse = await fetchUserSettings()
+      if (settingsResponse.ok) {
+        ingestEnabled = settingsResponse.settings.chromeBookmarkIngestEnabled
+      }
+    } catch {
+      ingestEnabled = undefined
+    }
+    if (resolveLibraryBookmarkRetryBlockedReason(ingestEnabled) === 'ingest_off') {
+      showToastError(t('library_bookmark_import_ingest_off'))
+      return
+    }
+
     const response = await ensureChromeBookmarksImportedMessage()
     if (!response.ok) {
       showToastError(tImportError(response.errorCode))

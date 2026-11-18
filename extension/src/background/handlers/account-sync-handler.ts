@@ -5,6 +5,7 @@
 
 import { summarizeOrphanOwnerBuckets } from '@/application/identity/orphan-owner-buckets'
 import { clearAccountLibraryOnSignOut } from '@/application/identity/clear-account-library-on-sign-out'
+import { invalidateBookmarkSyncAlignmentCache } from '@/application/memory/bookmark-sync-alignment-cache'
 import { filterCloudSyncableMemoryItems } from '@/core/memory/memory-item-type'
 import { mergeMemoryItemsByUpdatedAt } from '@/core/memory/merge-memory-items-by-updated-at'
 import { selectMemoryItemsToPush } from '@/core/memory/select-memory-items-to-push'
@@ -381,12 +382,14 @@ export async function handleAuthSignOut(mode: AuthSignOutMode): Promise<AuthSign
       }
       clearedCount = items.length
       await memoryItemRepository.replaceOwnerItems(binding.accountId, [])
+      invalidateBookmarkSyncAlignmentCache()
     } else if (mode === 'clear_local') {
       const items = await memoryItemRepository.listAllByOwnerId(binding.accountId, {
         includeDeleted: true
       })
       clearedCount = items.length
       await memoryItemRepository.replaceOwnerItems(binding.accountId, [])
+      invalidateBookmarkSyncAlignmentCache()
     }
 
     await finishSignOutSession()

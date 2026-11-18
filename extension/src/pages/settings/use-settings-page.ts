@@ -10,7 +10,7 @@ import {
   DEFAULT_SETTINGS_SECTION,
   parseSettingsSectionFromLocationSearch,
   resolveSettingsSectionTab,
-  SETTINGS_HASH_CHROME_BOOKMARK_INGEST,
+  SETTINGS_HASH_CHROME_BOOKMARK_SYNC,
   SETTINGS_SECTION_TABS,
   type SettingsSectionId
 } from '@/core/settings/settings-sections'
@@ -1755,6 +1755,7 @@ export function useSettingsPage() {
       signOutDialogOpen.value = false
       signedIn.value = false
       accountEmail.value = ''
+      accountDisplayName.value = ''
       syncEnabled.value = false
       syncLocalCount.value = 0
       syncAccountOwnerCount.value = 0
@@ -1773,7 +1774,7 @@ export function useSettingsPage() {
   let stopWatchAuthSession: (() => void) | null = null
 
   /**
-   * 深链 hash（如空库「导入」→ `#chrome-bookmark-ingest`）：
+   * 深链 hash（如空库「同步书签」→ `#chrome-bookmark-sync`）：
    * 切到保存分区并滚到目标开关。
    */
   function scrollToSettingsHashTarget(): void {
@@ -1781,7 +1782,7 @@ export function useSettingsPage() {
     if (!raw) {
       return
     }
-    if (raw === SETTINGS_HASH_CHROME_BOOKMARK_INGEST && activeSection.value !== 'capture') {
+    if (raw === SETTINGS_HASH_CHROME_BOOKMARK_SYNC && activeSection.value !== 'capture') {
       activeSection.value = DEFAULT_SETTINGS_SECTION
     }
     requestAnimationFrame(() => {

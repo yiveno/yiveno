@@ -1137,9 +1137,6 @@
   "settings_language_saving": {
     "message": "Updating language…"
   },
-  "settings_placeholder_privacy": {
-    "message": "Privacy options are not available yet."
-  },
   "settings_data_group_backup": {
     "message": "Backup"
   },
@@ -1384,23 +1381,8 @@
   "settings_mcp_remote_sync_failed": {
     "message": "Couldn't sync the MCP switch to the cloud. Local setting still saved—try again when you're online."
   },
-  "settings_privacy_ack": {
-    "message": "I understand this notice"
-  },
-  "settings_privacy_ack_done": {
-    "message": "Your confirmation was saved. You can turn on cloud sync."
-  },
-  "settings_privacy_ack_status_done": {
-    "message": "Current notice version: confirmed"
-  },
-  "settings_privacy_ack_status_needed": {
-    "message": "Current notice version: not confirmed yet (required before turning sync on)"
-  },
   "settings_privacy_sync_confirm": {
     "message": "Turning on cloud sync aligns excerpts on this device with your account (and may upload). Synced excerpts are stored in the United States (East US / Ohio). Bookmarks stay local from this browser. Confirm you have read the privacy policy. Continue?"
-  },
-  "settings_privacy_open_sync": {
-    "message": "Open Account & Sync"
   },
   "settings_privacy_open_policy": {
     "message": "Read full privacy policy"
@@ -1515,9 +1497,6 @@
   "settings_error_local_export": {
     "message": "Could not export local memories"
   },
-  "settings_placeholder_ai": {
-    "message": "AI options are not available yet."
-  },
   "settings_ai_intro": {
     "message": "Helps understand what you type and fill in a few fields. Your saves stay the source of truth."
   },
@@ -1587,28 +1566,8 @@
   "settings_upcoming_ai": {
     "message": "AI — not available yet"
   },
-  "settings_section_account": {
-    "message": "Account"
-  },
-  "settings_section_account_copy": {
-    "message": "Sign in on the Yiveno website. The extension only syncs your login — it does not upload memories until you turn sync on."
-  },
-  "settings_account_signed_out": {
-    "message": "Not signed in"
-  },
-  "settings_account_signed_in": {
-    "message": "Signed in as $EMAIL$",
-    "placeholders": {
-      "EMAIL": {
-        "content": "$1"
-      }
-    }
-  },
   "settings_account_sign_in_hint": {
     "message": "Not signed in. Sign in to manage sync and cloud memories."
-  },
-  "settings_account_sign_in_website": {
-    "message": "Sign in on website"
   },
   "settings_account_waiting_website": {
     "message": "Finish signing in in the browser tab, then return here."
@@ -1665,12 +1624,6 @@
   },
   "settings_sign_out_clear_local_hint": {
     "message": "Also removes bookmarks tied to this account on this device (not remapped). Cannot recover if never synced."
-  },
-  "settings_sign_out_sync_then_clear": {
-    "message": "Sync to cloud, then sign out and clear device"
-  },
-  "settings_sign_out_sync_then_clear_hint": {
-    "message": "Advanced — replace cloud with this device, then clear the device copy"
   },
   "settings_sign_out_sync_then_clear_disabled": {
     "message": "Nothing on this device to upload"
@@ -2113,6 +2066,9 @@
   },
   "library_bookmark_import_retry": {
     "message": "Re-import"
+  },
+  "library_bookmark_import_ingest_off": {
+    "message": "Chrome bookmark import is off. Turn it on in Settings → Capture, then try re-importing."
   },
   "library_bookmark_unsynced": {
     "message": "Not in memory"
@@ -3070,11 +3026,11 @@
   "settings_toggle_chrome_bookmark_sync_hint": {
     "message": "When on, imports your current bookmarks and keeps them in sync. When off, sync stops; imported content stays."
   },
+  "settings_chrome_bookmark_reimport_title": {
+    "message": "Chrome bookmarks"
+  },
   "settings_action_reimport_chrome_bookmarks": {
     "message": "Re-import bookmarks"
-  },
-  "settings_action_reimport_chrome_bookmarks_hint": {
-    "message": "Pull in bookmarks added in Chrome since the last import. Bookmarks you deleted in Yiveno won't come back."
   },
   "settings_reimport_chrome_bookmarks_done": {
     "message": "Re-import complete."

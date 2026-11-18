@@ -178,6 +178,7 @@ describe('importLocalMemoryBackup', () => {
     expect(putManyMock).toHaveBeenCalledOnce()
     expect(putNoteRecordMock).toHaveBeenCalledOnce()
     expect(putMetaMock).toHaveBeenCalledOnce()
+    expect(invalidateBookmarkSyncAlignmentCacheMock).toHaveBeenCalledOnce()
     const writtenMeta = putMetaMock.mock.calls[0]?.[0]
     expect(writtenMeta.lastDreamRunId).toBeNull()
     expect(writtenMeta.lastCursor).toBe('')

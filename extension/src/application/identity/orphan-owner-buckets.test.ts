@@ -5,13 +5,17 @@ const {
   getAccountBindingMock,
   listOwnerBucketSummariesMock,
   listAllByOwnerIdMock,
-  replaceOwnerItemsMock
+  replaceOwnerItemsMock,
+  resetChromeBookmarkImportAfterLocalClearMock,
+  invalidateBookmarkSyncAlignmentCacheMock
 } = vi.hoisted(() => ({
   getOrCreateLocalProfileMock: vi.fn(),
   getAccountBindingMock: vi.fn(),
   listOwnerBucketSummariesMock: vi.fn(),
   listAllByOwnerIdMock: vi.fn(),
-  replaceOwnerItemsMock: vi.fn()
+  replaceOwnerItemsMock: vi.fn(),
+  resetChromeBookmarkImportAfterLocalClearMock: vi.fn(),
+  invalidateBookmarkSyncAlignmentCacheMock: vi.fn()
 }))
 
 vi.mock('@/infrastructure/identity/local-profile-service', () => ({
@@ -25,6 +29,14 @@ vi.mock('@/infrastructure/indexeddb/memory-item-repository', () => ({
     listAllByOwnerId: listAllByOwnerIdMock,
     replaceOwnerItems: replaceOwnerItemsMock
   }
+}))
+
+vi.mock('@/application/capture/import-chrome-bookmarks-service', () => ({
+  resetChromeBookmarkImportAfterLocalClear: resetChromeBookmarkImportAfterLocalClearMock
+}))
+
+vi.mock('@/application/memory/bookmark-sync-alignment-cache', () => ({
+  invalidateBookmarkSyncAlignmentCache: invalidateBookmarkSyncAlignmentCacheMock
 }))
 
 vi.mock('@/infrastructure/logging/flow-log', () => ({
@@ -102,12 +114,46 @@ describe('orphan-owner-buckets', () => {
       { ownerId: accountId, activeCount: 2, totalCount: 2 },
       { ownerId: orphanId, activeCount: 1, totalCount: 2 }
     ])
-    listAllByOwnerIdMock.mockResolvedValue([{ id: 'a' }, { id: 'b' }])
+    listAllByOwnerIdMock.mockResolvedValue([
+      { id: 'a', type: 'text_excerpt' },
+      { id: 'b', type: 'text_excerpt' }
+    ])
     replaceOwnerItemsMock.mockResolvedValue(0)
 
     const result = await clearOrphanOwnerBuckets()
     expect(result).toEqual({ clearedBuckets: 1, clearedItems: 2 })
     expect(replaceOwnerItemsMock).toHaveBeenCalledWith(orphanId, [])
     expect(replaceOwnerItemsMock).not.toHaveBeenCalledWith(accountId, [])
+    expect(invalidateBookmarkSyncAlignmentCacheMock).toHaveBeenCalledOnce()
+    expect(resetChromeBookmarkImportAfterLocalClearMock).not.toHaveBeenCalled()
+  })
+
+  it('孤儿桶含书签行 → 清空后重置导入状态并失效对齐缓存', async () => {
+    listOwnerBucketSummariesMock.mockResolvedValue([
+      { ownerId: orphanId, activeCount: 1, totalCount: 1 }
+    ])
+    listAllByOwnerIdMock.mockResolvedValue([{ id: 'bm', type: 'bookmark' }])
+    replaceOwnerItemsMock.mockResolvedValue(0)
+    resetChromeBookmarkImportAfterLocalClearMock.mockResolvedValue(undefined)
+
+    const result = await clearOrphanOwnerBuckets()
+    expect(result.clearedItems).toBe(1)
+    expect(invalidateBookmarkSyncAlignmentCacheMock).toHaveBeenCalledOnce()
+    expect(resetChromeBookmarkImportAfterLocalClearMock).toHaveBeenCalledOnce()
+  })
+
+  it('孤儿桶仅摘录 → 失效对齐缓存但不重置导入状态', async () => {
+    listOwnerBucketSummariesMock.mockResolvedValue([
+      { ownerId: orphanId, activeCount: 2, totalCount: 2 }
+    ])
+    listAllByOwnerIdMock.mockResolvedValue([
+      { id: 'e1', type: 'text_excerpt' },
+      { id: 'e2', type: 'text_excerpt' }
+    ])
+    replaceOwnerItemsMock.mockResolvedValue(0)
+
+    await clearOrphanOwnerBuckets()
+    expect(invalidateBookmarkSyncAlignmentCacheMock).toHaveBeenCalledOnce()
+    expect(resetChromeBookmarkImportAfterLocalClearMock).not.toHaveBeenCalled()
   })
 })

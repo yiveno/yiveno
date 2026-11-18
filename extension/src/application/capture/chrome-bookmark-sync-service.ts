@@ -389,6 +389,11 @@ export async function reconcileChromeBookmarksWithMemory(): Promise<{
     }
   }
 
+  // 有补洞写入时失效对齐缓存，避免 Library 仍显示「未进入记忆」
+  if (upserted > 0) {
+    invalidateBookmarkSyncAlignmentCache()
+  }
+
   logger.info('ChromeBookmarkSync', 'reconcile 完成', {
     leafCount: leaves.length,
     upserted,

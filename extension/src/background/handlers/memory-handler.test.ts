@@ -84,6 +84,9 @@ describe('memory-handler', () => {
   })
 
   it('handleCaptureBookmark 写入并返回 MemoryItem', async () => {
+    const alignmentCache = await import('@/application/memory/bookmark-sync-alignment-cache')
+    const invalidateSpy = vi.spyOn(alignmentCache, 'invalidateBookmarkSyncAlignmentCache')
+
     const response = await handleCaptureBookmark({
       title: 'Yiveno',
       url: 'https://yiveno.com'
@@ -99,6 +102,8 @@ describe('memory-handler', () => {
       return
     }
     expect(response.item.payload.title).toBe('Yiveno')
+    expect(invalidateSpy).toHaveBeenCalledOnce()
+    invalidateSpy.mockRestore()
   })
 
   it('handleListMemoryItems 返回当前用户条目', async () => {

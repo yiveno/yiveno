@@ -101,4 +101,85 @@ describe('chrome-bookmark-bulk-import', () => {
     expect(chromeIds).toContain('3')
     expect(chromeIds).not.toContain('2')
   })
+
+  it('offset 0 扫除同 chromeBookmarkId 多活行并保留有 note 的一行', async () => {
+    const shared = {
+      title: 'Dup',
+      url: 'https://example.com/dup',
+      chromeBookmarkId: '99'
+    }
+    const a = await memoryItemRepository.createBookmark({
+      payload: shared,
+      captureEntry: 'sync',
+      now: () => '2026-01-01T00:00:00.000Z'
+    })
+    await memoryItemRepository.updateNote(a.id, '保留附注')
+    await memoryItemRepository.createBookmark({
+      payload: shared,
+      captureEntry: 'sync',
+      now: () => '2026-01-02T00:00:00.000Z'
+    })
+    await memoryItemRepository.createBookmark({
+      payload: shared,
+      captureEntry: 'sync',
+      now: () => '2026-01-03T00:00:00.000Z'
+    })
+    expect(
+      await memoryItemRepository.listByOwner({ type: 'bookmark', limit: Number.MAX_SAFE_INTEGER })
+    ).toHaveLength(3)
+
+    await bulkPutChromeBookmarkLeaves([
+      {
+        chromeBookmarkId: '99',
+        title: 'Dup',
+        url: 'https://example.com/dup'
+      }
+    ])
+
+    const stored = await memoryItemRepository.listByOwner({
+      type: 'bookmark',
+      limit: Number.MAX_SAFE_INTEGER
+    })
+    expect(stored).toHaveLength(1)
+    expect(stored[0]?.clues.note).toBe('保留附注')
+  })
+
+  it('连续两次 offset 0 bulk 导入行数恒等于叶子数', async () => {
+    const leaves = createLeaves(5)
+    await bulkPutChromeBookmarkLeaves(leaves)
+    await bulkPutChromeBookmarkLeaves(leaves)
+    const stored = await memoryItemRepository.listByOwner({
+      type: 'bookmark',
+      limit: Number.MAX_SAFE_INTEGER
+    })
+    expect(stored).toHaveLength(5)
+  })
+
+  it('续传 startOffset>0 不跑扫除（既有行保留、仅 upsert 语义由上层负责）', async () => {
+    const shared = {
+      title: 'Keep dups on resume',
+      url: 'https://example.com/resume-dup',
+      chromeBookmarkId: '77'
+    }
+    await memoryItemRepository.createBookmark({
+      payload: shared,
+      captureEntry: 'sync',
+      now: () => '2026-01-01T00:00:00.000Z'
+    })
+    await memoryItemRepository.createBookmark({
+      payload: shared,
+      captureEntry: 'sync',
+      now: () => '2026-01-02T00:00:00.000Z'
+    })
+
+    // startOffset>0：不扫除；叶子切片为空时不写
+    await bulkPutChromeBookmarkLeaves(createLeaves(2), 2)
+    const stored = await memoryItemRepository.listByOwner({
+      type: 'bookmark',
+      limit: Number.MAX_SAFE_INTEGER
+    })
+    expect(
+      stored.filter(item => item.type === 'bookmark' && item.payload.chromeBookmarkId === '77')
+    ).toHaveLength(2)
+  })
 })

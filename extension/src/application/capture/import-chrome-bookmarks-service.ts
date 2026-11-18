@@ -7,6 +7,7 @@ import {
   writeChromeBookmarkImportState
 } from '@/application/capture/chrome-bookmark-bulk-import'
 import { finalizeChromeBookmarkSyncAfterImport } from '@/application/capture/chrome-bookmark-sync-service'
+import { invalidateBookmarkSyncAlignmentCache } from '@/application/memory/bookmark-sync-alignment-cache'
 import { readChromeBookmarkLeaves } from '@/infrastructure/browser/chrome-bookmark-reader'
 import { getUserSettings } from '@/infrastructure/settings/user-settings-service'
 import { logger } from '@/infrastructure/logging/logger'
@@ -19,8 +20,17 @@ function yieldToEventLoop(): Promise<void> {
 
 let importInFlight: Promise<ChromeBookmarkImportState> | null = null
 
-/** 本 SW 会话是否已调度过「灌库开 → ensure 补洞」（避免 status 轮询重复全量 reconcile）。 */
-let ensureHoleHealScheduledThisSwSession = false
+/**
+ * 本 SW 会话是否已对终态（completed / failed）跑过调度 ensure。
+ * running / pending / ingest OFF 不置位，便于卡住的 running 被后续 status 读取续跑。
+ */
+let ensureHoleHealTerminalConsumedThisSwSession = false
+
+/** 调度入口在途去重：同一 tick 多次 schedule 只进一次异步工作。 */
+let ensureHoleHealScheduleInFlight = false
+
+/** 当前在途调度 Promise（测试排空用；生产忽略）。 */
+let ensureHoleHealSchedulePromise: Promise<void> | null = null
 
 /** 读取当前 Chrome 书签导入进度（不触发导入）。 */
 export async function getChromeBookmarkImportStatus(): Promise<ChromeBookmarkImportState | null> {
@@ -28,37 +38,68 @@ export async function getChromeBookmarkImportStatus(): Promise<ChromeBookmarkImp
 }
 
 /**
- * 导入已授权时，每 SW 会话最多调度一次 ensure（completed → finalize；未完成 → 续跑 bulk）。
- * 门仍查 ingest（一次性导入授权）：ingest 开 + sync 关时仍须补洞/续传，避免空库残留；
- * finalize 内 reconcile/repair 另受 sync 门禁，不会在未同意同步时拉新书签。
- * 堵住：Memory 被清空/丢库后 import 仍标 completed、冷启动 ready 早退不再补洞。
+ * 导入已授权时调度 ensure（completed → finalize；running/pending → 续跑 bulk）。
+ * 终态（completed/failed）本会话只自动跑一次；failed 不风暴重试（显式 ENSURE 消息直调 ensure，不受本守卫）。
+ * 门仍查 ingest：ingest 开 + sync 关时仍须补洞/续传；finalize 内 reconcile 另受 sync 门禁。
  */
 export function scheduleEnsureChromeBookmarksImportedIfNeeded(reason: string): void {
-  if (ensureHoleHealScheduledThisSwSession) {
+  if (ensureHoleHealScheduleInFlight) {
     return
   }
-  ensureHoleHealScheduledThisSwSession = true
-  void (async () => {
+  ensureHoleHealScheduleInFlight = true
+  ensureHoleHealSchedulePromise = (async () => {
     try {
       const settings = await getUserSettings()
       if (!settings.chromeBookmarkIngestEnabled) {
-        // 未授权导入：允许本会话稍后授权时再调度
-        ensureHoleHealScheduledThisSwSession = false
+        // 未授权：不置终态标志，稍后授权仍可再调度
         return
       }
-      await ensureChromeBookmarksImported()
-      logger.info('ChromeBookmarkImport', '会话级书签补洞 ensure 完成', { reason })
-    } catch (error) {
-      ensureHoleHealScheduledThisSwSession = false
-      logger.warn('ChromeBookmarkImport', '会话级书签补洞 ensure 失败', { reason, error })
+      const existing = await readChromeBookmarkImportState()
+      if (
+        (existing?.status === 'completed' || existing?.status === 'failed') &&
+        ensureHoleHealTerminalConsumedThisSwSession
+      ) {
+        return
+      }
+      try {
+        const state = await ensureChromeBookmarksImported()
+        if (state.status === 'completed' || state.status === 'failed') {
+          ensureHoleHealTerminalConsumedThisSwSession = true
+        }
+        logger.info('ChromeBookmarkImport', '会话级书签补洞 ensure 完成', { reason })
+      } catch (error) {
+        const afterFailure = await readChromeBookmarkImportState()
+        if (afterFailure?.status === 'completed' || afterFailure?.status === 'failed') {
+          ensureHoleHealTerminalConsumedThisSwSession = true
+        }
+        logger.warn('ChromeBookmarkImport', '会话级书签补洞 ensure 失败', { reason, error })
+      }
+    } finally {
+      ensureHoleHealScheduleInFlight = false
     }
   })()
+}
+
+/** 测试用：排空在途 schedule，避免测间标志竞态。 */
+export async function flushScheduledChromeBookmarkEnsureForTests(): Promise<void> {
+  for (let i = 0; i < 20; i += 1) {
+    const pending = ensureHoleHealSchedulePromise
+    if (!pending && !ensureHoleHealScheduleInFlight) {
+      return
+    }
+    if (pending) {
+      await pending
+    }
+    await new Promise<void>(resolve => {
+      setTimeout(resolve, 0)
+    })
+  }
 }
 
 /** 清本机记忆时抹掉导入进度，便于重新开启后整树 bulk。 */
 export async function resetChromeBookmarkImportAfterLocalClear(): Promise<void> {
   await clearChromeBookmarkImportState()
-  ensureHoleHealScheduledThisSwSession = false
+  ensureHoleHealTerminalConsumedThisSwSession = false
   logger.info('ChromeBookmarkImport', '已清除书签导入进度（随清本机记忆）')
 }
 
@@ -183,6 +224,9 @@ async function runChromeBookmarkImport(
       importedCount = await bulkPutChromeBookmarkLeaves(leaves, 0, onProgress)
     }
 
+    // 写阶段已落库：失效对齐缓存，避免 Library「未进入记忆」要重载扩展才更新
+    invalidateBookmarkSyncAlignmentCache()
+
     const completed: ChromeBookmarkImportState = {
       status: 'completed',
       importedCount,
@@ -201,6 +245,10 @@ async function runChromeBookmarkImport(
 
     return completed
   } catch (error) {
+    // 失败前可能已有部分 batch 写入，同样失效
+    if (failurePhase === 'write') {
+      invalidateBookmarkSyncAlignmentCache()
+    }
     const errorCode =
       failurePhase === 'read' ? 'BOOKMARK_IMPORT_READ_FAILED' : 'BOOKMARK_IMPORT_WRITE_FAILED'
     const failed: ChromeBookmarkImportState = {

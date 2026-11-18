@@ -17,7 +17,8 @@ const {
   clearSubscriptionSnapshotMock,
   ensureMemoryCloudSyncAlarmMock,
   clearAccountLibraryOnSignOutMock,
-  clearExtensionUninstallRevokeMock
+  clearExtensionUninstallRevokeMock,
+  invalidateBookmarkSyncAlignmentCacheMock
 } = vi.hoisted(() => ({
   clearAuthSessionMock: vi.fn(),
   getAccountBindingMock: vi.fn(),
@@ -35,7 +36,8 @@ const {
   clearSubscriptionSnapshotMock: vi.fn(),
   ensureMemoryCloudSyncAlarmMock: vi.fn(),
   clearAccountLibraryOnSignOutMock: vi.fn(),
-  clearExtensionUninstallRevokeMock: vi.fn(async () => true)
+  clearExtensionUninstallRevokeMock: vi.fn(async () => true),
+  invalidateBookmarkSyncAlignmentCacheMock: vi.fn()
 }))
 
 vi.mock('@/infrastructure/identity/auth-session-service', () => ({
@@ -108,6 +110,10 @@ vi.mock('@/infrastructure/logging/flow-log', () => ({
   flowStart: () => 0,
   flowOk: vi.fn(),
   flowFail: vi.fn()
+}))
+
+vi.mock('@/application/memory/bookmark-sync-alignment-cache', () => ({
+  invalidateBookmarkSyncAlignmentCache: invalidateBookmarkSyncAlignmentCacheMock
 }))
 
 import { handleAuthSignOut } from '@/background/handlers/account-sync-handler'
@@ -205,6 +211,7 @@ describe('handleAuthSignOut', () => {
       releasedToLocalCount: 0
     })
     expect(replaceOwnerItemsMock).toHaveBeenCalledWith(accountId, [])
+    expect(invalidateBookmarkSyncAlignmentCacheMock).toHaveBeenCalledOnce()
     expect(clearAccountLibraryOnSignOutMock).not.toHaveBeenCalled()
   })
 

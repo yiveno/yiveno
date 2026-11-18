@@ -1134,9 +1134,6 @@
   "settings_language_saving": {
     "message": "正在更新语言…"
   },
-  "settings_placeholder_privacy": {
-    "message": "隐私选项尚未开放。"
-  },
   "settings_data_group_backup": {
     "message": "备份"
   },
@@ -1381,23 +1378,8 @@
   "settings_mcp_remote_sync_failed": {
     "message": "无法将 MCP 开关同步到云端。本机设置已保存——联网后再试。"
   },
-  "settings_privacy_ack": {
-    "message": "我已了解本说明"
-  },
-  "settings_privacy_ack_done": {
-    "message": "确认已保存。你可以开启云同步。"
-  },
-  "settings_privacy_ack_status_done": {
-    "message": "当前说明版本：已确认"
-  },
-  "settings_privacy_ack_status_needed": {
-    "message": "当前说明版本：尚未确认（开启同步前必须确认）"
-  },
   "settings_privacy_sync_confirm": {
     "message": "开启云同步会将本机摘录与账号对齐（可能上传）。已同步摘录存储在美国（美东 / 俄亥俄）。书签仍留在本机浏览器。请确认已阅读隐私政策。继续？"
-  },
-  "settings_privacy_open_sync": {
-    "message": "打开账号与同步"
   },
   "settings_privacy_open_policy": {
     "message": "阅读完整隐私政策"
@@ -1512,9 +1494,6 @@
   "settings_error_local_export": {
     "message": "无法导出本机记忆"
   },
-  "settings_placeholder_ai": {
-    "message": "AI 选项尚未开放。"
-  },
   "settings_ai_intro": {
     "message": "帮助理解你输入的内容，并填写少量字段。你保存的内容始终是事实来源。"
   },
@@ -1584,28 +1563,8 @@
   "settings_upcoming_ai": {
     "message": "AI — 尚未开放"
   },
-  "settings_section_account": {
-    "message": "账号"
-  },
-  "settings_section_account_copy": {
-    "message": "在 Yiveno 网站登录。扩展只同步登录状态 — 在你开启同步前不会上传记忆。"
-  },
-  "settings_account_signed_out": {
-    "message": "未登录"
-  },
-  "settings_account_signed_in": {
-    "message": "已登录为 $EMAIL$",
-    "placeholders": {
-      "EMAIL": {
-        "content": "$1"
-      }
-    }
-  },
   "settings_account_sign_in_hint": {
     "message": "未登录。登录后可管理同步与云端记忆。"
-  },
-  "settings_account_sign_in_website": {
-    "message": "在网站登录"
   },
   "settings_account_waiting_website": {
     "message": "请在浏览器标签页完成登录，然后回到这里。"
@@ -1662,12 +1621,6 @@
   },
   "settings_sign_out_clear_local_hint": {
     "message": "同时移除此账号在本机绑定的书签（不会重映射）。若从未同步则无法恢复。"
-  },
-  "settings_sign_out_sync_then_clear": {
-    "message": "同步到云端，然后退出并清空本机"
-  },
-  "settings_sign_out_sync_then_clear_hint": {
-    "message": "高级 — 用本机覆盖云端，然后清空本机副本"
   },
   "settings_sign_out_sync_then_clear_disabled": {
     "message": "本机没有可上传的内容"
@@ -2110,6 +2063,9 @@
   },
   "library_bookmark_import_retry": {
     "message": "重新导入"
+  },
+  "library_bookmark_import_ingest_off": {
+    "message": "Chrome 书签导入未开启。请在设置 → 保存中开启导入，然后再点重新导入。"
   },
   "library_bookmark_unsynced": {
     "message": "未进入记忆"
@@ -3070,11 +3026,11 @@
   "settings_toggle_chrome_bookmark_sync_hint": {
     "message": "开启后将导入现有书签并保持同步；关闭后停止同步，已导入的内容保留。"
   },
+  "settings_chrome_bookmark_reimport_title": {
+    "message": "Chrome 书签"
+  },
   "settings_action_reimport_chrome_bookmarks": {
     "message": "重新导入书签"
-  },
-  "settings_action_reimport_chrome_bookmarks_hint": {
-    "message": "补导上次导入后新增的书签；在 Yiveno 里删除过的不再导回。"
   },
   "settings_reimport_chrome_bookmarks_done": {
     "message": "重新导入完成。"

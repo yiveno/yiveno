@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import {
   isLibraryBookmarkImportFailed,
-  isLibraryBookmarkImporting
+  isLibraryBookmarkImporting,
+  resolveLibraryBookmarkRetryBlockedReason
 } from '@/pages/library/library-bookmark-import-ui'
 
 describe('isLibraryBookmarkImporting', () => {
@@ -28,5 +29,19 @@ describe('isLibraryBookmarkImportFailed', () => {
     expect(isLibraryBookmarkImportFailed('running')).toBe(false)
     expect(isLibraryBookmarkImportFailed('pending')).toBe(false)
     expect(isLibraryBookmarkImportFailed('completed')).toBe(false)
+  })
+})
+
+describe('resolveLibraryBookmarkRetryBlockedReason', () => {
+  it('false → ingest_off', () => {
+    expect(resolveLibraryBookmarkRetryBlockedReason(false)).toBe('ingest_off')
+  })
+
+  it('true → null', () => {
+    expect(resolveLibraryBookmarkRetryBlockedReason(true)).toBe(null)
+  })
+
+  it('undefined → null（fail-open）', () => {
+    expect(resolveLibraryBookmarkRetryBlockedReason(undefined)).toBe(null)
   })
 })

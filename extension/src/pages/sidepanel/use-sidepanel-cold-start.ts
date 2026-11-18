@@ -27,7 +27,7 @@ import {
 import { getTimeOfDayGreeting } from '@/core/recall/time-of-day-greeting'
 import { openGettingStartedPage } from '@/infrastructure/browser/extension-pages'
 import { focusOrOpenSettingsTab } from '@/infrastructure/browser/extension-tab'
-import { SETTINGS_HASH_CHROME_BOOKMARK_INGEST } from '@/core/settings/settings-sections'
+import { SETTINGS_HASH_CHROME_BOOKMARK_SYNC } from '@/core/settings/settings-sections'
 import { t } from '@/infrastructure/i18n/t'
 import {
   readColdStartPostReleaseBannerDismissedReadyAt,
@@ -457,7 +457,7 @@ export function useSidepanelColdStart(
 
   /** 空库「导入书签」→ Settings 保存分区书签灌库开关。 */
   function handleOpenBookmarkIngestSettings(): void {
-    void focusOrOpenSettingsTab({ hash: SETTINGS_HASH_CHROME_BOOKMARK_INGEST })
+    void focusOrOpenSettingsTab({ hash: SETTINGS_HASH_CHROME_BOOKMARK_SYNC })
   }
 
   function handleOpenAiSettings(): void {

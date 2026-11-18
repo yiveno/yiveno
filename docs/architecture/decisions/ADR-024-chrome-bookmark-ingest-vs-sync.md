@@ -23,7 +23,7 @@ downstream: extension/src/core/settings/user-settings.ts, chrome-bookmark-sync-s
 
 1. **两键：** `chromeBookmarkIngestEnabled` = 一次性导入授权记录（默认关）；`chromeBookmarkSyncEnabled` = 持续同步（默认关）。
 2. **GS：** 同意只置 ingest → 立即 bulk；导入完成后可建议开 sync（可 dismissal）；不暗开 sync。
-3. **Settings：** 主开关 = sync（开时披露并导入现有；关只卸监听）；ingest 已开时提供「重新导入」；锚点 `#chrome-bookmark-ingest` 保留。
+3. **Settings：** 主开关 = sync（开时披露并导入现有；关只卸监听）；ingest 已开时提供「重新导入」；锚点 `#chrome-bookmark-sync`。
 4. **门禁：** 监听 / repair alarm / reconcile·repair = sync；会话级 ensure 补洞仍查 ingest（finalize 内对账仍受 sync）。
 5. **迁移：** 存量缺 `chromeBookmarkSyncEnabled` 时 `sync = ingest`。
 

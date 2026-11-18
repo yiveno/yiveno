@@ -27,10 +27,10 @@ export interface SettingsSectionTabDef {
 export const DEFAULT_SETTINGS_SECTION: SettingsSectionId = 'capture'
 
 /**
- * Settings 深链 hash：滚到书签灌库开关（Side Panel 空库「导入」链接）。
+ * Settings 深链 hash：滚到书签持续同步开关（Side Panel 空库「同步书签」链接）。
  * 对应 DOM `id`；打开 `settings.html#…`（capture 为默认分区，无需 `?section=`）。
  */
-export const SETTINGS_HASH_CHROME_BOOKMARK_INGEST = 'chrome-bookmark-ingest' as const
+export const SETTINGS_HASH_CHROME_BOOKMARK_SYNC = 'chrome-bookmark-sync' as const
 
 /** URL 查询参数：设置分区（刷新后恢复）。 */
 export const SETTINGS_SECTION_QUERY_KEY = 'section'
