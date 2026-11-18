@@ -47,7 +47,7 @@ async function consumeEmbedDailyQuota(
   userId: string,
   isPro: boolean
 ): Promise<
-  | { allowed: true; used: number; limit: number }
+  | { allowed: true; used: number; limit: number; degraded?: true }
   | { allowed: false; used: number; limit: number; reason: 'quota_exceeded' | 'kv_not_configured' }
 > {
   const envKey = isPro ? env.AI_EMBED_DAILY_LIMIT : env.AI_EMBED_FREE_DAILY_LIMIT
@@ -60,14 +60,21 @@ async function consumeEmbedDailyQuota(
   }
 
   const key = `embed_ai:${userId}:${utcDayKey()}`
-  const raw = await kv.get(key)
-  const used = raw ? Number.parseInt(raw, 10) || 0 : 0
-  if (used >= dailyLimit) {
-    return { allowed: false, used, limit: dailyLimit, reason: 'quota_exceeded' }
-  }
+  // 配额是防刷守卫，不是核心操作：KV 读写故障（含同 key 写限流）时 fail-open，
+  // 避免守卫击穿请求变成 500。故障期间不强制配额；used 报告 0（未知、未计数）。
+  try {
+    const raw = await kv.get(key)
+    const used = raw ? Number.parseInt(raw, 10) || 0 : 0
+    if (used >= dailyLimit) {
+      return { allowed: false, used, limit: dailyLimit, reason: 'quota_exceeded' }
+    }
 
-  await kv.put(key, String(used + 1), { expirationTtl: 60 * 60 * 48 })
-  return { allowed: true, used: used + 1, limit: dailyLimit }
+    await kv.put(key, String(used + 1), { expirationTtl: 60 * 60 * 48 })
+    return { allowed: true, used: used + 1, limit: dailyLimit }
+  } catch (err) {
+    logError(err, { path: '/api/ai/embed', userId })
+    return { allowed: true, used: 0, limit: dailyLimit, degraded: true }
+  }
 }
 
 type AiEmbeddingResponse = {
@@ -169,7 +176,9 @@ export async function handleEmbed(request: Request, env: Env, userId: string): P
           quota: {
             used: quota.used,
             limit: quota.limit,
-            remaining: Math.max(0, quota.limit - quota.used)
+            remaining: Math.max(0, quota.limit - quota.used),
+            // degraded：KV 故障 fail-open；used=0 表示未知未计数（additive，不破坏旧字段）
+            ...(quota.degraded ? { degraded: true as const } : {})
           }
         }
       },

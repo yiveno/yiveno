@@ -129,4 +129,77 @@ describe('handleEmbed', () => {
     const json = (await response.json()) as { error: string }
     expect(json.error).toBe('ai_binding_missing')
   })
+
+  test('kv.get 抛错 → fail-open 200 + quota.degraded', async () => {
+    mock.module('../services/ai/require-pro-user', () => ({
+      isActiveProUser: async () => false
+    }))
+    const { handleEmbed: handle } = await import('./ai-embed')
+    const kv = {
+      get: async () => {
+        throw new Error('kv_get_rate_limited')
+      },
+      put: async () => {
+        throw new Error('should_not_put')
+      }
+    }
+    const response = await handle(
+      new Request('http://localhost/api/ai/embed', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ texts: ['hello'] })
+      }),
+      createEnv({ AI_USAGE_KV: kv }),
+      'user-kv-get-fail'
+    )
+    expect(response.status).toBe(200)
+    const json = (await response.json()) as {
+      success: boolean
+      data: {
+        embeddings: number[][]
+        quota: { used: number; limit: number; remaining: number; degraded?: boolean }
+      }
+    }
+    expect(json.success).toBe(true)
+    expect(json.data.embeddings).toHaveLength(1)
+    expect(json.data.quota.degraded).toBe(true)
+    expect(json.data.quota.used).toBe(0)
+    expect(json.data.quota.limit).toBe(100)
+    expect(json.data.quota.remaining).toBe(100)
+  })
+
+  test('kv.put 抛错 → fail-open 200 + quota.degraded', async () => {
+    mock.module('../services/ai/require-pro-user', () => ({
+      isActiveProUser: async () => false
+    }))
+    const { handleEmbed: handle } = await import('./ai-embed')
+    const kv = {
+      get: async () => null,
+      put: async () => {
+        throw new Error('kv_put_rate_limited')
+      }
+    }
+    const response = await handle(
+      new Request('http://localhost/api/ai/embed', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ texts: ['hello'] })
+      }),
+      createEnv({ AI_USAGE_KV: kv }),
+      'user-kv-put-fail'
+    )
+    expect(response.status).toBe(200)
+    const json = (await response.json()) as {
+      success: boolean
+      data: {
+        embeddings: number[][]
+        quota: { used: number; limit: number; remaining: number; degraded?: boolean }
+      }
+    }
+    expect(json.success).toBe(true)
+    expect(json.data.embeddings).toHaveLength(1)
+    expect(json.data.quota.degraded).toBe(true)
+    expect(json.data.quota.used).toBe(0)
+    expect(json.data.quota.limit).toBe(100)
+  })
 })
