@@ -385,4 +385,28 @@ describe('memory-handler', () => {
     expect(fetched.item.clues.dismissCount).toBe(1)
     expect(fetched.item.clues.lastDismissedAt).toBeTruthy()
   })
+
+  it('handleListMemoryItems 透传 offset 给 service.list', async () => {
+    const { memoryItemService } = await import('@/application/memory/memory-item-service')
+    const listSpy = vi.spyOn(memoryItemService, 'list').mockResolvedValue([])
+    const countSpy = vi.spyOn(memoryItemService, 'countActive').mockResolvedValue(0)
+    try {
+      const response = await handleListMemoryItems({
+        type: 'text_excerpt',
+        limit: 200,
+        offset: 200
+      })
+      expect(response.ok).toBe(true)
+      expect(listSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'text_excerpt',
+          limit: 200,
+          offset: 200
+        })
+      )
+    } finally {
+      listSpy.mockRestore()
+      countSpy.mockRestore()
+    }
+  })
 })

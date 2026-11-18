@@ -5,6 +5,11 @@ import AppButton from '@/infrastructure/ui/AppButton.vue'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
 import AppSwitch from '@/infrastructure/ui/AppSwitch.vue'
 import SettingsActionRow from '@/pages/settings/SettingsActionRow.vue'
+import SettingsThirdPartySourceGroup from '@/pages/settings/SettingsThirdPartySourceGroup.vue'
+import {
+  formatDualThreadLearningTimingMs,
+  resolveDualThreadLearningLabel
+} from '@/pages/settings/dual-thread-learning-label'
 import type { SettingsPageController } from '@/pages/settings/use-settings-page'
 
 defineOptions({ name: 'SettingsSectionPanels' })
@@ -31,6 +36,8 @@ const {
   aiFeaturesEnabled,
   linkStatusSweepEnabled,
   chromeBookmarkIngestEnabled,
+  chromeBookmarkImportStatusCopy,
+  chromeBookmarkImportStatusKind,
   chromeBookmarkSyncEnabled,
   commandRows,
   commandsError,
@@ -41,10 +48,10 @@ const {
   handleLinkStatusSweepToggle,
   handleChromeBookmarkSyncToggle,
   handleReimportChromeBookmarks,
+  handleSignIn,
   handleClearLocalMemory,
   handleClearLocalRecallAdaptation,
   handleClearOrphans,
-  handleDeleteThirdPartyCorpus,
   handleRecallOutcomePairSoftAdjustToggle,
   handleDeleteCloudMemory,
   handleExportLocalMemory,
@@ -99,8 +106,12 @@ const {
   savingAiFeatures,
   savingLinkStatusSweep,
   savingChromeBookmarkSync,
+  loadCommands,
+  loadThirdPartyCorpusSummary,
+  loadUserSettings,
   reimportChromeBookmarksBusy,
   reimportChromeBookmarksDone,
+  reimportChromeBookmarksDoneText,
   savingMcpReadOnly,
   savingRecallOutcomeSoftAdjust,
   savingDualThreadLocalLearning,
@@ -112,6 +123,7 @@ const {
   settingsError,
   settingsState,
   signedIn,
+  signingIn,
   signingOut,
   subscriptionIsPro,
   syncEnabled,
@@ -121,9 +133,8 @@ const {
   t,
   termsOfServiceUrl,
   thirdPartyCorpusSummary,
-  thirdPartyDeleteWorking,
   thirdPartyImportWorking,
-  thirdPartySourceStatusCopy
+  thirdPartySummaryLoading
 } = inject<SettingsPageController>('settingsPage')!
 </script>
 
@@ -132,16 +143,21 @@ const {
     <div class="settings-block" aria-labelledby="settings-capture-heading">
       <div class="settings-section-head">
         <h2 id="settings-capture-heading" class="settings-section-title">
-          {{ t('settings_section_capture') }}
+          {{ t('settings_tab_capture') }}
         </h2>
       </div>
 
       <p v-if="settingsState === 'loading'" class="settings-status" role="status">
         {{ t('settings_loading') }}
       </p>
-      <p v-else-if="settingsState === 'error'" class="settings-error" role="alert">
-        {{ settingsError }}
-      </p>
+      <template v-else-if="settingsState === 'error'">
+        <p class="settings-error" role="alert">
+          {{ settingsError }}
+        </p>
+        <AppButton type="button" variant="outlined" @click="loadUserSettings">
+          {{ t('action_retry') }}
+        </AppButton>
+      </template>
 
       <template v-else>
         <div class="settings-card-stack">
@@ -149,6 +165,9 @@ const {
             <div class="settings-toggle-copy">
               <span class="settings-toggle-title">{{
                 t('settings_toggle_selection_toolbar')
+              }}</span>
+              <span class="settings-toggle-hint">{{
+                t('settings_toggle_selection_toolbar_hint')
               }}</span>
             </div>
             <AppSwitch
@@ -163,6 +182,12 @@ const {
               <span class="settings-toggle-title">{{
                 t('settings_toggle_chrome_bookmark_sync')
               }}</span>
+              <span class="settings-toggle-hint">{{
+                t('settings_chrome_bookmark_sync_intro')
+              }}</span>
+              <span v-if="chromeBookmarkSyncEnabled" class="settings-toggle-hint">{{
+                t('settings_chrome_bookmark_sync_off_note')
+              }}</span>
             </div>
             <AppSwitch
               :aria-label="t('settings_toggle_chrome_bookmark_sync')"
@@ -171,13 +196,30 @@ const {
               @update:model-value="handleChromeBookmarkSyncToggle"
             />
           </div>
+          <p
+            v-if="chromeBookmarkImportStatusKind !== 'none'"
+            :class="
+              chromeBookmarkImportStatusKind === 'query_failed' ||
+              chromeBookmarkImportStatusKind === 'failed'
+                ? 'settings-error'
+                : 'settings-section-copy'
+            "
+            :role="
+              chromeBookmarkImportStatusKind === 'query_failed' ||
+              chromeBookmarkImportStatusKind === 'failed'
+                ? 'alert'
+                : 'status'
+            "
+          >
+            {{ chromeBookmarkImportStatusCopy }}
+          </p>
           <div v-if="chromeBookmarkIngestEnabled" class="settings-toggle">
             <div class="settings-toggle-copy">
               <span class="settings-toggle-title">{{
                 t('settings_action_reimport_chrome_bookmarks')
               }}</span>
               <span v-if="reimportChromeBookmarksDone" class="settings-toggle-hint" role="status">
-                {{ t('settings_reimport_chrome_bookmarks_done') }}
+                {{ reimportChromeBookmarksDoneText }}
               </span>
             </div>
             <AppButton
@@ -206,123 +248,34 @@ const {
         </h2>
       </div>
 
-      <section class="settings-group" :aria-label="t('settings_data_import_raindrop')">
-        <h3 class="settings-group__label">{{ t('settings_data_import_raindrop') }}</h3>
-        <div class="settings-group__card">
-          <SettingsActionRow surface="embedded" :title="t('settings_data_import_raindrop')">
-            <input
-              :ref="bindRaindropFileInput"
-              type="file"
-              class="settings-file-input"
-              accept=".html,.htm,.csv,.json,text/html,text/csv,application/json"
-              :aria-label="t('settings_data_import_raindrop')"
-              @change="handleRaindropFileSelected"
-            />
-            <AppButton
-              type="button"
-              :disabled="
-                thirdPartyImportWorking ||
-                restoreWorking ||
-                dataWorking ||
-                exportWorking ||
-                signingOut
-              "
-              :title="t('settings_data_import_raindrop')"
-              variant="outlined"
-              @click="handlePickRaindropImportFile"
-            >
-              {{
-                thirdPartyImportWorking
-                  ? t('settings_privacy_working')
-                  : t('settings_data_import_action')
-              }}
-            </AppButton>
-          </SettingsActionRow>
-          <p class="settings-section-copy settings-third-party-status" role="status">
-            {{ thirdPartySourceStatusCopy('raindrop') }}
-          </p>
-          <SettingsActionRow surface="embedded" :title="t('settings_third_party_delete_all')">
-            <AppButton
-              type="button"
-              variant="outlined"
-              :disabled="
-                (thirdPartyCorpusSummary?.raindrop.count ?? 0) <= 0 ||
-                thirdPartyDeleteWorking ||
-                thirdPartyImportWorking ||
-                dataWorking ||
-                signingOut
-              "
-              :title="t('settings_third_party_delete_all')"
-              @click="handleDeleteThirdPartyCorpus('raindrop')"
-            >
-              {{
-                thirdPartyDeleteWorking
-                  ? t('settings_privacy_working')
-                  : t('settings_third_party_delete_all')
-              }}
-            </AppButton>
-          </SettingsActionRow>
-        </div>
-      </section>
+      <SettingsThirdPartySourceGroup
+        source="raindrop"
+        title-key="settings_data_import_raindrop"
+        guide-key="settings_third_party_import_raindrop_guide"
+        accept=".html,.htm,.csv,.json,text/html,text/csv,application/json"
+        :bind-file-input="bindRaindropFileInput"
+        :on-pick-file="handlePickRaindropImportFile"
+        :on-file-selected="handleRaindropFileSelected"
+      />
 
-      <section class="settings-group" :aria-label="t('settings_data_import_pocket')">
-        <h3 class="settings-group__label">{{ t('settings_data_import_pocket') }}</h3>
-        <div class="settings-group__card">
-          <SettingsActionRow surface="embedded" :title="t('settings_data_import_pocket')">
-            <input
-              :ref="bindPocketFileInput"
-              type="file"
-              class="settings-file-input"
-              accept=".html,.htm,text/html"
-              :aria-label="t('settings_data_import_pocket')"
-              @change="handlePocketFileSelected"
-            />
-            <AppButton
-              type="button"
-              :disabled="
-                thirdPartyImportWorking ||
-                restoreWorking ||
-                dataWorking ||
-                exportWorking ||
-                signingOut
-              "
-              :title="t('settings_data_import_pocket')"
-              variant="outlined"
-              @click="handlePickPocketImportFile"
-            >
-              {{
-                thirdPartyImportWorking
-                  ? t('settings_privacy_working')
-                  : t('settings_data_import_action')
-              }}
-            </AppButton>
-          </SettingsActionRow>
-          <p class="settings-section-copy settings-third-party-status" role="status">
-            {{ thirdPartySourceStatusCopy('pocket') }}
-          </p>
-          <SettingsActionRow surface="embedded" :title="t('settings_third_party_delete_all')">
-            <AppButton
-              type="button"
-              variant="outlined"
-              :disabled="
-                (thirdPartyCorpusSummary?.pocket.count ?? 0) <= 0 ||
-                thirdPartyDeleteWorking ||
-                thirdPartyImportWorking ||
-                dataWorking ||
-                signingOut
-              "
-              :title="t('settings_third_party_delete_all')"
-              @click="handleDeleteThirdPartyCorpus('pocket')"
-            >
-              {{
-                thirdPartyDeleteWorking
-                  ? t('settings_privacy_working')
-                  : t('settings_third_party_delete_all')
-              }}
-            </AppButton>
-          </SettingsActionRow>
-        </div>
-      </section>
+      <SettingsThirdPartySourceGroup
+        source="pocket"
+        title-key="settings_data_import_pocket"
+        guide-key="settings_third_party_import_pocket_guide"
+        accept=".html,.htm,text/html"
+        :bind-file-input="bindPocketFileInput"
+        :on-pick-file="handlePickPocketImportFile"
+        :on-file-selected="handlePocketFileSelected"
+      />
+
+      <AppButton
+        v-if="thirdPartyCorpusSummary === null && !thirdPartySummaryLoading"
+        type="button"
+        variant="outlined"
+        @click="loadThirdPartyCorpusSummary"
+      >
+        {{ t('action_retry') }}
+      </AppButton>
     </div>
   </template>
 
@@ -330,22 +283,36 @@ const {
     <div class="settings-block" aria-labelledby="settings-shortcuts-heading">
       <div class="settings-section-head">
         <h2 id="settings-shortcuts-heading" class="settings-section-title">
-          {{ t('settings_section_shortcuts') }}
+          {{ t('settings_tab_shortcuts') }}
         </h2>
       </div>
 
       <p v-if="commandsState === 'loading'" class="settings-status" role="status">
         {{ t('settings_commands_loading') }}
       </p>
-      <p v-else-if="commandsState === 'error'" class="settings-error" role="alert">
-        {{ commandsError }}
-      </p>
+      <template v-else-if="commandsState === 'error'">
+        <p class="settings-error" role="alert">
+          {{ commandsError }}
+        </p>
+        <AppButton type="button" variant="outlined" @click="loadCommands">
+          {{ t('action_retry') }}
+        </AppButton>
+      </template>
 
       <template v-else>
         <ul class="settings-command-list">
           <li v-for="row in commandRows" :key="row.name" class="settings-command-row">
             <div class="settings-command-meta">
               <p class="settings-command-title">{{ row.title }}</p>
+              <p v-if="row.unbound" class="settings-command-hint">
+                {{ t('settings_command_unbound_hint') }}
+              </p>
+              <p
+                v-if="row.name === 'save_selection' || row.name === 'save_selection_with_note'"
+                class="settings-command-hint"
+              >
+                {{ t('settings_command_selection_hint') }}
+              </p>
             </div>
             <p
               class="settings-command-shortcut"
@@ -382,14 +349,18 @@ const {
     <div class="settings-block" aria-labelledby="settings-sync-heading">
       <div class="settings-section-head">
         <h2 id="settings-sync-heading" class="settings-section-title">
-          {{ t('settings_section_sync') }}
+          {{ t('settings_tab_account_sync') }}
         </h2>
       </div>
 
-      <div
-        class="settings-toggle"
-        :title="!signedIn ? t('settings_sync_sign_in_required') : undefined"
-      >
+      <div v-if="!signedIn" class="settings-sign-in-row">
+        <p class="settings-section-copy">{{ t('settings_account_sign_in_hint') }}</p>
+        <AppButton type="button" variant="tonal" :disabled="signingIn" @click="handleSignIn">
+          {{ t('nav_sign_in') }}
+        </AppButton>
+      </div>
+
+      <div class="settings-toggle">
         <div class="settings-toggle-copy">
           <span class="settings-toggle-title">{{ t('settings_sync_toggle') }}</span>
         </div>
@@ -402,6 +373,14 @@ const {
       </div>
       <p v-if="signedIn && !subscriptionIsPro" class="settings-status" role="status">
         {{ t('settings_sync_pro_required_hint') }}
+        <a
+          class="settings-privacy-banner__link"
+          :href="pricingUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {{ t('settings_legal_link_pricing') }}
+        </a>
       </p>
 
       <div v-if="signedIn" class="settings-status-strip">
@@ -461,35 +440,33 @@ const {
               }}
             </AppButton>
           </SettingsActionRow>
+        </div>
+      </div>
 
-          <div v-if="hasOrphanOwners" class="settings-orphan">
-            <p class="settings-orphan-title">{{ t('settings_orphan_title') }}</p>
-            <p class="settings-section-copy settings-orphan-copy">
-              {{
-                t('settings_orphan_copy', [String(orphanBucketCount), String(orphanActiveCount)])
-              }}
-            </p>
-            <div class="settings-actions">
-              <AppButton
-                type="button"
-                :disabled="orphanWorking || signingOut || savingSync"
-                :title="t('settings_orphan_export')"
-                variant="outlined"
-                @click="handleExportOrphans"
-              >
-                {{ orphanWorking ? t('settings_orphan_working') : t('settings_orphan_export') }}
-              </AppButton>
-              <AppButton
-                type="button"
-                :disabled="orphanWorking || signingOut || savingSync"
-                :title="t('settings_orphan_clear')"
-                variant="outlined"
-                @click="handleClearOrphans"
-              >
-                {{ orphanWorking ? t('settings_orphan_working') : t('settings_orphan_clear') }}
-              </AppButton>
-            </div>
-          </div>
+      <div v-if="hasOrphanOwners" class="settings-orphan">
+        <p class="settings-orphan-title">{{ t('settings_orphan_title') }}</p>
+        <p class="settings-section-copy settings-orphan-copy">
+          {{ t('settings_orphan_copy', [String(orphanBucketCount), String(orphanActiveCount)]) }}
+        </p>
+        <div class="settings-actions">
+          <AppButton
+            type="button"
+            :disabled="orphanWorking || signingOut || savingSync"
+            :title="t('settings_orphan_export')"
+            variant="outlined"
+            @click="handleExportOrphans"
+          >
+            {{ orphanWorking ? t('settings_orphan_working') : t('settings_orphan_export') }}
+          </AppButton>
+          <AppButton
+            type="button"
+            :disabled="orphanWorking || signingOut || savingSync"
+            :title="t('settings_orphan_clear')"
+            variant="outlined"
+            @click="handleClearOrphans"
+          >
+            {{ orphanWorking ? t('settings_orphan_working') : t('settings_orphan_clear') }}
+          </AppButton>
         </div>
       </div>
 
@@ -504,6 +481,85 @@ const {
           {{ signingOut ? t('settings_account_signing_out') : t('settings_account_sign_out') }}
         </AppButton>
       </div>
+    </div>
+  </template>
+
+  <template v-else-if="activeSection === 'ai'">
+    <div class="settings-block" aria-labelledby="settings-ai-heading">
+      <div class="settings-section-head">
+        <h2 id="settings-ai-heading" class="settings-section-title">
+          {{ t('settings_tab_ai') }}
+        </h2>
+      </div>
+
+      <div class="settings-toggle">
+        <div class="settings-toggle-copy">
+          <span class="settings-toggle-title">{{ t('settings_ai_toggle') }}</span>
+          <span class="settings-toggle-hint">{{ t('settings_ai_toggle_hint') }}</span>
+        </div>
+        <AppSwitch
+          :model-value="aiFeaturesEnabled"
+          :disabled="savingAiFeatures || settingsState !== 'ready'"
+          :aria-label="t('settings_ai_toggle')"
+          @update:model-value="handleAiFeaturesToggle"
+        />
+      </div>
+
+      <div class="settings-toggle settings-card-stack--spaced">
+        <div class="settings-toggle-copy">
+          <span class="settings-toggle-title">{{ t('settings_link_sweep_toggle') }}</span>
+          <span class="settings-toggle-hint">{{ t('settings_link_sweep_toggle_hint') }}</span>
+        </div>
+        <AppSwitch
+          :model-value="linkStatusSweepEnabled"
+          :disabled="savingLinkStatusSweep || settingsState !== 'ready'"
+          :aria-label="t('settings_link_sweep_toggle')"
+          @update:model-value="handleLinkStatusSweepToggle"
+        />
+      </div>
+
+      <details class="settings-details">
+        <summary class="settings-details__summary">
+          <span class="settings-details__summary-label">
+            {{ t('settings_ai_details_summary') }}
+          </span>
+          <span class="settings-details__chevrons" aria-hidden="true">
+            <AppIcon
+              class="settings-details__chevron settings-details__chevron--down"
+              name="expand_more"
+              size="18px"
+            />
+            <AppIcon
+              class="settings-details__chevron settings-details__chevron--up"
+              name="chevron_up"
+              size="18px"
+            />
+          </span>
+        </summary>
+        <p class="settings-details__lead">{{ t('settings_ai_model_note') }}</p>
+        <ul class="settings-details__list">
+          <li>{{ t('settings_ai_bullet_clue') }}</li>
+          <li>{{ t('settings_ai_bullet_enrichment') }}</li>
+          <li>{{ t('settings_ai_bullet_boundary') }}</li>
+        </ul>
+      </details>
+
+      <div
+        v-if="hostedQuotaLoading || hostedQuotaText || hostedQuotaError"
+        class="settings-status-strip settings-status-strip--spaced"
+      >
+        <p v-if="hostedQuotaLoading" class="settings-status-strip__line" role="status">
+          {{ t('settings_ai_quota_loading') }}
+        </p>
+        <p v-else-if="hostedQuotaText" class="settings-status-strip__line" role="status">
+          {{ hostedQuotaText }}
+        </p>
+        <p v-if="hostedQuotaError" class="settings-status-strip__line settings-error" role="alert">
+          {{ hostedQuotaError }}
+        </p>
+      </div>
+
+      <p v-if="settingsError" class="settings-error" role="alert">{{ settingsError }}</p>
     </div>
   </template>
 
@@ -537,6 +593,7 @@ const {
       <div class="settings-toggle settings-card-stack--spaced">
         <div class="settings-toggle-copy">
           <span class="settings-toggle-title">{{ t('settings_mcp_toggle') }}</span>
+          <span class="settings-toggle-hint">{{ t('settings_mcp_toggle_hint') }}</span>
         </div>
         <AppSwitch
           :model-value="mcpReadOnlyEnabled"
@@ -613,6 +670,9 @@ const {
                 <span class="settings-toggle-title">{{
                   t('settings_data_outcome_soft_adjust_toggle')
                 }}</span>
+                <span class="settings-toggle-hint">{{
+                  t('settings_data_outcome_soft_adjust_hint')
+                }}</span>
               </div>
               <AppSwitch
                 :model-value="recallOutcomePairSoftAdjustEnabled"
@@ -650,75 +710,96 @@ const {
                 <li>{{ t('settings_dual_thread_local_learning_intro_3') }}</li>
                 <li>{{ t('settings_dual_thread_local_learning_intro_4') }}</li>
               </ul>
-              <div
-                v-if="dualThreadLocalLearningEnabled"
-                class="settings-dual-thread-learning"
-                aria-live="polite"
-              >
-                <h4 class="settings-dual-thread-learning__title">
-                  {{ t('settings_dual_thread_learning_heading') }}
-                </h4>
-                <p v-if="dualThreadLearningLoading" class="settings-toggle-hint">
-                  {{ t('settings_privacy_working') }}
-                </p>
-                <p v-else-if="dualThreadLearningError" class="settings-error" role="alert">
-                  {{ dualThreadLearningError }}
-                </p>
-                <template v-else-if="dualThreadLearningSketch">
-                  <p class="settings-toggle-hint">
-                    {{
-                      t('settings_dual_thread_learning_event_count', [
-                        String(dualThreadLearningSketch.telemetryEventCount)
-                      ])
-                    }}
+              <details v-if="dualThreadLocalLearningEnabled" class="settings-details">
+                <summary class="settings-details__summary">
+                  <span class="settings-details__summary-label">
+                    {{ t('settings_dual_thread_learning_heading') }}
+                  </span>
+                  <span class="settings-details__chevrons" aria-hidden="true">
+                    <AppIcon
+                      class="settings-details__chevron settings-details__chevron--down"
+                      name="expand_more"
+                      size="18px"
+                    />
+                    <AppIcon
+                      class="settings-details__chevron settings-details__chevron--up"
+                      name="chevron_up"
+                      size="18px"
+                    />
+                  </span>
+                </summary>
+                <div class="settings-dual-thread-learning" aria-live="polite">
+                  <p v-if="dualThreadLearningLoading" class="settings-toggle-hint">
+                    {{ t('settings_privacy_working') }}
                   </p>
-                  <p class="settings-dual-thread-learning__label">
-                    {{ t('settings_dual_thread_learning_outcomes') }}
+                  <p v-else-if="dualThreadLearningError" class="settings-error" role="alert">
+                    {{ dualThreadLearningError }}
                   </p>
-                  <ul class="settings-dual-thread-counts">
-                    <li
-                      v-for="(count, key) in dualThreadLearningSketch.resultOutcomeCounts"
-                      :key="`outcome-${key}`"
-                    >
-                      {{ key }}: {{ count }}
-                    </li>
-                  </ul>
-                  <p class="settings-dual-thread-learning__label">
-                    {{ t('settings_dual_thread_learning_confirms') }}
-                  </p>
-                  <ul class="settings-dual-thread-counts">
-                    <li
-                      v-for="(count, key) in dualThreadLearningSketch.confirmLabelCounts"
-                      :key="`confirm-${key}`"
-                    >
-                      {{ key }}: {{ count }}
-                    </li>
-                  </ul>
-                  <p class="settings-dual-thread-learning__label">
-                    {{ t('settings_dual_thread_learning_timing') }}
-                  </p>
-                  <p class="settings-toggle-hint">
-                    n={{ dualThreadLearningSketch.timingTotalMs?.n ?? 0 }} · p50={{
-                      dualThreadLearningSketch.timingTotalMs?.p50 ?? '—'
-                    }}
-                    · p90={{ dualThreadLearningSketch.timingTotalMs?.p90 ?? '—' }}
-                  </p>
-                  <p class="settings-dual-thread-learning__label">
-                    {{ t('settings_dual_thread_learning_failures') }}
-                  </p>
-                  <p v-if="!dualThreadLearningHasAttributions" class="settings-toggle-hint">
-                    {{ t('settings_dual_thread_learning_no_attributions') }}
-                  </p>
-                  <ul v-else class="settings-dual-thread-counts">
-                    <li
-                      v-for="(count, key) in dualThreadLearningSketch.failureStageCounts"
-                      :key="`fail-${key}`"
-                    >
-                      {{ key }}: {{ count }}
-                    </li>
-                  </ul>
-                </template>
-              </div>
+                  <template v-else-if="dualThreadLearningSketch">
+                    <p class="settings-toggle-hint">
+                      {{
+                        t('settings_dual_thread_learning_event_count', [
+                          String(dualThreadLearningSketch.telemetryEventCount)
+                        ])
+                      }}
+                    </p>
+                    <p class="settings-dual-thread-learning__label">
+                      {{ t('settings_dual_thread_learning_outcomes') }}
+                    </p>
+                    <ul class="settings-dual-thread-counts">
+                      <li
+                        v-for="(count, key) in dualThreadLearningSketch.resultOutcomeCounts"
+                        :key="`outcome-${key}`"
+                      >
+                        {{ resolveDualThreadLearningLabel('outcome', String(key), t) }}:
+                        {{ count }}
+                      </li>
+                    </ul>
+                    <p class="settings-dual-thread-learning__label">
+                      {{ t('settings_dual_thread_learning_confirms') }}
+                    </p>
+                    <ul class="settings-dual-thread-counts">
+                      <li
+                        v-for="(count, key) in dualThreadLearningSketch.confirmLabelCounts"
+                        :key="`confirm-${key}`"
+                      >
+                        {{ resolveDualThreadLearningLabel('confirm', String(key), t) }}:
+                        {{ count }}
+                      </li>
+                    </ul>
+                    <p class="settings-dual-thread-learning__label">
+                      {{ t('settings_dual_thread_learning_timing') }}
+                    </p>
+                    <p class="settings-toggle-hint">
+                      n={{ dualThreadLearningSketch.timingTotalMs?.n ?? 0 }} · p50={{
+                        formatDualThreadLearningTimingMs(
+                          dualThreadLearningSketch.timingTotalMs?.p50
+                        )
+                      }}
+                      · p90={{
+                        formatDualThreadLearningTimingMs(
+                          dualThreadLearningSketch.timingTotalMs?.p90
+                        )
+                      }}
+                    </p>
+                    <p class="settings-dual-thread-learning__label">
+                      {{ t('settings_dual_thread_learning_failures') }}
+                    </p>
+                    <p v-if="!dualThreadLearningHasAttributions" class="settings-toggle-hint">
+                      {{ t('settings_dual_thread_learning_no_attributions') }}
+                    </p>
+                    <ul v-else class="settings-dual-thread-counts">
+                      <li
+                        v-for="(count, key) in dualThreadLearningSketch.failureStageCounts"
+                        :key="`fail-${key}`"
+                      >
+                        {{ resolveDualThreadLearningLabel('stage', String(key), t) }}:
+                        {{ count }}
+                      </li>
+                    </ul>
+                  </template>
+                </div>
+              </details>
             </div>
 
             <!-- 暗线·贡献匿名汇总（ADR-027） -->
@@ -884,172 +965,80 @@ const {
     </div>
   </template>
 
-  <template v-else-if="activeSection === 'help'">
-    <div class="settings-block" aria-labelledby="settings-help-heading">
+  <template v-else-if="activeSection === 'help_legal'">
+    <div class="settings-block" aria-labelledby="settings-help-legal-heading">
       <div class="settings-section-head">
-        <h2 id="settings-help-heading" class="settings-section-title">
-          {{ t('settings_tab_help') }}
+        <h2 id="settings-help-legal-heading" class="settings-section-title">
+          {{ t('settings_tab_help_legal') }}
         </h2>
       </div>
 
-      <!-- FAQ + Contact（官网 `/faq`；Support 软跳 `/faq#contact`） -->
-      <div class="settings-group">
+      <section class="settings-group" :aria-label="t('settings_tab_help')">
+        <h3 class="settings-group__label">{{ t('settings_tab_help') }}</h3>
         <div class="settings-group__card">
-          <SettingsActionRow surface="embedded" :title="t('settings_legal_link_faq')">
-            <a
-              class="settings-external-link"
-              :href="faqUrl"
-              :title="t('settings_legal_link_faq')"
-              :aria-label="t('settings_legal_link_faq')"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <AppIcon name="arrow_up_right" size="18px" />
-            </a>
-          </SettingsActionRow>
-          <SettingsActionRow surface="embedded" :title="t('settings_legal_link_support')">
-            <a
-              class="settings-external-link"
-              :href="supportUrl"
-              :title="t('settings_legal_link_support')"
-              :aria-label="t('settings_legal_link_support')"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <AppIcon name="arrow_up_right" size="18px" />
-            </a>
-          </SettingsActionRow>
+          <a
+            class="settings-link-row"
+            :href="faqUrl"
+            :title="t('settings_help_link_faq')"
+            :aria-label="t('settings_help_link_faq')"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span class="settings-link-row__title">{{ t('settings_help_link_faq') }}</span>
+            <AppIcon name="arrow_up_right" size="18px" />
+          </a>
+          <a
+            class="settings-link-row"
+            :href="supportUrl"
+            :title="t('settings_help_link_support')"
+            :aria-label="t('settings_help_link_support')"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span class="settings-link-row__title">{{ t('settings_help_link_support') }}</span>
+            <AppIcon name="arrow_up_right" size="18px" />
+          </a>
         </div>
-      </div>
-    </div>
-  </template>
+      </section>
 
-  <template v-else-if="activeSection === 'legal'">
-    <div class="settings-block" aria-labelledby="settings-legal-heading">
-      <div class="settings-section-head">
-        <h2 id="settings-legal-heading" class="settings-section-title">
-          {{ t('settings_tab_legal') }}
-        </h2>
-      </div>
-
-      <!-- 定价 / 隐私政策 / 服务条款 -->
-      <div class="settings-group">
+      <section class="settings-group" :aria-label="t('settings_tab_legal')">
+        <h3 class="settings-group__label">{{ t('settings_tab_legal') }}</h3>
         <div class="settings-group__card">
-          <SettingsActionRow surface="embedded" :title="t('settings_legal_link_pricing')">
-            <a
-              class="settings-external-link"
-              :href="pricingUrl"
-              :title="t('settings_legal_link_pricing')"
-              :aria-label="t('settings_legal_link_pricing')"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <AppIcon name="arrow_up_right" size="18px" />
-            </a>
-          </SettingsActionRow>
-          <SettingsActionRow surface="embedded" :title="t('settings_legal_link_privacy')">
-            <a
-              class="settings-external-link"
-              :href="privacyPolicyUrl"
-              :title="t('settings_legal_link_privacy')"
-              :aria-label="t('settings_legal_link_privacy')"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <AppIcon name="arrow_up_right" size="18px" />
-            </a>
-          </SettingsActionRow>
-          <SettingsActionRow surface="embedded" :title="t('settings_legal_link_terms')">
-            <a
-              class="settings-external-link"
-              :href="termsOfServiceUrl"
-              :title="t('settings_legal_link_terms')"
-              :aria-label="t('settings_legal_link_terms')"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <AppIcon name="arrow_up_right" size="18px" />
-            </a>
-          </SettingsActionRow>
+          <a
+            class="settings-link-row"
+            :href="pricingUrl"
+            :title="t('settings_legal_link_pricing')"
+            :aria-label="t('settings_legal_link_pricing')"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span class="settings-link-row__title">{{ t('settings_legal_link_pricing') }}</span>
+            <AppIcon name="arrow_up_right" size="18px" />
+          </a>
+          <a
+            class="settings-link-row"
+            :href="privacyPolicyUrl"
+            :title="t('settings_legal_link_privacy')"
+            :aria-label="t('settings_legal_link_privacy')"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span class="settings-link-row__title">{{ t('settings_legal_link_privacy') }}</span>
+            <AppIcon name="arrow_up_right" size="18px" />
+          </a>
+          <a
+            class="settings-link-row"
+            :href="termsOfServiceUrl"
+            :title="t('settings_legal_link_terms')"
+            :aria-label="t('settings_legal_link_terms')"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <span class="settings-link-row__title">{{ t('settings_legal_link_terms') }}</span>
+            <AppIcon name="arrow_up_right" size="18px" />
+          </a>
         </div>
-      </div>
-    </div>
-  </template>
-
-  <template v-else-if="activeSection === 'ai'">
-    <div class="settings-block" aria-labelledby="settings-ai-heading">
-      <div class="settings-section-head">
-        <h2 id="settings-ai-heading" class="settings-section-title">
-          {{ t('settings_tab_ai') }}
-        </h2>
-      </div>
-
-      <div class="settings-toggle">
-        <div class="settings-toggle-copy">
-          <span class="settings-toggle-title">{{ t('settings_ai_toggle') }}</span>
-        </div>
-        <AppSwitch
-          :model-value="aiFeaturesEnabled"
-          :disabled="savingAiFeatures || settingsState !== 'ready'"
-          :aria-label="t('settings_ai_toggle')"
-          @update:model-value="handleAiFeaturesToggle"
-        />
-      </div>
-
-      <div class="settings-toggle settings-card-stack--spaced">
-        <div class="settings-toggle-copy">
-          <span class="settings-toggle-title">{{ t('settings_link_sweep_toggle') }}</span>
-        </div>
-        <AppSwitch
-          :model-value="linkStatusSweepEnabled"
-          :disabled="savingLinkStatusSweep || settingsState !== 'ready'"
-          :aria-label="t('settings_link_sweep_toggle')"
-          @update:model-value="handleLinkStatusSweepToggle"
-        />
-      </div>
-
-      <details class="settings-details">
-        <summary class="settings-details__summary">
-          <span class="settings-details__summary-label">
-            {{ t('settings_ai_details_summary') }}
-          </span>
-          <span class="settings-details__chevrons" aria-hidden="true">
-            <AppIcon
-              class="settings-details__chevron settings-details__chevron--down"
-              name="expand_more"
-              size="18px"
-            />
-            <AppIcon
-              class="settings-details__chevron settings-details__chevron--up"
-              name="chevron_up"
-              size="18px"
-            />
-          </span>
-        </summary>
-        <p class="settings-details__lead">{{ t('settings_ai_model_note') }}</p>
-        <ul class="settings-details__list">
-          <li>{{ t('settings_ai_bullet_clue') }}</li>
-          <li>{{ t('settings_ai_bullet_enrichment') }}</li>
-          <li>{{ t('settings_ai_bullet_boundary') }}</li>
-        </ul>
-      </details>
-
-      <div
-        v-if="hostedQuotaLoading || hostedQuotaText || hostedQuotaError"
-        class="settings-status-strip settings-status-strip--spaced"
-      >
-        <p v-if="hostedQuotaLoading" class="settings-status-strip__line" role="status">
-          {{ t('settings_ai_quota_loading') }}
-        </p>
-        <p v-else-if="hostedQuotaText" class="settings-status-strip__line" role="status">
-          {{ hostedQuotaText }}
-        </p>
-        <p v-if="hostedQuotaError" class="settings-status-strip__line settings-error" role="alert">
-          {{ hostedQuotaError }}
-        </p>
-      </div>
-
-      <p v-if="settingsError" class="settings-error" role="alert">{{ settingsError }}</p>
+      </section>
     </div>
   </template>
 
@@ -1057,7 +1046,7 @@ const {
     <div class="settings-block" aria-labelledby="settings-language-heading">
       <div class="settings-section-head">
         <h2 id="settings-language-heading" class="settings-section-title">
-          {{ t('settings_section_language') }}
+          {{ t('settings_tab_language') }}
         </h2>
       </div>
 

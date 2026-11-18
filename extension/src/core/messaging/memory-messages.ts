@@ -31,7 +31,9 @@ const captureTextExcerptPayloadSchema = z.object({
 const listMemoryItemsPayloadSchema = z
   .object({
     type: SupportedMemoryItemTypeSchema.optional(),
-    limit: z.number().int().positive().max(500).optional()
+    limit: z.number().int().positive().max(500).optional(),
+    /** 跳过前 N 条活条目后再取 limit（软删不占名额；默认 0）。 */
+    offset: z.number().int().nonnegative().optional()
   })
   .optional()
 

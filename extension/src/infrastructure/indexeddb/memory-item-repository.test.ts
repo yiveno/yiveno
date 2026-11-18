@@ -432,4 +432,93 @@ describe('memory-item-repository', () => {
     expect(await memoryItemRepository.countActiveByCorpusSource('pocket')).toBe(1)
     expect(await memoryItemRepository.getById(chromeLike.id)).not.toBeNull()
   })
+
+  it('listByOwner offset 2 + limit 2 返回倒序第 3–4 条', async () => {
+    const ids: string[] = []
+    for (let index = 0; index < 5; index += 1) {
+      const { item } = await memoryItemRepository.createTextExcerpt({
+        payload: {
+          selectedText: `offset page excerpt ${index}`,
+          sourceUrl: `https://offset.example.com/${index}`,
+          pageTitle: `O${index}`
+        },
+        now: () => `2026-07-22T0${index}:00:00.000Z`
+      })
+      ids.push(item.id)
+    }
+
+    const page = await memoryItemRepository.listByOwner({
+      type: 'text_excerpt',
+      limit: 2,
+      offset: 2
+    })
+    expect(page).toHaveLength(2)
+    // updatedAt 倒序：index 4,3,2,1,0 → offset 2 起为 index 2,1
+    expect(page[0]?.id).toBe(ids[2])
+    expect(page[1]?.id).toBe(ids[1])
+  })
+
+  it('listByOwner offset ≥ 总数返回空数组', async () => {
+    await memoryItemRepository.createTextExcerpt({
+      payload: {
+        selectedText: 'only one',
+        sourceUrl: 'https://offset-empty.example.com/1',
+        pageTitle: 'One'
+      }
+    })
+    const page = await memoryItemRepository.listByOwner({
+      type: 'text_excerpt',
+      limit: 10,
+      offset: 5
+    })
+    expect(page).toEqual([])
+  })
+
+  it('listByOwner offset 0 等价于不传', async () => {
+    for (let index = 0; index < 3; index += 1) {
+      await memoryItemRepository.createTextExcerpt({
+        payload: {
+          selectedText: `offset zero ${index}`,
+          sourceUrl: `https://offset-zero.example.com/${index}`,
+          pageTitle: `Z${index}`
+        },
+        now: () => `2026-07-22T1${index}:00:00.000Z`
+      })
+    }
+    const withZero = await memoryItemRepository.listByOwner({
+      type: 'text_excerpt',
+      limit: 2,
+      offset: 0
+    })
+    const without = await memoryItemRepository.listByOwner({
+      type: 'text_excerpt',
+      limit: 2
+    })
+    expect(withZero.map(item => item.id)).toEqual(without.map(item => item.id))
+  })
+
+  it('listByOwner 软删行不占 offset 名额', async () => {
+    const created: string[] = []
+    for (let index = 0; index < 4; index += 1) {
+      const { item } = await memoryItemRepository.createTextExcerpt({
+        payload: {
+          selectedText: `offset soft ${index}`,
+          sourceUrl: `https://offset-soft.example.com/${index}`,
+          pageTitle: `S${index}`
+        },
+        now: () => `2026-07-22T2${index}:00:00.000Z`
+      })
+      created.push(item.id)
+    }
+    // 倒序活条目：3,2,1,0；删掉窗口内第 2 条（index 2）后：3,1,0
+    await memoryItemRepository.softDelete(created[2]!)
+    const beforeDeleteWindow = await memoryItemRepository.listByOwner({
+      type: 'text_excerpt',
+      limit: 1,
+      offset: 1
+    })
+    // 软删后 offset 1 仍应落在原「跳过最新 1 条后的下一条」口径：最新为 3，下一条为 1
+    expect(beforeDeleteWindow).toHaveLength(1)
+    expect(beforeDeleteWindow[0]?.id).toBe(created[1])
+  })
 })

@@ -17,6 +17,10 @@ withDefaults(
     description?: string | undefined
     /** 正文（与 default slot 二选一） */
     body?: string | undefined
+    /** 正文下方外链 href（可选；与 bodyLinkLabel 成对） */
+    bodyLinkHref?: string | undefined
+    /** 正文下方外链文案（可选） */
+    bodyLinkLabel?: string | undefined
     /** 确认按钮文案 */
     confirmLabel: string
     /** 取消按钮文案 */
@@ -62,6 +66,14 @@ const emit = defineEmits<{
   >
     <p v-if="body" class="app-confirm-modal__body">{{ body }}</p>
     <slot v-else />
+    <a
+      v-if="bodyLinkHref && bodyLinkLabel"
+      class="app-confirm-modal__body-link"
+      :href="bodyLinkHref"
+      target="_blank"
+      rel="noopener noreferrer"
+      >{{ bodyLinkLabel }}</a
+    >
 
     <template v-if="error" #error>{{ error }}</template>
 
@@ -95,5 +107,20 @@ const emit = defineEmits<{
   font-size: 13px;
   line-height: 1.5;
   color: var(--on-surface-muted);
+}
+
+.app-confirm-modal__body-link {
+  display: inline-block;
+  margin-top: var(--space-xs);
+  font-size: 13px;
+  line-height: 1.5;
+  text-decoration: none;
+  color: var(--accent);
+}
+
+.app-confirm-modal__body-link:hover,
+.app-confirm-modal__body-link:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
 }
 </style>

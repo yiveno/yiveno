@@ -29,11 +29,12 @@ import {
   shouldShowLibraryListCapNote
 } from '@/core/memory/library-tabs'
 import { parseChromeBookmarkTreeChangedMessage } from '@/core/messaging/ui-messages'
-import { tImportError } from '@/infrastructure/i18n/background-error'
+import { tChromeBookmarkImportError, tImportError } from '@/infrastructure/i18n/background-error'
 import { t } from '@/infrastructure/i18n/t'
 import { tMemoryError } from '@/infrastructure/i18n/memory-error'
 import {
   deleteMemoryItem,
+  ensureChromeBookmarksImportedMessage,
   fetchBookmarkLibraryTree,
   fetchChromeBookmarkImportStatus,
   listMemoryItems,
@@ -46,7 +47,10 @@ import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
 import type { AppIconName } from '@/infrastructure/ui/icons/icon-paths'
 import BookmarkLibraryTree from '@/pages/library/BookmarkLibraryTree.vue'
 import ExcerptLibraryList from '@/pages/library/ExcerptLibraryList.vue'
-import { isLibraryBookmarkImporting } from '@/pages/library/library-bookmark-import-ui'
+import {
+  isLibraryBookmarkImportFailed,
+  isLibraryBookmarkImporting
+} from '@/pages/library/library-bookmark-import-ui'
 import {
   buildExcerptLibraryListRows,
   collectBookmarkExportableMemoryIds,
@@ -86,11 +90,15 @@ const items = shallowRef<MemoryItem[]>([])
 /** 摘录 Tab：LIST 返回的全库活条目总数（可大于已加载条数）。 */
 const excerptTotal = ref(0)
 const listRows = shallowRef<ExcerptLibraryListRow[]>([])
+/** 摘录「加载更多」busy（防连点）。 */
+const loadingMoreExcerpts = ref(false)
 const bookmarkIndex = shallowRef<BookmarkLibraryIndex | null>(null)
 const bookmarkStructureHash = ref('')
 const bookmarkSyncReady = ref(false)
 /** Chrome 书签导入状态（与树并行拉取；storage 事件驱动刷新）。 */
 const bookmarkImportState = ref<ChromeBookmarkImportState | null>(null)
+/** 书签导入失败后点「重新导入」busy。 */
+const retryingBookmarkImport = ref(false)
 const deletingId = ref<string | null>(null)
 let bookmarkTreeRefreshTimer: ReturnType<typeof setTimeout> | null = null
 let bookmarkTreeRefreshInFlight = false
@@ -159,6 +167,15 @@ const bookmarkImporting = computed(() =>
   isLibraryBookmarkImporting(bookmarkImportState.value?.status)
 )
 
+const isBookmarkImportFailed = computed(() =>
+  isLibraryBookmarkImportFailed(bookmarkImportState.value?.status)
+)
+
+const bookmarkImportFailedReason = computed(() => {
+  const errorCode = bookmarkImportState.value?.errorCode
+  return tChromeBookmarkImportError(errorCode ?? 'BOOKMARK_IMPORT_FAILED')
+})
+
 const bookmarkImportPercent = computed(() => {
   const state = bookmarkImportState.value
   if (!state) {
@@ -193,6 +210,16 @@ const showBookmarkImportProgress = computed(
     bookmarkImporting.value &&
     !bookmarkSyncReady.value &&
     (bookmarkIndex.value?.bookmarkCount ?? 0) > 0
+)
+
+const showBookmarkImportFailedEmpty = computed(
+  () =>
+    isBookmarkImportFailed.value &&
+    (!bookmarkIndex.value || bookmarkIndex.value.bookmarkCount === 0)
+)
+
+const showBookmarkImportFailedBanner = computed(
+  () => isBookmarkImportFailed.value && (bookmarkIndex.value?.bookmarkCount ?? 0) > 0
 )
 
 function bumpDetailExportSelectionRevision(): void {
@@ -469,7 +496,7 @@ function refreshVisibleLibraryPanel(): void {
   void refreshExcerptListSilent()
 }
 
-/** 摘录 Tab 静默重拉：不闪 loading，失败保留旧列表。 */
+/** 摘录 Tab 静默重拉：不闪 loading，失败保留旧列表；窗口同步到已加载条数。 */
 async function refreshExcerptListSilent(): Promise<void> {
   if (showingBookmarkTree.value) {
     return
@@ -477,7 +504,8 @@ async function refreshExcerptListSilent(): Promise<void> {
   try {
     const response = await listMemoryItems({
       type: 'text_excerpt',
-      limit: LIBRARY_LIST_LIMIT
+      limit: Math.max(LIBRARY_LIST_LIMIT, items.value.length),
+      offset: 0
     })
     if (!response.ok || !('items' in response)) {
       return
@@ -491,6 +519,59 @@ async function refreshExcerptListSilent(): Promise<void> {
     errorMessage.value = ''
   } catch {
     // 忽略：静默刷新失败不打断浏览
+  }
+}
+
+/** 摘录「加载更多」：offset 分页追加；busy 中连点直接返回。 */
+async function loadMoreExcerpts(): Promise<void> {
+  if (loadingMoreExcerpts.value || showingBookmarkTree.value) {
+    return
+  }
+  if (!shouldShowLibraryListCapNote(excerptTotal.value, listRows.value.length)) {
+    return
+  }
+  loadingMoreExcerpts.value = true
+  try {
+    const response = await listMemoryItems({
+      type: 'text_excerpt',
+      limit: LIBRARY_LIST_LIMIT,
+      offset: listRows.value.length
+    })
+    if (!response.ok) {
+      showToastError(tMemoryError(response.errorCode))
+      return
+    }
+    if (!('items' in response)) {
+      showToastError(t('library_invalid_response'))
+      return
+    }
+    items.value = [...items.value, ...response.items]
+    excerptTotal.value = response.total
+    rebuildListRows()
+  } catch {
+    showToastError(tMemoryError('MEMORY_OPERATION_FAILED'))
+  } finally {
+    loadingMoreExcerpts.value = false
+  }
+}
+
+/** 书签导入失败后重试：复用 ENSURE_CHROME_BOOKMARKS_IMPORTED。 */
+async function retryBookmarkImport(): Promise<void> {
+  if (retryingBookmarkImport.value) {
+    return
+  }
+  retryingBookmarkImport.value = true
+  try {
+    const response = await ensureChromeBookmarksImportedMessage()
+    if (!response.ok) {
+      showToastError(tImportError(response.errorCode))
+      return
+    }
+    bookmarkImportState.value = response.state
+  } catch {
+    showToastError(tImportError('IMPORT_STATUS_READ_FAILED'))
+  } finally {
+    retryingBookmarkImport.value = false
   }
 }
 
@@ -859,6 +940,22 @@ onUnmounted(() => {
                 :aria-label="t('library_bookmark_import_progress_aria')"
               />
             </div>
+            <div v-else-if="showBookmarkImportFailedEmpty" class="library-empty" role="alert">
+              <p class="library-empty-title">{{ t('library_bookmark_import_failed_title') }}</p>
+              <p class="library-empty-copy">{{ bookmarkImportFailedReason }}</p>
+              <AppButton
+                type="button"
+                variant="tonal"
+                :disabled="retryingBookmarkImport"
+                @click="retryBookmarkImport"
+              >
+                {{
+                  retryingBookmarkImport
+                    ? t('library_bookmark_import_progress_indeterminate')
+                    : t('library_bookmark_import_retry')
+                }}
+              </AppButton>
+            </div>
             <div
               v-else-if="!bookmarkIndex || bookmarkIndex.bookmarkCount === 0"
               class="library-empty"
@@ -880,6 +977,25 @@ onUnmounted(() => {
                   :value="bookmarkImportPercent"
                   :aria-label="t('library_bookmark_import_progress_aria')"
                 />
+              </div>
+              <div
+                v-else-if="showBookmarkImportFailedBanner"
+                class="library-import-banner library-import-banner--failed"
+                role="alert"
+              >
+                <p class="library-import-detail">{{ bookmarkImportFailedReason }}</p>
+                <AppButton
+                  type="button"
+                  variant="tonal"
+                  :disabled="retryingBookmarkImport"
+                  @click="retryBookmarkImport"
+                >
+                  {{
+                    retryingBookmarkImport
+                      ? t('library_bookmark_import_progress_indeterminate')
+                      : t('library_bookmark_import_retry')
+                  }}
+                </AppButton>
               </div>
               <BookmarkLibraryTree
                 :index="bookmarkIndex"
@@ -916,6 +1032,16 @@ onUnmounted(() => {
                 @edit-note="openNoteEditor"
                 @delete-excerpt="handleDeleteExcerpt"
               />
+            </div>
+            <div v-if="showExcerptListCapNote" class="library-load-more">
+              <AppButton
+                type="button"
+                variant="tonal"
+                :disabled="loadingMoreExcerpts"
+                @click="loadMoreExcerpts"
+              >
+                {{ loadingMoreExcerpts ? t('library_loading') : t('library_load_more') }}
+              </AppButton>
             </div>
           </template>
         </div>
@@ -1008,7 +1134,9 @@ onUnmounted(() => {
   max-height: var(--library-detail-export-slot-height);
   border-top: 1px solid var(--border);
   background: var(--surface-white);
-  overflow: hidden;
+
+  /* 向上格式菜单必须溢出 slot 可见；勿改回 hidden（F4：hidden 会裁掉菜单） */
+  overflow: visible;
 }
 
 .library-detail-export-bar {
@@ -1170,6 +1298,14 @@ onUnmounted(() => {
   display: grid;
   gap: var(--space-xs);
   margin-bottom: var(--space-sm);
+  justify-items: start;
+}
+
+.library-load-more {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-sm);
 }
 
 .library-import-detail {

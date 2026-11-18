@@ -52,6 +52,8 @@ import {
 export interface ListMemoryItemsOptions {
   type?: SupportedMemoryItemType
   limit?: number
+  /** 跳过前 N 条活条目（软删不占名额；默认 0）。 */
+  offset?: number
   includeDeleted?: boolean
 }
 
@@ -440,6 +442,7 @@ export class MemoryItemRepository {
     await this.ensureReady()
     const ownerId = await getCurrentOwnerId()
     const limit = options.limit ?? 100
+    const offset = options.offset ?? 0
     const includeDeleted = options.includeDeleted ?? false
 
     return indexedDBManager.withTransaction(MEMORY_ITEM_STORE, 'readonly', async transaction => {
@@ -454,6 +457,7 @@ export class MemoryItemRepository {
       const range = IDBKeyRange.bound(lower, upper)
 
       const items: MemoryItem[] = []
+      let skipped = 0
       await new Promise<void>((resolve, reject) => {
         const request = index.openCursor(range, 'prev')
 
@@ -466,7 +470,11 @@ export class MemoryItemRepository {
 
           const item = safeParseMemoryItem(cursor.value)
           if (item && (includeDeleted || item.deletedAt == null)) {
-            items.push(item)
+            if (skipped < offset) {
+              skipped += 1
+            } else {
+              items.push(item)
+            }
           }
 
           if (items.length >= limit) {

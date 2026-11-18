@@ -1067,6 +1067,9 @@
   "settings_third_party_not_imported": {
     "message": "尚未导入"
   },
+  "settings_third_party_status_failed": {
+    "message": "状态加载失败"
+  },
   "settings_third_party_delete_all": {
     "message": "删除全部导入"
   },
@@ -1111,9 +1114,6 @@
     "message": "AI"
   },
   "settings_tab_language": {
-    "message": "语言"
-  },
-  "settings_section_language": {
     "message": "语言"
   },
   "settings_section_language_copy": {
@@ -1231,10 +1231,10 @@
     }
   },
   "settings_data_outcome_soft_adjust_toggle": {
-    "message": "用 Outcome 做个人排序加成"
+    "message": "按你的确认记录微调排序"
   },
   "settings_data_outcome_soft_adjust_hint": {
-    "message": "开启时，Yiveno 可用本机 Outcome 对软升/降权候选。关闭只暂停这一步——记忆库与找东西仍可用；对缓冲保留直至你清除。"
+    "message": "你确认过的结果，下次排得更靠前；否认过的排得更靠后。"
   },
   "settings_dual_thread_local_learning_toggle": {
     "message": "本地学习"
@@ -1373,7 +1373,7 @@
     "message": "只读 MCP（beta）"
   },
   "settings_mcp_toggle_hint": {
-    "message": "让 Cursor 或其他 MCP 客户端从你的记忆库查阅少量带出处的条目。关闭后，本机与云端都会拦截。"
+    "message": "外部 AI 助手只能读取、查阅你的记忆库，不能修改或删除任何内容。"
   },
   "settings_mcp_howto": {
     "message": "用自然语言线索提问；你会得到 1–5 条带出处的条目——绝不会整库倾倒。云端路径需要登录、Pro 同步，以及此开关开启。设置细节见开发者文档。"
@@ -1405,17 +1405,11 @@
   "settings_legal_link_pricing": {
     "message": "定价"
   },
-  "settings_legal_link_support": {
-    "message": "支持"
-  },
   "settings_legal_link_privacy": {
     "message": "隐私政策"
   },
   "settings_legal_link_terms": {
     "message": "服务条款"
-  },
-  "settings_legal_link_faq": {
-    "message": "常见问题"
   },
   "settings_privacy_export": {
     "message": "导出完整备份"
@@ -1531,13 +1525,13 @@
     "message": "启用 AI 辅助"
   },
   "settings_ai_toggle_hint": {
-    "message": "关闭：仅用规则理解线索；保存时不做 AI 建议。"
+    "message": "关闭后不再调用 AI 理解线索与丰富内容；线索理解改回本地规则。"
   },
   "settings_link_sweep_toggle": {
     "message": "每周检查已存链接"
   },
   "settings_link_sweep_toggle_hint": {
-    "message": "关闭：不做每周链接巡检。失效链接只在找东西时降权，绝不删除。"
+    "message": "每周检查一次已存链接；失效链接只降权、不删除。"
   },
   "settings_ai_model_note": {
     "message": "请求如何路由："
@@ -1551,9 +1545,6 @@
   "settings_ai_bullet_boundary": {
     "message": "默认不会把整库发给模型；模型不能直接改你的记忆库。"
   },
-  "settings_section_capture": {
-    "message": "保存"
-  },
   "settings_section_capture_copy": {
     "message": "控制划选时的保存菜单，以及本浏览器书签是否加入记忆库。"
   },
@@ -1564,10 +1555,7 @@
     "message": "划选时显示保存菜单"
   },
   "settings_toggle_selection_toolbar_hint": {
-    "message": "选中文本后显示「保存到 Yiveno」"
-  },
-  "settings_section_shortcuts": {
-    "message": "快捷键"
+    "message": "选中网页文字时，弹出保存按钮。"
   },
   "settings_section_shortcuts_copy": {
     "message": "在此查看绑定；改键请到本浏览器的扩展快捷键页。"
@@ -1576,7 +1564,7 @@
     "message": "打开本浏览器中 Yiveno 的扩展快捷键页。"
   },
   "settings_open_shortcuts_action": {
-    "message": "打开"
+    "message": "打开浏览器快捷键设置"
   },
   "settings_commands_loading": {
     "message": "正在加载快捷键…"
@@ -1612,6 +1600,9 @@
         "content": "$1"
       }
     }
+  },
+  "settings_account_sign_in_hint": {
+    "message": "未登录。登录后可管理同步与云端记忆。"
   },
   "settings_account_sign_in_website": {
     "message": "在网站登录"
@@ -1782,9 +1773,6 @@
   },
   "settings_error_login_migration_status": {
     "message": "无法检查可导入的本机保存"
-  },
-  "settings_section_sync": {
-    "message": "同步"
   },
   "settings_section_sync_copy": {
     "message": "默认关闭。开启后先与云端合并，然后大约每 15 分钟同步一次。"
@@ -2052,6 +2040,9 @@
   "library_loading": {
     "message": "加载中…"
   },
+  "library_load_more": {
+    "message": "加载更多"
+  },
   "library_list_visible_cap_note": {
     "message": "仅显示前 $1 条，共 $2 条。",
     "placeholders": {
@@ -2113,6 +2104,12 @@
   },
   "library_bookmark_import_progress_aria": {
     "message": "书签导入进度"
+  },
+  "library_bookmark_import_failed_title": {
+    "message": "书签导入失败"
+  },
+  "library_bookmark_import_retry": {
+    "message": "重新导入"
   },
   "library_bookmark_unsynced": {
     "message": "未进入记忆"
@@ -3039,6 +3036,34 @@
   "getting_started_sync_suggest_dismiss": {
     "message": "不用了"
   },
+  "settings_chrome_bookmark_import_done": {
+    "message": "已导入 $COUNT$ 条书签",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_chrome_bookmark_import_progress": {
+    "message": "正在导入书签：$imported$ / $total$ 条",
+    "placeholders": {
+      "imported": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      }
+    }
+  },
+  "settings_chrome_bookmark_import_progress_unknown": {
+    "message": "正在导入书签…"
+  },
+  "settings_chrome_bookmark_sync_intro": {
+    "message": "开启后，现有 Chrome 书签会导入到这台设备上的本机库，之后新增的书签也会持续同步进来。书签只存在这台设备上，不上传。"
+  },
+  "settings_chrome_bookmark_sync_off_note": {
+    "message": "关闭同步后，已导入的书签仍保留在库中。"
+  },
   "settings_toggle_chrome_bookmark_sync": {
     "message": "同步 Chrome 书签到本机记忆库"
   },
@@ -3053,6 +3078,14 @@
   },
   "settings_reimport_chrome_bookmarks_done": {
     "message": "重新导入完成。"
+  },
+  "settings_reimport_chrome_bookmarks_done_count": {
+    "message": "重新导入完成，共 $COUNT$ 条。",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
   },
   "sidepanel_recall_deeper_reading_quota_monthly": {
     "message": "本月线索帮助次数已用完（$USED$/$LIMIT$），已改用本机规则理解。下月恢复。",
@@ -3146,5 +3179,77 @@
         "content": "$1"
       }
     }
+  },
+  "settings_tab_help_legal": {
+    "message": "帮助与法律"
+  },
+  "settings_help_link_faq": {
+    "message": "常见问题"
+  },
+  "settings_help_link_support": {
+    "message": "支持"
+  },
+  "settings_third_party_import_raindrop_guide": {
+    "message": "先在 Raindrop.io 导出书签（HTML、CSV 或 JSON），再选择文件导入。"
+  },
+  "settings_third_party_import_pocket_guide": {
+    "message": "先在 Pocket 导出书签（HTML），再选择文件导入。"
+  },
+  "settings_third_party_importing": {
+    "message": "正在导入…"
+  },
+  "settings_command_unbound_hint": {
+    "message": "在浏览器快捷键设置中绑定"
+  },
+  "settings_command_selection_hint": {
+    "message": "使用前需先选中网页文字"
+  },
+  "settings_dual_thread_learning_outcome_top_pick": {
+    "message": "有首选建议"
+  },
+  "settings_dual_thread_learning_outcome_need_a_clue": {
+    "message": "需补线索"
+  },
+  "settings_dual_thread_learning_outcome_no_match": {
+    "message": "无命中"
+  },
+  "settings_dual_thread_learning_confirm_target": {
+    "message": "确认是目标"
+  },
+  "settings_dual_thread_learning_confirm_none_in_results": {
+    "message": "以上都不是"
+  },
+  "settings_dual_thread_learning_confirm_absent": {
+    "message": "库内没有"
+  },
+  "settings_dual_thread_learning_confirm_unknown": {
+    "message": "未知"
+  },
+  "settings_dual_thread_learning_stage_not_captured": {
+    "message": "目标未进库"
+  },
+  "settings_dual_thread_learning_stage_index_gap": {
+    "message": "索引缺口"
+  },
+  "settings_dual_thread_learning_stage_candidate_miss": {
+    "message": "未进候选"
+  },
+  "settings_dual_thread_learning_stage_understand_skew": {
+    "message": "理解偏离"
+  },
+  "settings_dual_thread_learning_stage_rank_wrong": {
+    "message": "排序错排"
+  },
+  "settings_dual_thread_learning_stage_clue_insufficient": {
+    "message": "线索过薄"
+  },
+  "settings_dual_thread_learning_stage_absent_honest": {
+    "message": "诚实无相关"
+  },
+  "settings_dual_thread_learning_stage_ux_friction": {
+    "message": "体验摩擦"
+  },
+  "settings_dual_thread_learning_stage_unknown": {
+    "message": "证据不足"
   }
 }

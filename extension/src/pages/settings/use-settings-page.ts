@@ -16,6 +16,7 @@ import {
 } from '@/core/settings/settings-sections'
 import {
   ackPrivacyNotice,
+  authSignIn,
   authSignOut,
   clearLocalMemory,
   clearLocalRecallAdaptation,
@@ -26,6 +27,7 @@ import {
   exportLocalMemory,
   exportOrphanOwners,
   fetchAuthState,
+  fetchChromeBookmarkImportStatus,
   fetchExtensionCommands,
   fetchSubscriptionStatus,
   fetchSyncStatus,
@@ -52,21 +54,26 @@ import {
   type DualThreadContributeBlockReason,
   type DualThreadSketchUploadState
 } from '@/core/recall/dual-thread/dual-thread-consent'
-import {
-  ThirdPartyCorpusImportErrorCodeSchema,
-  type ThirdPartyCorpusImportState
-} from '@/core/memory/third-party-corpus-import-state'
+import type { ChromeBookmarkImportState } from '@/core/memory/chrome-bookmark-import-state'
 import type { ThirdPartyCorpusSource } from '@/core/memory/third-party-corpus-source'
+import type { ImportErrorCode } from '@/core/messaging/import-messages'
 import { formatLibrarySavedAt } from '@/infrastructure/i18n/format-library-saved-at'
 import { watchAuthSessionStorage } from '@/infrastructure/auth/watch-auth-session-storage'
 import { useLoginMigrationDialog } from '@/pages/shared/use-login-migration-dialog'
 import {
   tAccountSyncError,
+  tChromeBookmarkImportError,
   tCommandsError,
+  tImportError,
   tLocalMemoryImportError,
   tSettingsError,
   tThirdPartyImportError
 } from '@/infrastructure/i18n/background-error'
+import { resolveChromeBookmarkImportStatusView } from '@/pages/settings/chrome-bookmark-import-status-copy'
+import {
+  resolveThirdPartySourceStatusView,
+  type ThirdPartyCorpusSummaryView
+} from '@/pages/settings/third-party-source-status-copy'
 import { t } from '@/infrastructure/i18n/t'
 import { readBrowserOnline } from '@/infrastructure/browser/browser-online'
 import { getWebsiteBaseUrl } from '@/infrastructure/browser/website-page'
@@ -167,16 +174,18 @@ export function useSettingsPage() {
   const thirdPartyImportWorking = ref(false)
   const thirdPartyDeleteWorking = ref(false)
   /** 两来源条数 + 最近导入状态；加载失败时为 null（仍可导入）。 */
-  type ThirdPartySourceSummaryView = {
-    count: number
-    lastImport: ThirdPartyCorpusImportState | null
-  }
-  type ThirdPartyCorpusSummaryView = {
-    raindrop: ThirdPartySourceSummaryView
-    pocket: ThirdPartySourceSummaryView
-  }
   const thirdPartyCorpusSummary = ref<ThirdPartyCorpusSummaryView | null>(null)
+  /** 第三方摘要加载中（加载中不清空旧 summary）。 */
+  const thirdPartySummaryLoading = ref(false)
   const pendingThirdPartyDeleteSource = ref<ThirdPartyCorpusSource | null>(null)
+  /** Chrome 书签导入状态（capture 区状态行 / 轮询）。 */
+  const chromeBookmarkImportState = ref<ChromeBookmarkImportState | null>(null)
+  const chromeBookmarkImportQueryFailed = ref(false)
+  const chromeBookmarkImportErrorCode = ref<ImportErrorCode | null>(null)
+  /** 书签导入进度轮询定时器（仅 capture + running/pending）。 */
+  let bookmarkImportPollTimer: ReturnType<typeof setInterval> | null = null
+  /** 分区内登录进行中。 */
+  const signingIn = ref(false)
   const restoreWorking = ref(false)
   const raindropFileInputRef = ref<HTMLInputElement | null>(null)
   const pocketFileInputRef = ref<HTMLInputElement | null>(null)
@@ -291,6 +300,8 @@ export function useSettingsPage() {
   watch(
     activeSection,
     section => {
+      // P1-9：切分区清空设置错误，避免跨分区残留
+      settingsError.value = ''
       syncActiveSectionToUrl(section)
       hasCompletedInitialSectionSync.value = true
       if (section === 'ai') {
@@ -302,12 +313,18 @@ export function useSettingsPage() {
       if (section === 'privacy') {
         void loadDualThreadLearningStatus()
       }
+      if (section === 'capture') {
+        void loadChromeBookmarkImportStatus()
+      } else {
+        stopBookmarkImportPolling()
+      }
     },
     { immediate: true }
   )
 
-  /** 加载第三方语料两来源摘要；失败时置 null，不弹错。 */
+  /** 加载第三方语料两来源摘要；失败时置 null，不弹错；加载中保留旧 summary。 */
   async function loadThirdPartyCorpusSummary(): Promise<void> {
+    thirdPartySummaryLoading.value = true
     try {
       const response = await fetchThirdPartyCorpusSummary()
       if (!response.ok) {
@@ -317,36 +334,158 @@ export function useSettingsPage() {
       thirdPartyCorpusSummary.value = response.sources
     } catch {
       thirdPartyCorpusSummary.value = null
+    } finally {
+      thirdPartySummaryLoading.value = false
     }
   }
 
-  /** 状态行文案：未导入 / 条数+上次导入 / 失败可见。 */
+  /** 状态行文案：经 resolver 决策后再 t() 渲染。 */
   function thirdPartySourceStatusCopy(source: ThirdPartyCorpusSource): string {
-    const summary = thirdPartyCorpusSummary.value?.[source]
-    if (!summary || (summary.count === 0 && summary.lastImport == null)) {
+    const view = resolveThirdPartySourceStatusView({
+      summary: thirdPartyCorpusSummary.value,
+      summaryLoading: thirdPartySummaryLoading.value,
+      source
+    })
+    if (view.kind === 'loading') {
+      return t('settings_privacy_working')
+    }
+    if (view.kind === 'summary_failed') {
+      return t('settings_third_party_status_failed')
+    }
+    if (view.kind === 'not_imported') {
       return t('settings_third_party_not_imported')
     }
-    const lastImport = summary.lastImport
-    if (lastImport?.status === 'failed') {
-      const parsedCode = ThirdPartyCorpusImportErrorCodeSchema.safeParse(lastImport.errorCode)
-      const failLabel = parsedCode.success
-        ? tThirdPartyImportError(parsedCode.data)
+    if (view.kind === 'failed_import') {
+      const failLabel = view.errorCode
+        ? tThirdPartyImportError(view.errorCode)
         : t('error_third_party_import_failed')
       const countPart =
-        summary.count > 0 ? `${t('settings_third_party_count', [String(summary.count)])} · ` : ''
+        view.count > 0 ? `${t('settings_third_party_count', [String(view.count)])} · ` : ''
       return `${countPart}${failLabel}`
     }
-    const parts = [t('settings_third_party_count', [String(summary.count)])]
-    if (lastImport) {
-      const dateLabel = formatLibrarySavedAt(lastImport.finishedAt ?? lastImport.startedAt)
+    const parts = [t('settings_third_party_count', [String(view.count)])]
+    if (view.lastImport) {
+      const dateLabel = formatLibrarySavedAt(
+        view.lastImport.finishedAt ?? view.lastImport.startedAt
+      )
       if (dateLabel) {
         parts.push(
-          t('settings_third_party_last_import', [dateLabel, String(lastImport.importedCount)])
+          t('settings_third_party_last_import', [dateLabel, String(view.lastImport.importedCount)])
         )
       }
     }
     return parts.join(' · ')
   }
+
+  /** 查询 Chrome 书签导入状态；失败时置 queryFailed。 */
+  async function loadChromeBookmarkImportStatus(): Promise<void> {
+    try {
+      const response = await fetchChromeBookmarkImportStatus()
+      if (!response.ok) {
+        chromeBookmarkImportState.value = null
+        chromeBookmarkImportQueryFailed.value = true
+        chromeBookmarkImportErrorCode.value = response.errorCode
+        return
+      }
+      chromeBookmarkImportState.value = response.state
+      chromeBookmarkImportQueryFailed.value = false
+      chromeBookmarkImportErrorCode.value = null
+    } catch {
+      chromeBookmarkImportState.value = null
+      chromeBookmarkImportQueryFailed.value = true
+      chromeBookmarkImportErrorCode.value = null
+    }
+  }
+
+  const chromeBookmarkImportStatusView = computed(() =>
+    resolveChromeBookmarkImportStatusView(
+      chromeBookmarkImportState.value,
+      !chromeBookmarkImportQueryFailed.value,
+      chromeBookmarkImportErrorCode.value ?? undefined
+    )
+  )
+
+  const chromeBookmarkImportStatusKind = computed(() => chromeBookmarkImportStatusView.value.kind)
+
+  /** 书签导入状态行文案（none → 空串；模板靠 kind 决定是否渲染）。 */
+  const chromeBookmarkImportStatusCopy = computed(() => {
+    const view = chromeBookmarkImportStatusView.value
+    if (view.kind === 'none') {
+      return ''
+    }
+    if (view.kind === 'query_failed') {
+      return tImportError(view.errorCode ?? 'IMPORT_STATUS_READ_FAILED')
+    }
+    if (view.kind === 'running') {
+      if (view.totalCount != null) {
+        return t('settings_chrome_bookmark_import_progress', [
+          String(view.importedCount),
+          String(view.totalCount)
+        ])
+      }
+      return t('settings_chrome_bookmark_import_progress_unknown')
+    }
+    if (view.kind === 'completed') {
+      return t('settings_chrome_bookmark_import_done', [String(view.importedCount)])
+    }
+    return tChromeBookmarkImportError(view.errorCode ?? 'BOOKMARK_IMPORT_FAILED')
+  })
+
+  /** 重新导入完成提示（带条数）；未完成时为空。 */
+  const reimportChromeBookmarksDoneText = computed(() => {
+    if (!reimportChromeBookmarksDone.value || chromeBookmarkImportState.value == null) {
+      return ''
+    }
+    return t('settings_reimport_chrome_bookmarks_done_count', [
+      String(chromeBookmarkImportState.value.importedCount)
+    ])
+  })
+
+  /** 仅在 capture 且导入进行中时轮询（1500ms）。 */
+  function startBookmarkImportPolling(): void {
+    stopBookmarkImportPolling()
+    bookmarkImportPollTimer = setInterval(() => {
+      const status = chromeBookmarkImportState.value?.status
+      if (activeSection.value !== 'capture' || (status !== 'running' && status !== 'pending')) {
+        stopBookmarkImportPolling()
+        return
+      }
+      void loadChromeBookmarkImportStatus()
+    }, 1500)
+  }
+
+  function stopBookmarkImportPolling(): void {
+    if (bookmarkImportPollTimer !== null) {
+      clearInterval(bookmarkImportPollTimer)
+      bookmarkImportPollTimer = null
+    }
+  }
+
+  /** 账号分区内登录（官网 handoff；成功后由 watchAuthSessionStorage 刷新）。 */
+  async function handleSignIn(): Promise<void> {
+    if (signingIn.value) {
+      return
+    }
+    signingIn.value = true
+    try {
+      const response = await authSignIn()
+      if (!response.ok) {
+        showToastError(t('settings_error_auth_sign_in'))
+      }
+    } catch {
+      showToastError(t('settings_error_auth_sign_in'))
+    } finally {
+      signingIn.value = false
+    }
+  }
+
+  /** 隐私同步确认弹窗：正文下隐私政策外链。 */
+  const confirmDialogBodyLinkHref = computed(() =>
+    confirmDialogAction.value === 'privacy_sync' ? privacyPolicyUrl : undefined
+  )
+  const confirmDialogBodyLinkLabel = computed(() =>
+    confirmDialogAction.value === 'privacy_sync' ? t('settings_legal_link_privacy') : undefined
+  )
 
   async function loadCommands(options?: { quiet?: boolean }) {
     const quiet = options?.quiet === true
@@ -470,6 +609,11 @@ export function useSettingsPage() {
 
       chromeBookmarkSyncEnabled.value = response.settings.chromeBookmarkSyncEnabled
       chromeBookmarkIngestEnabled.value = response.settings.chromeBookmarkIngestEnabled
+      await loadChromeBookmarkImportStatus()
+      const status = chromeBookmarkImportState.value?.status
+      if (status === 'running' || status === 'pending') {
+        startBookmarkImportPolling()
+      }
     } catch {
       settingsError.value = t('settings_error_update')
     } finally {
@@ -496,11 +640,17 @@ export function useSettingsPage() {
         settingsError.value = t('settings_error_update')
         return
       }
+      chromeBookmarkImportState.value = response.state
+      chromeBookmarkImportQueryFailed.value = false
+      chromeBookmarkImportErrorCode.value = null
       reimportChromeBookmarksDone.value = true
       reimportDoneTimer = setTimeout(() => {
         reimportChromeBookmarksDone.value = false
         reimportDoneTimer = null
       }, 2500)
+      if (response.state.status === 'running' || response.state.status === 'pending') {
+        startBookmarkImportPolling()
+      }
     } catch {
       settingsError.value = t('settings_error_update')
     } finally {
@@ -1610,6 +1760,8 @@ export function useSettingsPage() {
       syncAccountOwnerCount.value = 0
       syncLocalProfileOwnerCount.value = 0
       syncRemoteCount.value = 0
+      // 退出后以服务端/本机最新同步状态为准（覆盖上方置 0）
+      await refreshSyncStatus()
     } catch {
       signOutError.value = t('settings_error_auth_sign_out')
     } finally {
@@ -1665,6 +1817,7 @@ export function useSettingsPage() {
   onUnmounted(() => {
     stopWatchAuthSession?.()
     stopWatchAuthSession = null
+    stopBookmarkImportPolling()
     window.removeEventListener('popstate', handlePopState)
     window.removeEventListener('hashchange', handleHashChange)
     document.removeEventListener('visibilitychange', handleDocumentVisibilityChange)
@@ -1679,6 +1832,8 @@ export function useSettingsPage() {
     aiFeaturesEnabled,
     awaitingShortcutsReturn,
     chromeBookmarkIngestEnabled,
+    chromeBookmarkImportStatusCopy,
+    chromeBookmarkImportStatusKind,
     chromeBookmarkSyncEnabled,
     linkStatusSweepEnabled,
     closeConfirmDialog,
@@ -1691,6 +1846,8 @@ export function useSettingsPage() {
     confirmDeleteAccount,
     confirmDialogAction,
     confirmDialogBody,
+    confirmDialogBodyLinkHref,
+    confirmDialogBodyLinkLabel,
     confirmDialogError,
     confirmDialogLoading,
     confirmDialogOpen,
@@ -1738,6 +1895,7 @@ export function useSettingsPage() {
     handleRestoreLatestSyncBackup,
     handleRunIncrementalSync,
     handleSelectionToolbarToggle,
+    handleSignIn,
     handleSyncToggle,
     handleUiLocalePreferenceChange,
     hasCompletedInitialSectionSync,
@@ -1793,6 +1951,7 @@ export function useSettingsPage() {
     savingChromeBookmarkSync,
     reimportChromeBookmarksBusy,
     reimportChromeBookmarksDone,
+    reimportChromeBookmarksDoneText,
     savingMcpReadOnly,
     savingRecallOutcomeSoftAdjust,
     savingDualThreadLocalLearning,
@@ -1825,6 +1984,7 @@ export function useSettingsPage() {
     signOutError,
     signOutLocalCount,
     signedIn,
+    signingIn,
     signingOut,
     subscriptionIsPro,
     syncAccountOwnerCount,
@@ -1839,6 +1999,7 @@ export function useSettingsPage() {
     thirdPartyDeleteWorking,
     thirdPartyImportWorking,
     thirdPartySourceStatusCopy,
+    thirdPartySummaryLoading,
     t
   }
 }

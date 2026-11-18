@@ -4,10 +4,9 @@ export type SettingsSectionId =
   | 'third_party' // 第三方数据：Raindrop / Pocket 导入与按来源管理
   | 'shortcuts' // 快捷键：展示绑定；改键跳转 Chrome 原生页
   | 'account_sync' // 账户与同步：同步 / 冲突 / 孤儿桶 / 退出
-  | 'privacy' // 数据与隐私：说明卡 / MCP / 备份 / 本机适应 / 清除删除
-  | 'help' // 帮助与支持：FAQ / Contact（官网 `/faq` · `/faq#contact`）
-  | 'legal' // 法律信息：定价 / 隐私政策 / 服务条款外链
   | 'ai' // AI：开关与模型说明
+  | 'privacy' // 数据与隐私：说明卡 / MCP / 备份 / 本机适应 / 清除删除
+  | 'help_legal' // 帮助与法律：FAQ / 联系支持 / 定价 / 隐私政策 / 服务条款
   | 'language' // 界面语言：system / en / zh_CN
 
 /** 设置分区文案 key（由 UI `t()` 解析；core 不依赖 chrome）。 */
@@ -18,10 +17,9 @@ export interface SettingsSectionTabDef {
     | 'settings_tab_third_party'
     | 'settings_tab_shortcuts'
     | 'settings_tab_account_sync'
-    | 'settings_tab_privacy'
-    | 'settings_tab_help'
-    | 'settings_tab_legal'
     | 'settings_tab_ai'
+    | 'settings_tab_privacy'
+    | 'settings_tab_help_legal'
     | 'settings_tab_language'
 }
 
@@ -43,20 +41,22 @@ export const SETTINGS_SECTION_TABS: readonly SettingsSectionTabDef[] = [
   { id: 'third_party', labelKey: 'settings_tab_third_party' },
   { id: 'shortcuts', labelKey: 'settings_tab_shortcuts' },
   { id: 'account_sync', labelKey: 'settings_tab_account_sync' },
-  { id: 'privacy', labelKey: 'settings_tab_privacy' },
-  { id: 'help', labelKey: 'settings_tab_help' },
-  { id: 'legal', labelKey: 'settings_tab_legal' },
   { id: 'ai', labelKey: 'settings_tab_ai' },
+  { id: 'privacy', labelKey: 'settings_tab_privacy' },
+  { id: 'help_legal', labelKey: 'settings_tab_help_legal' },
   { id: 'language', labelKey: 'settings_tab_language' }
 ] as const
 
 /**
  * 旧深链别名 → 现分区。
- * `usage` → 保存；`data` → 数据与隐私（原独立「数据」已并入 `privacy`）。
+ * `usage` → 保存；`data` → 数据与隐私（原独立「数据」已并入 `privacy`）；
+ * `help` / `legal` → 帮助与法律（原两区已合并）。
  */
 const LEGACY_SECTION_ALIASES: Readonly<Record<string, SettingsSectionId>> = {
   usage: 'capture',
-  data: 'privacy'
+  data: 'privacy',
+  help: 'help_legal',
+  legal: 'help_legal'
 }
 
 /** 解析分区定义；非法值回退默认「保存」。 */

@@ -15,6 +15,8 @@ const {
   closeSignOutDialog,
   confirmDeleteAccount,
   confirmDialogBody,
+  confirmDialogBodyLinkHref,
+  confirmDialogBodyLinkLabel,
   confirmDialogError,
   confirmDialogLoading,
   confirmDialogOpen,
@@ -150,6 +152,8 @@ const {
     :open="confirmDialogOpen"
     :title="confirmDialogTitle"
     :body="confirmDialogBody"
+    :body-link-href="confirmDialogBodyLinkHref"
+    :body-link-label="confirmDialogBodyLinkLabel"
     :cancel-label="t('settings_sign_out_cancel')"
     :confirm-label="confirmDialogTitle"
     :confirm-tone="confirmDialogTone"

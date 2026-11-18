@@ -31,6 +31,14 @@ function handleSurfaceActivate(event: MouseEvent): void {
   emit('activate', event)
 }
 
+/** 中键（button === 1）激活；右键保留上下文菜单。 */
+function handleSurfaceAuxclick(event: MouseEvent): void {
+  if (event.button !== 1) {
+    return
+  }
+  emit('activate', event)
+}
+
 function handleSurfaceKeydown(event: KeyboardEvent): void {
   if (event.key !== 'Enter' && event.key !== ' ') {
     return
@@ -65,6 +73,7 @@ function handleSurfaceKeydown(event: KeyboardEvent): void {
       "
       :tabindex="props.detailExportActive || props.href ? 0 : undefined"
       @click="handleSurfaceActivate"
+      @auxclick="handleSurfaceAuxclick"
       @keydown="handleSurfaceKeydown"
     >
       <span

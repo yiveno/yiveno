@@ -15,6 +15,7 @@ import {
   readBookmarkLibraryTreeExpandedSession,
   schedulePersistBookmarkLibraryTreeExpanded
 } from '@/pages/library/bookmark-library-tree-expanded'
+import { buildBookmarkLibraryRowMemoDeps } from '@/pages/library/bookmark-library-tree-row-memo'
 import BookmarkLibraryTreeRow from '@/pages/library/BookmarkLibraryTreeRow.vue'
 import { createLibraryVirtualScrollHandler } from '@/pages/library/use-library-virtual-scroll'
 
@@ -152,15 +153,13 @@ function bookmarkRowMemoDeps(row: (typeof renderedRows.value)[number]): unknown[
     row.kind === 'bookmark' && row.memoryItemId
       ? props.selectedDetailExportIds?.has(row.memoryItemId) === true
       : false
-  return [
-    row.kind,
-    row.chromeId,
-    row.depth,
-    props.showDetailExportSelection === true,
-    props.detailExportSelectionRevision ?? 0,
+  return buildBookmarkLibraryRowMemoDeps(row, {
+    showDetailExportSelection: props.showDetailExportSelection === true,
+    detailExportSelectionRevision: props.detailExportSelectionRevision ?? 0,
     exportSelected,
-    row.kind === 'bookmark' && !row.memoryItemId
-  ]
+    deletingId: props.deletingId ?? null,
+    showUnsyncedFlags: props.showUnsyncedFlags === true
+  })
 }
 </script>
 

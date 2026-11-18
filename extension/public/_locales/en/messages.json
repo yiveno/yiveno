@@ -1067,6 +1067,9 @@
   "settings_third_party_not_imported": {
     "message": "Not imported yet"
   },
+  "settings_third_party_status_failed": {
+    "message": "Couldn't load status"
+  },
   "settings_third_party_delete_all": {
     "message": "Delete all imports"
   },
@@ -1111,9 +1114,6 @@
     "message": "AI"
   },
   "settings_tab_language": {
-    "message": "Language"
-  },
-  "settings_section_language": {
     "message": "Language"
   },
   "settings_section_language_copy": {
@@ -1234,10 +1234,10 @@
     }
   },
   "settings_data_outcome_soft_adjust_toggle": {
-    "message": "Personal ranking boosts from Outcomes"
+    "message": "Fine-tune ranking from your confirmations"
   },
   "settings_data_outcome_soft_adjust_hint": {
-    "message": "When on, Yiveno may softly boost or demote matches using on-device Outcome pairs. Off pauses that only—your library and find still work; pairs stay until you clear them."
+    "message": "Results you confirm rank higher next time; results you dismiss rank lower."
   },
   "settings_dual_thread_local_learning_toggle": {
     "message": "Learn locally"
@@ -1376,7 +1376,7 @@
     "message": "Read-only MCP (beta)"
   },
   "settings_mcp_toggle_hint": {
-    "message": "Let Cursor or other MCP clients look up a few sourced items from your library. Off blocks this on the device and in the cloud."
+    "message": "External AI assistants can only read and look up items in your library. They cannot change or delete anything."
   },
   "settings_mcp_howto": {
     "message": "Ask with a natural-language clue; you get 1–5 sourced items—never a full-library dump. Cloud path needs sign-in, Pro sync, and this switch on. Setup details are in the developer docs."
@@ -1408,17 +1408,11 @@
   "settings_legal_link_pricing": {
     "message": "Pricing"
   },
-  "settings_legal_link_support": {
-    "message": "Support"
-  },
   "settings_legal_link_privacy": {
     "message": "Privacy policy"
   },
   "settings_legal_link_terms": {
     "message": "Terms of service"
-  },
-  "settings_legal_link_faq": {
-    "message": "FAQ"
   },
   "settings_privacy_export": {
     "message": "Export full backup"
@@ -1534,13 +1528,13 @@
     "message": "Enable AI assistance"
   },
   "settings_ai_toggle_hint": {
-    "message": "Off: understand clues with rules only; no AI suggestions when you save."
+    "message": "When off, Yiveno stops calling AI to understand clues and enrich content. Clue understanding falls back to local rules."
   },
   "settings_link_sweep_toggle": {
     "message": "Check saved links weekly"
   },
   "settings_link_sweep_toggle_hint": {
-    "message": "Off: skip weekly link checks. Broken links are only ranked lower in Recall — never deleted."
+    "message": "Checks saved links weekly. Dead links are only down-ranked, never deleted."
   },
   "settings_ai_model_note": {
     "message": "How requests are routed:"
@@ -1554,9 +1548,6 @@
   "settings_ai_bullet_boundary": {
     "message": "We don’t send your entire library to a model by default; models can’t directly change your library."
   },
-  "settings_section_capture": {
-    "message": "Capture"
-  },
   "settings_section_capture_copy": {
     "message": "Control the save menu on selection and whether browser bookmarks join your library."
   },
@@ -1567,10 +1558,7 @@
     "message": "Show save menu on selection"
   },
   "settings_toggle_selection_toolbar_hint": {
-    "message": "Shows “Save to Yiveno” after you select text"
-  },
-  "settings_section_shortcuts": {
-    "message": "Shortcuts"
+    "message": "Shows a save button when you select text on a web page."
   },
   "settings_section_shortcuts_copy": {
     "message": "Review bindings here; change keys in your browser."
@@ -1579,7 +1567,7 @@
     "message": "Opens this browser’s extension shortcuts page for Yiveno."
   },
   "settings_open_shortcuts_action": {
-    "message": "Open"
+    "message": "Open browser shortcut settings"
   },
   "settings_commands_loading": {
     "message": "Loading shortcuts…"
@@ -1615,6 +1603,9 @@
         "content": "$1"
       }
     }
+  },
+  "settings_account_sign_in_hint": {
+    "message": "Not signed in. Sign in to manage sync and cloud memories."
   },
   "settings_account_sign_in_website": {
     "message": "Sign in on website"
@@ -1785,9 +1776,6 @@
   },
   "settings_error_login_migration_status": {
     "message": "Couldn’t check for local saves to import"
-  },
-  "settings_section_sync": {
-    "message": "Sync"
   },
   "settings_section_sync_copy": {
     "message": "Off by default. When on, merges this device with the cloud, then syncs about every 15 minutes."
@@ -2055,6 +2043,9 @@
   "library_loading": {
     "message": "Loading…"
   },
+  "library_load_more": {
+    "message": "Load more"
+  },
   "library_list_visible_cap_note": {
     "message": "Showing the first $1 of $2.",
     "placeholders": {
@@ -2116,6 +2107,12 @@
   },
   "library_bookmark_import_progress_aria": {
     "message": "Bookmark import progress"
+  },
+  "library_bookmark_import_failed_title": {
+    "message": "Bookmark import failed"
+  },
+  "library_bookmark_import_retry": {
+    "message": "Re-import"
   },
   "library_bookmark_unsynced": {
     "message": "Not in memory"
@@ -3039,6 +3036,34 @@
   "getting_started_sync_suggest_dismiss": {
     "message": "No thanks"
   },
+  "settings_chrome_bookmark_import_done": {
+    "message": "$COUNT$ bookmarks imported",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_chrome_bookmark_import_progress": {
+    "message": "Importing bookmarks: $imported$ of $total$",
+    "placeholders": {
+      "imported": {
+        "content": "$1"
+      },
+      "total": {
+        "content": "$2"
+      }
+    }
+  },
+  "settings_chrome_bookmark_import_progress_unknown": {
+    "message": "Importing bookmarks…"
+  },
+  "settings_chrome_bookmark_sync_intro": {
+    "message": "Turn this on to import your existing Chrome bookmarks into the library on this device and keep new ones in sync. Bookmarks stay on this device and are never uploaded."
+  },
+  "settings_chrome_bookmark_sync_off_note": {
+    "message": "Turning sync off keeps your imported bookmarks in the library."
+  },
   "settings_toggle_chrome_bookmark_sync": {
     "message": "Sync Chrome bookmarks to the local library"
   },
@@ -3053,6 +3078,14 @@
   },
   "settings_reimport_chrome_bookmarks_done": {
     "message": "Re-import complete."
+  },
+  "settings_reimport_chrome_bookmarks_done_count": {
+    "message": "Re-import complete: $COUNT$ bookmarks.",
+    "placeholders": {
+      "COUNT": {
+        "content": "$1"
+      }
+    }
   },
   "sidepanel_recall_deeper_reading_quota_monthly": {
     "message": "This month's clue-help allowance is used up ($USED$/$LIMIT$). Using on-device rules instead. It resets next month.",
@@ -3146,5 +3179,77 @@
         "content": "$1"
       }
     }
+  },
+  "settings_tab_help_legal": {
+    "message": "Help & legal"
+  },
+  "settings_help_link_faq": {
+    "message": "FAQ"
+  },
+  "settings_help_link_support": {
+    "message": "Support"
+  },
+  "settings_third_party_import_raindrop_guide": {
+    "message": "Export your bookmarks from Raindrop.io as HTML, CSV, or JSON, then choose the file to import."
+  },
+  "settings_third_party_import_pocket_guide": {
+    "message": "Export your bookmarks from Pocket as HTML, then choose the file to import."
+  },
+  "settings_third_party_importing": {
+    "message": "Importing…"
+  },
+  "settings_command_unbound_hint": {
+    "message": "Bind it in your browser's keyboard shortcuts settings"
+  },
+  "settings_command_selection_hint": {
+    "message": "Select text on the page first"
+  },
+  "settings_dual_thread_learning_outcome_top_pick": {
+    "message": "Top pick shown"
+  },
+  "settings_dual_thread_learning_outcome_need_a_clue": {
+    "message": "Needed another clue"
+  },
+  "settings_dual_thread_learning_outcome_no_match": {
+    "message": "No match"
+  },
+  "settings_dual_thread_learning_confirm_target": {
+    "message": "Confirmed target"
+  },
+  "settings_dual_thread_learning_confirm_none_in_results": {
+    "message": "None of these"
+  },
+  "settings_dual_thread_learning_confirm_absent": {
+    "message": "Not in library"
+  },
+  "settings_dual_thread_learning_confirm_unknown": {
+    "message": "Unknown"
+  },
+  "settings_dual_thread_learning_stage_not_captured": {
+    "message": "Not captured"
+  },
+  "settings_dual_thread_learning_stage_index_gap": {
+    "message": "Index gap"
+  },
+  "settings_dual_thread_learning_stage_candidate_miss": {
+    "message": "Missed candidates"
+  },
+  "settings_dual_thread_learning_stage_understand_skew": {
+    "message": "Understanding skew"
+  },
+  "settings_dual_thread_learning_stage_rank_wrong": {
+    "message": "Wrong ranking"
+  },
+  "settings_dual_thread_learning_stage_clue_insufficient": {
+    "message": "Clue too thin"
+  },
+  "settings_dual_thread_learning_stage_absent_honest": {
+    "message": "Honestly absent"
+  },
+  "settings_dual_thread_learning_stage_ux_friction": {
+    "message": "UX friction"
+  },
+  "settings_dual_thread_learning_stage_unknown": {
+    "message": "Unknown"
   }
 }

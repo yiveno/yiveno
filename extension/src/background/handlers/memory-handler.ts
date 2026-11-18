@@ -143,7 +143,8 @@ export async function handleListMemoryItems(payload: unknown): Promise<MemoryBac
     const [items, total] = await Promise.all([
       memoryItemService.list({
         ...optionalProp('type', options?.type),
-        ...optionalProp('limit', options?.limit)
+        ...optionalProp('limit', options?.limit),
+        ...optionalProp('offset', options?.offset)
       }),
       memoryItemService.countActive(options?.type)
     ])
@@ -151,7 +152,8 @@ export async function handleListMemoryItems(payload: unknown): Promise<MemoryBac
       count: items.length,
       total,
       type: options?.type ?? null,
-      limit: options?.limit ?? null
+      limit: options?.limit ?? null,
+      offset: options?.offset ?? null
     })
     return { ok: true, items, total }
   } catch (error) {

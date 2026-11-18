@@ -11,6 +11,7 @@ import { t } from '@/infrastructure/i18n/t'
 import AppLibraryItemCard from '@/infrastructure/ui/AppLibraryItemCard.vue'
 import AppLibraryItemFavicon from '@/infrastructure/ui/AppLibraryItemFavicon.vue'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
+import { resolveBookmarkActivateAction } from '@/pages/library/bookmark-library-activate'
 
 defineOptions({ name: 'BookmarkLibraryTreeRow' })
 
@@ -113,31 +114,26 @@ function handleBookmarkActivate(event: MouseEvent | KeyboardEvent) {
   }
 
   const memoryItemId = props.row.memoryItemId
-  if (props.showDetailExportSelection && memoryItemId) {
+  const action = resolveBookmarkActivateAction({
+    isKeyboard: event instanceof KeyboardEvent,
+    hasMemoryItemId: Boolean(memoryItemId),
+    exportMode: props.showDetailExportSelection === true
+  })
+
+  if (action === 'ignore') {
     event.preventDefault()
-    if (props.detailExportSelectionDisabled === true) {
+    return
+  }
+
+  if (action === 'toggle') {
+    event.preventDefault()
+    if (!memoryItemId || props.detailExportSelectionDisabled === true) {
       return
     }
     emit('toggleDetailExportSelection', memoryItemId)
     return
   }
 
-  if (event instanceof KeyboardEvent) {
-    event.preventDefault()
-    emit('openBookmark', {
-      url: props.row.url,
-      navigate: true,
-      ...(memoryItemId ? { memoryItemId } : {})
-    })
-    return
-  }
-
-  if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
-    if (memoryItemId) {
-      emit('openBookmark', { url: props.row.url, memoryItemId, navigate: false })
-    }
-    return
-  }
   event.preventDefault()
   emit('openBookmark', {
     url: props.row.url,
@@ -177,7 +173,7 @@ function handleBookmarkActivate(event: MouseEvent | KeyboardEvent) {
       :href="row.url"
       :link-title="bookmarkTooltip"
       :activate-aria-label="bookmarkTitleDisplay"
-      :detail-export-active="showDetailExportSelection === true"
+      :detail-export-active="showDetailExportSelection === true && Boolean(row.memoryItemId)"
       :detail-export-selected="detailExportSelected === true"
       @activate="handleBookmarkActivate"
     >

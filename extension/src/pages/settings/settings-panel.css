@@ -186,6 +186,21 @@
   color: var(--on-surface-muted);
 }
 
+.settings-command-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--on-surface-muted);
+}
+
+/** 账号分区未登录：登录提示 + 按钮 */
+.settings-sign-in-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
+}
+
 .settings-dual-thread-block {
   display: grid;
   gap: var(--space-xs);
@@ -457,27 +472,30 @@
   color: var(--on-surface);
 }
 
-/** 官网外链行：右仅 ↗ 图标（无障碍靠 title + aria-label） */
-.settings-external-link {
-  display: inline-flex;
-  justify-content: center;
+.settings-link-row {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
-  width: 36px;
-  height: 36px;
+  gap: var(--space-sm);
   margin: 0;
-  padding: 0;
+  padding: var(--space-sm) var(--space-md);
   border: none;
   border-radius: var(--radius-md, 8px);
-  color: var(--on-surface-muted);
-  background: transparent;
   text-decoration: none;
+  color: var(--on-surface);
+  background: transparent;
   cursor: pointer;
   transition:
     color var(--motion-duration-fast) var(--motion-easing-standard),
     background-color var(--motion-duration-fast) var(--motion-easing-standard);
 }
 
-.settings-external-link:hover {
+.settings-link-row__title {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.settings-link-row:hover {
   color: var(--on-surface);
   background: color-mix(
     in srgb,
@@ -486,7 +504,7 @@
   );
 }
 
-.settings-external-link:focus-visible {
+.settings-link-row:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }

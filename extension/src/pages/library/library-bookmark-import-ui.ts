@@ -6,3 +6,10 @@ export function isLibraryBookmarkImporting(
 ): boolean {
   return status === 'running' || status === 'pending'
 }
+
+/** Library 书签 Tab：导入失败（与 importing 互斥；用于失败面板/横幅）。 */
+export function isLibraryBookmarkImportFailed(
+  status: ChromeBookmarkImportState['status'] | null | undefined
+): boolean {
+  return status === 'failed'
+}
