@@ -22,12 +22,3 @@ export {
   buildDualThreadAggregateSketch,
   type DualThreadAggregateSketch
 } from '@/core/recall/dual-thread/dual-thread-aggregate'
-
-export {
-  resolveDualThreadContributeBlockReason,
-  shouldAttemptDualThreadSketchUpload,
-  hasAnyFailureStageCounts,
-  resolveDualThreadContributionDisplay,
-  type DualThreadContributeBlockReason,
-  type DualThreadSketchUploadState
-} from '@/core/recall/dual-thread/dual-thread-consent'
