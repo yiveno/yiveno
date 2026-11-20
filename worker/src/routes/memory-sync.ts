@@ -15,7 +15,7 @@ import {
   deleteAllCloudMemoryForOwner,
   upsertMemoryItems
 } from '../data-access/memory-items'
-import { supabaseAuth } from '../middleware/supabase-auth'
+import { deviceAuthOrSupabaseAuth } from '../middleware/device-or-supabase-auth'
 import {
   MEMORY_SYNC_BATCH_MAX,
   MEMORY_SYNC_PULL_MAX,
@@ -32,12 +32,13 @@ type SyncVars = {
     supabaseUserId: string
     supabaseAccessToken: string
     supabaseUserEmail: string | null
+    deviceIsAnonymous?: boolean
   }
 }
 
 export const memorySyncRouter = new Hono<SyncVars>()
 
-memorySyncRouter.use('*', supabaseAuth())
+memorySyncRouter.use('*', deviceAuthOrSupabaseAuth())
 
 /** pull / push / replace / restore 须有效 Pro。 */
 async function requireProForSync(c: {

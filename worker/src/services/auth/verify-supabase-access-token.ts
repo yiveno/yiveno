@@ -16,12 +16,16 @@ const supabaseAccessTokenPayloadSchema = z.object({
   sub: z.string().min(1),
   email: z.string().email().optional().nullable(),
   role: z.string().optional(),
-  aud: z.union([z.string(), z.array(z.string())]).optional()
+  aud: z.union([z.string(), z.array(z.string())]).optional(),
+  /** 匿名 Auth 用户；旧 token 可能无此 claim */
+  is_anonymous: z.boolean().optional()
 })
 
 export type VerifiedSupabaseUser = {
   id: string
   email: string | null
+  /** 来自 JWT `is_anonymous`；缺失按非匿名 */
+  isAnonymous: boolean
 }
 
 export type VerifySupabaseAccessTokenResult =
@@ -49,7 +53,8 @@ function claimsToUser(payload: unknown): VerifySupabaseAccessTokenResult {
     ok: true,
     user: {
       id: parsed.data.sub,
-      email: parsed.data.email ?? null
+      email: parsed.data.email ?? null,
+      isAnonymous: parsed.data.is_anonymous ?? false
     }
   }
 }

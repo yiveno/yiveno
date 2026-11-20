@@ -63,6 +63,11 @@ billingRouter.post('/checkout-session', async c => {
   }
 
   info('[Billing] checkout-session 开始', { userId, plan })
+  // 匿名 / 无邮箱：Dodo 结账需 email → 干净 400（非 500）
+  if (!email?.trim()) {
+    return c.json({ error: 'email_required' }, 400)
+  }
+
   // 有效 Pro（含周期结束取消仍在期内）不得再开新单，改走 Customer Portal。
   const entitlement = await getSubscriptionStatusOrThrow(c.env, userId, { reconcile: true })
   if (entitlement.isPro) {

@@ -6,7 +6,7 @@
 import { Hono } from 'hono'
 import { z } from 'zod'
 
-import { supabaseAuth } from '../middleware/supabase-auth'
+import { deviceAuthOrSupabaseAuth } from '../middleware/device-or-supabase-auth'
 import { isActiveProUser } from '../services/ai/require-pro-user'
 import {
   McpRecallArgsSchema,
@@ -25,12 +25,13 @@ type McpVars = {
     supabaseUserId: string
     supabaseAccessToken: string
     supabaseUserEmail: string | null
+    deviceIsAnonymous?: boolean
   }
 }
 
 export const mcpRouter = new Hono<McpVars>()
 
-mcpRouter.use('*', supabaseAuth())
+mcpRouter.use('*', deviceAuthOrSupabaseAuth())
 
 const toolDescriptors = [
   {

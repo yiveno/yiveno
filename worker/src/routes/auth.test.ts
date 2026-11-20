@@ -21,10 +21,12 @@ afterEach(() => {
 })
 
 describe('auth routes', () => {
-  test('POST /api/auth/extension-session 缺少 Authorization → 401', async () => {
+  test('POST /api/auth/extension-session → 410 Gone（改走 device-register）', async () => {
     const app = createApp()
     const response = await app.request('/api/auth/extension-session', { method: 'POST' }, baseEnv)
-    expect(response.status).toBe(401)
+    expect(response.status).toBe(410)
+    const data = (await response.json()) as { error: string }
+    expect(data.error).toBe('gone')
   })
 
   test('POST /api/auth/extension-uninstall-revoke 缺 token → 400', async () => {

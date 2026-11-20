@@ -1,10 +1,12 @@
 /**
- * 托管 LLM 月度 + 日软盖配额服务（登录 Free / Pro 分档）。
+ * 托管 LLM 配额服务：Free/Pro 月度+日盖；匿名终身档（无月重置、无日盖）。
  */
 
 import {
   buildDailyUsageKey,
+  buildLifetimeUsageKey,
   buildMonthlyUsageKey,
+  resolveHostedAnonymousLifetimeQuota,
   resolveHostedDailyCap,
   resolveHostedMonthlyQuota
 } from '../../config/ai-hosted'
@@ -18,17 +20,54 @@ export interface HostedQuotaSnapshot {
   dailyUsed: number
   dailyLimit: number
   dailyRemaining: number
-  tier: 'free' | 'pro'
+  tier: 'free' | 'pro' | 'anonymous'
+}
+
+export type HostedQuotaOptions = {
+  /** 必须在 isPro 之前短路；匿名走终身 key */
+  isAnonymous?: boolean
+  isPro: boolean
+}
+
+function anonymousSnapshot(env: Env, used: number): HostedQuotaSnapshot {
+  const limit = resolveHostedAnonymousLifetimeQuota(env)
+  const remaining = Math.max(0, limit - used)
+  return {
+    used,
+    limit,
+    remaining,
+    monthKey: 'lifetime',
+    // 429 契约：匿名档 daily* 镜像终身数
+    dailyUsed: used,
+    dailyLimit: limit,
+    dailyRemaining: remaining,
+    tier: 'anonymous'
+  }
 }
 
 /**
- * 读取用户当月/当日配额快照（不递增）
+ * 读取配额快照（不递增）。
+ * 匿名分支必须在 isPro 判断之前短路。
  */
 export async function getHostedQuotaSnapshot(
   env: Env,
   userId: string,
-  isPro: boolean
+  isProOrOptions: boolean | HostedQuotaOptions
 ): Promise<HostedQuotaSnapshot> {
+  const opts: HostedQuotaOptions =
+    typeof isProOrOptions === 'boolean'
+      ? { isPro: isProOrOptions, isAnonymous: false }
+      : isProOrOptions
+
+  if (opts.isAnonymous) {
+    const kv = env.AI_USAGE_KV
+    const key = buildLifetimeUsageKey(userId)
+    const raw = kv ? await kv.get(key) : null
+    const used = Number.parseInt(raw ?? '0', 10) || 0
+    return anonymousSnapshot(env, used)
+  }
+
+  const isPro = opts.isPro
   const limit = resolveHostedMonthlyQuota(env, isPro)
   const dailyLimit = resolveHostedDailyCap(env, isPro)
   const monthKey = buildMonthlyUsageKey(userId)
@@ -52,13 +91,13 @@ export async function getHostedQuotaSnapshot(
 }
 
 /**
- * 在月配额与日软盖均允许时递增一次调用计数。
+ * 在配额允许时递增一次调用计数。
  * 未绑定 AI_USAGE_KV 时拒绝（避免无上限调用）。
  */
 export async function consumeHostedQuota(
   env: Env,
   userId: string,
-  isPro: boolean
+  isProOrOptions: boolean | HostedQuotaOptions
 ): Promise<
   | { allowed: true; snapshot: HostedQuotaSnapshot }
   | {
@@ -67,9 +106,22 @@ export async function consumeHostedQuota(
       reason?: 'quota_exceeded' | 'daily_cap_exceeded' | 'kv_not_configured'
     }
 > {
+  const opts: HostedQuotaOptions =
+    typeof isProOrOptions === 'boolean'
+      ? { isPro: isProOrOptions, isAnonymous: false }
+      : isProOrOptions
+
   if (!env.AI_USAGE_KV) {
-    const limit = resolveHostedMonthlyQuota(env, isPro)
-    const dailyLimit = resolveHostedDailyCap(env, isPro)
+    if (opts.isAnonymous) {
+      const snapshot = anonymousSnapshot(env, 0)
+      return {
+        allowed: false,
+        reason: 'kv_not_configured',
+        snapshot: { ...snapshot, remaining: 0, dailyRemaining: 0 }
+      }
+    }
+    const limit = resolveHostedMonthlyQuota(env, opts.isPro)
+    const dailyLimit = resolveHostedDailyCap(env, opts.isPro)
     const monthKey = buildMonthlyUsageKey(userId)
     return {
       allowed: false,
@@ -82,12 +134,23 @@ export async function consumeHostedQuota(
         dailyUsed: 0,
         dailyLimit,
         dailyRemaining: 0,
-        tier: isPro ? 'pro' : 'free'
+        tier: opts.isPro ? 'pro' : 'free'
       }
     }
   }
 
-  const snapshot = await getHostedQuotaSnapshot(env, userId, isPro)
+  if (opts.isAnonymous) {
+    const snapshot = await getHostedQuotaSnapshot(env, userId, opts)
+    if (snapshot.used >= snapshot.limit) {
+      return { allowed: false, reason: 'quota_exceeded', snapshot }
+    }
+    const nextUsed = snapshot.used + 1
+    await env.AI_USAGE_KV.put(buildLifetimeUsageKey(userId), String(nextUsed))
+    const updated = anonymousSnapshot(env, nextUsed)
+    return { allowed: true, snapshot: updated }
+  }
+
+  const snapshot = await getHostedQuotaSnapshot(env, userId, opts)
 
   if (snapshot.used >= snapshot.limit) {
     return { allowed: false, reason: 'quota_exceeded', snapshot }

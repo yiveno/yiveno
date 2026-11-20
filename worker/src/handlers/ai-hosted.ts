@@ -18,11 +18,13 @@ import { info as logInfo, logError } from '../utils/logger'
 
 /**
  * 获取托管 LLM 配额信息（须登录；不要求 Pro）。
+ * @param isAnonymous 设备 token 路径读自 user_meta；Supabase 过渡路径传 false
  */
 export async function handleHostedQuota(
   request: Request,
   env: Env,
-  userId: string
+  userId: string,
+  isAnonymous = false
 ): Promise<Response> {
   const origin = request.headers.get('origin')
 
@@ -30,8 +32,9 @@ export async function handleHostedQuota(
     return errorJson({ error: 'kv_not_configured' }, 503, origin)
   }
 
-  const isPro = await isActiveProUser(env, userId)
-  const snapshot = await getHostedQuotaSnapshot(env, userId, isPro)
+  // 匿名必须在 isPro 之前短路，避免落入 Free 月配额
+  const isPro = isAnonymous ? false : await isActiveProUser(env, userId)
+  const snapshot = await getHostedQuotaSnapshot(env, userId, { isAnonymous, isPro })
 
   return okJson(
     {
@@ -50,12 +53,14 @@ export async function handleHostedQuota(
 }
 
 /**
- * 处理托管 LLM 文本补全（须登录；Free/Pro 配额分档）。
+ * 处理托管 LLM 文本补全（须登录；Free/Pro/匿名配额分档）。
+ * @param isAnonymous 设备 token 路径读自 user_meta；Supabase 过渡路径传 false
  */
 export async function handleHostedComplete(
   request: Request,
   env: Env,
-  userId: string
+  userId: string,
+  isAnonymous = false
 ): Promise<Response> {
   const origin = request.headers.get('origin')
   const startedAt = Date.now()
@@ -89,8 +94,8 @@ export async function handleHostedComplete(
     return errorJson({ error: 'missing_prompt' }, 400, origin)
   }
 
-  const isPro = await isActiveProUser(env, userId)
-  const quotaResult = await consumeHostedQuota(env, userId, isPro)
+  const isPro = isAnonymous ? false : await isActiveProUser(env, userId)
+  const quotaResult = await consumeHostedQuota(env, userId, { isAnonymous, isPro })
   if (!quotaResult.allowed) {
     logInfo('hosted_complete_quota_exceeded', {
       userId,

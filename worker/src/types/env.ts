@@ -42,6 +42,10 @@ export type Env = Cloudflare.Env & {
   AI_HOSTED_FREE_DAILY_CAP?: string
   /** 托管 LLM Pro 日盖 */
   AI_HOSTED_DAILY_CAP?: string
+  /** 匿名档 LLM 终身配额覆盖（默认 15） */
+  AI_HOSTED_ANONYMOUS_LIFETIME_QUOTA?: string
+  /** 匿名档 embedding 终身调用上限覆盖（默认 30） */
+  AI_EMBED_ANONYMOUS_LIFETIME_LIMIT?: string
   /**
    * 任务级模型覆盖（可选 · Phase 1+ 插座；未设则用 AI_HOSTED_MODEL）。
    * 见 docs/architecture/2026-10-任务级模型路由方案.md

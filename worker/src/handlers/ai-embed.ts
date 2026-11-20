@@ -1,6 +1,6 @@
 /**
  * 登录可用：Workers AI embedding（bge-m3）。
- * 鉴权：Supabase Bearer；按用户日配额防刷（Free/Pro 分档）。
+ * 鉴权：双栈 Bearer（device token 或 Supabase）；按用户日/终身配额防刷。
  */
 
 import type { Env } from '../types/env'
@@ -16,6 +16,12 @@ const MAX_CHARS_PER_TEXT = 2000
 const DEFAULT_FREE_DAILY_LIMIT = 100
 /** Pro 默认日调用上限 */
 const DEFAULT_PRO_DAILY_LIMIT = 500
+/** 匿名终身调用上限（次数，非条数） */
+const DEFAULT_ANON_LIFETIME_LIMIT = 30
+
+export function buildAnonymousEmbedUsageKey(userId: string): string {
+  return `embed_anon:${userId}`
+}
 
 export interface EmbedRequestBody {
   texts?: unknown
@@ -42,38 +48,170 @@ function normalizeTexts(raw: unknown): string[] | null {
   return texts
 }
 
+type EmbedQuotaOk = {
+  allowed: true
+  used: number
+  limit: number
+  remaining: number
+  tier: 'free' | 'pro' | 'anonymous'
+  dailyUsed: number
+  dailyLimit: number
+  dailyRemaining: number
+  degraded?: true
+}
+
+type EmbedQuotaDenied = {
+  allowed: false
+  used: number
+  limit: number
+  remaining: number
+  tier: 'free' | 'pro' | 'anonymous'
+  dailyUsed: number
+  dailyLimit: number
+  dailyRemaining: number
+  reason: 'quota_exceeded' | 'kv_not_configured'
+}
+
+function resolveAnonEmbedLimit(env: Env): number {
+  const parsed = Number.parseInt(env.AI_EMBED_ANONYMOUS_LIFETIME_LIMIT ?? '', 10)
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_ANON_LIFETIME_LIMIT
+}
+
+async function consumeEmbedAnonymousQuota(
+  env: Env,
+  userId: string
+): Promise<EmbedQuotaOk | EmbedQuotaDenied> {
+  const limit = resolveAnonEmbedLimit(env)
+  const kv = env.AI_USAGE_KV
+  if (!kv) {
+    return {
+      allowed: false,
+      used: 0,
+      limit,
+      remaining: 0,
+      tier: 'anonymous',
+      dailyUsed: 0,
+      dailyLimit: limit,
+      dailyRemaining: 0,
+      reason: 'kv_not_configured'
+    }
+  }
+  const key = buildAnonymousEmbedUsageKey(userId)
+  try {
+    const raw = await kv.get(key)
+    const used = raw ? Number.parseInt(raw, 10) || 0 : 0
+    if (used >= limit) {
+      return {
+        allowed: false,
+        used,
+        limit,
+        remaining: 0,
+        tier: 'anonymous',
+        dailyUsed: used,
+        dailyLimit: limit,
+        dailyRemaining: 0,
+        reason: 'quota_exceeded'
+      }
+    }
+    const next = used + 1
+    await kv.put(key, String(next))
+    const remaining = Math.max(0, limit - next)
+    return {
+      allowed: true,
+      used: next,
+      limit,
+      remaining,
+      tier: 'anonymous',
+      dailyUsed: next,
+      dailyLimit: limit,
+      dailyRemaining: remaining
+    }
+  } catch (err) {
+    logError(err, { path: '/api/ai/embed', userId })
+    return {
+      allowed: true,
+      used: 0,
+      limit,
+      remaining: limit,
+      tier: 'anonymous',
+      dailyUsed: 0,
+      dailyLimit: limit,
+      dailyRemaining: limit,
+      degraded: true
+    }
+  }
+}
+
 async function consumeEmbedDailyQuota(
   env: Env,
   userId: string,
   isPro: boolean
-): Promise<
-  | { allowed: true; used: number; limit: number; degraded?: true }
-  | { allowed: false; used: number; limit: number; reason: 'quota_exceeded' | 'kv_not_configured' }
-> {
+): Promise<EmbedQuotaOk | EmbedQuotaDenied> {
   const envKey = isPro ? env.AI_EMBED_DAILY_LIMIT : env.AI_EMBED_FREE_DAILY_LIMIT
   const fallback = isPro ? DEFAULT_PRO_DAILY_LIMIT : DEFAULT_FREE_DAILY_LIMIT
   const parsed = Number.parseInt(envKey ?? '', 10)
   const dailyLimit = Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
+  const tier = isPro ? ('pro' as const) : ('free' as const)
   const kv = env.AI_USAGE_KV
   if (!kv) {
-    return { allowed: false, used: 0, limit: dailyLimit, reason: 'kv_not_configured' }
+    return {
+      allowed: false,
+      used: 0,
+      limit: dailyLimit,
+      remaining: 0,
+      tier,
+      dailyUsed: 0,
+      dailyLimit,
+      dailyRemaining: 0,
+      reason: 'kv_not_configured'
+    }
   }
 
   const key = `embed_ai:${userId}:${utcDayKey()}`
-  // 配额是防刷守卫，不是核心操作：KV 读写故障（含同 key 写限流）时 fail-open，
-  // 避免守卫击穿请求变成 500。故障期间不强制配额；used 报告 0（未知、未计数）。
+  // 配额是防刷守卫，不是核心操作：KV 读写故障（含同 key 写限流）时 fail-open
   try {
     const raw = await kv.get(key)
     const used = raw ? Number.parseInt(raw, 10) || 0 : 0
     if (used >= dailyLimit) {
-      return { allowed: false, used, limit: dailyLimit, reason: 'quota_exceeded' }
+      return {
+        allowed: false,
+        used,
+        limit: dailyLimit,
+        remaining: 0,
+        tier,
+        dailyUsed: used,
+        dailyLimit,
+        dailyRemaining: 0,
+        reason: 'quota_exceeded'
+      }
     }
 
-    await kv.put(key, String(used + 1), { expirationTtl: 60 * 60 * 48 })
-    return { allowed: true, used: used + 1, limit: dailyLimit }
+    const next = used + 1
+    await kv.put(key, String(next), { expirationTtl: 60 * 60 * 48 })
+    const remaining = Math.max(0, dailyLimit - next)
+    return {
+      allowed: true,
+      used: next,
+      limit: dailyLimit,
+      remaining,
+      tier,
+      dailyUsed: next,
+      dailyLimit,
+      dailyRemaining: remaining
+    }
   } catch (err) {
     logError(err, { path: '/api/ai/embed', userId })
-    return { allowed: true, used: 0, limit: dailyLimit, degraded: true }
+    return {
+      allowed: true,
+      used: 0,
+      limit: dailyLimit,
+      remaining: dailyLimit,
+      tier,
+      dailyUsed: 0,
+      dailyLimit,
+      dailyRemaining: dailyLimit,
+      degraded: true
+    }
   }
 }
 
@@ -107,8 +245,14 @@ export function extractEmbeddingsFromAiResponse(
 
 /**
  * POST /api/ai/embed
+ * @param isAnonymous 匿名走终身 embed_anon:{userId}；保留 fail-open
  */
-export async function handleEmbed(request: Request, env: Env, userId: string): Promise<Response> {
+export async function handleEmbed(
+  request: Request,
+  env: Env,
+  userId: string,
+  isAnonymous = false
+): Promise<Response> {
   const origin = request.headers.get('origin')
   const startedAt = Date.now()
 
@@ -117,18 +261,30 @@ export async function handleEmbed(request: Request, env: Env, userId: string): P
     return errorJson({ error: 'ai_binding_missing' }, 503, origin)
   }
 
-  const isPro = await isActiveProUser(env, userId)
-  const quota = await consumeEmbedDailyQuota(env, userId, isPro)
+  const quota = isAnonymous
+    ? await consumeEmbedAnonymousQuota(env, userId)
+    : await consumeEmbedDailyQuota(env, userId, await isActiveProUser(env, userId))
   if (!quota.allowed) {
     logInfo('embed_rejected', {
       reason: quota.reason,
       userId,
       used: quota.used,
-      limit: quota.limit
+      limit: quota.limit,
+      tier: quota.tier
     })
     const status = quota.reason === 'kv_not_configured' ? 503 : 429
     return errorJson(
-      { error: quota.reason, quota: { used: quota.used, limit: quota.limit } },
+      {
+        error: quota.reason,
+        tier: quota.tier,
+        used: quota.used,
+        limit: quota.limit,
+        remaining: quota.remaining,
+        dailyUsed: quota.dailyUsed,
+        dailyLimit: quota.dailyLimit,
+        dailyRemaining: quota.dailyRemaining,
+        quota: { used: quota.used, limit: quota.limit }
+      },
       status,
       origin
     )

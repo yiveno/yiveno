@@ -4,8 +4,8 @@
  * - `/clue/complete`：开发/未登录降级路径（IP 日配额；正式 Pro 走 hosted）
  * - `/enrichment/complete`：Capture enrichment 结构化提议（扩展 merge 后写库）
  * - `/gs-clue-samples/complete`：Getting Started 示意 clue（一次 4 条；IP 日配额）
- * - `/hosted/*`：托管口语 LLM（Bearer + 月配额；扩展已接线）
- * - `/dreaming/complete`：夜间命题批量编译（Bearer；独立 dreaming 配额；peek-then-commit）
+ * - `/hosted/*`：托管口语 LLM（双栈 Bearer + 月/终身配额）
+ * - `/dreaming/complete`：夜间命题批量编译（双栈 Bearer；匿名 403）
  */
 
 import { Hono } from 'hono'
@@ -16,7 +16,7 @@ import { handleEnrichmentComplete } from '../handlers/ai-enrichment'
 import { handleGsClueSamplesComplete } from '../handlers/ai-gs-clue-samples'
 import { handleDreamingComplete } from '../handlers/ai-dreaming'
 import { handleHostedComplete, handleHostedQuota } from '../handlers/ai-hosted'
-import { supabaseAuth } from '../middleware/supabase-auth'
+import { deviceAuthOrSupabaseAuth } from '../middleware/device-or-supabase-auth'
 
 interface AiRouteEnv {
   Bindings: Env
@@ -24,7 +24,12 @@ interface AiRouteEnv {
     supabaseUserId: string
     supabaseAccessToken: string
     supabaseUserEmail: string | null
+    deviceIsAnonymous: boolean
   }
+}
+
+function readIsAnonymous(c: { get: (key: 'deviceIsAnonymous') => boolean | undefined }): boolean {
+  return c.get('deviceIsAnonymous') === true
 }
 
 export const aiRouter = new Hono<AiRouteEnv>()
@@ -59,39 +64,39 @@ aiRouter.post('/gs-clue-samples/complete', async c => {
 /**
  * POST /api/ai/embed
  *
- * Pro 专用：Workers AI bge-m3 向量；扩展异步写本机 clues.embedding。
+ * Workers AI bge-m3；双栈鉴权；匿名终身 30 次调用。
  */
-aiRouter.post('/embed', supabaseAuth(), async c => {
+aiRouter.post('/embed', deviceAuthOrSupabaseAuth(), async c => {
   const userId = c.get('supabaseUserId')
-  return handleEmbed(c.req.raw, c.env, userId)
+  return handleEmbed(c.req.raw, c.env, userId, readIsAnonymous(c))
 })
 
 /**
  * GET /api/ai/hosted/quota
  *
- * Pro 托管 LLM 配额查询
+ * 托管 LLM 配额查询（含匿名终身档）
  */
-aiRouter.get('/hosted/quota', supabaseAuth(), async c => {
+aiRouter.get('/hosted/quota', deviceAuthOrSupabaseAuth(), async c => {
   const userId = c.get('supabaseUserId')
-  return handleHostedQuota(c.req.raw, c.env, userId)
+  return handleHostedQuota(c.req.raw, c.env, userId, readIsAnonymous(c))
 })
 
 /**
  * POST /api/ai/hosted/complete
  *
- * Pro 托管 LLM 文本补全（支持 prompt 或 messages）
+ * 托管 LLM 文本补全（支持 prompt 或 messages）
  */
-aiRouter.post('/hosted/complete', supabaseAuth(), async c => {
+aiRouter.post('/hosted/complete', deviceAuthOrSupabaseAuth(), async c => {
   const userId = c.get('supabaseUserId')
-  return handleHostedComplete(c.req.raw, c.env, userId)
+  return handleHostedComplete(c.req.raw, c.env, userId, readIsAnonymous(c))
 })
 
 /**
  * POST /api/ai/dreaming/complete
  *
- * 夜间命题批量编译（登录 Free/Pro；独立配额；成功才扣费）。
+ * 夜间命题批量编译；匿名 403。
  */
-aiRouter.post('/dreaming/complete', supabaseAuth(), async c => {
+aiRouter.post('/dreaming/complete', deviceAuthOrSupabaseAuth(), async c => {
   const userId = c.get('supabaseUserId')
-  return handleDreamingComplete(c.req.raw, c.env, userId)
+  return handleDreamingComplete(c.req.raw, c.env, userId, readIsAnonymous(c))
 })

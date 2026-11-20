@@ -20,6 +20,9 @@ export const AI_HOSTED_FREE_DAILY_CAP = 10
 /** Pro：日软盖 */
 export const AI_HOSTED_PRO_DAILY_CAP = 120
 
+/** 匿名试用：LLM 终身次数（不按月重置） */
+export const AI_HOSTED_ANONYMOUS_LIFETIME_QUOTA = 15
+
 /** DeepSeek API 默认 Base URL（直连回退） */
 export const DEEPSEEK_DEFAULT_BASE_URL = 'https://api.deepseek.com'
 
@@ -42,6 +45,7 @@ export type HostedQuotaEnv = {
   AI_HOSTED_FREE_MONTHLY_QUOTA?: string // Free 月配额覆盖
   AI_HOSTED_DAILY_CAP?: string // Pro 日盖覆盖
   AI_HOSTED_FREE_DAILY_CAP?: string // Free 日盖覆盖
+  AI_HOSTED_ANONYMOUS_LIFETIME_QUOTA?: string // 匿名终身配额覆盖
 }
 
 /**
@@ -101,6 +105,16 @@ export function resolveHostedMonthlyQuota(env: HostedQuotaEnv, isPro: boolean): 
 }
 
 /**
+ * 解析匿名档 LLM 终身配额。
+ */
+export function resolveHostedAnonymousLifetimeQuota(env: HostedQuotaEnv): number {
+  return parsePositiveInt(
+    env.AI_HOSTED_ANONYMOUS_LIFETIME_QUOTA,
+    AI_HOSTED_ANONYMOUS_LIFETIME_QUOTA
+  )
+}
+
+/**
  * 解析托管 LLM 日软盖。
  */
 export function resolveHostedDailyCap(env: HostedQuotaEnv, isPro: boolean): number {
@@ -135,4 +149,11 @@ export function buildDailyUsageKey(userId: string, date = new Date()): string {
   const month = String(date.getUTCMonth() + 1).padStart(2, '0')
   const day = String(date.getUTCDate()).padStart(2, '0')
   return `ai_usage_day:${userId}:${year}-${month}-${day}`
+}
+
+/**
+ * 匿名档终身配额 KV Key（无月份段，不重置）
+ */
+export function buildLifetimeUsageKey(userId: string): string {
+  return `ai_usage_lifetime:${userId}`
 }

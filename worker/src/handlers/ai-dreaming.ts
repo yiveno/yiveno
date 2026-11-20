@@ -19,11 +19,18 @@ import { info as logInfo, logError } from '../utils/logger'
 export async function handleDreamingComplete(
   request: Request,
   env: Env,
-  userId: string
+  userId: string,
+  isAnonymous = false
 ): Promise<Response> {
   const origin = request.headers.get('origin')
   const startedAt = Date.now()
   const taskKind = 'dreaming' as const
+
+  // 匿名禁止 Dreaming（转正门禁；服务端强制，不进 peek）
+  if (isAnonymous) {
+    logInfo('dreaming_complete_rejected', { reason: 'anonymous_not_allowed', userId })
+    return errorJson({ error: 'anonymous_not_allowed' }, 403, origin)
+  }
 
   if (!isAiChatProviderConfigured(env)) {
     return errorJson({ error: 'ai_provider_not_configured' }, 503, origin)

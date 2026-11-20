@@ -1,5 +1,6 @@
 /**
- * 账户路由：删除账号、订阅状态、只读 MCP 开关等（Supabase Auth Bearer）。
+ * 账户路由：删除账号、订阅状态、只读 MCP 开关等。
+ * `/subscription`：扩展向，过渡期双栈；其余仍 supabaseAuth（官网主路径）。
  */
 
 import { Hono } from 'hono'
@@ -7,6 +8,7 @@ import { z } from 'zod'
 
 import { deleteAccountForOwner } from '../data-access/account-delete'
 import { getSubscriptionStatusOrThrow } from '../handlers/subscription'
+import { deviceAuthOrSupabaseAuth } from '../middleware/device-or-supabase-auth'
 import { supabaseAuth } from '../middleware/supabase-auth'
 import { putMcpReadOnlyEnabled } from '../services/mcp/mcp-preference-kv'
 import type { Env } from '../types/env'
@@ -18,18 +20,17 @@ type AccountVars = {
     supabaseUserId: string
     supabaseAccessToken: string
     supabaseUserEmail: string | null
+    deviceIsAnonymous?: boolean
   }
 }
 
 export const accountRouter = new Hono<AccountVars>()
 
-accountRouter.use('*', supabaseAuth())
-
 /**
  * GET /api/account/subscription
- * 扩展主路径：当前用户是否 Pro（与 memory sync 同一 Bearer）。
+ * 扩展主路径：当前用户是否 Pro（双栈 Bearer）。
  */
-accountRouter.get('/subscription', async c => {
+accountRouter.get('/subscription', deviceAuthOrSupabaseAuth(), async c => {
   const userId = c.get('supabaseUserId')
   try {
     const data = await getSubscriptionStatusOrThrow(c.env, userId)
@@ -56,7 +57,7 @@ const McpPreferenceBodySchema = z.object({
  * PUT /api/account/mcp
  * 同步 Settings「只读 MCP」开关到 AI_USAGE_KV（供 /api/mcp 门禁）。
  */
-accountRouter.put('/mcp', async c => {
+accountRouter.put('/mcp', supabaseAuth(), async c => {
   const userId = c.get('supabaseUserId')
   let body: unknown
   try {
@@ -81,7 +82,7 @@ accountRouter.put('/mcp', async c => {
  * POST /api/account/delete
  * 删除云端 Memory/backups 并注销 Auth 用户（不可恢复）。
  */
-accountRouter.post('/delete', async c => {
+accountRouter.post('/delete', supabaseAuth(), async c => {
   const userId = c.get('supabaseUserId')
   try {
     const result = await deleteAccountForOwner(c.env, userId)

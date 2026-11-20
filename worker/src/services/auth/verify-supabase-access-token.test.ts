@@ -32,7 +32,39 @@ describe('verifySupabaseAccessToken', () => {
       ok: true,
       user: {
         id: '63f46a67-9083-418e-a693-f576e47cc4a9',
-        email: 'user@example.com'
+        email: 'user@example.com',
+        isAnonymous: false
+      }
+    })
+  })
+
+  test('getClaims 含 is_anonymous:true → isAnonymous true', async () => {
+    jest.spyOn(supabaseJs, 'createClient').mockReturnValue({
+      auth: {
+        getClaims: async () => ({
+          data: {
+            claims: {
+              sub: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+              role: 'authenticated',
+              aud: 'authenticated',
+              is_anonymous: true
+            }
+          },
+          error: null
+        })
+      }
+    } as never)
+
+    const result = await verifySupabaseAccessToken('https://example.supabase.co', 'token', {
+      anonKey: 'anon-key'
+    })
+
+    expect(result).toEqual({
+      ok: true,
+      user: {
+        id: 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa',
+        email: null,
+        isAnonymous: true
       }
     })
   })

@@ -2,18 +2,21 @@
  * 认证路由
  *
  * - 遗留：自建 OAuth → 自定义 JWT（非 Phase C 主路径）
- * - Phase C：`POST /extension-session` 为扩展铸造独立 Supabase 会话（官网 Bearer）
- * - `POST /website-session`：扩展 Bearer 为官网铸造独立会话（不写扩展租约）
- * - `POST /extension-session-release`：扩展 Bearer 释放本会话（退出无 revoke token 兜底）
- * - `POST /extension-uninstall-revoke`：卸载落地页 / handoff 失败回滚 / 主动退出用一次性 token
+ * - D 方案：`POST /device-register` 发设备 token；`POST /device-revoke-self` 撤本设备
+ * - 旧 `POST /extension-session` → 410（设计 §2.1 推荐 ②）
+ * - `POST /website-session`：扩展双栈 Bearer 为官网铸造独立会话
+ * - `POST /extension-session-release` / uninstall-revoke：过渡期仍保留
  */
 
 import { Hono } from 'hono'
 import type { Env } from '../types/env'
 import { handleAuthProviders, handleAuthStart, handleAuthCallback } from '../handlers/auth'
+import { deviceAuth, invalidateDeviceAuthCacheEntry } from '../middleware/device-auth'
+import { deviceAuthOrSupabaseAuth } from '../middleware/device-or-supabase-auth'
 import { supabaseAuth } from '../middleware/supabase-auth'
 import { consumeExtensionUninstallRevoke } from '../services/auth/consume-extension-uninstall-revoke'
-import { mintExtensionSession } from '../services/auth/mint-extension-session'
+import { handleDeviceRegister } from '../services/auth/device-register'
+import { revokeDeviceTokenSelf } from '../services/auth/device-token-kv'
 import { mintWebsiteSessionFromExtension } from '../services/auth/mint-website-session'
 import { probeExtensionSessionLease } from '../services/auth/probe-extension-session-lease'
 import { releaseExtensionSessionByAccessToken } from '../services/auth/release-extension-session'
@@ -25,6 +28,8 @@ type AuthVars = {
     supabaseUserId: string
     supabaseAccessToken: string
     supabaseUserEmail: string | null
+    deviceIsAnonymous?: boolean
+    deviceId?: string
   }
 }
 
@@ -70,83 +75,84 @@ authRouter.get('/callback', async c => {
 })
 
 /**
- * POST /api/auth/extension-session
+ * POST /api/auth/device-register
  *
- * 为 Chrome 扩展铸造独立 session；账号下扩展登录会话单活跃（按 session 租约，不按 extensionId）。
- * Body（可选）：`{ extensionId?, confirmDisplace? }` — 确认挤掉其它已登录扩展会话。
- * 409 `needs_displace_confirm`：KV 已有扩展会话租约且未确认。
- * 502 `displace_revoke_failed`：确认挤掉但前序扩展 Auth session 硬撤失败（不铸造新会话）。
+ * 扩展首次拿 device token（website_connect / session_exchange）。
+ * 鉴权按 mode 内联；不写 ext_auth_session、不挤掉其它设备。
  */
-authRouter.post('/extension-session', supabaseAuth(), async c => {
-  const userId = c.get('supabaseUserId')
-  const email = c.get('supabaseUserEmail')
-  let confirmDisplace = false
-  let extensionId: string | undefined
+authRouter.post('/device-register', async c => {
+  let body: Record<string, unknown> = {}
   try {
-    const body = await c.req.json().catch(() => null)
-    if (typeof body === 'object' && body !== null) {
-      if ((body as { confirmDisplace?: unknown }).confirmDisplace === true) {
-        confirmDisplace = true
-      }
-      const rawExt = (body as { extensionId?: unknown }).extensionId
-      if (typeof rawExt === 'string' && rawExt.trim()) {
-        extensionId = rawExt.trim()
-      }
+    const parsed = await c.req.json().catch(() => null)
+    if (typeof parsed === 'object' && parsed !== null) {
+      body = parsed as Record<string, unknown>
     }
   } catch {
-    confirmDisplace = false
+    body = {}
   }
 
   try {
-    const result = await mintExtensionSession(c.env, userId, email, {
-      confirmDisplace,
-      ...(extensionId ? { extensionId } : {})
-    })
+    const result = await handleDeviceRegister(c.env, c.req.raw, body)
     if (!result.ok) {
-      if (result.error === 'needs_displace_confirm') {
-        info('[Auth] extension-session 需确认挤掉', { userId })
-        return c.json(
-          {
-            error: 'needs_displace_confirm',
-            data: {
-              existingMintedAt: result.existingMintedAt ?? null,
-              existingSessionId: result.existingSessionId ?? null
-            }
-          },
-          409
-        )
-      }
-      const status =
-        result.error === 'supabase_not_configured'
-          ? 500
-          : result.error === 'email_required'
-            ? 400
-            : 502
-      logErrorMessage('[Auth] extension-session 铸造失败', { userId, error: result.error })
-      return c.json({ error: result.error }, status)
+      return c.json({ error: result.error }, result.status)
     }
-    info('[Auth] extension-session 已返回', {
-      userId,
-      displaced: Boolean(result.displacedSessionId),
-      hasUninstallRevokeToken: Boolean(result.session.uninstallRevokeToken)
+    info('[Auth] device-register 已返回', {
+      userId: result.data.userId,
+      deviceId: result.data.deviceId,
+      isAnonymous: result.data.isAnonymous
     })
-    return c.json({
-      success: true,
-      data: {
-        accessToken: result.session.accessToken,
-        refreshToken: result.session.refreshToken,
-        userId: result.session.userId,
-        email: result.session.email,
-        expiresAt: result.session.expiresAt,
-        displaced: Boolean(result.displacedSessionId),
-        uninstallRevokeToken: result.session.uninstallRevokeToken
-      }
-    })
+    return c.json({ success: true, data: result.data })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
-    logErrorMessage('[Auth] extension-session 异常', { userId, detail: msg })
-    return c.json({ error: 'extension_session_failed' }, 500)
+    logErrorMessage('[Auth] device-register 异常', { detail: msg })
+    return c.json({ error: 'device_register_failed' }, 500)
   }
+})
+
+/**
+ * POST /api/auth/device-revoke-self
+ *
+ * 扩展 Settings 退出：撤**本** device token。
+ */
+authRouter.post('/device-revoke-self', deviceAuth(), async c => {
+  const authHeader = c.req.header('authorization') ?? ''
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length).trim() : ''
+  const userId = c.get('supabaseUserId')
+  try {
+    const result = await revokeDeviceTokenSelf(c.env, token)
+    if (!result.ok) {
+      return c.json({ error: result.error }, 503)
+    }
+    if (token) {
+      invalidateDeviceAuthCacheEntry(token)
+    }
+    info('[Auth] device-revoke-self', {
+      userId,
+      revoked: result.revoked,
+      deviceId: result.deviceId ?? null
+    })
+    return c.json({ success: true, data: { revoked: result.revoked } })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    logErrorMessage('[Auth] device-revoke-self 异常', { userId, detail: msg })
+    return c.json({ error: 'device_revoke_failed' }, 500)
+  }
+})
+
+/**
+ * POST /api/auth/extension-session
+ *
+ * 已弃用（D 方案改走 `/device-register`）。返回 410 Gone。
+ * 注意：过渡期旧扩展 Connect 会断；不得擅自改回旧 mint 行为（见汇报）。
+ */
+authRouter.post('/extension-session', async c => {
+  return c.json(
+    {
+      error: 'gone',
+      message: 'Use POST /api/auth/device-register'
+    },
+    410
+  )
 })
 
 /**
@@ -178,9 +184,9 @@ authRouter.get('/extension-session-lease', supabaseAuth(), async c => {
 /**
  * POST /api/auth/website-session
  *
- * Bearer=扩展 access。为官网铸造独立会话（扩展→官网反向接通）；**不**改扩展租约。
+ * Bearer=扩展 access 或 device token。为官网铸造独立会话（反向接通）；**不**改扩展租约。
  */
-authRouter.post('/website-session', supabaseAuth(), async c => {
+authRouter.post('/website-session', deviceAuthOrSupabaseAuth(), async c => {
   const userId = c.get('supabaseUserId')
   const email = c.get('supabaseUserEmail')
   try {
