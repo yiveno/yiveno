@@ -28,7 +28,7 @@ downstream:
 - 扩展持 **Supabase Auth 会话**（`accessToken` + `refreshToken`），键 `yiveno:auth_session`（`extension/src/core/identity/auth-session.ts`）。
 - 官网 → 扩展：Worker `POST /api/auth/extension-session`（`supabaseAuth` + `mintExtensionSession`）铸造**独立** Supabase session，再 `YIVENO_AUTH_SESSION_HANDOFF` 写入扩展（`website/src/services/mint-extension-session.ts`、`extension-auth-handoff.ts`；`worker/src/routes/auth.ts` L80–150）。
 - **扩展单活跃**：`AI_USAGE_KV` 键 `ext_auth_session:{userId}`（`extension-session-lease-kv.ts`）；已有租约 → 409 `needs_displace_confirm`；确认后硬撤前序 Auth session（`mint-extension-session.ts` L146–197）；扩展侧 1 分钟闹钟 + `GET /api/auth/extension-session-lease` 探测 displaced（`auth-session-lease-alarm.ts`、`extension-session-lease-probe.ts`、`auth-session-revalidate.ts`）。
-- 扩展 → 官网：Bearer=扩展 access → `POST /api/auth/website-session` → `issueSupabaseUserSession`（`mint-website-session.ts`；`FromExtensionAuth.vue`）。
+- 扩展 → 官网：Bearer=扩展 access → `POST /api/auth/website-session` → `issueSupabaseUserSession`（扩展侧 `website-session-from-extension.ts`；`FromExtensionAuth.vue`）。
 - AI / 账户 / Memory sync / billing 等扩展调用面：一律 `supabaseAuth()` 验 Supabase JWT（`worker/src/middleware/supabase-auth.ts`；`routes/ai.ts`、`account.ts`、`memory-sync.ts`、`billing.ts`、`research.ts`）。
 - Worker **无 D1 绑定**（`wrangler.toml` 仅见 `AI_USAGE_KV` 等）；租约 / 卸载 revoke / 配额均在 KV。
 
@@ -385,7 +385,7 @@ SW 启动 / GET_AUTH_STATE：
 ### 8.4 B1 / O1
 
 - **B1 Turnstile 桥：** 仍只出 captcha token；打在扩展 GoTrue signup（非 `device-register` body）。Worker **不**持 Turnstile secret。**薄改口径，非 B1 扩面。**
-- **O1 清理 cron：** 与设备 token 无耦合则**不变**；若 cron 清僵死 `ext_auth_session`，实现 D 时改为清孤儿 `devtok` / 空 `user_devs`（薄改，非 B1/O1 范围扩张）。
+- **O1 清理 cron：** **已接线（ADR-028）**——周日 UTC 03:00；清超期 `is_anonymous` Auth 行时**先**撤该用户全部 `devtok` / `user_devs` / `user_meta` / 匿名配额 key，再 Admin `deleteUser`；默认 dry-run。
 
 ---
 

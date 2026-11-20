@@ -220,6 +220,35 @@ export async function putUserMeta(
   }
 }
 
+/** 删除 user_meta（匿名清理 / 账号注销后幂等）。 */
+export async function deleteUserMeta(env: Env, userId: string): Promise<void> {
+  if (!env.AI_USAGE_KV) return
+  try {
+    await env.AI_USAGE_KV.delete(userMetaKvKey(userId))
+  } catch {
+    warn('[DeviceAuth] 删除 user_meta 失败', { userId })
+  }
+}
+
+/**
+ * 撤销该用户全部 device token：删各 `devtok:` 后清空 `user_devs`。
+ * 无设备 / 无 KV → 跳过（幂等）。
+ */
+export async function revokeAllDevicesForUser(env: Env, userId: string): Promise<void> {
+  if (!env.AI_USAGE_KV) return
+  const index = await getUserDevicesIndex(env, userId)
+  for (const entry of index.devices) {
+    const token = entry.deviceToken?.trim()
+    if (!token) continue
+    await deleteDeviceTokenRecord(env, token)
+  }
+  try {
+    await env.AI_USAGE_KV.delete(userDevicesKvKey(userId))
+  } catch {
+    warn('[DeviceAuth] 删除 user_devs 失败', { userId })
+  }
+}
+
 /**
  * 列出用户设备：从 user_devs 取 id 后逐个核对 `devtok:` 存在性；
  * 索引漂移（无对应 token）的行不返回，并尽力从索引剔除。

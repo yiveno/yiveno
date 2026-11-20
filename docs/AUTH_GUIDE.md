@@ -16,8 +16,9 @@
 5. 反向接通：扩展 device Bearer → `POST /api/auth/website-session`（匿名无 email → `email_required`）。
 6. 匿名转正：扩展 device Bearer → `POST /api/auth/promote`（`{ email }`）→ Admin 绑邮箱；**不**重发 token、**不**发 OTP（Confirm email OFF）；冲突 → `409 email_conflict`（引导登录合并）。
 7. 账户页 **Devices**：列表 / 改名 / 撤销（官网 JWT）。
+8. 匿名超期清理：周日 UTC 03:00 cron（默认 dry-run）→ 撤 device / meta / 配额 KV → Admin `deleteUser`（见下「匿名生命周期」· ADR-028）。
 
-权威行为契约：产品文档 **§登录态对齐**；身份隔离见 ADR-018；UI 桥见 ADR-019；设备 token 规格见 `docs/device-token-design.md`。
+权威行为契约：产品文档 **§登录态对齐**；身份隔离见 ADR-018；UI 桥见 ADR-019；设备 token 规格见 `docs/device-token-design.md`；匿名决策见 ADR-028。
 
 ---
 
@@ -80,6 +81,7 @@
 | OAuth·magic link 回调 | `website/src/components/AuthCallback.vue`               | setSession / exchangeCode → 设备注册并交接                  |
 | 设备注册              | `worker/src/services/auth/device-register.ts`           | 签发 `ydt_` device token；软上限 20                         |
 | 匿名转正              | `worker/src/services/auth/promote-anonymous-user.ts`    | `POST /api/auth/promote`；绑邮箱；token 继续有效            |
+| 匿名超期清理          | `worker/.../anonymous-cleanup.ts` + scheduled handler   | 周日 cron；90 天；默认 dry-run；每轮 ≤500（ADR-028）        |
 | 设备列表/改名/撤销    | `worker/.../device-token-kv.ts` + `/api/auth/devices*`  | 官网 JWT；账户页 Devices                                    |
 | 官网 register+handoff | `website/.../register-device-from-website.ts` + handoff | `registerAndHandoffDeviceToExtension`                       |
 | 扩展接收并写入        | `extension/.../external-auth-handoff.ts`                | 写入 `yiveno:device_session`；**不**发起 OAuth              |
@@ -263,11 +265,27 @@ flowchart TD
 账号交接成功路径只强调「禁止静默并库」；**真正弹窗**靠上述界面刷新，与上节「设备注册并交接」**分图**。
 ---
 
+## 匿名生命周期（试用 → 转正 → 清理）
+
+> **权威决策：** [ADR-028](./architecture/decisions/ADR-028-anonymous-device-auth.md)。行为契约见产品文档 §登录态对齐。
+
+| 阶段     | 做什么                                                            | 要点                                                                                    |
+| -------- | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| **注册** | 扩展 GoTrue 匿名 signup → `device-register`（`session_exchange`） | 只持久化 `yiveno:device_session`；Worker **不** Admin 建匿名号（`generateLink` 要邮箱） |
+| **试用** | 匿名档配额                                                        | LLM **15** lifetime；embeddings **30** lifetime；Dreaming / 云同步 / 订阅须转正         |
+| **转正** | `POST /api/auth/promote` + email                                  | 同 `userId`；device token 继续有效；Confirm email OFF（不验归属）；冲突 `409`           |
+| **清理** | 周日 UTC `0 3 * * 0`                                              | `is_anonymous` 且不活跃 **≥90 天**；先撤 KV 再 `deleteUser`；默认 dry-run；每轮 ≤500    |
+
+**运维：** `ANON_CLEANUP_DRY_RUN` 未设或非 `'false'` = 只记日志；显式 `'false'` 才真删。部署新 Worker 后 cron 才生效。
+
+---
+
 ## 相关文档
 
 - [Yiveno 产品文档 v4.0](./product/Yiveno-产品文档-v4.0.md) §登录态对齐
 - [ADR-018](./architecture/decisions/ADR-018-account-profile-data-isolation.md)
 - [ADR-019](./architecture/decisions/ADR-019-website-extension-ui-bridge.md)
+- [ADR-028](./architecture/decisions/ADR-028-anonymous-device-auth.md)（匿名认证 + 清理）
 - [ENVIRONMENT](./ENVIRONMENT.md)
 - [图表 registry](./diagrams/registry.json) · `auth.login-migration-gate`（旧 `auth.extension-session-mint-handoff` 图语义已过时；以本节「设备注册并交接」为准）
 - 设备 token 规格：[`docs/device-token-design.md`](./device-token-design.md)

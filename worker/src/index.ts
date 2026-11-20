@@ -5,6 +5,10 @@
  */
 
 import { createApp } from './app'
+import {
+  ANONYMOUS_CLEANUP_CRON,
+  handleScheduledAnonymousCleanup
+} from './handlers/scheduled-anonymous-cleanup'
 import { handleScheduledCleanup } from './handlers/scheduled-cleanup'
 import { handleScheduledSubscriptionReconcile } from './handlers/scheduled-subscription-reconcile'
 import type { Env } from './types/env'
@@ -25,6 +29,10 @@ export default {
   scheduled(controller: ScheduledController, env: Env, ctx: ExecutionContext) {
     if (controller.cron === SUBSCRIPTION_RECONCILE_CRON) {
       ctx.waitUntil(handleScheduledSubscriptionReconcile(controller, env))
+      return
+    }
+    if (controller.cron === ANONYMOUS_CLEANUP_CRON) {
+      ctx.waitUntil(handleScheduledAnonymousCleanup(controller, env))
       return
     }
     ctx.waitUntil(handleScheduledCleanup(controller, env))

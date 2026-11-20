@@ -52,26 +52,26 @@
 }
 
 .settings-privacy-banner__link {
-  justify-self: start;
   font-size: 13px;
   font-weight: 500;
   line-height: 1.4;
-  color: var(--accent);
   text-decoration: none;
+  color: var(--accent);
+  justify-self: start;
 }
 
 .settings-privacy-banner__link:hover,
 .settings-privacy-banner__link:focus-visible {
-  color: var(--accent-hover);
-  text-decoration: underline;
-  text-underline-offset: 0.12em;
   outline: none;
+  text-decoration: underline;
+  color: var(--accent-hover);
+  text-underline-offset: 0.12em;
 }
 
 .settings-privacy-banner__link:focus-visible {
+  border-radius: 2px;
   outline: 2px solid color-mix(in srgb, var(--accent) 45%, transparent);
   outline-offset: 2px;
-  border-radius: 2px;
 }
 
 /** 设置页卡片纵向堆叠：块间距统一用 --space-sm */
@@ -192,17 +192,17 @@
 }
 
 .settings-promote-input {
+  box-sizing: border-box;
   width: 100%;
   max-width: 28rem;
-  box-sizing: border-box;
   margin-top: var(--space-3xs, 4px);
-  padding: 8px 12px;
-  border: 1px solid var(--outline-variant, rgba(0, 0, 0, 0.16));
-  border-radius: 8px;
-  background: var(--surface);
-  color: var(--on-surface);
-  font: inherit;
+  padding: var(--space-xs) var(--space-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
   font-size: 14px;
+  color: var(--on-surface);
+  background: var(--surface);
 }
 
 .settings-promote-input:focus-visible {
@@ -225,10 +225,10 @@
 }
 
 .settings-dual-thread-intro {
-  margin: 0;
-  padding-left: 1.1rem;
   display: grid;
   gap: var(--space-2xs);
+  margin: 0;
+  padding-left: 1.1rem;
   font-size: 12px;
   line-height: 1.45;
   color: var(--on-surface-muted);

@@ -77,6 +77,13 @@ export type Env = Cloudflare.Env & {
   CLEANUP_MEMORY_SYNC_BACKUPS_KEEP?: string
   /** subscriptions / payment_records 软删保留天数。 */
   CLEANUP_SOFT_DELETE_RETENTION_DAYS?: string
+  /**
+   * 匿名 Auth 清理 dry-run：未设或非 `"false"` = 只记日志不删；
+   * 显式 `"false"` 才撤 KV + Admin deleteUser。
+   */
+  ANON_CLEANUP_DRY_RUN?: string
+  /** 匿名清理 cron 开关；`"false"` 关闭。 */
+  ANON_CLEANUP_SCHEDULED_ENABLED?: string
   /** Dodo Payments API key；checkout / 对账；生产必配 */
   DODO_PAYMENTS_API_KEY?: string
   /** Dodo Standard Webhooks signing secret（whsec_…） */

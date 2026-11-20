@@ -50,7 +50,7 @@ docs-sync-iron.mdc[XQ8T]: F:文档↔代码同步铁律：行为变更同批改�
 git-workdir-safety.mdc[XQ8T]: F:禁止静默丢弃工作区 WIP 的 git 还原命令 | R:code:.cursor/hooks/block_destructive_git.py | A:alwaysApply Org L0 | S:未经用户丢弃授权禁 checkout/restore/reset --hard/clean -fd；实验用 /tmp 备份
 mcp-chrome-tab-reuse.mdc[XQ6T]: F:Chrome DevTools MCP 开页前先复用已有标签 | R:code:.cursor/rules/project.mdc | A:alwaysApply | S:未 list_pages 禁 new_page；同 URL 须 select 复用
 project.mdc[XQ9L]: F:Yiveno 本仓 AI 行为与架构硬规则单一权威 | R:code:.cursor/rules/session-boot.mdc,code:.cursor/rules/terminology.mdc | A:alwaysApply；与产品文档冲突时以产品文档为准 | S:UI 只经 background-client；禁内容别名灰名单冒充通解；扩展用户可感改动须 MCP 真机；禁擅自 commit/push
-session-boot.mdc[XQ8T]: F:Agent 会话开机层：当下焦点与冻结 ADR | R:code:.cursor/rules/project.mdc | A:alwaysApply；当下块由 CURRENT 同步 | S:只改 CURRENT 再 sync:ide-boot；SYNC 标记块勿手改语义源
+session-boot.mdc[XQ8T]: F:Agent 会话开机层：当下焦点与冻结 ADR | R:code:.cursor/rules/project.mdc | A:alwaysApply；当下块由 CURRENT 同步 | S:冻结含 ADR-028 匿名认证；只改 CURRENT 再 sync:ide-boot；SYNC 标记块勿手改语义源
 session-discipline.mdc[XQ7T]: F:多会话 Brief/Handoff、必选可选与按优先级执行 | R:code:.cursor/rules/agent-core.mdc | A:alwaysApply Org L0 | S:已排序无冲突项禁假二选一；禁主动问 commit/push
 terminology.mdc[XQ8T]: F:产品术语锚点：clue/Recall/附注与禁用词 | R:- | A:alwaysApply；定义权威为术语表 | S:产品面禁 Search/搜索/默认「找回」；clue 与 MemoryItem.clues 勿混
 testing-real-library.mdc[XQ6T]: F:测试默认用维护者个人真实 Chrome 库 | R:code:.cursor/rules/git-workdir-safety.mdc | A:alwaysApply | S:禁擅自 seedRecallProbe replace；探针库数字不得冒充 §5.9
@@ -183,7 +183,7 @@ registry.ts[AB5T]: F:chrome.commands 处理器注册与分发 | R:code:extension
 
 ===/<repository>/extension/src/background/handlers/===
 account-library-handlers.ts[EM8L]: F:账户库迁移/孤儿桶/隐私/订阅相关 Background handlers | R:code:extension/src/application/identity/login-migration.ts | A:从 account-sync-handler 抽出 | S:禁止静默 absorb
-account-sync-handler.ts[EM9L]: F:账户登录与云同步 Background 编排 | R:code:extension/src/infrastructure/auth/promote-anonymous-api-client.ts,code:extension/src/infrastructure/identity/subscription-service.ts | A:CONVERT_ANONYMOUS_ACCOUNT;AUTH_CONNECT_WEBSITE;AUTH_SIGN_OUT | S:退出无 sync_then_clear；Connect 总超时 60s；转正写 device
+account-sync-handler.ts[EM9L]: F:账户登录与云同步 Background 编排 | R:code:extension/src/infrastructure/auth/promote-anonymous-api-client.ts,code:extension/src/infrastructure/identity/subscription-service.ts | A:CONVERT_ANONYMOUS_ACCOUNT;AUTH_CONNECT_WEBSITE;AUTH_SIGN_OUT | S:退出无 sync_then_clear；Connect 无 ack 回退账户页 device-register；转正写 device
 account-sync-shared.ts[EM6S]: F:账户/同步 handler 共用辅助 | R:code:extension/src/infrastructure/identity/device-session-service.ts,code:extension/src/infrastructure/auth/device-register-api-client.ts | A:requireAccessToken;finishSignOutSession | S:Bearer 优先 device；退出 device 走 revoke-self
 active-recall-registry.ts[EM5T]: F:Recall in-flight 追踪（per-source） | R:code:extension/src/background/handlers/recall-handler.ts | A:新 recall 覆盖旧；支持 CANCEL | S:-
 commands-handler.ts[EM6S]: F:扩展命令查询与打开 Recall 壳/导航 tab | R:code:extension/src/core/commands/command-display.ts | A:Background message handlers | S:-
@@ -1070,14 +1070,14 @@ site.css[EU3T]: F:兼容入口 = brand + critical + deferred | R:- | A:- | S:-
 package.json[FV5T]: F:Cloudflare Worker workspace 依赖与脚本清单 | R:- | A:- | S:-
 tsconfig.json[FV5T]: F:Worker TypeScript 配置 | R:- | A:- | S:-
 worker-configuration.d.ts[FV3L]: F:Wrangler 生成的 Worker Env 与运行时类型声明 | R:- | A:- | S:-
-wrangler.toml[FV5S]: F:Worker 部署配置：入口、cron、兼容标志与绑定 | R:- | A:- | S:-
+wrangler.toml[FV5S]: F:Worker 部署配置：入口、cron、兼容标志与绑定 | R:- | A:triggers.crons;ANON_CLEANUP_DRY_RUN | S:三 cron：日清理/小时对账/周日匿名清理；dry-run 默认 true
 
 ===/<repository>/worker/scripts/===
 sync-env.sh[XV5T]: F:同步 Worker 开发环境变量到 .dev.vars | R:- | A:- | S:-
 
 ===/<repository>/worker/src/===
 app.ts[EG5S]: F:Hono 应用主入口 | R:- | A:- | S:-
-index.ts[EG8T]: F:Cloudflare Worker 主入口 | R:- | A:- | S:-
+index.ts[EG8T]: F:Cloudflare Worker 主入口 | R:code:worker/src/handlers/scheduled-anonymous-cleanup.ts,code:worker/src/handlers/scheduled-cleanup.ts | A:scheduled;fetch | S:按 cron 分流：小时对账 / 周日匿名清理 / 每日业务清理；均 waitUntil
 
 ===/<repository>/worker/src/config/===
 ai-hosted.ts[FC5S]: F:托管 LLM 配额常量与 KV key 构造（含匿名终身） | R:code:worker/src/services/ai/usage-quota.ts | A:buildLifetimeUsageKey;resolveHostedAnonymousLifetimeQuota | S:匿名档键为 ai_usage_lifetime:{userId}，无月份段且不按月重置
@@ -1105,6 +1105,7 @@ scheduled-subscription-reconcile.ts[EW5T]: F:Worker cron：对账并把过期的
 subscription.ts[EB5T]: F:GET /api/subscription：扩展用 Bearer 查询是否 Pro（默认可对账） | R:- | A:- | S:-
 website-uninstall-feedback.ts[EU5S]: F:扩展卸载落地页可选反馈 HTTP 入口 | R:- | A:- | S:-
 website-waitlist.ts[EU5S]: F:官网预约名单：校验邮箱、蜜罐、按 IP 限流后写入 Supabase | R:- | A:- | S:-
+scheduled-anonymous-cleanup.ts[EW5T]: F:Worker cron：每周清理超期匿名 Auth 用户 | R:code:worker/src/services/auth/anonymous-cleanup.ts | A:handleScheduledAnonymousCleanup;ANONYMOUS_CLEANUP_CRON | S:默认 dry-run；异常只记日志不抛；ANON_CLEANUP_SCHEDULED_ENABLED=false 可关
 
 ===/<repository>/worker/src/middleware/===
 cors.ts[MN5T]: F:CORS 中间件 | R:- | A:- | S:-
@@ -1154,8 +1155,9 @@ revoke-auth-session.ts[II5T]: F:撤销指定 Supabase Auth session（该端等�
 validation.ts[II5T]: F:OAuth 请求参数验证 | R:- | A:- | S:-
 verify-supabase-access-token.ts[II5S]: F:服务端校验 Supabase access token 并提取 claims | R:code:worker/src/services/auth/device-register.ts | A:verifySupabaseAccessToken | S:透传 is_anonymous；缺失 claim 按非匿名
 device-register.ts[II6M]: F:设备注册 connect/exchange | R:code:worker/src/services/auth/device-token-kv.ts | A:handleDeviceRegister | S:cap 20→403；签发可选 uninstallRevokeToken；已有 meta 不覆盖
-device-token-kv.ts[PI7L]: F:设备 token KV（列表/改名/撤销/cap） | R:code:worker/src/middleware/device-auth.ts | A:issueDeviceToken;listDevicesForUser;putUserMeta | S:ydt_+64hex；DEVICE_CAP=20；转正后保留旧设备 isAnonymous=false
+device-token-kv.ts[PI7L]: F:设备 token KV（列表/改名/撤销/cap/整户清） | R:code:worker/src/middleware/device-auth.ts | A:issueDeviceToken;listDevicesForUser;revokeAllDevicesForUser;deleteUserMeta | S:ydt_+64hex；DEVICE_CAP=20；转正后保留旧设备；清理幂等删 user_devs/meta
 promote-anonymous-user.ts[PA5S]: F:匿名账号绑定邮箱转正 | R:code:worker/src/services/auth/device-token-kv.ts | A:promoteAnonymousUser;mapPromoteAdminError | S:Admin updateUser+email_confirm；写 user_meta；冲突 409；已非匿名幂等
+anonymous-cleanup.ts[PA6M]: F:匿名超期用户清理：筛 90 天 + KV 先行 + Admin deleteUser | R:code:worker/src/services/auth/device-token-kv.ts,code:worker/src/data-access/supabase.ts | A:runAnonymousCleanup;isStaleAnonymousUser | S:默认 dry-run；每轮≤500；依赖可注入；先撤 device/meta/配额再删用户
 
 ===/<repository>/worker/src/services/billing/===
 dodo-client.ts[IB5M]: F:Dodo Payments REST 客户端 | R:- | A:- | S:-
@@ -1189,7 +1191,7 @@ require-pro-for-sync.ts[AD5T]: F:Memory 云同步 Pro 门禁（可单测） | R:
 ===/<repository>/worker/src/types/===
 ai.ts[CA5T]: F:AI 相关类型定义 | R:- | A:- | S:-
 auth.ts[CI5T]: F:认证相关类型定义 | R:- | A:- | S:-
-env.ts[FC5S]: F:Worker Env 可选覆盖键类型 | R:- | A:AI_HOSTED_ANONYMOUS_LIFETIME_QUOTA;AI_EMBED_ANONYMOUS_LIFETIME_LIMIT | S:已删 TURNSTILE_SECRET_KEY；匿名配额覆盖仍在
+env.ts[FC5S]: F:Worker Env 可选覆盖键类型 | R:- | A:ANON_CLEANUP_DRY_RUN;ANON_CLEANUP_SCHEDULED_ENABLED;AI_HOSTED_ANONYMOUS_LIFETIME_QUOTA | S:匿名清理 dry-run 默认开；已删 TURNSTILE_SECRET_KEY
 
 ===/<repository>/worker/src/utils/===
 jwt.ts[CI5T]: F:JWT 工具函数 | R:- | A:- | S:-

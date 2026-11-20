@@ -228,7 +228,7 @@ export async function handleAuthConnectWebsite(): Promise<AuthConnectWebsiteResp
       if (settled) {
         return
       }
-      // 无 Port 或官网未 ack → 账户页原地 mint
+      // 无 Port 或官网未 ack → 账户页原地 device-register
       path = 'account_tab'
       void openWebsiteAccountConnectPage()
         .then(() => {
