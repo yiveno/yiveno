@@ -5,10 +5,8 @@ import {
   rollbackIssuedDeviceToken
 } from './register-device-from-website'
 
-const originalFetch = globalThis.fetch
-
 afterEach(() => {
-  globalThis.fetch = originalFetch
+  vi.unstubAllGlobals()
   vi.restoreAllMocks()
 })
 
@@ -24,37 +22,47 @@ const okData = {
 
 describe('registerDeviceFromWebsite', () => {
   it('成功映射 register data', async () => {
-    globalThis.fetch = vi
+    const fetchMock = vi
       .fn()
       .mockResolvedValue(
         new Response(JSON.stringify({ success: true, data: okData }), { status: 200 })
       )
+    vi.stubGlobal('fetch', fetchMock)
     const result = await registerDeviceFromWebsite('website-at', { extensionId: 'ext-a' })
     expect(result).toEqual({ status: 'ok', data: okData })
-    expect(globalThis.fetch).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining('/api/auth/device-register'),
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({ authorization: 'Bearer website-at' })
       })
     )
-    const fetchMock = globalThis.fetch as ReturnType<typeof vi.fn>
     const body = JSON.parse(String((fetchMock.mock.calls[0]?.[1] as RequestInit).body))
     expect(body).toEqual({ mode: 'website_connect', extensionId: 'ext-a' })
   })
 
   it('401 → unauthorized', async () => {
-    globalThis.fetch = vi
-      .fn()
-      .mockResolvedValue(new Response(JSON.stringify({ error: 'invalid_token' }), { status: 401 }))
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(JSON.stringify({ error: 'invalid_token' }), { status: 401 })
+        )
+    )
     const result = await registerDeviceFromWebsite('stale')
     expect(result).toEqual({ status: 'unauthorized', error: 'invalid_token' })
   })
 
   it('非 401 失败 → failed + httpStatus', async () => {
-    globalThis.fetch = vi
-      .fn()
-      .mockResolvedValue(new Response(JSON.stringify({ error: 'kv_unavailable' }), { status: 503 }))
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue(
+          new Response(JSON.stringify({ error: 'kv_unavailable' }), { status: 503 })
+        )
+    )
     const result = await registerDeviceFromWebsite('tok')
     expect(result).toEqual({
       status: 'failed',
@@ -64,13 +72,16 @@ describe('registerDeviceFromWebsite', () => {
   })
 
   it('响应缺字段 → failed', async () => {
-    globalThis.fetch = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify({
-          success: true,
-          data: { deviceToken: 'short', userId: 'x', isAnonymous: false }
-        }),
-        { status: 200 }
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            success: true,
+            data: { deviceToken: 'short', userId: 'x', isAnonymous: false }
+          }),
+          { status: 200 }
+        )
       )
     )
     const result = await registerDeviceFromWebsite('tok')
@@ -88,10 +99,11 @@ describe('registerDeviceFromWebsite', () => {
 
 describe('rollbackIssuedDeviceToken', () => {
   it('成功调 device-revoke-self', async () => {
-    globalThis.fetch = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
+    const fetchMock = vi.fn().mockResolvedValue(new Response('{}', { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
     const token = 'ydt_' + 'b'.repeat(64)
     expect(await rollbackIssuedDeviceToken(token)).toBe(true)
-    expect(globalThis.fetch).toHaveBeenCalledWith(
+    expect(fetchMock).toHaveBeenCalledWith(
       expect.stringContaining('/api/auth/device-revoke-self'),
       expect.objectContaining({
         headers: expect.objectContaining({ authorization: `Bearer ${token}` })
