@@ -18,6 +18,7 @@ import type {
   GetLoginMigrationStatusResponse,
   LoginMigrationAction,
   ProbeWebsiteSignedInResponse,
+  ConvertAnonymousAccountResponse,
   RetryAnonymousCaptchaResponse,
   ResolveLoginMigrationResponse,
   GetSubscriptionStatusResponse,
@@ -476,6 +477,17 @@ export async function retryAnonymousCaptcha(): Promise<RetryAnonymousCaptchaResp
   return sendBackgroundMessage<RetryAnonymousCaptchaResponse>({
     scope: 'background',
     type: 'RETRY_ANONYMOUS_CAPTCHA'
+  })
+}
+
+/** 匿名试用绑邮箱转正（Side Panel / Settings 共用）。 */
+export async function convertAnonymousAccount(
+  email: string
+): Promise<ConvertAnonymousAccountResponse> {
+  return sendBackgroundMessage<ConvertAnonymousAccountResponse>({
+    scope: 'background',
+    type: 'CONVERT_ANONYMOUS_ACCOUNT',
+    payload: { email }
   })
 }
 

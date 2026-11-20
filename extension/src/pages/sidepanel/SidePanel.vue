@@ -915,9 +915,13 @@ async function runRecall(trimmedClue: string): Promise<void> {
 
     const highlightClue = response.result.effectiveClue ?? response.result.clue
     const resultIds = collectResultIdsFromRecall(response.result)
+    /** 匿名试用配额用尽：内联转正；与 deeperReadingTip 互斥 */
+    const showAnonymousPromote =
+      response.result.understandSource === 'rules_fallback' &&
+      response.result.understandErrorKind === 'anonymous_quota_exhausted'
     /** rules_fallback 结果轻提示；按失败 kind 诚实归因；断网 omit LLM（source=rules）不叠 */
     const deeperReadingTip =
-      response.result.understandSource === 'rules_fallback'
+      response.result.understandSource === 'rules_fallback' && !showAnonymousPromote
         ? resolveDeeperReadingTip(
             response.result.understandErrorKind ?? 'unknown',
             t,
@@ -925,6 +929,9 @@ async function runRecall(trimmedClue: string): Promise<void> {
           )
         : null
     const deeperReadingTipFields = deeperReadingTip !== null ? { deeperReadingTip } : {}
+    const anonymousPromoteFields = showAnonymousPromote
+      ? { showAnonymousPromote: true as const }
+      : {}
     /** 超长线索截断轻提示；与 deeperReadingTip 可叠加 */
     const clueTruncatedTipFields =
       response.result.clueTruncated === true
@@ -1008,6 +1015,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
           text: listReply.text,
           ...contextStatusFields,
           ...deeperReadingTipFields,
+          ...anonymousPromoteFields,
           ...clueTruncatedTipFields,
           ...(understandingEcho ? { understandingEcho } : {}),
           candidateCards: rankedCards,
@@ -1051,6 +1059,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
           text: listReply.text,
           ...contextStatusFields,
           ...deeperReadingTipFields,
+          ...anonymousPromoteFields,
           ...clueTruncatedTipFields,
           ...(understandingEcho ? { understandingEcho } : {}),
           candidateCards,
@@ -1144,6 +1153,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
           ...(emptyFuelSegments && preferEmptyFuelCopy ? { textSegments: emptyFuelSegments } : {}),
           ...contextStatusFields,
           ...deeperReadingTipFields,
+          ...anonymousPromoteFields,
           ...clueTruncatedTipFields,
           ...(understandingEcho ? { understandingEcho } : {}),
           ...('recallFramingFacts' in missReply && missReply.recallFramingFacts !== undefined

@@ -14,7 +14,8 @@
 3. 若本次带接通参数 `connect_extension=1`：官网用当前 access 调 Worker `POST /api/auth/device-register`（`mode=website_connect`）签发 device token → **交接**（`YIVENO_AUTH_DEVICE_HANDOFF`）。多设备可并存（软上限 20）；**无** 409 / 挤掉弹窗。
 4. 纯官网登录（无接通参数）**不**改扩展设备；扩展靠 Connect / UI 桥接通（ADR-018 / ADR-019）。
 5. 反向接通：扩展 device Bearer → `POST /api/auth/website-session`（匿名无 email → `email_required`）。
-6. 账户页 **Devices**：列表 / 改名 / 撤销（官网 JWT）。
+6. 匿名转正：扩展 device Bearer → `POST /api/auth/promote`（`{ email }`）→ Admin 绑邮箱；**不**重发 token、**不**发 OTP（Confirm email OFF）；冲突 → `409 email_conflict`（引导登录合并）。
+7. 账户页 **Devices**：列表 / 改名 / 撤销（官网 JWT）。
 
 权威行为契约：产品文档 **§登录态对齐**；身份隔离见 ADR-018；UI 桥见 ADR-019；设备 token 规格见 `docs/device-token-design.md`。
 
@@ -78,6 +79,7 @@
 | 邮箱格式              | `website/src/services/auth-email.ts`                    | 校验 / 规范化                                               |
 | OAuth·magic link 回调 | `website/src/components/AuthCallback.vue`               | setSession / exchangeCode → 设备注册并交接                  |
 | 设备注册              | `worker/src/services/auth/device-register.ts`           | 签发 `ydt_` device token；软上限 20                         |
+| 匿名转正              | `worker/src/services/auth/promote-anonymous-user.ts`    | `POST /api/auth/promote`；绑邮箱；token 继续有效            |
 | 设备列表/改名/撤销    | `worker/.../device-token-kv.ts` + `/api/auth/devices*`  | 官网 JWT；账户页 Devices                                    |
 | 官网 register+handoff | `website/.../register-device-from-website.ts` + handoff | `registerAndHandoffDeviceToExtension`                       |
 | 扩展接收并写入        | `extension/.../external-auth-handoff.ts`                | 写入 `yiveno:device_session`；**不**发起 OAuth              |

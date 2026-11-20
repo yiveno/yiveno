@@ -77,6 +77,25 @@ function resolveAnonEmbedLimit(env: Env): number {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : DEFAULT_ANON_LIFETIME_LIMIT
 }
 
+/** 匿名 embedding 终身配额快照（只读；供 hosted/quota 展示）。 */
+export async function peekAnonymousEmbedQuota(
+  env: Env,
+  userId: string
+): Promise<{ used: number; limit: number; remaining: number }> {
+  const limit = resolveAnonEmbedLimit(env)
+  const kv = env.AI_USAGE_KV
+  if (!kv) {
+    return { used: 0, limit, remaining: limit }
+  }
+  try {
+    const raw = await kv.get(buildAnonymousEmbedUsageKey(userId))
+    const used = raw ? Number.parseInt(raw, 10) || 0 : 0
+    return { used, limit, remaining: Math.max(0, limit - used) }
+  } catch {
+    return { used: 0, limit, remaining: limit }
+  }
+}
+
 async function consumeEmbedAnonymousQuota(
   env: Env,
   userId: string

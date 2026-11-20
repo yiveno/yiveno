@@ -12,7 +12,7 @@ function getApiBaseUrl(): string {
 /** 与 Worker `handleHostedQuota` 响应对齐。 */
 export type HostedQuotaSnapshot = {
   model: string
-  tier: 'free' | 'pro'
+  tier: 'free' | 'pro' | 'anonymous'
   used: number
   limit: number
   remaining: number
@@ -20,28 +20,48 @@ export type HostedQuotaSnapshot = {
   dailyLimit: number
   dailyRemaining: number
   monthKey: string
+  /** 匿名试用 embedding 终身计数（正式档通常缺省） */
+  embedUsed?: number
+  embedLimit?: number
+  embedRemaining?: number
 }
 
-function isHostedQuotaSnapshot(body: unknown): body is HostedQuotaSnapshot {
+function isOptionalNonNegNumber(value: unknown): value is number | undefined {
+  return value === undefined || (typeof value === 'number' && Number.isFinite(value))
+}
+
+/** 供单测与解析共用。 */
+export function isHostedQuotaSnapshot(body: unknown): body is HostedQuotaSnapshot {
   if (typeof body !== 'object' || body === null) {
     return false
   }
   const record = body as Record<string, unknown>
-  return (
+  const tierOk = record.tier === 'free' || record.tier === 'pro' || record.tier === 'anonymous'
+  if (!(
     typeof record.model === 'string' &&
-    (record.tier === 'free' || record.tier === 'pro') &&
+    tierOk &&
     typeof record.used === 'number' &&
     typeof record.limit === 'number' &&
     typeof record.remaining === 'number' &&
     typeof record.dailyUsed === 'number' &&
     typeof record.dailyLimit === 'number' &&
     typeof record.dailyRemaining === 'number' &&
-    typeof record.monthKey === 'string'
-  )
+    typeof record.monthKey === 'string' &&
+    isOptionalNonNegNumber(record.embedUsed) &&
+    isOptionalNonNegNumber(record.embedLimit) &&
+    isOptionalNonNegNumber(record.embedRemaining)
+  )) {
+    return false
+  }
+  // 匿名契约：monthKey=lifetime；daily* 镜像终身（W1'）
+  if (record.tier === 'anonymous' && record.monthKey !== 'lifetime') {
+    return false
+  }
+  return true
 }
 
 /**
- * GET /api/ai/hosted/quota — 须登录 Bearer。
+ * GET /api/ai/hosted/quota — 须登录 Bearer（device token 或迁移窗 access）。
  */
 export async function fetchHostedQuota(accessToken: string): Promise<HostedQuotaSnapshot> {
   const startedAt = flowStart('ClueLlm', '读取托管配额')
@@ -70,7 +90,8 @@ export async function fetchHostedQuota(accessToken: string): Promise<HostedQuota
       used: body.used,
       limit: body.limit,
       dailyUsed: body.dailyUsed,
-      dailyLimit: body.dailyLimit
+      dailyLimit: body.dailyLimit,
+      ...(body.embedRemaining !== undefined ? { embedRemaining: body.embedRemaining } : {})
     })
     return body
   } catch (error) {

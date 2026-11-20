@@ -34,6 +34,26 @@ describe('classifyClueLlmFailure', () => {
     )
   })
 
+  it('429 + quota_exceeded + tier=anonymous → anonymous_quota_exhausted', () => {
+    expect(
+      classifyClueLlmFailure({
+        status: 429,
+        workerError: 'quota_exceeded',
+        tier: 'anonymous'
+      })
+    ).toBe('anonymous_quota_exhausted')
+  })
+
+  it('429 + quota_exceeded + tier=free → 仍为 quota_monthly', () => {
+    expect(
+      classifyClueLlmFailure({
+        status: 429,
+        workerError: 'quota_exceeded',
+        tier: 'free'
+      })
+    ).toBe('quota_monthly')
+  })
+
   it('429 + daily_cap_exceeded → quota_daily', () => {
     expect(classifyClueLlmFailure({ status: 429, workerError: 'daily_cap_exceeded' })).toBe(
       'quota_daily'

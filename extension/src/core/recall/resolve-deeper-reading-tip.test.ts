@@ -18,7 +18,8 @@ describe('resolveDeeperReadingTip', () => {
     sidepanel_recall_deeper_reading_auth: 'auth tip',
     sidepanel_recall_deeper_reading_provider_error: 'provider tip',
     sidepanel_recall_deeper_reading_not_configured: 'not configured tip',
-    sidepanel_recall_deeper_reading_empty_response: 'empty tip'
+    sidepanel_recall_deeper_reading_empty_response: 'empty tip',
+    sidepanel_recall_anonymous_promote_copy: 'trial promote copy'
   }
 
   const translate = (key: string, substitutions?: string | string[]) => {
@@ -34,9 +35,9 @@ describe('resolveDeeperReadingTip', () => {
     expect(resolveDeeperReadingTip(undefined, translate)).toBeNull()
   })
 
-  it('9 个 kind 均映射到对应 key 文案', () => {
+  it('全部 kind 均映射到对应 key 文案', () => {
     const kinds = Object.keys(DEEPER_READING_TIP_KEYS) as ClueLlmFailureKind[]
-    expect(kinds).toHaveLength(9)
+    expect(kinds).toHaveLength(10)
     for (const kind of kinds) {
       if (kind === 'quota_monthly' || kind === 'quota_daily') {
         continue

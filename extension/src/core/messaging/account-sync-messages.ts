@@ -42,7 +42,11 @@ export const AccountSyncErrorCodeSchema = z.enum([
   'LOGIN_MIGRATION_STATUS_FAILED', // 读取登录迁移门闸失败
   'LOGIN_MIGRATION_FAILED', // 执行登录迁移（导入/导出/删除）失败
   'SUBSCRIPTION_STATUS_FAILED', // 拉取订阅状态失败
-  'MCP_REMOTE_UPDATE_FAILED' // 同步 MCP 开关到云端失败
+  'MCP_REMOTE_UPDATE_FAILED', // 同步 MCP 开关到云端失败
+  'AUTH_PROMOTE_INVALID_EMAIL', // 转正邮箱格式非法
+  'AUTH_PROMOTE_EMAIL_CONFLICT', // 转正邮箱已被其它账号占用
+  'AUTH_PROMOTE_FAILED', // 转正失败（网络 / Worker）
+  'AUTH_PROMOTE_NOT_ANONYMOUS' // 当前非匿名会话，无法转正
 ])
 
 export type AccountSyncErrorCode = z.infer<typeof AccountSyncErrorCodeSchema>
@@ -249,6 +253,30 @@ export type RetryAnonymousCaptchaResponse =
       /** ensure 结果摘要 */
       outcome: 'created' | 'already' | 'failed' | 'skipped_has_legacy'
       error?: string
+    }
+  | {
+      ok: false
+      errorCode: AccountSyncErrorCode
+      error?: string
+    }
+
+/**
+ * 匿名试用转正：绑定邮箱（Worker `POST /api/auth/promote`）。
+ * Side Panel 内联提示与 Settings 账号区共用。
+ */
+export type ConvertAnonymousAccountMessage = {
+  scope: BackgroundMessageScope
+  type: 'CONVERT_ANONYMOUS_ACCOUNT'
+  payload: {
+    email: string
+  }
+}
+
+export type ConvertAnonymousAccountResponse =
+  | {
+      ok: true
+      email: string
+      userId: string
     }
   | {
       ok: false
@@ -620,6 +648,7 @@ export type AccountSyncBackgroundMessage =
   | GetAuthStateMessage
   | ProbeWebsiteSignedInMessage
   | RetryAnonymousCaptchaMessage
+  | ConvertAnonymousAccountMessage
   | RefreshAuthProfileMessage
   | GetSyncStatusMessage
   | GetLoginMigrationStatusMessage
@@ -647,6 +676,7 @@ export type AccountSyncBackgroundResponse =
   | GetAuthStateResponse
   | ProbeWebsiteSignedInResponse
   | RetryAnonymousCaptchaResponse
+  | ConvertAnonymousAccountResponse
   | RefreshAuthProfileResponse
   | GetSyncStatusResponse
   | GetLoginMigrationStatusResponse

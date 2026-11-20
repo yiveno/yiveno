@@ -26,6 +26,7 @@ export function createAssistantTurn(input: {
   recallFramingFacts?: RecallFramingFacts
   understandingEcho?: RecallUnderstandingEchoChip[]
   deeperReadingTip?: string
+  showAnonymousPromote?: boolean
   clueTruncatedTip?: string
   /** 系统样式轻提示行（dismiss 等）；不伪造用户发言 */
   systemNote?: string
@@ -60,6 +61,9 @@ export function createAssistantTurn(input: {
       ? {}
       : { understandingEcho: input.understandingEcho }),
     ...(input.deeperReadingTip === undefined ? {} : { deeperReadingTip: input.deeperReadingTip }),
+    ...(input.showAnonymousPromote === undefined
+      ? {}
+      : { showAnonymousPromote: input.showAnonymousPromote }),
     ...(input.clueTruncatedTip === undefined ? {} : { clueTruncatedTip: input.clueTruncatedTip }),
     ...(input.systemNote === undefined ? {} : { systemNote: input.systemNote }),
     allowDismiss: input.allowDismiss ?? false

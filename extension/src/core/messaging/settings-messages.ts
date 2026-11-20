@@ -16,7 +16,8 @@ export type SettingsErrorCode = z.infer<typeof SettingsErrorCodeSchema>
 /** 托管 Clue LLM 配额快照（与 Worker 对齐）。 */
 export type AiHostedQuotaSnapshot = {
   model: string
-  tier: 'free' | 'pro' // free=登录免费档；pro=有效 Pro
+  /** free=登录免费档；pro=有效 Pro；anonymous=试用终身档 */
+  tier: 'free' | 'pro' | 'anonymous'
   used: number
   limit: number
   remaining: number
@@ -24,6 +25,10 @@ export type AiHostedQuotaSnapshot = {
   dailyLimit: number
   dailyRemaining: number
   monthKey: string
+  /** 匿名试用 embedding 终身计数（正式档通常缺省） */
+  embedUsed?: number
+  embedLimit?: number
+  embedRemaining?: number
 }
 
 /** 读取用户设置。 */

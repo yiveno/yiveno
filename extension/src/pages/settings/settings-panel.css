@@ -184,6 +184,32 @@
 }
 
 /** 账号分区未登录：登录提示 + 按钮 */
+.settings-promote-label {
+  display: block;
+  margin-top: var(--space-2xs);
+  font-size: 12px;
+  color: var(--on-surface-muted);
+}
+
+.settings-promote-input {
+  width: 100%;
+  max-width: 28rem;
+  box-sizing: border-box;
+  margin-top: var(--space-3xs, 4px);
+  padding: 8px 12px;
+  border: 1px solid var(--outline-variant, rgba(0, 0, 0, 0.16));
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--on-surface);
+  font: inherit;
+  font-size: 14px;
+}
+
+.settings-promote-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .settings-sign-in-row {
   display: flex;
   flex-direction: column;

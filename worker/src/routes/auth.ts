@@ -24,6 +24,7 @@ import {
   revokeDeviceTokenSelf
 } from '../services/auth/device-token-kv'
 import { mintWebsiteSessionFromExtension } from '../services/auth/mint-website-session'
+import { maskEmailForLog, promoteAnonymousUser } from '../services/auth/promote-anonymous-user'
 import { error as logErrorMessage, info } from '../utils/logger'
 
 type AuthVars = {
@@ -251,6 +252,52 @@ authRouter.post('/device-rename', supabaseAuth(), async c => {
     const msg = err instanceof Error ? err.message : String(err)
     logErrorMessage('[Auth] device-rename 异常', { userId, detail: msg })
     return c.json({ error: 'device_rename_failed' }, 500)
+  }
+})
+
+/**
+ * POST /api/auth/promote
+ *
+ * 匿名转正：device Bearer + `{ email }` → Admin 绑邮箱；token 继续有效。
+ * Confirm email OFF：不发 OTP。冲突 → 409 email_conflict；重复转正 → 200 幂等。
+ */
+authRouter.post('/promote', deviceAuth(), async c => {
+  const userId = c.get('supabaseUserId')
+  const authHeader = c.req.header('authorization') ?? ''
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length).trim() : ''
+
+  let rawEmail = ''
+  try {
+    const parsed = await c.req.json().catch(() => null)
+    if (typeof parsed === 'object' && parsed !== null) {
+      const email = (parsed as { email?: unknown }).email
+      if (typeof email === 'string') {
+        rawEmail = email
+      }
+    }
+  } catch {
+    rawEmail = ''
+  }
+
+  try {
+    const result = await promoteAnonymousUser(c.env, userId, rawEmail)
+    if (!result.ok) {
+      return c.json({ error: result.error }, result.status)
+    }
+    // 转正后清 deviceAuth 缓存，避免 isAnonymous 短窗仍为 true
+    if (token) {
+      invalidateDeviceAuthCacheEntry(token)
+    }
+    info('[Auth] promote 已返回', {
+      userId,
+      emailMasked: maskEmailForLog(result.data.email),
+      idempotent: result.idempotent === true
+    })
+    return c.json({ success: true, data: result.data })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    logErrorMessage('[Auth] promote 异常', { userId, detail: msg })
+    return c.json({ error: 'promote_failed' }, 500)
   }
 })
 

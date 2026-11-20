@@ -315,13 +315,13 @@ SW 启动 / GET_AUTH_STATE：
 
 **端点：** `POST /api/auth/promote`（名称可调）。
 
-| 项               | 结论                                                                                                                         |
-| ---------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| **鉴权**         | `deviceAuth`                                                                                                                 |
-| **Body**         | `{ email: string, captchaToken?: string }`（若邮件链路仍要 bot 防护）                                                        |
-| **行为**         | Admin `updateUserById`：绑定 email、`is_anonymous → false`（或等价）；发验证邮件按产品定；更新 `user_meta.isAnonymous=false` |
-| **device token** | **继续有效**；不必重发、不必 mint、不必撤旧                                                                                  |
-| **邮箱冲突**     | Admin 报邮箱已占用 → `409 email_conflict`；扩展 UI「登录合并或换邮箱」（与方案 C 一致，合并策略另 Brief）                    |
+| 项               | 结论                                                                                                                                        |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| **鉴权**         | `deviceAuth`                                                                                                                                |
+| **Body**         | `{ email: string, captchaToken?: string }`（若邮件链路仍要 bot 防护）                                                                       |
+| **行为**         | Admin `updateUserById`：绑定 email、`email_confirm: true`（Confirm email OFF → 当场生效，**不**发 OTP）；更新 `user_meta.isAnonymous=false` |
+| **device token** | **继续有效**；不必重发、不必 mint、不必撤旧                                                                                                 |
+| **邮箱冲突**     | Admin 报邮箱已占用 → `409 email_conflict`；扩展 UI「登录合并或换邮箱」（与方案 C 一致，合并策略另 Brief）                                   |
 
 **「转正后强制刷新问题」消失的原因：**  
 旧世界依赖 JWT / 会话里的匿名标记或 refresh 后 claims；D 世界 **device token 不含 `is_anonymous` claim**，配额读 **`user_meta`（§2.4）**，转正写库后**下一次**配额检查即见正式用户——无需 refresh、无需换 token。

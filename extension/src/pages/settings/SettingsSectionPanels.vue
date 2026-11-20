@@ -29,6 +29,11 @@ function bindRestoreFileInput(el: Element | ComponentPublicInstance | null): voi
   page.restoreFileInputRef.value = el as HTMLInputElement | null
 }
 
+function onPromoteEmailInput(event: Event): void {
+  const target = event.target as HTMLInputElement | null
+  page.promoteEmail.value = target?.value ?? ''
+}
+
 const {
   accountDisplayName,
   accountEmail,
@@ -50,7 +55,18 @@ const {
   handleChromeBookmarkSyncToggle,
   handleReimportChromeBookmarks,
   handleSignIn,
+  handlePromoteAnonymous,
   handleRetryAnonymousCaptcha,
+  isAnonymous,
+  promoteEmail,
+  promoteError,
+  promoteShowSignIn,
+  promoteSuccess,
+  promoteWorking,
+  trialEmbedLimit,
+  trialEmbedRemaining,
+  trialLlmLimit,
+  trialLlmRemaining,
   handleClearLocalMemory,
   handleClearLocalRecallAdaptation,
   handleClearOrphans,
@@ -361,6 +377,75 @@ const {
         <AppButton type="button" variant="tonal" :disabled="signingIn" @click="handleSignIn">
           {{ t('nav_sign_in') }}
         </AppButton>
+      </div>
+
+      <div
+        v-if="signedIn && isAnonymous"
+        class="settings-card-stack"
+        aria-labelledby="settings-trial-account-heading"
+      >
+        <div class="settings-toggle-copy">
+          <span id="settings-trial-account-heading" class="settings-toggle-title">{{
+            t('settings_trial_account_title')
+          }}</span>
+          <span class="settings-toggle-hint">{{ t('settings_trial_account_hint') }}</span>
+        </div>
+        <p
+          v-if="trialLlmRemaining !== null && trialLlmLimit !== null"
+          class="settings-section-copy"
+          role="status"
+        >
+          {{ t('settings_trial_quota_llm', [String(trialLlmRemaining), String(trialLlmLimit)]) }}
+        </p>
+        <p
+          v-if="trialEmbedRemaining !== null && trialEmbedLimit !== null"
+          class="settings-section-copy"
+          role="status"
+        >
+          {{
+            t('settings_trial_quota_embed', [String(trialEmbedRemaining), String(trialEmbedLimit)])
+          }}
+        </p>
+        <p v-if="promoteSuccess" class="settings-status" role="status">
+          {{ t('settings_promote_success') }}
+        </p>
+        <template v-else>
+          <label class="settings-promote-label" for="settings-promote-email">{{
+            t('settings_promote_email_label')
+          }}</label>
+          <input
+            id="settings-promote-email"
+            class="settings-promote-input"
+            type="email"
+            autocomplete="email"
+            :placeholder="t('settings_promote_email_placeholder')"
+            :value="promoteEmail"
+            :disabled="promoteWorking"
+            @input="onPromoteEmailInput"
+          />
+          <div class="settings-actions">
+            <AppButton
+              type="button"
+              variant="tonal"
+              :disabled="promoteWorking || !String(promoteEmail ?? '').trim()"
+              :title="t('settings_promote_submit')"
+              @click="handlePromoteAnonymous"
+            >
+              {{ promoteWorking ? t('settings_promote_working') : t('settings_promote_submit') }}
+            </AppButton>
+            <AppButton
+              v-if="promoteShowSignIn"
+              type="button"
+              variant="outlined"
+              :disabled="signingIn"
+              :title="t('settings_promote_sign_in')"
+              @click="handleSignIn"
+            >
+              {{ t('settings_promote_sign_in') }}
+            </AppButton>
+          </div>
+          <p v-if="promoteError" class="settings-error" role="alert">{{ promoteError }}</p>
+        </template>
       </div>
 
       <div

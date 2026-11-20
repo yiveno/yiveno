@@ -36,6 +36,7 @@ import {
   fetchUserSettings,
   openChromeShortcutsPage,
   fetchAiHostedQuota,
+  convertAnonymousAccount,
   fetchDualThreadLearningStatus,
   deleteDualThreadContributedSketches,
   restoreLatestSyncBackup,
@@ -153,6 +154,16 @@ export function useSettingsPage() {
   const hostedQuotaLoading = ref(false)
   const hostedQuotaText = ref('')
   const hostedQuotaError = ref('')
+  /** 匿名试用配额数字（拉取失败则静默不展示） */
+  const trialLlmRemaining = ref<number | null>(null)
+  const trialLlmLimit = ref<number | null>(null)
+  const trialEmbedRemaining = ref<number | null>(null)
+  const trialEmbedLimit = ref<number | null>(null)
+  const promoteEmail = ref('')
+  const promoteError = ref('')
+  const promoteWorking = ref(false)
+  const promoteSuccess = ref(false)
+  const promoteShowSignIn = ref(false)
 
   const signedIn = ref(false)
   const accountEmail = ref('')
@@ -973,10 +984,14 @@ export function useSettingsPage() {
     }
   }
 
-  /** 刷新托管 Clue LLM 配额展示。 */
+  /** 刷新托管 Clue LLM 配额展示；匿名试用另填 trial* 数字（失败静默）。 */
   async function loadHostedQuota(): Promise<void> {
     hostedQuotaError.value = ''
     hostedQuotaText.value = ''
+    trialLlmRemaining.value = null
+    trialLlmLimit.value = null
+    trialEmbedRemaining.value = null
+    trialEmbedLimit.value = null
     if (!signedIn.value) {
       hostedQuotaText.value = t('settings_ai_quota_sign_in')
       return
@@ -985,7 +1000,30 @@ export function useSettingsPage() {
     try {
       const response = await fetchAiHostedQuota()
       if (!response.ok) {
-        hostedQuotaError.value = tSettingsError(response.errorCode)
+        // 匿名试用区：拉取失败不弹数字、不谎报；AI 区仍可显示错误
+        if (!isAnonymous.value) {
+          hostedQuotaError.value = tSettingsError(response.errorCode)
+        }
+        return
+      }
+      if (response.quota.tier === 'anonymous') {
+        trialLlmRemaining.value = response.quota.remaining
+        trialLlmLimit.value = response.quota.limit
+        if (
+          typeof response.quota.embedRemaining === 'number' &&
+          typeof response.quota.embedLimit === 'number'
+        ) {
+          trialEmbedRemaining.value = response.quota.embedRemaining
+          trialEmbedLimit.value = response.quota.embedLimit
+        }
+        // AI 分区摘要：试用档
+        hostedQuotaText.value = t('settings_ai_quota_summary', [
+          t('settings_trial_account_title'),
+          String(response.quota.used),
+          String(response.quota.limit),
+          String(response.quota.dailyUsed),
+          String(response.quota.dailyLimit)
+        ])
         return
       }
       hostedQuotaText.value = t('settings_ai_quota_summary', [
@@ -998,11 +1036,44 @@ export function useSettingsPage() {
         String(response.quota.dailyLimit)
       ])
     } catch {
-      hostedQuotaError.value = readBrowserOnline()
-        ? t('settings_ai_quota_failed')
-        : t('settings_ai_quota_failed_offline')
+      if (!isAnonymous.value) {
+        hostedQuotaError.value = readBrowserOnline()
+          ? t('settings_ai_quota_failed')
+          : t('settings_ai_quota_failed_offline')
+      }
     } finally {
       hostedQuotaLoading.value = false
+    }
+  }
+
+  /** Settings / Side Panel 共用：绑邮箱转正。 */
+  async function handlePromoteAnonymous(): Promise<void> {
+    if (promoteWorking.value || !isAnonymous.value) {
+      return
+    }
+    promoteError.value = ''
+    promoteShowSignIn.value = false
+    promoteWorking.value = true
+    try {
+      const response = await convertAnonymousAccount(promoteEmail.value.trim())
+      if (!response.ok) {
+        promoteError.value = tAccountSyncError(response.errorCode)
+        promoteShowSignIn.value = response.errorCode === 'AUTH_PROMOTE_EMAIL_CONFLICT'
+        return
+      }
+      promoteSuccess.value = true
+      isAnonymous.value = false
+      accountEmail.value = response.email
+      promoteEmail.value = ''
+      trialLlmRemaining.value = null
+      trialLlmLimit.value = null
+      trialEmbedRemaining.value = null
+      trialEmbedLimit.value = null
+      await loadHostedQuota()
+    } catch {
+      promoteError.value = t('settings_promote_error_failed')
+    } finally {
+      promoteWorking.value = false
     }
   }
 
@@ -1046,7 +1117,8 @@ export function useSettingsPage() {
       if (response.signedIn) {
         await refreshLoginMigrationGate()
       }
-      if (activeSection.value === 'ai') {
+      // AI 分区摘要；匿名试用数字也在账号区展示 → 已登录即拉
+      if (response.signedIn) {
         await loadHostedQuota()
       }
     } catch {
@@ -2010,11 +2082,22 @@ export function useSettingsPage() {
     handleUiLocalePreferenceChange,
     hasCompletedInitialSectionSync,
     hasOrphanOwners,
+    handlePromoteAnonymous,
     hostedQuotaError,
     hostedQuotaLoading,
     hostedQuotaText,
+    isAnonymous,
     loadCommands,
     loadHostedQuota,
+    promoteEmail,
+    promoteError,
+    promoteShowSignIn,
+    promoteSuccess,
+    promoteWorking,
+    trialEmbedLimit,
+    trialEmbedRemaining,
+    trialLlmLimit,
+    trialLlmRemaining,
     loadSubscriptionStatus,
     loadSyncContext,
     loadThirdPartyCorpusSummary,

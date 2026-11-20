@@ -58,8 +58,13 @@ export type AssistantTurn = {
   /**
    * LLM 失败/超时降级后的结果轻提示（已翻译）。
    * 仅 `rules_fallback`；断网 omit LLM（source=`rules`）不叠。
+   * 与 `showAnonymousPromote` 互斥（转正块自带文案）。
    */
   deeperReadingTip?: string
+  /**
+   * 匿名试用 LLM 配额用尽：本回合内联转正表单（非 modal）。
+   */
+  showAnonymousPromote?: boolean
   /**
    * 线索超长截断后的轻提示（已翻译）。
    * 仅 `clueTruncated`；与 `deeperReadingTip` 可叠加（两者独立）。

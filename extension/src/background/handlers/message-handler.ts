@@ -25,6 +25,7 @@ import {
   handleGetAuthState,
   handleGetLoginMigrationStatus,
   handleProbeWebsiteSignedIn,
+  handleConvertAnonymousAccount,
   handleRetryAnonymousCaptcha,
   handleGetSubscriptionStatus,
   handleGetSyncStatus,
@@ -141,6 +142,8 @@ async function dispatchBackgroundMessage(
       return handleProbeWebsiteSignedIn()
     case 'RETRY_ANONYMOUS_CAPTCHA':
       return handleRetryAnonymousCaptcha()
+    case 'CONVERT_ANONYMOUS_ACCOUNT':
+      return handleConvertAnonymousAccount(message.payload.email)
     case 'GET_SUBSCRIPTION_STATUS':
       return handleGetSubscriptionStatus(message.payload)
     case 'REFRESH_AUTH_PROFILE':

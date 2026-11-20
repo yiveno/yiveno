@@ -21,6 +21,20 @@ afterEach(() => {
 })
 
 describe('auth routes', () => {
+  test('POST /api/auth/promote 未登录 → 401', async () => {
+    const app = createApp()
+    const response = await app.request(
+      '/api/auth/promote',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email: 'a@example.com' })
+      },
+      baseEnv
+    )
+    expect(response.status).toBe(401)
+  })
+
   test('POST /api/auth/extension-session → 410 Gone（改走 device-register）', async () => {
     const app = createApp()
     const response = await app.request('/api/auth/extension-session', { method: 'POST' }, baseEnv)

@@ -38,6 +38,57 @@ describe('createHostedClueUnderstandApiCompleter temperature 透传', () => {
   })
 })
 
+describe('createHostedClueUnderstandApiCompleter 429 tier', () => {
+  it('429 + anonymous → anonymous_quota_exhausted', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          error: 'quota_exceeded',
+          tier: 'anonymous',
+          used: 15,
+          limit: 15,
+          dailyUsed: 15,
+          dailyLimit: 15
+        }),
+        { status: 429, headers: { 'content-type': 'application/json' } }
+      )
+    ) as typeof fetch
+
+    const complete = createHostedClueUnderstandApiCompleter(
+      async () => 'token',
+      'http://localhost:8787'
+    )
+    await expect(complete(messages, { taskKind: 'nlu' })).rejects.toMatchObject({
+      kind: 'anonymous_quota_exhausted',
+      name: 'HostedCompleteError'
+    })
+  })
+
+  it('429 + free → quota_monthly（不变）', async () => {
+    globalThis.fetch = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          error: 'quota_exceeded',
+          tier: 'free',
+          used: 60,
+          limit: 60,
+          dailyUsed: 5,
+          dailyLimit: 20
+        }),
+        { status: 429, headers: { 'content-type': 'application/json' } }
+      )
+    ) as typeof fetch
+
+    const complete = createHostedClueUnderstandApiCompleter(
+      async () => 'token',
+      'http://localhost:8787'
+    )
+    await expect(complete(messages, { taskKind: 'nlu' })).rejects.toMatchObject({
+      kind: 'quota_monthly'
+    })
+  })
+})
+
 describe('createHostedClueUnderstandApiCompleterDetailed', () => {
   it('透传 Worker 拆分 prompt/completion token', async () => {
     const fetchMock = vi.fn().mockImplementation(

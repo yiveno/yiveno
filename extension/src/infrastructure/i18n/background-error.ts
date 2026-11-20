@@ -49,7 +49,11 @@ const ACCOUNT_SYNC_ERROR_MESSAGE_KEYS: Record<AccountSyncErrorCode, MessageKey> 
   LOGIN_MIGRATION_STATUS_FAILED: 'settings_error_login_migration_status',
   LOGIN_MIGRATION_FAILED: 'settings_error_login_migration',
   SUBSCRIPTION_STATUS_FAILED: 'settings_error_subscription_status',
-  MCP_REMOTE_UPDATE_FAILED: 'settings_mcp_remote_sync_failed'
+  MCP_REMOTE_UPDATE_FAILED: 'settings_mcp_remote_sync_failed',
+  AUTH_PROMOTE_INVALID_EMAIL: 'settings_promote_error_invalid_email',
+  AUTH_PROMOTE_EMAIL_CONFLICT: 'settings_promote_error_email_conflict',
+  AUTH_PROMOTE_FAILED: 'settings_promote_error_failed',
+  AUTH_PROMOTE_NOT_ANONYMOUS: 'settings_promote_error_not_anonymous'
 }
 
 const RECALL_ERROR_MESSAGE_KEYS: Record<RecallErrorCode, MessageKey> = {

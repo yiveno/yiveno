@@ -1596,6 +1596,56 @@
   "settings_anonymous_captcha_retry_failed": {
     "message": "验证没完成。可以再试一次。"
   },
+  "settings_trial_account_title": {
+    "message": "试用账号"
+  },
+  "settings_trial_account_hint": {
+    "message": "你正在试用。绑定邮箱后，可用 Free 每月额度继续找东西。"
+  },
+  "settings_trial_quota_llm": {
+    "message": "线索帮助剩余：$REMAINING$/$LIMIT$",
+    "placeholders": {
+      "REMAINING": { "content": "$1" },
+      "LIMIT": { "content": "$2" }
+    }
+  },
+  "settings_trial_quota_embed": {
+    "message": "摘录向量剩余：$REMAINING$/$LIMIT$",
+    "placeholders": {
+      "REMAINING": { "content": "$1" },
+      "LIMIT": { "content": "$2" }
+    }
+  },
+  "settings_promote_email_label": {
+    "message": "邮箱"
+  },
+  "settings_promote_email_placeholder": {
+    "message": "you@example.com"
+  },
+  "settings_promote_submit": {
+    "message": "绑定邮箱"
+  },
+  "settings_promote_working": {
+    "message": "绑定中…"
+  },
+  "settings_promote_success": {
+    "message": "已转为 Free。每月线索帮助额度已解锁。"
+  },
+  "settings_promote_sign_in": {
+    "message": "去登录合并"
+  },
+  "settings_promote_error_invalid_email": {
+    "message": "邮箱格式不对。"
+  },
+  "settings_promote_error_email_conflict": {
+    "message": "该邮箱已注册，请登录合并，或换一个邮箱。"
+  },
+  "settings_promote_error_failed": {
+    "message": "绑定失败。请检查网络后再试。"
+  },
+  "settings_promote_error_not_anonymous": {
+    "message": "当前账号已绑定邮箱。"
+  },
   "settings_account_waiting_website": {
     "message": "请在浏览器标签页完成登录，然后回到这里。"
   },
@@ -3098,6 +3148,27 @@
   },
   "sidepanel_recall_deeper_reading_quota_monthly_no_numbers": {
     "message": "本月线索帮助次数已用完，已改用本机规则理解。下月恢复。"
+  },
+  "sidepanel_recall_anonymous_promote_copy": {
+    "message": "试用 15 次线索帮助已用完。绑定邮箱后可继续用 Free 额度找东西。"
+  },
+  "sidepanel_recall_anonymous_promote_email_label": {
+    "message": "邮箱"
+  },
+  "sidepanel_recall_anonymous_promote_email_placeholder": {
+    "message": "you@example.com"
+  },
+  "sidepanel_recall_anonymous_promote_submit": {
+    "message": "绑定邮箱"
+  },
+  "sidepanel_recall_anonymous_promote_working": {
+    "message": "绑定中…"
+  },
+  "sidepanel_recall_anonymous_promote_sign_in": {
+    "message": "去登录合并"
+  },
+  "sidepanel_recall_anonymous_promote_success": {
+    "message": "已转为 Free，继续找吧。"
   },
   "sidepanel_recall_deeper_reading_quota_daily": {
     "message": "今日线索帮助次数已用完（$DAILY_USED$/$DAILY_LIMIT$），已改用本机规则理解。明天恢复。",

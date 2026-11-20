@@ -18,6 +18,7 @@ import type {
   AuthSignInResponse,
   AuthSignOutMode,
   AuthSignOutResponse,
+  ConvertAnonymousAccountResponse,
   GetAuthStateResponse,
   ProbeWebsiteSignedInResponse,
   RetryAnonymousCaptchaResponse,
@@ -53,9 +54,11 @@ import {
   getAuthSession,
   setAuthSession
 } from '@/infrastructure/identity/auth-session-service'
+import { promoteAnonymousViaApi } from '@/infrastructure/auth/promote-anonymous-api-client'
 import {
   clearDeviceSession,
-  getDeviceSession
+  getDeviceSession,
+  setDeviceSession
 } from '@/infrastructure/identity/device-session-service'
 import {
   clearAccountBinding,
@@ -606,6 +609,67 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
     return {
       ok: false,
       errorCode: 'AUTH_STATE_READ_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/**
+ * CONVERT_ANONYMOUS_ACCOUNT — 匿名试用绑邮箱转正（Side Panel / Settings 共用）。
+ */
+export async function handleConvertAnonymousAccount(
+  email: string
+): Promise<ConvertAnonymousAccountResponse> {
+  const startedAt = flowStart('Auth', 'CONVERT_ANONYMOUS_ACCOUNT')
+  try {
+    const device = await getDeviceSession()
+    if (!device) {
+      flowOk('Auth', 'CONVERT_ANONYMOUS_ACCOUNT', startedAt, { reason: 'no_device' })
+      return { ok: false, errorCode: 'SYNC_NOT_AUTHENTICATED' }
+    }
+    if (!device.isAnonymous) {
+      flowOk('Auth', 'CONVERT_ANONYMOUS_ACCOUNT', startedAt, { reason: 'not_anonymous' })
+      return { ok: false, errorCode: 'AUTH_PROMOTE_NOT_ANONYMOUS' }
+    }
+
+    const result = await promoteAnonymousViaApi(device.deviceToken, email)
+    if (!result.ok) {
+      const errorCode: AccountSyncErrorCode =
+        result.error === 'invalid_email' || result.status === 400
+          ? 'AUTH_PROMOTE_INVALID_EMAIL'
+          : result.error === 'email_conflict' || result.status === 409
+            ? 'AUTH_PROMOTE_EMAIL_CONFLICT'
+            : 'AUTH_PROMOTE_FAILED'
+      flowOk('Auth', 'CONVERT_ANONYMOUS_ACCOUNT', startedAt, {
+        ok: false,
+        errorCode,
+        status: result.status
+      })
+      return {
+        ok: false,
+        errorCode,
+        ...(result.error ? { error: result.error } : {})
+      }
+    }
+
+    await setDeviceSession({
+      ...device,
+      isAnonymous: false,
+      email: result.data.email
+    })
+    flowOk('Auth', 'CONVERT_ANONYMOUS_ACCOUNT', startedAt, {
+      userId: result.data.userId
+    })
+    return {
+      ok: true,
+      email: result.data.email,
+      userId: result.data.userId
+    }
+  } catch (error) {
+    flowFail('Auth', 'CONVERT_ANONYMOUS_ACCOUNT', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'AUTH_PROMOTE_FAILED',
       ...(error instanceof Error ? { error: error.message } : {})
     }
   }

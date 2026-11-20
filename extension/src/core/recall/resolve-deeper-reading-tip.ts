@@ -12,6 +12,8 @@ import type {
 export const DEEPER_READING_TIP_KEYS: Record<ClueLlmFailureKind, string> = {
   quota_monthly: 'sidepanel_recall_deeper_reading_quota_monthly',
   quota_daily: 'sidepanel_recall_deeper_reading_quota_daily',
+  /** 匿名试用：文案在内联转正块；此处给无表单回退 */
+  anonymous_quota_exhausted: 'sidepanel_recall_anonymous_promote_copy',
   timeout: 'sidepanel_recall_deeper_reading_timeout',
   network: 'sidepanel_recall_deeper_reading_network',
   auth: 'sidepanel_recall_deeper_reading_auth',

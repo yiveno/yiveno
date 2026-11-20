@@ -33,6 +33,8 @@ import {
 } from '@/pages/sidepanel/recall-result-card-helpers'
 import ClueFormattedText from '@/pages/sidepanel/composer/ClueFormattedText.vue'
 import RecallResultCard from '@/pages/sidepanel/RecallResultCard.vue'
+import { authSignIn, convertAnonymousAccount } from '@/infrastructure/messaging/background-client'
+import { tAccountSyncError } from '@/infrastructure/i18n/background-error'
 import { t } from '@/infrastructure/i18n/t'
 
 defineOptions({ name: 'RecallConversation' })
@@ -81,6 +83,13 @@ const emit = defineEmits<{
 
 /** 纠错菜单：`${turnId}::${chipId}`；null = 关闭。 */
 const openEchoMenuKey = ref<string | null>(null)
+
+/** 匿名转正：按 turnId 存邮箱 / 错误 / 进行中 / 成功。 */
+const promoteEmailByTurn = ref<Record<string, string>>({})
+const promoteErrorByTurn = ref<Record<string, string>>({})
+const promoteConflictTurnIds = ref<Set<string>>(new Set())
+const promoteWorkingTurnId = ref<string | null>(null)
+const promoteSuccessTurnIds = ref<Set<string>>(new Set())
 
 const ALL_OBJECT_TYPES = Object.keys(RECALL_OBJECT_TYPE_CANONICAL_SURFACES) as RecallObjectType[]
 
@@ -146,6 +155,59 @@ const latestDismissibleAssistantId = computed(() => {
 
 function onDismissClick(): void {
   emit('dismiss')
+}
+
+function promoteEmailFor(turnId: string): string {
+  return promoteEmailByTurn.value[turnId] ?? ''
+}
+
+function setPromoteEmail(turnId: string, value: string): void {
+  promoteEmailByTurn.value = { ...promoteEmailByTurn.value, [turnId]: value }
+}
+
+async function submitAnonymousPromote(turnId: string): Promise<void> {
+  if (promoteWorkingTurnId.value) {
+    return
+  }
+  const email = promoteEmailFor(turnId).trim()
+  promoteErrorByTurn.value = { ...promoteErrorByTurn.value, [turnId]: '' }
+  const clearedConflict = new Set(promoteConflictTurnIds.value)
+  clearedConflict.delete(turnId)
+  promoteConflictTurnIds.value = clearedConflict
+  promoteWorkingTurnId.value = turnId
+  try {
+    const response = await convertAnonymousAccount(email)
+    if (!response.ok) {
+      promoteErrorByTurn.value = {
+        ...promoteErrorByTurn.value,
+        [turnId]: tAccountSyncError(response.errorCode)
+      }
+      if (response.errorCode === 'AUTH_PROMOTE_EMAIL_CONFLICT') {
+        const nextConflict = new Set(promoteConflictTurnIds.value)
+        nextConflict.add(turnId)
+        promoteConflictTurnIds.value = nextConflict
+      }
+      return
+    }
+    const next = new Set(promoteSuccessTurnIds.value)
+    next.add(turnId)
+    promoteSuccessTurnIds.value = next
+  } catch {
+    promoteErrorByTurn.value = {
+      ...promoteErrorByTurn.value,
+      [turnId]: t('settings_promote_error_failed')
+    }
+  } finally {
+    promoteWorkingTurnId.value = null
+  }
+}
+
+async function promoteSignInToMerge(): Promise<void> {
+  try {
+    await authSignIn()
+  } catch {
+    // 打开官网失败时静默；用户可再点
+  }
 }
 
 function onSuggestionClick(value: string): void {
@@ -498,6 +560,71 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
           <p v-if="turn.deeperReadingTip" class="assistant-turn-deeper-tip" role="status">
             {{ turn.deeperReadingTip }}
           </p>
+          <div
+            v-if="turn.showAnonymousPromote"
+            class="assistant-turn-promote"
+            role="group"
+            :aria-label="t('sidepanel_recall_anonymous_promote_copy')"
+          >
+            <p class="assistant-turn-deeper-tip" role="status">
+              {{ t('sidepanel_recall_anonymous_promote_copy') }}
+            </p>
+            <p
+              v-if="promoteSuccessTurnIds.has(turn.id)"
+              class="assistant-turn-promote__success"
+              role="status"
+            >
+              {{ t('sidepanel_recall_anonymous_promote_success') }}
+            </p>
+            <template v-else>
+              <label class="assistant-turn-promote__label" :for="`promote-email-${turn.id}`">
+                {{ t('sidepanel_recall_anonymous_promote_email_label') }}
+              </label>
+              <input
+                :id="`promote-email-${turn.id}`"
+                class="assistant-turn-promote__input"
+                type="email"
+                autocomplete="email"
+                :placeholder="t('sidepanel_recall_anonymous_promote_email_placeholder')"
+                :value="promoteEmailFor(turn.id)"
+                :disabled="promoteWorkingTurnId === turn.id"
+                @input="
+                  setPromoteEmail(turn.id, ($event.target as HTMLInputElement | null)?.value ?? '')
+                "
+              />
+              <div class="assistant-turn-promote__actions">
+                <AppButton
+                  type="button"
+                  variant="tonal"
+                  :disabled="promoteWorkingTurnId === turn.id || !promoteEmailFor(turn.id).trim()"
+                  :title="t('sidepanel_recall_anonymous_promote_submit')"
+                  @click="submitAnonymousPromote(turn.id)"
+                >
+                  {{
+                    promoteWorkingTurnId === turn.id
+                      ? t('sidepanel_recall_anonymous_promote_working')
+                      : t('sidepanel_recall_anonymous_promote_submit')
+                  }}
+                </AppButton>
+                <AppButton
+                  v-if="promoteConflictTurnIds.has(turn.id)"
+                  type="button"
+                  variant="outlined"
+                  :title="t('sidepanel_recall_anonymous_promote_sign_in')"
+                  @click="promoteSignInToMerge"
+                >
+                  {{ t('sidepanel_recall_anonymous_promote_sign_in') }}
+                </AppButton>
+              </div>
+              <p
+                v-if="promoteErrorByTurn[turn.id]"
+                class="assistant-turn-promote__error"
+                role="alert"
+              >
+                {{ promoteErrorByTurn[turn.id] }}
+              </p>
+            </template>
+          </div>
           <p v-if="turn.clueTruncatedTip" class="assistant-turn-deeper-tip" role="status">
             {{ turn.clueTruncatedTip }}
           </p>
@@ -1054,6 +1181,55 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
 
 .assistant-turn-deeper-tip {
   max-width: 42ch;
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--on-surface-muted);
+}
+
+.assistant-turn-promote {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2xs);
+  max-width: 42ch;
+}
+
+.assistant-turn-promote__label {
+  font-size: 12px;
+  color: var(--on-surface-muted);
+}
+
+.assistant-turn-promote__input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 6px 10px;
+  border: 1px solid var(--outline-variant, rgba(0, 0, 0, 0.16));
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--on-surface);
+  font: inherit;
+  font-size: 14px;
+}
+
+.assistant-turn-promote__input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.assistant-turn-promote__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs);
+}
+
+.assistant-turn-promote__error {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--error, #b3261e);
+}
+
+.assistant-turn-promote__success {
   margin: 0;
   font-size: 12px;
   line-height: 1.35;

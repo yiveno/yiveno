@@ -12,6 +12,7 @@ import {
   resolveHostedModelForTask
 } from '../config/ai-task-kind'
 import { isAiChatProviderConfigured, resolveAiChatProvider } from '../services/ai/ai-chat-provider'
+import { peekAnonymousEmbedQuota } from './ai-embed'
 import { consumeHostedQuota, getHostedQuotaSnapshot } from '../services/ai/usage-quota'
 import { isActiveProUser } from '../services/ai/require-pro-user'
 import { info as logInfo, logError } from '../utils/logger'
@@ -36,6 +37,10 @@ export async function handleHostedQuota(
   const isPro = isAnonymous ? false : await isActiveProUser(env, userId)
   const snapshot = await getHostedQuotaSnapshot(env, userId, { isAnonymous, isPro })
 
+  // 匿名试用：附加 embedding 终身剩余（Settings 展示）；正式档不附
+  const embed =
+    isAnonymous && snapshot.tier === 'anonymous' ? await peekAnonymousEmbedQuota(env, userId) : null
+
   return okJson(
     {
       model: resolveHostedModel(env),
@@ -46,7 +51,14 @@ export async function handleHostedQuota(
       dailyUsed: snapshot.dailyUsed,
       dailyLimit: snapshot.dailyLimit,
       dailyRemaining: snapshot.dailyRemaining,
-      monthKey: snapshot.monthKey
+      monthKey: snapshot.monthKey,
+      ...(embed
+        ? {
+            embedUsed: embed.used,
+            embedLimit: embed.limit,
+            embedRemaining: embed.remaining
+          }
+        : {})
     },
     origin
   )

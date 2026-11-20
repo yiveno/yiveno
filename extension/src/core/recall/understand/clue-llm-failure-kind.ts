@@ -5,8 +5,9 @@
 
 /** 线索 LLM 理解失败原因闭集。 */
 export type ClueLlmFailureKind =
-  | 'quota_monthly' // 本月配额用完（429 + quota_exceeded）
+  | 'quota_monthly' // 本月配额用完（429 + quota_exceeded；非匿名）
   | 'quota_daily' // 当日软盖用完（429 + daily_cap_exceeded）
+  | 'anonymous_quota_exhausted' // 匿名试用 LLM 终身用尽（429 + quota_exceeded + tier=anonymous）
   | 'timeout' // 12 秒超时（AbortSignal TimeoutError / AbortError）
   | 'network' // fetch 抛错（连不上 Worker / 断网）
   | 'auth' // 无 token 或 401（登录过期/缺失）
@@ -29,6 +30,8 @@ export type ClassifyClueLlmFailureInput = {
   status?: number
   /** Worker JSON 的 `error` 字段（精确相等比较）。 */
   workerError?: string
+  /** Worker 429 JSON 的 `tier`（精确相等；匿名试用分流）。 */
+  tier?: string
   /** 异常 `name`（TimeoutError / AbortError 等）。 */
   errorName?: string
   /** 已知语义捷径：无 token / 空 text。 */
@@ -65,6 +68,10 @@ export function classifyClueLlmFailure(input: ClassifyClueLlmFailureInput): Clue
   const workerError = input.workerError
   if (status === 429) {
     if (workerError === 'quota_exceeded') {
+      // 匿名终身档与 Free/Pro 月配额共用 error 码；靠 tier 分流
+      if (input.tier === 'anonymous') {
+        return 'anonymous_quota_exhausted'
+      }
       return 'quota_monthly'
     }
     if (workerError === 'daily_cap_exceeded') {
@@ -130,7 +137,11 @@ export function resolveClueLlmFailureQuotaFromError(
   if (!(error instanceof HostedCompleteError)) {
     return undefined
   }
-  if (error.kind !== 'quota_monthly' && error.kind !== 'quota_daily') {
+  if (
+    error.kind !== 'quota_monthly' &&
+    error.kind !== 'quota_daily' &&
+    error.kind !== 'anonymous_quota_exhausted'
+  ) {
     return undefined
   }
   return error.quota

@@ -30,6 +30,8 @@ export interface HostedCompleteApiResponse {
   tokensUsed?: number
   promptTokens?: number
   completionTokens?: number
+  /** 429 路径：free | pro | anonymous（匿名试用终身档分流）。 */
+  tier?: string
   /** 成功路径偶发嵌套配额；429 失败路径 Worker 用顶层 used/limit/daily*。 */
   quota?: {
     used?: number
@@ -140,9 +142,11 @@ async function requestHostedCompleteDetailed(
   const payload = (await response.json().catch(() => ({}))) as HostedCompleteApiResponse
   if (!response.ok) {
     const workerError = typeof payload.error === 'string' ? payload.error : undefined
+    const tier = typeof payload.tier === 'string' ? payload.tier : undefined
     const kind = classifyClueLlmFailure({
       status: response.status,
-      ...(workerError !== undefined ? { workerError } : {})
+      ...(workerError !== undefined ? { workerError } : {}),
+      ...(tier !== undefined ? { tier } : {})
     })
     logger.warn('ClueLlm', '托管请求非 2xx', {
       url,
@@ -150,11 +154,14 @@ async function requestHostedCompleteDetailed(
       status: response.status,
       durationMs: Date.now() - startedAt,
       error: payload.error ?? response.statusText,
+      ...(tier !== undefined ? { tier } : {}),
       outcome: response.status === 429 ? 'quota' : 'http_error',
       failureKind: kind
     })
     const quota =
-      kind === 'quota_monthly' || kind === 'quota_daily' ? readQuotaSnapshot(payload) : undefined
+      kind === 'quota_monthly' || kind === 'quota_daily' || kind === 'anonymous_quota_exhausted'
+        ? readQuotaSnapshot(payload)
+        : undefined
     throw new HostedCompleteError(
       kind,
       workerError || response.statusText || 'hosted_complete_failed',
