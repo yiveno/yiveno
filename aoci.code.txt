@@ -1,0 +1,1191 @@
+#AOCI-CODE-VOLUME: 1
+
+===/<repository>/===
+.gitattributes[FV4T]: F:品牌素材走 Git LFS | R:- | A:docs/design/brand-assets 下常见图像扩展名 | S:-
+.gitignore[FQ6S]: F:忽略 node_modules、dist、本地 env 与生成物 | R:- | A:根级忽略清单 | S:.env.runtime 与 website/.env 等为生成物勿手改提交
+.lintstagedrc.js[XQ6S]: F:按 workspace 分组跑 ESLint/Stylelint/Prettier | R:code:.husky/pre-commit | A:max-warnings 0 | S:忽略 worker/worker-configuration.d.ts 生成物；ESLint 须在各 workspace cwd 下跑
+.prettierignore[FQ3T]: F:Prettier 忽略路径清单 | R:code:.prettierrc.json | A:- | S:-
+.prettierrc.json[FQ4T]: F:Prettier 根配置 | R:code:.prettierignore | A:JSON 配置 | S:-
+AGENTS.md[SQ7S]: F:跨 IDE 薄指针：权威入口与 AOCI 托管块 | R:code:.cursor/rules/session-boot.mdc,code:.cursor/rules/project.mdc | A:仓库归属 yiveno/yiveno | S:aoci:begin…end 托管块禁手改，须走 MCP/CLI
+CHROMEWEBSTORE.md[SQ6M]: F:Chrome Web Store 上架元数据与权限理由 | R:code:extension/public/manifest.json | A:改 manifest 权限须同批更新 | S:商店用户向文案仅 en
+EDGEADDONS.md[SQ6S]: F:Edge Add-ons 双店上架说明（ADR-020） | R:code:CHROMEWEBSTORE.md | A:同包异 ID | S:禁侧载 ZIP 当主 CTA
+README.md[SQ6L]: F:仓库总览：产品定位、结构与本地开发入口 | R:code:AGENTS.md | A:面向贡献者的根 README | S:-
+bunfig.toml[FQ4T]: F:Bun 安装使用 hoisted linker | R:- | A:[install] linker=hoisted | S:-
+commitlint.config.cjs[XQ6T]: F:commitlint 首行 type/scope/subject 规则 | R:code:.husky/commit-msg | A:extends conventional；header≤72 | S:体层文件索引由 check-commit-message.mjs 另验；Merge/Revert 跳过
+eslint.config.js[XQ8L]: F:monorepo ESLint flat config，含 DDD 分层禁令 | R:- | A:按 cwd 适配 extension/worker/website glob | S:core 禁 chrome.* 与 UI/IDB 直连；非 background 禁导入 background；max-warnings 0
+knip.json[FV5T]: F:根仓 Knip 未使用导出与依赖检测规则配置 | R:- | A:- | S:-
+mprocs.yaml[FV5T]: F:本地三端并行开发（TUI：上下键切换进程输出） | R:- | A:- | S:-
+package.json[FV5S]: F:Yiveno monorepo 根清单：workspaces、脚本与共享 resolutions | R:- | A:Bun workspaces 根 package | S:-
+skills-lock.json[FV3T]: F:Agent Skills 锁文件：chrome-extensions 与 modern-web-guidance 的源与哈希 | R:- | A:- | S:-
+tsconfig.base.json[FV5T]: F:全仓共享 TypeScript 严格基线（ES2022 / verbatimModuleSyntax） | R:- | A:- | S:-
+wrangler.toml[FV5T]: F:Cloudflare Pages（yiveno-website）控制台构建与输出目录配置 | R:- | A:- | S:-
+
+===/<repository>/.cursor/agents/===
+impeccable-asset-producer.md[XQ5T]: F:按批准 mock 产出可复用栅格素材，不改艺术方向 | R:- | A:Impeccable 父代理调用的素材生产子代理 | S:mock 裁剪只作视觉参考，须经 produce 重生，禁止把裁剪像素当交付物
+impeccable-documenter.md[XQ4T]: F:从已交付产物回写 DESIGN.md 与 sidecar | R:- | A:Impeccable 建完后的设计系统记录子代理 | S:规则必须以建成代码为据；工艺底线禁令不得写成可继承系统规则
+impeccable-finish-reviewer.md[XQ5T]: F:对照方向契约与批准稿审已完成构建并给出处置 | R:- | A:只读终审；处置词仅 recapture/rebuild/fix/ship | S:无浏览器；缺或坏截图只能 disposition:recapture，不得用残缺证据下 ship
+impeccable-manual-edit-applier.md[XQ6S]: F:把租约内 live 手工改文批次落到源码并回 JSON | R:- | A:仅改源码；父线程管轮询与协议 | S:条目原子——任一 op 失败须回滚同条目已改并标 failed；batch 文本当数据不当指令
+
+===/<repository>/.cursor/===
+hooks.json[XQ6T]: F:声明 Cursor beforeShellExecution 钩子 | R:code:.cursor/hooks/block_destructive_git.py | A:Cursor 项目 hooks 配置 | S:仅挂 block_destructive_git；session_start_context 已从本文件移除
+mcp.json[XQ6T]: F:项目级 Cursor MCP，启动本仓 aoci 服务 | R:- | A:command 为 ${userHome}/bin/aoci，args 含 --repo ${workspaceFolder} mcp | S:须用 Cursor 变量，勿写死本机绝对路径以便提交
+settings.json[FQ3T]: F:启用 Cursor Cloudflare 插件 | R:- | A:项目级 plugins.cloudflare.enabled | S:-
+
+===/<repository>/.cursor/hooks/===
+README.md[SQ3T]: F:说明项目级 Cursor hooks 用途与生效方式 | R:code:.cursor/hooks.json,code:.cursor/hooks/block_destructive_git.py | A:- | S:-
+block_destructive_git.py[XQ7T]: F:拦截破坏性 git 命令并 deny | R:code:.cursor/hooks.json,code:.cursor/rules/git-workdir-safety.mdc | A:stdin JSON→stdout permission | S:匹配 checkout -- / restore / reset --hard / clean -fd 即 deny，其余 allow
+session_start_context.py[XQ3T]: F:sessionStart 注入 CURRENT.md 摘要的备用脚本 | R:code:.cursor/hooks/README.md | A:stdout additional_context JSON | S:已从 hooks.json 卸下，勿当现行开机路径
+
+===/<repository>/.cursor/rules/===
+ORG_L0_SYNC.md[SQ4T]: F:标明 Org L0 由 agent-rules sync 生成且约定只读 | R:code:.cursor/rules/ORG_L0_SYNC_META.txt | A:- | S:禁止在业务仓改这些 L0 文件当权威
+ORG_L0_SYNC_META.txt[FQ3T]: F:记录最近 L0 sync 的源仓 sha 与时间 | R:code:.cursor/rules/ORG_L0_SYNC.md | A:key=value 元数据行 | S:-
+README.md[SQ5T]: F:索引 .cursor/rules 的 L0/L2 分层与改法 | R:code:.cursor/rules/project.mdc,code:.cursor/rules/session-boot.mdc,code:.cursor/rules/ORG_L0_SYNC.md | A:- | S:L0 改 agent-rules 再 sync；L2 本仓手写
+agent-core.mdc[XQ9L]: F:定义 AI Agent 行为元规则：理解、证据、范围、验证与完成标准 | R:code:.cursor/rules/project.mdc | A:alwaysApply；项目无关；各仓特有规则见 project.mdc | S:专业标准优先于用户偏好实现；不得讨好交付已知坏方案；产品契约仍由仓权威定义
+collaboration.mdc[XQ7T]: F:约定用户/Muse/Cursor 三方分工、锁与 MCP 回归，并含 AOCI 认知索引 standing rule | R:code:.cursor/rules/session-boot.mdc | A:提示词=授权边界；不碰版本库 | S:MCP 回归按 MCP-回归清单编号；不可达项移交 Muse；禁手改 aoci.* / AGENTS AOCI 托管块
+commit-message-core.mdc[XQ7S]: F:规定 commit message 的 type、文件索引与中文 subject | R:code:.cursor/rules/commit-message.mdc | A:仅用户明确要求 commit 时生成 | S:禁止擅自 commit/push；每个暂存路径须在 body 方括号出现≥1次
+commit-message.mdc[XQ6T]: F:本仓 commit message L2 附录（hook/示例/术语） | R:code:.cursor/rules/commit-message-core.mdc | A:由 check-commit-message.mjs 与 husky commit-msg 强制 | S:subject 英文短语须全小写；格式核勿在本仓改当权威
+dev-chinese-plain-core.mdc[XQ7S]: F:开发者沟通用词核：正确、可区分、低负担 | R:code:.cursor/rules/dev-chinese-plain.mdc,code:.cursor/rules/agent-core.mdc | A:alwaysApply Org L0 | S:禁「夹具」等歧义词；产品术语须先改术语表再改叫法
+dev-chinese-plain.mdc[XQ5T]: F:本仓开发者沟通附录（鉴权词表与术语指针） | R:code:.cursor/rules/dev-chinese-plain-core.mdc | A:alwaysApply L2 | S:鉴权 handoff 与 Omnibox 换赛道 handoff 须区分
+docs-sync-iron.mdc[XQ8T]: F:文档↔代码同步铁律：行为变更同批改权威文档 | R:code:.cursor/rules/project.mdc,code:.cursor/rules/agent-core.mdc | A:alwaysApply Org L0 | S:方案已定改码后禁止再问「要不要改文档」；半同步算未完成
+git-workdir-safety.mdc[XQ8T]: F:禁止静默丢弃工作区 WIP 的 git 还原命令 | R:code:.cursor/hooks/block_destructive_git.py | A:alwaysApply Org L0 | S:未经用户丢弃授权禁 checkout/restore/reset --hard/clean -fd；实验用 /tmp 备份
+mcp-chrome-tab-reuse.mdc[XQ6T]: F:Chrome DevTools MCP 开页前先复用已有标签 | R:code:.cursor/rules/project.mdc | A:alwaysApply | S:未 list_pages 禁 new_page；同 URL 须 select 复用
+project.mdc[XQ9L]: F:Yiveno 本仓 AI 行为与架构硬规则单一权威 | R:code:.cursor/rules/session-boot.mdc,code:.cursor/rules/terminology.mdc | A:alwaysApply；与产品文档冲突时以产品文档为准 | S:UI 只经 background-client；禁内容别名灰名单冒充通解；扩展用户可感改动须 MCP 真机；禁擅自 commit/push
+session-boot.mdc[XQ8T]: F:Agent 会话开机层：当下焦点与冻结 ADR | R:code:.cursor/rules/project.mdc | A:alwaysApply；当下块由 CURRENT 同步 | S:只改 CURRENT 再 sync:ide-boot；SYNC 标记块勿手改语义源
+session-discipline.mdc[XQ7T]: F:多会话 Brief/Handoff、必选可选与按优先级执行 | R:code:.cursor/rules/agent-core.mdc | A:alwaysApply Org L0 | S:已排序无冲突项禁假二选一；禁主动问 commit/push
+terminology.mdc[XQ8T]: F:产品术语锚点：clue/Recall/附注与禁用词 | R:- | A:alwaysApply；定义权威为术语表 | S:产品面禁 Search/搜索/默认「找回」；clue 与 MemoryItem.clues 勿混
+testing-real-library.mdc[XQ6T]: F:测试默认用维护者个人真实 Chrome 库 | R:code:.cursor/rules/git-workdir-safety.mdc | A:alwaysApply | S:禁擅自 seedRecallProbe replace；探针库数字不得冒充 §5.9
+
+===/<repository>/.github/===
+pull_request_template.md[SQ6T]: F:PR 清单：文档同步、§1.1 验收、门禁与双线程 | R:- | A:GitHub PR 模板 | S:Recall/Capture 可感变更须 must 或 §5 步骤；扩展 UI 须 MCP 真机
+
+===/<repository>/.github/workflows/===
+api-health.yml[OQ5T]: F:定时探测 api.yiveno.com /api/health | R:- | A:每 15 分钟 cron；失败则 workflow 红 | S:须 HTTP 200 且 JSON status 为 ok
+ci.yml[OQ8S]: F:PR/main CI：typecheck、lint、i18n、knip、test、显式 test:must 与 extension build | R:- | A:push/PR 触发；不跑真实 LLM/BGE | S:test:must 有 eval 数量地板，防目录清空假绿；真实消融见 recall-real-eval.yml
+knip.yml[OQ5T]: F:每周一 cron 跑 Knip 死代码检查（阻断） | R:- | A:workflow_dispatch 可手动 | S:-
+recall-real-eval.yml[OQ7S]: F:真实 BGE retrieval-ablation 评测工作流 | R:- | A:workflow_dispatch + 周一 cron；不挡 PR | S:须 ablation 鉴权（token 或 Supabase mint）；与 CI 确定性替身分计
+yiveno-api-keep-alive.yml[OQ5T]: F:每 12 小时探活 Supabase 以防休眠 | R:- | A:cron + workflow_dispatch | S:依赖仓库 secrets 中的 Supabase URL/Key
+
+===/<repository>/.husky/===
+commit-msg[XQ7T]: F:commit-msg 双层校验 commitlint + 文件索引脚本 | R:code:.cursor/rules/commit-message.mdc | A:husky hook | S:任一失败即拒绝；须修 message 后重试
+pre-commit[XQ6T]: F:pre-commit 对暂存区跑 lint-staged | R:code:.lintstagedrc.js | A:husky hook | S:-
+pre-push[XQ7M]: F:按变更路径跑 extension build/test、worker、doc:check、knip | R:- | A:相对 upstream 差集；无变更则跳过 | S:ESLint 不在此跑（归 pre-commit）；全量门禁归 CI
+
+===/<repository>/extension/===
+package.json[FV6T]: F:扩展 workspace 脚本与依赖清单 | R:- | A:核心依赖 vue/zod；脚本含 build/test:must/i18n:check | S:-
+stylelint.config.js[FQ5M]: F:扩展 Stylelint：Vue SFC style 质量规则（非格式化） | R:- | A:- | S:-
+tsconfig.app.json[FV5T]: F:扩展 Vue 应用源码 tsconfig（DOM + Chrome types，挂 vue-tsc app 工程） | R:- | A:- | S:-
+tsconfig.json[FV5T]: F:扩展 workspace 主 tsconfig：references 挂 app/node/vitest 同一工程图 | R:- | A:- | S:-
+tsconfig.node.json[FV5T]: F:扩展 Vite/构建脚本 Node 侧 tsconfig | R:- | A:- | S:-
+tsconfig.vitest.json[FV5T]: F:扩展 Vitest 单测 tsconfig（仅 *.test/spec，挂 references） | R:- | A:- | S:-
+vite.config.ts[FV5T]: F:Vite 配置主入口 | R:- | A:- | S:-
+vitest.config.mts[FQ5T]: F:扩展 Vitest 配置：Vue 插件与路径别名 | R:- | A:- | S:-
+
+===/<repository>/extension/public/_locales/en/===
+messages.json[FL7L]: F:扩展 en 文案表（chrome.i18n） | R:code:extension/public/_locales/zh_CN/messages.json,code:extension/scripts/check-i18n-keys.mjs | A:与 MESSAGE_KEYS 对称 | S:产品面禁 Search 等违禁词由 i18n:check 扫
+
+===/<repository>/extension/public/_locales/zh_CN/===
+messages.json[FL7L]: F:扩展 zh_CN 文案表 | R:code:extension/public/_locales/en/messages.json | A:键集须与 en 对称 | S:中文 UI 禁「搜索」；勿默认「找回」
+
+===/<repository>/extension/public/===
+manifest.json[FE8S]: F:MV3 扩展清单：SW、Side Panel、Omnibox | R:code:CHROMEWEBSTORE.md | A:permissions/host_permissions 见文件；keyword yi | S:改权限须同批更新 CHROMEWEBSTORE.md；host 含宽匹配 http(s)://*/*
+offscreen.html[FE4T]: F:Offscreen Document HTML 壳 | R:- | A:加载 ./offscreen.js | S:-
+
+===/<repository>/extension/scripts/===
+check-i18n-keys.mjs[XQ6S]: F:校验 en/zh_CN 键与 MESSAGE_KEYS 及产品面违禁词 | R:code:extension/public/_locales/en/messages.json | A:bun run i18n:check 入口 | S:键不对称或违禁标签即失败
+clean-dist.cjs[XV6S]: F:整理 Vite 产物为可加载的扩展 dist 布局 | R:- | A:post-build：搬 HTML、修相对路径、白名单复制 public | S:不复制 models/营销 logo 等非运行资产
+decider-flash-gate-a-eval.mjs[TQ4T]: F:Vite SSR 加载器，启动 Gate A Decider 评测 TS | R:code:extension/scripts/decider-flash-gate-a-eval.ts | A:Bun 不解析 @/ 时的薄包装 | S:-
+decider-flash-gate-a-eval.ts[TQ6L]: F:Decider Flash Gate A 只读对照评测 | R:code:extension/scripts/decider-flash-gate-a-eval.mjs | A:主集 INTENT_EVAL_MUST；需 OPENROUTER_API_KEY | S:不改产品理解路径；基线写死 deepseek-v4-flash
+decision-model-d1-eval.mjs[TQ4T]: F:Vite SSR 加载器，启动 D1 决策模型评测 TS | R:code:extension/scripts/decision-model-d1-eval.ts | A:薄包装 | S:-
+decision-model-d1-eval.ts[TQ6L]: F:三家决策模型只读对照评测并写审计报告 | R:code:extension/scripts/decision-model-d1-eval.mjs | A:输出 docs/audits 下 md/json | S:只读 eval，不改产品行为
+export-probe-eval-fixture.mjs[TQ4T]: F:Vite SSR 加载器，导出 probe eval fixture | R:code:extension/scripts/export-probe-eval-fixture.ts | A:薄包装 | S:-
+export-probe-eval-fixture.ts[TQ5T]: F:导出 Probe M4 冻结夹具 JSON 与基线率 | R:code:extension/scripts/export-probe-eval-fixture.mjs | A:写入 core/recall/eval/fixtures | S:persona 固定 researcher；基线来自当场评测
+nlu-try-report.ts[TQ5S]: F:定义 nlu:try 终端报告类型与槽位投影 | R:code:extension/scripts/nlu-try.ts | A:仅 CLI；不进生产 Recall | S:展示形态对齐 Hybrid currentParsed，去掉 embedding 大字段
+nlu-try.mjs[TQ4T]: F:Vite SSR 加载器启动 nlu-try.ts | R:code:extension/scripts/nlu-try.ts | A:薄包装 | S:-
+nlu-try.ts[TQ7M]: F:线索→ParsedRecallClue 理解阶段试跑 CLI | R:code:extension/scripts/nlu-try.mjs,code:extension/scripts/nlu-try-report.ts | A:走 understandRecallClue 产品同款编排 | S:Node 不测托管 complete；听懂验收须真实 Key 主路径非 lexical
+pressure-try.mjs[TQ4T]: F:Vite SSR 加载器启动 pressure-try.ts | R:code:extension/scripts/pressure-try.ts | A:薄包装 | S:-
+pressure-try.ts[TQ6M]: F:任意输入压力集试跑并汇总对照 | R:code:extension/scripts/pressure-try.mjs | A:循环 PRESSURE_CASES；永远 exit 0 | S:只汇报不挡门禁；环境变量与 nlu:try 同款
+recall-ablation-audit.mjs[TQ4T]: F:Vite SSR 加载器启动消融审计 TS | R:code:extension/scripts/recall-ablation-audit.ts | A:默认注入系统 CA | S:-
+recall-ablation-audit.ts[TQ6L]: F:Recall 消融审计离线只读实验 | R:code:extension/scripts/recall-ablation-audit.mjs | A:写 docs/audits 报告；可 --arms/--skip-llm | S:不改产品文件；禁 fake embedding；密钥只从 .env*.local
+recall-prototype-minimal.mjs[TQ4T]: F:Vite SSR 加载器启动最小 LLM 原型评测 | R:code:extension/scripts/recall-prototype-minimal.ts | A:薄包装+系统 CA | S:-
+recall-prototype-minimal.ts[TQ6L]: F:最小 LLM 原生原型与解析模型对照评测 | R:code:extension/scripts/recall-prototype-minimal.mjs | A:clue→解析→BGE Top50→重排；写审计 | S:无 Gate/关键词/RRF；禁 fake embedding；不改产品文件
+run-retrieval-ablation-real.mjs[TQ4T]: F:Vite SSR 加载器启动真实 BGE 消融 CLI | R:code:extension/scripts/run-retrieval-ablation-real.ts | A:默认 NODE_EXTRA_CA_CERTS | S:缺 CA 时失败常在 Supabase mint 非鉴权绕过
+run-retrieval-ablation-real.ts[TQ7L]: F:L2 召回消融真实 Embedding 轨 CLI | R:code:extension/scripts/run-retrieval-ablation-real.mjs | A:token 经 Worker Bearer；可 vs_baseline 门 | S:禁 fake embedding；token 解析顺序见文件头注释
+
+===/<repository>/extension/src/application/capture/===
+capture-text-excerpt-service.ts[AB7S]: F:从页面选区捕获 Text Excerpt 写入 Memory | R:code:extension/src/application/memory/memory-item-service.ts | A:右键/划词共用；返回 item+duplicate | S:非可存页抛 CAPTURE_UNSAVABLE_PAGE
+chrome-bookmark-bulk-import.ts[AB7M]: F:批量构建/upsert Chrome 书签 MemoryItem 与导入态 | R:code:extension/src/application/capture/import-chrome-bookmarks-service.ts | A:进度写入 chrome.storage | S:尊重删除墓碑；分批 MEMORY_ITEM_BULK_IMPORT_BATCH_SIZE
+chrome-bookmark-sync-service.ts[AB8L]: F:Chrome 书签持续同步与导入后收尾 | R:code:extension/src/application/capture/chrome-bookmark-bulk-import.ts | A:session pending；配额耗尽标记 | S:写失败触配额门后短路；可调度静默 embedding 维护
+chrome-bookmark-sync-staleness.ts[AB6T]: F:统计同步关时未入库书签叶子数 | R:code:extension/src/application/capture/chrome-bookmark-sync-service.ts | A:只读；供 cold-start 探针 | S:同步开或导入未完成返回 0
+import-chrome-bookmarks-service.ts[AB7M]: F:编排 Chrome 书签导入进度与终态补洞 | R:code:extension/src/application/capture/chrome-bookmark-bulk-import.ts,code:extension/src/application/capture/chrome-bookmark-sync-service.ts | A:单飞 importInFlight | S:running 可被后续 status 续跑；终态 ensure 每 SW 会话一次
+import-local-memory-service.ts[AB7M]: F:本地 Backup 恢复 merge/upsert（含 L3 笔记） | R:code:extension/src/infrastructure/indexeddb/memory-item-repository.ts | A:newer-wins；抛 LocalMemoryImportError | S:含 memory_notes/meta；成功后 bump library revision
+import-third-party-corpus-service.ts[AB6S]: F:Raindrop/Pocket 导出导入服务 | R:code:extension/src/application/memory/memory-item-service.ts | A:单飞；状态存 chrome.storage | S:§5.10.6 R2 准入；解析失败映射错误码
+
+===/<repository>/extension/src/application/dreaming/===
+build-daily-review-service.ts[AB6S]: F:组装每日回顾只读 DTO | R:code:extension/src/core/dreaming/build-daily-review.ts | A:扫命题上限 2000 | S:不写表、不调 LLM、不触发编译
+capture-dreaming-preprocess.ts[AB3T]: F:再导出 Capture dreaming 预处理纯函数 | R:- | A:application 侧薄出口 | S:纯计算在 core；写库在 repository
+check-memory-link-url.ts[AI6T]: F:死链 URL HEAD/GET 探测 | R:- | A:返回 ok/dead/probe_failed | S:URL 不经 Yiveno 服务器；超时/离线为 probe_failed 不得升 stale
+compile-memory-notes.ts[AB7M]: F:夜间命题编译主路径：分片 LLM 写库 | R:code:extension/src/application/dreaming/dreaming-llm-client.ts | A:游标推进；可嵌 embedding | S:本 Phase 不进 Recall；只写派生不改用户原文
+dreaming-llm-client.ts[AI6S]: F:Dreaming LLM 客户端 POST dreaming/complete | R:code:extension/src/application/dreaming/compile-memory-notes.ts | A:Zod 校验 results；peek-then-commit | S:失败不重试；429 deferred 留待下次 run
+schedule-proposition-embeddings.ts[AB7M]: F:命题向量批量生产与按日回填 | R:code:extension/src/infrastructure/ai/embed-api-client.ts | A:≤8/请求；模型门控 WORKER_EMBEDDING_MODEL | S:inputText+model 未变跳过；失败 fail-open
+sweep-memory-link-status.ts[AB7M]: F:每周死链巡检 tick 写 memory_link_status | R:code:extension/src/application/dreaming/check-memory-link-url.ts | A:只降权不删不改原文 | S:连续失败达阈升 stale
+sweep-orphan-memory-notes.ts[AB5T]: F:删除源已硬删的孤儿命题 | R:code:extension/src/infrastructure/indexeddb/memory-notes-repository.ts | A:软删源不扫为孤儿 | S:-
+
+===/<repository>/extension/src/application/identity/===
+clear-account-library-on-sign-out.ts[AB6T]: F:退出/被挤掉时清本机账号桶 | R:code:extension/src/infrastructure/indexeddb/memory-item-repository.ts | A:书签 remap 回 localProfile；摘录删除 | S:ADR-018 口径 A；同 id 短路 0
+login-migration.ts[AB7S]: F:登录迁移门闸：盘点/导入/导出/删除无主摘录 | R:code:extension/src/infrastructure/indexeddb/memory-item-repository.ts | A:禁止静默 absorb | S:仅未登录期 localProfile 摘录；书签 Import 一并迁入不上云
+orphan-owner-buckets.ts[AB7S]: F:盘点/导出/清除换号残留孤儿 owner 桶 | R:code:extension/src/infrastructure/indexeddb/memory-item-repository.ts | A:保留 localProfile∪当前 binding | S:禁止静默删除；设置页显式触发
+
+===/<repository>/extension/src/application/memory/===
+bookmark-library-tree-cache.ts[AB4T]: F:SW 侧书签库树索引内存缓存 | R:- | A:hash 未变可短路重建 | S:-
+bookmark-sync-alignment-cache-state.ts[AB4T]: F:书签对齐缓存叶状态（零 import） | R:- | A:避免 embedding↔alignment 成环 | S:仅变量与失效
+bookmark-sync-alignment-cache.ts[AB5T]: F:带缓存读取书签同步对齐表 | R:code:extension/src/application/memory/bookmark-sync-alignment-cache-state.ts,code:extension/src/application/memory/memory-item-service.ts | A:再导出 invalidate | S:-
+build-merged-memory-enrichment.ts[AB6S]: F:规则 enrichment 与可选 LLM 提议合并 | R:code:extension/src/core/memory/merge-memory-clue-enrichment.ts | A:不写 IDB；配额满 path=quota_exceeded | S:LLM 失败降级规则
+ensure-memory-embedding-maintenance.ts[AB5T]: F:防抖调度无感 embedding 维护 | R:code:extension/src/application/memory/schedule-async-memory-embedding.ts | A:bootstrap/登录/书签 sync 后触发 | S:用户无 UI
+ensure-memory-enrichment-backfill.ts[AB6T]: F:存量 enrichment 版本幂等回填 | R:code:extension/src/core/memory/enrich-memory-clues.ts | A:chrome.storage 版本门；扫上限 20k | S:含退役 seed scrub
+find-memory-enrichment-donor.ts[AB6S]: F:按复用键限量扫描 enrichment/embedding donor | R:code:extension/src/core/memory/derive-memory-duplicate-key.ts | A:默认扫 500；不含自身 | S:-
+indexeddb-write-quota.ts[AB5T]: F:IndexedDB 写配额耗尽检测与会话熔断 | R:- | A:独立文件断循环依赖 | S:标记后本会话停高成本写
+memory-duplicate-reuse-cache.ts[AB5T]: F:会话内 enrichment/embedding/域名基座去重复用 Map | R:- | A:SW 生命周期 | S:-
+memory-item-service.ts[AB8M]: F:MemoryItem 应用服务：捕获/查询/对齐入口 | R:code:extension/src/infrastructure/indexeddb/memory-item-repository.ts | A:UI 经消息间接调用 | S:用户 Capture 调度 LLM+embed；书签 bulk upsert 不调度
+schedule-async-memory-embedding.ts[AB8L]: F:异步串行队列写 clues.embedding | R:code:extension/src/infrastructure/ai/embed-api-client.ts | A:不阻塞 Capture；可回填/清队列 | S:未登录跳过；失败静默；配额可腾书签空间
+schedule-async-memory-llm-enrichment.ts[AB8L]: F:异步稀疏 LLM enrichment 队列写回 clues | R:code:extension/src/application/memory/build-merged-memory-enrichment.ts | A:domainProfile∪pageOverlay∪既有 | S:失败降级规则；可暂停冷启动批次
+
+===/<repository>/extension/src/application/onboarding/===
+cold-start-enrichment-batch-store.ts[AB6S]: F:冷启动 enrichment 批次进度读写 | R:code:extension/src/core/memory/cold-start-enrichment-batch.ts | A:chrome.storage.local | S:total=0 不写
+cold-start-pipeline-service.ts[AB8L]: F:冷启动三阶段门禁：对齐→规则 enrichment→AI 尽力 | R:code:extension/src/application/capture/import-chrome-bookmarks-service.ts | A:Side Panel 全屏进度；GS 可跳过 | S:AI 尽力超时占位；不挡方向
+generate-getting-started-clue-samples.ts[AB6S]: F:Getting Started 挑书签生成 4 条口语 clue | R:code:extension/src/infrastructure/ai/gs-clue-samples-api-client.ts | A:失败回退标题模板；可缓存 | S:-
+open-getting-started-on-install.ts[AB5T]: F:首次安装打开 Getting Started 页 | R:code:extension/src/core/capture/install-onboarding.ts | A:已完成则跳过 | S:-
+
+===/<repository>/extension/src/application/recall/===
+apply-recall-context.ts[AB6T]: F:Recall 候选页上下文与 Outcome 对软调整 | R:code:extension/src/core/recall/page-context-mode.ts | A:§7.1/§7.2；同域 boost+5 | S:mode=none 禁止静默 boost
+clue-llm-completer-registry.ts[AB4T]: F:线索 LLM completer 进程内注册表 | R:code:extension/src/application/recall/refresh-clue-llm-completer.ts | A:无注册则规则降级 | S:-
+commit-recall-outcome.ts[AB7M]: F:提交 Recall Outcome：settled 与 clue 对持久化 | R:code:extension/src/core/recall/recall-outcome.ts | A:会话态关 Panel 丢 | S:防出口+终局双计 settleWriteDone
+create-recall-flow-trace.ts[AB4T]: F:将 ClueFlowTrace 接到 logger | R:code:extension/src/infrastructure/logging/logger.ts | A:默认 scope RecallFlow | S:-
+dual-thread-learning-service.ts[AB7S]: F:暗线学习记录读取/贡献上传/删除 | R:code:extension/src/core/recall/dual-thread/dual-thread-consent.ts | A:不改适应旋钮不挡 Recall | S:ADR-027
+export-detail-export-service.ts[AB6T]: F:按 id 构建 Detail export JSON+Markdown | R:code:extension/src/core/recall/detail-export.ts | A:不含软删；错误码稳定 | S:-
+load-link-status-hints.ts[AB5T]: F:加载死链 hint map 供 Side Panel | R:code:extension/src/infrastructure/indexeddb/memory-link-status-repository.ts | A:Omnibox 不调 | S:读失败 fail-open 空 map
+mcp-recall-evidence-service.ts[AB6S]: F:只读 MCP 本机 Hybrid 召回出证 | R:code:extension/src/application/recall/recall-service.ts | A:须 Settings 开启 | S:§5.10.5
+note-match-merge.ts[AB7S]: F:关键词池后合并 Dreaming 命题命中 | R:code:extension/src/core/recall/note-match.ts | A:非 Omnibox；fail-open | S:语义匹配需 preferRead+子开关+queryVector
+recall-backend.ts[AB5T]: F:定义 RecallBackend 契约与入口分轨类型 | R:- | A:sidepanel/omnibox/mcp | S:ADR-007/021；Omnibox≠离线产品
+recall-service.ts[AB5T]: F:Recall 应用服务委托 HybridRecallBackend | R:code:extension/src/application/recall/backends/hybrid-recall-backend.ts | A:UI/消息入口 | S:Free/Pro 召回质量同档
+refresh-clue-llm-completer.ts[AB6T]: F:按设置/登录态挂载线索 LLM completer | R:code:extension/src/application/recall/clue-llm-completer-registry.ts | A:关 AI→空；hosted/直连分档 | S:正式未登录→规则
+
+===/<repository>/extension/src/application/recall/backends/===
+hybrid-recall-backend.ts[AB9L]: F:Hybrid Recall 默认后端：关键词+向量 RRF | R:code:extension/src/application/recall/recall-backend.ts,code:extension/src/application/memory/memory-item-service.ts | A:实现 RecallBackend；Side Panel/MCP | S:无向量失败降级关键词；Omnibox 不用本完整轨
+recall-scan-limit.ts[AB5T]: F:定义本机召回扫描上限常量 | R:- | A:RECALL_SCAN_LIMIT=20k；FALLBACK=100k | S:100k 为 cold memory OOM 阀非产品上限
+
+===/<repository>/extension/src/background/===
+bootstrap-ready.ts[AB5T]: F:Background bootstrap 幂等门闩 | R:code:extension/src/background/bootstrap.ts | A:打断循环依赖；并发合并 | S:禁动态 import
+bootstrap.ts[AB7S]: F:SW 启动：IDB/监听器/冷启动/LLM 挂载 | R:code:extension/src/background/bootstrap-ready.ts | A:绑定 runner；注册 alarms/omnibox 等 | S:-
+main.ts[EM6T]: F:SW 入口：安装引导+ensure bootstrap+消息监听 | R:code:extension/src/background/bootstrap.ts | A:静态 import 全链路 | S:禁动态 import
+
+===/<repository>/extension/src/background/commands/===
+registry.ts[AB5T]: F:chrome.commands 处理器注册与分发 | R:code:extension/src/core/commands/command-ids.ts | A:未知命令忽略 | S:_execute_action 不进此路径
+
+===/<repository>/extension/src/background/handlers/===
+account-library-handlers.ts[EM8L]: F:账户库迁移/孤儿桶/隐私/订阅相关 Background handlers | R:code:extension/src/application/identity/login-migration.ts | A:从 account-sync-handler 抽出 | S:禁止静默 absorb
+account-sync-handler.ts[EM9L]: F:账户登录与云同步 Background 编排 | R:code:extension/src/background/handlers/account-sync-shared.ts | A:登录经官网 external handoff | S:扩展不做 OAuth
+account-sync-shared.ts[EM6S]: F:账户/同步 handler 共用辅助 | R:code:extension/src/background/handlers/account-sync-handler.ts | A:token/云条目/退出收尾 | S:-
+active-recall-registry.ts[EM5T]: F:Recall in-flight 追踪（per-source） | R:code:extension/src/background/handlers/recall-handler.ts | A:新 recall 覆盖旧；支持 CANCEL | S:-
+commands-handler.ts[EM6S]: F:扩展命令查询与打开 Recall 壳/导航 tab | R:code:extension/src/core/commands/command-display.ts | A:Background message handlers | S:-
+daily-review-handler.ts[EM4T]: F:每日回顾只读 Background handler | R:code:extension/src/application/dreaming/build-daily-review-service.ts | A:薄转发 | S:-
+dual-thread-handler.ts[EM4T]: F:暗线学习/贡献 Background handlers | R:code:extension/src/application/recall/dual-thread-learning-service.ts | A:ADR-027 | S:-
+import-handler.ts[EM7M]: F:书签导入/冷启动/书签树/GS clue 消息入口 | R:code:extension/src/application/capture/import-chrome-bookmarks-service.ts | A:Background handlers | S:-
+mcp-handler.ts[EM4T]: F:只读 MCP 召回出证 handler | R:code:extension/src/application/recall/mcp-recall-evidence-service.ts | A:§5.10.5 | S:-
+memory-handler.ts[EM7M]: F:Memory 捕获/列表/删改 Background handlers | R:code:extension/src/application/memory/memory-item-service.ts | A:错误码映射 | S:-
+message-handler.ts[EM8M]: F:Background 消息总分发 | R:code:extension/src/core/messaging/background-messages.ts | A:按 type 路由各 handler | S:须 scope=background
+recall-handler.ts[EM7M]: F:RECALL_WITH_CLUE/CANCEL/页上下文 handlers | R:code:extension/src/application/recall/recall-service.ts | A:登记 activeRecall；推可见进展 | S:-
+resolve-clue-url-display.ts[EM6S]: F:为 composer URL 芯片解析展示标题 | R:- | A:本机库→打开 tab→none | S:不联网抓页；库标题 SW 生命周期缓存
+settings-handler.ts[EM6S]: F:用户设置读写与 AI 配额查询 handlers | R:code:extension/src/infrastructure/settings/user-settings-service.ts | A:Zod patch | S:-
+
+===/<repository>/extension/src/background/listeners/===
+auth-session-lease-alarm.ts[EM5T]: F:租约探测闹钟：周期 GET_AUTH_STATE | R:- | A:被挤掉无需开 Panel | S:-
+chrome-bookmark-repair-alarm.ts[EM5T]: F:书签每日 full repair 闹钟监听 | R:- | A:对账 IndexedDB↔Chrome | S:-
+chrome-bookmark-sync.ts[EM6S]: F:Chrome 书签变更监听挂/卸与设置同步 | R:code:extension/src/application/capture/chrome-bookmark-sync-service.ts | A:按 sync 开关 | S:-
+commands.ts[EM5T]: F:注册 chrome.commands → dispatch | R:code:extension/src/background/commands/registry.ts | A:可闪 badge | S:-
+context-menu.ts[EM6S]: F:划词存摘录右键菜单注册与点击 | R:code:extension/src/application/capture/capture-text-excerpt-service.ts | A:随设置刷新 | S:-
+dreaming-alarm.ts[EM5T]: F:dreaming 定时闹钟：编译分片+孤儿扫+向量回填 | R:code:extension/src/application/dreaming/compile-memory-notes.ts | A:失败只记日志 | S:向量回填 fail-open
+external-auth-handoff.ts[EM7M]: F:官网登录/退出 external handoff 写入 binding | R:code:extension/src/application/identity/clear-account-library-on-sign-out.ts | A:登录不静默 absorb | S:ADR-018；退出口径 A
+link-status-sweep-alarm.ts[EM5T]: F:死链巡检闹钟挂/卸 | R:code:extension/src/application/dreaming/sweep-memory-link-status.ts | A:随 Settings | S:-
+memory-cloud-sync-alarm.ts[EM5T]: F:云 Memory 定时同步闹钟监听 | R:- | A:触发增量 sync | S:-
+omnibox.ts[EM7M]: F:Omnibox 建议与换赛道交接 Side Panel | R:code:extension/src/application/recall/recall-service.ts | A:entry=omnibox 本机快跳 | S:ADR-007；非离线产品叙事
+selection-toolbar-keepalive.ts[EM4T]: F:承接划词 content keepalive port | R:- | A:防 port 无人听断开 | S:-
+ui-bridge.ts[EM7M]: F:同浏览器官网↔扩展 UI Port 桥 | R:- | A:只写 storage/广播；可见才刷 DOM | S:ADR-019；禁止 Port 传 token
+
+===/<repository>/extension/src/content/selection-toolbar/===
+main.ts[EU9L]: F:划词浮层 content script 主逻辑 | R:code:extension/src/content/selection-toolbar/selection-toolbar-logic.ts | A:Shadow DOM；Capture/预填 | S:与页面隔离样式
+selection-toolbar-guards.ts[EU4T]: F:划词浮层 UI 模式与滚动/状态守卫 | R:code:extension/src/content/selection-toolbar/main.ts | A:纯判定 | S:-
+selection-toolbar-logic.ts[EU7M]: F:划词浮层锚点与显隐时序纯逻辑 | R:code:extension/src/content/selection-toolbar/main.ts | A:延迟展示避开站点条 | S:-
+selection-toolbar-scroll.ts[EU5T]: F:划词浮层滚动关闭/重定位处理器工厂 | R:code:extension/src/content/selection-toolbar/selection-toolbar-guards.ts | A:- | S:-
+selection-toolbar-shadow-styles.ts[EU6S]: F:划词 Shadow 内品牌 token 与组件 CSS | R:code:packages/design-tokens/css/brand.css | A::root 改挂 host | S:Shadow 不继承页面 token
+
+===/<repository>/extension/src/core/capture/===
+install-onboarding.ts[CR4T]: F:安装引导状态机纯函数 | R:- | A:存储在 infrastructure | S:-
+text-excerpt-selection.ts[CR5T]: F:规范化选区正文/上下文长度上限 | R:- | A:纯函数 | S:-
+
+===/<repository>/extension/src/core/commands/===
+command-display.ts[CR5T]: F:命令展示标题与快捷键设置页 URL | R:code:extension/src/core/commands/command-ids.ts | A:Chrome/Edge 分 URL | S:-
+command-ids.ts[CR4T]: F:扩展命令 id 闭集与守卫 | R:- | A:不含保留 _execute_action | S:-
+
+===/<repository>/extension/src/core/common/===
+coded-error.ts[CR4T]: F:带稳定 errorCode 的业务错误类型 | R:- | A:跨 application→handler | S:-
+optional-props.ts[CR3T]: F:exactOptionalPropertyTypes 兼容可选字段助手 | R:- | A:- | S:-
+
+===/<repository>/extension/src/core/dreaming/===
+build-daily-review.ts[CR8L]: F:每日回顾分组排序关系句纯函数 | R:- | A:无 IDB/chrome/网络/LLM | S:-
+build-proposition-embedding-text.ts[CR4T]: F:命题向量输入文本拼装契约 | R:- | A:text+quote≤1000 | S:-
+capture-dreaming-preprocess.ts[CR5T]: F:Capture 时 dreaming 去重键与链接形状纯函数 | R:- | A:零网络零 LLM；不改原文 | S:写库在 infrastructure
+dream-run-cursor.ts[CR5T]: F:Dreaming run 游标纯函数：生成/推进/判已处理 | R:- | A:不碰 IDB/Chrome | S:持久化由 meta repository
+dreaming-constants.ts[CR5T]: F:Dreaming 闭集常量（闹钟/schema/命题上限） | R:- | A:禁止调用处散写字面量 | S:-
+
+===/<repository>/extension/src/core/extension/===
+extension-cws-contract.ts[CC4T]: F:CWS 披露与 manifest 权限权威对照 | R:- | A:改权限须同批 CHROMEWEBSTORE.md | S:-
+extension-cws-graphics-contract.ts[CC4T]: F:CWS 图形资产与母本目录对照 | R:- | A:母本不进扩展包 | S:-
+extension-icon-contract.ts[CC4T]: F:工具栏/商店图标权威路径 | R:- | A:与 manifest icons 同源 | S:-
+extension-manifest-profile.ts[CC5T]: F:host_permissions 开发含本地 Worker、商店剔除 | R:- | A:同步 clean-dist 与 CWS 披露 | S:-
+extension-options-contract.ts[CC3T]: F:Options UI 契约：manifest↔Vite↔dist | R:- | A:改则同步 clean-dist | S:-
+externally-connectable-origins.ts[CC4T]: F:官网 external auth 允许来源闭集 | R:- | A:与 manifest externally_connectable 同源 | S:-
+
+===/<repository>/extension/src/core/i18n/===
+test-translate-en.ts[CL5S]: F:单测用英文 TranslateFn 子集表 | R:code:extension/src/core/i18n/translate.ts | A:对齐 en messages 子集 | S:-
+translate.ts[CL3T]: F:可注入 TranslateFn 签名（core 无 chrome） | R:- | A:infrastructure t 实现 | S:-
+ui-locale.ts[CL5T]: F:UI locale 偏好解析纯函数 | R:- | A:en/zh_CN；默认跟浏览器 | S:不按 IP 锁语言
+
+===/<repository>/extension/src/core/identity/===
+auth-session.ts[CI4T]: F:扩展侧 AuthSession Zod schema | R:- | A:仅必要 token 字段 | S:-
+auth-user-profile.ts[CI4T]: F:从 user_metadata 提取头像/名称 | R:- | A:兼容 Google avatar_url/picture | S:-
+external-auth-handoff.ts[CI5T]: F:官网→扩展登录会话回传消息 schema | R:code:extension/src/core/identity/auth-session.ts | A:扩展不发起 OAuth | S:-
+local-profile.ts[CI5T]: F:本机匿名 LocalProfile Zod schema | R:- | A:schema 版本可升 | S:-
+privacy-prefs.ts[CI5T]: F:隐私说明确认水位与偏好 schema | R:- | A:文案大变更递增 VERSION | S:-
+subscription-snapshot.ts[CI5T]: F:订阅层级快照 schema（free/pro/premium） | R:- | A:与云端 tier 对齐 | S:premium 预留不售
+sync-prefs.ts[CI4T]: F:云同步偏好 schema | R:- | A:默认 enabled=false | S:登录≠自动上传
+ui-bridge-messages.ts[CI6S]: F:官网↔扩展 UI 桥消息 schema | R:- | A:仅 UI 态/资料镜像 | S:ADR-019；禁传 token
+
+===/<repository>/extension/src/core/memory/===
+bookmark-library-fixture.ts[DB4T]: F:合成 Chrome 书签树供基准/单测 | R:code:extension/src/core/memory/bookmark-library-tree.ts | A:仅测试数据 | S:-
+bookmark-library-index.ts[DB7M]: F:书签扁平索引只读视图模型 | R:code:extension/src/core/memory/bookmark-library-tree.ts | A:虚拟列表/SW 缓存 diff | S:避免嵌套树 deep reactive
+bookmark-library-tree.ts[DB6S]: F:书签目录树只读视图模型 | R:- | A:由 Chrome 树映射；可挂 memoryItemId | S:-
+bookmark-library-virtual-list.ts[DB5T]: F:书签虚拟列表行高/偏移度量 | R:code:extension/src/core/memory/bookmark-library-index.ts | A:纯计算 | S:-
+build-embedding-text.ts[DB5T]: F:MemoryItem embedding 输入文本拼装 | R:- | A:截断控长 | S:-
+capture-entry.ts[DB4T]: F:Capture 入口枚举 schema | R:- | A:含遗留 popup 枚举 | S:popup≠现行 Side Panel 主壳
+chrome-bookmark-delete-tombstone.ts[DB3T]: F:书签删除墓碑 storage 键与 schema | R:- | A:本地-only 防同步复活 | S:-
+chrome-bookmark-import-state.ts[DB5T]: F:书签导入进度状态 Zod schema | R:- | A:含稳定 UI 错误码 | S:-
+chrome-bookmark-sync-pending.ts[DB4T]: F:书签同步 pending 事件 session 键 | R:- | A:SW 重启可恢复 | S:-
+clues.ts[DB5T]: F:MemoryClues 可寻回线索 Zod schema | R:code:extension/src/core/memory/capture-entry.ts | A:MVP 扩展位 | S:-
+cold-start-enrichment-batch.ts[DB5T]: F:冷启动 LLM enrichment 批次进度 schema | R:- | A:本轮 done/total 非全库 | S:-
+cold-start-pipeline-state.ts[DB7M]: F:冷启动三阶段门禁状态 schema | R:code:extension/src/core/memory/cold-start-enrichment-batch.ts | A:chrome.storage | S:-
+corpus-adapter-contract.ts[DB5T]: F:语料适配器插头契约类型 | R:- | A:不实现连接器；只固定形状 | S:§0.1.1
+corpus-quality-gate.ts[DB5T]: F:语料锚点质量评估（weak 降权） | R:code:extension/src/core/memory/corpus-adapter-contract.ts | A:不新增持久化字段 | S:-
+create-memory-item.ts[DB7M]: F:构建 Bookmark/Excerpt MemoryItem 工厂 | R:code:extension/src/core/dreaming/capture-dreaming-preprocess.ts | A:纯构造；写库在 repository | S:-
+derive-memory-duplicate-key.ts[DB6S]: F:重复/enrichment/embedding 复用键 | R:- | A:库内可并存；键只折叠与去重请求 | S:-
+domain-enrichment-profile.ts[DB6S]: F:域名层 enrichment 基座 domainProfile | R:- | A:同 host 共享 tags/entities | S:不含 keywords/summary/note/embedding
+enrich-memory-clues.ts[DB7M]: F:Capture 规则 enrichment：tags/keywords | R:- | A:无 LLM | S:禁止内容别名灰名单；实体留给 LLM/附注
+library-excerpt-virtual-list.ts[DB4T]: F:摘录库虚拟列表行度量 | R:code:extension/src/core/memory/bookmark-library-index.ts | A:复用 stride 度量 | S:-
+library-tabs.ts[DB5T]: F:记忆库 Tab 定义与文案 key | R:- | A:core 不调 chrome.i18n | S:-
+local-memory-import-error.ts[DB3T]: F:本地 Backup 恢复稳定错误码枚举 | R:- | A:供 UI t() | S:-
+memory-enrichment-backfill.ts[DB4T]: F:enrichment 存量回填 storage 键与版本 | R:- | A:词典大变递增 version | S:-
+memory-enrichment-proposal.ts[DB6S]: F:LLM enrichment 结构化提议 Zod | R:- | A:写库前必校验 | S:模型只提议；落库确定性代码
+memory-item-saved-at.ts[DB5T]: F:解析 MemoryItem 有效保存时间 ISO/ms | R:code:extension/src/core/memory/memory-item.ts | A:优先 clues.savedAt 再 createdAt | S:非法 ISO 回退 null
+memory-item-type.ts[DB7T]: F:MemoryItem 可写类型与云同步面判定 | R:code:extension/src/core/memory/memory-item.ts | A:SupportedMemoryItemTypeSchema；isCloudSyncableMemoryItem | S:云同步面仅 text_excerpt（ADR-017）
+memory-item.ts[DB8T]: F:MemoryItem Zod 联合与类型导出 | R:code:extension/src/core/memory/clues.ts,code:extension/src/core/memory/payload.ts | A:bookmark/text_excerpt 双分支 | S:core 无 Chrome/IDB
+merge-memory-clue-enrichment.ts[DB7S]: F:合并既有 clues、规则与 LLM enrichment | R:code:extension/src/core/memory/clues.ts | A:优先级见 mergeMemoryClueEnrichment | S:不写 note/embedding
+merge-memory-items-by-updated-at.ts[DB6T]: F:本机与云端 Memory 按 id 取较新者 | R:code:extension/src/core/memory/memory-item.ts | A:开同步首次对齐 | S:同 id 取 updatedAt 较新
+parse-local-memory-export.ts[DB6T]: F:解析本地 Backup JSON 信封 | R:code:extension/src/core/memory/memory-item.ts | A:Settings 数据与隐私恢复 | S:文件信封版本≠L3 meta.schemaVersion
+parse-netscape-bookmarks-html.ts[DB5T]: F:解析 Netscape 书签 HTML 导出 | R:- | A:Raindrop/Pocket/Chrome 共用格式 | S:-
+parse-raindrop-csv.ts[DB5S]: F:解析 Raindrop CSV 导出行 | R:- | A:首行表头 link/title/created/excerpt/tags | S:-
+parse-raindrop-json.ts[DB5T]: F:解析 Raindrop JSON items 数组 | R:- | A:需 _id+link+title+created | S:-
+parse-third-party-corpus-export.ts[DB6T]: F:第三方语料导出解析入口 | R:code:extension/src/core/memory/parse-raindrop-csv.ts,code:extension/src/core/memory/parse-raindrop-json.ts,code:extension/src/core/memory/parse-netscape-bookmarks-html.ts | A:Raindrop/Pocket §5.10.6 | S:格式不识别抛 ThirdPartyCorpusParseError
+payload.ts[DB7T]: F:Bookmark/TextExcerpt 载荷 Zod schema | R:code:extension/src/core/memory/third-party-corpus-source.ts | A:含 extractDomainFromUrl | S:-
+retired-enrichment-seeds.ts[DB6T]: F:退役主题实体 seed 词面 scrub | R:- | A:回填 v4+ 剔除灰名单残留 | S:大小写不敏感；无法区分 LLM 同词一律剔除
+reusable-enrichment-fields.ts[DB5T]: F:抽取可复用 enrichment 字段子集 | R:code:extension/src/core/memory/clues.ts | A:只拷 tags/keywords/entities | S:不拷 summary/note/embedding
+select-memory-items-to-push.ts[DB6T]: F:选出增量上云 Memory 条目 | R:code:extension/src/core/memory/memory-item-type.ts | A:先限云同步面再比水位 | S:无 lastPushedAt→该面全量；updatedAt 严格新于水位
+should-request-llm-memory-enrichment.ts[DB6T]: F:Capture 后 LLM enrichment 稀疏门禁 | R:- | A:纯函数不读网络/storage | S:调用方另拦 bulk import
+third-party-corpus-import-state.ts[DB5T]: F:第三方语料导入进度 Zod 与 storage 键 | R:code:extension/src/core/memory/third-party-corpus-source.ts | A:chrome.storage.local 形状 | S:-
+third-party-corpus-source.ts[DB5T]: F:第三方语料源枚举与导入上限 | R:- | A:raindrop/pocket 闭集 | S:§5.10.6 R2 准入
+
+===/<repository>/extension/src/core/messaging/===
+account-sync-messages.ts[CM8L]: F:账号同步 Background 消息契约 | R:code:extension/src/core/messaging/constants.ts | A:登录/退出/订阅/handoff 等 union | S:无 Chrome；错误码稳定枚举
+background-messages.ts[CM8S]: F:Background 消息总联合与身份消息 | R:code:extension/src/core/messaging/account-sync-messages.ts,code:extension/src/core/messaging/memory-messages.ts,code:extension/src/core/messaging/recall-messages.ts | A:再导出各域 message union | S:新 type 须先改本目录再接线
+commands-messages.ts[CM6S]: F:Commands 导航与扩展命令消息契约 | R:code:extension/src/core/messaging/constants.ts | A:NavigateActiveTab/ListExtensionCommands | S:稳定 CommandsErrorCode
+constants.ts[CM7T]: F:Background 消息统一 scope 常量 | R:- | A:BACKGROUND_MESSAGE_SCOPE=background | S:-
+content-messages.ts[CM6T]: F:Content Script 消息与划词工具条命令 | R:- | A:scope=content；SELECTION_TOOLBAR_* | S:与 background scope 区分
+daily-review-messages.ts[CM5T]: F:Dreaming 每日回顾只读消息契约 | R:code:extension/src/core/messaging/constants.ts | A:GetDailyReview | S:楕子#1 只读
+debug-messages.ts[CM5L]: F:DEV 召回探针种库/清噪消息契约 | R:code:extension/src/core/messaging/constants.ts | A:仅 import.meta.env.DEV 受理 | S:禁止生产路径调用
+dual-thread-messages.ts[CM5T]: F:暗线同意学习记录与贡献消息契约 | R:code:extension/src/core/messaging/constants.ts | A:读取/上传/删除已贡献汇总 | S:ADR-027
+import-messages.ts[CM7M]: F:Chrome 书签导入与第三方语料消息契约 | R:code:extension/src/core/memory/chrome-bookmark-import-state.ts,code:extension/src/core/memory/third-party-corpus-import-state.ts | A:Ensure/Get 导入状态与进度 | S:稳定 ImportErrorCode
+mcp-messages.ts[CM5T]: F:MCP 只读证据导出消息契约 | R:code:extension/src/core/recall/detail-export.ts | A:McpRecallEvidence；上限 MCP_DETAIL_EXPORT_MAX_ITEMS | S:-
+memory-messages.ts[CM8M]: F:Capture/Memory CRUD Background 消息契约 | R:code:extension/src/core/memory/memory-item.ts,code:extension/src/core/memory/capture-entry.ts | A:Capture/List/Get/Update/Delete 等 | S:稳定 MemoryErrorCode
+recall-messages.ts[CM8M]: F:Recall 线索提交与页上下文消息契约 | R:code:extension/src/core/recall/parse-recall-clue-types.ts,code:extension/src/core/recall/page-context-mode.ts | A:RECALL_WITH_CLUE；RECALL_CLUE_MAX_CHARS | S:稳定 RecallErrorCode
+settings-messages.ts[CM6T]: F:UserSettings 读写消息契约 | R:code:extension/src/core/settings/user-settings.ts | A:Get/UpdateUserSettings；AI 配额快照 | S:稳定 SettingsErrorCode
+ui-messages.ts[CM6T]: F:SW→扩展页推送消息 scope 与解析 | R:- | A:书签树变更/Recall 可见进展 | S:解析失败返回 null
+
+===/<repository>/extension/src/core/onboarding/===
+gs-clue-samples.ts[DB5T]: F:Getting Started 示意 clue 列表 shape | R:- | A:LLM 一次 4 条；无 Chrome/IDB | S:-
+pick-getting-started-bookmark-sample.ts[DB6S]: F:从真实书签标题生成口语 clue 建议 | R:- | A:固定模板+标题字面 | S:禁止内容别名灰名单
+
+===/<repository>/extension/src/core/recall/===
+build-clue-embedding-text.ts[DB6T]: F:从口语 clue/Parsed 拼 embedding 文本 | R:code:extension/src/core/recall/parse-recall-clue-types.ts | A:供 Hybrid embed 请求 | S:-
+build-environment-recall-suggestions.ts[DB5T]: F:构建环境弱芯片闭集建议 | R:- | A:仅真实环境信号；§7.1 | S:禁止 site/quote/note/type 固定银行
+build-prefill-clue.ts[DB5T]: F:摘录预填短线索与存完浮层预览 | R:- | A:预填可字符截断；预览靠 CSS clamp | S:-
+build-recall-framing-facts.ts[DB7M]: F:从 RecallResult 构建 Framing 事实 | R:code:extension/src/core/recall/build-recall-result.ts | A:确定性；供模板或 LLM 润色 | S:-
+build-recall-result.ts[DB8M]: F:构建排名邻域池与 RecallResult 页切 | R:code:extension/src/core/recall/keyword-filter.ts,code:extension/src/core/recall/collapse-recall-duplicates.ts | A:Top Pick 门禁与分页常量 | S:top_pick 非神谕
+clamp-recall-clue-text.ts[DB6T]: F:Recall clue 长度门禁与剩余容量 | R:code:extension/src/core/messaging/recall-messages.ts | A:对齐 RECALL_CLUE_MAX_CHARS | S:纯函数；写入前调用
+clue-plain-url.ts[DB7M]: F:Clue 纯文本 URL 检测规范化与缩短 | R:code:extension/src/core/recall/clue-url-display.ts | A:契约面完整 URL；可见面短标签 | S:展示截断见 clue-url-display
+clue-url-display.ts[DB5T]: F:Composer URL 芯片对齐键与 label | R:code:extension/src/core/recall/clue-plain-url.ts | A:SW/UI 共用纯函数 | S:不联网抓页
+collapse-recall-duplicates.ts[DB7M]: F:Recall 结果层按折叠键去重 | R:code:extension/src/core/memory/derive-memory-duplicate-key.ts | A:库内仍可并存；Also 相对 Top 互斥 | S:折叠键见 derive-memory-duplicate-key
+compute-composer-placeholder.ts[DB6S]: F:Composer placeholder 双通道状态机 | R:code:extension/src/core/recall/recall-shell-empty-copy.ts | A:有线程锚点时 Narrow/Neutral 点名锚点 | S:§7.0；避免听起来像全新 Recall
+content-term-corroboration.ts[DB8M]: F:内容词面佐证门过滤邻域候选 | R:code:extension/src/core/recall/keyword-filter.ts | A:contentTerms 非空时至少一词须库内佐证 | S:禁止仅靠弱 embedding/RRF 过门
+detail-export.ts[DB6S]: F:多选 MemoryItem 详情导出 schema 与上限 | R:- | A:JSON+Markdown；§5.10.4 ADR-008 | S:MCP 上限 MCP_DETAIL_EXPORT_MAX_ITEMS
+enrich-empty-recall-result.ts[DB6S]: F:no_match 后补 emptyKind 与同类猜测 | R:code:extension/src/core/recall/build-recall-result.ts | A:约束下库空判定；挂载 relatedGuess | S:不改 Filter 内核
+exclude-content-terms.ts[DB7L]: F:应用线索 excludeContentTerms 硬排除 | R:code:extension/src/core/recall/keyword-filter.ts | A:用户明确不要的内容词面 | S:与 Outcome 否定分计
+explain-recall-match.ts[DB6M]: F:生成召回命中可读原因 | R:- | A:按线索 token 与匹配字段 | S:文案经注入 translate
+extract-composer-narrow-examples.ts[DB6L]: F:从候选抽取 composer Narrow 举例 | R:- | A:按切割力排序；无主题 seed | S:grounded
+extract-document-index-tokens.ts[DB7M]: F:从 MemoryItem 提取倒排文档 token | R:code:extension/src/core/memory/memory-item.ts | A:供关键词预过滤 | S:精排仍走 keyword-filter
+first-recall-onboarding.ts[DB4T]: F:判定是否展示首次找引导 | R:- | A:纯函数；存储在 infrastructure | S:-
+format-recall-saved-time.ts[DB5T]: F:格式化 Recall 卡保存相对/绝对时间 | R:- | A:locale 由调用方传入 | S:无 Chrome/DOM
+format-recall-understanding-echo.ts[DB6S]: F:把 Parsed 槽位压成理解回声芯片 | R:code:extension/src/core/recall/parse-recall-clue-types.ts | A:只露闭集槽位+字面 token | S:禁止 Thinking/编造主题
+format-recall-visible-progress-basis.ts[DB5T]: F:格式化结果页主要依据轻解释句 | R:- | A:§7.0 | S:-
+gate-polished-composer-narrow-examples.ts[DB5T]: F:门禁 LLM 润色 Narrow 举例 | R:- | A:须与选定词同 identity | S:失败回退原词；禁造词
+gate-recall-follow-up-chips.ts[DB6M]: F:追问芯片展示切割力门禁 | R:- | A:邻域过窄不挂芯片 | S:P0 2026-10-29
+highlight-recall-text.ts[DB5S]: F:按匹配字段切分高亮片段 | R:code:extension/src/core/recall/explain-recall-match.ts | A:供结果卡标题/摘录 | S:-
+hybrid-fusion.ts[DB8S]: F:Hybrid 余弦+RRF 融合纯函数 | R:- | A:不依赖 Chrome/IDB | S:-
+keyword-filter-weights.ts[DB6T]: F:关键词 Filter 字段权重系数 | R:code:extension/src/core/recall/keyword-filter.ts | A:从 keyword-filter 抽出 | S:禁止本波改数值
+keyword-filter.ts[DB9L]: F:关键词 Filter 打分与硬约束核心 | R:code:extension/src/core/memory/memory-item.ts | A:子串/字段权重/Top Pick 门 | S:召回核心；CURRENT 暂停调参
+mcp-tool-schema.ts[DB5T]: F:只读 MCP 工具响应契约 | R:code:extension/src/core/recall/detail-export.ts | A:= detail export 列表 | S:禁止写操作/全库 dump
+memory-open-href.ts[DB5S]: F:解析 Memory 打开用 href | R:code:extension/src/core/memory/memory-item.ts | A:含 Omnibox 占位页名 | S:-
+merge-recall-dialog-turn.ts[DB7M]: F:多轮对话槽位确定性合并 | R:code:extension/src/core/recall/parse-recall-clue-types.ts | A:本轮 refine accumulated | S:短补充不得冲掉 prior
+non-recall-clue-surfaces.ts[DB6M]: F:非召回词面闭合枚举与谓词 | R:- | A:零锚点拦截与意图判断共用 | S:-
+note-match.ts[DB6M]: F:构建命题命中集与查询匹配 | R:- | A:纯函数为主；扫描 fail-open | S:-
+omnibox-suggest.ts[DB7M]: F:构建 Omnibox 建议行文案与跳转 | R:code:extension/src/core/recall/memory-open-href.ts | A:经 translate | S:-
+orchestrate-keyword-recall.ts[DB8L]: F:编排关键词 Recall 全链路 | R:code:extension/src/core/recall/keyword-filter.ts,code:extension/src/core/recall/parse-recall-clue.ts | A:解析→检索词→软加权→折叠 | S:不改 Filter 内核
+page-context-mode.ts[DB6T]: F:当前页上下文模式闭集枚举 | R:- | A:与 clue 字符串分离 | S:默认 none
+parse-recall-clue-lexicon.ts[DB7M]: F:闭集槽位词典：时间/类型/行为/附注 | R:- | A:产品语言→枚举 | S:ADR-021；非开放同义词典
+parse-recall-clue-types.ts[DB8M]: F:ParsedRecallClue 与相关 Zod 类型 | R:- | A:含 embedding 向量类型 | S:-
+parse-recall-clue.ts[DB8L]: F:规则解析 clue→结构化约束 | R:code:extension/src/core/recall/parse-recall-clue-lexicon.ts,code:extension/src/core/recall/parse-recall-clue-types.ts | A:纯规则无 LLM | S:ADR-021 降级与 Omnibox 快跳
+recall-framing-facts.ts[DB6S]: F:Framing 事实 Zod schema | R:- | A:检索路径闭集等 | S:-
+recall-outcome-calibration.ts[DB5T]: F:Outcome 隐式标签校准策略 | R:code:extension/src/core/recall/recall-outcome.ts | A:未过 gold 门限制写入 | S:§7.2 P2
+recall-outcome-pairs.ts[DB5S]: F:本机 clue→target 对用于重排 | R:code:extension/src/core/recall/recall-outcome.ts | A:仅 strong/medium settled | S:§7.2 P3
+recall-outcome.ts[DB6M]: F:Recall Outcome 标签结算纯函数 | R:- | A:提问↔答案对照 | S:UI/SW 只喂信号
+recall-result-visible-count.ts[DB5T]: F:计算结果可见条数上限 | R:code:extension/src/core/recall/build-recall-result.ts | A:对齐 PAGE_SIZE/MAX_VISIBLE | S:-
+recall-result.ts[DB8M]: F:RecallResult 领域类型与匹配项 shape | R:code:extension/src/core/memory/memory-item.ts | A:邻域交付结构 | S:-
+recall-shell-empty-copy.ts[DB6M]: F:选择 Recall 壳空态/恢复文案 key | R:- | A:经注入 translate | S:i18n 仍 popup_* 前缀
+recall-shell-handoff.ts[DB6T]: F:开壳预填接力顺序铁律 | R:- | A:先 openShell 不 await | S:Omnibox/划选同律
+recall-source-scope.ts[DB5T]: F:按 MemoryItem.type 硬筛来源范围 | R:- | A:默认 all；不进 clue 串 | S:不改 objectTypes 槽位
+recall-telemetry.ts[DB7M]: F:Recall TTE 埋点 schema 与 ECS | R:- | A:纯函数+Zod | S:§5.9/§5.10.3
+recall-topic.ts[DB6M]: F:Topic 主题槽位与 embedding 文本拼装 | R:code:extension/src/core/recall/topic-embedding.ts | A:供 Hybrid/主题邻域 | S:-
+render-recall-framing.ts[DB6M]: F:把 Framing 事实渲染为可读段落 | R:code:extension/src/core/recall/recall-framing-facts.ts | A:静态模板路径 | S:经 translate
+resolve-deeper-reading-tip.ts[DB4T]: F:解析更深阅读提示文案 | R:- | A:纯函数 | S:-
+resolve-recall-degraded-reason.ts[DB5T]: F:解析 Recall 降级原因码 | R:- | A:供 UI 轻提示 | S:-
+resolve-thread-anchor-label.ts[DB5T]: F:解析线程锚点展示标签 | R:- | A:composer/placeholder 用 | S:-
+semantic-note-score-bucket.ts[DB4T]: F:语义命题分桶常量 | R:- | A:阈值标定用 | S:-
+should-offer-thread-pivot-confirm.ts[DB5S]: F:判定是否提示线程换轨确认 | R:- | A:纯函数 | S:-
+summarize-visible-progress-telemetry.ts[DB4T]: F:汇总可见进展埋点计数 | R:code:extension/src/core/recall/recall-telemetry.ts | A:离线分析 | S:-
+synthesize-echo-correction-clue.ts[DB5T]: F:从回声纠错合成新 clue | R:code:extension/src/core/recall/format-recall-understanding-echo.ts | A:用户改芯片后 | S:-
+time-of-day-greeting.ts[DB3T]: F:按时段选问候文案 key | R:- | A:空态用 | S:-
+topic-embedding.ts[DB6S]: F:Topic embedding 请求文本与缓存键 | R:- | A:纯函数 | S:-
+topic-lookup.ts[DB6M]: F:按 topic 查邻域候选 | R:code:extension/src/core/recall/topic-embedding.ts | A:库内主题命中 | S:-
+visible-progress-basis.ts[DB5T]: F:可见进展「主要依据」事实类型 | R:- | A:§7.0 | S:-
+visible-progress.ts[DB6S]: F:§7.0 可见进展阶段与文案选择 | R:code:extension/src/core/recall/visible-progress-basis.ts | A:结果页轻进展 | S:非 Agent 思考轨迹
+
+===/<repository>/extension/src/core/recall/dual-thread/===
+dual-thread-aggregate.ts[DB5S]: F:构建暗线匿名汇总草图 | R:- | A:从遥测输入计数；剥离 clue/id/URL | S:-
+dual-thread-consent.ts[DB5S]: F:暗线同意学习/贡献门禁纯函数 | R:- | A:本地学习与匿名汇总贡献 | S:ADR-027；不改适应旋钮
+index.ts[DB4T]: F:双线程暗线 core 再导出面 | R:code:extension/src/core/recall/dual-thread/dual-thread-consent.ts,code:extension/src/core/recall/dual-thread/dual-thread-aggregate.ts | A:仅 re-export 已用符号 | S:细项请直引子模块
+recall-adaptation-config.ts[DB5S]: F:登记暗线受控适应旋钮元数据 | R:- | A:只登记如何回退；不自动改值 | S:脚手架；无运行时自进化
+recall-failure-attribution.ts[DB6M]: F:Recall 失败环节归因 schema 与映射 | R:- | A:纯 schema；不自动判定根因 | S:无 Chrome 依赖
+
+===/<repository>/extension/src/core/recall/eval/===
+arbitrary-input-pressure-cases.ts[TQ4M]: F:任意输入压力集用例数据 | R:- | A:R10/H12；只汇报不挡门禁 | S:expectedIntent 非断言
+build-synth-noise-gateway-cases.ts[TQ4S]: F:按固定 seed 合成噪声入闸用例 | R:code:extension/src/core/recall/eval/noise-gateway-cases.ts | A:确定性合成集 | S:-
+calibrate-semantic-note-threshold.ts[TQ5S]: F:扫语义入闸阈值标定报告 | R:- | A:救援率 vs 误报翻转率 | S:取误报上限内最大救援点
+compare-retrieval-ablation-baseline.ts[TQ6S]: F:消融结果相对基线质量门禁 | R:- | A:召回/MRR/nDCG 不得低于基线ε | S:纯函数；不接生产路径
+dreaming-eval-cases.ts[TQ5T]: F:Dreaming 命题命中 must 用例 | R:code:extension/src/core/recall/eval/dreaming-eval-corpus.ts | A:D-N1–D-N6 | S:expectation 对齐 RecallEval
+dreaming-eval-corpus.ts[TQ5L]: F:Dreaming 命题命中固定合成库 | R:- | A:与主 RECALL_EVAL 独立 | S:不读 IndexedDB
+dreaming-offline-eval-cases.ts[TQ4L]: F:Dreaming 离线评估合成用例 | R:- | A:4类×5组；gate=stretch | S:不进 must
+eval-failure-observation.ts[TQ5M]: F:从 Recall 结果观察失败阶段 | R:code:extension/src/core/recall/build-recall-result.ts | A:observedStage 可复现 | S:非推断根因
+hybrid-eval-cases.ts[TQ6S]: F:Hybrid eval 用例与门禁维度 | R:code:extension/src/core/recall/eval/hybrid-eval-ids.ts | A:R0 严格保真等契约 | S:-
+hybrid-eval-corpus.ts[TQ5M]: F:Hybrid eval 专用合成 corpus | R:code:extension/src/core/recall/eval/hybrid-eval-ids.ts | A:2222… 前缀命名空间 | S:仅 run-hybrid-eval 用
+hybrid-eval-ids.ts[TQ5T]: F:Hybrid eval 稳定记忆 ID | R:- | A:与 RECALL_EVAL_IDS 隔离 | S:2222… 前缀
+hybrid-fake-embedding.ts[TQ5S]: F:Hybrid eval 确定性 fake embedding | R:- | A:CI 无外网触发点 | S:≠生产 bge-m3
+intent-eval-cases.ts[TQ4T]: F:闲聊意图金标用例 | R:- | A:供 nlu:try live | S:不进 CI must
+judge-parse-gold.ts[TQ4S]: F:比对 parse-gold 槽位差异 | R:code:extension/src/core/recall/eval/parse-gold-cases.ts | A:diffParseGoldSlots | S:-
+metrics.ts[TQ7L]: F:分层评测指标纯函数集 | R:- | A:位次/槽位协议等 | S:无 Chrome/无网络
+noise-gateway-cases.ts[TQ5L]: F:噪声入闸手写用例集 | R:code:extension/src/core/recall/understand/select-clue-processing-disposition.ts | A:NoiseGatewayGate/Expect | S:-
+omnibox-eval-cases.ts[TQ5S]: F:Omnibox 路径 eval 用例 | R:code:extension/src/core/recall/eval/recall-eval-ids.ts | A:可转 RecallEvalMust | S:-
+parse-gold-cases.ts[TQ3T]: F:parse-gold 槽位类型与用例壳 | R:code:extension/src/core/recall/parse-recall-clue-lexicon.ts | A:已退役批跑残留类型面 | S:-
+parse-gold-now.ts[TQ3T]: F:parse-gold 固定时钟常量 | R:- | A:时间窗 from/to 派生 | S:金标只比 timeLabel
+probe-generated-eval.ts[TQ5S]: F:Probe 冻结夹具→关键词离线评测 | R:- | A:M4；假时钟 | S:无网络/LLM/Chrome
+recall-eval-cases.ts[TQ7L]: F:主 recall-eval 用例与门禁 | R:code:extension/src/core/recall/eval/recall-eval-ids.ts | A:must/stretch 等 gate | S:-
+recall-eval-corpus.ts[TQ6L]: F:主 recall-eval 合成库构建 | R:code:extension/src/core/memory/create-memory-item.ts,code:extension/src/core/recall/eval/recall-eval-ids.ts | A:1111… ID | S:-
+recall-eval-ids.ts[TQ6T]: F:主 recall-eval 固定记忆 ID | R:- | A:断言期望命中用 | S:避免随机 UUID
+recall-eval-now.ts[TQ4T]: F:recall-eval 固定时钟常量 | R:- | A:近因加权相对此时间 | S:避免 CI 日期漂移
+recall-framing-eval.ts[TQ5S]: F:Framing 事实层 eval 用例 | R:code:extension/src/core/recall/build-recall-framing-facts.ts | A:不挡主路径 recall-eval | S:-
+retrieval-ablation-cases.ts[TQ6L]: F:L2 召回消融用例与固定 goldParsed | R:code:extension/src/core/recall/eval/retrieval-ablation-ids.ts | A:禁止策略内重新 parse | S:-
+retrieval-ablation-corpus.ts[TQ5M]: F:L2 消融合成库（无预填 embedding） | R:code:extension/src/core/recall/eval/retrieval-ablation-ids.ts | A:真实轨经 Worker bge-m3 | S:禁止 fake embeddingAnchor
+retrieval-ablation-embed-telemetry.ts[TQ4T]: F:消融 embedding 请求遥测收集 | R:- | A:失败须抛错 | S:禁止空向量续算
+retrieval-ablation-fusion-constants.ts[TQ4T]: F:消融融合常量再导出 | R:code:extension/src/core/recall/hybrid-fusion.ts | A:与 hybrid-recall-backend 对齐 | S:core 不依赖 infrastructure
+retrieval-ablation-ids.ts[TQ5T]: F:L2 消融 corpus 稳定 ID | R:- | A:3333… 前缀 | S:与 1111/2222 隔离
+run-hybrid-eval.ts[TQ6M]: F:跑 Hybrid eval 并汇总指标 | R:code:extension/src/core/recall/eval/hybrid-eval-cases.ts,code:extension/src/core/recall/eval/hybrid-fake-embedding.ts | A:复用 fuseHybridMatches | S:不调 HybridRecallBackend
+run-noise-gateway-eval.ts[TQ5S]: F:跑噪声入闸用例并汇总 | R:code:extension/src/core/recall/eval/noise-gateway-cases.ts | A:含手写与合成 case | S:-
+run-omnibox-eval.ts[TQ5S]: F:跑 Omnibox 路径 eval | R:code:extension/src/core/recall/eval/omnibox-eval-cases.ts | A:观察失败阶段 | S:-
+run-recall-eval.ts[TQ7M]: F:跑主 recall-eval 并汇总指标 | R:code:extension/src/core/recall/eval/recall-eval-cases.ts,code:extension/src/core/recall/build-recall-result.ts | A:关键词路径；分页常量 | S:-
+run-retrieval-ablation.ts[TQ7L]: F:跑 L2 召回消融比较三路 | R:code:extension/src/core/recall/eval/retrieval-ablation-cases.ts | A:固定 goldParsed | S:禁止策略内 parseRecallClue
+semantic-note-eval-cases.ts[TQ4M]: F:语义命题评估合成用例 | R:- | A:意译/对抗；不进 must | S:Phase 4.1 Stage 3
+string-hash-u32.ts[TQ3T]: F:FNV-1a 32-bit 确定性字符串哈希 | R:- | A:供 fake embedding 种子 | S:非加密强度
+
+===/<repository>/extension/src/core/recall/understand/===
+ai-chat-task-kind.ts[DB5T]: F:AI chat taskKind 闭集 | R:- | A:hosted/直连共用 | S:-
+build-chitchat-reply-prompt.ts[DB4T]: F:拼闲聊回复 LLM prompt | R:- | A:非召回路径 | S:-
+build-llm-follow-up-prompt.ts[DB5T]: F:拼追问芯片 LLM prompt | R:- | A:基于邻域事实 | S:-
+build-llm-framing-prompt.ts[DB5T]: F:拼 Framing NLG prompt | R:code:extension/src/core/recall/recall-framing-facts.ts | A:润色列表级说明 | S:-
+build-llm-narrow-example-polish-prompt.ts[DB4T]: F:拼 Narrow 举例润色 prompt | R:- | A:须过门禁 | S:-
+build-llm-parse-prompt.ts[DB6T]: F:拼 clue 理解 LLM parse prompt | R:- | A:单次理解默认 | S:ADR-010
+classify-rules-clue-intent.ts[DB6S]: F:规则分类 clue 意图 | R:code:extension/src/core/recall/non-recall-clue-surfaces.ts | A:召回/闲聊/噪声 | S:无 LLM
+clue-flow-trace.ts[DB4T]: F:线索流 trace 注入类型 | R:- | A:理解层可观测 | S:-
+clue-llm-failure-kind.ts[DB5S]: F:LLM 理解失败种类映射 | R:- | A:超时/配额/解析等 | S:-
+clue-llm-timeout.ts[DB4T]: F:线索 LLM 超时毫秒常量 | R:- | A:- | S:-
+complete-composer-narrow-example-polish.ts[DB5T]: F:完成 Narrow 举例 LLM 润色调用 | R:code:extension/src/core/recall/understand/build-llm-narrow-example-polish-prompt.ts | A:失败回退原词 | S:-
+complete-recall-follow-up.ts[DB5T]: F:完成追问芯片 LLM 调用 | R:code:extension/src/core/recall/understand/build-llm-follow-up-prompt.ts | A:提案经门禁 | S:-
+complete-recall-framing-nlg.ts[DB5S]: F:完成 Framing NLG 调用 | R:code:extension/src/core/recall/understand/build-llm-framing-prompt.ts | A:失败回退模板 | S:-
+extract-llm-json.ts[DB4T]: F:从 LLM 文本提取 JSON | R:- | A:容错围栏 | S:-
+ground-llm-parse-slots.ts[DB7M]: F:把 LLM 提议接地为闭集槽位 | R:code:extension/src/core/recall/parse-recall-clue-lexicon.ts | A:非法槽位丢弃 | S:ADR-021
+llm-chat-usage.ts[DB4T]: F:规范化 LLM chat usage 计数 | R:- | A:配额记账 | S:-
+llm-follow-up-proposal.ts[DB4T]: F:追问芯片 LLM 提案 Zod | R:- | A:- | S:-
+llm-narrow-example-polish-proposal.ts[DB3T]: F:Narrow 润色提案 Zod | R:- | A:- | S:-
+llm-parse-cache.ts[DB5S]: F:线索 LLM parse 结果缓存 | R:- | A:同 clue 去抖 | S:-
+llm-parsed-clue-proposal.ts[DB5T]: F:LLM 解析 clue 提案 Zod | R:- | A:经 ground 再执行 | S:-
+map-llm-follow-up-proposal.ts[DB5T]: F:映射追问提案为可展示芯片 | R:code:extension/src/core/recall/understand/llm-follow-up-proposal.ts | A:- | S:-
+map-llm-proposal-to-parsed.ts[DB6S]: F:映射 LLM 提案为 ParsedRecallClue | R:code:extension/src/core/recall/understand/ground-llm-parse-slots.ts | A:接地后产出 | S:-
+openai-compatible-chat.ts[DB6S]: F:OpenAI 兼容 chat 请求封装 | R:- | A:core 无 Chrome | S:-
+parse-recall-clue-with-llm.ts[DB8M]: F:经 LLM 解析 clue 并接地 | R:code:extension/src/core/recall/understand/map-llm-proposal-to-parsed.ts,code:extension/src/core/recall/understand/openai-compatible-chat.ts | A:默认理解路径 | S:失败降级规则
+select-clue-processing-disposition.ts[DB7M]: F:选择线索处理处置：拒/闲聊/召回 | R:code:extension/src/core/recall/understand/classify-rules-clue-intent.ts | A:入闸噪声门 | S:-
+select-clue-understanding-mode.ts[DB6T]: F:选择规则或 LLM 理解模式 | R:- | A:有 LLM 默认理解 | S:ADR-010
+understand-recall-clue.ts[DB8M]: F:理解 clue 总编排 | R:code:extension/src/core/recall/understand/select-clue-understanding-mode.ts,code:extension/src/core/recall/understand/parse-recall-clue-with-llm.ts | A:规则/LLM 合一入口 | S:-
+
+===/<repository>/extension/src/core/settings/===
+settings-sections.ts[DC5S]: F:Settings 分区 id 与可见性闭集 | R:code:extension/src/core/settings/user-settings.ts | A:供 Settings UI 分区 | S:-
+user-settings.ts[DC7S]: F:UserSettings Zod 与默认值 | R:- | A:含 uiLocalePreference 等 | S:core 无 Chrome
+
+===/<repository>/extension/src/core/speech/===
+speech-dictation.ts[DU5S]: F:听写会话状态机与文本合并 | R:- | A:composer 听写契约 | S:无 Chrome Web Speech 实现
+
+===/<repository>/extension/src/core/ui/===
+keyboard-command.ts[DU4T]: F:键盘命令匹配纯函数 | R:- | A:UI 快捷键 | S:-
+list-selection.ts[DU4T]: F:列表多选集合操作纯函数 | R:- | A:detail export 等 | S:-
+
+===/<repository>/extension/src/dev/probe-console/===
+index.html[XQ3T]: F:Probe Console 页面壳 | R:- | A:DEV only | S:-
+main.ts[XQ3T]: F:挂载 Probe Console Vue | R:code:packages/yiveno-probe/src/console/ProbeConsole.vue | A:DEV | S:-
+open-probe-console-page.ts[XQ4T]: F:打开 Probe Console 扩展页 | R:- | A:chrome.tabs | S:仅 DEV
+
+===/<repository>/extension/src/dev/probe/===
+debug-dev-handler.prod-stub.ts[XQ3T]: F:生产桩：DEV 探针 handler 空实现 | R:- | A:build 替换 | S:禁止生产种库
+debug-dev-handler.ts[XQ6M]: F:DEV 探针消息 handler 实现 | R:code:extension/src/core/messaging/debug-messages.ts | A:种库/清噪/巡检 | S:仅 import.meta.env.DEV
+expose-recall-probe-seed-debug.prod-stub.ts[XQ3T]: F:生产桩：不暴露种库 debug | R:- | A:- | S:-
+expose-recall-probe-seed-debug.ts[XQ5S]: F:向 window 暴露种库 debug API | R:code:extension/src/dev/probe/recall-probe-seed-service.ts | A:控制台调试 | S:仅 DEV
+inspect-memory-debug.ts[XQ5S]: F:只读巡检本机 Memory 库摘要 | R:- | A:DEV 诊断 | S:不写库
+probe-batch-progress-storage.ts[XQ4T]: F:探针批次进度 chrome.storage | R:- | A:批跑 UI | S:-
+probe-batch-runner.ts[XQ6M]: F:编排探针批次种库与评测 | R:code:extension/src/dev/probe/recall-probe-seed-service.ts | A:可暂停/续跑 | S:禁止冒充 §5.9
+probe-cold-memory-impact.ts[XQ5S]: F:冷库冲击探针指标 | R:- | A:性能诊断 | S:-
+probe-cold-memory-latency.ts[XQ5S]: F:冷库延迟探针 | R:- | A:性能诊断 | S:-
+probe-fixture-catalog.ts[XQ3T]: F:探针夹具目录再导出 | R:code:packages/yiveno-probe/src/catalog/fixture-catalog.ts | A:- | S:-
+probe-key-id-map-storage.ts[XQ5S]: F:探针 key→Memory id 映射存储 | R:- | A:清理/断言用 | S:-
+probe-library-snapshot.ts[XQ5S]: F:快照本机库供探针对比 | R:- | A:DEV | S:-
+probe-run-history-storage.ts[XQ5M]: F:探针跑史读写 | R:- | A:chrome.storage | S:-
+recall-probe-cleanup-service.ts[XQ5M]: F:清理探针种入库条目 | R:code:extension/src/dev/probe/probe-key-id-map-storage.ts | A:按映射删 | S:须用户点名 replace
+recall-probe-omnibox-smoke.ts[XQ5S]: F:Omnibox 探针冒烟步骤 | R:- | A:DEV | S:-
+recall-probe-purge-classify.ts[XQ5S]: F:分类可清探针噪声条目 | R:- | A:purge 前置 | S:-
+recall-probe-purge-service.ts[XQ4T]: F:执行探针噪声清理 | R:code:extension/src/dev/probe/recall-probe-purge-classify.ts | A:- | S:-
+recall-probe-seed-service.ts[XQ7L]: F:种入召回探针语料到本机库 | R:code:packages/yiveno-probe/src/presets/seed-payload.ts | A:模拟真实书签结构 | S:replace 须用户点名；禁冒充 §5.9
+
+===/<repository>/extension/src/===
+env.d.ts[FV3T]: F:Vite/扩展环境类型声明 | R:- | A:ImportMeta.env | S:-
+
+===/<repository>/extension/src/infrastructure/ai/===
+clue-understand-api-client.ts[IA6S]: F:直连 clue 理解 API 客户端 | R:code:extension/src/infrastructure/ai/dev-clue-llm-config.ts | A:yiveno.dev.clueLlm 调试 | S:非默认 hosted
+dev-clue-llm-config.ts[IA4T]: F:读取 DEV 直连 LLM 配置 | R:- | A:chrome.storage | S:-
+embed-api-client.ts[IA6M]: F:Embedding API 客户端 | R:- | A:Hybrid/维护用 | S:失败上抛
+gs-clue-samples-api-client.ts[IA5S]: F:Getting Started 示意 clue API | R:- | A:hosted | S:-
+hosted-clue-understand-api-client.ts[IA7M]: F:Hosted clue complete 客户端 | R:- | A:默认理解路径 | S:配额错误码映射
+hosted-quota-api-client.ts[IA5T]: F:拉取 hosted AI 配额快照 | R:- | A:Settings 展示 | S:-
+memory-enrichment-api-client.ts[IA5S]: F:Memory enrichment LLM API 客户端 | R:- | A:异步 enrichment | S:-
+
+===/<repository>/extension/src/infrastructure/analytics/===
+dual-thread-sketch-upload-store.ts[IA4T]: F:暗线草图上传状态本地存储 | R:- | A:ADR-027 | S:-
+recall-telemetry-recorder.ts[IA7M]: F:录制 Recall TTE 遥测事件 | R:code:extension/src/core/recall/recall-telemetry.ts | A:写 chrome.storage | S:§5.9
+recall-telemetry-store.ts[IA5T]: F:读写 Recall 遥测存储 | R:code:extension/src/infrastructure/analytics/recall-telemetry-recorder.ts | A:- | S:-
+
+===/<repository>/extension/src/infrastructure/auth/===
+auth-session-lease-alarm.ts[II5T]: F:扩展会话租约闹钟注册 | R:- | A:SW alarm | S:-
+auth-session-revalidate.ts[II6M]: F:重验扩展会话并刷新租约 | R:- | A:失败可挤端 | S:ADR-018/019
+extension-oauth.ts[II7M]: F:扩展 OAuth/会话 mint 与 handoff | R:- | A:官网↔扩展 | S:禁止 Port 传 token
+extension-session-lease-probe.ts[II6T]: F:向 Worker 探测本扩展 access token 是否仍为账号活跃租约 | R:code:extension/src/infrastructure/logging/flow-log.ts | A:- | S:-
+extension-uninstall-url.ts[II6S]: F:扩展卸载 URL：作废票 + 落地页 | R:code:extension/src/infrastructure/logging/flow-log.ts | A:- | S:-
+mint-website-session-from-extension.ts[II6T]: F:用扩展会话向 Worker 铸造官网短期 website-session | R:code:extension/src/infrastructure/logging/flow-log.ts | A:- | S:-
+read-jwt-session-id.ts[II6T]: F:只读解析 JWT payload.session_id（不验签） | R:- | A:- | S:-
+supabase-client.ts[II6T]: F:扩展侧 Supabase 客户端单例入口 | R:- | A:- | S:-
+watch-auth-session-storage.ts[II6T]: F:监听 chrome.storage 扩展会话键变更 | R:- | A:- | S:-
+watch-website-auth-ui-storage.ts[II6T]: F:监听官网鉴权 UI 存储键变更 | R:- | A:- | S:-
+website-auth-probe.ts[II6T]: F:探测官网登录态供扩展 UI 桥 | R:code:extension/src/infrastructure/logging/flow-log.ts | A:- | S:-
+website-auth-ui-storage.ts[II6T]: F:官网鉴权 UI 展示态读写 | R:- | A:- | S:-
+
+===/<repository>/extension/src/infrastructure/browser/===
+action-badge.ts[IE6T]: F:工具栏 action 角标封装 | R:- | A:Chrome API 封装 | S:-
+active-tab-reader.ts[IE6T]: F:读取当前活动标签页元数据 | R:- | A:Chrome API 封装 | S:-
+browser-online.ts[IE6T]: F:浏览器在线状态探测 | R:- | A:Chrome API 封装 | S:-
+chrome-bookmark-reader.ts[IE6T]: F:Chrome 书签树只读封装 | R:- | A:Chrome API 封装 | S:-
+chrome-favicon.ts[IE6T]: F:Favicon URL 解析封装 | R:- | A:Chrome API 封装 | S:-
+clipboard-and-download.ts[IE6T]: F:剪贴板与下载封装 | R:- | A:Chrome API 封装 | S:-
+extension-pages.ts[IE6T]: F:扩展内建页面 URL/打开封装 | R:- | A:Chrome API 封装 | S:-
+extension-tab.ts[IE6S]: F:扩展标签页查询与聚焦 | R:- | A:Chrome API 封装 | S:-
+focus-or-open-tab.ts[IE6M]: F:聚焦已有标签或新开目标 URL | R:- | A:Chrome API 封装 | S:-
+microphone-permission.ts[IE6T]: F:麦克风权限探测封装 | R:- | A:Chrome API 封装 | S:-
+navigate-tab.ts[IE6T]: F:标签页导航封装 | R:- | A:Chrome API 封装 | S:-
+selection-context-page.ts[IE6T]: F:选区上下文页侧桥接 | R:- | A:Chrome API 封装 | S:-
+selection-context-reader.ts[IE6T]: F:读取页面选区上下文 | R:- | A:Chrome API 封装 | S:-
+selection-toolbar-command.ts[IE6S]: F:选区工具条命令分发 | R:- | A:Chrome API 封装 | S:-
+selection-toolbar-page-api.ts[IE6T]: F:选区工具条页侧 API | R:- | A:Chrome API 封装 | S:-
+side-panel.ts[IE6S]: F:Side Panel 打开/路径封装 | R:- | A:Chrome API 封装 | S:-
+subscribe-active-tab-navigation.ts[IE6T]: F:订阅活动标签导航变化 | R:- | A:Chrome API 封装 | S:-
+website-page.ts[IE6S]: F:打开官网页面封装 | R:- | A:Chrome API 封装 | S:-
+
+===/<repository>/extension/src/infrastructure/debug/===
+expose-clue-gateway-debug.prod-stub.ts[XO3T]: F:线索网关调试挂载生产桩 | R:- | A:- | S:生产桩
+expose-clue-gateway-debug.ts[XO5T]: F:DEV 挂载线索网关调试 API | R:- | A:- | S:仅 DEV
+expose-dual-thread-debug.prod-stub.ts[XO3T]: F:双线程调试挂载生产桩 | R:- | A:- | S:生产桩
+expose-dual-thread-debug.ts[XO5T]: F:DEV 挂载双线程调试 API | R:- | A:- | S:仅 DEV
+expose-memory-dev-debug.prod-stub.ts[XO3T]: F:Memory DEV 调试挂载生产桩 | R:- | A:- | S:生产桩
+expose-memory-dev-debug.ts[XO5T]: F:DEV 挂载 Memory 调试 API | R:- | A:- | S:仅 DEV
+expose-recall-telemetry-debug.prod-stub.ts[XO3T]: F:Recall 遥测调试挂载生产桩 | R:- | A:- | S:生产桩
+expose-recall-telemetry-debug.ts[XO5T]: F:DEV 挂载 Recall 遥测调试 API | R:- | A:- | S:仅 DEV
+memory-dev-backdate-saved-at.ts[XO5T]: F:DEV 回写条目 savedAt 便于时间测 | R:- | A:- | S:仅 DEV
+
+===/<repository>/extension/src/infrastructure/i18n/===
+apply-document-locale.ts[IL6T]: F:将文档 lang/dir 设为当前 UI locale | R:- | A:- | S:-
+background-error.ts[IL6S]: F:Background 错误码到 i18n 文案 | R:- | A:- | S:-
+extension-i18n-boot.ts[IL6S]: F:扩展页 i18n 启动与 locale 解析 | R:code:extension/src/infrastructure/i18n/message-keys.ts | A:- | S:-
+format-chrome-i18n-message.ts[IL6T]: F:按 Chrome _locales 约定格式化文案（对齐 chrome.i18n.getMessage） | R:- | A:i18n | S:-
+format-library-saved-at.ts[IL6T]: F:Library 摘录/书签列表：保存时间展示（locale 感知；非当年补年份） | R:code:extension/src/infrastructure/i18n/t.ts | A:i18n | S:-
+icon-only-control-a11y.ts[IL6T]: F:图标控件无障碍：省略可见文字时 title 与 aria-label 须同源（经 t()） | R:code:extension/src/infrastructure/i18n/product-surface-label-policy.ts | A:i18n | S:-
+memory-error.ts[IL6T]: F:Memory 错误码映射到 i18n MessageKey 并经 t() 取文案 | R:code:extension/src/core/messaging/memory-messages.ts,code:extension/src/infrastructure/i18n/message-keys.ts | A:i18n | S:-
+message-keys.ts[IL8L]: F:扩展 MESSAGE_KEYS 闭集与类型 | R:- | A:i18n | S:-
+product-surface-label-policy.ts[IL6T]: F:产品面文案禁用词策略（术语表：对用户禁止 Search，用 Recall / Filter） | R:- | A:i18n | S:禁止 Search，用 Recall / Filter）
+t.ts[IL8S]: F:扩展 t() 文案解析入口 | R:code:extension/src/core/i18n/translate.ts,code:extension/src/core/i18n/ui-locale.ts | A:i18n | S:-
+validate-critical-extension-messages.ts[IL6T]: F:validate critical extension messages | R:code:extension/src/infrastructure/i18n/extension-i18n-boot.ts | A:i18n | S:-
+
+===/<repository>/extension/src/infrastructure/identity/===
+auth-session-service.ts[II6T]: F:读写 chrome.storage.local 中的 Auth 会话（get/set/clear） | R:code:extension/src/core/identity/auth-session.ts,code:extension/src/infrastructure/storage/chrome-storage-local.ts | A:身份/订阅 | S:-
+local-profile-service.ts[II6T]: F:读写本机 LocalProfile 与账号绑定（缺省时创建档案） | R:code:extension/src/core/identity/local-profile.ts,code:extension/src/infrastructure/storage/chrome-storage-local.ts | A:身份/订阅 | S:-
+privacy-prefs-service.ts[II6T]: F:隐私偏好读写（chrome.storage.local） | R:code:extension/src/core/identity/privacy-prefs.ts,code:extension/src/infrastructure/storage/chrome-storage-local.ts | A:身份/订阅 | S:-
+subscription-api-client.ts[II6T]: F:Worker 订阅状态 HTTP 客户端（仅 Background） | R:code:extension/src/core/identity/subscription-snapshot.ts,code:extension/src/infrastructure/logging/flow-log.ts | A:身份/订阅 | S:-
+subscription-service.ts[II6S]: F:本机订阅快照读写 + 刷新（Background 唯一写入口） | R:code:extension/src/core/identity/subscription-snapshot.ts,code:extension/src/infrastructure/identity/auth-session-service.ts | A:身份/订阅 | S:-
+sync-prefs-service.ts[II6T]: F:读写同步偏好；缺失时回落默认（enabled=false） | R:code:extension/src/core/identity/sync-prefs.ts,code:extension/src/infrastructure/storage/chrome-storage-local.ts | A:身份/订阅 | S:-
+worker-api-access-token.ts[II6T]: F:为 Worker API 取可用 access token；临近过期则 refresh | R:code:extension/src/infrastructure/auth/extension-oauth.ts,code:extension/src/infrastructure/identity/auth-session-service.ts | A:身份/订阅 | S:-
+
+===/<repository>/extension/src/infrastructure/indexeddb/===
+constants.ts[PD5T]: F:Yiveno Memory DB 常量 | R:- | A:IDB 仓储 | S:-
+dreaming-duplicate-group-repository.ts[PD5S]: F:dreaming_duplicate_groups：同一折叠键下多源 MemoryItem 链接 | R:code:extension/src/core/dreaming/capture-dreaming-preprocess.ts,code:extension/src/infrastructure/indexeddb/constants.ts | A:IDB 仓储 | S:-
+keyword-index-repository.ts[PD8L]: F:倒排关键词索引仓储 | R:code:extension/src/core/recall/extract-document-index-tokens.ts,code:extension/src/core/memory/memory-item.ts | A:IDB 仓储 | S:-
+keyword-index-types.ts[PD5T]: F:关键词倒排 posting / meta 的 Zod 形状与 key 工具 | R:code:extension/src/infrastructure/indexeddb/constants.ts | A:IDB 仓储 | S:-
+manager.ts[PD8S]: F:IndexedDB 唯一管理器入口 | R:- | A:IDB 仓储 | S:禁止领域/UI 直接调用原生 IndexedDB API
+memory-db-definition.ts[PD5S]: F:定义并升级 memory_items 等 IDB store 与索引（含倒排与 dreaming） | R:code:extension/src/infrastructure/indexeddb/constants.ts,code:extension/src/infrastructure/indexeddb/manager.ts | A:IDB 仓储 | S:-
+memory-db.ts[PD5T]: F:Memory DB 打开与初始化 Promise 单例 | R:code:extension/src/infrastructure/indexeddb/memory-db-definition.ts,code:extension/src/infrastructure/indexeddb/manager.ts | A:IDB 仓储 | S:-
+memory-item-repository.ts[PD8L]: F:MemoryItem IndexedDB 仓储 | R:code:extension/src/core/common/coded-error.ts,code:extension/src/core/common/optional-props.ts | A:IDB 仓储 | S:-
+memory-link-status-repository.ts[PD5S]: F:`memory_link_status`：按源条目存巡检结论（派生；可重算；不进 Backup） | R:code:extension/src/infrastructure/indexeddb/constants.ts,code:extension/src/infrastructure/indexeddb/memory-db.ts | A:IDB 仓储 | S:-
+memory-link-status-types.ts[PD5T]: F:memory_link_status 的 Zod 形状与主键工具（死链巡检派生；不进 Backup） | R:- | A:IDB 仓储 | S:-
+memory-note-embedding-repository.ts[PD5S]: F:memory_note_embeddings 仓储：命题向量可重算缓存（不进 Backup） | R:code:extension/src/infrastructure/indexeddb/constants.ts,code:extension/src/infrastructure/indexeddb/memory-db.ts | A:IDB 仓储 | S:-
+memory-note-embedding-types.ts[PD5T]: F:`memory_note_embeddings` Zod 形状（可重算缓存；不进 Backup） | R:- | A:IDB 仓储 | S:-
+memory-notes-meta-repository.ts[PD5S]: F:memory_notes_meta 仓储：每 owner 一条 run 游标与 dirty 元数据 | R:code:extension/src/core/dreaming/dreaming-constants.ts,code:extension/src/core/dreaming/dream-run-cursor.ts | A:IDB 仓储 | S:-
+memory-notes-repository.ts[PD5M]: F:`memory_notes` 读写：按源查、按 owner 扫、写命题、扫孤儿、标脏 | R:code:extension/src/core/dreaming/dreaming-constants.ts,code:extension/src/core/memory/memory-item-type.ts | A:IDB 仓储 | S:-
+memory-notes-types.ts[PD5S]: F:memory_notes 与 memory_notes_meta 的 Zod 形状与主键工具 | R:code:extension/src/core/memory/memory-item-type.ts,code:extension/src/core/dreaming/dreaming-constants.ts | A:IDB 仓储 | S:-
+
+===/<repository>/extension/src/infrastructure/logging/===
+flow-log.ts[IO6T]: F:业务流日志约定辅助：开始 / 完成 / 失败，便于 SW 控制台按 scope 过滤 | R:code:extension/src/infrastructure/logging/log-scopes.ts,code:extension/src/infrastructure/logging/logger.ts | A:日志 | S:-
+log-scopes.ts[IO6T]: F:扩展业务日志 scope 闭集（控制台首行 `[Yiveno:<scope>]`） | R:- | A:日志 | S:禁止在 `logger` / `flow-log` 调用处自由发明未登记
+logger.ts[IO6S]: F:Service Worker 与页面均可使用的轻量日志接口 | R:code:extension/src/infrastructure/logging/log-scopes.ts | A:日志 | S:-
+
+===/<repository>/extension/src/infrastructure/mcp/===
+mcp-api-client.ts[IG6T]: F:只读 MCP 偏好同步到 Worker（AI_USAGE_KV） | R:- | A:- | S:-
+
+===/<repository>/extension/src/infrastructure/messaging/===
+background-client.ts[IM8L]: F:UI→Background 消息客户端唯一入口 | R:code:extension/src/core/messaging/background-messages.ts,code:extension/src/core/messaging/account-sync-messages.ts | A:消息客户端 | S:-
+dual-thread-research-api-client.ts[IM6T]: F:暗线研究接收端 HTTP 客户端（仅 Background 调用 · ADR-027） | R:code:extension/src/core/recall/dual-thread/dual-thread-aggregate.ts,code:extension/src/infrastructure/logging/flow-log.ts | A:消息客户端 | S:ADR-027）
+memory-sync-api-client.ts[IM6M]: F:Worker Cloud Memory 同步 HTTP 客户端（仅 Background 调用） | R:code:extension/src/core/memory/memory-item.ts,code:extension/src/infrastructure/logging/flow-log.ts | A:消息客户端 | S:-
+notify-chrome-bookmark-tree-changed.ts[IM3T]: F:notify chrome bookmark tree changed | R:code:extension/src/core/messaging/ui-messages.ts,code:extension/src/core/messaging/ui-messages.ts | A:消息客户端 | S:-
+notify-recall-visible-progress.ts[IM6T]: F:notify recall visible progress | R:code:extension/src/core/messaging/ui-messages.ts,code:extension/src/core/messaging/ui-messages.ts | A:消息客户端 | S:-
+
+===/<repository>/extension/src/infrastructure/recall/===
+detail-export-client.ts[IG6T]: F:经 Background 构建详情导出包并触发复制或下载 | R:code:extension/src/core/messaging/memory-messages.ts,code:extension/src/infrastructure/browser/clipboard-and-download.ts | A:- | S:-
+detail-export-selection.ts[IG6T]: F:切换 Detail export 多选（无条数上限） | R:code:extension/src/core/recall/detail-export.ts | A:- | S:-
+
+===/<repository>/extension/src/infrastructure/settings/===
+user-settings-service.ts[IG8T]: F:读写 UserSettings；缺字段时 parse 补默认后写回 | R:code:extension/src/core/settings/user-settings.ts,code:extension/src/infrastructure/storage/chrome-storage-local.ts | A:- | S:-
+
+===/<repository>/extension/src/infrastructure/speech/===
+browser-speech-recognition.ts[IG6S]: F:浏览器 Web Speech（SpeechRecognition）探测与最小封装 | R:code:extension/src/infrastructure/logging/logger.ts | A:- | S:-
+
+===/<repository>/extension/src/infrastructure/storage/===
+chrome-bookmark-delete-tombstone-storage.ts[PD5T]: F:持久化 Chrome 书签删除墓碑集合的读写与清空 | R:code:extension/src/core/memory/chrome-bookmark-delete-tombstone.ts,code:extension/src/infrastructure/storage/chrome-storage-local.ts | A:- | S:-
+chrome-storage-local.ts[PD5T]: F:chrome.storage.local 的 Zod 校验读写与删除封装 | R:code:extension/src/infrastructure/logging/logger.ts | A:- | S:-
+chrome-storage-quota.ts[PD5T]: F:chrome.storage.local/session 用量采样（getBytesInUse + QUOTA_BYTES） | R:code:extension/src/infrastructure/logging/logger.ts | A:- | S:-
+chrome-storage-session.ts[PD5T]: F:chrome.storage.session 的 Zod 校验读写与删除封装 | R:code:extension/src/infrastructure/logging/logger.ts | A:- | S:-
+cold-start-post-release-banner-storage.ts[PD5T]: F:冷启动放行后轻条：本会话 dismiss 的 readyAt（session 存储） | R:code:extension/src/infrastructure/storage/chrome-storage-session.ts | A:- | S:-
+extension-displaced-notice-storage.ts[PD5T]: F:扩展被他端挤下线软条标记（仅 lease displaced；session 存储） | R:code:extension/src/infrastructure/logging/logger.ts,code:extension/src/infrastructure/storage/chrome-storage-session.ts | A:- | S:-
+first-recall-onboarding-storage.ts[PD5S]: F:首次找回引导相关 storage（Side Panel / 划词浮层共用） | R:code:extension/src/infrastructure/storage/install-onboarding-storage.ts | A:- | S:-
+gs-clue-samples-storage.ts[PD5T]: F:Getting Started 示意 clue 的 session 缓存（同会话不重复烧配额） | R:code:extension/src/infrastructure/storage/chrome-storage-session.ts | A:- | S:-
+install-onboarding-storage.ts[PD5T]: F:安装引导完成标记（Side Panel / Getting Started 共用） | R:- | A:- | S:-
+last-extension-lease-session-storage.ts[PD5T]: F:本机上次成功 handoff 的扩展 Auth session_id（区分孤儿租约与他端占用） | R:code:extension/src/infrastructure/logging/logger.ts,code:extension/src/infrastructure/storage/chrome-storage-local.ts | A:- | S:-
+memory-library-revision-storage.ts[PD5T]: F:本机 Memory 库成员变更信号（chrome.storage.local） | R:- | A:- | S:-
+recall-outcome-pairs-storage.ts[PD5S]: F:本机 Recall Outcome 对 ring buffer（chrome.storage.local） | R:code:extension/src/core/common/optional-props.ts,code:extension/src/core/recall/recall-outcome-pairs.ts | A:- | S:-
+suppress-displaced-notice-storage.ts[PD5T]: F:本机 Connect / mint 编排窗口：抑制「signed in elsewh | R:code:extension/src/infrastructure/storage/chrome-storage-session.ts | A:- | S:不得冒充
+third-party-corpus-import-storage.ts[PD5T]: F:第三方语料导入进度读写（chrome.storage.local，按来源 map） | R:code:extension/src/core/memory/third-party-corpus-import-state.ts,code:extension/src/core/memory/third-party-corpus-source.ts | A:- | S:-
+
+===/<repository>/extension/src/infrastructure/sync/===
+chrome-bookmark-repair-alarm.ts[IR6T]: F:Chrome 书签 ↔ Memory 定时 full repair 闹钟 | R:code:extension/src/infrastructure/logging/logger.ts | A:- | S:-
+dreaming-alarm.ts[IR6T]: F:Dreaming 夜间批处理闹钟（chrome.alarms） | R:code:extension/src/core/dreaming/dreaming-constants.ts,code:extension/src/infrastructure/logging/logger.ts | A:- | S:-
+link-status-sweep-alarm.ts[IR6T]: F:死链巡检周期闹钟（chrome.alarms） | R:code:extension/src/core/dreaming/dreaming-constants.ts,code:extension/src/infrastructure/logging/logger.ts | A:- | S:-
+memory-cloud-sync-alarm.ts[IR6T]: F:云 Memory 定时同步闹钟（chrome.alarms） | R:code:extension/src/infrastructure/logging/logger.ts | A:- | S:-
+
+===/<repository>/extension/src/infrastructure/ui/===
+AppButton.vue[IU6M]: F:自研按钮：filled/tonal/outlined/text；可选 href 渲染为链接 | R:- | A:Vue 组件 | S:-
+AppConfirmModal.vue[IU6S]: F:确认类 Modal：薄封装 AppModal，固定 Cancel + Confirm | R:code:extension/src/infrastructure/ui/AppButton.vue,code:extension/src/infrastructure/ui/AppModal.vue | A:Vue 组件 | S:-
+AppHoverTip.vue[IU6S]: F:悬停或键盘焦点时在触发器上方弹出说明气泡 | R:- | A:Vue 组件 | S:-
+AppIconButton.vue[IU6S]: F:自研图标按钮；省略可见文字时由父组件传入 title 与 aria-label | R:- | A:Vue 组件 | S:-
+AppLibraryItemCard.vue[IU6M]: F:资料库条目卡：跳转/多选/Detail export 选中态 | R:code:extension/src/infrastructure/ui/icons/AppIcon.vue | A:Vue 组件 | S:-
+AppLibraryItemFavicon.vue[IU6T]: F:资料库条目 favicon（Chrome 缓存；失败回退图标） | R:code:extension/src/infrastructure/browser/chrome-favicon.ts,code:extension/src/infrastructure/ui/icons/AppIcon.vue | A:Vue 组件 | S:-
+AppLinearProgress.vue[IU6T]: F:自研线性进度条；value 为 0–1，缺省为不确定动画 | R:- | A:Vue 组件 | S:-
+AppMenuButton.vue[IU6M]: F:带弹出菜单的按钮：hover 预展开、click 切换、Esc/外点关闭 | R:code:extension/src/infrastructure/ui/icons/AppIcon.vue,code:extension/src/infrastructure/ui/icons/icon-paths.ts | A:Vue 组件 | S:-
+AppModal.vue[IU6S]: F:Modal 对话框：遮罩+卡片+Esc 与焦点陷阱 | R:code:extension/src/infrastructure/ui/use-modal-focus-trap.ts | A:Vue 组件 | S:-
+AppPageHeader.vue[IU6L]: F:扩展页顶栏：品牌与跨页导航入口 | R:code:extension/src/core/identity/subscription-snapshot.ts,code:extension/src/infrastructure/auth/watch-auth-session-storage.ts | A:Vue 组件 | S:-
+AppSectionTabs.vue[IU6S]: F:页内分区 Tab（侧栏/顶栏 chips；WAI-ARIA Tabs） | R:code:extension/src/infrastructure/ui/app-section-tabs-keyboard.ts | A:Vue 组件 | S:-
+AppSwitch.vue[IU6T]: F:自研受控开关；失败回滚由父组件保持旧值 | R:- | A:Vue 组件 | S:-
+AppTextarea.vue[IU6T]: F:自研多行输入：附注等表单场景 | R:- | A:Vue 组件 | S:-
+AppToast.vue[IU6T]: F:单条 Toast 展示（语气与 a11y live 区域） | R:code:extension/src/infrastructure/ui/icons/AppIcon.vue,code:extension/src/infrastructure/ui/icons/icon-paths.ts | A:Vue 组件 | S:-
+AppToastHost.vue[IU6T]: F:Toast 宿主：Teleport 到 body 并挂载队列 | R:code:extension/src/infrastructure/ui/AppToast.vue,code:extension/src/infrastructure/ui/use-app-toast.ts | A:Vue 组件 | S:-
+DetailExportBar.vue[IU6S]: F:Detail export 底栏：选中计数与导出格式菜单 | R:code:extension/src/infrastructure/recall/detail-export-selection.ts,code:extension/src/infrastructure/i18n/t.ts | A:Vue 组件 | S:-
+DetailExportBarDock.vue[IU6T]: F:Detail export 底栏停靠层与离场过渡 | R:- | A:Vue 组件 | S:-
+app-hover-menu-timing.ts[IU6T]: F:悬停展开菜单的延迟（AppMenuButton / 划词浮层对齐） | R:- | A:- | S:-
+app-section-tabs-keyboard.ts[IU3T]: F:AppSectionTabs 方向键 / Home / End 导航 | R:- | A:- | S:-
+library-item-card-content.css[IU3S]: F:AppLibraryItemCard 三行布局排版（摘录 / 书签共用） | R:- | A:- | S:-
+use-app-toast.ts[IU6S]: F:Toast 语气：info=中性提示 | R:- | A:- | S:-
+use-modal-focus-trap.ts[IU6T]: F:可聚焦元素选择器（Modal 焦点陷阱） | R:- | A:- | S:-
+
+===/<repository>/extension/src/infrastructure/ui/icons/===
+AppIcon.vue[IU6T]: F:通识 Lucide 线框图标 SVG 组件 | R:code:extension/src/infrastructure/ui/icons/icon-paths.ts | A:Vue 组件 | S:-
+icon-paths.ts[IU6M]: F:扩展 UI Lucide 线框图标路径表（离线内联；禁第二套图标库） | R:- | A:- | S:禁止图标字体 / CDN / 第二套图标库
+
+===/<repository>/extension/src/offscreen/===
+main.ts[EE5T]: F:v4 Offscreen Document 入口，供未来本地 embedding 等 | R:code:extension/src/offscreen/offscreen-message.ts | A:- | S:-
+offscreen-message.ts[EE5T]: F:Offscreen Document 探活消息（embedding 接入前仅 PING） | R:- | A:- | S:-
+
+===/<repository>/extension/src/pages/detail/===
+Detail.vue[EU5L]: F:条目详情页：正文预览与附注编辑 | R:code:extension/src/infrastructure/ui/AppButton.vue,code:extension/src/infrastructure/ui/AppIconButton.vue | A:扩展页 UI | S:-
+index.html[EU3T]: F:详情页 HTML 壳：挂载 detail/main.ts | R:- | A:扩展页 UI | S:-
+main.ts[EU5T]: F:Detail 页入口：i18n boot 后挂载 Detail.vue | R:code:extension/src/infrastructure/i18n/extension-i18n-boot.ts | A:扩展页 UI | S:-
+
+===/<repository>/extension/src/pages/getting-started/===
+GettingStarted.vue[EU5M]: F:Getting Started 启动页：书签/摘录双源与首召引导 | R:code:extension/src/infrastructure/browser/side-panel.ts,code:extension/src/infrastructure/i18n/t.ts | A:扩展页 UI | S:-
+GettingStartedBookmarksPanel.vue[EU5L]: F:Getting Started 书签面板：授权同意与导入进度 | R:code:extension/src/core/memory/chrome-bookmark-import-state.ts,code:extension/src/core/messaging/ui-messages.ts | A:扩展页 UI | S:-
+GettingStartedExcerptsPanel.vue[EU5S]: F:Getting Started 摘录面板：空库文学段或示意召回 | R:code:extension/src/infrastructure/browser/side-panel.ts,code:extension/src/infrastructure/i18n/t.ts | A:扩展页 UI | S:-
+GettingStartedPassage.vue[EU5S]: F:Getting Started 文学段：供划词浮层 Save 示意 | R:code:extension/src/infrastructure/ui/AppButton.vue,code:extension/src/infrastructure/i18n/t.ts | A:扩展页 UI | S:-
+GettingStartedRecallPanel.vue[EU5L]: F:Getting Started 页内召回卡：示意 clue 与结果 | R:code:extension/src/core/onboarding/gs-clue-samples.ts,code:extension/src/infrastructure/ui/AppButton.vue | A:扩展页 UI | S:-
+chrome-bookmark-sync-suggestion.ts[EU5T]: F:Getting Started：导入完成后是否展示「建议开启同步」卡 | R:- | A:扩展页 UI | S:-
+getting-started-actions.ts[EU5T]: F:Getting Started 是否可提交 clue | R:- | A:扩展页 UI | S:-
+getting-started-progress.ts[EU5T]: F:汇总 Getting Started 进度：库侧三态与首次召回完成条件 | R:code:extension/src/core/settings/user-settings.ts,code:extension/src/infrastructure/storage/first-recall-onboarding-storage.ts | A:扩展页 UI | S:-
+getting-started-tabs.ts[EU5T]: F:Getting Started 启动设置双源 tab（闭集） | R:- | A:扩展页 UI | S:-
+index.html[EU3T]: F:Getting Started 页 HTML 壳：挂载 getting-started/main.ts | R:- | A:扩展页 UI | S:-
+main.ts[EU5T]: F:void bootExtensionPage('getting_started'). | R:code:extension/src/content/selection-toolbar/main.ts,code:extension/src/infrastructure/i18n/extension-i18n-boot.ts | A:扩展页 UI | S:-
+map-getting-started-recall-card.ts[EU3T]: F:Getting Started 页内结果卡（轻量，非 Side Panel 全卡） | R:code:extension/src/core/i18n/translate.ts,code:extension/src/core/recall/explain-recall-match.ts | A:扩展页 UI | S:-
+pick-getting-started-bookmark-sample.ts[EU5T]: F:已废弃再导出：Getting Started 书签示意采样请改从 core/onboarding 导入 | R:code:extension/src/core/onboarding/pick-getting-started-bookmark-sample.ts | A:扩展页 UI | S:-
+pick-getting-started-excerpt-sample.ts[EU5S]: F:Getting Started 摘录口语建议：从真实摘录正文/标题生成 1–3 条口 | R:code:extension/src/core/memory/memory-item.ts | A:扩展页 UI | S:禁止内容别名灰名单；仅固定模板 + 字面片段
+use-getting-started-in-page-recall.ts[EU5S]: F:Getting Started 页内真 Recall（书签 / 摘录 tab 共用） | R:code:extension/src/infrastructure/i18n/t.ts,code:extension/src/infrastructure/logging/logger.ts | A:扩展页 UI | S:-
+
+===/<repository>/extension/src/pages/library/===
+BookmarkLibraryTree.vue[EU5M]: F:Library 书签树虚拟列表（文件夹展开与滚动） | R:code:extension/src/core/memory/bookmark-library-index.ts,code:extension/src/core/memory/bookmark-library-index.ts | A:扩展页 UI | S:-
+BookmarkLibraryTreeRow.vue[EU5M]: F:Library 书签树单行：文件夹折叠或书签激活/导出选中 | R:code:extension/src/infrastructure/ui/AppIconButton.vue,code:extension/src/core/memory/bookmark-library-index.ts | A:扩展页 UI | S:-
+ExcerptLibraryList.vue[EU5M]: F:Library 摘录列表虚拟滚动 | R:code:extension/src/core/memory/library-excerpt-virtual-list.ts,code:extension/src/core/memory/bookmark-library-virtual-list.ts | A:扩展页 UI | S:-
+Library.vue[EU5L]: F:Library 主页：书签/摘录 Tab 与 Detail export | R:code:extension/src/infrastructure/ui/AppButton.vue,code:extension/src/infrastructure/ui/AppIconButton.vue | A:扩展页 UI | S:-
+bookmark-library-activate.ts[EU5T]: F:书签行激活后的动作：展开多选 / 打开 / 忽略 | R:- | A:扩展页 UI | S:-
+bookmark-library-tree-expanded.ts[EU3T]: F:用 session 存储记忆库书签树已展开文件夹 id 列表 | R:code:extension/src/core/memory/bookmark-library-tree.ts,code:extension/src/infrastructure/storage/chrome-storage-session.ts | A:扩展页 UI | S:-
+bookmark-library-tree-row-memo.ts[EU5T]: F:书签树行 v-memo 上下文（父组件状态，非行内字段） | R:code:extension/src/core/memory/bookmark-library-index.ts | A:扩展页 UI | S:-
+index.html[EU3T]: F:记忆库页 HTML 壳：挂载 library/main.ts | R:- | A:扩展页 UI | S:-
+library-bookmark-import-ui.ts[EU5T]: F:Library 书签 Tab：是否处于导入进行中的 UI 谓词 | R:code:extension/src/core/memory/chrome-bookmark-import-state.ts | A:扩展页 UI | S:-
+library-excerpt-list-rows.ts[EU5T]: F:摘录列表虚拟行（展示字段在加载时预计算，避免滚动/多选时重复 format） | R:code:extension/src/core/memory/memory-item-saved-at.ts,code:extension/src/core/memory/memory-item.ts | A:扩展页 UI | S:-
+library-list-tokens.ts[EU5T]: F:Library 摘录列表与书签树共享行距 rhythm token | R:code:extension/src/core/memory/bookmark-library-index.ts | A:扩展页 UI | S:-
+main.ts[EU5T]: F:Library 页入口：i18n boot 后挂载 Library.vue | R:code:extension/src/infrastructure/i18n/extension-i18n-boot.ts | A:扩展页 UI | S:-
+use-library-virtual-scroll.ts[EU5T]: F:把 library 滚动合并到每帧一次，降低虚拟列表压力 | R:- | A:扩展页 UI | S:-
+
+===/<repository>/extension/src/pages/review/===
+ReviewPage.vue[EU5L]: F:每日回顾只读页：展示 dreaming 回顾楔子 | R:code:extension/src/core/dreaming/build-daily-review.ts,code:extension/src/core/dreaming/build-daily-review.ts | A:扩展页 UI | S:-
+index.html[EU3T]: F:复习页 HTML 壳：挂载 review/main.ts | R:- | A:扩展页 UI | S:-
+main.ts[EU5T]: F:Review 页入口：i18n boot 后挂载 ReviewPage.vue | R:code:extension/src/infrastructure/i18n/extension-i18n-boot.ts | A:扩展页 UI | S:-
+
+===/<repository>/extension/src/pages/settings/===
+Settings.vue[EU5S]: F:Settings 主页壳：分区导航与全局 Toast | R:code:extension/src/infrastructure/ui/AppPageHeader.vue,code:extension/src/infrastructure/ui/AppSectionTabs.vue | A:扩展页 UI | S:-
+SettingsActionRow.vue[EU5S]: F:设置页行式操作：左文案右按钮 | R:- | A:扩展页 UI | S:-
+SettingsPageDialogs.vue[EU5S]: F:Settings 页内对话框集合（登录迁移等） | R:code:extension/src/infrastructure/ui/AppButton.vue,code:extension/src/infrastructure/ui/AppConfirmModal.vue | A:扩展页 UI | S:-
+SettingsSectionPanels.vue[EU5L]: F:Settings 各分区面板内容 | R:code:extension/src/core/settings/settings-sections.ts,code:extension/src/infrastructure/ui/AppButton.vue | A:扩展页 UI | S:-
+SettingsThirdPartySourceGroup.vue[EU5T]: F:第三方语料来源分组：导入操作行 | R:code:extension/src/core/memory/third-party-corpus-source.ts,code:extension/src/infrastructure/ui/AppButton.vue | A:扩展页 UI | S:-
+chrome-bookmark-import-status-copy.ts[EU5T]: F:Chrome 书签导入状态映射为 Settings 展示文案 view | R:code:extension/src/core/memory/chrome-bookmark-import-state.ts,code:extension/src/core/memory/chrome-bookmark-import-state.ts | A:扩展页 UI | S:-
+dual-thread-learning-label.ts[EU5T]: F:学习面板标签种类：结果 outcome / 确认 label / 失败 stage | R:code:extension/src/core/i18n/translate.ts | A:扩展页 UI | S:-
+index.html[EU3T]: F:设置页 HTML 壳：挂载 settings/main.ts | R:- | A:扩展页 UI | S:-
+main.ts[EU5T]: F:Settings 页入口：i18n boot 后挂载 Settings.vue | R:code:extension/src/infrastructure/i18n/extension-i18n-boot.ts | A:扩展页 UI | S:-
+settings-page-url-sync.ts[EU5T]: F:Settings 分区与 location.search / history 的读写同步 | R:code:extension/src/core/settings/settings-sections.ts | A:扩展页 UI | S:-
+settings-panel.css[EU3L]: F:.settings-block { | R:- | A:扩展页 UI | S:-
+settings-visibility-refresh.ts[EU5T]: F:从 Chrome 快捷键页返回后是否应静默刷新命令绑定 | R:- | A:扩展页 UI | S:-
+third-party-source-status-copy.ts[EU5T]: F:第三方语料导入状态行的摘要文案与错误码映射 | R:code:extension/src/core/memory/third-party-corpus-import-state.ts,code:extension/src/core/memory/third-party-corpus-source.ts | A:扩展页 UI | S:-
+use-settings-page.ts[EU5L]: F:Settings 页组合状态：分区、偏好、命令快捷键与第三方导入 | R:code:extension/src/core/commands/command-display.ts,code:extension/src/core/messaging/commands-messages.ts | A:扩展页 UI | S:-
+
+===/<repository>/extension/src/pages/shared/===
+LoginMigrationDialog.vue[EU5S]: F:登录迁移对话框：本机摘录/书签处置确认 | R:code:extension/src/infrastructure/ui/AppButton.vue,code:extension/src/infrastructure/ui/AppConfirmModal.vue | A:扩展页 UI | S:-
+use-login-migration-dialog.ts[EU5S]: F:登录迁移门闸 UI（ADR-018）：Import / Export / Delet | R:code:extension/src/infrastructure/messaging/background-client.ts,code:extension/src/infrastructure/i18n/background-error.ts | A:扩展页 UI | S:ADR-018）：Import / Export / Delete
+
+===/<repository>/extension/src/pages/sidepanel/===
+RecallHighlightText.vue[EU5T]: F:Recall 命中片段高亮渲染 | R:code:extension/src/core/recall/highlight-recall-text.ts | A:扩展页 UI | S:-
+RecallResultCard.vue[EU5L]: F:Recall 结果卡：邻域项扫读、展开与打开原文 | R:code:extension/src/core/recall/highlight-recall-text.ts,code:extension/src/infrastructure/browser/active-tab-reader.ts | A:扩展页 UI | S:-
+SidePanel.vue[EU8L]: F:Recall 主壳 Side Panel | R:code:extension/src/infrastructure/ui/AppButton.vue,code:extension/src/infrastructure/ui/AppIconButton.vue | A:扩展页 UI | S:-
+build-assistant-turn.ts[EU5T]: F:构造 Side Panel 助手轮次（轻提示、卡片与 framing 字段） | R:code:extension/src/core/recall/format-recall-understanding-echo.ts,code:extension/src/core/recall/recall-framing-facts.ts | A:扩展页 UI | S:-
+index.html[EU3T]: F:Side Panel HTML 壳：挂载 sidepanel/main.ts | R:- | A:扩展页 UI | S:-
+main.ts[EU5T]: F:Side Panel 入口：i18n boot 后挂载 SidePanel.vue | R:code:extension/src/infrastructure/i18n/extension-i18n-boot.ts | A:扩展页 UI | S:-
+recall-conversation-turn-window.ts[EU5T]: F:会话线程默认挂载 turn 窗口与「Show earlier」分页常量 | R:- | A:扩展页 UI | S:-
+recall-conversation-types.ts[EU5T]: F:Side Panel 会话 turn / suggestion 等展示类型 | R:code:extension/src/core/recall/format-recall-understanding-echo.ts,code:extension/src/core/recall/recall-framing-facts.ts | A:扩展页 UI | S:-
+recall-match-card.ts[EU3S]: F:把 RecallMatch 转成结果卡模型（含解释与 detail 链接） | R:code:extension/src/core/i18n/translate.ts,code:extension/src/core/recall/recall-result.ts | A:扩展页 UI | S:-
+recall-result-card-evidence.ts[EU5T]: F:为 TTE evidenceVisible 从结果卡抽取并评分证据字段 | R:code:extension/src/core/recall/recall-telemetry.ts | A:扩展页 UI | S:-
+recall-result-card-favicon.ts[EU5T]: F:favicon 加载失败 id 集合（不可变更新，配合 Vue ref） | R:- | A:扩展页 UI | S:-
+recall-result-card-helpers.ts[EU5S]: F:Side Panel 结果卡派生：可见截取、Framing/回声文案、match→卡 | R:code:extension/src/core/recall/recall-result.ts,code:extension/src/core/recall/render-recall-framing.ts | A:扩展页 UI | S:-
+recall-result-card-interaction.ts[EU5T]: F:Recall 结果卡点击意图：导出切换或经 SW 打开原文 | R:- | A:扩展页 UI | S:-
+recall-shell-scroll.ts[EU5S]: F:距顶/底 threshold 内视为「贴边」（与 Side Panel 滚动区一致） | R:- | A:扩展页 UI | S:-
+resolve-recall-failed-copy.ts[EU5T]: F:Recall 整轮失败时的 UI 文案分流（诚实归因 · 离线 vs 在线） | R:- | A:扩展页 UI | S:纯函数
+use-composer-speech-dictation.ts[EU5M]: F:Composer 麦克风听写写入 clue（不自动提交；含授权引导） | R:code:extension/src/core/messaging/recall-messages.ts,code:extension/src/core/recall/clamp-recall-clue-text.ts | A:扩展页 UI | S:-
+use-detail-export.ts[EU5S]: F:Side Panel 详情导出：多选、选中集与复制/下载 toast | R:code:extension/src/pages/sidepanel/recall-conversation-types.ts,code:extension/src/application/recall/commit-recall-outcome.ts | A:扩展页 UI | S:-
+use-recall-outcome-session.ts[EU5M]: F:Side Panel §7.2 Outcome 会话：出口条、dwell 收尾、结算 | R:code:extension/src/core/recall/recall-result.ts,code:extension/src/core/recall/resolve-recall-degraded-reason.ts | A:扩展页 UI | S:-
+use-recall-result-cards.ts[EU5M]: F:Side Panel 结果卡交互：Show more、重复组折叠、打开原文、证据可见 | R:code:extension/src/core/recall/build-recall-result.ts,code:extension/src/core/recall/recall-result-visible-count.ts | A:扩展页 UI | S:-
+use-recall-shell-scroll.ts[EU5M]: F:Side Panel 滚动胶水：浮底间隙、黏底、邻域锚点、跳转钮、ResizeObs | R:code:extension/src/infrastructure/i18n/t.ts,code:extension/src/pages/sidepanel/recall-conversation-types.ts | A:扩展页 UI | S:-
+use-recall-visible-progress.ts[EU5M]: F:Side Panel §7.0 可见进展 UI 态：揭示门限、阶段队列 pacing | R:code:extension/src/core/recall/recall-telemetry.ts,code:extension/src/core/recall/visible-progress.ts | A:扩展页 UI | S:-
+use-sidepanel-cold-start.ts[EU5L]: F:Side Panel 冷启动门禁 / 书签导入轮询 / 空态文案 / 首召预填 | R:code:extension/src/core/memory/chrome-bookmark-import-state.ts,code:extension/src/core/memory/cold-start-pipeline-state.ts | A:扩展页 UI | S:-
+use-voice-input-meter.ts[EU5M]: F:听写态电平：AnalyserNode 跟麦克风能量；失败 / 降动态时回退氛围动画 | R:code:extension/src/infrastructure/logging/logger.ts | A:扩展页 UI | S:-
+
+===/<repository>/extension/src/pages/sidepanel/components/===
+ColdStartGate.vue[EU5M]: F:Side Panel 冷启动全屏门禁：分阶段真实进度 | R:code:extension/src/infrastructure/ui/AppLinearProgress.vue,code:extension/src/core/memory/cold-start-pipeline-state.ts | A:扩展页 UI | S:-
+RecallComposer.vue[EU5L]: F:Recall composer：clue 输入、麦克风与提交 | R:code:extension/src/core/messaging/recall-messages.ts,code:extension/src/core/recall/clamp-recall-clue-text.ts | A:扩展页 UI | S:-
+RecallConversation.vue[EU5L]: F:Recall 会话线程：用户/助手 turn 与更早展开 | R:code:extension/src/infrastructure/ui/AppButton.vue,code:extension/src/core/recall/build-recall-result.ts | A:扩展页 UI | S:-
+RecallPageContextControls.vue[EU5L]: F:当前浏览页上下文芯片：域名与展开/收起 | R:code:extension/src/infrastructure/ui/AppHoverTip.vue,code:extension/src/infrastructure/ui/icons/AppIcon.vue | A:扩展页 UI | S:-
+
+===/<repository>/extension/src/pages/sidepanel/composer/===
+ClueFormattedText.vue[EU5S]: F:只读 clue 渲染：纯文本 + URL 芯片 | R:code:extension/src/core/recall/clue-url-display.ts,code:extension/src/infrastructure/browser/chrome-favicon.ts | A:扩展页 UI | S:-
+clue-editor-dom.ts[EU5M]: F:Contenteditable clue 编辑器：纯文本与 URL 芯片 DOM 互转 | R:code:extension/src/infrastructure/browser/chrome-favicon.ts,code:extension/src/pages/sidepanel/composer/clue-url.ts | A:扩展页 UI | S:-
+clue-url-chip.css[EU3T]: F:URL 原子芯片样式（composer 与用户气泡共用） | R:- | A:扩展页 UI | S:-
+clue-url.ts[EU5T]: F:Composer 侧 re-export clue URL 解析与展示工具 | R:code:extension/src/core/recall/clue-url-display.ts,code:extension/src/core/recall/clue-plain-url.ts | A:扩展页 UI | S:-
+enrich-clue-url-chips.ts[EU5T]: F:异步给 URL 芯片补标题（本机库 / 打开中 tab）；失败静默保留缩短 host | R:code:extension/src/core/recall/clue-url-display.ts,code:extension/src/infrastructure/messaging/background-client.ts | A:扩展页 UI | S:-
+
+===/<repository>/extension/src/styles/===
+extension-ui.css[EU3T]: F:扩展 UI 样式入口：Brand Roles + motion + 语义色 | R:- | A:- | S:-
+fonts.css[EU3T]: F:扩展 Body/UI：Work Sans（与官网正文同族） | R:- | A:- | S:-
+
+===/<repository>/extension/stylelint/===
+no-motion-on-interaction.mjs[FQ5S]: F:Stylelint 规则：禁止 :hover/:focus/:active 上改几何属性 | R:- | A:- | S:-
+
+===/<repository>/extension/vite/===
+build-options.ts[FV5T]: F:扩展 Vite 多入口清单（sidepanel/settings/background/offscreen） | R:- | A:- | S:-
+build.ts[FV3T]: F:Chrome 扩展 Vite 构建选项 | R:- | A:- | S:-
+constants.ts[FV5T]: F:Vite 配置常量 | R:- | A:- | S:-
+content-scripts-iife.ts[FV5T]: F:构建时把 content script 打成无 ESM 的单文件 IIFE 供 MV3 加载 | R:- | A:- | S:-
+extension-post-build-paths.ts[FV5T]: F:判定路径变更是否会使 content script IIFE 产物过期 | R:- | A:- | S:-
+extension-post-build.ts[FV3M]: F:扩展构建收尾：watch 互斥、content IIFE 与平铺 HTML | R:- | A:- | S:-
+plugins.ts[FV5T]: F:Vite 插件配置 | R:- | A:- | S:-
+server.ts[FV5T]: F:Vite 开发服务器配置 | R:- | A:- | S:-
+sw-safe-modulepreload.ts[FV3T]: F:Service Worker 无 document/window | R:- | A:- | S:-
+
+===/<repository>/packages/design-tokens/css/===
+brand.css[LU3T]: F:品牌核心与 Product Roles、布局 token（CSS 权威） | R:- | A:- | S:-
+motion.css[LU3T]: F:扩展交互时长 / 缓动（自研；供 App* 控件消费） | R:- | A:- | S:-
+semantic-colors.css[LU3T]: F:语义色 — 直连 Brand Roles（禁止第二套主色 / 紫「AI」强调） | R:- | A:- | S:禁止第二套主色 / 紫「AI」强调）
+variables.css[LU3T]: F:扩展配套：motion + 轻量全局 | R:- | A:- | S:-
+
+===/<repository>/packages/design-tokens/===
+package.json[FV5T]: F:@yiveno/design-tokens 包清单与 exports（brand/CSS 入口） | R:- | A:- | S:-
+tsconfig.json[FV5T]: F:design-tokens 包 TypeScript 编译配置 | R:- | A:- | S:-
+
+===/<repository>/packages/design-tokens/src/===
+brand.ts[LU3T]: F:Yiveno Brand Core 常量（TS 侧 Ink/Paper/Sage 等） | R:- | A:- | S:-
+index.ts[LU5T]: F:设计令牌包入口：再导出 brand 核心 token | R:- | A:- | S:-
+
+===/<repository>/packages/types/===
+package.json[FV5T]: F:@yiveno/types 共享类型包清单 | R:- | A:- | S:-
+tsconfig.json[FV5T]: F:@yiveno/types TypeScript 配置 | R:- | A:- | S:-
+
+===/<repository>/packages/types/src/===
+index.ts[LG5T]: F:共享类型包入口：再导出订阅与支付类型 | R:- | A:- | S:-
+payment.ts[LB5T]: F:共享支付记录与支付状态类型 | R:- | A:- | S:-
+subscription.ts[LB5S]: F:共享订阅档位、状态与校验相关类型 | R:- | A:- | S:-
+
+===/<repository>/packages/yiveno-mcp/===
+package.json[FV5T]: F:@yiveno/mcp 只读 MCP CLI 包清单 | R:- | A:- | S:-
+tsconfig.json[FV5T]: F:@yiveno/mcp TypeScript 配置 | R:- | A:- | S:-
+
+===/<repository>/packages/yiveno-mcp/src/===
+cli.ts[XE5S]: F:只读 MCP stdio 桥：把客户端接到 Worker /api/mcp 召回证据 | R:- | A:- | S:-
+
+===/<repository>/packages/yiveno-probe/===
+package.json[XQ5T]: F:@yiveno/probe 召回探针语料与 Console 包清单 | R:- | A:- | S:-
+tsconfig.json[XQ5T]: F:@yiveno/probe TypeScript 配置 | R:- | A:- | S:-
+vitest.config.ts[XQ5T]: F:@yiveno/probe 包 Vitest 配置（node 环境） | R:- | A:- | S:-
+
+===/<repository>/packages/yiveno-probe/src/catalog/===
+fixture-catalog.ts[XQ5T]: F:探针精选夹具目录（不写库；纯展开语料 clues） | R:- | A:- | S:-
+
+===/<repository>/packages/yiveno-probe/src/console/===
+ProbeConsole.vue[XQ5L]: F:DEV 探针工作台：造数/清理/批量跑分（非 §5.9） | R:- | A:Vue 组件 | S:-
+index.ts[XQ5T]: F:Probe Console Vue 入口（由 extension DEV 页挂载） | R:- | A:- | S:-
+probe-console-client.ts[XQ5M]: F:Probe Console 到 Background 的 DEV 造数/清理/跑分客户端 | R:- | A:- | S:-
+
+===/<repository>/packages/yiveno-probe/src/corpus/===
+clue-gen.ts[XQ5M]: F:diversity / cluster 线索生成（与内容生成分离；独立 rng 流） | R:- | A:- | S:禁止从 note / snippet 原文截取拼装；associativ
+clusters.ts[XQ5M]: F:同主题混淆组：同 subject、3–5 成员、消歧线索 + 组级 ambiguou | R:- | A:- | S:-
+creator.ts[XQ5S]: F:DEV 召回探针语料 · 创作者 / 设计研究者画像（分群第二优先） | R:- | A:- | S:-
+developer.ts[XQ5S]: F:DEV 召回探针语料 · 开发者 / PM 画像（分群第三优先） | R:- | A:- | S:-
+distribution.ts[XQ5T]: F:探针语料分布工具（纯函数） | R:- | A:- | S:禁止进召回 runtime
+diversity.ts[XQ5L]: F:质量轮多样性语料：画像风味 + 过程随机（可复现 seed） | R:- | A:- | S:禁止进召回 runtime
+index.ts[XQ5T]: F:召回探针语料索引出口（纯数据，无 Chrome/IDB） | R:- | A:- | S:无 Chrome
+knowledge-worker.ts[XQ5S]: F:DEV 召回探针语料 · 知识工作者 / 非工程职场画像（扩展覆盖；默认种库不含） | R:- | A:- | S:-
+negatives.ts[XQ5S]: F:负例探针：线索描述的目标不在库中；不种库、无 expected id | R:- | A:- | S:-
+noise.ts[XQ5S]: F:质量轮噪声语料：过程随机拼装（可复现 seed），clues 恒为空、role=di | R:- | A:- | S:禁止复制进召回 runtime
+prng.ts[XQ5T]: F:探针 filler（diversity / noise）过程随机：可复现 PRNG | R:- | A:- | S:禁止进召回 runtime
+researcher.ts[XQ5M]: F:DEV 召回探针语料 · 跨来源研究者画像（首发分群优先） | R:- | A:- | S:禁止当作 runtime 灰名单
+student.ts[XQ5S]: F:DEV 召回探针语料 · 学生 / 终身学习者画像（扩展覆盖；默认种库不含） | R:- | A:- | S:-
+types.ts[XQ5T]: F:DEV 召回探针语料共享类型（禁止进召回 runtime） | R:- | A:- | S:禁止进召回 runtime）
+
+===/<repository>/packages/yiveno-probe/src/export/===
+probe-generated-fixture.ts[XQ5S]: F:冻结探针评测夹具（纯数据）：精选语料 → items + cases | R:- | A:- | S:-
+
+===/<repository>/packages/yiveno-probe/src/===
+index.ts[XQ5T]: F:@yiveno/probe — Yiveno 测试语料与 Probe Console | R:- | A:- | S:纯函数
+vue-shim.d.ts[XQ3T]: F:为探针包声明 *.vue 模块与 Vite client 类型 | R:- | A:- | S:-
+
+===/<repository>/packages/yiveno-probe/src/presets/===
+seed-payload.ts[XQ3T]: F:种库 payload（与扩展 DEV_SEED_RECALL_PROBE 对齐） | R:- | A:- | S:-
+seed-presets.ts[XQ5T]: F:一键预设 = 内置配方的薄封装（兼容旧 Console API） | R:- | A:- | S:-
+
+===/<repository>/packages/yiveno-probe/src/recipe/===
+builtin-recipes.ts[XQ5T]: F:内置测试数据配方（与历史一键预设对齐） | R:- | A:- | S:-
+index.ts[XQ5T]: F:配方纯逻辑导出（不含 localStorage；可进 Service Worker） | R:- | A:- | S:-
+recipe-ops.ts[XQ5M]: F:配方纯函数：解析 / 序列化 / 表单互转 / 种库结果对照 | R:- | A:- | S:纯函数
+recipe-storage.ts[XQ5T]: F:本机自定义配方存储（Probe Console localStorage） | R:- | A:- | S:-
+types.ts[XQ5T]: F:测试数据配方（可序列化、可回放） | R:- | A:- | S:-
+
+===/<repository>/packages/yiveno-probe/src/run/===
+aggregate.ts[XQ5M]: F:批量探针结果聚合与排序（纯函数） | R:- | A:- | S:纯函数
+case-plan.ts[XQ5M]: F:展开批量探针用例：精选 + diversity + cluster + 负例 | R:- | A:- | S:纯函数
+diff.ts[XQ5T]: F:两次探针运行聚合指标 diff（纯函数） | R:- | A:- | S:纯函数
+index.ts[XQ5T]: F:探针批量运行：用例展开、聚合、diff（纯函数面） | R:- | A:- | S:纯函数
+types.ts[XQ5S]: F:探针批量运行报告类型（纯数据；无 Chrome / IDB） | R:- | A:- | S:无 Chrome
+
+===/<repository>/packages/yiveno-probe/src/verify/===
+neighborhood.ts[XQ3T]: F:DEV 邻域对拍判定（与 recall-eval in_topk/top1 语义对齐） | R:- | A:- | S:纯函数
+
+===/<repository>/scripts/===
+README.md[XV5M]: F:Scripts 目录 | R:- | A:- | S:-
+check-commit-message.mjs[XV5S]: F:校验 commit message body 是否方括号索引每个暂存文件 | R:- | A:- | S:-
+check-doc-code-consistency.mjs[XV5M]: F:静态门禁：核对权威文档承诺与代码架构约束一致 | R:- | A:- | S:-
+check-doc-drift.mjs[XV5S]: F:文档漂移门禁：message registry、产品 §4 与 session-boot 同步 | R:- | A:- | S:-
+dev-env.mjs[XV5L]: F:生成本地/生产环境变量到各 workspace 运行时文件 | R:- | A:- | S:-
+dev-green-check.mjs[XV5T]: F:本地一键绿检：extension typecheck、knip、test:must、doc:check | R:- | A:- | S:-
+diagram-change-impact.mjs[XV5L]: F:按 Git diff 映射受影响 Mermaid 图表并输出 Agent 复核清单 | R:- | A:- | S:-
+migrate-probe-clues-m2.mjs[XV5S]: F:一次性：精选语料 suggestedClues → clues: ProbeType | R:- | A:- | S:-
+setup-git-lfs.sh[XV5T]: F:为本仓安装 Git LFS filter（不覆盖 Husky pre-push） | R:- | A:- | S:-
+summarize-visible-progress-telemetry.mjs[XV5S]: F:汇总 §7.0 可见进展遥测导出（与 TTE 分计） | R:- | A:- | S:-
+sync-brand-assets.mjs[XV5T]: F:把品牌母本同步到扩展与官网运行时目录（可 --check） | R:- | A:- | S:-
+sync-diagrams.mjs[XV5M]: F:校验 Mermaid 图表清单并写出 Agent 同步 Brief | R:- | A:- | S:-
+sync-ide-boot.mjs[XV5S]: F:从 CURRENT.md 同步 session-boot.mdc 的当下块（可 --check） | R:- | A:- | S:-
+tte-summarize-telemetry.mjs[XV5S]: F:汇总 TTE 遥测缓冲导出（研究用，非运行时） | R:- | A:- | S:-
+
+===/<repository>/scripts/lib/===
+mermaid-diagrams.mjs[XV5M]: F:Mermaid 图表清单与宿主 MD 解析（供 sync-diagrams/check） | R:- | A:- | S:-
+
+===/<repository>/supabase/===
+.gitignore[OV5T]: F:Supabase 目录的 git 忽略规则（分支缓存、临时目录与本地 env） | R:- | A:- | S:-
+config.toml[FV5M]: F:For detailed configuration reference docum | R:- | A:- | S:-
+
+===/<repository>/supabase/migrations/===
+20251212102549_remote_schema.sql[PD5L]: F:远程基线 schema：含 subscriptions/payment_records 等业务表 | R:- | A:- | S:-
+20251212103134_remote_schema.sql[PD5T]: F:修补远程 schema：订阅/支付外键与 updated_at 触发器 | R:- | A:- | S:-
+20260408162642_fix_database_issues.sql[PD5S]: F:修复早期库表/权限相关数据库问题 | R:- | A:- | S:-
+20260516160726_revoke_anon_execute_on_security_definer_functions.sql[PS5T]: F:撤销 anon 对 SECURITY DEFINER 函数的执行权限 | R:- | A:- | S:-
+20260516160907_fix_security_definer_functions_permissions.sql[PS5T]: F:修复 SECURITY DEFINER 函数权限 | R:- | A:- | S:-
+20260516161222_add_indexes_for_foreign_keys.sql[PP5T]: F:为外键字段添加索引以提升查询性能 | R:- | A:- | S:-
+20260516161255_remove_unused_indexes.sql[PP5T]: F:删除未使用索引以节省存储并减轻写入 | R:- | A:- | S:-
+20260516161322_add_index_for_gumroad_subscription_id_fkey.sql[PP5T]: F:为 gumroad_subscription_id 外键添加索引 | R:- | A:- | S:-
+20260518183920_create_share_tables.sql[PD5M]: F:创建分享功能相关表（其后已退役） | R:- | A:- | S:-
+20260518184500_create_profiles_table.sql[PI5T]: F:创建用户资料 profiles 表 | R:- | A:- | S:-
+20260518185000_simplify_share_tables.sql[PD5T]: F:简化分享表结构 | R:- | A:- | S:-
+20260519000000_add_show_username_to_shares.sql[PD5T]: F:shares 表增加 show_username 字段 | R:- | A:- | S:-
+20260519000100_add_description_to_shares.sql[PD5T]: F:shares 表增加 description 字段 | R:- | A:- | S:-
+20260519000200_fix_rls_policies.sql[PS5T]: F:修复相关表 RLS 策略 | R:- | A:- | S:-
+20260603000000_standardize_subscription_payment_contracts.sql[PB5S]: F:统一订阅/支付字段契约为 snake_case | R:- | A:- | S:-
+20260803120000_create_memory_items.sql[PD5T]: F:创建 MemoryItem 云端事实源表（同步铺路） | R:- | A:- | S:-
+20260805193000_drop_share_tables.sql[PD5T]: F:移除分享功能相关表 | R:- | A:- | S:-
+20260805194000_prune_expired_business_data.sql[PW5T]: F:清理过期业务数据（不触碰 memory_items 本体） | R:- | A:- | S:-
+20260806120000_subscription_entitlement_provenance.sql[PB5T]: F:订阅投影可证明性：来源、对账状态与事件账 | R:- | A:- | S:-
+20260814010000_paddle_billing_projection.sql[PB5M]: F:计费投影切到 Paddle 并重命名 gumroad_* 字段 | R:- | A:- | S:-
+20260815020000_create_website_waitlist.sql[PU5T]: F:创建官网预约下载 waitlist 表 | R:- | A:- | S:-
+20260817120000_dodo_billing_provider.sql[PB5T]: F:计费提供方从 Paddle 切到 Dodo Payments | R:- | A:- | S:-
+20261013001500_billing_events_rls_service_role_only.sql[PS5T]: F:billing_events 仅允许 service_role 读写 | R:- | A:- | S:-
+20261013010000_advisor_cleanup_rls_functions_indexes.sql[PS5T]: F:Advisor 建议清理：RLS、函数与索引 | R:- | A:- | S:-
+20261117120000_create_dual_thread_sketches.sql[PA5T]: F:创建暗线匿名汇总草图表（ADR-027） | R:- | A:- | S:ADR-027）
+
+===/<repository>/website/===
+.gitignore[OV5T]: F:官网目录 git 忽略：依赖、构建产物、本地 env 与缓存 | R:- | A:- | S:-
+astro.config.mjs[FV5T]: F:官网 Astro 静态输出与 Vue 集成配置 | R:- | A:- | S:-
+dev.sh[XV5T]: F:同步官网开发环境变量后启动 Astro dev | R:- | A:- | S:-
+package.json[FV5T]: F:官网 Astro/Vue workspace 依赖与脚本清单 | R:- | A:- | S:-
+stylelint.config.js[FQ5T]: F:官网 Stylelint 规则（含 Vue/HTML 语法） | R:- | A:- | S:-
+tsconfig.json[FV5T]: F:官网 TypeScript 配置 | R:- | A:- | S:-
+wrangler.toml[FV5T]: F:官网 Cloudflare Pages 本地 deploy 项目配置 | R:- | A:- | S:-
+
+===/<repository>/website/functions/===
+_middleware.ts[MG5T]: F:Pages 中间件：软性按地区跳转 .com ↔ .cn | R:- | A:官网边缘 | S:-
+
+===/<repository>/website/public/===
+_headers[OV5T]: F:Cloudflare Pages：哈希资源长缓存 | R:- | A:- | S:-
+_redirects[OV5T]: F:Cloudflare Pages：/s/* SPA 回退到 /s/ | R:- | A:- | S:-
+llms.txt[SU5T]: F:面向 LLM 爬虫的官网产品事实摘要（llms.txt） | R:- | A:- | S:-
+robots.txt[OO5T]: F:官网 robots：允许营销页索引并禁止账号/鉴权路径 | R:- | A:- | S:-
+sitemap.xml[OV5T]: F:官网公开 sitemap：首页与主要营销/法务路径 | R:- | A:- | S:-
+
+===/<repository>/website/src/billing/===
+tiers.ts[FC5T]: F:官网付费档位（仅 Pro）的价与 plan id | R:- | A:- | S:-
+
+===/<repository>/website/src/components/===
+AccountPage.vue[EU5L]: F:官网账户页：身份、权益、付费管理与结束会话 | R:- | A:官网组件 | S:-
+AppNav.astro[EU5T]: F:账号域顶栏：品牌 mark + AuthNav + UI 桥宿主 | R:- | A:官网组件 | S:-
+AuthCallback.vue[EI5S]: F:官网鉴权回调：交换会话或带回短错误码 | R:- | A:官网组件 | S:-
+AuthNav.vue[EI5S]: F:官网顶栏鉴权入口：登录链接或头像菜单 | R:- | A:官网组件 | S:-
+DisplaceExtensionConfirmDialog.vue[EI5S]: F:挤掉他端扩展租约确认对话框 | R:- | A:官网组件 | S:-
+ExtensionSessionProbe.vue[EI5T]: F:探测官网是否已登录并回传 signedIn（不 mint） | R:- | A:官网组件 | S:-
+ExtensionUninstalledPage.vue[EU5L]: F:扩展卸载落地：可选反馈与后台 revoke | R:- | A:官网组件 | S:-
+FromExtensionAuth.vue[EI5S]: F:扩展→官网反向接通：取会话并 setSession | R:- | A:官网组件 | S:-
+InstallCta.astro[EU5S]: F:首页安装 CTA：按主机选 Edge/Chrome 主路径（ADR-020） | R:- | A:官网组件 | S:-
+LoginForm.vue[EI5L]: F:官网登录表单：邮箱 OTP 与 OAuth | R:- | A:官网组件 | S:-
+LogoutPage.vue[EI5T]: F:官网退出页：清本地会话并反馈状态 | R:- | A:官网组件 | S:-
+MarketingNav.astro[EU5T]: F:营销页顶栏：与账号域同样挂 AuthNav，语言切换在页脚 | R:- | A:官网组件 | S:-
+PricingPage.vue[EB5L]: F:官网定价页：档位与结账入口 | R:- | A:官网组件 | S:-
+SoftToastHost.vue[EU5S]: F:官网轻提示 Toast 宿主（客户端 Teleport） | R:- | A:官网组件 | S:-
+UiBridgeHost.vue[EE5T]: F:维持官网↔扩展 UI Port，推送鉴权变化 | R:- | A:官网组件 | S:-
+WebsiteLanguageSwitcher.vue[EL5M]: F:官网语言切换菜单（en / zh_CN） | R:- | A:官网组件 | S:-
+
+===/<repository>/website/src/components/home/===
+HomeFlowDemo.astro[EU5S]: F:首页 Save→Forget→Recall 轻量流程动画（DOM+CSS 切相） | R:- | A:官网组件 | S:-
+RecallPanelMock.astro[EU5T]: F:首页 Recall 证明静帧：Side Panel 形态 composer + 邻域卡 | R:- | A:官网组件 | S:-
+YMark.astro[EU5T]: F:官网品牌 mark：浅底/深底双资源，Nav 可随 Hero 自适应 | R:- | A:官网组件 | S:-
+
+===/<repository>/website/src/components/legal/===
+PrivacyProseEn.astro[EU5M]: F:隐私政策英文权威正文 | R:- | A:官网组件 | S:-
+PrivacyProseZh.astro[EU5M]: F:隐私政策简体中文便利译本（冲突以英文版为准） | R:- | A:官网组件 | S:-
+TermsProseEn.astro[EU5T]: F:服务条款英文权威正文 | R:- | A:官网组件 | S:-
+TermsProseZh.astro[EU5T]: F:服务条款简体中文便利译本（冲突以英文版为准） | R:- | A:官网组件 | S:-
+
+===/<repository>/website/src/composables/===
+use-soft-toast.ts[AU5T]: F:官网轻提示 Toast 状态与自动消失逻辑 | R:- | A:官网组件 | S:-
+
+===/<repository>/website/src/===
+env.d.ts[FC3T]: F:Astro 官网 ImportMetaEnv 与客户端类型声明 | R:- | A:- | S:-
+
+===/<repository>/website/src/geo/===
+resolve-geo-domain-redirect.ts[AG5M]: F:官网软性按地区选域名（与页面显示语言无关） | R:- | A:- | S:-
+
+===/<repository>/website/src/i18n/===
+en.ts[IL5M]: F:官网产品面英文文案（美式英语；与 `zh.ts` 键对称） | R:- | A:- | S:禁止写死用户可见句
+locale.ts[IL5T]: F:官网 UI 语言：跟浏览器，可覆盖并持久化到 localStorage | R:- | A:- | S:-
+t.ts[IL8T]: F:官网产品面 t()：en/zh_CN 文案解析与 locale 持久化 | R:- | A:- | S:-
+zh.ts[IL5M]: F:官网产品面简体中文文案（与 `en.ts` 键对称） | R:- | A:- | S:禁止「搜索」；禁止默认「找回」
+
+===/<repository>/website/src/install/===
+store-links.ts[FE5T]: F:扩展商店安装深链（ADR-020） | R:- | A:- | S:禁止假装可装
+
+===/<repository>/website/src/layouts/===
+MainLayout.astro[EU5M]: F:官网主布局：文档壳、公共资源与页脚结构 | R:- | A:官网页面 | S:-
+
+===/<repository>/website/src/lib/===
+minify-css.ts[FV5T]: F:构建时用 esbuild 压缩内联 CSS（?raw 不走 Vite css minify） | R:- | A:- | S:-
+
+===/<repository>/website/src/pages/===
+account.astro[EU5T]: F:官网 Account 页入口 | R:- | A:官网页面 | S:-
+checkout.astro[EU5T]: F:官网 Checkout 页入口 | R:- | A:官网页面 | S:-
+faq.astro[EU5S]: F:官网 FAQ 页（含 Contact）入口 | R:- | A:官网页面 | S:-
+index.astro[EU5M]: F:官网首页入口 | R:- | A:官网页面 | S:-
+login.astro[EU5T]: F:官网登录页入口 | R:- | A:官网页面 | S:-
+logout.astro[EU5T]: F:官网退出页入口 | R:- | A:官网页面 | S:-
+pricing.astro[EU5T]: F:官网定价页入口 | R:- | A:官网页面 | S:-
+privacy.astro[EU5T]: F:官网隐私政策页入口 | R:- | A:官网页面 | S:-
+support.astro[EU5T]: F:旧 /support 入口（重定向 FAQ Contact） | R:- | A:官网页面 | S:-
+terms.astro[EU5T]: F:官网服务条款页入口 | R:- | A:官网页面 | S:-
+welcome.astro[EU5T]: F:官网欢迎/落地页入口 | R:- | A:官网页面 | S:-
+
+===/<repository>/website/src/pages/auth/===
+callback.astro[EU5T]: F:OAuth/鉴权回调页入口 | R:- | A:官网页面 | S:-
+extension-session-probe.astro[EU5T]: F:扩展会话探测页入口（官网↔扩展桥） | R:- | A:官网页面 | S:-
+extension-uninstalled.astro[EU5T]: F:扩展卸载落地页入口 | R:- | A:官网页面 | S:-
+from-extension.astro[EU5T]: F:扩展跳转官网鉴权交接页入口 | R:- | A:官网页面 | S:-
+
+===/<repository>/website/src/scripts/===
+home-page.ts[XV5S]: F:首页客户端交互：Nav 深底态、scroll reveal | R:- | A:- | S:-
+
+===/<repository>/website/src/seo/===
+json-ld.ts[OO3S]: F:官网 JSON-LD 构建（GEO / 常规 SEO） | R:- | A:- | S:禁止 InStock 冒充可装
+
+===/<repository>/website/src/services/===
+auth-email.ts[II5T]: F:官网邮箱登录：纯格式校验（不碰网络） | R:- | A:- | S:-
+auth-return.ts[II5T]: F:登录后回跳：用 sessionStorage 扛过 Google/Microsoft | R:- | A:- | S:-
+auth-session-liveness.ts[II5T]: F:官网会话存活探测：失效则尽快反映未登录 | R:- | A:官网服务 | S:-
+auth.ts[II5S]: F:官网登录：OAuth/邮件 OTP、会话读写与退出 | R:- | A:- | S:-
+billing.ts[IB5T]: F:官网计费 API（Worker） | R:- | A:- | S:-
+confirm-displace-extension-session.ts[AI5T]: F:自定义挤掉确认弹窗（非 window.confirm） | R:- | A:- | S:-
+date.ts[CL5T]: F:官网日期展示：跟生效 UI locale（BCP 47） | R:- | A:- | S:禁止裸 `toLocaleDateString()` 无 locale
+extension-auth-handoff.ts[II5L]: F:官网 → Chrome 扩展登录 / 退出会话回传 | R:- | A:- | S:禁止把官网 refresh 直接递给扩展
+mint-extension-session.ts[II5S]: F:向 Worker 申请扩展专用 Supabase session（独立 refresh 族） | R:- | A:官网服务 | S:-
+nav-pro-badge-cache.ts[AB5T]: F:官网顶栏 Pro 环用的会话缓存 | R:- | A:- | S:-
+otp-resend-cooldown.ts[AI5T]: F:Email OTP「再次发送」冷却：截止时间写入 sessionStorage | R:- | A:- | S:-
+rollback-minted-extension-session.ts[II5T]: F:mint 成功但 handoff 失败时：用 uninstallRevokeToken 销会话并清租约 | R:- | A:- | S:-
+run-extension-connect.ts[AI5S]: F:官网已登录时：用本浏览器会话 mint+handoff 接到扩展 | R:- | A:- | S:-
+subscription.ts[IB5T]: F:官网拉取 Worker 订阅状态的 HTTP 客户端 | R:- | A:官网服务 | S:-
+supabase.ts[II5T]: F:官网 Supabase 客户端单例工厂 | R:- | A:官网服务 | S:-
+turnstile.ts[IS5S]: F:Cloudflare Turnstile（官网 Email OTP 防刷） | R:- | A:- | S:-
+ui-bridge.ts[IE5M]: F:同浏览器官网 ↔ 扩展 UI Port 桥（ADR-019） | R:- | A:- | S:ADR-019）
+
+===/<repository>/website/src/styles/===
+home-critical.css[EU3T]: F:首页首屏关键样式（reveal 在 home-deferred） | R:- | A:- | S:-
+home-deferred.css[EU3L]: F:首页 below-fold 异步样式（reveal 入场与段落布局） | R:- | A:- | S:-
+home.css[EU3T]: F:已拆为 home-critical.css + home-deferred.css | R:- | A:- | S:-
+pages.css[EU3M]: F:内页共用排版样式（Support/Privacy/Terms/Pricing/Auth） | R:- | A:- | S:-
+site-critical.css[EU3M]: F:官网首屏关键壳：字体 / 布局 / Nav + reset | R:- | A:- | S:-
+site-deferred.css[EU3T]: F:官网壳 below-fold：Footer + 首页滚动条隐藏 | R:- | A:- | S:-
+site.css[EU3T]: F:兼容入口 = brand + critical + deferred | R:- | A:- | S:-
+
+===/<repository>/worker/===
+package.json[FV5T]: F:Cloudflare Worker workspace 依赖与脚本清单 | R:- | A:- | S:-
+tsconfig.json[FV5T]: F:Worker TypeScript 配置 | R:- | A:- | S:-
+worker-configuration.d.ts[FV3L]: F:Wrangler 生成的 Worker Env 与运行时类型声明 | R:- | A:- | S:-
+wrangler.toml[FV5S]: F:Worker 部署配置：入口、cron、兼容标志与绑定 | R:- | A:- | S:-
+
+===/<repository>/worker/scripts/===
+sync-env.sh[XV5T]: F:同步 Worker 开发环境变量到 .dev.vars | R:- | A:- | S:-
+
+===/<repository>/worker/src/===
+app.ts[EG5S]: F:Hono 应用主入口 | R:- | A:- | S:-
+index.ts[EG8T]: F:Cloudflare Worker 主入口 | R:- | A:- | S:-
+
+===/<repository>/worker/src/config/===
+ai-hosted.ts[FA3S]: F:托管 LLM 服务端配额与模型配置（经 AI Gateway 或直连） | R:- | A:- | S:-
+ai-task-kind.ts[FA3S]: F:托管 / 线索 chat 补全的任务种类（taskKind） | R:- | A:- | S:-
+
+===/<repository>/worker/src/data-access/===
+account-delete.ts[PI5T]: F:删除账号（隐私）：清云端 Memory 后注销 Supabase Auth 用户 | R:- | A:- | S:-
+business-data-cleanup.ts[PD5M]: F:按保留策略清理备份、支付与订阅等业务投影行 | R:- | A:- | S:-
+dual-thread-sketches.ts[PA5T]: F:暗线匿名汇总草图仓储（Supabase service role · ADR-027） | R:- | A:- | S:ADR-027）
+memory-items.ts[PD5L]: F:Cloud MemoryItem 仓储（Supabase service role） | R:- | A:- | S:-
+supabase.ts[PD5L]: F:Worker 侧 Supabase 管理客户端与订阅/支付 CRUD | R:- | A:- | S:-
+
+===/<repository>/worker/src/handlers/===
+admin.ts[EI5T]: F:管理员接口处理器 | R:- | A:- | S:-
+ai-clue.ts[EA5M]: F:Recall 线索理解聊天补全代理（密钥仅在 Worker Secret） | R:- | A:- | S:-
+ai-dreaming.ts[EA5S]: F:夜间命题批量编译 complete 处理器 | R:- | A:- | S:-
+ai-embed.ts[EA3S]: F:登录可用：Workers AI embedding（bge-m3） | R:- | A:- | S:-
+ai-enrichment.ts[EA5M]: F:Capture enrichment 结构化提议代理（密钥仅在 Worker） | R:- | A:- | S:-
+ai-gs-clue-samples.ts[EA5M]: F:Getting Started 示意 clue 结构化生成代理 | R:- | A:- | S:-
+ai-hosted.ts[EA3S]: F:托管 LLM 接口处理器（登录可用；Free/Pro 配额分档） | R:- | A:- | S:-
+auth.ts[EI5S]: F:认证处理器 | R:- | A:- | S:-
+health.ts[EO5T]: F:健康检查处理器 | R:- | A:- | S:-
+scheduled-cleanup.ts[EW5T]: F:Worker cron：定时清理过期 / 冗余业务数据 | R:- | A:- | S:-
+scheduled-subscription-reconcile.ts[EW5T]: F:Worker cron：对账并把过期的 active 订阅投影收口 | R:- | A:- | S:-
+subscription.ts[EB5T]: F:GET /api/subscription：扩展用 Bearer 查询是否 Pro（默认可对账） | R:- | A:- | S:-
+website-uninstall-feedback.ts[EU5S]: F:扩展卸载落地页可选反馈 HTTP 入口 | R:- | A:- | S:-
+website-waitlist.ts[EU5S]: F:官网预约名单：校验邮箱、蜜罐、按 IP 限流后写入 Supabase | R:- | A:- | S:-
+
+===/<repository>/worker/src/middleware/===
+cors.ts[MN5T]: F:CORS 中间件 | R:- | A:- | S:-
+jwt.ts[MI5T]: F:JWT 认证中间件 | R:- | A:- | S:-
+secure-headers.ts[MS5T]: F:安全响应头中间件 | R:- | A:- | S:-
+supabase-auth.ts[MI5T]: F:校验扩展/官网传来的 Supabase access token 中间件 | R:- | A:- | S:-
+
+===/<repository>/worker/src/routes/===
+account.ts[EI5S]: F:账户路由：删号、订阅状态、只读 MCP 开关等 | R:- | A:- | S:-
+admin.ts[EI5T]: F:管理员运维自检路由（JWT）；产品主路径不依赖 | R:- | A:- | S:-
+ai.ts[EA5T]: F:AI 路由树：clue/dreaming/enrichment/embed 等入口 | R:- | A:- | S:-
+auth.ts[EI5M]: F:认证路由 | R:- | A:- | S:-
+billing.ts[EB5S]: F:计费路由：套餐目录、checkout、Customer Portal | R:- | A:- | S:-
+health.ts[EO5T]: F:健康检查路由 | R:- | A:- | S:-
+mcp.ts[EE5S]: F:只读 MCP HTTP：tools/list 与 tools/call（Bearer+Pro 门禁） | R:- | A:- | S:-
+memory-sync.ts[ED5M]: F:Memory 云同步路由（Phase C 铺路） | R:- | A:- | S:-
+research.ts[EA5S]: F:暗线研究接收端（匿名汇总草图 · ADR-027） | R:- | A:- | S:ADR-027）
+webhooks-dodo.ts[EB5T]: F:POST /api/webhooks/dodo：独立验签，不与其它 webhook 混用 | R:- | A:- | S:-
+website.ts[EU5T]: F:官网 Pages→Worker API：预约/卸载反馈与订阅查询 | R:- | A:- | S:-
+
+===/<repository>/worker/src/schemas/===
+memory-item.ts[DD8T]: F:云端 MemoryItem Zod（与扩展侧形状对齐） | R:- | A:- | S:禁止跨用户伪造 ownerId
+
+===/<repository>/worker/src/services/ai/===
+ai-chat-provider.ts[IA5T]: F:Worker 侧聊天补全 Provider 抽象 | R:- | A:- | S:-
+deepseek-ai-chat-provider.ts[IA5M]: F:DeepSeek Chat Completions 的 AiChatProvider 适配器 | R:- | A:- | S:-
+deepseek-client.ts[IA5T]: F:已废弃：请改用 deepseek-ai-chat-provider | R:- | A:- | S:-
+dreaming-compile-proposal.ts[AA5T]: F:Dreaming 批量命题编译：请求/响应 Zod + prompt + 解析 | R:- | A:- | S:-
+dreaming-quota.ts[AA5S]: F:Dreaming 独立调用配额（与托管 Clue LLM 分桶） | R:- | A:- | S:-
+gs-clue-samples-proposal.ts[AA5S]: F:Getting Started 示意 clue：一次 LLM 生成恰好 4 条英文口语线索 | R:- | A:- | S:禁止发明正文论点
+memory-enrichment-proposal.ts[AA5S]: F:Capture enrichment LLM 提议：字段与扩展侧 MemoryEnrichment 对齐 | R:- | A:- | S:-
+require-pro-user.ts[AB5T]: F:Pro 用户校验（§A.3.2：投影 + 新鲜度 + 对账） | R:- | A:- | S:-
+usage-quota.ts[AA5S]: F:托管 LLM 月度 + 日软盖配额服务（登录 Free / Pro 分档） | R:- | A:- | S:-
+
+===/<repository>/worker/src/services/auth/===
+auth-session-exists.ts[II5T]: F:探测指定 Auth session 是否仍存在于 `auth.sessions` | R:- | A:- | S:禁止**把 Admin GET 的 404 当成 gone：多数 GoT
+consume-extension-uninstall-revoke.ts[II5T]: F:消费卸载一次性 revoke token：撤 Auth session 并清单活跃租约 | R:- | A:- | S:-
+extension-session-lease-kv.ts[II5S]: F:扩展侧「单活跃会话」租约（AI_USAGE_KV） | R:- | A:- | S:-
+extension-uninstall-revoke-kv.ts[II5S]: F:扩展卸载用一次性 revoke token（AI_USAGE_KV） | R:- | A:- | S:-
+issue-supabase-user-session.ts[II5S]: F:Admin generateLink + anon verifyOtp：为指定用户签发新 Auth 会话 | R:- | A:- | S:-
+mint-extension-session.ts[II5M]: F:为扩展另开 Supabase Auth 会话（独立 refresh；单活跃租约） | R:- | A:- | S:不得直接 handoff 共用 refresh；官网可多端同登，**不*
+mint-website-session.ts[II5T]: F:用扩展 Bearer 为本浏览器官网铸造独立 Supabase 会话 | R:- | A:- | S:-
+oauth-client.ts[II5S]: F:OAuth 令牌交换 & 用户信息获取 | R:- | A:- | S:-
+probe-extension-session-lease.ts[II5T]: F:探测 access token 的 session_id 是否仍是账号下的当前扩展租约 | R:- | A:- | S:-
+provider-config.ts[FI5T]: F:OAuth 提供商配置 | R:- | A:- | S:-
+read-jwt-session-id.ts[II3T]: F:从 access token payload 读取 session_id（不验签） | R:- | A:- | S:-
+release-extension-session.ts[II5T]: F:用扩展 Bearer 释放本会话：撤销 Auth session，若仍占租约则清 KV | R:- | A:- | S:-
+revoke-auth-session.ts[II5T]: F:撤销指定 Supabase Auth session（该端等价登出） | R:- | A:- | S:-
+validation.ts[II5T]: F:OAuth 请求参数验证 | R:- | A:- | S:-
+verify-supabase-access-token.ts[II5T]: F:在服务端校验 Supabase access token | R:- | A:- | S:-
+
+===/<repository>/worker/src/services/billing/===
+dodo-client.ts[IB5M]: F:Dodo Payments REST 客户端 | R:- | A:- | S:-
+dodo-webhook.ts[IB5S]: F:Dodo Payments webhook 验签与解析 | R:- | A:- | S:-
+entitlement-policy.ts[DB5T]: F:订阅权益新鲜度策略（产品文档 §A.3.2） | R:- | A:- | S:-
+normalize.ts[DB5S]: F:将 Dodo 实体映射为 Yiveno 订阅投影 | R:- | A:- | S:-
+plans.ts[FC5T]: F:Yiveno 计费套餐目录（展示锚点的唯一代码源） | R:- | A:- | S:-
+pro-welcome-email.ts[IB5M]: F:首次授 Pro 后的产品欢迎信（与 Dodo 收据分开） | R:- | A:- | S:不得影响 webhook 投影
+projection.ts[PB5L]: F:Dodo webhook → 归一化 → 订阅/支付投影 | R:- | A:- | S:-
+reconcile.ts[AB5S]: F:将投影与 Dodo subscription 对齐（§A.3.2） | R:- | A:- | S:-
+subscription-id.ts[DB3T]: F:Dodo 订阅 ID / Yiveno user_id 硬门槛 | R:- | A:- | S:-
+
+===/<repository>/worker/src/services/email/===
+aliyun-directmail.ts[IN5S]: F:阿里云 DirectMail SingleSendMail 发送封装 | R:- | A:- | S:-
+
+===/<repository>/worker/src/services/feedback/===
+feedback-event.ts[DU5S]: F:结构化产品反馈契约（轨道 1） | R:- | A:- | S:-
+record-feedback.ts[AU5T]: F:结构化反馈统一入口：契约钉死，sink 可插拔（kv / email；日后 db） | R:- | A:- | S:-
+
+===/<repository>/worker/src/services/feedback/sinks/===
+email-feedback-sink.ts[IU5M]: F:反馈邮件 sink：Worker 发信到运营已验证邮箱 | R:- | A:- | S:-
+kv-feedback-sink.ts[PU5T]: F:反馈底账 sink：AI_USAGE_KV，TTL≈180 天 | R:- | A:- | S:-
+
+===/<repository>/worker/src/services/mcp/===
+cloud-keyword-recall.ts[AE5S]: F:云端只读 MCP：对已同步 Memory 做关键词扫描成 evidence | R:- | A:- | S:禁止全库 dump 响应
+mcp-preference-kv.ts[PE5T]: F:只读 MCP 云端门禁（AI_USAGE_KV） | R:- | A:- | S:-
+
+===/<repository>/worker/src/services/memory/===
+require-pro-for-sync.ts[AD5T]: F:Memory 云同步 Pro 门禁（可单测） | R:- | A:- | S:-
+
+===/<repository>/worker/src/types/===
+ai.ts[CA5T]: F:AI 相关类型定义 | R:- | A:- | S:-
+auth.ts[CI5T]: F:认证相关类型定义 | R:- | A:- | S:-
+env.ts[CC5S]: F:Worker 环境变量类型 | R:- | A:- | S:-
+
+===/<repository>/worker/src/utils/===
+jwt.ts[CI5T]: F:JWT 工具函数 | R:- | A:- | S:-
+logger.ts[CO5S]: F:结构化日志工具 | R:- | A:- | S:-
+response.ts[CN5T]: F:响应工具函数 | R:- | A:- | S:-
+validation.ts[CQ5T]: F:校验工具函数 | R:- | A:- | S:-

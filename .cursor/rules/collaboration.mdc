@@ -46,3 +46,14 @@ alwaysApply: true
 ## 任务纪律
 
 - 见 `session-boot.mdc`（Brief / 不默认 commit/push / 报完成标准）。本文件只补三方分工，不重复。
+
+## AOCI 认知索引
+
+仓库用 AOCI-CODE（`aoci` CLI + MCP server）维护一份持久化、Git 版本化的代码库认知索引（`aoci.txt` / `aoci.meta.txt` / `aoci.code.txt`）。索引是地图，不是领土：改代码前仍以源码实读为准。
+
+- **会话开始**：跨领域批先调 `aoci_rules` 再调 `aoci_overview` 建立全量认知；窄批用 `aoci_search` / `aoci_get_entries` 定向读相关条目，不强制全量。
+- **上下文压缩/重置后**：此前建立的认知不可靠，重新建立（Cursor 无 compaction 事件通知，靠自觉）。
+- **收尾**：文件达最终稳定态后调一次 `aoci_maintain`，按 issued batch 著录受影响条目；索引维护不受本批业务文件范围限制，但汇报与提交中与业务文件分开列。
+- **禁手改**：AGENTS.md 内的 AOCI 托管块（`<!-- aoci:begin -->`…`<!-- aoci:end -->`）、`aoci.*` 索引文件、`.aoci/*`，一律走 MCP 工具或 `aoci` CLI，不手写、不手改。
+- **条目语义来自实证**：F/R/A/S 须来自源码与已接受证据（ADR、产品文档），不凭路径名、文件名、模板臆造；证据不足时用 `aoci_report`，不要猜。
+- **验收口径**：门禁不变；另加 `aoci verify` 与 `aoci check` 双绿。索引漂移（stale）不带病报完成。
