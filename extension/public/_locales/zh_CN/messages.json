@@ -3207,5 +3207,134 @@
   },
   "settings_dual_thread_learning_stage_unknown": {
     "message": "证据不足"
+  },
+  "page_title_review": {
+    "message": "每日回顾 · Yiveno"
+  },
+  "review_title": {
+    "message": "每日回顾"
+  },
+  "review_subtitle": {
+    "message": "一屏看看 Dreaming 夜里编译出的成果。"
+  },
+  "review_nav_open": {
+    "message": "每日回顾"
+  },
+  "review_loading": {
+    "message": "正在加载回顾…"
+  },
+  "review_load_failed": {
+    "message": "加载每日回顾失败"
+  },
+  "review_retry": {
+    "message": "重试"
+  },
+  "review_section_groups_title": {
+    "message": "昨天存的几件事"
+  },
+  "review_section_featured_title": {
+    "message": "值得再看的一件"
+  },
+  "review_section_stale_title": {
+    "message": "可能过时的一件"
+  },
+  "review_relation_same_source": {
+    "message": "都来自同一条保存「$1」",
+    "placeholders": {
+      "title": {
+        "content": "$1",
+        "example": "设计笔记"
+      }
+    }
+  },
+  "review_relation_same_source_no_title": {
+    "message": "都来自同一条保存"
+  },
+  "review_relation_shared_topic": {
+    "message": "这 $1 条都提到「$2」",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      },
+      "term": {
+        "content": "$2",
+        "example": "rust"
+      }
+    }
+  },
+  "review_featured_shared_older": {
+    "message": "它提到的「$1」在你过去的 $2 条命题里也出现过",
+    "placeholders": {
+      "term": {
+        "content": "$1",
+        "example": "rust"
+      },
+      "count": {
+        "content": "$2",
+        "example": "4"
+      }
+    }
+  },
+  "review_featured_recent_topic": {
+    "message": "与你最近常看的「$1」相关",
+    "placeholders": {
+      "term": {
+        "content": "$1",
+        "example": "rust"
+      }
+    }
+  },
+  "review_featured_latest_yesterday": {
+    "message": "昨天最新的一条命题"
+  },
+  "review_stale_reference_only": {
+    "message": "仅供参考"
+  },
+  "review_stale_first_seen": {
+    "message": "首次标为过时：$1",
+    "placeholders": {
+      "date": {
+        "content": "$1",
+        "example": "2026年11月1日"
+      }
+    }
+  },
+  "review_groups_truncated": {
+    "message": "昨天共 $1 条命题，仅显示前 $2 条",
+    "placeholders": {
+      "total": {
+        "content": "$1",
+        "example": "28"
+      },
+      "limit": {
+        "content": "$2",
+        "example": "20"
+      }
+    }
+  },
+  "review_empty_dreaming_off_title": {
+    "message": "Dreaming 未开启"
+  },
+  "review_empty_dreaming_off_body": {
+    "message": "命题需要开启 Dreaming 后由夜间编译生成。可到设置 → AI 打开，今晚之后再来看看。"
+  },
+  "review_empty_dreaming_off_open_settings": {
+    "message": "打开 AI 设置"
+  },
+  "review_empty_no_notes_title": {
+    "message": "还没有命题"
+  },
+  "review_empty_no_notes_body": {
+    "message": "夜间编译从你保存的新内容生成命题，今晚之后再来看看。"
+  },
+  "review_empty_no_yesterday": {
+    "message": "昨天没有新增命题"
+  },
+  "review_open_source": {
+    "message": "看来源"
+  },
+  "error_open_review": {
+    "message": "无法打开每日回顾"
   }
 }

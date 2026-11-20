@@ -145,6 +145,7 @@ function finalizeExtensionDist() {
   flattenPageHtml('settings')
   flattenPageHtml('detail')
   flattenPageHtml('library')
+  flattenPageHtml('review')
   flattenPageHtml('getting-started')
 
   const isProduction = process.env.NODE_ENV === 'production'
@@ -175,6 +176,7 @@ function finalizeExtensionDist() {
     'settings.html',
     'detail.html',
     'library.html',
+    'review.html',
     'getting-started.html',
     'manifest.json'
   ]

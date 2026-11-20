@@ -92,6 +92,7 @@ import type {
   GetDualThreadLearningStatusResponse,
   MaybeUploadDualThreadSketchResponse
 } from '@/core/messaging/dual-thread-messages'
+import type { GetDailyReviewResponse } from '@/core/messaging/daily-review-messages'
 
 /** 向 Background 发送消息并返回响应。 */
 export async function sendBackgroundMessage<TResponse extends BackgroundMessageResponse>(
@@ -648,6 +649,14 @@ export async function maybeUploadDualThreadSketch(): Promise<MaybeUploadDualThre
   return sendBackgroundMessage<MaybeUploadDualThreadSketchResponse>({
     scope: 'background',
     type: 'MAYBE_UPLOAD_DUAL_THREAD_SKETCH'
+  })
+}
+
+/** Dreaming 每日回顾（楔子 #1 · 只读；日期由 SW 按本地时区算）。 */
+export async function fetchDailyReview(): Promise<GetDailyReviewResponse> {
+  return sendBackgroundMessage<GetDailyReviewResponse>({
+    scope: 'background',
+    type: 'GET_DAILY_REVIEW'
   })
 }
 

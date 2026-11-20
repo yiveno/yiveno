@@ -4,7 +4,8 @@ import { initUiLocaleFromSettings, t } from '@/infrastructure/i18n/t'
 import { logger } from '@/infrastructure/logging/logger'
 
 /** 扩展 HTML 页面入口 id（与 Vite 多页入口一一对应）。 */
-export type ExtensionPageId = 'sidepanel' | 'settings' | 'library' | 'detail' | 'getting_started'
+export type ExtensionPageId =
+  'sidepanel' | 'settings' | 'library' | 'detail' | 'getting_started' | 'review'
 
 /** Content script bundle id（独立入口，无 document title）。 */
 export type ContentScriptBundleId = 'selection_toolbar'
@@ -14,7 +15,8 @@ const EXTENSION_PAGE_TITLE_KEYS: Record<ExtensionPageId, MessageKey> = {
   settings: 'page_title_settings',
   library: 'page_title_library',
   detail: 'page_title_detail',
-  getting_started: 'page_title_getting_started'
+  getting_started: 'page_title_getting_started',
+  review: 'page_title_review'
 }
 
 /**
@@ -39,7 +41,8 @@ const CRITICAL_MESSAGE_KEYS_BY_PAGE: Record<ExtensionPageId, readonly MessageKey
     'getting_started_tab_bookmarks',
     'getting_started_tab_excerpts',
     'nav_aria_label'
-  ]
+  ],
+  review: ['review_title', 'nav_aria_label']
 }
 
 /** 划词浮层首屏关键文案（Save / Note / Try recall / 错误态）。 */

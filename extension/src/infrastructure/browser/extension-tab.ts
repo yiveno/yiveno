@@ -13,6 +13,7 @@ import { focusOrOpenTab } from '@/infrastructure/browser/focus-or-open-tab'
 const LIBRARY_TAB_SESSION_KEY = 'yiveno.libraryTabId'
 const SETTINGS_TAB_SESSION_KEY = 'yiveno.settingsTabId'
 const GETTING_STARTED_TAB_SESSION_KEY = 'yiveno.gettingStartedTabId'
+const REVIEW_TAB_SESSION_KEY = 'yiveno.reviewTabId'
 
 /** chrome.tabs.query url 过滤：匹配扩展页及其 query/hash 变体，避免全量 tabs.query({})。 */
 export function buildExtensionPageTabQueryPattern(path: string): string {
@@ -102,4 +103,9 @@ export async function focusOrOpenSettingsTab(options?: {
 /** Side Panel / 安装引导：打开或切到 Getting Started 页。 */
 export async function focusOrOpenGettingStartedTab(): Promise<boolean> {
   return focusOrCreateExtensionPage('getting-started.html', GETTING_STARTED_TAB_SESSION_KEY)
+}
+
+/** Library / Side Panel：打开或切到 Dreaming 每日回顾页。 */
+export async function focusOrOpenReviewTab(): Promise<boolean> {
+  return focusOrCreateExtensionPage('review.html', REVIEW_TAB_SESSION_KEY)
 }

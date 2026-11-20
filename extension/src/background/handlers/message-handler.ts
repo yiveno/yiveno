@@ -85,6 +85,7 @@ import {
   handleGetDualThreadLearningStatus,
   handleMaybeUploadDualThreadSketch
 } from '@/background/handlers/dual-thread-handler'
+import { handleGetDailyReview } from '@/background/handlers/daily-review-handler'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
 import {
@@ -251,6 +252,8 @@ async function dispatchBackgroundMessage(
       return handleDeleteDualThreadContributedSketches()
     case 'MAYBE_UPLOAD_DUAL_THREAD_SKETCH':
       return handleMaybeUploadDualThreadSketch()
+    case 'GET_DAILY_REVIEW':
+      return handleGetDailyReview()
     case 'DEV_SEED_RECALL_PROBE':
     case 'DEV_PURGE_PROBE_NOISE':
     case 'DEV_PROBE_CLEANUP':

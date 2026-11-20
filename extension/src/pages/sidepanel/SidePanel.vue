@@ -48,6 +48,7 @@ import {
   consumeRecallPrefillWithRetry,
   markFirstRecallOpenDone
 } from '@/infrastructure/storage/first-recall-onboarding-storage'
+import { openExtensionReviewPage } from '@/infrastructure/browser/extension-pages'
 import { readBrowserOnline, subscribeBrowserOnline } from '@/infrastructure/browser/browser-online'
 import { subscribeActiveTabNavigation } from '@/infrastructure/browser/subscribe-active-tab-navigation'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
@@ -1157,6 +1158,14 @@ function handleNavigateError(message: string) {
   errorMessage.value = message
 }
 
+async function openDailyReview(): Promise<void> {
+  try {
+    await openExtensionReviewPage()
+  } catch {
+    handleNavigateError(t('error_open_review'))
+  }
+}
+
 async function handleSendTurn(
   overrideClue?: string,
   options?: { skipPivotCheck?: boolean }
@@ -1433,6 +1442,11 @@ onUnmounted(() => {
         @new-find="startNewFindSession"
         @detail-export="enterDetailExportMode"
       />
+      <p class="recall-review-entry">
+        <AppButton type="button" variant="text" @click="openDailyReview">
+          {{ t('review_nav_open') }}
+        </AppButton>
+      </p>
 
       <section
         v-if="showOfflineBanner"
@@ -2037,6 +2051,10 @@ onUnmounted(() => {
   flex-shrink: 0;
   min-width: 0;
   margin-bottom: var(--space-sm);
+}
+
+.recall-review-entry {
+  margin: 0;
 }
 
 .recall-header-top {

@@ -6,6 +6,7 @@
 import {
   focusOrOpenGettingStartedTab,
   focusOrOpenLibraryTab,
+  focusOrOpenReviewTab,
   focusOrOpenSettingsTab
 } from '@/infrastructure/browser/extension-tab'
 
@@ -35,4 +36,14 @@ export async function openExtensionLibraryPage(): Promise<void> {
  */
 export async function openGettingStartedPage(): Promise<void> {
   await focusOrOpenGettingStartedTab()
+}
+
+/**
+ * 打开或聚焦 Dreaming 每日回顾页（楔子 #1）。
+ */
+export async function openExtensionReviewPage(): Promise<void> {
+  const ok = await focusOrOpenReviewTab()
+  if (!ok) {
+    throw new Error('OPEN_REVIEW_FAILED')
+  }
 }

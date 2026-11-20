@@ -56,6 +56,7 @@ const EXTENSION_PAGE_HTML_PATHS = [
   'settings/index.html',
   'detail/index.html',
   'library/index.html',
+  'review/index.html',
   'getting-started/index.html'
 ] as const
 

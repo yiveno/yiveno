@@ -43,6 +43,7 @@ import {
   updateMemoryNote
 } from '@/infrastructure/messaging/background-client'
 import AppLinearProgress from '@/infrastructure/ui/AppLinearProgress.vue'
+import { openExtensionReviewPage } from '@/infrastructure/browser/extension-pages'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
 import type { AppIconName } from '@/infrastructure/ui/icons/icon-paths'
@@ -708,6 +709,14 @@ function dismissDeleteConfirmAfterSuccess(): void {
   deleteConfirmError.value = ''
 }
 
+async function openDailyReview(): Promise<void> {
+  try {
+    await openExtensionReviewPage()
+  } catch {
+    showToastError(t('error_open_review'))
+  }
+}
+
 const deleteConfirmTitle = computed(() =>
   pendingDeleteKind.value === 'bookmark'
     ? t('library_delete_bookmark_aria')
@@ -884,6 +893,11 @@ onUnmounted(() => {
       <AppPageHeader current="library" class="library-header-top" />
       <h1 class="library-title">{{ t('library_title') }}</h1>
       <p class="library-subtitle">{{ t('library_subtitle') }}</p>
+      <p class="library-review-entry">
+        <AppButton type="button" variant="text" @click="openDailyReview">
+          {{ t('review_nav_open') }}
+        </AppButton>
+      </p>
     </header>
 
     <div class="library-layout">
@@ -1185,6 +1199,10 @@ onUnmounted(() => {
   font-size: 14px;
   line-height: 1.5;
   color: var(--on-surface-muted);
+}
+
+.library-review-entry {
+  margin: var(--space-xs) 0 0;
 }
 
 .library-layout {

@@ -38,6 +38,10 @@ import type {
   DualThreadBackgroundMessage,
   DualThreadBackgroundResponse
 } from '@/core/messaging/dual-thread-messages'
+import type {
+  DailyReviewBackgroundMessage,
+  DailyReviewBackgroundResponse
+} from '@/core/messaging/daily-review-messages'
 
 export { BACKGROUND_MESSAGE_SCOPE }
 
@@ -101,6 +105,7 @@ export type BackgroundMessage =
   | CommandsBackgroundMessage
   | SettingsBackgroundMessage
   | DualThreadBackgroundMessage
+  | DailyReviewBackgroundMessage
   | AccountSyncBackgroundMessage
   | DebugBackgroundMessage
 
@@ -117,6 +122,7 @@ export type BackgroundMessageResponse =
   | CommandsBackgroundResponse
   | SettingsBackgroundResponse
   | DualThreadBackgroundResponse
+  | DailyReviewBackgroundResponse
   | AccountSyncBackgroundResponse
   | DebugBackgroundResponse
   | BackgroundDispatchErrorResponse

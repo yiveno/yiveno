@@ -3207,5 +3207,134 @@
   },
   "settings_dual_thread_learning_stage_unknown": {
     "message": "Unknown"
+  },
+  "page_title_review": {
+    "message": "Daily review · Yiveno"
+  },
+  "review_title": {
+    "message": "Daily review"
+  },
+  "review_subtitle": {
+    "message": "A one-screen look at what Dreaming compiled overnight."
+  },
+  "review_nav_open": {
+    "message": "Daily review"
+  },
+  "review_loading": {
+    "message": "Loading your review…"
+  },
+  "review_load_failed": {
+    "message": "Could not load the daily review"
+  },
+  "review_retry": {
+    "message": "Retry"
+  },
+  "review_section_groups_title": {
+    "message": "What you saved yesterday"
+  },
+  "review_section_featured_title": {
+    "message": "Worth another look"
+  },
+  "review_section_stale_title": {
+    "message": "Possibly outdated"
+  },
+  "review_relation_same_source": {
+    "message": "All from the same save \"$1\"",
+    "placeholders": {
+      "title": {
+        "content": "$1",
+        "example": "Design notes"
+      }
+    }
+  },
+  "review_relation_same_source_no_title": {
+    "message": "All from the same save"
+  },
+  "review_relation_shared_topic": {
+    "message": "These $1 notes all mention \"$2\"",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      },
+      "term": {
+        "content": "$2",
+        "example": "rust"
+      }
+    }
+  },
+  "review_featured_shared_older": {
+    "message": "It mentions \"$1\", which also appears in $2 of your older notes",
+    "placeholders": {
+      "term": {
+        "content": "$1",
+        "example": "rust"
+      },
+      "count": {
+        "content": "$2",
+        "example": "4"
+      }
+    }
+  },
+  "review_featured_recent_topic": {
+    "message": "Related to \"$1\", which you've been looking at lately",
+    "placeholders": {
+      "term": {
+        "content": "$1",
+        "example": "rust"
+      }
+    }
+  },
+  "review_featured_latest_yesterday": {
+    "message": "Yesterday's newest note"
+  },
+  "review_stale_reference_only": {
+    "message": "For reference only"
+  },
+  "review_stale_first_seen": {
+    "message": "First marked outdated: $1",
+    "placeholders": {
+      "date": {
+        "content": "$1",
+        "example": "Nov 1, 2026"
+      }
+    }
+  },
+  "review_groups_truncated": {
+    "message": "Yesterday had $1 notes; showing the first $2",
+    "placeholders": {
+      "total": {
+        "content": "$1",
+        "example": "28"
+      },
+      "limit": {
+        "content": "$2",
+        "example": "20"
+      }
+    }
+  },
+  "review_empty_dreaming_off_title": {
+    "message": "Dreaming is off"
+  },
+  "review_empty_dreaming_off_body": {
+    "message": "Notes come from overnight Dreaming compilation. Turn Dreaming on in Settings → AI, then check back after a night."
+  },
+  "review_empty_dreaming_off_open_settings": {
+    "message": "Open AI settings"
+  },
+  "review_empty_no_notes_title": {
+    "message": "No notes yet"
+  },
+  "review_empty_no_notes_body": {
+    "message": "Overnight compilation builds notes from new saves. Come back after tonight."
+  },
+  "review_empty_no_yesterday": {
+    "message": "No new notes yesterday"
+  },
+  "review_open_source": {
+    "message": "Open source"
+  },
+  "error_open_review": {
+    "message": "Could not open daily review"
   }
 }
