@@ -59,11 +59,14 @@ vi.mock('@/infrastructure/logging/logger', () => ({
 
 import {
   enforceSyncRequiresPro,
+  isProActiveFromSnapshot,
   refreshSubscriptionSnapshot
 } from '@/infrastructure/identity/subscription-service'
 import {
+  SUBSCRIPTION_SNAPSHOT_MAX_AGE_MS,
   SUBSCRIPTION_SNAPSHOT_STORAGE_KEY,
-  SubscriptionRefreshError
+  SubscriptionRefreshError,
+  isSubscriptionSnapshotFresh
 } from '@/core/identity/subscription-snapshot'
 
 describe('enforceSyncRequiresPro', () => {
@@ -157,5 +160,129 @@ describe('refreshSubscriptionSnapshot', () => {
       SubscriptionRefreshError
     )
     expect(writeChromeStorageLocalMock).not.toHaveBeenCalled()
+  })
+})
+
+describe('isSubscriptionSnapshotFresh', () => {
+  it('缺 fetchedAt / 非法日期 → 不新鲜（不崩）', () => {
+    expect(isSubscriptionSnapshotFresh({})).toBe(false)
+    expect(isSubscriptionSnapshotFresh({ fetchedAt: null })).toBe(false)
+    expect(isSubscriptionSnapshotFresh({ fetchedAt: 'not-a-date' })).toBe(false)
+  })
+
+  it('在 MAX_AGE 内 → 新鲜；刚过边界 → 不新鲜', () => {
+    const nowMs = Date.parse('2026-11-20T12:00:00.000Z')
+    const freshIso = new Date(nowMs - SUBSCRIPTION_SNAPSHOT_MAX_AGE_MS + 1000).toISOString()
+    const staleIso = new Date(nowMs - SUBSCRIPTION_SNAPSHOT_MAX_AGE_MS - 1000).toISOString()
+    expect(isSubscriptionSnapshotFresh({ fetchedAt: freshIso }, nowMs)).toBe(true)
+    expect(isSubscriptionSnapshotFresh({ fetchedAt: staleIso }, nowMs)).toBe(false)
+  })
+})
+
+describe('isProActiveFromSnapshot · staleness', () => {
+  const futureEnd = () => new Date(Date.now() + 86400000).toISOString()
+
+  beforeEach(() => {
+    vi.clearAllMocks()
+    getAccountBindingMock.mockResolvedValue({ accountId: 'acct-1' })
+    getWorkerApiAccessTokenMock.mockResolvedValue('token')
+    getSyncPrefsMock.mockResolvedValue({ enabled: false })
+    patchSyncPrefsMock.mockResolvedValue({ enabled: false })
+    ensureMemoryCloudSyncAlarmMock.mockResolvedValue(undefined)
+    writeChromeStorageLocalMock.mockResolvedValue(undefined)
+  })
+
+  it('快照新鲜且 Pro → true，不强制刷新', async () => {
+    getSubscriptionSnapshotMock.mockResolvedValue({
+      isPro: true,
+      tier: 'pro',
+      status: 'active',
+      currentPeriodEnd: futureEnd(),
+      cancelAtPeriodEnd: false,
+      fetchedAt: new Date().toISOString()
+    })
+    await expect(isProActiveFromSnapshot()).resolves.toBe(true)
+    expect(fetchRemoteSubscriptionStatusMock).not.toHaveBeenCalled()
+  })
+
+  it('快照超 7 天 + 刷新成功 → 用新快照', async () => {
+    const staleFetchedAt = new Date(
+      Date.now() - SUBSCRIPTION_SNAPSHOT_MAX_AGE_MS - 60_000
+    ).toISOString()
+    getSubscriptionSnapshotMock
+      .mockResolvedValueOnce({
+        isPro: true,
+        tier: 'pro',
+        status: 'active',
+        currentPeriodEnd: futureEnd(),
+        cancelAtPeriodEnd: false,
+        fetchedAt: staleFetchedAt
+      })
+      // refresh 成功写库后 enforceSyncRequiresPro 再读
+      .mockResolvedValue({
+        isPro: true,
+        tier: 'pro',
+        status: 'active',
+        currentPeriodEnd: futureEnd(),
+        cancelAtPeriodEnd: false,
+        fetchedAt: new Date().toISOString()
+      })
+    fetchRemoteSubscriptionStatusMock.mockResolvedValue({
+      isPro: true,
+      tier: 'pro',
+      status: 'active',
+      currentPeriodEnd: futureEnd(),
+      cancelAtPeriodEnd: false
+    })
+
+    await expect(isProActiveFromSnapshot()).resolves.toBe(true)
+    expect(fetchRemoteSubscriptionStatusMock).toHaveBeenCalledOnce()
+    expect(writeChromeStorageLocalMock).toHaveBeenCalled()
+  })
+
+  it('快照超 7 天 + 刷新失败沿用旧快照 → 保守 Free', async () => {
+    const stale = {
+      isPro: true,
+      tier: 'pro' as const,
+      status: 'active' as const,
+      currentPeriodEnd: futureEnd(),
+      cancelAtPeriodEnd: false,
+      fetchedAt: new Date(Date.now() - SUBSCRIPTION_SNAPSHOT_MAX_AGE_MS - 60_000).toISOString()
+    }
+    getSubscriptionSnapshotMock.mockResolvedValue(stale)
+    fetchRemoteSubscriptionStatusMock.mockRejectedValue(new Error('network'))
+
+    await expect(isProActiveFromSnapshot()).resolves.toBe(false)
+    expect(fetchRemoteSubscriptionStatusMock).toHaveBeenCalledOnce()
+  })
+
+  it('无 fetchedAt 的旧快照 → 按未知处理（不崩，强制刷新）', async () => {
+    getSubscriptionSnapshotMock
+      .mockResolvedValueOnce({
+        isPro: true,
+        tier: 'pro',
+        status: 'active',
+        currentPeriodEnd: futureEnd(),
+        cancelAtPeriodEnd: false,
+        fetchedAt: undefined
+      } as never)
+      .mockResolvedValue({
+        isPro: false,
+        tier: 'free',
+        status: 'inactive',
+        currentPeriodEnd: null,
+        cancelAtPeriodEnd: false,
+        fetchedAt: new Date().toISOString()
+      })
+    fetchRemoteSubscriptionStatusMock.mockResolvedValue({
+      isPro: false,
+      tier: 'free',
+      status: 'inactive',
+      currentPeriodEnd: null,
+      cancelAtPeriodEnd: false
+    })
+
+    await expect(isProActiveFromSnapshot()).resolves.toBe(false)
+    expect(fetchRemoteSubscriptionStatusMock).toHaveBeenCalledOnce()
   })
 })

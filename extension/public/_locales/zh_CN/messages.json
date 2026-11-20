@@ -1605,15 +1605,23 @@
   "settings_trial_quota_llm": {
     "message": "线索帮助剩余：$REMAINING$/$LIMIT$",
     "placeholders": {
-      "REMAINING": { "content": "$1" },
-      "LIMIT": { "content": "$2" }
+      "REMAINING": {
+        "content": "$1"
+      },
+      "LIMIT": {
+        "content": "$2"
+      }
     }
   },
   "settings_trial_quota_embed": {
     "message": "摘录向量剩余：$REMAINING$/$LIMIT$",
     "placeholders": {
-      "REMAINING": { "content": "$1" },
-      "LIMIT": { "content": "$2" }
+      "REMAINING": {
+        "content": "$1"
+      },
+      "LIMIT": {
+        "content": "$2"
+      }
     }
   },
   "settings_promote_email_label": {
@@ -1713,9 +1721,6 @@
   },
   "settings_sign_out_clear_local_hint": {
     "message": "同时移除此账号在本机绑定的书签（不会重映射）。若从未同步则无法恢复。"
-  },
-  "settings_sign_out_sync_then_clear_disabled": {
-    "message": "本机没有可上传的内容"
   },
   "settings_sign_out_cancel": {
     "message": "取消"

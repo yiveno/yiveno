@@ -12,7 +12,7 @@ function getApiBaseUrl(): string {
   return fromEnv ? fromEnv.replace(/\/$/, '') : 'http://localhost:8787'
 }
 
-export type MintedWebsiteSession = {
+export type WebsiteSessionFromExtension = {
   accessToken: string
   refreshToken: string
   userId: string
@@ -20,8 +20,8 @@ export type MintedWebsiteSession = {
   expiresAt?: number
 }
 
-export type MintWebsiteSessionResult =
-  | { status: 'ok'; session: MintedWebsiteSession }
+export type WebsiteSessionFromExtensionResult =
+  | { status: 'ok'; session: WebsiteSessionFromExtension }
   | { status: 'not_signed_in' }
   | { status: 'email_required' }
   | { status: 'failed'; error: string }
@@ -30,10 +30,10 @@ export type MintWebsiteSessionResult =
  * POST /api/auth/website-session（device Bearer 优先）。
  * 匿名无 email → `email_required`（官网 L1 引导先转正，不得静默失败）。
  */
-export async function mintWebsiteSessionFromExtensionAccess(): Promise<MintWebsiteSessionResult> {
+export async function requestWebsiteSessionFromExtension(): Promise<WebsiteSessionFromExtensionResult> {
   const token = await getWorkerApiAccessToken()
   if (!token) {
-    logger.warn('Auth', '反向接通：扩展未登录，无法铸官网会话')
+    logger.warn('Auth', '反向接通：扩展未登录，无法申请官网会话')
     return { status: 'not_signed_in' }
   }
 

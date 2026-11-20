@@ -8,6 +8,7 @@ import {
   SubscriptionRefreshError,
   SubscriptionSnapshotSchema,
   createFreeSubscriptionSnapshot,
+  isSubscriptionSnapshotFresh,
   type SubscriptionSnapshot
 } from '@/core/identity/subscription-snapshot'
 import { getAccountBinding } from '@/infrastructure/identity/local-profile-service'
@@ -71,10 +72,28 @@ export async function clearSubscriptionSnapshot(): Promise<void> {
 
 /**
  * 是否有效 Pro（本地快照；过期按 currentPeriodEnd 再判一次）。
+ * `fetchedAt` 超过 `SUBSCRIPTION_SNAPSHOT_MAX_AGE_MS`（7 天，或缺失）→ 强制刷新一次；
+ * 刷新失败或仍不新鲜 → 保守 Free（不放行 Pro 门禁）。
  */
 export async function isProActiveFromSnapshot(): Promise<boolean> {
-  const snapshot = await getSubscriptionSnapshot()
-  if (!snapshot?.isPro) {
+  let snapshot = await getSubscriptionSnapshot()
+  if (!snapshot) {
+    return false
+  }
+
+  if (!isSubscriptionSnapshotFresh(snapshot)) {
+    try {
+      snapshot = await refreshSubscriptionSnapshot({ force: true })
+    } catch {
+      return false
+    }
+    // 网络失败路径会沿用旧快照；仍不新鲜则按未知 → Free
+    if (!isSubscriptionSnapshotFresh(snapshot)) {
+      return false
+    }
+  }
+
+  if (!snapshot.isPro) {
     return false
   }
   if (snapshot.currentPeriodEnd) {

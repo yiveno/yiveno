@@ -228,7 +228,7 @@ Authorization: Bearer <deviceToken>
 | `userId` / `email` / `avatarUrl` / `displayName` | **保留**（迁入新 schema） |
 | 新增 `deviceToken` / `deviceId` / `isAnonymous`  | 写入                      |
 
-调用 `getAuthSession()` 取 `accessToken` 的路径（AI client、memory sync、dreaming、cold-start、`mint-website-session-from-extension.ts` 等）改为取 `deviceToken` 作 Bearer。
+调用 `getAuthSession()` 取 `accessToken` 的路径（AI client、memory sync、dreaming、cold-start、`website-session-from-extension.ts` 等）改为取 `deviceToken` 作 Bearer。
 
 ### 4.2 已登录用户升级迁移（无感）
 
@@ -444,18 +444,18 @@ E **不**解决「扩展持 Supabase 会话 + 匿名直 signup + 转正强制 re
 
 ## 附录 A · 关键代码锚点（Step 0 实读）
 
-| 主题                      | 路径                                                                                                                           |
-| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| Mint + 单活跃             | `worker/src/services/auth/mint-extension-session.ts`（L5–12 仍写「本机库不可多机共存」——与已定产品方向冲突，以本设计为准废止） |
-| 租约 KV                   | `worker/src/services/auth/extension-session-lease-kv.ts`                                                                       |
-| 鉴权中间件                | `worker/src/middleware/supabase-auth.ts`                                                                                       |
-| Auth / AI 路由            | `worker/src/routes/auth.ts`、`ai.ts`                                                                                           |
-| 扩展会话 schema           | `extension/src/core/identity/auth-session.ts`                                                                                  |
-| 存取                      | `extension/src/infrastructure/identity/auth-session-service.ts`                                                                |
-| Revalidate / 闹钟 / probe | `auth-session-revalidate.ts`、`auth-session-lease-alarm.ts`、`extension-session-lease-probe.ts`                                |
-| Handoff                   | `external-auth-handoff.ts`（core + background listener）；`website/.../extension-auth-handoff.ts`                              |
-| 反向接通                  | `mint-website-session-from-extension.ts`；`FromExtensionAuth.vue`；`issue-supabase-user-session.ts`                            |
-| Normative                 | 产品文档 §登录态对齐；`docs/AUTH_GUIDE.md`；ADR-018 / ADR-019                                                                  |
+| 主题                      | 路径                                                                                                                              |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
+| Mint + 单活跃             | `worker/src/services/auth/mint-extension-session.ts`（已删除，见 S1）                                                             |
+| 租约 KV                   | `worker/src/services/auth/extension-session-lease-kv.ts`（已删除，见 S1）                                                         |
+| 鉴权中间件                | `worker/src/middleware/supabase-auth.ts`                                                                                          |
+| Auth / AI 路由            | `worker/src/routes/auth.ts`、`ai.ts`                                                                                              |
+| 扩展会话 schema           | `extension/src/core/identity/auth-session.ts`                                                                                     |
+| 存取                      | `extension/src/infrastructure/identity/auth-session-service.ts`                                                                   |
+| Revalidate / 闹钟 / probe | `auth-session-revalidate.ts`；`auth-session-lease-alarm.ts`（已删除，见 S1）；`extension-session-lease-probe.ts`（已删除，见 S1） |
+| Handoff                   | `external-auth-handoff.ts`（core + background listener）；`website/.../extension-auth-handoff.ts`                                 |
+| 反向接通                  | `website-session-from-extension.ts`；`FromExtensionAuth.vue`；`issue-supabase-user-session.ts`                                    |
+| Normative                 | 产品文档 §登录态对齐；`docs/AUTH_GUIDE.md`；ADR-018 / ADR-019                                                                     |
 
 ## 附录 B · 文档落点说明
 

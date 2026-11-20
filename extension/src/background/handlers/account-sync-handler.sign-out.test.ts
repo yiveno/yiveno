@@ -260,63 +260,6 @@ describe('handleAuthSignOut', () => {
     expect(clearAccountLibraryOnSignOutMock).not.toHaveBeenCalled()
   })
 
-  it('sync_then_clear_local 本机有摘录时覆盖云端再清', async () => {
-    const items = [
-      { id: 'a', ownerId: accountId, type: 'text_excerpt' },
-      { id: 'b', ownerId: accountId, type: 'bookmark' }
-    ]
-    listAllByOwnerIdMock.mockResolvedValue(items)
-    replaceRemoteWithLocalItemsMock.mockResolvedValue({ written: 1, backupId: 'bak' })
-
-    const result = await handleAuthSignOut('sync_then_clear_local')
-    expect(result).toMatchObject({
-      ok: true,
-      mode: 'sync_then_clear_local',
-      clearedCount: 2,
-      syncedCount: 1
-    })
-    expect(remapOwnerIdMock).toHaveBeenCalledWith(localProfileId, accountId)
-    expect(replaceRemoteWithLocalItemsMock).toHaveBeenCalledWith(
-      'at',
-      [{ id: 'a', ownerId: accountId, type: 'text_excerpt' }],
-      { allowDestructiveShrink: true }
-    )
-    expect(replaceOwnerItemsMock).toHaveBeenCalledWith(accountId, [])
-  })
-
-  it('sync_then_clear_local 本机无数据时不写空云端', async () => {
-    listAllByOwnerIdMock.mockResolvedValue([])
-    const result = await handleAuthSignOut('sync_then_clear_local')
-    expect(result).toMatchObject({ ok: true, syncedCount: 0, clearedCount: 0 })
-    expect(replaceRemoteWithLocalItemsMock).not.toHaveBeenCalled()
-    expect(replaceOwnerItemsMock).toHaveBeenCalledWith(accountId, [])
-  })
-
-  it('sync_then_clear_local 本机仅书签时不写云仍清本地', async () => {
-    listAllByOwnerIdMock.mockResolvedValue([{ id: 'b', ownerId: accountId, type: 'bookmark' }])
-    const result = await handleAuthSignOut('sync_then_clear_local')
-    expect(result).toMatchObject({
-      ok: true,
-      mode: 'sync_then_clear_local',
-      syncedCount: 0,
-      clearedCount: 1
-    })
-    expect(replaceRemoteWithLocalItemsMock).not.toHaveBeenCalled()
-    expect(replaceOwnerItemsMock).toHaveBeenCalledWith(accountId, [])
-  })
-
-  it('sync_then_clear_local 云端失败时不退出', async () => {
-    listAllByOwnerIdMock.mockResolvedValue([{ id: 'a', type: 'text_excerpt' }])
-    replaceRemoteWithLocalItemsMock.mockRejectedValue(new Error('network'))
-    const result = await handleAuthSignOut('sync_then_clear_local')
-    expect(result.ok).toBe(false)
-    if (!result.ok) {
-      expect(result.errorCode).toBe('SYNC_REPLACE_LOCAL_FAILED')
-    }
-    expect(clearAuthSessionMock).not.toHaveBeenCalled()
-    expect(replaceOwnerItemsMock).not.toHaveBeenCalled()
-  })
-
   it('device 会话退出调 revoke-self，不走 uninstall revoke', async () => {
     const deviceToken = 'ydt_' + 'r'.repeat(64)
     getDeviceSessionMock.mockResolvedValue({

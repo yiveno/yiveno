@@ -1608,15 +1608,23 @@
   "settings_trial_quota_llm": {
     "message": "Clue help left: $REMAINING$/$LIMIT$",
     "placeholders": {
-      "REMAINING": { "content": "$1" },
-      "LIMIT": { "content": "$2" }
+      "REMAINING": {
+        "content": "$1"
+      },
+      "LIMIT": {
+        "content": "$2"
+      }
     }
   },
   "settings_trial_quota_embed": {
     "message": "Excerpt embeddings left: $REMAINING$/$LIMIT$",
     "placeholders": {
-      "REMAINING": { "content": "$1" },
-      "LIMIT": { "content": "$2" }
+      "REMAINING": {
+        "content": "$1"
+      },
+      "LIMIT": {
+        "content": "$2"
+      }
     }
   },
   "settings_promote_email_label": {
@@ -1716,9 +1724,6 @@
   },
   "settings_sign_out_clear_local_hint": {
     "message": "Also removes bookmarks tied to this account on this device (not remapped). Cannot recover if never synced."
-  },
-  "settings_sign_out_sync_then_clear_disabled": {
-    "message": "Nothing on this device to upload"
   },
   "settings_sign_out_cancel": {
     "message": "Cancel"

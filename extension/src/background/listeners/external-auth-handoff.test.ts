@@ -1,16 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const ensureBackgroundBootstrappedMock = vi.hoisted(() => vi.fn(async () => undefined))
-const clearAccountLibraryOnSignOutMock = vi.hoisted(() =>
-  vi.fn(async () => ({ clearedCount: 0, remappedBookmarks: 0 }))
-)
 
 vi.mock('@/background/bootstrap-ready', () => ({
   ensureBackgroundBootstrapped: ensureBackgroundBootstrappedMock
-}))
-
-vi.mock('@/application/identity/clear-account-library-on-sign-out', () => ({
-  clearAccountLibraryOnSignOut: clearAccountLibraryOnSignOutMock
 }))
 
 vi.mock('@/application/memory/ensure-memory-embedding-maintenance', () => ({
@@ -95,11 +88,6 @@ describe('external auth handoff（device）', () => {
   beforeEach(() => {
     resetExternalAuthHandoffListenerForTests()
     ensureBackgroundBootstrappedMock.mockClear()
-    clearAccountLibraryOnSignOutMock.mockClear()
-    clearAccountLibraryOnSignOutMock.mockResolvedValue({
-      clearedCount: 0,
-      remappedBookmarks: 0
-    })
     vi.mocked(scheduleSilentMemoryEmbeddingMaintenance).mockClear()
     vi.stubGlobal('chrome', createChromeStorageMock())
   })
@@ -123,7 +111,6 @@ describe('external auth handoff（device）', () => {
       expect(ensureBackgroundBootstrappedMock).toHaveBeenCalled()
       expect(scheduleSilentMemoryEmbeddingMaintenance).toHaveBeenCalledWith('auth_handoff', 800)
     })
-    expect(clearAccountLibraryOnSignOutMock).not.toHaveBeenCalled()
   })
 
   it('载荷非法 → 拒绝', async () => {
@@ -246,33 +233,6 @@ describe('external auth handoff（device）', () => {
       payload: { nextPath: '/account' }
     })
     expect(result).toEqual({ ok: false, error: 'not_signed_in' })
-  })
-
-  it('sign-out handoff 清账号桶后清登录态', async () => {
-    vi.stubGlobal(
-      'chrome',
-      createChromeStorageMock({
-        [ACCOUNT_BINDING_STORAGE_KEY]: {
-          accountId: USER_A,
-          boundAt: '2026-08-01T00:00:00.000Z'
-        },
-        [DEVICE_SESSION_STORAGE_KEY]: {
-          deviceToken: 'ydt_' + 'a'.repeat(64),
-          deviceId: DEVICE_A,
-          userId: USER_A,
-          isAnonymous: false,
-          createdAt: '2026-01-01T00:00:00.000Z'
-        }
-      })
-    )
-    const result = await applyExternalAuthHandoff({
-      type: 'YIVENO_AUTH_SIGN_OUT_HANDOFF',
-      payload: { reason: 'website_sign_out' }
-    })
-    expect(result).toEqual({ ok: true })
-    await vi.waitFor(() => {
-      expect(clearAccountLibraryOnSignOutMock).toHaveBeenCalledWith(USER_A)
-    })
   })
 
   it('register 只挂一次监听', () => {

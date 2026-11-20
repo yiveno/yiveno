@@ -362,32 +362,6 @@ export async function handleAuthSignOut(
         clearedCount = cleared.clearedCount
         releasedToLocalCount = cleared.remappedBookmarks + cleared.remappedExcerpts
       }
-    } else if (mode === 'sync_then_clear_local') {
-      const profile = await getOrCreateLocalProfile()
-      await memoryItemRepository.remapOwnerId(profile.localProfileId, binding.accountId)
-      const items = await memoryItemRepository.listAllByOwnerId(binding.accountId, {
-        includeDeleted: true
-      })
-      const outbound = filterCloudSyncableMemoryItems(items)
-      if (outbound.length > 0) {
-        try {
-          syncedCount = await flushAccountExcerptsToCloud(binding.accountId)
-        } catch (error) {
-          const code =
-            error instanceof Error && error.message === 'SYNC_NOT_AUTHENTICATED'
-              ? 'SYNC_NOT_AUTHENTICATED'
-              : 'SYNC_REPLACE_LOCAL_FAILED'
-          flowFail('Auth', 'AUTH_SIGN_OUT', startedAt, error)
-          return {
-            ok: false,
-            errorCode: code,
-            ...(error instanceof Error ? { error: error.message } : {})
-          }
-        }
-      }
-      clearedCount = items.length
-      await memoryItemRepository.replaceOwnerItems(binding.accountId, [])
-      invalidateBookmarkSyncAlignmentCache()
     } else if (mode === 'clear_local') {
       const items = await memoryItemRepository.listAllByOwnerId(binding.accountId, {
         includeDeleted: true

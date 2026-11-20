@@ -59,8 +59,7 @@ export type AccountSyncErrorCode = z.infer<typeof AccountSyncErrorCodeSchema>
 export const AuthSignOutModeSchema = z.enum([
   'keep_local', // 默认：账号桶全量回迁本地档后退出；opt-in 可删摘录
   'flush_then_keep', // 先 flush 摘录上云，再同 keep_local 回迁（失败不退出，UI 可仍退出）
-  'clear_local', // 整桶清空账号桶（含已归属书签，不回迁；强确认）
-  'sync_then_clear_local' // 遗留：先覆盖云端再清账号桶；设置页主路径不再主推
+  'clear_local' // 整桶清空账号桶（含已归属书签，不回迁；强确认）
 ])
 
 export type AuthSignOutMode = z.infer<typeof AuthSignOutModeSchema>
@@ -124,7 +123,7 @@ export type AuthSignOutResponse =
       mode: AuthSignOutMode
       /** 本机从账号桶删除的条数（仅 deleteLocalExcerpts / clear_local 等） */
       clearedCount: number
-      /** flush / sync_then_clear 时写入云端的条数；其它模式为 0 */
+      /** flush_then_keep 时写入云端的条数；其它模式为 0 */
       syncedCount: number
       /** keep / flush_then_keep：回迁到本地档的条数（书签 + 摘录） */
       releasedToLocalCount: number

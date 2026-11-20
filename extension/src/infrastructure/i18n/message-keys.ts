@@ -485,7 +485,6 @@ export const MESSAGE_KEYS = [
   'settings_sign_out_flush_failed_still',
   'settings_sign_out_clear_local',
   'settings_sign_out_clear_local_hint',
-  'settings_sign_out_sync_then_clear_disabled',
   'settings_sign_out_cancel',
   'settings_login_migration_title',
   'settings_login_migration_copy',

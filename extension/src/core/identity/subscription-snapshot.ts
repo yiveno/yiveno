@@ -45,6 +45,31 @@ export type SubscriptionSnapshot = z.infer<typeof SubscriptionSnapshotSchema>
 
 export const SUBSCRIPTION_SNAPSHOT_STORAGE_KEY = 'yiveno.subscriptionSnapshot'
 
+/**
+ * 本地订阅快照最长可信龄。
+ * 超过则视为未知：Pro 门禁须强制刷新；刷新失败按 Free 保守处理。
+ */
+export const SUBSCRIPTION_SNAPSHOT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000
+
+/**
+ * 快照是否仍新鲜（看 `fetchedAt`）。
+ * 缺字段 / 非法日期 → 不新鲜（勿崩）。
+ */
+export function isSubscriptionSnapshotFresh(
+  snapshot: { fetchedAt?: string | null },
+  nowMs = Date.now()
+): boolean {
+  const raw = snapshot.fetchedAt
+  if (typeof raw !== 'string' || !raw.trim()) {
+    return false
+  }
+  const fetchedMs = Date.parse(raw)
+  if (Number.isNaN(fetchedMs)) {
+    return false
+  }
+  return nowMs - fetchedMs <= SUBSCRIPTION_SNAPSHOT_MAX_AGE_MS
+}
+
 /** 刷新订阅快照失败（已登录但 Worker 不可用等）。 */
 export class SubscriptionRefreshError extends Error {
   readonly code: string

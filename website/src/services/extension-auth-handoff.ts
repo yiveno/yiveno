@@ -107,8 +107,8 @@ export function getPendingExtensionId(): string | null {
 
 /**
  * 解析 handoff 目标：优先本次 connect，其次上次成功连接。
- * 用于已铸造 session 的 sendMessage 目标；
- * **mint 新扩展会话**须走 `getPendingExtensionId()`（禁止仅凭 last id 静默 remint）。
+ * 用于已注册 device 后的 sendMessage 目标；
+ * **新 device-register**须走 `getPendingExtensionId()`（禁止仅凭 last id 静默重注册）。
  */
 export function resolveExtensionHandoffTargetId(): string | null {
   return getPendingExtensionId() ?? getLastConnectedExtensionId()

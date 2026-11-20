@@ -21,19 +21,6 @@ export const ExternalAuthDeviceHandoffSchema = z.object({
 })
 
 /**
- * 官网 → 扩展：旧版「官网退出连带踢扩展」消息（已退役调用方）。
- * 扩展仍接受并 keep_local，以免缓存旧官网页误发；新产品路径官网退出**不**发此消息。
- */
-export const ExternalAuthSignOutHandoffSchema = z.object({
-  type: z.literal('YIVENO_AUTH_SIGN_OUT_HANDOFF'), // 遗留：官网连带踢扩展
-  payload: z
-    .object({
-      reason: z.literal('website_sign_out').optional() // 官网主动退出（遗留）
-    })
-    .optional()
-})
-
-/**
  * 官网 → 扩展：仅探测官网是否已登录（Side Panel Connect 软条用；不带 token）。
  */
 export const WebsiteAuthProbeHandoffSchema = z.object({
@@ -44,8 +31,8 @@ export const WebsiteAuthProbeHandoffSchema = z.object({
 })
 
 /**
- * 官网 → 扩展：询问本机扩展是否已登录（Connect 前短路；避免同机已连通仍 mint/挤掉）。
- * 不带 token；扩展只回本地 binding/session 的 userId。
+ * 官网 → 扩展：询问本机扩展是否已登录（Connect 前短路；同账号则跳过 device-register）。
+ * 不带 token；扩展只回本地 binding / device session 的 userId。
  */
 export const ExtensionAuthStatusProbeSchema = z.object({
   type: z.literal('YIVENO_EXTENSION_AUTH_STATUS_PROBE'), // 官网问扩展登录态
@@ -71,7 +58,6 @@ export const WebsiteSessionRequestSchema = z.object({
 
 export const ExternalAuthHandoffMessageSchema = z.union([
   ExternalAuthDeviceHandoffSchema,
-  ExternalAuthSignOutHandoffSchema,
   WebsiteAuthProbeHandoffSchema,
   ExtensionAuthStatusProbeSchema,
   WebsiteSessionRequestSchema

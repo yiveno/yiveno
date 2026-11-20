@@ -1,10 +1,9 @@
 /**
- * 接收官网回传的登录 / 退出，写入或清理本地 binding。
- * 登录：不静默 absorb（ADR-018 门闸由 UI 处理）；退出：清账号桶痕迹（ADR-018 keep_local）。
+ * 接收官网回传的 device handoff / 探测 / 反向接通请求。
+ * device 写入：不静默 absorb（ADR-018 门闸由 UI 处理）。
  */
 
 import { scheduleSilentMemoryEmbeddingMaintenance } from '@/application/memory/ensure-memory-embedding-maintenance'
-import { clearAccountLibraryOnSignOut } from '@/application/identity/clear-account-library-on-sign-out'
 import { ensureBackgroundBootstrapped } from '@/background/bootstrap-ready'
 import { isExternallyConnectableOrigin } from '@/core/extension/externally-connectable-origins'
 import {
@@ -12,28 +11,19 @@ import {
   type ExternalAuthHandoffResponse
 } from '@/core/identity/external-auth-handoff'
 import { deviceSessionFromRegisterData } from '@/infrastructure/auth/device-register-api-client'
-import {
-  clearExtensionUninstallRevoke,
-  registerExtensionUninstallRevoke
-} from '@/infrastructure/auth/extension-uninstall-url'
-import { mintWebsiteSessionFromExtensionAccess } from '@/infrastructure/auth/mint-website-session-from-extension'
+import { registerExtensionUninstallRevoke } from '@/infrastructure/auth/extension-uninstall-url'
+import { requestWebsiteSessionFromExtension } from '@/infrastructure/auth/website-session-from-extension'
 import { resolveWebsiteAuthProbeFromExternal } from '@/infrastructure/auth/website-auth-probe'
 import { clearAuthSession, getAuthSession } from '@/infrastructure/identity/auth-session-service'
 import {
-  clearDeviceSession,
   getDeviceSession,
   setDeviceSession
 } from '@/infrastructure/identity/device-session-service'
 import {
   setAccountBinding,
-  clearAccountBinding,
   getAccountBinding
 } from '@/infrastructure/identity/local-profile-service'
-import { patchSyncPrefs } from '@/infrastructure/identity/sync-prefs-service'
-import {
-  markAuthValidatedNow,
-  clearAuthValidationTimestamp
-} from '@/infrastructure/auth/auth-session-revalidate'
+import { markAuthValidatedNow } from '@/infrastructure/auth/auth-session-revalidate'
 import { maskDeviceTokenForLog } from '@/core/identity/device-session'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
@@ -143,55 +133,6 @@ export async function applyExternalAuthDeviceHandoff(
 }
 
 /**
- * 遗留：旧官网页仍可能发 SIGN_OUT_HANDOFF。新产品路径官网退出不踢扩展；
- * 若收到则仍 keep_local 清扩展（兼容缓存页），并尽力释放远程 device。
- */
-export async function applyExternalAuthSignOutHandoff(
-  message: unknown
-): Promise<ExternalAuthHandoffResponse> {
-  const startedAt = flowStart('Auth', '官网 sign-out handoff（遗留）')
-  const parsed = ExternalAuthHandoffMessageSchema.safeParse(message)
-  if (!parsed.success || parsed.data.type !== 'YIVENO_AUTH_SIGN_OUT_HANDOFF') {
-    flowFail('Auth', '官网 sign-out handoff', startedAt, new Error('invalid_sign_out_handoff'))
-    return { ok: false, error: 'invalid_sign_out_handoff' }
-  }
-
-  try {
-    const binding = await getAccountBinding()
-    if (binding) {
-      try {
-        await ensureBootstrapReady()
-        await clearAccountLibraryOnSignOut(binding.accountId)
-      } catch (error) {
-        logger.warn('Auth', '官网退出 handoff 清账号桶失败', error)
-      }
-    }
-    const device = await getDeviceSession()
-    const remoteReleased = await clearExtensionUninstallRevoke({
-      revokeRemote: true,
-      ...(device?.deviceToken ? { deviceTokenFallback: device.deviceToken } : {})
-    })
-    await clearDeviceSession()
-    await clearAuthSession()
-    await clearAccountBinding()
-    await patchSyncPrefs({ enabled: false })
-    await clearAuthValidationTimestamp()
-    flowOk('Auth', '官网 sign-out handoff', startedAt, {
-      reason: parsed.data.payload?.reason ?? 'website_sign_out',
-      clearedAccountLibrary: Boolean(binding),
-      remoteDeviceReleased: remoteReleased
-    })
-    return { ok: true }
-  } catch (error) {
-    flowFail('Auth', '官网 sign-out handoff', startedAt, error)
-    return {
-      ok: false,
-      error: error instanceof Error ? error.message : 'sign_out_handoff_failed'
-    }
-  }
-}
-
-/**
  * 官网询问：本机扩展是否已有登录态（只读；不改存储）。
  * 优先 device session；迁移窗回退旧 auth_session。
  */
@@ -241,23 +182,23 @@ export async function applyWebsiteSessionRequest(
   if (!parsed.success || parsed.data.type !== 'YIVENO_WEBSITE_SESSION_REQUEST') {
     return { ok: false, error: 'invalid_website_session_request' }
   }
-  const minted = await mintWebsiteSessionFromExtensionAccess()
-  if (minted.status === 'email_required') {
+  const issued = await requestWebsiteSessionFromExtension()
+  if (issued.status === 'email_required') {
     return { ok: false, error: 'email_required' }
   }
-  if (minted.status !== 'ok') {
+  if (issued.status !== 'ok') {
     return {
       ok: false,
-      error: minted.status === 'not_signed_in' ? 'not_signed_in' : minted.error
+      error: issued.status === 'not_signed_in' ? 'not_signed_in' : issued.error
     }
   }
   return {
     ok: true,
-    accessToken: minted.session.accessToken,
-    refreshToken: minted.session.refreshToken,
-    userId: minted.session.userId,
-    ...(minted.session.email ? { email: minted.session.email } : {}),
-    ...(minted.session.expiresAt != null ? { expiresAt: minted.session.expiresAt } : {})
+    accessToken: issued.session.accessToken,
+    refreshToken: issued.session.refreshToken,
+    userId: issued.session.userId,
+    ...(issued.session.email ? { email: issued.session.email } : {}),
+    ...(issued.session.expiresAt != null ? { expiresAt: issued.session.expiresAt } : {})
   }
 }
 
@@ -278,9 +219,6 @@ export async function applyExternalAuthHandoff(
   }
   if (parsed.data.type === 'YIVENO_WEBSITE_SESSION_REQUEST') {
     return applyWebsiteSessionRequest(message)
-  }
-  if (parsed.data.type === 'YIVENO_AUTH_SIGN_OUT_HANDOFF') {
-    return applyExternalAuthSignOutHandoff(message)
   }
   return applyExternalAuthDeviceHandoff(message)
 }
