@@ -23,7 +23,7 @@ export const DEVICE_AUTH_CACHE_TTL_MS = 45_000
 /** lastSeenAt 最短写入间隔 */
 export const DEVICE_LAST_SEEN_THROTTLE_MS = 5 * 60_000
 
-export type DeviceAuthCacheEntry = {
+type DeviceAuthCacheEntry = {
   userId: string
   deviceId: string
   isAnonymous: boolean

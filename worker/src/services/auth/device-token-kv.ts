@@ -28,7 +28,7 @@ export type DeviceTokenRecord = {
 }
 
 /** 用户设备索引行 */
-export type UserDeviceIndexEntry = {
+type UserDeviceIndexEntry = {
   deviceId: string
   deviceLabel: string
   platform: string

@@ -8,9 +8,9 @@ import { verifySupabaseAccessToken } from './verify-supabase-access-token'
 import { getUserMeta, issueDeviceToken, putUserMeta, type UserMetaRecord } from './device-token-kv'
 import { info } from '../../utils/logger'
 
-export type DeviceRegisterMode = 'website_connect' | 'session_exchange'
+type DeviceRegisterMode = 'website_connect' | 'session_exchange'
 
-export type DeviceRegisterSuccess = {
+type DeviceRegisterSuccess = {
   deviceToken: string
   deviceId: string
   userId: string
@@ -20,7 +20,7 @@ export type DeviceRegisterSuccess = {
   isAnonymous: boolean
 }
 
-export type DeviceRegisterFailure = {
+type DeviceRegisterFailure = {
   ok: false
   status: 400 | 401 | 429 | 500 | 503
   error: string
