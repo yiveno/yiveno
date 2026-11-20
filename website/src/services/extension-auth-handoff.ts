@@ -16,9 +16,6 @@ import {
 export type RegisterAndHandoffResult =
   { status: 'ok' } | { status: 'failed'; error?: string } | { status: 'account_mismatch' }
 
-/** @deprecated 用 {@link RegisterAndHandoffResult} */
-export type MintAndHandoffResult = RegisterAndHandoffResult
-
 /** 本次从扩展打开登录时的临时 connect（OAuth 跳转用 sessionStorage）。 */
 const STORAGE_EXTENSION_ID = 'yiveno_connect_extension_id'
 const STORAGE_CONNECT_FLAG = 'yiveno_connect_extension'
@@ -384,6 +381,3 @@ export async function registerAndHandoffDeviceToExtension(input: {
   }
   return { status: 'ok' }
 }
-
-/** @deprecated 用 {@link registerAndHandoffDeviceToExtension} */
-export const mintAndHandoffSessionToExtension = registerAndHandoffDeviceToExtension

@@ -86,18 +86,3 @@ export async function takeExtensionUninstallRevokeToken(
     return null
   }
 }
-
-/** 丢弃尚未使用的 revoke token（换设备 / 主动退出时）。 */
-export async function deleteExtensionUninstallRevokeToken(
-  env: Env,
-  token: string | null | undefined
-): Promise<void> {
-  if (!token?.trim() || !env.AI_USAGE_KV) {
-    return
-  }
-  try {
-    await env.AI_USAGE_KV.delete(extensionUninstallRevokeKvKey(token.trim()))
-  } catch {
-    warn('[Auth] 删除卸载 revoke token 失败')
-  }
-}
