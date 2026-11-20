@@ -735,7 +735,7 @@ dual-thread-learning-label.ts[EU5T]: F:学习面板标签种类：结果 outcome
 index.html[EU3T]: F:设置页 HTML 壳：挂载 settings/main.ts | R:- | A:扩展页 UI | S:-
 main.ts[EU5T]: F:Settings 页入口：i18n boot 后挂载 Settings.vue | R:code:extension/src/infrastructure/i18n/extension-i18n-boot.ts | A:扩展页 UI | S:-
 settings-page-url-sync.ts[EU5T]: F:Settings 分区与 location.search / history 的读写同步 | R:code:extension/src/core/settings/settings-sections.ts | A:扩展页 UI | S:-
-settings-panel.css[EU3L]: F:Settings 面板样式 | R:- | A:含 promote 输入框样式 | S:交互态无几何变换
+settings-panel.css[EU3L]: F:Settings 面板样式 | R:- | A:含 promote 输入框样式 | S:间距圆角用 design token；交互态无几何变换
 settings-visibility-refresh.ts[EU5T]: F:从 Chrome 快捷键页返回后是否应静默刷新命令绑定 | R:- | A:扩展页 UI | S:-
 third-party-source-status-copy.ts[EU5T]: F:第三方语料导入状态行的摘要文案与错误码映射 | R:code:extension/src/core/memory/third-party-corpus-import-state.ts,code:extension/src/core/memory/third-party-corpus-source.ts | A:扩展页 UI | S:-
 use-settings-page.ts[EU7L]: F:Settings 页状态与账户动作 | R:code:extension/src/infrastructure/messaging/background-client.ts | A:handlePromoteAnonymous;loadHostedQuota trial* | S:配额拉取失败静默不展示试用数字
@@ -1046,7 +1046,7 @@ auth-session-liveness.ts[II5T]: F:官网会话存活探测：失效则尽快反�
 auth.ts[II5S]: F:官网登录：OAuth/邮件 OTP、会话读写与退出 | R:- | A:- | S:-
 billing.ts[IB5T]: F:官网计费 API（Worker） | R:- | A:- | S:-
 date.ts[CL5T]: F:官网日期展示：跟生效 UI locale（BCP 47） | R:- | A:- | S:禁止裸 `toLocaleDateString()` 无 locale
-extension-auth-handoff.ts[II5M]: F:官网 Connect：device-register 后 DEVICE_HANDOFF | R:code:website/src/services/register-device-from-website.ts | A:registerAndHandoffDeviceToExtension;getPendingExtensionId | S:新 register 须 pending；禁 last id 静默重注册；不发 SIGN_OUT
+extension-auth-handoff.ts[II5M]: F:官网 Connect：device-register 后 DEVICE_HANDOFF | R:code:website/src/services/register-device-from-website.ts | A:registerAndHandoffDeviceToExtension;getPendingExtensionId | S:新 register 须 pending；禁 last id 静默重注册；旧 mint 别名已删
 nav-pro-badge-cache.ts[AB5T]: F:官网顶栏 Pro 环用的会话缓存 | R:- | A:- | S:-
 otp-resend-cooldown.ts[AI5T]: F:Email OTP「再次发送」冷却：截止时间写入 sessionStorage | R:- | A:- | S:-
 run-extension-connect.ts[AI5S]: F:官网已登录时编排 Connect 到扩展 | R:code:website/src/services/extension-auth-handoff.ts | A:website_connect_result | S:结果含 account_mismatch；不清官网会话
@@ -1145,18 +1145,17 @@ usage-quota.ts[AA5S]: F:托管 LLM 配额 | R:code:worker/src/config/ai-hosted.t
 ===/<repository>/worker/src/services/auth/===
 auth-session-exists.ts[II5T]: F:探测指定 Auth session 是否仍存在于 `auth.sessions` | R:- | A:- | S:禁止**把 Admin GET 的 404 当成 gone：多数 GoT
 consume-extension-uninstall-revoke.ts[II5T]: F:消费卸载一次性作废票：撤设备 token | R:code:worker/src/services/auth/device-token-kv.ts | A:consumeExtensionUninstallRevoke | S:payload={userId,deviceId}；revokeDeviceById
-extension-uninstall-revoke-kv.ts[II5S]: F:扩展卸载一次性作废票 KV | R:code:worker/src/services/auth/consume-extension-uninstall-revoke.ts | A:put/get uninstall revoke | S:payload 含 deviceId（非 sessionId）
+extension-uninstall-revoke-kv.ts[II5S]: F:扩展卸载一次性作废票 KV | R:code:worker/src/services/auth/consume-extension-uninstall-revoke.ts | A:put/consume uninstall revoke | S:payload 含 deviceId；无 delete 导出
 issue-supabase-user-session.ts[II5S]: F:Admin generateLink + anon verifyOtp：为指定用户签发新 Auth 会话 | R:- | A:- | S:-
 mint-website-session.ts[II5T]: F:用扩展 Bearer 为本浏览器官网铸造独立 Supabase 会话 | R:- | A:- | S:-
 oauth-client.ts[II5S]: F:OAuth 令牌交换 & 用户信息获取 | R:- | A:- | S:-
 provider-config.ts[FI5T]: F:OAuth 提供商配置 | R:- | A:- | S:-
 read-jwt-session-id.ts[II3T]: F:从 access token payload 读取 session_id（不验签） | R:- | A:- | S:-
-revoke-auth-session.ts[II5T]: F:撤销指定 Supabase Auth session（该端等价登出） | R:- | A:- | S:-
 validation.ts[II5T]: F:OAuth 请求参数验证 | R:- | A:- | S:-
 verify-supabase-access-token.ts[II5S]: F:服务端校验 Supabase access token 并提取 claims | R:code:worker/src/services/auth/device-register.ts | A:verifySupabaseAccessToken | S:透传 is_anonymous；缺失 claim 按非匿名
 device-register.ts[II6M]: F:设备注册 connect/exchange | R:code:worker/src/services/auth/device-token-kv.ts | A:handleDeviceRegister | S:cap 20→403；签发可选 uninstallRevokeToken；已有 meta 不覆盖
 device-token-kv.ts[PI7L]: F:设备 token KV（列表/改名/撤销/cap/整户清） | R:code:worker/src/middleware/device-auth.ts | A:issueDeviceToken;listDevicesForUser;revokeAllDevicesForUser;deleteUserMeta | S:ydt_+64hex；DEVICE_CAP=20；转正后保留旧设备；清理幂等删 user_devs/meta
-promote-anonymous-user.ts[PA5S]: F:匿名账号绑定邮箱转正 | R:code:worker/src/services/auth/device-token-kv.ts | A:promoteAnonymousUser;mapPromoteAdminError | S:Admin updateUser+email_confirm；写 user_meta；冲突 409；已非匿名幂等
+promote-anonymous-user.ts[PA5S]: F:匿名账号绑定邮箱转正 | R:code:worker/src/services/auth/device-token-kv.ts | A:promoteAnonymousUser;mapPromoteAdminError;normalizePromoteAdminError | S:Admin updateUser+email_confirm；AuthError 归一化过 exactOptional；冲突 409；已非匿名幂等
 anonymous-cleanup.ts[PA6M]: F:匿名超期用户清理：筛 90 天 + KV 先行 + Admin deleteUser | R:code:worker/src/services/auth/device-token-kv.ts,code:worker/src/data-access/supabase.ts | A:runAnonymousCleanup;isStaleAnonymousUser | S:默认 dry-run；每轮≤500；依赖可注入；先撤 device/meta/配额再删用户
 
 ===/<repository>/worker/src/services/billing/===
