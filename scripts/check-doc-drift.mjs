@@ -26,6 +26,7 @@ const MESSAGING_SCHEMA_FILES = [
   'extension/src/core/messaging/import-messages.ts',
   'extension/src/core/messaging/settings-messages.ts',
   'extension/src/core/messaging/dual-thread-messages.ts',
+  'extension/src/core/messaging/daily-review-messages.ts',
   'extension/src/core/messaging/commands-messages.ts',
   'extension/src/core/messaging/account-sync-messages.ts',
   'extension/src/core/messaging/mcp-messages.ts',
