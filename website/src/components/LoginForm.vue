@@ -28,7 +28,6 @@ import {
   peekAuthReturn
 } from '../services/auth-return'
 import {
-  abortWebsiteLoginAfterDisplaceCancel,
   captureExtensionConnectParamsFromUrl,
   extractProfileFromUserMetadata,
   getPendingExtensionId,
@@ -243,7 +242,7 @@ function onPageShow(): void {
   }
 }
 
-async function tryHandoffCurrentSession(): Promise<'ok' | 'cancelled_displace' | 'failed'> {
+async function tryHandoffCurrentSession(): Promise<'ok' | 'account_mismatch' | 'failed'> {
   // 仅本次 connect_extension；禁止 last_extension_id 顺带 remint
   if (!getPendingExtensionId()) {
     return 'failed'
@@ -266,8 +265,12 @@ async function tryHandoffCurrentSession(): Promise<'ok' | 'cancelled_displace' |
     })
     if (result.status === 'ok') {
       toast.success(t('login.toast.extensionConnected'))
+      return 'ok'
     }
-    return result.status
+    if (result.status === 'account_mismatch') {
+      return 'account_mismatch'
+    }
+    return 'failed'
   } finally {
     connectingExtension.value = false
   }
@@ -281,8 +284,8 @@ async function finishSignedInOnLoginPage(): Promise<void> {
       await goAfterSignIn('/account?extension_connected=1')
       return
     }
-    if (handoff === 'cancelled_displace') {
-      await abortWebsiteLoginAfterDisplaceCancel()
+    if (handoff === 'account_mismatch') {
+      flashError(t('login.error.connectAccountMismatch'))
       return
     }
     flashError(t('login.error.connectExtension'))

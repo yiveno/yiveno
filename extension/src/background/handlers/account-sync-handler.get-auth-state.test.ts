@@ -5,10 +5,14 @@ const {
   getAccountBindingMock,
   clearAccountBindingMock,
   getAuthSessionMock,
+  getDeviceSessionMock,
+  clearDeviceSessionMock,
   patchSyncPrefsMock,
   clearSubscriptionSnapshotMock,
   ensureMemoryCloudSyncAlarmMock,
   revalidateAuthSessionMock,
+  revalidateDeviceSessionMock,
+  ensureDeviceSessionReadyMock,
   clearAuthValidationTimestampMock,
   clearExtensionUninstallRevokeMock,
   openWebsiteLoginPageMock,
@@ -18,10 +22,14 @@ const {
   getAccountBindingMock: vi.fn(),
   clearAccountBindingMock: vi.fn(),
   getAuthSessionMock: vi.fn(),
+  getDeviceSessionMock: vi.fn(),
+  clearDeviceSessionMock: vi.fn(),
   patchSyncPrefsMock: vi.fn(),
   clearSubscriptionSnapshotMock: vi.fn(),
   ensureMemoryCloudSyncAlarmMock: vi.fn(),
   revalidateAuthSessionMock: vi.fn(),
+  revalidateDeviceSessionMock: vi.fn(),
+  ensureDeviceSessionReadyMock: vi.fn(),
   clearAuthValidationTimestampMock: vi.fn(),
   clearExtensionUninstallRevokeMock: vi.fn(),
   openWebsiteLoginPageMock: vi.fn(),
@@ -32,6 +40,20 @@ vi.mock('@/infrastructure/identity/auth-session-service', () => ({
   clearAuthSession: clearAuthSessionMock,
   getAuthSession: getAuthSessionMock,
   setAuthSession: vi.fn()
+}))
+
+vi.mock('@/infrastructure/identity/device-session-service', () => ({
+  getDeviceSession: getDeviceSessionMock,
+  clearDeviceSession: clearDeviceSessionMock,
+  setDeviceSession: vi.fn()
+}))
+
+vi.mock('@/infrastructure/auth/ensure-device-session-ready', () => ({
+  ensureDeviceSessionReady: ensureDeviceSessionReadyMock
+}))
+
+vi.mock('@/infrastructure/auth/device-session-revalidate', () => ({
+  revalidateDeviceSession: revalidateDeviceSessionMock
 }))
 
 vi.mock('@/infrastructure/identity/local-profile-service', () => ({
@@ -46,16 +68,41 @@ vi.mock('@/infrastructure/identity/sync-prefs-service', () => ({
   patchSyncPrefs: patchSyncPrefsMock
 }))
 
+const {
+  listAllByOwnerIdMock,
+  replaceRemoteWithLocalItemsMock,
+  remapAccountLibraryToLocalProfileMock,
+  writeSignOutRemapNoticeMock
+} = vi.hoisted(() => ({
+  listAllByOwnerIdMock: vi.fn(async () => [] as unknown[]),
+  replaceRemoteWithLocalItemsMock: vi.fn(),
+  remapAccountLibraryToLocalProfileMock: vi.fn(async () => ({
+    clearedCount: 0,
+    remappedBookmarks: 0,
+    remappedExcerpts: 0
+  })),
+  writeSignOutRemapNoticeMock: vi.fn(async () => undefined)
+}))
+
 vi.mock('@/infrastructure/indexeddb/memory-item-repository', () => ({
   memoryItemRepository: {
     remapOwnerId: vi.fn(),
-    listAllByOwnerId: vi.fn(async () => []),
+    listAllByOwnerId: listAllByOwnerIdMock,
     replaceOwnerItems: vi.fn()
   }
 }))
 
 vi.mock('@/application/identity/clear-account-library-on-sign-out', () => ({
-  clearAccountLibraryOnSignOut: vi.fn(async () => ({ clearedCount: 0, remappedBookmarks: 0 }))
+  clearAccountLibraryOnSignOut: vi.fn(async () => ({
+    clearedCount: 0,
+    remappedBookmarks: 0,
+    remappedExcerpts: 0
+  })),
+  remapAccountLibraryToLocalProfile: remapAccountLibraryToLocalProfileMock
+}))
+
+vi.mock('@/infrastructure/storage/sign-out-remap-notice-storage', () => ({
+  writeSignOutRemapNotice: writeSignOutRemapNoticeMock
 }))
 
 vi.mock('@/infrastructure/identity/subscription-service', () => ({
@@ -71,7 +118,7 @@ vi.mock('@/infrastructure/sync/memory-cloud-sync-alarm', () => ({
 vi.mock('@/infrastructure/messaging/memory-sync-api-client', () => ({
   fetchRemoteSyncStatus: vi.fn(),
   pullRemoteMemoryItems: vi.fn(),
-  replaceRemoteWithLocalItems: vi.fn()
+  replaceRemoteWithLocalItems: replaceRemoteWithLocalItemsMock
 }))
 
 vi.mock('@/infrastructure/auth/extension-oauth', () => ({
@@ -128,6 +175,9 @@ describe('handleGetAuthState · 被挤掉 / refresh 作废', () => {
       accountId,
       boundAt: '2026-08-01T00:00:00.000Z'
     })
+    // 默认走旧 Supabase 路径（迁移窗口）
+    getDeviceSessionMock.mockResolvedValue(null)
+    ensureDeviceSessionReadyMock.mockResolvedValue({ device: null, note: 'no_legacy' })
     getAuthSessionMock.mockResolvedValue({
       accessToken: 'at',
       refreshToken: 'rt',
@@ -135,6 +185,7 @@ describe('handleGetAuthState · 被挤掉 / refresh 作废', () => {
       expiresAt: Math.floor(Date.now() / 1000) + 3600
     })
     clearAuthSessionMock.mockResolvedValue(undefined)
+    clearDeviceSessionMock.mockResolvedValue(undefined)
     clearAccountBindingMock.mockResolvedValue(undefined)
     patchSyncPrefsMock.mockResolvedValue({ enabled: false })
     clearSubscriptionSnapshotMock.mockResolvedValue(undefined)
@@ -143,9 +194,16 @@ describe('handleGetAuthState · 被挤掉 / refresh 作废', () => {
     clearExtensionUninstallRevokeMock.mockResolvedValue(false)
     openWebsiteLoginPageMock.mockResolvedValue(undefined)
     maybeWriteExtensionDisplacedNoticeMock.mockResolvedValue(false)
+    listAllByOwnerIdMock.mockResolvedValue([])
+    remapAccountLibraryToLocalProfileMock.mockResolvedValue({
+      clearedCount: 0,
+      remappedBookmarks: 0,
+      remappedExcerpts: 0
+    })
+    writeSignOutRemapNoticeMock.mockResolvedValue(undefined)
   })
 
-  it('revalidate invalid（非 lease displaced）→ 清登录态、不写 elsewhere 软条', async () => {
+  it('revalidate invalid（非 lease displaced）→ 全量回迁 + flush 成功文案、不写 elsewhere 软条', async () => {
     revalidateAuthSessionMock.mockResolvedValue({
       status: 'invalid',
       reason: 'session_revoked'
@@ -160,6 +218,8 @@ describe('handleGetAuthState · 被挤掉 / refresh 作废', () => {
       binding: null,
       syncPrefs: { enabled: true }
     })
+    expect(remapAccountLibraryToLocalProfileMock).toHaveBeenCalledWith(accountId)
+    expect(writeSignOutRemapNoticeMock).toHaveBeenCalledWith(true)
     expect(clearAuthSessionMock).toHaveBeenCalled()
     expect(clearAccountBindingMock).toHaveBeenCalled()
     // 非 displaced 作废也尽力释放远程（防孤儿租约）；release 仅清仍指向本 session 的租约
@@ -171,7 +231,24 @@ describe('handleGetAuthState · 被挤掉 / refresh 作废', () => {
     expect(openWebsiteLoginPageMock).not.toHaveBeenCalled()
   })
 
-  it('revalidate invalid（lease displaced）→ 清登录态并尝试写 elsewhere 软条', async () => {
+  it('revalidate invalid + flush 失败 → 回迁保留并写 flushOk=false 提示', async () => {
+    revalidateAuthSessionMock.mockResolvedValue({
+      status: 'invalid',
+      reason: 'session_revoked'
+    })
+    listAllByOwnerIdMock.mockResolvedValue([
+      { id: 'e1', ownerId: accountId, type: 'text_excerpt', updatedAt: '2026-01-01T00:00:00.000Z' }
+    ])
+    replaceRemoteWithLocalItemsMock.mockRejectedValue(new Error('network'))
+
+    await handleGetAuthState()
+
+    expect(remapAccountLibraryToLocalProfileMock).toHaveBeenCalledWith(accountId)
+    expect(writeSignOutRemapNoticeMock).toHaveBeenCalledWith(false)
+    expect(clearAuthSessionMock).toHaveBeenCalled()
+  })
+
+  it('revalidate invalid（lease displaced）→ 回迁 + 写 elsewhere 软条', async () => {
     revalidateAuthSessionMock.mockResolvedValue({
       status: 'invalid',
       reason: 'extension_session_displaced'
@@ -180,6 +257,8 @@ describe('handleGetAuthState · 被挤掉 / refresh 作废', () => {
 
     await handleGetAuthState()
 
+    expect(remapAccountLibraryToLocalProfileMock).toHaveBeenCalledWith(accountId)
+    expect(writeSignOutRemapNoticeMock).toHaveBeenCalledWith(true)
     expect(maybeWriteExtensionDisplacedNoticeMock).toHaveBeenCalledWith(
       'extension_session_displaced'
     )
@@ -204,5 +283,86 @@ describe('handleGetAuthState · 被挤掉 / refresh 作废', () => {
     expect(clearAuthSessionMock).not.toHaveBeenCalled()
     expect(openWebsiteLoginPageMock).not.toHaveBeenCalled()
     expect(maybeWriteExtensionDisplacedNoticeMock).not.toHaveBeenCalled()
+  })
+
+  it('device 会话 401 invalid + 正式 → 全量回迁，不走 uninstall revoke', async () => {
+    const device = {
+      deviceToken: 'ydt_' + 'd'.repeat(64),
+      deviceId: '33333333-3333-4333-8333-333333333333',
+      userId: accountId,
+      isAnonymous: false,
+      createdAt: '2026-11-20T08:00:00.000Z'
+    }
+    getDeviceSessionMock.mockResolvedValue(device)
+    ensureDeviceSessionReadyMock.mockResolvedValue({ device, note: 'already_device' })
+    revalidateDeviceSessionMock.mockResolvedValue({
+      status: 'invalid',
+      reason: 'device_token_unauthorized'
+    })
+
+    const result = await handleGetAuthState()
+
+    expect(result).toEqual({
+      ok: true,
+      signedIn: false,
+      binding: null,
+      syncPrefs: { enabled: true }
+    })
+    expect(remapAccountLibraryToLocalProfileMock).toHaveBeenCalledWith(accountId)
+    expect(writeSignOutRemapNoticeMock).toHaveBeenCalledWith(true)
+    expect(clearDeviceSessionMock).toHaveBeenCalled()
+    expect(clearAccountBindingMock).toHaveBeenCalled()
+    expect(clearExtensionUninstallRevokeMock).not.toHaveBeenCalled()
+    expect(revalidateAuthSessionMock).not.toHaveBeenCalled()
+  })
+
+  it('device 会话 401 invalid + 匿名 → 仅清会话/binding，不回迁', async () => {
+    const device = {
+      deviceToken: 'ydt_' + 'a'.repeat(64),
+      deviceId: '33333333-3333-4333-8333-333333333333',
+      userId: accountId,
+      isAnonymous: true,
+      createdAt: '2026-11-20T08:00:00.000Z'
+    }
+    getDeviceSessionMock.mockResolvedValue(device)
+    ensureDeviceSessionReadyMock.mockResolvedValue({ device, note: 'already_device' })
+    revalidateDeviceSessionMock.mockResolvedValue({
+      status: 'invalid',
+      reason: 'device_token_unauthorized'
+    })
+
+    await handleGetAuthState()
+
+    expect(remapAccountLibraryToLocalProfileMock).not.toHaveBeenCalled()
+    expect(writeSignOutRemapNoticeMock).not.toHaveBeenCalled()
+    expect(clearDeviceSessionMock).toHaveBeenCalled()
+    expect(clearAccountBindingMock).toHaveBeenCalled()
+    expect(clearExtensionUninstallRevokeMock).not.toHaveBeenCalled()
+  })
+
+  it('device 会话 uncertain → 保留登录态', async () => {
+    const device = {
+      deviceToken: 'ydt_' + 'u'.repeat(64),
+      deviceId: '33333333-3333-4333-8333-333333333333',
+      userId: accountId,
+      email: 'u@example.com',
+      isAnonymous: false,
+      createdAt: '2026-11-20T08:00:00.000Z'
+    }
+    getDeviceSessionMock.mockResolvedValue(device)
+    ensureDeviceSessionReadyMock.mockResolvedValue({ device, note: 'already_device' })
+    revalidateDeviceSessionMock.mockResolvedValue({
+      status: 'uncertain',
+      reason: 'http_503'
+    })
+
+    const result = await handleGetAuthState()
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.signedIn).toBe(true)
+    expect(result.isAnonymous).toBe(false)
+    expect(result.email).toBe('u@example.com')
+    expect(clearDeviceSessionMock).not.toHaveBeenCalled()
   })
 })

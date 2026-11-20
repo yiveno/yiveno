@@ -10,8 +10,8 @@ import {
   createFreeSubscriptionSnapshot,
   type SubscriptionSnapshot
 } from '@/core/identity/subscription-snapshot'
-import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
 import { getAccountBinding } from '@/infrastructure/identity/local-profile-service'
+import { getWorkerApiAccessToken } from '@/infrastructure/identity/worker-api-access-token'
 import { fetchRemoteSubscriptionStatus } from '@/infrastructure/identity/subscription-api-client'
 import { getSyncPrefs, patchSyncPrefs } from '@/infrastructure/identity/sync-prefs-service'
 import { ensureMemoryCloudSyncAlarm } from '@/infrastructure/sync/memory-cloud-sync-alarm'
@@ -136,8 +136,8 @@ async function doRefreshSubscriptionSnapshot(options?: {
 }): Promise<SubscriptionSnapshot> {
   const startedAt = flowStart('Subscription', '刷新订阅快照')
   const binding = await getAccountBinding()
-  const session = await getAuthSession()
-  if (!binding || !session?.accessToken) {
+  const accessToken = await getWorkerApiAccessToken()
+  if (!binding || !accessToken) {
     const free = createFreeSubscriptionSnapshot()
     await setSubscriptionSnapshot(free)
     await enforceSyncRequiresPro()
@@ -148,7 +148,7 @@ async function doRefreshSubscriptionSnapshot(options?: {
   }
 
   try {
-    const remote = await fetchRemoteSubscriptionStatus(session.accessToken)
+    const remote = await fetchRemoteSubscriptionStatus(accessToken)
     const snapshot: SubscriptionSnapshot = {
       ...remote,
       fetchedAt: new Date().toISOString()

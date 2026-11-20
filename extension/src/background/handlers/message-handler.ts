@@ -25,6 +25,7 @@ import {
   handleGetAuthState,
   handleGetLoginMigrationStatus,
   handleProbeWebsiteSignedIn,
+  handleRetryAnonymousCaptcha,
   handleGetSubscriptionStatus,
   handleGetSyncStatus,
   handleRefreshAuthProfile,
@@ -131,11 +132,15 @@ async function dispatchBackgroundMessage(
     case 'AUTH_CONNECT_WEBSITE':
       return handleAuthConnectWebsite()
     case 'AUTH_SIGN_OUT':
-      return handleAuthSignOut(message.payload.mode)
+      return handleAuthSignOut(message.payload.mode, {
+        deleteLocalExcerpts: message.payload.deleteLocalExcerpts === true
+      })
     case 'GET_AUTH_STATE':
       return handleGetAuthState()
     case 'PROBE_WEBSITE_SIGNED_IN':
       return handleProbeWebsiteSignedIn()
+    case 'RETRY_ANONYMOUS_CAPTCHA':
+      return handleRetryAnonymousCaptcha()
     case 'GET_SUBSCRIPTION_STATUS':
       return handleGetSubscriptionStatus(message.payload)
     case 'REFRESH_AUTH_PROFILE':

@@ -1,7 +1,7 @@
 /**
  * 登录迁移门闸（ADR-018）：禁止静默 absorb。
- * 无主摘录 = **未登录期间**写在 localProfile 桶的 text_excerpt；
- * 退出会清账号桶，故门闸不服务「外账号残留桶」。
+ * 无主摘录 = 写在 localProfile 桶的 text_excerpt（含未登录创造，以及退出全量回迁后的摘录）。
+ * 重登录时门闸照常弹出；用户选导入即重新归属。
  */
 
 import type { MemoryItem } from '@/core/memory/memory-item'

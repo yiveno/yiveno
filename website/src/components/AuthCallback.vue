@@ -8,15 +8,15 @@ import {
 } from '../services/auth-return'
 import { getSupabase } from '../services/supabase'
 import {
-  abortWebsiteLoginAfterDisplaceCancel,
   captureExtensionConnectParamsFromUrl,
   extractProfileFromUserMetadata,
   getPendingExtensionId,
   mintAndHandoffSessionToExtension,
   type MintAndHandoffResult
 } from '../services/extension-auth-handoff'
+import { t } from '../i18n/t'
 
-const status = ref('Signing in…')
+const status = ref(t('login.status.signingIn'))
 
 /** 跳回登录页，并带上可诊断的短错误码（避免超长 URL） */
 function redirectLoginError(code: string, detail?: string | null): void {
@@ -32,7 +32,7 @@ function redirectLoginError(code: string, detail?: string | null): void {
   window.location.href = `/login?${params.toString()}`
 }
 
-/** 用官网 session 铸造扩展独立会话并 handoff（失败不共享官网 refresh） */
+/** 用官网 session 换 device token 并 handoff（失败不共享官网 refresh） */
 async function tryMintHandoff(session: Session): Promise<MintAndHandoffResult> {
   const profile = extractProfileFromUserMetadata(
     session.user.user_metadata as Record<string, unknown> | undefined
@@ -41,11 +41,7 @@ async function tryMintHandoff(session: Session): Promise<MintAndHandoffResult> {
     websiteAccessToken: session.access_token,
     userId: session.user.id,
     ...(session.user.email ? { email: session.user.email } : {}),
-    ...profile,
-    onNeedsDisplaceConfirm: () => {
-      // 挤掉弹窗已打开；勿让用户以为页面卡在 Connecting
-      status.value = 'Another extension session is active — confirm in the dialog to continue…'
-    }
+    ...profile
   })
 }
 
@@ -60,19 +56,20 @@ async function finishWithSession(session: Session): Promise<void> {
   const authReturn = peekAuthReturn()
 
   if (pendingConnect) {
-    status.value = 'Connecting to the extension…'
+    status.value = t('login.status.connectingExtension')
     const handoff = await tryMintHandoff(session)
     if (handoff.status === 'ok') {
       window.location.href = '/account?extension_connected=1'
       return
     }
-    if (handoff.status === 'cancelled_displace') {
-      status.value = 'Sign-in cancelled…'
-      await abortWebsiteLoginAfterDisplaceCancel()
+    if (handoff.status === 'account_mismatch') {
+      status.value = t('login.status.connectAccountMismatch')
+      window.setTimeout(() => {
+        window.location.href = '/account?extension_connected=0&connect_error=account_mismatch'
+      }, 3200)
       return
     }
-    status.value =
-      'Signed in on the website, but the extension did not connect. Use Connect in the side panel, or Settings → Sign in.'
+    status.value = t('login.status.connectFailed')
     window.setTimeout(() => {
       window.location.href = '/account?extension_connected=0'
     }, 2800)

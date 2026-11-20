@@ -27,7 +27,7 @@ export type RequestExtensionConnectPayload = {
 }
 
 export type WebsiteConnectResultStatus =
-  'ok' | 'cancelled_displace' | 'failed' | 'no_session' | 'busy'
+  'ok' | 'failed' | 'account_mismatch' | 'no_session' | 'busy'
 
 type ChromePort = {
   name: string
@@ -265,4 +265,59 @@ export function publishWebsiteConnectResult(status: WebsiteConnectResultStatus):
     type: 'website_connect_result',
     payload: { status }
   })
+}
+
+/**
+ * 推送 Turnstile captcha token（一次性凭证，非会话 token；ADR-019 允许）。
+ * **立即发送**（后台 tab 也不可见，不得走 dirty 延迟）；可选显式 extensionId（URL 传入）。
+ */
+export function publishWebsiteTurnstileToken(
+  token: string,
+  options?: { extensionId?: string }
+): void {
+  const trimmed = token.trim()
+  if (!trimmed) {
+    return
+  }
+  const explicitId = options?.extensionId?.trim()
+  if (explicitId) {
+    void connectAndPost(explicitId, {
+      type: 'website_turnstile_token',
+      payload: { token: trimmed }
+    })
+    return
+  }
+  postWhenReady({
+    type: 'website_turnstile_token',
+    payload: { token: trimmed }
+  })
+}
+
+/** 用指定 extensionId 建 Port 并立刻 post（不等可见性）。 */
+function connectAndPost(extensionId: string, msg: Record<string, unknown>): void {
+  const runtime = getChromeRuntime()
+  if (!runtime?.connect) {
+    console.warn('[UiBridge] turnstile: no chrome.runtime.connect')
+    return
+  }
+  try {
+    if (port) {
+      try {
+        port.postMessage(wrap(msg))
+        return
+      } catch {
+        port = null
+      }
+    }
+    const next = runtime.connect(extensionId, { name: PORT_NAME })
+    void runtime.lastError
+    attachPort(next)
+    try {
+      next.postMessage(wrap(msg))
+    } catch (error) {
+      console.warn('[UiBridge] turnstile post failed', error)
+    }
+  } catch (error) {
+    console.warn('[UiBridge] turnstile connect failed', error)
+  }
 }

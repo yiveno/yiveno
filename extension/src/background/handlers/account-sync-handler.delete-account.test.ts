@@ -36,6 +36,22 @@ vi.mock('@/infrastructure/identity/auth-session-service', () => ({
   setAuthSession: vi.fn()
 }))
 
+vi.mock('@/infrastructure/identity/device-session-service', () => ({
+  getDeviceSession: vi.fn(async () => null),
+  clearDeviceSession: vi.fn(async () => undefined),
+  setDeviceSession: vi.fn()
+}))
+
+vi.mock('@/infrastructure/auth/device-register-api-client', () => ({
+  revokeOwnDeviceToken: vi.fn(async () => true),
+  registerDeviceViaSessionExchange: vi.fn(),
+  deviceSessionFromRegisterData: vi.fn()
+}))
+
+vi.mock('@/infrastructure/auth/auth-session-lease-alarm', () => ({
+  ensureAuthSessionLeaseAlarm: vi.fn(async () => undefined)
+}))
+
 vi.mock('@/infrastructure/identity/local-profile-service', () => ({
   clearAccountBinding: clearAccountBindingMock,
   getAccountBinding: getAccountBindingMock,

@@ -39,15 +39,8 @@ vi.mock('@/infrastructure/ai/embed-api-client', () => ({
   requestWorkerEmbeddings: requestWorkerEmbeddingsMock
 }))
 
-vi.mock('@/infrastructure/identity/auth-session-service', () => ({
-  getAuthSession: vi.fn(async () => ({
-    accessToken: 'dreaming-eval-token',
-    ownerId: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa',
-    email: 'eval@yiveno.local',
-    provider: 'clerk'
-  })),
-  setAuthSession: vi.fn(async () => {}),
-  clearAuthSession: vi.fn(async () => {})
+vi.mock('@/infrastructure/identity/worker-api-access-token', () => ({
+  getWorkerApiAccessToken: vi.fn(async () => 'dreaming-eval-token')
 }))
 
 vi.mock('@/infrastructure/storage/recall-outcome-pairs-storage', () => ({

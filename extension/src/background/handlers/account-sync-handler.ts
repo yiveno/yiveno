@@ -4,7 +4,10 @@
  */
 
 import { summarizeOrphanOwnerBuckets } from '@/application/identity/orphan-owner-buckets'
-import { clearAccountLibraryOnSignOut } from '@/application/identity/clear-account-library-on-sign-out'
+import {
+  clearAccountLibraryOnSignOut,
+  remapAccountLibraryToLocalProfile
+} from '@/application/identity/clear-account-library-on-sign-out'
 import { invalidateBookmarkSyncAlignmentCache } from '@/application/memory/bookmark-sync-alignment-cache'
 import { filterCloudSyncableMemoryItems } from '@/core/memory/memory-item-type'
 import { mergeMemoryItemsByUpdatedAt } from '@/core/memory/merge-memory-items-by-updated-at'
@@ -17,6 +20,7 @@ import type {
   AuthSignOutResponse,
   GetAuthStateResponse,
   ProbeWebsiteSignedInResponse,
+  RetryAnonymousCaptchaResponse,
   GetSyncStatusResponse,
   RefreshAuthProfileResponse,
   RunIncrementalMemorySyncResponse,
@@ -32,11 +36,20 @@ import {
   clearAuthValidationTimestamp,
   revalidateAuthSession
 } from '@/infrastructure/auth/auth-session-revalidate'
+import { revalidateDeviceSession } from '@/infrastructure/auth/device-session-revalidate'
+import { ensureAnonymousDeviceSession } from '@/infrastructure/auth/ensure-anonymous-device-session'
+import { ensureDeviceSessionReady } from '@/infrastructure/auth/ensure-device-session-ready'
+import {
+  clearAnonymousCaptchaRetryNeeded,
+  getTurnstileToken,
+  isAnonymousCaptchaRetryNeeded
+} from '@/infrastructure/auth/turnstile-token-provider'
 import { clearExtensionUninstallRevoke } from '@/infrastructure/auth/extension-uninstall-url'
 import { readJwtSessionId } from '@/infrastructure/auth/read-jwt-session-id'
 import { probeWebsiteSignedIn } from '@/infrastructure/auth/website-auth-probe'
 import { ensureAuthSessionLeaseAlarm } from '@/infrastructure/auth/auth-session-lease-alarm'
 import { maybeWriteExtensionDisplacedNotice } from '@/infrastructure/storage/extension-displaced-notice-storage'
+import { writeSignOutRemapNotice } from '@/infrastructure/storage/sign-out-remap-notice-storage'
 import {
   clearLastExtensionLeaseSessionId,
   writeLastExtensionLeaseSessionId
@@ -51,6 +64,10 @@ import {
   getAuthSession,
   setAuthSession
 } from '@/infrastructure/identity/auth-session-service'
+import {
+  clearDeviceSession,
+  getDeviceSession
+} from '@/infrastructure/identity/device-session-service'
 import {
   clearAccountBinding,
   getAccountBinding,
@@ -204,7 +221,7 @@ export async function handleAuthConnectWebsite(): Promise<AuthConnectWebsiteResp
           finish({ ok: true, path })
           return
         }
-        if (status === 'cancelled_displace') {
+        if (status === 'account_mismatch') {
           finish({
             ok: false,
             errorCode: 'AUTH_CONNECT_WEBSITE_FAILED',
@@ -301,12 +318,20 @@ export async function handleProbeWebsiteSignedIn(): Promise<ProbeWebsiteSignedIn
   }
 }
 
+export type AuthSignOutOptions = {
+  /** true = 旧口径 A 删摘录；默认 false = 全量回迁 */
+  deleteLocalExcerpts?: boolean
+}
+
 /**
- * 结束登录态：清 session / binding，并关闭同步开关。
- * 不修改 IndexedDB（由调用方按 mode 先行处理）。
+ * 结束登录态：按 mode 处理账号桶后清 session / binding，并关闭同步开关。
  */
-export async function handleAuthSignOut(mode: AuthSignOutMode): Promise<AuthSignOutResponse> {
-  const startedAt = flowStart('Auth', 'AUTH_SIGN_OUT', { mode })
+export async function handleAuthSignOut(
+  mode: AuthSignOutMode,
+  options: AuthSignOutOptions = {}
+): Promise<AuthSignOutResponse> {
+  const deleteLocalExcerpts = options.deleteLocalExcerpts === true
+  const startedAt = flowStart('Auth', 'AUTH_SIGN_OUT', { mode, deleteLocalExcerpts })
   try {
     const binding = await getAccountBinding()
     if (!binding) {
@@ -330,6 +355,7 @@ export async function handleAuthSignOut(mode: AuthSignOutMode): Promise<AuthSign
     let clearedCount = 0
     let syncedCount = 0
     let releasedToLocalCount = 0
+    const remapOptions = { deleteLocalExcerpts }
 
     if (mode === 'flush_then_keep') {
       try {
@@ -343,19 +369,20 @@ export async function handleAuthSignOut(mode: AuthSignOutMode): Promise<AuthSign
         return {
           ok: false,
           errorCode: code,
+          flushFailed: true,
           ...(error instanceof Error ? { error: error.message } : {})
         }
       }
       {
-        const cleared = await clearAccountLibraryOnSignOut(binding.accountId)
+        const cleared = await clearAccountLibraryOnSignOut(binding.accountId, remapOptions)
         clearedCount = cleared.clearedCount
-        releasedToLocalCount = cleared.remappedBookmarks
+        releasedToLocalCount = cleared.remappedBookmarks + cleared.remappedExcerpts
       }
     } else if (mode === 'keep_local') {
       {
-        const cleared = await clearAccountLibraryOnSignOut(binding.accountId)
+        const cleared = await clearAccountLibraryOnSignOut(binding.accountId, remapOptions)
         clearedCount = cleared.clearedCount
-        releasedToLocalCount = cleared.remappedBookmarks
+        releasedToLocalCount = cleared.remappedBookmarks + cleared.remappedExcerpts
       }
     } else if (mode === 'sync_then_clear_local') {
       const profile = await getOrCreateLocalProfile()
@@ -411,20 +438,102 @@ export async function handleAuthSignOut(mode: AuthSignOutMode): Promise<AuthSign
 }
 
 /**
- * GET_AUTH_STATE — 读本地 session；节流后用 refresh 探测是否仍有效（官网退出兜底）。
- * 失效则按 keep_local 清登录态（清账号桶痕迹；本地档无主摘录保留）。
+ * GET_AUTH_STATE — ensure device 会话 → 按凭证面 revalidate。
+ * device：subscription 探针；invalid 匿名仅清会话，正式走 L1 全量回迁。
+ * 旧 Supabase（迁移窗口）：租约+refresh 路径不变。
  */
 export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
   const startedAt = flowStart('Auth', 'GET_AUTH_STATE')
   try {
-    const [binding, syncPrefs] = await Promise.all([getAccountBinding(), getSyncPrefs()])
-    let session = await getAuthSession()
+    await ensureDeviceSessionReady()
+    const [binding, syncPrefs, deviceSession] = await Promise.all([
+      getAccountBinding(),
+      getSyncPrefs(),
+      getDeviceSession()
+    ])
+    let session = deviceSession ? null : await getAuthSession()
     /** 本次 revalidate 结果；无 binding/session 时不拉订阅。 */
     let authRevalidateStatus: 'skipped' | 'valid' | 'invalid' | 'uncertain' | 'none' = 'none'
 
-    if (binding && session) {
-      // force：每次打开都做租约探测（Worker KV）；refresh 仍短节流，避免 Supabase rate limit。
-      // 被挤掉优先靠 lease，不依赖 token 端是否限流。
+    // —— device 会话路径（无租约 / 无 refresh）——
+    if (binding && deviceSession) {
+      const revalidated = await revalidateDeviceSession(deviceSession, { force: true })
+      authRevalidateStatus = revalidated.status
+      if (revalidated.status === 'invalid') {
+        if (deviceSession.isAnonymous) {
+          // 匿名：不 flush、不清数据、不远程释放；仅清会话 + binding → 孤儿桶
+          await clearDeviceSession()
+          await clearAccountBinding()
+          await clearSubscriptionSnapshot()
+          await patchSyncPrefs({ enabled: false })
+          await ensureMemoryCloudSyncAlarm(false)
+          await clearAuthValidationTimestamp()
+          try {
+            await ensureAuthSessionLeaseAlarm(false)
+          } catch (error) {
+            logger.warn('Auth', '匿名 device invalid 关租约闹钟失败', error)
+          }
+          flowOk('Auth', 'GET_AUTH_STATE', startedAt, {
+            signedIn: false,
+            reason: 'device_revalidate_invalid_anonymous',
+            detail: revalidated.reason,
+            orphanedBucket: true
+          })
+          return {
+            ok: true,
+            signedIn: false,
+            binding: null,
+            syncPrefs: await getSyncPrefs()
+          }
+        }
+
+        // 正式：复用 L1 remap + 回迁提示；远程尽力 revoke（无旧 uninstall 路径）
+        const displacedAccountId = binding.accountId
+        let flushOk = false
+        try {
+          await flushAccountExcerptsToCloud(displacedAccountId)
+          flushOk = true
+        } catch (error) {
+          logger.warn('Auth', 'device invalid 退登前 flush 失败（仍全量回迁）', error)
+        }
+        try {
+          await remapAccountLibraryToLocalProfile(displacedAccountId)
+        } catch (error) {
+          logger.warn('Auth', 'device invalid 退登回迁账号桶失败', error)
+        }
+        try {
+          await writeSignOutRemapNotice(flushOk)
+        } catch (error) {
+          logger.warn('Auth', '写回迁提示失败', error)
+        }
+        await clearDeviceSession()
+        await clearAccountBinding()
+        await clearSubscriptionSnapshot()
+        await patchSyncPrefs({ enabled: false })
+        await ensureMemoryCloudSyncAlarm(false)
+        await clearAuthValidationTimestamp()
+        try {
+          await ensureAuthSessionLeaseAlarm(false)
+        } catch (error) {
+          logger.warn('Auth', 'device invalid 关租约闹钟失败', error)
+        }
+        flowOk('Auth', 'GET_AUTH_STATE', startedAt, {
+          signedIn: false,
+          reason: 'device_revalidate_invalid',
+          detail: revalidated.reason,
+          flushOk,
+          remappedLibrary: true
+        })
+        return {
+          ok: true,
+          signedIn: false,
+          binding: null,
+          syncPrefs: await getSyncPrefs()
+        }
+      }
+      // valid / skipped / uncertain：继续用 deviceSession
+    } else if (binding && session) {
+      // —— 旧 Supabase 会话（迁移失败 fail-open 窗口）——
       const revalidated = await revalidateAuthSession(session, { force: true })
       authRevalidateStatus = revalidated.status
       if (revalidated.status === 'valid') {
@@ -437,23 +546,25 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
         }
         session = revalidated.session
       } else if (revalidated.status === 'invalid') {
-        // 会话作废：尽力 flush + 清账号桶后 keep_local 退登。
-        // elsewhere 软条：仅 lease displaced 且非本机 Connect 编排（立意：别处登录）。
         const displacedAccountId = binding.accountId
         const accessBeforeClear = session.accessToken
+        let flushOk = false
         try {
           await flushAccountExcerptsToCloud(displacedAccountId)
+          flushOk = true
         } catch (error) {
-          logger.warn('Auth', '会话作废退登前 flush 失败（仍清本机账号桶）', error)
+          logger.warn('Auth', '会话作废退登前 flush 失败（仍全量回迁保留本机）', error)
         }
         try {
-          await clearAccountLibraryOnSignOut(displacedAccountId)
+          await remapAccountLibraryToLocalProfile(displacedAccountId)
         } catch (error) {
-          logger.warn('Auth', '会话作废退登清账号桶失败', error)
+          logger.warn('Auth', '会话作废退登回迁账号桶失败', error)
         }
-        // 尽力释放本机扩展远程会话（防孤儿租约）。uninstall-revoke / session-release
-        // 仅当 KV 仍指向本 session 才清租约 → 他端已占不会误清。
-        // 远程失败：写 lastLease 供同机 Connect 静默认领。
+        try {
+          await writeSignOutRemapNotice(flushOk)
+        } catch (error) {
+          logger.warn('Auth', '写回迁提示失败', error)
+        }
         let remoteReleased = false
         try {
           remoteReleased = await clearExtensionUninstallRevoke({
@@ -502,8 +613,9 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
           reason: 'revalidate_invalid',
           detail: revalidated.reason,
           wroteDisplacedNotice,
+          flushOk,
           openedLogin: false,
-          releasedLibrary: true
+          remappedLibrary: true
         })
         return {
           ok: true,
@@ -512,43 +624,91 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
           syncPrefs: await getSyncPrefs()
         }
       }
-      // uncertain / skipped：保留本地 session，不误踢
     }
 
     const stillBound = await getAccountBinding()
-    // ADR-018：禁止静默 absorb；未归属摘录由登录迁移门闸处理
-    if (stillBound && session) {
-      // 仅 token 可信时后台刷新订阅，避免 uncertain 用旧 access 刷 invalid_token
+    const latestDevice = await getDeviceSession()
+    const latestLegacy = latestDevice ? null : await getAuthSession()
+    const hasCredential = Boolean(latestDevice || latestLegacy)
+
+    if (stillBound && hasCredential) {
       if (authRevalidateStatus === 'valid' || authRevalidateStatus === 'skipped') {
         void refreshSubscriptionSnapshot().catch(() => undefined)
       }
-    } else if (!stillBound || !session) {
+    } else if (!stillBound || !hasCredential) {
       await clearSubscriptionSnapshot()
     }
 
-    const signedIn = Boolean(stillBound && session)
+    const signedIn = Boolean(stillBound && hasCredential)
+    if (signedIn) {
+      clearAnonymousCaptchaRetryNeeded()
+    }
+    // device 会话不启租约闹钟；仅旧 Supabase 会话才对齐
     try {
-      await ensureAuthSessionLeaseAlarm(signedIn)
+      await ensureAuthSessionLeaseAlarm(signedIn && Boolean(latestLegacy) && !latestDevice)
     } catch (error) {
       logger.warn('Auth', '对齐租约探测闹钟失败', error)
     }
 
+    const profileEmail = latestDevice?.email ?? latestLegacy?.email
+    const profileAvatar = latestDevice?.avatarUrl ?? latestLegacy?.avatarUrl
+    const profileName = latestDevice?.displayName ?? latestLegacy?.displayName
+    const captchaRetry = !signedIn && isAnonymousCaptchaRetryNeeded()
+
     flowOk('Auth', 'GET_AUTH_STATE', startedAt, {
       signedIn,
       syncEnabled: syncPrefs.enabled,
-      hasAvatar: Boolean(session?.avatarUrl)
+      hasAvatar: Boolean(profileAvatar),
+      isAnonymous: latestDevice?.isAnonymous ?? false,
+      anonymousCaptchaRetryNeeded: captchaRetry,
+      credential: latestDevice ? 'device' : latestLegacy ? 'legacy' : 'none'
     })
     return {
       ok: true,
       signedIn,
       binding: stillBound,
       syncPrefs: stillBound ? syncPrefs : await getSyncPrefs(),
-      ...(session?.email ? { email: session.email } : {}),
-      ...(session?.avatarUrl ? { avatarUrl: session.avatarUrl } : {}),
-      ...(session?.displayName ? { displayName: session.displayName } : {})
+      ...(profileEmail ? { email: profileEmail } : {}),
+      ...(profileAvatar ? { avatarUrl: profileAvatar } : {}),
+      ...(profileName ? { displayName: profileName } : {}),
+      ...(latestDevice ? { isAnonymous: latestDevice.isAnonymous } : {}),
+      ...(captchaRetry ? { anonymousCaptchaRetryNeeded: true } : {})
     }
   } catch (error) {
     flowFail('Auth', 'GET_AUTH_STATE', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'AUTH_STATE_READ_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/**
+ * RETRY_ANONYMOUS_CAPTCHA — Settings 前景打开 Turnstile 后复用 ensure 匿名流程。
+ */
+export async function handleRetryAnonymousCaptcha(): Promise<RetryAnonymousCaptchaResponse> {
+  const startedAt = flowStart('Auth', 'RETRY_ANONYMOUS_CAPTCHA')
+  try {
+    const result = await ensureAnonymousDeviceSession({
+      getTurnstileToken: () => getTurnstileToken({ foreground: true })
+    })
+    if (result.status === 'created' || result.status === 'already') {
+      clearAnonymousCaptchaRetryNeeded()
+      flowOk('Auth', 'RETRY_ANONYMOUS_CAPTCHA', startedAt, { outcome: result.status })
+      return { ok: true, outcome: result.status }
+    }
+    if (result.status === 'skipped_has_legacy') {
+      flowOk('Auth', 'RETRY_ANONYMOUS_CAPTCHA', startedAt, { outcome: 'skipped_has_legacy' })
+      return { ok: true, outcome: 'skipped_has_legacy' }
+    }
+    flowOk('Auth', 'RETRY_ANONYMOUS_CAPTCHA', startedAt, {
+      outcome: 'failed',
+      error: result.error
+    })
+    return { ok: true, outcome: 'failed', error: result.error }
+  } catch (error) {
+    flowFail('Auth', 'RETRY_ANONYMOUS_CAPTCHA', startedAt, error)
     return {
       ok: false,
       errorCode: 'AUTH_STATE_READ_FAILED',

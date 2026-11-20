@@ -9,7 +9,7 @@ const {
   putRecordMock,
   listByOwnerUpdatedMock,
   listByOwnerEmbedMock,
-  getAuthSessionMock,
+  getWorkerApiAccessTokenMock,
   getUserSettingsMock,
   getCurrentOwnerIdMock
 } = vi.hoisted(() => ({
@@ -17,7 +17,7 @@ const {
   putRecordMock: vi.fn(),
   listByOwnerUpdatedMock: vi.fn(),
   listByOwnerEmbedMock: vi.fn(),
-  getAuthSessionMock: vi.fn(),
+  getWorkerApiAccessTokenMock: vi.fn(),
   getUserSettingsMock: vi.fn(),
   getCurrentOwnerIdMock: vi.fn()
 }))
@@ -42,8 +42,8 @@ vi.mock('@/infrastructure/indexeddb/memory-notes-repository', () => ({
   }
 }))
 
-vi.mock('@/infrastructure/identity/auth-session-service', () => ({
-  getAuthSession: getAuthSessionMock
+vi.mock('@/infrastructure/identity/worker-api-access-token', () => ({
+  getWorkerApiAccessToken: getWorkerApiAccessTokenMock
 }))
 
 vi.mock('@/infrastructure/settings/user-settings-service', () => ({
@@ -79,12 +79,12 @@ describe('schedule-proposition-embeddings', () => {
     putRecordMock.mockReset()
     listByOwnerUpdatedMock.mockReset()
     listByOwnerEmbedMock.mockReset()
-    getAuthSessionMock.mockReset()
+    getWorkerApiAccessTokenMock.mockReset()
     getUserSettingsMock.mockReset()
     getCurrentOwnerIdMock.mockReset()
     putRecordMock.mockResolvedValue({})
     getUserSettingsMock.mockResolvedValue({ aiFeaturesEnabled: true })
-    getAuthSessionMock.mockResolvedValue({ accessToken: 'tok' })
+    getWorkerApiAccessTokenMock.mockResolvedValue('tok')
     getCurrentOwnerIdMock.mockResolvedValue(OWNER)
   })
 

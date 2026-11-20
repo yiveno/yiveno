@@ -109,7 +109,7 @@ import {
   type UnderstandRecallClueResult
 } from '@/core/recall/understand/understand-recall-clue'
 import { requestWorkerEmbeddings } from '@/infrastructure/ai/embed-api-client'
-import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
+import { getWorkerApiAccessToken } from '@/infrastructure/identity/worker-api-access-token'
 import { memoryNotesMetaRepository } from '@/infrastructure/indexeddb/memory-notes-meta-repository'
 import { t } from '@/infrastructure/i18n/t'
 
@@ -679,8 +679,8 @@ export async function fuseHybridMatches(input: {
   effectiveParsed: ParsedRecallClue
   timeSoftReopen: boolean
 } | null> {
-  const session = await getAuthSession()
-  if (!session?.accessToken) {
+  const accessToken = await getWorkerApiAccessToken()
+  if (!accessToken) {
     input.trace('info', 'Hybrid：无登录态，跳过向量融合')
     return null
   }
@@ -715,7 +715,7 @@ export async function fuseHybridMatches(input: {
     queryVector = input.queryVector
   } else {
     try {
-      const embed = await requestWorkerEmbeddings(session.accessToken, [input.clueEmbeddingText])
+      const embed = await requestWorkerEmbeddings(accessToken, [input.clueEmbeddingText])
       const vector = embed.embeddings[0]
       if (!vector?.length) {
         return null
@@ -986,8 +986,7 @@ export class HybridRecallBackend implements RecallBackend {
     // D3-C Gap 5：Topic embedding 注入（仅 Side Panel / 完整 Recall 轨）。
     // Omnibox（ADR-007）：完全本地——不注入 Topic embed，miss 也不联网兜底。
     let merged = withRecallTopic(merge.merged)
-    const session = await getAuthSession()
-    const accessToken = session?.accessToken
+    const accessToken = await getWorkerApiAccessToken()
     if (accessToken && !isOmniboxEntry) {
       // Gap 5：注入 embedding 句柄（仅在登录态可用时）
       merged = await withRecallTopicAsync(merged, async (text: string) => {
@@ -1058,9 +1057,9 @@ export class HybridRecallBackend implements RecallBackend {
       !isOmniboxEntry && DREAMING_PREFER_READ_ENABLED && DREAMING_SEMANTIC_NOTE_MATCH_ENABLED
     if (wantSemanticNoteMatch) {
       try {
-        const session = await getAuthSession()
-        if (session?.accessToken) {
-          const embed = await requestWorkerEmbeddings(session.accessToken, [clueEmbeddingText])
+        const bearer = await getWorkerApiAccessToken()
+        if (bearer) {
+          const embed = await requestWorkerEmbeddings(bearer, [clueEmbeddingText])
           const vector = embed.embeddings[0]
           if (vector?.length) {
             queryVector = vector

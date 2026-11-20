@@ -1,0 +1,14 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro'
+import AuthTurnstileBridge from '../../components/AuthTurnstileBridge.vue'
+import '../../styles/pages.css'
+---
+
+<MainLayout
+  noindex
+  title="Bot check · Yiveno"
+  description="Complete a quick bot check so the Yiveno extension can continue."
+  i18nTitleKey="turnstile.meta.title"
+>
+  <AuthTurnstileBridge client:load />
+</MainLayout>

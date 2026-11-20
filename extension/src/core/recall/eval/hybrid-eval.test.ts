@@ -39,19 +39,11 @@ vi.mock('@/infrastructure/storage/recall-outcome-pairs-storage', () => ({
   listRecallOutcomePairs: vi.fn(async () => [])
 }))
 
-// Hybrid 路径会调 `getAuthSession` 走 chrome.storage.local；CI 在 jsdom 下没有 chrome，
-// 直接返回有 token 的 session，让语义融合真正跑；Free/Pro 同档命中同一真路径。
+// Hybrid 路径会调 Worker Bearer；CI 在 jsdom 下没有 chrome，直接返回 fake token。
 const HYBRID_EVAL_AUTH_TOKEN = 'eval-fake-token'
 
-vi.mock('@/infrastructure/identity/auth-session-service', () => ({
-  getAuthSession: vi.fn(async () => ({
-    accessToken: HYBRID_EVAL_AUTH_TOKEN,
-    ownerId: 'eval-owner-id',
-    email: 'eval@yiveno.local',
-    provider: 'clerk'
-  })),
-  setAuthSession: vi.fn(async () => {}),
-  clearAuthSession: vi.fn(async () => {})
+vi.mock('@/infrastructure/identity/worker-api-access-token', () => ({
+  getWorkerApiAccessToken: vi.fn(async () => HYBRID_EVAL_AUTH_TOKEN)
 }))
 
 describe('hybrid-eval', () => {

@@ -18,17 +18,37 @@ vi.mock('@/application/memory/ensure-memory-embedding-maintenance', () => ({
 }))
 
 import {
+  applyExternalAuthDeviceHandoff,
   applyExternalAuthHandoff,
-  applyExternalAuthSessionHandoff,
   isExternalAuthHandoffListenerRegistered,
   registerExternalAuthHandoffListener,
   resetExternalAuthHandoffListenerForTests
 } from '@/background/listeners/external-auth-handoff'
 import { scheduleSilentMemoryEmbeddingMaintenance } from '@/application/memory/ensure-memory-embedding-maintenance'
-import { AUTH_SESSION_STORAGE_KEY } from '@/core/identity/auth-session'
+import { DEVICE_SESSION_STORAGE_KEY } from '@/core/identity/device-session'
 import { ACCOUNT_BINDING_STORAGE_KEY } from '@/core/identity/local-profile'
 
 type StorageMap = Record<string, unknown>
+
+const USER_A = '22222222-2222-4222-8222-222222222222'
+const USER_B = '33333333-3333-4333-8333-333333333333'
+const DEVICE_A = '44444444-4444-4444-8444-444444444444'
+const DEVICE_B = '55555555-5555-4555-8555-555555555555'
+
+function devicePayload(overrides: Record<string, unknown> = {}) {
+  return {
+    type: 'YIVENO_AUTH_DEVICE_HANDOFF' as const,
+    payload: {
+      deviceToken: 'ydt_' + 'a'.repeat(64),
+      deviceId: DEVICE_A,
+      userId: USER_A,
+      isAnonymous: false,
+      email: 'u@example.com',
+      displayName: 'User',
+      ...overrides
+    }
+  }
+}
 
 function createChromeStorageMock(initial: StorageMap = {}) {
   const store: StorageMap = { ...initial }
@@ -71,7 +91,7 @@ function createChromeStorageMock(initial: StorageMap = {}) {
   }
 }
 
-describe('external auth handoff', () => {
+describe('external auth handoff（device）', () => {
   beforeEach(() => {
     resetExternalAuthHandoffListenerForTests()
     ensureBackgroundBootstrappedMock.mockClear()
@@ -84,34 +104,20 @@ describe('external auth handoff', () => {
     vi.stubGlobal('chrome', createChromeStorageMock())
   })
 
-  it('合法 session handoff 写入 session 与 AccountBinding，不静默 absorb', async () => {
-    const revokeToken = 'r'.repeat(64)
-    const result = await applyExternalAuthSessionHandoff({
-      type: 'YIVENO_AUTH_SESSION_HANDOFF',
-      payload: {
-        accessToken: 'at',
-        refreshToken: 'rt',
-        userId: '22222222-2222-4222-8222-222222222222',
-        email: 'u@example.com',
-        uninstallRevokeToken: revokeToken
-      }
-    })
+  it('合法 device handoff 写入 device session 与 AccountBinding，不静默 absorb', async () => {
+    const result = await applyExternalAuthDeviceHandoff(devicePayload())
     expect(result).toEqual({ ok: true })
-    expect(chrome.storage.local.set).toHaveBeenCalled()
-    expect(chrome.runtime.setUninstallURL).toHaveBeenCalledWith(
-      expect.stringContaining('/auth/extension-uninstalled'),
-      expect.any(Function)
-    )
 
     const setCalls = vi.mocked(chrome.storage.local.set).mock.calls
     const flattened = Object.assign({}, ...setCalls.map(call => call[0] as StorageMap))
-    expect(flattened[AUTH_SESSION_STORAGE_KEY]).toMatchObject({
-      accessToken: 'at',
-      userId: '22222222-2222-4222-8222-222222222222'
+    expect(flattened[DEVICE_SESSION_STORAGE_KEY]).toMatchObject({
+      userId: USER_A,
+      deviceId: DEVICE_A,
+      isAnonymous: false
     })
-    expect(flattened[AUTH_SESSION_STORAGE_KEY]).not.toHaveProperty('uninstallRevokeToken')
+    expect(flattened[DEVICE_SESSION_STORAGE_KEY]).toHaveProperty('createdAt')
     expect(flattened[ACCOUNT_BINDING_STORAGE_KEY]).toMatchObject({
-      accountId: '22222222-2222-4222-8222-222222222222'
+      accountId: USER_A
     })
     await vi.waitFor(() => {
       expect(ensureBackgroundBootstrappedMock).toHaveBeenCalled()
@@ -120,7 +126,69 @@ describe('external auth handoff', () => {
     expect(clearAccountLibraryOnSignOutMock).not.toHaveBeenCalled()
   })
 
-  it('session 写入后立即 ok，embedding 在 bootstrap 后调度', async () => {
+  it('载荷非法 → 拒绝', async () => {
+    const result = await applyExternalAuthDeviceHandoff({
+      type: 'YIVENO_AUTH_DEVICE_HANDOFF',
+      payload: { deviceToken: 'short', userId: 'not-uuid' }
+    })
+    expect(result).toEqual({ ok: false, error: 'invalid_handoff_payload' })
+    expect(chrome.storage.local.set).not.toHaveBeenCalled()
+  })
+
+  it('同账号重复 Connect：覆盖 token，不重写 binding，不调度 embedding', async () => {
+    vi.stubGlobal(
+      'chrome',
+      createChromeStorageMock({
+        [DEVICE_SESSION_STORAGE_KEY]: {
+          deviceToken: 'ydt_' + 'b'.repeat(64),
+          deviceId: DEVICE_B,
+          userId: USER_A,
+          isAnonymous: false,
+          createdAt: '2026-01-01T00:00:00.000Z'
+        },
+        [ACCOUNT_BINDING_STORAGE_KEY]: {
+          accountId: USER_A,
+          boundAt: '2026-01-01T00:00:00.000Z'
+        }
+      })
+    )
+    const result = await applyExternalAuthDeviceHandoff(
+      devicePayload({ deviceToken: 'ydt_' + 'c'.repeat(64), deviceId: DEVICE_A })
+    )
+    expect(result).toEqual({ ok: true })
+    const setCalls = vi.mocked(chrome.storage.local.set).mock.calls
+    const flattened = Object.assign({}, ...setCalls.map(call => call[0] as StorageMap))
+    expect(flattened[DEVICE_SESSION_STORAGE_KEY]).toMatchObject({
+      deviceToken: 'ydt_' + 'c'.repeat(64),
+      userId: USER_A
+    })
+    expect(flattened).not.toHaveProperty(ACCOUNT_BINDING_STORAGE_KEY)
+    expect(scheduleSilentMemoryEmbeddingMaintenance).not.toHaveBeenCalled()
+  })
+
+  it('不同账号 Connect：拒绝覆盖', async () => {
+    vi.stubGlobal(
+      'chrome',
+      createChromeStorageMock({
+        [DEVICE_SESSION_STORAGE_KEY]: {
+          deviceToken: 'ydt_' + 'b'.repeat(64),
+          deviceId: DEVICE_B,
+          userId: USER_A,
+          isAnonymous: false,
+          createdAt: '2026-01-01T00:00:00.000Z'
+        },
+        [ACCOUNT_BINDING_STORAGE_KEY]: {
+          accountId: USER_A,
+          boundAt: '2026-01-01T00:00:00.000Z'
+        }
+      })
+    )
+    const result = await applyExternalAuthDeviceHandoff(devicePayload({ userId: USER_B }))
+    expect(result).toEqual({ ok: false, error: 'account_mismatch' })
+    expect(scheduleSilentMemoryEmbeddingMaintenance).not.toHaveBeenCalled()
+  })
+
+  it('device 写入后立即 ok，embedding 在 bootstrap 后调度', async () => {
     let resolveBoot: (() => void) | undefined
     ensureBackgroundBootstrappedMock.mockReturnValue(
       new Promise(resolve => {
@@ -128,15 +196,7 @@ describe('external auth handoff', () => {
       })
     )
 
-    const result = await applyExternalAuthSessionHandoff({
-      type: 'YIVENO_AUTH_SESSION_HANDOFF',
-      payload: {
-        accessToken: 'at',
-        refreshToken: 'rt',
-        userId: '22222222-2222-4222-8222-222222222222'
-      }
-    })
-
+    const result = await applyExternalAuthDeviceHandoff(devicePayload())
     expect(result).toEqual({ ok: true })
     expect(scheduleSilentMemoryEmbeddingMaintenance).not.toHaveBeenCalled()
     resolveBoot?.()
@@ -148,9 +208,36 @@ describe('external auth handoff', () => {
   it('扩展登录态探测：未登录 → signedIn false', async () => {
     const result = await applyExternalAuthHandoff({
       type: 'YIVENO_EXTENSION_AUTH_STATUS_PROBE',
-      payload: { expectedUserId: '22222222-2222-4222-8222-222222222222' }
+      payload: { expectedUserId: USER_A }
     })
     expect(result).toEqual({ ok: true, signedIn: false })
+  })
+
+  it('扩展登录态探测：已有 device session → 回传 userId', async () => {
+    vi.stubGlobal(
+      'chrome',
+      createChromeStorageMock({
+        [DEVICE_SESSION_STORAGE_KEY]: {
+          deviceToken: 'ydt_' + 'a'.repeat(64),
+          deviceId: DEVICE_A,
+          userId: USER_A,
+          isAnonymous: false,
+          email: 'u@example.com',
+          displayName: 'User',
+          createdAt: '2026-01-01T00:00:00.000Z'
+        }
+      })
+    )
+    const result = await applyExternalAuthHandoff({
+      type: 'YIVENO_EXTENSION_AUTH_STATUS_PROBE'
+    })
+    expect(result).toEqual({
+      ok: true,
+      signedIn: true,
+      userId: USER_A,
+      email: 'u@example.com',
+      displayName: 'User'
+    })
   })
 
   it('租约认领探测：本地 lastLease 匹配且未登录 → reclaimable', async () => {
@@ -169,28 +256,6 @@ describe('external auth handoff', () => {
     expect(result).toEqual({ ok: true, reclaimable: true, signedIn: false })
   })
 
-  it('租约认领探测：已登录 → 不可认领', async () => {
-    const userId = '22222222-2222-4222-8222-222222222222'
-    const { LAST_EXTENSION_LEASE_SESSION_KEY } =
-      await import('@/infrastructure/storage/last-extension-lease-session-storage')
-    vi.stubGlobal(
-      'chrome',
-      createChromeStorageMock({
-        [AUTH_SESSION_STORAGE_KEY]: {
-          accessToken: 'at',
-          refreshToken: 'rt',
-          userId
-        },
-        [LAST_EXTENSION_LEASE_SESSION_KEY]: { sessionId: 'lease-sess-1' }
-      })
-    )
-    const result = await applyExternalAuthHandoff({
-      type: 'YIVENO_EXTENSION_LEASE_RECLAIM_PROBE',
-      payload: { existingSessionId: 'lease-sess-1' }
-    })
-    expect(result).toEqual({ ok: true, reclaimable: false, signedIn: true, userId })
-  })
-
   it('官网会话请求：扩展未登录 → 失败', async () => {
     const result = await applyExternalAuthHandoff({
       type: 'YIVENO_WEBSITE_SESSION_REQUEST',
@@ -199,48 +264,20 @@ describe('external auth handoff', () => {
     expect(result).toEqual({ ok: false, error: 'website_session_mint_failed' })
   })
 
-  it('租约认领探测：session 不匹配 → 不可认领', async () => {
-    const { LAST_EXTENSION_LEASE_SESSION_KEY } =
-      await import('@/infrastructure/storage/last-extension-lease-session-storage')
-    vi.stubGlobal(
-      'chrome',
-      createChromeStorageMock({
-        [LAST_EXTENSION_LEASE_SESSION_KEY]: { sessionId: 'lease-mine' }
-      })
-    )
-    const result = await applyExternalAuthHandoff({
-      type: 'YIVENO_EXTENSION_LEASE_RECLAIM_PROBE',
-      payload: { existingSessionId: 'lease-other' }
-    })
-    expect(result).toEqual({ ok: true, reclaimable: false, signedIn: false })
-  })
-
-  it('扩展登录态探测：已登录 → 回传 userId', async () => {
-    const userId = '22222222-2222-4222-8222-222222222222'
-    vi.stubGlobal(
-      'chrome',
-      createChromeStorageMock({
-        [AUTH_SESSION_STORAGE_KEY]: {
-          accessToken: 'at',
-          refreshToken: 'rt',
-          userId
-        }
-      })
-    )
-    const result = await applyExternalAuthHandoff({
-      type: 'YIVENO_EXTENSION_AUTH_STATUS_PROBE'
-    })
-    expect(result).toEqual({ ok: true, signedIn: true, userId })
-  })
-
   it('sign-out handoff 清账号桶后清登录态', async () => {
-    const accountId = '22222222-2222-4222-8222-222222222222'
     vi.stubGlobal(
       'chrome',
       createChromeStorageMock({
         [ACCOUNT_BINDING_STORAGE_KEY]: {
-          accountId,
+          accountId: USER_A,
           boundAt: '2026-08-01T00:00:00.000Z'
+        },
+        [DEVICE_SESSION_STORAGE_KEY]: {
+          deviceToken: 'ydt_' + 'a'.repeat(64),
+          deviceId: DEVICE_A,
+          userId: USER_A,
+          isAnonymous: false,
+          createdAt: '2026-01-01T00:00:00.000Z'
         }
       })
     )
@@ -250,7 +287,7 @@ describe('external auth handoff', () => {
     })
     expect(result).toEqual({ ok: true })
     await vi.waitFor(() => {
-      expect(clearAccountLibraryOnSignOutMock).toHaveBeenCalledWith(accountId)
+      expect(clearAccountLibraryOnSignOutMock).toHaveBeenCalledWith(USER_A)
     })
   })
 

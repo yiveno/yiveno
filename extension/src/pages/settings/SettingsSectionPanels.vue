@@ -32,6 +32,7 @@ function bindRestoreFileInput(el: Element | ComponentPublicInstance | null): voi
 const {
   accountDisplayName,
   accountEmail,
+  websiteAccountMismatch,
   activeSection,
   aiFeaturesEnabled,
   linkStatusSweepEnabled,
@@ -49,6 +50,7 @@ const {
   handleChromeBookmarkSyncToggle,
   handleReimportChromeBookmarks,
   handleSignIn,
+  handleRetryAnonymousCaptcha,
   handleClearLocalMemory,
   handleClearLocalRecallAdaptation,
   handleClearOrphans,
@@ -122,6 +124,8 @@ const {
   uiLocalePreference,
   settingsError,
   settingsState,
+  showAnonymousCaptchaRetry,
+  retryingAnonymousCaptcha,
   signedIn,
   signingIn,
   signingOut,
@@ -359,6 +363,32 @@ const {
         </AppButton>
       </div>
 
+      <div
+        v-if="showAnonymousCaptchaRetry"
+        class="settings-card-stack"
+        aria-labelledby="settings-anonymous-captcha-heading"
+      >
+        <div class="settings-toggle-copy">
+          <span id="settings-anonymous-captcha-heading" class="settings-toggle-title">{{
+            t('settings_anonymous_captcha_retry_title')
+          }}</span>
+          <span class="settings-toggle-hint">{{ t('settings_anonymous_captcha_retry_hint') }}</span>
+        </div>
+        <AppButton
+          type="button"
+          variant="outlined"
+          :disabled="retryingAnonymousCaptcha || signingIn"
+          :title="t('settings_anonymous_captcha_retry_action')"
+          @click="handleRetryAnonymousCaptcha"
+        >
+          {{
+            retryingAnonymousCaptcha
+              ? t('settings_anonymous_captcha_retry_working')
+              : t('settings_anonymous_captcha_retry_action')
+          }}
+        </AppButton>
+      </div>
+
       <div class="settings-toggle">
         <div class="settings-toggle-copy">
           <span class="settings-toggle-title">{{ t('settings_sync_toggle') }}</span>
@@ -398,6 +428,13 @@ const {
         >
           {{ accountDisplayName || accountEmail }}
           <template v-if="accountDisplayName && accountEmail"> · {{ accountEmail }}</template>
+        </p>
+        <p
+          v-if="websiteAccountMismatch"
+          class="settings-status-strip__line settings-status-strip__line--mismatch"
+          role="status"
+        >
+          {{ t('settings_account_website_mismatch') }}
         </p>
       </div>
 

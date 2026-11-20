@@ -6,7 +6,7 @@ const {
   ensureMemoryCloudSyncAlarmMock,
   getSubscriptionSnapshotMock,
   writeChromeStorageLocalMock,
-  getAuthSessionMock,
+  getWorkerApiAccessTokenMock,
   getAccountBindingMock,
   fetchRemoteSubscriptionStatusMock
 } = vi.hoisted(() => ({
@@ -15,7 +15,7 @@ const {
   ensureMemoryCloudSyncAlarmMock: vi.fn(),
   getSubscriptionSnapshotMock: vi.fn(),
   writeChromeStorageLocalMock: vi.fn(),
-  getAuthSessionMock: vi.fn(),
+  getWorkerApiAccessTokenMock: vi.fn(),
   getAccountBindingMock: vi.fn(),
   fetchRemoteSubscriptionStatusMock: vi.fn()
 }))
@@ -35,8 +35,8 @@ vi.mock('@/infrastructure/storage/chrome-storage-local', () => ({
   removeChromeStorageLocal: vi.fn()
 }))
 
-vi.mock('@/infrastructure/identity/auth-session-service', () => ({
-  getAuthSession: getAuthSessionMock
+vi.mock('@/infrastructure/identity/worker-api-access-token', () => ({
+  getWorkerApiAccessToken: getWorkerApiAccessTokenMock
 }))
 
 vi.mock('@/infrastructure/identity/local-profile-service', () => ({
@@ -125,7 +125,7 @@ describe('refreshSubscriptionSnapshot', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     getAccountBindingMock.mockResolvedValue({ accountId: 'acct-1' })
-    getAuthSessionMock.mockResolvedValue({ accessToken: 'token' })
+    getWorkerApiAccessTokenMock.mockResolvedValue('token')
     getSyncPrefsMock.mockResolvedValue({ enabled: true })
     patchSyncPrefsMock.mockResolvedValue({ enabled: false })
     ensureMemoryCloudSyncAlarmMock.mockResolvedValue(undefined)

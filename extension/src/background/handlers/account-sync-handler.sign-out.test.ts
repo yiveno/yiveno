@@ -11,9 +11,12 @@ const {
   replaceOwnerItemsMock,
   replaceRemoteWithLocalItemsMock,
   getAuthSessionMock,
+  getDeviceSessionMock,
+  clearDeviceSessionMock,
   setAuthSessionMock,
   setAccountBindingMock,
   refreshAuthSessionMock,
+  revokeOwnDeviceTokenMock,
   clearSubscriptionSnapshotMock,
   ensureMemoryCloudSyncAlarmMock,
   clearAccountLibraryOnSignOutMock,
@@ -30,9 +33,12 @@ const {
   replaceOwnerItemsMock: vi.fn(),
   replaceRemoteWithLocalItemsMock: vi.fn(),
   getAuthSessionMock: vi.fn(),
+  getDeviceSessionMock: vi.fn(),
+  clearDeviceSessionMock: vi.fn(),
   setAuthSessionMock: vi.fn(),
   setAccountBindingMock: vi.fn(),
   refreshAuthSessionMock: vi.fn(),
+  revokeOwnDeviceTokenMock: vi.fn(),
   clearSubscriptionSnapshotMock: vi.fn(),
   ensureMemoryCloudSyncAlarmMock: vi.fn(),
   clearAccountLibraryOnSignOutMock: vi.fn(),
@@ -44,6 +50,22 @@ vi.mock('@/infrastructure/identity/auth-session-service', () => ({
   clearAuthSession: clearAuthSessionMock,
   getAuthSession: getAuthSessionMock,
   setAuthSession: setAuthSessionMock
+}))
+
+vi.mock('@/infrastructure/identity/device-session-service', () => ({
+  getDeviceSession: getDeviceSessionMock,
+  clearDeviceSession: clearDeviceSessionMock,
+  setDeviceSession: vi.fn()
+}))
+
+vi.mock('@/infrastructure/auth/device-register-api-client', () => ({
+  revokeOwnDeviceToken: revokeOwnDeviceTokenMock,
+  registerDeviceViaSessionExchange: vi.fn(),
+  deviceSessionFromRegisterData: vi.fn()
+}))
+
+vi.mock('@/infrastructure/auth/auth-session-lease-alarm', () => ({
+  ensureAuthSessionLeaseAlarm: vi.fn(async () => undefined)
 }))
 
 vi.mock('@/infrastructure/identity/local-profile-service', () => ({
@@ -137,31 +159,37 @@ describe('handleAuthSignOut', () => {
     patchSyncPrefsMock.mockResolvedValue({ enabled: false })
     remapOwnerIdMock.mockResolvedValue(0)
     clearAccountLibraryOnSignOutMock.mockResolvedValue({
-      clearedCount: 2,
-      remappedBookmarks: 3
+      clearedCount: 0,
+      remappedBookmarks: 3,
+      remappedExcerpts: 2
     })
     listAllByOwnerIdMock.mockResolvedValue([])
     replaceOwnerItemsMock.mockResolvedValue(0)
+    getDeviceSessionMock.mockResolvedValue(null)
     getAuthSessionMock.mockResolvedValue({
       accessToken: 'at',
       refreshToken: 'rt',
       userId: accountId,
       expiresAt: Math.floor(Date.now() / 1000) + 3600
     })
+    clearDeviceSessionMock.mockResolvedValue(undefined)
+    revokeOwnDeviceTokenMock.mockResolvedValue(true)
     clearSubscriptionSnapshotMock.mockResolvedValue(undefined)
     ensureMemoryCloudSyncAlarmMock.mockResolvedValue(undefined)
   })
 
-  it('keep_local 清账号桶（书签回迁 + 删摘录）后退出', async () => {
+  it('keep_local 默认全量回迁后退出', async () => {
     const result = await handleAuthSignOut('keep_local')
     expect(result).toEqual({
       ok: true,
       mode: 'keep_local',
-      clearedCount: 2,
+      clearedCount: 0,
       syncedCount: 0,
-      releasedToLocalCount: 3
+      releasedToLocalCount: 5
     })
-    expect(clearAccountLibraryOnSignOutMock).toHaveBeenCalledWith(accountId)
+    expect(clearAccountLibraryOnSignOutMock).toHaveBeenCalledWith(accountId, {
+      deleteLocalExcerpts: false
+    })
     expect(clearExtensionUninstallRevokeMock).toHaveBeenCalledWith({
       revokeRemote: true,
       accessTokenFallback: 'at'
@@ -170,7 +198,26 @@ describe('handleAuthSignOut', () => {
     expect(clearAccountBindingMock).toHaveBeenCalled()
   })
 
-  it('flush_then_keep 先上云再清账号桶', async () => {
+  it('keep_local + deleteLocalExcerpts 走旧口径 A', async () => {
+    clearAccountLibraryOnSignOutMock.mockResolvedValue({
+      clearedCount: 2,
+      remappedBookmarks: 3,
+      remappedExcerpts: 0
+    })
+    const result = await handleAuthSignOut('keep_local', { deleteLocalExcerpts: true })
+    expect(result).toEqual({
+      ok: true,
+      mode: 'keep_local',
+      clearedCount: 2,
+      syncedCount: 0,
+      releasedToLocalCount: 3
+    })
+    expect(clearAccountLibraryOnSignOutMock).toHaveBeenCalledWith(accountId, {
+      deleteLocalExcerpts: true
+    })
+  })
+
+  it('flush_then_keep 先上云再全量回迁', async () => {
     listAllByOwnerIdMock.mockResolvedValue([
       { id: 'a', ownerId: accountId, type: 'text_excerpt' },
       { id: 'b', ownerId: accountId, type: 'bookmark' }
@@ -181,20 +228,23 @@ describe('handleAuthSignOut', () => {
       ok: true,
       mode: 'flush_then_keep',
       syncedCount: 1,
-      releasedToLocalCount: 3,
-      clearedCount: 2
+      releasedToLocalCount: 5,
+      clearedCount: 0
     })
     expect(replaceRemoteWithLocalItemsMock).toHaveBeenCalled()
-    expect(clearAccountLibraryOnSignOutMock).toHaveBeenCalledWith(accountId)
+    expect(clearAccountLibraryOnSignOutMock).toHaveBeenCalledWith(accountId, {
+      deleteLocalExcerpts: false
+    })
   })
 
-  it('flush_then_keep 云端失败时不退出', async () => {
+  it('flush_then_keep 云端失败时不退出并标记 flushFailed', async () => {
     listAllByOwnerIdMock.mockResolvedValue([{ id: 'a', type: 'text_excerpt' }])
     replaceRemoteWithLocalItemsMock.mockRejectedValue(new Error('network'))
     const result = await handleAuthSignOut('flush_then_keep')
     expect(result.ok).toBe(false)
     if (!result.ok) {
       expect(result.errorCode).toBe('SYNC_REPLACE_LOCAL_FAILED')
+      expect(result.flushFailed).toBe(true)
     }
     expect(clearAuthSessionMock).not.toHaveBeenCalled()
     expect(clearAccountLibraryOnSignOutMock).not.toHaveBeenCalled()
@@ -270,5 +320,41 @@ describe('handleAuthSignOut', () => {
     }
     expect(clearAuthSessionMock).not.toHaveBeenCalled()
     expect(replaceOwnerItemsMock).not.toHaveBeenCalled()
+  })
+
+  it('device 会话退出调 revoke-self，不走 uninstall revoke', async () => {
+    const deviceToken = 'ydt_' + 'r'.repeat(64)
+    getDeviceSessionMock.mockResolvedValue({
+      deviceToken,
+      deviceId: '33333333-3333-4333-8333-333333333333',
+      userId: accountId,
+      isAnonymous: false,
+      createdAt: '2026-11-20T08:00:00.000Z'
+    })
+    getAuthSessionMock.mockResolvedValue(null)
+
+    const result = await handleAuthSignOut('keep_local')
+    expect(result.ok).toBe(true)
+    expect(revokeOwnDeviceTokenMock).toHaveBeenCalledWith(deviceToken)
+    expect(clearExtensionUninstallRevokeMock).not.toHaveBeenCalled()
+    expect(clearDeviceSessionMock).toHaveBeenCalled()
+    expect(clearAuthSessionMock).toHaveBeenCalled()
+  })
+
+  it('device revoke 失败仍退出成功', async () => {
+    getDeviceSessionMock.mockResolvedValue({
+      deviceToken: 'ydt_' + 'f'.repeat(64),
+      deviceId: '33333333-3333-4333-8333-333333333333',
+      userId: accountId,
+      isAnonymous: false,
+      createdAt: '2026-11-20T08:00:00.000Z'
+    })
+    getAuthSessionMock.mockResolvedValue(null)
+    revokeOwnDeviceTokenMock.mockResolvedValue(false)
+
+    const result = await handleAuthSignOut('keep_local')
+    expect(result.ok).toBe(true)
+    expect(clearDeviceSessionMock).toHaveBeenCalled()
+    expect(clearAccountBindingMock).toHaveBeenCalled()
   })
 })

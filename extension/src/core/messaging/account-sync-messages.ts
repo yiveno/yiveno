@@ -48,12 +48,13 @@ export const AccountSyncErrorCodeSchema = z.enum([
 export type AccountSyncErrorCode = z.infer<typeof AccountSyncErrorCodeSchema>
 
 /**
- * 退出登录对本机 Memory 的处理策略（ADR-018 · 口径 A）。
- * 默认 keep_local：书签回本地档 + 删除账号桶其余；Pro 可先 flush_then_keep。
+ * 退出登录对本机 Memory 的处理策略（ADR-018 · G1-a）。
+ * 默认 keep_local：账号桶（摘录+书签）全量回迁 localProfileId；
+ * `deleteLocalExcerpts: true` 才走旧口径 A（删摘录）；Pro 可先 flush_then_keep。
  */
 export const AuthSignOutModeSchema = z.enum([
-  'keep_local', // 默认：书签→本地档，删账号桶摘录等后退出（本地档无主摘录保留）
-  'flush_then_keep', // 先 flush 摘录上云，再同 keep_local 清账号桶（失败不退出）
+  'keep_local', // 默认：账号桶全量回迁本地档后退出；opt-in 可删摘录
+  'flush_then_keep', // 先 flush 摘录上云，再同 keep_local 回迁（失败不退出，UI 可仍退出）
   'clear_local', // 整桶清空账号桶（含已归属书签，不回迁；强确认）
   'sync_then_clear_local' // 遗留：先覆盖云端再清账号桶；设置页主路径不再主推
 ])
@@ -105,6 +106,11 @@ export type AuthSignOutMessage = {
   type: 'AUTH_SIGN_OUT'
   payload: {
     mode: AuthSignOutMode
+    /**
+     * true = 旧口径 A：删账号桶摘录、书签回迁；
+     * false / 缺省 = 全量回迁（与 clear_local 不同）。
+     */
+    deleteLocalExcerpts?: boolean
   }
 }
 
@@ -112,17 +118,22 @@ export type AuthSignOutResponse =
   | {
       ok: true
       mode: AuthSignOutMode
-      /** 本机从账号桶删除的条数（keep / flush_then_keep = 清掉的摘录等） */
+      /** 本机从账号桶删除的条数（仅 deleteLocalExcerpts / clear_local 等） */
       clearedCount: number
       /** flush / sync_then_clear 时写入云端的条数；其它模式为 0 */
       syncedCount: number
-      /** keep / flush_then_keep：书签回迁本地档条数 */
+      /** keep / flush_then_keep：回迁到本地档的条数（书签 + 摘录） */
       releasedToLocalCount: number
     }
   | {
       ok: false
       errorCode: AccountSyncErrorCode
       error?: string
+      /**
+       * flush_then_keep 同步失败且尚未退出。
+       * UI 应展示真实原因，并提供「先导出备份」与「仍退出」。
+       */
+      flushFailed?: true
     }
 
 /** 登录迁移门闸动作。 */
@@ -214,7 +225,30 @@ export type GetAuthStateResponse =
       email?: string
       avatarUrl?: string
       displayName?: string
+      /** 来自 device session；匿名试用为 true */
+      isAnonymous?: boolean
+      /** Turnstile 曾失败，Settings 可前景重试 */
+      anonymousCaptchaRetryNeeded?: boolean
       syncPrefs: SyncPrefs
+    }
+  | {
+      ok: false
+      errorCode: AccountSyncErrorCode
+      error?: string
+    }
+
+/** Settings：前景打开 Turnstile 页后重试匿名 ensure。 */
+export type RetryAnonymousCaptchaMessage = {
+  scope: BackgroundMessageScope
+  type: 'RETRY_ANONYMOUS_CAPTCHA'
+}
+
+export type RetryAnonymousCaptchaResponse =
+  | {
+      ok: true
+      /** ensure 结果摘要 */
+      outcome: 'created' | 'already' | 'failed' | 'skipped_has_legacy'
+      error?: string
     }
   | {
       ok: false
@@ -585,6 +619,7 @@ export type AccountSyncBackgroundMessage =
   | AuthSignOutMessage
   | GetAuthStateMessage
   | ProbeWebsiteSignedInMessage
+  | RetryAnonymousCaptchaMessage
   | RefreshAuthProfileMessage
   | GetSyncStatusMessage
   | GetLoginMigrationStatusMessage
@@ -611,6 +646,7 @@ export type AccountSyncBackgroundResponse =
   | AuthSignOutResponse
   | GetAuthStateResponse
   | ProbeWebsiteSignedInResponse
+  | RetryAnonymousCaptchaResponse
   | RefreshAuthProfileResponse
   | GetSyncStatusResponse
   | GetLoginMigrationStatusResponse

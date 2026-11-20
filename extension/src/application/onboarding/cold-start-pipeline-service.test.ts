@@ -8,7 +8,7 @@ const {
   runSilentMemoryEmbeddingMaintenanceMock,
   scheduleSilentMemoryEmbeddingMaintenanceMock,
   scheduleAsyncMemoryLlmEnrichmentMock,
-  getAuthSessionMock,
+  getWorkerApiAccessTokenMock,
   getUserSettingsMock,
   listByOwnerMock,
   readChromeStorageLocalMock,
@@ -22,7 +22,7 @@ const {
   runSilentMemoryEmbeddingMaintenanceMock: vi.fn(),
   scheduleSilentMemoryEmbeddingMaintenanceMock: vi.fn(),
   scheduleAsyncMemoryLlmEnrichmentMock: vi.fn(),
-  getAuthSessionMock: vi.fn(),
+  getWorkerApiAccessTokenMock: vi.fn(),
   getUserSettingsMock: vi.fn(),
   listByOwnerMock: vi.fn(),
   readChromeStorageLocalMock: vi.fn(),
@@ -49,8 +49,8 @@ vi.mock('@/application/memory/schedule-async-memory-llm-enrichment', () => ({
   scheduleAsyncMemoryLlmEnrichment: scheduleAsyncMemoryLlmEnrichmentMock
 }))
 
-vi.mock('@/infrastructure/identity/auth-session-service', () => ({
-  getAuthSession: getAuthSessionMock
+vi.mock('@/infrastructure/identity/worker-api-access-token', () => ({
+  getWorkerApiAccessToken: getWorkerApiAccessTokenMock
 }))
 
 vi.mock('@/infrastructure/settings/user-settings-service', () => ({
@@ -103,7 +103,7 @@ describe('runColdStartPipeline', () => {
       quotaHit: false
     })
     listByOwnerMock.mockResolvedValue([])
-    getAuthSessionMock.mockResolvedValue({ accessToken: 'tok' })
+    getWorkerApiAccessTokenMock.mockResolvedValue('tok')
     readInstallOnboardingDoneMock.mockResolvedValue(true)
   })
 
@@ -193,7 +193,7 @@ describe('runColdStartPipeline', () => {
 
   it('灌库关闭：不调 ensure，ingest_disabled 放行', async () => {
     getUserSettingsMock.mockResolvedValue({ chromeBookmarkIngestEnabled: false })
-    getAuthSessionMock.mockResolvedValue(null)
+    getWorkerApiAccessTokenMock.mockResolvedValue(null)
     listByOwnerMock.mockResolvedValue([])
     let stored: Record<string, unknown> | null = null
     readChromeStorageLocalMock.mockImplementation(async () => stored)
@@ -249,7 +249,7 @@ describe('runColdStartPipeline', () => {
   })
 
   it('未登录：规则后进 AI 阶段，LLM 入队、无 embed，local_ready 放行', async () => {
-    getAuthSessionMock.mockResolvedValue(null)
+    getWorkerApiAccessTokenMock.mockResolvedValue(null)
     listByOwnerMock.mockResolvedValue([
       { id: 'item-1', title: 'Example', url: 'https://example.com' }
     ])

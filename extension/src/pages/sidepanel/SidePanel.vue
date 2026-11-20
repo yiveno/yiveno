@@ -34,6 +34,7 @@ import { commitRecallOutcome } from '@/application/recall/commit-recall-outcome'
 import {
   authConnectWebsite,
   cancelRecall,
+  exportLocalMemory,
   fetchAuthState,
   getRecallPageContext,
   maybeUploadDualThreadSketch,
@@ -44,6 +45,11 @@ import {
   clearExtensionDisplacedNotice,
   readExtensionDisplacedNotice
 } from '@/infrastructure/storage/extension-displaced-notice-storage'
+import {
+  clearSignOutRemapNotice,
+  readSignOutRemapNotice,
+  type SignOutRemapNotice
+} from '@/infrastructure/storage/sign-out-remap-notice-storage'
 import {
   consumeRecallPrefillWithRetry,
   markFirstRecallOpenDone
@@ -134,12 +140,19 @@ const websiteConnectBusy = ref(false)
 const websiteConnectError = ref('')
 /** 被别处挤掉后的原因说明（无 Connect；Dismiss 只清 displaced 标记） */
 const showExtensionDisplacedBanner = ref(false)
+/** invalid 退登后：全量回迁提示（flush 成败分文案） */
+const signOutRemapNotice = ref<SignOutRemapNotice | null>(null)
+const signOutRemapExportBusy = ref(false)
+/** 扩展已登录且官网 UI 桥为另一账号 */
+const showWebsiteAccountMismatch = ref(false)
 /** 壳级断网薄适配（ADR-021）：本机库可读、云端理解不可用（不可 dismiss；恢复在线自动隐） */
 const isBrowserOnline = ref(readBrowserOnline())
 const showOfflineBanner = computed(() => !isBrowserOnline.value)
 const lastSentClue = ref('')
 /** 登录展示名；未登录或无名则空，问候退化为仅时段。 */
 const accountDisplayName = ref('')
+/** 扩展绑定账号 id（对照官网 UI 桥） */
+const extensionAccountId = ref<string | null>(null)
 
 /** handleSendTurn 定义前占位；定义后改写，供预填自动提交。 */
 let autoSubmitPrefillClue: (clueText: string) => void = () => {}
@@ -619,13 +632,25 @@ async function loadGreetingIdentity(): Promise<void> {
     if (!response.ok) {
       signedIn.value = null
       accountDisplayName.value = ''
+      extensionAccountId.value = null
+      showWebsiteAccountMismatch.value = false
       void refreshWebsiteConnectBanner(false)
+      void refreshSignOutRemapNotice()
       return
     }
     signedIn.value = response.signedIn
+    extensionAccountId.value = response.binding?.accountId?.trim() || null
     void refreshWebsiteConnectBanner(response.signedIn)
+    void refreshWebsiteAccountMismatch(response.signedIn)
+    void refreshSignOutRemapNotice()
     if (response.signedIn) {
       void refreshLoginMigrationGate()
+      try {
+        await clearSignOutRemapNotice()
+        signOutRemapNotice.value = null
+      } catch {
+        // 忽略
+      }
     }
     const fromProfile = response.displayName?.trim() ?? ''
     if (fromProfile) {
@@ -638,6 +663,78 @@ async function loadGreetingIdentity(): Promise<void> {
   } catch {
     signedIn.value = null
     accountDisplayName.value = ''
+    extensionAccountId.value = null
+    showWebsiteAccountMismatch.value = false
+  }
+}
+
+async function refreshSignOutRemapNotice(): Promise<void> {
+  try {
+    signOutRemapNotice.value = await readSignOutRemapNotice()
+  } catch {
+    signOutRemapNotice.value = null
+  }
+}
+
+async function refreshWebsiteAccountMismatch(extensionSignedIn: boolean): Promise<void> {
+  if (!extensionSignedIn || !extensionAccountId.value) {
+    showWebsiteAccountMismatch.value = false
+    return
+  }
+  try {
+    const ui = await readWebsiteAuthUiState()
+    const websiteId = ui?.signedIn ? ui.userId?.trim() : ''
+    showWebsiteAccountMismatch.value = Boolean(websiteId && websiteId !== extensionAccountId.value)
+  } catch {
+    showWebsiteAccountMismatch.value = false
+  }
+}
+
+async function dismissSignOutRemapNotice(): Promise<void> {
+  signOutRemapNotice.value = null
+  try {
+    await clearSignOutRemapNotice()
+  } catch {
+    // 忽略
+  }
+}
+
+async function exportAfterSignOutRemap(): Promise<void> {
+  if (signOutRemapExportBusy.value) {
+    return
+  }
+  signOutRemapExportBusy.value = true
+  try {
+    const response = await exportLocalMemory()
+    if (!response.ok) {
+      return
+    }
+    const blob = new Blob(
+      [
+        JSON.stringify(
+          {
+            exportedAt: new Date().toISOString(),
+            ownerId: response.ownerId,
+            items: response.items,
+            memoryNotes: response.memoryNotes,
+            memoryNotesMeta: response.memoryNotesMeta
+          },
+          null,
+          2
+        )
+      ],
+      { type: 'application/json' }
+    )
+    const url = URL.createObjectURL(blob)
+    const anchor = document.createElement('a')
+    anchor.href = url
+    anchor.download = `yiveno-memory-export-${new Date().toISOString().slice(0, 10)}.json`
+    anchor.click()
+    URL.revokeObjectURL(url)
+  } catch {
+    // 忽略：用户可再试
+  } finally {
+    signOutRemapExportBusy.value = false
   }
 }
 
@@ -715,6 +812,13 @@ async function dismissExtensionDisplacedBanner(): Promise<void> {
   } catch {
     // 忽略：本地已隐藏
   }
+}
+
+/** 官网 UI 桥变化时：Connect 条 + 账号不一致提示 */
+async function refreshWebsiteUiDerivedBanners(): Promise<void> {
+  const extensionSignedIn = signedIn.value === true
+  await refreshWebsiteConnectBanner(extensionSignedIn)
+  await refreshWebsiteAccountMismatch(extensionSignedIn)
 }
 
 async function runRecall(trimmedClue: string): Promise<void> {
@@ -1358,7 +1462,7 @@ onMounted(() => {
     if (document.visibilityState !== 'visible') {
       return
     }
-    void loadGreetingIdentity()
+    void refreshWebsiteUiDerivedBanners()
   })
   document.addEventListener('visibilitychange', handleSidePanelVisibilityChange)
   void (async () => {
@@ -1478,6 +1582,51 @@ onUnmounted(() => {
           <AppIcon name="close" size="16px" />
         </AppIconButton>
         <p class="recall-website-connect-label">{{ t('sidepanel_extension_displaced_banner') }}</p>
+      </section>
+
+      <section
+        v-if="signOutRemapNotice"
+        class="recall-website-connect recall-website-connect--remap"
+        role="status"
+        aria-live="polite"
+      >
+        <AppIconButton
+          class="recall-website-connect-close"
+          type="button"
+          :title="t('sidepanel_sign_out_remap_dismiss_aria')"
+          :aria-label="t('sidepanel_sign_out_remap_dismiss_aria')"
+          @click="dismissSignOutRemapNotice"
+        >
+          <AppIcon name="close" size="16px" />
+        </AppIconButton>
+        <p class="recall-website-connect-label">
+          {{
+            signOutRemapNotice.flushOk
+              ? t('sidepanel_sign_out_remap_flush_ok')
+              : t('sidepanel_sign_out_remap_flush_failed')
+          }}
+        </p>
+        <AppButton
+          v-if="!signOutRemapNotice.flushOk"
+          type="button"
+          variant="text"
+          class="recall-website-connect-cta"
+          :disabled="signOutRemapExportBusy"
+          :title="t('sidepanel_sign_out_remap_export')"
+          :aria-label="t('sidepanel_sign_out_remap_export')"
+          @click="exportAfterSignOutRemap"
+        >
+          {{ t('sidepanel_sign_out_remap_export') }}
+        </AppButton>
+      </section>
+
+      <section
+        v-if="showWebsiteAccountMismatch"
+        class="recall-website-connect recall-website-connect--mismatch"
+        role="status"
+        aria-live="polite"
+      >
+        <p class="recall-website-connect-label">{{ t('sidepanel_account_website_mismatch') }}</p>
       </section>
 
       <section

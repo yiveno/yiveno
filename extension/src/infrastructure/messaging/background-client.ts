@@ -18,6 +18,7 @@ import type {
   GetLoginMigrationStatusResponse,
   LoginMigrationAction,
   ProbeWebsiteSignedInResponse,
+  RetryAnonymousCaptchaResponse,
   ResolveLoginMigrationResponse,
   GetSubscriptionStatusResponse,
   GetSyncStatusResponse,
@@ -470,6 +471,14 @@ export async function probeWebsiteSignedIn(): Promise<ProbeWebsiteSignedInRespon
   })
 }
 
+/** Settings：前景 Turnstile 后重试匿名设备会话。 */
+export async function retryAnonymousCaptcha(): Promise<RetryAnonymousCaptchaResponse> {
+  return sendBackgroundMessage<RetryAnonymousCaptchaResponse>({
+    scope: 'background',
+    type: 'RETRY_ANONYMOUS_CAPTCHA'
+  })
+}
+
 /** 从 Supabase 刷新头像 / 展示名到本机 session。 */
 export async function refreshAuthProfile(): Promise<RefreshAuthProfileResponse> {
   return sendBackgroundMessage<RefreshAuthProfileResponse>({
@@ -495,11 +504,17 @@ export async function authConnectWebsite(): Promise<AuthConnectWebsiteResponse> 
 }
 
 /** 退出登录（须指定对本机该账号 Memory 的处理策略）。 */
-export async function authSignOut(mode: AuthSignOutMode): Promise<AuthSignOutResponse> {
+export async function authSignOut(
+  mode: AuthSignOutMode,
+  options?: { deleteLocalExcerpts?: boolean }
+): Promise<AuthSignOutResponse> {
   return sendBackgroundMessage<AuthSignOutResponse>({
     scope: 'background',
     type: 'AUTH_SIGN_OUT',
-    payload: { mode }
+    payload: {
+      mode,
+      ...(options?.deleteLocalExcerpts === true ? { deleteLocalExcerpts: true } : {})
+    }
   })
 }
 

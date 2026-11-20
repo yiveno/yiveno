@@ -20,6 +20,12 @@ vi.mock('@/infrastructure/identity/auth-session-service', () => ({
   setAuthSession: setAuthSessionMock
 }))
 
+vi.mock('@/infrastructure/identity/device-session-service', () => ({
+  getDeviceSession: vi.fn(async () => null),
+  clearDeviceSession: vi.fn(),
+  setDeviceSession: vi.fn()
+}))
+
 vi.mock('@/infrastructure/identity/local-profile-service', () => ({
   clearAccountBinding: vi.fn(),
   getAccountBinding: getAccountBindingMock,

@@ -49,7 +49,7 @@ describe('runExtensionConnectFromWebsite', () => {
     expect(mintAndHandoffMock).not.toHaveBeenCalled()
   })
 
-  it('mint ok → ok', async () => {
+  it('device handoff ok → ok', async () => {
     getSessionMock.mockResolvedValue({
       access_token: 'at',
       user: { id: '11111111-1111-4111-8111-111111111111', email: 'a@b.com' }
@@ -61,15 +61,15 @@ describe('runExtensionConnectFromWebsite', () => {
     expect(publishResultMock).toHaveBeenCalledWith('ok')
   })
 
-  it('取消挤掉 → cancelled_displace 且不清官网（只清 pending）', async () => {
+  it('扩展已是其它账号 → account_mismatch（不清官网会话）', async () => {
     getSessionMock.mockResolvedValue({
       access_token: 'at',
       user: { id: '11111111-1111-4111-8111-111111111111' }
     })
-    mintAndHandoffMock.mockResolvedValue({ status: 'cancelled_displace' })
+    mintAndHandoffMock.mockResolvedValue({ status: 'account_mismatch' })
     const status = await runExtensionConnectFromWebsite('ext-id-1')
-    expect(status).toBe('cancelled_displace')
+    expect(status).toBe('account_mismatch')
     expect(clearPendingMock).toHaveBeenCalled()
-    expect(publishResultMock).toHaveBeenCalledWith('cancelled_displace')
+    expect(publishResultMock).toHaveBeenCalledWith('account_mismatch')
   })
 })

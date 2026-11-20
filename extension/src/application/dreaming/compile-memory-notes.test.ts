@@ -11,8 +11,8 @@ vi.mock('@/application/dreaming/dreaming-llm-client', () => ({
   requestDreamingCompileBatch: vi.fn()
 }))
 
-vi.mock('@/infrastructure/identity/auth-session-service', () => ({
-  getAuthSession: vi.fn(async () => ({ accessToken: 'tok' }))
+vi.mock('@/infrastructure/identity/worker-api-access-token', () => ({
+  getWorkerApiAccessToken: vi.fn(async () => 'tok')
 }))
 
 vi.mock('@/infrastructure/settings/user-settings-service', () => ({

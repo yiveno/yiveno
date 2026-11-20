@@ -271,7 +271,7 @@ onMounted(async () => {
   // Connect 回退路径：账户页原地 mint（不进登录壳）；与 UI 桥零导航共用 runExtensionConnect
   if (wantConnect && extensionId) {
     void runExtensionConnectFromWebsite(extensionId, { announceViaBridge: true }).then(status => {
-      if (status === 'ok' || status === 'cancelled_displace' || status === 'failed') {
+      if (status === 'ok' || status === 'account_mismatch' || status === 'failed') {
         const clean = new URL(window.location.href)
         clean.searchParams.delete('connect_extension')
         clean.searchParams.delete('extension_id')
@@ -357,10 +357,13 @@ async function handleSignOut() {
           </p>
         </div>
       </div>
-      <!-- 4. 结束会话 -->
-      <button type="button" class="account__sign-out" @click="handleSignOut">
-        {{ t('account.sign_out') }}
-      </button>
+      <!-- 4. 结束会话（仅本浏览器官网；不联动扩展） -->
+      <div class="account__sign-out-wrap">
+        <button type="button" class="account__sign-out" @click="handleSignOut">
+          {{ t('account.sign_out') }}
+        </button>
+        <p class="account__sign-out-hint">{{ t('account.sign_out_scope_hint') }}</p>
+      </div>
     </header>
 
     <!-- 2. 权益 + 3. 付费与管理 -->
@@ -567,9 +570,17 @@ async function handleSignOut() {
   opacity: 0.7;
 }
 
-.account__sign-out {
+.account__sign-out-wrap {
   flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
   margin-top: 4px;
+  max-width: 14rem;
+}
+
+.account__sign-out {
   padding: 8px 10px;
   border: none;
   border-radius: 8px;
@@ -579,6 +590,14 @@ async function handleSignOut() {
   font-weight: 400;
   color: var(--muted);
   cursor: pointer;
+}
+
+.account__sign-out-hint {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--muted);
+  text-align: right;
 }
 
 .account__sign-out:hover {

@@ -6,6 +6,7 @@ import {
 import type { ExtensionCommandInfo } from '@/core/messaging/commands-messages'
 import type { AuthSignOutMode } from '@/core/messaging/account-sync-messages'
 import type { UiLocalePreference } from '@/core/i18n/ui-locale'
+import { shouldShowAnonymousCaptchaRetry } from '@/core/identity/anonymous-captcha-retry'
 import {
   DEFAULT_SETTINGS_SECTION,
   parseSettingsSectionFromLocationSearch,
@@ -27,6 +28,7 @@ import {
   exportLocalMemory,
   exportOrphanOwners,
   fetchAuthState,
+  retryAnonymousCaptcha,
   fetchChromeBookmarkImportStatus,
   fetchExtensionCommands,
   fetchSubscriptionStatus,
@@ -59,6 +61,8 @@ import type { ThirdPartyCorpusSource } from '@/core/memory/third-party-corpus-so
 import type { ImportErrorCode } from '@/core/messaging/import-messages'
 import { formatLibrarySavedAt } from '@/infrastructure/i18n/format-library-saved-at'
 import { watchAuthSessionStorage } from '@/infrastructure/auth/watch-auth-session-storage'
+import { watchWebsiteAuthUiStorage } from '@/infrastructure/auth/watch-website-auth-ui-storage'
+import { readWebsiteAuthUiState } from '@/infrastructure/auth/website-auth-ui-storage'
 import { useLoginMigrationDialog } from '@/pages/shared/use-login-migration-dialog'
 import {
   tAccountSyncError,
@@ -153,7 +157,34 @@ export function useSettingsPage() {
   const signedIn = ref(false)
   const accountEmail = ref('')
   const accountDisplayName = ref('')
+  /** device session 匿名试用 */
+  const isAnonymous = ref(false)
+  /** Turnstile 曾失败 → Settings 前景重试 */
+  const anonymousCaptchaRetryNeeded = ref(false)
+  const retryingAnonymousCaptcha = ref(false)
+  /** 扩展当前绑定账号 id（与官网 UI 桥 userId 对照） */
+  const accountId = ref<string | null>(null)
+  /** 官网 UI 桥登录态 userId（无桥行则为 null） */
+  const websiteAuthUserId = ref<string | null>(null)
   const subscriptionIsPro = ref(false)
+  /** 扩展与官网登录账号不一致 */
+  const websiteAccountMismatch = computed(() => {
+    if (!signedIn.value || !accountId.value) {
+      return false
+    }
+    const websiteId = websiteAuthUserId.value?.trim()
+    if (!websiteId) {
+      return false
+    }
+    return websiteId !== accountId.value
+  })
+  const showAnonymousCaptchaRetry = computed(() =>
+    shouldShowAnonymousCaptchaRetry({
+      signedIn: signedIn.value,
+      isAnonymous: isAnonymous.value,
+      anonymousCaptchaRetryNeeded: anonymousCaptchaRetryNeeded.value
+    })
+  )
 
   const syncEnabled = ref(false)
   const syncLocalCount = ref(0)
@@ -201,6 +232,10 @@ export function useSettingsPage() {
   const supportUrl = `${websiteBaseUrl}/faq#contact`
 
   const signOutDialogOpen = ref(false)
+  /** 退出时 opt-in：删本机账号桶摘录（默认不勾选） */
+  const signOutDeleteLocalExcerpts = ref(false)
+  /** flush_then_keep 失败后展示导出 / 仍退出 */
+  const signOutFlushFailed = ref(false)
   const deleteAccountDialogOpen = ref(false)
   /** 通用危险/确认弹窗（替代 window.confirm） */
   type SettingsConfirmAction =
@@ -458,6 +493,32 @@ export function useSettingsPage() {
     if (bookmarkImportPollTimer !== null) {
       clearInterval(bookmarkImportPollTimer)
       bookmarkImportPollTimer = null
+    }
+  }
+
+  /** 前景打开 Turnstile 页，重试匿名 ensure。 */
+  async function handleRetryAnonymousCaptcha(): Promise<void> {
+    if (retryingAnonymousCaptcha.value || !showAnonymousCaptchaRetry.value) {
+      return
+    }
+    retryingAnonymousCaptcha.value = true
+    try {
+      const response = await retryAnonymousCaptcha()
+      if (!response.ok) {
+        showToastError(t('settings_anonymous_captcha_retry_failed'))
+        return
+      }
+      if (response.outcome === 'created' || response.outcome === 'already') {
+        anonymousCaptchaRetryNeeded.value = false
+        await loadSyncContext()
+        return
+      }
+      showToastError(t('settings_anonymous_captcha_retry_failed'))
+      anonymousCaptchaRetryNeeded.value = true
+    } catch {
+      showToastError(t('settings_anonymous_captcha_retry_failed'))
+    } finally {
+      retryingAnonymousCaptcha.value = false
     }
   }
 
@@ -973,7 +1034,11 @@ export function useSettingsPage() {
       signedIn.value = response.signedIn
       accountEmail.value = response.email?.trim() ?? ''
       accountDisplayName.value = response.displayName?.trim() ?? ''
+      isAnonymous.value = response.isAnonymous === true
+      anonymousCaptchaRetryNeeded.value = response.anonymousCaptchaRetryNeeded === true
+      accountId.value = response.binding?.accountId?.trim() || null
       syncEnabled.value = response.syncPrefs.enabled
+      await refreshWebsiteAuthMismatch()
 
       // 未登录也要盘点孤儿桶（换号退出后残留仍可见）
       await refreshSyncStatus()
@@ -1707,8 +1772,23 @@ export function useSettingsPage() {
     }
   }
 
+  async function refreshWebsiteAuthMismatch(): Promise<void> {
+    try {
+      const ui = await readWebsiteAuthUiState()
+      if (ui?.signedIn && ui.userId?.trim()) {
+        websiteAuthUserId.value = ui.userId.trim()
+      } else {
+        websiteAuthUserId.value = null
+      }
+    } catch {
+      websiteAuthUserId.value = null
+    }
+  }
+
   async function openSignOutDialog() {
     signOutError.value = ''
+    signOutFlushFailed.value = false
+    signOutDeleteLocalExcerpts.value = false
     if (!signedIn.value) {
       return
     }
@@ -1727,6 +1807,8 @@ export function useSettingsPage() {
     }
     signOutDialogOpen.value = false
     signOutError.value = ''
+    signOutFlushFailed.value = false
+    signOutDeleteLocalExcerpts.value = false
   }
 
   async function confirmSignOut(mode: AuthSignOutMode) {
@@ -1742,20 +1824,26 @@ export function useSettingsPage() {
 
     signingOut.value = true
     signOutError.value = ''
+    signOutFlushFailed.value = false
     try {
-      const response = await authSignOut(mode)
+      const response = await authSignOut(mode, {
+        deleteLocalExcerpts: signOutDeleteLocalExcerpts.value
+      })
       if (!response.ok) {
-        if (mode === 'flush_then_keep') {
-          signOutError.value = `${tAccountSyncError(response.errorCode)} ${t('settings_sign_out_flush_failed_keep_anyway')}`
+        if (mode === 'flush_then_keep' && response.flushFailed) {
+          signOutError.value = t('settings_sign_out_flush_failed_keep_anyway')
+          signOutFlushFailed.value = true
         } else {
           signOutError.value = tAccountSyncError(response.errorCode)
         }
         return
       }
       signOutDialogOpen.value = false
+      signOutFlushFailed.value = false
       signedIn.value = false
       accountEmail.value = ''
       accountDisplayName.value = ''
+      accountId.value = null
       syncEnabled.value = false
       syncLocalCount.value = 0
       syncAccountOwnerCount.value = 0
@@ -1770,8 +1858,20 @@ export function useSettingsPage() {
     }
   }
 
-  /** 取消登录态 storage 订阅。 */
+  /** flush 失败后：先导出本机备份（不退出）。 */
+  async function exportBeforeSignOutAfterFlushFail(): Promise<void> {
+    await handleExportLocalMemory()
+  }
+
+  /** flush 失败后：用户确认仍退出 → keep_local（资料回迁保留）。 */
+  async function confirmSignOutAnywayAfterFlushFail(): Promise<void> {
+    signOutFlushFailed.value = false
+    await confirmSignOut('keep_local')
+  }
+
+  /** 取消登录态 / 官网 UI 桥 storage 订阅。 */
   let stopWatchAuthSession: (() => void) | null = null
+  let stopWatchWebsiteAuthUi: (() => void) | null = null
 
   /**
    * 深链 hash（如空库「同步书签」→ `#chrome-bookmark-sync`）：
@@ -1806,6 +1906,9 @@ export function useSettingsPage() {
     stopWatchAuthSession = watchAuthSessionStorage(() => {
       void loadSyncContext()
     })
+    stopWatchWebsiteAuthUi = watchWebsiteAuthUiStorage(() => {
+      void refreshWebsiteAuthMismatch()
+    })
     window.addEventListener('popstate', handlePopState)
     window.addEventListener('hashchange', handleHashChange)
     document.addEventListener('visibilitychange', handleDocumentVisibilityChange)
@@ -1818,6 +1921,8 @@ export function useSettingsPage() {
   onUnmounted(() => {
     stopWatchAuthSession?.()
     stopWatchAuthSession = null
+    stopWatchWebsiteAuthUi?.()
+    stopWatchWebsiteAuthUi = null
     stopBookmarkImportPolling()
     window.removeEventListener('popstate', handlePopState)
     window.removeEventListener('hashchange', handleHashChange)
@@ -1827,6 +1932,7 @@ export function useSettingsPage() {
   return {
     accountDisplayName,
     accountEmail,
+    websiteAccountMismatch,
     activeSection,
     activeSectionLabel,
     activeSectionTab,
@@ -1840,6 +1946,8 @@ export function useSettingsPage() {
     closeConfirmDialog,
     closeDeleteAccountDialog,
     closeSignOutDialog,
+    confirmSignOutAnywayAfterFlushFail,
+    exportBeforeSignOutAfterFlushFail,
     commandRows,
     commands,
     commandsError,
@@ -1896,6 +2004,7 @@ export function useSettingsPage() {
     handleRestoreLatestSyncBackup,
     handleRunIncrementalSync,
     handleSelectionToolbarToggle,
+    handleRetryAnonymousCaptcha,
     handleSignIn,
     handleSyncToggle,
     handleUiLocalePreferenceChange,
@@ -1981,9 +2090,13 @@ export function useSettingsPage() {
     runLoginMigrationImport,
     showSignOutClearAction,
     showSignOutFlushAction,
+    signOutDeleteLocalExcerpts,
     signOutDialogOpen,
     signOutError,
+    signOutFlushFailed,
     signOutLocalCount,
+    showAnonymousCaptchaRetry,
+    retryingAnonymousCaptcha,
     signedIn,
     signingIn,
     signingOut,

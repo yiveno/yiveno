@@ -20,8 +20,8 @@ import {
   type DreamingCompileSourceInput
 } from '@/application/dreaming/dreaming-llm-client'
 import { embedPropositionsForWrittenNotes } from '@/application/dreaming/schedule-proposition-embeddings'
-import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
 import { getCurrentOwnerId } from '@/infrastructure/identity/local-profile-service'
+import { getWorkerApiAccessToken } from '@/infrastructure/identity/worker-api-access-token'
 import { memoryItemRepository } from '@/infrastructure/indexeddb/memory-item-repository'
 import { memoryNoteEmbeddingRepository } from '@/infrastructure/indexeddb/memory-note-embedding-repository'
 import { memoryNotesMetaRepository } from '@/infrastructure/indexeddb/memory-notes-meta-repository'
@@ -172,8 +172,8 @@ export async function compileMemoryNotesTick(): Promise<CompileMemoryNotesTickRe
     }
   }
 
-  const session = await getAuthSession()
-  if (!session?.accessToken) {
+  const accessToken = await getWorkerApiAccessToken()
+  if (!accessToken) {
     logger.info('Dreaming', '编译跳过：未登录（Embed/托管门）')
     return {
       skipped: true,
@@ -253,7 +253,7 @@ export async function compileMemoryNotesTick(): Promise<CompileMemoryNotesTickRe
         item,
         dreamRunId: cursor.dreamRunId,
         propositions,
-        accessToken: session.accessToken
+        accessToken
       })
       cursor = advanceDreamRunCursor(cursor, item.id)
       processedSources += 1

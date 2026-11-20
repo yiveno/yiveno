@@ -1,15 +1,21 @@
 import { z } from 'zod'
 
-import { AuthSessionSchema } from '@/core/identity/auth-session'
-
 /**
- * 官网 → 扩展的登录会话回传（chrome.runtime.sendMessage + externally_connectable）。
- * 扩展不在此发起 OAuth；只接收已校验的 session 字段。
+ * 官网 → 扩展：device-register 后回传 device token（D 方案 Connect）。
+ * 同通道替代旧 `YIVENO_AUTH_SESSION_HANDOFF`（Supabase 会话载荷）。
+ * `createdAt` 由扩展本机生成，不在载荷内。
  */
-export const ExternalAuthSessionHandoffSchema = z.object({
-  type: z.literal('YIVENO_AUTH_SESSION_HANDOFF'), // 官网登录成功后回传
-  payload: AuthSessionSchema.extend({
-    /** 卸载时官网落地页销远程会话用（不写入 AuthSession 本体） */
+export const ExternalAuthDeviceHandoffSchema = z.object({
+  type: z.literal('YIVENO_AUTH_DEVICE_HANDOFF'), // 官网 Connect 回传 device
+  payload: z.object({
+    deviceToken: z.string().min(32),
+    deviceId: z.uuid(),
+    userId: z.uuid(),
+    isAnonymous: z.boolean(),
+    email: z.email().optional(),
+    avatarUrl: z.url().optional(),
+    displayName: z.string().optional(),
+    /** 可选；消费时撤 device（若官网发了） */
     uninstallRevokeToken: z.string().min(32).optional()
   })
 })
@@ -75,7 +81,7 @@ export const WebsiteSessionRequestSchema = z.object({
 })
 
 export const ExternalAuthHandoffMessageSchema = z.union([
-  ExternalAuthSessionHandoffSchema,
+  ExternalAuthDeviceHandoffSchema,
   ExternalAuthSignOutHandoffSchema,
   WebsiteAuthProbeHandoffSchema,
   ExtensionAuthStatusProbeSchema,
@@ -89,11 +95,13 @@ export type ExternalAuthHandoffResponse =
       ok: true
       signedIn?: boolean
       userId?: string
+      /** STATUS_PROBE / WEBSITE_SESSION_REQUEST：展示用 */
+      email?: string
+      displayName?: string
       reclaimable?: boolean
       /** 仅 WEBSITE_SESSION_REQUEST 成功时 */
       accessToken?: string
       refreshToken?: string
-      email?: string
       expiresAt?: number
     }
   | { ok: false; error: string }

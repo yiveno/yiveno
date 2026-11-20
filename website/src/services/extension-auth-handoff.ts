@@ -2,17 +2,19 @@
  * 官网 → Chrome 扩展登录 / 退出会话回传。
  * 依赖扩展 manifest externally_connectable；页面通过 chrome.runtime.sendMessage(extensionId, …)。
  *
- * 登录 handoff：必须先 Worker mint 扩展独立 session，再回传；禁止把官网 refresh 直接递给扩展。
+ * Connect：Worker `device-register`（website_connect）→ `YIVENO_AUTH_DEVICE_HANDOFF`；
+ * 禁止把官网 refresh 直接递给扩展。
  */
 
-import { signOut } from './auth'
-import { confirmDisplaceExtensionSession } from './confirm-displace-extension-session'
-import { mintExtensionSession, type MintedExtensionSession } from './mint-extension-session'
-import { rollbackMintedExtensionSession } from './rollback-minted-extension-session'
+import {
+  registerDeviceFromWebsite,
+  rollbackIssuedDeviceToken,
+  type RegisteredDeviceFromWebsite
+} from './register-device-from-website'
 
-/** mint + handoff 结果（取消挤掉弹窗 → cancelled_displace） */
+/** device-register + handoff 结果 */
 export type MintAndHandoffResult =
-  { status: 'ok' } | { status: 'cancelled_displace' } | { status: 'failed' }
+  { status: 'ok' } | { status: 'failed'; error?: string } | { status: 'account_mismatch' }
 
 /** 本次从扩展打开登录时的临时 connect（OAuth 跳转用 sessionStorage）。 */
 const STORAGE_EXTENSION_ID = 'yiveno_connect_extension_id'
@@ -21,16 +23,15 @@ const STORAGE_CONNECT_FLAG = 'yiveno_connect_extension'
 /** 上次成功连接的扩展 id（localStorage，供账户页退出回传）。 */
 const STORAGE_LAST_EXTENSION_ID = 'yiveno_last_extension_id'
 
-export interface ExtensionHandoffSession {
-  accessToken: string
-  refreshToken: string
+/** 官网 → 扩展 device handoff 载荷（与扩展 ExternalAuthDeviceHandoffSchema 对齐）。 */
+export type ExtensionDeviceHandoffPayload = {
+  deviceToken: string
+  deviceId: string
   userId: string
+  isAnonymous: boolean
   email?: string
-  expiresAt?: number
   avatarUrl?: string
   displayName?: string
-  /** Worker 下发的卸载一次性 revoke token */
-  uninstallRevokeToken?: string
 }
 
 /** 读取非空字符串。 */
@@ -213,17 +214,23 @@ async function sendToExtensionWaking(extensionId: string, message: unknown): Pro
   return sendToExtension(extensionId, message)
 }
 
+export type ExtensionAuthStatusProbeResult =
+  | { kind: 'unreachable' }
+  | { kind: 'signed_out' }
+  | { kind: 'same_account'; userId: string }
+  | { kind: 'other_account'; userId: string }
+
 /**
- * 探测本机扩展是否已登录为指定 userId（Connect 前短路用）。
- * 探测失败 / 未装扩展 → false（继续走 mint）。
+ * 探测本机扩展登录态（Connect 前短路 / 冲突检测）。
+ * 探测失败 / 未装扩展 → unreachable（可继续 register）。
  */
-export async function probeExtensionAlreadySignedInAs(
+export async function probeExtensionAuthStatus(
   extensionId: string,
-  userId: string
-): Promise<boolean> {
-  const expected = userId.trim()
+  expectedUserId: string
+): Promise<ExtensionAuthStatusProbeResult> {
+  const expected = expectedUserId.trim()
   if (!extensionId.trim() || !expected) {
-    return false
+    return { kind: 'unreachable' }
   }
   const response = await sendToExtensionRaw(extensionId, {
     type: 'YIVENO_EXTENSION_AUTH_STATUS_PROBE',
@@ -234,66 +241,54 @@ export async function probeExtensionAlreadySignedInAs(
     response === null ||
     (response as { ok?: unknown }).ok !== true
   ) {
-    return false
+    return { kind: 'unreachable' }
   }
   const signedIn = (response as { signedIn?: unknown }).signedIn === true
   const responseUserId =
     typeof (response as { userId?: unknown }).userId === 'string'
       ? (response as { userId: string }).userId.trim()
       : ''
-  return signedIn && responseUserId === expected
+  if (!signedIn || !responseUserId) {
+    return { kind: 'signed_out' }
+  }
+  if (responseUserId === expected) {
+    return { kind: 'same_account', userId: responseUserId }
+  }
+  return { kind: 'other_account', userId: responseUserId }
 }
 
 /**
- * 探测本机扩展能否静默认领 409 租约（本地 lastLeaseSessionId 匹配且未登录）。
- * 探测失败 → false（保守弹窗）。
+ * 探测本机扩展是否已登录为指定 userId（Connect 前短路用）。
+ * @deprecated 优先用 {@link probeExtensionAuthStatus}
  */
-export async function probeExtensionLeaseReclaimable(
+export async function probeExtensionAlreadySignedInAs(
   extensionId: string,
-  existingSessionId: string
+  userId: string
 ): Promise<boolean> {
-  const sid = existingSessionId.trim()
-  if (!extensionId.trim() || !sid) {
-    return false
-  }
-  const response = await sendToExtensionRaw(extensionId, {
-    type: 'YIVENO_EXTENSION_LEASE_RECLAIM_PROBE',
-    payload: { existingSessionId: sid }
-  })
-  if (
-    typeof response !== 'object' ||
-    response === null ||
-    (response as { ok?: unknown }).ok !== true
-  ) {
-    return false
-  }
-  return (response as { reclaimable?: unknown }).reclaimable === true
+  const probed = await probeExtensionAuthStatus(extensionId, userId)
+  return probed.kind === 'same_account'
 }
 
 /**
- * 将已铸造的扩展 session 回传扩展。
- * 目标 id：本次 connect pending → 上次成功连接的扩展。
+ * 将 device-register 结果回传扩展（外部消息通道）。
  * @returns true 表示扩展确认 ok
  */
-export function handoffSessionToExtension(session: ExtensionHandoffSession): Promise<boolean> {
+export function handoffDeviceToExtension(payload: ExtensionDeviceHandoffPayload): Promise<boolean> {
   const extensionId = resolveExtensionHandoffTargetId()
   if (!extensionId) {
     return Promise.resolve(false)
   }
 
   const message = {
-    type: 'YIVENO_AUTH_SESSION_HANDOFF',
+    type: 'YIVENO_AUTH_DEVICE_HANDOFF',
     payload: {
-      accessToken: session.accessToken,
-      refreshToken: session.refreshToken,
-      userId: session.userId,
-      ...(session.email ? { email: session.email } : {}),
-      ...(session.expiresAt != null ? { expiresAt: session.expiresAt } : {}),
-      ...(session.avatarUrl ? { avatarUrl: session.avatarUrl } : {}),
-      ...(session.displayName ? { displayName: session.displayName } : {}),
-      ...(session.uninstallRevokeToken
-        ? { uninstallRevokeToken: session.uninstallRevokeToken }
-        : {})
+      deviceToken: payload.deviceToken,
+      deviceId: payload.deviceId,
+      userId: payload.userId,
+      isAnonymous: payload.isAnonymous,
+      ...(payload.email ? { email: payload.email } : {}),
+      ...(payload.avatarUrl ? { avatarUrl: payload.avatarUrl } : {}),
+      ...(payload.displayName ? { displayName: payload.displayName } : {})
     }
   }
 
@@ -306,68 +301,35 @@ export function handoffSessionToExtension(session: ExtensionHandoffSession): Pro
   })
 }
 
-/**
- * 放弃 connect 时清本机官网会话并回登录页（可带 connect 参数重试）。
- * Connect 路径不再二次弹窗；此函数供兼容分支 / 显式 abort。
- */
-export async function abortWebsiteLoginAfterDisplaceCancel(): Promise<void> {
-  const extensionId = getPendingExtensionId()
-  try {
-    await signOut()
-  } catch (error) {
-    console.warn('[ExtensionHandoff] 取消挤掉后清官网会话失败', error)
+function deviceHandoffPayloadFromRegister(
+  data: RegisteredDeviceFromWebsite,
+  profile: { email?: string; avatarUrl?: string; displayName?: string }
+): ExtensionDeviceHandoffPayload {
+  return {
+    deviceToken: data.deviceToken,
+    deviceId: data.deviceId,
+    userId: data.userId,
+    isAnonymous: data.isAnonymous,
+    ...(data.email ? { email: data.email } : profile.email ? { email: profile.email } : {}),
+    ...(data.avatarUrl
+      ? { avatarUrl: data.avatarUrl }
+      : profile.avatarUrl
+        ? { avatarUrl: profile.avatarUrl }
+        : {}),
+    ...(data.displayName
+      ? { displayName: data.displayName }
+      : profile.displayName
+        ? { displayName: profile.displayName }
+        : {})
   }
-  if (extensionId) {
-    const params = new URLSearchParams()
-    params.set('connect_extension', '1')
-    params.set('extension_id', extensionId)
-    window.location.replace(`/login?${params.toString()}`)
-    return
-  }
-  window.location.replace('/login')
 }
 
 /**
- * 将已铸造的扩展 session handoff 到扩展（禁止共享官网 refresh）。
- * handoff 失败 → 立刻用本次 revoke token 回滚远端会话/租约（防活租约孤儿）。
- */
-async function handoffMintedSession(
-  input: {
-    userId: string
-    email?: string
-    avatarUrl?: string
-    displayName?: string
-  },
-  session: MintedExtensionSession
-): Promise<boolean> {
-  if (session.userId !== input.userId) {
-    console.warn('[ExtensionHandoff] mint userId 与官网不一致，跳过 handoff 并回滚')
-    await rollbackMintedExtensionSession(session.uninstallRevokeToken)
-    return false
-  }
-  const ok = await handoffSessionToExtension({
-    accessToken: session.accessToken,
-    refreshToken: session.refreshToken,
-    userId: session.userId,
-    ...(session.email ? { email: session.email } : input.email ? { email: input.email } : {}),
-    ...(session.expiresAt != null ? { expiresAt: session.expiresAt } : {}),
-    ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {}),
-    ...(input.displayName ? { displayName: input.displayName } : {}),
-    ...(session.uninstallRevokeToken ? { uninstallRevokeToken: session.uninstallRevokeToken } : {})
-  })
-  if (!ok) {
-    console.warn('[ExtensionHandoff] handoff 失败，回滚刚铸造的扩展会话')
-    await rollbackMintedExtensionSession(session.uninstallRevokeToken)
-  }
-  return ok
-}
-
-/**
- * 用官网 access token 铸造扩展独立会话并 handoff。
- * **仅**本次 `connect_extension`（sessionStorage pending）可 mint；`last_extension_id` 不够格。
- * 扩展已是同一 userId → 跳过 mint（避免同机已连通仍弹挤掉）。
- * 已有扩展租约：本机 lastLease 可认领 → 静默 `confirmDisplace`；否则自定义弹窗（真·他端）。
- * mint 失败不回退为共享官网 refresh。
+ * 用官网 access 换 device token 并 handoff 到扩展。
+ * **仅**本次 `connect_extension` pending 可 register；`last_extension_id` 不够格。
+ * 扩展已是同一 userId → 跳过 register。
+ * 扩展已是**另一**账号 → 不静默覆盖（返回 account_mismatch）。
+ * register/handoff 失败不共享官网 refresh；handoff 失败尽力 revoke 刚发的 device。
  */
 export async function mintAndHandoffSessionToExtension(input: {
   websiteAccessToken: string
@@ -375,63 +337,54 @@ export async function mintAndHandoffSessionToExtension(input: {
   email?: string
   avatarUrl?: string
   displayName?: string
-  /** 即将弹出挤掉确认时回调（AuthCallback 更新状态文案） */
-  onNeedsDisplaceConfirm?: () => void
 }): Promise<MintAndHandoffResult> {
   const extensionId = getPendingExtensionId()
   if (!extensionId) {
-    console.warn('[ExtensionHandoff] 无本次 connect_extension，跳过 mint（不静默 remint）')
-    return { status: 'failed' }
+    console.warn('[ExtensionHandoff] 无本次 connect_extension，跳过 device-register')
+    return { status: 'failed', error: 'missing_connect_pending' }
   }
 
-  // 同机已连通同一账号：零 mint、零挤掉弹窗
-  if (await probeExtensionAlreadySignedInAs(extensionId, input.userId)) {
-    console.warn('[ExtensionHandoff] 扩展已是同一账号，跳过 mint')
+  const probed = await probeExtensionAuthStatus(extensionId, input.userId)
+  if (probed.kind === 'same_account') {
+    console.warn('[ExtensionHandoff] 扩展已是同一账号，跳过 device-register')
     rememberConnectedExtensionId(extensionId)
     clearExtensionConnectParams()
     return { status: 'ok' }
   }
-
-  const minted = await mintExtensionSession(input.websiteAccessToken, { extensionId })
-  if (minted.status === 'needs_displace_confirm') {
-    const runConfirmDisplace = async (): Promise<boolean> => {
-      const displaced = await mintExtensionSession(input.websiteAccessToken, {
-        confirmDisplace: true,
-        extensionId
-      })
-      if (displaced.status !== 'ok') {
-        console.warn('[ExtensionHandoff] confirmDisplace mint 失败', displaced.status)
-        return false
-      }
-      const handed = await handoffMintedSession(input, displaced.session)
-      if (!handed) {
-        console.warn('[ExtensionHandoff] confirmDisplace 后 handoff 失败')
-        return false
-      }
-      return true
-    }
-
-    // 同机孤儿租约（本安装上次 handoff 的 session 仍占 KV）→ 静默挤掉，不弹窗
-    // 真·他端（他 Profile / 他设备）→ 弹窗确认。extensionId 不能区分 Profile。
-    const canReclaim =
-      minted.existingSessionId != null &&
-      (await probeExtensionLeaseReclaimable(extensionId, minted.existingSessionId))
-    if (canReclaim) {
-      console.warn('[ExtensionHandoff] 本机可认领孤儿租约，静默 confirmDisplace')
-      const ok = await runConfirmDisplace()
-      return ok ? { status: 'ok' } : { status: 'failed' }
-    }
-
-    console.warn('[ExtensionHandoff] 他端占租约，打开自定义挤掉确认')
-    input.onNeedsDisplaceConfirm?.()
-    const confirmed = await confirmDisplaceExtensionSession(runConfirmDisplace)
-    return confirmed ? { status: 'ok' } : { status: 'cancelled_displace' }
+  if (probed.kind === 'other_account') {
+    console.warn('[ExtensionHandoff] 扩展已登录其它账号，拒绝覆盖', {
+      extensionUserId: probed.userId,
+      websiteUserId: input.userId
+    })
+    return { status: 'account_mismatch' }
   }
 
-  if (minted.status !== 'ok') {
-    console.warn('[ExtensionHandoff] mint 失败，跳过 handoff（不共享官网 refresh）')
-    return { status: 'failed' }
+  const registered = await registerDeviceFromWebsite(input.websiteAccessToken, { extensionId })
+  if (registered.status === 'unauthorized') {
+    console.warn('[ExtensionHandoff] device-register 401', registered.error)
+    return { status: 'failed', error: registered.error }
   }
-  const handed = await handoffMintedSession(input, minted.session)
-  return handed ? { status: 'ok' } : { status: 'failed' }
+  if (registered.status !== 'ok') {
+    console.warn('[ExtensionHandoff] device-register 失败', registered.error)
+    return { status: 'failed', error: registered.error }
+  }
+
+  if (registered.data.userId !== input.userId) {
+    console.warn('[ExtensionHandoff] register userId 与官网不一致，回滚')
+    await rollbackIssuedDeviceToken(registered.data.deviceToken)
+    return { status: 'failed', error: 'user_id_mismatch' }
+  }
+
+  const payload = deviceHandoffPayloadFromRegister(registered.data, {
+    ...(input.email ? { email: input.email } : {}),
+    ...(input.avatarUrl ? { avatarUrl: input.avatarUrl } : {}),
+    ...(input.displayName ? { displayName: input.displayName } : {})
+  })
+  const handed = await handoffDeviceToExtension(payload)
+  if (!handed) {
+    console.warn('[ExtensionHandoff] device handoff 失败，回滚刚发的 device token')
+    await rollbackIssuedDeviceToken(registered.data.deviceToken)
+    return { status: 'failed', error: 'handoff_failed' }
+  }
+  return { status: 'ok' }
 }

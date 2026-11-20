@@ -37,8 +37,8 @@ vi.mock('@/application/memory/memory-item-service', () => ({
   }
 }))
 
-vi.mock('@/infrastructure/identity/auth-session-service', () => ({
-  getAuthSession: vi.fn(async () => null)
+vi.mock('@/infrastructure/identity/worker-api-access-token', () => ({
+  getWorkerApiAccessToken: vi.fn(async () => null)
 }))
 
 vi.mock('@/application/recall/apply-recall-context', () => ({

@@ -8,12 +8,17 @@ import { clearAuthValidationTimestamp } from '@/infrastructure/auth/auth-session
 import { clearExtensionUninstallRevoke } from '@/infrastructure/auth/extension-uninstall-url'
 import { ensureAuthSessionLeaseAlarm } from '@/infrastructure/auth/auth-session-lease-alarm'
 import { clearLastExtensionLeaseSessionId } from '@/infrastructure/storage/last-extension-lease-session-storage'
+import { revokeOwnDeviceToken } from '@/infrastructure/auth/device-register-api-client'
 import { refreshAuthSession } from '@/infrastructure/auth/extension-oauth'
 import {
   clearAuthSession,
   getAuthSession,
   setAuthSession
 } from '@/infrastructure/identity/auth-session-service'
+import {
+  clearDeviceSession,
+  getDeviceSession
+} from '@/infrastructure/identity/device-session-service'
 import {
   clearAccountBinding,
   getAccountBinding,
@@ -31,11 +36,19 @@ import { ensureMemoryCloudSyncAlarm } from '@/infrastructure/sync/memory-cloud-s
 /** access token 提前刷新余量（秒），避免边界过期。 */
 const ACCESS_TOKEN_REFRESH_SKEW_SEC = 60
 
-/** 确保有可用 access token（未过期则复用；过期才 refresh，并保留头像等展示字段）。 */
+/**
+ * 确保有可用 Worker Bearer（优先 device token；迁移窗口回退 Supabase access）。
+ * 字段名仍叫 accessToken，兼容既有 sync / AI 调用方。
+ */
 export async function requireAccessToken(): Promise<{
   accessToken: string
   userId: string
 } | null> {
+  const device = await getDeviceSession()
+  if (device?.deviceToken) {
+    return { accessToken: device.deviceToken, userId: device.userId }
+  }
+
   const session = await getAuthSession()
   if (!session) {
     return null
@@ -93,27 +106,40 @@ export function parseCloudItems(rawItems: MemoryItem[]): MemoryItem[] {
 
 /** 清本机会话绑定、订阅快照与同步闹钟（退出 / 删账号共用）。 */
 export async function finishSignOutSession(): Promise<void> {
-  // 先读 session（清本机前）：有 revoke token 走卸载接口；否则 Bearer 释放租约
+  const deviceBeforeClear = await getDeviceSession()
   const sessionBeforeClear = await getAuthSession()
-  let remoteReleased = false
-  try {
-    remoteReleased = await clearExtensionUninstallRevoke({
-      revokeRemote: true,
-      ...(sessionBeforeClear?.accessToken
-        ? { accessTokenFallback: sessionBeforeClear.accessToken }
-        : {})
-    })
-  } catch (error) {
-    logger.warn('Auth', '退出时卸载 revoke / 清 token 失败', error)
-  }
-  // 远程租约已释放才清 lastLease；失败保留 → 同机 Connect 可静默认领
-  if (remoteReleased) {
+
+  if (deviceBeforeClear?.deviceToken) {
+    // device 会话：尽力 revoke-self；失败不挡退出
     try {
-      await clearLastExtensionLeaseSessionId()
+      await revokeOwnDeviceToken(deviceBeforeClear.deviceToken)
     } catch (error) {
-      logger.warn('Auth', '退出后清 lastLeaseSessionId 失败', error)
+      logger.warn('Auth', '退出时 device-revoke-self 失败（仍退出）', error)
+    }
+  } else {
+    // 旧 Supabase 会话：有 revoke token 走卸载接口；否则 Bearer 释放租约
+    let remoteReleased = false
+    try {
+      remoteReleased = await clearExtensionUninstallRevoke({
+        revokeRemote: true,
+        ...(sessionBeforeClear?.accessToken
+          ? { accessTokenFallback: sessionBeforeClear.accessToken }
+          : {})
+      })
+    } catch (error) {
+      logger.warn('Auth', '退出时卸载 revoke / 清 token 失败', error)
+    }
+    // 远程租约已释放才清 lastLease；失败保留 → 同机 Connect 可静默认领
+    if (remoteReleased) {
+      try {
+        await clearLastExtensionLeaseSessionId()
+      } catch (error) {
+        logger.warn('Auth', '退出后清 lastLeaseSessionId 失败', error)
+      }
     }
   }
+
+  await clearDeviceSession()
   await clearAuthSession()
   await clearAccountBinding()
   await clearSubscriptionSnapshot()

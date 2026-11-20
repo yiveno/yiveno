@@ -155,6 +155,17 @@ describe('ui bridge listener', () => {
     expect(chrome.storage.session.set).toHaveBeenCalled()
   })
 
+  it('website_turnstile_token 可解析且不写 storage', async () => {
+    await applyUiBridgeEnvelopeForTests(
+      wrapUiBridgeMessage({
+        type: 'website_turnstile_token',
+        payload: { token: 'cf-turnstile-test-token' }
+      })
+    )
+    expect(chrome.storage.session.set).not.toHaveBeenCalled()
+    expect(chrome.storage.local.set).not.toHaveBeenCalled()
+  })
+
   it('website_profile_changed 仅同 userId 才写 session', async () => {
     const session = {
       userId: '11111111-1111-4111-8111-111111111111',

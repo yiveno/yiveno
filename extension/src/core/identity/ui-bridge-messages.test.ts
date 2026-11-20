@@ -28,10 +28,21 @@ describe('ui-bridge-messages', () => {
       UiBridgeEnvelopeSchema.parse(
         wrapUiBridgeMessage({
           type: 'website_connect_result',
-          payload: { status: 'cancelled_displace' }
+          payload: { status: 'account_mismatch' }
         })
       ).msg
-    ).toMatchObject({ type: 'website_connect_result', payload: { status: 'cancelled_displace' } })
+    ).toMatchObject({ type: 'website_connect_result', payload: { status: 'account_mismatch' } })
+  })
+
+  it('wrap + parse website_turnstile_token', () => {
+    const envelope = wrapUiBridgeMessage({
+      type: 'website_turnstile_token',
+      payload: { token: 'cf-turnstile-response-token' }
+    })
+    expect(UiBridgeEnvelopeSchema.parse(envelope).msg).toMatchObject({
+      type: 'website_turnstile_token',
+      payload: { token: 'cf-turnstile-response-token' }
+    })
   })
 
   it('拒绝非法 channel', () => {

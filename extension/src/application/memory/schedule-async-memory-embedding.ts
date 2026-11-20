@@ -22,7 +22,6 @@ import {
   requestWorkerEmbeddings,
   WORKER_EMBEDDING_MODEL
 } from '@/infrastructure/ai/embed-api-client'
-import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
 import { getWorkerApiAccessToken } from '@/infrastructure/identity/worker-api-access-token'
 import {
   memoryItemRepository,
@@ -406,8 +405,8 @@ export async function enqueueMissingMemoryEmbeddings(
   repository: MemoryItemRepository = memoryItemRepository,
   limit = EMBEDDING_BACKFILL_BATCH_LIMIT
 ): Promise<{ enqueued: number; scanned: number }> {
-  const session = await getAuthSession()
-  if (!session?.accessToken) {
+  const accessToken = await getWorkerApiAccessToken()
+  if (!accessToken) {
     return { enqueued: 0, scanned: 0 }
   }
   resumeAsyncMemoryEmbeddingAfterAuth()

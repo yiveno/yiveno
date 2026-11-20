@@ -16,6 +16,7 @@ import { registerLinkStatusSweepAlarmListener } from '@/background/listeners/lin
 import { registerMemoryCloudSyncAlarmListener } from '@/background/listeners/memory-cloud-sync-alarm'
 import { registerOmniboxListeners } from '@/background/listeners/omnibox'
 import { registerSelectionToolbarKeepaliveListener } from '@/background/listeners/selection-toolbar-keepalive'
+import { ensureDeviceSessionReady } from '@/infrastructure/auth/ensure-device-session-ready'
 import { ensureExtensionUninstallFeedbackUrl } from '@/infrastructure/auth/extension-uninstall-url'
 import { ensureSidePanelOpensOnActionClick } from '@/infrastructure/browser/side-panel'
 import {
@@ -83,6 +84,11 @@ async function bootstrapBackground(): Promise<void> {
     // 订阅变更 → 线索 LLM 重挂（通过事件机制，避免 infrastructure → application 跨层依赖）
     // Set-based listener，不会重复注册（SW 重启不会累积）
     onSubscriptionChanged(handleSubscriptionChanged)
+
+    // 先 ensure device（migrate / 匿名）；exchange 完成前不得挂 hosted AI
+    await ensureDeviceSessionReady().catch(error => {
+      logger.warn('Background', 'ensure device session 失败（fail-open）', error)
+    })
 
     await refreshClueLlmCompleterFromDevConfig().catch(error => {
       logger.warn('Background', '线索 LLM 开发配置加载失败，将仅用规则理解', error)

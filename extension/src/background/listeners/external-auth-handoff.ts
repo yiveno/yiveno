@@ -11,18 +11,19 @@ import {
   ExternalAuthHandoffMessageSchema,
   type ExternalAuthHandoffResponse
 } from '@/core/identity/external-auth-handoff'
+import { deviceSessionFromRegisterData } from '@/infrastructure/auth/device-register-api-client'
 import {
   clearExtensionUninstallRevoke,
   registerExtensionUninstallRevoke
 } from '@/infrastructure/auth/extension-uninstall-url'
 import { mintWebsiteSessionFromExtensionAccess } from '@/infrastructure/auth/mint-website-session-from-extension'
-import { readJwtSessionId } from '@/infrastructure/auth/read-jwt-session-id'
 import { resolveWebsiteAuthProbeFromExternal } from '@/infrastructure/auth/website-auth-probe'
+import { clearAuthSession, getAuthSession } from '@/infrastructure/identity/auth-session-service'
 import {
-  setAuthSession,
-  clearAuthSession,
-  getAuthSession
-} from '@/infrastructure/identity/auth-session-service'
+  clearDeviceSession,
+  getDeviceSession,
+  setDeviceSession
+} from '@/infrastructure/identity/device-session-service'
 import {
   setAccountBinding,
   clearAccountBinding,
@@ -37,9 +38,9 @@ import { ensureAuthSessionLeaseAlarm } from '@/infrastructure/auth/auth-session-
 import { clearExtensionDisplacedNotice } from '@/infrastructure/storage/extension-displaced-notice-storage'
 import {
   clearLastExtensionLeaseSessionId,
-  isExtensionLeaseReclaimable,
-  writeLastExtensionLeaseSessionId
+  isExtensionLeaseReclaimable
 } from '@/infrastructure/storage/last-extension-lease-session-storage'
+import { maskDeviceTokenForLog } from '@/core/identity/device-session'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
 
@@ -51,73 +52,105 @@ async function ensureBootstrapReady(): Promise<void> {
 }
 
 /**
- * 应用官网登录 handoff 的 session。
- * 成功后写入 chrome.storage.local；UI 经 watchAuthSessionStorage 即时刷新并弹迁移门闸。
+ * 应用官网 Connect 回传的 device token。
+ * 写入 `yiveno:device_session` + AccountBinding；UI 经 watchAuthSessionStorage 刷新并弹迁移门闸。
+ * 同账号：只覆盖 token，不改 binding（幂等、不重弹门）。
+ * 不同账号：拒绝覆盖（官网侧亦会 STATUS_PROBE 拦下）。
  */
-export async function applyExternalAuthSessionHandoff(
+export async function applyExternalAuthDeviceHandoff(
   message: unknown
 ): Promise<ExternalAuthHandoffResponse> {
-  const startedAt = flowStart('Auth', '官网 session handoff')
+  const startedAt = flowStart('Auth', '官网 device handoff')
   const parsed = ExternalAuthHandoffMessageSchema.safeParse(message)
-  if (!parsed.success || parsed.data.type !== 'YIVENO_AUTH_SESSION_HANDOFF') {
-    flowFail('Auth', '官网 session handoff', startedAt, new Error('invalid_handoff_payload'))
+  if (!parsed.success || parsed.data.type !== 'YIVENO_AUTH_DEVICE_HANDOFF') {
+    flowFail('Auth', '官网 device handoff', startedAt, new Error('invalid_handoff_payload'))
     return { ok: false, error: 'invalid_handoff_payload' }
   }
 
   try {
-    const { uninstallRevokeToken, ...session } = parsed.data.payload
-    await setAuthSession(session)
-    await setAccountBinding({
-      accountId: session.userId,
-      boundAt: new Date().toISOString()
-    })
-    // 记录本机 lease session_id（同机 Connect 认领孤儿租约；失败不阻断登录）
-    const leaseSessionId = readJwtSessionId(session.accessToken)
-    if (leaseSessionId) {
-      try {
-        await writeLastExtensionLeaseSessionId(leaseSessionId)
-      } catch (error) {
-        logger.warn('Auth', 'handoff 后写 lastLeaseSessionId 失败', error)
-      }
-    } else {
-      logger.warn('Auth', 'handoff access token 无 session_id，跳过 lastLease 记录')
+    const { uninstallRevokeToken, ...registerFields } = parsed.data.payload
+    const incomingUserId = registerFields.userId
+
+    const existingDevice = await getDeviceSession()
+    const existingBinding = await getAccountBinding()
+    const existingUserId =
+      existingDevice?.userId?.trim() || existingBinding?.accountId?.trim() || ''
+
+    if (existingUserId && existingUserId !== incomingUserId) {
+      logger.warn('Auth', 'device handoff 拒绝覆盖其它账号', {
+        existingUserId,
+        incomingUserId
+      })
+      flowFail('Auth', '官网 device handoff', startedAt, new Error('account_mismatch'), {
+        existingUserId,
+        incomingUserId
+      })
+      return { ok: false, error: 'account_mismatch' }
     }
-    // 登记卸载 URL（best-effort；失败不阻断登录）
-    await registerExtensionUninstallRevoke(uninstallRevokeToken)
-    // 刚写入的 token 视为有效，避免立刻 refresh 与官网抢 refresh_token 被踢成未登录
+
+    const sameAccount = Boolean(existingUserId && existingUserId === incomingUserId)
+    const deviceSession = deviceSessionFromRegisterData({
+      deviceToken: registerFields.deviceToken,
+      deviceId: registerFields.deviceId,
+      userId: registerFields.userId,
+      isAnonymous: registerFields.isAnonymous,
+      email: registerFields.email ?? null,
+      displayName: registerFields.displayName ?? null,
+      avatarUrl: registerFields.avatarUrl ?? null
+    })
+    await setDeviceSession(deviceSession)
+    // 迁出旧 Supabase 会话键，避免双凭证
+    await clearAuthSession()
+
+    if (!sameAccount) {
+      await setAccountBinding({
+        accountId: incomingUserId,
+        boundAt: new Date().toISOString()
+      })
+    }
+
+    if (uninstallRevokeToken) {
+      await registerExtensionUninstallRevoke(uninstallRevokeToken)
+    }
     await markAuthValidatedNow()
     try {
       await clearExtensionDisplacedNotice()
     } catch (error) {
-      logger.warn('Auth', 'handoff 后清除被挤掉软条标记失败', error)
+      logger.warn('Auth', 'device handoff 后清除被挤掉软条标记失败', error)
     }
     try {
-      await ensureAuthSessionLeaseAlarm(true)
+      await ensureAuthSessionLeaseAlarm(false)
     } catch (error) {
-      logger.warn('Auth', 'handoff 后挂载租约探测闹钟失败', error)
+      logger.warn('Auth', 'device handoff 后清除租约探测闹钟失败', error)
     }
-    // ADR-018：禁止静默 absorb；仅调度 embedding 维护（门闸由 Settings / Side Panel 弹）
-    void ensureBootstrapReady()
-      .then(() => {
-        scheduleSilentMemoryEmbeddingMaintenance('auth_handoff', 800)
-        flowOk('Auth', '官网 session handoff embedding 调度', startedAt, {
-          userId: session.userId
+
+    if (!sameAccount) {
+      // ADR-018：禁止静默 absorb；门闸由 Settings / Side Panel 在 binding 变更后弹
+      void ensureBootstrapReady()
+        .then(() => {
+          scheduleSilentMemoryEmbeddingMaintenance('auth_handoff', 800)
+          flowOk('Auth', '官网 device handoff embedding 调度', startedAt, {
+            userId: incomingUserId
+          })
         })
-      })
-      .catch(error => {
-        flowFail('Auth', '官网 session handoff embedding 调度', startedAt, error, {
-          userId: session.userId
+        .catch(error => {
+          flowFail('Auth', '官网 device handoff embedding 调度', startedAt, error, {
+            userId: incomingUserId
+          })
         })
-      })
-    flowOk('Auth', '官网 session handoff', startedAt, {
-      userId: session.userId,
+    }
+
+    flowOk('Auth', '官网 device handoff', startedAt, {
+      userId: incomingUserId,
+      deviceId: registerFields.deviceId,
+      tokenSuffix: maskDeviceTokenForLog(registerFields.deviceToken),
+      sameAccount,
       absorbDeferred: false,
-      loginMigrationPendingUi: true,
-      embeddingMaintenanceScheduled: true
+      loginMigrationPendingUi: !sameAccount
     })
     return { ok: true }
   } catch (error) {
-    flowFail('Auth', '官网 session handoff', startedAt, error)
+    flowFail('Auth', '官网 device handoff', startedAt, error)
     return {
       ok: false,
       error: error instanceof Error ? error.message : 'handoff_failed'
@@ -159,6 +192,7 @@ export async function applyExternalAuthSignOutHandoff(
         logger.warn('Auth', '官网退出后清 lastLeaseSessionId 失败', error)
       }
     }
+    await clearDeviceSession()
     await clearAuthSession()
     await clearAccountBinding()
     await patchSyncPrefs({ enabled: false })
@@ -184,7 +218,8 @@ export async function applyExternalAuthSignOutHandoff(
 }
 
 /**
- * 官网询问：本机扩展是否已有登录态（只读；不 mint、不改存储）。
+ * 官网询问：本机扩展是否已有登录态（只读；不改存储）。
+ * 优先 device session；迁移窗回退旧 auth_session。
  */
 export async function applyExtensionAuthStatusProbe(
   message: unknown
@@ -194,12 +229,28 @@ export async function applyExtensionAuthStatusProbe(
     return { ok: false, error: 'invalid_status_probe' }
   }
   try {
+    const device = await getDeviceSession()
+    if (device?.userId?.trim()) {
+      return {
+        ok: true,
+        signedIn: true,
+        userId: device.userId.trim(),
+        ...(device.email?.trim() ? { email: device.email.trim() } : {}),
+        ...(device.displayName?.trim() ? { displayName: device.displayName.trim() } : {})
+      }
+    }
     const session = await getAuthSession()
     const userId = session?.userId?.trim()
-    if (!userId) {
+    if (!session || !userId) {
       return { ok: true, signedIn: false }
     }
-    return { ok: true, signedIn: true, userId }
+    return {
+      ok: true,
+      signedIn: true,
+      userId,
+      ...(session.email?.trim() ? { email: session.email.trim() } : {}),
+      ...(session.displayName?.trim() ? { displayName: session.displayName.trim() } : {})
+    }
   } catch (error) {
     logger.warn('Auth', '扩展登录态探测失败', error)
     return { ok: false, error: 'status_probe_failed' }
@@ -242,6 +293,10 @@ export async function applyExtensionLeaseReclaimProbe(
     return { ok: false, error: 'invalid_reclaim_probe' }
   }
   try {
+    const device = await getDeviceSession()
+    if (device?.userId?.trim()) {
+      return { ok: true, reclaimable: false, signedIn: true, userId: device.userId.trim() }
+    }
     const session = await getAuthSession()
     if (session?.userId?.trim()) {
       return { ok: true, reclaimable: false, signedIn: true, userId: session.userId.trim() }
@@ -282,7 +337,7 @@ export async function applyExternalAuthHandoff(
   if (parsed.data.type === 'YIVENO_AUTH_SIGN_OUT_HANDOFF') {
     return applyExternalAuthSignOutHandoff(message)
   }
-  return applyExternalAuthSessionHandoff(message)
+  return applyExternalAuthDeviceHandoff(message)
 }
 
 /** 注册 chrome.runtime.onMessageExternal。 */

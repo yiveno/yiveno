@@ -12,7 +12,7 @@ import { syncChromeBookmarkSyncListenersWithSyncSetting } from '@/background/lis
 import { ensureLinkStatusSweepAlarm } from '@/infrastructure/sync/link-status-sweep-alarm'
 import { fetchHostedQuota } from '@/infrastructure/ai/hosted-quota-api-client'
 import { readBrowserOnline } from '@/infrastructure/browser/browser-online'
-import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
+import { getWorkerApiAccessToken } from '@/infrastructure/identity/worker-api-access-token'
 import {
   getUserSettings,
   updateUserSettings
@@ -152,8 +152,7 @@ export async function handleUpdateUserSettings(
 export async function handleGetAiHostedQuota(): Promise<GetAiHostedQuotaResponse> {
   const startedAt = flowStart('Settings', '读取托管配额')
   try {
-    const session = await getAuthSession()
-    const accessToken = session?.accessToken
+    const accessToken = await getWorkerApiAccessToken()
     if (!accessToken) {
       flowOk('Settings', '读取托管配额', startedAt, { reason: 'not_signed_in' })
       return { ok: false, errorCode: 'AI_HOSTED_QUOTA_AUTH_REQUIRED' }

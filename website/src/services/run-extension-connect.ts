@@ -12,7 +12,7 @@ import {
 } from './extension-auth-handoff'
 import { publishWebsiteConnectAck, publishWebsiteConnectResult } from './ui-bridge'
 
-export type ExtensionConnectStatus = 'ok' | 'cancelled_displace' | 'failed' | 'no_session' | 'busy'
+export type ExtensionConnectStatus = 'ok' | 'failed' | 'account_mismatch' | 'no_session' | 'busy'
 
 let connectInFlight = false
 
@@ -68,13 +68,12 @@ export async function runExtensionConnectFromWebsite(
       ...profile
     })
 
-    if (result.status === 'cancelled_displace') {
-      // 已登录 Connect：取消挤掉只放弃本次，禁止清官网会话
+    if (result.status === 'account_mismatch') {
       clearExtensionConnectParams()
       if (announce) {
-        publishWebsiteConnectResult('cancelled_displace')
+        publishWebsiteConnectResult('account_mismatch')
       }
-      return 'cancelled_displace'
+      return 'account_mismatch'
     }
 
     if (result.status !== 'ok') {

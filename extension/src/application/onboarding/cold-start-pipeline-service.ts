@@ -24,7 +24,7 @@ import {
   type ColdStartPipelineState,
   type ColdStartReleaseReason
 } from '@/core/memory/cold-start-pipeline-state'
-import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
+import { getWorkerApiAccessToken } from '@/infrastructure/identity/worker-api-access-token'
 import { memoryItemRepository } from '@/infrastructure/indexeddb/memory-item-repository'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
@@ -307,8 +307,7 @@ async function enqueueColdStartLlmEnrichment(): Promise<number> {
 }
 
 async function runAiBestEffortStage(): Promise<ColdStartReleaseReason> {
-  const session = await getAuthSession()
-  const isLoggedIn = Boolean(session?.accessToken)
+  const isLoggedIn = Boolean(await getWorkerApiAccessToken())
 
   await patchState({
     status: 'running',

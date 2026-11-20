@@ -7,7 +7,7 @@ import { z } from 'zod'
 
 import { DREAMING_COMPILE_BATCH_SIZE } from '@/core/dreaming/dreaming-constants'
 import { parseLlmChatUsage, type LlmChatUsage } from '@/core/recall/understand/llm-chat-usage'
-import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
+import { getWorkerApiAccessToken } from '@/infrastructure/identity/worker-api-access-token'
 import { logger } from '@/infrastructure/logging/logger'
 
 const PropositionSchema = z.object({
@@ -70,8 +70,7 @@ export async function requestDreamingCompileBatch(
     return { ok: false, deferred: false, errorCode: 'invalid_batch_size' }
   }
 
-  const session = await getAuthSession()
-  const accessToken = session?.accessToken?.trim()
+  const accessToken = (await getWorkerApiAccessToken())?.trim()
   if (!accessToken) {
     logger.info('Dreaming', '编译跳过：未登录', { sourceCount: sources.length })
     return { ok: false, deferred: true, errorCode: 'not_signed_in' }

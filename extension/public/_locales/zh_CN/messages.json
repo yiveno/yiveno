@@ -338,6 +338,21 @@
   "sidepanel_extension_displaced_dismiss_aria": {
     "message": "关闭已退出提示"
   },
+  "sidepanel_account_website_mismatch": {
+    "message": "官网当前登录的是另一个账号"
+  },
+  "sidepanel_sign_out_remap_flush_ok": {
+    "message": "本机扩展已退出。摘录已同步到云端，资料仍保留在本机。"
+  },
+  "sidepanel_sign_out_remap_flush_failed": {
+    "message": "本机扩展已退出。同步失败——摘录只留在本机（未上云）。需要的话请先导出备份。"
+  },
+  "sidepanel_sign_out_remap_export": {
+    "message": "导出备份"
+  },
+  "sidepanel_sign_out_remap_dismiss_aria": {
+    "message": "关闭资料已保留说明"
+  },
   "sidepanel_offline_banner": {
     "message": "你已离线 — 只在本机已保存内容里找。"
   },
@@ -1566,6 +1581,21 @@
   "settings_account_sign_in_hint": {
     "message": "未登录。登录后可管理同步与云端记忆。"
   },
+  "settings_anonymous_captcha_retry_title": {
+    "message": "完成人机验证"
+  },
+  "settings_anonymous_captcha_retry_hint": {
+    "message": "匿名试用开始前需要一次人机验证。若后台没完成（超时或后续步骤失败），点这里在新标签里手动过验证。仍失败就保持未登录，不会弄坏现有数据。"
+  },
+  "settings_anonymous_captcha_retry_action": {
+    "message": "去完成验证"
+  },
+  "settings_anonymous_captcha_retry_working": {
+    "message": "等待验证中…"
+  },
+  "settings_anonymous_captcha_retry_failed": {
+    "message": "验证没完成。可以再试一次。"
+  },
   "settings_account_waiting_website": {
     "message": "请在浏览器标签页完成登录，然后回到这里。"
   },
@@ -1581,11 +1611,14 @@
   "settings_account_signing_out": {
     "message": "正在退出…"
   },
+  "settings_account_website_mismatch": {
+    "message": "官网当前登录的是另一个账号"
+  },
   "settings_sign_out_dialog_title": {
     "message": "退出登录"
   },
   "settings_sign_out_dialog_copy": {
-    "message": "退出后会移除此账号在本机的摘录。书签保留。未登录时保存的内容会留给下次登录。完整清空此账号本机库是可选操作，需要二次确认。"
+    "message": "退出后此账号在本机的资料会保留（迁到本地档）。再次登录时会询问是否并入账号。完整清空是可选操作，需要二次确认。"
   },
   "settings_sign_out_dialog_counts": {
     "message": "此账号本机：$ACCOUNT$。其他本机保存：$LOCAL$。云端：$REMOTE$。",
@@ -1605,16 +1638,25 @@
     "message": "退出登录"
   },
   "settings_sign_out_keep_local_hint": {
-    "message": "推荐 — 移除此账号在本机的摘录。书签保留。未登录时保存的内容会留给下次登录。"
+    "message": "推荐 — 摘录与书签都保留在本机本地档。下次登录可选择并入账号。"
+  },
+  "settings_sign_out_delete_excerpts_opt_in": {
+    "message": "同时删除本设备上此账号的摘录（书签仍保留；与「清空全部本机库」不同）"
   },
   "settings_sign_out_flush_then_keep": {
     "message": "先同步摘录，再退出"
   },
   "settings_sign_out_flush_then_keep_hint": {
-    "message": "先把摘录上传云端，再移除此账号在本机的摘录"
+    "message": "先把摘录上传云端，再把整库保留到本机本地档"
   },
   "settings_sign_out_flush_failed_keep_anyway": {
-    "message": "云同步失败。仍要退出吗？云端副本可能落后，且此账号的摘录仍会从本机移除。"
+    "message": "同步失败——摘录只留在本机、未上传云端。需要的话请先导出备份，或仍退出（资料仍留本机）。"
+  },
+  "settings_sign_out_flush_failed_export": {
+    "message": "先导出备份"
+  },
+  "settings_sign_out_flush_failed_still": {
+    "message": "仍退出"
   },
   "settings_sign_out_clear_local": {
     "message": "退出并清空此账号本机记忆库"

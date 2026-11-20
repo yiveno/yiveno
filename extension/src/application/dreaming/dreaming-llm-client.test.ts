@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-vi.mock('@/infrastructure/identity/auth-session-service', () => ({
-  getAuthSession: vi.fn(async () => ({ accessToken: 'tok' }))
+vi.mock('@/infrastructure/identity/worker-api-access-token', () => ({
+  getWorkerApiAccessToken: vi.fn(async () => 'tok')
 }))
 
 import { requestDreamingCompileBatch } from '@/application/dreaming/dreaming-llm-client'

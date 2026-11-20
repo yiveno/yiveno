@@ -17,7 +17,7 @@ import {
   createHostedClueUnderstandApiCompleterDetailed
 } from '@/infrastructure/ai/hosted-clue-understand-api-client'
 import { readDevClueLlmConfig } from '@/infrastructure/ai/dev-clue-llm-config'
-import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
+import { getWorkerApiAccessToken } from '@/infrastructure/identity/worker-api-access-token'
 import { getUserSettings } from '@/infrastructure/settings/user-settings-service'
 import { logger } from '@/infrastructure/logging/logger'
 import {
@@ -53,12 +53,10 @@ export async function refreshClueLlmCompleterFromDevConfig(): Promise<void> {
     return
   }
 
-  const session = await getAuthSession()
-  if (session?.accessToken) {
-    const accessTokenProvider = async () => {
-      const latest = await getAuthSession()
-      return latest?.accessToken ?? null
-    }
+  // 有 device token（或迁移窗口旧 access）→ hosted；无则匿名 rules / DEV IP
+  const bearer = await getWorkerApiAccessToken()
+  if (bearer) {
+    const accessTokenProvider = async () => getWorkerApiAccessToken()
     setClueLlmCompleter(createHostedClueUnderstandApiCompleter(accessTokenProvider))
     setClueLlmCompleterDetailed(createHostedClueUnderstandApiCompleterDetailed(accessTokenProvider))
     const apiBase = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8787'

@@ -70,17 +70,28 @@ export const WebsiteConnectAckSchema = z.object({
   payload: z.object({}).optional()
 })
 
-/** 官网 → 扩展：Connect 终态（成功 / 取消挤掉 / 失败）。 */
+/** 官网 → 扩展：Connect 终态（成功 / 失败 / 账号冲突）。 */
 export const WebsiteConnectResultSchema = z.object({
   type: z.literal('website_connect_result'), // 官网 Connect 结果
   payload: z.object({
     status: z.enum([
-      'ok', // mint+handoff 成功
-      'cancelled_displace', // 用户取消挤掉
-      'failed', // mint/handoff 失败
+      'ok', // device-register + handoff 成功
+      'failed', // register/handoff 失败
+      'account_mismatch', // 扩展已是其它账号，拒绝覆盖
       'no_session', // 官网无会话
       'busy' // 已有 Connect 在飞
     ])
+  })
+})
+
+/**
+ * 官网 → 扩展：Turnstile captcha token（一次性凭证，非 access/refresh）。
+ * 仅匿名 signup 消费；不得转发其它通道、不得持久化。
+ */
+export const WebsiteTurnstileTokenSchema = z.object({
+  type: z.literal('website_turnstile_token'), // Turnstile captcha 回传
+  payload: z.object({
+    token: z.string().min(1).max(4096) // captcha token 字面量
   })
 })
 
@@ -91,7 +102,8 @@ export const UiBridgeInnerMessageSchema = z.union([
   BridgeHelloSchema,
   RequestExtensionConnectSchema,
   WebsiteConnectAckSchema,
-  WebsiteConnectResultSchema
+  WebsiteConnectResultSchema,
+  WebsiteTurnstileTokenSchema
 ])
 
 /** Port 上传输的完整信封。 */

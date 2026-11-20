@@ -15,8 +15,8 @@ import {
   requestWorkerEmbeddings,
   WORKER_EMBEDDING_MODEL
 } from '@/infrastructure/ai/embed-api-client'
-import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
 import { getCurrentOwnerId } from '@/infrastructure/identity/local-profile-service'
+import { getWorkerApiAccessToken } from '@/infrastructure/identity/worker-api-access-token'
 import { memoryNoteEmbeddingRepository } from '@/infrastructure/indexeddb/memory-note-embedding-repository'
 import type { MemoryNoteEmbeddingLoaded } from '@/infrastructure/indexeddb/memory-note-embedding-types'
 import { memoryNotesRepository } from '@/infrastructure/indexeddb/memory-notes-repository'
@@ -160,8 +160,8 @@ export async function backfillPropositionEmbeddingsTick(): Promise<PropositionEm
   if (!settings.aiFeaturesEnabled) {
     return { skipped: true, reason: 'ai_disabled', scanned: 0, written: 0, reused: 0, failed: 0 }
   }
-  const session = await getAuthSession()
-  if (!session?.accessToken) {
+  const accessToken = await getWorkerApiAccessToken()
+  if (!accessToken) {
     return { skipped: true, reason: 'not_signed_in', scanned: 0, written: 0, reused: 0, failed: 0 }
   }
 
@@ -197,7 +197,7 @@ export async function backfillPropositionEmbeddingsTick(): Promise<PropositionEm
   }
 
   const result = await embedPropositionsForWrittenNotes({
-    accessToken: session.accessToken,
+    accessToken,
     notes: gaps.map(note => ({
       noteId: note.id,
       ownerId: note.ownerId,

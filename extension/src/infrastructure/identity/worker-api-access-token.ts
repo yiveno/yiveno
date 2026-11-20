@@ -1,15 +1,21 @@
 /**
- * Worker API（embed / clue / enrichment）用 access token。
- * 过期前复用；临近过期则 refresh，避免 SW 长任务里拿 stale token。
+ * Worker API（embed / clue / enrichment）用 Bearer。
+ * 优先 device token；迁移窗口内无 device 时回退旧 Supabase access（refresh 后复用）。
  */
 
 import { refreshAuthSession } from '@/infrastructure/auth/extension-oauth'
 import { getAuthSession, setAuthSession } from '@/infrastructure/identity/auth-session-service'
+import { getDeviceSession } from '@/infrastructure/identity/device-session-service'
 
 const ACCESS_TOKEN_REFRESH_SKEW_SEC = 60
 
 /** 返回可用于 Worker Bearer 的 token；未登录时 null。 */
 export async function getWorkerApiAccessToken(): Promise<string | null> {
+  const device = await getDeviceSession()
+  if (device?.deviceToken) {
+    return device.deviceToken
+  }
+
   const session = await getAuthSession()
   if (!session) {
     return null

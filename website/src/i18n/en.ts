@@ -9,6 +9,13 @@ export const en = {
   'login.meta.description':
     "Sign in to Yiveno for your account and billing. What you've saved stays on this device unless you turn sync on.",
 
+  /** 扩展匿名 signup：/auth/turnstile 最小页（无登录要求） */
+  'turnstile.meta.title': 'Bot check · Yiveno',
+  'turnstile.status.loading': 'Preparing bot check…',
+  'turnstile.status.ready': 'Complete the check if asked — this tab can close after.',
+  'turnstile.status.done': 'Check complete. You can close this tab.',
+  'turnstile.status.unavailable': 'Bot check unavailable. You can close this tab.',
+
   'login.title': 'Sign in to Yiveno',
   'login.hint.redirecting': 'Taking you to your account…',
   'login.hint.subscribe':
@@ -49,6 +56,14 @@ export const en = {
 
   'login.error.connectExtension':
     'Could not connect the extension. Install Yiveno and try Connect again.',
+  'login.error.connectAccountMismatch':
+    'This browser’s extension is already signed in with a different account. Sign out of the extension first, then Connect again.',
+  'login.status.signingIn': 'Signing in…',
+  'login.status.connectingExtension': 'Connecting to the extension…',
+  'login.status.connectFailed':
+    'Signed in on the website, but the extension did not connect. Use Connect in the side panel, or Settings → Sign in.',
+  'login.status.connectAccountMismatch':
+    'Signed in on the website, but this browser’s extension is already signed in with a different account. Sign out of the extension first, then Connect again.',
   'login.error.noToken': "Sign-in didn't finish. Please try again.",
   'login.error.sessionError': 'Could not save your sign-in session',
   'login.error.authError': 'Sign-in failed unexpectedly',
@@ -163,7 +178,29 @@ export const en = {
   'account.meta.title': 'Account · Yiveno',
   'account.meta.description': 'Your Yiveno account, plan, and billing.',
   'account.sign_out': 'Sign out',
+  'account.sign_out_scope_hint': 'Signs out only this browser — your extension stays signed in',
   'account.plan_heading': 'Plan',
+  'from_extension.title': 'Continue on the website',
+  'from_extension.loading': 'Checking your extension…',
+  'from_extension.already_signed_in': 'Already signed in',
+  'from_extension.copy_unsigned':
+    'Continue to open the website with the same account as your extension.',
+  'from_extension.copy_switch':
+    'The website is signed in with a different account. Continue will switch this browser to your extension account.',
+  'from_extension.switch_warn':
+    'Continuing replaces the website session on this browser. Your extension login is unchanged.',
+  'from_extension.extension_account': 'Extension account',
+  'from_extension.website_account': 'Website account now',
+  'from_extension.unknown_account': 'Signed-in account',
+  'from_extension.continue': 'Continue',
+  'from_extension.cancel': 'Cancel',
+  'from_extension.cancelled': 'No change — still on this page.',
+  'from_extension.signing_in': 'Signing you in…',
+  'from_extension.missing_extension': 'Missing extension. Open Account from the Yiveno side panel.',
+  'from_extension.extension_not_signed_in':
+    'The extension is not signed in. Sign in there first, then try again.',
+  'from_extension.error_mint': 'Could not sign in from the extension. Try Sign in on this page.',
+  'from_extension.error_save': 'Could not save the website session.',
   'account.checking_plan': 'Checking your plan…',
   'account.plan.pro': 'Pro',
   'account.plan.free': 'Free',

@@ -9,7 +9,7 @@ import {
   exportDetailExport,
   DetailExportError
 } from '@/application/recall/export-detail-export-service'
-import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
+import { getWorkerApiAccessToken } from '@/infrastructure/identity/worker-api-access-token'
 import type { MemoryBackgroundResponse, MemoryErrorCode } from '@/core/messaging/memory-messages'
 import {
   MemoryErrorCodeSchema,
@@ -307,7 +307,7 @@ export async function handleRecordRecallSettle(
 export async function handleBackfillMemoryEmbeddings(): Promise<MemoryBackgroundResponse> {
   const startedAt = flowStart('Memory', '回填 embedding')
   try {
-    if (!(await getAuthSession())?.accessToken) {
+    if (!(await getWorkerApiAccessToken())) {
       flowOk('Memory', '回填 embedding', startedAt, { reason: 'not_signed_in' })
       return toErrorResponse('EMBEDDING_BACKFILL_AUTH_REQUIRED')
     }

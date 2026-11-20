@@ -338,6 +338,21 @@
   "sidepanel_extension_displaced_dismiss_aria": {
     "message": "Dismiss signed-out notice"
   },
+  "sidepanel_account_website_mismatch": {
+    "message": "The website is signed in with a different account"
+  },
+  "sidepanel_sign_out_remap_flush_ok": {
+    "message": "You were signed out here. Excerpts were synced to the cloud, and your library stayed on this device."
+  },
+  "sidepanel_sign_out_remap_flush_failed": {
+    "message": "You were signed out here. Sync failed — excerpts stayed only on this device (not in the cloud). Export a backup if you need one."
+  },
+  "sidepanel_sign_out_remap_export": {
+    "message": "Export backup"
+  },
+  "sidepanel_sign_out_remap_dismiss_aria": {
+    "message": "Dismiss library kept notice"
+  },
   "sidepanel_offline_banner": {
     "message": "You're offline — finding in what you saved on this device."
   },
@@ -1569,6 +1584,21 @@
   "settings_account_sign_in_hint": {
     "message": "Not signed in. Sign in to manage sync and cloud memories."
   },
+  "settings_anonymous_captcha_retry_title": {
+    "message": "Finish bot check"
+  },
+  "settings_anonymous_captcha_retry_hint": {
+    "message": "A quick bot check is needed before anonymous tryout can start. If the background check did not finish (timeout or follow-up failure), use this button to complete it in a new tab. If it still fails, you stay signed out — nothing breaks."
+  },
+  "settings_anonymous_captcha_retry_action": {
+    "message": "Complete bot check"
+  },
+  "settings_anonymous_captcha_retry_working": {
+    "message": "Waiting for bot check…"
+  },
+  "settings_anonymous_captcha_retry_failed": {
+    "message": "Bot check did not finish. You can try again."
+  },
   "settings_account_waiting_website": {
     "message": "Finish signing in in the browser tab, then return here."
   },
@@ -1584,11 +1614,14 @@
   "settings_account_signing_out": {
     "message": "Signing out…"
   },
+  "settings_account_website_mismatch": {
+    "message": "The website is signed in with a different account"
+  },
   "settings_sign_out_dialog_title": {
     "message": "Sign out"
   },
   "settings_sign_out_dialog_copy": {
-    "message": "Signing out removes this account’s excerpts from this device. Bookmarks stay. Anything you saved while signed out stays for the next sign-in. A full wipe of this account’s on-device library is optional and needs a second confirmation."
+    "message": "Signing out keeps this account’s library on this device (moved to your local profile). Sign in again and you’ll be asked whether to bring those saves into the account. A full wipe is optional and needs a second confirmation."
   },
   "settings_sign_out_dialog_counts": {
     "message": "This account on device: $ACCOUNT$. Other local saves: $LOCAL$. Cloud: $REMOTE$.",
@@ -1608,16 +1641,25 @@
     "message": "Sign out"
   },
   "settings_sign_out_keep_local_hint": {
-    "message": "Recommended — removes this account’s excerpts from this device. Bookmarks stay. Anything you saved while signed out stays for the next sign-in."
+    "message": "Recommended — keeps excerpts and bookmarks on this device under your local profile. Next sign-in can import them into the account."
+  },
+  "settings_sign_out_delete_excerpts_opt_in": {
+    "message": "Also delete this account’s excerpts on this device (bookmarks still stay; not the same as wiping the whole library)"
   },
   "settings_sign_out_flush_then_keep": {
     "message": "Sync excerpts, then sign out"
   },
   "settings_sign_out_flush_then_keep_hint": {
-    "message": "Upload excerpts to the cloud first, then remove this account’s excerpts from this device"
+    "message": "Upload excerpts to the cloud first, then keep the full library on this device under your local profile"
   },
   "settings_sign_out_flush_failed_keep_anyway": {
-    "message": "Cloud sync failed. Sign out anyway? The cloud copy may be behind, and this account’s excerpts will still be removed from this device."
+    "message": "Sync failed — excerpts stay only on this device and were not uploaded. Export a backup first if you need one, or sign out anyway (library stays locally)."
+  },
+  "settings_sign_out_flush_failed_export": {
+    "message": "Export backup first"
+  },
+  "settings_sign_out_flush_failed_still": {
+    "message": "Sign out anyway"
   },
   "settings_sign_out_clear_local": {
     "message": "Sign out and wipe this account’s library on device"

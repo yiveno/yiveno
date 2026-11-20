@@ -5,10 +5,11 @@
  */
 
 import { AUTH_SESSION_STORAGE_KEY } from '@/core/identity/auth-session'
+import { DEVICE_SESSION_STORAGE_KEY } from '@/core/identity/device-session'
 import { ACCOUNT_BINDING_STORAGE_KEY } from '@/core/identity/local-profile'
 
 /**
- * 监听 session 或 AccountBinding 写入/清除。
+ * 监听 device/session 或 AccountBinding 写入/清除。
  * @returns 取消订阅函数（onUnmounted 调用）
  */
 export function watchAuthSessionStorage(onChange: () => void): () => void {
@@ -16,7 +17,11 @@ export function watchAuthSessionStorage(onChange: () => void): () => void {
     if (areaName !== 'local') {
       return
     }
-    if (!(AUTH_SESSION_STORAGE_KEY in changes) && !(ACCOUNT_BINDING_STORAGE_KEY in changes)) {
+    if (
+      !(DEVICE_SESSION_STORAGE_KEY in changes) &&
+      !(AUTH_SESSION_STORAGE_KEY in changes) &&
+      !(ACCOUNT_BINDING_STORAGE_KEY in changes)
+    ) {
       return
     }
     onChange()

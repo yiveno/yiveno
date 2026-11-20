@@ -12,6 +12,7 @@ import {
   type UiBridgeEnvelope,
   type UiBridgeInnerMessage
 } from '@/core/identity/ui-bridge-messages'
+import { resolveTurnstileTokenFromUiBridge } from '@/infrastructure/auth/turnstile-token-provider'
 import { writeWebsiteAuthUiState } from '@/infrastructure/auth/website-auth-ui-storage'
 import { getAuthSession, setAuthSession } from '@/infrastructure/identity/auth-session-service'
 import { logger } from '@/infrastructure/logging/logger'
@@ -162,6 +163,14 @@ async function handleInnerMessage(msg: UiBridgeInnerMessage): Promise<void> {
         waiter.onResult(msg.payload.status)
       }
       return
+    case 'website_turnstile_token': {
+      const consumed = resolveTurnstileTokenFromUiBridge(msg.payload.token)
+      logger.info('Auth', 'UI 桥：收到 Turnstile token', {
+        consumed,
+        tokenLength: msg.payload.token.length
+      })
+      return
+    }
     default: {
       const _exhaustive: never = msg
       void _exhaustive
