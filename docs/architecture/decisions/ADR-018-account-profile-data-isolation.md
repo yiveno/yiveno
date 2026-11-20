@@ -85,7 +85,7 @@ ADR-017 已钉云同步面仅摘录、书签不上云。本 ADR 钉 **身份平�
 
 - 产品文档 §5.1 / 账户与同步 Normative 与本 ADR 对齐（含 G1-a 默认全量回迁）。
 - `GET_LOGIN_MIGRATION_STATUS` / `RESOLVE_LOGIN_MIGRATION` + Side Panel / Settings 门闸 UI；拆除静默 absorb；门闸计本地档无主摘录（含退出回迁）。
-- 扩展退出 `keep_local` / `flush_then_keep` → `remapAccountLibraryToLocalProfile`（默认全量回迁；`deleteLocalExcerpts` opt-in 旧口径 A）；被挤掉同回迁。官网 Sign out **退出解耦**，不踢扩展；反向接通为确认式（`FromExtensionAuth`）。
+- 扩展退出 `keep_local` / `flush_then_keep` → `remapAccountLibraryToLocalProfile`（默认全量回迁；`deleteLocalExcerpts` opt-in 旧口径 A）；被挤掉同回迁。官网 Sign out **退出解耦**，不踢扩展；反向接通（`FromExtensionAuth` · RV1）：官网未登录自动铸会话；不同账号仍确认。
 - 设置/隐私文案：未登录可划存；Free 登录不增加本机能力；Pro = 摘录换机；**扩展**退出默认保留本机库。
 
 **禁止：**
@@ -93,7 +93,7 @@ ADR-017 已钉云同步面仅摘录、书签不上云。本 ADR 钉 **身份平�
 - 登录静默把本机摘录并进当前账号。
 - 退出默认静默删除账号桶摘录（须显式 opt-in 或 `clear_local`）。
 - 将「能 Capture」做成必须登录或必须 Pro。
-- 官网反向接通加载时自动铸会话并静默覆盖已登录的另一账号。
+- 官网已登录不同账号时，反向接通加载自动铸会话并覆盖（须用户确认）。
 
 ## 拒绝的替代
 

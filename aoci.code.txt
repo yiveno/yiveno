@@ -29,7 +29,7 @@ impeccable-manual-edit-applier.md[XQ6S]: F:把租约内 live 手工改文批次�
 ===/<repository>/.cursor/===
 hooks.json[XQ6T]: F:声明 Cursor beforeShellExecution 钩子 | R:code:.cursor/hooks/block_destructive_git.py | A:Cursor 项目 hooks 配置 | S:仅挂 block_destructive_git；session_start_context 已从本文件移除
 mcp.json[XQ6T]: F:项目级 Cursor MCP，启动本仓 aoci 服务 | R:- | A:command 为 ${userHome}/bin/aoci，args 含 --repo ${workspaceFolder} mcp | S:须用 Cursor 变量，勿写死本机绝对路径以便提交
-settings.json[FQ3T]: F:启用 Cursor Cloudflare 插件 | R:- | A:项目级 plugins.cloudflare.enabled | S:-
+settings.json[FC3T]: F:项目级 Cursor 插件开关（Cloudflare / Supabase） | R:- | A:plugins.cloudflare.enabled;plugins.supabase.enabled | S:-
 
 ===/<repository>/.cursor/hooks/===
 README.md[SQ3T]: F:说明项目级 Cursor hooks 用途与生效方式 | R:code:.cursor/hooks.json,code:.cursor/hooks/block_destructive_git.py | A:- | S:-
@@ -962,13 +962,13 @@ sitemap.xml[OV5T]: F:官网公开 sitemap：首页与主要营销/法务路径 |
 tiers.ts[FC5T]: F:官网付费档位（仅 Pro）的价与 plan id | R:- | A:- | S:-
 
 ===/<repository>/website/src/components/===
-AccountPage.vue[EU5L]: F:官网账户页（含 Devices） | R:code:website/src/services/account-devices.ts | A:列表/改名/撤销设备；Connect | S:Devices 走官网 JWT；退出仅当前浏览器
+AccountPage.vue[EU5L]: F:官网账户页（身份/权益/设备）+ 扩展自动登录 toast | R:code:website/src/services/extension-auth-handoff.ts,code:website/src/components/SoftToastHost.vue | A:consumeFromExtensionSignInArrival;Devices;Connect | S:toast 仅消费到达标记；SoftToastHost 为顶级兄弟根；退出仅当前浏览器
 AppNav.astro[EU5T]: F:账号域顶栏：品牌 mark + AuthNav + UI 桥宿主 | R:- | A:官网组件 | S:-
 AuthCallback.vue[EI5S]: F:官网鉴权回调：交换会话并可选 device 注册交接 | R:code:website/src/services/extension-auth-handoff.ts,code:website/src/i18n/en.ts | A:registerAndHandoffDeviceToExtension | S:无 409 挤掉；extension_connected=0/1
 AuthNav.vue[EI5S]: F:官网顶栏鉴权入口：登录链接或头像菜单 | R:- | A:官网组件 | S:-
 ExtensionSessionProbe.vue[EI5T]: F:探测官网是否已登录并回传 signedIn（不 mint） | R:- | A:官网组件 | S:-
 ExtensionUninstalledPage.vue[EU5L]: F:扩展卸载落地：可选反馈与后台 revoke | R:- | A:官网组件 | S:-
-FromExtensionAuth.vue[EI6M]: F:扩展→官网反向接通确认页 | R:code:website/src/components/from-extension-auth-phase.ts | A:Continue 后才铸会话 | S:email_required 引导转正；加载禁止自动 mint
+FromExtensionAuth.vue[EI6M]: F:扩展→官网反向接通（RV1：未登录自动铸） | R:code:website/src/components/from-extension-auth-phase.ts,code:website/src/services/extension-auth-handoff.ts | A:continueFromExtension;keepCurrentAccount;applyMintedSession | S:auto_sign_in 加载即铸；confirm_switch 仍确认；auto 成功才写到达标记；email_required 引导转正
 InstallCta.astro[EU5S]: F:首页安装 CTA：按主机选 Edge/Chrome 主路径（ADR-020） | R:- | A:官网组件 | S:-
 LoginForm.vue[EI5L]: F:官网登录表单：邮箱 OTP 与 OAuth | R:code:website/src/services/extension-auth-handoff.ts | A:registerAndHandoffDeviceToExtension | S:Connect 异账号 account_mismatch；无挤掉路径；device-register 交接
 LogoutPage.vue[EI5T]: F:官网退出页：清本地会话并反馈状态 | R:- | A:官网组件 | S:-
@@ -977,7 +977,7 @@ PricingPage.vue[EB5L]: F:官网定价页：档位与结账入口 | R:- | A:官�
 SoftToastHost.vue[EU5S]: F:官网轻提示 Toast 宿主（客户端 Teleport） | R:- | A:官网组件 | S:-
 UiBridgeHost.vue[EE5T]: F:维持官网↔扩展 UI Port，推送鉴权变化 | R:- | A:官网组件 | S:-
 WebsiteLanguageSwitcher.vue[EL5M]: F:官网语言切换菜单（en / zh_CN） | R:- | A:官网组件 | S:-
-from-extension-auth-phase.ts[CI5T]: F:反向接通加载相位纯决策 | R:code:website/src/components/FromExtensionAuth.vue | A:decideFromExtensionAuthPhase | S:不触发铸会话
+from-extension-auth-phase.ts[CI5T]: F:反向接通加载相位纯决策（含 auto_sign_in） | R:code:website/src/components/FromExtensionAuth.vue | A:decideFromExtensionAuthPhase | S:不触发铸会话；未登录→auto_sign_in
 AuthTurnstileBridge.vue[EU4T]: F:官网 turnstile 页渲染 Turnstile 并桥回传 token | R:code:website/src/services/turnstile.ts,code:website/src/services/ui-bridge.ts | A:无登录要求 | S:失败只 console.warn；不收集除 token 外信息
 
 ===/<repository>/website/src/components/home/===
@@ -1001,10 +1001,10 @@ env.d.ts[FC3T]: F:Astro 官网 ImportMetaEnv 与客户端类型声明 | R:- | A:
 resolve-geo-domain-redirect.ts[AG5M]: F:官网软性按地区选域名（与页面显示语言无关） | R:- | A:- | S:-
 
 ===/<repository>/website/src/i18n/===
-en.ts[IL5L]: F:官网产品面英文文案 | R:code:website/src/i18n/zh.ts | A:WebsiteMessageKey | S:含 Devices / turnstile / email_required 键
+en.ts[IL5M]: F:官网产品面英文文案 | R:code:website/src/i18n/zh.ts | A:WebsiteMessageKey | S:from_extension 含 keep_current / signed_in_via_extension；与 zh 键对称
 locale.ts[IL5T]: F:官网 UI 语言：跟浏览器，可覆盖并持久化到 localStorage | R:- | A:- | S:-
 t.ts[IL8T]: F:官网产品面 t()：en/zh_CN 文案解析与 locale 持久化 | R:- | A:- | S:-
-zh.ts[IL5M]: F:官网产品面简体中文文案 | R:code:website/src/i18n/en.ts | A:键与 en 对称 | S:含 Devices / email_required 键
+zh.ts[IL5M]: F:官网产品面简体中文文案 | R:code:website/src/i18n/en.ts | A:键与 en 对称 | S:from_extension 含 keep_current / signed_in_via_extension
 
 ===/<repository>/website/src/install/===
 store-links.ts[FE5T]: F:扩展商店安装深链（ADR-020） | R:- | A:- | S:禁止假装可装
@@ -1048,7 +1048,7 @@ auth-session-liveness.ts[II5T]: F:官网会话存活探测：失效则尽快反�
 auth.ts[II5S]: F:官网登录：OAuth/邮件 OTP、会话读写与退出 | R:- | A:- | S:-
 billing.ts[IB5T]: F:官网计费 API（Worker） | R:- | A:- | S:-
 date.ts[CL5T]: F:官网日期展示：跟生效 UI locale（BCP 47） | R:- | A:- | S:禁止裸 `toLocaleDateString()` 无 locale
-extension-auth-handoff.ts[II5M]: F:官网 Connect：device-register 后 DEVICE_HANDOFF | R:code:website/src/services/register-device-from-website.ts | A:registerAndHandoffDeviceToExtension;getPendingExtensionId | S:新 register 须 pending；禁 last id 静默重注册；旧 mint 别名已删
+extension-auth-handoff.ts[II5L]: F:官网 Connect handoff + 扩展自动登录到达标记 | R:code:website/src/services/register-device-from-website.ts | A:registerAndHandoffDeviceToExtension;remember/consumeFromExtensionSignInArrival | S:到达标记 sessionStorage 10s；消费即删；禁 last id 静默重注册
 nav-pro-badge-cache.ts[AB5T]: F:官网顶栏 Pro 环用的会话缓存 | R:- | A:- | S:-
 otp-resend-cooldown.ts[AI5T]: F:Email OTP「再次发送」冷却：截止时间写入 sessionStorage | R:- | A:- | S:-
 run-extension-connect.ts[AI5S]: F:官网已登录时编排 Connect 到扩展 | R:code:website/src/services/extension-auth-handoff.ts | A:website_connect_result | S:结果含 account_mismatch；不清官网会话

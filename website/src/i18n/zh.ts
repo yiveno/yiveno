@@ -171,7 +171,6 @@ export const zh = {
   'from_extension.title': '在官网继续',
   'from_extension.loading': '正在核对扩展…',
   'from_extension.already_signed_in': '已是同一账号',
-  'from_extension.copy_unsigned': '继续后，官网将使用与扩展相同的账号登录。',
   'from_extension.copy_switch':
     '官网当前登录的是另一个账号。继续将把本浏览器官网会话切换为扩展账号。',
   'from_extension.switch_warn': '继续会替换本浏览器官网登录态；扩展登录不受影响。',
@@ -179,8 +178,8 @@ export const zh = {
   'from_extension.website_account': '官网当前账号',
   'from_extension.unknown_account': '已登录账号',
   'from_extension.continue': '继续',
-  'from_extension.cancel': '取消',
-  'from_extension.cancelled': '未改动登录态 — 仍停留本页。',
+  'from_extension.keep_current': '保留当前账号',
+  'from_extension.signed_in_via_extension': '已通过扩展登录为 {account}',
   'from_extension.signing_in': '正在登录…',
   'from_extension.missing_extension': '缺少扩展信息。请从 Yiveno 侧栏打开账户。',
   'from_extension.extension_not_signed_in': '扩展尚未登录。请先在扩展登录后再试。',

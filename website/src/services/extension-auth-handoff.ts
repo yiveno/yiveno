@@ -20,8 +20,59 @@ export type RegisterAndHandoffResult =
 const STORAGE_EXTENSION_ID = 'yiveno_connect_extension_id'
 const STORAGE_CONNECT_FLAG = 'yiveno_connect_extension'
 
+/** 扩展自动登录到达标记（sessionStorage，同 tab；账户页消费后弹 toast）。 */
+const STORAGE_FROM_EXTENSION_SIGN_IN = 'yiveno_from_extension_signed_in'
+const FROM_EXTENSION_SIGN_IN_MAX_AGE_MS = 10_000
+
 /** 上次成功连接的扩展 id（localStorage，供账户页退出回传）。 */
 const STORAGE_LAST_EXTENSION_ID = 'yiveno_last_extension_id'
+
+type FromExtensionSignInStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
+
+/**
+ * 记录"刚经扩展自动登录"到达标记（sessionStorage，同 tab 有效）。
+ * storage 参数仅为测试注入：website vitest 默认 node 环境无 sessionStorage；生产调用不传。
+ */
+export function rememberFromExtensionSignInArrival(
+  label: string,
+  storage: FromExtensionSignInStorage = sessionStorage
+): void {
+  const trimmed = label.trim()
+  if (!trimmed) return
+  storage.setItem(
+    STORAGE_FROM_EXTENSION_SIGN_IN,
+    JSON.stringify({ label: trimmed, at: Date.now() })
+  )
+}
+
+/**
+ * 消费到达标记：无论有效与否都删除（消费即删，刷新不重复弹）。
+ * 超过 10 秒视为过期（覆盖 next 不是 /account、用户稍后才进账户页的情形）。
+ */
+export function consumeFromExtensionSignInArrival(
+  now: number = Date.now(),
+  storage: FromExtensionSignInStorage = sessionStorage
+): string | null {
+  const raw = storage.getItem(STORAGE_FROM_EXTENSION_SIGN_IN)
+  storage.removeItem(STORAGE_FROM_EXTENSION_SIGN_IN)
+  if (!raw) return null
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(raw)
+  } catch {
+    return null
+  }
+  if (typeof parsed !== 'object' || parsed === null) return null
+  const { label, at } = parsed as { label?: unknown; at?: unknown }
+  if (typeof label !== 'string' || !label.trim()) return null
+  if (
+    typeof at !== 'number' ||
+    !Number.isFinite(at) ||
+    now - at > FROM_EXTENSION_SIGN_IN_MAX_AGE_MS
+  )
+    return null
+  return label.trim()
+}
 
 /** 官网 → 扩展 device handoff 载荷（与扩展 ExternalAuthDeviceHandoffSchema 对齐）。 */
 export type ExtensionDeviceHandoffPayload = {

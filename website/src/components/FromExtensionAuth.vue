@@ -1,21 +1,23 @@
 <script setup lang="ts">
 /**
- * 扩展 → 官网反向接通确认页（G1-b）。
- * 加载时不自动铸会话；同账号短路；未登录 / 不同账号需用户 Continue。
+ * 扩展 → 官网反向接通（G1-b；RV1 修订）。
+ * 同账号短路；官网未登录时加载即自动铸会话（点扩展头像即是手势）；官网已登录不同账号时仍需用户确认才切换。
  */
 import { computed, onMounted, ref } from 'vue'
 import { t } from '../i18n/t'
 import { getSupabase } from '../services/supabase'
 import { clearNavIsProCache } from '../services/nav-pro-badge-cache'
 import { ensureUiBridgeConnected, publishWebsiteAuthChanged } from '../services/ui-bridge'
-import { rememberConnectedExtensionId } from '../services/extension-auth-handoff'
+import {
+  rememberConnectedExtensionId,
+  rememberFromExtensionSignInArrival
+} from '../services/extension-auth-handoff'
 import { decideFromExtensionAuthPhase } from './from-extension-auth-phase'
 
 defineOptions({ name: 'FromExtensionAuth' })
 
 type Phase =
   | 'loading' // 探测中
-  | 'confirm_unsigned' // 官网未登录 → 确认铸会话
   | 'confirm_switch' // 官网已登录不同账号 → 确认切换
   | 'working' // 铸会话中
   | 'error' // 失败文案
@@ -29,7 +31,7 @@ const extensionEmail = ref('')
 const extensionDisplayName = ref('')
 const websiteUserId = ref('')
 const websiteEmail = ref('')
-/** 测试/调试：是否已发起铸会话（加载时必须为 false） */
+/** 是否已发起铸会话（每页加载最多一次；未登录自动路径在加载时即发起） */
 const mintAttempted = ref(false)
 
 type ChromeRuntimeMessenger = {
@@ -111,7 +113,12 @@ const websiteAccountLabel = computed(() => {
   )
 })
 
-async function applyMintedSession(accessToken: string, refreshToken: string, userId: string) {
+async function applyMintedSession(
+  accessToken: string,
+  refreshToken: string,
+  userId: string,
+  auto: boolean
+) {
   const supabase = await getSupabase()
   const { data, error } = await supabase.auth.setSession({
     access_token: accessToken,
@@ -119,6 +126,9 @@ async function applyMintedSession(accessToken: string, refreshToken: string, use
   })
   if (error || !data.session?.user?.id || data.session.user.id !== userId) {
     throw new Error('set_session_failed')
+  }
+  if (auto) {
+    rememberFromExtensionSignInArrival(extensionAccountLabel.value)
   }
   clearNavIsProCache()
   try {
@@ -130,7 +140,8 @@ async function applyMintedSession(accessToken: string, refreshToken: string, use
   window.location.replace(nextPathRef.value)
 }
 
-async function continueFromExtension(): Promise<void> {
+async function continueFromExtension(options?: { auto?: boolean }): Promise<void> {
+  const auto = options?.auto === true
   const extensionId = extensionIdRef.value
   if (!extensionId || mintAttempted.value) {
     return
@@ -176,7 +187,7 @@ async function continueFromExtension(): Promise<void> {
   const userId = (response as { userId: string }).userId.trim()
 
   try {
-    await applyMintedSession(accessToken, refreshToken, userId)
+    await applyMintedSession(accessToken, refreshToken, userId, auto)
   } catch (error) {
     console.error('[FromExtensionAuth] setSession failed', error)
     phase.value = 'error'
@@ -187,10 +198,9 @@ async function continueFromExtension(): Promise<void> {
   }
 }
 
-function cancelConfirm(): void {
-  // 不做任何会话改动；停留在当前确认页
-  phase.value = websiteUserId.value ? 'confirm_switch' : 'confirm_unsigned'
-  status.value = t('from_extension.cancelled')
+function keepCurrentAccount(): void {
+  // 保留官网当前账号：不铸会话、不改登录态，直接去目标页
+  window.location.replace(nextPathRef.value)
 }
 
 onMounted(async () => {
@@ -235,7 +245,6 @@ onMounted(async () => {
     websiteUserId: websiteId
   })
 
-  // 加载路径禁止自动铸会话（mintAttempted 须仍为 false）
   if (decided === 'error_missing_extension') {
     phase.value = 'error'
     status.value = t('from_extension.missing_extension')
@@ -251,9 +260,8 @@ onMounted(async () => {
     window.location.replace(nextPath)
     return
   }
-  if (decided === 'confirm_unsigned') {
-    phase.value = 'confirm_unsigned'
-    status.value = t('from_extension.copy_unsigned')
+  if (decided === 'auto_sign_in') {
+    await continueFromExtension({ auto: true })
     return
   }
 
@@ -269,18 +277,18 @@ onMounted(async () => {
     <h1 class="from-extension__title">{{ t('from_extension.title') }}</h1>
     <p class="ui-status from-extension__status" role="status">{{ status }}</p>
 
-    <template v-if="phase === 'confirm_unsigned' || phase === 'confirm_switch'">
+    <template v-if="phase === 'confirm_switch'">
       <dl class="from-extension__accounts">
         <div>
           <dt>{{ t('from_extension.extension_account') }}</dt>
           <dd>{{ extensionAccountLabel }}</dd>
         </div>
-        <div v-if="phase === 'confirm_switch'">
+        <div>
           <dt>{{ t('from_extension.website_account') }}</dt>
           <dd>{{ websiteAccountLabel }}</dd>
         </div>
       </dl>
-      <p v-if="phase === 'confirm_switch'" class="from-extension__warn">
+      <p class="from-extension__warn">
         {{ t('from_extension.switch_warn') }}
       </p>
       <div class="from-extension__actions">
@@ -288,18 +296,17 @@ onMounted(async () => {
           type="button"
           class="from-extension__continue"
           data-testid="from-extension-continue"
-          @click="continueFromExtension"
+          @click="continueFromExtension()"
         >
           {{ t('from_extension.continue') }}
         </button>
         <button
-          v-if="phase === 'confirm_switch'"
           type="button"
           class="from-extension__cancel"
-          data-testid="from-extension-cancel"
-          @click="cancelConfirm"
+          data-testid="from-extension-keep-current"
+          @click="keepCurrentAccount"
         >
-          {{ t('from_extension.cancel') }}
+          {{ t('from_extension.keep_current') }}
         </button>
       </div>
     </template>

@@ -11,9 +11,12 @@ import { formatDate } from '../services/date'
 import {
   captureExtensionConnectParamsFromUrl,
   clearExtensionConnectParams,
+  consumeFromExtensionSignInArrival,
   extractProfileFromUserMetadata,
   rememberConnectedExtensionId
 } from '../services/extension-auth-handoff'
+import SoftToastHost from './SoftToastHost.vue'
+import { useSoftToast } from '../composables/use-soft-toast'
 import { runExtensionConnectFromWebsite } from '../services/run-extension-connect'
 import {
   listAccountDevices,
@@ -259,6 +262,12 @@ onMounted(async () => {
   profileAvatarUrl.value = profile.avatarUrl ?? ''
   profileDisplayName.value = profile.displayName ?? data.session.user.email ?? ''
   pageLoading.value = false
+  const fromExtensionLabel = consumeFromExtensionSignInArrival()
+  if (fromExtensionLabel) {
+    useSoftToast().success(
+      tFormat('from_extension.signed_in_via_extension', { account: fromExtensionLabel })
+    )
+  }
   document.addEventListener('visibilitychange', refreshSubscriptionOnVisible)
   const becamePro = await loadSubscription()
   // 已是 Pro：不必再挂「核对中」；失败提示保留到用户 Dismiss
@@ -644,6 +653,7 @@ function formatDeviceTime(iso: string): string {
     </section>
   </div>
   <div v-else class="ui-status">{{ t('account.loading') }}</div>
+  <SoftToastHost />
 </template>
 
 <style scoped>

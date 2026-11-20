@@ -183,8 +183,6 @@ export const en = {
   'from_extension.title': 'Continue on the website',
   'from_extension.loading': 'Checking your extension…',
   'from_extension.already_signed_in': 'Already signed in',
-  'from_extension.copy_unsigned':
-    'Continue to open the website with the same account as your extension.',
   'from_extension.copy_switch':
     'The website is signed in with a different account. Continue will switch this browser to your extension account.',
   'from_extension.switch_warn':
@@ -193,8 +191,8 @@ export const en = {
   'from_extension.website_account': 'Website account now',
   'from_extension.unknown_account': 'Signed-in account',
   'from_extension.continue': 'Continue',
-  'from_extension.cancel': 'Cancel',
-  'from_extension.cancelled': 'No change — still on this page.',
+  'from_extension.keep_current': 'Keep current account',
+  'from_extension.signed_in_via_extension': 'Signed in via the extension as {account}',
   'from_extension.signing_in': 'Signing you in…',
   'from_extension.missing_extension': 'Missing extension. Open Account from the Yiveno side panel.',
   'from_extension.extension_not_signed_in':

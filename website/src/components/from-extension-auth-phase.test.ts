@@ -40,7 +40,7 @@ describe('decideFromExtensionAuthPhase', () => {
     ).toBe('redirect_same')
   })
 
-  it('官网未登录 → confirm_unsigned', () => {
+  it('官网未登录 → auto_sign_in', () => {
     expect(
       decideFromExtensionAuthPhase({
         extensionId: extId,
@@ -48,7 +48,7 @@ describe('decideFromExtensionAuthPhase', () => {
         extensionUserId: userA,
         websiteUserId: ''
       })
-    ).toBe('confirm_unsigned')
+    ).toBe('auto_sign_in')
   })
 
   it('官网不同账号 → confirm_switch', () => {

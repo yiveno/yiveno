@@ -85,6 +85,7 @@ describe('website i18n t()', () => {
       'account.sign_out_scope_hint',
       'from_extension.title',
       'from_extension.continue',
+      'from_extension.signed_in_via_extension',
       'account.upgrade',
       'account.checkout.pending',
       'faq.contact.title',
@@ -102,5 +103,14 @@ describe('website i18n t()', () => {
     expect(t('account.sign_out', 'zh_CN')).toBe('退出登录')
     expect(t('faq.contact.title', 'zh_CN')).toBe('联系')
     expect(t('privacy.translation_note', 'zh_CN')).toMatch(/英文/)
+  })
+
+  test('from_extension.signed_in_via_extension 占位替换', () => {
+    expect(tFormat('from_extension.signed_in_via_extension', { account: 'a@b.co' }, 'en')).toBe(
+      'Signed in via the extension as a@b.co'
+    )
+    expect(tFormat('from_extension.signed_in_via_extension', { account: 'a@b.co' }, 'zh_CN')).toBe(
+      '已通过扩展登录为 a@b.co'
+    )
   })
 })
