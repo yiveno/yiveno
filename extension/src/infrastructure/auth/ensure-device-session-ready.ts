@@ -56,8 +56,3 @@ export async function ensureDeviceSessionReady(): Promise<EnsureDeviceSessionRea
   })
   return ensureInflight
 }
-
-/** 测试用：清 single-flight。 */
-export function resetEnsureDeviceSessionReadyForTests(): void {
-  ensureInflight = null
-}

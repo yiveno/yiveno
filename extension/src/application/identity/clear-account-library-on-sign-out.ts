@@ -25,9 +25,6 @@ export interface RemapAccountLibraryToLocalResult {
   remappedExcerpts: number
 }
 
-/** @deprecated 别名；新代码优先用 {@link RemapAccountLibraryToLocalResult} */
-export type ClearAccountLibraryOnSignOutResult = RemapAccountLibraryToLocalResult
-
 /**
  * 将 `accountId` 桶回迁到本机 `localProfileId`（可复用：主动退出 / invalid 退登 / 后续 device token）。
  * @returns 删除条数与回迁条数；id 相同则为全 0

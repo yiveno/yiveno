@@ -258,18 +258,6 @@ export async function probeExtensionAuthStatus(
 }
 
 /**
- * 探测本机扩展是否已登录为指定 userId（Connect 前短路用）。
- * @deprecated 优先用 {@link probeExtensionAuthStatus}
- */
-export async function probeExtensionAlreadySignedInAs(
-  extensionId: string,
-  userId: string
-): Promise<boolean> {
-  const probed = await probeExtensionAuthStatus(extensionId, userId)
-  return probed.kind === 'same_account'
-}
-
-/**
  * 将 device-register 结果回传扩展（外部消息通道）。
  * @returns true 表示扩展确认 ok
  */

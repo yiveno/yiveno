@@ -1,9 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 vi.mock('@/infrastructure/auth/auth-session-revalidate', () => ({
-  AUTH_LAST_VALIDATED_AT_KEY: 'yiveno:auth_last_validated_at',
-  AUTH_REVALIDATE_MIN_INTERVAL_MS: 300_000,
-  clearAuthValidationTimestamp: vi.fn(),
   markAuthValidatedNow: vi.fn(async () => undefined),
   shouldRevalidateAuthSession: vi.fn(async () => true)
 }))

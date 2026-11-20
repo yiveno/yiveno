@@ -6,9 +6,6 @@
 import type { DeviceSession } from '@/core/identity/device-session'
 import { maskDeviceTokenForLog } from '@/core/identity/device-session'
 import {
-  AUTH_LAST_VALIDATED_AT_KEY,
-  AUTH_REVALIDATE_MIN_INTERVAL_MS,
-  clearAuthValidationTimestamp,
   markAuthValidatedNow,
   shouldRevalidateAuthSession
 } from '@/infrastructure/auth/auth-session-revalidate'
@@ -113,12 +110,4 @@ export async function revalidateDeviceSession(
   })
   deviceRevalidateInflight = { deviceToken: token, promise }
   return promise
-}
-
-export {
-  AUTH_LAST_VALIDATED_AT_KEY,
-  AUTH_REVALIDATE_MIN_INTERVAL_MS,
-  clearAuthValidationTimestamp,
-  markAuthValidatedNow,
-  shouldRevalidateAuthSession
 }
