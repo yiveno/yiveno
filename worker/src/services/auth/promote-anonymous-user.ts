@@ -30,17 +30,43 @@ export type PromoteAnonymousUserResult =
         | 'promote_failed'
     }
 
+/** Admin 错误归一化（exactOptionalPropertyTypes：缺省键勿写 undefined） */
+export type PromoteAdminError = {
+  code?: string
+  message?: string
+  status?: number
+}
+
 /** Admin updateUserById 可注入（单测）；生产默认走 service_role 客户端。 */
 export type PromoteAdminUpdateUser = (
   userId: string,
   attributes: { email: string; email_confirm: true }
 ) => Promise<{
   data: { user: { id: string; email?: string | null } | null }
-  error: { code?: string; message?: string; status?: number } | null
+  error: PromoteAdminError | null
 }>
 
 export type PromoteAnonymousUserDeps = {
   updateUserById?: PromoteAdminUpdateUser
+}
+
+/** 把 supabase-js AuthError 收成可注入契约（去掉 undefined 字段）。 */
+function normalizePromoteAdminError(error: {
+  code?: string | undefined
+  message?: string | undefined
+  status?: number | undefined
+}): PromoteAdminError {
+  const out: PromoteAdminError = {}
+  if (error.code != null && error.code !== '') {
+    out.code = String(error.code)
+  }
+  if (error.message != null && error.message !== '') {
+    out.message = error.message
+  }
+  if (error.status != null) {
+    out.status = error.status
+  }
+  return out
 }
 
 /** 日志用：掩码邮箱（保留首字符与域名）。 */
@@ -58,11 +84,9 @@ export function maskEmailForLog(email: string): string {
  * 将 Admin updateUser 冲突类错误映射为 email_conflict。
  * 不透传原始 message。
  */
-export function mapPromoteAdminError(error: {
-  code?: string
-  message?: string
-  status?: number
-}): 'email_conflict' | 'promote_failed' {
+export function mapPromoteAdminError(
+  error: PromoteAdminError
+): 'email_conflict' | 'promote_failed' {
   const code = (error.code ?? '').toLowerCase()
   if (
     code === 'email_exists' ||
@@ -119,8 +143,10 @@ export async function promoteAnonymousUser(
     }
   }
 
-  let updateUserById = deps.updateUserById
-  if (!updateUserById) {
+  let updateUserById: PromoteAdminUpdateUser
+  if (deps.updateUserById) {
+    updateUserById = deps.updateUserById
+  } else {
     if (!hasSupabase(env)) {
       return { ok: false, status: 503, error: 'supabase_not_configured' }
     }
@@ -128,7 +154,13 @@ export async function promoteAnonymousUser(
     if (!admin) {
       return { ok: false, status: 503, error: 'supabase_not_configured' }
     }
-    updateUserById = (uid, attributes) => admin.auth.admin.updateUserById(uid, attributes)
+    updateUserById = async (uid, attributes) => {
+      const { data, error } = await admin.auth.admin.updateUserById(uid, attributes)
+      return {
+        data: { user: data.user },
+        error: error ? normalizePromoteAdminError(error) : null
+      }
+    }
   }
 
   try {
