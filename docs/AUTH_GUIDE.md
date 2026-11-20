@@ -1,22 +1,22 @@
 # 认证系统使用指南
 
-> **最后更新：** 2026-10-31  
-> **状态：** Phase C 主路径 = **官网 Supabase Auth**（Email OTP + Google / Microsoft OAuth）→ Worker **铸造**扩展独立会话 → **交接写入扩展**（步骤名 mint / handoff，见下节名词表）。  
+> **最后更新：** 2026-11-20  
+> **状态：** Phase C 主路径 = **官网 Supabase Auth**（Email OTP + Google / Microsoft OAuth）→ Worker **`device-register`** 签发 **device token** → **交接写入扩展**（`YIVENO_AUTH_DEVICE_HANDOFF`）。  
+> 旧 `POST /api/auth/extension-session`（Supabase 会话 mint + 单活跃租约）→ **410**；设计见 [`docs/device-token-design.md`](./device-token-design.md)。  
 > Worker 遗留的自建 OAuth → 自定义 JWT（`/api/auth/start|callback`）**不是**用户主路径。  
-> **扩展接通流程图：** §「扩展 Session：铸造并交接」· registry `auth.extension-session-mint-handoff`（报告：[`docs/diagrams/reports/2026-10-Auth-Extension-Session图表补齐.md`](./diagrams/reports/2026-10-Auth-Extension-Session图表补齐.md)）。  
-> **登录迁移门闸：** §「登录迁移门闸」· registry `auth.login-migration-gate`（报告：[`docs/diagrams/reports/2026-10-Auth-Login-Migration-Gate图表补齐.md`](./diagrams/reports/2026-10-Auth-Login-Migration-Gate图表补齐.md)）。  
+> **登录迁移门闸：** §「登录迁移门闸」· registry `auth.login-migration-gate`。  
 > **用词：** 业内词可直用；本仓专有步骤须白话+释义（与 `.cursor/rules/dev-chinese-plain.mdc` 一致）。
 
 ## 概述
 
 1. **用户在官网 `/login` 登录**（扩展 Settings / 头像「Sign in」只打开该页，**不**弹本机 OAuth）。
-2. 登录方式（并列）：
-   - **Email OTP**：输入邮箱 → Supabase 发信 → **同页邮箱框保留**，下方出现 **8 位**码输入 `verifyOtp`（邮件内 magic link 亦可落 `/auth/callback`）。位数由 Dashboard **Email OTP length** 与仓内 `EMAIL_OTP_LENGTH`（`website/src/services/auth-email.ts`）对齐，**精确匹配、无区间**。冷却未尽时刷新/后退恢复邮箱+码区；码区态邮箱只读，**换邮箱**（en：_Use a different email_；`website/src/i18n`）清 `sessionStorage` 冷却并收起码区后可换址重发。`/login` 用户可见文案经官网 `t()`（en / zh_CN）。
-   - **Google / Microsoft**：Supabase `signInWithOAuth` → `/auth/callback`。
-3. 若本次带接通参数 `connect_extension=1`：官网用当前 access 调 Worker `POST /api/auth/extension-session` **铸造**扩展专用会话 → 再 **交接**给扩展（`YIVENO_AUTH_SESSION_HANDOFF`）。
-4. 纯官网登录（无接通参数）**不**改扩展租约；扩展靠 Connect / UI 桥接通（ADR-018 / ADR-019）。
+2. 登录方式（并列）：Email OTP / Google / Microsoft（细节同下表）。
+3. 若本次带接通参数 `connect_extension=1`：官网用当前 access 调 Worker `POST /api/auth/device-register`（`mode=website_connect`）签发 device token → **交接**（`YIVENO_AUTH_DEVICE_HANDOFF`）。多设备可并存（软上限 20）；**无** 409 / 挤掉弹窗。
+4. 纯官网登录（无接通参数）**不**改扩展设备；扩展靠 Connect / UI 桥接通（ADR-018 / ADR-019）。
+5. 反向接通：扩展 device Bearer → `POST /api/auth/website-session`（匿名无 email → `email_required`）。
+6. 账户页 **Devices**：列表 / 改名 / 撤销（官网 JWT）。
 
-权威行为契约：产品文档 **§登录态对齐**；身份隔离见 ADR-018；UI 桥见 ADR-019。
+权威行为契约：产品文档 **§登录态对齐**；身份隔离见 ADR-018；UI 桥见 ADR-019；设备 token 规格见 `docs/device-token-design.md`。
 
 ---
 
@@ -71,14 +71,16 @@
 
 ## 关键代码路径
 
-| 面                    | 路径                                                 | 职责                                                        |
-| --------------------- | ---------------------------------------------------- | ----------------------------------------------------------- |
-| 官网登录 UI           | `website/src/components/LoginForm.vue`               | Email OTP + OAuth；connect 收尾                             |
-| 官网 Auth API         | `website/src/services/auth.ts`                       | `signInWithOAuth` / `signInWithEmailOtp` / `verifyEmailOtp` |
-| 邮箱格式              | `website/src/services/auth-email.ts`                 | 校验 / 规范化                                               |
-| OAuth·magic link 回调 | `website/src/components/AuthCallback.vue`            | setSession / exchangeCode → 进入铸造并交接                  |
-| 铸造扩展会话          | `worker/src/services/auth/mint-extension-session.ts` | 独立 refresh；须有 email（代码模块名含 mint）               |
-| 扩展接收并写入会话    | `extension/.../external-auth-handoff.ts`             | 校验后写入；**不**发起 OAuth（交接 handoff）                |
+| 面                    | 路径                                                    | 职责                                                        |
+| --------------------- | ------------------------------------------------------- | ----------------------------------------------------------- |
+| 官网登录 UI           | `website/src/components/LoginForm.vue`                  | Email OTP + OAuth；connect 收尾                             |
+| 官网 Auth API         | `website/src/services/auth.ts`                          | `signInWithOAuth` / `signInWithEmailOtp` / `verifyEmailOtp` |
+| 邮箱格式              | `website/src/services/auth-email.ts`                    | 校验 / 规范化                                               |
+| OAuth·magic link 回调 | `website/src/components/AuthCallback.vue`               | setSession / exchangeCode → 设备注册并交接                  |
+| 设备注册              | `worker/src/services/auth/device-register.ts`           | 签发 `ydt_` device token；软上限 20                         |
+| 设备列表/改名/撤销    | `worker/.../device-token-kv.ts` + `/api/auth/devices*`  | 官网 JWT；账户页 Devices                                    |
+| 官网 register+handoff | `website/.../register-device-from-website.ts` + handoff | `registerAndHandoffDeviceToExtension`                       |
+| 扩展接收并写入        | `extension/.../external-auth-handoff.ts`                | 写入 `yiveno:device_session`；**不**发起 OAuth              |
 
 ---
 
@@ -95,7 +97,7 @@
 
 ### Q: 为什么不在扩展里弹 Google 登录？
 
-A: 产品规定官网为唯一用户向登录壳；扩展只接收**交接写入**的独立会话（避免 chrome.identity 主路径与双会话契约冲突）。
+A: 产品规定官网为唯一用户向登录壳；扩展只接收**交接写入**的 device token（避免 chrome.identity 主路径与双会话契约冲突）。
 
 ### Q: 中国用户怎么登录？
 
@@ -105,109 +107,92 @@ A: 用 **Email OTP**（可达邮箱）。Google / Microsoft 在大陆常不可�
 
 A: **自动关联（Automatic linking）默认始终开启，Dashboard 没有开关可关**（官方文档 + 社区确认）。同一**已验证**邮箱的 Google / Email OTP / Microsoft 会落到**同一个** `auth.users` 行。Dashboard 里能看到的是 **Allow manual linking**（`GOTRUE_SECURITY_MANUAL_LINKING_ENABLED` / 本地 `enable_manual_linking`）——那是给**不同邮箱**在已登录态用 `linkIdentity()` 手动绑身份用的，与「同邮箱自动合并」无关；本仓默认关、产品面也不做跨 provider 人工合并 UI。
 
-### Q: 铸造扩展会话为什么要求 email？
+### Q: 设备注册 / 反向接通为什么有时要求 email？
 
-A: Worker 用 Admin magiclink 路径铸造扩展会话；无 email → `email_required`。故新身份提供方也须产出带 email 的用户（或先改铸造契约）。
+A: **官网→扩展** `device-register`（`website_connect`）可用匿名官网会话签发 device token。**扩展→官网** `website-session` 仍依赖带 email 的用户才能铸官网会话；匿名无 email → `email_required`（引导转正）。勿把两条路径的 email 要求混为一谈。
 
 ---
 
-## 扩展 Session：铸造并交接（官网 → 扩展）
+## 设备注册并交接（官网 → 扩展）
 
-> **范围：** 已有**官网**登录会话之后，如何**新造一套扩展专用登录会话**并写入扩展本机。  
-> **不含：** Cloudflare Turnstile / OTP / OAuth 建立官网会话（见 `turnstile.*`）；扩展→官网反铸 `website-session`；登录迁移门闸（见下节 `auth.login-migration-gate`）；Pro 云同步；遗留「官网退出顺带踢扩展」路径（新产品路径**不**踢）。  
-> **安全铁律（代码 + Normative 一致）：** 扩展持有**独立** refresh；**禁止**把官网 refresh 直接塞进扩展；Connect ≠ Sign in；access / refresh / 作废票 / 交接载荷**勿混为同一凭证**。
+> **范围：** 已有**官网**登录会话之后，如何签发 **device token** 并写入扩展本机。  
+> **不含：** Turnstile / OTP / OAuth 建官网会话；登录迁移门闸；Pro 云同步；官网退出踢扩展（新产品路径**不**踢）。  
+> **安全铁律：** **禁止**把官网 refresh 塞进扩展；Connect ≠ Sign in；device token / 作废票 / 官网 access **勿混**；UI 桥 **禁止**传 token（ADR-019）。  
+> **已退役：** 单活跃租约 / 409 挤掉 / `YIVENO_AUTH_SESSION_HANDOFF` 传 Supabase 会话；旧 `POST /api/auth/extension-session` → **410**。
 
 ### 读图名词（业内通用 vs 本仓专有）
 
-| 说法                           | 归类                                                | 含义                                                                         |
-| ------------------------------ | --------------------------------------------------- | ---------------------------------------------------------------------------- |
-| **session / access / refresh** | 业内（OAuth/OIDC 常见）                             | 登录会话；短命访问令牌；长命刷新令牌                                         |
-| **OTP / OAuth / Bearer**       | 业内                                                | 邮箱一次性码；第三方登录；HTTP `Authorization: Bearer …`                     |
-| **409**                        | 业内（HTTP）                                        | 冲突；此处表示「他端扩展会话占着，需确认是否挤掉」                           |
-| **幂等**                       | 业内                                                | 再做一次结果不变；此处 = 扩展已登录则不再铸造                                |
-| **Turnstile**                  | **产品名**（Cloudflare）                            | 官网发码前的人机验证组件，**不是**通用鉴权步骤名                             |
-| **铸造（mint）**               | 业内偶用「mint a token」；**本仓步骤名**            | Worker **新造**扩展专用会话（独立 refresh 族），不是拷贝官网会话             |
-| **交接（handoff）**            | 英语常义；**本仓协议步骤**                          | 官网把刚铸好的扩展令牌交给扩展写入本地（消息 `YIVENO_AUTH_SESSION_HANDOFF`） |
-| **探测登录态**                 | **本仓消息**（代码里常叫 `STATUS_PROBE`）           | 官网问扩展：是否已登录、是哪个用户；兼唤醒 Service Worker                    |
-| **挤掉他端 / 收回租约**        | **本仓策略**（代码 `displace` / `LEASE_RECLAIM_*`） | 同一账号扩展侧通常单活跃；确认后撤销旧扩展会话再铸造                         |
-| **作废票**                     | **本仓字段**（`uninstallRevokeToken`）              | 卸载或交接失败时一次性作废刚铸会话；**不是** refresh                         |
-| **静默并库**                   | **本仓禁语**（旧实现曾称 absorb）                   | 登录后偷偷把本机摘录并进账号——**已禁止**，改走迁移门闸                       |
-| **接通参数**                   | **本仓 URL 查询串**（`connect_extension=1`）        | 标记「这次官网登录是为了接通扩展」；没有则只登官网                           |
-| **UI 桥**                      | **本仓**（ADR-019 · `chrome.runtime` Port）         | 同浏览器官网页↔扩展的编排通道；**禁止**传 token                              |
+| 说法                     | 归类                                   | 含义                                                                  |
+| ------------------------ | -------------------------------------- | --------------------------------------------------------------------- |
+| **OTP / OAuth / Bearer** | 业内                                   | 邮箱一次性码；第三方登录；HTTP `Authorization: Bearer …`              |
+| **幂等**                 | 业内                                   | 扩展已是同一用户则不再注册                                            |
+| **Turnstile**            | **产品名**（Cloudflare）               | 官网发码前人机验证；**不是**鉴权步骤名                                |
+| **设备注册**             | **本仓步骤**                           | Worker `POST /api/auth/device-register` 签发 `ydt_` opaque token      |
+| **交接（handoff）**      | **本仓协议步骤**                       | 官网把 device 载荷交给扩展（`YIVENO_AUTH_DEVICE_HANDOFF`）            |
+| **探测登录态**           | **本仓消息**（`STATUS_PROBE`）         | 官网问扩展是否已登录 / 哪位用户；兼唤醒 SW                            |
+| **作废票**               | **本仓字段**（`uninstallRevokeToken`） | payload=`{userId,deviceId}`；卸载或 handoff 失败时撤该设备；≠ refresh |
+| **静默并库**             | **本仓禁语**（旧 absorb）              | 登录后偷偷并入本机摘录——**已禁止**                                    |
+| **接通参数**             | **本仓 URL**（`connect_extension=1`）  | 标记「这次登录是为了接通扩展」                                        |
+| **UI 桥**                | **本仓**（ADR-019）                    | 同浏览器官网页↔扩展编排；**禁止**传 token                             |
 
-凭证分工（读图前先分清）：
+凭证分工：
 
-| 凭证                                           | 谁持有                             | 用途                                            |
-| ---------------------------------------------- | ---------------------------------- | ----------------------------------------------- |
-| 官网 `access_token`                            | 官网 Supabase 会话                 | 仅作 Worker 铸造接口的 Bearer；**不**写入扩展   |
-| 扩展 `access_token` + **独立** `refresh_token` | 扩展 `chrome.storage.local`        | 交接写入；扩展日后刷新 / 调 API                 |
-| 作废票 `uninstallRevokeToken`                  | 铸造响应 → 交接旁路登记 / 失败回滚 | 一次性销扩展会话 + 服务端租约；**不是** refresh |
-| UI 桥 Port 消息                                | 同浏览器编排                       | **禁止**传任何 token（ADR-019）                 |
-
-<!-- diagram: id=auth.extension-session-mint-handoff kind=flowchart status=implemented -->
+| 凭证                          | 谁持有                       | 用途                                            |
+| ----------------------------- | ---------------------------- | ----------------------------------------------- |
+| 官网 `access_token`           | 官网 Supabase 会话           | Worker `device-register` Bearer；**不**写入扩展 |
+| 扩展 `deviceToken`（`ydt_`）  | 扩展 `yiveno:device_session` | 调 Worker `deviceAuth`；多设备可并存（上限 20） |
+| 作废票 `uninstallRevokeToken` | 注册响应 → 卸载 URL / 回滚   | 一次性撤该 `deviceId`；**不是** refresh         |
+| UI 桥 Port 消息               | 同浏览器编排                 | **禁止**传任何 token（ADR-019）                 |
 
 ```mermaid
 flowchart TD
   Start([需要把官网账号接到扩展]) --> Entry{入口?}
 
   Entry -->|扩展 Sign in| OpenLogin[打开登录页<br/>带接通扩展参数]
-  OpenLogin --> WebLogin[用户 OTP/OAuth → 官网已登录<br/>发码前人机验证见 Turnstile 图]
-  WebLogin --> MintGate
+  OpenLogin --> WebLogin[用户 OTP/OAuth → 官网已登录]
+  WebLogin --> RegGate
 
-  Entry -->|扩展 Connect<br/>官网已登录| ExtSess{扩展本地是否已有会话?}
-  ExtSess -->|是| IdemOk[直接成功 · 幂等 · 不再铸造]
-  ExtSess -->|否| PortQ{同浏览器 UI 桥<br/>约 2s 内有应答?}
+  Entry -->|扩展 Connect<br/>官网已登录| ExtSess{扩展本地是否已有设备会话?}
+  ExtSess -->|是同用户| IdemOk[直接成功 · 幂等 · 不再注册]
+  ExtSess -->|否| PortQ{同浏览器 UI 桥有应答?}
   PortQ -->|有| Bridge[桥消息请官网页发起接通<br/>不传 token]
   PortQ -->|无| OpenAcct[打开账户页<br/>带接通扩展参数]
-  Bridge --> MintGate
-  OpenAcct --> MintGate
+  Bridge --> RegGate
+  OpenAcct --> RegGate
 
-  MintGate{{进入铸造并交接<br/>须浏览器临时接通标记<br/>禁止仅凭上次扩展 id 静默重铸}}
-  MintGate --> Probe[探测扩展登录态<br/>并唤醒扩展后台]
+  RegGate{{进入设备注册并交接<br/>须临时接通标记}}
+  RegGate --> Probe[探测扩展登录态]
   Probe --> SameUser{扩展已是同一用户?}
-  SameUser -->|是| SkipMint[跳过铸造 · 清临时标记<br/>记下扩展 id]
-  SameUser -->|否| MintReq[请求 Worker 铸造扩展会话<br/>用官网 access 作 Bearer<br/>不得用官网 refresh]
+  SameUser -->|是| SkipReg[跳过注册 · 清临时标记]
+  SameUser -->|否| RegReq[POST device-register<br/>官网 access 作 Bearer]
+  RegReq --> RegRes{结果?}
+  RegRes -->|失败 / 达上限 20| NoHandoff[不交接]
+  RegRes -->|成功| Tokens[得到 deviceToken + deviceId<br/>及可选作废票]
+  Tokens --> Handoff[YIVENO_AUTH_DEVICE_HANDOFF]
+  Handoff --> HofOk{成功且用户一致?}
+  HofOk -->|是| Write[写入 yiveno:device_session<br/>禁止静默并库]
+  HofOk -->|否| Rollback[device-revoke-self / 作废票回滚]
 
-  MintReq --> MintRes{铸造结果?}
-  MintRes -->|失败<br/>如缺邮箱等| NoHandoff[不交接<br/>禁止把官网 refresh 塞进扩展]
-  MintRes -->|409 需确认挤掉| Reclaim[探测本机能否收回旧扩展租约]
-  Reclaim --> Orphan{本机孤儿租约可收回?}
-  Orphan -->|是| ConfirmMint[确认挤掉后再次铸造<br/>先硬撤旧扩展会话]
-  Orphan -->|否 · 他端占用| AskUser{用户确认挤掉他端?}
-  AskUser -->|确认| ConfirmMint
-  AskUser -->|取消| AbortDisp[Connect：只清临时标记 · 留官网登录<br/>Sign in：可中止并退回登录页]
-  ConfirmMint --> MintRes2{再次铸造?}
-  MintRes2 -->|失败| NoHandoff
-  MintRes2 -->|成功| Tokens
-  MintRes -->|成功| Tokens[得到扩展 access + 独立 refresh<br/>及可选作废票]
-
-  Tokens --> Handoff[交接：把扩展令牌发给扩展写入<br/>先探测/唤醒后台 · 超时约 8s · 可短重试]
-  Handoff --> HofOk{交接成功且用户一致?}
-  HofOk -->|是| Write[写入扩展本地存储<br/>会话 + 账号绑定<br/>租约闹钟等<br/>禁止静默并库]
-  Write --> BridgeOk[若经 UI 桥 Connect<br/>回告官网接通成功]
-  BridgeOk --> Alive[之后扩展用自有 refresh 续命<br/>与官网会话生命周期独立]
-  HofOk -->|否| Rollback[用作废票回滚刚铸的会话/租约]
-
-  NotePure[纯官网登录页<br/>不带接通参数 → 不进本图]
+  NotePure[纯官网登录<br/>无接通参数 → 不进本图]
   Start -.-> NotePure
 ```
 
 **入口对照（勿混）：**
 
-| 入口       | 代码路径（对照实现）                                            | 何时用                                     |
+| 入口       | 代码路径                                                        | 何时用                                     |
 | ---------- | --------------------------------------------------------------- | ------------------------------------------ |
 | Sign in    | `AUTH_SIGN_IN` → `/login?connect_extension=1`                   | 扩展**未**登录；须用户在官网完成 OTP/OAuth |
 | Connect    | `AUTH_CONNECT_WEBSITE` → UI 桥或 `/account?connect_extension=1` | 官网**已**登录；**禁止**先开登录壳         |
-| 纯官网登录 | `/login` 无接通参数                                             | **不**铸造、**不**改扩展租约               |
+| 纯官网登录 | `/login` 无接通参数                                             | **不**注册、**不**改扩展设备               |
 
-**故意不画进本图：** 扩展→官网反铸会话；登录迁移三选一（下节）；云同步门禁；卸载落地页全时序（仅涉及作废票回滚边）。
+**故意不画：** 扩展→官网 `website-session`；登录迁移三选一；账户页 Devices 管理；卸载落地页全时序。
 
 ---
 
 ## 登录迁移门闸（无主摘录 · ADR-018）
 
 > **范围：** 扩展**已**绑定账号之后，如何识别「未登录期间写在本地档的摘录」，以及用户 Import / Export / Delete 对归属的后果。  
-> **不含：** 上节「铸造并交接」；**静默并库**（旧称 absorb，**已拆除**）；外账号脏数据清理（Settings 旁路）；云同步对齐（ADR-017 · `sync.excerpt-cloud-pro-gate`）。  
+> **不含：** 上节「设备注册并交接」；**静默并库**（旧称 absorb，**已拆除**）；外账号脏数据清理（Settings 旁路）；云同步对齐（ADR-017 · `sync.excerpt-cloud-pro-gate`）。  
 > **无主定义（代码 = Normative）：** 仅本地档 `localProfileId` 上的 `text_excerpt`（盘点看未软删；Export/Delete 可含软删）；**不**扫描其它账号桶。
 
 **读图小词：**
@@ -273,7 +258,7 @@ flowchart TD
 | **失败**                            | 不变                                       | 不变                                     | 主窗不关 + 错误文案           |
 | **「取消主窗」**                    | —                                          | —                                        | **未实现**（无 Esc/无关闭钮） |
 
-账号交接成功路径只强调「禁止静默并库」；**真正弹窗**靠上述界面刷新，与 `auth.extension-session-mint-handoff` **分图**。
+账号交接成功路径只强调「禁止静默并库」；**真正弹窗**靠上述界面刷新，与上节「设备注册并交接」**分图**。
 ---
 
 ## 相关文档
@@ -282,4 +267,5 @@ flowchart TD
 - [ADR-018](./architecture/decisions/ADR-018-account-profile-data-isolation.md)
 - [ADR-019](./architecture/decisions/ADR-019-website-extension-ui-bridge.md)
 - [ENVIRONMENT](./ENVIRONMENT.md)
-- [图表 registry](./diagrams/registry.json) · `auth.extension-session-mint-handoff` · `auth.login-migration-gate`
+- [图表 registry](./diagrams/registry.json) · `auth.login-migration-gate`（旧 `auth.extension-session-mint-handoff` 图语义已过时；以本节「设备注册并交接」为准）
+- 设备 token 规格：[`docs/device-token-design.md`](./device-token-design.md)

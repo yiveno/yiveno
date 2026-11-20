@@ -115,6 +115,7 @@ describe('handleDeviceRegister', () => {
     expect(result.data.isAnonymous).toBe(true)
     expect(result.data.email).toBeNull()
     expect(isDeviceTokenFormat(result.data.deviceToken)).toBe(true)
+    expect(result.data.uninstallRevokeToken).toBeTruthy()
     const meta = await getUserMeta(env, userId)
     expect(meta?.isAnonymous).toBe(true)
   })

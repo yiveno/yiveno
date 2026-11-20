@@ -15,8 +15,7 @@ const {
   ensureDeviceSessionReadyMock,
   clearAuthValidationTimestampMock,
   clearExtensionUninstallRevokeMock,
-  openWebsiteLoginPageMock,
-  maybeWriteExtensionDisplacedNoticeMock
+  openWebsiteLoginPageMock
 } = vi.hoisted(() => ({
   clearAuthSessionMock: vi.fn(),
   getAccountBindingMock: vi.fn(),
@@ -32,8 +31,7 @@ const {
   ensureDeviceSessionReadyMock: vi.fn(),
   clearAuthValidationTimestampMock: vi.fn(),
   clearExtensionUninstallRevokeMock: vi.fn(),
-  openWebsiteLoginPageMock: vi.fn(),
-  maybeWriteExtensionDisplacedNoticeMock: vi.fn()
+  openWebsiteLoginPageMock: vi.fn()
 }))
 
 vi.mock('@/infrastructure/identity/auth-session-service', () => ({
@@ -141,22 +139,6 @@ vi.mock('@/infrastructure/auth/extension-uninstall-url', () => ({
   registerExtensionUninstallRevoke: vi.fn(async () => undefined)
 }))
 
-vi.mock('@/infrastructure/storage/extension-displaced-notice-storage', () => ({
-  maybeWriteExtensionDisplacedNotice: maybeWriteExtensionDisplacedNoticeMock,
-  writeExtensionDisplacedNotice: vi.fn()
-}))
-
-vi.mock('@/infrastructure/storage/last-extension-lease-session-storage', () => ({
-  clearLastExtensionLeaseSessionId: vi.fn(async () => undefined),
-  writeLastExtensionLeaseSessionId: vi.fn(async () => undefined),
-  readLastExtensionLeaseSessionId: vi.fn(async () => null),
-  isExtensionLeaseReclaimable: vi.fn(async () => false)
-}))
-
-vi.mock('@/infrastructure/auth/auth-session-lease-alarm', () => ({
-  ensureAuthSessionLeaseAlarm: vi.fn(async () => undefined)
-}))
-
 vi.mock('@/infrastructure/logging/flow-log', () => ({
   flowStart: () => 0,
   flowOk: vi.fn(),
@@ -167,7 +149,7 @@ import { handleGetAuthState } from '@/background/handlers/account-sync-handler'
 
 const accountId = '22222222-2222-4222-8222-222222222222'
 
-describe('handleGetAuthState · 被挤掉 / refresh 作废', () => {
+describe('handleGetAuthState · refresh 作废', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.stubGlobal('chrome', { runtime: { id: 'ext-under-test' } })
@@ -175,7 +157,6 @@ describe('handleGetAuthState · 被挤掉 / refresh 作废', () => {
       accountId,
       boundAt: '2026-08-01T00:00:00.000Z'
     })
-    // 默认走旧 Supabase 路径（迁移窗口）
     getDeviceSessionMock.mockResolvedValue(null)
     ensureDeviceSessionReadyMock.mockResolvedValue({ device: null, note: 'no_legacy' })
     getAuthSessionMock.mockResolvedValue({
@@ -193,7 +174,6 @@ describe('handleGetAuthState · 被挤掉 / refresh 作废', () => {
     clearAuthValidationTimestampMock.mockResolvedValue(undefined)
     clearExtensionUninstallRevokeMock.mockResolvedValue(false)
     openWebsiteLoginPageMock.mockResolvedValue(undefined)
-    maybeWriteExtensionDisplacedNoticeMock.mockResolvedValue(false)
     listAllByOwnerIdMock.mockResolvedValue([])
     remapAccountLibraryToLocalProfileMock.mockResolvedValue({
       clearedCount: 0,
@@ -203,12 +183,11 @@ describe('handleGetAuthState · 被挤掉 / refresh 作废', () => {
     writeSignOutRemapNoticeMock.mockResolvedValue(undefined)
   })
 
-  it('revalidate invalid（非 lease displaced）→ 全量回迁 + flush 成功文案、不写 elsewhere 软条', async () => {
+  it('revalidate invalid → 全量回迁 + flush 成功文案', async () => {
     revalidateAuthSessionMock.mockResolvedValue({
       status: 'invalid',
       reason: 'session_revoked'
     })
-    maybeWriteExtensionDisplacedNoticeMock.mockResolvedValue(false)
 
     const result = await handleGetAuthState()
 
@@ -222,12 +201,9 @@ describe('handleGetAuthState · 被挤掉 / refresh 作废', () => {
     expect(writeSignOutRemapNoticeMock).toHaveBeenCalledWith(true)
     expect(clearAuthSessionMock).toHaveBeenCalled()
     expect(clearAccountBindingMock).toHaveBeenCalled()
-    // 非 displaced 作废也尽力释放远程（防孤儿租约）；release 仅清仍指向本 session 的租约
     expect(clearExtensionUninstallRevokeMock).toHaveBeenCalledWith({
-      revokeRemote: true,
-      accessTokenFallback: 'at'
+      revokeRemote: true
     })
-    expect(maybeWriteExtensionDisplacedNoticeMock).toHaveBeenCalledWith('session_revoked')
     expect(openWebsiteLoginPageMock).not.toHaveBeenCalled()
   })
 
@@ -248,27 +224,6 @@ describe('handleGetAuthState · 被挤掉 / refresh 作废', () => {
     expect(clearAuthSessionMock).toHaveBeenCalled()
   })
 
-  it('revalidate invalid（lease displaced）→ 回迁 + 写 elsewhere 软条', async () => {
-    revalidateAuthSessionMock.mockResolvedValue({
-      status: 'invalid',
-      reason: 'extension_session_displaced'
-    })
-    maybeWriteExtensionDisplacedNoticeMock.mockResolvedValue(true)
-
-    await handleGetAuthState()
-
-    expect(remapAccountLibraryToLocalProfileMock).toHaveBeenCalledWith(accountId)
-    expect(writeSignOutRemapNoticeMock).toHaveBeenCalledWith(true)
-    expect(maybeWriteExtensionDisplacedNoticeMock).toHaveBeenCalledWith(
-      'extension_session_displaced'
-    )
-    expect(clearAuthSessionMock).toHaveBeenCalled()
-    expect(clearExtensionUninstallRevokeMock).toHaveBeenCalledWith({
-      revokeRemote: true,
-      accessTokenFallback: 'at'
-    })
-  })
-
   it('revalidate uncertain → 保留登录态，不打开 login', async () => {
     revalidateAuthSessionMock.mockResolvedValue({
       status: 'uncertain',
@@ -282,7 +237,6 @@ describe('handleGetAuthState · 被挤掉 / refresh 作废', () => {
     expect(result.signedIn).toBe(true)
     expect(clearAuthSessionMock).not.toHaveBeenCalled()
     expect(openWebsiteLoginPageMock).not.toHaveBeenCalled()
-    expect(maybeWriteExtensionDisplacedNoticeMock).not.toHaveBeenCalled()
   })
 
   it('device 会话 401 invalid + 正式 → 全量回迁，不走 uninstall revoke', async () => {

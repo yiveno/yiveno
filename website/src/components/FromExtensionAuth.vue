@@ -154,7 +154,17 @@ async function continueFromExtension(): Promise<void> {
   ) {
     console.warn('[FromExtensionAuth] website session request failed', response)
     phase.value = 'error'
-    status.value = t('from_extension.error_mint')
+    const err =
+      typeof response === 'object' &&
+      response !== null &&
+      typeof (response as { error?: unknown }).error === 'string'
+        ? (response as { error: string }).error
+        : ''
+    // 匿名设备无 email：明确引导转正，不得静默失败
+    status.value =
+      err === 'email_required'
+        ? t('from_extension.error_email_required')
+        : t('from_extension.error_mint')
     window.setTimeout(() => {
       window.location.replace(`/login?next=${encodeURIComponent(nextPathRef.value)}`)
     }, 1600)

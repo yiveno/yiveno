@@ -1,9 +1,9 @@
 ---
 created: 2026-11-20 14:57 +0800
-updated: 2026-11-20 15:52 +0800
+updated: 2026-11-20 19:50 +0800
 author: agent:cursor
 scope: S0 设备 token（D 方案）设计稿；不实施产品代码
-status: draft
+status: implemented-s1
 upstream:
   - docs/AUTH_GUIDE.md
   - docs/architecture/decisions/ADR-018-account-profile-data-isolation.md
@@ -418,22 +418,27 @@ E **不**解决「扩展持 Supabase 会话 + 匿名直 signup + 转正强制 re
 
 ---
 
-## 10. 开放问题（≤5；附推荐）
+## 10. 开放问题（≤5；附推荐）→ **S1 采取结果（2026-11-20）**
 
 1. **匿名用户能否反向接通官网？**  
-   **推荐：** 不能直接铸官网会话（`issueSupabaseUserSession` 今日硬依赖 email）；Open account 引导转正或「加邮箱」。避免为匿名打通 generateLink 特例。
+   **推荐：** 不能直接铸官网会话；Open account 引导转正。  
+   **S1 采取：** 是——`website-session` 仍 `email_required`；扩展回传明确错误；官网 L1 文案 `from_extension.error_email_required`。
 
 2. **设备上限？**  
-   **推荐：** 软上限 **20** 台 / 账号；超出拒绝新注册并提示撤销旧设备。防 token 膨胀与滥用。
+   **推荐：** 软上限 **20** 台 / 账号；超出拒绝新注册。  
+   **S1 采取：** `DEVICE_CAP_PER_USER = 20`；`issueDeviceToken` / `device-register` → `403 device_limit_reached`（不 LRU 踢旧）。
 
 3. **升级窗口是否双栈鉴权？**  
-   **推荐：** 是——`deviceAuthOrSupabaseAuth` 维持 **一个** 扩展发布周期；遥测显示旧会话占比 <1% 再关掉 Supabase 分支。
+   **推荐：** `deviceAuthOrSupabaseAuth` 维持一个发布周期。  
+   **S1 采取：** **保留** dual-auth 与 `yiveno:auth_session` 读写；**不**删本批。
 
 4. **卸载票是否保留独立 KV？**  
-   **推荐：** 保留一次性卸载票，但 payload 改为 `{ userId, deviceId }`（不再 `sessionId`）；消费时删 `devtok`。无票的主动退出走 `device-revoke-self`。
+   **推荐：** 保留；payload `{ userId, deviceId }`；消费删 `devtok`。  
+   **S1 采取：** 是——`ext_uninstall_revoke:` 仍用；消费走 `revokeDeviceById`；无票退出 → `device-revoke-self`。
 
 5. **`user_meta` 与 Supabase `is_anonymous` 冲突时以谁为准？**  
-   **推荐：** 配额与门禁以 **`user_meta` 为准**；定期/转正/注册时与 Admin 对齐；发现不一致打 warn 并以 Admin 回写 `user_meta`。
+   **推荐：** 配额/门禁以 **`user_meta` 为准**。  
+   **S1 采取：** 已在 W1'/device-register 路径落地；本批未改配额 tier。
 
 ---
 
@@ -456,4 +461,4 @@ E **不**解决「扩展持 Supabase 会话 + 匿名直 signup + 转正强制 re
 
 - 路径：`docs/device-token-design.md`（与 `docs/AUTH_GUIDE.md` 同级）。
 - 未放入 `docs/design/`：该目录为**视觉/品牌**标准（`Yiveno-设计标准-v1.md`），非鉴权架构。
-- 实现批落地后：应回写 `AUTH_GUIDE.md`、产品文档 §登录态对齐、ADR-018 中与「扩展单活跃」冲突的表述，并考虑新增 ADR「扩展鉴权改 device token」。
+- **S1（2026-11-20）已落地：** `AUTH_GUIDE.md`、产品文档 §登录态对齐、ADR-018 §4 已改写；代码拆除租约/409/displaced；官网 Devices + cap 20。后续可另开 ADR「扩展鉴权改 device token」固化决策（本文件仍为规格权威）。

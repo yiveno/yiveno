@@ -9,6 +9,12 @@ import { warn } from '../../utils/logger'
 /** Bearer / 存储用前缀（与 JWT / uninstall revoke 区分） */
 export const DEVICE_TOKEN_PREFIX = 'ydt_' as const
 
+/** 每账号设备软上限（设计 §10）；超出拒绝新注册 */
+export const DEVICE_CAP_PER_USER = 20 as const
+
+/** 设备展示名长度上限（trim 后） */
+export const DEVICE_LABEL_MAX_LEN = 64 as const
+
 const DEVTOK_PREFIX = 'devtok:' as const
 const USER_DEVS_PREFIX = 'user_devs:' as const
 const USER_META_PREFIX = 'user_meta:' as const
@@ -27,7 +33,7 @@ export type DeviceTokenRecord = {
   revokedAt?: string
 }
 
-/** 用户设备索引行 */
+/** 用户设备索引行（含完整 token，仅服务端；API 响应不得外泄） */
 type UserDeviceIndexEntry = {
   deviceId: string
   deviceLabel: string
@@ -36,6 +42,17 @@ type UserDeviceIndexEntry = {
   lastSeenAt: string
   /** token 末 8 字符，仅运维对照，非密钥 */
   tokenKeySuffix: string
+  /** 完整 device token；用于按 deviceId 撤销 / 核对 devtok 存在性 */
+  deviceToken?: string
+}
+
+/** 对官网/扩展暴露的设备列表行（无 token） */
+export type DeviceListItem = {
+  deviceId: string
+  name: string
+  platform: string
+  lastSeenAt: string
+  createdAt: string
 }
 
 export type UserDevicesIndex = {
@@ -204,7 +221,57 @@ export async function putUserMeta(
 }
 
 /**
+ * 列出用户设备：从 user_devs 取 id 后逐个核对 `devtok:` 存在性；
+ * 索引漂移（无对应 token）的行不返回，并尽力从索引剔除。
+ */
+export async function listDevicesForUser(
+  env: Env,
+  userId: string
+): Promise<{ ok: true; devices: DeviceListItem[] } | { ok: false; error: 'kv_unavailable' }> {
+  if (!env.AI_USAGE_KV) return { ok: false, error: 'kv_unavailable' }
+  const index = await getUserDevicesIndex(env, userId)
+  const devices: DeviceListItem[] = []
+  const kept: UserDeviceIndexEntry[] = []
+  let drifted = false
+
+  for (const entry of index.devices) {
+    const token = entry.deviceToken?.trim()
+    if (!token) {
+      drifted = true
+      continue
+    }
+    const record = await getDeviceTokenRecord(env, token)
+    if (!record || record.revokedAt || record.userId !== userId) {
+      drifted = true
+      continue
+    }
+    kept.push({
+      ...entry,
+      deviceLabel: record.deviceLabel,
+      platform: record.platform,
+      lastSeenAt: record.lastSeenAt,
+      createdAt: record.createdAt,
+      deviceToken: token
+    })
+    devices.push({
+      deviceId: record.deviceId,
+      name: record.deviceLabel,
+      platform: record.platform,
+      lastSeenAt: record.lastSeenAt,
+      createdAt: record.createdAt
+    })
+  }
+
+  if (drifted) {
+    await putUserDevicesIndex(env, userId, { devices: kept })
+  }
+
+  return { ok: true, devices }
+}
+
+/**
  * 签发一条 device token：写 devtok + 追加 user_devs（不挤掉其它设备）。
+ * 已达 {@link DEVICE_CAP_PER_USER}（按存活设备计）→ `device_limit_reached`。
  */
 export async function issueDeviceToken(
   env: Env,
@@ -225,8 +292,22 @@ export async function issueDeviceToken(
       isAnonymous: boolean
       email: string | null
     }
-  | { ok: false; error: 'kv_unavailable' | 'kv_put_failed' }
+  | { ok: false; error: 'kv_unavailable' | 'kv_put_failed' | 'device_limit_reached' }
 > {
+  if (!env.AI_USAGE_KV) return { ok: false, error: 'kv_unavailable' }
+
+  // 先列存活设备再判 cap（顺带清漂移索引）
+  const listed = await listDevicesForUser(env, input.userId)
+  if (!listed.ok) return listed
+  if (listed.devices.length >= DEVICE_CAP_PER_USER) {
+    warn('[DeviceAuth] 设备数已达上限，拒绝签发', {
+      userId: input.userId,
+      count: listed.devices.length,
+      cap: DEVICE_CAP_PER_USER
+    })
+    return { ok: false, error: 'device_limit_reached' }
+  }
+
   const deviceToken = createDeviceToken()
   const deviceId = crypto.randomUUID()
   const now = new Date().toISOString()
@@ -255,7 +336,8 @@ export async function issueDeviceToken(
     platform,
     createdAt: now,
     lastSeenAt: now,
-    tokenKeySuffix: deviceToken.slice(-8)
+    tokenKeySuffix: deviceToken.slice(-8),
+    deviceToken
   })
   const putIdx = await putUserDevicesIndex(env, input.userId, index)
   if (!putIdx.ok) {
@@ -287,6 +369,102 @@ export async function issueDeviceToken(
     userId: input.userId,
     isAnonymous,
     email: metaEmail
+  }
+}
+
+/**
+ * 按 deviceId 撤销（仅限 ownerUserId 名下）。
+ * 不存在 / 非本人 → not_found（不泄露归属）。
+ */
+export async function revokeDeviceById(
+  env: Env,
+  ownerUserId: string,
+  deviceId: string
+): Promise<
+  | { ok: true; revoked: true; deviceToken: string }
+  | { ok: true; revoked: false; reason: 'not_found' }
+  | { ok: false; error: 'kv_unavailable' }
+> {
+  if (!env.AI_USAGE_KV) return { ok: false, error: 'kv_unavailable' }
+  const trimmedId = deviceId.trim()
+  if (!trimmedId) {
+    return { ok: true, revoked: false, reason: 'not_found' }
+  }
+
+  const index = await getUserDevicesIndex(env, ownerUserId)
+  const entry = index.devices.find(d => d.deviceId === trimmedId)
+  const token = entry?.deviceToken?.trim()
+  if (!token) {
+    return { ok: true, revoked: false, reason: 'not_found' }
+  }
+
+  const record = await getDeviceTokenRecord(env, token)
+  if (!record || record.userId !== ownerUserId || record.deviceId !== trimmedId) {
+    // 索引漂移：清掉该行
+    index.devices = index.devices.filter(d => d.deviceId !== trimmedId)
+    await putUserDevicesIndex(env, ownerUserId, index)
+    return { ok: true, revoked: false, reason: 'not_found' }
+  }
+
+  await deleteDeviceTokenRecord(env, token)
+  index.devices = index.devices.filter(d => d.deviceId !== trimmedId)
+  await putUserDevicesIndex(env, ownerUserId, index)
+  return { ok: true, revoked: true, deviceToken: token }
+}
+
+/**
+ * 按 deviceId 改名（仅限本人；空名 → invalid_name）。
+ */
+export async function renameDeviceById(
+  env: Env,
+  ownerUserId: string,
+  deviceId: string,
+  rawName: string
+): Promise<
+  | { ok: true; device: DeviceListItem }
+  | { ok: true; notFound: true }
+  | { ok: false; error: 'kv_unavailable' | 'kv_put_failed' | 'invalid_name' }
+> {
+  if (!env.AI_USAGE_KV) return { ok: false, error: 'kv_unavailable' }
+  const name = rawName.trim()
+  if (!name || name.length > DEVICE_LABEL_MAX_LEN) {
+    return { ok: false, error: 'invalid_name' }
+  }
+
+  const trimmedId = deviceId.trim()
+  const index = await getUserDevicesIndex(env, ownerUserId)
+  const entryIndex = index.devices.findIndex(d => d.deviceId === trimmedId)
+  if (entryIndex < 0) {
+    return { ok: true, notFound: true }
+  }
+  const entry = index.devices[entryIndex]!
+  const token = entry.deviceToken?.trim()
+  if (!token) {
+    return { ok: true, notFound: true }
+  }
+
+  const record = await getDeviceTokenRecord(env, token)
+  if (!record || record.userId !== ownerUserId || record.deviceId !== trimmedId) {
+    return { ok: true, notFound: true }
+  }
+
+  const updated: DeviceTokenRecord = { ...record, deviceLabel: name }
+  const putTok = await putDeviceTokenRecord(env, token, updated)
+  if (!putTok.ok) return putTok
+
+  index.devices[entryIndex] = { ...entry, deviceLabel: name, deviceToken: token }
+  const putIdx = await putUserDevicesIndex(env, ownerUserId, index)
+  if (!putIdx.ok) return putIdx
+
+  return {
+    ok: true,
+    device: {
+      deviceId: updated.deviceId,
+      name: updated.deviceLabel,
+      platform: updated.platform,
+      lastSeenAt: updated.lastSeenAt,
+      createdAt: updated.createdAt
+    }
   }
 }
 

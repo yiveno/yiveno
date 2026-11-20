@@ -42,10 +42,6 @@ import {
   recallWithClue
 } from '@/infrastructure/messaging/background-client'
 import {
-  clearExtensionDisplacedNotice,
-  readExtensionDisplacedNotice
-} from '@/infrastructure/storage/extension-displaced-notice-storage'
-import {
   clearSignOutRemapNotice,
   readSignOutRemapNotice,
   type SignOutRemapNotice
@@ -133,13 +129,11 @@ const {
   }
 })
 
-/** 官网已登录 → 是否同步连到本扩展（仅此用途；与被挤掉说明分开） */
+/** 官网已登录 → 是否同步连到本扩展 */
 const showWebsiteConnectBanner = ref(false)
 const websiteConnectBusy = ref(false)
 /** Connect 失败/超时短提示（成功则条消失）。 */
 const websiteConnectError = ref('')
-/** 被别处挤掉后的原因说明（无 Connect；Dismiss 只清 displaced 标记） */
-const showExtensionDisplacedBanner = ref(false)
 /** invalid 退登后：全量回迁提示（flush 成败分文案） */
 const signOutRemapNotice = ref<SignOutRemapNotice | null>(null)
 const signOutRemapExportBusy = ref(false)
@@ -739,25 +733,12 @@ async function exportAfterSignOutRemap(): Promise<void> {
 }
 
 /**
- * 扩展未登录时的两条独立软条（互不混用文案 / CTA）：
- * - displaced：说明为何本机扩展登录失效（被别处挤掉）
- * - website connect：官网已登录时询问是否 Connect 到本扩展
+ * 扩展未登录时：官网已登录则询问是否 Connect 到本扩展。
  */
 async function refreshWebsiteConnectBanner(extensionSignedIn: boolean): Promise<void> {
   if (extensionSignedIn) {
     showWebsiteConnectBanner.value = false
-    showExtensionDisplacedBanner.value = false
-    try {
-      await clearExtensionDisplacedNotice()
-    } catch {
-      // 忽略
-    }
     return
-  }
-  try {
-    showExtensionDisplacedBanner.value = await readExtensionDisplacedNotice()
-  } catch {
-    showExtensionDisplacedBanner.value = false
   }
   // 优先 UI 桥 session 态；无桥行再 probe（打开 Panel 兜底）
   try {
@@ -788,7 +769,7 @@ async function connectWebsiteSessionFromBanner(): Promise<void> {
       return
     }
     if (response.cancelled) {
-      // 用户取消挤掉：恢复 Connect，不报错
+      // 用户取消 Connect：恢复条，不报错
       return
     }
     websiteConnectError.value = t('sidepanel_website_connect_failed')
@@ -803,15 +784,6 @@ async function connectWebsiteSessionFromBanner(): Promise<void> {
 function closeWebsiteConnectBanner(): void {
   showWebsiteConnectBanner.value = false
   websiteConnectError.value = ''
-}
-
-async function dismissExtensionDisplacedBanner(): Promise<void> {
-  showExtensionDisplacedBanner.value = false
-  try {
-    await clearExtensionDisplacedNotice()
-  } catch {
-    // 忽略：本地已隐藏
-  }
 }
 
 /** 官网 UI 桥变化时：Connect 条 + 账号不一致提示 */
@@ -1567,24 +1539,6 @@ onUnmounted(() => {
       </section>
 
       <section
-        v-if="showExtensionDisplacedBanner"
-        class="recall-website-connect recall-website-connect--displaced"
-        role="status"
-        aria-live="polite"
-      >
-        <AppIconButton
-          class="recall-website-connect-close"
-          type="button"
-          :title="t('sidepanel_extension_displaced_dismiss_aria')"
-          :aria-label="t('sidepanel_extension_displaced_dismiss_aria')"
-          @click="dismissExtensionDisplacedBanner"
-        >
-          <AppIcon name="close" size="16px" />
-        </AppIconButton>
-        <p class="recall-website-connect-label">{{ t('sidepanel_extension_displaced_banner') }}</p>
-      </section>
-
-      <section
         v-if="signOutRemapNotice"
         class="recall-website-connect recall-website-connect--remap"
         role="status"
@@ -2300,12 +2254,6 @@ onUnmounted(() => {
   color: var(--on-surface-muted);
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.recall-website-connect--displaced .recall-website-connect-label {
-  white-space: normal;
-  overflow: visible;
-  text-overflow: unset;
 }
 
 .recall-website-connect-cta {

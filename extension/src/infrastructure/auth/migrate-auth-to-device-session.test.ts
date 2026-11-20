@@ -6,16 +6,14 @@ const {
   getAuthSessionMock,
   clearAuthSessionMock,
   registerDeviceViaSessionExchangeMock,
-  clearAuthValidationTimestampMock,
-  ensureAuthSessionLeaseAlarmMock
+  clearAuthValidationTimestampMock
 } = vi.hoisted(() => ({
   getDeviceSessionMock: vi.fn(),
   setDeviceSessionMock: vi.fn(),
   getAuthSessionMock: vi.fn(),
   clearAuthSessionMock: vi.fn(),
   registerDeviceViaSessionExchangeMock: vi.fn(),
-  clearAuthValidationTimestampMock: vi.fn(),
-  ensureAuthSessionLeaseAlarmMock: vi.fn()
+  clearAuthValidationTimestampMock: vi.fn()
 }))
 
 vi.mock('@/infrastructure/identity/device-session-service', () => ({
@@ -52,10 +50,6 @@ vi.mock('@/infrastructure/auth/auth-session-revalidate', () => ({
   clearAuthValidationTimestamp: clearAuthValidationTimestampMock
 }))
 
-vi.mock('@/infrastructure/auth/auth-session-lease-alarm', () => ({
-  ensureAuthSessionLeaseAlarm: ensureAuthSessionLeaseAlarmMock
-}))
-
 vi.mock('@/infrastructure/logging/flow-log', () => ({
   flowStart: () => 0,
   flowOk: vi.fn(),
@@ -73,7 +67,6 @@ describe('migrateAuthSessionToDeviceIfNeeded', () => {
     setDeviceSessionMock.mockResolvedValue(undefined)
     clearAuthSessionMock.mockResolvedValue(undefined)
     clearAuthValidationTimestampMock.mockResolvedValue(undefined)
-    ensureAuthSessionLeaseAlarmMock.mockResolvedValue(undefined)
   })
 
   it('无旧键时不调用 exchange', async () => {

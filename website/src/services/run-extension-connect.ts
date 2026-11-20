@@ -7,7 +7,7 @@ import { getSession } from './auth'
 import {
   clearExtensionConnectParams,
   extractProfileFromUserMetadata,
-  mintAndHandoffSessionToExtension,
+  registerAndHandoffDeviceToExtension,
   primeExtensionConnectPending
 } from './extension-auth-handoff'
 import { publishWebsiteConnectAck, publishWebsiteConnectResult } from './ui-bridge'
@@ -61,7 +61,7 @@ export async function runExtensionConnectFromWebsite(
     const profile = extractProfileFromUserMetadata(
       session.user.user_metadata as Record<string, unknown> | undefined
     )
-    const result = await mintAndHandoffSessionToExtension({
+    const result = await registerAndHandoffDeviceToExtension({
       websiteAccessToken: session.access_token,
       userId: session.user.id,
       ...(session.user.email ? { email: session.user.email } : {}),

@@ -6,8 +6,6 @@ import { filterCloudSyncableMemoryItems } from '@/core/memory/memory-item-type'
 import { MemoryItemSchema, type MemoryItem } from '@/core/memory/memory-item'
 import { clearAuthValidationTimestamp } from '@/infrastructure/auth/auth-session-revalidate'
 import { clearExtensionUninstallRevoke } from '@/infrastructure/auth/extension-uninstall-url'
-import { ensureAuthSessionLeaseAlarm } from '@/infrastructure/auth/auth-session-lease-alarm'
-import { clearLastExtensionLeaseSessionId } from '@/infrastructure/storage/last-extension-lease-session-storage'
 import { revokeOwnDeviceToken } from '@/infrastructure/auth/device-register-api-client'
 import { refreshAuthSession } from '@/infrastructure/auth/extension-oauth'
 import {
@@ -116,26 +114,20 @@ export async function finishSignOutSession(): Promise<void> {
     } catch (error) {
       logger.warn('Auth', '退出时 device-revoke-self 失败（仍退出）', error)
     }
-  } else {
-    // 旧 Supabase 会话：有 revoke token 走卸载接口；否则 Bearer 释放租约
-    let remoteReleased = false
     try {
-      remoteReleased = await clearExtensionUninstallRevoke({
-        revokeRemote: true,
-        ...(sessionBeforeClear?.accessToken
-          ? { accessTokenFallback: sessionBeforeClear.accessToken }
-          : {})
-      })
+      await clearExtensionUninstallRevoke({ revokeRemote: false })
+    } catch (error) {
+      logger.warn('Auth', '退出时清本地卸载票失败', error)
+    }
+  } else {
+    // 旧 Supabase 会话：有 uninstall 票则消费；无票则无法远程撤（租约端点已删）
+    try {
+      await clearExtensionUninstallRevoke({ revokeRemote: true })
     } catch (error) {
       logger.warn('Auth', '退出时卸载 revoke / 清 token 失败', error)
     }
-    // 远程租约已释放才清 lastLease；失败保留 → 同机 Connect 可静默认领
-    if (remoteReleased) {
-      try {
-        await clearLastExtensionLeaseSessionId()
-      } catch (error) {
-        logger.warn('Auth', '退出后清 lastLeaseSessionId 失败', error)
-      }
+    if (sessionBeforeClear?.accessToken) {
+      logger.info('Auth', '旧会话退出：无 device token，跳过 session-release（端点已删）')
     }
   }
 
@@ -146,11 +138,6 @@ export async function finishSignOutSession(): Promise<void> {
   await patchSyncPrefs({ enabled: false })
   await ensureMemoryCloudSyncAlarm(false)
   await clearAuthValidationTimestamp()
-  try {
-    await ensureAuthSessionLeaseAlarm(false)
-  } catch (error) {
-    logger.warn('Auth', '退出后清除租约探测闹钟失败', error)
-  }
   // 扩展退出**不**清官网会话（与 Connect 显式接通对称：各自只退自己）
 }
 

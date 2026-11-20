@@ -2,10 +2,10 @@
  * 认证路由
  *
  * - 遗留：自建 OAuth → 自定义 JWT（非 Phase C 主路径）
- * - D 方案：`POST /device-register` 发设备 token；`POST /device-revoke-self` 撤本设备
+ * - D 方案：`POST /device-register` 发设备 token；设备列表 / 撤销 / 改名；`POST /device-revoke-self`
  * - 旧 `POST /extension-session` → 410（设计 §2.1 推荐 ②）
  * - `POST /website-session`：扩展双栈 Bearer 为官网铸造独立会话
- * - `POST /extension-session-release` / uninstall-revoke：过渡期仍保留
+ * - uninstall-revoke：一次性票撤 device token（payload={userId,deviceId}）
  */
 
 import { Hono } from 'hono'
@@ -16,10 +16,14 @@ import { deviceAuthOrSupabaseAuth } from '../middleware/device-or-supabase-auth'
 import { supabaseAuth } from '../middleware/supabase-auth'
 import { consumeExtensionUninstallRevoke } from '../services/auth/consume-extension-uninstall-revoke'
 import { handleDeviceRegister } from '../services/auth/device-register'
-import { revokeDeviceTokenSelf } from '../services/auth/device-token-kv'
+import {
+  DEVICE_LABEL_MAX_LEN,
+  listDevicesForUser,
+  renameDeviceById,
+  revokeDeviceById,
+  revokeDeviceTokenSelf
+} from '../services/auth/device-token-kv'
 import { mintWebsiteSessionFromExtension } from '../services/auth/mint-website-session'
-import { probeExtensionSessionLease } from '../services/auth/probe-extension-session-lease'
-import { releaseExtensionSessionByAccessToken } from '../services/auth/release-extension-session'
 import { error as logErrorMessage, info } from '../utils/logger'
 
 type AuthVars = {
@@ -140,6 +144,117 @@ authRouter.post('/device-revoke-self', deviceAuth(), async c => {
 })
 
 /**
+ * GET /api/auth/devices
+ *
+ * 官网账户页设备列表。鉴权：官网 Supabase JWT（设计 §2.3；AccountPage 持官网会话）。
+ * 索引漂移 id 不返回（逐个核对 `devtok:`）。
+ */
+authRouter.get('/devices', supabaseAuth(), async c => {
+  const userId = c.get('supabaseUserId')
+  try {
+    const result = await listDevicesForUser(c.env, userId)
+    if (!result.ok) {
+      return c.json({ error: result.error }, 503)
+    }
+    return c.json({ success: true, data: { devices: result.devices } })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    logErrorMessage('[Auth] devices 列表异常', { userId, detail: msg })
+    return c.json({ error: 'devices_list_failed' }, 500)
+  }
+})
+
+/**
+ * POST /api/auth/device-revoke
+ *
+ * 官网撤销指定设备（body `{ deviceId }`）。仅限本用户；含撤销自身。
+ * 不存在 / 非本人 → 404（不泄露归属）。
+ */
+authRouter.post('/device-revoke', supabaseAuth(), async c => {
+  const userId = c.get('supabaseUserId')
+  let deviceId = ''
+  try {
+    const body = await c.req.json().catch(() => null)
+    if (typeof body === 'object' && body !== null) {
+      const raw = (body as { deviceId?: unknown }).deviceId
+      if (typeof raw === 'string') deviceId = raw
+    }
+  } catch {
+    deviceId = ''
+  }
+  if (!deviceId.trim()) {
+    return c.json({ error: 'missing_device_id' }, 400)
+  }
+  try {
+    const result = await revokeDeviceById(c.env, userId, deviceId)
+    if (!result.ok) {
+      return c.json({ error: result.error }, 503)
+    }
+    if (!result.revoked) {
+      return c.json({ error: 'not_found' }, 404)
+    }
+    invalidateDeviceAuthCacheEntry(result.deviceToken)
+    info('[Auth] device-revoke', { userId, deviceId: deviceId.trim() })
+    return c.json({ success: true, data: { revoked: true } })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    logErrorMessage('[Auth] device-revoke 异常', { userId, detail: msg })
+    return c.json({ error: 'device_revoke_failed' }, 500)
+  }
+})
+
+/**
+ * POST /api/auth/device-rename
+ *
+ * 改设备名（body `{ deviceId, name }`）；trim 后空或超 64 → 400。
+ */
+authRouter.post('/device-rename', supabaseAuth(), async c => {
+  const userId = c.get('supabaseUserId')
+  let deviceId = ''
+  let name = ''
+  try {
+    const body = await c.req.json().catch(() => null)
+    if (typeof body === 'object' && body !== null) {
+      const rawId = (body as { deviceId?: unknown }).deviceId
+      const rawName = (body as { name?: unknown }).name
+      if (typeof rawId === 'string') deviceId = rawId
+      if (typeof rawName === 'string') name = rawName
+    }
+  } catch {
+    deviceId = ''
+    name = ''
+  }
+  if (!deviceId.trim()) {
+    return c.json({ error: 'missing_device_id' }, 400)
+  }
+  const trimmedName = name.trim()
+  if (!trimmedName || trimmedName.length > DEVICE_LABEL_MAX_LEN) {
+    return c.json({ error: 'invalid_name' }, 400)
+  }
+  try {
+    const result = await renameDeviceById(c.env, userId, deviceId, trimmedName)
+    if (!result.ok) {
+      if (result.error === 'invalid_name') {
+        return c.json({ error: 'invalid_name' }, 400)
+      }
+      return c.json({ error: result.error }, 503)
+    }
+    if ('notFound' in result && result.notFound) {
+      return c.json({ error: 'not_found' }, 404)
+    }
+    if (!('device' in result)) {
+      return c.json({ error: 'not_found' }, 404)
+    }
+    info('[Auth] device-rename', { userId, deviceId: deviceId.trim() })
+    return c.json({ success: true, data: { device: result.device } })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    logErrorMessage('[Auth] device-rename 异常', { userId, detail: msg })
+    return c.json({ error: 'device_rename_failed' }, 500)
+  }
+})
+
+/**
  * POST /api/auth/extension-session
  *
  * 已弃用（D 方案改走 `/device-register`）。返回 410 Gone。
@@ -156,35 +271,9 @@ authRouter.post('/extension-session', async c => {
 })
 
 /**
- * GET /api/auth/extension-session-lease
- *
- * 扩展探测本 Bearer 是否仍为账号下活跃扩展租约（对照 KV sessionId）。
- * 被挤掉 → `{ active: false, reason: 'displaced' }`；供 GET_AUTH_STATE 在 Supabase refresh 限流时仍能退登。
- */
-authRouter.get('/extension-session-lease', supabaseAuth(), async c => {
-  const userId = c.get('supabaseUserId')
-  const accessToken = c.get('supabaseAccessToken')
-  try {
-    const result = await probeExtensionSessionLease(c.env, userId, accessToken)
-    if (result.status === 'displaced') {
-      info('[Auth] extension-session-lease 探测到被挤掉', { userId })
-      return c.json({ success: true, data: { active: false, reason: 'displaced' as const } })
-    }
-    if (result.status === 'unknown') {
-      return c.json({ success: true, data: { active: true, reason: 'unknown' as const } })
-    }
-    return c.json({ success: true, data: { active: true, reason: 'lease_match' as const } })
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    logErrorMessage('[Auth] extension-session-lease 异常', { userId, detail: msg })
-    return c.json({ error: 'lease_probe_failed' }, 500)
-  }
-})
-
-/**
  * POST /api/auth/website-session
  *
- * Bearer=扩展 access 或 device token。为官网铸造独立会话（反向接通）；**不**改扩展租约。
+ * Bearer=扩展 access 或 device token。为官网铸造独立会话（反向接通）。
  */
 authRouter.post('/website-session', deviceAuthOrSupabaseAuth(), async c => {
   const userId = c.get('supabaseUserId')
@@ -220,38 +309,10 @@ authRouter.post('/website-session', deviceAuthOrSupabaseAuth(), async c => {
 })
 
 /**
- * POST /api/auth/extension-session-release
- *
- * Bearer=扩展 access。主动退出时若本地无 uninstallRevokeToken，用本接口销本会话并清匹配租约。
- * 租约已指向他端 session → 只撤本会话，不动租约。
- */
-authRouter.post('/extension-session-release', supabaseAuth(), async c => {
-  const userId = c.get('supabaseUserId')
-  const accessToken = c.get('supabaseAccessToken')
-  try {
-    const result = await releaseExtensionSessionByAccessToken(c.env, userId, accessToken)
-    if (!result.ok) {
-      return c.json({ error: result.error }, 400)
-    }
-    return c.json({
-      success: true,
-      data: {
-        revoked: result.revoked,
-        clearedLease: result.clearedLease
-      }
-    })
-  } catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    logErrorMessage('[Auth] extension-session-release 异常', { userId, detail: msg })
-    return c.json({ error: 'session_release_failed' }, 500)
-  }
-})
-
-/**
  * POST /api/auth/extension-uninstall-revoke
  *
- * 公开：body `{ token }`。消费一次性卸载 revoke token，撤销扩展 Auth session 并清租约。
- * 官网卸载页与扩展主动退出共用；**不**动官网浏览器会话。
+ * 公开：body `{ token }`。消费一次性卸载票 → 撤对应 device token。
+ * **不**动官网浏览器会话。
  */
 authRouter.post('/extension-uninstall-revoke', async c => {
   let token = ''
@@ -273,11 +334,13 @@ authRouter.post('/extension-uninstall-revoke', async c => {
       const status = result.error === 'empty_token' ? 400 : 404
       return c.json({ error: result.error }, status)
     }
+    if (result.deviceToken) {
+      invalidateDeviceAuthCacheEntry(result.deviceToken)
+    }
     return c.json({
       success: true,
       data: {
-        revoked: result.revoked,
-        clearedLease: result.clearedLease
+        revoked: result.revoked
       }
     })
   } catch (err) {

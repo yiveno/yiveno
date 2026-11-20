@@ -31,7 +31,7 @@ import {
   captureExtensionConnectParamsFromUrl,
   extractProfileFromUserMetadata,
   getPendingExtensionId,
-  mintAndHandoffSessionToExtension
+  registerAndHandoffDeviceToExtension
 } from '../services/extension-auth-handoff'
 import {
   isTurnstileConfigured,
@@ -257,7 +257,7 @@ async function tryHandoffCurrentSession(): Promise<'ok' | 'account_mismatch' | '
     const profile = extractProfileFromUserMetadata(
       session.user.user_metadata as Record<string, unknown> | undefined
     )
-    const result = await mintAndHandoffSessionToExtension({
+    const result = await registerAndHandoffDeviceToExtension({
       websiteAccessToken: session.access_token,
       userId: session.user.id,
       ...(session.user.email ? { email: session.user.email } : {}),

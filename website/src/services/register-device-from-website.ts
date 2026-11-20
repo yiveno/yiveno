@@ -17,6 +17,7 @@ export type RegisteredDeviceFromWebsite = {
   displayName: string | null
   avatarUrl: string | null
   isAnonymous: boolean
+  uninstallRevokeToken: string | null
 }
 
 export type RegisterDeviceFromWebsiteResult =
@@ -32,6 +33,7 @@ type RegisterApiData = {
   displayName?: unknown
   avatarUrl?: unknown
   isAnonymous?: unknown
+  uninstallRevokeToken?: unknown
 }
 
 function readNullableString(value: unknown): string | null {
@@ -113,7 +115,8 @@ export async function registerDeviceFromWebsite(
         email: readNullableString(data.email),
         displayName: readNullableString(data.displayName),
         avatarUrl: readNullableString(data.avatarUrl),
-        isAnonymous: data.isAnonymous
+        isAnonymous: data.isAnonymous,
+        uninstallRevokeToken: readNullableString(data.uninstallRevokeToken)
       }
     }
   } catch (error) {

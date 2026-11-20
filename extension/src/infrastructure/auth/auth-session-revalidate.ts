@@ -1,7 +1,7 @@
 /**
- * 扩展侧 Auth 存活校验（节流）：
- * 1) Worker 租约探测（被挤掉，不依赖 Supabase refresh）
- * 2) refresh 探测 refresh_token 是否仍有效（官网退出等）
+ * 扩展侧旧 Supabase Auth 存活校验（节流）：仅 refresh。
+ * D 方案：租约探测已删除；持 device_session 的主路径不走本模块。
+ * 迁移窗内仍可能对 yiveno:auth_session 做 refresh。
  *
  * 重要：网络/5xx / rate limit 等瞬时失败不得清登录态。
  * 并发 GET_AUTH_STATE 共用一次校验（single-flight），避免 Already Used 误踢。
@@ -9,7 +9,6 @@
 
 import type { AuthSession } from '@/core/identity/auth-session'
 import { refreshAuthSessionDetailed } from '@/infrastructure/auth/extension-oauth'
-import { probeExtensionSessionLease } from '@/infrastructure/auth/extension-session-lease-probe'
 import { getAuthSession, setAuthSession } from '@/infrastructure/identity/auth-session-service'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
@@ -17,10 +16,10 @@ import { logger } from '@/infrastructure/logging/logger'
 /** chrome.storage.session：上次成功/完成校验的时间戳（ms）。 */
 export const AUTH_LAST_VALIDATED_AT_KEY = 'yiveno:auth_last_validated_at' as const
 
-/** 两次完整校验（租约+refresh）最小间隔；挤掉靠每次强制时的租约探测，不必每次打 refresh。 */
+/** 两次完整校验（refresh）最小间隔。 */
 export const AUTH_REVALIDATE_MIN_INTERVAL_MS = 5 * 60 * 1000
 
-/** GET_AUTH_STATE 强制路径：租约每次查；refresh 最短间隔（减轻 Supabase rate limit）。 */
+/** GET_AUTH_STATE 强制路径：refresh 最短间隔（减轻 Supabase rate limit）。 */
 export const AUTH_REFRESH_MIN_INTERVAL_MS = 60 * 1000
 
 /** chrome.storage.session：上次成功 refresh 的时间戳。 */
@@ -37,7 +36,7 @@ export async function clearAuthValidationTimestamp(): Promise<void> {
   await chrome.storage.session.remove([AUTH_LAST_VALIDATED_AT_KEY, AUTH_LAST_REFRESHED_AT_KEY])
 }
 
-/** 标记刚刚完成一次成功校验（含租约仍活跃）。 */
+/** 标记刚刚完成一次成功校验。 */
 export async function markAuthValidatedNow(): Promise<void> {
   await chrome.storage.session.set({ [AUTH_LAST_VALIDATED_AT_KEY]: Date.now() })
 }
@@ -101,26 +100,13 @@ async function runRevalidateAuthSession(
 ): Promise<AuthRevalidateResult> {
   const startedAt = flowStart('Auth', 'revalidate session')
 
-  // 1) 租约探测：被挤掉时无需 refresh（避开 Supabase rate limit）
-  const lease = await probeExtensionSessionLease(session.accessToken)
-  if (lease.status === 'displaced') {
-    await markAuthValidatedNow()
-    flowOk('Auth', 'revalidate session', startedAt, {
-      userId: session.userId,
-      outcome: 'invalid',
-      detail: 'lease_displaced'
-    })
-    return { status: 'invalid', reason: 'extension_session_displaced' }
-  }
-
-  // force 路径：租约仍活跃时，refresh 仍节流，避免连点/多面板打爆 token 端
+  // force 路径：refresh 仍节流，避免连点/多面板打爆 token 端
   const needRefresh = options.force ? await shouldRefreshAuthSession() : true
   if (!needRefresh) {
     await markAuthValidatedNow()
     flowOk('Auth', 'revalidate session', startedAt, {
       userId: session.userId,
-      skippedRefresh: true,
-      lease: lease.status
+      skippedRefresh: true
     })
     return { status: 'valid', session }
   }
@@ -133,7 +119,6 @@ async function runRevalidateAuthSession(
       ...(session.displayName ? { displayName: session.displayName } : {})
     })
   } catch (error) {
-    // 兜底：refresh 实现不应再抛；若抛出则保留本地登录态
     const reason = error instanceof Error ? error.message : 'revalidate_threw'
     const recovered = await recoverSessionIfRotated(session.refreshToken)
     if (recovered) {
@@ -145,7 +130,6 @@ async function runRevalidateAuthSession(
       })
       return { status: 'valid', session: recovered }
     }
-    // rate limit / 抛错：warn 不进 chrome://extensions 红三角
     if (isRateLimitReason(reason)) {
       logger.warn('Auth', 'revalidate session：限流，保留登录态', { reason })
     } else {
@@ -157,7 +141,6 @@ async function runRevalidateAuthSession(
   }
 
   if (refreshed.status === 'ok') {
-    // 立刻落盘，避免并发 requireAccessToken 仍读到旧 refresh
     await setAuthSession(refreshed.session)
     await markAuthValidatedNow()
     await markAuthRefreshedNow()
@@ -166,7 +149,6 @@ async function runRevalidateAuthSession(
   }
 
   if (refreshed.status === 'invalid') {
-    // 明确作废才标记，避免反复打无效 refresh；调用方会清 session
     await markAuthValidatedNow()
     flowFail('Auth', 'revalidate session', startedAt, new Error(refreshed.reason), {
       outcome: 'invalid'
@@ -174,7 +156,6 @@ async function runRevalidateAuthSession(
     return { status: 'invalid', reason: refreshed.reason }
   }
 
-  // transient（含 Already Used）：若并发另一路已写入新 token，采信存储，勿误踢
   const recovered = await recoverSessionIfRotated(session.refreshToken)
   if (recovered) {
     await markAuthValidatedNow()
@@ -187,7 +168,6 @@ async function runRevalidateAuthSession(
     return { status: 'valid', session: recovered }
   }
 
-  // Already Used 且本地无新 refresh：token 族已废，继续「假登录」只会拖垮订阅/embed
   if (isAlreadyUsedRefreshReason(refreshed.reason)) {
     await markAuthValidatedNow()
     flowFail('Auth', 'revalidate session', startedAt, new Error(refreshed.reason), {
@@ -197,7 +177,6 @@ async function runRevalidateAuthSession(
     return { status: 'invalid', reason: refreshed.reason }
   }
 
-  // rate limit：warn；其它瞬时失败：不 mark，下次可再试
   if (isRateLimitReason(refreshed.reason)) {
     logger.warn('Auth', 'revalidate session：限流，保留登录态', {
       reason: refreshed.reason,

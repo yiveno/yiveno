@@ -6,7 +6,11 @@
 import type { Env } from '../../types/env'
 import { verifySupabaseAccessToken } from './verify-supabase-access-token'
 import { getUserMeta, issueDeviceToken, putUserMeta, type UserMetaRecord } from './device-token-kv'
-import { info } from '../../utils/logger'
+import {
+  createExtensionUninstallRevokeToken,
+  putExtensionUninstallRevokeToken
+} from './extension-uninstall-revoke-kv'
+import { info, warn } from '../../utils/logger'
 
 type DeviceRegisterMode = 'website_connect' | 'session_exchange'
 
@@ -18,11 +22,13 @@ type DeviceRegisterSuccess = {
   displayName: string | null
   avatarUrl: string | null
   isAnonymous: boolean
+  /** 一次性卸载票；失败时为 null（扩展仍可 device-revoke-self） */
+  uninstallRevokeToken: string | null
 }
 
 type DeviceRegisterFailure = {
   ok: false
-  status: 400 | 401 | 429 | 500 | 503
+  status: 400 | 401 | 403 | 429 | 500 | 503
   error: string
 }
 
@@ -88,7 +94,29 @@ async function issueForAuthenticatedUser(
     ...(input.extensionId ? { extensionId: input.extensionId } : {})
   })
   if (!issued.ok) {
+    if (issued.error === 'device_limit_reached') {
+      return { ok: false, status: 403, error: 'device_limit_reached' }
+    }
     return { ok: false, status: 503, error: issued.error }
+  }
+
+  // 卸载票：payload={userId,deviceId}；写失败不阻断 register（warn）
+  let uninstallRevokeToken: string | null = null
+  const candidate = createExtensionUninstallRevokeToken()
+  const tokenPut = await putExtensionUninstallRevokeToken(env, candidate, {
+    userId: issued.userId,
+    deviceId: issued.deviceId,
+    extensionId: input.extensionId?.trim() || null,
+    createdAt: new Date().toISOString()
+  })
+  if (tokenPut.ok) {
+    uninstallRevokeToken = candidate
+  } else {
+    warn('[DeviceRegister] 卸载 revoke token 写入失败，继续返回 device', {
+      userId: issued.userId,
+      deviceId: issued.deviceId,
+      error: tokenPut.error
+    })
   }
 
   return {
@@ -100,7 +128,8 @@ async function issueForAuthenticatedUser(
       email: issued.email,
       displayName: null,
       avatarUrl: null,
-      isAnonymous: issued.isAnonymous
+      isAnonymous: issued.isAnonymous,
+      uninstallRevokeToken
     }
   }
 }

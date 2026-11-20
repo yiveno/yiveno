@@ -1,6 +1,7 @@
 /**
  * 扩展卸载用一次性 revoke token（AI_USAGE_KV）。
- * 卸载时扩展无法再跑代码，只能靠 setUninstallURL 打开官网页持 token 销远程会话。
+ * 卸载时扩展无法再跑代码，只能靠 setUninstallURL 打开官网页持 token 销本设备 device token。
+ * payload：`{ userId, deviceId }`（设计 §10；不再存 sessionId）。
  */
 
 import type { Env } from '../../types/env'
@@ -10,13 +11,13 @@ const KEY_PREFIX = 'ext_uninstall_revoke:' as const
 
 /**
  * Cloudflare KV `expirationTtl` 上限为 31536000（365 天）。
- * 超过会 put 失败 → mint 拿不到 token → 卸载无法销远程会话。
+ * 超过会 put 失败 → register 拿不到 token → 卸载无法销远程设备。
  */
 const REVOKE_TOKEN_TTL_SEC = 60 * 60 * 24 * 365
 
 export type ExtensionUninstallRevokeRecord = {
   userId: string
-  sessionId: string
+  deviceId: string
   extensionId: string | null
   createdAt: string
 }
@@ -54,30 +55,29 @@ export async function takeExtensionUninstallRevokeToken(
   env: Env,
   token: string
 ): Promise<ExtensionUninstallRevokeRecord | null> {
-  const kv = env.AI_USAGE_KV
-  if (!kv) {
+  if (!env.AI_USAGE_KV) {
     return null
   }
   const key = extensionUninstallRevokeKvKey(token.trim())
   try {
-    const raw = await kv.get(key)
+    const raw = await env.AI_USAGE_KV.get(key)
     if (!raw) {
       return null
     }
-    await kv.delete(key)
+    await env.AI_USAGE_KV.delete(key)
     const parsed = JSON.parse(raw) as unknown
     if (
       typeof parsed !== 'object' ||
       parsed === null ||
       typeof (parsed as ExtensionUninstallRevokeRecord).userId !== 'string' ||
-      typeof (parsed as ExtensionUninstallRevokeRecord).sessionId !== 'string'
+      typeof (parsed as ExtensionUninstallRevokeRecord).deviceId !== 'string'
     ) {
       return null
     }
     const row = parsed as ExtensionUninstallRevokeRecord
     return {
       userId: row.userId,
-      sessionId: row.sessionId,
+      deviceId: row.deviceId,
       extensionId: typeof row.extensionId === 'string' ? row.extensionId : null,
       createdAt: typeof row.createdAt === 'string' ? row.createdAt : new Date().toISOString()
     }
@@ -87,7 +87,7 @@ export async function takeExtensionUninstallRevokeToken(
   }
 }
 
-/** 丢弃尚未使用的 revoke token（换发 session / 主动退出时）。 */
+/** 丢弃尚未使用的 revoke token（换设备 / 主动退出时）。 */
 export async function deleteExtensionUninstallRevokeToken(
   env: Env,
   token: string | null | undefined

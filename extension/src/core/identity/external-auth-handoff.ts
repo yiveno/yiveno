@@ -57,17 +57,6 @@ export const ExtensionAuthStatusProbeSchema = z.object({
 })
 
 /**
- * 官网 → 扩展：409 租约是否为本机孤儿可认领（不带 token）。
- * 扩展对照本地 lastLeaseSessionId；已登录则不可认领（走 STATUS_PROBE 短路）。
- */
-export const ExtensionLeaseReclaimProbeSchema = z.object({
-  type: z.literal('YIVENO_EXTENSION_LEASE_RECLAIM_PROBE'), // 官网问能否静默认领租约
-  payload: z.object({
-    existingSessionId: z.string().min(1) // Worker 409 带回的租约 session_id
-  })
-})
-
-/**
  * 官网 → 扩展：请求用扩展登录态为官网铸造会话（反向接通；扩展调 Worker，回传 token）。
  * 仅 externally_connectable 官网源；**禁止**经 UI 桥 Port 传 token。
  */
@@ -85,11 +74,10 @@ export const ExternalAuthHandoffMessageSchema = z.union([
   ExternalAuthSignOutHandoffSchema,
   WebsiteAuthProbeHandoffSchema,
   ExtensionAuthStatusProbeSchema,
-  ExtensionLeaseReclaimProbeSchema,
   WebsiteSessionRequestSchema
 ])
 
-/** 扩展处理 handoff 后的响应（ok / 错误码；状态/认领/官网会话可附带字段）。 */
+/** 扩展处理 handoff 后的响应（ok / 错误码；状态/官网会话可附带字段）。 */
 export type ExternalAuthHandoffResponse =
   | {
       ok: true
@@ -98,7 +86,6 @@ export type ExternalAuthHandoffResponse =
       /** STATUS_PROBE / WEBSITE_SESSION_REQUEST：展示用 */
       email?: string
       displayName?: string
-      reclaimable?: boolean
       /** 仅 WEBSITE_SESSION_REQUEST 成功时 */
       accessToken?: string
       refreshToken?: string

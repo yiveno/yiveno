@@ -17,7 +17,8 @@ const okData = {
   email: 'u@example.com',
   displayName: 'User',
   avatarUrl: null,
-  isAnonymous: false
+  isAnonymous: false,
+  uninstallRevokeToken: null
 }
 
 describe('registerDeviceFromWebsite', () => {

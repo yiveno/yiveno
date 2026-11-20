@@ -23,7 +23,7 @@ vi.mock('./auth', () => ({
 vi.mock('./extension-auth-handoff', () => ({
   clearExtensionConnectParams: clearPendingMock,
   extractProfileFromUserMetadata: () => ({}),
-  mintAndHandoffSessionToExtension: mintAndHandoffMock,
+  registerAndHandoffDeviceToExtension: mintAndHandoffMock,
   primeExtensionConnectPending: primeMock
 }))
 

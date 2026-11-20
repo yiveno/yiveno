@@ -240,28 +240,12 @@ describe('external auth handoff（device）', () => {
     })
   })
 
-  it('租约认领探测：本地 lastLease 匹配且未登录 → reclaimable', async () => {
-    const { LAST_EXTENSION_LEASE_SESSION_KEY } =
-      await import('@/infrastructure/storage/last-extension-lease-session-storage')
-    vi.stubGlobal(
-      'chrome',
-      createChromeStorageMock({
-        [LAST_EXTENSION_LEASE_SESSION_KEY]: { sessionId: 'lease-sess-1' }
-      })
-    )
-    const result = await applyExternalAuthHandoff({
-      type: 'YIVENO_EXTENSION_LEASE_RECLAIM_PROBE',
-      payload: { existingSessionId: 'lease-sess-1' }
-    })
-    expect(result).toEqual({ ok: true, reclaimable: true, signedIn: false })
-  })
-
   it('官网会话请求：扩展未登录 → 失败', async () => {
     const result = await applyExternalAuthHandoff({
       type: 'YIVENO_WEBSITE_SESSION_REQUEST',
       payload: { nextPath: '/account' }
     })
-    expect(result).toEqual({ ok: false, error: 'website_session_mint_failed' })
+    expect(result).toEqual({ ok: false, error: 'not_signed_in' })
   })
 
   it('sign-out handoff 清账号桶后清登录态', async () => {

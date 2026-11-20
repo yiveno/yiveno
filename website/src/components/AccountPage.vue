@@ -15,6 +15,12 @@ import {
   rememberConnectedExtensionId
 } from '../services/extension-auth-handoff'
 import { runExtensionConnectFromWebsite } from '../services/run-extension-connect'
+import {
+  listAccountDevices,
+  renameAccountDevice,
+  revokeAccountDevice,
+  type AccountDevice
+} from '../services/account-devices'
 import { createCheckoutSession, createPortalSession } from '../services/billing'
 import {
   startWebsiteAuthLiveness,
@@ -28,8 +34,7 @@ import { t, tFormat } from '../i18n/t'
 defineOptions({ name: 'AccountPage' })
 
 /**
- * 账户页范围（仅此四块）：
- * 身份 · 权益（Free/Pro）· 付费与管理 · 结束会话。
+ * 账户页范围：身份 · 权益 · 付费与管理 · 设备 · 结束会话。
  * 扩展 handoff 仍后台执行，不在本页展示。
  */
 
@@ -64,6 +69,15 @@ const signInProvider = computed(() => {
 
 const checkoutBusy = ref(false)
 const checkoutError = ref('')
+
+/** 设备列表（D 方案；官网 JWT 调 Worker） */
+const devices = ref<AccountDevice[]>([])
+const devicesLoading = ref(false)
+const devicesError = ref('')
+const deviceActionId = ref<string | null>(null)
+const renamingDeviceId = ref<string | null>(null)
+const renameDraft = ref('')
+const renameError = ref('')
 /**
  * 结账回跳提示：中性 `?checkout=return` + Dodo 追加的 `status`。
  * 禁止把 URL 里的 success 字样当成「已付款」；授 Pro 只信投影。
@@ -268,7 +282,9 @@ onMounted(async () => {
     window.location.replace('/login')
   })
 
-  // Connect 回退路径：账户页原地 mint（不进登录壳）；与 UI 桥零导航共用 runExtensionConnect
+  void loadDevices()
+
+  // Connect 回退路径：账户页原地 device-register（不进登录壳）；与 UI 桥零导航共用 runExtensionConnect
   if (wantConnect && extensionId) {
     void runExtensionConnectFromWebsite(extensionId, { announceViaBridge: true }).then(status => {
       if (status === 'ok' || status === 'account_mismatch' || status === 'failed') {
@@ -276,6 +292,9 @@ onMounted(async () => {
         clean.searchParams.delete('connect_extension')
         clean.searchParams.delete('extension_id')
         window.history.replaceState({}, '', clean.pathname + clean.search)
+      }
+      if (status === 'ok') {
+        void loadDevices()
       }
     })
   }
@@ -304,6 +323,102 @@ async function handleSignOut() {
     console.warn('[AccountPage] ui-bridge auth publish failed', error)
   }
   window.location.href = '/login'
+}
+
+async function loadDevices(): Promise<void> {
+  const token = accessToken.value?.trim()
+  if (!token) return
+  devicesLoading.value = true
+  devicesError.value = ''
+  try {
+    const result = await listAccountDevices(token)
+    if (result.status === 'ok') {
+      devices.value = result.devices
+      return
+    }
+    if (result.status === 'unauthorized') {
+      window.location.replace('/login')
+      return
+    }
+    devicesError.value = t('account.devices_load_error')
+  } finally {
+    devicesLoading.value = false
+  }
+}
+
+function beginRename(device: AccountDevice): void {
+  renamingDeviceId.value = device.deviceId
+  renameDraft.value = device.name
+  renameError.value = ''
+}
+
+function cancelRename(): void {
+  renamingDeviceId.value = null
+  renameDraft.value = ''
+  renameError.value = ''
+}
+
+async function saveRename(deviceId: string): Promise<void> {
+  const token = accessToken.value?.trim()
+  if (!token) return
+  const name = renameDraft.value.trim()
+  if (!name || name.length > 64) {
+    renameError.value = t('account.devices_rename_invalid')
+    return
+  }
+  deviceActionId.value = deviceId
+  renameError.value = ''
+  try {
+    const result = await renameAccountDevice(token, deviceId, name)
+    if (result.status === 'ok') {
+      if (result.device) {
+        devices.value = devices.value.map(d => (d.deviceId === deviceId ? result.device! : d))
+      } else {
+        devices.value = devices.value.map(d => (d.deviceId === deviceId ? { ...d, name } : d))
+      }
+      cancelRename()
+      return
+    }
+    if (result.status === 'invalid_name') {
+      renameError.value = t('account.devices_rename_invalid')
+      return
+    }
+    if (result.status === 'unauthorized') {
+      window.location.replace('/login')
+      return
+    }
+    renameError.value = t('account.devices_load_error')
+  } finally {
+    deviceActionId.value = null
+  }
+}
+
+async function revokeDevice(device: AccountDevice): Promise<void> {
+  const token = accessToken.value?.trim()
+  if (!token) return
+  if (!window.confirm(t('account.devices_revoke_confirm'))) {
+    return
+  }
+  deviceActionId.value = device.deviceId
+  devicesError.value = ''
+  try {
+    const result = await revokeAccountDevice(token, device.deviceId)
+    if (result.status === 'ok' || result.status === 'not_found') {
+      devices.value = devices.value.filter(d => d.deviceId !== device.deviceId)
+      return
+    }
+    if (result.status === 'unauthorized') {
+      window.location.replace('/login')
+      return
+    }
+    devicesError.value = t('account.devices_revoke_error')
+  } finally {
+    deviceActionId.value = null
+  }
+}
+
+function formatDeviceTime(iso: string): string {
+  return formatDate(iso)
 }
 </script>
 
@@ -439,6 +554,94 @@ async function handleSignOut() {
         <p v-if="checkoutError" class="account__error" role="alert">{{ checkoutError }}</p>
       </div>
     </section>
+
+    <!-- 设备列表（扩展 device token） -->
+    <section class="account__devices" aria-labelledby="account-devices-heading">
+      <h2 id="account-devices-heading" class="account__section-label">
+        {{ t('account.devices_heading') }}
+      </h2>
+      <div v-if="devicesLoading" class="account__devices-status" role="status">
+        {{ t('account.devices_loading') }}
+      </div>
+      <p v-else-if="devicesError" class="account__error" role="alert">{{ devicesError }}</p>
+      <p v-else-if="devices.length === 0" class="account__devices-status">
+        {{ t('account.devices_empty') }}
+      </p>
+      <ul v-else class="account__device-list">
+        <li v-for="device in devices" :key="device.deviceId" class="account__device-row">
+          <div class="account__device-main">
+            <template v-if="renamingDeviceId === device.deviceId">
+              <label class="account__device-rename">
+                <span class="visually-hidden">{{ t('account.devices_name') }}</span>
+                <input
+                  v-model="renameDraft"
+                  type="text"
+                  maxlength="64"
+                  class="account__device-rename-input"
+                  :disabled="deviceActionId === device.deviceId"
+                />
+              </label>
+              <p v-if="renameError" class="account__error" role="alert">{{ renameError }}</p>
+              <div class="account__device-actions">
+                <button
+                  type="button"
+                  class="ui-btn ui-btn--primary"
+                  :disabled="deviceActionId === device.deviceId"
+                  @click="saveRename(device.deviceId)"
+                >
+                  {{ t('account.devices_rename_save') }}
+                </button>
+                <button
+                  type="button"
+                  class="ui-btn ui-btn--ghost"
+                  :disabled="deviceActionId === device.deviceId"
+                  @click="cancelRename"
+                >
+                  {{ t('account.devices_rename_cancel') }}
+                </button>
+              </div>
+            </template>
+            <template v-else>
+              <p class="account__device-name">{{ device.name }}</p>
+              <p class="account__device-meta">
+                <span>{{ device.platform }}</span>
+                <span class="account__dot" aria-hidden="true">·</span>
+                <span
+                  >{{ t('account.devices_last_seen') }}
+                  {{ formatDeviceTime(device.lastSeenAt) }}</span
+                >
+                <span class="account__dot" aria-hidden="true">·</span>
+                <span
+                  >{{ t('account.devices_created') }} {{ formatDeviceTime(device.createdAt) }}</span
+                >
+              </p>
+              <div class="account__device-actions">
+                <button
+                  type="button"
+                  class="ui-btn ui-btn--ghost"
+                  :disabled="deviceActionId === device.deviceId"
+                  @click="beginRename(device)"
+                >
+                  {{ t('account.devices_rename') }}
+                </button>
+                <button
+                  type="button"
+                  class="ui-btn"
+                  :disabled="deviceActionId === device.deviceId"
+                  @click="revokeDevice(device)"
+                >
+                  {{
+                    deviceActionId === device.deviceId
+                      ? t('account.devices_revoke_busy')
+                      : t('account.devices_revoke')
+                  }}
+                </button>
+              </div>
+            </template>
+          </div>
+        </li>
+      </ul>
+    </section>
   </div>
   <div v-else class="ui-status">{{ t('account.loading') }}</div>
 </template>
@@ -446,6 +649,79 @@ async function handleSignOut() {
 <style scoped>
 .account {
   max-width: 720px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.account__devices {
+  margin-top: clamp(28px, 4vw, 40px);
+  padding-top: clamp(24px, 3vw, 32px);
+  border-top: 1px solid var(--border);
+}
+
+.account__devices-status {
+  margin: 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.account__device-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.account__device-row {
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--paper-dim) 55%, transparent);
+}
+
+.account__device-name {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+}
+
+.account__device-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 0.35em;
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.account__device-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.account__device-rename-input {
+  width: min(100%, 20rem);
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font: inherit;
+  background: var(--paper, #fff);
+  color: var(--ink);
 }
 
 .account__checkout-hint {

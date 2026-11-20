@@ -11,8 +11,8 @@ import {
   captureExtensionConnectParamsFromUrl,
   extractProfileFromUserMetadata,
   getPendingExtensionId,
-  mintAndHandoffSessionToExtension,
-  type MintAndHandoffResult
+  registerAndHandoffDeviceToExtension,
+  type RegisterAndHandoffResult
 } from '../services/extension-auth-handoff'
 import { t } from '../i18n/t'
 
@@ -32,12 +32,12 @@ function redirectLoginError(code: string, detail?: string | null): void {
   window.location.href = `/login?${params.toString()}`
 }
 
-/** 用官网 session 换 device token 并 handoff（失败不共享官网 refresh） */
-async function tryMintHandoff(session: Session): Promise<MintAndHandoffResult> {
+/** 用官网 session 注册 device token 并 handoff（失败不共享官网 refresh） */
+async function tryRegisterHandoff(session: Session): Promise<RegisterAndHandoffResult> {
   const profile = extractProfileFromUserMetadata(
     session.user.user_metadata as Record<string, unknown> | undefined
   )
-  return mintAndHandoffSessionToExtension({
+  return registerAndHandoffDeviceToExtension({
     websiteAccessToken: session.access_token,
     userId: session.user.id,
     ...(session.user.email ? { email: session.user.email } : {}),
@@ -47,9 +47,9 @@ async function tryMintHandoff(session: Session): Promise<MintAndHandoffResult> {
 
 /**
  * 登录成功收尾优先级：
- * 1) 本次从扩展打开（sessionStorage `connect_extension`）→ mint+handoff + /account
- * 2) 有 next（如续付）→ 只回跳官网意图；**不**因 last_extension_id 静默 mint
- * 3) 默认 /account；纯官网登录**不**动扩展租约（须显式 Connect / connect_extension）
+ * 1) 本次从扩展打开（sessionStorage `connect_extension`）→ device-register + handoff + /account
+ * 2) 有 next（如续付）→ 只回跳官网意图；**不**因 last_extension_id 静默 register
+ * 3) 默认 /account；纯官网登录**不**动扩展设备（须显式 Connect / connect_extension）
  */
 async function finishWithSession(session: Session): Promise<void> {
   const pendingConnect = getPendingExtensionId()
@@ -57,7 +57,7 @@ async function finishWithSession(session: Session): Promise<void> {
 
   if (pendingConnect) {
     status.value = t('login.status.connectingExtension')
-    const handoff = await tryMintHandoff(session)
+    const handoff = await tryRegisterHandoff(session)
     if (handoff.status === 'ok') {
       window.location.href = '/account?extension_connected=1'
       return
@@ -76,7 +76,7 @@ async function finishWithSession(session: Session): Promise<void> {
     return
   }
 
-  // 无本次 connect：只完成官网会话。禁止用 last_extension_id 顺带 remint（会自挤同机扩展 → displaced 假象）
+  // 无本次 connect：只完成官网会话。禁止用 last_extension_id 顺带 register
   if (authReturn.next) {
     const href = buildPostAuthHref('/account')
     console.warn('[AuthCallback] 登录成功，回跳续意图（不 mint 扩展）', { href })

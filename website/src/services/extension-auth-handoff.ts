@@ -13,8 +13,11 @@ import {
 } from './register-device-from-website'
 
 /** device-register + handoff 结果 */
-export type MintAndHandoffResult =
+export type RegisterAndHandoffResult =
   { status: 'ok' } | { status: 'failed'; error?: string } | { status: 'account_mismatch' }
+
+/** @deprecated 用 {@link RegisterAndHandoffResult} */
+export type MintAndHandoffResult = RegisterAndHandoffResult
 
 /** 本次从扩展打开登录时的临时 connect（OAuth 跳转用 sessionStorage）。 */
 const STORAGE_EXTENSION_ID = 'yiveno_connect_extension_id'
@@ -32,6 +35,7 @@ export type ExtensionDeviceHandoffPayload = {
   email?: string
   avatarUrl?: string
   displayName?: string
+  uninstallRevokeToken?: string
 }
 
 /** 读取非空字符串。 */
@@ -82,7 +86,7 @@ export function clearExtensionConnectParams(): void {
 }
 
 /**
- * UI 桥 / 账户页 Connect：无 URL 时写入本次 pending（供 mintAndHandoff 读取）。
+ * UI 桥 / 账户页 Connect：无 URL 时写入本次 pending（供 registerAndHandoff 读取）。
  */
 export function primeExtensionConnectPending(extensionId: string): void {
   const trimmed = extensionId.trim()
@@ -276,7 +280,10 @@ export function handoffDeviceToExtension(payload: ExtensionDeviceHandoffPayload)
       isAnonymous: payload.isAnonymous,
       ...(payload.email ? { email: payload.email } : {}),
       ...(payload.avatarUrl ? { avatarUrl: payload.avatarUrl } : {}),
-      ...(payload.displayName ? { displayName: payload.displayName } : {})
+      ...(payload.displayName ? { displayName: payload.displayName } : {}),
+      ...(payload.uninstallRevokeToken
+        ? { uninstallRevokeToken: payload.uninstallRevokeToken }
+        : {})
     }
   }
 
@@ -308,24 +315,25 @@ function deviceHandoffPayloadFromRegister(
       ? { displayName: data.displayName }
       : profile.displayName
         ? { displayName: profile.displayName }
-        : {})
+        : {}),
+    ...(data.uninstallRevokeToken ? { uninstallRevokeToken: data.uninstallRevokeToken } : {})
   }
 }
 
 /**
- * 用官网 access 换 device token 并 handoff 到扩展。
+ * 用官网 access 注册 device token 并 handoff 到扩展。
  * **仅**本次 `connect_extension` pending 可 register；`last_extension_id` 不够格。
  * 扩展已是同一 userId → 跳过 register。
  * 扩展已是**另一**账号 → 不静默覆盖（返回 account_mismatch）。
  * register/handoff 失败不共享官网 refresh；handoff 失败尽力 revoke 刚发的 device。
  */
-export async function mintAndHandoffSessionToExtension(input: {
+export async function registerAndHandoffDeviceToExtension(input: {
   websiteAccessToken: string
   userId: string
   email?: string
   avatarUrl?: string
   displayName?: string
-}): Promise<MintAndHandoffResult> {
+}): Promise<RegisterAndHandoffResult> {
   const extensionId = getPendingExtensionId()
   if (!extensionId) {
     console.warn('[ExtensionHandoff] 无本次 connect_extension，跳过 device-register')
@@ -376,3 +384,6 @@ export async function mintAndHandoffSessionToExtension(input: {
   }
   return { status: 'ok' }
 }
+
+/** @deprecated 用 {@link registerAndHandoffDeviceToExtension} */
+export const mintAndHandoffSessionToExtension = registerAndHandoffDeviceToExtension

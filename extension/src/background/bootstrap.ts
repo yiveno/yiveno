@@ -9,7 +9,6 @@ import {
 import { syncChromeBookmarkSyncListenersWithSyncSetting } from '@/background/listeners/chrome-bookmark-sync'
 import { registerCommandListeners } from '@/background/listeners/commands'
 import { registerContextMenuListeners } from '@/background/listeners/context-menu'
-import { registerAuthSessionLeaseAlarmListener } from '@/background/listeners/auth-session-lease-alarm'
 import { registerChromeBookmarkRepairAlarmListener } from '@/background/listeners/chrome-bookmark-repair-alarm'
 import { registerDreamingAlarmListener } from '@/background/listeners/dreaming-alarm'
 import { registerLinkStatusSweepAlarmListener } from '@/background/listeners/link-status-sweep-alarm'
@@ -80,7 +79,6 @@ async function bootstrapBackground(): Promise<void> {
     registerChromeBookmarkRepairAlarmListener()
     registerDreamingAlarmListener()
     registerLinkStatusSweepAlarmListener()
-    registerAuthSessionLeaseAlarmListener()
     // 订阅变更 → 线索 LLM 重挂（通过事件机制，避免 infrastructure → application 跨层依赖）
     // Set-based listener，不会重复注册（SW 重启不会累积）
     onSubscriptionChanged(handleSubscriptionChanged)

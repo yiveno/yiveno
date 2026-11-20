@@ -45,19 +45,8 @@ import {
   isAnonymousCaptchaRetryNeeded
 } from '@/infrastructure/auth/turnstile-token-provider'
 import { clearExtensionUninstallRevoke } from '@/infrastructure/auth/extension-uninstall-url'
-import { readJwtSessionId } from '@/infrastructure/auth/read-jwt-session-id'
 import { probeWebsiteSignedIn } from '@/infrastructure/auth/website-auth-probe'
-import { ensureAuthSessionLeaseAlarm } from '@/infrastructure/auth/auth-session-lease-alarm'
-import { maybeWriteExtensionDisplacedNotice } from '@/infrastructure/storage/extension-displaced-notice-storage'
 import { writeSignOutRemapNotice } from '@/infrastructure/storage/sign-out-remap-notice-storage'
-import {
-  clearLastExtensionLeaseSessionId,
-  writeLastExtensionLeaseSessionId
-} from '@/infrastructure/storage/last-extension-lease-session-storage'
-import {
-  beginSuppressDisplacedNotice,
-  endSuppressDisplacedNotice
-} from '@/infrastructure/storage/suppress-displaced-notice-storage'
 import { refreshAuthProfileFields } from '@/infrastructure/auth/extension-oauth'
 import {
   clearAuthSession,
@@ -118,12 +107,6 @@ let incrementalSyncInFlight: Promise<RunIncrementalMemorySyncResponse> | null = 
 export async function handleAuthSignIn(): Promise<AuthSignInResponse> {
   const startedAt = flowStart('Auth', 'AUTH_SIGN_IN（打开官网）')
   try {
-    // 登录页 mint 可能先撤旧扩展会话再 handoff：抑制自挤误报 elsewhere
-    try {
-      await beginSuppressDisplacedNotice()
-    } catch (error) {
-      logger.warn('Auth', 'Sign in 打开 displaced 抑制窗失败', error)
-    }
     const loginUrl = new URL('/login', getWebsiteBaseUrl())
     loginUrl.searchParams.set('connect_extension', '1')
     loginUrl.searchParams.set('extension_id', chrome.runtime.id)
@@ -145,31 +128,29 @@ export async function handleAuthSignIn(): Promise<AuthSignInResponse> {
 
 /** 等官网 ack 的最长时间；超时则打开账户页回退。 */
 const CONNECT_ACK_TIMEOUT_MS = 2000
-/** 等 mint/handoff / 挤掉确认的最长时间。 */
+/** 等 device-register / handoff 的最长时间。 */
 const CONNECT_DONE_TIMEOUT_MS = 60_000
 
 /**
- * AUTH_CONNECT_WEBSITE — 官网已登录时把会话接到扩展。
+ * AUTH_CONNECT_WEBSITE — 官网已登录时把设备接到扩展。
  * 1) UI 桥 `request_extension_connect`（零导航）
  * 2) 无 ack → 打开 `/account?connect_extension=1`
- * 等到 website_connect_result / handoff 写 session / 超时。
+ * 等到 website_connect_result / handoff 写 device session / 超时。
  */
 export async function handleAuthConnectWebsite(): Promise<AuthConnectWebsiteResponse> {
   const startedAt = flowStart('Auth', 'AUTH_CONNECT_WEBSITE')
   const extensionId = chrome.runtime.id
 
-  // 已是登录态：幂等成功
+  // 已是登录态：幂等成功（device 或迁移窗旧会话）
+  const existingDevice = await getDeviceSession()
+  if (existingDevice?.userId) {
+    flowOk('Auth', 'AUTH_CONNECT_WEBSITE', startedAt, { alreadySignedIn: true })
+    return { ok: true, path: 'bridge' }
+  }
   const existing = await getAuthSession()
   if (existing?.userId) {
     flowOk('Auth', 'AUTH_CONNECT_WEBSITE', startedAt, { alreadySignedIn: true })
     return { ok: true, path: 'bridge' }
-  }
-
-  // 本机即将 mint：禁止把自挤误报成「别处登录」
-  try {
-    await beginSuppressDisplacedNotice()
-  } catch (error) {
-    logger.warn('Auth', 'Connect 打开 displaced 抑制窗失败', error)
   }
 
   let path: 'bridge' | 'account_tab' = 'bridge'
@@ -284,12 +265,6 @@ export async function handleAuthConnectWebsite(): Promise<AuthConnectWebsiteResp
       })
     }
   })
-
-  try {
-    await endSuppressDisplacedNotice()
-  } catch (error) {
-    logger.warn('Auth', 'Connect 结束 displaced 抑制窗失败', error)
-  }
 
   if (outcome.ok) {
     flowOk('Auth', 'AUTH_CONNECT_WEBSITE', startedAt, { path: outcome.path })
@@ -468,11 +443,6 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
           await patchSyncPrefs({ enabled: false })
           await ensureMemoryCloudSyncAlarm(false)
           await clearAuthValidationTimestamp()
-          try {
-            await ensureAuthSessionLeaseAlarm(false)
-          } catch (error) {
-            logger.warn('Auth', '匿名 device invalid 关租约闹钟失败', error)
-          }
           flowOk('Auth', 'GET_AUTH_STATE', startedAt, {
             signedIn: false,
             reason: 'device_revalidate_invalid_anonymous',
@@ -487,7 +457,7 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
           }
         }
 
-        // 正式：复用 L1 remap + 回迁提示；远程尽力 revoke（无旧 uninstall 路径）
+        // 正式：复用 L1 remap + 回迁提示；本分支只清本机会话，不调远程 revoke
         const displacedAccountId = binding.accountId
         let flushOk = false
         try {
@@ -512,11 +482,6 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
         await patchSyncPrefs({ enabled: false })
         await ensureMemoryCloudSyncAlarm(false)
         await clearAuthValidationTimestamp()
-        try {
-          await ensureAuthSessionLeaseAlarm(false)
-        } catch (error) {
-          logger.warn('Auth', 'device invalid 关租约闹钟失败', error)
-        }
         flowOk('Auth', 'GET_AUTH_STATE', startedAt, {
           signedIn: false,
           reason: 'device_revalidate_invalid',
@@ -547,7 +512,6 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
         session = revalidated.session
       } else if (revalidated.status === 'invalid') {
         const displacedAccountId = binding.accountId
-        const accessBeforeClear = session.accessToken
         let flushOk = false
         try {
           await flushAccountExcerptsToCloud(displacedAccountId)
@@ -565,30 +529,11 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
         } catch (error) {
           logger.warn('Auth', '写回迁提示失败', error)
         }
-        let remoteReleased = false
+        // 旧会话作废：尽力消费本地卸载票（若有）；无票则无法远程撤（租约/release 端点已删）
         try {
-          remoteReleased = await clearExtensionUninstallRevoke({
-            revokeRemote: true,
-            ...(accessBeforeClear.trim() ? { accessTokenFallback: accessBeforeClear } : {})
-          })
+          await clearExtensionUninstallRevoke({ revokeRemote: true })
         } catch (error) {
-          logger.warn('Auth', '会话作废退登远程释放失败', error)
-        }
-        if (remoteReleased) {
-          try {
-            await clearLastExtensionLeaseSessionId()
-          } catch (error) {
-            logger.warn('Auth', '会话作废退登清 lastLeaseSessionId 失败', error)
-          }
-        } else {
-          const leaseSid = readJwtSessionId(accessBeforeClear)
-          if (leaseSid) {
-            try {
-              await writeLastExtensionLeaseSessionId(leaseSid)
-            } catch (error) {
-              logger.warn('Auth', '会话作废退登写 lastLeaseSessionId 失败', error)
-            }
-          }
+          logger.warn('Auth', '会话作废退登清卸载票失败', error)
         }
         await clearAuthSession()
         await clearAccountBinding()
@@ -596,23 +541,11 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
         await patchSyncPrefs({ enabled: false })
         await ensureMemoryCloudSyncAlarm(false)
         await clearAuthValidationTimestamp()
-        let wroteDisplacedNotice = false
-        try {
-          wroteDisplacedNotice = await maybeWriteExtensionDisplacedNotice(revalidated.reason)
-        } catch (error) {
-          logger.warn('Auth', '写 elsewhere 软条标记失败', error)
-        }
-        try {
-          await ensureAuthSessionLeaseAlarm(false)
-        } catch (error) {
-          logger.warn('Auth', '会话作废退登清除租约探测闹钟失败', error)
-        }
         session = null
         flowOk('Auth', 'GET_AUTH_STATE', startedAt, {
           signedIn: false,
           reason: 'revalidate_invalid',
           detail: revalidated.reason,
-          wroteDisplacedNotice,
           flushOk,
           openedLogin: false,
           remappedLibrary: true
@@ -642,12 +575,6 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
     const signedIn = Boolean(stillBound && hasCredential)
     if (signedIn) {
       clearAnonymousCaptchaRetryNeeded()
-    }
-    // device 会话不启租约闹钟；仅旧 Supabase 会话才对齐
-    try {
-      await ensureAuthSessionLeaseAlarm(signedIn && Boolean(latestLegacy) && !latestDevice)
-    } catch (error) {
-      logger.warn('Auth', '对齐租约探测闹钟失败', error)
     }
 
     const profileEmail = latestDevice?.email ?? latestLegacy?.email

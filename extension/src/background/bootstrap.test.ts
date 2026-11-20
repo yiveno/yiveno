@@ -73,10 +73,6 @@ vi.mock('@/background/listeners/chrome-bookmark-repair-alarm', () => ({
   registerChromeBookmarkRepairAlarmListener: vi.fn()
 }))
 
-vi.mock('@/background/listeners/auth-session-lease-alarm', () => ({
-  registerAuthSessionLeaseAlarmListener: vi.fn()
-}))
-
 vi.mock('@/application/recall/refresh-clue-llm-completer', () => ({
   refreshClueLlmCompleterFromDevConfig: vi.fn(async () => undefined)
 }))

@@ -1,20 +1,19 @@
 /**
- * 消费卸载一次性 revoke token：撤销扩展 Auth session + 清单活跃租约。
+ * 消费卸载一次性 revoke token：撤销对应 device token。
  * 供官网卸载落地页 / 扩展主动退出调用（公开接口，凭高熵 token）。
  */
 
 import type { Env } from '../../types/env'
 import { info, warn } from '../../utils/logger'
-import { clearExtensionSessionLease, getExtensionSessionLease } from './extension-session-lease-kv'
 import { takeExtensionUninstallRevokeToken } from './extension-uninstall-revoke-kv'
-import { revokeAuthSessionById } from './revoke-auth-session'
+import { revokeDeviceById } from './device-token-kv'
 
 export type ConsumeExtensionUninstallRevokeResult =
-  | { ok: true; revoked: boolean; clearedLease: boolean }
+  | { ok: true; revoked: boolean; deviceToken?: string }
   | { ok: false; error: 'invalid_token' | 'empty_token' }
 
 /**
- * 一次性消费 token：删 KV 记录 → 撤 Auth session → 若租约仍指向该 session 则清租约。
+ * 一次性消费 token：删 KV 记录 → 按 deviceId 撤 device token。
  * token 无效 / 已用过 → invalid_token（幂等友好：重复调用同一已消费 token 亦 404）。
  */
 export async function consumeExtensionUninstallRevoke(
@@ -31,29 +30,26 @@ export async function consumeExtensionUninstallRevoke(
     return { ok: false, error: 'invalid_token' }
   }
 
-  const revoked = await revokeAuthSessionById(env, record.userId, record.sessionId)
-
-  let clearedLease = false
-  const lease = await getExtensionSessionLease(env, record.userId)
-  if (lease && lease.sessionId === record.sessionId) {
-    await clearExtensionSessionLease(env, record.userId)
-    clearedLease = true
+  const result = await revokeDeviceById(env, record.userId, record.deviceId)
+  if (!result.ok) {
+    warn('[Auth] 卸载 revoke：KV 不可用', { userId: record.userId, deviceId: record.deviceId })
+    return { ok: true, revoked: false }
   }
 
-  info('[Auth] 已消费卸载 revoke token', {
+  info('[Auth] 已消费卸载 revoke token（撤 device）', {
     userId: record.userId,
-    sessionId: record.sessionId,
-    revoked,
-    clearedLease,
+    deviceId: record.deviceId,
+    revoked: result.revoked,
     extensionId: record.extensionId
   })
 
-  if (!revoked) {
-    warn('[Auth] 卸载 revoke：Auth session 撤销未确认成功（租约可能已清）', {
+  if (!result.revoked) {
+    warn('[Auth] 卸载 revoke：device 已不存在（可能已主动退出）', {
       userId: record.userId,
-      sessionId: record.sessionId
+      deviceId: record.deviceId
     })
+    return { ok: true, revoked: false }
   }
 
-  return { ok: true, revoked, clearedLease }
+  return { ok: true, revoked: true, deviceToken: result.deviceToken }
 }

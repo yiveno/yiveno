@@ -1,6 +1,6 @@
 /**
  * 接收官网回传的登录 / 退出，写入或清理本地 binding。
- * 登录：不静默 absorb（ADR-018 门闸由 UI 处理）；退出：清账号桶痕迹（口径 A）。
+ * 登录：不静默 absorb（ADR-018 门闸由 UI 处理）；退出：清账号桶痕迹（ADR-018 keep_local）。
  */
 
 import { scheduleSilentMemoryEmbeddingMaintenance } from '@/application/memory/ensure-memory-embedding-maintenance'
@@ -34,12 +34,6 @@ import {
   markAuthValidatedNow,
   clearAuthValidationTimestamp
 } from '@/infrastructure/auth/auth-session-revalidate'
-import { ensureAuthSessionLeaseAlarm } from '@/infrastructure/auth/auth-session-lease-alarm'
-import { clearExtensionDisplacedNotice } from '@/infrastructure/storage/extension-displaced-notice-storage'
-import {
-  clearLastExtensionLeaseSessionId,
-  isExtensionLeaseReclaimable
-} from '@/infrastructure/storage/last-extension-lease-session-storage'
 import { maskDeviceTokenForLog } from '@/core/identity/device-session'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
@@ -113,16 +107,6 @@ export async function applyExternalAuthDeviceHandoff(
       await registerExtensionUninstallRevoke(uninstallRevokeToken)
     }
     await markAuthValidatedNow()
-    try {
-      await clearExtensionDisplacedNotice()
-    } catch (error) {
-      logger.warn('Auth', 'device handoff 后清除被挤掉软条标记失败', error)
-    }
-    try {
-      await ensureAuthSessionLeaseAlarm(false)
-    } catch (error) {
-      logger.warn('Auth', 'device handoff 后清除租约探测闹钟失败', error)
-    }
 
     if (!sameAccount) {
       // ADR-018：禁止静默 absorb；门闸由 Settings / Side Panel 在 binding 变更后弹
@@ -160,7 +144,7 @@ export async function applyExternalAuthDeviceHandoff(
 
 /**
  * 遗留：旧官网页仍可能发 SIGN_OUT_HANDOFF。新产品路径官网退出不踢扩展；
- * 若收到则仍 keep_local 清扩展（兼容缓存页），并尽力释放远程租约。
+ * 若收到则仍 keep_local 清扩展（兼容缓存页），并尽力释放远程 device。
  */
 export async function applyExternalAuthSignOutHandoff(
   message: unknown
@@ -182,30 +166,20 @@ export async function applyExternalAuthSignOutHandoff(
         logger.warn('Auth', '官网退出 handoff 清账号桶失败', error)
       }
     }
-    // 官网退出：扩展 keep_local（口径 A 清账号桶）；销远程会话并清 revoke token
-    const remoteReleased = await clearExtensionUninstallRevoke({ revokeRemote: true })
-    // 远程租约已释放才清 lastLease；失败保留以便同机 Connect 静默认领
-    if (remoteReleased) {
-      try {
-        await clearLastExtensionLeaseSessionId()
-      } catch (error) {
-        logger.warn('Auth', '官网退出后清 lastLeaseSessionId 失败', error)
-      }
-    }
+    const device = await getDeviceSession()
+    const remoteReleased = await clearExtensionUninstallRevoke({
+      revokeRemote: true,
+      ...(device?.deviceToken ? { deviceTokenFallback: device.deviceToken } : {})
+    })
     await clearDeviceSession()
     await clearAuthSession()
     await clearAccountBinding()
     await patchSyncPrefs({ enabled: false })
     await clearAuthValidationTimestamp()
-    try {
-      await ensureAuthSessionLeaseAlarm(false)
-    } catch (error) {
-      logger.warn('Auth', '官网退出后清除租约探测闹钟失败', error)
-    }
     flowOk('Auth', '官网 sign-out handoff', startedAt, {
       reason: parsed.data.payload?.reason ?? 'website_sign_out',
       clearedAccountLibrary: Boolean(binding),
-      remoteLeaseReleased: remoteReleased
+      remoteDeviceReleased: remoteReleased
     })
     return { ok: true }
   } catch (error) {
@@ -268,48 +242,22 @@ export async function applyWebsiteSessionRequest(
     return { ok: false, error: 'invalid_website_session_request' }
   }
   const minted = await mintWebsiteSessionFromExtensionAccess()
-  if (!minted) {
-    return { ok: false, error: 'website_session_mint_failed' }
+  if (minted.status === 'email_required') {
+    return { ok: false, error: 'email_required' }
+  }
+  if (minted.status !== 'ok') {
+    return {
+      ok: false,
+      error: minted.status === 'not_signed_in' ? 'not_signed_in' : minted.error
+    }
   }
   return {
     ok: true,
-    accessToken: minted.accessToken,
-    refreshToken: minted.refreshToken,
-    userId: minted.userId,
-    ...(minted.email ? { email: minted.email } : {}),
-    ...(minted.expiresAt != null ? { expiresAt: minted.expiresAt } : {})
-  }
-}
-
-/**
- * 官网询问：409 租约是否为本机上次 handoff 的孤儿会话（可静默 confirmDisplace）。
- * 已登录 → 不可认领（应由 STATUS_PROBE 短路）；无匹配 lastLease → 真他端，须弹窗。
- */
-export async function applyExtensionLeaseReclaimProbe(
-  message: unknown
-): Promise<ExternalAuthHandoffResponse> {
-  const parsed = ExternalAuthHandoffMessageSchema.safeParse(message)
-  if (!parsed.success || parsed.data.type !== 'YIVENO_EXTENSION_LEASE_RECLAIM_PROBE') {
-    return { ok: false, error: 'invalid_reclaim_probe' }
-  }
-  try {
-    const device = await getDeviceSession()
-    if (device?.userId?.trim()) {
-      return { ok: true, reclaimable: false, signedIn: true, userId: device.userId.trim() }
-    }
-    const session = await getAuthSession()
-    if (session?.userId?.trim()) {
-      return { ok: true, reclaimable: false, signedIn: true, userId: session.userId.trim() }
-    }
-    const reclaimable = await isExtensionLeaseReclaimable(parsed.data.payload.existingSessionId)
-    logger.info('Auth', '扩展租约认领探测', {
-      reclaimable,
-      existingSessionIdPreview: parsed.data.payload.existingSessionId.trim().slice(0, 8)
-    })
-    return { ok: true, reclaimable, signedIn: false }
-  } catch (error) {
-    logger.warn('Auth', '扩展租约认领探测失败', error)
-    return { ok: false, error: 'reclaim_probe_failed' }
+    accessToken: minted.session.accessToken,
+    refreshToken: minted.session.refreshToken,
+    userId: minted.session.userId,
+    ...(minted.session.email ? { email: minted.session.email } : {}),
+    ...(minted.session.expiresAt != null ? { expiresAt: minted.session.expiresAt } : {})
   }
 }
 
@@ -327,9 +275,6 @@ export async function applyExternalAuthHandoff(
   }
   if (parsed.data.type === 'YIVENO_EXTENSION_AUTH_STATUS_PROBE') {
     return applyExtensionAuthStatusProbe(message)
-  }
-  if (parsed.data.type === 'YIVENO_EXTENSION_LEASE_RECLAIM_PROBE') {
-    return applyExtensionLeaseReclaimProbe(message)
   }
   if (parsed.data.type === 'YIVENO_WEBSITE_SESSION_REQUEST') {
     return applyWebsiteSessionRequest(message)

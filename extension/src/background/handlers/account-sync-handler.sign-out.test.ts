@@ -64,10 +64,6 @@ vi.mock('@/infrastructure/auth/device-register-api-client', () => ({
   deviceSessionFromRegisterData: vi.fn()
 }))
 
-vi.mock('@/infrastructure/auth/auth-session-lease-alarm', () => ({
-  ensureAuthSessionLeaseAlarm: vi.fn(async () => undefined)
-}))
-
 vi.mock('@/infrastructure/identity/local-profile-service', () => ({
   clearAccountBinding: clearAccountBindingMock,
   getAccountBinding: getAccountBindingMock,
@@ -191,8 +187,7 @@ describe('handleAuthSignOut', () => {
       deleteLocalExcerpts: false
     })
     expect(clearExtensionUninstallRevokeMock).toHaveBeenCalledWith({
-      revokeRemote: true,
-      accessTokenFallback: 'at'
+      revokeRemote: true
     })
     expect(clearAuthSessionMock).toHaveBeenCalled()
     expect(clearAccountBindingMock).toHaveBeenCalled()
@@ -336,7 +331,7 @@ describe('handleAuthSignOut', () => {
     const result = await handleAuthSignOut('keep_local')
     expect(result.ok).toBe(true)
     expect(revokeOwnDeviceTokenMock).toHaveBeenCalledWith(deviceToken)
-    expect(clearExtensionUninstallRevokeMock).not.toHaveBeenCalled()
+    expect(clearExtensionUninstallRevokeMock).toHaveBeenCalledWith({ revokeRemote: false })
     expect(clearDeviceSessionMock).toHaveBeenCalled()
     expect(clearAuthSessionMock).toHaveBeenCalled()
   })

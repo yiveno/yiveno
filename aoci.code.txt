@@ -81,7 +81,7 @@ vite.config.ts[FV5T]: F:Vite 配置主入口 | R:- | A:- | S:-
 vitest.config.mts[FQ5T]: F:扩展 Vitest 配置：Vue 插件与路径别名 | R:- | A:- | S:-
 
 ===/<repository>/extension/public/_locales/en/===
-messages.json[FL7L]: F:扩展 en 文案表（chrome.i18n） | R:code:extension/public/_locales/zh_CN/messages.json,code:extension/src/infrastructure/i18n/message-keys.ts | A:与 MESSAGE_KEYS 对称 | S:含匿名 Turnstile 前景重试五键；禁 Search
+messages.json[FL7L]: F:扩展 en 文案表（chrome.i18n） | R:code:extension/public/_locales/zh_CN/messages.json,code:extension/src/infrastructure/i18n/message-keys.ts | A:与 MESSAGE_KEYS 对称 | S:含匿名 Turnstile 重试键；displaced 键可残留但 UI 已拆；禁 Search
 
 ===/<repository>/extension/public/_locales/zh_CN/===
 messages.json[FL7L]: F:扩展 zh_CN 文案表 | R:code:extension/public/_locales/en/messages.json | A:键集须与 en 对称 | S:中文 UI 禁「搜索」；含匿名人机验证重试文案
@@ -131,7 +131,7 @@ sweep-memory-link-status.ts[AB7M]: F:每周死链巡检 tick 写 memory_link_sta
 sweep-orphan-memory-notes.ts[AB5T]: F:删除源已硬删的孤儿命题 | R:code:extension/src/infrastructure/indexeddb/memory-notes-repository.ts | A:软删源不扫为孤儿 | S:-
 
 ===/<repository>/extension/src/application/identity/===
-clear-account-library-on-sign-out.ts[AB8T]: F:退出/invalid 时账号桶回迁本地档 helper | R:code:extension/src/infrastructure/indexeddb/memory-item-repository.ts | A:remapAccountLibraryToLocalProfile;clearAccountLibraryOnSignOut | S:默认全量回迁；deleteLocalExcerpts=true 旧口径 A；E1' 复用
+clear-account-library-on-sign-out.ts[AB8S]: F:退出/invalid 时账号桶回迁本地档 helper | R:code:extension/src/infrastructure/indexeddb/memory-item-repository.ts | A:remapAccountLibraryToLocalProfile;clearAccountLibraryOnSignOut | S:默认全量回迁；设备撤销/退登同路径；deleteLocalExcerpts=true 旧口径 A
 login-migration.ts[AB7S]: F:登录迁移门闸：盘点/导入/导出/删除无主摘录 | R:code:extension/src/infrastructure/indexeddb/memory-item-repository.ts | A:禁止静默 absorb | S:无主=localProfile 摘录（含退出回迁）
 orphan-owner-buckets.ts[AB7S]: F:盘点/导出/清除换号残留孤儿 owner 桶 | R:code:extension/src/infrastructure/indexeddb/memory-item-repository.ts | A:保留 localProfile∪当前 binding | S:禁止静默删除；设置页显式触发
 
@@ -175,7 +175,7 @@ recall-scan-limit.ts[AB5T]: F:定义本机召回扫描上限常量 | R:- | A:REC
 
 ===/<repository>/extension/src/background/===
 bootstrap-ready.ts[AB5T]: F:Background bootstrap 幂等门闩 | R:code:extension/src/background/bootstrap.ts | A:打断循环依赖；并发合并 | S:禁动态 import
-bootstrap.ts[AB7S]: F:SW 启动：IDB/监听器/冷启动/LLM 挂载 | R:code:extension/src/infrastructure/auth/ensure-device-session-ready.ts | A:绑定 runner；注册 alarms/omnibox 等 | S:先 ensure device 再 refreshClueLlm，防 exchange 前 AI
+bootstrap.ts[AB7S]: F:SW 启动：IDB/监听器/冷启动/LLM 挂载 | R:code:extension/src/infrastructure/auth/ensure-device-session-ready.ts | A:绑定 runner；注册 alarms/omnibox 等 | S:先 ensure device 再 refreshClueLlm；S1 无 lease alarm
 main.ts[EM6T]: F:SW 入口：安装引导+ensure bootstrap+消息监听 | R:code:extension/src/background/bootstrap.ts | A:静态 import 全链路 | S:禁动态 import
 
 ===/<repository>/extension/src/background/commands/===
@@ -183,7 +183,7 @@ registry.ts[AB5T]: F:chrome.commands 处理器注册与分发 | R:code:extension
 
 ===/<repository>/extension/src/background/handlers/===
 account-library-handlers.ts[EM8L]: F:账户库迁移/孤儿桶/隐私/订阅相关 Background handlers | R:code:extension/src/application/identity/login-migration.ts | A:从 account-sync-handler 抽出 | S:禁止静默 absorb
-account-sync-handler.ts[EM9L]: F:账户登录与云同步 Background 编排 | R:code:extension/src/infrastructure/auth/ensure-anonymous-device-session.ts,code:extension/src/infrastructure/auth/turnstile-token-provider.ts | A:RETRY_ANONYMOUS_CAPTCHA;GET_AUTH_STATE.anonymousCaptchaRetryNeeded | S:前景重试注入 getTurnstileToken({foreground:true})；不改 ensure 流程本身
+account-sync-handler.ts[EM9L]: F:账户登录与云同步 Background 编排 | R:code:extension/src/infrastructure/auth/ensure-anonymous-device-session.ts,code:extension/src/infrastructure/auth/turnstile-token-provider.ts | A:RETRY_ANONYMOUS_CAPTCHA;GET_AUTH_STATE;SIGN_OUT | S:S1 无 displaced/lease；退出 device-revoke-self；前景 captcha 重试
 account-sync-shared.ts[EM6S]: F:账户/同步 handler 共用辅助 | R:code:extension/src/infrastructure/identity/device-session-service.ts,code:extension/src/infrastructure/auth/device-register-api-client.ts | A:requireAccessToken;finishSignOutSession | S:Bearer 优先 device；退出 device 走 revoke-self
 active-recall-registry.ts[EM5T]: F:Recall in-flight 追踪（per-source） | R:code:extension/src/background/handlers/recall-handler.ts | A:新 recall 覆盖旧；支持 CANCEL | S:-
 commands-handler.ts[EM6S]: F:扩展命令查询与打开 Recall 壳/导航 tab | R:code:extension/src/core/commands/command-display.ts | A:Background message handlers | S:-
@@ -198,7 +198,6 @@ resolve-clue-url-display.ts[EM6S]: F:为 composer URL 芯片解析展示标题 |
 settings-handler.ts[EM6S]: F:用户设置读写与 AI 配额查询 handlers | R:code:extension/src/infrastructure/identity/worker-api-access-token.ts | A:Zod patch；hosted quota | S:配额 Bearer 经 getWorkerApiAccessToken
 
 ===/<repository>/extension/src/background/listeners/===
-auth-session-lease-alarm.ts[EM5T]: F:租约探测闹钟：周期 GET_AUTH_STATE | R:- | A:被挤掉无需开 Panel | S:-
 chrome-bookmark-repair-alarm.ts[EM5T]: F:书签每日 full repair 闹钟监听 | R:- | A:对账 IndexedDB↔Chrome | S:-
 chrome-bookmark-sync.ts[EM6S]: F:Chrome 书签变更监听挂/卸与设置同步 | R:code:extension/src/application/capture/chrome-bookmark-sync-service.ts | A:按 sync 开关 | S:-
 commands.ts[EM5T]: F:注册 chrome.commands → dispatch | R:code:extension/src/background/commands/registry.ts | A:可闪 badge | S:-
@@ -517,12 +516,10 @@ recall-telemetry-recorder.ts[IA7M]: F:录制 Recall TTE 遥测事件 | R:code:ex
 recall-telemetry-store.ts[IA5T]: F:读写 Recall 遥测存储 | R:code:extension/src/infrastructure/analytics/recall-telemetry-recorder.ts | A:- | S:-
 
 ===/<repository>/extension/src/infrastructure/auth/===
-auth-session-lease-alarm.ts[II5T]: F:扩展会话租约闹钟注册 | R:- | A:SW alarm | S:-
-auth-session-revalidate.ts[II6M]: F:重验扩展会话并刷新租约 | R:- | A:失败可挤端 | S:ADR-018/019
+auth-session-revalidate.ts[II6S]: F:迁移窗内重验旧 auth_session（refresh） | R:code:extension/src/infrastructure/auth/device-session-revalidate.ts | A:revalidateAuthSession | S:S1 已拆 lease/displaced；仅 dual-auth 旧会话路径
 extension-oauth.ts[II7M]: F:扩展 OAuth/会话 mint 与 handoff | R:- | A:官网↔扩展 | S:禁止 Port 传 token
-extension-session-lease-probe.ts[II6T]: F:向 Worker 探测本扩展 access token 是否仍为账号活跃租约 | R:code:extension/src/infrastructure/logging/flow-log.ts | A:- | S:-
-extension-uninstall-url.ts[II6S]: F:扩展卸载 URL：作废票 + 落地页 | R:code:extension/src/infrastructure/logging/flow-log.ts | A:- | S:-
-mint-website-session-from-extension.ts[II6T]: F:用扩展会话向 Worker 铸造官网短期 website-session | R:code:extension/src/infrastructure/logging/flow-log.ts | A:- | S:-
+extension-uninstall-url.ts[IA6S]: F:扩展卸载 URL：作废票 + 落地页 | R:code:extension/src/infrastructure/logging/flow-log.ts | A:setUninstallURL 旁路登记 | S:作废票 payload={userId,deviceId}；消费撤 devtok
+mint-website-session-from-extension.ts[IA6S]: F:用扩展 device Bearer 铸官网短期 website-session | R:code:extension/src/infrastructure/logging/flow-log.ts | A:mintWebsiteSessionFromExtension | S:email_required 上抛；无租约依赖；dual-auth 兼容旧会话
 read-jwt-session-id.ts[II6T]: F:只读解析 JWT payload.session_id（不验签） | R:- | A:- | S:-
 supabase-client.ts[II6T]: F:扩展侧 Supabase 客户端单例入口 | R:- | A:- | S:-
 watch-auth-session-storage.ts[II6T]: F:监听 chrome.storage 登录相关键变更 | R:code:extension/src/core/identity/device-session.ts | A:- | S:含 yiveno:device_session 与旧 auth_session、AccountBinding
@@ -533,7 +530,7 @@ device-register-api-client.ts[IA6S]: F:Worker device-register/revoke-self HTTP �
 device-session-revalidate.ts[IA6S]: F:device 会话存活探针（subscription） | R:code:extension/src/infrastructure/auth/auth-session-revalidate.ts | A:revalidateDeviceSession | S:401→invalid；非 401→uncertain；无租约/refresh
 ensure-anonymous-device-session.ts[IA7S]: F:匿名 GoTrue signup→exchange→只存 device | R:code:extension/src/infrastructure/auth/turnstile-token-provider.ts,code:extension/src/infrastructure/auth/device-register-api-client.ts | A:ensureAnonymousDeviceSession | S:exchange 前不持久化 Supabase；captcha null fail-open
 ensure-device-session-ready.ts[IA5T]: F:启动/GET_AUTH_STATE 确保 device 就绪 | R:code:extension/src/infrastructure/auth/migrate-auth-to-device-session.ts,code:extension/src/infrastructure/auth/ensure-anonymous-device-session.ts | A:ensureDeviceSessionReady | S:migrate→anon；single-flight
-migrate-auth-to-device-session.ts[IA5T]: F:旧 auth_session→device_session 升级 | R:code:extension/src/infrastructure/auth/device-register-api-client.ts | A:migrateAuthSessionToDeviceIfNeeded | S:先写新键再删旧；失败 fail-open
+migrate-auth-to-device-session.ts[IA5T]: F:旧 auth_session→device_session 升级 | R:code:extension/src/infrastructure/auth/device-register-api-client.ts | A:migrateAuthSessionToDeviceIfNeeded | S:session_exchange；先写新键再删旧；失败 fail-open；无租约清理
 turnstile-token-provider.ts[IA7S]: F:开官网页取 Turnstile captcha 经 UI 桥回传 | R:code:extension/src/infrastructure/browser/website-page.ts | A:getTurnstileToken({foreground?});resolveTurnstileTokenFromUiBridge | S:single-flight；约30s超时fail-open；token不持久化；日志只记长度
 
 ===/<repository>/extension/src/infrastructure/browser/===
@@ -638,14 +635,11 @@ chrome-storage-local.ts[PD5T]: F:chrome.storage.local 的 Zod 校验读写与删
 chrome-storage-quota.ts[PD5T]: F:chrome.storage.local/session 用量采样（getBytesInUse + QUOTA_BYTES） | R:code:extension/src/infrastructure/logging/logger.ts | A:- | S:-
 chrome-storage-session.ts[PD5T]: F:chrome.storage.session 的 Zod 校验读写与删除封装 | R:code:extension/src/infrastructure/logging/logger.ts | A:- | S:-
 cold-start-post-release-banner-storage.ts[PD5T]: F:冷启动放行后轻条：本会话 dismiss 的 readyAt（session 存储） | R:code:extension/src/infrastructure/storage/chrome-storage-session.ts | A:- | S:-
-extension-displaced-notice-storage.ts[PD5T]: F:扩展被他端挤下线软条标记（仅 lease displaced；session 存储） | R:code:extension/src/infrastructure/logging/logger.ts,code:extension/src/infrastructure/storage/chrome-storage-session.ts | A:- | S:-
 first-recall-onboarding-storage.ts[PD5S]: F:首次找回引导相关 storage（Side Panel / 划词浮层共用） | R:code:extension/src/infrastructure/storage/install-onboarding-storage.ts | A:- | S:-
 gs-clue-samples-storage.ts[PD5T]: F:Getting Started 示意 clue 的 session 缓存（同会话不重复烧配额） | R:code:extension/src/infrastructure/storage/chrome-storage-session.ts | A:- | S:-
 install-onboarding-storage.ts[PD5T]: F:安装引导完成标记（Side Panel / Getting Started 共用） | R:- | A:- | S:-
-last-extension-lease-session-storage.ts[PD5T]: F:本机上次成功 handoff 的扩展 Auth session_id（区分孤儿租约与他端占用） | R:code:extension/src/infrastructure/logging/logger.ts,code:extension/src/infrastructure/storage/chrome-storage-local.ts | A:- | S:-
 memory-library-revision-storage.ts[PD5T]: F:本机 Memory 库成员变更信号（chrome.storage.local） | R:- | A:- | S:-
 recall-outcome-pairs-storage.ts[PD5S]: F:本机 Recall Outcome 对 ring buffer（chrome.storage.local） | R:code:extension/src/core/common/optional-props.ts,code:extension/src/core/recall/recall-outcome-pairs.ts | A:- | S:-
-suppress-displaced-notice-storage.ts[PD5T]: F:本机 Connect / mint 编排窗口：抑制「signed in elsewh | R:code:extension/src/infrastructure/storage/chrome-storage-session.ts | A:- | S:不得冒充
 third-party-corpus-import-storage.ts[PD5T]: F:第三方语料导入进度读写（chrome.storage.local，按来源 map） | R:code:extension/src/core/memory/third-party-corpus-import-state.ts,code:extension/src/core/memory/third-party-corpus-source.ts | A:- | S:-
 sign-out-remap-notice-storage.ts[IS6T]: F:invalid 退登后回迁提示（session） | R:code:extension/src/infrastructure/storage/chrome-storage-session.ts | A:writeSignOutRemapNotice(flushOk) | S:与 displaced 软条独立
 
@@ -752,7 +746,7 @@ use-login-migration-dialog.ts[EU5S]: F:登录迁移门闸 UI（ADR-018）：Impo
 ===/<repository>/extension/src/pages/sidepanel/===
 RecallHighlightText.vue[EU5T]: F:Recall 命中片段高亮渲染 | R:code:extension/src/core/recall/highlight-recall-text.ts | A:扩展页 UI | S:-
 RecallResultCard.vue[EU5L]: F:Recall 结果卡：邻域项扫读、展开与打开原文 | R:code:extension/src/core/recall/highlight-recall-text.ts,code:extension/src/infrastructure/browser/active-tab-reader.ts | A:扩展页 UI | S:-
-SidePanel.vue[EU8L]: F:Recall 主壳 Side Panel | R:code:extension/src/infrastructure/storage/sign-out-remap-notice-storage.ts | A:回迁软条+官网账号不一致 | S:无退出按钮；displaced 不动
+SidePanel.vue[EU8L]: F:Recall 主壳 Side Panel | R:code:extension/src/infrastructure/storage/sign-out-remap-notice-storage.ts | A:回迁软条+官网 Connect | S:无退出按钮；S1 已拆 displaced 软条与 CSS
 build-assistant-turn.ts[EU5T]: F:构造 Side Panel 助手轮次（轻提示、卡片与 framing 字段） | R:code:extension/src/core/recall/format-recall-understanding-echo.ts,code:extension/src/core/recall/recall-framing-facts.ts | A:扩展页 UI | S:-
 index.html[EU3T]: F:Side Panel HTML 壳：挂载 sidepanel/main.ts | R:- | A:扩展页 UI | S:-
 main.ts[EU5T]: F:Side Panel 入口：i18n boot 后挂载 SidePanel.vue | R:code:extension/src/infrastructure/i18n/extension-i18n-boot.ts | A:扩展页 UI | S:-
@@ -965,15 +959,15 @@ sitemap.xml[OV5T]: F:官网公开 sitemap：首页与主要营销/法务路径 |
 tiers.ts[FC5T]: F:官网付费档位（仅 Pro）的价与 plan id | R:- | A:- | S:-
 
 ===/<repository>/website/src/components/===
-AccountPage.vue[EU5L]: F:官网账户页 | R:code:website/src/services/run-extension-connect.ts,code:website/src/i18n/en.ts | A:官网组件 | S:Connect 清参认 account_mismatch；退出注明仅当前浏览器
+AccountPage.vue[EU5L]: F:官网账户页（含 Devices） | R:code:website/src/services/account-devices.ts,code:website/src/services/run-extension-connect.ts,code:website/src/i18n/en.ts | A:列表/改名/撤销设备；Connect | S:Devices 走官网 JWT；Connect 认 account_mismatch；退出仅当前浏览器
 AppNav.astro[EU5T]: F:账号域顶栏：品牌 mark + AuthNav + UI 桥宿主 | R:- | A:官网组件 | S:-
-AuthCallback.vue[EI5S]: F:官网鉴权回调：交换会话并可选 Connect handoff | R:code:website/src/services/extension-auth-handoff.ts,code:website/src/i18n/en.ts | A:官网组件 | S:Connect 失败/账号冲突走 i18n；extension_connected=0/1
+AuthCallback.vue[EI5S]: F:官网鉴权回调：交换会话并可选 device 注册交接 | R:code:website/src/services/extension-auth-handoff.ts,code:website/src/i18n/en.ts | A:registerAndHandoffDeviceToExtension | S:无 409 挤掉；extension_connected=0/1
 AuthNav.vue[EI5S]: F:官网顶栏鉴权入口：登录链接或头像菜单 | R:- | A:官网组件 | S:-
 ExtensionSessionProbe.vue[EI5T]: F:探测官网是否已登录并回传 signedIn（不 mint） | R:- | A:官网组件 | S:-
 ExtensionUninstalledPage.vue[EU5L]: F:扩展卸载落地：可选反馈与后台 revoke | R:- | A:官网组件 | S:-
-FromExtensionAuth.vue[EI6M]: F:扩展→官网反向接通确认页 | R:code:website/src/components/from-extension-auth-phase.ts | A:Continue 后才铸会话 | S:加载禁止自动 mint
+FromExtensionAuth.vue[EI6M]: F:扩展→官网反向接通确认页 | R:code:website/src/components/from-extension-auth-phase.ts | A:Continue 后才铸会话 | S:email_required 引导转正；加载禁止自动 mint
 InstallCta.astro[EU5S]: F:首页安装 CTA：按主机选 Edge/Chrome 主路径（ADR-020） | R:- | A:官网组件 | S:-
-LoginForm.vue[EI5L]: F:官网登录表单：邮箱 OTP 与 OAuth | R:code:website/src/services/extension-auth-handoff.ts | A:官网组件 | S:Connect 异账号 account_mismatch 诚实文案；无挤掉取消路径
+LoginForm.vue[EI5L]: F:官网登录表单：邮箱 OTP 与 OAuth | R:code:website/src/services/extension-auth-handoff.ts | A:registerAndHandoffDeviceToExtension | S:Connect 异账号 account_mismatch；无挤掉路径；device-register 交接
 LogoutPage.vue[EI5T]: F:官网退出页：清本地会话并反馈状态 | R:- | A:官网组件 | S:-
 MarketingNav.astro[EU5T]: F:营销页顶栏：与账号域同样挂 AuthNav，语言切换在页脚 | R:- | A:官网组件 | S:-
 PricingPage.vue[EB5L]: F:官网定价页：档位与结账入口 | R:- | A:官网组件 | S:-
@@ -1004,10 +998,10 @@ env.d.ts[FC3T]: F:Astro 官网 ImportMetaEnv 与客户端类型声明 | R:- | A:
 resolve-geo-domain-redirect.ts[AG5M]: F:官网软性按地区选域名（与页面显示语言无关） | R:- | A:- | S:-
 
 ===/<repository>/website/src/i18n/===
-en.ts[IL5M]: F:官网产品面英文文案 | R:code:website/src/i18n/zh.ts | A:WebsiteMessageKey | S:含 turnstile.meta/status 键
+en.ts[IL5L]: F:官网产品面英文文案 | R:code:website/src/i18n/zh.ts | A:WebsiteMessageKey | S:含 Devices / turnstile / email_required 键
 locale.ts[IL5T]: F:官网 UI 语言：跟浏览器，可覆盖并持久化到 localStorage | R:- | A:- | S:-
 t.ts[IL8T]: F:官网产品面 t()：en/zh_CN 文案解析与 locale 持久化 | R:- | A:- | S:-
-zh.ts[IL5M]: F:官网产品面简体中文文案 | R:code:website/src/i18n/en.ts | A:键与 en 对称 | S:含 turnstile 人机验证页文案
+zh.ts[IL5M]: F:官网产品面简体中文文案 | R:code:website/src/i18n/en.ts | A:键与 en 对称 | S:含 Devices / turnstile / email_required 键
 
 ===/<repository>/website/src/install/===
 store-links.ts[FE5T]: F:扩展商店安装深链（ADR-020） | R:- | A:- | S:禁止假装可装
@@ -1051,15 +1045,16 @@ auth-session-liveness.ts[II5T]: F:官网会话存活探测：失效则尽快反�
 auth.ts[II5S]: F:官网登录：OAuth/邮件 OTP、会话读写与退出 | R:- | A:- | S:-
 billing.ts[IB5T]: F:官网计费 API（Worker） | R:- | A:- | S:-
 date.ts[CL5T]: F:官网日期展示：跟生效 UI locale（BCP 47） | R:- | A:- | S:禁止裸 `toLocaleDateString()` 无 locale
-extension-auth-handoff.ts[II5M]: F:官网 Connect：device-register 后 DEVICE_HANDOFF | R:code:website/src/services/register-device-from-website.ts | A:YIVENO_AUTH_DEVICE_HANDOFF;STATUS_PROBE | S:同账号短路；异账号拒绝；handoff 失败 revoke-self；禁传官网 refresh
+extension-auth-handoff.ts[II5M]: F:官网 Connect：device-register 后 DEVICE_HANDOFF | R:code:website/src/services/register-device-from-website.ts | A:registerAndHandoffDeviceToExtension;STATUS_PROBE | S:同账号短路；异账号拒绝；失败 revoke-self；禁传官网 refresh
 nav-pro-badge-cache.ts[AB5T]: F:官网顶栏 Pro 环用的会话缓存 | R:- | A:- | S:-
 otp-resend-cooldown.ts[AI5T]: F:Email OTP「再次发送」冷却：截止时间写入 sessionStorage | R:- | A:- | S:-
 run-extension-connect.ts[AI5S]: F:官网已登录时编排 Connect 到扩展 | R:code:website/src/services/extension-auth-handoff.ts | A:website_connect_result | S:结果含 account_mismatch；不清官网会话
 subscription.ts[IB5T]: F:官网拉取 Worker 订阅状态的 HTTP 客户端 | R:- | A:官网服务 | S:-
 supabase.ts[II5T]: F:官网 Supabase 客户端单例工厂 | R:- | A:官网服务 | S:-
 turnstile.ts[IS5S]: F:Cloudflare Turnstile（官网 Email OTP 防刷） | R:- | A:- | S:-
-ui-bridge.ts[IE5M]: F:同浏览器官网与扩展 UI Port 桥（ADR-019） | R:code:website/src/services/extension-auth-handoff.ts | A:publishWebsiteTurnstileToken | S:captcha token 立即 post（后台 tab 不走 dirty）；可显式 extensionId
-register-device-from-website.ts[II5S]: F:官网用 access 调 device-register website_connect | R:- | A:POST /api/auth/device-register | S:401 与缺字段结构化失败；回滚走 device-revoke-self
+ui-bridge.ts[IE5M]: F:同浏览器官网与扩展 UI Port 桥（ADR-019） | R:code:website/src/services/extension-auth-handoff.ts | A:publishWebsiteTurnstileToken | S:captcha token 立即 post；可显式 extensionId；禁传登录 token
+register-device-from-website.ts[II5S]: F:官网用 access 调 device-register website_connect | R:- | A:POST /api/auth/device-register | S:映射 uninstallRevokeToken；401 与缺字段结构化失败；回滚 revoke-self
+account-devices.ts[II5S]: F:官网账户页 Devices API 客户端 | R:code:website/src/components/AccountPage.vue | A:listDevices;renameDevice;revokeDevice | S:Bearer=官网 JWT；非 deviceAuth
 
 ===/<repository>/website/src/styles/===
 home-critical.css[EU3T]: F:首页首屏关键样式（reveal 在 home-deferred） | R:- | A:- | S:-
@@ -1122,7 +1117,7 @@ device-or-supabase-auth.ts[MI6T]: F:过渡期双栈鉴权（ydt_→device 否则
 account.ts[EI5S]: F:账户路由：订阅/MCP 开关/删号 | R:code:worker/src/middleware/device-or-supabase-auth.ts | A:GET /subscription | S:仅 /subscription 双栈；/mcp 与 /delete 仍 supabaseAuth
 admin.ts[EI5T]: F:管理员运维自检路由（JWT）；产品主路径不依赖 | R:- | A:- | S:-
 ai.ts[EA5T]: F:AI 路由树：clue/hosted/embed/dreaming 入口 | R:code:worker/src/middleware/device-or-supabase-auth.ts | A:deviceAuthOrSupabaseAuth | S:embed/hosted/dreaming 双栈并把 deviceIsAnonymous 传入 handler
-auth.ts[EI5M]: F:认证路由 device-register/revoke | R:code:worker/src/services/auth/device-register.ts | A:POST /device-register | S:L1 未改 Worker
+auth.ts[EI5M]: F:认证路由 device-register/devices/revoke/rename | R:code:worker/src/services/auth/device-register.ts,code:worker/src/services/auth/device-token-kv.ts | A:POST device-register;GET devices;extension-session→410 | S:S1 无 lease；devices 用 supabaseAuth
 billing.ts[EB5S]: F:计费路由：套餐目录、checkout、Customer Portal | R:code:worker/src/middleware/supabase-auth.ts | A:POST /checkout-session | S:缺 email 返回 400 email_required，避免匿名结账走 500
 health.ts[EO5T]: F:健康检查路由 | R:- | A:- | S:-
 mcp.ts[EE5S]: F:只读 MCP HTTP tools/list 与 tools/call | R:code:worker/src/middleware/device-or-supabase-auth.ts | A:deviceAuthOrSupabaseAuth | S:鉴权改双栈；Pro+KV 开关门禁不变，匿名非 Pro 仍拒
@@ -1147,22 +1142,18 @@ usage-quota.ts[AA5S]: F:托管 LLM 配额 | R:code:worker/src/config/ai-hosted.t
 
 ===/<repository>/worker/src/services/auth/===
 auth-session-exists.ts[II5T]: F:探测指定 Auth session 是否仍存在于 `auth.sessions` | R:- | A:- | S:禁止**把 Admin GET 的 404 当成 gone：多数 GoT
-consume-extension-uninstall-revoke.ts[II5T]: F:消费卸载一次性 revoke token：撤 Auth session 并清单活跃租约 | R:- | A:- | S:-
-extension-session-lease-kv.ts[II5S]: F:扩展侧「单活跃会话」租约（AI_USAGE_KV） | R:- | A:- | S:-
-extension-uninstall-revoke-kv.ts[II5S]: F:扩展卸载用一次性 revoke token（AI_USAGE_KV） | R:- | A:- | S:-
+consume-extension-uninstall-revoke.ts[II5T]: F:消费卸载一次性作废票：撤设备 token | R:code:worker/src/services/auth/device-token-kv.ts | A:consumeExtensionUninstallRevoke | S:payload={userId,deviceId}；revokeDeviceById
+extension-uninstall-revoke-kv.ts[II5S]: F:扩展卸载一次性作废票 KV | R:code:worker/src/services/auth/consume-extension-uninstall-revoke.ts | A:put/get uninstall revoke | S:payload 含 deviceId（非 sessionId）
 issue-supabase-user-session.ts[II5S]: F:Admin generateLink + anon verifyOtp：为指定用户签发新 Auth 会话 | R:- | A:- | S:-
-mint-extension-session.ts[II5M]: F:为扩展另开 Supabase Auth 会话（独立 refresh；单活跃租约） | R:- | A:- | S:不得直接 handoff 共用 refresh；官网可多端同登，**不*
 mint-website-session.ts[II5T]: F:用扩展 Bearer 为本浏览器官网铸造独立 Supabase 会话 | R:- | A:- | S:-
 oauth-client.ts[II5S]: F:OAuth 令牌交换 & 用户信息获取 | R:- | A:- | S:-
-probe-extension-session-lease.ts[II5T]: F:探测 access token 的 session_id 是否仍是账号下的当前扩展租约 | R:- | A:- | S:-
 provider-config.ts[FI5T]: F:OAuth 提供商配置 | R:- | A:- | S:-
 read-jwt-session-id.ts[II3T]: F:从 access token payload 读取 session_id（不验签） | R:- | A:- | S:-
-release-extension-session.ts[II5T]: F:用扩展 Bearer 释放本会话：撤销 Auth session，若仍占租约则清 KV | R:- | A:- | S:-
 revoke-auth-session.ts[II5T]: F:撤销指定 Supabase Auth session（该端等价登出） | R:- | A:- | S:-
 validation.ts[II5T]: F:OAuth 请求参数验证 | R:- | A:- | S:-
 verify-supabase-access-token.ts[II5S]: F:服务端校验 Supabase access token 并提取 claims | R:code:worker/src/services/auth/device-register.ts | A:verifySupabaseAccessToken | S:透传 is_anonymous；缺失 claim 按非匿名
-device-register.ts[II6M]: F:设备注册 connect/exchange | R:code:worker/src/services/auth/device-token-kv.ts | A:handleDeviceRegister | S:已有 meta 不覆盖
-device-token-kv.ts[PI7M]: F:设备 token KV | R:code:worker/src/middleware/device-auth.ts | A:issueDeviceToken;revokeDeviceTokenSelf | S:ydt_+64hex；不挤掉其它设备
+device-register.ts[II6M]: F:设备注册 connect/exchange | R:code:worker/src/services/auth/device-token-kv.ts | A:handleDeviceRegister | S:cap 20→403；签发可选 uninstallRevokeToken；已有 meta 不覆盖
+device-token-kv.ts[PI7L]: F:设备 token KV（列表/改名/撤销/cap） | R:code:worker/src/middleware/device-auth.ts | A:issueDeviceToken;listDevicesForUser;revokeDeviceById;renameDevice | S:ydt_+64hex；DEVICE_CAP=20；列表验活 devtok
 
 ===/<repository>/worker/src/services/billing/===
 dodo-client.ts[IB5M]: F:Dodo Payments REST 客户端 | R:- | A:- | S:-

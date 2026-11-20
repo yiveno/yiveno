@@ -9,7 +9,6 @@ import {
   registerDeviceViaSessionExchange
 } from '@/infrastructure/auth/device-register-api-client'
 import { clearAuthValidationTimestamp } from '@/infrastructure/auth/auth-session-revalidate'
-import { ensureAuthSessionLeaseAlarm } from '@/infrastructure/auth/auth-session-lease-alarm'
 import { clearAuthSession, getAuthSession } from '@/infrastructure/identity/auth-session-service'
 import {
   getDeviceSession,
@@ -66,12 +65,6 @@ export async function migrateAuthSessionToDeviceIfNeeded(): Promise<MigrateAuthT
   // 再删旧键（写成功后才删）
   await clearAuthSession()
   await clearAuthValidationTimestamp()
-  try {
-    // device 会话无租约；关掉探测闹钟
-    await ensureAuthSessionLeaseAlarm(false)
-  } catch (error) {
-    logger.warn('Auth', '迁移后关租约闹钟失败', error)
-  }
 
   flowOk('Auth', 'migrate auth_session → device_session', startedAt, {
     userId: deviceSession.userId,

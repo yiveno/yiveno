@@ -106,17 +106,17 @@ describe('extension-uninstall-url', () => {
     expect(chrome.runtime.setUninstallURL).not.toHaveBeenCalledWith('', expect.any(Function))
   })
 
-  it('clear 无 token 时用 accessTokenFallback 走 session-release', async () => {
+  it('clear 无 token 时用 deviceTokenFallback 走 device-revoke-self', async () => {
     await clearExtensionUninstallRevoke({
       revokeRemote: true,
-      accessTokenFallback: 'access-token-xyz'
+      deviceTokenFallback: 'ydt_' + 'a'.repeat(64)
     })
     expect(fetch).toHaveBeenCalledWith(
-      'https://api.yiveno.com/api/auth/extension-session-release',
+      'https://api.yiveno.com/api/auth/device-revoke-self',
       expect.objectContaining({
         method: 'POST',
         headers: expect.objectContaining({
-          authorization: 'Bearer access-token-xyz'
+          authorization: expect.stringMatching(/^Bearer ydt_/)
         })
       })
     )
