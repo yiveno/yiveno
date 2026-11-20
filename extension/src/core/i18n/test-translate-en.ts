@@ -4,21 +4,21 @@ import type { TranslateFn } from '@/core/i18n/translate'
 const EN: Record<string, string> = {
   popup_empty_no_memory_title: 'Nothing in your library yet',
   popup_empty_no_memory_body_importing:
-    'Your bookmarks are syncing in. You can also highlight a line to keep—once it’s saved, recall it in your own words.',
+    'Your bookmarks are syncing in. You can also highlight a line to keep—once it’s saved, find it in your own words.',
   popup_empty_no_memory_body_prefix: ' ',
   popup_empty_no_memory_body_suffix:
-    ', or highlight a line to save. Then come back and recall it in your own words.',
+    ', or highlight a line to save. Then come back and find it in your own words.',
   popup_empty_no_memory_body:
-    'Sync your bookmarks, or highlight a line to save. Then come back and recall it in your own words.',
+    'Sync your bookmarks, or highlight a line to save. Then come back and find it in your own words.',
   popup_empty_no_memory_body_ingest_on_empty:
-    'Bookmark sync is on, but your library is still empty. Save a highlight (or open Getting Started), then recall it in your own words.',
+    'Bookmark sync is on, but your library is still empty. Save a highlight (or open Getting Started), then find it in your own words.',
   popup_empty_import_bookmarks: 'Sync bookmarks',
   popup_empty_import_bookmarks_aria: 'Open Settings to turn on bookmark sync',
   popup_capture_first_title: 'Save a line first',
   popup_capture_first_body:
-    'Highlight a sentence on any page—or save the demo line on Getting Started—then recall it in your own words.',
+    'Highlight a sentence on any page—or save the demo line on Getting Started—then find it in your own words.',
   popup_capture_first_body_importing:
-    'Your bookmarks are syncing in. Save one excerpt first—it is the fastest way to see how recall works.',
+    'Your bookmarks are syncing in. Save one excerpt first—it is the fastest way to see how Find works.',
   popup_empty_library_empty_title: 'Nothing saved yet',
   popup_empty_library_empty_body_prefix: 'Your library is empty. ',
   popup_empty_library_empty_body_suffix:
@@ -26,7 +26,7 @@ const EN: Record<string, string> = {
   popup_empty_library_empty_body:
     'Your library is empty. Sync bookmarks or save an excerpt first, then try again in your own words.',
   popup_empty_library_empty_body_importing:
-    'Your bookmarks are still syncing in. Save an excerpt if you want something to recall right away.',
+    'Your bookmarks are still syncing in. Save an excerpt if you want something to find right away.',
   popup_empty_library_empty_body_ingest_on_empty:
     'Your library is still empty. Save a highlight, then come back with any clue in your own words.',
   popup_no_match_title_with_clue: 'No match for "$1"',
@@ -84,8 +84,8 @@ const EN: Record<string, string> = {
   omnibox_default_suggestion: 'Tip: Title, site, or note keyword. Fuzzy → Side Panel',
   omnibox_default_suggestion_with_shortcut:
     'Tip: Title, site, or note keyword. Fuzzy → Side Panel ($1)',
-  omnibox_no_match: 'No quick match — try a fuller recall in Side Panel',
-  omnibox_no_match_with_shortcut: 'No quick match — try a fuller recall in Side Panel ($1)',
+  omnibox_no_match: 'No quick match — try finding it in the Side Panel',
+  omnibox_no_match_with_shortcut: 'No quick match — try finding it in the Side Panel ($1)',
   omnibox_switch_track: 'Not what you wanted? Open Side Panel',
   omnibox_switch_track_with_shortcut: 'Not what you wanted? Open Side Panel ($1)',
   omnibox_type_bookmark: 'Bookmark',
@@ -94,7 +94,7 @@ const EN: Record<string, string> = {
   recall_card_saved: 'Saved $1',
   recall_card_saved_just_now: 'Just saved',
   recall_card_match_reason_aria: 'Why this fits: $1',
-  command_title_open_recall: 'Open Recall (side panel)',
+  command_title_open_recall: 'Open Find (side panel)',
   command_title_open_library: 'Open Library',
   command_title_open_settings: 'Open Settings',
   command_title_save_selection: 'Save Selected Text',

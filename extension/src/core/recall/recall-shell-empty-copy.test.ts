@@ -62,7 +62,7 @@ describe('recall-shell-empty-copy', () => {
     expect(copy?.title).toBe('Nothing in your library yet')
     expect(copy?.body).toMatch(/sync.*bookmark|bookmark.*sync/i)
     expect(copy?.body).toMatch(/highlight|save/i)
-    expect(copy?.body).toMatch(/recall/i)
+    expect(copy?.body).toMatch(/find/i)
     expect(copy?.body).not.toMatch(FORBIDDEN)
     expect(copy?.bodySegments?.some(s => s.kind === 'open_bookmark_ingest_settings')).toBe(true)
     // en 前缀为故意单空格；不得被 pushTextSegment 当「空白」丢弃

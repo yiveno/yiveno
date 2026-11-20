@@ -3,7 +3,7 @@
     "message": "Yiveno"
   },
   "app_description": {
-    "message": "存下重要的。之后用 Recall 找到。"
+    "message": "存下重要的，之后找到它。"
   },
   "context_menu_save_selection": {
     "message": "保存到 Yiveno"
@@ -21,10 +21,10 @@
     }
   },
   "omnibox_no_match": {
-    "message": "没有快速匹配 — 可在侧边栏试更完整的 Recall"
+    "message": "没有快速匹配 — 去侧边栏找找"
   },
   "omnibox_no_match_with_shortcut": {
-    "message": "没有快速匹配 — 可在侧边栏试更完整的 Recall（$1）",
+    "message": "没有快速匹配 — 去侧边栏找找（$1）",
     "placeholders": {
       "shortcut": {
         "content": "$1",
@@ -45,7 +45,7 @@
     }
   },
   "command_open_recall": {
-    "message": "打开 Yiveno Recall（侧边栏）"
+    "message": "打开 Yiveno 找东西（侧边栏）"
   },
   "command_open_library": {
     "message": "打开 Yiveno 记忆库"
@@ -120,10 +120,10 @@
     }
   },
   "selection_toolbar_saved_hint_generic": {
-    "message": "用你记得的任何词试试 Recall"
+    "message": "用你记得的任何词试试找找"
   },
   "selection_toolbar_saved_hint_edit": {
-    "message": "会打开 Recall，并带上「$1」供你改",
+    "message": "会打开侧边栏，并带上「$1」供你改",
     "placeholders": {
       "clue": {
         "content": "$1",
@@ -135,7 +135,7 @@
     "message": "用这段来找"
   },
   "selection_toolbar_try_recall_aria": {
-    "message": "打开 Recall，并把「$1」填进线索框供你改",
+    "message": "打开找东西，并把「$1」填进线索框供你改",
     "placeholders": {
       "clue": {
         "content": "$1",
@@ -144,10 +144,10 @@
     }
   },
   "selection_toolbar_try_recall_aria_generic": {
-    "message": "用你记得的任何词试试 Recall"
+    "message": "用你记得的任何词试试找找"
   },
   "selection_toolbar_open_recall_failed": {
-    "message": "打不开 Recall。请点一下 Yiveno 图标。"
+    "message": "打不开侧边栏。请点一下 Yiveno 图标。"
   },
   "selection_toolbar_failed": {
     "message": "保存失败"
@@ -201,7 +201,7 @@
     "message": "可选的 AI 润色，让更含糊的线索也好用——这一步不必登录。之后登录可获得更丰富的匹配。大型库可能在后台完成。"
   },
   "cold_start_stage_done_title": {
-    "message": "可以开始 Recall 了"
+    "message": "可以开始找东西了"
   },
   "cold_start_stage_done_body": {
     "message": "记忆库已就绪。若想要更丰富的模糊匹配，稍后登录即可。"
@@ -274,10 +274,10 @@
     "message": "3 · 改进模糊找东西（尽力而为）"
   },
   "cold_start_post_release_banner": {
-    "message": "现在就能 Recall——但还没到最佳状态。我们仍在后台充实你的记忆库。再等几分钟就好。"
+    "message": "现在就能找东西了——但还没到最佳状态。我们仍在后台充实你的记忆库。再等几分钟就好。"
   },
   "cold_start_post_release_banner_progress": {
-    "message": "现在就能 Recall——但还没到最佳状态。正在充实记忆库… $DONE$ / $TOTAL$。",
+    "message": "现在就能找东西了——但还没到最佳状态。正在充实记忆库… $DONE$ / $TOTAL$。",
     "placeholders": {
       "done": {
         "content": "$1",
@@ -290,7 +290,7 @@
     }
   },
   "cold_start_post_release_banner_paused": {
-    "message": "现在就能 Recall。记忆库充实已暂停在 $DONE$ / $TOTAL$（今日 AI 限额）。稍后会继续。",
+    "message": "现在就能找东西了。记忆库充实已暂停在 $DONE$ / $TOTAL$（今日 AI 限额）。稍后会继续。",
     "placeholders": {
       "done": {
         "content": "$1",
@@ -568,16 +568,16 @@
     "message": "此页面无法使用。切到普通网页后会重新启用。"
   },
   "sidepanel_recall_settings_toggle": {
-    "message": "Recall 设置"
+    "message": "找东西设置"
   },
   "sidepanel_recall_settings_dismiss": {
-    "message": "关闭 Recall 设置"
+    "message": "关闭找东西设置"
   },
   "sidepanel_recall_source_all": {
     "message": "全部"
   },
   "sidepanel_recall_source_all_hint": {
-    "message": "书签和摘录都算。这是常规 Recall。"
+    "message": "书签和摘录都算。这是常规找东西。"
   },
   "sidepanel_recall_source_excerpts": {
     "message": "摘录"
@@ -592,10 +592,10 @@
     "message": "只看书签。已存段落不参与。如果不够接近，会如实告诉你——不会打开其余库。"
   },
   "popup_submit": {
-    "message": "开始 Recall"
+    "message": "开始找东西"
   },
   "popup_submitting": {
-    "message": "正在 Recall…"
+    "message": "正在找…"
   },
   "sidepanel_voice_start": {
     "message": "语音输入线索"
@@ -1037,7 +1037,7 @@
     }
   },
   "popup_recall_failed": {
-    "message": "Recall 服务暂时出错，请稍后再试。"
+    "message": "服务暂时出错，请稍后再试。"
   },
   "popup_navigate_tab_failed": {
     "message": "打不开那个页面。请再试一次。"
@@ -1132,7 +1132,7 @@
     "message": "语言"
   },
   "settings_section_language_copy": {
-    "message": "选择扩展界面语言。默认跟随浏览器；可随时改。不会改变 Recall 如何理解线索。"
+    "message": "选择扩展界面语言。默认跟随浏览器；可随时改。不会改变找东西如何理解线索。"
   },
   "settings_language_legend": {
     "message": "显示语言"
@@ -1412,7 +1412,7 @@
     "message": "导出完整备份"
   },
   "settings_privacy_export_hint": {
-    "message": "将本机全部记忆下载为 JSON — 含内容、使用信号，以及让 Recall 工作的辅助数据。"
+    "message": "将本机全部记忆下载为 JSON — 含内容、使用信号，以及让找东西工作的辅助数据。"
   },
   "settings_privacy_export_action": {
     "message": "导出"
@@ -2079,13 +2079,13 @@
     "message": "还没有书签"
   },
   "library_empty_bookmarks_body": {
-    "message": "你在本浏览器添加的书签会出现在此树中；同步到 Yiveno 后即可 Recall。"
+    "message": "你在本浏览器添加的书签会出现在此树中；同步到 Yiveno 后即可找到。"
   },
   "library_empty_excerpts_title": {
     "message": "还没有文本摘录"
   },
   "library_empty_excerpts_body": {
-    "message": "在页面上选中文字保存，或用「保存到 Yiveno」。这些个人保存是 Recall 效果最好的材料。"
+    "message": "在页面上选中文字保存，或用「保存到 Yiveno」。这些个人保存是找东西效果最好的材料。"
   },
   "library_loading": {
     "message": "加载中…"
@@ -2116,7 +2116,7 @@
     "message": "加载出错了。请再试一次。"
   },
   "library_delete_confirm": {
-    "message": "删除这条摘录？之后将无法再 Recall 到它。"
+    "message": "删除这条摘录？之后将无法再找到它。"
   },
   "library_delete_failed": {
     "message": "无法删除"
@@ -2272,7 +2272,7 @@
     "message": "打不开这条摘录"
   },
   "detail_missing_id_body": {
-    "message": "请从 Recall 结果再次打开。"
+    "message": "请从找东西的结果再次打开。"
   },
   "detail_not_found_title": {
     "message": "找不到这条记忆"
@@ -2284,7 +2284,7 @@
     "message": "已删除"
   },
   "detail_deleted_body": {
-    "message": "此摘录已从记忆库移除，不会再出现在 Recall 中。"
+    "message": "此摘录已从记忆库移除，不会再出现在找东西的结果里。"
   },
   "detail_open_library": {
     "message": "打开记忆库"
@@ -2317,7 +2317,7 @@
     "message": "正在删除…"
   },
   "detail_delete_confirm": {
-    "message": "删除这条摘录？之后将无法再 Recall 到它。"
+    "message": "删除这条摘录？之后将无法再找到它。"
   },
   "detail_delete_failed": {
     "message": "无法删除"
@@ -2419,7 +2419,7 @@
     "message": "在任意页面划存一句——或在「开始使用」保存演示句——再用自己的话找到。"
   },
   "popup_capture_first_body_importing": {
-    "message": "书签正在导入。先保存一条摘录——这是最快看到 Recall 怎么工作的方式。"
+    "message": "书签正在导入。先保存一条摘录——这是最快看到找东西怎么工作的方式。"
   },
   "popup_open_getting_started": {
     "message": "打开开始使用"
@@ -2480,7 +2480,7 @@
     "message": "导入未能完成"
   },
   "getting_started_consent_failed_body": {
-    "message": "你的授权已保存。可重试导入，或对已有内容试试 Recall。"
+    "message": "你的授权已保存。可重试导入，或对已有内容试试找东西。"
   },
   "getting_started_consent_retry": {
     "message": "再次尝试导入"
@@ -2507,10 +2507,10 @@
     "message": "摘录"
   },
   "getting_started_recall_card_aria": {
-    "message": "从书签中 Recall 某条"
+    "message": "从书签中找某条"
   },
   "getting_started_excerpt_recall_aria": {
-    "message": "从摘录中 Recall 某条"
+    "message": "从摘录中找某条"
   },
   "getting_started_excerpt_empty_title": {
     "message": "这里还没有内容。"
@@ -2567,10 +2567,10 @@
     "message": "正在导入书签…"
   },
   "getting_started_importing_body": {
-    "message": "稍等——导入完成后，你可以用自己的话试试 Recall 一条。"
+    "message": "稍等——导入完成后，你可以用自己的话试试找一条。"
   },
   "getting_started_empty_title": {
-    "message": "还没有可 Recall 的书签"
+    "message": "还没有可找的书签"
   },
   "getting_started_empty_body": {
     "message": "本浏览器里有书签后，在此用自己的话描述一条。你也可以继续往下。"
@@ -2591,7 +2591,7 @@
     "message": "可以试着这么说："
   },
   "getting_started_oral_sample_lead": {
-    "message": "试试 Recall 某条："
+    "message": "试试找某条："
   },
   "getting_started_oral_sample_generating": {
     "message": "正根据你的书签写一条线索…"
@@ -2618,7 +2618,7 @@
     "message": "没有足够接近的结果。试试另一个你记得住的细节。"
   },
   "getting_started_recall_failed": {
-    "message": "刚才没能 Recall。稍后再试。"
+    "message": "刚才没能找到。稍后再试。"
   },
   "getting_started_open_result_aria": {
     "message": "打开 $title$",
@@ -3045,7 +3045,7 @@
     "message": "摘录"
   },
   "command_title_open_recall": {
-    "message": "打开 Recall（侧边栏）"
+    "message": "打开找东西（侧边栏）"
   },
   "command_title_open_library": {
     "message": "打开记忆库"
@@ -3081,7 +3081,7 @@
     "message": "建议开启同步，让书签库保持最新"
   },
   "getting_started_sync_suggest_body": {
-    "message": "以后在 Chrome 里新增的书签会自动进入 Yiveno，删除的也会同步移除，Recall 才能找到你最近存的东西。同步只在本地进行，不上传。"
+    "message": "以后在 Chrome 里新增的书签会自动进入 Yiveno，删除的也会同步移除，这样才能找到你最近存的东西。同步只在本地进行，不上传。"
   },
   "getting_started_sync_suggest_enable": {
     "message": "开启同步"
@@ -3217,7 +3217,7 @@
     "message": "另外：你的 Chrome 书签还在导入中，导完后再试一次。"
   },
   "popup_recall_failed_offline": {
-    "message": "网络已断开，Recall 需要联网。请联网后再试。"
+    "message": "网络已断开，联网后才能找东西。请联网后再试。"
   },
   "error_bookmark_import_read_failed": {
     "message": "读不了 Chrome 书签。请确认书签权限后重试导入。"

@@ -330,7 +330,7 @@ export const zh = {
 
   'faq.meta.title': '常见问题 · Yiveno',
   'faq.meta.description':
-    'Yiveno 是什么与不是什么、Recall 怎么工作、隐私默认、Free / Pro、商店上架状态，以及如何联系我们。',
+    'Yiveno 是什么与不是什么、找东西怎么工作、隐私默认、Free / Pro、商店上架状态，以及如何联系我们。',
   'faq.title': '常见问题',
   'faq.lede_before': '关于「找到你存过的东西」的短答。遇到 bug 或账号问题，见',
   'faq.lede_contact': '联系',
@@ -357,7 +357,7 @@ export const zh = {
   'faq.what_isnt.q': 'Yiveno 不是什么？',
   'faq.what_isnt.a':
     'Yiveno 的主承诺不是书签管理器、笔记应用、聊天机器人或 AI 整理工具。它不声称永远押中那一条链接；相近结果是建议，不是神谕。',
-  'faq.recall.q': 'Recall（找）怎么工作？',
+  'faq.recall.q': '找东西怎么工作？',
   'faq.recall.a':
     '用日常语言输入一条线索——不必记得确切标题。Yiveno 会排出与你记忆最贴近的邻域。置顶建议只是建议；哪一条对，由你决定。',
   'faq.data.q': '我的数据存在哪里？',

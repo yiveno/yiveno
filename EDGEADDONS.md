@@ -12,7 +12,7 @@ Yiveno
 
 **Short Description** [REQUIRED]
 
-Save what matters. Recall it later.
+Save what matters. Find it later.
 
 **Detailed Description** [REQUIRED]
 
@@ -20,7 +20,7 @@ Yiveno helps you find what you already saved on the web — highlights, snippets
 
 Capture while you browse: select text and save it in one step, or pull in bookmarks when you want them in your library. Add a short note if it helps future-you remember why it mattered.
 
-When you only remember a fragment — a phrase, a site name, a rough topic — open Recall in the side panel and describe what you're looking for in your own words. Yiveno surfaces a short neighborhood of closest matches from your library. You pick the right one; nothing claims to be the only answer.
+When you only remember a fragment — a phrase, a site name, a rough topic — open Find in the side panel and describe what you're looking for in your own words. Yiveno surfaces a short neighborhood of closest matches from your library. You pick the right one; nothing claims to be the only answer.
 
 You can also type `yi` in the address bar for a quick jump when you remember a keyword, open your full Library to browse what you saved, and adjust settings when you want cloud sync or account features.
 
@@ -50,7 +50,7 @@ Edge Add-ons requires at least a **logo** and **small promotional tile**. Reuse 
 | Small Promo Tile       | 440×280             | Ready (interim) | `docs/design/brand-assets/chrome-web-store/chrome-web-store-small-promo-440x280.png` |
 | Screenshot 1           | 1280×800 or 640×400 | Ready (interim) | `docs/design/brand-assets/chrome-web-store/screenshot-01-brand-focus-1280x800.png`   |
 | Screenshot 2           | 1280×800 or 640×400 | Ready (interim) | `docs/design/brand-assets/chrome-web-store/screenshot-02-brand-connect-1280x800.png` |
-| Product UI screenshots | same                | Pending         | Recall Side Panel / Capture / Library — see `CHROMEWEBSTORE.md` Screenshot Notes     |
+| Product UI screenshots | same                | Pending         | Find Side Panel / Capture / Library — see `CHROMEWEBSTORE.md` Screenshot Notes       |
 
 **双店共用：** 母本目录 `docs/design/brand-assets/chrome-web-store/`（不进扩展包）；Edge 提交可直接上传同批图，无需第二套品牌方向。
 
@@ -130,7 +130,7 @@ https://yiveno.com/privacy
 
 - Same MV3 ZIP as Chrome Web Store submission (`bun run --cwd extension build:prod` strips localhost Worker host).
 - Do not claim “Chrome-only” in Edge listing copy.
-- Local-first library; neighborhood Recall, not oracle single answer.
+- Local-first library; neighborhood Find, not oracle single answer.
 - Manual ZIP sideload is **not** the mainland primary path (ADR-020).
 
 ### Rejection History
@@ -141,4 +141,4 @@ https://yiveno.com/privacy
 
 ## Edge 真机验收（提交前）
 
-清单权威：[`docs/engineering/Edge-真机验收清单.md`](docs/engineering/Edge-真机验收清单.md)。加载路径 = 仓库根 `dist/`（`cd extension && bun run build`）。覆盖：Side Panel、Capture、书签灌库、Recall、Omnibox `yi`、官网桥（含 yiveno.cn）、`edge://extensions/shortcuts`、卸载页。
+清单权威：[`docs/engineering/Edge-真机验收清单.md`](docs/engineering/Edge-真机验收清单.md)。加载路径 = 仓库根 `dist/`（`cd extension && bun run build`）。覆盖：Side Panel、Capture、书签灌库、Find、Omnibox `yi`、官网桥（含 yiveno.cn）、`edge://extensions/shortcuts`、卸载页。

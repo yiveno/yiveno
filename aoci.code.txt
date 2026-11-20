@@ -7,8 +7,8 @@
 .prettierignore[FQ3T]: F:Prettier 忽略路径清单 | R:code:.prettierrc.json | A:- | S:-
 .prettierrc.json[FQ4T]: F:Prettier 根配置 | R:code:.prettierignore | A:JSON 配置 | S:-
 AGENTS.md[SQ7S]: F:跨 IDE 薄指针：权威入口与 AOCI 托管块 | R:code:.cursor/rules/session-boot.mdc,code:.cursor/rules/project.mdc | A:仓库归属 yiveno/yiveno | S:aoci:begin…end 托管块禁手改，须走 MCP/CLI
-CHROMEWEBSTORE.md[SQ6M]: F:Chrome Web Store 上架元数据与权限理由 | R:code:extension/public/manifest.json | A:改 manifest 权限须同批更新 | S:商店用户向文案仅 en
-EDGEADDONS.md[SQ6S]: F:Edge Add-ons 双店上架说明（ADR-020） | R:code:CHROMEWEBSTORE.md | A:同包异 ID | S:禁侧载 ZIP 当主 CTA
+CHROMEWEBSTORE.md[SQ6M]: F:Chrome Web Store 上架元数据与权限理由 | R:code:extension/public/manifest.json,code:extension/src/core/extension/extension-cws-contract.ts | A:改 manifest 权限须同批更新；短描述须等于 en app_description | S:商店用户向文案仅 en；用户向能力名用 Find 不用 Recall
+EDGEADDONS.md[SQ6S]: F:Edge Add-ons 双店上架说明（ADR-020） | R:code:CHROMEWEBSTORE.md | A:同包异 ID；短描述与 CWS/en app_description 对齐 | S:禁侧载 ZIP 当主 CTA；用户向能力名用 Find
 README.md[SQ6L]: F:仓库总览：产品定位、结构与本地开发入口 | R:code:AGENTS.md | A:面向贡献者的根 README | S:-
 bunfig.toml[FQ4T]: F:Bun 安装使用 hoisted linker | R:- | A:[install] linker=hoisted | S:-
 commitlint.config.cjs[XQ6T]: F:commitlint 首行 type/scope/subject 规则 | R:code:.husky/commit-msg | A:extends conventional；header≤72 | S:体层文件索引由 check-commit-message.mjs 另验；Merge/Revert 跳过
@@ -81,10 +81,10 @@ vite.config.ts[FV5T]: F:Vite 配置主入口 | R:- | A:- | S:-
 vitest.config.mts[FQ5T]: F:扩展 Vitest 配置：Vue 插件与路径别名 | R:- | A:- | S:-
 
 ===/<repository>/extension/public/_locales/en/===
-messages.json[FL7L]: F:扩展 en 文案表（chrome.i18n） | R:code:extension/public/_locales/zh_CN/messages.json,code:extension/src/infrastructure/i18n/message-keys.ts | A:与 MESSAGE_KEYS 对称 | S:含试用转正键；已删 sync_then_clear 退出文案；禁 Search
+messages.json[FL7L]: F:扩展 en 文案表（chrome.i18n） | R:code:extension/public/_locales/zh_CN/messages.json,code:extension/src/infrastructure/i18n/message-keys.ts | A:与 MESSAGE_KEYS 对称；i18n:check 禁 Search | S:用户向能力名用 Find；adaptation 组 7 key 仍可含 recall；禁 Search
 
 ===/<repository>/extension/public/_locales/zh_CN/===
-messages.json[FL7L]: F:扩展 zh_CN 文案表 | R:code:extension/public/_locales/en/messages.json | A:键集须与 en 对称 | S:中文 UI 禁「搜索」；含试用转正；已删 sync_then_clear 键
+messages.json[FL7L]: F:扩展 zh_CN 文案表 | R:code:extension/public/_locales/en/messages.json | A:键集须与 en 对称 | S:用户向能力名用找东西；adaptation 组 7 key 仍可含 Recall；中文 UI 禁「搜索」
 
 ===/<repository>/extension/public/===
 manifest.json[FE8S]: F:MV3 扩展清单：SW、Side Panel、Omnibox | R:code:CHROMEWEBSTORE.md | A:permissions/host_permissions 见文件；keyword yi | S:改权限须同批更新 CHROMEWEBSTORE.md；host 含宽匹配 http(s)://*/*
@@ -237,7 +237,7 @@ dream-run-cursor.ts[CR5T]: F:Dreaming run 游标纯函数：生成/推进/判已
 dreaming-constants.ts[CR5T]: F:Dreaming 闭集常量（闹钟/schema/命题上限） | R:- | A:禁止调用处散写字面量 | S:-
 
 ===/<repository>/extension/src/core/extension/===
-extension-cws-contract.ts[CC4T]: F:CWS 披露与 manifest 权限权威对照 | R:- | A:改权限须同批 CHROMEWEBSTORE.md | S:-
+extension-cws-contract.ts[CC4T]: F:CWS 披露与 manifest 权限权威对照 | R:code:CHROMEWEBSTORE.md | A:改权限须同批 CHROMEWEBSTORE.md；短描述常量须等于 en app_description | S:EXTENSION_CWS_SHORT_DESCRIPTION=Save what matters. Find it later.
 extension-cws-graphics-contract.ts[CC4T]: F:CWS 图形资产与母本目录对照 | R:- | A:母本不进扩展包 | S:-
 extension-icon-contract.ts[CC4T]: F:工具栏/商店图标权威路径 | R:- | A:与 manifest icons 同源 | S:-
 extension-manifest-profile.ts[CC5T]: F:host_permissions 开发含本地 Worker、商店剔除 | R:- | A:同步 clean-dist 与 CWS 披露 | S:-
@@ -245,7 +245,7 @@ extension-options-contract.ts[CC3T]: F:Options UI 契约：manifest↔Vite↔dis
 externally-connectable-origins.ts[CC4T]: F:官网 external auth 允许来源闭集 | R:- | A:与 manifest externally_connectable 同源 | S:-
 
 ===/<repository>/extension/src/core/i18n/===
-test-translate-en.ts[CL5S]: F:单测用英文 TranslateFn 子集表 | R:code:extension/src/core/i18n/translate.ts | A:对齐 en messages 子集 | S:-
+test-translate-en.ts[CL5S]: F:单测用英文 TranslateFn 子集表 | R:code:extension/src/core/i18n/translate.ts,code:extension/public/_locales/en/messages.json | A:对齐 en messages 子集（含 Find 文案） | S:非全量 mirror；个别 importing 句仍可与 messages 略异
 translate.ts[CL3T]: F:可注入 TranslateFn 签名（core 无 chrome） | R:- | A:infrastructure t 实现 | S:-
 ui-locale.ts[CL5T]: F:UI locale 偏好解析纯函数 | R:- | A:en/zh_CN；默认跟浏览器 | S:不按 IP 锁语言
 
@@ -575,7 +575,7 @@ format-library-saved-at.ts[IL6T]: F:Library 摘录/书签列表：保存时间�
 icon-only-control-a11y.ts[IL6T]: F:图标控件无障碍：省略可见文字时 title 与 aria-label 须同源（经 t()） | R:code:extension/src/infrastructure/i18n/product-surface-label-policy.ts | A:i18n | S:-
 memory-error.ts[IL6T]: F:Memory 错误码映射到 i18n MessageKey 并经 t() 取文案 | R:code:extension/src/core/messaging/memory-messages.ts,code:extension/src/infrastructure/i18n/message-keys.ts | A:i18n | S:-
 message-keys.ts[IL8L]: F:扩展 MESSAGE_KEYS 闭集 | R:code:extension/public/_locales/en/messages.json | A:i18n:check | S:含试用转正键；已删 settings_sign_out_sync_then_clear_disabled
-product-surface-label-policy.ts[IL6T]: F:产品面文案禁用词策略（术语表：对用户禁止 Search，用 Recall / Filter） | R:- | A:i18n | S:禁止 Search，用 Recall / Filter）
+product-surface-label-policy.ts[IL6T]: F:产品面文案禁用词策略（禁 Search；用户向用 Find / Filter） | R:code:extension/scripts/check-i18n-keys.mjs | A:i18n:check 全量扫描 en messages | S:只 enforce Search（及 zh 搜索）；不强制出现 Find/Recall
 t.ts[IL8S]: F:扩展 t() 文案解析入口 | R:code:extension/src/core/i18n/translate.ts,code:extension/src/core/i18n/ui-locale.ts | A:i18n | S:-
 validate-critical-extension-messages.ts[IL6T]: F:validate critical extension messages | R:code:extension/src/infrastructure/i18n/extension-i18n-boot.ts | A:i18n | S:-
 
@@ -1001,10 +1001,10 @@ env.d.ts[FC3T]: F:Astro 官网 ImportMetaEnv 与客户端类型声明 | R:- | A:
 resolve-geo-domain-redirect.ts[AG5M]: F:官网软性按地区选域名（与页面显示语言无关） | R:- | A:- | S:-
 
 ===/<repository>/website/src/i18n/===
-en.ts[IL5M]: F:官网产品面英文文案 | R:code:website/src/i18n/zh.ts | A:WebsiteMessageKey | S:from_extension 含 keep_current / signed_in_via_extension；与 zh 键对称
+en.ts[IL5M]: F:官网产品面英文文案 | R:code:website/src/i18n/zh.ts | A:WebsiteMessageKey | S:用户向能力名用 Find；from_extension 含 keep_current / signed_in_via_extension；与 zh 键对称
 locale.ts[IL5T]: F:官网 UI 语言：跟浏览器，可覆盖并持久化到 localStorage | R:- | A:- | S:-
 t.ts[IL8T]: F:官网产品面 t()：en/zh_CN 文案解析与 locale 持久化 | R:- | A:- | S:-
-zh.ts[IL5M]: F:官网产品面简体中文文案 | R:code:website/src/i18n/en.ts | A:键与 en 对称 | S:from_extension 含 keep_current / signed_in_via_extension
+zh.ts[IL5M]: F:官网产品面简体中文文案 | R:code:website/src/i18n/en.ts | A:键与 en 对称 | S:用户向能力名用找东西；from_extension 含 keep_current / signed_in_via_extension
 
 ===/<repository>/website/src/install/===
 store-links.ts[FE5T]: F:扩展商店安装深链（ADR-020） | R:- | A:- | S:禁止假装可装
@@ -1039,7 +1039,7 @@ turnstile.astro[EU3T]: F:官网 /auth/turnstile 路由壳 | R:code:website/src/c
 home-page.ts[XV5S]: F:首页客户端交互：Nav 深底态、scroll reveal | R:- | A:- | S:-
 
 ===/<repository>/website/src/seo/===
-json-ld.ts[OO3S]: F:官网 JSON-LD 构建（GEO / 常规 SEO） | R:- | A:- | S:禁止 InStock 冒充可装
+json-ld.ts[OO3S]: F:官网 JSON-LD 构建（GEO / 常规 SEO） | R:code:website/src/i18n/en.ts | A:FAQ 问答与 en faq.* 对齐 | S:禁止 InStock 冒充可装；FAQ 用 Find 不用 Recall
 
 ===/<repository>/website/src/services/===
 auth-email.ts[II5T]: F:官网邮箱登录：纯格式校验（不碰网络） | R:- | A:- | S:-

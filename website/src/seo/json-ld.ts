@@ -96,7 +96,7 @@ export const FAQ_ENTRIES: FaqEntry[] = [
   {
     question: 'What is Yiveno?',
     answer:
-      'Yiveno is the thing that finds what you saved. Capture pages or passages with low friction, then Recall by saying what you remember. It returns a short list of closest fits — you pick. It is a Chromium browser extension for Microsoft Edge and Google Chrome.'
+      'Yiveno is the thing that finds what you saved. Capture pages or passages with low friction, then Find by saying what you remember. It returns a short list of closest fits — you pick. It is a Chromium browser extension for Microsoft Edge and Google Chrome.'
   },
   {
     question: "What isn't Yiveno?",
@@ -104,7 +104,7 @@ export const FAQ_ENTRIES: FaqEntry[] = [
       'Yiveno is not a bookmark manager, notes app, chatbot, or AI organizer as its primary promise. It does not claim one guaranteed correct link; closest fits are suggestions, not an oracle.'
   },
   {
-    question: 'How does Recall work?',
+    question: 'How does Find work?',
     answer:
       'You type a clue in everyday language — you do not need the exact title. Yiveno ranks a neighborhood of saved things that best match what you remember. Top pick is a suggestion; you decide which item is right.'
   },

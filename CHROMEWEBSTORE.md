@@ -15,7 +15,7 @@ Yiveno
 
 **Short Description** [REQUIRED]
 
-Save what matters. Recall it later.
+Save what matters. Find it later.
 
 <!-- 43 characters. Matches _locales/en `app_description`. Max 132. -->
 
@@ -25,7 +25,7 @@ Yiveno helps you find what you already saved on the web — highlights, snippets
 
 Capture while you browse: select text and save it in one step, or pull in bookmarks when you want them in your library. Add a short note if it helps future-you remember why it mattered.
 
-When you only remember a fragment — a phrase, a site name, a rough topic — open Recall in the side panel and describe what you're looking for in your own words. Yiveno surfaces a short neighborhood of closest matches from your library. You pick the right one; nothing claims to be the only answer.
+When you only remember a fragment — a phrase, a site name, a rough topic — open Find in the side panel and describe what you're looking for in your own words. Yiveno surfaces a short neighborhood of closest matches from your library. You pick the right one; nothing claims to be the only answer.
 
 You can also type `yi` in the address bar for a quick jump when you remember a keyword, open your full Library to browse what you saved, and adjust settings when you want cloud sync or account features.
 
@@ -39,7 +39,7 @@ Productivity
 
 **Single Purpose** [REQUIRED]
 
-Help users capture web excerpts and bookmarks, then recall them later with natural-language clues from their own library.
+Help users capture web excerpts and bookmarks, then find them later with natural-language clues from their own library.
 
 **Primary Language** [REQUIRED]
 
@@ -67,7 +67,7 @@ English
 
 ### Screenshot Notes
 
-1. **Recall (Side Panel)** — User enters a vague clue; neighborhood of saved items with titles, snippets, and open actions. Show Alt+Shift+Y entry if helpful.
+1. **Find (Side Panel)** — User enters a vague clue; neighborhood of saved items with titles, snippets, and open actions. Show Alt+Shift+Y entry if helpful.
 2. **Capture** — Selection on a page with “Save to Yiveno” (toolbar or context menu); optional note field.
 3. **Library** — Browsable list/tree of saved items with favicons and saved dates.
 4. **Omnibox quick jump** — Address bar `yi` keyword with a matching suggestion (optional).
@@ -77,22 +77,22 @@ English
 
 <!-- 审核会逐项核对。改 manifest 须同批更新本表。 -->
 
-| Permission                 | Type             | Justification                                                                                                                                                                                                                                                  |
-| -------------------------- | ---------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `storage`                  | permissions      | Saves extension settings, onboarding state, optional auth session handles, sync preferences, and local recall telemetry on the user’s profile. Required for the extension to remember choices between sessions.                                                |
-| `alarms`                   | permissions      | Schedules optional background cloud memory sync when the user enables sync. No alarm runs when sync is off.                                                                                                                                                    |
-| `activeTab`                | permissions      | When the user saves from the current page (keyboard shortcut or toolbar), reads the active tab’s URL and title only for that user-initiated Capture. No background tab scanning.                                                                               |
-| `bookmarks`                | permissions      | Optional import and sync of the user’s Chrome bookmarks into the Yiveno library when they explicitly start import from Settings or onboarding. Not used to browse bookmarks silently.                                                                          |
-| `contextMenus`             | permissions      | Adds “Save to Yiveno” on selected text so users can Capture a highlight without opening the side panel first.                                                                                                                                                  |
-| `scripting`                | permissions      | Injects a small, user-triggered script on the active tab to read the current text selection and show the in-page save toolbar. Runs only on user action, not on every page load in the background.                                                             |
-| `tabs`                     | permissions      | Opens Library and Settings pages, focuses existing Yiveno tabs, and navigates to a saved item’s source URL when the user chooses Open from a recall result.                                                                                                    |
-| `sidePanel`                | permissions      | Hosts the main Recall experience where users submit clues and review matched items from their library.                                                                                                                                                         |
-| `favicon`                  | permissions      | Shows recognizable site icons next to saved items in the Library using Chrome’s built-in favicon service (`/_favicon/`), so users can scan results faster.                                                                                                     |
-| `https://*.supabase.co/*`  | host_permissions | Connects to Supabase only when the user signs in or enables optional cloud memory sync (auth tokens and encrypted sync payloads). Not contacted for anonymous/local-only use.                                                                                  |
-| `https://api.yiveno.com/*` | host_permissions | Calls Yiveno’s API (Cloudflare Worker) for optional features the user invokes: clue understanding, embeddings, sync API, quota checks, and MCP beta endpoints. No full-library upload by default.                                                              |
-| `http://localhost:8787/*`  | host_permissions | **Development only:** local Cloudflare Worker API during unpacked/dev builds. Remove or exclude from the store submission package if reviewers require production-only host permissions.                                                                       |
-| `http://*/*`               | host_permissions | Optional weekly link check: from the user’s browser, Yiveno may request URLs the user already saved (bookmarks / excerpt sources) so broken links can be ranked lower in Recall. URLs are not sent to Yiveno servers. User can turn this off in Settings → AI. |
-| `https://*/*`              | host_permissions | Same optional weekly link check over HTTPS saved URLs. Requests stay in the user’s browser; not uploaded to Yiveno servers. Toggle: Settings → AI.                                                                                                             |
+| Permission                 | Type             | Justification                                                                                                                                                                                                                                                |
+| -------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `storage`                  | permissions      | Saves extension settings, onboarding state, optional auth session handles, sync preferences, and local Find telemetry on the user’s profile. Required for the extension to remember choices between sessions.                                                |
+| `alarms`                   | permissions      | Schedules optional background cloud memory sync when the user enables sync. No alarm runs when sync is off.                                                                                                                                                  |
+| `activeTab`                | permissions      | When the user saves from the current page (keyboard shortcut or toolbar), reads the active tab’s URL and title only for that user-initiated Capture. No background tab scanning.                                                                             |
+| `bookmarks`                | permissions      | Optional import and sync of the user’s Chrome bookmarks into the Yiveno library when they explicitly start import from Settings or onboarding. Not used to browse bookmarks silently.                                                                        |
+| `contextMenus`             | permissions      | Adds “Save to Yiveno” on selected text so users can Capture a highlight without opening the side panel first.                                                                                                                                                |
+| `scripting`                | permissions      | Injects a small, user-triggered script on the active tab to read the current text selection and show the in-page save toolbar. Runs only on user action, not on every page load in the background.                                                           |
+| `tabs`                     | permissions      | Opens Library and Settings pages, focuses existing Yiveno tabs, and navigates to a saved item’s source URL when the user chooses Open from a Find result.                                                                                                    |
+| `sidePanel`                | permissions      | Hosts the main Find experience where users submit clues and review matched items from their library.                                                                                                                                                         |
+| `favicon`                  | permissions      | Shows recognizable site icons next to saved items in the Library using Chrome’s built-in favicon service (`/_favicon/`), so users can scan results faster.                                                                                                   |
+| `https://*.supabase.co/*`  | host_permissions | Connects to Supabase only when the user signs in or enables optional cloud memory sync (auth tokens and encrypted sync payloads). Not contacted for anonymous/local-only use.                                                                                |
+| `https://api.yiveno.com/*` | host_permissions | Calls Yiveno’s API (Cloudflare Worker) for optional features the user invokes: clue understanding, embeddings, sync API, quota checks, and MCP beta endpoints. No full-library upload by default.                                                            |
+| `http://localhost:8787/*`  | host_permissions | **Development only:** local Cloudflare Worker API during unpacked/dev builds. Remove or exclude from the store submission package if reviewers require production-only host permissions.                                                                     |
+| `http://*/*`               | host_permissions | Optional weekly link check: from the user’s browser, Yiveno may request URLs the user already saved (bookmarks / excerpt sources) so broken links can be ranked lower in Find. URLs are not sent to Yiveno servers. User can turn this off in Settings → AI. |
+| `https://*/*`              | host_permissions | Same optional weekly link check over HTTPS saved URLs. Requests stay in the user’s browser; not uploaded to Yiveno servers. Toggle: Settings → AI.                                                                                                           |
 
 ### Content scripts (manifest, not a permission row)
 
@@ -114,18 +114,18 @@ English
 
 **Does the extension collect user data?** Yes
 
-| Data Type                    | Collected?           | Transmitted Off-Device?                 | Purpose                                                                                                                                                                                                                                                                                    | Shared with Third Parties?                                  |
-| ---------------------------- | -------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------- |
-| Personally identifiable info | Yes (if sign-in)     | Yes, when signed in                     | Account id, email, display name/avatar from sign-in (email OTP or OAuth provider)                                                                                                                                                                                                          | No (processed via auth provider + our API)                  |
-| Health info                  | No                   | No                                      | —                                                                                                                                                                                                                                                                                          | No                                                          |
-| Financial info               | No                   | No                                      | —                                                                                                                                                                                                                                                                                          | No                                                          |
-| Authentication info          | Yes (if sign-in)     | Yes, when signed in                     | Session tokens for account and optional cloud sync; `setUninstallURL` always opens the uninstall feedback page; when signed in, a one-time revoke token is attached so removing the extension can clear the remote extension session (website login and memories unchanged)                | No                                                          |
-| Personal communications      | No                   | No                                      | —                                                                                                                                                                                                                                                                                          | No                                                          |
-| Location                     | No                   | No                                      | —                                                                                                                                                                                                                                                                                          | No                                                          |
-| Web history                  | No (full history)    | No                                      | Yiveno does not collect or upload full browsing history                                                                                                                                                                                                                                    | No                                                          |
-| User activity                | Yes                  | Local by default; cloud only if sync on | Recall interactions (e.g. opens, dismissals) to improve ordering on the user’s library                                                                                                                                                                                                     | No                                                          |
-| Website content              | Yes (user-initiated) | Local by default; cloud only if sync on | Text excerpts, page title/URL, and notes the user explicitly Captures                                                                                                                                                                                                                      | No (stored in user’s library; cloud bucket if sync enabled) |
-| Microphone / voice dictation | Yes (user-initiated) | Possibly (browser speech service)       | Optional: user taps the mic in the Recall composer to dictate a clue. Audio is handled by the browser’s Web Speech / speech-recognition stack (often a vendor cloud STT). Yiveno does not upload the raw audio to `api.yiveno.com`. Resulting text stays in the composer like typed clues. | Browser vendor speech stack only (not Yiveno servers)       |
+| Data Type                    | Collected?           | Transmitted Off-Device?                 | Purpose                                                                                                                                                                                                                                                                                  | Shared with Third Parties?                                  |
+| ---------------------------- | -------------------- | --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Personally identifiable info | Yes (if sign-in)     | Yes, when signed in                     | Account id, email, display name/avatar from sign-in (email OTP or OAuth provider)                                                                                                                                                                                                        | No (processed via auth provider + our API)                  |
+| Health info                  | No                   | No                                      | —                                                                                                                                                                                                                                                                                        | No                                                          |
+| Financial info               | No                   | No                                      | —                                                                                                                                                                                                                                                                                        | No                                                          |
+| Authentication info          | Yes (if sign-in)     | Yes, when signed in                     | Session tokens for account and optional cloud sync; `setUninstallURL` always opens the uninstall feedback page; when signed in, a one-time revoke token is attached so removing the extension can clear the remote extension session (website login and memories unchanged)              | No                                                          |
+| Personal communications      | No                   | No                                      | —                                                                                                                                                                                                                                                                                        | No                                                          |
+| Location                     | No                   | No                                      | —                                                                                                                                                                                                                                                                                        | No                                                          |
+| Web history                  | No (full history)    | No                                      | Yiveno does not collect or upload full browsing history                                                                                                                                                                                                                                  | No                                                          |
+| User activity                | Yes                  | Local by default; cloud only if sync on | Find interactions (e.g. opens, dismissals) to improve ordering on the user’s library                                                                                                                                                                                                     | No                                                          |
+| Website content              | Yes (user-initiated) | Local by default; cloud only if sync on | Text excerpts, page title/URL, and notes the user explicitly Captures                                                                                                                                                                                                                    | No (stored in user’s library; cloud bucket if sync enabled) |
+| Microphone / voice dictation | Yes (user-initiated) | Possibly (browser speech service)       | Optional: user taps the mic in the Find composer to dictate a clue. Audio is handled by the browser’s Web Speech / speech-recognition stack (often a vendor cloud STT). Yiveno does not upload the raw audio to `api.yiveno.com`. Resulting text stays in the composer like typed clues. | Browser vendor speech stack only (not Yiveno servers)       |
 
 ### Data Use Certification
 
@@ -135,7 +135,7 @@ English
 
 ### AI / clue understanding (disclosure note)
 
-When the user submits a Recall clue, limited text may be sent to Yiveno’s API (`api.yiveno.com`) for natural-language understanding. The model is not the system of record for library CRUD; memories remain in IndexedDB (and optional cloud sync). See privacy policy §2.4.
+When the user submits a Find clue, limited text may be sent to Yiveno’s API (`api.yiveno.com`) for natural-language understanding. The model is not the system of record for library CRUD; memories remain in IndexedDB (and optional cloud sync). See privacy policy §2.4.
 
 ### Voice dictation (disclosure note)
 
@@ -179,17 +179,17 @@ https://yiveno.com
 
 ## Version History
 
-| Version | Date       | Changes                                                                            | Status |
-| ------- | ---------- | ---------------------------------------------------------------------------------- | ------ |
-| 4.0.0   | 2026-08-30 | Side Panel Recall shell, Library, Capture, optional cloud sync, omnibox quick jump | Draft  |
+| Version | Date       | Changes                                                                          | Status |
+| ------- | ---------- | -------------------------------------------------------------------------------- | ------ |
+| 4.0.0   | 2026-08-30 | Side Panel Find shell, Library, Capture, optional cloud sync, omnibox quick jump | Draft  |
 
 ## Review Notes
 
 ### Known Issues / Limitations
 
 - **Local-first:** Memories stay in IndexedDB until the user enables cloud sync.
-- **Not a bookmark manager primary pitch:** Bookmark import is optional; core value is Capture + Recall from personal traces.
-- **Recall delivers a neighborhood, not a single oracle answer:** Store copy must not promise “always picks the right one.”
+- **Not a bookmark manager primary pitch:** Bookmark import is optional; core value is Capture + Find from personal traces.
+- **Find delivers a neighborhood, not a single oracle answer:** Store copy must not promise “always picks the right one.”
 - **`localhost:8787` host permission:** Present in dev `public/manifest.json` only. **`bun run --cwd extension build:prod`** / `cd extension && bun run pack:store`（`NODE_ENV=production`）strips it from repo-root `dist/manifest.json` via `clean-dist` before store upload. ZIP 落在 `extension/yiveno-extension-store.zip`（CWS 与 Edge 同包 · ADR-020）。
 - **Dual store:** Same ZIP for Chrome Web Store and Microsoft Edge Add-ons; listing metadata split across this file and `EDGEADDONS.md`.
 - **Store screenshots / promo tiles:** Screenshot 1–3 + promo tiles ready (see Graphics table). Capture toolbar still pending; prefer re-shoot Side Panel/Library on a daily library before public listing.

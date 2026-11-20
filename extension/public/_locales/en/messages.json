@@ -3,7 +3,7 @@
     "message": "Yiveno"
   },
   "app_description": {
-    "message": "Save what matters. Recall it later."
+    "message": "Save what matters. Find it later."
   },
   "context_menu_save_selection": {
     "message": "Save to Yiveno"
@@ -21,10 +21,10 @@
     }
   },
   "omnibox_no_match": {
-    "message": "No quick match — try a fuller recall in Side Panel"
+    "message": "No quick match — try finding it in the Side Panel"
   },
   "omnibox_no_match_with_shortcut": {
-    "message": "No quick match — try a fuller recall in Side Panel ($1)",
+    "message": "No quick match — try finding it in the Side Panel ($1)",
     "placeholders": {
       "shortcut": {
         "content": "$1",
@@ -45,7 +45,7 @@
     }
   },
   "command_open_recall": {
-    "message": "Open Yiveno Recall (side panel)"
+    "message": "Open Yiveno Find (side panel)"
   },
   "command_open_library": {
     "message": "Open Yiveno Library"
@@ -111,7 +111,7 @@
     "message": "Already saved to Yiveno"
   },
   "selection_toolbar_saved_hint": {
-    "message": "Find with this: “$1” — edit in Recall before sending",
+    "message": "Find with this: “$1” — edit before sending",
     "placeholders": {
       "clue": {
         "content": "$1",
@@ -120,10 +120,10 @@
     }
   },
   "selection_toolbar_saved_hint_generic": {
-    "message": "Try recalling with any word you remember"
+    "message": "Try finding with any word you remember"
   },
   "selection_toolbar_saved_hint_edit": {
-    "message": "Opens Recall with “$1” ready to edit",
+    "message": "Opens Find with “$1” ready to edit",
     "placeholders": {
       "clue": {
         "content": "$1",
@@ -135,7 +135,7 @@
     "message": "Find with this"
   },
   "selection_toolbar_try_recall_aria": {
-    "message": "Open Recall with “$1” as a clue you can edit",
+    "message": "Open Find with “$1” as a clue you can edit",
     "placeholders": {
       "clue": {
         "content": "$1",
@@ -144,10 +144,10 @@
     }
   },
   "selection_toolbar_try_recall_aria_generic": {
-    "message": "Try recalling with any word you remember"
+    "message": "Try finding with any word you remember"
   },
   "selection_toolbar_open_recall_failed": {
-    "message": "Could not open recall. Click the Yiveno icon."
+    "message": "Could not open the side panel. Click the Yiveno icon."
   },
   "selection_toolbar_failed": {
     "message": "Save failed"
@@ -201,7 +201,7 @@
     "message": "Optional AI polish so vaguer clues work better—no sign-in required for this step. Sign in later for richer matching. Large libraries may finish in the background."
   },
   "cold_start_stage_done_title": {
-    "message": "Ready to recall"
+    "message": "Ready to find"
   },
   "cold_start_stage_done_body": {
     "message": "Your library is ready. Sign in later if you want richer fuzzy matching."
@@ -274,10 +274,10 @@
     "message": "3 · Improve fuzzy find (best effort)"
   },
   "cold_start_post_release_banner": {
-    "message": "You can recall now—but it’s not at its best yet. We’re still enriching your library in the background. Give it a few minutes."
+    "message": "You can find things now—but it’s not at its best yet. We’re still enriching your library in the background. Give it a few minutes."
   },
   "cold_start_post_release_banner_progress": {
-    "message": "You can recall now—but it’s not at its best yet. Enriching your library… $DONE$ of $TOTAL$.",
+    "message": "You can find things now—but it’s not at its best yet. Enriching your library… $DONE$ of $TOTAL$.",
     "placeholders": {
       "done": {
         "content": "$1",
@@ -290,7 +290,7 @@
     }
   },
   "cold_start_post_release_banner_paused": {
-    "message": "You can recall now. Library enrichment paused at $DONE$ of $TOTAL$ (daily AI limit). It’ll resume later.",
+    "message": "You can find things now. Library enrichment paused at $DONE$ of $TOTAL$ (daily AI limit). It’ll resume later.",
     "placeholders": {
       "done": {
         "content": "$1",
@@ -568,16 +568,16 @@
     "message": "This page can't be used. Switch to a normal page and this turns back on."
   },
   "sidepanel_recall_settings_toggle": {
-    "message": "Recall settings"
+    "message": "Find settings"
   },
   "sidepanel_recall_settings_dismiss": {
-    "message": "Close recall settings"
+    "message": "Close Find settings"
   },
   "sidepanel_recall_source_all": {
     "message": "All"
   },
   "sidepanel_recall_source_all_hint": {
-    "message": "Bookmarks and excerpts both count. This is the usual recall."
+    "message": "Bookmarks and excerpts both count. This is the usual way to find."
   },
   "sidepanel_recall_source_excerpts": {
     "message": "Excerpts"
@@ -592,10 +592,10 @@
     "message": "Only bookmarks. Saved passages stay out. If nothing is close enough, you'll see that — it won't open the rest of your library."
   },
   "popup_submit": {
-    "message": "Start recall"
+    "message": "Start finding"
   },
   "popup_submitting": {
-    "message": "Recalling…"
+    "message": "Finding…"
   },
   "sidepanel_voice_start": {
     "message": "Dictate clue"
@@ -1037,7 +1037,7 @@
     }
   },
   "popup_recall_failed": {
-    "message": "The Recall service hit a temporary error. Please try again later."
+    "message": "The service hit a temporary error. Please try again later."
   },
   "popup_navigate_tab_failed": {
     "message": "Couldn't open that page. Try again."
@@ -1415,7 +1415,7 @@
     "message": "Export full backup"
   },
   "settings_privacy_export_hint": {
-    "message": "Download all local memories as JSON — content, usage signals, and helpers that make recall work."
+    "message": "Download all local memories as JSON — content, usage signals, and helpers that make Find work."
   },
   "settings_privacy_export_action": {
     "message": "Export"
@@ -2082,13 +2082,13 @@
     "message": "No bookmarks yet"
   },
   "library_empty_bookmarks_body": {
-    "message": "Bookmarks you add in this browser show up in this tree; once synced to Yiveno they can be recalled."
+    "message": "Bookmarks you add in this browser show up in this tree; once synced to Yiveno you can find them."
   },
   "library_empty_excerpts_title": {
     "message": "No text excerpts yet"
   },
   "library_empty_excerpts_body": {
-    "message": "Select text on a page to save, or use “Save to Yiveno”. Those personal saves are what recall works best on."
+    "message": "Select text on a page to save, or use “Save to Yiveno”. Those personal saves are what Find works best on."
   },
   "library_loading": {
     "message": "Loading…"
@@ -2119,7 +2119,7 @@
     "message": "Something went wrong loading this. Try again."
   },
   "library_delete_confirm": {
-    "message": "Delete this excerpt? You will not be able to recall it afterward."
+    "message": "Delete this excerpt? You will not be able to find it afterward."
   },
   "library_delete_failed": {
     "message": "Could not delete"
@@ -2275,7 +2275,7 @@
     "message": "Can’t open this excerpt"
   },
   "detail_missing_id_body": {
-    "message": "Open it again from a recall result."
+    "message": "Open it again from a Find result."
   },
   "detail_not_found_title": {
     "message": "Memory not found"
@@ -2287,7 +2287,7 @@
     "message": "Deleted"
   },
   "detail_deleted_body": {
-    "message": "This excerpt was removed from your library and will not appear in recall."
+    "message": "This excerpt was removed from your library and will not appear in Find results."
   },
   "detail_open_library": {
     "message": "Open library"
@@ -2320,7 +2320,7 @@
     "message": "Deleting…"
   },
   "detail_delete_confirm": {
-    "message": "Delete this excerpt? You will not be able to recall it afterward."
+    "message": "Delete this excerpt? You will not be able to find it afterward."
   },
   "detail_delete_failed": {
     "message": "Could not delete"
@@ -2377,19 +2377,19 @@
     "message": "Nothing in your library yet"
   },
   "popup_empty_no_memory_body_importing": {
-    "message": "Your bookmarks are syncing in. You can also highlight a line to keep—once it’s saved, recall it in your own words."
+    "message": "Your bookmarks are syncing in. You can also highlight a line to keep—once it’s saved, find it in your own words."
   },
   "popup_empty_no_memory_body_prefix": {
     "message": " "
   },
   "popup_empty_no_memory_body_suffix": {
-    "message": ", or highlight a line to save. Then come back and recall it in your own words."
+    "message": ", or highlight a line to save. Then come back and find it in your own words."
   },
   "popup_empty_no_memory_body": {
-    "message": "Sync your bookmarks, or highlight a line to save. Then come back and recall it in your own words."
+    "message": "Sync your bookmarks, or highlight a line to save. Then come back and find it in your own words."
   },
   "popup_empty_no_memory_body_ingest_on_empty": {
-    "message": "Bookmark sync is on, but your library is still empty. Save a highlight (or open Getting Started), then recall it in your own words."
+    "message": "Bookmark sync is on, but your library is still empty. Save a highlight (or open Getting Started), then find it in your own words."
   },
   "popup_empty_library_empty_title": {
     "message": "Nothing saved yet"
@@ -2404,7 +2404,7 @@
     "message": "Your library is empty. Sync bookmarks or save an excerpt first, then try again in your own words."
   },
   "popup_empty_library_empty_body_importing": {
-    "message": "Your bookmarks are still syncing in. Save an excerpt if you want something to recall right away."
+    "message": "Your bookmarks are still syncing in. Save an excerpt if you want something to find right away."
   },
   "popup_empty_library_empty_body_ingest_on_empty": {
     "message": "Your library is still empty. Save a highlight, then come back with any clue in your own words."
@@ -2419,10 +2419,10 @@
     "message": "Save a line first"
   },
   "popup_capture_first_body": {
-    "message": "Highlight a sentence on any page—or save the demo line on Getting Started—then recall it in your own words."
+    "message": "Highlight a sentence on any page—or save the demo line on Getting Started—then find it in your own words."
   },
   "popup_capture_first_body_importing": {
-    "message": "Your bookmarks are importing. Save one excerpt first—it is the fastest way to see how recall works."
+    "message": "Your bookmarks are importing. Save one excerpt first—it is the fastest way to see how Find works."
   },
   "popup_open_getting_started": {
     "message": "Open Getting Started"
@@ -2483,7 +2483,7 @@
     "message": "Couldn’t finish importing"
   },
   "getting_started_consent_failed_body": {
-    "message": "Your permission is saved. Retry the import, or try recalling what you already have."
+    "message": "Your permission is saved. Retry the import, or try finding what you already have."
   },
   "getting_started_consent_retry": {
     "message": "Try importing again"
@@ -2510,10 +2510,10 @@
     "message": "Excerpts"
   },
   "getting_started_recall_card_aria": {
-    "message": "Recall something from your bookmarks"
+    "message": "Find something from your bookmarks"
   },
   "getting_started_excerpt_recall_aria": {
-    "message": "Recall something from your excerpts"
+    "message": "Find something from your excerpts"
   },
   "getting_started_excerpt_empty_title": {
     "message": "Nothing here yet."
@@ -2570,10 +2570,10 @@
     "message": "Bringing in your bookmarks…"
   },
   "getting_started_importing_body": {
-    "message": "Hang tight—once they’re in, you can try recalling one in your own words."
+    "message": "Hang tight—once they’re in, you can try finding one in your own words."
   },
   "getting_started_empty_title": {
-    "message": "No bookmarks to recall yet"
+    "message": "No bookmarks to find yet"
   },
   "getting_started_empty_body": {
     "message": "When you have bookmarks in this browser, describe one in your own words here. You can still continue below."
@@ -2594,7 +2594,7 @@
     "message": "Try saying it like:"
   },
   "getting_started_oral_sample_lead": {
-    "message": "Try recalling something:"
+    "message": "Try finding something:"
   },
   "getting_started_oral_sample_generating": {
     "message": "Writing a clue from your bookmarks…"
@@ -2621,7 +2621,7 @@
     "message": "Nothing close enough turned up. Try another detail that stuck with you."
   },
   "getting_started_recall_failed": {
-    "message": "Couldn’t recall just now. Try again in a moment."
+    "message": "Couldn’t find it just now. Try again in a moment."
   },
   "getting_started_open_result_aria": {
     "message": "Open $title$",
@@ -3048,7 +3048,7 @@
     "message": "Excerpt"
   },
   "command_title_open_recall": {
-    "message": "Open Recall (side panel)"
+    "message": "Open Find (side panel)"
   },
   "command_title_open_library": {
     "message": "Open Library"
@@ -3081,7 +3081,7 @@
     "message": "Keep your bookmarks in sync?"
   },
   "getting_started_sync_suggest_body": {
-    "message": "New bookmarks you save in Chrome will appear in Yiveno automatically, and deleted ones will be removed — so Recall keeps finding what you saved recently. Sync stays on this device; nothing is uploaded."
+    "message": "New bookmarks you save in Chrome will appear in Yiveno automatically, and deleted ones will be removed — so Yiveno keeps finding what you saved recently. Sync stays on this device; nothing is uploaded."
   },
   "getting_started_sync_suggest_enable": {
     "message": "Turn on sync"
@@ -3217,7 +3217,7 @@
     "message": "Also: your Chrome bookmarks are still importing. Try again once the import finishes."
   },
   "popup_recall_failed_offline": {
-    "message": "You're offline, and Recall needs a connection. Reconnect and try again."
+    "message": "You're offline, and Find needs a connection. Reconnect and try again."
   },
   "error_bookmark_import_read_failed": {
     "message": "Couldn't read Chrome bookmarks. Check bookmark permission, then retry import."

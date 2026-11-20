@@ -23,7 +23,7 @@ export const EXTENSION_CWS_HOST_PERMISSIONS = EXTENSION_CWS_HOST_PERMISSIONS_DEV
 export const EXTENSION_CWS_CONTENT_SCRIPT_JS = 'content-selection-toolbar.js' as const
 
 /** 商店短描述与 _locales/en `app_description` 同源。 */
-export const EXTENSION_CWS_SHORT_DESCRIPTION = 'Save what matters. Recall it later.' as const
+export const EXTENSION_CWS_SHORT_DESCRIPTION = 'Save what matters. Find it later.' as const
 
 /** 相对仓库根的 CWS 元数据路径。 */
 export const CHROMEWEBSTORE_DOC_PATH = 'CHROMEWEBSTORE.md' as const
