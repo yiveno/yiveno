@@ -34,11 +34,15 @@ describe('handleRetryAnonymousCaptcha', () => {
     getTurnstileTokenMock.mockResolvedValue('fg-token')
   })
 
-  it('注入前景 getTurnstileToken 并复用 ensure', async () => {
+  it('注入前景 getTurnstileToken + ignoreBackoff 并复用 ensure', async () => {
     ensureAnonymousDeviceSessionMock.mockImplementation(
-      async (deps: { getTurnstileToken: () => Promise<string | null> }) => {
+      async (deps: {
+        getTurnstileToken: () => Promise<string | null>
+        ignoreBackoff?: boolean
+      }) => {
         const token = await deps.getTurnstileToken()
         expect(token).toBe('fg-token')
+        expect(deps.ignoreBackoff).toBe(true)
         expect(getTurnstileTokenMock).toHaveBeenCalledWith({ foreground: true })
         return {
           status: 'created',

@@ -183,7 +183,7 @@ registry.ts[AB5T]: F:chrome.commands 处理器注册与分发 | R:code:extension
 
 ===/<repository>/extension/src/background/handlers/===
 account-library-handlers.ts[EM8L]: F:账户库迁移/孤儿桶/隐私/订阅相关 Background handlers | R:code:extension/src/application/identity/login-migration.ts | A:从 account-sync-handler 抽出 | S:禁止静默 absorb
-account-sync-handler.ts[EM9L]: F:账户登录与云同步 Background 编排 | R:code:extension/src/infrastructure/auth/promote-anonymous-api-client.ts,code:extension/src/infrastructure/identity/subscription-service.ts | A:CONVERT_ANONYMOUS_ACCOUNT;AUTH_CONNECT_WEBSITE;AUTH_SIGN_OUT | S:退出无 sync_then_clear；Connect 无 ack 回退账户页 device-register；转正写 device
+account-sync-handler.ts[EM9L]: F:账户登录与云同步 Background 编排 | R:code:extension/src/infrastructure/auth/promote-anonymous-api-client.ts,code:extension/src/infrastructure/identity/subscription-service.ts,code:extension/src/infrastructure/auth/ensure-anonymous-device-session.ts | A:CONVERT_ANONYMOUS_ACCOUNT;AUTH_CONNECT_WEBSITE;AUTH_SIGN_OUT;RETRY_ANONYMOUS_CAPTCHA | S:退出无 sync_then_clear；Connect 无 ack 回退账户页 device-register；转正写 device；手动 captcha 重试 ignoreBackoff
 account-sync-shared.ts[EM6S]: F:账户/同步 handler 共用辅助 | R:code:extension/src/infrastructure/identity/device-session-service.ts,code:extension/src/infrastructure/auth/device-register-api-client.ts | A:requireAccessToken;finishSignOutSession | S:Bearer 优先 device；退出 device 走 revoke-self
 active-recall-registry.ts[EM5T]: F:Recall in-flight 追踪（per-source） | R:code:extension/src/background/handlers/recall-handler.ts | A:新 recall 覆盖旧；支持 CANCEL | S:-
 commands-handler.ts[EM6S]: F:扩展命令查询与打开 Recall 壳/导航 tab | R:code:extension/src/core/commands/command-display.ts | A:Background message handlers | S:-
@@ -260,6 +260,7 @@ sync-prefs.ts[CI4T]: F:云同步偏好 schema | R:- | A:默认 enabled=false | S
 ui-bridge-messages.ts[CI6S]: F:官网↔扩展 UI 桥消息 schema | R:- | A:website_turnstile_token{token} | S:ADR-019；captcha 一次性凭证非会话 token；禁传 access/refresh
 device-session.ts[CI5T]: F:设备会话 Zod schema 与存储键 | R:- | A:DeviceSession;DEVICE_SESSION_STORAGE_KEY | S:无 access/refresh；日志只掩码 token 末 4
 anonymous-captcha-retry.ts[CI3T]: F:Settings 是否展示匿名 Turnstile 前景重试 | R:- | A:shouldShowAnonymousCaptchaRetry | S:captcha 失败时通常 signedIn=false；正式账号已登录不展示
+pending-anonymous-session.ts[CI5T]: F:待交换匿名会话 Zod schema 与存储键 | R:- | A:PendingAnonymousSession;PENDING_ANON_SESSION_STORAGE_KEY | S:仅 exchange/refresh；禁写 auth_session；禁 AI；15min 退避常量
 
 ===/<repository>/extension/src/core/memory/===
 bookmark-library-fixture.ts[DB4T]: F:合成 Chrome 书签树供基准/单测 | R:code:extension/src/core/memory/bookmark-library-tree.ts | A:仅测试数据 | S:-
@@ -527,7 +528,7 @@ website-auth-probe.ts[II6T]: F:探测官网登录态供扩展 UI 桥 | R:code:ex
 website-auth-ui-storage.ts[II6T]: F:官网鉴权 UI 展示态读写 | R:- | A:- | S:-
 device-register-api-client.ts[IA6S]: F:Worker device-register/revoke-self HTTP 客户端 | R:code:extension/src/core/identity/device-session.ts | A:session_exchange;revokeOwnDeviceToken | S:日志禁完整 token
 device-session-revalidate.ts[IA6S]: F:device 会话存活探针（subscription） | R:code:extension/src/infrastructure/auth/auth-session-revalidate.ts | A:revalidateDeviceSession | S:401→invalid；非 401→uncertain；无租约/refresh
-ensure-anonymous-device-session.ts[IA7S]: F:匿名 GoTrue signup→exchange→只存 device | R:code:extension/src/infrastructure/auth/turnstile-token-provider.ts,code:extension/src/infrastructure/auth/device-register-api-client.ts | A:ensureAnonymousDeviceSession | S:exchange 前不持久化 Supabase；captcha null fail-open
+ensure-anonymous-device-session.ts[IA8L]: F:匿名 signup→pending→exchange→只存 device | R:code:extension/src/infrastructure/identity/pending-anonymous-session-service.ts,code:extension/src/infrastructure/auth/extension-oauth.ts,code:extension/src/infrastructure/auth/device-register-api-client.ts | A:ensureAnonymousDeviceSession;signupAnonymousWithGoTrue | S:pending 持久化复用用户；过期先 refresh；401 同次重 signup；15min 退避；ignoreBackoff 手动重试
 ensure-device-session-ready.ts[IA5T]: F:启动/GET_AUTH_STATE 确保 device 就绪 | R:code:extension/src/infrastructure/auth/migrate-auth-to-device-session.ts,code:extension/src/infrastructure/auth/ensure-anonymous-device-session.ts | A:ensureDeviceSessionReady | S:migrate→anon；single-flight
 migrate-auth-to-device-session.ts[IA5T]: F:旧 auth_session→device_session 升级 | R:code:extension/src/infrastructure/auth/device-register-api-client.ts | A:migrateAuthSessionToDeviceIfNeeded | S:session_exchange；先写新键再删旧；失败 fail-open；无租约清理
 turnstile-token-provider.ts[IA7S]: F:开官网页取 Turnstile captcha 经 UI 桥回传 | R:code:extension/src/infrastructure/browser/website-page.ts | A:getTurnstileToken({foreground?});resolveTurnstileTokenFromUiBridge | S:single-flight；约30s超时fail-open；token不持久化；日志只记长度
@@ -587,6 +588,7 @@ subscription-service.ts[II6S]: F:本机订阅快照读写 + Pro 门禁 | R:code:
 sync-prefs-service.ts[II6T]: F:读写同步偏好；缺失时回落默认（enabled=false） | R:code:extension/src/core/identity/sync-prefs.ts,code:extension/src/infrastructure/storage/chrome-storage-local.ts | A:身份/订阅 | S:-
 worker-api-access-token.ts[II6T]: F:Worker API Bearer；优先 device token | R:code:extension/src/infrastructure/identity/device-session-service.ts,code:extension/src/infrastructure/identity/auth-session-service.ts | A:getWorkerApiAccessToken | S:无 device 才回退旧 access+refresh
 device-session-service.ts[II4T]: F:yiveno:device_session 读写 | R:code:extension/src/core/identity/device-session.ts | A:get/set/clearDeviceSession | S:独立于 auth-session-service 并存迁移窗
+pending-anonymous-session-service.ts[II4T]: F:yiveno:pending_anon_session 读写 | R:code:extension/src/core/identity/pending-anonymous-session.ts | A:get/set/clearPendingAnonymousSession | S:非法形状→null；仅 ensure-anonymous 使用
 
 ===/<repository>/extension/src/infrastructure/indexeddb/===
 constants.ts[PD5T]: F:Yiveno Memory DB 常量 | R:- | A:IDB 仓储 | S:-

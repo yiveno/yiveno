@@ -293,21 +293,22 @@ SW 启动 / GET_AUTH_STATE：
 ```text
 扩展首次需要云 AI / 身份：
   →（B1）官网页桥拿 captchaToken；扩展裸 fetch POST /auth/v1/signup（captcha 由 Supabase 校验）
-  → 内存持有匿名 Supabase access（不持久化）
+  → 立即持久化待交换会话于 yiveno:pending_anon_session（AN1；仅 exchange / 自身 refresh；禁止 AI / 禁止写 yiveno:auth_session）
   → POST /api/auth/device-register  mode=session_exchange  Authorization: Bearer <anon access>
   → Worker：验 JWT → 读 is_anonymous → 写 user_meta.isAnonymous=true → 发 device token
-  → 扩展写入 yiveno:device_session；丢弃 Supabase 会话；AccountBinding.accountId = 匿名 userId
+  → 扩展写入 yiveno:device_session；清 pending；AccountBinding.accountId = 匿名 userId
   → 本地库重归属：localProfileId → 匿名 userId（E1 原设计，保留意图）
+  → exchange 失败：保留 pending + 15min 退避；access 过期先 refresh，refresh/401 才重新 signup
 ```
 
 ### 5.2 与方案 C 原设计的差异（必须明示）
 
-| 点            | 方案 C 原稿（E 世界）                                                     | **D 世界**                                                                                                        |
-| ------------- | ------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| 匿名期凭证    | 扩展**直持** Supabase 匿名会话（裸 `signup` + 存 `yiveno:auth_session`）  | 扩展**只持** device token；**不**持久化 Supabase access/refresh（signup↔exchange 之间短暂内存持有一次，随即丢弃） |
-| 转正后        | `PUT /auth/v1/user` + **强制 refresh** + **mint 置换**扩展会话 + 撤旧会话 | 见 §6：Worker 转正；**device token 继续有效**；无会话置换                                                         |
-| revalidate    | 跳过租约但仍 refresh                                                      | **无 refresh**；存活 = device token 仍在 KV                                                                       |
-| 单活跃 / 租约 | 匿名也要处理租约特例                                                      | **无租约**                                                                                                        |
+| 点            | 方案 C 原稿（E 世界）                                                     | **D 世界**                                                                                                                              |
+| ------------- | ------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| 匿名期凭证    | 扩展**直持** Supabase 匿名会话（裸 `signup` + 存 `yiveno:auth_session`）  | 扩展**只持** device token 作业务凭证；signup↔exchange 间待交换会话落 `yiveno:pending_anon_session`（AN1；非 legacy auth 键；不可调 AI） |
+| 转正后        | `PUT /auth/v1/user` + **强制 refresh** + **mint 置换**扩展会话 + 撤旧会话 | 见 §6：Worker 转正；**device token 继续有效**；无会话置换                                                                               |
+| revalidate    | 跳过租约但仍 refresh                                                      | **无 refresh**；存活 = device token 仍在 KV                                                                                             |
+| 单活跃 / 租约 | 匿名也要处理租约特例                                                      | **无租约**                                                                                                                              |
 
 ---
 
@@ -365,14 +366,14 @@ SW 启动 / GET_AUTH_STATE：
 
 ### 8.2 E1（扩展匿名身份）
 
-| E 世界                                                              | D 世界改写                                                                                                                            |
-| ------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| 裸 fetch `POST /auth/v1/signup` + captcha in `gotrue_meta_security` | **保留** signup（captcha 由 Supabase 校验）→ 立即 `device-register` `session_exchange` → 丢弃 Supabase 会话；**不**持久化 GoTrue 会话 |
-| 会话存 `yiveno:auth_session`                                        | **`yiveno:device_session`**                                                                                                           |
-| `AccountBinding` 写匿名 id                                          | **保留**                                                                                                                              |
-| 升级重归属 localProfileId → 匿名 id                                 | **保留**                                                                                                                              |
-| revalidate 跳过租约探测                                             | **整段租约/refresh revalidate 删除**；401 → keep_local                                                                                |
-| `invalid` 路径孤儿化（不清桶）                                      | 匿名失效策略另定；**推荐**与正式 keep_local 对齐或「匿名无效则清 device 保留本地档」——实现 Brief 钉死                                 |
+| E 世界                                                              | D 世界改写                                                                                                                 |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| 裸 fetch `POST /auth/v1/signup` + captcha in `gotrue_meta_security` | **保留** signup → 写 `yiveno:pending_anon_session` → `session_exchange` → 成功清 pending 写 `yiveno:device_session`（AN1） |
+| 会话存 `yiveno:auth_session`                                        | **`yiveno:device_session`**（业务）；待交换另键 `yiveno:pending_anon_session`（非 legacy）                                 |
+| `AccountBinding` 写匿名 id                                          | **保留**                                                                                                                   |
+| 升级重归属 localProfileId → 匿名 id                                 | **保留**                                                                                                                   |
+| revalidate 跳过租约探测                                             | **整段租约/refresh revalidate 删除**；401 → keep_local                                                                     |
+| `invalid` 路径孤儿化（不清桶）                                      | 匿名失效策略另定；**推荐**与正式 keep_local 对齐或「匿名无效则清 device 保留本地档」——实现 Brief 钉死                      |
 
 ### 8.3 E2（转正）
 

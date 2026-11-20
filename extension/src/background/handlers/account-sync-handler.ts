@@ -656,7 +656,9 @@ export async function handleRetryAnonymousCaptcha(): Promise<RetryAnonymousCaptc
   const startedAt = flowStart('Auth', 'RETRY_ANONYMOUS_CAPTCHA')
   try {
     const result = await ensureAnonymousDeviceSession({
-      getTurnstileToken: () => getTurnstileToken({ foreground: true })
+      getTurnstileToken: () => getTurnstileToken({ foreground: true }),
+      // 用户主动点重试：不得被 15 分钟 exchange 退避静默吞掉
+      ignoreBackoff: true
     })
     if (result.status === 'created' || result.status === 'already') {
       clearAnonymousCaptchaRetryNeeded()

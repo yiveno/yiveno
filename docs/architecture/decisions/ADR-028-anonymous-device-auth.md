@@ -1,6 +1,6 @@
 ---
 created: 2026-11-20T21:04:08+08:00
-updated: 2026-11-20T21:04:08+08:00
+updated: 2026-11-20T23:58:31+08:00
 author: agent:cursor
 scope: docs/architecture/decisions
 status: 已接受
@@ -21,7 +21,7 @@ downstream: worker anonymous-cleanup cron；device-register / promote / dual-aut
 
 ## 决定
 
-1. **匿名试用 = 方案 C：** 扩展经 GoTrue 匿名 signup → `POST /api/auth/device-register`（`mode=session_exchange`）换 **device token**；本地只持久化 `yiveno:device_session`，**不**持久化匿名 Supabase 会话。
+1. **匿名试用 = 方案 C：** 扩展经 GoTrue 匿名 signup → `POST /api/auth/device-register`（`mode=session_exchange`）换 **device token**；业务凭证只持久化 `yiveno:device_session`。**AN1：** signup↔exchange 间可将待交换匿名会话落 `yiveno:pending_anon_session`（复用同一用户、过期先 refresh）；仍禁止写 legacy `yiveno:auth_session`，且待交换会话不得调 AI。
 2. **配额：** 匿名档 LLM **15** 次 lifetime（`ai_usage_lifetime:{userId}`）；embeddings **前 30** 次 lifetime（`embed_anon:{userId}`）。转正**不**重置计数器。
 3. **Turnstile B'：** 官网登录只出 captcha token（打在 Email OTP）；Worker **不**持 Turnstile secret；匿名 signup 路径不经 Worker 验 captcha。
 4. **放弃「Admin mint 匿名」：** Spike 证实 Admin `generateLink` / `createUser` 要求邮箱，无法无邮箱建匿名号。匿名只走扩展 signup + `session_exchange`。
