@@ -3,12 +3,15 @@
  *
  * 铁律修订（AN1）：signup 后待交换会话持久化于 `yiveno:pending_anon_session`，
  * exchange 失败可复用同一匿名用户；access 过期先 refresh，refresh 失败才重新 signup。
+ * AN2：系统性 401 不删 pending，写独立熔断键 `yiveno:anon_exchange_401_backoff`（60min）；
+ * 窗口内 ensure fail-open，避免反复 signup 刷孤儿。
  * 仍禁止：写 legacy `yiveno:auth_session`；用待交换会话调 AI（W1' N3：exchange 完成前不得发起 AI）。
  */
 
 import type { DeviceSession } from '@/core/identity/device-session'
 import { maskDeviceTokenForLog } from '@/core/identity/device-session'
 import {
+  ANON_EXCHANGE_401_BACKOFF_MS,
   PENDING_ANON_ACCESS_CLOCK_SKEW_MS,
   PENDING_ANON_EXCHANGE_RETRY_INTERVAL_MS,
   maskPendingAccessTokenForLog,
@@ -25,6 +28,11 @@ import {
   getTurnstileToken,
   markAnonymousCaptchaRetryNeeded
 } from '@/infrastructure/auth/turnstile-token-provider'
+import {
+  clearAnonExchange401Backoff,
+  getAnonExchange401Backoff,
+  recordAnonExchange401
+} from '@/infrastructure/identity/anon-exchange-401-backoff-service'
 import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
 import {
   getDeviceSession,
@@ -172,6 +180,21 @@ function isWithinExchangeBackoff(
   return nowMs - lastMs < PENDING_ANON_EXCHANGE_RETRY_INTERVAL_MS
 }
 
+function isWithin401Backoff(
+  last401AtIso: string | undefined,
+  nowMs: number,
+  ignoreBackoff: boolean
+): boolean {
+  if (ignoreBackoff || !last401AtIso) {
+    return false
+  }
+  const lastMs = Date.parse(last401AtIso)
+  if (Number.isNaN(lastMs)) {
+    return false
+  }
+  return nowMs - lastMs < ANON_EXCHANGE_401_BACKOFF_MS
+}
+
 async function touchPendingExchangeAttempt(pending: PendingAnonymousSession): Promise<void> {
   await setPendingAnonymousSession({
     ...pending,
@@ -240,6 +263,7 @@ async function finishCreatedDeviceSession(
 ): Promise<EnsureAnonymousResult> {
   await setDeviceSession(deviceSession)
   await clearPendingAnonymousSession()
+  await clearAnonExchange401Backoff()
   clearAnonymousCaptchaRetryNeeded()
   deps.onAfterDeviceStored?.()
 
@@ -287,12 +311,15 @@ async function attemptExchange(
   }
 
   if (isAuthInvalidExchangeFailure(exchange.status)) {
-    logger.info('Auth', '待交换会话 exchange 鉴权失败，丢弃后同次重新 signup', {
+    // AN2：401 保留 pending，写独立熔断键；禁止同次清 pending 再 signup 刷孤儿
+    const backoff = await recordAnonExchange401()
+    logger.info('Auth', '待交换会话 exchange 401，保留 pending 并进入熔断', {
       userId: pending.userId,
       status: exchange.status,
-      error: exchange.error
+      error: exchange.error,
+      last401At: backoff.last401At,
+      count: backoff.count
     })
-    await clearPendingAnonymousSession()
     return { kind: 'auth_invalid' }
   }
 
@@ -342,7 +369,7 @@ async function runFreshSignup(
 
   const outcome = await attemptExchange(pending, deps, startedAt)
   if ('kind' in outcome) {
-    // 全新 signup 后仍 auth_invalid：极少见；fail-open，避免同次死循环 signup
+    // 全新 signup 后仍 401：保留 pending + 熔断；fail-open，禁止同次再 signup
     if (outcome.kind === 'auth_invalid') {
       markAnonymousCaptchaRetryNeeded()
       flowFail(
@@ -362,6 +389,7 @@ async function runFreshSignup(
 /**
  * 无设备会话时：复用待交换会话或 signup → exchange → 存 device → 清待交换 → binding + 重归属。
  * captcha null / 任一步失败 → fail-open（保持未登录）；exchange 网络失败保留待交换会话。
+ * AN2：401 熔断窗口内不 signup / 不 exchange（`ignoreBackoff` 可绕过）。
  */
 export async function ensureAnonymousDeviceSession(
   deps: EnsureAnonymousDeviceSessionDeps = { getTurnstileToken }
@@ -369,8 +397,9 @@ export async function ensureAnonymousDeviceSession(
   const ignoreBackoff = deps.ignoreBackoff === true
   const existing = await getDeviceSession()
   if (existing) {
-    // 官网 Connect 等路径可能已写 device，残留待交换会话 best-effort 清掉
+    // 官网 Connect 等路径可能已写 device，残留 pending / 401 熔断 best-effort 清掉
     void clearPendingAnonymousSession().catch(() => undefined)
+    void clearAnonExchange401Backoff().catch(() => undefined)
     return { status: 'already', session: existing }
   }
   const legacy = await getAuthSession()
@@ -381,6 +410,18 @@ export async function ensureAnonymousDeviceSession(
 
   const startedAt = flowStart('Auth', 'ensure anonymous device session')
   const nowMs = Date.now()
+
+  // 401 熔断：读 pending 之前先判；窗口内零 signup / 零 exchange
+  const exchange401Backoff = await getAnonExchange401Backoff()
+  if (isWithin401Backoff(exchange401Backoff?.last401At, nowMs, ignoreBackoff)) {
+    flowOk('Auth', 'ensure anonymous device session', startedAt, {
+      outcome: 'fail_open',
+      reason: 'exchange_401_backoff',
+      last401At: exchange401Backoff?.last401At,
+      count: exchange401Backoff?.count
+    })
+    return { status: 'failed', error: 'exchange_401_backoff' }
+  }
 
   let pending = await getPendingAnonymousSession()
   if (pending) {
@@ -402,7 +443,16 @@ export async function ensureAnonymousDeviceSession(
       if (outcome.kind === 'exchange_failed') {
         return { status: 'failed', error: outcome.error }
       }
-      // auth_invalid：已丢弃待交换 → 同次调用内全新 signup
+      // auth_invalid（401）：pending 保留 + 熔断已写 → fail-open，禁止同次全新 signup
+      markAnonymousCaptchaRetryNeeded()
+      flowFail(
+        'Auth',
+        'ensure anonymous device session',
+        startedAt,
+        new Error('exchange_auth_invalid'),
+        { failOpen: true, phase: 'exchange' }
+      )
+      return { status: 'failed', error: 'exchange_auth_invalid' }
     }
   }
 

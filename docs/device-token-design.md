@@ -1,6 +1,6 @@
 ---
 created: 2026-11-20 14:57 +0800
-updated: 2026-11-20 19:50 +0800
+updated: 2026-11-21 15:05 +0800
 author: agent:cursor
 scope: S0 设备 token（D 方案）设计稿；不实施产品代码
 status: implemented-s1
@@ -298,7 +298,9 @@ SW 启动 / GET_AUTH_STATE：
   → Worker：验 JWT → 读 is_anonymous → 写 user_meta.isAnonymous=true → 发 device token
   → 扩展写入 yiveno:device_session；清 pending；AccountBinding.accountId = 匿名 userId
   → 本地库重归属：localProfileId → 匿名 userId（E1 原设计，保留意图）
-  → exchange 失败：保留 pending + 15min 退避；access 过期先 refresh，refresh/401 才重新 signup
+  → exchange 非 401 失败：保留 pending + 15min 退避；access 过期先 refresh，refresh 失败才重新 signup
+  → exchange 401（AN2）：保留 pending；写独立熔断键 yiveno:anon_exchange_401_backoff（60min）；窗口内 ensure 不 signup / 不 exchange（Settings ignoreBackoff 可绕过）；成功后清 pending + 熔断；device 会话建立时（handoff 成功 / ensure 已有会话）清熔断（AN2.1）
+  → AN3：匿名 token claims 的 email:"" 视同无邮箱；claims 校验拒绝记 [VerifySupabase] 诊断（补 getClaims 成功但 Zod/role 拒的观测）
 ```
 
 ### 5.2 与方案 C 原设计的差异（必须明示）

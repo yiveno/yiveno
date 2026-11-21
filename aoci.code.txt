@@ -203,7 +203,7 @@ chrome-bookmark-sync.ts[EM6S]: F:Chrome 书签变更监听挂/卸与设置同步
 commands.ts[EM5T]: F:注册 chrome.commands → dispatch | R:code:extension/src/background/commands/registry.ts | A:可闪 badge | S:-
 context-menu.ts[EM6S]: F:划词存摘录右键菜单注册与点击 | R:code:extension/src/application/capture/capture-text-excerpt-service.ts | A:随设置刷新 | S:-
 dreaming-alarm.ts[EM5T]: F:dreaming 定时闹钟：编译分片+孤儿扫+向量回填 | R:code:extension/src/application/dreaming/compile-memory-notes.ts | A:失败只记日志 | S:向量回填 fail-open
-external-auth-handoff.ts[EM7M]: F:官网↔扩展 external device handoff | R:code:extension/src/infrastructure/identity/device-session-service.ts,code:extension/src/infrastructure/auth/website-session-from-extension.ts | A:YIVENO_AUTH_DEVICE_HANDOFF;STATUS_PROBE;WEBSITE_SESSION_REQUEST | S:同账号幂等覆 token；异账号 mismatch；SIGN_OUT_HANDOFF 已删
+external-auth-handoff.ts[EM7M]: F:官网↔扩展 external device handoff | R:code:extension/src/infrastructure/identity/device-session-service.ts,code:extension/src/infrastructure/identity/anon-exchange-401-backoff-service.ts,code:extension/src/infrastructure/auth/website-session-from-extension.ts | A:YIVENO_AUTH_DEVICE_HANDOFF;STATUS_PROBE;WEBSITE_SESSION_REQUEST | S:同账号幂等覆 token；异账号 mismatch；成功后 best-effort 清 401 熔断（失败不拖垮 handoff）；SIGN_OUT_HANDOFF 已删
 link-status-sweep-alarm.ts[EM5T]: F:死链巡检闹钟挂/卸 | R:code:extension/src/application/dreaming/sweep-memory-link-status.ts | A:随 Settings | S:-
 memory-cloud-sync-alarm.ts[EM5T]: F:云 Memory 定时同步闹钟监听 | R:- | A:触发增量 sync | S:-
 omnibox.ts[EM7M]: F:Omnibox 建议与换赛道交接 Side Panel | R:code:extension/src/application/recall/recall-service.ts | A:entry=omnibox 本机快跳 | S:ADR-007；非离线产品叙事
@@ -260,7 +260,7 @@ sync-prefs.ts[CI4T]: F:云同步偏好 schema | R:- | A:默认 enabled=false | S
 ui-bridge-messages.ts[CI6S]: F:官网↔扩展 UI 桥消息 schema | R:- | A:website_turnstile_token{token} | S:ADR-019；captcha 一次性凭证非会话 token；禁传 access/refresh
 device-session.ts[CI5T]: F:设备会话 Zod schema 与存储键 | R:- | A:DeviceSession;DEVICE_SESSION_STORAGE_KEY | S:无 access/refresh；日志只掩码 token 末 4
 anonymous-captcha-retry.ts[CI3T]: F:Settings 是否展示匿名 Turnstile 前景重试 | R:- | A:shouldShowAnonymousCaptchaRetry | S:captcha 失败时通常 signedIn=false；正式账号已登录不展示
-pending-anonymous-session.ts[CI5T]: F:待交换匿名会话 Zod schema 与存储键 | R:- | A:PendingAnonymousSession;PENDING_ANON_SESSION_STORAGE_KEY | S:仅 exchange/refresh；禁写 auth_session；禁 AI；15min 退避常量
+pending-anonymous-session.ts[CI5T]: F:待交换匿名会话与 401 熔断 Zod/键/常量 | R:- | A:PendingAnonymousSession;AnonExchange401Backoff;PENDING_ANON_SESSION_STORAGE_KEY;ANON_EXCHANGE_401_BACKOFF_STORAGE_KEY;PENDING_ANON_EXCHANGE_RETRY_INTERVAL_MS;ANON_EXCHANGE_401_BACKOFF_MS | S:pending 仅 exchange/refresh；禁写 auth_session；禁 AI；15min 失败退避；401 熔断 60min 分键；清 pending 不动熔断键
 
 ===/<repository>/extension/src/core/memory/===
 bookmark-library-fixture.ts[DB4T]: F:合成 Chrome 书签树供基准/单测 | R:code:extension/src/core/memory/bookmark-library-tree.ts | A:仅测试数据 | S:-
@@ -528,7 +528,7 @@ website-auth-probe.ts[II6T]: F:探测官网登录态供扩展 UI 桥 | R:code:ex
 website-auth-ui-storage.ts[II6T]: F:官网鉴权 UI 展示态读写 | R:- | A:- | S:-
 device-register-api-client.ts[IA6S]: F:Worker device-register/revoke-self HTTP 客户端 | R:code:extension/src/core/identity/device-session.ts | A:session_exchange;revokeOwnDeviceToken | S:日志禁完整 token
 device-session-revalidate.ts[IA6S]: F:device 会话存活探针（subscription） | R:code:extension/src/infrastructure/auth/auth-session-revalidate.ts | A:revalidateDeviceSession | S:401→invalid；非 401→uncertain；无租约/refresh
-ensure-anonymous-device-session.ts[IA8L]: F:匿名 signup→pending→exchange→只存 device | R:code:extension/src/infrastructure/identity/pending-anonymous-session-service.ts,code:extension/src/infrastructure/auth/extension-oauth.ts,code:extension/src/infrastructure/auth/device-register-api-client.ts | A:ensureAnonymousDeviceSession;signupAnonymousWithGoTrue | S:pending 持久化复用用户；过期先 refresh；401 同次重 signup；15min 退避；ignoreBackoff 手动重试
+ensure-anonymous-device-session.ts[IA8L]: F:匿名 signup→pending→exchange→只存 device | R:code:extension/src/infrastructure/identity/pending-anonymous-session-service.ts,code:extension/src/infrastructure/identity/anon-exchange-401-backoff-service.ts,code:extension/src/infrastructure/auth/extension-oauth.ts,code:extension/src/infrastructure/auth/device-register-api-client.ts | A:ensureAnonymousDeviceSession;signupAnonymousWithGoTrue | S:AN2：401 保留 pending 写熔断；60min fail-open；成功清 pending+熔断；已有会话 best-effort 清 pending+熔断（AN2.1）；ignoreBackoff 绕过；禁写 auth_session；禁 AI
 ensure-device-session-ready.ts[IA5T]: F:启动/GET_AUTH_STATE 确保 device 就绪 | R:code:extension/src/infrastructure/auth/migrate-auth-to-device-session.ts,code:extension/src/infrastructure/auth/ensure-anonymous-device-session.ts | A:ensureDeviceSessionReady | S:migrate→anon；single-flight
 migrate-auth-to-device-session.ts[IA5T]: F:旧 auth_session→device_session 升级 | R:code:extension/src/infrastructure/auth/device-register-api-client.ts | A:migrateAuthSessionToDeviceIfNeeded | S:session_exchange；先写新键再删旧；失败 fail-open；无租约清理
 turnstile-token-provider.ts[IA7S]: F:开官网页取 Turnstile captcha 经 UI 桥回传 | R:code:extension/src/infrastructure/browser/website-page.ts | A:getTurnstileToken({foreground?});resolveTurnstileTokenFromUiBridge | S:single-flight；约30s超时fail-open；token不持久化；日志只记长度
@@ -589,6 +589,7 @@ sync-prefs-service.ts[II6T]: F:读写同步偏好；缺失时回落默认（enab
 worker-api-access-token.ts[II6T]: F:Worker API Bearer；优先 device token | R:code:extension/src/infrastructure/identity/device-session-service.ts,code:extension/src/infrastructure/identity/auth-session-service.ts | A:getWorkerApiAccessToken | S:无 device 才回退旧 access+refresh
 device-session-service.ts[II4T]: F:yiveno:device_session 读写 | R:code:extension/src/core/identity/device-session.ts | A:get/set/clearDeviceSession | S:独立于 auth-session-service 并存迁移窗
 pending-anonymous-session-service.ts[II4T]: F:yiveno:pending_anon_session 读写 | R:code:extension/src/core/identity/pending-anonymous-session.ts | A:get/set/clearPendingAnonymousSession | S:非法形状→null；仅 ensure-anonymous 使用
+anon-exchange-401-backoff-service.ts[CI4T]: F:匿名 exchange 401 熔断 chrome.storage 读写 | R:code:extension/src/core/identity/pending-anonymous-session.ts,code:extension/src/infrastructure/storage/chrome-storage-local.ts | A:getAnonExchange401Backoff;recordAnonExchange401;clearAnonExchange401Backoff | S:与 pending 分键；清 pending 不动本键；成功 exchange 才 clear
 
 ===/<repository>/extension/src/infrastructure/indexeddb/===
 constants.ts[PD5T]: F:Yiveno Memory DB 常量 | R:- | A:IDB 仓储 | S:-
@@ -663,7 +664,7 @@ AppLinearProgress.vue[IU6T]: F:自研线性进度条；value 为 0–1，缺省�
 AppMenuButton.vue[IU6M]: F:带弹出菜单的按钮：hover 预展开、click 切换、Esc/外点关闭 | R:code:extension/src/infrastructure/ui/icons/AppIcon.vue,code:extension/src/infrastructure/ui/icons/icon-paths.ts | A:Vue 组件 | S:-
 AppModal.vue[IU6S]: F:Modal 对话框：遮罩+卡片+Esc 与焦点陷阱 | R:code:extension/src/infrastructure/ui/use-modal-focus-trap.ts | A:Vue 组件 | S:-
 AppPageHeader.vue[IU6L]: F:扩展页顶栏：品牌与跨页导航入口 | R:code:extension/src/core/identity/subscription-snapshot.ts,code:extension/src/infrastructure/auth/watch-auth-session-storage.ts | A:Vue 组件 | S:-
-AppSectionTabs.vue[IU6S]: F:页内分区 Tab（侧栏/顶栏 chips；WAI-ARIA Tabs） | R:code:extension/src/infrastructure/ui/app-section-tabs-keyboard.ts | A:Vue 组件 | S:-
+AppSectionTabs.vue[IU6S]: F:页内分区 Tab（侧栏/顶栏 chips；WAI-ARIA Tabs） | R:code:extension/src/infrastructure/ui/app-section-tabs-keyboard.ts | A:Vue 组件；layout=responsive|side|top | S:≤640px 时 responsive 变体横向滚动且标签 nowrap，避免词内换行
 AppSwitch.vue[IU6T]: F:自研受控开关；失败回滚由父组件保持旧值 | R:- | A:Vue 组件 | S:-
 AppTextarea.vue[IU6T]: F:自研多行输入：附注等表单场景 | R:- | A:Vue 组件 | S:-
 AppToast.vue[IU6T]: F:单条 Toast 展示（语气与 a11y live 区域） | R:code:extension/src/infrastructure/ui/icons/AppIcon.vue,code:extension/src/infrastructure/ui/icons/icon-paths.ts | A:Vue 组件 | S:-
@@ -727,17 +728,17 @@ index.html[EU3T]: F:复习页 HTML 壳：挂载 review/main.ts | R:- | A:扩展�
 main.ts[EU5T]: F:Review 页入口：i18n boot 后挂载 ReviewPage.vue | R:code:extension/src/infrastructure/i18n/extension-i18n-boot.ts | A:扩展页 UI | S:-
 
 ===/<repository>/extension/src/pages/settings/===
-Settings.vue[EU5S]: F:Settings 主页壳：分区导航与全局 Toast | R:code:extension/src/infrastructure/ui/AppPageHeader.vue,code:extension/src/infrastructure/ui/AppSectionTabs.vue | A:扩展页 UI | S:-
+Settings.vue[EU5S]: F:Settings 主页壳：分区导航与全局 Toast | R:code:extension/src/infrastructure/ui/AppPageHeader.vue,code:extension/src/infrastructure/ui/AppSectionTabs.vue,code:extension/src/pages/settings/SettingsSectionPanels.vue | A:扩展页 UI；provide settingsPage | S:侧栏卡 stretch 与右侧面板等高（勿 align-self:start）
 SettingsActionRow.vue[EU5S]: F:设置页行式操作：左文案右按钮 | R:- | A:扩展页 UI | S:-
-SettingsPageDialogs.vue[EU6M]: F:Settings 对话框（退出/迁移/确认） | R:code:extension/src/pages/settings/use-settings-page.ts | A:退出 opt-in；flush 失败导出/仍退出 | S:唯一扩展退出 UI
-SettingsSectionPanels.vue[EU6L]: F:Settings 各分区面板 | R:code:extension/src/pages/settings/use-settings-page.ts | A:试用账号区+绑定邮箱表单 | S:匿名态显示 trial 配额；冲突附登录合并
-SettingsThirdPartySourceGroup.vue[EU5T]: F:第三方语料来源分组：导入操作行 | R:code:extension/src/core/memory/third-party-corpus-source.ts,code:extension/src/infrastructure/ui/AppButton.vue | A:扩展页 UI | S:-
+SettingsPageDialogs.vue[EU6M]: F:Settings 对话框（退出/迁移/确认） | R:code:extension/src/pages/settings/use-settings-page.ts,code:extension/src/pages/shared/LoginMigrationDialog.vue | A:退出 opt-in；flush 失败导出/仍退出 | S:唯一扩展退出 UI；settings-* 样式来自 main 全局引入，本文件不再 scoped 引入 settings-panel.css
+SettingsSectionPanels.vue[EU6L]: F:Settings 各分区面板 | R:code:extension/src/pages/settings/use-settings-page.ts,code:extension/src/pages/settings/settings-panel.css | A:试用账号区+绑定邮箱表单；分区内容包 settings-card-stack | S:匿名态显示 trial 配额；冲突附登录合并；trailing error 保持 block 直挂勿并入 stack
+SettingsThirdPartySourceGroup.vue[EU5T]: F:第三方语料来源分组：导入操作行 | R:code:extension/src/core/memory/third-party-corpus-source.ts,code:extension/src/infrastructure/ui/AppButton.vue,code:extension/src/pages/settings/settings-panel.css | A:扩展页 UI；无自有 style，依赖 settings 全局 CSS | S:导入中提示须带 settings-third-party-status 才有分隔与 padding
 chrome-bookmark-import-status-copy.ts[EU5T]: F:Chrome 书签导入状态映射为 Settings 展示文案 view | R:code:extension/src/core/memory/chrome-bookmark-import-state.ts,code:extension/src/core/memory/chrome-bookmark-import-state.ts | A:扩展页 UI | S:-
 dual-thread-learning-label.ts[EU5T]: F:学习面板标签种类：结果 outcome / 确认 label / 失败 stage | R:code:extension/src/core/i18n/translate.ts | A:扩展页 UI | S:-
 index.html[EU3T]: F:设置页 HTML 壳：挂载 settings/main.ts | R:- | A:扩展页 UI | S:-
-main.ts[EU5T]: F:Settings 页入口：i18n boot 后挂载 Settings.vue | R:code:extension/src/infrastructure/i18n/extension-i18n-boot.ts | A:扩展页 UI | S:-
+main.ts[EU5T]: F:Settings 页入口：i18n boot 后挂载 Settings.vue | R:code:extension/src/infrastructure/i18n/extension-i18n-boot.ts,code:extension/src/pages/settings/settings-panel.css | A:扩展页 UI | S:全局引入 settings-panel.css（勿再在子组件 scoped 重复引入）
 settings-page-url-sync.ts[EU5T]: F:Settings 分区与 location.search / history 的读写同步 | R:code:extension/src/core/settings/settings-sections.ts | A:扩展页 UI | S:-
-settings-panel.css[EU3L]: F:Settings 面板样式 | R:- | A:含 promote 输入框样式 | S:间距圆角用 design token；交互态无几何变换
+settings-panel.css[EU3L]: F:Settings 面板样式（间距/卡片/分隔线） | R:code:extension/src/pages/settings/main.ts | A:块间由 settings-card-stack gap 控制；卡内分隔与 dual-thread 缩进 | S:token 间距；stack 内禁纵向 margin 叠 gap
 settings-visibility-refresh.ts[EU5T]: F:从 Chrome 快捷键页返回后是否应静默刷新命令绑定 | R:- | A:扩展页 UI | S:-
 third-party-source-status-copy.ts[EU5T]: F:第三方语料导入状态行的摘要文案与错误码映射 | R:code:extension/src/core/memory/third-party-corpus-import-state.ts,code:extension/src/core/memory/third-party-corpus-source.ts | A:扩展页 UI | S:-
 use-settings-page.ts[EU7L]: F:Settings 页状态与账户动作 | R:code:extension/src/infrastructure/messaging/background-client.ts | A:handlePromoteAnonymous;loadHostedQuota trial* | S:配额拉取失败静默不展示试用数字
@@ -1154,7 +1155,7 @@ oauth-client.ts[II5S]: F:OAuth 令牌交换 & 用户信息获取 | R:- | A:- | S
 provider-config.ts[FI5T]: F:OAuth 提供商配置 | R:- | A:- | S:-
 read-jwt-session-id.ts[II3T]: F:从 access token payload 读取 session_id（不验签） | R:- | A:- | S:-
 validation.ts[II5T]: F:OAuth 请求参数验证 | R:- | A:- | S:-
-verify-supabase-access-token.ts[II5S]: F:服务端校验 Supabase access token 并提取 claims | R:code:worker/src/services/auth/device-register.ts | A:verifySupabaseAccessToken | S:透传 is_anonymous；缺失 claim 按非匿名
+verify-supabase-access-token.ts[II6M]: F:服务端 getClaims 校验 Supabase access 并提取 claims | R:code:worker/src/services/auth/device-register.ts,code:worker/src/utils/logger.ts | A:verifySupabaseAccessToken;decodeJwtForDiagnostics;logGetClaimsFailure | S:email:"" 视同无邮箱（AN3）；getClaims error 与 claims Zod/role 拒均记 [VerifySupabase]；禁记 token 全文；透传 is_anonymous；路径推断 local_jwks vs auth_service_fallback
 device-register.ts[II6M]: F:设备注册 connect/exchange | R:code:worker/src/services/auth/device-token-kv.ts | A:handleDeviceRegister | S:cap 20→403；签发可选 uninstallRevokeToken；已有 meta 不覆盖
 device-token-kv.ts[PI7L]: F:设备 token KV（列表/改名/撤销/cap/整户清） | R:code:worker/src/middleware/device-auth.ts | A:issueDeviceToken;listDevicesForUser;revokeAllDevicesForUser;deleteUserMeta | S:ydt_+64hex；DEVICE_CAP=20；转正后保留旧设备；清理幂等删 user_devs/meta
 promote-anonymous-user.ts[PA5S]: F:匿名账号绑定邮箱转正 | R:code:worker/src/services/auth/device-token-kv.ts | A:promoteAnonymousUser;mapPromoteAdminError;normalizePromoteAdminError | S:Admin updateUser+email_confirm；AuthError 归一化过 exactOptional；冲突 409；已非匿名幂等

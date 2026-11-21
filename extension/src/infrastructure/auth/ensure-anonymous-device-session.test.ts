@@ -13,7 +13,10 @@ const {
   getPendingAnonymousSessionMock,
   setPendingAnonymousSessionMock,
   clearPendingAnonymousSessionMock,
-  refreshAuthSessionDetailedMock
+  refreshAuthSessionDetailedMock,
+  getAnonExchange401BackoffMock,
+  recordAnonExchange401Mock,
+  clearAnonExchange401BackoffMock
 } = vi.hoisted(() => ({
   getDeviceSessionMock: vi.fn(),
   setDeviceSessionMock: vi.fn(),
@@ -27,7 +30,10 @@ const {
   getPendingAnonymousSessionMock: vi.fn(),
   setPendingAnonymousSessionMock: vi.fn(),
   clearPendingAnonymousSessionMock: vi.fn(),
-  refreshAuthSessionDetailedMock: vi.fn()
+  refreshAuthSessionDetailedMock: vi.fn(),
+  getAnonExchange401BackoffMock: vi.fn(),
+  recordAnonExchange401Mock: vi.fn(),
+  clearAnonExchange401BackoffMock: vi.fn()
 }))
 
 vi.mock('@/infrastructure/identity/device-session-service', () => ({
@@ -43,6 +49,12 @@ vi.mock('@/infrastructure/identity/pending-anonymous-session-service', () => ({
   getPendingAnonymousSession: getPendingAnonymousSessionMock,
   setPendingAnonymousSession: setPendingAnonymousSessionMock,
   clearPendingAnonymousSession: clearPendingAnonymousSessionMock
+}))
+
+vi.mock('@/infrastructure/identity/anon-exchange-401-backoff-service', () => ({
+  getAnonExchange401Backoff: getAnonExchange401BackoffMock,
+  recordAnonExchange401: recordAnonExchange401Mock,
+  clearAnonExchange401Backoff: clearAnonExchange401BackoffMock
 }))
 
 vi.mock('@/infrastructure/auth/device-register-api-client', () => ({
@@ -88,7 +100,10 @@ vi.mock('@/infrastructure/logging/flow-log', () => ({
   flowFail: vi.fn()
 }))
 
-import { PENDING_ANON_EXCHANGE_RETRY_INTERVAL_MS } from '@/core/identity/pending-anonymous-session'
+import {
+  ANON_EXCHANGE_401_BACKOFF_MS,
+  PENDING_ANON_EXCHANGE_RETRY_INTERVAL_MS
+} from '@/core/identity/pending-anonymous-session'
 import { ensureAnonymousDeviceSession } from '@/infrastructure/auth/ensure-anonymous-device-session'
 import {
   clearAnonymousCaptchaRetryNeeded,
@@ -140,6 +155,12 @@ describe('ensureAnonymousDeviceSession', () => {
     getPendingAnonymousSessionMock.mockResolvedValue(null)
     setPendingAnonymousSessionMock.mockResolvedValue(undefined)
     clearPendingAnonymousSessionMock.mockResolvedValue(undefined)
+    getAnonExchange401BackoffMock.mockResolvedValue(null)
+    recordAnonExchange401Mock.mockResolvedValue({
+      last401At: new Date().toISOString(),
+      count: 1
+    })
+    clearAnonExchange401BackoffMock.mockResolvedValue(undefined)
     getAccountBindingMock.mockResolvedValue(null)
     getOrCreateLocalProfileMock.mockResolvedValue({
       localProfileId,
@@ -267,6 +288,7 @@ describe('ensureAnonymousDeviceSession', () => {
     expect(isAnonymousCaptchaRetryNeeded()).toBe(false)
     expect(callOrder).toEqual(['signup', 'beforeExchange', 'exchange', 'setDevice', 'afterStored'])
     expect(clearPendingAnonymousSessionMock).toHaveBeenCalled()
+    expect(clearAnonExchange401BackoffMock).toHaveBeenCalled()
     expect(getAuthSessionMock).toHaveBeenCalled()
     expect(setAccountBindingMock).toHaveBeenCalledWith({
       accountId: userId,
@@ -339,33 +361,110 @@ describe('ensureAnonymousDeviceSession', () => {
     expect(registerDeviceViaSessionExchangeMock).toHaveBeenCalledWith('fresh-at')
   })
 
-  it('exchange 返回 401 auth-invalid → 丢弃 + 同次全新 signup', async () => {
-    getPendingAnonymousSessionMock
-      .mockResolvedValueOnce({
-        accessToken: 'stale-at',
-        refreshToken: 'stale-rt',
-        userId,
-        expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
-        createdAt: '2026-11-20T08:00:00.000Z',
-        lastExchangeAttemptAt: new Date(
-          Date.now() - PENDING_ANON_EXCHANGE_RETRY_INTERVAL_MS - 1000
-        ).toISOString()
-      })
-      .mockResolvedValue(null)
-    registerDeviceViaSessionExchangeMock
-      .mockResolvedValueOnce({ ok: false, status: 401, error: 'invalid_token' })
-      .mockResolvedValueOnce(deviceOk)
-    const fetchMock = signupFetchMock('fresh-after-401')
+  it('AN2：401 后保留 pending、写熔断，不 signup', async () => {
+    getPendingAnonymousSessionMock.mockResolvedValue({
+      accessToken: 'stale-at',
+      refreshToken: 'stale-rt',
+      userId,
+      expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+      createdAt: '2026-11-20T08:00:00.000Z',
+      lastExchangeAttemptAt: new Date(
+        Date.now() - PENDING_ANON_EXCHANGE_RETRY_INTERVAL_MS - 1000
+      ).toISOString()
+    })
+    registerDeviceViaSessionExchangeMock.mockResolvedValue({
+      ok: false,
+      status: 401,
+      error: 'invalid_token'
+    })
+    const fetchMock = vi.fn()
     vi.stubGlobal('fetch', fetchMock)
 
     const result = await ensureAnonymousDeviceSession({
       getTurnstileToken: async () => 'captcha'
     })
+    expect(result).toEqual({ status: 'failed', error: 'exchange_auth_invalid' })
+    expect(clearPendingAnonymousSessionMock).not.toHaveBeenCalled()
+    expect(recordAnonExchange401Mock).toHaveBeenCalled()
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(registerDeviceViaSessionExchangeMock).toHaveBeenCalledTimes(1)
+    expect(registerDeviceViaSessionExchangeMock).toHaveBeenCalledWith('stale-at')
+  })
+
+  it('AN2：熔断窗口内 ensure 不 signup / 不 exchange', async () => {
+    getAnonExchange401BackoffMock.mockResolvedValue({
+      last401At: new Date().toISOString(),
+      count: 3
+    })
+    getPendingAnonymousSessionMock.mockResolvedValue({
+      accessToken: 'pending-at',
+      refreshToken: 'pending-rt',
+      userId,
+      expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+      createdAt: '2026-11-20T08:00:00.000Z'
+    })
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await ensureAnonymousDeviceSession({
+      getTurnstileToken: async () => 'captcha'
+    })
+    expect(result).toEqual({ status: 'failed', error: 'exchange_401_backoff' })
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(registerDeviceViaSessionExchangeMock).not.toHaveBeenCalled()
+    expect(getPendingAnonymousSessionMock).not.toHaveBeenCalled()
+  })
+
+  it('AN2：熔断过期后复用同一 pending exchange，不新 signup', async () => {
+    getAnonExchange401BackoffMock.mockResolvedValue({
+      last401At: new Date(Date.now() - ANON_EXCHANGE_401_BACKOFF_MS - 1000).toISOString(),
+      count: 2
+    })
+    getPendingAnonymousSessionMock.mockResolvedValue({
+      accessToken: 'reuse-after-401',
+      refreshToken: 'pending-rt',
+      userId,
+      expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+      createdAt: '2026-11-20T08:00:00.000Z',
+      lastExchangeAttemptAt: new Date(
+        Date.now() - PENDING_ANON_EXCHANGE_RETRY_INTERVAL_MS - 1000
+      ).toISOString()
+    })
+    registerDeviceViaSessionExchangeMock.mockResolvedValue(deviceOk)
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await ensureAnonymousDeviceSession({
+      getTurnstileToken: async () => 'should-not-run'
+    })
     expect(result.status).toBe('created')
-    expect(clearPendingAnonymousSessionMock).toHaveBeenCalled()
-    expect(fetchMock).toHaveBeenCalled()
-    expect(registerDeviceViaSessionExchangeMock).toHaveBeenNthCalledWith(1, 'stale-at')
-    expect(registerDeviceViaSessionExchangeMock).toHaveBeenNthCalledWith(2, 'fresh-after-401')
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(registerDeviceViaSessionExchangeMock).toHaveBeenCalledWith('reuse-after-401')
+    expect(clearAnonExchange401BackoffMock).toHaveBeenCalled()
+  })
+
+  it('AN2：ignoreBackoff 绕过 401 熔断', async () => {
+    getAnonExchange401BackoffMock.mockResolvedValue({
+      last401At: new Date().toISOString(),
+      count: 5
+    })
+    getPendingAnonymousSessionMock.mockResolvedValue({
+      accessToken: 'pending-at',
+      refreshToken: 'pending-rt',
+      userId,
+      expiresAt: new Date(Date.now() + 3_600_000).toISOString(),
+      createdAt: '2026-11-20T08:00:00.000Z',
+      lastExchangeAttemptAt: new Date().toISOString()
+    })
+    registerDeviceViaSessionExchangeMock.mockResolvedValue(deviceOk)
+
+    const result = await ensureAnonymousDeviceSession({
+      getTurnstileToken: async () => 'should-not-run',
+      ignoreBackoff: true
+    })
+    expect(result.status).toBe('created')
+    expect(registerDeviceViaSessionExchangeMock).toHaveBeenCalledWith('pending-at')
+    expect(clearAnonExchange401BackoffMock).toHaveBeenCalled()
   })
 
   it('退避：间隔内第二次调用零 fetch', async () => {
@@ -407,7 +506,7 @@ describe('ensureAnonymousDeviceSession', () => {
     expect(registerDeviceViaSessionExchangeMock).toHaveBeenCalledWith('pending-at')
   })
 
-  it('已有会话时不重复 signup，并 best-effort 清待交换', async () => {
+  it('已有会话时不重复 signup，并 best-effort 清待交换与 401 熔断', async () => {
     const device = {
       deviceToken: 'ydt_' + 'e'.repeat(64),
       deviceId,
@@ -421,5 +520,6 @@ describe('ensureAnonymousDeviceSession', () => {
     })
     expect(result).toEqual({ status: 'already', session: device })
     expect(clearPendingAnonymousSessionMock).toHaveBeenCalled()
+    expect(clearAnonExchange401BackoffMock).toHaveBeenCalled()
   })
 })

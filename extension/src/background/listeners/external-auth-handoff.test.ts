@@ -19,6 +19,7 @@ import {
 } from '@/background/listeners/external-auth-handoff'
 import { scheduleSilentMemoryEmbeddingMaintenance } from '@/application/memory/ensure-memory-embedding-maintenance'
 import { DEVICE_SESSION_STORAGE_KEY } from '@/core/identity/device-session'
+import { ANON_EXCHANGE_401_BACKOFF_STORAGE_KEY } from '@/core/identity/pending-anonymous-session'
 import { ACCOUNT_BINDING_STORAGE_KEY } from '@/core/identity/local-profile'
 
 type StorageMap = Record<string, unknown>
@@ -173,6 +174,57 @@ describe('external auth handoff（device）', () => {
     const result = await applyExternalAuthDeviceHandoff(devicePayload({ userId: USER_B }))
     expect(result).toEqual({ ok: false, error: 'account_mismatch' })
     expect(scheduleSilentMemoryEmbeddingMaintenance).not.toHaveBeenCalled()
+  })
+
+  it('AN2.1：成功 handoff 清除预置 401 熔断键', async () => {
+    const chromeMock = createChromeStorageMock({
+      [ANON_EXCHANGE_401_BACKOFF_STORAGE_KEY]: {
+        last401At: '2026-11-21T12:00:00.000Z',
+        count: 1
+      }
+    })
+    vi.stubGlobal('chrome', chromeMock)
+
+    const result = await applyExternalAuthDeviceHandoff(devicePayload())
+    expect(result).toEqual({ ok: true })
+    await vi.waitFor(() => {
+      expect(chromeMock.store[ANON_EXCHANGE_401_BACKOFF_STORAGE_KEY]).toBeUndefined()
+    })
+    expect(chromeMock.store[DEVICE_SESSION_STORAGE_KEY]).toMatchObject({
+      userId: USER_A,
+      deviceId: DEVICE_A
+    })
+    expect(chromeMock.store[ACCOUNT_BINDING_STORAGE_KEY]).toMatchObject({
+      accountId: USER_A
+    })
+  })
+
+  it('AN2.1：account_mismatch 拒绝时不动 401 熔断键', async () => {
+    const chromeMock = createChromeStorageMock({
+      [DEVICE_SESSION_STORAGE_KEY]: {
+        deviceToken: 'ydt_' + 'b'.repeat(64),
+        deviceId: DEVICE_B,
+        userId: USER_A,
+        isAnonymous: false,
+        createdAt: '2026-01-01T00:00:00.000Z'
+      },
+      [ACCOUNT_BINDING_STORAGE_KEY]: {
+        accountId: USER_A,
+        boundAt: '2026-01-01T00:00:00.000Z'
+      },
+      [ANON_EXCHANGE_401_BACKOFF_STORAGE_KEY]: {
+        last401At: '2026-11-21T12:00:00.000Z',
+        count: 2
+      }
+    })
+    vi.stubGlobal('chrome', chromeMock)
+
+    const result = await applyExternalAuthDeviceHandoff(devicePayload({ userId: USER_B }))
+    expect(result).toEqual({ ok: false, error: 'account_mismatch' })
+    expect(chromeMock.store[ANON_EXCHANGE_401_BACKOFF_STORAGE_KEY]).toEqual({
+      last401At: '2026-11-21T12:00:00.000Z',
+      count: 2
+    })
   })
 
   it('device 写入后立即 ok，embedding 在 bootstrap 后调度', async () => {

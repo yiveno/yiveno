@@ -14,6 +14,7 @@ import { deviceSessionFromRegisterData } from '@/infrastructure/auth/device-regi
 import { registerExtensionUninstallRevoke } from '@/infrastructure/auth/extension-uninstall-url'
 import { requestWebsiteSessionFromExtension } from '@/infrastructure/auth/website-session-from-extension'
 import { resolveWebsiteAuthProbeFromExternal } from '@/infrastructure/auth/website-auth-probe'
+import { clearAnonExchange401Backoff } from '@/infrastructure/identity/anon-exchange-401-backoff-service'
 import { clearAuthSession, getAuthSession } from '@/infrastructure/identity/auth-session-service'
 import {
   getDeviceSession,
@@ -85,6 +86,8 @@ export async function applyExternalAuthDeviceHandoff(
     await setDeviceSession(deviceSession)
     // 迁出旧 Supabase 会话键，避免双凭证
     await clearAuthSession()
+    // AN2.1：device 已建立则清匿名 401 熔断（best-effort；失败不得拖垮 handoff / 触发官网回滚）
+    void clearAnonExchange401Backoff().catch(() => undefined)
 
     if (!sameAccount) {
       await setAccountBinding({

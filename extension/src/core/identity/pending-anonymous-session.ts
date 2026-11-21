@@ -28,6 +28,25 @@ export const PENDING_ANON_SESSION_STORAGE_KEY = 'yiveno:pending_anon_session' as
 /** exchange 失败后的最小重试间隔（15 分钟）。 */
 export const PENDING_ANON_EXCHANGE_RETRY_INTERVAL_MS = 15 * 60 * 1000
 
+/**
+ * exchange 连续 401（invalid_token）后的熔断窗口（60 分钟）。
+ * 与待交换会话分键；窗口内 ensure 不 signup / 不 exchange，避免系统性 401 刷孤儿用户。
+ */
+export const ANON_EXCHANGE_401_BACKOFF_MS = 60 * 60 * 1000
+
+/** chrome.storage.local 键：401 熔断状态（清除 pending 时不动）。 */
+export const ANON_EXCHANGE_401_BACKOFF_STORAGE_KEY = 'yiveno:anon_exchange_401_backoff' as const
+
+/** 401 熔断持久化形状。 */
+export const AnonExchange401BackoffSchema = z.object({
+  /** 最近一次 exchange 401 时间（ISO） */
+  last401At: z.string().datetime(),
+  /** 累计 401 次数（本机；成功清零） */
+  count: z.number().int().positive()
+})
+
+export type AnonExchange401Backoff = z.infer<typeof AnonExchange401BackoffSchema>
+
 /** access 过期判定的时钟偏差余量。 */
 export const PENDING_ANON_ACCESS_CLOCK_SKEW_MS = 60_000
 
