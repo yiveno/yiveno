@@ -664,7 +664,7 @@ AppLinearProgress.vue[IU6T]: F:自研线性进度条；value 为 0–1，缺省�
 AppMenuButton.vue[IU6M]: F:带弹出菜单的按钮：hover 预展开、click 切换、Esc/外点关闭 | R:code:extension/src/infrastructure/ui/icons/AppIcon.vue,code:extension/src/infrastructure/ui/icons/icon-paths.ts | A:Vue 组件 | S:-
 AppModal.vue[IU6S]: F:Modal 对话框：遮罩+卡片+Esc 与焦点陷阱 | R:code:extension/src/infrastructure/ui/use-modal-focus-trap.ts | A:Vue 组件 | S:-
 AppPageHeader.vue[IU6L]: F:扩展页顶栏：品牌与跨页导航入口 | R:code:extension/src/core/identity/subscription-snapshot.ts,code:extension/src/infrastructure/auth/watch-auth-session-storage.ts | A:Vue 组件 | S:-
-AppSectionTabs.vue[IU6S]: F:页内分区 Tab（侧栏/顶栏 chips；WAI-ARIA Tabs） | R:code:extension/src/infrastructure/ui/app-section-tabs-keyboard.ts | A:Vue 组件；layout=responsive|side|top | S:≤640px 时 responsive 变体横向滚动且标签 nowrap，避免词内换行
+AppSectionTabs.vue[IU6S]: F:页内分区 Tab（侧栏/顶栏 chips；WAI-ARIA Tabs） | R:code:extension/src/infrastructure/ui/app-section-tabs-keyboard.ts | A:Vue 组件；layout=responsive|side|top | S:未选 tab font-weight medium；选中态显式 semibold；≤640px responsive 横向滚动且标签 nowrap
 AppSwitch.vue[IU6T]: F:自研受控开关；失败回滚由父组件保持旧值 | R:- | A:Vue 组件 | S:-
 AppTextarea.vue[IU6T]: F:自研多行输入：附注等表单场景 | R:- | A:Vue 组件 | S:-
 AppToast.vue[IU6T]: F:单条 Toast 展示（语气与 a11y live 区域） | R:code:extension/src/infrastructure/ui/icons/AppIcon.vue,code:extension/src/infrastructure/ui/icons/icon-paths.ts | A:Vue 组件 | S:-
@@ -728,8 +728,8 @@ index.html[EU3T]: F:复习页 HTML 壳：挂载 review/main.ts | R:- | A:扩展�
 main.ts[EU5T]: F:Review 页入口：i18n boot 后挂载 ReviewPage.vue | R:code:extension/src/infrastructure/i18n/extension-i18n-boot.ts | A:扩展页 UI | S:-
 
 ===/<repository>/extension/src/pages/settings/===
-Settings.vue[EU5S]: F:Settings 主页壳：分区导航与全局 Toast | R:code:extension/src/infrastructure/ui/AppPageHeader.vue,code:extension/src/infrastructure/ui/AppSectionTabs.vue,code:extension/src/pages/settings/SettingsSectionPanels.vue | A:扩展页 UI；provide settingsPage | S:侧栏卡 stretch 与右侧面板等高（勿 align-self:start）
-SettingsActionRow.vue[EU5S]: F:设置页行式操作：左文案右按钮 | R:- | A:扩展页 UI | S:-
+Settings.vue[EU5S]: F:Settings 主页壳：分区导航与全局 Toast | R:code:extension/src/infrastructure/ui/AppPageHeader.vue,code:extension/src/infrastructure/ui/AppSectionTabs.vue,code:extension/src/pages/settings/SettingsSectionPanels.vue | A:扩展页 UI；provide settingsPage | S:h1 用 --text-display/--font-weight-semibold/--leading-tight；侧栏卡 stretch 与右栏等高
+SettingsActionRow.vue[EU5S]: F:设置页行式操作：左文案右按钮 | R:- | A:扩展页 UI | S:标题/副标题接 --text-body|--text-caption 与 --leading-snug；danger 仅改标题色
 SettingsPageDialogs.vue[EU6M]: F:Settings 对话框（退出/迁移/确认） | R:code:extension/src/pages/settings/use-settings-page.ts,code:extension/src/pages/shared/LoginMigrationDialog.vue | A:退出 opt-in；flush 失败导出/仍退出 | S:唯一扩展退出 UI；settings-* 样式来自 main 全局引入，本文件不再 scoped 引入 settings-panel.css
 SettingsSectionPanels.vue[EU6L]: F:Settings 各分区面板 | R:code:extension/src/pages/settings/use-settings-page.ts,code:extension/src/pages/settings/settings-panel.css | A:试用账号区+绑定邮箱表单；分区内容包 settings-card-stack | S:匿名态显示 trial 配额；冲突附登录合并；trailing error 保持 block 直挂勿并入 stack
 SettingsThirdPartySourceGroup.vue[EU5T]: F:第三方语料来源分组：导入操作行 | R:code:extension/src/core/memory/third-party-corpus-source.ts,code:extension/src/infrastructure/ui/AppButton.vue,code:extension/src/pages/settings/settings-panel.css | A:扩展页 UI；无自有 style，依赖 settings 全局 CSS | S:导入中提示须带 settings-third-party-status 才有分隔与 padding
@@ -738,7 +738,7 @@ dual-thread-learning-label.ts[EU5T]: F:学习面板标签种类：结果 outcome
 index.html[EU3T]: F:设置页 HTML 壳：挂载 settings/main.ts | R:- | A:扩展页 UI | S:-
 main.ts[EU5T]: F:Settings 页入口：i18n boot 后挂载 Settings.vue | R:code:extension/src/infrastructure/i18n/extension-i18n-boot.ts,code:extension/src/pages/settings/settings-panel.css | A:扩展页 UI | S:全局引入 settings-panel.css（勿再在子组件 scoped 重复引入）
 settings-page-url-sync.ts[EU5T]: F:Settings 分区与 location.search / history 的读写同步 | R:code:extension/src/core/settings/settings-sections.ts | A:扩展页 UI | S:-
-settings-panel.css[EU3L]: F:Settings 面板样式（间距/卡片/分隔线） | R:code:extension/src/pages/settings/main.ts | A:块间由 settings-card-stack gap 控制；卡内分隔与 dual-thread 缩进 | S:token 间距；stack 内禁纵向 margin 叠 gap
+settings-panel.css[EU3L]: F:Settings 面板样式（间距/字阶/卡片） | R:code:extension/src/pages/settings/main.ts,code:packages/design-tokens/css/brand.css | A:块间 settings-card-stack gap；§4.5 字阶 token | S:h2=title/600；eyebrow×4 muted；交互500；行高三档
 settings-visibility-refresh.ts[EU5T]: F:从 Chrome 快捷键页返回后是否应静默刷新命令绑定 | R:- | A:扩展页 UI | S:-
 third-party-source-status-copy.ts[EU5T]: F:第三方语料导入状态行的摘要文案与错误码映射 | R:code:extension/src/core/memory/third-party-corpus-import-state.ts,code:extension/src/core/memory/third-party-corpus-source.ts | A:扩展页 UI | S:-
 use-settings-page.ts[EU7L]: F:Settings 页状态与账户动作 | R:code:extension/src/infrastructure/messaging/background-client.ts | A:handlePromoteAnonymous;loadHostedQuota trial* | S:配额拉取失败静默不展示试用数字
@@ -804,7 +804,7 @@ server.ts[FV5T]: F:Vite 开发服务器配置 | R:- | A:- | S:-
 sw-safe-modulepreload.ts[FV3T]: F:Service Worker 无 document/window | R:- | A:- | S:-
 
 ===/<repository>/packages/design-tokens/css/===
-brand.css[LU3T]: F:品牌核心与 Product Roles、布局 token（CSS 权威） | R:- | A:- | S:-
+brand.css[LU3T]: F:品牌核心、Product Roles、间距/圆角与字阶 token（CSS 权威） | R:- | A:--text-* / --font-weight-* / --leading-*（§4.5） | S:扩展 UI 最大字重 600；无 700 token；行高三档 1.3/1.4/1.5
 motion.css[LU3T]: F:扩展交互时长 / 缓动（自研；供 App* 控件消费） | R:- | A:- | S:-
 semantic-colors.css[LU3T]: F:语义色 — 直连 Brand Roles（禁止第二套主色 / 紫「AI」强调） | R:- | A:- | S:禁止第二套主色 / 紫「AI」强调）
 variables.css[LU3T]: F:扩展配套：motion + 轻量全局 | R:- | A:- | S:-
@@ -1049,7 +1049,7 @@ auth-session-liveness.ts[II5T]: F:官网会话存活探测：失效则尽快反�
 auth.ts[II5S]: F:官网登录：OAuth/邮件 OTP、会话读写与退出 | R:- | A:- | S:-
 billing.ts[IB5T]: F:官网计费 API（Worker） | R:- | A:- | S:-
 date.ts[CL5T]: F:官网日期展示：跟生效 UI locale（BCP 47） | R:- | A:- | S:禁止裸 `toLocaleDateString()` 无 locale
-extension-auth-handoff.ts[II5L]: F:官网 Connect handoff + 扩展自动登录到达标记 | R:code:website/src/services/register-device-from-website.ts | A:registerAndHandoffDeviceToExtension;probeExtensionAuthStatus;remember/consumeFromExtensionSignInArrival | S:到达标记 sessionStorage 10s；消费即删；禁 last id 静默重注册；AN5 匿名占位 probe 不拦 register
+extension-auth-handoff.ts[II5L]: F:官网 Connect handoff + 扩展自动登录到达标记 | R:code:website/src/services/register-device-from-website.ts | A:registerAndHandoffDeviceToExtension;probeExtensionAuthStatus;remember/consumeFromExtensionSignInArrival | S:到达标记 sessionStorage 10s；消费即删；禁 last id 静默重注册；匿名占位 probe 不拦 register
 nav-pro-badge-cache.ts[AB5T]: F:官网顶栏 Pro 环用的会话缓存 | R:- | A:- | S:-
 otp-resend-cooldown.ts[AI5T]: F:Email OTP「再次发送」冷却：截止时间写入 sessionStorage | R:- | A:- | S:-
 run-extension-connect.ts[AI5S]: F:官网已登录时编排 Connect 到扩展 | R:code:website/src/services/extension-auth-handoff.ts | A:website_connect_result | S:结果含 account_mismatch；不清官网会话

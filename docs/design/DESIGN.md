@@ -52,6 +52,18 @@ typography:
     fontFamily: 'Work Sans, system-ui, sans-serif'
     fontWeight: 300
     lineHeight: 1.7
+  # Extension dense UI scale（设计标准 §4.5）；与上方营销 display/body 族并列，不覆盖
+  text-display: '28px'
+  text-title: '20px'
+  text-body: '14px'
+  text-meta: '13px'
+  text-caption: '12px'
+  font-weight-regular: 400
+  font-weight-medium: 500
+  font-weight-semibold: 600
+  leading-tight: 1.3
+  leading-snug: 1.4
+  leading-relaxed: 1.5
 spacing:
   2xs: '4px'
   xs: '8px'
@@ -99,7 +111,7 @@ components:
 > **Product truth:** [`docs/product/Yiveno-产品文档-v4.0.md`](docs/product/Yiveno-产品文档-v4.0.md) §0  
 > **Terminology (Glossary):** [`docs/product/Yiveno-术语表.md`](docs/product/Yiveno-术语表.md) — user Recall input = **clue**; `clues.note` = **note** (附注)
 > **Brand assets:** [`docs/design/brand-assets/README.md`](docs/design/brand-assets/README.md)  
-> **Authority:** [`packages/design-tokens/css/brand.css`](packages/design-tokens/css/brand.css) — colors, roles, `--space-*`, `--radius-*`. Extension UI: self-built `App*` components (`AppButton`, `AppModal`, …) + [`extension-ui.css`](extension/src/styles/extension-ui.css).
+> **Authority:** [`packages/design-tokens/css/brand.css`](packages/design-tokens/css/brand.css) — colors, roles, `--space-*`, `--radius-*`, `--text-*` / `--font-weight-*` / `--leading-*` (§4.5). Extension UI: self-built `App*` components (`AppButton`, `AppModal`, …) + [`extension-ui.css`](extension/src/styles/extension-ui.css).
 
 ## Overview
 
@@ -155,8 +167,8 @@ Canonical CSS names in `site-critical.css`. Prefer roles over raw Brand Core in 
 - Brand recognition = ink + paper + sage. Do not introduce a second primary hue.
 - Forbidden as brand accents: bright purple, electric blue, neon, rainbow gradients, high-saturation coral/pink as “AI energy.”
 - **Do not** regenerate third-party theme-builder palettes as the source of truth.
-- Authority path: `packages/design-tokens/css/brand.css` (color + space + radius).
-- Extension product CSS: Roles / `--space-*` / `--radius-*`. Self-built `App*` components (`AppButton`, `AppModal`, `AppSectionTabs`, …).
+- Authority path: `packages/design-tokens/css/brand.css` (color + space + radius + type scale).
+- Extension product CSS: Roles / `--space-*` / `--radius-*` / `--text-*` / `--font-weight-*` / `--leading-*`. Self-built `App*` components (`AppButton`, `AppModal`, `AppSectionTabs`, …).
 - **Account avatar fallback:** IdP `avatarUrl` first; else Yiveno `logo-mark` in a soft circle — **never** email/name first letter. Design standard §6.3.1.
 - **Modal Dialog:** Use `AppModal` for blocking confirms/forms; Esc + focus trap required; backdrop click never dismisses; no `window.confirm`. Binary confirms use `AppConfirmModal`. See design standard §6.2.1.
 - **Section Tabs:** In-page panel switching (Settings / Library) uses `AppSectionTabs` (ARIA tabs), not Nav. Cross-page nav stays in `AppPageHeader`. See §6.2.2.
@@ -172,6 +184,26 @@ Canonical CSS names in `site-critical.css`. Prefer roles over raw Brand Core in 
 | ------------------------ | --------- | -------------------------------------------------------------------------- |
 | Display / brand wordmark | Fraunces  | Headlines, editorial emphasis; weight 300–500; italic for secondary clause |
 | Body / UI                | Work Sans | Controls, nav, captions; weight 300–600                                    |
+
+**Extension dense UI type scale**（设计标准 §4.5；权威 token 在 `brand.css`）
+
+| Semantic | Size                    | Weight | Leading | Role                                                 |
+| -------- | ----------------------- | ------ | ------- | ---------------------------------------------------- |
+| display  | 28px (`--text-display`) | 600    | 1.3     | Page h1                                              |
+| title    | 20px (`--text-title`)   | 600    | 1.3     | Section h2                                           |
+| heading  | 14px (`--text-body`)    | 600    | 1.4     | Card content titles                                  |
+| label    | 14px (`--text-body`)    | 500    | 1.4     | Interactive labels (links, closed summary, idle tab) |
+| meta     | 13px (`--text-meta`)    | 400    | 1.5     | Section copy, status, sync counts                    |
+| caption  | 12px (`--text-caption`) | 400    | 1.4     | Hints, secondary lines                               |
+| eyebrow  | 12px (`--text-caption`) | 600    | 1.4     | Group labels (muted, `letter-spacing: 0.02em`)       |
+
+| Token                                                                                | Value                     |
+| ------------------------------------------------------------------------------------ | ------------------------- |
+| `--text-display` / `--text-title` / `--text-body` / `--text-meta` / `--text-caption` | 28 / 20 / 14 / 13 / 12 px |
+| `--font-weight-regular` / `--font-weight-medium` / `--font-weight-semibold`          | 400 / 500 / 600           |
+| `--leading-tight` / `--leading-snug` / `--leading-relaxed`                           | 1.3 / 1.4 / 1.5           |
+
+Ladder: 28 → 20 → 14 ≈ 1.4×; within a size, weight separates content (600) / interactive (500) / body (400). Max weight for extension UI is **600** (no 700 token).
 
 **Rules**
 

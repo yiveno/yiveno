@@ -83,14 +83,16 @@ const {
 
 .settings-title {
   margin: 0 0 var(--space-xs);
-  font-size: 28px;
-  line-height: 1.2;
+  font-size: var(--text-display);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
 }
 
 .settings-subtitle {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-relaxed);
   color: var(--on-surface-muted);
 }
 

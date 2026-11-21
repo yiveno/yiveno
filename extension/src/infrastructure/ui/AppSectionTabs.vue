@@ -137,8 +137,8 @@ function onTabKeyDown(event: KeyboardEvent, index: number): void {
   border: none;
   border-radius: var(--radius-sm);
   font: inherit;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-medium);
   text-align: left;
   color: var(--on-surface-muted);
   background: transparent;
@@ -162,6 +162,7 @@ function onTabKeyDown(event: KeyboardEvent, index: number): void {
 }
 
 .app-section-tabs__tab--active {
+  font-weight: var(--font-weight-semibold);
   color: var(--on-surface);
   background: var(--surface-accent-soft);
 }

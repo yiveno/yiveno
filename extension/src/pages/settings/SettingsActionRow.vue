@@ -85,9 +85,9 @@ withDefaults(
 
 .settings-action-row__title {
   margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-  line-height: 1.35;
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-snug);
 }
 
 .settings-action-row--danger .settings-action-row__title {
@@ -96,8 +96,9 @@ withDefaults(
 
 .settings-action-row__subtitle {
   margin: var(--space-2xs) 0 0;
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-regular);
+  line-height: var(--leading-snug);
   color: var(--on-surface-muted);
 }
 

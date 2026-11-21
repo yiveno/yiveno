@@ -1,4 +1,4 @@
-# Yiveno 设计标准 v1.5
+# Yiveno 设计标准 v1.15
 
 | 项                      | 内容                                                                                                                           |
 | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
@@ -168,6 +168,17 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 | `--disabled-opacity`          | 禁用透明度           | `0.55`                                        |
 | `--space-2xs` … `--space-3xl` | 间距阶梯             | 4 / 8 / 12 / 16 / 24 / 32 / 48 / 64 px        |
 | `--radius-xs` … `--radius-xl` | 圆角                 | 4 / 8 / 10 / 12 / 16 px（另 `--radius-full`） |
+| `--text-display`              | 页级标题字号         | 28px（语义档 display，§4.5）                  |
+| `--text-title`                | 分区标题字号         | 20px（语义档 title）                          |
+| `--text-body`                 | 正文 / 卡片标题字号  | 14px（语义档 heading / label）                |
+| `--text-meta`                 | 说明 / 状态字号      | 13px（语义档 meta）                           |
+| `--text-caption`              | 提示 / eyebrow 字号  | 12px（语义档 caption / eyebrow）              |
+| `--font-weight-regular`       | 正文字重             | 400                                           |
+| `--font-weight-medium`        | 可交互标签字重       | 500                                           |
+| `--font-weight-semibold`      | 内容标题字重（上限） | 600（扩展 UI 最大字重；不设 700）             |
+| `--leading-tight`             | 紧凑行高             | 1.3（页/分区标题）                            |
+| `--leading-snug`              | 常用行高             | 1.4（卡片标题 / 标签 / 提示）                 |
+| `--leading-relaxed`           | 宽松行高             | 1.5（分区说明等正文）                         |
 
 **场景覆盖（不升为跨产品角色）：** `--nav-*` 仅官网 Nav 深/浅切换。首页以 `data-nav-over-hero` 为准：采样**顶栏背后**是否落在 Ink（`#hero` / `.home-sec--ink`）——是则浅色字 + `logo-mark-on-dark.svg`，否则深色字 + `logo-mark.svg`（`home-page.ts` scroll/resize；勿用「视口内任意 ink」以免 Paper 顶栏被下方深段误切）。
 
@@ -214,10 +225,22 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 - 时尚杂志式过度装饰衬线
 - 在 11px 以下堆 ALL-CAPS 作为主要层级（徽章类 ≥12px）
 
-### 4.5 字号阶梯（待定）
+### 4.5 字号阶梯（扩展密集 UI）
 
-扩展密集 UI **尚未**冻结 `--text-*` 字号 token。间距/圆角以 §3.3 `--space-*` / `--radius-*` 为准；stylelint 仅门禁间距与圆角的裸 `px`（1–2px 发丝光学微调除外）。  
-**禁止**为消 lint 警告而从历史写死像素反推一串字号别名；若要定 type scale，须先在本节写明语义档（如 caption / body / title）再接线。
+扩展密集 UI 字号 / 字重 / 行高以本表语义档为准；token 见 §3.3 与 `brand.css`。间距/圆角仍以 §3.3 `--space-*` / `--radius-*` 为准；stylelint 仅门禁间距与圆角的裸 `px`（1–2px 发丝光学微调除外）。  
+**禁止**为消 lint 警告而从历史写死像素反推一串字号别名；type scale 须先在本节写明语义档再接线（本表即权威语义档）。
+
+| 语义档  | 字号 | 字重 | 行高 | 角色与用例                                                        |
+| ------- | ---- | ---- | ---- | ----------------------------------------------------------------- |
+| display | 28px | 600  | 1.3  | 页级 h1（设置、Library 等整页标题）                               |
+| title   | 20px | 600  | 1.3  | 分区 h2（面板内一级标题）                                         |
+| heading | 14px | 600  | 1.4  | 卡片内容标题（toggle / 命令 / 操作行 / 孤儿 / 语言选项 / banner） |
+| label   | 14px | 500  | 1.4  | 可交互标签（按钮、链接行标题、折叠摘要、未选中 tab）              |
+| meta    | 13px | 400  | 1.5  | 分区说明、状态行、错误行、同步统计                                |
+| caption | 12px | 400  | 1.4  | 提示、次级说明、统计行、状态条行                                  |
+| eyebrow | 12px | 600  | 1.4  | 分组标签（muted，字距 +0.02em）                                   |
+
+**阶梯关系：** 28 → 20 → 14 约 1.4x 一档；14 → 13 → 12 为正文/说明的细档；同一字号内用字重分角色（600 内容 / 500 交互 / 400 正文）。扩展 UI 最大字重 600（见 `DESIGN.md` 范围），700 不进 token。行高收敛为 1.3 / 1.4 / 1.5 三档（`--leading-tight` / `--leading-snug` / `--leading-relaxed`）。
 
 ---
 
@@ -523,6 +546,7 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 - [x] Roles v1 已在官网冻结（§3.3），并迁入 `@yiveno/design-tokens/css/brand.css`
 - [x] 扩展业务 CSS 写 Roles；自研控件；Lucide 内联图标
 - [x] 间距/形状自研；`semantic-colors.css` 直连 Roles
+- [x] §4.5 字号阶梯语义档已冻结；`--text-*` / `--font-weight-*` / `--leading-*` 已进 brand
 - [ ] 新角色仍先在官网验证，再写入 §3.3 / `brand.css` 再外推
 
 ### 9.4 营销 / 证明
@@ -540,24 +564,25 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 
 ## 10. 版本与变更
 
-| 版本   | 日期       | 说明                                                                          |
-| ------ | ---------- | ----------------------------------------------------------------------------- |
-| v1.14  | 2026-11-02 | §6.2.6 Top Pick：细描边+浅底 wash，禁左侧加粗轨                               |
-| v1.13  | 2026-11-02 | §5.4 Side Panel 结果卡 opacity stagger / sibling 淡入（已接线）               |
-| v1.12  | 2026-10-29 | §6.2.7 Recall 快速反馈条：同区异形 + 芯片触发对齐产品交互 1a（N≥2）           |
-| v1.0   | 2026-08-15 | 以官网敲定 Brand Core；宣告旧实验色非标准                                     |
-| v1.1   | 2026-08-16 | 废弃旧色板路径；官网为色系试验场，角色层在官网补全后再外推                    |
-| v1.2   | 2026-08-20 | Roles v1 冻结可外推；权威实现先落官网 `site-critical.css`；消散落业务 hex     |
-| v1.2.1 | 2026-08-20 | Brand Core + Roles 迁入 `@yiveno/design-tokens/css/brand.css`；官网消费该包   |
-| v1.3   | 2026-08-20 | 扩展接入 Brand Roles；停用多预设色板运行时                                    |
-| v1.4   | 2026-08-20 | 扩展业务 CSS 改写 Roles；删除旧 presets / theme 运行时                        |
-| v1.5   | 2026-08-20 | `--space-*` / `--radius-*` 进 brand；semantic 直连 Roles；variables 瘦身      |
-| v1.11  | 2026-10-27 | §6.1 Mechanism：Save→Forget→Recall 流程动画（循环/步进/reduced-motion）       |
-| v1.10  | 2026-10-27 | §6.1 首页：Mechanism 三步分镜 + Recall Side Panel mock；Boundary 短列表       |
-| v1.9   | 2026-10-27 | §6.3.1 账户头像 fallback = 品牌标；禁止邮箱/昵称首字符默认                    |
-| v1.8   | 2026-10-15 | Modal 一律禁止点遮罩关闭（移除 `closeOnBackdrop`；须显式按钮 / Esc）          |
-| v1.7   | 2026-08-23 | 扩展 `AppModal` Modal Dialog 规范（§6.2.1）；禁止 `window.confirm` 作用户确认 |
-| v1.6   | 2026-08-22 | 扩展自研 App\* 控件；图标统一 Lucide 按需内联                                 |
+| 版本   | 日期       | 说明                                                                                      |
+| ------ | ---------- | ----------------------------------------------------------------------------------------- |
+| v1.15  | 2026-11-21 | §4.5 扩展 UI 字号阶梯语义档冻结；§3.3 增补 `--text-*` / `--font-weight-*` / `--leading-*` |
+| v1.14  | 2026-11-02 | §6.2.6 Top Pick：细描边+浅底 wash，禁左侧加粗轨                                           |
+| v1.13  | 2026-11-02 | §5.4 Side Panel 结果卡 opacity stagger / sibling 淡入（已接线）                           |
+| v1.12  | 2026-10-29 | §6.2.7 Recall 快速反馈条：同区异形 + 芯片触发对齐产品交互 1a（N≥2）                       |
+| v1.0   | 2026-08-15 | 以官网敲定 Brand Core；宣告旧实验色非标准                                                 |
+| v1.1   | 2026-08-16 | 废弃旧色板路径；官网为色系试验场，角色层在官网补全后再外推                                |
+| v1.2   | 2026-08-20 | Roles v1 冻结可外推；权威实现先落官网 `site-critical.css`；消散落业务 hex                 |
+| v1.2.1 | 2026-08-20 | Brand Core + Roles 迁入 `@yiveno/design-tokens/css/brand.css`；官网消费该包               |
+| v1.3   | 2026-08-20 | 扩展接入 Brand Roles；停用多预设色板运行时                                                |
+| v1.4   | 2026-08-20 | 扩展业务 CSS 改写 Roles；删除旧 presets / theme 运行时                                    |
+| v1.5   | 2026-08-20 | `--space-*` / `--radius-*` 进 brand；semantic 直连 Roles；variables 瘦身                  |
+| v1.11  | 2026-10-27 | §6.1 Mechanism：Save→Forget→Recall 流程动画（循环/步进/reduced-motion）                   |
+| v1.10  | 2026-10-27 | §6.1 首页：Mechanism 三步分镜 + Recall Side Panel mock；Boundary 短列表                   |
+| v1.9   | 2026-10-27 | §6.3.1 账户头像 fallback = 品牌标；禁止邮箱/昵称首字符默认                                |
+| v1.8   | 2026-10-15 | Modal 一律禁止点遮罩关闭（移除 `closeOnBackdrop`；须显式按钮 / Esc）                      |
+| v1.7   | 2026-08-23 | 扩展 `AppModal` Modal Dialog 规范（§6.2.1）；禁止 `window.confirm` 作用户确认             |
+| v1.6   | 2026-08-22 | 扩展自研 App\* 控件；图标统一 Lucide 按需内联                                             |
 
 **变更规则：**
 
