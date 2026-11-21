@@ -176,6 +176,84 @@ describe('external auth handoff（device）', () => {
     expect(scheduleSilentMemoryEmbeddingMaintenance).not.toHaveBeenCalled()
   })
 
+  it('AN5：匿名占位 + 真实账号 handoff → 覆盖成功', async () => {
+    vi.stubGlobal(
+      'chrome',
+      createChromeStorageMock({
+        [DEVICE_SESSION_STORAGE_KEY]: {
+          deviceToken: 'ydt_' + 'b'.repeat(64),
+          deviceId: DEVICE_B,
+          userId: USER_A,
+          isAnonymous: true,
+          createdAt: '2026-01-01T00:00:00.000Z'
+        },
+        [ACCOUNT_BINDING_STORAGE_KEY]: {
+          accountId: USER_A,
+          boundAt: '2026-01-01T00:00:00.000Z'
+        }
+      })
+    )
+    const result = await applyExternalAuthDeviceHandoff(
+      devicePayload({ userId: USER_B, isAnonymous: false })
+    )
+    expect(result).toEqual({ ok: true })
+    const setCalls = vi.mocked(chrome.storage.local.set).mock.calls
+    const flattened = Object.assign({}, ...setCalls.map(call => call[0] as StorageMap))
+    expect(flattened[DEVICE_SESSION_STORAGE_KEY]).toMatchObject({
+      userId: USER_B,
+      isAnonymous: false
+    })
+    expect(flattened[ACCOUNT_BINDING_STORAGE_KEY]).toMatchObject({
+      accountId: USER_B
+    })
+  })
+
+  it('AN5：真实账号 + 另一真实账号 handoff → 仍硬拒 account_mismatch', async () => {
+    vi.stubGlobal(
+      'chrome',
+      createChromeStorageMock({
+        [DEVICE_SESSION_STORAGE_KEY]: {
+          deviceToken: 'ydt_' + 'b'.repeat(64),
+          deviceId: DEVICE_B,
+          userId: USER_A,
+          isAnonymous: false,
+          createdAt: '2026-01-01T00:00:00.000Z'
+        },
+        [ACCOUNT_BINDING_STORAGE_KEY]: {
+          accountId: USER_A,
+          boundAt: '2026-01-01T00:00:00.000Z'
+        }
+      })
+    )
+    const result = await applyExternalAuthDeviceHandoff(
+      devicePayload({ userId: USER_B, isAnonymous: false })
+    )
+    expect(result).toEqual({ ok: false, error: 'account_mismatch' })
+  })
+
+  it('AN5：匿名占位 + 匿名 handoff → account_mismatch（豁免仅对真实接通）', async () => {
+    vi.stubGlobal(
+      'chrome',
+      createChromeStorageMock({
+        [DEVICE_SESSION_STORAGE_KEY]: {
+          deviceToken: 'ydt_' + 'b'.repeat(64),
+          deviceId: DEVICE_B,
+          userId: USER_A,
+          isAnonymous: true,
+          createdAt: '2026-01-01T00:00:00.000Z'
+        },
+        [ACCOUNT_BINDING_STORAGE_KEY]: {
+          accountId: USER_A,
+          boundAt: '2026-01-01T00:00:00.000Z'
+        }
+      })
+    )
+    const result = await applyExternalAuthDeviceHandoff(
+      devicePayload({ userId: USER_B, isAnonymous: true, email: undefined, displayName: undefined })
+    )
+    expect(result).toEqual({ ok: false, error: 'account_mismatch' })
+  })
+
   it('AN2.1：成功 handoff 清除预置 401 熔断键', async () => {
     const chromeMock = createChromeStorageMock({
       [ANON_EXCHANGE_401_BACKOFF_STORAGE_KEY]: {
@@ -274,8 +352,55 @@ describe('external auth handoff（device）', () => {
       ok: true,
       signedIn: true,
       userId: USER_A,
+      isAnonymous: false,
       email: 'u@example.com',
       displayName: 'User'
+    })
+  })
+
+  it('AN5：STATUS_PROBE 匿名会话 → isAnonymous true；真实会话 → false', async () => {
+    vi.stubGlobal(
+      'chrome',
+      createChromeStorageMock({
+        [DEVICE_SESSION_STORAGE_KEY]: {
+          deviceToken: 'ydt_' + 'a'.repeat(64),
+          deviceId: DEVICE_A,
+          userId: USER_A,
+          isAnonymous: true,
+          createdAt: '2026-01-01T00:00:00.000Z'
+        }
+      })
+    )
+    const anonProbe = await applyExternalAuthHandoff({
+      type: 'YIVENO_EXTENSION_AUTH_STATUS_PROBE'
+    })
+    expect(anonProbe).toEqual({
+      ok: true,
+      signedIn: true,
+      userId: USER_A,
+      isAnonymous: true
+    })
+
+    vi.stubGlobal(
+      'chrome',
+      createChromeStorageMock({
+        [DEVICE_SESSION_STORAGE_KEY]: {
+          deviceToken: 'ydt_' + 'a'.repeat(64),
+          deviceId: DEVICE_A,
+          userId: USER_B,
+          isAnonymous: false,
+          createdAt: '2026-01-01T00:00:00.000Z'
+        }
+      })
+    )
+    const realProbe = await applyExternalAuthHandoff({
+      type: 'YIVENO_EXTENSION_AUTH_STATUS_PROBE'
+    })
+    expect(realProbe).toEqual({
+      ok: true,
+      signedIn: true,
+      userId: USER_B,
+      isAnonymous: false
     })
   })
 

@@ -1,7 +1,8 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
   consumeFromExtensionSignInArrival,
+  probeExtensionAuthStatus,
   rememberFromExtensionSignInArrival
 } from './extension-auth-handoff'
 
@@ -55,5 +56,68 @@ describe('from-extension sign-in arrival mark', () => {
   it('缺失：空 storage → null', () => {
     const storage = createStubStorage()
     expect(consumeFromExtensionSignInArrival(Date.now(), storage)).toBeNull()
+  })
+})
+
+describe('AN5：probeExtensionAuthStatus 匿名豁免', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  function stubSendMessage(response: unknown): void {
+    vi.stubGlobal('chrome', {
+      runtime: {
+        sendMessage: (
+          _extensionId: string,
+          _message: unknown,
+          responseCallback?: (response: unknown) => void
+        ) => {
+          responseCallback?.(response)
+        }
+      }
+    })
+    vi.stubGlobal('window', {
+      setTimeout: (fn: () => void) => {
+        // 探测路径不依赖超时回调；返回假 timer id
+        return 1 as unknown as ReturnType<typeof setTimeout>
+      },
+      clearTimeout: () => undefined
+    })
+  }
+
+  it('扩展匿名占位 → anonymous_placeholder', async () => {
+    stubSendMessage({
+      ok: true,
+      signedIn: true,
+      userId: 'A',
+      isAnonymous: true
+    })
+    await expect(probeExtensionAuthStatus('ext-id', 'B')).resolves.toEqual({
+      kind: 'anonymous_placeholder',
+      userId: 'A'
+    })
+  })
+
+  it('扩展真实其它账号（含缺 isAnonymous）→ other_account', async () => {
+    stubSendMessage({
+      ok: true,
+      signedIn: true,
+      userId: 'A',
+      isAnonymous: false
+    })
+    await expect(probeExtensionAuthStatus('ext-id', 'B')).resolves.toEqual({
+      kind: 'other_account',
+      userId: 'A'
+    })
+
+    stubSendMessage({
+      ok: true,
+      signedIn: true,
+      userId: 'A'
+    })
+    await expect(probeExtensionAuthStatus('ext-id', 'B')).resolves.toEqual({
+      kind: 'other_account',
+      userId: 'A'
+    })
   })
 })

@@ -271,6 +271,7 @@ export type ExtensionAuthStatusProbeResult =
   | { kind: 'signed_out' }
   | { kind: 'same_account'; userId: string }
   | { kind: 'other_account'; userId: string }
+  | { kind: 'anonymous_placeholder'; userId: string }
 
 /**
  * 探测本机扩展登录态（Connect 前短路 / 冲突检测）。
@@ -300,11 +301,16 @@ export async function probeExtensionAuthStatus(
     typeof (response as { userId?: unknown }).userId === 'string'
       ? (response as { userId: string }).userId.trim()
       : ''
+  const responseIsAnonymous = (response as { isAnonymous?: unknown }).isAnonymous === true
   if (!signedIn || !responseUserId) {
     return { kind: 'signed_out' }
   }
   if (responseUserId === expected) {
     return { kind: 'same_account', userId: responseUserId }
+  }
+  // AN5：扩展是匿名占位（非真实账号），允许官网真实账号 Connect 覆盖
+  if (responseIsAnonymous) {
+    return { kind: 'anonymous_placeholder', userId: responseUserId }
   }
   return { kind: 'other_account', userId: responseUserId }
 }
@@ -401,6 +407,12 @@ export async function registerAndHandoffDeviceToExtension(input: {
       websiteUserId: input.userId
     })
     return { status: 'account_mismatch' }
+  }
+  if (probed.kind === 'anonymous_placeholder') {
+    console.warn('[ExtensionHandoff] 扩展是匿名占位，继续 register + handoff 覆盖', {
+      extensionUserId: probed.userId,
+      websiteUserId: input.userId
+    })
   }
 
   const registered = await registerDeviceFromWebsite(input.websiteAccessToken, { extensionId })

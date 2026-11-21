@@ -58,8 +58,20 @@ export async function applyExternalAuthDeviceHandoff(
 
     const existingDevice = await getDeviceSession()
     const existingBinding = await getAccountBinding()
-    const existingUserId =
-      existingDevice?.userId?.trim() || existingBinding?.accountId?.trim() || ''
+    // AN5：匿名会话不是真实账号。扩展签出后任意 GET_AUTH_STATE 都会 ensure 出新匿名会话，
+    // 若匿名也算冲突，官网 Connect 永远撞 account_mismatch。匿名占位 + 真实账号接通 = 升级，直接覆盖。
+    const existingIsAnonymousPlaceholder =
+      existingDevice?.isAnonymous === true && registerFields.isAnonymous === false
+    const existingUserId = existingIsAnonymousPlaceholder
+      ? ''
+      : existingDevice?.userId?.trim() || existingBinding?.accountId?.trim() || ''
+
+    if (existingIsAnonymousPlaceholder) {
+      logger.info('Auth', 'device handoff 覆盖匿名占位会话', {
+        existingUserId: existingDevice?.userId?.trim() ?? null,
+        incomingUserId
+      })
+    }
 
     if (existingUserId && existingUserId !== incomingUserId) {
       logger.warn('Auth', 'device handoff 拒绝覆盖其它账号', {
@@ -153,6 +165,7 @@ export async function applyExtensionAuthStatusProbe(
         ok: true,
         signedIn: true,
         userId: device.userId.trim(),
+        isAnonymous: device.isAnonymous === true,
         ...(device.email?.trim() ? { email: device.email.trim() } : {}),
         ...(device.displayName?.trim() ? { displayName: device.displayName.trim() } : {})
       }
@@ -162,10 +175,12 @@ export async function applyExtensionAuthStatusProbe(
     if (!session || !userId) {
       return { ok: true, signedIn: false }
     }
+    // 旧 Supabase 会话回退：均为真实账号
     return {
       ok: true,
       signedIn: true,
       userId,
+      isAnonymous: false,
       ...(session.email?.trim() ? { email: session.email.trim() } : {}),
       ...(session.displayName?.trim() ? { displayName: session.displayName.trim() } : {})
     }

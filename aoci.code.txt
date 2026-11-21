@@ -203,7 +203,7 @@ chrome-bookmark-sync.ts[EM6S]: F:Chrome 书签变更监听挂/卸与设置同步
 commands.ts[EM5T]: F:注册 chrome.commands → dispatch | R:code:extension/src/background/commands/registry.ts | A:可闪 badge | S:-
 context-menu.ts[EM6S]: F:划词存摘录右键菜单注册与点击 | R:code:extension/src/application/capture/capture-text-excerpt-service.ts | A:随设置刷新 | S:-
 dreaming-alarm.ts[EM5T]: F:dreaming 定时闹钟：编译分片+孤儿扫+向量回填 | R:code:extension/src/application/dreaming/compile-memory-notes.ts | A:失败只记日志 | S:向量回填 fail-open
-external-auth-handoff.ts[EM7M]: F:官网↔扩展 external device handoff | R:code:extension/src/infrastructure/identity/device-session-service.ts,code:extension/src/infrastructure/identity/anon-exchange-401-backoff-service.ts,code:extension/src/infrastructure/auth/website-session-from-extension.ts | A:YIVENO_AUTH_DEVICE_HANDOFF;STATUS_PROBE;WEBSITE_SESSION_REQUEST | S:同账号幂等覆 token；异账号 mismatch；成功后 best-effort 清 401 熔断（失败不拖垮 handoff）；SIGN_OUT_HANDOFF 已删
+external-auth-handoff.ts[EM7M]: F:官网↔扩展 external device handoff | R:code:extension/src/infrastructure/identity/device-session-service.ts,code:extension/src/infrastructure/identity/anon-exchange-401-backoff-service.ts,code:extension/src/infrastructure/auth/website-session-from-extension.ts | A:YIVENO_AUTH_DEVICE_HANDOFF;STATUS_PROBE;WEBSITE_SESSION_REQUEST | S:同账号幂等覆 token；真实异账号 mismatch；AN5 匿名占位+真实 handoff 直接覆盖；STATUS_PROBE 回 isAnonymous；成功后 best-effort 清 401 熔断
 link-status-sweep-alarm.ts[EM5T]: F:死链巡检闹钟挂/卸 | R:code:extension/src/application/dreaming/sweep-memory-link-status.ts | A:随 Settings | S:-
 memory-cloud-sync-alarm.ts[EM5T]: F:云 Memory 定时同步闹钟监听 | R:- | A:触发增量 sync | S:-
 omnibox.ts[EM7M]: F:Omnibox 建议与换赛道交接 Side Panel | R:code:extension/src/application/recall/recall-service.ts | A:entry=omnibox 本机快跳 | S:ADR-007；非离线产品叙事
@@ -252,7 +252,7 @@ ui-locale.ts[CL5T]: F:UI locale 偏好解析纯函数 | R:- | A:en/zh_CN；默�
 ===/<repository>/extension/src/core/identity/===
 auth-session.ts[CI4T]: F:扩展侧 AuthSession Zod schema | R:- | A:仅必要 token 字段 | S:-
 auth-user-profile.ts[CI4T]: F:从 user_metadata 提取头像/名称 | R:- | A:兼容 Google avatar_url/picture | S:-
-external-auth-handoff.ts[CI5T]: F:官网↔扩展 handoff 消息 schema | R:code:extension/src/core/identity/device-session.ts | A:YIVENO_AUTH_DEVICE_HANDOFF;STATUS_PROBE;WEBSITE_SESSION_REQUEST | S:无 SIGN_OUT_HANDOFF；STATUS_PROBE 同账号跳过 register
+external-auth-handoff.ts[CI5T]: F:官网↔扩展 handoff 消息 schema | R:code:extension/src/core/identity/device-session.ts | A:YIVENO_AUTH_DEVICE_HANDOFF;STATUS_PROBE;WEBSITE_SESSION_REQUEST | S:无 SIGN_OUT_HANDOFF；STATUS_PROBE ok 响应可带 isAnonymous（AN5 官网 Connect 匿名豁免）
 local-profile.ts[CI5T]: F:本机匿名 LocalProfile Zod schema | R:- | A:schema 版本可升 | S:-
 privacy-prefs.ts[CI5T]: F:隐私说明确认水位与偏好 schema | R:- | A:文案大变更递增 VERSION | S:-
 subscription-snapshot.ts[CI5T]: F:订阅快照 schema + 新鲜度 | R:- | A:SUBSCRIPTION_SNAPSHOT_MAX_AGE_MS;isSubscriptionSnapshotFresh | S:MAX_AGE=7d；缺 fetchedAt 视为不新鲜
@@ -1049,7 +1049,7 @@ auth-session-liveness.ts[II5T]: F:官网会话存活探测：失效则尽快反�
 auth.ts[II5S]: F:官网登录：OAuth/邮件 OTP、会话读写与退出 | R:- | A:- | S:-
 billing.ts[IB5T]: F:官网计费 API（Worker） | R:- | A:- | S:-
 date.ts[CL5T]: F:官网日期展示：跟生效 UI locale（BCP 47） | R:- | A:- | S:禁止裸 `toLocaleDateString()` 无 locale
-extension-auth-handoff.ts[II5L]: F:官网 Connect handoff + 扩展自动登录到达标记 | R:code:website/src/services/register-device-from-website.ts | A:registerAndHandoffDeviceToExtension;remember/consumeFromExtensionSignInArrival | S:到达标记 sessionStorage 10s；消费即删；禁 last id 静默重注册
+extension-auth-handoff.ts[II5L]: F:官网 Connect handoff + 扩展自动登录到达标记 | R:code:website/src/services/register-device-from-website.ts | A:registerAndHandoffDeviceToExtension;probeExtensionAuthStatus;remember/consumeFromExtensionSignInArrival | S:到达标记 sessionStorage 10s；消费即删；禁 last id 静默重注册；AN5 匿名占位 probe 不拦 register
 nav-pro-badge-cache.ts[AB5T]: F:官网顶栏 Pro 环用的会话缓存 | R:- | A:- | S:-
 otp-resend-cooldown.ts[AI5T]: F:Email OTP「再次发送」冷却：截止时间写入 sessionStorage | R:- | A:- | S:-
 run-extension-connect.ts[AI5S]: F:官网已登录时编排 Connect 到扩展 | R:code:website/src/services/extension-auth-handoff.ts | A:website_connect_result | S:结果含 account_mismatch；不清官网会话

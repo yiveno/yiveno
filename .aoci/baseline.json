@@ -1,7 +1,7 @@
 {
   "version": 1,
   "created_at": "2026-11-20T03:52:43Z",
-  "updated_at": "2026-11-21T07:17:41Z",
+  "updated_at": "2026-11-21T09:10:58Z",
   "files": {
     ".cursor/agents/impeccable-asset-producer.md": {
       "role": "index",
@@ -275,9 +275,9 @@
     },
     "aoci.code.txt": {
       "role": "index",
-      "sha256": "d9f67e3c5d16a6f5d12813945757d7360115d12f947d95c4029094442ceeab34",
-      "size": 155407,
-      "normalized_sha256": "d9f67e3c5d16a6f5d12813945757d7360115d12f947d95c4029094442ceeab34"
+      "sha256": "b80d69469221e2b8bde490e1230001eb9c6b0f4f8b7357467889031a62b32dce",
+      "size": 155542,
+      "normalized_sha256": "b80d69469221e2b8bde490e1230001eb9c6b0f4f8b7357467889031a62b32dce"
     },
     "aoci.meta.txt": {
       "role": "index",
@@ -515,9 +515,9 @@
     },
     "docs/architecture/decisions/ADR-028-anonymous-device-auth.md": {
       "role": "observe",
-      "sha256": "dd0d9ad5540ef7a50ae6908de787db90ef393a1d466c11c962894f85dd07f0ea",
-      "size": 4039,
-      "normalized_sha256": "dd0d9ad5540ef7a50ae6908de787db90ef393a1d466c11c962894f85dd07f0ea"
+      "sha256": "508946aed45258f5f52697ba9da1d41a3fc71d8be9ebd672631d964da5d5ae23",
+      "size": 4302,
+      "normalized_sha256": "508946aed45258f5f52697ba9da1d41a3fc71d8be9ebd672631d964da5d5ae23"
     },
     "docs/architecture/decisions/README.md": {
       "role": "observe",
@@ -1560,9 +1560,9 @@
     },
     "docs/device-token-design.md": {
       "role": "observe",
-      "sha256": "c9a3171f0fe4eca108bb37e2aac822003fb58362da8a71f8cb615fbb6167a786",
-      "size": 46654,
-      "normalized_sha256": "c9a3171f0fe4eca108bb37e2aac822003fb58362da8a71f8cb615fbb6167a786"
+      "sha256": "00bb64026b78094efe96af24cf64cf74fd5ad86719516e815826eb39df8ca2a1",
+      "size": 46935,
+      "normalized_sha256": "00bb64026b78094efe96af24cf64cf74fd5ad86719516e815826eb39df8ca2a1"
     },
     "docs/diagrams/README.md": {
       "role": "observe",
@@ -2892,15 +2892,15 @@
     },
     "extension/src/background/listeners/external-auth-handoff.test.ts": {
       "role": "observe",
-      "sha256": "a6927f93b8fe636c5222a15077a3984444043a9b30973571a4b0067e92fc936b",
-      "size": 10082,
-      "normalized_sha256": "a6927f93b8fe636c5222a15077a3984444043a9b30973571a4b0067e92fc936b"
+      "sha256": "59f5b6381fe5abae544a824f8147859e1657d56467d265bcef8afb72d12533a9",
+      "size": 13904,
+      "normalized_sha256": "59f5b6381fe5abae544a824f8147859e1657d56467d265bcef8afb72d12533a9"
     },
     "extension/src/background/listeners/external-auth-handoff.ts": {
       "role": "index",
-      "sha256": "35e67ffb3d9716287c6c68be431ac9bc6038d3fe5a6e606138824ce99758e445",
-      "size": 9809,
-      "normalized_sha256": "35e67ffb3d9716287c6c68be431ac9bc6038d3fe5a6e606138824ce99758e445"
+      "sha256": "1ebac392f8fa94733cfd2335d7bb803cd72e4d3a42082496adcff1492c68486d",
+      "size": 10580,
+      "normalized_sha256": "1ebac392f8fa94733cfd2335d7bb803cd72e4d3a42082496adcff1492c68486d"
     },
     "extension/src/background/listeners/link-status-sweep-alarm.test.ts": {
       "role": "observe",
@@ -3342,9 +3342,9 @@
     },
     "extension/src/core/identity/external-auth-handoff.ts": {
       "role": "index",
-      "sha256": "eb2a66aeb022fe5d5ce3c4949c816a7aab2dfd0cf466d5548f0097f25b73a6f4",
-      "size": 2806,
-      "normalized_sha256": "eb2a66aeb022fe5d5ce3c4949c816a7aab2dfd0cf466d5548f0097f25b73a6f4"
+      "sha256": "79c565c8563392eb1dea8cd8c1773492ff45396c7b828a7f96aad956c8a54923",
+      "size": 2947,
+      "normalized_sha256": "79c565c8563392eb1dea8cd8c1773492ff45396c7b828a7f96aad956c8a54923"
     },
     "extension/src/core/identity/local-profile.test.ts": {
       "role": "observe",
@@ -8848,15 +8848,15 @@
     },
     "website/src/services/extension-auth-handoff.test.ts": {
       "role": "observe",
-      "sha256": "9fa2c87002b748761203734c500864d77a3b8ebb193bcf8a4853773bb24a1d32",
-      "size": 1832,
-      "normalized_sha256": "9fa2c87002b748761203734c500864d77a3b8ebb193bcf8a4853773bb24a1d32"
+      "sha256": "a819aef99a148765a685c475d8a6dbc4676001f33c60b4396a4237383239afcd",
+      "size": 3444,
+      "normalized_sha256": "a819aef99a148765a685c475d8a6dbc4676001f33c60b4396a4237383239afcd"
     },
     "website/src/services/extension-auth-handoff.ts": {
       "role": "index",
-      "sha256": "2bb255f59e083bf33bea4435c3ecbf12048e5d00b4518de004ef1318b7f35767",
-      "size": 14827,
-      "normalized_sha256": "2bb255f59e083bf33bea4435c3ecbf12048e5d00b4518de004ef1318b7f35767"
+      "sha256": "0b9bf54b9069b80ed9dbf0873317346ccf06a0f3453f55c47f86c4b172355c51",
+      "size": 15404,
+      "normalized_sha256": "0b9bf54b9069b80ed9dbf0873317346ccf06a0f3453f55c47f86c4b172355c51"
     },
     "website/src/services/mint-extension-session.ts": {
       "role": "index",

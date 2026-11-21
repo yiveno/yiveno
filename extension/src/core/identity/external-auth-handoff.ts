@@ -69,6 +69,8 @@ export type ExternalAuthHandoffResponse =
       ok: true
       signedIn?: boolean
       userId?: string
+      /** STATUS_PROBE：扩展当前会话是否为匿名占位（官网 Connect 据此决定是否覆盖） */
+      isAnonymous?: boolean
       /** STATUS_PROBE / WEBSITE_SESSION_REQUEST：展示用 */
       email?: string
       displayName?: string
