@@ -1,6 +1,8 @@
 /**
  * Turnstile captcha token：开官网页 `/auth/turnstile`，经 UI 桥收 `website_turnstile_token`。
  * 一次性凭证：立即消费、不持久化、日志不打 token 内容。
+ *
+ * 页生命周期：开前清扫 + 页面自关 + SW 启动清扫（AN4），不依赖 SW 活过整个等待。
  */
 
 import { getWebsiteBaseUrl } from '@/infrastructure/browser/website-page'
@@ -8,6 +10,18 @@ import { logger } from '@/infrastructure/logging/logger'
 
 /** 等待桥消息超时（后台交互挑战用户看不到 → fail-open）。 */
 const TURNSTILE_TIMEOUT_MS = 30_000
+
+/**
+ * 官网 Turnstile 页 hostname（与 manifest `externally_connectable` 一致）。
+ * 只比 hostname，不比 port（localhost 各开发端口均命中）。
+ */
+const TURNSTILE_HOSTNAMES = new Set([
+  'yiveno.com',
+  'www.yiveno.com',
+  'yiveno.cn',
+  'www.yiveno.cn',
+  'localhost'
+])
 
 export type GetTurnstileTokenOptions = {
   /** true：前景打开 tab，供 Settings 手动完成交互式验证 */
@@ -51,6 +65,57 @@ export function resetTurnstileTokenProviderForTests(): void {
   captchaRetryNeeded = false
 }
 
+/** 是否为官网 `/auth/turnstile` 残留候选（解析失败则否）。 */
+function isTurnstilePageUrl(rawUrl: string | undefined): boolean {
+  if (!rawUrl) {
+    return false
+  }
+  try {
+    const parsed = new URL(rawUrl)
+    return parsed.pathname === '/auth/turnstile' && TURNSTILE_HOSTNAMES.has(parsed.hostname)
+  } catch {
+    return false
+  }
+}
+
+/**
+ * 清扫残留 Turnstile 页（AN4 层 1 / 层 3）。
+ * 跳过 active 页与当前等待中的 `turnstileTabId`；不持久化 tab id；失败 fail-open。
+ */
+export async function closeStaleTurnstileTabs(): Promise<void> {
+  let tabs: chrome.tabs.Tab[]
+  try {
+    tabs = await chrome.tabs.query({})
+  } catch {
+    return
+  }
+
+  let closed = 0
+  for (const tab of tabs) {
+    if (typeof tab.id !== 'number' || !isTurnstilePageUrl(tab.url)) {
+      continue
+    }
+    // 用户正在看的页（可能前景交互验证中）
+    if (tab.active === true) {
+      continue
+    }
+    // 读值在 remove 前一刻，避免 query↔remove 之间新开的等待 tab 被误关
+    if (tab.id === turnstileTabId) {
+      continue
+    }
+    try {
+      await chrome.tabs.remove(tab.id)
+      closed += 1
+    } catch {
+      // tab 可能已关
+    }
+  }
+
+  if (closed > 0) {
+    logger.info('Auth', 'Turnstile：清扫残留页', { closed })
+  }
+}
+
 /** UI 桥收到 `website_turnstile_token` 时调用；返回是否消费。 */
 export function resolveTurnstileTokenFromUiBridge(token: unknown): boolean {
   if (typeof token !== 'string' || !token.trim() || !turnstileWaiter) {
@@ -89,6 +154,9 @@ async function runGetTurnstileToken(options: GetTurnstileTokenOptions): Promise<
   url.searchParams.set('extension_id', chrome.runtime.id)
 
   try {
+    // 开前清扫：single-flight 下 turnstileTabId 在上一次 finally 后已为 null
+    await closeStaleTurnstileTabs()
+
     const tab = await chrome.tabs.create({
       url: url.toString(),
       active: foreground

@@ -18,9 +18,26 @@ const statusText = ref('')
 const turnstileHost = ref<HTMLElement | null>(null)
 let turnstileHandle: TurnstileRenderHandle | null = null
 let sent = false
+/** 成功后自关 / 错误路径延时自关；卸载时必须 clear，避免关到用户已导航去的页 */
+let closeTimerId: ReturnType<typeof setTimeout> | null = null
 
 function extensionIdFromUrl(): string {
   return new URLSearchParams(window.location.search).get('extension_id')?.trim() ?? ''
+}
+
+/** 脚本打开的 tab 可关；手动打开关不掉是预期，由扩展清扫兜底。 */
+function scheduleWindowClose(delayMs: number): void {
+  if (closeTimerId != null) {
+    clearTimeout(closeTimerId)
+  }
+  closeTimerId = setTimeout(() => {
+    closeTimerId = null
+    try {
+      window.close()
+    } catch {
+      /* 非脚本打开的页关不掉，忽略 */
+    }
+  }, delayMs)
 }
 
 function onToken(token: string | null): void {
@@ -31,6 +48,8 @@ function onToken(token: string | null): void {
   const extensionId = extensionIdFromUrl()
   publishWebsiteTurnstileToken(token, extensionId ? { extensionId } : undefined)
   statusText.value = t('turnstile.status.done')
+  // 500ms：给 Port fire-and-forget 留 flush 时间
+  scheduleWindowClose(500)
 }
 
 onMounted(async () => {
@@ -38,12 +57,14 @@ onMounted(async () => {
   if (!isTurnstileConfigured()) {
     statusText.value = t('turnstile.status.unavailable')
     console.warn('[AuthTurnstileBridge] Turnstile site key missing')
+    scheduleWindowClose(30_000)
     return
   }
   const host = turnstileHost.value
   if (!host) {
     statusText.value = t('turnstile.status.unavailable')
     console.warn('[AuthTurnstileBridge] host element missing')
+    scheduleWindowClose(30_000)
     return
   }
   try {
@@ -52,10 +73,15 @@ onMounted(async () => {
   } catch (error) {
     statusText.value = t('turnstile.status.unavailable')
     console.warn('[AuthTurnstileBridge] Turnstile render failed', error)
+    scheduleWindowClose(30_000)
   }
 })
 
 onUnmounted(() => {
+  if (closeTimerId != null) {
+    clearTimeout(closeTimerId)
+    closeTimerId = null
+  }
   turnstileHandle?.remove()
   turnstileHandle = null
 })

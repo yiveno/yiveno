@@ -1,6 +1,7 @@
 import { openGettingStartedOnInstall } from '@/application/onboarding/open-getting-started-on-install'
 import { ensureBackgroundBootstrapped } from '@/background/bootstrap'
 import { handleBackgroundMessage } from '@/background/handlers/message-handler'
+import { closeStaleTurnstileTabs } from '@/infrastructure/auth/turnstile-token-provider'
 import { ensureSidePanelOpensOnActionClick } from '@/infrastructure/browser/side-panel'
 import {
   attachChromeBookmarkSyncListenersAtStartup,
@@ -65,6 +66,11 @@ void ensureSidePanelOpensOnActionClick().catch(error => {
 attachChromeBookmarkSyncListenersAtStartup()
 void syncChromeBookmarkSyncListenersWithSyncSetting().catch(error => {
   logger.warn('Background', '启动时同步书签监听失败，将由 bootstrap 重试', error)
+})
+
+// AN4：SW 每次启动清扫残留 Turnstile 页（覆盖 SW 中途死亡 / 浏览器恢复；不用 onStartup）
+void closeStaleTurnstileTabs().catch(error => {
+  logger.warn('Background', '启动时清扫残留 Turnstile 页失败', error)
 })
 
 chrome.runtime.onInstalled.addListener(details => {

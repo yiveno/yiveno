@@ -176,7 +176,7 @@ recall-scan-limit.ts[AB5T]: F:定义本机召回扫描上限常量 | R:- | A:REC
 ===/<repository>/extension/src/background/===
 bootstrap-ready.ts[AB5T]: F:Background bootstrap 幂等门闩 | R:code:extension/src/background/bootstrap.ts | A:打断循环依赖；并发合并 | S:禁动态 import
 bootstrap.ts[AB7S]: F:SW 启动：IDB/监听器/冷启动/LLM 挂载 | R:code:extension/src/infrastructure/auth/ensure-device-session-ready.ts | A:绑定 runner；注册 alarms/omnibox 等 | S:先 ensure device 再 refreshClueLlm；S1 无 lease alarm
-main.ts[EM6T]: F:SW 入口：安装引导+ensure bootstrap+消息监听 | R:code:extension/src/background/bootstrap.ts | A:静态 import 全链路 | S:禁动态 import
+main.ts[EM6T]: F:SW 入口：安装引导+ensure bootstrap+消息监听 | R:code:extension/src/background/bootstrap.ts,code:extension/src/infrastructure/auth/turnstile-token-provider.ts | A:静态 import 全链路 | S:禁动态 import；启动顶层 fire-and-forget 清扫残留 Turnstile 页（AN4；非 onStartup）
 
 ===/<repository>/extension/src/background/commands/===
 registry.ts[AB5T]: F:chrome.commands 处理器注册与分发 | R:code:extension/src/core/commands/command-ids.ts | A:未知命令忽略 | S:_execute_action 不进此路径
@@ -531,7 +531,7 @@ device-session-revalidate.ts[IA6S]: F:device 会话存活探针（subscription�
 ensure-anonymous-device-session.ts[IA8L]: F:匿名 signup→pending→exchange→只存 device | R:code:extension/src/infrastructure/identity/pending-anonymous-session-service.ts,code:extension/src/infrastructure/identity/anon-exchange-401-backoff-service.ts,code:extension/src/infrastructure/auth/extension-oauth.ts,code:extension/src/infrastructure/auth/device-register-api-client.ts | A:ensureAnonymousDeviceSession;signupAnonymousWithGoTrue | S:AN2：401 保留 pending 写熔断；60min fail-open；成功清 pending+熔断；已有会话 best-effort 清 pending+熔断（AN2.1）；ignoreBackoff 绕过；禁写 auth_session；禁 AI
 ensure-device-session-ready.ts[IA5T]: F:启动/GET_AUTH_STATE 确保 device 就绪 | R:code:extension/src/infrastructure/auth/migrate-auth-to-device-session.ts,code:extension/src/infrastructure/auth/ensure-anonymous-device-session.ts | A:ensureDeviceSessionReady | S:migrate→anon；single-flight
 migrate-auth-to-device-session.ts[IA5T]: F:旧 auth_session→device_session 升级 | R:code:extension/src/infrastructure/auth/device-register-api-client.ts | A:migrateAuthSessionToDeviceIfNeeded | S:session_exchange；先写新键再删旧；失败 fail-open；无租约清理
-turnstile-token-provider.ts[IA7S]: F:开官网页取 Turnstile captcha 经 UI 桥回传 | R:code:extension/src/infrastructure/browser/website-page.ts | A:getTurnstileToken({foreground?});resolveTurnstileTokenFromUiBridge | S:single-flight；约30s超时fail-open；token不持久化；日志只记长度
+turnstile-token-provider.ts[IA7M]: F:开官网页取 Turnstile captcha 经 UI 桥回传 | R:code:extension/src/infrastructure/browser/website-page.ts,code:extension/src/background/main.ts | A:getTurnstileToken;closeStaleTurnstileTabs;resolveTurnstileTokenFromUiBridge | S:开前/SW启动清扫；跳过 active 与当前 turnstileTabId；不持久化 tab id；single-flight；约30s超时fail-open；token不落盘；日志禁 URL
 promote-anonymous-api-client.ts[IA5S]: F:Worker promote 匿名转正 HTTP 客户端 | R:- | A:promoteAnonymousViaApi;maskEmailForLog | S:仅 Background；邮箱掩码进日志
 website-session-from-extension.ts[IA6S]: F:用扩展 device Bearer 申请官网 website-session | R:code:extension/src/infrastructure/identity/worker-api-access-token.ts | A:requestWebsiteSessionFromExtension | S:email_required 上抛；匿名须先转正；非 mint
 
@@ -979,7 +979,7 @@ SoftToastHost.vue[EU5S]: F:官网轻提示 Toast 宿主（客户端 Teleport） 
 UiBridgeHost.vue[EE5T]: F:维持官网↔扩展 UI Port，推送鉴权变化 | R:- | A:官网组件 | S:-
 WebsiteLanguageSwitcher.vue[EL5M]: F:官网语言切换菜单（en / zh_CN） | R:- | A:官网组件 | S:-
 from-extension-auth-phase.ts[CI5T]: F:反向接通加载相位纯决策（含 auto_sign_in） | R:code:website/src/components/FromExtensionAuth.vue | A:decideFromExtensionAuthPhase | S:不触发铸会话；未登录→auto_sign_in
-AuthTurnstileBridge.vue[EU4T]: F:官网 turnstile 页渲染 Turnstile 并桥回传 token | R:code:website/src/services/turnstile.ts,code:website/src/services/ui-bridge.ts | A:无登录要求 | S:失败只 console.warn；不收集除 token 外信息
+AuthTurnstileBridge.vue[EU4S]: F:官网 turnstile 页渲染 Turnstile 并桥回传 token | R:code:website/src/services/turnstile.ts,code:website/src/services/ui-bridge.ts | A:无登录要求；发完 token 延时自关 | S:成功500ms/错误30s后 window.close；onUnmounted clearTimeout；失败只 console.warn；不收集除 token 外信息
 
 ===/<repository>/website/src/components/home/===
 HomeFlowDemo.astro[EU5S]: F:首页 Save→Forget→Recall 轻量流程动画（DOM+CSS 切相） | R:- | A:官网组件 | S:-
@@ -1155,7 +1155,7 @@ oauth-client.ts[II5S]: F:OAuth 令牌交换 & 用户信息获取 | R:- | A:- | S
 provider-config.ts[FI5T]: F:OAuth 提供商配置 | R:- | A:- | S:-
 read-jwt-session-id.ts[II3T]: F:从 access token payload 读取 session_id（不验签） | R:- | A:- | S:-
 validation.ts[II5T]: F:OAuth 请求参数验证 | R:- | A:- | S:-
-verify-supabase-access-token.ts[II6M]: F:服务端 getClaims 校验 Supabase access 并提取 claims | R:code:worker/src/services/auth/device-register.ts,code:worker/src/utils/logger.ts | A:verifySupabaseAccessToken;decodeJwtForDiagnostics;logGetClaimsFailure | S:email:"" 视同无邮箱（AN3）；getClaims error 与 claims Zod/role 拒均记 [VerifySupabase]；禁记 token 全文；透传 is_anonymous；路径推断 local_jwks vs auth_service_fallback
+verify-supabase-access-token.ts[II6M]: F:服务端 getClaims 校验 Supabase access 并提取 claims | R:code:worker/src/services/auth/device-register.ts,code:worker/src/utils/logger.ts | A:verifySupabaseAccessToken;decodeJwtForDiagnostics;logGetClaimsFailure | S:email空串视同无邮箱（AN3）；getClaims error 与 claims Zod/role 拒均记 [VerifySupabase]；禁记 token 全文；透传 is_anonymous；路径推断 local_jwks vs auth_service_fallback
 device-register.ts[II6M]: F:设备注册 connect/exchange | R:code:worker/src/services/auth/device-token-kv.ts | A:handleDeviceRegister | S:cap 20→403；签发可选 uninstallRevokeToken；已有 meta 不覆盖
 device-token-kv.ts[PI7L]: F:设备 token KV（列表/改名/撤销/cap/整户清） | R:code:worker/src/middleware/device-auth.ts | A:issueDeviceToken;listDevicesForUser;revokeAllDevicesForUser;deleteUserMeta | S:ydt_+64hex；DEVICE_CAP=20；转正后保留旧设备；清理幂等删 user_devs/meta
 promote-anonymous-user.ts[PA5S]: F:匿名账号绑定邮箱转正 | R:code:worker/src/services/auth/device-token-kv.ts | A:promoteAnonymousUser;mapPromoteAdminError;normalizePromoteAdminError | S:Admin updateUser+email_confirm；AuthError 归一化过 exactOptional；冲突 409；已非匿名幂等

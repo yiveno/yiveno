@@ -1,6 +1,6 @@
 ---
 created: 2026-11-20 14:57 +0800
-updated: 2026-11-21 15:05 +0800
+updated: 2026-11-21 15:14 +0800
 author: agent:cursor
 scope: S0 设备 token（D 方案）设计稿；不实施产品代码
 status: implemented-s1
@@ -387,7 +387,8 @@ SW 启动 / GET_AUTH_STATE：
 
 ### 8.4 B1 / O1
 
-- **B1 Turnstile 桥：** 仍只出 captcha token；打在扩展 GoTrue signup（非 `device-register` body）。Worker **不**持 Turnstile secret。**薄改口径，非 B1 扩面。**
+- **B1 Turnstile 桥（方案 B'）：** 仍只出 captcha token；打在扩展 GoTrue signup（非 `device-register` body）。Worker **不**持 Turnstile secret。**薄改口径，非 B1 扩面。**
+- **Turnstile 页生命周期（AN4）：** MV3 SW 可能在 30s 等待内被终止，内存里的 `turnstileTabId` / waiter 会丢，残留「Bot check」tab。根治三层、缺一不可：① 开新 tab **前** `closeStaleTurnstileTabs()` 清扫；② 官网 `/auth/turnstile` 发完 token 后页面自 `window.close()`（错误路径 30s 延时自关）；③ **每次 SW 启动**顶层再清扫一次（不用 `onStartup`，覆盖 SW 重启）。清扫只关官网 hostname + `pathname === '/auth/turnstile'` 的非 active tab，并跳过当前等待中的 `turnstileTabId`；**不**持久化 tab id；tab 数恒 ≤1。
 - **O1 清理 cron：** **已接线（ADR-028）**——周日 UTC 03:00；清超期 `is_anonymous` Auth 行时**先**撤该用户全部 `devtok` / `user_devs` / `user_meta` / 匿名配额 key，再 Admin `deleteUser`；默认 dry-run。
 
 ---
