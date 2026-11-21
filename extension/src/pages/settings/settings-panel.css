@@ -90,7 +90,7 @@
 
 .settings-group__label {
   margin: 0;
-  padding-inline: var(--space-2xs);
+  padding-inline: var(--space-md);
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.02em;
@@ -123,7 +123,21 @@
 
 .settings-group__card .settings-third-party-status {
   margin: 0;
-  padding: 8px 16px 12px;
+  padding: var(--space-xs) var(--space-md) var(--space-sm);
+  border-top: 1px solid var(--border);
+}
+
+/** 状态行与删除行之间：ActionRow 自有 + 规则够不着状态行 */
+.settings-group__card .settings-third-party-status + .settings-action-row--embedded {
+  border-top: 1px solid var(--border);
+}
+
+.settings-group__card .settings-link-row + .settings-link-row {
+  border-top: 1px solid var(--border);
+}
+
+/** adaptation：删除块与清除行不是兄弟，补分隔线 */
+.settings-group__card .settings-dual-thread-block + .settings-action-row--embedded {
   border-top: 1px solid var(--border);
 }
 
@@ -139,10 +153,6 @@
 
   /* sr-only：clip 已弃用，改用 clip-path */
   clip-path: inset(50%);
-}
-
-.settings-card-stack--spaced {
-  margin-top: var(--space-md);
 }
 
 .settings-toggle,
@@ -171,6 +181,7 @@
 }
 
 .settings-toggle-hint {
+  margin: 0;
   font-size: 12px;
   line-height: 1.4;
   color: var(--on-surface-muted);
@@ -186,7 +197,7 @@
 /** 账号分区未登录：登录提示 + 按钮 */
 .settings-promote-label {
   display: block;
-  margin-top: var(--space-2xs);
+  margin-top: 0;
   font-size: 12px;
   color: var(--on-surface-muted);
 }
@@ -195,7 +206,7 @@
   box-sizing: border-box;
   width: 100%;
   max-width: 28rem;
-  margin-top: var(--space-3xs, 4px);
+  margin-top: 0;
   padding: var(--space-xs) var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -214,7 +225,6 @@
   display: flex;
   flex-direction: column;
   gap: var(--space-xs);
-  margin-bottom: var(--space-sm);
 }
 
 .settings-dual-thread-block {
@@ -222,6 +232,15 @@
   gap: var(--space-xs);
   padding: var(--space-sm) 0;
   border-top: 1px solid var(--border);
+}
+
+.settings-dual-thread-block > .settings-toggle-hint {
+  padding-inline: var(--space-md);
+}
+
+.settings-dual-thread-block > .settings-details {
+  border: none;
+  background: transparent;
 }
 
 .settings-dual-thread-intro {
@@ -236,20 +255,15 @@
 
 .settings-dual-thread-learning {
   display: grid;
-  gap: var(--space-2xs);
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
   padding: var(--space-sm);
   border-radius: var(--radius-lg);
   background: var(--surface);
 }
 
-.settings-dual-thread-learning__title {
-  margin: 0;
-  font-size: 13px;
-  font-weight: 600;
-}
-
 .settings-dual-thread-learning__label {
-  margin: var(--space-2xs) 0 0;
+  margin: 0;
   font-size: 12px;
   font-weight: 600;
   color: var(--on-surface);
@@ -269,6 +283,10 @@
   color: var(--on-surface-muted);
 }
 
+.settings-card-stack > .settings-status {
+  margin-bottom: 0;
+}
+
 .settings-error {
   margin: var(--space-sm) 0 0;
   font-size: 13px;
@@ -276,10 +294,16 @@
   color: var(--danger);
 }
 
+.settings-card-stack > .settings-error,
+.settings-dual-thread-block > .settings-error,
+.settings-dual-thread-learning > .settings-error {
+  margin-top: 0;
+}
+
 .settings-command-list {
   display: grid;
   gap: var(--space-sm);
-  margin: 0 0 var(--space-md);
+  margin: 0;
   padding: 0;
   list-style: none;
 }
@@ -296,6 +320,8 @@
 }
 
 .settings-command-meta {
+  display: grid;
+  gap: var(--space-2xs);
   min-width: 0;
 }
 
@@ -329,23 +355,23 @@
   gap: var(--space-sm);
 }
 
-.settings-actions--spaced {
-  margin-top: var(--space-md);
-}
-
+/**
+ * 高级小节：stack gap 12 + 自身 margin-top 12 = 24px 语义分隔。
+ */
 .settings-subsection {
-  margin-top: var(--space-lg);
+  display: grid;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
 }
 
 .settings-subsection-title {
-  margin: 0 0 var(--space-sm);
+  margin: 0;
   font-size: 14px;
   font-weight: 600;
   line-height: 1.3;
 }
 
 .settings-status-strip {
-  margin-top: var(--space-sm);
   padding: var(--space-sm) var(--space-md);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -368,12 +394,11 @@
   color: var(--on-surface);
 }
 
-.settings-status-strip--spaced {
-  margin-top: var(--space-md);
+.settings-status-strip__line--mismatch {
+  color: var(--danger);
 }
 
 .settings-details {
-  margin-top: var(--space-sm);
   padding: var(--space-sm) var(--space-md);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
@@ -436,7 +461,7 @@
 
 .settings-details__list {
   margin: var(--space-xs) 0 0;
-  padding-left: 1.15rem;
+  padding-left: 1.1rem;
   font-size: 12px;
   line-height: 1.45;
   color: var(--on-surface-muted);
@@ -460,6 +485,11 @@
   color: var(--on-surface-muted);
 }
 
+.settings-dialog-copy {
+  display: grid;
+  gap: var(--space-2xs);
+}
+
 .settings-sign-out-options {
   display: grid;
   gap: var(--space-xs);
@@ -467,7 +497,7 @@
 }
 
 .settings-sign-out-option-hint {
-  margin: 0 0 var(--space-sm);
+  margin: 0;
   font-size: 12px;
   line-height: 1.4;
   color: var(--on-surface-muted);
@@ -529,9 +559,10 @@
   display: flex;
   align-items: flex-start;
   gap: var(--space-sm);
-  margin: 0 0 var(--space-sm);
-  padding: var(--space-sm);
-  border-radius: var(--radius-sm);
+  margin: 0;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
   background: var(--surface-raised);
   cursor: pointer;
 }

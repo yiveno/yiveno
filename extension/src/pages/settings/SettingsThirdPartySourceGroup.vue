@@ -59,7 +59,11 @@ const {
           }}
         </AppButton>
       </SettingsActionRow>
-      <p v-if="thirdPartyImportWorking" class="settings-section-copy" role="status">
+      <p
+        v-if="thirdPartyImportWorking"
+        class="settings-section-copy settings-third-party-status"
+        role="status"
+      >
         {{ t('settings_third_party_importing') }}
       </p>
       <p class="settings-section-copy settings-third-party-status" role="status">

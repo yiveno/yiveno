@@ -172,12 +172,14 @@ function onTabKeyDown(event: KeyboardEvent, index: number): void {
 
 @media (width <= 640px) {
   .app-section-tabs--responsive {
-    grid-auto-columns: 1fr;
+    grid-auto-columns: max-content;
     grid-auto-flow: column;
+    overflow-x: auto;
   }
 
   .app-section-tabs--responsive .app-section-tabs__tab {
     text-align: center;
+    white-space: nowrap;
   }
 }
 </style>

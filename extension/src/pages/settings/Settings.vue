@@ -103,10 +103,6 @@ const {
   min-height: 0;
 }
 
-.settings-section-tabs {
-  align-self: start;
-}
-
 .settings-panel {
   min-width: 0;
   min-height: 0;

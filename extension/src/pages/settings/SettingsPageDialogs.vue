@@ -78,8 +78,10 @@ const {
     size="md"
     @close="closeSignOutDialog"
   >
-    <p v-if="accountEmail" class="settings-section-copy">{{ accountEmail }}</p>
-    <p class="settings-section-copy">{{ t('settings_sign_out_dialog_copy') }}</p>
+    <div class="settings-dialog-copy">
+      <p v-if="accountEmail" class="settings-section-copy">{{ accountEmail }}</p>
+      <p class="settings-section-copy">{{ t('settings_sign_out_dialog_copy') }}</p>
+    </div>
     <p class="settings-sync-counts">
       {{
         t('settings_sign_out_dialog_counts', [
@@ -192,14 +194,13 @@ const {
   />
 </template>
 
-<style scoped src="./settings-panel.css"></style>
 <style scoped>
 .settings-sign-out-opt-in {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-xs);
   align-items: flex-start;
-  margin: 0.75rem 0 1rem;
-  font-size: 0.875rem;
+  margin: var(--space-sm) 0 var(--space-md);
+  font-size: 14px;
   line-height: 1.4;
   cursor: pointer;
 }
