@@ -179,7 +179,7 @@ describe('verifySupabaseAccessToken', () => {
 
     expect(result).toEqual({ ok: false, reason: 'invalid_token' })
     expect(warnSpy).toHaveBeenCalled()
-    const logged = warnSpy.mock.calls.map(c => String(c[0])).join('\n')
+    const logged = warnSpy.mock.calls.map((c: unknown[]) => String(c[0])).join('\n')
     expect(logged).toContain('[VerifySupabase] getClaims 失败')
     expect(logged).toContain('service_role')
     expect(logged).toContain('wrong-audience')
@@ -294,7 +294,7 @@ describe('verifySupabaseAccessToken', () => {
 
     expect(result).toEqual({ ok: false, reason: 'malformed_response' })
     expect(warnSpy).toHaveBeenCalled()
-    const logged = warnSpy.mock.calls.map(c => String(c[0])).join('\n')
+    const logged = warnSpy.mock.calls.map((c: unknown[]) => String(c[0])).join('\n')
     expect(logged).toContain('[VerifySupabase]')
     expect(logged).toContain('malformed_response')
   })
@@ -321,7 +321,7 @@ describe('verifySupabaseAccessToken', () => {
 
     expect(result).toEqual({ ok: false, reason: 'invalid_token' })
     expect(warnSpy).toHaveBeenCalled()
-    const logged = warnSpy.mock.calls.map(c => String(c[0])).join('\n')
+    const logged = warnSpy.mock.calls.map((c: unknown[]) => String(c[0])).join('\n')
     expect(logged).toContain('[VerifySupabase]')
     expect(logged).toContain('role_rejected')
     expect(logged).toContain('anon')
