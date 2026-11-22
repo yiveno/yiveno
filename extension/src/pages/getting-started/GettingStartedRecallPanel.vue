@@ -342,7 +342,7 @@ defineExpose({
 }
 
 .gs-recall__input:focus-visible {
-  outline: 2px solid var(--primary);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 1px;
 }
 
@@ -414,7 +414,7 @@ defineExpose({
 }
 
 .gs-recall__oral-shuffle:focus-visible {
-  outline: 2px solid var(--primary);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 1px;
 }
 
@@ -456,7 +456,7 @@ defineExpose({
 }
 
 .gs-recall__suggestion:focus-visible {
-  outline: 2px solid var(--primary);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 1px;
 }
 
@@ -495,7 +495,7 @@ defineExpose({
 }
 
 .gs-recall__card-hit:focus-visible {
-  outline: 2px solid var(--primary);
+  outline: 2px solid var(--focus-ring);
   outline-offset: -2px;
 }
 

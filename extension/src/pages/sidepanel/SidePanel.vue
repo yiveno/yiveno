@@ -2086,7 +2086,7 @@ onUnmounted(() => {
   margin: 0;
   padding: var(--space-xs) var(--space-sm);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius);
   background: color-mix(in srgb, var(--ink) 3%, transparent);
   color: var(--on-surface);
   font: inherit;
@@ -2098,8 +2098,8 @@ onUnmounted(() => {
 }
 
 .recall-outcome-exit__pick[aria-pressed='true'] {
-  border-color: color-mix(in srgb, var(--primary) 45%, var(--border));
-  background: color-mix(in srgb, var(--primary) 10%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  background: var(--yiveno-primary-alpha-10);
 }
 
 .recall-thread-pivot {
@@ -2131,7 +2131,7 @@ onUnmounted(() => {
   padding: var(--space-xs) var(--space-sm);
   overflow: auto;
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius);
   background: color-mix(in srgb, var(--ink) 4%, transparent);
   color: var(--on-surface-muted);
   font: inherit;
@@ -2276,7 +2276,7 @@ onUnmounted(() => {
   margin: 0;
   font-size: 12px;
   line-height: 1.35;
-  color: var(--error, #b42318);
+  color: var(--danger);
 }
 
 .recall-website-connect-close {
@@ -2499,7 +2499,7 @@ onUnmounted(() => {
   margin: 0;
   font: inherit;
   line-height: inherit;
-  color: var(--primary);
+  color: var(--accent);
   text-decoration: underline;
   text-underline-offset: 0.12em;
   cursor: pointer;
@@ -2514,7 +2514,7 @@ onUnmounted(() => {
 }
 
 .recall-empty-inline-link:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--primary) 45%, transparent);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
   border-radius: 2px;
 }

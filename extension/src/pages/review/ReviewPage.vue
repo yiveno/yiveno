@@ -299,7 +299,7 @@ onMounted(() => {
   min-height: 100vh;
   margin: 0 auto;
   padding: var(--space-md) var(--space-md) var(--space-xl);
-  color: var(--color-on-surface);
+  color: var(--on-surface);
 }
 
 .review-header {
@@ -320,7 +320,7 @@ onMounted(() => {
   margin: 0;
   font-size: 14px;
   line-height: 1.5;
-  color: var(--color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .review-status,
@@ -346,8 +346,8 @@ onMounted(() => {
   gap: var(--space-sm);
   align-items: flex-start;
   padding: var(--space-md);
-  border-radius: var(--radius-md);
-  background: var(--color-surface-container-low, var(--color-surface));
+  border-radius: var(--radius);
+  background: var(--surface-raised);
 }
 
 .review-empty-title {
@@ -356,7 +356,7 @@ onMounted(() => {
 }
 
 .review-empty-copy {
-  color: var(--color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .review-body {
@@ -376,7 +376,7 @@ onMounted(() => {
 .review-stale {
   margin-bottom: var(--space-sm);
   padding: var(--space-md);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius);
 }
 
 .review-relation,
@@ -386,15 +386,15 @@ onMounted(() => {
   margin: 0 0 var(--space-sm);
   font-size: 13px;
   line-height: 1.4;
-  color: var(--color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .review-stale-badge {
   display: inline-block;
   padding: 2px 8px;
   border-radius: var(--radius-sm);
-  background: var(--color-surface-container-high, var(--color-surface-variant));
-  color: var(--color-on-surface);
+  background: var(--surface-2);
+  color: var(--on-surface);
   font-weight: 500;
 }
 
@@ -407,7 +407,7 @@ onMounted(() => {
 .review-note + .review-note {
   margin-top: var(--space-md);
   padding-top: var(--space-md);
-  border-top: 1px solid var(--color-outline-variant, rgba(0, 0, 0, 0.08));
+  border-top: 1px solid var(--border);
 }
 
 .review-note-text {
@@ -420,13 +420,13 @@ onMounted(() => {
   margin: 0 0 var(--space-2xs);
   font-size: 13px;
   line-height: 1.4;
-  color: var(--color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .review-note-source {
   font-size: 13px;
   line-height: 1.4;
-  color: var(--color-primary);
+  color: var(--accent);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
@@ -438,10 +438,10 @@ onMounted(() => {
 
 .review-truncation {
   margin-bottom: var(--space-sm);
-  color: var(--color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 
 .review-empty-inline {
-  color: var(--color-on-surface-variant);
+  color: var(--on-surface-muted);
 }
 </style>

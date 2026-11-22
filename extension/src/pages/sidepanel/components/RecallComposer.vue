@@ -819,7 +819,7 @@ defineExpose({ focus })
   margin: 0 0 var(--space-2xs);
   padding: var(--space-2xs) var(--space-xs);
   border: 1px solid color-mix(in srgb, var(--accent) 28%, var(--border));
-  border-radius: var(--radius-md);
+  border-radius: var(--radius);
   background: color-mix(in srgb, var(--accent) 8%, var(--surface-white));
 }
 

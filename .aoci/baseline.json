@@ -1,7 +1,7 @@
 {
   "version": 1,
   "created_at": "2026-11-20T03:52:43Z",
-  "updated_at": "2026-11-22T01:58:33Z",
+  "updated_at": "2026-11-22T02:18:43Z",
   "files": {
     ".cursor/agents/impeccable-asset-producer.md": {
       "role": "index",
@@ -275,9 +275,9 @@
     },
     "aoci.code.txt": {
       "role": "index",
-      "sha256": "e4d7ea0c1b0b35d957739e6a4b217e122bc1ed21cf9877d1ecd7213658ccc140",
-      "size": 156488,
-      "normalized_sha256": "e4d7ea0c1b0b35d957739e6a4b217e122bc1ed21cf9877d1ecd7213658ccc140"
+      "sha256": "30ad92afa8ae892baf84e12d53d5a2a4b2fbacbfc04cce848cec20d95af6bacc",
+      "size": 156910,
+      "normalized_sha256": "30ad92afa8ae892baf84e12d53d5a2a4b2fbacbfc04cce848cec20d95af6bacc"
     },
     "aoci.meta.txt": {
       "role": "index",
@@ -5592,9 +5592,9 @@
     },
     "extension/src/infrastructure/auth/device-label.ts": {
       "role": "index",
-      "sha256": "0311f185958a86bfde81ec60afc3076cd445dd6e2ca0e3d94452374e348d13b3",
-      "size": 2579,
-      "normalized_sha256": "0311f185958a86bfde81ec60afc3076cd445dd6e2ca0e3d94452374e348d13b3"
+      "sha256": "4597a0bf00158b6e5599e3c90bcce7b20c36f28a6b669d2f6d3b147e091c5de6",
+      "size": 2562,
+      "normalized_sha256": "4597a0bf00158b6e5599e3c90bcce7b20c36f28a6b669d2f6d3b147e091c5de6"
     },
     "extension/src/infrastructure/auth/device-register-api-client.test.ts": {
       "role": "observe",
@@ -6684,9 +6684,9 @@
     },
     "extension/src/infrastructure/ui/AppMenuButton.vue": {
       "role": "index",
-      "sha256": "0fe8072307468a2c11dfeb51215f09cc3d813d5666d297f027b28168a5ee10a9",
-      "size": 7908,
-      "normalized_sha256": "0fe8072307468a2c11dfeb51215f09cc3d813d5666d297f027b28168a5ee10a9"
+      "sha256": "cbe2ea346c6cfa032ddd0814c2f78a89ffed30b4daab375b7b7993989209eb95",
+      "size": 7905,
+      "normalized_sha256": "cbe2ea346c6cfa032ddd0814c2f78a89ffed30b4daab375b7b7993989209eb95"
     },
     "extension/src/infrastructure/ui/AppModal.vue": {
       "role": "index",
@@ -6876,9 +6876,9 @@
     },
     "extension/src/pages/getting-started/GettingStartedRecallPanel.vue": {
       "role": "index",
-      "sha256": "9e9e8ef1523492864b8c4af85a2659aaa81df1abe7cda63ff70cdd4e7875259b",
-      "size": 13997,
-      "normalized_sha256": "9e9e8ef1523492864b8c4af85a2659aaa81df1abe7cda63ff70cdd4e7875259b"
+      "sha256": "f1fce40ca1cd1534183b0c8460e049e1e5081515d80b88b64171f0a6cf23f7c4",
+      "size": 14009,
+      "normalized_sha256": "f1fce40ca1cd1534183b0c8460e049e1e5081515d80b88b64171f0a6cf23f7c4"
     },
     "extension/src/pages/getting-started/chrome-bookmark-sync-suggestion.test.ts": {
       "role": "observe",
@@ -7092,9 +7092,9 @@
     },
     "extension/src/pages/review/ReviewPage.vue": {
       "role": "index",
-      "sha256": "d40dabf50fb183833fd38922b1e8f40a00bcbb40b23efc5df2343ba44f3e3dc4",
-      "size": 12867,
-      "normalized_sha256": "d40dabf50fb183833fd38922b1e8f40a00bcbb40b23efc5df2343ba44f3e3dc4"
+      "sha256": "cf23722a98aabd0b39ea1fe85629d362431003143a485aa42139e273a4bf471f",
+      "size": 12674,
+      "normalized_sha256": "cf23722a98aabd0b39ea1fe85629d362431003143a485aa42139e273a4bf471f"
     },
     "extension/src/pages/review/index.html": {
       "role": "index",
@@ -7248,9 +7248,9 @@
     },
     "extension/src/pages/sidepanel/SidePanel.vue": {
       "role": "index",
-      "sha256": "1aa4e8dba89f31dc6b1ebcca7470c7eebe90036ff55546b3024b53eb41599d29",
-      "size": 84275,
-      "normalized_sha256": "1aa4e8dba89f31dc6b1ebcca7470c7eebe90036ff55546b3024b53eb41599d29"
+      "sha256": "4768e05472be2d5d44f7b6bc20c7c5459f9a907425e6f24eecbf5e8ac54ec63f",
+      "size": 84204,
+      "normalized_sha256": "4768e05472be2d5d44f7b6bc20c7c5459f9a907425e6f24eecbf5e8ac54ec63f"
     },
     "extension/src/pages/sidepanel/build-assistant-turn.ts": {
       "role": "index",
@@ -7266,15 +7266,15 @@
     },
     "extension/src/pages/sidepanel/components/RecallComposer.vue": {
       "role": "index",
-      "sha256": "a35b6393b327fa1db764bdfa440529db61e42f00effba6dc340fb320c40ed0e1",
-      "size": 30858,
-      "normalized_sha256": "a35b6393b327fa1db764bdfa440529db61e42f00effba6dc340fb320c40ed0e1"
+      "sha256": "6c9bdd03c6e92447246f275f7afb35b95e28c9f6343b5491fdceb116ccf6cc08",
+      "size": 30855,
+      "normalized_sha256": "6c9bdd03c6e92447246f275f7afb35b95e28c9f6343b5491fdceb116ccf6cc08"
     },
     "extension/src/pages/sidepanel/components/RecallConversation.vue": {
       "role": "index",
-      "sha256": "fc946a6a5c79b39ba3097b0b100215d95ec9715f30ea419ca30faaa0d5dfc471",
-      "size": 44473,
-      "normalized_sha256": "fc946a6a5c79b39ba3097b0b100215d95ec9715f30ea419ca30faaa0d5dfc471"
+      "sha256": "71582a6f7bbaab9d094af918c047bf82969550e49aaef948131fd04062483bd1",
+      "size": 44370,
+      "normalized_sha256": "71582a6f7bbaab9d094af918c047bf82969550e49aaef948131fd04062483bd1"
     },
     "extension/src/pages/sidepanel/components/RecallPageContextControls.vue": {
       "role": "index",
@@ -8872,9 +8872,9 @@
     },
     "website/src/services/device-label.ts": {
       "role": "index",
-      "sha256": "14b4d53d930fde7dd5928505f788a634b94307176f808dbc2321fa32234ae8ce",
-      "size": 2672,
-      "normalized_sha256": "14b4d53d930fde7dd5928505f788a634b94307176f808dbc2321fa32234ae8ce"
+      "sha256": "5ec6b82e81bc4cb1e6c04a8d5fe9f4226bc49b670f269adf460ae1aed78ce73c",
+      "size": 2655,
+      "normalized_sha256": "5ec6b82e81bc4cb1e6c04a8d5fe9f4226bc49b670f269adf460ae1aed78ce73c"
     },
     "website/src/services/extension-auth-handoff.test.ts": {
       "role": "observe",

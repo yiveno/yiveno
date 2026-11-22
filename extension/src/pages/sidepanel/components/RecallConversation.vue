@@ -1141,9 +1141,9 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
   overflow: auto;
   padding: var(--space-2xs);
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius);
   background: var(--surface-white);
-  box-shadow: var(--elevation-1, 0 4px 12px rgb(0 0 0 / 8%));
+  box-shadow: var(--shadow-ink-sm);
 }
 
 .assistant-turn-echo-menu-title {
@@ -1203,7 +1203,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
   width: 100%;
   box-sizing: border-box;
   padding: 6px 10px;
-  border: 1px solid var(--outline-variant, rgba(0, 0, 0, 0.16));
+  border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--surface);
   color: var(--on-surface);
@@ -1226,7 +1226,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
   margin: 0;
   font-size: 12px;
   line-height: 1.35;
-  color: var(--error, #b3261e);
+  color: var(--danger);
 }
 
 .assistant-turn-promote__success {
@@ -1260,7 +1260,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
   margin: 0;
   font: inherit;
   line-height: inherit;
-  color: var(--primary);
+  color: var(--accent);
   text-decoration: underline;
   text-underline-offset: 0.12em;
   cursor: pointer;
@@ -1270,13 +1270,13 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
 
 .assistant-turn-inline-link:hover,
 .assistant-turn-inline-link:focus-visible {
-  color: var(--primary);
+  color: var(--accent);
   opacity: 0.85;
   outline: none;
 }
 
 .assistant-turn-inline-link:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--primary) 45%, transparent);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
   border-radius: 2px;
 }
