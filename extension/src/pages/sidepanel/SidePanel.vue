@@ -2090,8 +2090,8 @@ onUnmounted(() => {
   background: color-mix(in srgb, var(--ink) 3%, transparent);
   color: var(--on-surface);
   font: inherit;
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: var(--text-meta);
+  line-height: var(--leading-snug);
   text-align: left;
   overflow-wrap: anywhere;
   cursor: pointer;
@@ -2118,8 +2118,8 @@ onUnmounted(() => {
 .recall-thread-pivot__prompt {
   min-width: 0;
   margin: 0;
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: var(--text-meta);
+  line-height: var(--leading-snug);
   color: var(--on-surface);
   overflow-wrap: anywhere;
 }
@@ -2135,7 +2135,7 @@ onUnmounted(() => {
   background: color-mix(in srgb, var(--ink) 4%, transparent);
   color: var(--on-surface-muted);
   font: inherit;
-  font-size: 12px;
+  font-size: var(--text-caption);
   line-height: 1.45;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -2149,8 +2149,8 @@ onUnmounted(() => {
 
 .recall-outcome-exit__prompt {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: var(--text-meta);
+  line-height: var(--leading-snug);
   color: var(--on-surface);
 }
 
@@ -2190,7 +2190,7 @@ onUnmounted(() => {
   gap: var(--space-sm);
   margin-top: var(--space-xs);
   margin-bottom: 0;
-  padding: var(--space-sm) 2rem var(--space-sm) var(--space-sm);
+  padding: var(--space-sm) var(--space-xl) var(--space-sm) var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface-white);
@@ -2228,8 +2228,8 @@ onUnmounted(() => {
 .recall-offline-mode-chip {
   margin: 0;
   font-size: 11px;
-  font-weight: 600;
-  line-height: 1.3;
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
   letter-spacing: 0.01em;
   color: var(--on-surface-muted);
 }
@@ -2237,7 +2237,7 @@ onUnmounted(() => {
 .recall-offline-composer-hint {
   flex-shrink: 0;
   margin: 0 var(--space-2xs);
-  font-size: 12px;
+  font-size: var(--text-caption);
   line-height: 1.35;
   color: var(--on-surface-muted);
 }
@@ -2258,7 +2258,7 @@ onUnmounted(() => {
   flex: 1 1 auto;
   min-width: 0;
   margin: 0;
-  font-size: 12px;
+  font-size: var(--text-caption);
   line-height: 1.35;
   white-space: nowrap;
   color: var(--on-surface-muted);
@@ -2274,7 +2274,7 @@ onUnmounted(() => {
 .recall-website-connect-error {
   flex: 1 1 100%;
   margin: 0;
-  font-size: 12px;
+  font-size: var(--text-caption);
   line-height: 1.35;
   color: var(--danger);
 }
@@ -2310,8 +2310,8 @@ onUnmounted(() => {
 .recall-post-release-label {
   min-width: 0;
   margin: 0;
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: var(--text-caption);
+  line-height: var(--leading-snug);
   color: var(--on-surface-muted);
   overflow-wrap: anywhere;
   text-wrap: pretty;
@@ -2387,7 +2387,7 @@ onUnmounted(() => {
   position: absolute;
   right: 0;
   /* clearance 已含 dock 高 + 空隙；再略抬一点避开壳顶 */
-  bottom: calc(var(--recall-dock-clearance) - 4px);
+  bottom: calc(var(--recall-dock-clearance) - var(--space-2xs));
   left: 0;
   z-index: 4;
   display: flex;
@@ -2457,8 +2457,8 @@ onUnmounted(() => {
 .recall-greeting {
   max-width: 18ch;
   margin: 0;
-  font-size: clamp(28px, 7vw, 36px);
-  font-weight: 600;
+  font-size: clamp(var(--text-display), 7vw, 36px);
+  font-weight: var(--font-weight-semibold);
   line-height: 1.2;
   letter-spacing: -0.03em;
   color: var(--on-surface);
@@ -2477,8 +2477,8 @@ onUnmounted(() => {
 
 .recall-empty-title {
   margin: 0;
-  font-size: 20px;
-  font-weight: 600;
+  font-size: var(--text-title);
+  font-weight: var(--font-weight-semibold);
   line-height: 1.25;
   letter-spacing: -0.02em;
   text-wrap: balance;
@@ -2487,8 +2487,8 @@ onUnmounted(() => {
 .recall-empty-copy {
   max-width: 32ch;
   margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
   color: var(--on-surface-muted);
   text-wrap: pretty;
 }
@@ -2543,22 +2543,22 @@ onUnmounted(() => {
 
 .recall-need-clue-title {
   margin: 0;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
   color: var(--on-surface);
 }
 
 .recall-need-clue-copy {
   margin: 0;
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: var(--text-caption);
+  line-height: var(--leading-snug);
   color: var(--on-surface-muted);
 }
 
 .recall-section-label {
   margin: 0 0 var(--space-xs);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.02em;
   color: var(--on-surface-muted);

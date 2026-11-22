@@ -113,8 +113,8 @@ function handleDownloadSelect(id: string): void {
 
 .detail-export-bar__status {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: var(--text-meta);
+  line-height: var(--leading-snug);
   white-space: nowrap;
   color: var(--on-surface-muted);
   overflow: hidden;

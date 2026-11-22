@@ -60,7 +60,7 @@ function onInput(event: Event) {
   padding: var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  font-size: 14px;
+  font-size: var(--text-body);
   line-height: 1.45;
   color: var(--on-surface);
   background: var(--surface-white);

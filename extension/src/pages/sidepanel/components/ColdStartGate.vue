@@ -152,7 +152,7 @@ const detailLine = computed(() => {
 .cold-start-gate__eyebrow {
   margin: 0;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.06em;
   color: var(--on-surface-muted);
@@ -160,22 +160,22 @@ const detailLine = computed(() => {
 
 .cold-start-gate__title {
   margin: 0;
-  font-size: 1.25rem;
+  font-size: var(--text-title);
   font-weight: 650;
-  line-height: 1.3;
+  line-height: var(--leading-tight);
   color: var(--on-surface);
 }
 
 .cold-start-gate__body {
   margin: 0;
-  font-size: 0.875rem;
+  font-size: var(--text-body);
   line-height: 1.45;
   color: var(--on-surface-muted);
 }
 
 .cold-start-gate__detail {
   margin: 0;
-  font-size: 0.8125rem;
+  font-size: var(--text-meta);
   font-variant-numeric: tabular-nums;
   color: var(--on-surface);
 }
@@ -186,7 +186,7 @@ const detailLine = computed(() => {
 
 .cold-start-gate__percent {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: var(--text-caption);
   font-variant-numeric: tabular-nums;
   color: var(--on-surface-muted);
 }
@@ -200,13 +200,13 @@ const detailLine = computed(() => {
 }
 
 .cold-start-gate__step {
-  font-size: 0.75rem;
+  font-size: var(--text-caption);
   color: var(--on-surface-muted);
   opacity: 0.55;
 }
 
 .cold-start-gate__step--active {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--accent);
   opacity: 1;
 }

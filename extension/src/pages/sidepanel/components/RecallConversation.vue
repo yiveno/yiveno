@@ -932,7 +932,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-xl);
   font-size: 15px;
-  line-height: 1.5;
+  line-height: var(--leading-relaxed);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -988,8 +988,8 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
 .pending-label {
   min-width: 0;
   margin: 0;
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: var(--text-meta);
+  line-height: var(--leading-snug);
   color: var(--on-surface);
   /* 仅 opacity 呼吸；禁止几何变换（产品 §3） */
   animation: pending-label-breathe 2.4s ease-in-out infinite;
@@ -1018,8 +1018,8 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
   align-items: flex-start;
   gap: var(--space-xs);
   margin: 0;
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: var(--text-caption);
+  line-height: var(--leading-snug);
   color: var(--on-surface-muted);
 }
 
@@ -1031,7 +1031,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
   flex: 0 0 auto;
   width: 0.9em;
   font-size: 11px;
-  line-height: 1.4;
+  line-height: var(--leading-snug);
   text-align: center;
 }
 
@@ -1039,8 +1039,8 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
   min-width: 0;
   max-width: 100%;
   margin: 0;
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: var(--text-caption);
+  line-height: var(--leading-snug);
   color: var(--on-surface-muted);
   text-wrap: pretty;
   overflow-wrap: anywhere;
@@ -1050,8 +1050,8 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
   min-width: 0;
   max-width: 100%;
   margin: 0;
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: var(--text-caption);
+  line-height: var(--leading-snug);
   color: var(--on-surface-muted);
   text-wrap: pretty;
   overflow-wrap: anywhere;
@@ -1065,14 +1065,14 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
   min-width: 0;
   max-width: 100%;
   margin: 0;
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: var(--text-caption);
+  line-height: var(--leading-snug);
   color: var(--on-surface-muted);
 }
 
 .assistant-turn-echo-prefix {
   flex: 0 0 auto;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   letter-spacing: 0.01em;
 }
 
@@ -1130,7 +1130,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
 .assistant-turn-echo-menu {
   position: absolute;
   z-index: 4;
-  top: calc(100% + 4px);
+  top: calc(100% + var(--space-2xs));
   left: 0;
   display: flex;
   flex-direction: column;
@@ -1149,8 +1149,8 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
 .assistant-turn-echo-menu-title {
   padding: 2px var(--space-2xs);
   font-size: 11px;
-  line-height: 1.3;
-  font-weight: 600;
+  line-height: var(--leading-tight);
+  font-weight: var(--font-weight-semibold);
   color: var(--on-surface-muted);
 }
 
@@ -1158,12 +1158,12 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
   display: block;
   width: 100%;
   min-height: 28px;
-  padding: 4px var(--space-2xs);
+  padding: var(--space-2xs) var(--space-2xs);
   border: none;
   border-radius: var(--radius-sm);
   font: inherit;
-  font-size: 12px;
-  line-height: 1.3;
+  font-size: var(--text-caption);
+  line-height: var(--leading-tight);
   text-align: left;
   color: var(--on-surface);
   background: transparent;
@@ -1182,7 +1182,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
 .assistant-turn-deeper-tip {
   max-width: 42ch;
   margin: 0;
-  font-size: 12px;
+  font-size: var(--text-caption);
   line-height: 1.35;
   color: var(--on-surface-muted);
 }
@@ -1195,7 +1195,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
 }
 
 .assistant-turn-promote__label {
-  font-size: 12px;
+  font-size: var(--text-caption);
   color: var(--on-surface-muted);
 }
 
@@ -1204,11 +1204,11 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
   box-sizing: border-box;
   padding: 6px 10px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--on-surface);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--text-body);
 }
 
 .assistant-turn-promote__input:focus-visible {
@@ -1224,14 +1224,14 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
 
 .assistant-turn-promote__error {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--text-caption);
   line-height: 1.35;
   color: var(--danger);
 }
 
 .assistant-turn-promote__success {
   margin: 0;
-  font-size: 12px;
+  font-size: var(--text-caption);
   line-height: 1.35;
   color: var(--on-surface-muted);
 }
@@ -1249,7 +1249,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
 /* 有邻域卡时：说明书退居卡后，略降字号/对比，不抢扫读 */
 .assistant-turn-copy--after-cards {
   margin-top: var(--space-2xs);
-  font-size: 13px;
+  font-size: var(--text-meta);
   line-height: 1.45;
   color: var(--on-surface-muted);
 }
@@ -1289,8 +1289,8 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
 
 .assistant-turn-neighborhood-count {
   margin: 0;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
   letter-spacing: 0.01em;
   color: var(--on-surface-muted);
 }
@@ -1300,14 +1300,14 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
   gap: var(--space-xs);
   min-width: 0;
   padding-top: 2px;
-  animation: recall-result-card-enter var(--motion-duration-short, 150ms)
-    var(--motion-easing-standard, cubic-bezier(0.2, 0, 0, 1)) both;
+  animation: recall-result-card-enter var(--motion-duration-short) var(--motion-easing-standard)
+    both;
 }
 
 .assistant-turn-related-guess-label {
   margin: 0;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
   letter-spacing: 0.01em;
   color: var(--on-surface-muted);
 }
@@ -1321,8 +1321,8 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
 
 .assistant-turn-candidates-label {
   margin: 0;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
   letter-spacing: 0.01em;
   color: var(--on-surface-muted);
 }
@@ -1335,8 +1335,8 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
   display: grid;
   gap: var(--space-xs);
   padding-top: 2px;
-  animation: recall-result-card-enter var(--motion-duration-short, 150ms)
-    var(--motion-easing-standard, cubic-bezier(0.2, 0, 0, 1)) both;
+  animation: recall-result-card-enter var(--motion-duration-short) var(--motion-easing-standard)
+    both;
 }
 
 .assistant-turn-quick-feedback {
@@ -1355,7 +1355,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
   border: 1px solid var(--border);
   border-radius: var(--radius-full);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--text-meta);
   line-height: 1;
   color: var(--on-surface);
   background: var(--surface-white);
@@ -1380,7 +1380,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
   border: none;
   border-radius: var(--radius-sm);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--text-meta);
   line-height: 1;
   color: var(--on-surface-muted);
   background: transparent;
@@ -1407,8 +1407,8 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
 
 /* 邻域入场：仅 opacity stagger；禁止几何变换（设计标准 §5.3–5.4） */
 .assistant-turn-candidates > li {
-  animation: recall-result-card-enter var(--motion-duration-medium, 250ms)
-    var(--motion-easing-standard, cubic-bezier(0.2, 0, 0, 1)) both;
+  animation: recall-result-card-enter var(--motion-duration-medium) var(--motion-easing-standard)
+    both;
 }
 
 .assistant-turn-candidates > li:nth-child(1) {

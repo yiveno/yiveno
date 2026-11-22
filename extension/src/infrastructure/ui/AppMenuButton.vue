@@ -210,8 +210,8 @@ onBeforeUnmount(() => {
   padding: 0 var(--space-md);
   border: 1px solid transparent;
   border-radius: var(--radius-full);
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-medium);
   line-height: 1.25;
   cursor: pointer;
   transition:
@@ -313,7 +313,7 @@ onBeforeUnmount(() => {
   padding: 0 var(--space-sm);
   border: none;
   border-radius: var(--radius-sm);
-  font-size: 0.875rem;
+  font-size: var(--text-body);
   line-height: 1.25;
   text-align: left;
   color: var(--on-surface);

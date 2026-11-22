@@ -200,8 +200,8 @@ const {
   gap: var(--space-xs);
   align-items: flex-start;
   margin: var(--space-sm) 0 var(--space-md);
-  font-size: 14px;
-  line-height: 1.4;
+  font-size: var(--text-body);
+  line-height: var(--leading-snug);
   cursor: pointer;
 }
 

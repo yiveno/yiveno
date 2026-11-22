@@ -104,16 +104,16 @@ const emit = defineEmits<{
 <style scoped>
 .app-confirm-modal__body {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: var(--text-meta);
+  line-height: var(--leading-relaxed);
   color: var(--on-surface-muted);
 }
 
 .app-confirm-modal__body-link {
   display: inline-block;
   margin-top: var(--space-xs);
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: var(--text-meta);
+  line-height: var(--leading-relaxed);
   text-decoration: none;
   color: var(--accent);
 }

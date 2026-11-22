@@ -219,7 +219,7 @@
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font-family: inherit;
-  font-size: 14px;
+  font-size: var(--text-body);
   color: var(--on-surface);
   background: var(--surface);
 }
@@ -351,8 +351,8 @@
   margin: 0;
   padding: var(--space-xs) var(--space-sm);
   border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
   font-variant-numeric: tabular-nums;
   color: var(--accent);
   background: var(--surface-accent-soft);

@@ -72,9 +72,9 @@ withDefaults(
   max-width: 14rem;
   padding: var(--space-2xs) var(--space-xs);
   border-radius: var(--radius-sm);
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 1.3;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--leading-tight);
   text-align: left;
   color: var(--surface-white);
   background: var(--on-surface);
@@ -95,11 +95,11 @@ withDefaults(
 }
 
 .app-hover-tip__title {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .app-hover-tip__hint {
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
   color: color-mix(in srgb, var(--surface-white) 78%, transparent);
 }
 

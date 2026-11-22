@@ -168,7 +168,7 @@ onUnmounted(() => {
 .getting-started__eyebrow {
   margin: 0;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: color-mix(in srgb, var(--on-surface-muted) 85%, transparent);
@@ -176,7 +176,7 @@ onUnmounted(() => {
 
 .getting-started__title {
   margin: 0;
-  font-size: clamp(28px, 4.5vw, 36px);
+  font-size: clamp(var(--text-display), 4.5vw, 36px);
   font-weight: 700;
   line-height: 1.15;
   letter-spacing: -0.02em;
@@ -207,12 +207,12 @@ onUnmounted(() => {
 
 .getting-started__tabs :deep(.app-section-tabs__tab) {
   padding: var(--space-2xs) var(--space-sm);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-medium);
 }
 
 .getting-started__tabs :deep(.app-section-tabs__tab--active) {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   background: color-mix(in srgb, var(--on-surface) 8%, transparent);
 }
 

@@ -1190,14 +1190,14 @@ onUnmounted(() => {
 
 .library-title {
   margin: 0 0 var(--space-xs);
-  font-size: 28px;
+  font-size: var(--text-display);
   line-height: 1.2;
 }
 
 .library-subtitle {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
   color: var(--on-surface-muted);
 }
 
@@ -1287,16 +1287,16 @@ onUnmounted(() => {
 .library-list-cap-note {
   flex-shrink: 0;
   margin: 0 0 var(--space-sm);
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: var(--text-meta);
+  line-height: var(--leading-snug);
   color: var(--on-surface-muted);
 }
 
 .library-status,
 .library-error {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
 }
 
 .library-error {
@@ -1318,13 +1318,13 @@ onUnmounted(() => {
 .library-empty-title {
   margin: 0;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .library-empty-copy {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: var(--text-meta);
+  line-height: var(--leading-relaxed);
   color: var(--on-surface-muted);
 }
 
@@ -1345,8 +1345,8 @@ onUnmounted(() => {
 
 .library-import-detail {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: var(--text-meta);
+  line-height: var(--leading-snug);
   color: var(--on-surface-muted);
 }
 
@@ -1357,8 +1357,8 @@ onUnmounted(() => {
 
 .library-note-dialog-target {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: var(--text-meta);
+  line-height: var(--leading-snug);
   white-space: nowrap;
   color: var(--on-surface-muted);
   overflow: hidden;

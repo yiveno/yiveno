@@ -49,15 +49,15 @@ select {
 
 .page-title {
   margin: 0 0 var(--space-xs);
-  font-size: 1.25rem;
-  line-height: 1.3;
+  font-size: var(--text-title);
+  line-height: var(--leading-tight);
   color: var(--on-surface);
 }
 
 .page-description {
   margin: 0;
-  font-size: 0.875rem;
-  line-height: 1.5;
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
   color: var(--on-surface-muted);
 }
 
@@ -78,15 +78,15 @@ select {
 
 .muted-text {
   margin: 0;
-  font-size: 0.8125rem;
-  line-height: 1.5;
+  font-size: var(--text-meta);
+  line-height: var(--leading-relaxed);
   color: var(--on-surface-muted);
 }
 
 .error-text {
   margin: var(--space-xs) 0 0;
-  font-size: 0.8125rem;
-  line-height: 1.4;
+  font-size: var(--text-meta);
+  line-height: var(--leading-snug);
   color: var(--danger);
 }
 

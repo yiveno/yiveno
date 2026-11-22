@@ -293,7 +293,7 @@ defineExpose({
 .gs-recall__status-title {
   margin: 0;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   line-height: 1.35;
 }
 
@@ -304,7 +304,7 @@ defineExpose({
 .gs-recall__done,
 .gs-recall__oral-generating {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--text-meta);
   line-height: 1.45;
   color: var(--on-surface-muted);
 }
@@ -323,8 +323,8 @@ defineExpose({
 }
 
 .gs-recall__label {
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
   color: var(--on-surface);
 }
 
@@ -362,8 +362,8 @@ defineExpose({
 
 .gs-recall__suggestions-lead {
   margin: 0;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
   color: var(--on-surface-muted);
 }
 
@@ -382,7 +382,7 @@ defineExpose({
   flex: 1;
   min-width: 0;
   margin: 0;
-  font-size: 13px;
+  font-size: var(--text-meta);
   line-height: 1.45;
   color: var(--on-surface);
   overflow-wrap: anywhere;
@@ -440,7 +440,7 @@ defineExpose({
   padding: var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  font-size: 13px;
+  font-size: var(--text-meta);
   line-height: 1.45;
   text-align: start;
   color: var(--on-surface);
@@ -501,8 +501,8 @@ defineExpose({
 
 .gs-recall__card-title {
   margin: 0;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
@@ -511,8 +511,8 @@ defineExpose({
 .gs-recall__card-reason,
 .gs-recall__card-preview {
   margin: 0;
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: var(--text-caption);
+  line-height: var(--leading-snug);
   color: var(--on-surface-muted);
   overflow-wrap: anywhere;
 }
@@ -526,7 +526,7 @@ defineExpose({
 
 .gs-recall__found-label {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--text-meta);
   color: var(--on-surface-muted);
 }
 </style>

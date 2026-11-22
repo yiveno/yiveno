@@ -25,8 +25,8 @@ defineProps<{
 
 .detail-export-bar-dock-enter-active {
   transition:
-    transform 280ms var(--motion-easing-emphasized, cubic-bezier(0.16, 1, 0.3, 1)),
-    opacity 220ms var(--motion-easing-standard, cubic-bezier(0.2, 0, 0, 1));
+    transform 280ms var(--motion-easing-emphasized),
+    opacity 220ms var(--motion-easing-standard);
 }
 
 .detail-export-bar-dock-leave-active {

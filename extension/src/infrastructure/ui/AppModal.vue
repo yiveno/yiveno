@@ -164,13 +164,13 @@ onUnmounted(() => {
 .app-modal__title {
   margin: 0;
   font-size: 18px;
-  line-height: 1.3;
+  line-height: var(--leading-tight);
 }
 
 .app-modal__description {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: var(--text-meta);
+  line-height: var(--leading-relaxed);
   color: var(--on-surface-muted);
 }
 
@@ -182,8 +182,8 @@ onUnmounted(() => {
 
 .app-modal__error {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: var(--text-meta);
+  line-height: var(--leading-snug);
   color: var(--danger);
 }
 

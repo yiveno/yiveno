@@ -301,8 +301,8 @@ function handleBookmarkActivate(event: MouseEvent | KeyboardEvent) {
 
 .tree-folder-title {
   min-width: 0;
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
   line-height: 1.35;
   white-space: nowrap;
   overflow: hidden;

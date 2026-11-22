@@ -414,16 +414,16 @@ onUnmounted(() => {
 
 .app-page-header__session-label {
   flex-shrink: 0;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
   color: var(--on-surface-muted);
 }
 
 .app-page-header__session-title {
   flex: 1 1 auto;
   min-width: 0;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-semibold);
   white-space: nowrap;
   color: var(--on-surface);
   overflow: hidden;
@@ -440,8 +440,8 @@ onUnmounted(() => {
 
 .app-page-header__brand {
   margin: 0;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--on-surface-muted);

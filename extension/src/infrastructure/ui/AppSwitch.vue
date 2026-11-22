@@ -79,8 +79,8 @@ function onToggle() {
 
 .app-switch__thumb {
   position: absolute;
-  top: 4px;
-  left: 4px;
+  top: var(--space-2xs);
+  left: var(--space-2xs);
   width: 24px;
   height: 24px;
   border-radius: var(--radius-full);

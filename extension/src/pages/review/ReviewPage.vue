@@ -312,14 +312,14 @@ onMounted(() => {
 
 .review-title {
   margin: 0 0 var(--space-xs);
-  font-size: 28px;
+  font-size: var(--text-display);
   line-height: 1.2;
 }
 
 .review-subtitle {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
   color: var(--on-surface-muted);
 }
 
@@ -330,8 +330,8 @@ onMounted(() => {
 .review-empty-inline,
 .review-truncation {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
 }
 
 .review-error-block {
@@ -351,7 +351,7 @@ onMounted(() => {
 }
 
 .review-empty-title {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   font-size: 16px;
 }
 
@@ -368,7 +368,7 @@ onMounted(() => {
 .review-section-title {
   margin: 0 0 var(--space-sm);
   font-size: 18px;
-  line-height: 1.3;
+  line-height: var(--leading-tight);
 }
 
 .review-group,
@@ -384,18 +384,18 @@ onMounted(() => {
 .review-stale-date,
 .review-stale-badge {
   margin: 0 0 var(--space-sm);
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: var(--text-meta);
+  line-height: var(--leading-snug);
   color: var(--on-surface-muted);
 }
 
 .review-stale-badge {
   display: inline-block;
-  padding: 2px 8px;
+  padding: 2px var(--space-xs);
   border-radius: var(--radius-sm);
   background: var(--surface-2);
   color: var(--on-surface);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
 }
 
 .review-note-list {
@@ -418,14 +418,14 @@ onMounted(() => {
 
 .review-note-quote {
   margin: 0 0 var(--space-2xs);
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: var(--text-meta);
+  line-height: var(--leading-snug);
   color: var(--on-surface-muted);
 }
 
 .review-note-source {
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: var(--text-meta);
+  line-height: var(--leading-snug);
   color: var(--accent);
   text-decoration: underline;
   text-underline-offset: 2px;

@@ -827,8 +827,8 @@ defineExpose({ focus })
   flex: 1 1 10rem;
   margin: 0;
   color: var(--on-surface);
-  font-size: 12px;
-  line-height: 1.4;
+  font-size: var(--text-caption);
+  line-height: var(--leading-snug);
 }
 
 .recall-voice-permission__actions {
@@ -840,14 +840,14 @@ defineExpose({ focus })
 
 .recall-voice-permission__allow {
   margin: 0;
-  padding: 4px 10px;
+  padding: var(--space-2xs) 10px;
   border: 0;
   border-radius: var(--radius-full);
   color: var(--on-accent);
   background: var(--accent);
   font: inherit;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
 }
 
@@ -1017,7 +1017,7 @@ defineExpose({ focus })
   background: color-mix(in srgb, var(--ink) 5%, transparent);
   cursor: pointer;
   font: inherit;
-  font-size: 12px;
+  font-size: var(--text-caption);
   line-height: 1.2;
   white-space: nowrap;
   transition:

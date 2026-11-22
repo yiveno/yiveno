@@ -750,20 +750,20 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
 .recall-card-title {
   margin: 0 0 var(--space-2xs);
   font-size: 16px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   line-height: 1.35;
   overflow-wrap: anywhere;
 }
 
 .recall-card-title--compact {
-  font-size: 14px;
+  font-size: var(--text-body);
 }
 
 .recall-card-body {
   display: -webkit-box;
   margin: 0 0 var(--space-2xs);
   font-size: 15px;
-  line-height: 1.5;
+  line-height: var(--leading-relaxed);
   color: var(--on-surface);
   overflow: hidden;
   overflow-wrap: anywhere;
@@ -778,7 +778,7 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
 }
 
 .recall-card-body--compact {
-  font-size: 13px;
+  font-size: var(--text-meta);
   -webkit-line-clamp: 2;
   line-clamp: 2;
 }
@@ -786,8 +786,8 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
 .recall-card-note {
   display: -webkit-box;
   margin: 0 0 var(--space-2xs);
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: var(--text-meta);
+  line-height: var(--leading-snug);
   color: var(--on-surface);
   overflow: hidden;
   -webkit-line-clamp: 2;
@@ -796,14 +796,14 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
 }
 
 .recall-card-note--compact {
-  font-size: 12px;
+  font-size: var(--text-caption);
   -webkit-line-clamp: 1;
   line-clamp: 1;
 }
 
 .recall-card-note-label {
   margin-right: var(--space-2xs);
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--accent);
 }
 
@@ -831,7 +831,7 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
   align-items: center;
   gap: var(--space-2xs);
   margin: 0;
-  font-size: 12px;
+  font-size: var(--text-caption);
   color: var(--on-surface-muted);
   overflow-wrap: anywhere;
 }
@@ -854,7 +854,7 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
   min-width: 0;
   margin: 0;
   font-size: 12.5px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: color-mix(in srgb, var(--on-surface) 78%, var(--on-surface-muted));
   overflow: hidden;
 }
@@ -867,7 +867,7 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
 }
 
 .recall-card-subtitle--compact {
-  font-size: 12px;
+  font-size: var(--text-caption);
 }
 
 .recall-card-subtitle-text {
@@ -983,8 +983,7 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
   overflow: hidden auto;
   list-style: none;
   overscroll-behavior: contain;
-  animation: recall-siblings-enter var(--motion-duration-short, 150ms)
-    var(--motion-easing-standard, cubic-bezier(0.2, 0, 0, 1)) both;
+  animation: recall-siblings-enter var(--motion-duration-short) var(--motion-easing-standard) both;
 }
 
 @keyframes recall-siblings-enter {

@@ -739,7 +739,7 @@ dual-thread-learning-label.ts[EU5T]: F:学习面板标签种类：结果 outcome
 index.html[EU3T]: F:设置页 HTML 壳：挂载 settings/main.ts | R:- | A:扩展页 UI | S:-
 main.ts[EU5T]: F:Settings 页入口：i18n boot 后挂载 Settings.vue | R:code:extension/src/infrastructure/i18n/extension-i18n-boot.ts,code:extension/src/pages/settings/settings-panel.css | A:扩展页 UI | S:全局引入 settings-panel.css（勿再在子组件 scoped 重复引入）
 settings-page-url-sync.ts[EU5T]: F:Settings 分区与 location.search / history 的读写同步 | R:code:extension/src/core/settings/settings-sections.ts | A:扩展页 UI | S:-
-settings-panel.css[EU3L]: F:Settings 面板样式（间距/字阶/卡片） | R:code:extension/src/pages/settings/main.ts,code:packages/design-tokens/css/brand.css | A:块间 settings-card-stack gap；§4.5 字阶 token | S:h2=title/600；eyebrow×4 muted；交互500；行高三档
+settings-panel.css[EU3L]: F:Settings 面板样式（间距/字阶/卡片） | R:code:extension/src/pages/settings/main.ts,code:packages/design-tokens/css/brand.css | A:块间 settings-card-stack gap；§4.5 字阶 token | S:h2=title/semibold；交互 medium；行高三档均走 token
 settings-visibility-refresh.ts[EU5T]: F:从 Chrome 快捷键页返回后是否应静默刷新命令绑定 | R:- | A:扩展页 UI | S:-
 third-party-source-status-copy.ts[EU5T]: F:第三方语料导入状态行的摘要文案与错误码映射 | R:code:extension/src/core/memory/third-party-corpus-import-state.ts,code:extension/src/core/memory/third-party-corpus-source.ts | A:扩展页 UI | S:-
 use-settings-page.ts[EU7L]: F:Settings 页状态与账户动作 | R:code:extension/src/infrastructure/messaging/background-client.ts | A:handlePromoteAnonymous;loadHostedQuota trial*;isAnonymous | S:无 promoteShowSignIn；配额拉取失败静默不展示试用数字

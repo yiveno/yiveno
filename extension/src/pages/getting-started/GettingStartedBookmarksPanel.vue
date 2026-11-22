@@ -634,15 +634,15 @@ onUnmounted(() => {
 .gs-bookmarks__consent-title {
   margin: 0;
   font-size: 15px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   line-height: 1.35;
 }
 
 .gs-bookmarks__consent-body,
 .gs-bookmarks__consent-detail {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: var(--text-meta);
+  line-height: var(--leading-relaxed);
   color: var(--on-surface-muted);
   text-wrap: pretty;
 }
@@ -652,8 +652,8 @@ onUnmounted(() => {
   gap: var(--space-2xs);
   margin: 0;
   padding-left: 1.15em;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: var(--text-meta);
+  line-height: var(--leading-relaxed);
   color: var(--on-surface-muted);
   text-wrap: pretty;
 }
@@ -674,7 +674,7 @@ onUnmounted(() => {
 
 .gs-bookmarks__consent-error {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--text-meta);
   line-height: 1.45;
   color: var(--danger);
 }

@@ -79,8 +79,8 @@ async function selectPassage(): Promise<void> {
 .gs-passage__lead {
   max-width: 42ch;
   margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
   color: var(--on-surface-muted);
 }
 

@@ -403,20 +403,20 @@ onMounted(() => {
 
 .detail-title {
   margin: 0 0 var(--space-xs);
-  font-size: 28px;
+  font-size: var(--text-display);
   line-height: 1.2;
 }
 
 .detail-subtitle {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
   color: var(--on-surface-muted);
 }
 
 .detail-status {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--text-body);
   color: var(--on-surface-muted);
 }
 
@@ -432,13 +432,13 @@ onMounted(() => {
 .detail-empty-title {
   margin: 0;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
 }
 
 .detail-empty-copy {
   margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
   color: var(--on-surface-muted);
 }
 
@@ -455,12 +455,12 @@ onMounted(() => {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-xs) var(--space-sm);
-  font-size: 12px;
+  font-size: var(--text-caption);
   color: var(--on-surface-muted);
 }
 
 .detail-type {
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   color: var(--accent);
 }
 
@@ -473,7 +473,7 @@ onMounted(() => {
 
 .detail-context {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--text-meta);
   line-height: 1.6;
   color: var(--on-surface-muted);
 }
@@ -506,14 +506,14 @@ onMounted(() => {
 
 .detail-note-label {
   margin: 0;
-  font-size: 12px;
-  font-weight: 600;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
   color: var(--on-surface-muted);
 }
 
 .detail-note-body {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--text-body);
   line-height: 1.55;
   white-space: pre-wrap;
   color: var(--on-surface);
@@ -521,8 +521,8 @@ onMounted(() => {
 
 .detail-note-empty {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: var(--text-meta);
+  line-height: var(--leading-relaxed);
   color: var(--on-surface-muted);
 }
 
@@ -542,8 +542,8 @@ onMounted(() => {
 
 .detail-inline-error {
   margin: 0;
-  font-size: 13px;
-  line-height: 1.4;
+  font-size: var(--text-meta);
+  line-height: var(--leading-snug);
   color: var(--danger);
 }
 
@@ -554,8 +554,8 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   gap: var(--space-xs);
-  font-size: 14px;
-  font-weight: 600;
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
   text-decoration: none;
   color: var(--accent);
 }
