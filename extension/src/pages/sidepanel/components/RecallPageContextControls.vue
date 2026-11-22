@@ -4,6 +4,7 @@ import { computed, onUnmounted, ref, watch } from 'vue'
 import type { PageContextMode } from '@/core/recall/page-context-mode'
 import AppHoverTip from '@/infrastructure/ui/AppHoverTip.vue'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
+import { setPageContextOutsideInert } from '@/pages/sidepanel/page-context-outside-inert'
 
 defineOptions({ name: 'RecallPageContextControls' })
 
@@ -120,40 +121,9 @@ function onDocumentKeydown(event: KeyboardEvent): void {
   }
 }
 
+/** 面板外 inert：排除含 root 的 toolbar / float-dock，勿把 root 所在子树标 inert。 */
 function setOutsideInert(active: boolean): void {
-  const root = rootRef.value
-  if (!root) {
-    return
-  }
-  const dock = root.closest('.recall-composer-dock')
-  const main = dock?.parentElement
-  if (main) {
-    for (const child of main.children) {
-      if (child === dock) {
-        continue
-      }
-      if (active) {
-        child.setAttribute('inert', '')
-      } else {
-        child.removeAttribute('inert')
-      }
-    }
-  }
-  // 壳内其余控件（textarea / 发送）在展开时不可操作
-  const shell = root.closest('.recall-composer-shell')
-  if (!shell) {
-    return
-  }
-  for (const child of shell.children) {
-    if (child === root) {
-      continue
-    }
-    if (active) {
-      child.setAttribute('inert', '')
-    } else {
-      child.removeAttribute('inert')
-    }
-  }
+  setPageContextOutsideInert(rootRef.value, active)
 }
 
 watch(

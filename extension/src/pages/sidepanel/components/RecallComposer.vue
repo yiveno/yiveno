@@ -928,13 +928,29 @@ defineExpose({ focus })
   padding: var(--space-sm) var(--space-sm) var(--space-xs);
   border: 1px solid color-mix(in srgb, var(--border) 85%, var(--ink));
   border-radius: var(--radius-xl);
-  /* ChatGPT 式浮底：半透明毛玻璃；扁平——无抬升阴影，靠边框分区 */
+  /* 毛玻璃放 ::before：backdrop-filter 会为 fixed 子孙建 containing block，困住设置遮罩 */
+  background: transparent;
+  box-shadow: none;
+  /* 可见：壳内 leading 的悬浮设置面板可向上溢出 */
+  overflow: visible;
+}
+
+.recall-composer-shell::before {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
   background: color-mix(in srgb, var(--surface-white) 62%, transparent);
   box-shadow: none;
   -webkit-backdrop-filter: blur(18px) saturate(1.15);
   backdrop-filter: blur(18px) saturate(1.15);
-  /* 可见：壳内 leading 的悬浮设置面板可向上溢出 */
-  overflow: visible;
+  pointer-events: none;
+  content: '';
+}
+
+.recall-composer-shell > * {
+  position: relative;
+  z-index: 1;
 }
 
 .recall-composer-shell--listening {
