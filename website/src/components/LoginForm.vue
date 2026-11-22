@@ -775,11 +775,11 @@ function scheduleClearLoadingIfStillHere(): void {
   width: min(100%, 26.5rem);
   max-width: 26.5rem;
   margin-inline: auto;
-  padding-top: clamp(28px, 6vh, var(--space-3xl));
+  padding-top: clamp(var(--space-xl), 6vh, var(--space-3xl));
   padding-bottom: clamp(40px, 8vh, 88px);
-  padding-left: 1.25rem;
-  padding-right: 1.25rem;
-  transition: opacity 220ms cubic-bezier(0.2, 0, 0, 1);
+  padding-left: var(--space-lg);
+  padding-right: var(--space-lg);
+  transition: opacity var(--motion-duration-medium) var(--motion-easing-standard);
 }
 
 .login-form--leaving {
@@ -794,7 +794,7 @@ function scheduleClearLoadingIfStillHere(): void {
 }
 
 .login-form--ready .login-form__rise {
-  animation: login-rise 280ms var(--ease-out) forwards;
+  animation: login-rise var(--motion-duration-medium) var(--ease-out) forwards;
 }
 
 .login-form--ready .login-form__rise--1 {
@@ -807,7 +807,7 @@ function scheduleClearLoadingIfStillHere(): void {
   animation-delay: 100ms;
 }
 .login-form--ready .login-form__rise--4 {
-  animation-delay: 150ms;
+  animation-delay: var(--motion-duration-short);
 }
 .login-form--ready .login-form__rise--5 {
   animation-delay: 200ms;
@@ -884,13 +884,13 @@ function scheduleClearLoadingIfStillHere(): void {
   font: inherit;
   font-size: var(--text-body);
   font-weight: 300;
-  line-height: 1.45;
+  line-height: var(--leading-relaxed);
   /* ⑥ 焦点环 / 边框；③ 禁用 opacity — 禁止 hover 几何变换 */
   transition:
-    border-color 150ms cubic-bezier(0.2, 0, 0, 1),
-    box-shadow 150ms cubic-bezier(0.2, 0, 0, 1),
-    background-color 180ms cubic-bezier(0.2, 0, 0, 1),
-    opacity 180ms cubic-bezier(0.2, 0, 0, 1);
+    border-color var(--motion-duration-short) var(--motion-easing-standard),
+    box-shadow var(--motion-duration-short) var(--motion-easing-standard),
+    background-color var(--motion-duration-short) var(--motion-easing-standard),
+    opacity var(--motion-duration-short) var(--motion-easing-standard);
 }
 
 .login-form__input::placeholder {
@@ -958,8 +958,8 @@ function scheduleClearLoadingIfStillHere(): void {
   background: var(--surface-raised);
   overflow: hidden;
   transition:
-    border-color 150ms cubic-bezier(0.2, 0, 0, 1),
-    box-shadow 150ms cubic-bezier(0.2, 0, 0, 1);
+    border-color var(--motion-duration-short) var(--motion-easing-standard),
+    box-shadow var(--motion-duration-short) var(--motion-easing-standard);
 }
 
 .login-form__otp-row:focus-within {
@@ -972,8 +972,8 @@ function scheduleClearLoadingIfStillHere(): void {
 .login-otp-enter-active,
 .login-otp-leave-active {
   transition:
-    opacity 240ms cubic-bezier(0.2, 0, 0, 1),
-    transform 240ms var(--ease-out);
+    opacity var(--motion-duration-medium) var(--motion-easing-standard),
+    transform var(--motion-duration-medium) var(--ease-out);
 }
 
 .login-otp-enter-from,
@@ -993,7 +993,7 @@ function scheduleClearLoadingIfStillHere(): void {
   min-width: 0;
   border: none;
   border-radius: 0;
-  /* ≥16px：避免 iOS 聚焦自动缩放 */
+  /* ≥16px：避免 iOS 聚焦自动缩放（故意不并入 --text-body=14px） */
   font-size: 1rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-variant-numeric: tabular-nums;
@@ -1015,15 +1015,15 @@ function scheduleClearLoadingIfStillHere(): void {
   font: inherit;
   font-size: var(--text-meta);
   font-weight: var(--font-weight-medium);
-  line-height: 1.2;
+  line-height: var(--leading-tight);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   cursor: pointer;
   transition:
-    color 180ms cubic-bezier(0.2, 0, 0, 1),
-    background-color 180ms cubic-bezier(0.2, 0, 0, 1),
-    opacity 180ms cubic-bezier(0.2, 0, 0, 1);
+    color var(--motion-duration-short) var(--motion-easing-standard),
+    background-color var(--motion-duration-short) var(--motion-easing-standard),
+    opacity var(--motion-duration-short) var(--motion-easing-standard);
 }
 
 /* ⑤ 倒计时秒数轻闪 */
@@ -1032,7 +1032,7 @@ function scheduleClearLoadingIfStillHere(): void {
   min-width: 1.35em;
   font-variant-numeric: tabular-nums;
   text-align: center;
-  animation: login-tick 120ms cubic-bezier(0.2, 0, 0, 1) both;
+  animation: login-tick var(--motion-duration-short) var(--motion-easing-standard) both;
 }
 
 @keyframes login-tick {
@@ -1070,12 +1070,12 @@ function scheduleClearLoadingIfStillHere(): void {
   font: inherit;
   font-size: var(--text-meta);
   font-weight: var(--font-weight-medium);
-  line-height: 1.35;
+  line-height: var(--leading-snug);
   cursor: pointer;
   text-decoration: none;
   transition:
-    color 180ms cubic-bezier(0.2, 0, 0, 1),
-    opacity 180ms cubic-bezier(0.2, 0, 0, 1);
+    color var(--motion-duration-short) var(--motion-easing-standard),
+    opacity var(--motion-duration-short) var(--motion-easing-standard);
 }
 
 .login-form__text-link:hover,
@@ -1102,17 +1102,17 @@ function scheduleClearLoadingIfStillHere(): void {
   letter-spacing: 0.01em;
   /* ③ 与 pages.css ui-btn 对齐；禁用态 opacity 跟手 */
   transition:
-    background 180ms cubic-bezier(0.2, 0, 0, 1),
-    border-color 180ms cubic-bezier(0.2, 0, 0, 1),
-    color 180ms cubic-bezier(0.2, 0, 0, 1),
-    opacity 180ms cubic-bezier(0.2, 0, 0, 1);
+    background var(--motion-duration-short) var(--motion-easing-standard),
+    border-color var(--motion-duration-short) var(--motion-easing-standard),
+    color var(--motion-duration-short) var(--motion-easing-standard),
+    opacity var(--motion-duration-short) var(--motion-easing-standard);
 }
 
 .login-form__divider {
   display: flex;
   align-items: center;
   width: 100%;
-  margin: 1.25rem auto;
+  margin: var(--space-lg) auto;
   gap: var(--space-sm);
   color: var(--on-surface-muted);
 }
@@ -1155,9 +1155,9 @@ function scheduleClearLoadingIfStillHere(): void {
   background: var(--surface-raised);
   border-color: color-mix(in srgb, var(--border) 70%, var(--ink));
   transition:
-    background 180ms cubic-bezier(0.2, 0, 0, 1),
-    border-color 180ms cubic-bezier(0.2, 0, 0, 1),
-    opacity 180ms cubic-bezier(0.2, 0, 0, 1);
+    background var(--motion-duration-short) var(--motion-easing-standard),
+    border-color var(--motion-duration-short) var(--motion-easing-standard),
+    opacity var(--motion-duration-short) var(--motion-easing-standard);
 }
 
 .login-form__oauth:hover,
@@ -1179,19 +1179,19 @@ function scheduleClearLoadingIfStillHere(): void {
   max-width: 22rem;
   margin: 0 auto;
   color: var(--on-surface-muted);
-  font-size: 0.9375rem;
+  font-size: var(--text-body);
   font-weight: 300;
-  line-height: 1.55;
+  line-height: var(--leading-relaxed);
 }
 
 @media (max-width: 480px) {
   .login-form.page {
-    padding-top: clamp(20px, 4vh, 40px);
+    padding-top: clamp(var(--space-lg), 4vh, 40px);
     padding-bottom: clamp(var(--space-xl), 6vh, var(--space-3xl));
   }
 
   .login-form__oauth-row {
-    gap: 1.25rem;
+    gap: var(--space-lg);
   }
 }
 

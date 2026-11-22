@@ -59,18 +59,18 @@
 
 /* 心智标签：find things；履约承诺仍在下方 H1（ADR-012） */
 .hero__epithet {
-  margin: 0 0 clamp(var(--space-sm), 1.8vh, 18px);
+  margin: 0 0 clamp(var(--space-sm), 1.8vh, var(--space-md));
   max-width: 28ch;
   font-family: var(--font-sans);
   font-size: clamp(var(--text-meta), 1.35vw, 15px);
   font-weight: var(--font-weight-medium);
-  line-height: 1.35;
+  line-height: var(--leading-snug);
   letter-spacing: 0.02em;
   color: color-mix(in srgb, var(--sage-faint) 42%, var(--on-ink-muted));
 }
 
 .hero__title {
-  margin: 0 0 clamp(18px, 2.5vh, 26px);
+  margin: 0 0 clamp(var(--space-md), 2.5vh, var(--space-lg));
   max-width: 100%;
   font-size: clamp(2rem, 5.5vw + 0.6rem, 88px);
   font-weight: var(--font-weight-regular);
@@ -85,7 +85,7 @@
 .hero__sub {
   margin: 0;
   max-width: min(40rem, 100%);
-  font-size: clamp(15px, 1.7vw, 18px);
+  font-size: clamp(var(--text-body), 1.7vw, 18px);
   font-weight: 300;
   line-height: 1.7;
   color: var(--on-ink-muted);

@@ -266,12 +266,12 @@ onMounted(async () => {
   background: transparent;
   padding: 0.55rem 1.1rem;
   font: inherit;
-  font-size: 13.5px;
+  font-size: var(--text-body);
   cursor: pointer;
   color: var(--muted);
   transition:
-    background 0.15s,
-    color 0.15s;
+    background var(--motion-duration-short),
+    color var(--motion-duration-short);
 }
 
 .toggle-btn.active {
@@ -281,7 +281,7 @@ onMounted(async () => {
 
 .plans {
   display: grid;
-  gap: clamp(var(--space-md), 2.5vw, 28px);
+  gap: clamp(var(--space-md), 2.5vw, var(--space-xl));
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
@@ -289,7 +289,7 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: clamp(var(--space-lg), 3vw, 36px);
+  padding: clamp(var(--space-lg), 3vw, var(--space-xl));
   border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   background: var(--paper-dim);
@@ -304,7 +304,7 @@ onMounted(async () => {
 
 .plan__tier {
   margin: 0 0 var(--space-md);
-  font-size: 11px;
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-medium);
   letter-spacing: 0.1em;
   text-transform: uppercase;
@@ -316,7 +316,7 @@ onMounted(async () => {
 }
 
 .plan__price {
-  margin: 0 0 10px;
+  margin: 0 0 var(--space-xs);
   font-family: var(--font-display);
   font-weight: var(--font-weight-regular);
   font-size: clamp(30px, 3.5vw, 40px);
@@ -341,10 +341,10 @@ onMounted(async () => {
 }
 
 .plan__desc {
-  margin: 0 0 28px;
+  margin: 0 0 var(--space-xl);
   font-size: var(--text-body);
   font-weight: 300;
-  line-height: 1.55;
+  line-height: var(--leading-relaxed);
   color: var(--muted);
 }
 
@@ -353,17 +353,17 @@ onMounted(async () => {
 }
 
 .plan__features {
-  margin: 0 0 28px;
+  margin: 0 0 var(--space-xl);
   padding: 0;
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-xs);
   flex: 1;
 }
 
 .plan__features li {
-  font-size: 13.5px;
+  font-size: var(--text-body);
   font-weight: 300;
   line-height: var(--leading-relaxed);
   color: var(--muted);
@@ -405,16 +405,16 @@ onMounted(async () => {
   max-width: 32rem;
   font-size: var(--text-meta);
   font-weight: 300;
-  line-height: 1.55;
+  line-height: var(--leading-relaxed);
   color: var(--sage-muted);
 }
 
 .pricing-page__footnote {
-  margin-top: clamp(28px, 4vw, 40px);
+  margin-top: clamp(var(--space-xl), 4vw, 40px);
   text-align: center;
   color: var(--sage-muted);
   font-size: var(--text-meta);
   font-weight: 300;
-  line-height: 1.55;
+  line-height: var(--leading-relaxed);
 }
 </style>

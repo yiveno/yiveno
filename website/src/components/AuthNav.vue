@@ -114,7 +114,7 @@ onUnmounted(() => {
 .nav-link {
   text-decoration: none;
   color: var(--nav-muted);
-  font-size: 15px;
+  font-size: var(--text-body);
   font-weight: var(--font-weight-medium);
   letter-spacing: 0.005em;
 }
@@ -126,7 +126,7 @@ onUnmounted(() => {
 
 .nav-link:focus-visible {
   outline: 2px solid var(--sage);
-  outline-offset: 3px;
+  outline-offset: 2px;
 }
 
 .user-info {

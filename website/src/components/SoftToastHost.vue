@@ -79,7 +79,7 @@ const markByTone: Record<SoftToastTone, string> = {
   border-radius: var(--radius);
   background: var(--surface-raised);
   box-shadow: 0 8px 24px color-mix(in srgb, var(--ink) 12%, transparent);
-  animation: soft-toast-enter 220ms ease-out;
+  animation: soft-toast-enter var(--motion-duration-medium) ease-out;
 }
 
 .soft-toast__mark {
@@ -87,8 +87,8 @@ const markByTone: Record<SoftToastTone, string> = {
   width: 1.15rem;
   height: 1.15rem;
   margin-top: 0.1rem;
-  border-radius: 999px;
-  font-size: 0.7rem;
+  border-radius: var(--radius-full);
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-semibold);
   line-height: 1.15rem;
   text-align: center;
@@ -119,7 +119,7 @@ const markByTone: Record<SoftToastTone, string> = {
   color: var(--on-surface);
   font-size: var(--text-body);
   font-weight: 300;
-  line-height: 1.45;
+  line-height: var(--leading-relaxed);
   overflow-wrap: anywhere;
 }
 

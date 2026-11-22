@@ -5,6 +5,7 @@ import WebsiteLanguageSwitcher from '../components/WebsiteLanguageSwitcher.vue'
 import fontsCriticalCssRaw from '../../public/fonts/fonts-critical.css?raw'
 /** Brand Core + Roles；?raw 不会解析 CSS @import，须与 site-critical 显式拼接 */
 import brandCssRaw from '@yiveno/design-tokens/css/brand.css?raw'
+import motionCssRaw from '@yiveno/design-tokens/css/motion.css?raw'
 import siteCriticalCssRaw from '../styles/site-critical.css?raw'
 import siteDeferredHref from '../styles/site-deferred.css?url'
 import homeCriticalCssRaw from '../styles/home-critical.css?raw'
@@ -55,7 +56,7 @@ const ogImage = `${canonicalOrigin}/og-image.jpg`
 
 /** 仅内联首屏所需 CSS；site/home deferred 异步加载（可长缓存） */
 const fontsCriticalCss = minifyCss(fontsCriticalCssRaw)
-const siteCriticalCss = minifyCss(`${brandCssRaw}\n${siteCriticalCssRaw}`)
+const siteCriticalCss = minifyCss(`${brandCssRaw}\n${motionCssRaw}\n${siteCriticalCssRaw}`)
 const homeCriticalCss = chrome === 'home' ? minifyCss(homeCriticalCssRaw) : ''
 
 const homeJsonLd = jsonLd ? buildHomeJsonLdGraph() : null

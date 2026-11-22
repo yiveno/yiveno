@@ -86,11 +86,11 @@ const secondaryKey =
   }
 
   .install-cta__lede {
-    margin: 0 0 1.25rem;
+    margin: 0 0 var(--space-lg);
     color: var(--muted);
-    font-size: clamp(15px, 1.6vw, 17px);
+    font-size: clamp(var(--text-body), 1.6vw, 17px);
     font-weight: 300;
-    line-height: 1.65;
+    line-height: var(--leading-relaxed);
   }
 
   .install-cta__actions {
@@ -108,10 +108,10 @@ const secondaryKey =
     min-height: 44px;
     padding: 0.55rem 1.1rem;
     border-radius: var(--radius);
-    font-size: 0.9375rem;
+    font-size: var(--text-body);
     font-weight: var(--font-weight-medium);
     text-decoration: none;
-    line-height: 1.2;
+    line-height: var(--leading-tight);
   }
 
   .install-cta__btn--primary {

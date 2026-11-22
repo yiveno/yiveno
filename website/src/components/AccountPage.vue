@@ -674,7 +674,7 @@ function formatDeviceTime(iso: string): string {
 }
 
 .account__devices {
-  margin-top: clamp(28px, 4vw, 40px);
+  margin-top: clamp(var(--space-xl), 4vw, 40px);
   padding-top: clamp(var(--space-lg), 3vw, var(--space-xl));
   border-top: 1px solid var(--border);
 }
@@ -695,7 +695,7 @@ function formatDeviceTime(iso: string): string {
 }
 
 .account__device-row {
-  padding: var(--space-sm) 14px;
+  padding: var(--space-sm) var(--space-md);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: color-mix(in srgb, var(--paper-dim) 55%, transparent);
@@ -703,7 +703,7 @@ function formatDeviceTime(iso: string): string {
 
 .account__device-name {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--text-body);
   font-weight: var(--font-weight-medium);
   color: var(--ink);
 }
@@ -712,7 +712,7 @@ function formatDeviceTime(iso: string): string {
   display: flex;
   flex-wrap: wrap;
   gap: 2px 0.35em;
-  margin: 6px 0 0;
+  margin: var(--space-xs) 0 0;
   font-size: var(--text-meta);
   color: var(--muted);
 }
@@ -721,12 +721,12 @@ function formatDeviceTime(iso: string): string {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-xs);
-  margin-top: 10px;
+  margin-top: var(--space-xs);
 }
 
 .account__device-rename-input {
   width: min(100%, 20rem);
-  padding: var(--space-xs) 10px;
+  padding: var(--space-xs) var(--space-xs);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font: inherit;
@@ -739,14 +739,14 @@ function formatDeviceTime(iso: string): string {
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-sm) var(--space-md);
-  margin: 0 0 clamp(20px, 3vw, 28px);
-  padding: var(--space-sm) 14px;
+  margin: 0 0 clamp(var(--space-lg), 3vw, var(--space-xl));
+  padding: var(--space-sm) var(--space-md);
   border: 1px solid color-mix(in srgb, var(--sage) 28%, var(--border));
   border-radius: var(--radius);
   background: color-mix(in srgb, var(--sage) 8%, var(--paper));
   font-size: var(--text-body);
   font-weight: var(--font-weight-regular);
-  line-height: 1.45;
+  line-height: var(--leading-relaxed);
   color: var(--charcoal);
 }
 
@@ -758,9 +758,9 @@ function formatDeviceTime(iso: string): string {
 .account__checkout-hint-dismiss {
   flex-shrink: 0;
   margin: 0;
-  padding: 2px 6px;
+  padding: 2px var(--space-xs);
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: transparent;
   font: inherit;
   font-size: var(--text-meta);
@@ -783,7 +783,7 @@ function formatDeviceTime(iso: string): string {
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-lg);
-  margin-bottom: clamp(28px, 4vw, 40px);
+  margin-bottom: clamp(var(--space-xl), 4vw, 40px);
   padding-bottom: clamp(var(--space-lg), 3vw, var(--space-xl));
   border-bottom: 1px solid var(--border);
 }
@@ -792,7 +792,7 @@ function formatDeviceTime(iso: string): string {
   display: flex;
   align-items: center;
   flex: 1;
-  gap: 14px;
+  gap: var(--space-md);
   min-width: 0;
 }
 
@@ -807,7 +807,7 @@ function formatDeviceTime(iso: string): string {
 
 .account__avatar--brand {
   box-sizing: border-box;
-  padding: 10px;
+  padding: var(--space-xs);
   object-fit: contain;
   background: var(--paper-dim);
   border: 1px solid var(--border);
@@ -823,7 +823,7 @@ function formatDeviceTime(iso: string): string {
   font-weight: var(--font-weight-regular);
   font-size: clamp(24px, 3.2vw, 30px);
   letter-spacing: -0.025em;
-  line-height: 1.15;
+  line-height: var(--leading-tight);
   color: var(--ink);
 }
 
@@ -832,7 +832,7 @@ function formatDeviceTime(iso: string): string {
   flex-wrap: wrap;
   align-items: baseline;
   gap: 2px 0.35em;
-  margin: 6px 0 0;
+  margin: var(--space-xs) 0 0;
   font-size: var(--text-body);
   font-weight: 300;
   line-height: var(--leading-snug);
@@ -867,7 +867,7 @@ function formatDeviceTime(iso: string): string {
 }
 
 .account__sign-out {
-  padding: var(--space-xs) 10px;
+  padding: var(--space-xs) var(--space-xs);
   border: none;
   border-radius: var(--radius-sm);
   background: transparent;
@@ -880,8 +880,8 @@ function formatDeviceTime(iso: string): string {
 
 .account__sign-out-hint {
   margin: 0;
-  font-size: 11px;
-  line-height: 1.35;
+  font-size: var(--text-caption);
+  line-height: var(--leading-snug);
   color: var(--muted);
   text-align: right;
 }
@@ -911,7 +911,7 @@ function formatDeviceTime(iso: string): string {
 }
 
 .account__plan-panel {
-  padding: clamp(20px, 3vw, 28px);
+  padding: clamp(var(--space-lg), 3vw, var(--space-xl));
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--paper) 72%, white);
@@ -929,7 +929,7 @@ function formatDeviceTime(iso: string): string {
 .account__plan-top {
   display: flex;
   align-items: baseline;
-  gap: 10px;
+  gap: var(--space-xs);
   flex-wrap: wrap;
 }
 
@@ -964,12 +964,12 @@ function formatDeviceTime(iso: string): string {
 .account__plan-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 20px;
+  gap: var(--space-xs);
+  margin-top: var(--space-lg);
 }
 
 .account__plan-status-text {
-  margin: 14px 0 0;
+  margin: var(--space-md) 0 0;
   font-size: var(--text-meta);
   font-weight: 300;
   color: var(--sage-muted);
@@ -983,7 +983,7 @@ function formatDeviceTime(iso: string): string {
 
 .account__skel {
   height: 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: color-mix(in srgb, var(--border) 70%, var(--paper));
   opacity: 0.85;
   animation: account-skel 1.2s ease-in-out infinite;
@@ -992,7 +992,7 @@ function formatDeviceTime(iso: string): string {
 .account__skel--title {
   width: 28%;
   height: 28px;
-  margin-bottom: 14px;
+  margin-bottom: var(--space-md);
 }
 
 .account__skel--line {

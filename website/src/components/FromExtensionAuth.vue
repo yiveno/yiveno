@@ -328,7 +328,7 @@ onMounted(async () => {
 
 .from-extension__status {
   margin: 0 0 var(--space-md);
-  line-height: 1.45;
+  line-height: var(--leading-relaxed);
 }
 
 .from-extension__accounts {
@@ -350,7 +350,7 @@ onMounted(async () => {
 
 .from-extension__warn {
   margin: 0 0 var(--space-md);
-  line-height: 1.45;
+  line-height: var(--leading-relaxed);
 }
 
 .from-extension__actions {
@@ -363,7 +363,7 @@ onMounted(async () => {
 .from-extension__cancel {
   min-height: 2.5rem;
   padding: var(--space-xs) var(--space-md);
-  border-radius: 0.5rem;
+  border-radius: var(--radius-sm);
   border: 1px solid transparent;
   cursor: pointer;
   font: inherit;

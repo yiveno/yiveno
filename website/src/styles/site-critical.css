@@ -138,7 +138,7 @@ img {
   font-family: var(--font-sans);
   font-size: var(--text-meta);
   font-weight: var(--font-weight-medium);
-  line-height: 1.25;
+  line-height: var(--leading-tight);
   letter-spacing: 0.01em;
   color: var(--on-surface);
   background: var(--surface);
@@ -171,7 +171,7 @@ img {
   background: var(--nav-bg);
   color: var(--nav-fg);
   border-bottom: 1px solid var(--nav-line);
-  transition: color 0.3s ease;
+  transition: color var(--motion-duration-medium) ease;
 }
 
 .site-nav--waitlist {
@@ -183,7 +183,7 @@ img {
 .site-nav__brand {
   display: inline-flex;
   align-items: center;
-  gap: 11px;
+  gap: var(--space-sm);
   text-decoration: none;
   color: var(--nav-brand);
 }
@@ -198,11 +198,11 @@ img {
 .site-nav__name {
   font-family: var(--font-display);
   font-weight: var(--font-weight-medium);
-  font-size: 17px;
+  font-size: var(--text-title);
   letter-spacing: -0.025em;
   line-height: 1;
   color: var(--nav-brand);
-  transition: color 0.3s;
+  transition: color var(--motion-duration-medium);
 }
 
 .site-nav__spacer {
@@ -215,7 +215,7 @@ img {
   font-size: var(--text-body);
   font-weight: var(--font-weight-medium);
   letter-spacing: 0.005em;
-  transition: color 0.18s ease;
+  transition: color var(--motion-duration-short) ease;
 }
 
 .site-nav__link:hover,
@@ -226,7 +226,7 @@ img {
 .site-nav__link:focus-visible,
 .site-nav__brand:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 3px;
+  outline-offset: 2px;
 }
 
 body[data-chrome='home'][data-nav-over-hero='true'] .site-nav__link:focus-visible,
@@ -242,10 +242,10 @@ body[data-chrome='home'][data-nav-over-hero='true'] .site-nav__brand:focus-visib
   }
 
   .site-nav__name {
-    font-size: 19px;
+    font-size: var(--text-title);
   }
 
   .site-nav__link {
-    font-size: 15px;
+    font-size: var(--text-body);
   }
 }

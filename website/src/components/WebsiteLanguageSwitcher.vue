@@ -170,24 +170,24 @@ function pick(locale: WebsiteUiLocaleId): void {
   padding: 0.2rem 0.15rem;
   border: 0;
   background: transparent;
-  color: var(--nav-muted, var(--muted));
+  color: var(--nav-muted);
   font: inherit;
   font-size: var(--text-meta);
   font-weight: var(--font-weight-medium);
   letter-spacing: 0.01em;
-  line-height: 1.2;
+  line-height: var(--leading-tight);
   cursor: pointer;
 }
 
 .site-lang__trigger:hover,
 .site-lang__trigger:focus-visible,
 .site-lang[data-open='true'] .site-lang__trigger {
-  color: var(--nav-fg, var(--on-surface));
+  color: var(--nav-fg);
 }
 
 .site-lang__trigger:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 3px;
+  outline-offset: 2px;
   border-radius: 2px;
 }
 
@@ -204,7 +204,7 @@ function pick(locale: WebsiteUiLocaleId): void {
 .site-lang__chevron {
   display: inline-flex;
   opacity: 0.7;
-  transition: transform 0.18s ease;
+  transition: transform var(--motion-duration-short) ease;
 }
 
 .site-lang[data-open='true'] .site-lang__chevron {
@@ -214,11 +214,11 @@ function pick(locale: WebsiteUiLocaleId): void {
 /* 浮层始终纸面底：深/浅顶栏背后都可读（对齐参考站 LANGUAGE 卡片） */
 .site-lang__menu {
   position: absolute;
-  top: calc(100% + 10px);
+  top: calc(100% + var(--space-xs));
   right: 0;
   z-index: calc(var(--z-nav) + 5);
   min-width: 11.5rem;
-  padding: var(--space-sm) 10px 10px;
+  padding: var(--space-sm) var(--space-xs) var(--space-xs);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface-raised);
@@ -228,13 +228,13 @@ function pick(locale: WebsiteUiLocaleId): void {
 
 .site-lang[data-placement='above'] .site-lang__menu {
   top: auto;
-  bottom: calc(100% + 10px);
+  bottom: calc(100% + var(--space-xs));
 }
 
 .site-lang__menu-heading {
-  margin: 0 6px var(--space-xs);
+  margin: 0 var(--space-xs) var(--space-xs);
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-semibold);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -254,13 +254,13 @@ function pick(locale: WebsiteUiLocaleId): void {
   display: block;
   width: 100%;
   margin: 0;
-  padding: 9px var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
   border: 0;
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   background: transparent;
   color: inherit;
   font: inherit;
-  font-size: 0.9rem;
+  font-size: var(--text-body);
   font-weight: 450;
   text-align: left;
   cursor: pointer;
@@ -273,7 +273,7 @@ function pick(locale: WebsiteUiLocaleId): void {
 
 .site-lang__option:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
 .site-lang__option[data-selected='true'] {

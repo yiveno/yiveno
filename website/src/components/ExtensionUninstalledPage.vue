@@ -394,7 +394,7 @@ onMounted(() => {
 }
 
 .uninstall__header {
-  margin-bottom: clamp(20px, 3vw, 28px);
+  margin-bottom: clamp(var(--space-lg), 3vw, var(--space-xl));
 }
 
 .uninstall__lede {
@@ -403,9 +403,9 @@ onMounted(() => {
 
 .uninstall__support-hint {
   margin: var(--space-sm) 0 0;
-  font-size: 13.5px;
+  font-size: var(--text-body);
   font-weight: 300;
-  line-height: 1.55;
+  line-height: var(--leading-relaxed);
   color: var(--sage-muted);
 }
 
@@ -423,7 +423,7 @@ onMounted(() => {
 
 /** 感谢态最轻提示：低于 lede，不抢「Thanks」 */
 .uninstall__soft-hint {
-  margin: 14px 0 0;
+  margin: var(--space-md) 0 0;
   font-size: var(--text-meta);
   font-weight: 300;
   line-height: var(--leading-relaxed);
@@ -451,9 +451,9 @@ onMounted(() => {
 
 .uninstall__hint {
   margin: var(--space-sm) 0 0;
-  font-size: 13.5px;
+  font-size: var(--text-body);
   font-weight: 300;
-  line-height: 1.55;
+  line-height: var(--leading-relaxed);
   color: var(--sage-muted);
 }
 
@@ -470,31 +470,31 @@ onMounted(() => {
 .uninstall__reason {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
-  padding: 10px var(--space-sm);
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface-2);
-  font-size: 14.5px;
+  font-size: var(--text-body);
   font-weight: var(--font-weight-regular);
-  line-height: 1.45;
+  line-height: var(--leading-relaxed);
   color: var(--on-surface);
   cursor: pointer;
   transition:
-    background 0.15s ease,
-    border-color 0.15s ease;
+    background var(--motion-duration-short) ease,
+    border-color var(--motion-duration-short) ease;
 }
 
 .uninstall__reason--custom {
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-xs);
   cursor: default;
 }
 
 .uninstall__reason-main {
   display: flex;
   align-items: flex-start;
-  gap: 10px;
+  gap: var(--space-xs);
   width: 100%;
   cursor: pointer;
 }
@@ -511,14 +511,14 @@ onMounted(() => {
 }
 
 .uninstall__check {
-  margin-top: 3px;
+  margin-top: var(--space-2xs);
   flex-shrink: 0;
   accent-color: var(--accent);
 }
 
 .uninstall__custom {
   width: 100%;
-  padding-left: 26px;
+  padding-left: var(--space-lg);
   box-sizing: border-box;
 }
 
@@ -526,7 +526,7 @@ onMounted(() => {
   display: block;
   width: 100%;
   box-sizing: border-box;
-  padding: 9px 11px;
+  padding: var(--space-xs) var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface);
@@ -534,7 +534,7 @@ onMounted(() => {
   font: inherit;
   font-size: var(--text-body);
   font-weight: 300;
-  line-height: 1.45;
+  line-height: var(--leading-relaxed);
 }
 
 .uninstall__custom-input::placeholder {
@@ -548,7 +548,7 @@ onMounted(() => {
 
 .uninstall__note-label {
   display: block;
-  margin: 20px 0 var(--space-xs);
+  margin: var(--space-lg) 0 var(--space-xs);
   font-size: var(--text-body);
   font-weight: var(--font-weight-medium);
   color: var(--on-surface);
@@ -563,13 +563,13 @@ onMounted(() => {
   display: block;
   width: 100%;
   box-sizing: border-box;
-  padding: 10px var(--space-sm);
+  padding: var(--space-xs) var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--ink);
   font: inherit;
-  font-size: 14.5px;
+  font-size: var(--text-body);
   font-weight: 300;
   line-height: var(--leading-relaxed);
   resize: vertical;
@@ -594,13 +594,13 @@ onMounted(() => {
 }
 
 .uninstall__err {
-  margin: 14px 0 0;
-  font-size: 13.5px;
+  margin: var(--space-md) 0 0;
+  font-size: var(--text-body);
   font-weight: 300;
   color: var(--danger);
 }
 
 .uninstall__actions {
-  margin-top: 22px;
+  margin-top: var(--space-lg);
 }
 </style>

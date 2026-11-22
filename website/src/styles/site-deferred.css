@@ -17,9 +17,9 @@ body[data-chrome='home']::-webkit-scrollbar {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 14px;
+  gap: var(--space-md);
   padding: var(--space-xl) var(--pad-x);
-  font-size: 0.9375rem;
+  font-size: var(--text-body);
   color: var(--muted);
   border-top: 1px solid var(--border);
   background: var(--paper-dim);
@@ -28,7 +28,7 @@ body[data-chrome='home']::-webkit-scrollbar {
 .site-footer__brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-xs);
   text-decoration: none;
   color: var(--charcoal);
 }
@@ -43,7 +43,7 @@ body[data-chrome='home']::-webkit-scrollbar {
 .site-footer__name {
   font-family: var(--font-display);
   font-weight: var(--font-weight-medium);
-  font-size: 16px;
+  font-size: var(--text-body);
   letter-spacing: -0.02em;
   color: var(--charcoal);
 }
@@ -59,13 +59,13 @@ body[data-chrome='home']::-webkit-scrollbar {
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: 20px 26px;
+  gap: var(--space-lg) var(--space-lg);
 }
 
 .site-footer__links {
   display: flex;
   flex-wrap: wrap;
-  gap: 26px;
+  gap: var(--space-lg);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -77,7 +77,7 @@ body[data-chrome='home']::-webkit-scrollbar {
   font-size: var(--text-body);
   font-weight: var(--font-weight-medium);
   letter-spacing: 0.01em;
-  transition: color 0.15s;
+  transition: color var(--motion-duration-short);
 }
 
 .site-footer a:hover,
@@ -88,5 +88,5 @@ body[data-chrome='home']::-webkit-scrollbar {
 
 .site-footer a:focus-visible {
   outline: 2px solid var(--sage);
-  outline-offset: 3px;
+  outline-offset: 2px;
 }

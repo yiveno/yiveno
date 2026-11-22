@@ -5,7 +5,7 @@
  */
 
 body[data-chrome='default'] #main {
-  padding-top: 68px;
+  padding-top: var(--space-3xl);
 }
 
 .page {
@@ -39,7 +39,7 @@ body[data-chrome='default'] #main {
 
 .page__lede {
   margin: 0 0 clamp(var(--space-xl), 5vw, var(--space-2xl));
-  font-size: clamp(15px, 1.6vw, 17.5px);
+  font-size: clamp(var(--text-body), 1.6vw, 17.5px);
   font-weight: 300;
   line-height: 1.7;
   color: var(--on-surface-muted);
@@ -53,14 +53,14 @@ body[data-chrome='default'] #main {
 }
 
 .page__meta {
-  margin: 0 0 clamp(28px, 4vw, 40px);
+  margin: 0 0 clamp(var(--space-xl), 4vw, 40px);
   font-size: var(--text-meta);
   font-weight: 300;
   color: var(--sage-muted);
 }
 
 .page__section {
-  margin-top: clamp(28px, 4vw, 40px);
+  margin-top: clamp(var(--space-xl), 4vw, 40px);
   padding-top: clamp(var(--space-lg), 3vw, var(--space-xl));
   border-top: 1px solid var(--border);
 }
@@ -75,13 +75,13 @@ body[data-chrome='default'] #main {
   margin: 0 0 var(--space-sm);
   font-family: var(--font-display);
   font-weight: var(--font-weight-regular);
-  font-size: clamp(18px, 2.2vw, 22px);
+  font-size: clamp(var(--text-title), 2.2vw, 22px);
   letter-spacing: -0.02em;
   color: var(--ink);
 }
 
 .page__section h3 {
-  margin: 22px 0 var(--space-xs);
+  margin: var(--space-lg) 0 var(--space-xs);
   font-family: var(--font-body);
   font-weight: var(--font-weight-medium);
   font-size: var(--text-body);
@@ -92,7 +92,7 @@ body[data-chrome='default'] #main {
 .page__section p,
 .page__section ul {
   margin: 0 0 var(--space-sm);
-  font-size: 15px;
+  font-size: var(--text-body);
   font-weight: 300;
   line-height: 1.75;
   color: var(--on-surface-muted);
@@ -111,7 +111,7 @@ body[data-chrome='default'] #main {
   text-decoration: underline;
   text-decoration-color: color-mix(in srgb, var(--accent) 35%, transparent);
   text-underline-offset: 2px;
-  transition: color 0.15s ease;
+  transition: color var(--motion-duration-short) ease;
 }
 
 .page__section a:hover,
@@ -121,10 +121,10 @@ body[data-chrome='default'] #main {
 
 /* 长文（Privacy / Terms）：单栏散文，无分段顶线 */
 .page__prose h2 {
-  margin: clamp(28px, 4vw, 40px) 0 var(--space-sm);
+  margin: clamp(var(--space-xl), 4vw, 40px) 0 var(--space-sm);
   font-family: var(--font-display);
   font-weight: var(--font-weight-regular);
-  font-size: clamp(18px, 2.2vw, 22px);
+  font-size: clamp(var(--text-title), 2.2vw, 22px);
   letter-spacing: -0.02em;
   color: var(--ink);
 }
@@ -134,7 +134,7 @@ body[data-chrome='default'] #main {
 }
 
 .page__prose h3 {
-  margin: 22px 0 var(--space-xs);
+  margin: var(--space-lg) 0 var(--space-xs);
   font-family: var(--font-body);
   font-weight: var(--font-weight-medium);
   font-size: var(--text-body);
@@ -145,7 +145,7 @@ body[data-chrome='default'] #main {
 .page__prose p,
 .page__prose ul {
   margin: 0 0 var(--space-sm);
-  font-size: 15px;
+  font-size: var(--text-body);
   font-weight: 300;
   line-height: 1.75;
   color: var(--on-surface-muted);
@@ -173,7 +173,7 @@ body[data-chrome='default'] #main {
 
 .page__hint,
 .page__note {
-  font-size: 13.5px;
+  font-size: var(--text-body);
   font-weight: 300;
   line-height: 1.6;
   color: var(--sage-muted);
@@ -183,7 +183,7 @@ body[data-chrome='default'] #main {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-sm);
-  margin-top: 28px;
+  margin-top: var(--space-xl);
   justify-content: flex-start;
 }
 
@@ -197,7 +197,7 @@ body[data-chrome='default'] #main {
   align-items: center;
   justify-content: center;
   min-height: 44px;
-  padding: 0 20px;
+  padding: 0 var(--space-lg);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--surface-2);
@@ -209,10 +209,10 @@ body[data-chrome='default'] #main {
   text-decoration: none;
   cursor: pointer;
   transition:
-    background 0.18s,
-    border-color 0.18s,
-    color 0.18s,
-    opacity 0.18s;
+    background var(--motion-duration-short),
+    border-color var(--motion-duration-short),
+    color var(--motion-duration-short),
+    opacity var(--motion-duration-short);
 }
 
 .ui-btn:hover,
@@ -265,7 +265,7 @@ body[data-chrome='default'] #main {
 
 .ui-status {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--text-body);
   font-weight: 300;
   color: var(--sage-muted);
   text-align: center;
