@@ -1124,7 +1124,7 @@ device-or-supabase-auth.ts[MI6T]: F:过渡期双栈鉴权（ydt_→device 否则
 account.ts[EI5S]: F:账户路由：订阅/MCP 开关/删号 | R:code:worker/src/middleware/device-or-supabase-auth.ts | A:GET /subscription | S:仅 /subscription 双栈；/mcp 与 /delete 仍 supabaseAuth
 admin.ts[EI5T]: F:管理员运维自检路由（JWT）；产品主路径不依赖 | R:- | A:- | S:-
 ai.ts[EA5T]: F:AI 路由树：clue/hosted/embed/dreaming 入口 | R:code:worker/src/middleware/device-or-supabase-auth.ts | A:deviceAuthOrSupabaseAuth | S:embed/hosted/dreaming 双栈并把 deviceIsAnonymous 传入 handler
-auth.ts[EI7L]: F:认证路由含 device、绑定 OTP 与匿名转正 | R:code:worker/src/services/auth/bind-otp-service.ts,code:worker/src/services/auth/promote-anonymous-user.ts,code:worker/src/services/auth/device-token-kv.ts | A:POST bind-code;POST bind-verify;POST promote;POST device-register | S:bind-* 与 promote 须 deviceAuth；claimToken 消费在 V2；extension-session→410
+auth.ts[EI7L]: F:认证路由含 device、绑定 OTP、promote 收紧与 claim-by-otp | R:code:worker/src/services/auth/bind-otp-service.ts,code:worker/src/services/auth/claim-by-otp.ts,code:worker/src/services/auth/promote-anonymous-user.ts | A:POST bind-code;POST bind-verify;POST promote;POST claim-by-otp | S:promote 必填 claimToken 无兼容期；claim-by-otp 邮箱取自记录
 billing.ts[EB5S]: F:计费路由：套餐目录、checkout、Customer Portal | R:code:worker/src/middleware/supabase-auth.ts | A:POST /checkout-session | S:缺 email 返回 400 email_required，避免匿名结账走 500
 health.ts[EO5T]: F:健康检查路由 | R:- | A:- | S:-
 mcp.ts[EE5S]: F:只读 MCP HTTP tools/list 与 tools/call | R:code:worker/src/middleware/device-or-supabase-auth.ts | A:deviceAuthOrSupabaseAuth | S:鉴权改双栈；Pro+KV 开关门禁不变，匿名非 Pro 仍拒
@@ -1158,15 +1158,16 @@ provider-config.ts[FI5T]: F:OAuth 提供商配置 | R:- | A:- | S:-
 read-jwt-session-id.ts[II3T]: F:从 access token payload 读取 session_id（不验签） | R:- | A:- | S:-
 validation.ts[II5T]: F:OAuth 请求参数验证 | R:- | A:- | S:-
 verify-supabase-access-token.ts[II6M]: F:服务端 getClaims 校验 Supabase access 并提取 claims | R:code:worker/src/services/auth/device-register.ts,code:worker/src/utils/logger.ts | A:verifySupabaseAccessToken;decodeJwtForDiagnostics;logGetClaimsFailure | S:email空串视同无邮箱（AN3）；getClaims error 与 claims Zod/role 拒均记 [VerifySupabase]；禁记 token 全文；透传 is_anonymous；路径推断 local_jwks vs auth_service_fallback
-device-register.ts[II6M]: F:设备注册 connect/exchange | R:code:worker/src/services/auth/device-token-kv.ts | A:handleDeviceRegister | S:cap 20→403；签发可选 uninstallRevokeToken；已有 meta 不覆盖
+device-register.ts[II6M]: F:设备注册 connect/exchange；导出签发供 claim | R:code:worker/src/services/auth/device-token-kv.ts | A:handleDeviceRegister;issueForAuthenticatedUser | S:cap 20→403；claim-by-otp 复用签发；已有 meta 不覆盖 isAnonymous
 device-token-kv.ts[PI7L]: F:设备 token KV（列表/改名/撤销/cap/整户清） | R:code:worker/src/middleware/device-auth.ts | A:issueDeviceToken;listDevicesForUser;revokeAllDevicesForUser;deleteUserMeta | S:ydt_+64hex；DEVICE_CAP=20；转正后保留旧设备；清理幂等删 user_devs/meta
 promote-anonymous-user.ts[PA5S]: F:匿名账号绑定邮箱转正 | R:code:worker/src/services/auth/device-token-kv.ts | A:promoteAnonymousUser;mapPromoteAdminError;normalizePromoteAdminError | S:Admin updateUser+email_confirm；AuthError 归一化过 exactOptional；冲突 409；已非匿名幂等
 anonymous-cleanup.ts[PA6M]: F:匿名超期用户清理：筛 90 天 + KV 先行 + Admin deleteUser | R:code:worker/src/services/auth/device-token-kv.ts,code:worker/src/data-access/supabase.ts | A:runAnonymousCleanup;isStaleAnonymousUser | S:默认 dry-run；每轮≤500；依赖可注入；先撤 device/meta/配额再删用户
 admin-user-lookup.ts[II6S]: F:Admin listUsers 分页按邮箱查用户 | R:code:worker/src/services/auth/promote-anonymous-user.ts | A:findUserByEmail | S:无 getUserByEmail；超 5 页 fail-closed；不建邮箱 KV 索引
 bind-otp-codes.ts[DI6M]: F:绑定 OTP 码生成哈希与 KV 限流 | R:- | A:generateBindOtpCode;storeBindOtpRecord;checkBindOtpRateLimits | S:限流仅发信成功后递增；日志禁验证码明文
 bind-otp-mail.ts[II5T]: F:绑定 OTP 中英邮件模板与 DirectMail 发送 | R:code:worker/src/services/email/aliyun-directmail.ts | A:buildBindOtpMail;sendBindOtpMail | S:默认发件 hello@yiveno.com；结果原样返回调用方映射
-bind-otp-service.ts[EI7M]: F:绑定 OTP 发码验码与 claimToken 签发 | R:code:worker/src/services/auth/turnstile-verify.ts,code:worker/src/services/auth/bind-otp-codes.ts,code:worker/src/services/auth/admin-user-lookup.ts,code:worker/src/services/auth/bind-otp-mail.ts | A:requestBindCode;verifyBindCode | S:发码不做存在性查询；验码后 listUsers 分叉；claim 消费在 V2
+bind-otp-service.ts[EI7L]: F:绑定 OTP 发码验码与 claimToken 签发消费 | R:code:worker/src/services/auth/turnstile-verify.ts,code:worker/src/services/auth/bind-otp-codes.ts,code:worker/src/services/auth/admin-user-lookup.ts | A:requestBindCode;verifyBindCode;validateAndConsumeClaimToken | S:发码不做存在性查询；claimToken 一次一用；不符不区分细节
 turnstile-verify.ts[II6T]: F:Turnstile siteverify 校验 | R:- | A:verifyTurnstileToken | S:缺 secret fail-closed；不透传原始错误
+claim-by-otp.ts[II6S]: F:claim 分支消费 token 并签发目标设备 | R:code:worker/src/services/auth/bind-otp-service.ts,code:worker/src/services/auth/device-register.ts | A:claimByOtp | S:不碰旧匿名会话；目标用户已删→404；邮箱取自 claim 记录
 
 ===/<repository>/worker/src/services/billing/===
 dodo-client.ts[IB5M]: F:Dodo Payments REST 客户端 | R:- | A:- | S:-

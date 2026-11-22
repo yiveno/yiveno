@@ -12,8 +12,6 @@ import {
 } from './extension-uninstall-revoke-kv'
 import { info, warn } from '../../utils/logger'
 
-type DeviceRegisterMode = 'website_connect' | 'session_exchange'
-
 type DeviceRegisterSuccess = {
   deviceToken: string
   deviceId: string
@@ -65,10 +63,11 @@ async function ensureUserMeta(
 }
 
 /**
- * 已鉴权用户（website_connect / session_exchange）发 device token。
+ * 已鉴权用户（website_connect / session_exchange / claim-by-otp）发 device token。
  * 不挤掉其它设备；不写 ext_auth_session；不撤销旧 Supabase 会话。
+ * 导出供 claim-by-otp 复用（AN6：可传 deviceLabel/platform）。
  */
-async function issueForAuthenticatedUser(
+export async function issueForAuthenticatedUser(
   env: Env,
   input: {
     userId: string

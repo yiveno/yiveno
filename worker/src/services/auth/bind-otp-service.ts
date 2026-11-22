@@ -139,7 +139,8 @@ export function bindClaimKvKey(token: string): string {
   return `${BINDCLAIM_PREFIX}${token}`
 }
 
-async function putClaimRecord(
+/** 写入 claimToken 记录（签发用；TTL 600s） */
+export async function putClaimRecord(
   kv: BindOtpKv,
   token: string,
   record: BindClaimRecord
@@ -147,6 +148,107 @@ async function putClaimRecord(
   await kv.put(bindClaimKvKey(token), JSON.stringify(record), {
     expirationTtl: CLAIM_TOKEN_TTL_SECONDS
   })
+}
+
+/** 只读 claimToken 记录（不消费）；解析失败 / 不存在 → null */
+export async function getBindClaimRecord(
+  kv: BindOtpKv,
+  token: string | undefined | null
+): Promise<BindClaimRecord | null> {
+  const trimmed = typeof token === 'string' ? token.trim() : ''
+  if (!trimmed) return null
+  try {
+    const raw = await kv.get(bindClaimKvKey(trimmed))
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as unknown
+    if (
+      typeof parsed !== 'object' ||
+      parsed === null ||
+      typeof (parsed as BindClaimRecord).anonUserId !== 'string' ||
+      typeof (parsed as BindClaimRecord).email !== 'string' ||
+      ((parsed as BindClaimRecord).branch !== 'promote' &&
+        (parsed as BindClaimRecord).branch !== 'claim') ||
+      typeof (parsed as BindClaimRecord).createdAt !== 'number'
+    ) {
+      return null
+    }
+    return parsed as BindClaimRecord
+  } catch {
+    return null
+  }
+}
+
+export type ValidateClaimExpected = {
+  anonUserId: string
+  email: string
+  branch: BindBranch
+}
+
+export type ValidateAndConsumeClaimResult =
+  { ok: true; record: BindClaimRecord } | { ok: false; error: 'invalid_claim' }
+
+/**
+ * 校验并一次性消费 claimToken。
+ * 不存在 / 解析失败 / branch·userId·email 任一不符 → invalid_claim（不区分细节）。
+ * 通过后立即删 KV；删除失败仍视为消费成功（warn + TTL 兜底）。
+ */
+export async function validateAndConsumeClaimToken(
+  kv: BindOtpKv,
+  token: string | undefined | null,
+  expected: ValidateClaimExpected
+): Promise<ValidateAndConsumeClaimResult> {
+  const trimmed = typeof token === 'string' ? token.trim() : ''
+  if (!trimmed) {
+    return { ok: false, error: 'invalid_claim' }
+  }
+
+  let raw: string | null
+  try {
+    raw = await kv.get(bindClaimKvKey(trimmed))
+  } catch {
+    return { ok: false, error: 'invalid_claim' }
+  }
+  if (!raw) {
+    return { ok: false, error: 'invalid_claim' }
+  }
+
+  let record: BindClaimRecord
+  try {
+    const parsed = JSON.parse(raw) as unknown
+    if (
+      typeof parsed !== 'object' ||
+      parsed === null ||
+      typeof (parsed as BindClaimRecord).anonUserId !== 'string' ||
+      typeof (parsed as BindClaimRecord).email !== 'string' ||
+      ((parsed as BindClaimRecord).branch !== 'promote' &&
+        (parsed as BindClaimRecord).branch !== 'claim') ||
+      typeof (parsed as BindClaimRecord).createdAt !== 'number'
+    ) {
+      return { ok: false, error: 'invalid_claim' }
+    }
+    record = parsed as BindClaimRecord
+  } catch {
+    return { ok: false, error: 'invalid_claim' }
+  }
+
+  if (
+    record.branch !== expected.branch ||
+    record.anonUserId !== expected.anonUserId ||
+    record.email !== expected.email
+  ) {
+    return { ok: false, error: 'invalid_claim' }
+  }
+
+  try {
+    await kv.delete(bindClaimKvKey(trimmed))
+  } catch {
+    warn('[Auth] claimToken 删除失败（仍视为已消费）', {
+      branch: record.branch,
+      anonUserId: record.anonUserId
+    })
+  }
+
+  return { ok: true, record }
 }
 
 /**

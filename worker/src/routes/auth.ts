@@ -24,8 +24,14 @@ import {
   revokeDeviceTokenSelf
 } from '../services/auth/device-token-kv'
 import { mintWebsiteSessionFromExtension } from '../services/auth/mint-website-session'
-import { requestBindCode, verifyBindCode } from '../services/auth/bind-otp-service'
+import { normalizeBindEmail, type BindOtpKv } from '../services/auth/bind-otp-codes'
 import type { BindOtpLocale } from '../services/auth/bind-otp-mail'
+import {
+  requestBindCode,
+  validateAndConsumeClaimToken,
+  verifyBindCode
+} from '../services/auth/bind-otp-service'
+import { claimByOtp } from '../services/auth/claim-by-otp'
 import { maskEmailForLog, promoteAnonymousUser } from '../services/auth/promote-anonymous-user'
 import { error as logErrorMessage, info } from '../utils/logger'
 
@@ -355,8 +361,8 @@ authRouter.post('/bind-verify', deviceAuth(), async c => {
 /**
  * POST /api/auth/promote
  *
- * 匿名转正：device Bearer + `{ email }` → Admin 绑邮箱；token 继续有效。
- * Confirm email OFF：不发 OTP。冲突 → 409 email_conflict；重复转正 → 200 幂等。
+ * 匿名转正：device Bearer + `{ email, claimToken }` → 消费 promote 分支 token → Admin 绑邮箱。
+ * 无兼容期：缺 / 无效 claimToken → 401 invalid_claim。冲突 → 409；已非匿名 → 200 幂等。
  */
 authRouter.post('/promote', deviceAuth(), async c => {
   const userId = c.get('supabaseUserId')
@@ -364,16 +370,40 @@ authRouter.post('/promote', deviceAuth(), async c => {
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice('Bearer '.length).trim() : ''
 
   let rawEmail = ''
+  let claimToken: string | undefined
   try {
     const parsed = await c.req.json().catch(() => null)
     if (typeof parsed === 'object' && parsed !== null) {
-      const email = (parsed as { email?: unknown }).email
-      if (typeof email === 'string') {
-        rawEmail = email
+      const body = parsed as { email?: unknown; claimToken?: unknown }
+      if (typeof body.email === 'string') {
+        rawEmail = body.email
+      }
+      if (typeof body.claimToken === 'string') {
+        claimToken = body.claimToken
       }
     }
   } catch {
     rawEmail = ''
+    claimToken = undefined
+  }
+
+  if (typeof claimToken !== 'string' || !claimToken.trim()) {
+    return c.json({ error: 'invalid_claim' }, 401)
+  }
+
+  const kv = c.env.AI_USAGE_KV as unknown as BindOtpKv | undefined
+  if (!kv) {
+    return c.json({ error: 'kv_unavailable' }, 503)
+  }
+
+  const emailNormalized = normalizeBindEmail(rawEmail)
+  const consumed = await validateAndConsumeClaimToken(kv, claimToken, {
+    anonUserId: userId,
+    email: emailNormalized,
+    branch: 'promote'
+  })
+  if (!consumed.ok) {
+    return c.json({ error: 'invalid_claim' }, 401)
   }
 
   try {
@@ -395,6 +425,56 @@ authRouter.post('/promote', deviceAuth(), async c => {
     const msg = err instanceof Error ? err.message : String(err)
     logErrorMessage('[Auth] promote 异常', { userId, detail: msg })
     return c.json({ error: 'promote_failed' }, 500)
+  }
+})
+
+/**
+ * POST /api/auth/claim-by-otp
+ *
+ * 持 claim 分支 claimToken → 为目标账号签发新 device token。
+ * 邮箱取自 claim 记录；不碰旧匿名会话。
+ */
+authRouter.post('/claim-by-otp', deviceAuth(), async c => {
+  const userId = c.get('supabaseUserId')
+
+  let claimToken = ''
+  let deviceLabel: string | null = null
+  let platform: string | null = null
+  try {
+    const parsed = await c.req.json().catch(() => null)
+    if (typeof parsed === 'object' && parsed !== null) {
+      const body = parsed as {
+        claimToken?: unknown
+        deviceLabel?: unknown
+        platform?: unknown
+      }
+      if (typeof body.claimToken === 'string') claimToken = body.claimToken
+      if (typeof body.deviceLabel === 'string' && body.deviceLabel.trim()) {
+        deviceLabel = body.deviceLabel.trim()
+      }
+      if (typeof body.platform === 'string' && body.platform.trim()) {
+        platform = body.platform.trim()
+      }
+    }
+  } catch {
+    claimToken = ''
+  }
+
+  try {
+    const result = await claimByOtp(c.env, {
+      anonUserId: userId,
+      claimToken,
+      deviceLabel,
+      platform
+    })
+    if (!result.ok) {
+      return c.json({ error: result.error }, result.status)
+    }
+    return c.json({ success: true, data: result.data })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    logErrorMessage('[Auth] claim-by-otp 异常', { userId, detail: msg })
+    return c.json({ error: 'claim_failed' }, 500)
   }
 })
 
