@@ -292,9 +292,9 @@ defineExpose({
 
 .gs-recall__status-title {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--text-body);
   font-weight: var(--font-weight-semibold);
-  line-height: 1.35;
+  line-height: var(--leading-snug);
 }
 
 .gs-recall__status-body,
@@ -305,7 +305,7 @@ defineExpose({
 .gs-recall__oral-generating {
   margin: 0;
   font-size: var(--text-meta);
-  line-height: 1.45;
+  line-height: var(--leading-relaxed);
   color: var(--on-surface-muted);
 }
 
@@ -334,7 +334,7 @@ defineExpose({
   padding: var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  line-height: 1.45;
+  line-height: var(--leading-relaxed);
   color: var(--on-surface);
   background: var(--surface-white);
   font: inherit;
@@ -343,7 +343,7 @@ defineExpose({
 
 .gs-recall__input:focus-visible {
   outline: 2px solid var(--focus-ring);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
 .gs-recall__composer-actions {
@@ -383,7 +383,7 @@ defineExpose({
   min-width: 0;
   margin: 0;
   font-size: var(--text-meta);
-  line-height: 1.45;
+  line-height: var(--leading-relaxed);
   color: var(--on-surface);
   overflow-wrap: anywhere;
 }
@@ -415,7 +415,7 @@ defineExpose({
 
 .gs-recall__oral-shuffle:focus-visible {
   outline: 2px solid var(--focus-ring);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
 .gs-recall__oral-shuffle:disabled {
@@ -441,7 +441,7 @@ defineExpose({
   border: 1px solid var(--border);
   border-radius: var(--radius);
   font-size: var(--text-meta);
-  line-height: 1.45;
+  line-height: var(--leading-relaxed);
   text-align: start;
   color: var(--on-surface);
   background: color-mix(in srgb, var(--on-surface) 4%, var(--surface-white));
@@ -457,7 +457,7 @@ defineExpose({
 
 .gs-recall__suggestion:focus-visible {
   outline: 2px solid var(--focus-ring);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
 .gs-recall__results {
@@ -503,7 +503,7 @@ defineExpose({
   margin: 0;
   font-size: var(--text-body);
   font-weight: var(--font-weight-semibold);
-  line-height: 1.35;
+  line-height: var(--leading-snug);
   overflow-wrap: anywhere;
 }
 

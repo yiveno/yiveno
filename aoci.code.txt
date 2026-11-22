@@ -662,7 +662,7 @@ AppIconButton.vue[IU6S]: F:自研图标按钮；省略可见文字时由父组�
 AppLibraryItemCard.vue[IU6M]: F:资料库条目卡：跳转/多选/Detail export 选中态 | R:code:extension/src/infrastructure/ui/icons/AppIcon.vue | A:Vue 组件 | S:-
 AppLibraryItemFavicon.vue[IU6T]: F:资料库条目 favicon（Chrome 缓存；失败回退图标） | R:code:extension/src/infrastructure/browser/chrome-favicon.ts,code:extension/src/infrastructure/ui/icons/AppIcon.vue | A:Vue 组件 | S:-
 AppLinearProgress.vue[IU6T]: F:自研线性进度条；value 为 0–1，缺省为不确定动画 | R:- | A:Vue 组件 | S:-
-AppMenuButton.vue[IU6M]: F:带弹出菜单的按钮：hover 预展开、click 切换、Esc/外点关闭 | R:code:extension/src/infrastructure/ui/icons/AppIcon.vue,code:extension/src/infrastructure/ui/icons/icon-paths.ts | A:Vue 组件 | S:面板圆角用 --radius（勿写幽灵 --radius-md）
+AppMenuButton.vue[IU6M]: F:带弹出菜单的按钮：hover 预展开、click 切换、Esc/外点关闭 | R:code:extension/src/infrastructure/ui/icons/AppIcon.vue,code:extension/src/infrastructure/ui/icons/icon-paths.ts | A:Vue 组件 | S:面板圆角用 --radius（勿写幽灵 --radius-md）；面板阴影走 --shadow-ink-md
 AppModal.vue[IU6S]: F:Modal 对话框：遮罩+卡片+Esc 与焦点陷阱 | R:code:extension/src/infrastructure/ui/use-modal-focus-trap.ts | A:Vue 组件 | S:-
 AppPageHeader.vue[IU6L]: F:扩展页顶栏：品牌与跨页导航入口 | R:code:extension/src/core/identity/subscription-snapshot.ts,code:extension/src/infrastructure/auth/watch-auth-session-storage.ts | A:Vue 组件 | S:-
 AppSectionTabs.vue[IU6S]: F:页内分区 Tab（侧栏/顶栏 chips；WAI-ARIA Tabs） | R:code:extension/src/infrastructure/ui/app-section-tabs-keyboard.ts | A:Vue 组件；layout=responsive|side|top | S:未选 tab font-weight medium；选中态显式 semibold；≤640px responsive 横向滚动且标签 nowrap
@@ -671,10 +671,10 @@ AppTextarea.vue[IU6T]: F:自研多行输入：附注等表单场景 | R:- | A:Vu
 AppToast.vue[IU6T]: F:单条 Toast 展示（语气与 a11y live 区域） | R:code:extension/src/infrastructure/ui/icons/AppIcon.vue,code:extension/src/infrastructure/ui/icons/icon-paths.ts | A:Vue 组件 | S:-
 AppToastHost.vue[IU6T]: F:Toast 宿主：Teleport 到 body 并挂载队列 | R:code:extension/src/infrastructure/ui/AppToast.vue,code:extension/src/infrastructure/ui/use-app-toast.ts | A:Vue 组件 | S:-
 DetailExportBar.vue[IU6S]: F:Detail export 底栏：选中计数与导出格式菜单 | R:code:extension/src/infrastructure/recall/detail-export-selection.ts,code:extension/src/infrastructure/i18n/t.ts | A:Vue 组件 | S:-
-DetailExportBarDock.vue[IU6T]: F:Detail export 底栏停靠层与离场过渡 | R:- | A:Vue 组件 | S:-
+DetailExportBarDock.vue[IU6T]: F:Detail export 底栏停靠层与离场过渡 | R:- | A:Vue 组件 | S:过渡时长走 --motion-duration-*；leave 缓动保留字面 cubic-bezier(0.4,0,0.2,1)
 app-hover-menu-timing.ts[IU6T]: F:悬停展开菜单的延迟（AppMenuButton / 划词浮层对齐） | R:- | A:- | S:-
 app-section-tabs-keyboard.ts[IU3T]: F:AppSectionTabs 方向键 / Home / End 导航 | R:- | A:- | S:-
-library-item-card-content.css[IU3S]: F:AppLibraryItemCard 三行布局排版（摘录 / 书签共用） | R:- | A:- | S:-
+library-item-card-content.css[IU3S]: F:AppLibraryItemCard 三行布局排版（摘录 / 书签共用） | R:- | A:- | S:字号/行高走 --text-* / --leading-*
 use-app-toast.ts[IU6S]: F:Toast 语气：info=中性提示 | R:- | A:- | S:-
 use-modal-focus-trap.ts[IU6T]: F:可聚焦元素选择器（Modal 焦点陷阱） | R:- | A:- | S:-
 
@@ -696,7 +696,7 @@ GettingStarted.vue[EU5M]: F:Getting Started 启动页：书签/摘录双源与�
 GettingStartedBookmarksPanel.vue[EU5L]: F:Getting Started 书签面板：授权同意与导入进度 | R:code:extension/src/core/memory/chrome-bookmark-import-state.ts,code:extension/src/core/messaging/ui-messages.ts | A:扩展页 UI | S:-
 GettingStartedExcerptsPanel.vue[EU5S]: F:Getting Started 摘录面板：空库文学段或示意召回 | R:code:extension/src/infrastructure/browser/side-panel.ts,code:extension/src/infrastructure/i18n/t.ts | A:扩展页 UI | S:-
 GettingStartedPassage.vue[EU5S]: F:Getting Started 文学段：供划词浮层 Save 示意 | R:code:extension/src/infrastructure/ui/AppButton.vue,code:extension/src/infrastructure/i18n/t.ts | A:扩展页 UI | S:-
-GettingStartedRecallPanel.vue[EU5L]: F:Getting Started 页内召回卡：示意 clue 与结果 | R:code:extension/src/core/onboarding/gs-clue-samples.ts,code:extension/src/infrastructure/ui/AppButton.vue | A:扩展页 UI | S:focus-visible 轮廓用 --focus-ring（勿写幽灵 --primary）
+GettingStartedRecallPanel.vue[EU5L]: F:Getting Started 页内召回卡：示意 clue 与结果 | R:code:extension/src/core/onboarding/gs-clue-samples.ts,code:extension/src/infrastructure/ui/AppButton.vue | A:扩展页 UI | S:focus-visible 轮廓用 --focus-ring（勿写幽灵 --primary）；负 outline-offset 内嵌轮廓维持 -2px
 chrome-bookmark-sync-suggestion.ts[EU5T]: F:Getting Started：导入完成后是否展示「建议开启同步」卡 | R:- | A:扩展页 UI | S:-
 getting-started-actions.ts[EU5T]: F:Getting Started 是否可提交 clue | R:- | A:扩展页 UI | S:-
 getting-started-progress.ts[EU5T]: F:汇总 Getting Started 进度：库侧三态与首次召回完成条件 | R:code:extension/src/core/settings/user-settings.ts,code:extension/src/infrastructure/storage/first-recall-onboarding-storage.ts | A:扩展页 UI | S:-
@@ -712,7 +712,7 @@ use-getting-started-in-page-recall.ts[EU5S]: F:Getting Started 页内真 Recall�
 BookmarkLibraryTree.vue[EU5M]: F:Library 书签树虚拟列表（文件夹展开与滚动） | R:code:extension/src/core/memory/bookmark-library-index.ts,code:extension/src/core/memory/bookmark-library-index.ts | A:扩展页 UI | S:-
 BookmarkLibraryTreeRow.vue[EU5M]: F:Library 书签树单行：文件夹折叠或书签激活/导出选中 | R:code:extension/src/infrastructure/ui/AppIconButton.vue,code:extension/src/core/memory/bookmark-library-index.ts | A:扩展页 UI | S:-
 ExcerptLibraryList.vue[EU5M]: F:Library 摘录列表虚拟滚动 | R:code:extension/src/core/memory/library-excerpt-virtual-list.ts,code:extension/src/core/memory/bookmark-library-virtual-list.ts | A:扩展页 UI | S:-
-Library.vue[EU5L]: F:Library 主页：书签/摘录 Tab 与 Detail export | R:code:extension/src/infrastructure/ui/AppButton.vue,code:extension/src/infrastructure/ui/AppIconButton.vue | A:扩展页 UI | S:-
+Library.vue[EU5L]: F:Library 主页：书签/摘录 Tab 与 Detail export | R:code:extension/src/infrastructure/ui/AppButton.vue,code:extension/src/infrastructure/ui/AppIconButton.vue | A:扩展页 UI | S:导出栏顶部向上阴影维持字面 0 -4px 16px（无向上 shadow token）
 bookmark-library-activate.ts[EU5T]: F:书签行激活后的动作：展开多选 / 打开 / 忽略 | R:- | A:扩展页 UI | S:-
 bookmark-library-tree-expanded.ts[EU3T]: F:用 session 存储记忆库书签树已展开文件夹 id 列表 | R:code:extension/src/core/memory/bookmark-library-tree.ts,code:extension/src/infrastructure/storage/chrome-storage-session.ts | A:扩展页 UI | S:-
 bookmark-library-tree-row-memo.ts[EU5T]: F:书签树行 v-memo 上下文（父组件状态，非行内字段） | R:code:extension/src/core/memory/bookmark-library-index.ts | A:扩展页 UI | S:-
@@ -749,9 +749,9 @@ LoginMigrationDialog.vue[EU5S]: F:登录迁移对话框：本机摘录/书签处
 use-login-migration-dialog.ts[EU5S]: F:登录迁移门闸 UI（ADR-018）：Import / Export / Delet | R:code:extension/src/infrastructure/messaging/background-client.ts,code:extension/src/infrastructure/i18n/background-error.ts | A:扩展页 UI | S:ADR-018）：Import / Export / Delete
 
 ===/<repository>/extension/src/pages/sidepanel/===
-RecallHighlightText.vue[EU5T]: F:Recall 命中片段高亮渲染 | R:code:extension/src/core/recall/highlight-recall-text.ts | A:扩展页 UI | S:-
-RecallResultCard.vue[EU5L]: F:Recall 结果卡：邻域项扫读、展开与打开原文 | R:code:extension/src/core/recall/highlight-recall-text.ts,code:extension/src/infrastructure/browser/active-tab-reader.ts | A:扩展页 UI | S:-
-SidePanel.vue[EU8L]: F:Recall 主壳 Side Panel | R:code:extension/src/pages/sidepanel/build-assistant-turn.ts | A:rules_fallback 时 showAnonymousPromote | S:与 deeperReadingTip 互斥；降级结果仍展示；链接/危险色用 --accent/--danger，选中态用 --yiveno-primary-alpha-10
+RecallHighlightText.vue[EU5T]: F:Recall 命中片段高亮渲染 | R:code:extension/src/core/recall/highlight-recall-text.ts | A:扩展页 UI | S:高亮字重走 --font-weight-semibold（上限 600）
+RecallResultCard.vue[EU5L]: F:Recall 结果卡：邻域项扫读、展开与打开原文 | R:code:extension/src/core/recall/highlight-recall-text.ts,code:extension/src/infrastructure/browser/active-tab-reader.ts | A:扩展页 UI | S:reason/provenance 字号走 --text-meta；尾部按钮预留 padding-right 2.75rem/2.25rem 维持字面
+SidePanel.vue[EU8L]: F:Recall 主壳 Side Panel | R:code:extension/src/pages/sidepanel/build-assistant-turn.ts | A:rules_fallback 时 showAnonymousPromote | S:与 deeperReadingTip 互斥；降级结果仍展示；链接/危险色用 --accent/--danger，选中态用 --yiveno-primary-alpha-10；导出栏顶部向上阴影维持字面
 build-assistant-turn.ts[EU5T]: F:构造助手 turn 字段 | R:code:extension/src/pages/sidepanel/recall-conversation-types.ts | A:createAssistantTurn 含 showAnonymousPromote | S:-
 index.html[EU3T]: F:Side Panel HTML 壳：挂载 sidepanel/main.ts | R:- | A:扩展页 UI | S:-
 main.ts[EU5T]: F:Side Panel 入口：i18n boot 后挂载 SidePanel.vue | R:code:extension/src/infrastructure/i18n/extension-i18n-boot.ts | A:扩展页 UI | S:-
@@ -775,14 +775,14 @@ use-voice-input-meter.ts[EU5M]: F:听写态电平：AnalyserNode 跟麦克风能
 
 ===/<repository>/extension/src/pages/sidepanel/components/===
 ColdStartGate.vue[EU5M]: F:Side Panel 冷启动全屏门禁：分阶段真实进度 | R:code:extension/src/infrastructure/ui/AppLinearProgress.vue,code:extension/src/core/memory/cold-start-pipeline-state.ts | A:扩展页 UI | S:-
-RecallComposer.vue[EU5L]: F:Recall composer：clue 输入、麦克风与提交 | R:code:extension/src/core/messaging/recall-messages.ts,code:extension/src/core/recall/clamp-recall-clue-text.ts | A:扩展页 UI | S:语音权限条圆角用 --radius（勿写幽灵 --radius-md）
-RecallConversation.vue[EU6L]: F:Recall 会话线程与内联转正表单 | R:code:extension/src/infrastructure/messaging/background-client.ts | A:submitAnonymousPromote;冲突去登录 | S:非 modal；走 CONVERT_ANONYMOUS_ACCOUNT；链接/错误/阴影用 --accent/--danger/--shadow-ink-sm
+RecallComposer.vue[EU5L]: F:Recall composer：clue 输入、麦克风与提交 | R:code:extension/src/core/messaging/recall-messages.ts,code:extension/src/core/recall/clamp-recall-clue-text.ts | A:扩展页 UI | S:语音权限条圆角用 --radius（勿写幽灵 --radius-md）；按钮过渡时长走 --motion-duration-short，缓动保留关键字 ease-out
+RecallConversation.vue[EU6L]: F:Recall 会话线程与内联转正表单 | R:code:extension/src/infrastructure/messaging/background-client.ts | A:submitAnonymousPromote;冲突去登录 | S:非 modal；走 CONVERT_ANONYMOUS_ACCOUNT；链接/错误/阴影用 --accent/--danger/--shadow-ink-sm；候选 stagger 的 animation-delay 维持字面（含 120ms）
 RecallPageContextControls.vue[EU5L]: F:当前浏览页上下文芯片：域名与展开/收起 | R:code:extension/src/infrastructure/ui/AppHoverTip.vue,code:extension/src/infrastructure/ui/icons/AppIcon.vue | A:扩展页 UI | S:-
 
 ===/<repository>/extension/src/pages/sidepanel/composer/===
 ClueFormattedText.vue[EU5S]: F:只读 clue 渲染：纯文本 + URL 芯片 | R:code:extension/src/core/recall/clue-url-display.ts,code:extension/src/infrastructure/browser/chrome-favicon.ts | A:扩展页 UI | S:-
 clue-editor-dom.ts[EU5M]: F:Contenteditable clue 编辑器：纯文本与 URL 芯片 DOM 互转 | R:code:extension/src/infrastructure/browser/chrome-favicon.ts,code:extension/src/pages/sidepanel/composer/clue-url.ts | A:扩展页 UI | S:-
-clue-url-chip.css[EU3T]: F:URL 原子芯片样式（composer 与用户气泡共用） | R:- | A:扩展页 UI | S:-
+clue-url-chip.css[EU3T]: F:URL 原子芯片样式（composer 与用户气泡共用） | R:- | A:扩展页 UI | S:字号维持 .92em 相对单位；水平 padding 6px 归并为 --space-xs
 clue-url.ts[EU5T]: F:Composer 侧 re-export clue URL 解析与展示工具 | R:code:extension/src/core/recall/clue-url-display.ts,code:extension/src/core/recall/clue-plain-url.ts | A:扩展页 UI | S:-
 enrich-clue-url-chips.ts[EU5T]: F:异步给 URL 芯片补标题（本机库 / 打开中 tab）；失败静默保留缩短 host | R:code:extension/src/core/recall/clue-url-display.ts,code:extension/src/infrastructure/messaging/background-client.ts | A:扩展页 UI | S:-
 

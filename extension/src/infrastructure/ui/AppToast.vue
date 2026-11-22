@@ -71,7 +71,7 @@ const iconByTone: Record<AppToastTone, AppIconName> = {
   min-width: 0;
   margin: 0;
   font-size: var(--text-body);
-  line-height: 1.45;
+  line-height: var(--leading-relaxed);
   color: var(--on-surface);
   overflow-wrap: anywhere;
 }

@@ -89,8 +89,8 @@ async function selectPassage(): Promise<void> {
   padding: var(--space-md);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
-  font-size: 16px;
-  line-height: 1.6;
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
   background: var(--surface-white);
   text-wrap: pretty;
 }

@@ -25,14 +25,14 @@ defineProps<{
 
 .detail-export-bar-dock-enter-active {
   transition:
-    transform 280ms var(--motion-easing-emphasized),
-    opacity 220ms var(--motion-easing-standard);
+    transform var(--motion-duration-medium) var(--motion-easing-emphasized),
+    opacity var(--motion-duration-medium) var(--motion-easing-standard);
 }
 
 .detail-export-bar-dock-leave-active {
   transition:
-    transform 220ms cubic-bezier(0.4, 0, 0.2, 1),
-    opacity 180ms cubic-bezier(0.4, 0, 0.2, 1);
+    transform var(--motion-duration-medium) cubic-bezier(0.4, 0, 0.2, 1),
+    opacity var(--motion-duration-short) cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .detail-export-bar-dock-enter-from,
@@ -50,7 +50,7 @@ defineProps<{
 @media (prefers-reduced-motion: reduce) {
   .detail-export-bar-dock-enter-active,
   .detail-export-bar-dock-leave-active {
-    transition: opacity 120ms var(--motion-easing-standard, ease);
+    transition: opacity var(--motion-duration-short) var(--motion-easing-standard);
   }
 
   .detail-export-bar-dock-enter-from,

@@ -644,7 +644,7 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
 /* 书签：标题 / URL 单行省略；完整内容靠原生 title */
 .recall-card--bookmark .recall-card-title {
   margin: 0 0 var(--space-2xs);
-  font-weight: 700;
+  font-weight: var(--font-weight-semibold);
   letter-spacing: -0.015em;
   white-space: nowrap;
   overflow: hidden;
@@ -749,9 +749,9 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
 
 .recall-card-title {
   margin: 0 0 var(--space-2xs);
-  font-size: 16px;
+  font-size: var(--text-body);
   font-weight: var(--font-weight-semibold);
-  line-height: 1.35;
+  line-height: var(--leading-snug);
   overflow-wrap: anywhere;
 }
 
@@ -762,7 +762,7 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
 .recall-card-body {
   display: -webkit-box;
   margin: 0 0 var(--space-2xs);
-  font-size: 15px;
+  font-size: var(--text-body);
   line-height: var(--leading-relaxed);
   color: var(--on-surface);
   overflow: hidden;
@@ -773,8 +773,8 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
 }
 
 .recall-card--excerpt .recall-card-body {
-  font-size: 15px;
-  line-height: 1.55;
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
 }
 
 .recall-card-body--compact {
@@ -810,8 +810,8 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
 .recall-card-reason {
   display: -webkit-box;
   margin: 0 0 var(--space-2xs);
-  font-size: 12.5px;
-  line-height: 1.45;
+  font-size: var(--text-meta);
+  line-height: var(--leading-relaxed);
   /* 略高于纯 muted，扫读「为何贴合」不糊成灰墙 */
   color: color-mix(in srgb, var(--on-surface) 72%, var(--on-surface-muted));
   overflow: hidden;
@@ -853,7 +853,7 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
   flex: 1 1 auto;
   min-width: 0;
   margin: 0;
-  font-size: 12.5px;
+  font-size: var(--text-meta);
   font-weight: var(--font-weight-medium);
   color: color-mix(in srgb, var(--on-surface) 78%, var(--on-surface-muted));
   overflow: hidden;
@@ -876,8 +876,8 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
 
 .recall-card-saved {
   margin: var(--space-2xs) 0 0;
-  font-size: 11px;
-  line-height: 1.35;
+  font-size: var(--text-caption);
+  line-height: var(--leading-snug);
   color: var(--on-surface-muted);
 }
 
@@ -888,7 +888,7 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
 }
 
 .recall-card-saved--compact {
-  font-size: 10px;
+  font-size: var(--text-caption);
 }
 
 .recall-card-saved time {
@@ -925,7 +925,7 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
 
 .recall-card-open-source:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
 .recall-card-open-source--sibling {
@@ -959,7 +959,7 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
 
 .recall-duplicate-more:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
 .recall-card-group.is-expanded .recall-duplicate-more {
@@ -967,8 +967,8 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
 }
 
 .recall-duplicate-more-count {
-  font-size: 11px;
-  font-weight: 700;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-semibold);
   line-height: 1;
 }
 

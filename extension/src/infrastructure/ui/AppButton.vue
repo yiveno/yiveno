@@ -64,7 +64,7 @@ withDefaults(
   border-radius: var(--radius-full);
   font-size: var(--text-body);
   font-weight: var(--font-weight-medium);
-  line-height: 1.25;
+  line-height: var(--leading-tight);
   text-decoration: none;
   cursor: pointer;
   transition:

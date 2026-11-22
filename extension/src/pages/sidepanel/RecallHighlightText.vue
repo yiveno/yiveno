@@ -19,7 +19,7 @@ defineProps<{
 .recall-hit {
   padding: 0 1px;
   border-radius: var(--radius-xs);
-  font-weight: 650;
+  font-weight: var(--font-weight-semibold);
   color: var(--accent);
   background: color-mix(in srgb, var(--accent) 18%, transparent);
 }

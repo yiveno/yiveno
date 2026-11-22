@@ -163,7 +163,7 @@ onUnmounted(() => {
 
 .app-modal__title {
   margin: 0;
-  font-size: 18px;
+  font-size: var(--text-title);
   line-height: var(--leading-tight);
 }
 

@@ -409,7 +409,7 @@ onUnmounted(() => {
   gap: var(--space-2xs);
   min-width: 0;
   margin: 0;
-  line-height: 1.35;
+  line-height: var(--leading-snug);
 }
 
 .app-page-header__session-label {

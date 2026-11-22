@@ -931,7 +931,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
   max-width: 88%;
   padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius-xl);
-  font-size: 15px;
+  font-size: var(--text-body);
   line-height: var(--leading-relaxed);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
@@ -1030,7 +1030,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
 .pending-step-mark {
   flex: 0 0 auto;
   width: 0.9em;
-  font-size: 11px;
+  font-size: var(--text-caption);
   line-height: var(--leading-snug);
   text-align: center;
 }
@@ -1148,7 +1148,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
 
 .assistant-turn-echo-menu-title {
   padding: 2px var(--space-2xs);
-  font-size: 11px;
+  font-size: var(--text-caption);
   line-height: var(--leading-tight);
   font-weight: var(--font-weight-semibold);
   color: var(--on-surface-muted);
@@ -1176,14 +1176,14 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
 
 .assistant-turn-echo-menu-item:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
 .assistant-turn-deeper-tip {
   max-width: 42ch;
   margin: 0;
   font-size: var(--text-caption);
-  line-height: 1.35;
+  line-height: var(--leading-snug);
   color: var(--on-surface-muted);
 }
 
@@ -1202,7 +1202,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
 .assistant-turn-promote__input {
   width: 100%;
   box-sizing: border-box;
-  padding: 6px 10px;
+  padding: var(--space-xs) var(--space-xs);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface);
@@ -1213,7 +1213,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
 
 .assistant-turn-promote__input:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
 .assistant-turn-promote__actions {
@@ -1225,22 +1225,22 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
 .assistant-turn-promote__error {
   margin: 0;
   font-size: var(--text-caption);
-  line-height: 1.35;
+  line-height: var(--leading-snug);
   color: var(--danger);
 }
 
 .assistant-turn-promote__success {
   margin: 0;
   font-size: var(--text-caption);
-  line-height: 1.35;
+  line-height: var(--leading-snug);
   color: var(--on-surface-muted);
 }
 
 .assistant-turn-copy {
   max-width: 42ch;
   margin: 0;
-  font-size: 15px;
-  line-height: 1.55;
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
   white-space: pre-wrap;
   color: var(--on-surface);
   text-wrap: pretty;
@@ -1250,7 +1250,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
 .assistant-turn-copy--after-cards {
   margin-top: var(--space-2xs);
   font-size: var(--text-meta);
-  line-height: 1.45;
+  line-height: var(--leading-relaxed);
   color: var(--on-surface-muted);
 }
 

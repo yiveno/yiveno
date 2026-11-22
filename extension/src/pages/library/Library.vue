@@ -1191,7 +1191,7 @@ onUnmounted(() => {
 .library-title {
   margin: 0 0 var(--space-xs);
   font-size: var(--text-display);
-  line-height: 1.2;
+  line-height: var(--leading-tight);
 }
 
 .library-subtitle {
@@ -1317,7 +1317,7 @@ onUnmounted(() => {
 
 .library-empty-title {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--text-body);
   font-weight: var(--font-weight-semibold);
 }
 

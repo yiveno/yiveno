@@ -212,7 +212,7 @@ onBeforeUnmount(() => {
   border-radius: var(--radius-full);
   font-size: var(--text-body);
   font-weight: var(--font-weight-medium);
-  line-height: 1.25;
+  line-height: var(--leading-tight);
   cursor: pointer;
   transition:
     background-color var(--motion-duration-fast) var(--motion-easing-standard),
@@ -302,7 +302,7 @@ onBeforeUnmount(() => {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface-white);
-  box-shadow: 0 8px 24px rgb(0 0 0 / 10%);
+  box-shadow: var(--shadow-ink-md);
 }
 
 .app-menu-button__item {
@@ -314,7 +314,7 @@ onBeforeUnmount(() => {
   border: none;
   border-radius: var(--radius-sm);
   font-size: var(--text-body);
-  line-height: 1.25;
+  line-height: var(--leading-tight);
   text-align: left;
   color: var(--on-surface);
   background: transparent;

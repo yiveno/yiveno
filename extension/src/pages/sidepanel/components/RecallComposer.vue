@@ -840,7 +840,7 @@ defineExpose({ focus })
 
 .recall-voice-permission__allow {
   margin: 0;
-  padding: var(--space-2xs) 10px;
+  padding: var(--space-2xs) var(--space-xs);
   border: 0;
   border-radius: var(--radius-full);
   color: var(--on-accent);
@@ -892,7 +892,7 @@ defineExpose({ focus })
 
 .recall-voice-permission__dismiss:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
 .recall-composer-shell {
@@ -930,7 +930,7 @@ defineExpose({ focus })
 .recall-composer-shell:focus-within {
   border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
   outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
-  outline-offset: 1px;
+  outline-offset: 2px;
   box-shadow: none;
 }
 
@@ -973,8 +973,8 @@ defineExpose({ focus })
   border: 0;
   outline: none;
   font-family: inherit;
-  font-size: 15px;
-  line-height: 1.45;
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
   color: inherit;
   background: transparent;
   overflow-x: hidden;
@@ -1018,11 +1018,11 @@ defineExpose({ focus })
   cursor: pointer;
   font: inherit;
   font-size: var(--text-caption);
-  line-height: 1.2;
+  line-height: var(--leading-tight);
   white-space: nowrap;
   transition:
-    background-color 140ms ease-out,
-    color 140ms ease-out;
+    background-color var(--motion-duration-short) ease-out,
+    color var(--motion-duration-short) ease-out;
 }
 
 .recall-voice-cancel:hover:not(:disabled) {
@@ -1058,9 +1058,9 @@ defineExpose({ focus })
   flex: 0 0 auto;
   width: 3px;
   min-height: 4px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   background: color-mix(in srgb, var(--on-surface-muted) 72%, var(--accent) 28%);
-  transition: height 70ms linear;
+  transition: height var(--motion-duration-fast) linear;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -1086,9 +1086,9 @@ defineExpose({ focus })
   background: transparent;
   cursor: pointer;
   transition:
-    background-color 140ms ease-out,
-    color 140ms ease-out,
-    opacity 140ms ease-out;
+    background-color var(--motion-duration-short) ease-out,
+    color var(--motion-duration-short) ease-out,
+    opacity var(--motion-duration-short) ease-out;
 }
 
 .recall-voice-button:hover:not(:disabled) {
@@ -1139,8 +1139,8 @@ defineExpose({ focus })
   background: var(--accent);
   cursor: pointer;
   transition:
-    background-color 140ms ease-out,
-    opacity 140ms ease-out;
+    background-color var(--motion-duration-short) ease-out,
+    opacity var(--motion-duration-short) ease-out;
 }
 
 .recall-send-button:disabled {

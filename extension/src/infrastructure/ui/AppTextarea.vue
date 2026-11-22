@@ -61,7 +61,7 @@ function onInput(event: Event) {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   font-size: var(--text-body);
-  line-height: 1.45;
+  line-height: var(--leading-relaxed);
   color: var(--on-surface);
   background: var(--surface-white);
   resize: vertical;
@@ -78,7 +78,7 @@ function onInput(event: Event) {
 
 .app-textarea:focus {
   outline: 2px solid var(--focus-ring);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
 .app-textarea:disabled {

@@ -2136,7 +2136,7 @@ onUnmounted(() => {
   color: var(--on-surface-muted);
   font: inherit;
   font-size: var(--text-caption);
-  line-height: 1.45;
+  line-height: var(--leading-relaxed);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -2227,7 +2227,7 @@ onUnmounted(() => {
 
 .recall-offline-mode-chip {
   margin: 0;
-  font-size: 11px;
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-semibold);
   line-height: var(--leading-tight);
   letter-spacing: 0.01em;
@@ -2238,7 +2238,7 @@ onUnmounted(() => {
   flex-shrink: 0;
   margin: 0 var(--space-2xs);
   font-size: var(--text-caption);
-  line-height: 1.35;
+  line-height: var(--leading-snug);
   color: var(--on-surface-muted);
 }
 
@@ -2259,7 +2259,7 @@ onUnmounted(() => {
   min-width: 0;
   margin: 0;
   font-size: var(--text-caption);
-  line-height: 1.35;
+  line-height: var(--leading-snug);
   white-space: nowrap;
   color: var(--on-surface-muted);
   overflow: hidden;
@@ -2275,7 +2275,7 @@ onUnmounted(() => {
   flex: 1 1 100%;
   margin: 0;
   font-size: var(--text-caption);
-  line-height: 1.35;
+  line-height: var(--leading-snug);
   color: var(--danger);
 }
 
@@ -2367,7 +2367,7 @@ onUnmounted(() => {
 }
 
 .recall-body::-webkit-scrollbar-thumb {
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   background: color-mix(in srgb, var(--ink) 18%, transparent);
   background-clip: padding-box;
   border: 1px solid transparent;
@@ -2459,7 +2459,7 @@ onUnmounted(() => {
   margin: 0;
   font-size: clamp(var(--text-display), 7vw, 36px);
   font-weight: var(--font-weight-semibold);
-  line-height: 1.2;
+  line-height: var(--leading-tight);
   letter-spacing: -0.03em;
   color: var(--on-surface);
   animation: recall-greeting-in var(--motion-duration-medium) var(--motion-easing-emphasized) both;
@@ -2479,7 +2479,7 @@ onUnmounted(() => {
   margin: 0;
   font-size: var(--text-title);
   font-weight: var(--font-weight-semibold);
-  line-height: 1.25;
+  line-height: var(--leading-tight);
   letter-spacing: -0.02em;
   text-wrap: balance;
 }

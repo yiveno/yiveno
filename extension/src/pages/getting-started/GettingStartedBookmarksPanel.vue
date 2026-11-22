@@ -633,9 +633,9 @@ onUnmounted(() => {
 
 .gs-bookmarks__consent-title {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--text-body);
   font-weight: var(--font-weight-semibold);
-  line-height: 1.35;
+  line-height: var(--leading-snug);
 }
 
 .gs-bookmarks__consent-body,
@@ -675,7 +675,7 @@ onUnmounted(() => {
 .gs-bookmarks__consent-error {
   margin: 0;
   font-size: var(--text-meta);
-  line-height: 1.45;
+  line-height: var(--leading-relaxed);
   color: var(--danger);
 }
 

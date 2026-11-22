@@ -167,7 +167,7 @@ onUnmounted(() => {
 
 .getting-started__eyebrow {
   margin: 0;
-  font-size: 11px;
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -177,16 +177,16 @@ onUnmounted(() => {
 .getting-started__title {
   margin: 0;
   font-size: clamp(var(--text-display), 4.5vw, 36px);
-  font-weight: 700;
-  line-height: 1.15;
+  font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
   letter-spacing: -0.02em;
 }
 
 .getting-started__lead {
   max-width: 42ch;
   margin: 0;
-  font-size: 16px;
-  line-height: 1.55;
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
   color: var(--on-surface-muted);
 }
 

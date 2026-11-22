@@ -151,7 +151,7 @@ const detailLine = computed(() => {
 
 .cold-start-gate__eyebrow {
   margin: 0;
-  font-size: 11px;
+  font-size: var(--text-caption);
   font-weight: var(--font-weight-semibold);
   text-transform: uppercase;
   letter-spacing: 0.06em;
@@ -161,7 +161,7 @@ const detailLine = computed(() => {
 .cold-start-gate__title {
   margin: 0;
   font-size: var(--text-title);
-  font-weight: 650;
+  font-weight: var(--font-weight-semibold);
   line-height: var(--leading-tight);
   color: var(--on-surface);
 }
@@ -169,7 +169,7 @@ const detailLine = computed(() => {
 .cold-start-gate__body {
   margin: 0;
   font-size: var(--text-body);
-  line-height: 1.45;
+  line-height: var(--leading-relaxed);
   color: var(--on-surface-muted);
 }
 

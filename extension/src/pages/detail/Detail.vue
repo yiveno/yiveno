@@ -404,7 +404,7 @@ onMounted(() => {
 .detail-title {
   margin: 0 0 var(--space-xs);
   font-size: var(--text-display);
-  line-height: 1.2;
+  line-height: var(--leading-tight);
 }
 
 .detail-subtitle {
@@ -431,7 +431,7 @@ onMounted(() => {
 
 .detail-empty-title {
   margin: 0;
-  font-size: 16px;
+  font-size: var(--text-body);
   font-weight: var(--font-weight-semibold);
 }
 
@@ -474,7 +474,7 @@ onMounted(() => {
 .detail-context {
   margin: 0;
   font-size: var(--text-meta);
-  line-height: 1.6;
+  line-height: var(--leading-relaxed);
   color: var(--on-surface-muted);
 }
 
@@ -482,8 +482,8 @@ onMounted(() => {
   margin: 0;
   padding: var(--space-md);
   border-radius: var(--radius-lg);
-  font-size: 16px;
-  line-height: 1.65;
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
   color: var(--on-surface);
   background: var(--surface-2);
 }
@@ -514,7 +514,7 @@ onMounted(() => {
 .detail-note-body {
   margin: 0;
   font-size: var(--text-body);
-  line-height: 1.55;
+  line-height: var(--leading-relaxed);
   white-space: pre-wrap;
   color: var(--on-surface);
 }

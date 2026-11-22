@@ -303,7 +303,7 @@ function handleBookmarkActivate(event: MouseEvent | KeyboardEvent) {
   min-width: 0;
   font-size: var(--text-body);
   font-weight: var(--font-weight-semibold);
-  line-height: 1.35;
+  line-height: var(--leading-snug);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

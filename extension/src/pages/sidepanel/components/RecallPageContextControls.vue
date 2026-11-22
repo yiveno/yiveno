@@ -375,7 +375,7 @@ onUnmounted(() => {
 
 .page-context__toggle:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
 .page-context__panel {
@@ -444,7 +444,7 @@ onUnmounted(() => {
 
 .page-context__card:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
 .page-context__rule {
@@ -496,6 +496,6 @@ onUnmounted(() => {
 
 .page-context__source:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 </style>

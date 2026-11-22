@@ -34,9 +34,9 @@
 .lib-item-title,
 .lib-item-body {
   margin: 0;
-  font-size: 15px;
+  font-size: var(--text-body);
   font-weight: var(--font-weight-semibold);
-  line-height: 1.35;
+  line-height: var(--leading-snug);
 }
 
 .lib-item-body {
@@ -59,7 +59,7 @@
   display: -webkit-box;
   margin: 0;
   font-size: var(--text-meta);
-  line-height: 1.45;
+  line-height: var(--leading-relaxed);
   color: var(--on-surface);
   overflow: hidden;
   /* 2 行上限；有附注行高见 BOOKMARK_LIBRARY_ROW_HEIGHT_WITH_NOTE */
@@ -86,7 +86,7 @@
 .lib-item-time {
   margin: 0;
   font-size: var(--text-caption);
-  line-height: 1.35;
+  line-height: var(--leading-snug);
   text-align: right;
   white-space: nowrap;
   color: var(--border-strong);

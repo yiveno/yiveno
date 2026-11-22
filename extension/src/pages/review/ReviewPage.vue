@@ -313,7 +313,7 @@ onMounted(() => {
 .review-title {
   margin: 0 0 var(--space-xs);
   font-size: var(--text-display);
-  line-height: 1.2;
+  line-height: var(--leading-tight);
 }
 
 .review-subtitle {
@@ -352,7 +352,7 @@ onMounted(() => {
 
 .review-empty-title {
   font-weight: var(--font-weight-semibold);
-  font-size: 16px;
+  font-size: var(--text-body);
 }
 
 .review-empty-copy {
@@ -367,7 +367,7 @@ onMounted(() => {
 
 .review-section-title {
   margin: 0 0 var(--space-sm);
-  font-size: 18px;
+  font-size: var(--text-title);
   line-height: var(--leading-tight);
 }
 
@@ -412,8 +412,8 @@ onMounted(() => {
 
 .review-note-text {
   margin: 0 0 var(--space-2xs);
-  font-size: 15px;
-  line-height: 1.45;
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
 }
 
 .review-note-quote {
