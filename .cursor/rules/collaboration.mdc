@@ -51,6 +51,7 @@ alwaysApply: true
 
 仓库用 AOCI-CODE（`aoci` CLI + MCP server）维护一份持久化、Git 版本化的代码库认知索引（`aoci.txt` / `aoci.meta.txt` / `aoci.code.txt`）。索引是地图，不是领土：改代码前仍以源码实读为准。
 
+- **实验暂停（2026-11-22 至 2026-11-25 复评）**：本节的收尾 maintain 与 verify/check 要求暂停执行；不调 `aoci_maintain`，不改索引文件；查询工具可用，不强制。复评后删除本行，并按结论恢复或删除本节。
 - **会话开始**：跨领域批先调 `aoci_rules` 再调 `aoci_overview` 建立全量认知；窄批用 `aoci_search` / `aoci_get_entries` 定向读相关条目，不强制全量。
 - **上下文压缩/重置后**：此前建立的认知不可靠，重新建立（Cursor 无 compaction 事件通知，靠自觉）。
 - **收尾**：文件达最终稳定态后调一次 `aoci_maintain`，按 issued batch 著录受影响条目；索引维护不受本批业务文件范围限制，但汇报与提交中与业务文件分开列。
