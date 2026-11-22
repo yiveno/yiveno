@@ -34,6 +34,33 @@ describe('parseRecallWithCluePayload', () => {
     expect(payload.context?.accumulated?.objectTypes).toContain('poem')
   })
 
+  it('多轮 accumulated 带 topic.embedding 时剥掉后再校验（消息边界）', () => {
+    const accumulated = parseRecallClue('poem Li Bai', {
+      nowMs: Date.parse('2026-08-05T12:00:00.000Z')
+    })
+    const withEmbedding = {
+      ...accumulated,
+      topic: {
+        terms: accumulated.topic?.terms ?? accumulated.contentTerms,
+        source: 'content' as const,
+        strength: 'strong' as const,
+        // 模拟跨页面后 instanceof 已不可靠的向量；预处理应剥掉
+        embedding: { 0: 0.1, length: 1 }
+      }
+    }
+    const payload = parseRecallWithCluePayload({
+      clue: 'yesterday',
+      source: 'sidepanel',
+      recallId: 't2-emb',
+      context: {
+        priorUserUtterances: ['poem Li Bai'],
+        accumulated: withEmbedding
+      }
+    })
+    expect(payload.context?.accumulated?.topic?.embedding).toBeUndefined()
+    expect(payload.context?.accumulated?.contentTerms?.length).toBeGreaterThan(0)
+  })
+
   it('拒绝非法 dismissedIds', () => {
     expect(() =>
       parseRecallWithCluePayload({

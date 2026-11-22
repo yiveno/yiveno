@@ -15,12 +15,34 @@ import type { BackgroundMessageScope } from '@/core/messaging/constants'
  */
 export const RECALL_CLUE_MAX_CHARS = 10_000
 
+/**
+ * 多轮 accumulated 入站预处理：剥掉 topic.embedding。
+ * UI→SW 消息边界上 Float32Array 常导致 Zod `instanceof` 失败（RECALL_FAILED）；
+ * embedding 是检索派生态，SW 合并后会再跑 withRecallTopicAsync，不必进契约。
+ */
+function stripAccumulatedTopicEmbedding(value: unknown): unknown {
+  if (!value || typeof value !== 'object') {
+    return value
+  }
+  const record = value as Record<string, unknown>
+  const topic = record.topic
+  if (!topic || typeof topic !== 'object') {
+    return value
+  }
+  const topicRecord = topic as Record<string, unknown>
+  if (!('embedding' in topicRecord)) {
+    return value
+  }
+  const { embedding: _omit, ...topicRest } = topicRecord
+  return { ...record, topic: topicRest }
+}
+
 /** Side Panel 多轮会话上下文（Omnibox 不传）。 */
 export const recallDialogContextSchema = z.object({
   /** 本轮之前已发送的用户原文（有序；最多 5）。 */
   priorUserUtterances: z.array(z.string().max(RECALL_CLUE_MAX_CHARS)).max(5).optional(),
-  /** 上一轮合并后的 ParsedRecallClue 快照。 */
-  accumulated: ParsedRecallClueSchema.optional(),
+  /** 上一轮合并后的 ParsedRecallClue 快照（不含 topic.embedding）。 */
+  accumulated: z.preprocess(stripAccumulatedTopicEmbedding, ParsedRecallClueSchema).optional(),
   /** 本会话已否定的 MemoryItem id（硬排除）。 */
   dismissedIds: z.array(z.string().uuid()).max(50).optional(),
   /**

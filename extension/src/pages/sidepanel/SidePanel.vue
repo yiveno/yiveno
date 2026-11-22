@@ -1,5 +1,9 @@
 <script setup lang="ts">
 import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import {
+  markAccumulatedForDialogState,
+  toCloneableAccumulated
+} from '@/pages/sidepanel/cloneable-recall-dialog-accumulated'
 import AppButton from '@/infrastructure/ui/AppButton.vue'
 import AppIconButton from '@/infrastructure/ui/AppIconButton.vue'
 import AppLinearProgress from '@/infrastructure/ui/AppLinearProgress.vue'
@@ -832,7 +836,10 @@ async function runRecall(trimmedClue: string): Promise<void> {
   startRecallVisibleProgressUi(progressRequestId)
 
   const priorUserUtterances = [...dialogState.value.priorUserUtterances]
+  // 跟进轮次：必须剥 Vue Proxy，否则 sendMessage structuredClone → DataCloneError
   const accumulated = dialogState.value.accumulated
+    ? toCloneableAccumulated(dialogState.value.accumulated)
+    : null
   const dismissedIds = [...dialogState.value.dismissedIds]
   const contextStatusFields = continuingContextStatus(
     priorUserUtterances,
@@ -917,10 +924,11 @@ async function runRecall(trimmedClue: string): Promise<void> {
     }
 
     // 成功且有合并 parsed 时推进会话（噪音拒绝无 parsed，不污染 prior）
+    // markRaw：避免 topic.embedding（Float32Array）被 deep reactive，跟进轮次才能 sendMessage
     if (response.result.parsed) {
       dialogState.value = {
         priorUserUtterances: [...priorUserUtterances, trimmed].slice(-5),
-        accumulated: response.result.parsed,
+        accumulated: markAccumulatedForDialogState(response.result.parsed),
         dismissedIds
       }
     }
