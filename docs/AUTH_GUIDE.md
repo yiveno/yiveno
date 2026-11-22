@@ -1,10 +1,11 @@
 # 认证系统使用指南
 
-> **最后更新：** 2026-11-20  
+> **最后更新：** 2026-11-22  
 > **状态：** Phase C 主路径 = **官网 Supabase Auth**（Email OTP + Google / Microsoft OAuth）→ Worker **`device-register`** 签发 **device token** → **交接写入扩展**（`YIVENO_AUTH_DEVICE_HANDOFF`）。  
 > 旧 `POST /api/auth/extension-session`（Supabase 会话 mint + 单活跃租约）→ **410**；设计见 [`docs/device-token-design.md`](./device-token-design.md)。  
 > Worker 遗留的自建 OAuth → 自定义 JWT（`/api/auth/start|callback`）**不是**用户主路径。  
 > **登录迁移门闸：** §「登录迁移门闸」· registry `auth.login-migration-gate`。  
+> **统一绑定 OTP：** §「统一绑定（匿名 → promote / claim）」· [ADR-029](./architecture/decisions/ADR-029-unified-bind-otp.md)。  
 > **用词：** 业内词可直用；本仓专有步骤须白话+释义（与 `.cursor/rules/dev-chinese-plain.mdc` 一致）。
 
 ## 概述
@@ -14,11 +15,11 @@
 3. 若本次带接通参数 `connect_extension=1`：官网用当前 access 调 Worker `POST /api/auth/device-register`（`mode=website_connect`）签发 device token → **交接**（`YIVENO_AUTH_DEVICE_HANDOFF`）。多设备可并存（软上限 20）；**无** 409 / 挤掉弹窗。
 4. 纯官网登录（无接通参数）**不**改扩展设备；扩展靠 Connect / UI 桥接通（ADR-018 / ADR-019）。
 5. 反向接通：扩展 device Bearer → `POST /api/auth/website-session`（匿名无 email → `email_required`）。
-6. 匿名转正：扩展 device Bearer → `POST /api/auth/promote`（`{ email }`）→ Admin 绑邮箱；**不**重发 token、**不**发 OTP（Confirm email OFF）；冲突 → `409 email_conflict`（引导登录合并）。
+6. **统一绑定（ADR-029）：** 匿名试用在扩展内绑邮箱——发 OTP → 验码 → 分叉 **promote**（邮箱未注册，同 `userId` 原地升级）或 **claim**（邮箱已注册，签发目标账号新 device token）。`POST /api/auth/promote` **必填** `claimToken`（无兼容期）；旧无 token 调用 → **401**。
 7. 账户页 **Devices**：列表 / 改名 / 撤销（官网 JWT）。
 8. 匿名超期清理：周日 UTC 03:00 cron（默认 dry-run）→ 撤 device / meta / 配额 KV → Admin `deleteUser`（见下「匿名生命周期」· ADR-028）。
 
-权威行为契约：产品文档 **§登录态对齐**；身份隔离见 ADR-018；UI 桥见 ADR-019；设备 token 规格见 `docs/device-token-design.md`；匿名决策见 ADR-028。
+权威行为契约：产品文档 **§登录态对齐**；身份隔离见 ADR-018；UI 桥见 ADR-019；设备 token 规格见 `docs/device-token-design.md`；匿名决策见 ADR-028；统一绑定见 ADR-029。
 
 ---
 
@@ -73,18 +74,19 @@
 
 ## 关键代码路径
 
-| 面                    | 路径                                                    | 职责                                                        |
-| --------------------- | ------------------------------------------------------- | ----------------------------------------------------------- |
-| 官网登录 UI           | `website/src/components/LoginForm.vue`                  | Email OTP + OAuth；connect 收尾                             |
-| 官网 Auth API         | `website/src/services/auth.ts`                          | `signInWithOAuth` / `signInWithEmailOtp` / `verifyEmailOtp` |
-| 邮箱格式              | `website/src/services/auth-email.ts`                    | 校验 / 规范化                                               |
-| OAuth·magic link 回调 | `website/src/components/AuthCallback.vue`               | setSession / exchangeCode → 设备注册并交接                  |
-| 设备注册              | `worker/src/services/auth/device-register.ts`           | 签发 `ydt_` device token；软上限 20                         |
-| 匿名转正              | `worker/src/services/auth/promote-anonymous-user.ts`    | `POST /api/auth/promote`；绑邮箱；token 继续有效            |
-| 匿名超期清理          | `worker/.../anonymous-cleanup.ts` + scheduled handler   | 周日 cron；90 天；默认 dry-run；每轮 ≤500（ADR-028）        |
-| 设备列表/改名/撤销    | `worker/.../device-token-kv.ts` + `/api/auth/devices*`  | 官网 JWT；账户页 Devices                                    |
-| 官网 register+handoff | `website/.../register-device-from-website.ts` + handoff | `registerAndHandoffDeviceToExtension`                       |
-| 扩展接收并写入        | `extension/.../external-auth-handoff.ts`                | 写入 `yiveno:device_session`；**不**发起 OAuth              |
+| 面                    | 路径                                                    | 职责                                                                |
+| --------------------- | ------------------------------------------------------- | ------------------------------------------------------------------- |
+| 官网登录 UI           | `website/src/components/LoginForm.vue`                  | Email OTP + OAuth；connect 收尾                                     |
+| 官网 Auth API         | `website/src/services/auth.ts`                          | `signInWithOAuth` / `signInWithEmailOtp` / `verifyEmailOtp`         |
+| 邮箱格式              | `website/src/services/auth-email.ts`                    | 校验 / 规范化                                                       |
+| OAuth·magic link 回调 | `website/src/components/AuthCallback.vue`               | setSession / exchangeCode → 设备注册并交接                          |
+| 设备注册              | `worker/src/services/auth/device-register.ts`           | 签发 `ydt_` device token；软上限 20                                 |
+| 统一绑定 OTP          | `worker/.../bind-otp-service.ts` + `claim-by-otp.ts`    | `bind-code` / `bind-verify` / `promote` / `claim-by-otp`（ADR-029） |
+| 匿名转正（promote）   | `worker/.../promote-anonymous-user.ts`                  | 须先持 promote 分支 `claimToken`；同 userId；token 继续有效         |
+| 匿名超期清理          | `worker/.../anonymous-cleanup.ts` + scheduled handler   | 周日 cron；90 天；默认 dry-run；每轮 ≤500（ADR-028）                |
+| 设备列表/改名/撤销    | `worker/.../device-token-kv.ts` + `/api/auth/devices*`  | 官网 JWT；账户页 Devices                                            |
+| 官网 register+handoff | `website/.../register-device-from-website.ts` + handoff | `registerAndHandoffDeviceToExtension`                               |
+| 扩展接收并写入        | `extension/.../external-auth-handoff.ts`                | 写入 `yiveno:device_session`；**不**发起 OAuth                      |
 
 ---
 
@@ -265,18 +267,85 @@ flowchart TD
 账号交接成功路径只强调「禁止静默并库」；**真正弹窗**靠上述界面刷新，与上节「设备注册并交接」**分图**。
 ---
 
-## 匿名生命周期（试用 → 转正 → 清理）
+## 匿名生命周期（试用 → 绑定 → 清理）
 
-> **权威决策：** [ADR-028](./architecture/decisions/ADR-028-anonymous-device-auth.md)。行为契约见产品文档 §登录态对齐。
+> **权威决策：** [ADR-028](./architecture/decisions/ADR-028-anonymous-device-auth.md)（试用 / 配额 / 清理）；绑定分叉见 [ADR-029](./architecture/decisions/ADR-029-unified-bind-otp.md)。行为契约见产品文档 §登录态对齐。
 
 | 阶段     | 做什么                                                            | 要点                                                                                    |
 | -------- | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | **注册** | 扩展 GoTrue 匿名 signup → `device-register`（`session_exchange`） | 只持久化 `yiveno:device_session`；Worker **不** Admin 建匿名号（`generateLink` 要邮箱） |
-| **试用** | 匿名档配额                                                        | LLM **15** lifetime；embeddings **30** lifetime；Dreaming / 云同步 / 订阅须转正         |
-| **转正** | `POST /api/auth/promote` + email                                  | 同 `userId`；device token 继续有效；Confirm email OFF（不验归属）；冲突 `409`           |
+| **试用** | 匿名档配额                                                        | LLM **15** lifetime；embeddings **30** lifetime；Dreaming / 云同步 / 订阅须绑定         |
+| **绑定** | 统一绑定 OTP（下节）→ promote **或** claim                        | **须验邮箱归属**；无兼容期的裸 promote 已废（401）                                      |
 | **清理** | 周日 UTC `0 3 * * SUN`（CF Quartz）                               | `is_anonymous` 且不活跃 **≥90 天**；先撤 KV 再 `deleteUser`；默认 dry-run；每轮 ≤500    |
 
 **运维：** `ANON_CLEANUP_DRY_RUN` 未设或非 `'false'` = 只记日志；显式 `'false'` 才真删。部署新 Worker 后 cron 才生效。
+
+---
+
+## 统一绑定（匿名 → promote / claim）
+
+> **权威决策：** [ADR-029](./architecture/decisions/ADR-029-unified-bind-otp.md)。扩展入口：Settings 试用区 + Side Panel 内联（共用状态机）；消息 `BIND_REQUEST_CODE` / `BIND_VERIFY_CODE` / `CONVERT_ANONYMOUS_ACCOUNT`。
+
+### 四步流程
+
+1. **发码** — 匿名 device Bearer → `POST /api/auth/bind-code`（`{ email, turnstileToken, locale? }`）。Turnstile **fail-closed**；限流见下；成功响应**不**透露邮箱是否已注册。邮件经 Worker DirectMail；码 **8** 位，SHA-256 存 KV，TTL **600s**。
+2. **验码** — `POST /api/auth/bind-verify`（`{ email, code }`）。最多 **5** 次尝试；成功 → `{ branch, claimToken }`（claimToken 一次性，KV TTL **600s**，绑定 `anonUserId` + email + branch）。
+3. **消费 claimToken（分叉）**
+   - `branch === 'promote'` → `POST /api/auth/promote`（`{ email, claimToken }`）→ Admin 同 `userId` 绑邮箱；device token **继续有效**，扩展只翻 `isAnonymous`。
+   - `branch === 'claim'` → `POST /api/auth/claim-by-otp`（`{ claimToken, deviceLabel?, platform? }`；**邮箱只从 claim 记录取**）→ 为目标账号签发新 device；扩展 best-effort 撤旧匿名 token → `applyIncomingDeviceSession` 切会话 → ADR-018 迁移门闸。
+4. **成功态** — promote：试用区变为已绑定账号；claim：可能弹出登录迁移门闸（有无主摘录时）。
+
+扩展状态机：`idle` → `code_sending` → `code_sent` → `verifying` → `confirming` → `success` | `error`；**60s** 重发冷却；换邮箱废弃码态。
+
+### promote vs claim
+
+| 项               | **promote**（邮箱未注册）               | **claim**（邮箱已注册）                 |
+| ---------------- | --------------------------------------- | --------------------------------------- |
+| **userId**       | **不变**（原地升级）                    | **切换**到目标账号                      |
+| **device token** | **不变**（同 token 翻转 `isAnonymous`） | **换新**（`issueForAuthenticatedUser`） |
+| **旧匿名 token** | 继续用                                  | 扩展 **best-effort 撤销**（失败不阻塞） |
+| **迁移门闸**     | 无（同账号）                            | 有（换账号；复用 ADR-018，不新建合并）  |
+| **Worker 端点**  | `/api/auth/promote`                     | `/api/auth/claim-by-otp`                |
+
+### 发码限流
+
+| 维     | 上限                                            |
+| ------ | ----------------------------------------------- |
+| 同邮箱 | **60s** 冷却（相对上次成功发码）                |
+| 每邮箱 | **5** / 小时                                    |
+| 每设备 | **10** / 天（缺 deviceId 时用 userId）          |
+| 每 IP  | **30** / 天（缺 `CF-Connecting-IP` 则跳过该维） |
+
+### 错误码（Worker JSON `error`）
+
+| `error`                   | HTTP | 含义                                                         |
+| ------------------------- | ---- | ------------------------------------------------------------ |
+| `invalid_email`           | 400  | 邮箱格式非法                                                 |
+| `captcha_required`        | 400  | 缺 Turnstile token                                           |
+| `captcha_failed`          | 400  | Turnstile 校验失败                                           |
+| `captcha_not_configured`  | 503  | Worker 缺 `TURNSTILE_SECRET_KEY`（发码 fail-closed）         |
+| `rate_limited`            | 429  | 冷却或四档限流触顶                                           |
+| `email_not_configured`    | 503  | DirectMail 未配置                                            |
+| `email_send_failed`       | 502  | 发信失败                                                     |
+| `code_not_found`          | 400  | 无待验码记录                                                 |
+| `code_expired`            | 400  | 码过期（已删）                                               |
+| `invalid_code`            | 400  | 码错；可带 `remainingAttempts`                               |
+| `too_many_attempts`       | 429  | 验码满 5 次，码作废                                          |
+| `auth_lookup_failed`      | 502  | 验码后 Admin 查邮箱失败                                      |
+| `supabase_not_configured` | 503  | Admin / Supabase 未配置                                      |
+| `invalid_claim`           | 401  | 缺 / 无效 / 分支不符的 claimToken（含旧无 token 的 promote） |
+| `claim_user_not_found`    | 404  | claim 目标用户不存在或记录缺 `targetUserId`                  |
+| `device_limit_reached`    | 403  | 目标账号设备数已达软上限（20）                               |
+| `email_conflict`          | 409  | promote 路径邮箱冲突（竞态；UI 须重新验码）                  |
+| `kv_unavailable`          | 503  | 绑定 KV 不可用                                               |
+
+### Turnstile 两档
+
+| 路径                           | 策略                                                                                  | 理由                                                                           |
+| ------------------------------ | ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| **匿名 signup**（扩展 ensure） | 拿不到 captcha → **fail-open**（保持未登录，可前景重试）                              | 冷启动试用不可因桥超时永久锁死；失败代价是「暂无试用」                         |
+| **官网登录 OTP**               | Supabase Attack Protection 持 secret；官网只出 site token                             | Secret **不**进 Worker / 官网 bundle                                           |
+| **绑定发码**（`bind-code`）    | Worker `TURNSTILE_SECRET_KEY` **siteverify fail-closed**；扩展拿不到 token **不发码** | 绑定可占邮箱；缺 secret → **503** `captcha_not_configured`，宁可不可用也不裸发 |
 
 ---
 
@@ -286,6 +355,7 @@ flowchart TD
 - [ADR-018](./architecture/decisions/ADR-018-account-profile-data-isolation.md)
 - [ADR-019](./architecture/decisions/ADR-019-website-extension-ui-bridge.md)
 - [ADR-028](./architecture/decisions/ADR-028-anonymous-device-auth.md)（匿名认证 + 清理）
+- [ADR-029](./architecture/decisions/ADR-029-unified-bind-otp.md)（统一绑定 OTP）
 - [ENVIRONMENT](./ENVIRONMENT.md)
 - [图表 registry](./diagrams/registry.json) · `auth.login-migration-gate`（旧 `auth.extension-session-mint-handoff` 图语义已过时；以本节「设备注册并交接」为准）
 - 设备 token 规格：[`docs/device-token-design.md`](./device-token-design.md)

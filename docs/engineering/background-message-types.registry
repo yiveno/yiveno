@@ -3,12 +3,19 @@
 # 权威：须与 message-handler.ts switch cases 一一对应。
 # 新增 type：先改 core/messaging/* → handler → 本文件 → 产品文档 §4（若属核心表）。
 # 校验：bun run doc:check
+#
+# 统一绑定（ADR-029）契约摘要（本文件仍只登记 type 名；shape 以 core/messaging 为准）：
+#   BIND_REQUEST_CODE  payload { email, locale: 'en'|'zh', foreground? } → { ok } | { ok:false, errorCode, error? }
+#   BIND_VERIFY_CODE   payload { email, code } → { ok, branch, claimToken } | { ok:false, errorCode, error?, remainingAttempts? }
+#   CONVERT_ANONYMOUS_ACCOUNT  payload { email, claimToken, branch: 'promote'|'claim' } → { ok, email, userId, branch } | { ok:false, errorCode, error? }
 
 ACK_PRIVACY_NOTICE
 AUTH_SIGN_IN
 AUTH_CONNECT_WEBSITE
 AUTH_SIGN_OUT
 BACKFILL_MEMORY_EMBEDDINGS
+BIND_REQUEST_CODE
+BIND_VERIFY_CODE
 CAPTURE_BOOKMARK
 CAPTURE_TEXT_EXCERPT
 CLEAR_LOCAL_MEMORY
