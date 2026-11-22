@@ -1,6 +1,6 @@
 ---
 created: 2026-11-20 14:57 +0800
-updated: 2026-11-21 17:09 +0800
+updated: 2026-11-22 09:55 +0800
 author: agent:cursor
 scope: S0 设备 token（D 方案）设计稿；不实施产品代码
 status: implemented-s1
@@ -302,6 +302,7 @@ SW 启动 / GET_AUTH_STATE：
   → exchange 401（AN2）：保留 pending；写独立熔断键 yiveno:anon_exchange_401_backoff（60min）；窗口内 ensure 不 signup / 不 exchange（Settings ignoreBackoff 可绕过）；成功后清 pending + 熔断；device 会话建立时（handoff 成功 / ensure 已有会话）清熔断（AN2.1）
   → AN3：匿名 token claims 的 email:"" 视同无邮箱；claims 校验拒绝记 [VerifySupabase] 诊断（补 getClaims 成功但 Zod/role 拒的观测）
   → AN5（2026-11-21）：Connect handoff 匿名豁免——扩展当前为匿名会话时，官网真实账号 handoff 直接覆盖（匿名是占位非真实账号）；真实账号间仍硬拒 `account_mismatch`。官网 probe 亦豁免（响应带 `isAnonymous` 字段）。
+  → AN6（2026-11-22）：设备注册填 `deviceLabel`（`"{浏览器} on {OS}"`，例 `Chrome on macOS`）与 `platform`（OS，例 `macOS`）；扩展 `session_exchange` 与官网 `website_connect` 两路均传；Worker 早已支持（`issueDeviceToken` 默认值 `Unknown device` / `unknown` 仅作兜底）。
 ```
 
 ### 5.2 与方案 C 原设计的差异（必须明示）

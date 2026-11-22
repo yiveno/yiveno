@@ -526,7 +526,7 @@ watch-auth-session-storage.ts[II6T]: F:监听 chrome.storage 登录相关键变�
 watch-website-auth-ui-storage.ts[II6T]: F:监听官网鉴权 UI 存储键变更 | R:- | A:- | S:-
 website-auth-probe.ts[II6T]: F:探测官网登录态供扩展 UI 桥 | R:code:extension/src/infrastructure/logging/flow-log.ts | A:- | S:-
 website-auth-ui-storage.ts[II6T]: F:官网鉴权 UI 展示态读写 | R:- | A:- | S:-
-device-register-api-client.ts[IA6S]: F:Worker device-register/revoke-self HTTP 客户端 | R:code:extension/src/core/identity/device-session.ts | A:session_exchange;revokeOwnDeviceToken | S:日志禁完整 token
+device-register-api-client.ts[IA6S]: F:Worker device-register/revoke-self HTTP 客户端 | R:code:extension/src/core/identity/device-session.ts,code:extension/src/infrastructure/auth/device-label.ts | A:session_exchange;revokeOwnDeviceToken | S:日志禁完整 token；deviceLabel/platform 非空才写入 body（AN6）
 device-session-revalidate.ts[IA6S]: F:device 会话存活探针（subscription） | R:code:extension/src/infrastructure/auth/auth-session-revalidate.ts | A:revalidateDeviceSession | S:401→invalid；非 401→uncertain；无租约/refresh
 ensure-anonymous-device-session.ts[IA8L]: F:匿名 signup→pending→exchange→只存 device | R:code:extension/src/infrastructure/identity/pending-anonymous-session-service.ts,code:extension/src/infrastructure/identity/anon-exchange-401-backoff-service.ts,code:extension/src/infrastructure/auth/extension-oauth.ts,code:extension/src/infrastructure/auth/device-register-api-client.ts | A:ensureAnonymousDeviceSession;signupAnonymousWithGoTrue | S:AN2：401 保留 pending 写熔断；60min fail-open；成功清 pending+熔断；已有会话 best-effort 清 pending+熔断（AN2.1）；ignoreBackoff 绕过；禁写 auth_session；禁 AI
 ensure-device-session-ready.ts[IA5T]: F:启动/GET_AUTH_STATE 确保 device 就绪 | R:code:extension/src/infrastructure/auth/migrate-auth-to-device-session.ts,code:extension/src/infrastructure/auth/ensure-anonymous-device-session.ts | A:ensureDeviceSessionReady | S:migrate→anon；single-flight
@@ -534,6 +534,7 @@ migrate-auth-to-device-session.ts[IA5T]: F:旧 auth_session→device_session 升
 turnstile-token-provider.ts[IA7M]: F:开官网页取 Turnstile captcha 经 UI 桥回传 | R:code:extension/src/infrastructure/browser/website-page.ts,code:extension/src/background/main.ts | A:getTurnstileToken;closeStaleTurnstileTabs;resolveTurnstileTokenFromUiBridge | S:开前/SW启动清扫；跳过 active 与当前 turnstileTabId；不持久化 tab id；single-flight；约30s超时fail-open；token不落盘；日志禁 URL
 promote-anonymous-api-client.ts[IA5S]: F:Worker promote 匿名转正 HTTP 客户端 | R:- | A:promoteAnonymousViaApi;maskEmailForLog | S:仅 Background；邮箱掩码进日志
 website-session-from-extension.ts[IA6S]: F:用扩展 device Bearer 申请官网 website-session | R:code:extension/src/infrastructure/identity/worker-api-access-token.ts | A:requestWebsiteSessionFromExtension | S:email_required 上抛；匿名须先转正；非 mint
+device-label.ts[II6T]: F:从 navigator 推导 deviceLabel 与 platform | R:- | A:getDeviceLabelAndPlatform | S:空串调用方不发字段；Edg/Brave 先于 Chrome；Chrome OS→ChromeOS；无 navigator 空串
 
 ===/<repository>/extension/src/infrastructure/browser/===
 action-badge.ts[IE6T]: F:工具栏 action 角标封装 | R:- | A:Chrome API 封装 | S:-
@@ -1057,8 +1058,9 @@ subscription.ts[IB5T]: F:官网拉取 Worker 订阅状态的 HTTP 客户端 | R:
 supabase.ts[II5T]: F:官网 Supabase 客户端单例工厂 | R:- | A:官网服务 | S:-
 turnstile.ts[IS5S]: F:Cloudflare Turnstile（官网 Email OTP 防刷） | R:- | A:- | S:-
 ui-bridge.ts[IE5M]: F:同浏览器官网与扩展 UI Port 桥（ADR-019） | R:code:website/src/services/extension-auth-handoff.ts | A:publishWebsiteTurnstileToken | S:captcha token 立即 post；可显式 extensionId；禁传登录 token
-register-device-from-website.ts[II5S]: F:官网用 access 调 device-register website_connect | R:- | A:POST /api/auth/device-register | S:映射 uninstallRevokeToken；401 与缺字段结构化失败；回滚 revoke-self
+register-device-from-website.ts[II5S]: F:官网用 access 调 device-register website_connect | R:code:website/src/services/device-label.ts | A:POST /api/auth/device-register;rollbackIssuedDeviceToken | S:映射 uninstallRevokeToken；401/缺字段结构化失败；回滚 revoke-self；deviceLabel/platform 非空才发（AN6）
 account-devices.ts[II5S]: F:官网账户页 Devices API 客户端 | R:code:website/src/components/AccountPage.vue | A:listDevices;renameDevice;revokeDevice | S:Bearer=官网 JWT；非 deviceAuth
+device-label.ts[II6T]: F:从 navigator 推导 deviceLabel 与 platform（与扩展规则一致） | R:- | A:getDeviceLabelAndPlatform | S:空串调用方不发字段；映射规则须与扩展 device-label 逐字一致
 
 ===/<repository>/website/src/styles/===
 home-critical.css[EU3T]: F:首页首屏关键样式（reveal 在 home-deferred） | R:- | A:- | S:-

@@ -4,6 +4,7 @@
  */
 
 import { maskDeviceTokenForLog, type DeviceSession } from '@/core/identity/device-session'
+import { getDeviceLabelAndPlatform } from '@/infrastructure/auth/device-label'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
 
@@ -35,6 +36,7 @@ export async function registerDeviceViaSessionExchange(
 ): Promise<DeviceRegisterResult> {
   const startedAt = flowStart('Auth', 'device-register session_exchange')
   try {
+    const { deviceLabel, platform } = getDeviceLabelAndPlatform()
     const url = `${getApiBaseUrl()}/api/auth/device-register`
     const response = await fetch(url, {
       method: 'POST',
@@ -42,7 +44,11 @@ export async function registerDeviceViaSessionExchange(
         'content-type': 'application/json',
         authorization: `Bearer ${supabaseAccessToken}`
       },
-      body: JSON.stringify({ mode: 'session_exchange' })
+      body: JSON.stringify({
+        mode: 'session_exchange',
+        ...(deviceLabel ? { deviceLabel } : {}),
+        ...(platform ? { platform } : {})
+      })
     })
     const body: unknown = await response.json().catch(() => null)
     if (!response.ok) {

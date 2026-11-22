@@ -1,6 +1,6 @@
 ---
 created: 2026-11-20T21:04:08+08:00
-updated: 2026-11-21T17:09:00+08:00
+updated: 2026-11-22T09:55:00+08:00
 author: agent:cursor
 scope: docs/architecture/decisions
 status: 已接受
@@ -21,7 +21,7 @@ downstream: worker anonymous-cleanup cron；device-register / promote / dual-aut
 
 ## 决定
 
-1. **匿名试用 = 方案 C：** 扩展经 GoTrue 匿名 signup → `POST /api/auth/device-register`（`mode=session_exchange`）换 **device token**；业务凭证只持久化 `yiveno:device_session`。**AN1：** signup↔exchange 间可将待交换匿名会话落 `yiveno:pending_anon_session`（复用同一用户、过期先 refresh）；仍禁止写 legacy `yiveno:auth_session`，且待交换会话不得调 AI。**AN2：** exchange 系统性 401 不删 pending，写独立熔断键 `yiveno:anon_exchange_401_backoff`（60 分钟窗口内不 signup / 不 exchange；`ignoreBackoff` 可绕过）；Worker `getClaims` 失败记 `[VerifySupabase]` 诊断日志（claims 摘要，不含 token 全文）。**AN2.1：** device 会话建立时（handoff 成功 / ensure 已有会话）清熔断，避免 Connect 后退出仍被 stale 熔断挡住。**AN3：** 匿名 token 的 `email: ""` 视同无邮箱；claims 校验拒绝记 `[VerifySupabase]` 诊断（getClaims 成功但 Zod/role 拒时亦有观测）。**AN5：** Connect handoff 匿名豁免——扩展当前为匿名会话时，官网真实账号 handoff 直接覆盖（匿名是占位非真实账号）；真实账号间仍硬拒 `account_mismatch`。官网 probe 亦豁免（响应带 `isAnonymous` 字段）。
+1. **匿名试用 = 方案 C：** 扩展经 GoTrue 匿名 signup → `POST /api/auth/device-register`（`mode=session_exchange`）换 **device token**；业务凭证只持久化 `yiveno:device_session`。**AN1：** signup↔exchange 间可将待交换匿名会话落 `yiveno:pending_anon_session`（复用同一用户、过期先 refresh）；仍禁止写 legacy `yiveno:auth_session`，且待交换会话不得调 AI。**AN2：** exchange 系统性 401 不删 pending，写独立熔断键 `yiveno:anon_exchange_401_backoff`（60 分钟窗口内不 signup / 不 exchange；`ignoreBackoff` 可绕过）；Worker `getClaims` 失败记 `[VerifySupabase]` 诊断日志（claims 摘要，不含 token 全文）。**AN2.1：** device 会话建立时（handoff 成功 / ensure 已有会话）清熔断，避免 Connect 后退出仍被 stale 熔断挡住。**AN3：** 匿名 token 的 `email: ""` 视同无邮箱；claims 校验拒绝记 `[VerifySupabase]` 诊断（getClaims 成功但 Zod/role 拒时亦有观测）。**AN5：** Connect handoff 匿名豁免——扩展当前为匿名会话时，官网真实账号 handoff 直接覆盖（匿名是占位非真实账号）；真实账号间仍硬拒 `account_mismatch`。官网 probe 亦豁免（响应带 `isAnonymous` 字段）。**AN6（2026-11-22）：** 设备注册填 `deviceLabel`（`"{浏览器} on {OS}"`，例 `Chrome on macOS`）与 `platform`（OS，例 `macOS`）；扩展 `session_exchange` 与官网 `website_connect` 两路均传；Worker 早已支持（`issueDeviceToken` 默认值 `Unknown device` / `unknown` 仅作兜底）。
 2. **配额：** 匿名档 LLM **15** 次 lifetime（`ai_usage_lifetime:{userId}`）；embeddings **前 30** 次 lifetime（`embed_anon:{userId}`）。转正**不**重置计数器。
 3. **Turnstile B'：** 官网登录只出 captcha token（打在 Email OTP）；Worker **不**持 Turnstile secret；匿名 signup 路径不经 Worker 验 captcha。
 4. **放弃「Admin mint 匿名」：** Spike 证实 Admin `generateLink` / `createUser` 要求邮箱，无法无邮箱建匿名号。匿名只走扩展 signup + `session_exchange`。

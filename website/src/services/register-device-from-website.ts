@@ -3,6 +3,8 @@
  * 取代旧 `mint-extension-session`（extension-session 已 410）。
  */
 
+import { getDeviceLabelAndPlatform } from './device-label'
+
 const API_BASE = (import.meta.env.PUBLIC_API_BASE_URL || 'https://api.yiveno.com').replace(
   /\/$/,
   ''
@@ -58,6 +60,7 @@ export async function registerDeviceFromWebsite(
   }
 
   try {
+    const { deviceLabel, platform } = getDeviceLabelAndPlatform()
     const res = await fetch(`${API_BASE}/api/auth/device-register`, {
       method: 'POST',
       headers: {
@@ -66,7 +69,9 @@ export async function registerDeviceFromWebsite(
       },
       body: JSON.stringify({
         mode: 'website_connect',
-        ...(options.extensionId?.trim() ? { extensionId: options.extensionId.trim() } : {})
+        ...(options.extensionId?.trim() ? { extensionId: options.extensionId.trim() } : {}),
+        ...(deviceLabel ? { deviceLabel } : {}),
+        ...(platform ? { platform } : {})
       })
     })
 

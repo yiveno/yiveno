@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
+import * as deviceLabel from './device-label'
 import {
   registerDeviceFromWebsite,
   rollbackIssuedDeviceToken
@@ -23,6 +24,10 @@ const okData = {
 
 describe('registerDeviceFromWebsite', () => {
   it('成功映射 register data', async () => {
+    vi.spyOn(deviceLabel, 'getDeviceLabelAndPlatform').mockReturnValue({
+      deviceLabel: '',
+      platform: ''
+    })
     const fetchMock = vi
       .fn()
       .mockResolvedValue(
@@ -40,6 +45,28 @@ describe('registerDeviceFromWebsite', () => {
     )
     const body = JSON.parse(String((fetchMock.mock.calls[0]?.[1] as RequestInit).body))
     expect(body).toEqual({ mode: 'website_connect', extensionId: 'ext-a' })
+  })
+
+  it('POST body 含 deviceLabel + platform', async () => {
+    vi.spyOn(deviceLabel, 'getDeviceLabelAndPlatform').mockReturnValue({
+      deviceLabel: 'Chrome on macOS',
+      platform: 'macOS'
+    })
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ success: true, data: okData }), { status: 200 })
+      )
+    vi.stubGlobal('fetch', fetchMock)
+    const result = await registerDeviceFromWebsite('website-at', { extensionId: 'ext-a' })
+    expect(result.status).toBe('ok')
+    const body = JSON.parse(String((fetchMock.mock.calls[0]?.[1] as RequestInit).body))
+    expect(body).toEqual({
+      mode: 'website_connect',
+      extensionId: 'ext-a',
+      deviceLabel: 'Chrome on macOS',
+      platform: 'macOS'
+    })
   })
 
   it('401 → unauthorized', async () => {
