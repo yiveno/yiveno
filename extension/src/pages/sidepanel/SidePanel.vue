@@ -662,6 +662,18 @@ async function loadGreetingIdentity(): Promise<void> {
   }
 }
 
+/** 绑定 OTP 成功：刷新账号态，并清掉会话里残留的试用尽提示。 */
+async function handleAnonymousBound(_payload: { branch: 'promote' | 'claim' }): Promise<void> {
+  await loadGreetingIdentity()
+  conversationTurns.value = conversationTurns.value.map(turn => {
+    if (turn.role !== 'assistant' || turn.showAnonymousPromote !== true) {
+      return turn
+    }
+    const { showAnonymousPromote: _cleared, ...rest } = turn
+    return rest
+  })
+}
+
 async function refreshSignOutRemapNotice(): Promise<void> {
   try {
     signOutRemapNotice.value = await readSignOutRemapNotice()
@@ -915,7 +927,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
 
     const highlightClue = response.result.effectiveClue ?? response.result.clue
     const resultIds = collectResultIdsFromRecall(response.result)
-    /** 匿名试用配额用尽：内联转正；与 deeperReadingTip 互斥 */
+    /** 匿名试用配额用尽：绑定邮箱入口；与 deeperReadingTip 互斥 */
     const showAnonymousPromote =
       response.result.understandSource === 'rules_fallback' &&
       response.result.understandErrorKind === 'anonymous_quota_exhausted'
@@ -1759,7 +1771,6 @@ onUnmounted(() => {
           :pendingSteps="recallPendingSteps"
           :selected-detail-export-ids="selectedDetailExportIds"
           :detail-export-selection-active="detailExportMode"
-          :auth-account-id="extensionAccountId"
           @open="handleCardOpen"
           @evidence-visible="handleEvidenceVisible"
           @toggle-detail-export-selection="handleToggleDetailExportSelection"
@@ -1771,6 +1782,7 @@ onUnmounted(() => {
           @open-bookmark-ingest-settings="handleOpenBookmarkIngestSettings"
           @open-ai-settings="handleOpenAiSettings"
           @open-account-settings="handleOpenAccountSettings"
+          @anonymous-bound="handleAnonymousBound"
         />
       </div>
 

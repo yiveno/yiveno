@@ -5,6 +5,7 @@ import {
   bindOtpCanSendCode,
   bindOtpConfirmFail,
   bindOtpConfirmOk,
+  bindOtpIsBusy,
   bindOtpSendFail,
   bindOtpSendOk,
   bindOtpSetEmail,
@@ -14,8 +15,7 @@ import {
   bindOtpVerifyFail,
   bindOtpVerifyOk,
   classifyBindOtpError,
-  createBindOtpState,
-  shouldResetBindOtpForAccountIdentityChange
+  createBindOtpState
 } from './bind-otp-flow'
 
 describe('bind-otp-flow', () => {
@@ -24,9 +24,11 @@ describe('bind-otp-flow', () => {
     state = bindOtpSetEmail(state, 'a@b.com')
     state = bindOtpStartSend(state)
     expect(state.phase).toBe('code_sending')
+    expect(bindOtpIsBusy(state)).toBe(true)
     state = bindOtpSendOk(state)
     expect(state.phase).toBe('code_sent')
     expect(state.resendCooldownSec).toBe(BIND_OTP_RESEND_COOLDOWN_SEC)
+    expect(bindOtpIsBusy(state)).toBe(false)
     state = { ...state, code: '12345678' }
     state = bindOtpStartVerify(state)
     state = bindOtpVerifyOk(state, { branch: 'promote', claimToken: 'tok' })
@@ -74,15 +76,30 @@ describe('bind-otp-flow', () => {
     expect(classifyBindOtpError('rate_limited')).toBe('rate_limited')
     expect(classifyBindOtpError('captcha_failed')).toBe('captcha')
     expect(classifyBindOtpError('captcha_required')).toBe('captcha')
+    expect(classifyBindOtpError('captcha_not_configured')).toBe('captcha_not_configured')
     expect(classifyBindOtpError('code_not_found')).toBe('code_expired')
     expect(classifyBindOtpError('device_limit_reached')).toBe('device_limit')
     expect(classifyBindOtpError('email_send_failed')).toBe('failed')
   })
 
-  it('发码失败 captcha → captchaRetryNeeded', () => {
-    const state = bindOtpSendFail(bindOtpStartSend(createBindOtpState()), 'captcha_required')
-    expect(state.errorKind).toBe('captcha')
-    expect(state.captchaRetryNeeded).toBe(true)
+  it('captcha_not_configured 精确分类；其它 captcha* 仍归 captcha', () => {
+    expect(classifyBindOtpError('captcha_not_configured')).toBe('captcha_not_configured')
+    expect(classifyBindOtpError('captcha_required')).toBe('captcha')
+    expect(classifyBindOtpError('captcha_failed')).toBe('captcha')
+    expect(classifyBindOtpError('captcha_timeout')).toBe('captcha')
+  })
+
+  it('发码失败 captcha → captchaRetryNeeded；captcha_not_configured 不触发重试', () => {
+    const captcha = bindOtpSendFail(bindOtpStartSend(createBindOtpState()), 'captcha_required')
+    expect(captcha.errorKind).toBe('captcha')
+    expect(captcha.captchaRetryNeeded).toBe(true)
+
+    const notConfigured = bindOtpSendFail(
+      bindOtpStartSend(createBindOtpState()),
+      'captcha_not_configured'
+    )
+    expect(notConfigured.errorKind).toBe('captcha_not_configured')
+    expect(notConfigured.captchaRetryNeeded).toBe(false)
   })
 
   it('confirm 竞态 email_conflict 清码', () => {
@@ -96,57 +113,18 @@ describe('bind-otp-flow', () => {
     expect(state.code).toBe('')
   })
 
-  describe('shouldResetBindOtpForAccountIdentityChange（BF1）', () => {
-    it('promote 成功后换新匿名账号 → 应重置（success 不可挡新表单）', () => {
-      const afterPromote = {
-        accountId: 'acct-same',
-        isAnonymous: false
-      }
-      const newAnonymous = {
-        accountId: 'acct-new-anon',
-        isAnonymous: true
-      }
-      expect(shouldResetBindOtpForAccountIdentityChange(afterPromote, newAnonymous)).toBe(true)
-
-      // 调用方重置后：idle + promoteSuccess=false
-      let bind = bindOtpConfirmOk(createBindOtpState())
-      expect(bind.phase).toBe('success')
-      if (shouldResetBindOtpForAccountIdentityChange(afterPromote, newAnonymous)) {
-        bind = createBindOtpState()
-      }
-      expect(bind.phase).toBe('idle')
-      expect(bind.phase === 'success').toBe(false)
-    })
-
-    it('同账号轮询刷新 → 不重置（保留 code_sent）', () => {
-      const identity = { accountId: 'acct-1', isAnonymous: true }
-      expect(shouldResetBindOtpForAccountIdentityChange(identity, identity)).toBe(false)
-
-      let bind = bindOtpSendOk(bindOtpSetEmail(createBindOtpState(), 'a@b.com'))
-      expect(bind.phase).toBe('code_sent')
-      if (shouldResetBindOtpForAccountIdentityChange(identity, { ...identity })) {
-        bind = createBindOtpState()
-      }
-      expect(bind.phase).toBe('code_sent')
-      expect(bind.email).toBe('a@b.com')
-    })
-
-    it('退出登录 accountId → null → 应重置', () => {
-      expect(
-        shouldResetBindOtpForAccountIdentityChange(
-          { accountId: 'acct-1', isAnonymous: true },
-          { accountId: null, isAnonymous: false }
-        )
-      ).toBe(true)
-    })
-
-    it('promote 同号 isAnonymous 翻转 → 应重置（Settings 可接受）', () => {
-      expect(
-        shouldResetBindOtpForAccountIdentityChange(
-          { accountId: 'acct-1', isAnonymous: true },
-          { accountId: 'acct-1', isAnonymous: false }
-        )
-      ).toBe(true)
-    })
+  it('弹窗打开重置：createBindOtpState 丢弃 success / code_sent 残留', () => {
+    let state = bindOtpConfirmOk(
+      bindOtpVerifyOk(bindOtpSendOk(bindOtpSetEmail(createBindOtpState(), 'a@b.com')), {
+        branch: 'promote',
+        claimToken: 'tok'
+      })
+    )
+    expect(state.phase).toBe('success')
+    state = createBindOtpState()
+    expect(state.phase).toBe('idle')
+    expect(state.email).toBe('')
+    expect(state.branch).toBeNull()
+    expect(state.claimToken).toBeNull()
   })
 })

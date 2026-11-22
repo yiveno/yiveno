@@ -1633,15 +1633,6 @@
   "settings_promote_email_placeholder": {
     "message": "you@example.com"
   },
-  "settings_promote_submit": {
-    "message": "Bind email"
-  },
-  "settings_promote_working": {
-    "message": "Binding…"
-  },
-  "settings_promote_success": {
-    "message": "You're on Free now. Monthly clue-help allowance unlocked."
-  },
   "settings_promote_error_invalid_email": {
     "message": "That doesn't look like a valid email."
   },
@@ -1653,6 +1644,24 @@
   },
   "settings_promote_error_not_anonymous": {
     "message": "This account is already signed in with an email."
+  },
+  "bind_otp_modal_title": {
+    "message": "Bind email"
+  },
+  "bind_otp_modal_description": {
+    "message": "We'll send a code to confirm it's you. Then you can keep finding on Free."
+  },
+  "bind_otp_modal_trigger": {
+    "message": "Bind email"
+  },
+  "bind_otp_modal_success_promote": {
+    "message": "You're on Free now. Monthly clue-help allowance unlocked."
+  },
+  "bind_otp_modal_success_claim": {
+    "message": "You're signed in to that account. If you have local saves, we may ask about moving them next."
+  },
+  "bind_otp_modal_done": {
+    "message": "Done"
   },
   "settings_bind_send_code": {
     "message": "Send code"
@@ -1702,6 +1711,9 @@
   },
   "settings_bind_error_captcha": {
     "message": "Verification needed before we can send a code."
+  },
+  "settings_bind_error_captcha_not_configured": {
+    "message": "Email verification is temporarily unavailable on our side. Try again later."
   },
   "settings_bind_error_email_conflict": {
     "message": "That email was just bound. Verify again with a new code."
@@ -3214,21 +3226,6 @@
   },
   "sidepanel_recall_anonymous_promote_copy": {
     "message": "Your trial of 15 clue-help uses is up. Bind an email to keep going on Free."
-  },
-  "sidepanel_recall_anonymous_promote_email_label": {
-    "message": "Email"
-  },
-  "sidepanel_recall_anonymous_promote_email_placeholder": {
-    "message": "you@example.com"
-  },
-  "sidepanel_recall_anonymous_promote_submit": {
-    "message": "Bind email"
-  },
-  "sidepanel_recall_anonymous_promote_working": {
-    "message": "Binding…"
-  },
-  "sidepanel_recall_anonymous_promote_success": {
-    "message": "You're on Free now. Keep finding."
   },
   "sidepanel_recall_deeper_reading_quota_daily": {
     "message": "Today's clue-help allowance is used up ($DAILY_USED$/$DAILY_LIMIT$). Using on-device rules instead. It resets tomorrow.",

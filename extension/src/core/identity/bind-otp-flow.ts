@@ -1,6 +1,6 @@
 /**
- * 绑定 OTP 双入口共用状态机（Settings 试用区 + Side Panel 内联）。
- * UI 状态在调用方本地；不进 chrome.storage。绝不持有/打印 claimToken 内容到日志。
+ * 绑定 OTP 共用状态机（Settings / Side Panel 经 BindOtpModal）。
+ * UI 状态由弹窗自持；不进 chrome.storage。绝不持有/打印 claimToken 内容到日志。
  */
 
 /** 与服务端发码冷却对齐（秒）。 */
@@ -21,7 +21,8 @@ export type BindOtpErrorKind =
   | 'invalid_code'
   | 'too_many_attempts'
   | 'code_expired'
-  | 'captcha'
+  | 'captcha' // token 缺失/无效，用户完成验证可解
+  | 'captcha_not_configured' // 服务端缺 Turnstile secret，用户操作无解
   | 'email_conflict'
   | 'claim_user_not_found'
   | 'device_limit'
@@ -61,28 +62,20 @@ export function classifyBindOtpError(apiError: string | undefined | null): BindO
   if (error === 'invalid_code') return 'invalid_code'
   if (error === 'too_many_attempts') return 'too_many_attempts'
   if (error === 'code_expired' || error === 'code_not_found') return 'code_expired'
-  if (error.startsWith('captcha') || error === 'captcha_required') return 'captcha'
+  // 先精确匹配服务端配置缺失，再兜底其它 captcha*
+  if (error === 'captcha_not_configured') return 'captcha_not_configured'
+  if (error.startsWith('captcha')) return 'captcha'
   if (error === 'email_conflict') return 'email_conflict'
   if (error === 'claim_user_not_found') return 'claim_user_not_found'
   if (error === 'device_limit_reached') return 'device_limit'
   return 'failed'
 }
 
-/** 账号身份快照（Settings / Side Panel 刷新鉴权后比较用）。 */
-export type BindOtpAccountIdentity = {
-  accountId: string | null
-  isAnonymous: boolean
-}
-
-/**
- * 鉴权刷新后是否应丢弃进行中的绑定 OTP UI 状态。
- * accountId 变化或 isAnonymous 翻转 → 重置；同账号轮询刷新 → 保留。
- */
-export function shouldResetBindOtpForAccountIdentityChange(
-  previous: BindOtpAccountIdentity,
-  next: BindOtpAccountIdentity
-): boolean {
-  return previous.accountId !== next.accountId || previous.isAnonymous !== next.isAnonymous
+/** 工作相位（弹窗 loading / 禁 Esc）。 */
+export function bindOtpIsBusy(state: BindOtpState): boolean {
+  return (
+    state.phase === 'code_sending' || state.phase === 'verifying' || state.phase === 'confirming'
+  )
 }
 
 /** 换邮箱：废弃当前验证码状态，回 idle。 */

@@ -62,7 +62,7 @@ export type AssistantTurn = {
    */
   deeperReadingTip?: string
   /**
-   * 匿名试用 LLM 配额用尽：本回合内联转正表单（非 modal）。
+   * 匿名试用 LLM 配额用尽：本回合展示绑定邮箱入口（共享 BindOtpModal）。
    */
   showAnonymousPromote?: boolean
   /**

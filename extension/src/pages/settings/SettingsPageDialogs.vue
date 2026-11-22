@@ -3,6 +3,7 @@ import { inject } from 'vue'
 import AppButton from '@/infrastructure/ui/AppButton.vue'
 import AppConfirmModal from '@/infrastructure/ui/AppConfirmModal.vue'
 import AppModal from '@/infrastructure/ui/AppModal.vue'
+import BindOtpModal from '@/pages/shared/BindOtpModal.vue'
 import LoginMigrationDialog from '@/pages/shared/LoginMigrationDialog.vue'
 import type { SettingsPageController } from '@/pages/settings/use-settings-page'
 
@@ -10,6 +11,8 @@ defineOptions({ name: 'SettingsPageDialogs' })
 
 const {
   accountEmail,
+  bindOtpModalOpen,
+  closeBindOtpModal,
   closeConfirmDialog,
   closeDeleteAccountDialog,
   closeSignOutDialog,
@@ -31,6 +34,7 @@ const {
   dismissLoginMigration,
   exportBeforeSignOutAfterFlushFail,
   exportWorking,
+  handleBindOtpSuccess,
   loginMigrationBookmarkCount,
   loginMigrationDeleteAfterExportOpen,
   loginMigrationError,
@@ -69,6 +73,12 @@ const {
     @later="dismissLoginMigration"
     @dismiss-delete-after-export="dismissDeleteAfterExport"
     @confirm-delete-after-export="runLoginMigrationDelete"
+  />
+
+  <BindOtpModal
+    :open="bindOtpModalOpen"
+    @close="closeBindOtpModal"
+    @success="handleBindOtpSuccess"
   />
 
   <AppModal
