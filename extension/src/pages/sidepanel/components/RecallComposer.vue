@@ -24,7 +24,10 @@ import {
 } from '@/pages/sidepanel/composer/clue-editor-dom'
 import { enrichClueUrlChipsInEditor } from '@/pages/sidepanel/composer/enrich-clue-url-chips'
 import { normalizeClueUrl } from '@/pages/sidepanel/composer/clue-url'
-import { useComposerSpeechDictation } from '@/pages/sidepanel/use-composer-speech-dictation'
+import {
+  shouldToastSpeechSilenceStop,
+  useComposerSpeechDictation
+} from '@/pages/sidepanel/use-composer-speech-dictation'
 import { useVoiceInputMeter } from '@/pages/sidepanel/use-voice-input-meter'
 
 import '@/pages/sidepanel/composer/clue-url-chip.css'
@@ -184,9 +187,18 @@ const speech = useComposerSpeechDictation({
 const isListening = computed(() => speech.status.value === 'listening')
 const voiceMeter = useVoiceInputMeter(isListening)
 
-const voiceButtonLabel = computed(() =>
-  isListening.value ? props.voiceStopLabel : props.voiceStartLabel
-)
+const voiceButtonLabel = computed(() => {
+  if (!speech.supported) {
+    return props.voiceUnavailableLabel
+  }
+  return isListening.value ? props.voiceStopLabel : props.voiceStartLabel
+})
+
+/** 听写中只读预览：live model；空则占位 Listening… */
+const dictationPreviewText = computed(() => {
+  const live = model.value.trim()
+  return live.length > 0 ? model.value : t('sidepanel_voice_listening')
+})
 
 const showMicPermissionStrip = computed(
   () => speech.supported && speech.status.value === 'requesting_permission'
@@ -652,21 +664,25 @@ watch(
   }
 )
 
-watch(isListening, async listening => {
+watch(isListening, async (listening, wasListening) => {
   if (listening) {
     window.addEventListener('keydown', handleListeningEscape)
-  } else {
-    window.removeEventListener('keydown', handleListeningEscape)
-    await nextTick()
-    // 听写结束：光标钉在转写段末尾（其后仍是点麦时的原文，如 URL 芯片）
-    const caretOffset = speech.caretAfterInsert.value
-    const caret = caretOffset !== null ? caretOffset : 'end'
-    applyModelToEditor(model.value, true, { caret })
-    resizeInput()
-    await nextTick()
-    const plainLen = model.value.length
-    focusWithCaretAt(caretOffset !== null ? Math.min(caretOffset, plainLen) : plainLen)
+    return
   }
+  window.removeEventListener('keydown', handleListeningEscape)
+  // 静默超时停：轻提示一次（手动停 / 取消不提示）
+  if (shouldToastSpeechSilenceStop(Boolean(wasListening), speech.lastStopReason.value)) {
+    toast.info(t('sidepanel_voice_silence_stopped'))
+  }
+  await nextTick()
+  // 听写结束：光标钉在转写段末尾（其后仍是点麦时的原文，如 URL 芯片）
+  const caretOffset = speech.caretAfterInsert.value
+  const caret = caretOffset !== null ? caretOffset : 'end'
+  applyModelToEditor(model.value, true, { caret })
+  resizeInput()
+  await nextTick()
+  const plainLen = model.value.length
+  focusWithCaretAt(caretOffset !== null ? Math.min(caretOffset, plainLen) : plainLen)
 })
 
 onMounted(() => {
@@ -740,16 +756,19 @@ defineExpose({ focus })
         />
         <div
           v-if="isListening"
-          class="recall-voice-meter"
+          class="recall-voice-listening"
           role="status"
           :aria-label="t('sidepanel_voice_listening')"
         >
-          <span
-            v-for="(style, index) in meterBarStyles"
-            :key="index"
-            class="recall-voice-meter__bar"
-            :style="style"
-          />
+          <div class="recall-voice-meter" aria-hidden="true">
+            <span
+              v-for="(style, index) in meterBarStyles"
+              :key="index"
+              class="recall-voice-meter__bar"
+              :style="style"
+            />
+          </div>
+          <p class="recall-voice-transcript">{{ dictationPreviewText }}</p>
         </div>
       </div>
 
@@ -769,14 +788,13 @@ defineExpose({ focus })
         <slot v-else name="leading" />
         <div class="recall-composer-toolbar__end">
           <button
-            v-if="speech.supported"
             type="button"
             class="recall-voice-button"
             :class="{ 'recall-voice-button--listening': isListening }"
             :aria-label="voiceButtonLabel"
             :title="voiceTitle"
-            :aria-pressed="isListening"
-            :disabled="props.disabled"
+            :aria-pressed="speech.supported ? isListening : undefined"
+            :disabled="props.disabled || !speech.supported"
             @mousedown="handleVoiceMouseDown"
             @click="handleVoiceClick"
           >
@@ -1040,17 +1058,36 @@ defineExpose({ focus })
   outline-offset: 2px;
 }
 
+.recall-voice-listening {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  gap: var(--space-2xs);
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  padding: 2px 0;
+}
+
 .recall-voice-meter {
   display: flex;
-  flex: 1 1 auto;
   justify-content: center;
   align-items: center;
   gap: 3px;
   box-sizing: border-box;
   width: 100%;
-  min-width: 0;
   min-height: 28px;
-  padding: 2px 0;
+}
+
+.recall-voice-transcript {
+  max-height: 4.5em;
+  margin: 0;
+  font-size: var(--text-body);
+  line-height: var(--leading-snug);
+  white-space: pre-wrap;
+  color: var(--on-surface);
+  overflow: auto;
+  overflow-wrap: anywhere;
 }
 
 .recall-voice-meter__bar {

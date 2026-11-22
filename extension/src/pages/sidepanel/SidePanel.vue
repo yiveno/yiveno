@@ -73,7 +73,7 @@ import RecallConversation from '@/pages/sidepanel/components/RecallConversation.
 import RecallComposer from '@/pages/sidepanel/components/RecallComposer.vue'
 import RecallPageContextControls from '@/pages/sidepanel/components/RecallPageContextControls.vue'
 import ColdStartGate from '@/pages/sidepanel/components/ColdStartGate.vue'
-import { resolvePageContextMode } from '@/core/recall/page-context-mode'
+import type { PageContextMode } from '@/core/recall/page-context-mode'
 import type { RecallSourceScope } from '@/core/recall/recall-source-scope'
 import { createAssistantTurn } from '@/pages/sidepanel/build-assistant-turn'
 import type { ConversationTurn, AssistantTurn } from '@/pages/sidepanel/recall-conversation-types'
@@ -280,11 +280,10 @@ const pendingPivotClue = ref<string | null>(null)
 /** 上次成功提交线索的时间（冷却启发式）。 */
 const lastSubmitAtMs = ref<number | null>(null)
 
-/** §7.1 composer 页上下文（会话级；默认收起、双关 = none）。 */
+/** §7.1 composer 页上下文（会话级；默认收起、三态单选 = none）。 */
 const pageContextDomain = ref<string | null>(null)
 const pageContextExpanded = ref(false)
-const pageContextCombine = ref(false)
-const pageContextOnlySite = ref(false)
+const pageContextMode = ref<PageContextMode>('none')
 /** 来源范围：默认全部；New find 复位。 */
 const recallSourceScope = ref<RecallSourceScope>('all')
 
@@ -359,8 +358,10 @@ const {
   detailExportSelectedCount,
   showDetailExportBar,
   hasRecallResultCards,
+  detailExportBulkAction,
   enterDetailExportMode,
   handleToggleDetailExportSelection,
+  handleDetailExportBulk,
   clearDetailExportSelection,
   runDetailExportAction
 } = useDetailExport({
@@ -569,8 +570,7 @@ async function completeNewFindSession(reason: string): Promise<void> {
   clearDetailExportSelection()
   stickToBottom.value = true
   pageContextExpanded.value = false
-  pageContextCombine.value = false
-  pageContextOnlySite.value = false
+  pageContextMode.value = 'none'
   recallSourceScope.value = 'all'
   const pendingPrefill = pendingPrefillAfterExit.value
   pendingPrefillAfterExit.value = null
@@ -604,7 +604,7 @@ function handlePageContextExpanded(next: boolean): void {
 
 /** 页上下文展示或已开启时，跟活动标签走，避免入口写死过期 host。 */
 const needsLivePageContextDomain = computed(
-  () => pageContextExpanded.value || pageContextCombine.value || pageContextOnlySite.value
+  () => pageContextExpanded.value || pageContextMode.value !== 'none'
 )
 
 /** 取消活动标签导航订阅（页面上下文域名刷新）。 */
@@ -896,16 +896,13 @@ async function runRecall(trimmedClue: string): Promise<void> {
     ...(supersedeWaitProgress ? { supersedeWaitProgress } : {})
   })
 
-  const pageContextMode = resolvePageContextMode({
-    combineWithPage: pageContextCombine.value,
-    onlyThisSite: pageContextOnlySite.value
-  })
-  if (pageContextMode !== 'none') {
+  const activePageContextMode = pageContextMode.value
+  if (activePageContextMode !== 'none') {
     // 发送瞬间再读当前 Tab，避免开关展示的 host 已过期
     await refreshPageContextDomain()
   }
   const hasDialogContext = priorUserUtterances.length > 0 || accumulated || dismissedIds.length > 0
-  const hasPageContext = pageContextMode !== 'none'
+  const hasPageContext = activePageContextMode !== 'none'
   const hasSourceScope = recallSourceScope.value !== 'all'
   try {
     const response = await recallWithClue({
@@ -921,7 +918,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
               ...(dismissedIds.length > 0 ? { dismissedIds } : {}),
               ...(hasPageContext
                 ? {
-                    pageContextMode,
+                    pageContextMode: activePageContextMode,
                     ...(pageContextDomain.value
                       ? { currentTabDomain: pageContextDomain.value }
                       : {})
@@ -1428,12 +1425,20 @@ function handleThreadPivotDismiss(): void {
   clearThreadPivotStrip()
 }
 
-/** 追问芯片：点击即发送一轮（稳定英文 value / 当前 locale label）；跳过软岔路口。 */
+/**
+ * 追问芯片 / 回声纠错：填回 composer，不自动发送。
+ * 空输入框直接填入；非空则空格拼接到现有文本后。
+ */
 function handleUseSuggestion(value: string): void {
-  if (!value.trim()) {
+  const trimmed = value.trim()
+  if (!trimmed) {
     return
   }
-  void handleSendTurn(value, { skipPivotCheck: true })
+  const existing = clue.value
+  clue.value = existing.trim().length === 0 ? trimmed : `${existing.trimEnd()} ${trimmed}`
+  void nextTick(() => {
+    clueInputRef.value?.focus()
+  })
 }
 
 /** 理解回声纠错：合成英文 refine → 同追问路径（merge 覆盖/排除）。 */
@@ -1981,11 +1986,14 @@ onUnmounted(() => {
               class="recall-detail-export-bar"
               :selected-count="detailExportSelectedCount"
               :exporting="detailExportExporting"
+              show-bulk-action
+              :bulk-action="detailExportBulkAction"
               @copy-json="runDetailExportAction('json', 'copy')"
               @copy-markdown="runDetailExportAction('markdown', 'copy')"
               @download-json="runDetailExportAction('json', 'download')"
               @download-markdown="runDetailExportAction('markdown', 'download')"
               @clear="clearDetailExportSelection"
+              @bulk="handleDetailExportBulk"
             />
           </DetailExportBarDock>
 
@@ -2008,12 +2016,12 @@ onUnmounted(() => {
               <template #leading>
                 <RecallPageContextControls
                   :domain="pageContextDomain"
-                  :combine-with-page="pageContextCombine"
-                  :only-this-site="pageContextOnlySite"
+                  :mode="pageContextMode"
                   :source-scope="recallSourceScope"
                   :expanded="pageContextExpanded"
                   :toggle-label="t('sidepanel_recall_settings_toggle')"
                   :dismiss-label="t('sidepanel_recall_settings_dismiss')"
+                  :none-label="t('sidepanel_page_context_none')"
                   :combine-label="t('sidepanel_page_context_combine')"
                   :combine-hint="t('sidepanel_page_context_combine_hint')"
                   :only-site-label="t('sidepanel_page_context_only_site')"
@@ -2026,8 +2034,7 @@ onUnmounted(() => {
                   :source-bookmarks-label="t('sidepanel_recall_source_bookmarks')"
                   :source-bookmarks-hint="t('sidepanel_recall_source_bookmarks_hint')"
                   @update:expanded="handlePageContextExpanded"
-                  @update:combine-with-page="pageContextCombine = $event"
-                  @update:only-this-site="pageContextOnlySite = $event"
+                  @update:mode="pageContextMode = $event"
                   @update:source-scope="recallSourceScope = $event"
                 />
               </template>

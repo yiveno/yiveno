@@ -42,6 +42,17 @@ export type UseComposerSpeechDictationOptions = {
   getInsertOffset?: () => number
 }
 
+/** 听写停止原因：静默超时 / 手动停 / 取消（还原）。 */
+export type SpeechDictationStopReason = 'silence' | 'manual' | 'cancel'
+
+/** 听写中→已停且原因为 silence 时弹一次轻提示（手动/取消不弹）。 */
+export function shouldToastSpeechSilenceStop(
+  wasListening: boolean,
+  reason: SpeechDictationStopReason | null
+): boolean {
+  return wasListening === true && reason === 'silence'
+}
+
 export function useComposerSpeechDictation(options: UseComposerSpeechDictationOptions) {
   const supported = isBrowserSpeechRecognitionAvailable()
   const status = ref<SpeechDictationStatus>('idle')
@@ -51,6 +62,8 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
     | 'sidepanel_voice_error_no_speech'
     | 'sidepanel_voice_error_generic'
   >(null)
+  /** 最近一次听写停止原因（供 UI 轻提示；idle 后仍可读一轮）。 */
+  const lastStopReason = ref<SpeechDictationStopReason | null>(null)
   /** 页内点「允许」进行中 */
   const permissionBusy = ref(false)
   /**
@@ -93,7 +106,7 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
       logger.info('SidePanel', '语音转写静默超时，自动停止', {
         silenceMs: SPEECH_DICTATION_SILENCE_STOP_MS
       })
-      stopListening()
+      stopListening('silence')
     }, SPEECH_DICTATION_SILENCE_STOP_MS)
   }
 
@@ -125,7 +138,7 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
     return Math.max(0, Math.min(full.length, Math.floor(raw)))
   }
 
-  function stopListening(): void {
+  function stopListening(reason: Exclude<SpeechDictationStopReason, 'cancel'> = 'manual'): void {
     clearSilenceWatch()
     if (!recognition || status.value !== 'listening') {
       if (status.value !== 'requesting_permission') {
@@ -133,6 +146,7 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
       }
       return
     }
+    lastStopReason.value = reason
     intentionalStop = true
     try {
       recognition.stop()
@@ -150,6 +164,7 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
     if (status.value !== 'listening' && status.value !== 'requesting_permission') {
       return
     }
+    lastStopReason.value = 'cancel'
     intentionalStop = true
     options.model.value = sessionStartText
     caretAfterInsert.value = null
@@ -217,6 +232,7 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
     }
 
     lastErrorKey.value = null
+    lastStopReason.value = null
     intentionalStop = false
     sessionStartText = options.model.value
     const insertAt = resolveInsertOffset(sessionStartText)
@@ -320,7 +336,7 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
 
   function toggleListening(): void {
     if (status.value === 'listening') {
-      stopListening()
+      stopListening('manual')
       return
     }
     startListening()
@@ -337,6 +353,7 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
     supported,
     status,
     lastErrorKey,
+    lastStopReason,
     permissionBusy,
     caretAfterInsert,
     toggleListening,

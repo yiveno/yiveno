@@ -3,25 +3,13 @@ import { describe, expect, it } from 'vitest'
 import {
   isSamePageContextDomain,
   normalizePageContextDomain,
-  resolvePageContextMode,
+  PAGE_CONTEXT_MODES,
   urlForPageContext
 } from '@/core/recall/page-context-mode'
 
-describe('resolvePageContextMode', () => {
-  it('双关 → none', () => {
-    expect(resolvePageContextMode({ combineWithPage: false, onlyThisSite: false })).toBe('none')
-  })
-
-  it('仅结合 → boost', () => {
-    expect(resolvePageContextMode({ combineWithPage: true, onlyThisSite: false })).toBe('boost')
-  })
-
-  it('仅此站 → restrict', () => {
-    expect(resolvePageContextMode({ combineWithPage: false, onlyThisSite: true })).toBe('restrict')
-  })
-
-  it('双开 → restrict 覆盖', () => {
-    expect(resolvePageContextMode({ combineWithPage: true, onlyThisSite: true })).toBe('restrict')
+describe('PAGE_CONTEXT_MODES', () => {
+  it('闭集为 none / boost / restrict', () => {
+    expect([...PAGE_CONTEXT_MODES]).toEqual(['none', 'boost', 'restrict'])
   })
 })
 

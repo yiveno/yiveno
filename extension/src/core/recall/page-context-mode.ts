@@ -1,6 +1,7 @@
 /**
  * §7.1 当前页上下文模式（Contextual Clue）。
  * 与 clue 字符串分离；默认 none（当前域名不参与检索）。
+ * UI 为三态单选（none / boost / restrict），直接对应本类型；无双开映射层。
  */
 
 /** 当前页上下文如何参与 Recall。 */
@@ -11,23 +12,6 @@ export const PAGE_CONTEXT_MODES = [
 ] as const
 
 export type PageContextMode = (typeof PAGE_CONTEXT_MODES)[number]
-
-/**
- * UI 双可选 → 管线三态。
- * 双开时 restrict 覆盖 boost（硬限后同域加成无增量）。
- */
-export function resolvePageContextMode(input: {
-  combineWithPage: boolean
-  onlyThisSite: boolean
-}): PageContextMode {
-  if (input.onlyThisSite) {
-    return 'restrict'
-  }
-  if (input.combineWithPage) {
-    return 'boost'
-  }
-  return 'none'
-}
 
 /**
  * 页上下文只用当前活动标签。

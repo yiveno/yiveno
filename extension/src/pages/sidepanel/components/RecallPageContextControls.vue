@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onUnmounted, ref, watch } from 'vue'
 
+import type { PageContextMode } from '@/core/recall/page-context-mode'
 import AppHoverTip from '@/infrastructure/ui/AppHoverTip.vue'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
 
@@ -9,14 +10,15 @@ defineOptions({ name: 'RecallPageContextControls' })
 const props = defineProps<{
   /** 当前浏览页域名；内置页 / 新标签时为空，图标仍显示 */
   domain: string | null
-  combineWithPage: boolean
-  onlyThisSite: boolean
+  /** 页上下文三态：none / boost / restrict（互斥单选） */
+  mode: PageContextMode
   /** 来源范围；默认 all */
   sourceScope: 'all' | 'text_excerpt' | 'bookmark'
   expanded: boolean
   disabled?: boolean
   toggleLabel: string
   dismissLabel: string
+  noneLabel: string
   combineLabel: string
   combineHint: string
   onlySiteLabel: string
@@ -32,15 +34,12 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:expanded': [value: boolean]
-  'update:combineWithPage': [value: boolean]
-  'update:onlyThisSite': [value: boolean]
+  'update:mode': [value: PageContextMode]
   'update:sourceScope': [value: 'all' | 'text_excerpt' | 'bookmark']
 }>()
 
 const hasActiveOption = computed(
-  () =>
-    (Boolean(props.domain) && (props.combineWithPage || props.onlyThisSite)) ||
-    props.sourceScope !== 'all'
+  () => (Boolean(props.domain) && props.mode !== 'none') || props.sourceScope !== 'all'
 )
 
 const pageUnavailable = computed(() => !props.domain)
@@ -59,9 +58,9 @@ const sourceSummary = computed(() => {
 const toggleAriaLabel = computed(() => {
   const source = sourceSummary.value
   let active = ''
-  if (props.domain && props.onlyThisSite) {
+  if (props.domain && props.mode === 'restrict') {
     active = source ? `${source} · Only ${props.domain}` : `Only ${props.domain}`
-  } else if (props.domain && props.combineWithPage) {
+  } else if (props.domain && props.mode === 'boost') {
     active = source ? `${source} · With ${props.domain}` : `With ${props.domain}`
   } else if (source) {
     active = source
@@ -88,18 +87,14 @@ function toggleExpanded(): void {
   emit('update:expanded', !props.expanded)
 }
 
-function toggleCombine(): void {
-  if (props.disabled || !props.domain) {
+function selectMode(mode: PageContextMode): void {
+  if (props.disabled) {
     return
   }
-  emit('update:combineWithPage', !props.combineWithPage)
-}
-
-function toggleOnlySite(): void {
-  if (props.disabled || !props.domain) {
+  if (mode !== 'none' && !props.domain) {
     return
   }
-  emit('update:onlyThisSite', !props.onlyThisSite)
+  emit('update:mode', mode)
 }
 
 function selectSource(scope: 'all' | 'text_excerpt' | 'bookmark'): void {
@@ -210,26 +205,39 @@ onUnmounted(() => {
       role="group"
       :aria-label="props.toggleLabel"
     >
-      <div class="page-context__context">
+      <div class="page-context__context" role="radiogroup" :aria-label="props.toggleLabel">
+        <AppHoverTip fill align="start" :title="props.noneLabel" :hint="props.noneLabel">
+          <button
+            type="button"
+            class="page-context__source"
+            :class="{ 'page-context__source--on': props.mode === 'none' }"
+            role="radio"
+            :aria-checked="props.mode === 'none'"
+            :aria-label="props.noneLabel"
+            :disabled="props.disabled"
+            @click="selectMode('none')"
+          >
+            <AppIcon name="radio_unchecked" size="18px" />
+          </button>
+        </AppHoverTip>
         <AppHoverTip
           fill
-          align="start"
           :title="props.domain ? props.combineLabel : ''"
           :hint="props.domain ? combineHintLine : ''"
         >
           <button
             type="button"
-            class="page-context__card"
+            class="page-context__source"
             :class="{
-              'page-context__card--on': props.combineWithPage && Boolean(props.domain),
-              'page-context__card--unavailable': pageUnavailable
+              'page-context__source--on': props.mode === 'boost' && Boolean(props.domain),
+              'page-context__source--unavailable': pageUnavailable
             }"
-            role="switch"
-            :aria-checked="props.combineWithPage"
+            role="radio"
+            :aria-checked="props.mode === 'boost'"
             :aria-disabled="pageUnavailable || props.disabled"
             :aria-label="`${props.combineLabel}. ${combineHintLine}`"
-            :disabled="props.disabled"
-            @click="toggleCombine"
+            :disabled="props.disabled || pageUnavailable"
+            @click="selectMode('boost')"
           >
             <AppIcon name="globe" size="18px" />
           </button>
@@ -242,17 +250,17 @@ onUnmounted(() => {
         >
           <button
             type="button"
-            class="page-context__card"
+            class="page-context__source"
             :class="{
-              'page-context__card--on': props.onlyThisSite && Boolean(props.domain),
-              'page-context__card--unavailable': pageUnavailable
+              'page-context__source--on': props.mode === 'restrict' && Boolean(props.domain),
+              'page-context__source--unavailable': pageUnavailable
             }"
-            role="switch"
-            :aria-checked="props.onlyThisSite"
+            role="radio"
+            :aria-checked="props.mode === 'restrict'"
             :aria-disabled="pageUnavailable || props.disabled"
             :aria-label="`${props.onlySiteLabel}. ${onlySiteHintLine}`"
-            :disabled="props.disabled"
-            @click="toggleOnlySite"
+            :disabled="props.disabled || pageUnavailable"
+            @click="selectMode('restrict')"
           >
             <AppIcon name="funnel" size="18px" />
           </button>
@@ -401,52 +409,6 @@ onUnmounted(() => {
   gap: var(--space-xs);
 }
 
-.page-context__card {
-  display: flex;
-  flex: 1 1 auto;
-  justify-content: center;
-  align-items: center;
-  min-width: 0;
-  margin: 0;
-  padding: var(--space-sm) var(--space-xs);
-  border: 0;
-  border-radius: var(--radius-lg);
-  color: var(--on-surface-muted);
-  background: color-mix(in srgb, var(--ink) 4%, transparent);
-  cursor: pointer;
-  font: inherit;
-}
-
-.page-context__card:hover:not(:disabled, .page-context__card--unavailable) {
-  color: var(--on-surface);
-  background: color-mix(in srgb, var(--ink) 8%, transparent);
-}
-
-.page-context__card--on {
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 16%, var(--surface-white));
-}
-
-.page-context__card--on:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--accent) 22%, var(--surface-white));
-}
-
-.page-context__card:disabled,
-.page-context__card--unavailable {
-  opacity: 0.4;
-  cursor: default;
-}
-
-.page-context__card--unavailable:hover {
-  color: var(--on-surface-muted);
-  background: color-mix(in srgb, var(--ink) 4%, transparent);
-}
-
-.page-context__card:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
-}
-
 .page-context__rule {
   height: 1px;
   margin: var(--space-2xs) 0;
@@ -475,7 +437,7 @@ onUnmounted(() => {
   font: inherit;
 }
 
-.page-context__source:hover:not(:disabled) {
+.page-context__source:hover:not(:disabled, .page-context__source--unavailable) {
   color: var(--on-surface);
   background: color-mix(in srgb, var(--ink) 8%, transparent);
 }
@@ -489,9 +451,15 @@ onUnmounted(() => {
   background: color-mix(in srgb, var(--accent) 22%, var(--surface-white));
 }
 
-.page-context__source:disabled {
-  opacity: 0.5;
+.page-context__source:disabled,
+.page-context__source--unavailable {
+  opacity: 0.4;
   cursor: default;
+}
+
+.page-context__source--unavailable:hover {
+  color: var(--on-surface-muted);
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
 }
 
 .page-context__source:focus-visible {

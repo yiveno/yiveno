@@ -579,6 +579,9 @@
   "sidepanel_page_context_toggle": {
     "message": "页面上下文"
   },
+  "sidepanel_page_context_none": {
+    "message": "不结合当前页"
+  },
   "sidepanel_page_context_combine": {
     "message": "结合当前页面"
   },
@@ -635,6 +638,9 @@
   },
   "sidepanel_voice_listening": {
     "message": "正在听…"
+  },
+  "sidepanel_voice_silence_stopped": {
+    "message": "已停止，刚才说的都留着"
   },
   "sidepanel_voice_unavailable": {
     "message": "当前浏览器不支持语音输入"

@@ -5,6 +5,8 @@ import { DETAIL_EXPORT_MIN_ITEMS } from '@/infrastructure/recall/detail-export-s
 import { t } from '@/infrastructure/i18n/t'
 import AppButton from '@/infrastructure/ui/AppButton.vue'
 import AppMenuButton, { type AppMenuPlacement } from '@/infrastructure/ui/AppMenuButton.vue'
+import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
+import type { AppIconName } from '@/infrastructure/ui/icons/icon-paths'
 
 defineOptions({ name: 'DetailExportBar' })
 
@@ -14,9 +16,15 @@ const props = withDefaults(
     exporting?: boolean
     /** 格式菜单弹出方向；底栏默认向上 */
     menuPlacement?: AppMenuPlacement
+    /** 是否显示全选/反选入口（Side Panel 用；Library 不传） */
+    showBulkAction?: boolean
+    /** 当前 bulk 动作 */
+    bulkAction?: 'selectAll' | 'invert'
   }>(),
   {
-    menuPlacement: 'top'
+    menuPlacement: 'top',
+    showBulkAction: false,
+    bulkAction: 'selectAll'
   }
 )
 
@@ -26,6 +34,7 @@ const emit = defineEmits<{
   downloadJson: []
   downloadMarkdown: []
   clear: []
+  bulk: []
 }>()
 
 const exportReady = computed(() => props.selectedCount >= DETAIL_EXPORT_MIN_ITEMS)
@@ -39,6 +48,22 @@ const formatMenuItems = computed(() => [
   { id: 'markdown', label: t('detail_export_format_markdown') },
   { id: 'json', label: t('detail_export_format_json') }
 ])
+
+const bulkLabel = computed(() =>
+  props.bulkAction === 'selectAll'
+    ? t('detail_export_select_all')
+    : t('detail_export_invert_selection')
+)
+
+const bulkHint = computed(() =>
+  props.bulkAction === 'selectAll'
+    ? t('detail_export_select_all_hint')
+    : t('detail_export_invert_selection_hint')
+)
+
+const bulkIcon = computed((): AppIconName =>
+  props.bulkAction === 'selectAll' ? 'list_checks' : 'flip_vertical'
+)
 
 function handleCopySelect(id: string): void {
   if (id === 'json') {
@@ -63,6 +88,20 @@ function handleDownloadSelect(id: string): void {
       <p class="detail-export-bar__status" role="status">{{ statusLabel }}</p>
     </div>
     <div class="detail-export-bar__actions">
+      <AppButton
+        v-if="showBulkAction"
+        type="button"
+        variant="outlined"
+        :title="bulkHint"
+        :aria-label="bulkLabel"
+        :disabled="exporting"
+        @click="emit('bulk')"
+      >
+        <span class="detail-export-bar__bulk-inner">
+          <AppIcon :name="bulkIcon" size="16px" />
+          <span>{{ bulkLabel }}</span>
+        </span>
+      </AppButton>
       <AppMenuButton
         :label="t('detail_export_copy')"
         icon="content_copy"
@@ -129,5 +168,11 @@ function handleDownloadSelect(id: string): void {
   align-items: center;
   gap: var(--space-xs) var(--space-sm);
   margin-left: auto;
+}
+
+.detail-export-bar__bulk-inner {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
 }
 </style>

@@ -570,6 +570,7 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
   z-index: 2;
   display: inline-flex;
   color: var(--yiveno-semantic-success);
+  pointer-events: none;
 }
 
 /*
