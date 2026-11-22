@@ -9,7 +9,7 @@ describe('scheduled-anonymous-cleanup', () => {
 
     await handleScheduledAnonymousCleanup(
       {
-        cron: '0 3 * * 0',
+        cron: '0 3 * * SUN',
         scheduledTime: Date.parse('2026-11-22T03:00:00.000Z')
       },
       { ANON_CLEANUP_SCHEDULED_ENABLED: 'false' } as Env,
@@ -23,7 +23,7 @@ describe('scheduled-anonymous-cleanup', () => {
     await expect(
       handleScheduledAnonymousCleanup(
         {
-          cron: '0 3 * * 0',
+          cron: '0 3 * * SUN',
           scheduledTime: Date.parse('2026-11-22T03:00:00.000Z')
         },
         {} as Env,

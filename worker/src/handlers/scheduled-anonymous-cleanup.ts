@@ -6,8 +6,8 @@ import { runAnonymousCleanup, type AnonymousCleanupDeps } from '../services/auth
 import type { Env } from '../types/env'
 import { error as logErrorMessage, info } from '../utils/logger'
 
-/** 与 wrangler.toml triggers 中周日 UTC 03:00 表达式一致 */
-export const ANONYMOUS_CLEANUP_CRON = '0 3 * * 0'
+/** 与 wrangler.toml triggers 中周日 UTC 03:00 表达式一致（CF Quartz：SUN，非 unix 的 0） */
+export const ANONYMOUS_CLEANUP_CRON = '0 3 * * SUN'
 
 /**
  * 定时入口：异常只记日志不抛，避免炸其它 cron 同进程语义（本触发独立）。

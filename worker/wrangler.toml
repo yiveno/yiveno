@@ -7,7 +7,8 @@ workers_dev = true
 [triggers]
 # 每天北京时间 03:17（UTC 19:17）业务数据清理；每小时 :07 订阅对账（§A.3.2）；
 # 每周日 UTC 03:00 匿名 Auth 用户清理（默认 dry-run，见 ANON_CLEANUP_DRY_RUN）
-crons = ["17 19 * * *", "7 * * * *", "0 3 * * 0"]
+# CF Cron 用 Quartz 星期：1=SUN…7=SAT；禁止 unix 的 0=周日（会 10100 invalid cron）
+crons = ["17 19 * * *", "7 * * * *", "0 3 * * SUN"]
 
 # ===================== 可观测性配置（默认 / 非 production 部署）=====================
 # 本地 `wrangler deploy`（无 --env）与开发：100% 采样，便于排障。

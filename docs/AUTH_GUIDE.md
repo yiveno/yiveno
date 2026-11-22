@@ -274,7 +274,7 @@ flowchart TD
 | **注册** | 扩展 GoTrue 匿名 signup → `device-register`（`session_exchange`） | 只持久化 `yiveno:device_session`；Worker **不** Admin 建匿名号（`generateLink` 要邮箱） |
 | **试用** | 匿名档配额                                                        | LLM **15** lifetime；embeddings **30** lifetime；Dreaming / 云同步 / 订阅须转正         |
 | **转正** | `POST /api/auth/promote` + email                                  | 同 `userId`；device token 继续有效；Confirm email OFF（不验归属）；冲突 `409`           |
-| **清理** | 周日 UTC `0 3 * * 0`                                              | `is_anonymous` 且不活跃 **≥90 天**；先撤 KV 再 `deleteUser`；默认 dry-run；每轮 ≤500    |
+| **清理** | 周日 UTC `0 3 * * SUN`（CF Quartz）                               | `is_anonymous` 且不活跃 **≥90 天**；先撤 KV 再 `deleteUser`；默认 dry-run；每轮 ≤500    |
 
 **运维：** `ANON_CLEANUP_DRY_RUN` 未设或非 `'false'` = 只记日志；显式 `'false'` 才真删。部署新 Worker 后 cron 才生效。
 

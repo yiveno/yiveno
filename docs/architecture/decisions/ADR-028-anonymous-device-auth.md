@@ -37,5 +37,5 @@ downstream: worker anonymous-cleanup cron；device-register / promote / dual-aut
 
 ## 后果
 
-- 运维须部署含 `0 3 * * 0` trigger 的 Worker；真删前核对 dry-run 日志。
+- 运维须部署含 `0 3 * * SUN` trigger 的 Worker（Cloudflare Quartz 星期，勿用 unix `0`）；真删前核对 dry-run 日志。
 - 文档：`AUTH_GUIDE` 匿名生命周期；产品文档 §登录态对齐；实现 `worker/src/services/auth/anonymous-cleanup.ts`。
