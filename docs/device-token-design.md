@@ -303,7 +303,7 @@ SW 启动 / GET_AUTH_STATE：
   → AN3：匿名 token claims 的 email:"" 视同无邮箱；claims 校验拒绝记 [VerifySupabase] 诊断（补 getClaims 成功但 Zod/role 拒的观测）
   → AN5（2026-11-21）：Connect handoff 匿名豁免——扩展当前为匿名会话时，官网真实账号 handoff 直接覆盖（匿名是占位非真实账号）；真实账号间仍硬拒 `account_mismatch`。官网 probe 亦豁免（响应带 `isAnonymous` 字段）。
   → AN6（2026-11-22）：设备注册填 `deviceLabel`（`"{浏览器} on {OS}"`，例 `Chrome on macOS`）与 `platform`（OS，例 `macOS`）；扩展 `session_exchange` 与官网 `website_connect` 两路均传；Worker 早已支持（`issueDeviceToken` 默认值 `Unknown device` / `unknown` 仅作兜底）。
-  → AN7（2026-11-22）：匿名态设置页隐藏退出登录（匿名无账号可退；退出后自动重建匿名会话，按钮是空转循环）；试用区常显去登录合并，绑定邮箱（升级试用）与登录已有账号两条路径 upfront。
+  → AN7（2026-11-22）：匿名态设置页隐藏退出登录（匿名无账号可退；退出后自动重建匿名会话，按钮是空转循环）；试用区统一绑定入口（ADR-029）：输邮箱 → OTP 验归属 → promote 原地升级或 claim 认领已有账号。「去登录合并」按钮已由 V3 删除（统一绑定双入口取代）。
 ```
 
 ### 5.2 与方案 C 原设计的差异（必须明示）
@@ -321,13 +321,15 @@ SW 启动 / GET_AUTH_STATE：
 
 **端点：** `POST /api/auth/promote`（名称可调）。
 
-| 项               | 结论                                                                                                                                        |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| **鉴权**         | `deviceAuth`                                                                                                                                |
-| **Body**         | `{ email: string, captchaToken?: string }`（若邮件链路仍要 bot 防护）                                                                       |
-| **行为**         | Admin `updateUserById`：绑定 email、`email_confirm: true`（Confirm email OFF → 当场生效，**不**发 OTP）；更新 `user_meta.isAnonymous=false` |
-| **device token** | **继续有效**；不必重发、不必 mint、不必撤旧                                                                                                 |
-| **邮箱冲突**     | Admin 报邮箱已占用 → `409 email_conflict`；扩展 UI「登录合并或换邮箱」（与方案 C 一致，合并策略另 Brief）                                   |
+> **权威：** [ADR-029](./architecture/decisions/ADR-029-unified-bind-otp.md)（统一绑定 OTP；本节原「不发 OTP」定值已取代）。
+
+| 项               | 结论                                                                                                                                                                                                          |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **鉴权**         | `deviceAuth`                                                                                                                                                                                                  |
+| **Body**         | `{ email: string, claimToken: string }`（claimToken 必填，须先经 bind-code / bind-verify；无兼容期）                                                                                                          |
+| **行为**         | 先验 claimToken（须为 promote 分支，一次性消费）；Admin `updateUserById`：绑定 email、`email_confirm: true`；更新 `user_meta.isAnonymous=false`。邮箱归属已由绑定 OTP 证明（ADR-029），不再接受不验归属的转正 |
+| **device token** | **继续有效**；不必重发、不必 mint、不必撤旧                                                                                                                                                                   |
+| **邮箱冲突**     | 邮箱已占用正常走 claim 分支（`POST /api/auth/claim-by-otp`，ADR-029）；`409 email_conflict` 只剩竞态（验码后、promote 前邮箱被注册），UI 须重新验码                                                           |
 
 **「转正后强制刷新问题」消失的原因：**  
 旧世界依赖 JWT / 会话里的匿名标记或 refresh 后 claims；D 世界 **device token 不含 `is_anonymous` claim**，配额读 **`user_meta`（§2.4）**，转正写库后**下一次**配额检查即见正式用户——无需 refresh、无需换 token。
@@ -382,11 +384,11 @@ SW 启动 / GET_AUTH_STATE：
 
 ### 8.3 E2（转正）
 
-| E 世界                                                                                  | D 世界改写                                                               |
-| --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| 扩展 `PUT /auth/v1/user` + 强制 refresh + `POST extension-session` mint 置换 + 撤旧会话 | **`POST /api/auth/promote`（device Bearer）**；无 refresh / 无 mint 置换 |
-| 第 16 次 LLM 内联转正提示                                                               | **保留产品行为**；failure kind 仍可新增；Bearer 已是 device token        |
-| Settings 匿名态 `tier: 'anonymous'`                                                     | **保留**；数据来自 `device_session.isAnonymous` 或配额 API               |
+| E 世界                                                                                  | D 世界改写                                                                                     |
+| --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| 扩展 `PUT /auth/v1/user` + 强制 refresh + `POST extension-session` mint 置换 + 撤旧会话 | **`POST /api/auth/promote`（device Bearer + claimToken，ADR-029）**；无 refresh / 无 mint 置换 |
+| 第 16 次 LLM 内联转正提示                                                               | **保留产品行为**；failure kind 仍可新增；Bearer 已是 device token                              |
+| Settings 匿名态 `tier: 'anonymous'`                                                     | **保留**；数据来自 `device_session.isAnonymous` 或配额 API                                     |
 
 ### 8.4 B1 / O1
 

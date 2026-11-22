@@ -1,6 +1,6 @@
 /**
- * 匿名转正：device Bearer + email → Admin updateUser；device token 继续有效。
- * Confirm email OFF：邮箱当场生效，不发 OTP。
+ * 匿名转正：device Bearer + email + claimToken → Admin updateUser；device token 继续有效。
+ * claimToken 须先经 bind-code / bind-verify（OTP 验邮箱归属，ADR-029）；Admin updateUser 本身不发 OTP。
  */
 
 import { createSupabaseClient, hasSupabase } from '../../data-access/supabase'

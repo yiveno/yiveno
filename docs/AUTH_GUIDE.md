@@ -327,16 +327,21 @@ flowchart TD
 | `rate_limited`            | 429  | 冷却或四档限流触顶                                           |
 | `email_not_configured`    | 503  | DirectMail 未配置                                            |
 | `email_send_failed`       | 502  | 发信失败                                                     |
+| `bind_code_failed`        | 500  | 发码路由兜底（非预期异常）                                   |
 | `code_not_found`          | 400  | 无待验码记录                                                 |
 | `code_expired`            | 400  | 码过期（已删）                                               |
 | `invalid_code`            | 400  | 码错；可带 `remainingAttempts`                               |
 | `too_many_attempts`       | 429  | 验码满 5 次，码作废                                          |
 | `auth_lookup_failed`      | 502  | 验码后 Admin 查邮箱失败                                      |
+| `bind_verify_failed`      | 500  | 验码路由兜底（非预期异常）                                   |
 | `supabase_not_configured` | 503  | Admin / Supabase 未配置                                      |
 | `invalid_claim`           | 401  | 缺 / 无效 / 分支不符的 claimToken（含旧无 token 的 promote） |
 | `claim_user_not_found`    | 404  | claim 目标用户不存在或记录缺 `targetUserId`                  |
+| `claim_failed`            | 500  | claim 服务兜底（非预期异常）                                 |
 | `device_limit_reached`    | 403  | 目标账号设备数已达软上限（20）                               |
 | `email_conflict`          | 409  | promote 路径邮箱冲突（竞态；UI 须重新验码）                  |
+| `kv_put_failed`           | 500  | promote 写 user_meta 失败（非 KV 不可用）                    |
+| `promote_failed`          | 500  | promote Admin 调用失败（非冲突类）                           |
 | `kv_unavailable`          | 503  | 绑定 KV 不可用                                               |
 
 ### Turnstile 两档
