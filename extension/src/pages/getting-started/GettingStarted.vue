@@ -64,8 +64,9 @@ async function handleContinue(): Promise<void> {
   }
   continueBusy.value = true
   try {
-    await openRecallSidePanelFromExtensionPage()
+    // 先落引导完成标记，再开壳：避免 Panel 读到 done=false 又推回 Capture-first
     await markInstallOnboardingDone()
+    await openRecallSidePanelFromExtensionPage()
     logger.info('Onboarding', 'GS Continue 已开 Side Panel', {
       hasLibrarySeed: hasLibrarySeed.value
     })

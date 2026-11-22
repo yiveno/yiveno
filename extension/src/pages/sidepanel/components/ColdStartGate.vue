@@ -2,8 +2,10 @@
 /**
  * Side Panel 冷启动全屏门禁：分阶段真实进度（library align → rules → AI 尽力）。
  * 书签 bulk 用户主进度在 Getting Started；本门禁 import 步为等待/对齐，非二次导入课。
+ * P1-18：停滞可跳过、读失败可重试（不重启 pipeline）。
  */
 import { computed } from 'vue'
+import AppButton from '@/infrastructure/ui/AppButton.vue'
 import AppLinearProgress from '@/infrastructure/ui/AppLinearProgress.vue'
 import {
   getColdStartOverallPercent,
@@ -16,6 +18,15 @@ defineOptions({ name: 'ColdStartGate' })
 
 const props = defineProps<{
   state: ColdStartPipelineState
+  /** 可见 ≥30s 且无进展 */
+  stalled?: boolean
+  /** 连续读状态失败 */
+  readFailed?: boolean
+}>()
+
+const emit = defineEmits<{
+  skip: []
+  retry: []
 }>()
 
 const percent = computed(() => getColdStartOverallPercent(props.state))
@@ -126,6 +137,31 @@ const detailLine = computed(() => {
           {{ t('cold_start_step_ai') }}
         </li>
       </ol>
+      <p v-if="readFailed" class="cold-start-gate__error" role="alert">
+        {{ t('cold_start_gate_read_failed') }}
+      </p>
+      <div v-if="readFailed || stalled" class="cold-start-gate__actions">
+        <AppButton
+          v-if="readFailed"
+          type="button"
+          variant="tonal"
+          :title="t('cold_start_gate_retry')"
+          :aria-label="t('cold_start_gate_retry')"
+          @click="emit('retry')"
+        >
+          {{ t('cold_start_gate_retry') }}
+        </AppButton>
+        <AppButton
+          v-else-if="stalled"
+          type="button"
+          variant="text"
+          :title="t('cold_start_gate_skip')"
+          :aria-label="t('cold_start_gate_skip')"
+          @click="emit('skip')"
+        >
+          {{ t('cold_start_gate_skip') }}
+        </AppButton>
+      </div>
     </div>
   </div>
 </template>
@@ -214,5 +250,19 @@ const detailLine = computed(() => {
 .cold-start-gate__step--done {
   color: var(--on-surface);
   opacity: 0.85;
+}
+
+.cold-start-gate__error {
+  margin: var(--space-2xs) 0 0;
+  font-size: var(--text-body);
+  line-height: var(--leading-snug);
+  color: var(--error, var(--on-surface));
+}
+
+.cold-start-gate__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs);
+  margin-top: var(--space-2xs);
 }
 </style>

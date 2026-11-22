@@ -374,6 +374,33 @@
   "popup_welcome_body": {
     "message": "想到什么就说什么。"
   },
+  "popup_library_unknown_title": {
+    "message": "正在确认你的库…"
+  },
+  "popup_library_unknown_body": {
+    "message": "稍等一下，正在看看你的库里有什么。"
+  },
+  "sidepanel_banner_more_hints": {
+    "message": "更多提示（$1）",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "cold_start_gate_skip": {
+    "message": "先跳过，直接找"
+  },
+  "cold_start_gate_skip_toast": {
+    "message": "库还在后台准备，找东西已可用。"
+  },
+  "cold_start_gate_read_failed": {
+    "message": "没能读到启动状态。"
+  },
+  "cold_start_gate_retry": {
+    "message": "重试"
+  },
   "popup_greeting_morning": {
     "message": "早上好"
   },

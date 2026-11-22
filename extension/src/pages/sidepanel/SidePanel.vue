@@ -61,7 +61,13 @@ import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import DetailExportBar from '@/infrastructure/ui/DetailExportBar.vue'
 import DetailExportBarDock from '@/infrastructure/ui/DetailExportBarDock.vue'
 import AppToastHost from '@/infrastructure/ui/AppToastHost.vue'
+import { useAppToast } from '@/infrastructure/ui/use-app-toast'
 import LoginMigrationDialog from '@/pages/shared/LoginMigrationDialog.vue'
+import {
+  resolveSidepanelBannerStack,
+  splitSidepanelBannerStack,
+  type SidepanelBannerId
+} from '@/pages/sidepanel/sidepanel-banner-stack'
 import { useLoginMigrationDialog } from '@/pages/shared/use-login-migration-dialog'
 import RecallConversation from '@/pages/sidepanel/components/RecallConversation.vue'
 import RecallComposer from '@/pages/sidepanel/components/RecallComposer.vue'
@@ -146,6 +152,9 @@ const showWebsiteAccountMismatch = ref(false)
 /** 壳级断网薄适配（ADR-021）：本机库可读、云端理解不可用（不可 dismiss；恢复在线自动隐） */
 const isBrowserOnline = ref(readBrowserOnline())
 const showOfflineBanner = computed(() => !isBrowserOnline.value)
+/** header 横幅「更多提示」是否已展开（会话级）。 */
+const bannerStackExpanded = ref(false)
+const { error: showToastError } = useAppToast()
 const lastSentClue = ref('')
 /** 登录展示名；未登录或无名则空，问候退化为仅时段。 */
 const accountDisplayName = ref('')
@@ -160,6 +169,10 @@ const {
   skipOnboardingBusy,
   showColdStartGate,
   coldStartGateState,
+  coldStartGateStalled,
+  coldStartStatusReadFailed,
+  skipColdStartGateForSession,
+  retryColdStartStatusRefresh,
   showColdStartPostReleaseBanner,
   coldStartEnrichmentProgressRatio,
   coldStartPostReleaseBannerLabel,
@@ -200,6 +213,34 @@ const {
     autoSubmitPrefillClue(clueText)
   }
 })
+
+/** header 横幅：按优先级有序；同屏最多 2 条，其余进展开行。 */
+const activeBannerStack = computed(() =>
+  resolveSidepanelBannerStack({
+    offline: showOfflineBanner.value,
+    website_mismatch: showWebsiteAccountMismatch.value,
+    sign_out_remap: Boolean(signOutRemapNotice.value),
+    website_connect: showWebsiteConnectBanner.value,
+    post_release: showColdStartPostReleaseBanner.value
+  })
+)
+const bannerStackSplit = computed(() => splitSidepanelBannerStack(activeBannerStack.value))
+const bannerOverflowCount = computed(() => bannerStackSplit.value.overflow.length)
+const renderedBannerIds = computed((): SidepanelBannerId[] => {
+  if (bannerStackExpanded.value) {
+    return activeBannerStack.value
+  }
+  return bannerStackSplit.value.visible
+})
+const showBannerMoreRow = computed(
+  () => !bannerStackExpanded.value && bannerOverflowCount.value > 0
+)
+function isBannerRendered(id: SidepanelBannerId): boolean {
+  return renderedBannerIds.value.includes(id)
+}
+function expandBannerStack(): void {
+  bannerStackExpanded.value = true
+}
 
 /** Side Panel 会话：槽位 accumulated + 本会话否定 id（关闭 Panel 即丢，P0）。 */
 const dialogState = ref<RecallDialogState>({
@@ -1260,8 +1301,9 @@ async function runRecall(trimmedClue: string): Promise<void> {
   }
 }
 
+/** 导航失败：走 toast，不写 errorMessage（留给 Recall 失败轮）。 */
 function handleNavigateError(message: string) {
-  errorMessage.value = message
+  showToastError(message)
 }
 
 async function openDailyReview(): Promise<void> {
@@ -1424,6 +1466,8 @@ function handleSidePanelVisibilityChange(): void {
   if (document.visibilityState !== 'visible') {
     return
   }
+  // 回前台补读引导态：storage 监听可见性门禁可能丢掉 GS Continue 瞬时不可见窗口内的 done 事件
+  void loadOnboardingState()
   void loadGreetingIdentity()
   void refreshPageContextDomain()
   void refreshBookmarkIngestSetting()
@@ -1525,7 +1569,14 @@ onUnmounted(() => {
     @confirm-delete-after-export="runLoginMigrationDelete"
   />
   <main class="recall-shell">
-    <ColdStartGate v-if="showColdStartGate && coldStartGateState" :state="coldStartGateState" />
+    <ColdStartGate
+      v-if="showColdStartGate && coldStartGateState"
+      :state="coldStartGateState"
+      :stalled="coldStartGateStalled"
+      :read-failed="coldStartStatusReadFailed"
+      @skip="skipColdStartGateForSession"
+      @retry="retryColdStartStatusRefresh"
+    />
 
     <header class="recall-header">
       <AppPageHeader
@@ -1555,7 +1606,7 @@ onUnmounted(() => {
       </p>
 
       <section
-        v-if="showOfflineBanner"
+        v-if="isBannerRendered('offline')"
         class="recall-website-connect recall-website-connect--offline"
         role="status"
         aria-live="polite"
@@ -1569,7 +1620,16 @@ onUnmounted(() => {
       </section>
 
       <section
-        v-if="signOutRemapNotice"
+        v-if="isBannerRendered('website_mismatch')"
+        class="recall-website-connect recall-website-connect--mismatch"
+        role="status"
+        aria-live="polite"
+      >
+        <p class="recall-website-connect-label">{{ t('sidepanel_account_website_mismatch') }}</p>
+      </section>
+
+      <section
+        v-if="isBannerRendered('sign_out_remap') && signOutRemapNotice"
         class="recall-website-connect recall-website-connect--remap"
         role="status"
         aria-live="polite"
@@ -1605,16 +1665,7 @@ onUnmounted(() => {
       </section>
 
       <section
-        v-if="showWebsiteAccountMismatch"
-        class="recall-website-connect recall-website-connect--mismatch"
-        role="status"
-        aria-live="polite"
-      >
-        <p class="recall-website-connect-label">{{ t('sidepanel_account_website_mismatch') }}</p>
-      </section>
-
-      <section
-        v-if="showWebsiteConnectBanner"
+        v-if="isBannerRendered('website_connect')"
         class="recall-website-connect"
         role="status"
         aria-live="polite"
@@ -1658,7 +1709,7 @@ onUnmounted(() => {
       </section>
 
       <section
-        v-if="showColdStartPostReleaseBanner"
+        v-if="isBannerRendered('post_release')"
         class="recall-post-release"
         role="status"
         aria-live="polite"
@@ -1683,6 +1734,17 @@ onUnmounted(() => {
           {{ t('cold_start_post_release_dismiss') }}
         </AppButton>
       </section>
+
+      <button
+        v-if="showBannerMoreRow"
+        type="button"
+        class="recall-banner-more"
+        :title="t('sidepanel_banner_more_hints', String(bannerOverflowCount))"
+        :aria-label="t('sidepanel_banner_more_hints', String(bannerOverflowCount))"
+        @click="expandBannerStack"
+      >
+        {{ t('sidepanel_banner_more_hints', String(bannerOverflowCount)) }}
+      </button>
     </header>
 
     <div ref="recallScrollRegionRef" class="recall-scroll-region">
@@ -1693,7 +1755,7 @@ onUnmounted(() => {
         @scroll="recallShellScrollListener"
       >
         <section v-if="conversationTurns.length === 0" class="recall-empty" aria-live="polite">
-          <div class="recall-greeting-slot">
+          <div v-if="libraryState === 'ready'" class="recall-greeting-slot">
             <p class="recall-greeting">{{ idleGreeting }}</p>
           </div>
           <div class="recall-empty-main">
@@ -2261,6 +2323,30 @@ onUnmounted(() => {
   font-size: var(--text-caption);
   line-height: var(--leading-snug);
   color: var(--on-surface-muted);
+}
+
+/* 横幅折叠：更多提示（不计入同屏 2 条上限） */
+.recall-banner-more {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: var(--space-2xs) var(--space-sm);
+  border: none;
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: var(--text-caption);
+  line-height: var(--leading-snug);
+  text-align: left;
+  color: var(--on-surface-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.recall-banner-more:hover,
+.recall-banner-more:focus-visible {
+  outline: none;
+  color: var(--on-surface);
+  background: color-mix(in srgb, var(--on-surface) 6%, transparent);
 }
 
 .recall-composer-dock {

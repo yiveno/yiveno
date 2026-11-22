@@ -34,6 +34,8 @@ const EN: Record<string, string> = {
   popup_no_match_body: 'Nothing close enough turned up. Try another detail that stuck with you.',
   popup_welcome_title: 'What are you looking for?',
   popup_welcome_body: 'Just say whatever comes to mind.',
+  popup_library_unknown_title: 'Checking your library…',
+  popup_library_unknown_body: 'Hang on—looking at what’s in your library.',
   popup_greeting_morning: 'Good morning',
   popup_greeting_afternoon: 'Good afternoon',
   popup_greeting_evening: 'Good evening',

@@ -173,6 +173,15 @@ export function getRecallShellIdleEmptyCopy(
     }
   }
 
+  // 库态未知：中性等待文案，不承诺「可以找」、不给找入口（模板勿再 fallback 到 popup_welcome_*）
+  if (library === 'unknown') {
+    return {
+      title: translate('popup_library_unknown_title'),
+      body: translate('popup_library_unknown_body')
+    }
+  }
+
+  // ready：无额外空态块，模板走 popup_welcome_* 问候
   if (library !== 'empty') {
     return null
   }

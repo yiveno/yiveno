@@ -374,6 +374,33 @@
   "popup_welcome_body": {
     "message": "Just say whatever comes to mind."
   },
+  "popup_library_unknown_title": {
+    "message": "Checking your library…"
+  },
+  "popup_library_unknown_body": {
+    "message": "Hang on—looking at what’s in your library."
+  },
+  "sidepanel_banner_more_hints": {
+    "message": "More tips ($1)",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "cold_start_gate_skip": {
+    "message": "Skip for now — start finding"
+  },
+  "cold_start_gate_skip_toast": {
+    "message": "Library is still preparing in the background. Finding is available."
+  },
+  "cold_start_gate_read_failed": {
+    "message": "Couldn’t read startup status."
+  },
+  "cold_start_gate_retry": {
+    "message": "Retry"
+  },
   "popup_greeting_morning": {
     "message": "Good morning"
   },

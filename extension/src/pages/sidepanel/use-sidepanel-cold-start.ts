@@ -5,6 +5,11 @@
 
 import { computed, nextTick, ref, watch, type ComputedRef, type Ref } from 'vue'
 
+/** 门禁可见超过此时长且无进展 → stalled，可「先跳过，直接找」。 */
+export const COLD_START_GATE_STALL_MS = 30_000
+/** 连续 `fetchColdStartStatus` 失败达到此次数 → 读失败态 + 重试。 */
+export const COLD_START_STATUS_READ_FAIL_THRESHOLD = 3
+
 import type { ChromeBookmarkImportState } from '@/core/memory/chrome-bookmark-import-state'
 import {
   shouldShowColdStartGate,
@@ -49,9 +54,11 @@ import {
 } from '@/infrastructure/storage/first-recall-onboarding-storage'
 import { MEMORY_LIBRARY_REVISION_LOCAL_KEY } from '@/infrastructure/storage/memory-library-revision-storage'
 import {
+  INSTALL_ONBOARDING_DONE_LOCAL_KEY,
   markInstallOnboardingDone,
   readInstallOnboardingDone
 } from '@/infrastructure/storage/install-onboarding-storage'
+import { showAppToast } from '@/infrastructure/ui/use-app-toast'
 
 export type UseSidepanelColdStartOptions = {
   /** composer 线索（预填写入）。 */
@@ -80,6 +87,12 @@ export type UseSidepanelColdStartResult = {
   skipOnboardingBusy: Ref<boolean>
   showColdStartGate: ComputedRef<boolean>
   coldStartGateState: ComputedRef<ColdStartPipelineState | null>
+  /** 门禁可见 ≥30s 且无进展。 */
+  coldStartGateStalled: Ref<boolean>
+  /** 连续读冷启动状态失败。 */
+  coldStartStatusReadFailed: Ref<boolean>
+  skipColdStartGateForSession: () => void
+  retryColdStartStatusRefresh: () => void
   showColdStartPostReleaseBanner: ComputedRef<boolean>
   coldStartEnrichmentProgressRatio: ComputedRef<number>
   coldStartPostReleaseBannerLabel: ComputedRef<string>
@@ -170,7 +183,19 @@ export function useSidepanelColdStart(
   let importPollTimer: ReturnType<typeof setInterval> | null = null
   let coldStartPollTimer: ReturnType<typeof setInterval> | null = null
 
+  /** 本 Panel 会话跳过门禁（不写持久化）。 */
+  const coldStartGateSessionSkipped = ref(false)
+  const coldStartGateStalled = ref(false)
+  const coldStartStatusReadFailed = ref(false)
+  let coldStartStatusReadFailCount = 0
+  let coldStartGateLastProgressSig: string | null = null
+  let coldStartGateLastProgressMs: number | null = null
+  let coldStartGateStallTimer: ReturnType<typeof setTimeout> | null = null
+
   const showColdStartGate = computed(() => {
+    if (coldStartGateSessionSkipped.value) {
+      return false
+    }
     if (coldStartState.value?.status === 'ready') {
       return false
     }
@@ -187,6 +212,77 @@ export function useSidepanelColdStart(
       coldStartState.value === null && (importStatus === 'running' || importStatus === 'pending')
     )
   })
+
+  /** 门禁进展指纹：pipeline / import 计数变化即算有进展。 */
+  function coldStartProgressSignature(): string {
+    const state = coldStartState.value
+    const imp = importState.value
+    return [
+      state?.status ?? '',
+      state?.stage ?? '',
+      String(state?.importImportedCount ?? ''),
+      String(state?.importTotalCount ?? ''),
+      String(state?.rulesScanned ?? ''),
+      String(state?.rulesUpdated ?? ''),
+      String(state?.aiEmbedAttempted ?? ''),
+      String(state?.aiEmbedWritten ?? ''),
+      String(state?.aiLlmEnqueued ?? ''),
+      imp?.status ?? '',
+      String(imp?.importedCount ?? ''),
+      String(imp?.totalCount ?? '')
+    ].join('|')
+  }
+
+  function clearColdStartGateStallTimer(): void {
+    if (coldStartGateStallTimer) {
+      clearTimeout(coldStartGateStallTimer)
+      coldStartGateStallTimer = null
+    }
+  }
+
+  function scheduleColdStartGateStallCheck(): void {
+    clearColdStartGateStallTimer()
+    if (!showColdStartGate.value || coldStartGateSessionSkipped.value) {
+      return
+    }
+    const lastProgressAt = coldStartGateLastProgressMs
+    if (lastProgressAt == null) {
+      return
+    }
+    const remaining = COLD_START_GATE_STALL_MS - (Date.now() - lastProgressAt)
+    if (remaining <= 0) {
+      coldStartGateStalled.value = true
+      return
+    }
+    coldStartGateStallTimer = setTimeout(() => {
+      coldStartGateStallTimer = null
+      if (showColdStartGate.value && !coldStartGateSessionSkipped.value) {
+        coldStartGateStalled.value = true
+      }
+    }, remaining)
+  }
+
+  function noteColdStartGateProgress(): void {
+    coldStartGateLastProgressMs = Date.now()
+    coldStartGateStalled.value = false
+    scheduleColdStartGateStallCheck()
+  }
+
+  /** 会话级跳过门禁 + 轻提示；库仍后台准备。 */
+  function skipColdStartGateForSession(): void {
+    coldStartGateSessionSkipped.value = true
+    clearColdStartGateStallTimer()
+    coldStartGateStalled.value = false
+    showAppToast({
+      tone: 'info',
+      message: t('cold_start_gate_skip_toast')
+    })
+  }
+
+  /** 仅重跑状态刷新；不重启 pipeline。 */
+  function retryColdStartStatusRefresh(): void {
+    void refreshColdStartStatus()
+  }
 
   /** 门禁已放行时冲刷 GS / Omnibox 预填自动 Recall。 */
   function tryFlushPendingGsPrefillRecall(): void {
@@ -266,7 +362,9 @@ export function useSidepanelColdStart(
       return
     }
     const membershipTouched =
-      EXCERPT_CAPTURE_COUNT_LOCAL_KEY in changes || MEMORY_LIBRARY_REVISION_LOCAL_KEY in changes
+      EXCERPT_CAPTURE_COUNT_LOCAL_KEY in changes ||
+      MEMORY_LIBRARY_REVISION_LOCAL_KEY in changes ||
+      INSTALL_ONBOARDING_DONE_LOCAL_KEY in changes
     if (!membershipTouched) {
       return
     }
@@ -278,8 +376,28 @@ export function useSidepanelColdStart(
   }
 
   watch(showColdStartGate, (blocked, wasBlocked) => {
+    if (blocked) {
+      coldStartGateLastProgressSig = coldStartProgressSignature()
+      noteColdStartGateProgress()
+    } else {
+      clearColdStartGateStallTimer()
+      coldStartGateStalled.value = false
+      coldStartGateLastProgressMs = null
+      coldStartGateLastProgressSig = null
+    }
     if (wasBlocked && !blocked) {
       tryFlushPendingGsPrefillRecall()
+    }
+  })
+
+  watch([coldStartState, importState], () => {
+    if (!showColdStartGate.value) {
+      return
+    }
+    const signature = coldStartProgressSignature()
+    if (signature !== coldStartGateLastProgressSig) {
+      coldStartGateLastProgressSig = signature
+      noteColdStartGateProgress()
     }
   })
 
@@ -568,8 +686,14 @@ export function useSidepanelColdStart(
   async function refreshColdStartStatus() {
     const response = await fetchColdStartStatus()
     if (!response.ok) {
+      coldStartStatusReadFailCount += 1
+      if (coldStartStatusReadFailCount >= COLD_START_STATUS_READ_FAIL_THRESHOLD) {
+        coldStartStatusReadFailed.value = true
+      }
       return
     }
+    coldStartStatusReadFailCount = 0
+    coldStartStatusReadFailed.value = false
     coldStartState.value = response.state
     coldStartEnrichmentBatch.value = response.enrichmentBatch
     scheduleColdStartPostReleaseBannerExpiry()
@@ -665,6 +789,7 @@ export function useSidepanelColdStart(
       clearInterval(coldStartPollTimer)
       coldStartPollTimer = null
     }
+    clearColdStartGateStallTimer()
   }
 
   async function hydrateColdStartPostReleaseDismissed(): Promise<void> {
@@ -694,6 +819,10 @@ export function useSidepanelColdStart(
     skipOnboardingBusy,
     showColdStartGate,
     coldStartGateState,
+    coldStartGateStalled,
+    coldStartStatusReadFailed,
+    skipColdStartGateForSession,
+    retryColdStartStatusRefresh,
     showColdStartPostReleaseBanner,
     coldStartEnrichmentProgressRatio,
     coldStartPostReleaseBannerLabel,

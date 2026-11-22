@@ -112,6 +112,14 @@ describe('recall-shell-empty-copy', () => {
     expect(getRecallShellIdleEmptyCopy('ready', testTranslateEn)).toBeNull()
   })
 
+  it('unknown library idle: 中性确认中文案，不承诺可以找', () => {
+    const copy = getRecallShellIdleEmptyCopy('unknown', testTranslateEn)
+    expect(copy?.title).toBe('Checking your library…')
+    expect(copy?.body).toMatch(/hang on|looking|library/i)
+    expect(copy?.body).not.toMatch(/what are you looking for|find it|ready/i)
+    expect(copy?.body).not.toMatch(FORBIDDEN)
+  })
+
   it('capture-first idle shows even when library is ready', () => {
     const copy = getRecallShellIdleEmptyCopy('ready', testTranslateEn, {
       captureFirst: true
