@@ -389,7 +389,7 @@ onMounted(() => {
 /** 标题：禁装饰性 nowrap（§6.1.1）；窄屏按词自然折 */
 .uninstall__title {
   max-width: 100%;
-  font-size: clamp(28px, 4.2vw, 40px);
+  font-size: clamp(var(--text-display), 4.2vw, 40px);
   text-wrap: balance;
 }
 
@@ -402,7 +402,7 @@ onMounted(() => {
 }
 
 .uninstall__support-hint {
-  margin: 12px 0 0;
+  margin: var(--space-sm) 0 0;
   font-size: 13.5px;
   font-weight: 300;
   line-height: 1.55;
@@ -424,9 +424,9 @@ onMounted(() => {
 /** 感谢态最轻提示：低于 lede，不抢「Thanks」 */
 .uninstall__soft-hint {
   margin: 14px 0 0;
-  font-size: 13px;
+  font-size: var(--text-meta);
   font-weight: 300;
-  line-height: 1.5;
+  line-height: var(--leading-relaxed);
   letter-spacing: 0.01em;
   color: color-mix(in srgb, var(--sage-muted) 72%, var(--paper));
 }
@@ -450,7 +450,7 @@ onMounted(() => {
 }
 
 .uninstall__hint {
-  margin: 12px 0 0;
+  margin: var(--space-sm) 0 0;
   font-size: 13.5px;
   font-weight: 300;
   line-height: 1.55;
@@ -464,19 +464,19 @@ onMounted(() => {
 .uninstall__reasons {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: var(--space-xs);
 }
 
 .uninstall__reason {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  padding: 10px 12px;
+  padding: 10px var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface-2);
   font-size: 14.5px;
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
   line-height: 1.45;
   color: var(--on-surface);
   cursor: pointer;
@@ -532,7 +532,7 @@ onMounted(() => {
   background: var(--surface);
   color: var(--ink);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--text-body);
   font-weight: 300;
   line-height: 1.45;
 }
@@ -548,9 +548,9 @@ onMounted(() => {
 
 .uninstall__note-label {
   display: block;
-  margin: 20px 0 8px;
-  font-size: 14px;
-  font-weight: 500;
+  margin: 20px 0 var(--space-xs);
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-medium);
   color: var(--on-surface);
 }
 
@@ -563,7 +563,7 @@ onMounted(() => {
   display: block;
   width: 100%;
   box-sizing: border-box;
-  padding: 10px 12px;
+  padding: 10px var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   background: var(--surface);
@@ -571,7 +571,7 @@ onMounted(() => {
   font: inherit;
   font-size: 14.5px;
   font-weight: 300;
-  line-height: 1.5;
+  line-height: var(--leading-relaxed);
   resize: vertical;
   min-height: 84px;
 }

@@ -317,52 +317,52 @@ onMounted(async () => {
 .from-extension {
   max-width: 28rem;
   margin: 2.5rem auto;
-  padding: 0 1rem;
+  padding: 0 var(--space-md);
 }
 
 .from-extension__title {
-  margin: 0 0 0.75rem;
-  font-size: 1.25rem;
-  font-weight: 600;
+  margin: 0 0 var(--space-sm);
+  font-size: var(--text-title);
+  font-weight: var(--font-weight-semibold);
 }
 
 .from-extension__status {
-  margin: 0 0 1rem;
+  margin: 0 0 var(--space-md);
   line-height: 1.45;
 }
 
 .from-extension__accounts {
   display: grid;
-  gap: 0.75rem;
-  margin: 0 0 1rem;
+  gap: var(--space-sm);
+  margin: 0 0 var(--space-md);
 }
 
 .from-extension__accounts dt {
-  font-size: 0.75rem;
+  font-size: var(--text-caption);
   opacity: 0.7;
 }
 
 .from-extension__accounts dd {
   margin: 0.15rem 0 0;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   word-break: break-word;
 }
 
 .from-extension__warn {
-  margin: 0 0 1rem;
+  margin: 0 0 var(--space-md);
   line-height: 1.45;
 }
 
 .from-extension__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: var(--space-sm);
 }
 
 .from-extension__continue,
 .from-extension__cancel {
   min-height: 2.5rem;
-  padding: 0.5rem 1rem;
+  padding: var(--space-xs) var(--space-md);
   border-radius: 0.5rem;
   border: 1px solid transparent;
   cursor: pointer;
@@ -370,8 +370,8 @@ onMounted(async () => {
 }
 
 .from-extension__continue {
-  background: var(--color-fg, #111);
-  color: var(--color-bg, #fff);
+  background: #111;
+  color: var(--surface-white);
 }
 
 .from-extension__cancel {

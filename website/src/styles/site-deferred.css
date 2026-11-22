@@ -18,7 +18,7 @@ body[data-chrome='home']::-webkit-scrollbar {
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  padding: 32px var(--pad-x);
+  padding: var(--space-xl) var(--pad-x);
   font-size: 0.9375rem;
   color: var(--muted);
   border-top: 1px solid var(--border);
@@ -42,15 +42,15 @@ body[data-chrome='home']::-webkit-scrollbar {
 
 .site-footer__name {
   font-family: var(--font-display);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   font-size: 16px;
   letter-spacing: -0.02em;
   color: var(--charcoal);
 }
 
 .site-footer__meta {
-  font-size: 13px;
-  font-weight: 400;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-regular);
   color: var(--muted);
 }
 
@@ -74,8 +74,8 @@ body[data-chrome='home']::-webkit-scrollbar {
 .site-footer a {
   color: var(--muted);
   text-decoration: none;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-medium);
   letter-spacing: 0.01em;
   transition: color 0.15s;
 }

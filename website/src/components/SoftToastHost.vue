@@ -55,12 +55,12 @@ const markByTone: Record<SoftToastTone, string> = {
 .soft-toast-host {
   position: fixed;
   z-index: 60;
-  top: max(1rem, env(safe-area-inset-top));
+  top: max(var(--space-md), env(safe-area-inset-top));
   left: 50%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-xs);
   width: max-content;
   max-width: min(26rem, calc(100vw - 2rem));
   transform: translateX(-50%);
@@ -70,14 +70,14 @@ const markByTone: Record<SoftToastTone, string> = {
 .soft-toast {
   display: inline-flex;
   align-items: flex-start;
-  gap: 0.5rem;
+  gap: var(--space-xs);
   box-sizing: border-box;
   width: fit-content;
   max-width: 100%;
   padding: 0.65rem 0.9rem;
   border: 1px solid var(--border);
-  border-radius: var(--radius-md, 10px);
-  background: var(--surface-raised, var(--surface));
+  border-radius: var(--radius);
+  background: var(--surface-raised);
   box-shadow: 0 8px 24px color-mix(in srgb, var(--ink) 12%, transparent);
   animation: soft-toast-enter 220ms ease-out;
 }
@@ -89,7 +89,7 @@ const markByTone: Record<SoftToastTone, string> = {
   margin-top: 0.1rem;
   border-radius: 999px;
   font-size: 0.7rem;
-  font-weight: 600;
+  font-weight: var(--font-weight-semibold);
   line-height: 1.15rem;
   text-align: center;
   color: var(--surface);
@@ -97,11 +97,11 @@ const markByTone: Record<SoftToastTone, string> = {
 }
 
 .soft-toast--info .soft-toast__mark {
-  background: var(--accent, #3d6b5a);
+  background: var(--accent);
 }
 
 .soft-toast--success .soft-toast__mark {
-  background: var(--sage, #4a6b5a);
+  background: var(--sage);
 }
 
 .soft-toast--warning .soft-toast__mark {
@@ -109,15 +109,15 @@ const markByTone: Record<SoftToastTone, string> = {
 }
 
 .soft-toast--error .soft-toast__mark {
-  background: var(--danger, #b42318);
+  background: var(--danger);
 }
 
 .soft-toast__message {
   flex: 0 1 auto;
   min-width: 0;
   margin: 0;
-  color: var(--on-surface, var(--ink));
-  font-size: 0.875rem;
+  color: var(--on-surface);
+  font-size: var(--text-body);
   font-weight: 300;
   line-height: 1.45;
   overflow-wrap: anywhere;

@@ -66,7 +66,7 @@ body {
   font-family: var(--font-sans);
   background: var(--surface);
   color: var(--on-surface);
-  line-height: 1.5;
+  line-height: var(--leading-relaxed);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 }
@@ -87,7 +87,7 @@ h2,
 h3,
 .site-nav__name {
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
 }
 
 ::selection {
@@ -134,16 +134,16 @@ img {
   left: 50%;
   top: 0.85rem;
   z-index: calc(var(--z-nav) + 10);
-  padding: 0.35rem 0.75rem;
+  padding: 0.35rem var(--space-sm);
   font-family: var(--font-sans);
-  font-size: 0.8125rem;
-  font-weight: 500;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-medium);
   line-height: 1.25;
   letter-spacing: 0.01em;
   color: var(--on-surface);
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   text-decoration: none;
   box-shadow: 0 1px 2px color-mix(in srgb, var(--on-surface) 10%, transparent);
   transform: translate(-50%, calc(-100% - 1.5rem));
@@ -167,7 +167,7 @@ img {
   /* 移动优先：窄屏紧凑；md+ 再松开 */
   gap: 0.65rem;
   height: 68px;
-  padding: 0 max(16px, var(--pad-x));
+  padding: 0 max(var(--space-md), var(--pad-x));
   background: var(--nav-bg);
   color: var(--nav-fg);
   border-bottom: 1px solid var(--nav-line);
@@ -185,7 +185,7 @@ img {
   align-items: center;
   gap: 11px;
   text-decoration: none;
-  color: var(--nav-brand, inherit);
+  color: var(--nav-brand);
 }
 
 .site-nav__logo {
@@ -197,11 +197,11 @@ img {
 
 .site-nav__name {
   font-family: var(--font-display);
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   font-size: 17px;
   letter-spacing: -0.025em;
   line-height: 1;
-  color: var(--nav-brand, inherit);
+  color: var(--nav-brand);
   transition: color 0.3s;
 }
 
@@ -212,8 +212,8 @@ img {
 .site-nav__link {
   text-decoration: none;
   color: var(--nav-muted);
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-medium);
   letter-spacing: 0.005em;
   transition: color 0.18s ease;
 }
@@ -237,7 +237,7 @@ body[data-chrome='home'][data-nav-over-hero='true'] .site-nav__brand:focus-visib
 /* md+：导航放松（§6.1.1 · 640） */
 @media (min-width: 640px) {
   .site-nav {
-    gap: clamp(1rem, 2.8vw, 2.1rem);
+    gap: clamp(var(--space-md), 2.8vw, 2.1rem);
     padding-inline: var(--pad-x);
   }
 

@@ -775,7 +775,7 @@ function scheduleClearLoadingIfStillHere(): void {
   width: min(100%, 26.5rem);
   max-width: 26.5rem;
   margin-inline: auto;
-  padding-top: clamp(28px, 6vh, 64px);
+  padding-top: clamp(28px, 6vh, var(--space-3xl));
   padding-bottom: clamp(40px, 8vh, 88px);
   padding-left: 1.25rem;
   padding-right: 1.25rem;
@@ -794,7 +794,7 @@ function scheduleClearLoadingIfStillHere(): void {
 }
 
 .login-form--ready .login-form__rise {
-  animation: login-rise 280ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: login-rise 280ms var(--ease-out) forwards;
 }
 
 .login-form--ready .login-form__rise--1 {
@@ -836,9 +836,9 @@ function scheduleClearLoadingIfStillHere(): void {
 }
 
 .login-form .page__title {
-  font-size: clamp(28px, 4vw, 36px);
+  font-size: clamp(var(--text-display), 4vw, 36px);
   /* 标题组内紧：标题下缘贴近说明 */
-  margin: 0 0 0.5rem;
+  margin: 0 0 var(--space-xs);
   max-width: 100%;
   /* 不用 balance：短标题会被刻意拆成两行；窄屏仍按词自然折 */
   text-wrap: wrap;
@@ -848,7 +848,7 @@ function scheduleClearLoadingIfStillHere(): void {
   display: block;
   width: 48px;
   height: 48px;
-  margin: 0 auto 0.75rem;
+  margin: 0 auto var(--space-sm);
   object-fit: contain;
   opacity: 0.92;
 }
@@ -860,14 +860,14 @@ function scheduleClearLoadingIfStillHere(): void {
   width: 100%;
   max-width: none;
   /* 标题组 ↔ 表单：分组间距 */
-  margin: 1.5rem auto 0;
-  gap: 0.5rem;
+  margin: var(--space-lg) auto 0;
+  gap: var(--space-xs);
   text-align: left;
 }
 
 .login-form__field-label {
-  font-size: 0.8125rem;
-  font-weight: 500;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-medium);
   color: var(--on-surface);
 }
 
@@ -876,13 +876,13 @@ function scheduleClearLoadingIfStillHere(): void {
   width: 100%;
   box-sizing: border-box;
   min-height: 44px;
-  padding: 0 12px;
+  padding: 0 var(--space-sm);
   border: 1px solid color-mix(in srgb, var(--border) 70%, var(--ink));
   border-radius: var(--radius-sm);
-  background: var(--surface-raised, var(--surface));
+  background: var(--surface-raised);
   color: var(--ink);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--text-body);
   font-weight: 300;
   line-height: 1.45;
   /* ⑥ 焦点环 / 边框；③ 禁用 opacity — 禁止 hover 几何变换 */
@@ -923,7 +923,7 @@ function scheduleClearLoadingIfStillHere(): void {
 .login-form__input:-webkit-autofill:active {
   -webkit-text-fill-color: var(--ink);
   caret-color: var(--ink);
-  box-shadow: 0 0 0 1000px var(--surface-raised, var(--surface)) inset;
+  box-shadow: 0 0 0 1000px var(--surface-raised) inset;
   transition: background-color 99999s ease-out 0s;
 }
 
@@ -944,7 +944,7 @@ function scheduleClearLoadingIfStillHere(): void {
   display: flex;
   flex-direction: column;
   /* label→输入 8px；输入→换邮箱 / 块内节奏对齐表单 gap */
-  gap: 0.5rem;
+  gap: var(--space-xs);
   margin-top: 0.15rem;
 }
 
@@ -955,7 +955,7 @@ function scheduleClearLoadingIfStillHere(): void {
   min-height: 44px;
   border: 1px solid color-mix(in srgb, var(--border) 70%, var(--ink));
   border-radius: var(--radius-sm);
-  background: var(--surface-raised, var(--surface));
+  background: var(--surface-raised);
   overflow: hidden;
   transition:
     border-color 150ms cubic-bezier(0.2, 0, 0, 1),
@@ -973,7 +973,7 @@ function scheduleClearLoadingIfStillHere(): void {
 .login-otp-leave-active {
   transition:
     opacity 240ms cubic-bezier(0.2, 0, 0, 1),
-    transform 240ms cubic-bezier(0.16, 1, 0.3, 1);
+    transform 240ms var(--ease-out);
 }
 
 .login-otp-enter-from,
@@ -1007,14 +1007,14 @@ function scheduleClearLoadingIfStillHere(): void {
 .login-form__otp-resend {
   flex: 0 0 auto;
   max-width: 46%;
-  padding: 0 12px;
+  padding: 0 var(--space-sm);
   border: none;
   border-left: 1px solid var(--border);
   background: transparent;
   color: var(--accent);
   font: inherit;
-  font-size: 0.8125rem;
-  font-weight: 500;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-medium);
   line-height: 1.2;
   white-space: nowrap;
   overflow: hidden;
@@ -1046,7 +1046,7 @@ function scheduleClearLoadingIfStillHere(): void {
 
 .login-form__otp-resend:hover,
 .login-form__otp-resend:focus-visible {
-  color: var(--accent-hover, var(--accent));
+  color: var(--accent-hover);
   background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
@@ -1068,8 +1068,8 @@ function scheduleClearLoadingIfStillHere(): void {
   background: transparent;
   color: var(--accent);
   font: inherit;
-  font-size: 0.8125rem;
-  font-weight: 500;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-medium);
   line-height: 1.35;
   cursor: pointer;
   text-decoration: none;
@@ -1080,7 +1080,7 @@ function scheduleClearLoadingIfStillHere(): void {
 
 .login-form__text-link:hover,
 .login-form__text-link:focus-visible {
-  color: var(--accent-hover, var(--accent));
+  color: var(--accent-hover);
 }
 
 .login-form__text-link:focus-visible {
@@ -1096,7 +1096,7 @@ function scheduleClearLoadingIfStillHere(): void {
 .login-form__email-submit {
   width: 100%;
   /* 表单 gap 0.5rem + 本边距 ≈ 16–20px，字段组与主 CTA 标准呼吸距 */
-  margin-top: 0.75rem;
+  margin-top: var(--space-sm);
   /* 与 OAuth 按钮同策略：文案切换不改宽高 */
   min-height: 44px;
   letter-spacing: 0.01em;
@@ -1113,8 +1113,8 @@ function scheduleClearLoadingIfStillHere(): void {
   align-items: center;
   width: 100%;
   margin: 1.25rem auto;
-  gap: 0.75rem;
-  color: var(--on-surface-muted, var(--muted));
+  gap: var(--space-sm);
+  color: var(--on-surface-muted);
 }
 
 .login-form__divider::before,
@@ -1126,8 +1126,8 @@ function scheduleClearLoadingIfStillHere(): void {
 }
 
 .login-form__divider-label {
-  font-size: 0.75rem;
-  font-weight: 400;
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-regular);
   text-transform: lowercase;
 }
 
@@ -1138,7 +1138,7 @@ function scheduleClearLoadingIfStillHere(): void {
   justify-content: center;
   align-items: center;
   /* 原 5rem 过散；两枚图标钮用 lg 间距即可 */
-  gap: 1.5rem;
+  gap: var(--space-lg);
   width: 100%;
   margin: 0 auto;
 }
@@ -1152,7 +1152,7 @@ function scheduleClearLoadingIfStillHere(): void {
   min-width: 3rem;
   padding: 0;
   gap: 0;
-  background: var(--surface-raised, var(--surface));
+  background: var(--surface-raised);
   border-color: color-mix(in srgb, var(--border) 70%, var(--ink));
   transition:
     background 180ms cubic-bezier(0.2, 0, 0, 1),
@@ -1162,7 +1162,7 @@ function scheduleClearLoadingIfStillHere(): void {
 
 .login-form__oauth:hover,
 .login-form__oauth:focus-visible {
-  background: color-mix(in srgb, var(--accent) 10%, var(--surface-raised, var(--surface)));
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface-raised));
 }
 
 .login-form__oauth--busy {
@@ -1178,7 +1178,7 @@ function scheduleClearLoadingIfStillHere(): void {
 .hint {
   max-width: 22rem;
   margin: 0 auto;
-  color: var(--on-surface-muted, var(--muted));
+  color: var(--on-surface-muted);
   font-size: 0.9375rem;
   font-weight: 300;
   line-height: 1.55;
@@ -1187,7 +1187,7 @@ function scheduleClearLoadingIfStillHere(): void {
 @media (max-width: 480px) {
   .login-form.page {
     padding-top: clamp(20px, 4vh, 40px);
-    padding-bottom: clamp(32px, 6vh, 64px);
+    padding-bottom: clamp(var(--space-xl), 6vh, var(--space-3xl));
   }
 
   .login-form__oauth-row {

@@ -102,7 +102,7 @@ onUnmounted(() => {
 .auth-turnstile-bridge {
   max-width: 28rem;
   margin: 2.5rem auto;
-  padding: 0 1rem;
+  padding: 0 var(--space-md);
   text-align: center;
 }
 
@@ -110,6 +110,6 @@ onUnmounted(() => {
   display: flex;
   justify-content: center;
   min-height: 1.5rem;
-  margin-top: 1rem;
+  margin-top: var(--space-md);
 }
 </style>

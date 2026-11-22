@@ -11,7 +11,8 @@ body[data-chrome='default'] #main {
 .page {
   max-width: 720px;
   margin: 0 auto;
-  padding: clamp(48px, 8vw, 88px) max(16px, var(--pad-x)) clamp(64px, 10vw, 112px);
+  padding: clamp(var(--space-2xl), 8vw, 88px) max(var(--space-md), var(--pad-x))
+    clamp(var(--space-3xl), 10vw, 112px);
 }
 
 .page--wide {
@@ -27,9 +28,9 @@ body[data-chrome='default'] #main {
 }
 
 .page__title {
-  margin: 0 0 16px;
+  margin: 0 0 var(--space-md);
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
   font-size: clamp(32px, 5vw, 44px);
   line-height: 1.1;
   letter-spacing: -0.03em;
@@ -37,7 +38,7 @@ body[data-chrome='default'] #main {
 }
 
 .page__lede {
-  margin: 0 0 clamp(32px, 5vw, 48px);
+  margin: 0 0 clamp(var(--space-xl), 5vw, var(--space-2xl));
   font-size: clamp(15px, 1.6vw, 17.5px);
   font-weight: 300;
   line-height: 1.7;
@@ -53,14 +54,14 @@ body[data-chrome='default'] #main {
 
 .page__meta {
   margin: 0 0 clamp(28px, 4vw, 40px);
-  font-size: 13px;
+  font-size: var(--text-meta);
   font-weight: 300;
   color: var(--sage-muted);
 }
 
 .page__section {
   margin-top: clamp(28px, 4vw, 40px);
-  padding-top: clamp(24px, 3vw, 32px);
+  padding-top: clamp(var(--space-lg), 3vw, var(--space-xl));
   border-top: 1px solid var(--border);
 }
 
@@ -71,26 +72,26 @@ body[data-chrome='default'] #main {
 }
 
 .page__section h2 {
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-sm);
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
   font-size: clamp(18px, 2.2vw, 22px);
   letter-spacing: -0.02em;
   color: var(--ink);
 }
 
 .page__section h3 {
-  margin: 22px 0 8px;
+  margin: 22px 0 var(--space-xs);
   font-family: var(--font-body);
-  font-weight: 500;
-  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--text-body);
   letter-spacing: 0.02em;
   color: var(--on-surface);
 }
 
 .page__section p,
 .page__section ul {
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-sm);
   font-size: 15px;
   font-weight: 300;
   line-height: 1.75;
@@ -120,9 +121,9 @@ body[data-chrome='default'] #main {
 
 /* 长文（Privacy / Terms）：单栏散文，无分段顶线 */
 .page__prose h2 {
-  margin: clamp(28px, 4vw, 40px) 0 12px;
+  margin: clamp(28px, 4vw, 40px) 0 var(--space-sm);
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
   font-size: clamp(18px, 2.2vw, 22px);
   letter-spacing: -0.02em;
   color: var(--ink);
@@ -133,17 +134,17 @@ body[data-chrome='default'] #main {
 }
 
 .page__prose h3 {
-  margin: 22px 0 8px;
+  margin: 22px 0 var(--space-xs);
   font-family: var(--font-body);
-  font-weight: 500;
-  font-size: 14px;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--text-body);
   letter-spacing: 0.02em;
   color: var(--on-surface);
 }
 
 .page__prose p,
 .page__prose ul {
-  margin: 0 0 12px;
+  margin: 0 0 var(--space-sm);
   font-size: 15px;
   font-weight: 300;
   line-height: 1.75;
@@ -181,7 +182,7 @@ body[data-chrome='default'] #main {
 .page__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: var(--space-sm);
   margin-top: 28px;
   justify-content: flex-start;
 }
@@ -202,8 +203,8 @@ body[data-chrome='default'] #main {
   background: var(--surface-2);
   color: var(--ink);
   font: inherit;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-medium);
   letter-spacing: 0.01em;
   text-decoration: none;
   cursor: pointer;
@@ -254,10 +255,10 @@ body[data-chrome='default'] #main {
 }
 
 .ui-banner {
-  margin: 0 0 16px;
-  font-size: 14px;
+  margin: 0 0 var(--space-md);
+  font-size: var(--text-body);
   font-weight: 300;
-  line-height: 1.5;
+  line-height: var(--leading-relaxed);
   color: var(--danger);
   text-align: center;
 }
@@ -268,5 +269,5 @@ body[data-chrome='default'] #main {
   font-weight: 300;
   color: var(--sage-muted);
   text-align: center;
-  padding: clamp(48px, 10vw, 96px) var(--pad-x);
+  padding: clamp(var(--space-2xl), 10vw, 96px) var(--pad-x);
 }

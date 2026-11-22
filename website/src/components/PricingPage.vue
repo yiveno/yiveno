@@ -243,7 +243,7 @@ onMounted(async () => {
 <style scoped>
 .pricing-page__hero {
   text-align: center;
-  margin-bottom: clamp(32px, 5vw, 48px);
+  margin-bottom: clamp(var(--space-xl), 5vw, var(--space-2xl));
 }
 
 .pricing-page__hero .page__lede {
@@ -255,7 +255,7 @@ onMounted(async () => {
 .billing-toggle {
   display: inline-flex;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
   overflow: hidden;
   background: var(--paper-dim);
 }
@@ -281,7 +281,7 @@ onMounted(async () => {
 
 .plans {
   display: grid;
-  gap: clamp(16px, 2.5vw, 28px);
+  gap: clamp(var(--space-md), 2.5vw, 28px);
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
@@ -289,8 +289,8 @@ onMounted(async () => {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: clamp(24px, 3vw, 36px);
-  border-radius: 12px;
+  padding: clamp(var(--space-lg), 3vw, 36px);
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   background: var(--paper-dim);
   text-align: left;
@@ -299,13 +299,13 @@ onMounted(async () => {
 .plan--pro {
   background: var(--sage);
   border-color: var(--sage);
-  color: #dce8de;
+  color: var(--on-ink);
 }
 
 .plan__tier {
-  margin: 0 0 16px;
+  margin: 0 0 var(--space-md);
   font-size: 11px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--sage-muted);
@@ -318,19 +318,19 @@ onMounted(async () => {
 .plan__price {
   margin: 0 0 10px;
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
   font-size: clamp(30px, 3.5vw, 40px);
   letter-spacing: -0.03em;
   color: var(--ink);
 }
 
 .plan--pro .plan__price {
-  color: #dce8de;
+  color: var(--on-ink);
 }
 
 .plan__interval {
   font-family: var(--font-body);
-  font-size: 13px;
+  font-size: var(--text-meta);
   font-weight: 300;
   color: var(--muted);
   margin-left: 0.2rem;
@@ -342,7 +342,7 @@ onMounted(async () => {
 
 .plan__desc {
   margin: 0 0 28px;
-  font-size: 14px;
+  font-size: var(--text-body);
   font-weight: 300;
   line-height: 1.55;
   color: var(--muted);
@@ -365,7 +365,7 @@ onMounted(async () => {
 .plan__features li {
   font-size: 13.5px;
   font-weight: 300;
-  line-height: 1.5;
+  line-height: var(--leading-relaxed);
   color: var(--muted);
   padding-left: 0;
 }
@@ -392,7 +392,7 @@ onMounted(async () => {
 .plan--pro :deep(.ui-btn--primary) {
   background: rgb(220 232 222 / 14%);
   border-color: rgb(220 232 222 / 30%);
-  color: #dce8de;
+  color: var(--on-ink);
 }
 
 .plan--pro :deep(.ui-btn--primary):hover,
@@ -401,9 +401,9 @@ onMounted(async () => {
 }
 
 .pricing-page__fx-note {
-  margin: 1rem auto 0;
+  margin: var(--space-md) auto 0;
   max-width: 32rem;
-  font-size: 13px;
+  font-size: var(--text-meta);
   font-weight: 300;
   line-height: 1.55;
   color: var(--sage-muted);
@@ -413,7 +413,7 @@ onMounted(async () => {
   margin-top: clamp(28px, 4vw, 40px);
   text-align: center;
   color: var(--sage-muted);
-  font-size: 13px;
+  font-size: var(--text-meta);
   font-weight: 300;
   line-height: 1.55;
 }

@@ -8,7 +8,8 @@
   align-items: center;
   /* 移动优先：不强制撑满视口；md+ 再全屏门面 */
   min-height: auto;
-  padding: clamp(72px, 16vh, 96px) max(16px, var(--pad-x)) clamp(48px, 10vh, 72px);
+  padding: clamp(72px, 16vh, 96px) max(var(--space-md), var(--pad-x))
+    clamp(var(--space-2xl), 10vh, 72px);
   background: var(--surface-ink);
   color: var(--on-ink);
   overflow: hidden;
@@ -58,11 +59,11 @@
 
 /* 心智标签：find things；履约承诺仍在下方 H1（ADR-012） */
 .hero__epithet {
-  margin: 0 0 clamp(12px, 1.8vh, 18px);
+  margin: 0 0 clamp(var(--space-sm), 1.8vh, 18px);
   max-width: 28ch;
   font-family: var(--font-sans);
-  font-size: clamp(13px, 1.35vw, 15px);
-  font-weight: 500;
+  font-size: clamp(var(--text-meta), 1.35vw, 15px);
+  font-weight: var(--font-weight-medium);
   line-height: 1.35;
   letter-spacing: 0.02em;
   color: color-mix(in srgb, var(--sage-faint) 42%, var(--on-ink-muted));
@@ -72,7 +73,7 @@
   margin: 0 0 clamp(18px, 2.5vh, 26px);
   max-width: 100%;
   font-size: clamp(2rem, 5.5vw + 0.6rem, 88px);
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
   line-height: 1.08;
   letter-spacing: -0.038em;
   color: var(--on-ink);

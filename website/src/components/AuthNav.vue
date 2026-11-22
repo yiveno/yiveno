@@ -108,31 +108,31 @@ onUnmounted(() => {
 .auth-nav {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-xs);
 }
 
 .nav-link {
   text-decoration: none;
-  color: var(--nav-muted, #555);
+  color: var(--nav-muted);
   font-size: 15px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   letter-spacing: 0.005em;
 }
 
 .nav-link:hover,
 .nav-link:focus-visible {
-  color: var(--nav-fg, inherit);
+  color: var(--nav-fg);
 }
 
 .nav-link:focus-visible {
-  outline: 2px solid var(--sage, #3d5348);
+  outline: 2px solid var(--sage);
   outline-offset: 3px;
 }
 
 .user-info {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-xs);
 }
 
 .avatar {
@@ -146,13 +146,13 @@ onUnmounted(() => {
 
 .avatar--brand {
   box-sizing: border-box;
-  padding: 4px;
+  padding: var(--space-2xs);
   object-fit: contain;
-  background: color-mix(in srgb, var(--sage, #4b6054) 12%, transparent);
+  background: color-mix(in srgb, var(--sage) 12%, transparent);
 }
 
 /* 1px Sage：档位信号，无光晕 / 无加粗 */
 .avatar--pro {
-  box-shadow: 0 0 0 1px var(--sage, #4b6054);
+  box-shadow: 0 0 0 1px var(--sage);
 }
 </style>

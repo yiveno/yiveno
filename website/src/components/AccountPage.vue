@@ -675,13 +675,13 @@ function formatDeviceTime(iso: string): string {
 
 .account__devices {
   margin-top: clamp(28px, 4vw, 40px);
-  padding-top: clamp(24px, 3vw, 32px);
+  padding-top: clamp(var(--space-lg), 3vw, var(--space-xl));
   border-top: 1px solid var(--border);
 }
 
 .account__devices-status {
   margin: 0;
-  font-size: 14px;
+  font-size: var(--text-body);
   color: var(--muted);
 }
 
@@ -691,20 +691,20 @@ function formatDeviceTime(iso: string): string {
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: var(--space-sm);
 }
 
 .account__device-row {
-  padding: 12px 14px;
+  padding: var(--space-sm) 14px;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius);
   background: color-mix(in srgb, var(--paper-dim) 55%, transparent);
 }
 
 .account__device-name {
   margin: 0;
   font-size: 15px;
-  font-weight: 500;
+  font-weight: var(--font-weight-medium);
   color: var(--ink);
 }
 
@@ -713,24 +713,24 @@ function formatDeviceTime(iso: string): string {
   flex-wrap: wrap;
   gap: 2px 0.35em;
   margin: 6px 0 0;
-  font-size: 13px;
+  font-size: var(--text-meta);
   color: var(--muted);
 }
 
 .account__device-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: var(--space-xs);
   margin-top: 10px;
 }
 
 .account__device-rename-input {
   width: min(100%, 20rem);
-  padding: 8px 10px;
+  padding: var(--space-xs) 10px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   font: inherit;
-  background: var(--paper, #fff);
+  background: var(--paper);
   color: var(--ink);
 }
 
@@ -738,21 +738,21 @@ function formatDeviceTime(iso: string): string {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px 16px;
+  gap: var(--space-sm) var(--space-md);
   margin: 0 0 clamp(20px, 3vw, 28px);
-  padding: 12px 14px;
+  padding: var(--space-sm) 14px;
   border: 1px solid color-mix(in srgb, var(--sage) 28%, var(--border));
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--sage) 8%, var(--paper, #fff));
-  font-size: 14px;
-  font-weight: 400;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--sage) 8%, var(--paper));
+  font-size: var(--text-body);
+  font-weight: var(--font-weight-regular);
   line-height: 1.45;
-  color: var(--charcoal, var(--ink));
+  color: var(--charcoal);
 }
 
 .account__checkout-hint--failed {
   border-color: color-mix(in srgb, var(--danger) 35%, var(--border));
-  background: color-mix(in srgb, var(--danger) 8%, var(--paper, #fff));
+  background: color-mix(in srgb, var(--danger) 8%, var(--paper));
 }
 
 .account__checkout-hint-dismiss {
@@ -763,18 +763,18 @@ function formatDeviceTime(iso: string): string {
   border-radius: 6px;
   background: transparent;
   font: inherit;
-  font-size: 13px;
+  font-size: var(--text-meta);
   color: var(--muted);
   cursor: pointer;
 }
 
 .account__checkout-hint-dismiss:hover {
   background: color-mix(in srgb, var(--paper-dim) 80%, transparent);
-  color: var(--charcoal, var(--ink));
+  color: var(--charcoal);
 }
 
 .account__checkout-hint-dismiss:focus-visible {
-  outline: 2px solid var(--focus-ring, color-mix(in srgb, var(--sage) 45%, transparent));
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
@@ -782,9 +782,9 @@ function formatDeviceTime(iso: string): string {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 24px;
+  gap: var(--space-lg);
   margin-bottom: clamp(28px, 4vw, 40px);
-  padding-bottom: clamp(24px, 3vw, 32px);
+  padding-bottom: clamp(var(--space-lg), 3vw, var(--space-xl));
   border-bottom: 1px solid var(--border);
 }
 
@@ -820,7 +820,7 @@ function formatDeviceTime(iso: string): string {
 .account__name {
   margin: 0;
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
   font-size: clamp(24px, 3.2vw, 30px);
   letter-spacing: -0.025em;
   line-height: 1.15;
@@ -833,9 +833,9 @@ function formatDeviceTime(iso: string): string {
   align-items: baseline;
   gap: 2px 0.35em;
   margin: 6px 0 0;
-  font-size: 14px;
+  font-size: var(--text-body);
   font-weight: 300;
-  line-height: 1.4;
+  line-height: var(--leading-snug);
   color: var(--sage-muted);
 }
 
@@ -861,19 +861,19 @@ function formatDeviceTime(iso: string): string {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-  gap: 4px;
-  margin-top: 4px;
+  gap: var(--space-2xs);
+  margin-top: var(--space-2xs);
   max-width: 14rem;
 }
 
 .account__sign-out {
-  padding: 8px 10px;
+  padding: var(--space-xs) 10px;
   border: none;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background: transparent;
   font: inherit;
-  font-size: 13px;
-  font-weight: 400;
+  font-size: var(--text-meta);
+  font-weight: var(--font-weight-regular);
   color: var(--muted);
   cursor: pointer;
 }
@@ -892,15 +892,15 @@ function formatDeviceTime(iso: string): string {
 }
 
 .account__sign-out:focus-visible {
-  outline: 2px solid var(--focus-ring, color-mix(in srgb, var(--sage) 45%, transparent));
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 
 .account__section-label {
-  margin: 0 0 12px;
-  font-family: var(--font-body, 'Work Sans', system-ui, sans-serif);
-  font-size: 12px;
-  font-weight: 500;
+  margin: 0 0 var(--space-sm);
+  font-family: var(--font-body);
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--sage-muted);
@@ -913,7 +913,7 @@ function formatDeviceTime(iso: string): string {
 .account__plan-panel {
   padding: clamp(20px, 3vw, 28px);
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--paper) 72%, white);
 }
 
@@ -936,7 +936,7 @@ function formatDeviceTime(iso: string): string {
 .account__plan-name {
   margin: 0;
   font-family: var(--font-display);
-  font-weight: 400;
+  font-weight: var(--font-weight-regular);
   font-size: clamp(26px, 3.5vw, 32px);
   letter-spacing: -0.03em;
   line-height: 1.1;
@@ -945,14 +945,14 @@ function formatDeviceTime(iso: string): string {
 
 .account__plan-updating {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--text-meta);
   font-weight: 300;
   color: var(--sage-muted);
 }
 
 .account__plan-renew {
-  margin: 8px 0 0;
-  font-size: 14px;
+  margin: var(--space-xs) 0 0;
+  font-size: var(--text-body);
   font-weight: 300;
   color: var(--muted);
 }
@@ -970,14 +970,14 @@ function formatDeviceTime(iso: string): string {
 
 .account__plan-status-text {
   margin: 14px 0 0;
-  font-size: 13px;
+  font-size: var(--text-meta);
   font-weight: 300;
   color: var(--sage-muted);
 }
 
 .account__error {
-  margin: 12px 0 0;
-  font-size: 13px;
+  margin: var(--space-sm) 0 0;
+  font-size: var(--text-meta);
   color: var(--danger);
 }
 
@@ -997,7 +997,7 @@ function formatDeviceTime(iso: string): string {
 
 .account__skel--line {
   width: 88%;
-  margin-bottom: 8px;
+  margin-bottom: var(--space-xs);
 }
 
 .account__skel--short {

@@ -96,9 +96,9 @@ const secondaryKey =
   .install-cta__actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem;
+    gap: var(--space-sm);
     justify-content: center;
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-md);
   }
 
   .install-cta__btn {
@@ -107,21 +107,21 @@ const secondaryKey =
     justify-content: center;
     min-height: 44px;
     padding: 0.55rem 1.1rem;
-    border-radius: var(--radius, 8px);
+    border-radius: var(--radius);
     font-size: 0.9375rem;
-    font-weight: 500;
+    font-weight: var(--font-weight-medium);
     text-decoration: none;
     line-height: 1.2;
   }
 
   .install-cta__btn--primary {
-    background: var(--ink, #192420);
-    color: var(--on-ink, #dce8de);
+    background: var(--ink);
+    color: var(--on-ink);
   }
 
   .install-cta__btn--secondary {
-    border: 1px solid var(--border, #d5ddd7);
-    color: var(--on-surface, #222c24);
+    border: 1px solid var(--border);
+    color: var(--on-surface);
     background: transparent;
   }
 
@@ -132,9 +132,9 @@ const secondaryKey =
 
   .install-cta__note {
     margin: 0;
-    font-size: 13px;
+    font-size: var(--text-meta);
     font-weight: 300;
-    line-height: 1.5;
-    color: var(--sage-muted, #7a8f84);
+    line-height: var(--leading-relaxed);
+    color: var(--sage-muted);
   }
 </style>
