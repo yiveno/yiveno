@@ -31,10 +31,15 @@ describe('promoteAnonymousViaApi', () => {
       )
     ) as typeof fetch
 
-    const result = await promoteAnonymousViaApi('ydt_' + 'a'.repeat(64), 'a@b.com')
+    const result = await promoteAnonymousViaApi('ydt_' + 'a'.repeat(64), 'a@b.com', 'claim')
     expect(result.ok).toBe(true)
     if (!result.ok) return
     expect(result.data.email).toBe('a@b.com')
+    expect(vi.mocked(globalThis.fetch).mock.calls[0]?.[1]).toEqual(
+      expect.objectContaining({
+        body: JSON.stringify({ email: 'a@b.com', claimToken: 'claim' })
+      })
+    )
   })
 
   it('409 email_conflict', async () => {
@@ -45,13 +50,13 @@ describe('promoteAnonymousViaApi', () => {
       })
     ) as typeof fetch
 
-    const result = await promoteAnonymousViaApi('ydt_' + 'a'.repeat(64), 'taken@x.com')
+    const result = await promoteAnonymousViaApi('ydt_' + 'a'.repeat(64), 'taken@x.com', 'claim')
     expect(result).toEqual({ ok: false, status: 409, error: 'email_conflict' })
   })
 
   it('网络失败 → status 0', async () => {
     globalThis.fetch = vi.fn().mockRejectedValue(new TypeError('Failed to fetch')) as typeof fetch
-    const result = await promoteAnonymousViaApi('ydt_' + 'a'.repeat(64), 'a@b.com')
+    const result = await promoteAnonymousViaApi('ydt_' + 'a'.repeat(64), 'a@b.com', 'claim')
     expect(result.ok).toBe(false)
     if (result.ok) return
     expect(result.status).toBe(0)

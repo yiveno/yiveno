@@ -18,6 +18,8 @@ import type {
   AuthSignInResponse,
   AuthSignOutMode,
   AuthSignOutResponse,
+  BindRequestCodeResponse,
+  BindVerifyCodeResponse,
   ConvertAnonymousAccountResponse,
   GetAuthStateResponse,
   ProbeWebsiteSignedInResponse,
@@ -54,7 +56,18 @@ import {
   getAuthSession,
   setAuthSession
 } from '@/infrastructure/identity/auth-session-service'
+import { applyIncomingDeviceSession } from '@/infrastructure/auth/apply-incoming-device-session'
+import {
+  claimByOtpApi,
+  requestBindCodeApi,
+  verifyBindCodeApi
+} from '@/infrastructure/auth/bind-otp-api-client'
+import {
+  deviceSessionFromRegisterData,
+  revokeOwnDeviceToken
+} from '@/infrastructure/auth/device-register-api-client'
 import { promoteAnonymousViaApi } from '@/infrastructure/auth/promote-anonymous-api-client'
+import { clearAnonExchange401Backoff } from '@/infrastructure/identity/anon-exchange-401-backoff-service'
 import {
   clearDeviceSession,
   getDeviceSession,
@@ -589,11 +602,128 @@ export async function handleGetAuthState(): Promise<GetAuthStateResponse> {
 }
 
 /**
- * CONVERT_ANONYMOUS_ACCOUNT — 匿名试用绑邮箱转正（Side Panel / Settings 共用）。
+ * BIND_REQUEST_CODE — 发绑定 OTP；后台 Turnstile 默认非前景，拿不到 token → fail-closed。
  */
-export async function handleConvertAnonymousAccount(
+export async function handleBindRequestCode(input: {
   email: string
-): Promise<ConvertAnonymousAccountResponse> {
+  locale: 'en' | 'zh'
+  foreground?: boolean
+}): Promise<BindRequestCodeResponse> {
+  const startedAt = flowStart('Auth', 'BIND_REQUEST_CODE')
+  try {
+    const device = await getDeviceSession()
+    if (!device) {
+      flowOk('Auth', 'BIND_REQUEST_CODE', startedAt, { reason: 'no_device' })
+      return { ok: false, errorCode: 'SYNC_NOT_AUTHENTICATED' }
+    }
+    if (!device.isAnonymous) {
+      flowOk('Auth', 'BIND_REQUEST_CODE', startedAt, { reason: 'not_anonymous' })
+      return { ok: false, errorCode: 'AUTH_PROMOTE_NOT_ANONYMOUS' }
+    }
+
+    const turnstileToken = await getTurnstileToken({
+      foreground: input.foreground === true
+    })
+    if (!turnstileToken) {
+      flowOk('Auth', 'BIND_REQUEST_CODE', startedAt, { reason: 'captcha_required' })
+      return { ok: false, errorCode: 'AUTH_BIND_CAPTCHA_REQUIRED', error: 'captcha_required' }
+    }
+
+    const result = await requestBindCodeApi({
+      deviceToken: device.deviceToken,
+      email: input.email,
+      turnstileToken,
+      locale: input.locale
+    })
+    if (!result.ok) {
+      flowOk('Auth', 'BIND_REQUEST_CODE', startedAt, {
+        ok: false,
+        status: result.status,
+        error: result.error
+      })
+      return {
+        ok: false,
+        errorCode: 'AUTH_BIND_FAILED',
+        error: result.error
+      }
+    }
+
+    flowOk('Auth', 'BIND_REQUEST_CODE', startedAt, { ok: true })
+    return { ok: true }
+  } catch (error) {
+    flowFail('Auth', 'BIND_REQUEST_CODE', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'AUTH_BIND_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/**
+ * BIND_VERIFY_CODE — 验 OTP → `{ branch, claimToken }`（不 log claimToken）。
+ */
+export async function handleBindVerifyCode(input: {
+  email: string
+  code: string
+}): Promise<BindVerifyCodeResponse> {
+  const startedAt = flowStart('Auth', 'BIND_VERIFY_CODE')
+  try {
+    const device = await getDeviceSession()
+    if (!device) {
+      flowOk('Auth', 'BIND_VERIFY_CODE', startedAt, { reason: 'no_device' })
+      return { ok: false, errorCode: 'SYNC_NOT_AUTHENTICATED' }
+    }
+    if (!device.isAnonymous) {
+      flowOk('Auth', 'BIND_VERIFY_CODE', startedAt, { reason: 'not_anonymous' })
+      return { ok: false, errorCode: 'AUTH_PROMOTE_NOT_ANONYMOUS' }
+    }
+
+    const result = await verifyBindCodeApi({
+      deviceToken: device.deviceToken,
+      email: input.email,
+      code: input.code
+    })
+    if (!result.ok) {
+      flowOk('Auth', 'BIND_VERIFY_CODE', startedAt, {
+        ok: false,
+        status: result.status,
+        error: result.error
+      })
+      return {
+        ok: false,
+        errorCode: 'AUTH_BIND_FAILED',
+        error: result.error,
+        ...(result.remainingAttempts !== undefined
+          ? { remainingAttempts: result.remainingAttempts }
+          : {})
+      }
+    }
+
+    flowOk('Auth', 'BIND_VERIFY_CODE', startedAt, { branch: result.data.branch })
+    return {
+      ok: true,
+      branch: result.data.branch,
+      claimToken: result.data.claimToken
+    }
+  } catch (error) {
+    flowFail('Auth', 'BIND_VERIFY_CODE', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'AUTH_BIND_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/**
+ * CONVERT_ANONYMOUS_ACCOUNT — 持 claimToken 走 promote / claim（Side Panel / Settings 共用）。
+ */
+export async function handleConvertAnonymousAccount(input: {
+  email: string
+  claimToken: string
+  branch: 'promote' | 'claim'
+}): Promise<ConvertAnonymousAccountResponse> {
   const startedAt = flowStart('Auth', 'CONVERT_ANONYMOUS_ACCOUNT')
   try {
     const device = await getDeviceSession()
@@ -606,38 +736,100 @@ export async function handleConvertAnonymousAccount(
       return { ok: false, errorCode: 'AUTH_PROMOTE_NOT_ANONYMOUS' }
     }
 
-    const result = await promoteAnonymousViaApi(device.deviceToken, email)
-    if (!result.ok) {
+    if (input.branch === 'promote') {
+      const result = await promoteAnonymousViaApi(device.deviceToken, input.email, input.claimToken)
+      if (!result.ok) {
+        const errorCode: AccountSyncErrorCode =
+          result.error === 'invalid_email' || result.status === 400
+            ? 'AUTH_PROMOTE_INVALID_EMAIL'
+            : result.error === 'email_conflict' || result.status === 409
+              ? 'AUTH_PROMOTE_EMAIL_CONFLICT'
+              : 'AUTH_PROMOTE_FAILED'
+        flowOk('Auth', 'CONVERT_ANONYMOUS_ACCOUNT', startedAt, {
+          ok: false,
+          branch: 'promote',
+          errorCode,
+          status: result.status
+        })
+        return {
+          ok: false,
+          errorCode,
+          ...(result.error ? { error: result.error } : {})
+        }
+      }
+
+      // promote：同 token 翻转 isAnonymous；binding 不变
+      await setDeviceSession({
+        ...device,
+        isAnonymous: false,
+        email: result.data.email
+      })
+      flowOk('Auth', 'CONVERT_ANONYMOUS_ACCOUNT', startedAt, {
+        branch: 'promote',
+        userId: result.data.userId
+      })
+      return {
+        ok: true,
+        email: result.data.email,
+        userId: result.data.userId,
+        branch: 'promote'
+      }
+    }
+
+    // claim：签发目标账号新 device → 撤旧匿名 token → 切会话
+    const claimResult = await claimByOtpApi({
+      deviceToken: device.deviceToken,
+      claimToken: input.claimToken
+    })
+    if (!claimResult.ok) {
       const errorCode: AccountSyncErrorCode =
-        result.error === 'invalid_email' || result.status === 400
-          ? 'AUTH_PROMOTE_INVALID_EMAIL'
-          : result.error === 'email_conflict' || result.status === 409
-            ? 'AUTH_PROMOTE_EMAIL_CONFLICT'
-            : 'AUTH_PROMOTE_FAILED'
+        claimResult.error === 'email_conflict' || claimResult.status === 409
+          ? 'AUTH_PROMOTE_EMAIL_CONFLICT'
+          : 'AUTH_CLAIM_FAILED'
       flowOk('Auth', 'CONVERT_ANONYMOUS_ACCOUNT', startedAt, {
         ok: false,
+        branch: 'claim',
         errorCode,
-        status: result.status
+        status: claimResult.status,
+        error: claimResult.error
       })
       return {
         ok: false,
         errorCode,
-        ...(result.error ? { error: result.error } : {})
+        ...(claimResult.error ? { error: claimResult.error } : {})
       }
     }
 
-    await setDeviceSession({
-      ...device,
-      isAnonymous: false,
-      email: result.data.email
+    const oldToken = device.deviceToken
+    // ① best-effort 撤旧匿名 device token；失败只记日志
+    try {
+      const revoked = await revokeOwnDeviceToken(oldToken)
+      if (!revoked) {
+        logger.warn('Auth', 'claim 后撤销旧匿名 device token 失败（不阻塞）')
+      }
+    } catch (error) {
+      logger.warn('Auth', 'claim 后撤销旧匿名 device token 异常（不阻塞）', error)
+    }
+
+    const newSession = deviceSessionFromRegisterData(claimResult.data)
+    // ② 与 handoff 匿名覆盖同款写入（共用 applyIncomingDeviceSession）
+    await applyIncomingDeviceSession({
+      deviceSession: newSession,
+      bindAccountId: claimResult.data.userId
     })
+    // ④ 清匿名 401 退避；③ 迁移门闸由 UI 见 binding 变更后 refreshLoginMigrationGate
+    void clearAnonExchange401Backoff().catch(() => undefined)
+
+    const email = claimResult.data.email?.trim() || input.email
     flowOk('Auth', 'CONVERT_ANONYMOUS_ACCOUNT', startedAt, {
-      userId: result.data.userId
+      branch: 'claim',
+      userId: claimResult.data.userId
     })
     return {
       ok: true,
-      email: result.data.email,
-      userId: result.data.userId
+      email,
+      userId: claimResult.data.userId,
+      branch: 'claim'
     }
   } catch (error) {
     flowFail('Auth', 'CONVERT_ANONYMOUS_ACCOUNT', startedAt, error)

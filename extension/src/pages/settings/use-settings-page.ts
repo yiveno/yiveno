@@ -8,6 +8,23 @@ import type { AuthSignOutMode } from '@/core/messaging/account-sync-messages'
 import type { UiLocalePreference } from '@/core/i18n/ui-locale'
 import { shouldShowAnonymousCaptchaRetry } from '@/core/identity/anonymous-captcha-retry'
 import {
+  bindOtpCanSendCode,
+  bindOtpCanVerify,
+  bindOtpConfirmFail,
+  bindOtpConfirmOk,
+  bindOtpSendFail,
+  bindOtpSendOk,
+  bindOtpSetCode,
+  bindOtpSetEmail,
+  bindOtpStartSend,
+  bindOtpStartVerify,
+  bindOtpTickCooldown,
+  bindOtpVerifyFail,
+  bindOtpVerifyOk,
+  createBindOtpState,
+  type BindOtpState
+} from '@/core/identity/bind-otp-flow'
+import {
   DEFAULT_SETTINGS_SECTION,
   parseSettingsSectionFromLocationSearch,
   resolveSettingsSectionTab,
@@ -36,6 +53,8 @@ import {
   fetchUserSettings,
   openChromeShortcutsPage,
   fetchAiHostedQuota,
+  bindRequestCode,
+  bindVerifyCode,
   convertAnonymousAccount,
   fetchDualThreadLearningStatus,
   deleteDualThreadContributedSketches,
@@ -79,7 +98,8 @@ import {
   resolveThirdPartySourceStatusView,
   type ThirdPartyCorpusSummaryView
 } from '@/pages/settings/third-party-source-status-copy'
-import { t } from '@/infrastructure/i18n/t'
+import { getEffectiveUiLocale, t } from '@/infrastructure/i18n/t'
+import { tBindOtpError } from '@/pages/shared/bind-otp-error-copy'
 import { readBrowserOnline } from '@/infrastructure/browser/browser-online'
 import { getWebsiteBaseUrl } from '@/infrastructure/browser/website-page'
 import { useAppToast } from '@/infrastructure/ui/use-app-toast'
@@ -159,10 +179,41 @@ export function useSettingsPage() {
   const trialLlmLimit = ref<number | null>(null)
   const trialEmbedRemaining = ref<number | null>(null)
   const trialEmbedLimit = ref<number | null>(null)
-  const promoteEmail = ref('')
-  const promoteError = ref('')
-  const promoteWorking = ref(false)
-  const promoteSuccess = ref(false)
+  const bindOtp = ref<BindOtpState>(createBindOtpState())
+  const promoteError = computed(() =>
+    bindOtp.value.errorKind
+      ? tBindOtpError(bindOtp.value.errorKind, bindOtp.value.remainingAttempts)
+      : ''
+  )
+  const promoteSuccess = computed(() => bindOtp.value.phase === 'success')
+  const promoteWorking = computed(
+    () =>
+      bindOtp.value.phase === 'code_sending' ||
+      bindOtp.value.phase === 'verifying' ||
+      bindOtp.value.phase === 'confirming'
+  )
+  let bindOtpCooldownTimer: ReturnType<typeof setInterval> | null = null
+
+  function stopBindOtpCooldown(): void {
+    if (bindOtpCooldownTimer != null) {
+      clearInterval(bindOtpCooldownTimer)
+      bindOtpCooldownTimer = null
+    }
+  }
+
+  function startBindOtpCooldown(): void {
+    stopBindOtpCooldown()
+    bindOtpCooldownTimer = setInterval(() => {
+      bindOtp.value = bindOtpTickCooldown(bindOtp.value)
+      if (bindOtp.value.resendCooldownSec <= 0) {
+        stopBindOtpCooldown()
+      }
+    }, 1000)
+  }
+
+  function bindOtpLocale(): 'en' | 'zh' {
+    return getEffectiveUiLocale() === 'zh_CN' ? 'zh' : 'en'
+  }
 
   const signedIn = ref(false)
   const accountEmail = ref('')
@@ -1045,32 +1096,88 @@ export function useSettingsPage() {
     }
   }
 
-  /** Settings / Side Panel 共用：绑邮箱转正。 */
-  async function handlePromoteAnonymous(): Promise<void> {
-    if (promoteWorking.value || !isAnonymous.value) {
-      return
-    }
-    promoteError.value = ''
-    promoteWorking.value = true
-    try {
-      const response = await convertAnonymousAccount(promoteEmail.value.trim())
-      if (!response.ok) {
-        promoteError.value = tAccountSyncError(response.errorCode)
+  function onBindOtpEmailInput(value: string): void {
+    bindOtp.value = bindOtpSetEmail(bindOtp.value, value)
+  }
+
+  function onBindOtpCodeInput(value: string): void {
+    bindOtp.value = bindOtpSetCode(bindOtp.value, value)
+  }
+
+  /** 发绑定验证码（含 captcha 前景重试）。 */
+  async function handleBindSendCode(options?: { foreground?: boolean }): Promise<void> {
+    if (!isAnonymous.value || !bindOtpCanSendCode(bindOtp.value)) {
+      if (!(options?.foreground === true && bindOtp.value.captchaRetryNeeded)) {
         return
       }
-      promoteSuccess.value = true
+    }
+    bindOtp.value = bindOtpStartSend(bindOtp.value)
+    try {
+      const response = await bindRequestCode({
+        email: bindOtp.value.email.trim(),
+        locale: bindOtpLocale(),
+        ...(options?.foreground === true ? { foreground: true } : {})
+      })
+      if (!response.ok) {
+        bindOtp.value = bindOtpSendFail(
+          bindOtp.value,
+          response.errorCode === 'AUTH_BIND_CAPTCHA_REQUIRED' ? 'captcha_required' : response.error
+        )
+        return
+      }
+      bindOtp.value = bindOtpSendOk(bindOtp.value)
+      startBindOtpCooldown()
+    } catch {
+      bindOtp.value = bindOtpSendFail(bindOtp.value, 'failed')
+    }
+  }
+
+  /** 验码 → promote/claim。 */
+  async function handleBindVerifyCode(): Promise<void> {
+    if (!isAnonymous.value || !bindOtpCanVerify(bindOtp.value)) {
+      return
+    }
+    bindOtp.value = bindOtpStartVerify(bindOtp.value)
+    try {
+      const verify = await bindVerifyCode({
+        email: bindOtp.value.email.trim(),
+        code: bindOtp.value.code.trim()
+      })
+      if (!verify.ok) {
+        bindOtp.value = bindOtpVerifyFail(bindOtp.value, verify.error, verify.remainingAttempts)
+        return
+      }
+      bindOtp.value = bindOtpVerifyOk(bindOtp.value, {
+        branch: verify.branch,
+        claimToken: verify.claimToken
+      })
+      const claimToken = bindOtp.value.claimToken
+      if (!claimToken) {
+        bindOtp.value = bindOtpConfirmFail(bindOtp.value, 'failed')
+        return
+      }
+      const convert = await convertAnonymousAccount({
+        email: bindOtp.value.email.trim(),
+        claimToken,
+        branch: verify.branch
+      })
+      if (!convert.ok) {
+        bindOtp.value = bindOtpConfirmFail(bindOtp.value, convert.error)
+        return
+      }
+      bindOtp.value = bindOtpConfirmOk(bindOtp.value)
+      stopBindOtpCooldown()
       isAnonymous.value = false
-      accountEmail.value = response.email
-      promoteEmail.value = ''
+      accountEmail.value = convert.email
+      signedIn.value = true
       trialLlmRemaining.value = null
       trialLlmLimit.value = null
       trialEmbedRemaining.value = null
       trialEmbedLimit.value = null
       await loadHostedQuota()
+      await refreshLoginMigrationGate()
     } catch {
-      promoteError.value = t('settings_promote_error_failed')
-    } finally {
-      promoteWorking.value = false
+      bindOtp.value = bindOtpConfirmFail(bindOtp.value, 'failed')
     }
   }
 
@@ -1988,6 +2095,7 @@ export function useSettingsPage() {
   })
 
   onUnmounted(() => {
+    stopBindOtpCooldown()
     stopWatchAuthSession?.()
     stopWatchAuthSession = null
     stopWatchWebsiteAuthUi?.()
@@ -2079,14 +2187,17 @@ export function useSettingsPage() {
     handleUiLocalePreferenceChange,
     hasCompletedInitialSectionSync,
     hasOrphanOwners,
-    handlePromoteAnonymous,
+    handleBindSendCode,
+    handleBindVerifyCode,
     hostedQuotaError,
     hostedQuotaLoading,
     hostedQuotaText,
     isAnonymous,
     loadCommands,
     loadHostedQuota,
-    promoteEmail,
+    bindOtp,
+    onBindOtpEmailInput,
+    onBindOtpCodeInput,
     promoteError,
     promoteSuccess,
     promoteWorking,

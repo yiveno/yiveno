@@ -33,9 +33,30 @@ import {
 } from '@/pages/sidepanel/recall-result-card-helpers'
 import ClueFormattedText from '@/pages/sidepanel/composer/ClueFormattedText.vue'
 import RecallResultCard from '@/pages/sidepanel/RecallResultCard.vue'
-import { authSignIn, convertAnonymousAccount } from '@/infrastructure/messaging/background-client'
-import { tAccountSyncError } from '@/infrastructure/i18n/background-error'
-import { t } from '@/infrastructure/i18n/t'
+import {
+  bindOtpCanSendCode,
+  bindOtpCanVerify,
+  bindOtpConfirmFail,
+  bindOtpConfirmOk,
+  bindOtpSendFail,
+  bindOtpSendOk,
+  bindOtpSetCode,
+  bindOtpSetEmail,
+  bindOtpStartSend,
+  bindOtpStartVerify,
+  bindOtpTickCooldown,
+  bindOtpVerifyFail,
+  bindOtpVerifyOk,
+  createBindOtpState,
+  type BindOtpState
+} from '@/core/identity/bind-otp-flow'
+import {
+  bindRequestCode,
+  bindVerifyCode,
+  convertAnonymousAccount
+} from '@/infrastructure/messaging/background-client'
+import { getEffectiveUiLocale, t } from '@/infrastructure/i18n/t'
+import { tBindOtpError } from '@/pages/shared/bind-otp-error-copy'
 
 defineOptions({ name: 'RecallConversation' })
 
@@ -84,12 +105,9 @@ const emit = defineEmits<{
 /** 纠错菜单：`${turnId}::${chipId}`；null = 关闭。 */
 const openEchoMenuKey = ref<string | null>(null)
 
-/** 匿名转正：按 turnId 存邮箱 / 错误 / 进行中 / 成功。 */
-const promoteEmailByTurn = ref<Record<string, string>>({})
-const promoteErrorByTurn = ref<Record<string, string>>({})
-const promoteConflictTurnIds = ref<Set<string>>(new Set())
-const promoteWorkingTurnId = ref<string | null>(null)
-const promoteSuccessTurnIds = ref<Set<string>>(new Set())
+/** 匿名绑定 OTP：按 turnId 存状态机（本地 UI，不进 storage）。 */
+const bindOtpByTurn = ref<Record<string, BindOtpState>>({})
+const bindOtpCooldownTimers = new Map<string, ReturnType<typeof setInterval>>()
 
 const ALL_OBJECT_TYPES = Object.keys(RECALL_OBJECT_TYPE_CANONICAL_SURFACES) as RecallObjectType[]
 
@@ -157,56 +175,133 @@ function onDismissClick(): void {
   emit('dismiss')
 }
 
-function promoteEmailFor(turnId: string): string {
-  return promoteEmailByTurn.value[turnId] ?? ''
+function bindOtpFor(turnId: string): BindOtpState {
+  return bindOtpByTurn.value[turnId] ?? createBindOtpState()
+}
+
+function patchBindOtp(turnId: string, next: BindOtpState): void {
+  bindOtpByTurn.value = { ...bindOtpByTurn.value, [turnId]: next }
+}
+
+function stopBindOtpCooldown(turnId: string): void {
+  const timer = bindOtpCooldownTimers.get(turnId)
+  if (timer != null) {
+    clearInterval(timer)
+    bindOtpCooldownTimers.delete(turnId)
+  }
+}
+
+function startBindOtpCooldown(turnId: string): void {
+  stopBindOtpCooldown(turnId)
+  const timer = setInterval(() => {
+    const current = bindOtpFor(turnId)
+    const next = bindOtpTickCooldown(current)
+    patchBindOtp(turnId, next)
+    if (next.resendCooldownSec <= 0) {
+      stopBindOtpCooldown(turnId)
+    }
+  }, 1000)
+  bindOtpCooldownTimers.set(turnId, timer)
 }
 
 function setPromoteEmail(turnId: string, value: string): void {
-  promoteEmailByTurn.value = { ...promoteEmailByTurn.value, [turnId]: value }
+  patchBindOtp(turnId, bindOtpSetEmail(bindOtpFor(turnId), value))
 }
 
-async function submitAnonymousPromote(turnId: string): Promise<void> {
-  if (promoteWorkingTurnId.value) {
+function setPromoteCode(turnId: string, value: string): void {
+  patchBindOtp(turnId, bindOtpSetCode(bindOtpFor(turnId), value))
+}
+
+function bindOtpLocale(): 'en' | 'zh' {
+  return getEffectiveUiLocale() === 'zh_CN' ? 'zh' : 'en'
+}
+
+function promoteErrorText(turnId: string): string {
+  const state = bindOtpFor(turnId)
+  return state.errorKind ? tBindOtpError(state.errorKind, state.remainingAttempts) : ''
+}
+
+function isBindOtpWorking(turnId: string): boolean {
+  const phase = bindOtpFor(turnId).phase
+  return phase === 'code_sending' || phase === 'verifying' || phase === 'confirming'
+}
+
+async function handleBindSendCode(
+  turnId: string,
+  options?: { foreground?: boolean }
+): Promise<void> {
+  const state = bindOtpFor(turnId)
+  const allowCaptchaRetry = options?.foreground === true && state.captchaRetryNeeded
+  if (!allowCaptchaRetry && !bindOtpCanSendCode(state)) {
     return
   }
-  const email = promoteEmailFor(turnId).trim()
-  promoteErrorByTurn.value = { ...promoteErrorByTurn.value, [turnId]: '' }
-  const clearedConflict = new Set(promoteConflictTurnIds.value)
-  clearedConflict.delete(turnId)
-  promoteConflictTurnIds.value = clearedConflict
-  promoteWorkingTurnId.value = turnId
+  patchBindOtp(turnId, bindOtpStartSend(state))
   try {
-    const response = await convertAnonymousAccount(email)
+    const response = await bindRequestCode({
+      email: bindOtpFor(turnId).email.trim(),
+      locale: bindOtpLocale(),
+      ...(options?.foreground === true ? { foreground: true } : {})
+    })
     if (!response.ok) {
-      promoteErrorByTurn.value = {
-        ...promoteErrorByTurn.value,
-        [turnId]: tAccountSyncError(response.errorCode)
-      }
-      if (response.errorCode === 'AUTH_PROMOTE_EMAIL_CONFLICT') {
-        const nextConflict = new Set(promoteConflictTurnIds.value)
-        nextConflict.add(turnId)
-        promoteConflictTurnIds.value = nextConflict
-      }
+      patchBindOtp(
+        turnId,
+        bindOtpSendFail(
+          bindOtpFor(turnId),
+          response.errorCode === 'AUTH_BIND_CAPTCHA_REQUIRED' ? 'captcha_required' : response.error
+        )
+      )
       return
     }
-    const next = new Set(promoteSuccessTurnIds.value)
-    next.add(turnId)
-    promoteSuccessTurnIds.value = next
+    patchBindOtp(turnId, bindOtpSendOk(bindOtpFor(turnId)))
+    startBindOtpCooldown(turnId)
   } catch {
-    promoteErrorByTurn.value = {
-      ...promoteErrorByTurn.value,
-      [turnId]: t('settings_promote_error_failed')
-    }
-  } finally {
-    promoteWorkingTurnId.value = null
+    patchBindOtp(turnId, bindOtpSendFail(bindOtpFor(turnId), 'failed'))
   }
 }
 
-async function promoteSignInToMerge(): Promise<void> {
+async function handleBindVerifyCode(turnId: string): Promise<void> {
+  if (!bindOtpCanVerify(bindOtpFor(turnId))) {
+    return
+  }
+  patchBindOtp(turnId, bindOtpStartVerify(bindOtpFor(turnId)))
   try {
-    await authSignIn()
+    const current = bindOtpFor(turnId)
+    const verify = await bindVerifyCode({
+      email: current.email.trim(),
+      code: current.code.trim()
+    })
+    if (!verify.ok) {
+      patchBindOtp(
+        turnId,
+        bindOtpVerifyFail(bindOtpFor(turnId), verify.error, verify.remainingAttempts)
+      )
+      return
+    }
+    patchBindOtp(
+      turnId,
+      bindOtpVerifyOk(bindOtpFor(turnId), {
+        branch: verify.branch,
+        claimToken: verify.claimToken
+      })
+    )
+    const claimToken = bindOtpFor(turnId).claimToken
+    if (!claimToken) {
+      patchBindOtp(turnId, bindOtpConfirmFail(bindOtpFor(turnId), 'failed'))
+      return
+    }
+    const convert = await convertAnonymousAccount({
+      email: bindOtpFor(turnId).email.trim(),
+      claimToken,
+      branch: verify.branch
+    })
+    if (!convert.ok) {
+      patchBindOtp(turnId, bindOtpConfirmFail(bindOtpFor(turnId), convert.error))
+      return
+    }
+    patchBindOtp(turnId, bindOtpConfirmOk(bindOtpFor(turnId)))
+    stopBindOtpCooldown(turnId)
   } catch {
-    // 打开官网失败时静默；用户可再点
+    patchBindOtp(turnId, bindOtpConfirmFail(bindOtpFor(turnId), 'failed'))
   }
 }
 
@@ -364,6 +459,9 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   document.removeEventListener('pointerdown', onDocumentPointerDown, true)
+  for (const turnId of bindOtpCooldownTimers.keys()) {
+    stopBindOtpCooldown(turnId)
+  }
 })
 
 function isDetailExportSelected(id: string): boolean {
@@ -570,7 +668,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
               {{ t('sidepanel_recall_anonymous_promote_copy') }}
             </p>
             <p
-              v-if="promoteSuccessTurnIds.has(turn.id)"
+              v-if="bindOtpFor(turn.id).phase === 'success'"
               class="assistant-turn-promote__success"
               role="status"
             >
@@ -586,42 +684,95 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
                 type="email"
                 autocomplete="email"
                 :placeholder="t('sidepanel_recall_anonymous_promote_email_placeholder')"
-                :value="promoteEmailFor(turn.id)"
-                :disabled="promoteWorkingTurnId === turn.id"
+                :value="bindOtpFor(turn.id).email"
+                :disabled="isBindOtpWorking(turn.id)"
                 @input="
                   setPromoteEmail(turn.id, ($event.target as HTMLInputElement | null)?.value ?? '')
+                "
+              />
+              <label class="assistant-turn-promote__label" :for="`promote-code-${turn.id}`">
+                {{ t('settings_bind_code_label') }}
+              </label>
+              <input
+                :id="`promote-code-${turn.id}`"
+                class="assistant-turn-promote__input"
+                type="text"
+                inputmode="numeric"
+                autocomplete="one-time-code"
+                maxlength="8"
+                :placeholder="t('settings_bind_code_placeholder')"
+                :value="bindOtpFor(turn.id).code"
+                :disabled="isBindOtpWorking(turn.id) || bindOtpFor(turn.id).phase === 'idle'"
+                @input="
+                  setPromoteCode(turn.id, ($event.target as HTMLInputElement | null)?.value ?? '')
                 "
               />
               <div class="assistant-turn-promote__actions">
                 <AppButton
                   type="button"
-                  variant="tonal"
-                  :disabled="promoteWorkingTurnId === turn.id || !promoteEmailFor(turn.id).trim()"
-                  :title="t('sidepanel_recall_anonymous_promote_submit')"
-                  @click="submitAnonymousPromote(turn.id)"
+                  variant="outlined"
+                  :disabled="
+                    isBindOtpWorking(turn.id) ||
+                    !bindOtpFor(turn.id).email.trim() ||
+                    bindOtpFor(turn.id).resendCooldownSec > 0
+                  "
+                  :title="
+                    bindOtpFor(turn.id).resendCooldownSec > 0
+                      ? t('settings_bind_resend_cooldown', [
+                          String(bindOtpFor(turn.id).resendCooldownSec)
+                        ])
+                      : t('settings_bind_send_code')
+                  "
+                  @click="handleBindSendCode(turn.id)"
                 >
                   {{
-                    promoteWorkingTurnId === turn.id
+                    bindOtpFor(turn.id).phase === 'code_sending'
                       ? t('sidepanel_recall_anonymous_promote_working')
-                      : t('sidepanel_recall_anonymous_promote_submit')
+                      : bindOtpFor(turn.id).resendCooldownSec > 0
+                        ? t('settings_bind_resend_cooldown', [
+                            String(bindOtpFor(turn.id).resendCooldownSec)
+                          ])
+                        : bindOtpFor(turn.id).phase === 'code_sent' ||
+                            bindOtpFor(turn.id).phase === 'error'
+                          ? t('settings_bind_resend')
+                          : t('settings_bind_send_code')
                   }}
                 </AppButton>
                 <AppButton
-                  v-if="promoteConflictTurnIds.has(turn.id)"
+                  type="button"
+                  variant="tonal"
+                  :disabled="
+                    isBindOtpWorking(turn.id) ||
+                    !bindOtpFor(turn.id).code.trim() ||
+                    bindOtpFor(turn.id).phase === 'idle'
+                  "
+                  :title="t('settings_bind_verify')"
+                  @click="handleBindVerifyCode(turn.id)"
+                >
+                  {{
+                    bindOtpFor(turn.id).phase === 'verifying' ||
+                    bindOtpFor(turn.id).phase === 'confirming'
+                      ? t('settings_bind_verifying')
+                      : t('settings_bind_verify')
+                  }}
+                </AppButton>
+                <AppButton
+                  v-if="bindOtpFor(turn.id).captchaRetryNeeded"
                   type="button"
                   variant="outlined"
-                  :title="t('sidepanel_recall_anonymous_promote_sign_in')"
-                  @click="promoteSignInToMerge"
+                  :disabled="isBindOtpWorking(turn.id)"
+                  :title="t('settings_bind_captcha_retry')"
+                  @click="handleBindSendCode(turn.id, { foreground: true })"
                 >
-                  {{ t('sidepanel_recall_anonymous_promote_sign_in') }}
+                  {{ t('settings_bind_captcha_retry') }}
                 </AppButton>
               </div>
               <p
-                v-if="promoteErrorByTurn[turn.id]"
+                v-if="promoteErrorText(turn.id)"
                 class="assistant-turn-promote__error"
                 role="alert"
               >
-                {{ promoteErrorByTurn[turn.id] }}
+                {{ promoteErrorText(turn.id) }}
               </p>
             </template>
           </div>

@@ -44,9 +44,12 @@ export const AccountSyncErrorCodeSchema = z.enum([
   'SUBSCRIPTION_STATUS_FAILED', // 拉取订阅状态失败
   'MCP_REMOTE_UPDATE_FAILED', // 同步 MCP 开关到云端失败
   'AUTH_PROMOTE_INVALID_EMAIL', // 转正邮箱格式非法
-  'AUTH_PROMOTE_EMAIL_CONFLICT', // 转正邮箱已被其它账号占用
+  'AUTH_PROMOTE_EMAIL_CONFLICT', // 转正邮箱已被其它账号占用（promote 竞态）
   'AUTH_PROMOTE_FAILED', // 转正失败（网络 / Worker）
-  'AUTH_PROMOTE_NOT_ANONYMOUS' // 当前非匿名会话，无法转正
+  'AUTH_PROMOTE_NOT_ANONYMOUS', // 当前非匿名会话，无法转正
+  'AUTH_BIND_CAPTCHA_REQUIRED', // 绑定发码需前景 Turnstile
+  'AUTH_BIND_FAILED', // 绑定发码 / 验码失败（细节见 error）
+  'AUTH_CLAIM_FAILED' // claim-by-otp 失败（细节见 error）
 ])
 
 export type AccountSyncErrorCode = z.infer<typeof AccountSyncErrorCodeSchema>
@@ -259,8 +262,53 @@ export type RetryAnonymousCaptchaResponse =
       error?: string
     }
 
+/** Settings / Side Panel：发绑定 OTP。 */
+export type BindRequestCodeMessage = {
+  scope: BackgroundMessageScope
+  type: 'BIND_REQUEST_CODE'
+  payload: {
+    email: string
+    /** Worker locale：en | zh */
+    locale: 'en' | 'zh'
+    /** true：前景打开 Turnstile（captcha 重试） */
+    foreground?: boolean
+  }
+}
+
+export type BindRequestCodeResponse =
+  | { ok: true }
+  | {
+      ok: false
+      errorCode: AccountSyncErrorCode
+      /** Worker / 客户端错误字面（如 rate_limited、captcha_failed） */
+      error?: string
+    }
+
+/** Settings / Side Panel：验绑定 OTP → branch + claimToken。 */
+export type BindVerifyCodeMessage = {
+  scope: BackgroundMessageScope
+  type: 'BIND_VERIFY_CODE'
+  payload: {
+    email: string
+    code: string
+  }
+}
+
+export type BindVerifyCodeResponse =
+  | {
+      ok: true
+      branch: 'promote' | 'claim'
+      claimToken: string
+    }
+  | {
+      ok: false
+      errorCode: AccountSyncErrorCode
+      error?: string
+      remainingAttempts?: number
+    }
+
 /**
- * 匿名试用转正：绑定邮箱（Worker `POST /api/auth/promote`）。
+ * 匿名试用转正 / 认领：持 claimToken 走 promote 或 claim-by-otp。
  * Side Panel 内联提示与 Settings 账号区共用。
  */
 export type ConvertAnonymousAccountMessage = {
@@ -268,6 +316,8 @@ export type ConvertAnonymousAccountMessage = {
   type: 'CONVERT_ANONYMOUS_ACCOUNT'
   payload: {
     email: string
+    claimToken: string
+    branch: 'promote' | 'claim'
   }
 }
 
@@ -276,6 +326,7 @@ export type ConvertAnonymousAccountResponse =
       ok: true
       email: string
       userId: string
+      branch: 'promote' | 'claim'
     }
   | {
       ok: false
@@ -647,6 +698,8 @@ export type AccountSyncBackgroundMessage =
   | GetAuthStateMessage
   | ProbeWebsiteSignedInMessage
   | RetryAnonymousCaptchaMessage
+  | BindRequestCodeMessage
+  | BindVerifyCodeMessage
   | ConvertAnonymousAccountMessage
   | RefreshAuthProfileMessage
   | GetSyncStatusMessage
@@ -675,6 +728,8 @@ export type AccountSyncBackgroundResponse =
   | GetAuthStateResponse
   | ProbeWebsiteSignedInResponse
   | RetryAnonymousCaptchaResponse
+  | BindRequestCodeResponse
+  | BindVerifyCodeResponse
   | ConvertAnonymousAccountResponse
   | RefreshAuthProfileResponse
   | GetSyncStatusResponse

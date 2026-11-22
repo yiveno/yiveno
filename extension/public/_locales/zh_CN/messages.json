@@ -1639,20 +1639,78 @@
   "settings_promote_success": {
     "message": "已转为 Free。每月线索帮助额度已解锁。"
   },
-  "settings_promote_sign_in": {
-    "message": "去登录合并"
-  },
   "settings_promote_error_invalid_email": {
     "message": "邮箱格式不对。"
   },
   "settings_promote_error_email_conflict": {
-    "message": "该邮箱已注册，请登录合并，或换一个邮箱。"
+    "message": "该邮箱刚刚被绑定，请重新验证。"
   },
   "settings_promote_error_failed": {
     "message": "绑定失败。请检查网络后再试。"
   },
   "settings_promote_error_not_anonymous": {
     "message": "当前账号已绑定邮箱。"
+  },
+  "settings_bind_send_code": {
+    "message": "发送验证码"
+  },
+  "settings_bind_code_label": {
+    "message": "验证码"
+  },
+  "settings_bind_code_placeholder": {
+    "message": "8 位验证码"
+  },
+  "settings_bind_verify": {
+    "message": "验证并继续"
+  },
+  "settings_bind_verifying": {
+    "message": "验证中…"
+  },
+  "settings_bind_resend": {
+    "message": "重新发送"
+  },
+  "settings_bind_resend_cooldown": {
+    "message": "$1 秒后可重发",
+    "placeholders": {
+      "SECONDS": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_bind_captcha_retry": {
+    "message": "完成验证并重发"
+  },
+  "settings_bind_error_rate_limited": {
+    "message": "发送太频繁，请稍后再试。"
+  },
+  "settings_bind_error_invalid_code": {
+    "message": "验证码不正确，还可试 $1 次。",
+    "placeholders": {
+      "REMAINING": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_bind_error_too_many_attempts": {
+    "message": "尝试次数过多，验证码已作废，请重新发送。"
+  },
+  "settings_bind_error_code_expired": {
+    "message": "验证码已过期或失效，请重新发送。"
+  },
+  "settings_bind_error_captcha": {
+    "message": "需要完成验证后才能发送验证码。"
+  },
+  "settings_bind_error_email_conflict": {
+    "message": "该邮箱刚刚被绑定，请重新验证。"
+  },
+  "settings_bind_error_claim_user_not_found": {
+    "message": "目标账号不存在，请重新验证。"
+  },
+  "settings_bind_error_device_limit": {
+    "message": "该账号设备已满 20 台，请到官网设备管理删除旧设备后重试。"
+  },
+  "settings_bind_error_failed": {
+    "message": "绑定未完成。请检查网络后再试。"
   },
   "settings_account_waiting_website": {
     "message": "请在浏览器标签页完成登录，然后回到这里。"
@@ -3168,9 +3226,6 @@
   },
   "sidepanel_recall_anonymous_promote_working": {
     "message": "绑定中…"
-  },
-  "sidepanel_recall_anonymous_promote_sign_in": {
-    "message": "去登录合并"
   },
   "sidepanel_recall_anonymous_promote_success": {
     "message": "已转为 Free，继续找吧。"

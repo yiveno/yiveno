@@ -18,6 +18,8 @@ import type {
   GetLoginMigrationStatusResponse,
   LoginMigrationAction,
   ProbeWebsiteSignedInResponse,
+  BindRequestCodeResponse,
+  BindVerifyCodeResponse,
   ConvertAnonymousAccountResponse,
   RetryAnonymousCaptchaResponse,
   ResolveLoginMigrationResponse,
@@ -480,14 +482,49 @@ export async function retryAnonymousCaptcha(): Promise<RetryAnonymousCaptchaResp
   })
 }
 
-/** 匿名试用绑邮箱转正（Side Panel / Settings 共用）。 */
-export async function convertAnonymousAccount(
+/** 发绑定 OTP（Side Panel / Settings 共用）。 */
+export async function bindRequestCode(input: {
   email: string
-): Promise<ConvertAnonymousAccountResponse> {
+  locale: 'en' | 'zh'
+  foreground?: boolean
+}): Promise<BindRequestCodeResponse> {
+  return sendBackgroundMessage<BindRequestCodeResponse>({
+    scope: 'background',
+    type: 'BIND_REQUEST_CODE',
+    payload: {
+      email: input.email,
+      locale: input.locale,
+      ...(input.foreground === true ? { foreground: true } : {})
+    }
+  })
+}
+
+/** 验绑定 OTP → branch + claimToken。 */
+export async function bindVerifyCode(input: {
+  email: string
+  code: string
+}): Promise<BindVerifyCodeResponse> {
+  return sendBackgroundMessage<BindVerifyCodeResponse>({
+    scope: 'background',
+    type: 'BIND_VERIFY_CODE',
+    payload: { email: input.email, code: input.code }
+  })
+}
+
+/** 匿名试用持 claimToken 转正 / 认领（Side Panel / Settings 共用）。 */
+export async function convertAnonymousAccount(input: {
+  email: string
+  claimToken: string
+  branch: 'promote' | 'claim'
+}): Promise<ConvertAnonymousAccountResponse> {
   return sendBackgroundMessage<ConvertAnonymousAccountResponse>({
     scope: 'background',
     type: 'CONVERT_ANONYMOUS_ACCOUNT',
-    payload: { email }
+    payload: {
+      email: input.email,
+      claimToken: input.claimToken,
+      branch: input.branch
+    }
   })
 }
 

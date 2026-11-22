@@ -1,6 +1,6 @@
 /**
  * Worker `POST /api/auth/promote` 客户端（仅 Background）。
- * device Bearer + email → 绑邮箱转正；不重发 token。
+ * device Bearer + email + claimToken → 绑邮箱转正；不重发 token。
  */
 
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
@@ -30,11 +30,13 @@ export type PromoteAnonymousApiResult =
     }
 
 /**
- * POST /api/auth/promote
+ * POST /api/auth/promote（必填 claimToken；缺则 Worker 401）。
+ * 绝不 log claimToken。
  */
 export async function promoteAnonymousViaApi(
   deviceToken: string,
-  email: string
+  email: string,
+  claimToken: string
 ): Promise<PromoteAnonymousApiResult> {
   const startedAt = flowStart('Auth', 'promote anonymous')
   try {
@@ -45,7 +47,7 @@ export async function promoteAnonymousViaApi(
         'content-type': 'application/json',
         authorization: `Bearer ${deviceToken}`
       },
-      body: JSON.stringify({ email })
+      body: JSON.stringify({ email, claimToken })
     })
     const body: unknown = await response.json().catch(() => null)
     if (!response.ok) {

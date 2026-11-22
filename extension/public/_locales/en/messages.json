@@ -1642,20 +1642,78 @@
   "settings_promote_success": {
     "message": "You're on Free now. Monthly clue-help allowance unlocked."
   },
-  "settings_promote_sign_in": {
-    "message": "Sign in to merge"
-  },
   "settings_promote_error_invalid_email": {
     "message": "That doesn't look like a valid email."
   },
   "settings_promote_error_email_conflict": {
-    "message": "That email is already registered. Sign in to merge, or try a different email."
+    "message": "That email was just claimed. Verify again with a new code."
   },
   "settings_promote_error_failed": {
     "message": "Couldn't bind that email. Check your connection and try again."
   },
   "settings_promote_error_not_anonymous": {
     "message": "This account is already signed in with an email."
+  },
+  "settings_bind_send_code": {
+    "message": "Send code"
+  },
+  "settings_bind_code_label": {
+    "message": "Verification code"
+  },
+  "settings_bind_code_placeholder": {
+    "message": "8-digit code"
+  },
+  "settings_bind_verify": {
+    "message": "Verify and continue"
+  },
+  "settings_bind_verifying": {
+    "message": "Verifying…"
+  },
+  "settings_bind_resend": {
+    "message": "Resend code"
+  },
+  "settings_bind_resend_cooldown": {
+    "message": "Resend in $1s",
+    "placeholders": {
+      "SECONDS": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_bind_captcha_retry": {
+    "message": "Complete verification and resend"
+  },
+  "settings_bind_error_rate_limited": {
+    "message": "Too many sends. Wait a bit and try again."
+  },
+  "settings_bind_error_invalid_code": {
+    "message": "That code is incorrect. $1 attempts left.",
+    "placeholders": {
+      "REMAINING": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_bind_error_too_many_attempts": {
+    "message": "Too many attempts. That code is void — request a new one."
+  },
+  "settings_bind_error_code_expired": {
+    "message": "That code expired or is no longer valid. Request a new one."
+  },
+  "settings_bind_error_captcha": {
+    "message": "Verification needed before we can send a code."
+  },
+  "settings_bind_error_email_conflict": {
+    "message": "That email was just bound. Verify again with a new code."
+  },
+  "settings_bind_error_claim_user_not_found": {
+    "message": "That account no longer exists. Verify again with a new code."
+  },
+  "settings_bind_error_device_limit": {
+    "message": "This account already has 20 devices. Remove an old one on the website, then try again."
+  },
+  "settings_bind_error_failed": {
+    "message": "Couldn't finish binding. Check your connection and try again."
   },
   "settings_account_waiting_website": {
     "message": "Finish signing in in the browser tab, then return here."
@@ -3168,9 +3226,6 @@
   },
   "sidepanel_recall_anonymous_promote_working": {
     "message": "Binding…"
-  },
-  "sidepanel_recall_anonymous_promote_sign_in": {
-    "message": "Sign in to merge"
   },
   "sidepanel_recall_anonymous_promote_success": {
     "message": "You're on Free now. Keep finding."

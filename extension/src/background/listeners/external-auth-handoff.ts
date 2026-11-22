@@ -10,21 +10,15 @@ import {
   ExternalAuthHandoffMessageSchema,
   type ExternalAuthHandoffResponse
 } from '@/core/identity/external-auth-handoff'
+import { applyIncomingDeviceSession } from '@/infrastructure/auth/apply-incoming-device-session'
 import { deviceSessionFromRegisterData } from '@/infrastructure/auth/device-register-api-client'
 import { registerExtensionUninstallRevoke } from '@/infrastructure/auth/extension-uninstall-url'
 import { requestWebsiteSessionFromExtension } from '@/infrastructure/auth/website-session-from-extension'
 import { resolveWebsiteAuthProbeFromExternal } from '@/infrastructure/auth/website-auth-probe'
 import { clearAnonExchange401Backoff } from '@/infrastructure/identity/anon-exchange-401-backoff-service'
-import { clearAuthSession, getAuthSession } from '@/infrastructure/identity/auth-session-service'
-import {
-  getDeviceSession,
-  setDeviceSession
-} from '@/infrastructure/identity/device-session-service'
-import {
-  setAccountBinding,
-  getAccountBinding
-} from '@/infrastructure/identity/local-profile-service'
-import { markAuthValidatedNow } from '@/infrastructure/auth/auth-session-revalidate'
+import { getAuthSession } from '@/infrastructure/identity/auth-session-service'
+import { getDeviceSession } from '@/infrastructure/identity/device-session-service'
+import { getAccountBinding } from '@/infrastructure/identity/local-profile-service'
 import { maskDeviceTokenForLog } from '@/core/identity/device-session'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
@@ -95,23 +89,17 @@ export async function applyExternalAuthDeviceHandoff(
       displayName: registerFields.displayName ?? null,
       avatarUrl: registerFields.avatarUrl ?? null
     })
-    await setDeviceSession(deviceSession)
-    // 迁出旧 Supabase 会话键，避免双凭证
-    await clearAuthSession()
+    // 与 claim 共用 applyIncomingDeviceSession（setDevice → clearAuth → binding? → markValidated）
+    await applyIncomingDeviceSession({
+      deviceSession,
+      ...(sameAccount ? {} : { bindAccountId: incomingUserId })
+    })
     // AN2.1：device 已建立则清匿名 401 熔断（best-effort；失败不得拖垮 handoff / 触发官网回滚）
     void clearAnonExchange401Backoff().catch(() => undefined)
-
-    if (!sameAccount) {
-      await setAccountBinding({
-        accountId: incomingUserId,
-        boundAt: new Date().toISOString()
-      })
-    }
 
     if (uninstallRevokeToken) {
       await registerExtensionUninstallRevoke(uninstallRevokeToken)
     }
-    await markAuthValidatedNow()
 
     if (!sameAccount) {
       // ADR-018：禁止静默 absorb；门闸由 Settings / Side Panel 在 binding 变更后弹

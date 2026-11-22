@@ -31,7 +31,12 @@ function bindRestoreFileInput(el: Element | ComponentPublicInstance | null): voi
 
 function onPromoteEmailInput(event: Event): void {
   const target = event.target as HTMLInputElement | null
-  page.promoteEmail.value = target?.value ?? ''
+  page.onBindOtpEmailInput(target?.value ?? '')
+}
+
+function onPromoteCodeInput(event: Event): void {
+  const target = event.target as HTMLInputElement | null
+  page.onBindOtpCodeInput(target?.value ?? '')
 }
 
 const {
@@ -55,10 +60,11 @@ const {
   handleChromeBookmarkSyncToggle,
   handleReimportChromeBookmarks,
   handleSignIn,
-  handlePromoteAnonymous,
+  handleBindSendCode,
+  handleBindVerifyCode,
   handleRetryAnonymousCaptcha,
   isAnonymous,
-  promoteEmail,
+  bindOtp,
   promoteError,
   promoteSuccess,
   promoteWorking,
@@ -430,28 +436,75 @@ const {
               type="email"
               autocomplete="email"
               :placeholder="t('settings_promote_email_placeholder')"
-              :value="promoteEmail"
+              :value="bindOtp.email"
               :disabled="promoteWorking"
               @input="onPromoteEmailInput"
+            />
+            <label class="settings-promote-label" for="settings-promote-code">{{
+              t('settings_bind_code_label')
+            }}</label>
+            <input
+              id="settings-promote-code"
+              class="settings-promote-input"
+              type="text"
+              inputmode="numeric"
+              autocomplete="one-time-code"
+              maxlength="8"
+              :placeholder="t('settings_bind_code_placeholder')"
+              :value="bindOtp.code"
+              :disabled="promoteWorking || bindOtp.phase === 'idle'"
+              @input="onPromoteCodeInput"
             />
             <div class="settings-actions">
               <AppButton
                 type="button"
-                variant="tonal"
-                :disabled="promoteWorking || !String(promoteEmail ?? '').trim()"
-                :title="t('settings_promote_submit')"
-                @click="handlePromoteAnonymous"
+                variant="outlined"
+                :disabled="
+                  promoteWorking ||
+                  !String(bindOtp.email ?? '').trim() ||
+                  bindOtp.resendCooldownSec > 0
+                "
+                :title="
+                  bindOtp.resendCooldownSec > 0
+                    ? t('settings_bind_resend_cooldown', [String(bindOtp.resendCooldownSec)])
+                    : t('settings_bind_send_code')
+                "
+                @click="handleBindSendCode()"
               >
-                {{ promoteWorking ? t('settings_promote_working') : t('settings_promote_submit') }}
+                {{
+                  bindOtp.phase === 'code_sending'
+                    ? t('settings_promote_working')
+                    : bindOtp.resendCooldownSec > 0
+                      ? t('settings_bind_resend_cooldown', [String(bindOtp.resendCooldownSec)])
+                      : bindOtp.phase === 'code_sent' || bindOtp.phase === 'error'
+                        ? t('settings_bind_resend')
+                        : t('settings_bind_send_code')
+                }}
               </AppButton>
               <AppButton
                 type="button"
-                variant="outlined"
-                :disabled="signingIn"
-                :title="t('settings_promote_sign_in')"
-                @click="handleSignIn"
+                variant="tonal"
+                :disabled="
+                  promoteWorking || !String(bindOtp.code ?? '').trim() || bindOtp.phase === 'idle'
+                "
+                :title="t('settings_bind_verify')"
+                @click="handleBindVerifyCode"
               >
-                {{ t('settings_promote_sign_in') }}
+                {{
+                  bindOtp.phase === 'verifying' || bindOtp.phase === 'confirming'
+                    ? t('settings_bind_verifying')
+                    : t('settings_bind_verify')
+                }}
+              </AppButton>
+              <AppButton
+                v-if="bindOtp.captchaRetryNeeded"
+                type="button"
+                variant="outlined"
+                :disabled="promoteWorking"
+                :title="t('settings_bind_captcha_retry')"
+                @click="handleBindSendCode({ foreground: true })"
+              >
+                {{ t('settings_bind_captcha_retry') }}
               </AppButton>
             </div>
             <p v-if="promoteError" class="settings-error" role="alert">{{ promoteError }}</p>
