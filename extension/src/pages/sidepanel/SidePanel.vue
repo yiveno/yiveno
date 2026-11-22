@@ -1759,6 +1759,7 @@ onUnmounted(() => {
           :pendingSteps="recallPendingSteps"
           :selected-detail-export-ids="selectedDetailExportIds"
           :detail-export-selection-active="detailExportMode"
+          :auth-account-id="extensionAccountId"
           @open="handleCardOpen"
           @evidence-visible="handleEvidenceVisible"
           @toggle-detail-export-selection="handleToggleDetailExportSelection"

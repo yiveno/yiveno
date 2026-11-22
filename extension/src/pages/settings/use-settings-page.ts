@@ -22,6 +22,7 @@ import {
   bindOtpVerifyFail,
   bindOtpVerifyOk,
   createBindOtpState,
+  shouldResetBindOtpForAccountIdentityChange,
   type BindOtpState
 } from '@/core/identity/bind-otp-flow'
 import {
@@ -1206,12 +1207,25 @@ export function useSettingsPage() {
         return
       }
 
+      const nextAccountId = response.binding?.accountId?.trim() || null
+      const nextIsAnonymous = response.isAnonymous === true
+      // 换号 / 匿名翻转时丢弃绑定 OTP UI；同账号轮询保留进行中的发码态
+      if (
+        shouldResetBindOtpForAccountIdentityChange(
+          { accountId: accountId.value, isAnonymous: isAnonymous.value },
+          { accountId: nextAccountId, isAnonymous: nextIsAnonymous }
+        )
+      ) {
+        stopBindOtpCooldown()
+        bindOtp.value = createBindOtpState()
+      }
+
       signedIn.value = response.signedIn
       accountEmail.value = response.email?.trim() ?? ''
       accountDisplayName.value = response.displayName?.trim() ?? ''
-      isAnonymous.value = response.isAnonymous === true
+      isAnonymous.value = nextIsAnonymous
       anonymousCaptchaRetryNeeded.value = response.anonymousCaptchaRetryNeeded === true
-      accountId.value = response.binding?.accountId?.trim() || null
+      accountId.value = nextAccountId
       syncEnabled.value = response.syncPrefs.enabled
       await refreshWebsiteAuthMismatch()
 

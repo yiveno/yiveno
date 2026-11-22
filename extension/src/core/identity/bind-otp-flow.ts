@@ -68,9 +68,26 @@ export function classifyBindOtpError(apiError: string | undefined | null): BindO
   return 'failed'
 }
 
+/** 账号身份快照（Settings / Side Panel 刷新鉴权后比较用）。 */
+export type BindOtpAccountIdentity = {
+  accountId: string | null
+  isAnonymous: boolean
+}
+
+/**
+ * 鉴权刷新后是否应丢弃进行中的绑定 OTP UI 状态。
+ * accountId 变化或 isAnonymous 翻转 → 重置；同账号轮询刷新 → 保留。
+ */
+export function shouldResetBindOtpForAccountIdentityChange(
+  previous: BindOtpAccountIdentity,
+  next: BindOtpAccountIdentity
+): boolean {
+  return previous.accountId !== next.accountId || previous.isAnonymous !== next.isAnonymous
+}
+
 /** 换邮箱：废弃当前验证码状态，回 idle。 */
 export function bindOtpSetEmail(state: BindOtpState, email: string): BindOtpState {
-  const next = email.trim() === state.email.trim() ? email : email
+  const next = email
   if (next.trim() === state.email.trim()) {
     return { ...state, email: next }
   }

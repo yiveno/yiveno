@@ -74,6 +74,12 @@ const props = defineProps<{
   selectedDetailExportIds?: Set<string>
   /** 为 true 时结果卡才显示 detail export 勾选框 */
   detailExportSelectionActive?: boolean
+  /**
+   * 扩展 accountId（退登/换号时变化）。
+   * 绑定 OTP 按 turn 存在组件内；换号后清掉残留 success/code_sent。
+   * 仅跟 accountId：promote 同号 isAnonymous 翻转须保留成功提示（转正块不卸载）。
+   */
+  authAccountId?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -108,6 +114,20 @@ const openEchoMenuKey = ref<string | null>(null)
 /** 匿名绑定 OTP：按 turnId 存状态机（本地 UI，不进 storage）。 */
 const bindOtpByTurn = ref<Record<string, BindOtpState>>({})
 const bindOtpCooldownTimers = new Map<string, ReturnType<typeof setInterval>>()
+
+/** 退登/换号：清空按 turn 残留的绑定 OTP（含 success 挡表单）。 */
+watch(
+  () => props.authAccountId ?? null,
+  (nextAccountId, previousAccountId) => {
+    if (previousAccountId === undefined || previousAccountId === nextAccountId) {
+      return
+    }
+    for (const turnId of [...bindOtpCooldownTimers.keys()]) {
+      stopBindOtpCooldown(turnId)
+    }
+    bindOtpByTurn.value = {}
+  }
+)
 
 const ALL_OBJECT_TYPES = Object.keys(RECALL_OBJECT_TYPE_CANONICAL_SURFACES) as RecallObjectType[]
 

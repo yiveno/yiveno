@@ -14,7 +14,8 @@ import {
   bindOtpVerifyFail,
   bindOtpVerifyOk,
   classifyBindOtpError,
-  createBindOtpState
+  createBindOtpState,
+  shouldResetBindOtpForAccountIdentityChange
 } from './bind-otp-flow'
 
 describe('bind-otp-flow', () => {
@@ -93,5 +94,59 @@ describe('bind-otp-flow', () => {
     expect(state.errorKind).toBe('email_conflict')
     expect(state.claimToken).toBeNull()
     expect(state.code).toBe('')
+  })
+
+  describe('shouldResetBindOtpForAccountIdentityChange（BF1）', () => {
+    it('promote 成功后换新匿名账号 → 应重置（success 不可挡新表单）', () => {
+      const afterPromote = {
+        accountId: 'acct-same',
+        isAnonymous: false
+      }
+      const newAnonymous = {
+        accountId: 'acct-new-anon',
+        isAnonymous: true
+      }
+      expect(shouldResetBindOtpForAccountIdentityChange(afterPromote, newAnonymous)).toBe(true)
+
+      // 调用方重置后：idle + promoteSuccess=false
+      let bind = bindOtpConfirmOk(createBindOtpState())
+      expect(bind.phase).toBe('success')
+      if (shouldResetBindOtpForAccountIdentityChange(afterPromote, newAnonymous)) {
+        bind = createBindOtpState()
+      }
+      expect(bind.phase).toBe('idle')
+      expect(bind.phase === 'success').toBe(false)
+    })
+
+    it('同账号轮询刷新 → 不重置（保留 code_sent）', () => {
+      const identity = { accountId: 'acct-1', isAnonymous: true }
+      expect(shouldResetBindOtpForAccountIdentityChange(identity, identity)).toBe(false)
+
+      let bind = bindOtpSendOk(bindOtpSetEmail(createBindOtpState(), 'a@b.com'))
+      expect(bind.phase).toBe('code_sent')
+      if (shouldResetBindOtpForAccountIdentityChange(identity, { ...identity })) {
+        bind = createBindOtpState()
+      }
+      expect(bind.phase).toBe('code_sent')
+      expect(bind.email).toBe('a@b.com')
+    })
+
+    it('退出登录 accountId → null → 应重置', () => {
+      expect(
+        shouldResetBindOtpForAccountIdentityChange(
+          { accountId: 'acct-1', isAnonymous: true },
+          { accountId: null, isAnonymous: false }
+        )
+      ).toBe(true)
+    })
+
+    it('promote 同号 isAnonymous 翻转 → 应重置（Settings 可接受）', () => {
+      expect(
+        shouldResetBindOtpForAccountIdentityChange(
+          { accountId: 'acct-1', isAnonymous: true },
+          { accountId: 'acct-1', isAnonymous: false }
+        )
+      ).toBe(true)
+    })
   })
 })
