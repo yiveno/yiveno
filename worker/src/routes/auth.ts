@@ -24,6 +24,8 @@ import {
   revokeDeviceTokenSelf
 } from '../services/auth/device-token-kv'
 import { mintWebsiteSessionFromExtension } from '../services/auth/mint-website-session'
+import { requestBindCode, verifyBindCode } from '../services/auth/bind-otp-service'
+import type { BindOtpLocale } from '../services/auth/bind-otp-mail'
 import { maskEmailForLog, promoteAnonymousUser } from '../services/auth/promote-anonymous-user'
 import { error as logErrorMessage, info } from '../utils/logger'
 
@@ -252,6 +254,101 @@ authRouter.post('/device-rename', supabaseAuth(), async c => {
     const msg = err instanceof Error ? err.message : String(err)
     logErrorMessage('[Auth] device-rename 异常', { userId, detail: msg })
     return c.json({ error: 'device_rename_failed' }, 500)
+  }
+})
+
+/**
+ * POST /api/auth/bind-code
+ *
+ * 发绑定 OTP：device Bearer + `{ email, turnstileToken, locale? }`。
+ * 成功不透露邮箱是否已注册；消费 claim 在 V2。
+ */
+authRouter.post('/bind-code', deviceAuth(), async c => {
+  const userId = c.get('supabaseUserId')
+  const deviceIdRaw = c.get('deviceId')
+  const deviceId =
+    typeof deviceIdRaw === 'string' && deviceIdRaw.trim() ? deviceIdRaw.trim() : userId
+  const ipHeader = c.req.header('CF-Connecting-IP')
+  const ip = ipHeader?.trim() || null
+
+  let email = ''
+  let turnstileToken: string | undefined
+  let locale: BindOtpLocale = 'zh'
+  try {
+    const parsed = await c.req.json().catch(() => null)
+    if (typeof parsed === 'object' && parsed !== null) {
+      const body = parsed as {
+        email?: unknown
+        turnstileToken?: unknown
+        locale?: unknown
+      }
+      if (typeof body.email === 'string') email = body.email
+      if (typeof body.turnstileToken === 'string') turnstileToken = body.turnstileToken
+      if (body.locale === 'en' || body.locale === 'zh') locale = body.locale
+    }
+  } catch {
+    email = ''
+    turnstileToken = undefined
+    locale = 'zh'
+  }
+
+  try {
+    const result = await requestBindCode(c.env, {
+      userId,
+      deviceId,
+      ip,
+      email,
+      turnstileToken,
+      locale
+    })
+    if (!result.ok) {
+      return c.json({ error: result.error }, result.status)
+    }
+    return c.json({ success: true })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    logErrorMessage('[Auth] bind-code 异常', { userId, detail: msg })
+    return c.json({ error: 'bind_code_failed' }, 500)
+  }
+})
+
+/**
+ * POST /api/auth/bind-verify
+ *
+ * 验绑定 OTP：device Bearer + `{ email, code }` → `{ branch, claimToken }`。
+ * claimToken 消费在 V2（promote / claim 端点）。
+ */
+authRouter.post('/bind-verify', deviceAuth(), async c => {
+  const userId = c.get('supabaseUserId')
+
+  let email = ''
+  let code = ''
+  try {
+    const parsed = await c.req.json().catch(() => null)
+    if (typeof parsed === 'object' && parsed !== null) {
+      const body = parsed as { email?: unknown; code?: unknown }
+      if (typeof body.email === 'string') email = body.email
+      if (typeof body.code === 'string') code = body.code
+    }
+  } catch {
+    email = ''
+    code = ''
+  }
+
+  try {
+    const result = await verifyBindCode(c.env, { userId, email, code })
+    if (!result.ok) {
+      const payload: { error: string; remainingAttempts?: number } = { error: result.error }
+      if (typeof result.remainingAttempts === 'number') {
+        payload.remainingAttempts = result.remainingAttempts
+      }
+      return c.json(payload, result.status)
+    }
+    return c.json({ success: true, data: result.data })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    logErrorMessage('[Auth] bind-verify 异常', { userId, detail: msg })
+    return c.json({ error: 'bind_verify_failed' }, 500)
   }
 })
 

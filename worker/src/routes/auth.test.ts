@@ -1,6 +1,9 @@
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test'
+import { afterEach, beforeEach, describe, expect, spyOn, test } from 'bun:test'
 import { createApp } from '../app'
 import type { Env } from '../types/env'
+import * as bindOtpService from '../services/auth/bind-otp-service'
+import { clearDeviceAuthCache } from '../middleware/device-auth'
+import { issueDeviceToken } from '../services/auth/device-token-kv'
 
 const baseEnv = {
   JWT_SECRET: 'test-secret',
@@ -18,7 +21,22 @@ beforeEach(() => {
 
 afterEach(() => {
   globalThis.fetch = originalFetch
+  clearDeviceAuthCache()
 })
+
+function createKvMock(initial: Record<string, string> = {}) {
+  const store = new Map(Object.entries(initial))
+  return {
+    store,
+    get: async (key: string) => store.get(key) ?? null,
+    put: async (key: string, value: string) => {
+      store.set(key, value)
+    },
+    delete: async (key: string) => {
+      store.delete(key)
+    }
+  }
+}
 
 describe('auth routes', () => {
   test('POST /api/auth/promote 未登录 → 401', async () => {
@@ -547,5 +565,198 @@ describe('auth routes', () => {
       provider: 'microsoft',
       tier: 'free'
     })
+  })
+
+  test('POST /api/auth/bind-code 未登录 → 401', async () => {
+    const app = createApp()
+    const response = await app.request(
+      '/api/auth/bind-code',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email: 'a@example.com', turnstileToken: 't' })
+      },
+      baseEnv
+    )
+    expect(response.status).toBe(401)
+  })
+
+  test('POST /api/auth/bind-verify 未登录 → 401', async () => {
+    const app = createApp()
+    const response = await app.request(
+      '/api/auth/bind-verify',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email: 'a@example.com', code: '12345678' })
+      },
+      baseEnv
+    )
+    expect(response.status).toBe(401)
+  })
+
+  test('POST /api/auth/bind-code 非法 body → 透传 service 错误', async () => {
+    const kv = createKvMock()
+    const env = {
+      ...baseEnv,
+      AI_USAGE_KV: kv
+    } as unknown as Env
+    const issued = await issueDeviceToken(env, {
+      userId: '11111111-1111-1111-1111-111111111111',
+      isAnonymous: true
+    })
+    expect(issued.ok).toBe(true)
+    if (!issued.ok) return
+
+    const spy = spyOn(bindOtpService, 'requestBindCode').mockResolvedValue({
+      ok: false,
+      status: 400,
+      error: 'invalid_email'
+    })
+
+    const app = createApp()
+    const response = await app.request(
+      '/api/auth/bind-code',
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${issued.deviceToken}`
+        },
+        body: JSON.stringify({ email: 'bad', turnstileToken: 't' })
+      },
+      env
+    )
+    expect(response.status).toBe(400)
+    const data = (await response.json()) as { error: string }
+    expect(data.error).toBe('invalid_email')
+    expect(spy).toHaveBeenCalled()
+    spy.mockRestore()
+  })
+
+  test('POST /api/auth/bind-code 成功 → { success: true }', async () => {
+    const kv = createKvMock()
+    const env = {
+      ...baseEnv,
+      AI_USAGE_KV: kv
+    } as unknown as Env
+    const issued = await issueDeviceToken(env, {
+      userId: '22222222-2222-2222-2222-222222222222',
+      isAnonymous: true
+    })
+    expect(issued.ok).toBe(true)
+    if (!issued.ok) return
+
+    const spy = spyOn(bindOtpService, 'requestBindCode').mockResolvedValue({ ok: true })
+    const app = createApp()
+    const response = await app.request(
+      '/api/auth/bind-code',
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${issued.deviceToken}`,
+          'CF-Connecting-IP': '203.0.113.1'
+        },
+        body: JSON.stringify({
+          email: 'ok@example.com',
+          turnstileToken: 'tok',
+          locale: 'en'
+        })
+      },
+      env
+    )
+    expect(response.status).toBe(200)
+    const data = (await response.json()) as { success: boolean }
+    expect(data.success).toBe(true)
+    expect(spy.mock.calls[0]?.[1]).toMatchObject({
+      email: 'ok@example.com',
+      turnstileToken: 'tok',
+      locale: 'en',
+      ip: '203.0.113.1',
+      userId: issued.userId,
+      deviceId: issued.deviceId
+    })
+    spy.mockRestore()
+  })
+
+  test('POST /api/auth/bind-verify 成功 → branch + claimToken', async () => {
+    const kv = createKvMock()
+    const env = {
+      ...baseEnv,
+      AI_USAGE_KV: kv
+    } as unknown as Env
+    const issued = await issueDeviceToken(env, {
+      userId: '33333333-3333-3333-3333-333333333333',
+      isAnonymous: true
+    })
+    expect(issued.ok).toBe(true)
+    if (!issued.ok) return
+
+    const spy = spyOn(bindOtpService, 'verifyBindCode').mockResolvedValue({
+      ok: true,
+      data: { branch: 'promote', claimToken: 'd'.repeat(64) }
+    })
+    const app = createApp()
+    const response = await app.request(
+      '/api/auth/bind-verify',
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${issued.deviceToken}`
+        },
+        body: JSON.stringify({ email: 'ok@example.com', code: '12345678' })
+      },
+      env
+    )
+    expect(response.status).toBe(200)
+    const data = (await response.json()) as {
+      success: boolean
+      data: { branch: string; claimToken: string }
+    }
+    expect(data.success).toBe(true)
+    expect(data.data.branch).toBe('promote')
+    expect(data.data.claimToken).toBe('d'.repeat(64))
+    spy.mockRestore()
+  })
+
+  test('POST /api/auth/bind-verify 主要失败路径 → invalid_code', async () => {
+    const kv = createKvMock()
+    const env = {
+      ...baseEnv,
+      AI_USAGE_KV: kv
+    } as unknown as Env
+    const issued = await issueDeviceToken(env, {
+      userId: '44444444-4444-4444-4444-444444444444',
+      isAnonymous: true
+    })
+    expect(issued.ok).toBe(true)
+    if (!issued.ok) return
+
+    const spy = spyOn(bindOtpService, 'verifyBindCode').mockResolvedValue({
+      ok: false,
+      status: 400,
+      error: 'invalid_code',
+      remainingAttempts: 3
+    })
+    const app = createApp()
+    const response = await app.request(
+      '/api/auth/bind-verify',
+      {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          authorization: `Bearer ${issued.deviceToken}`
+        },
+        body: JSON.stringify({ email: 'ok@example.com', code: '00000000' })
+      },
+      env
+    )
+    expect(response.status).toBe(400)
+    const data = (await response.json()) as { error: string; remainingAttempts?: number }
+    expect(data.error).toBe('invalid_code')
+    expect(data.remainingAttempts).toBe(3)
+    spy.mockRestore()
   })
 })

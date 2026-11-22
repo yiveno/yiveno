@@ -1,7 +1,7 @@
 {
   "version": 1,
   "created_at": "2026-11-20T03:52:43Z",
-  "updated_at": "2026-11-22T03:57:33Z",
+  "updated_at": "2026-11-22T04:42:35Z",
   "files": {
     ".cursor/agents/impeccable-asset-producer.md": {
       "role": "index",
@@ -275,9 +275,9 @@
     },
     "aoci.code.txt": {
       "role": "index",
-      "sha256": "b049413ef092dec926b505575f20e97884e2a049e86b4725dc92955b5892d668",
-      "size": 157674,
-      "normalized_sha256": "b049413ef092dec926b505575f20e97884e2a049e86b4725dc92955b5892d668"
+      "sha256": "f88506daa846f79d21482aee925bcf6210000763a53fd2cb33e50dbb7d0ee507",
+      "size": 158983,
+      "normalized_sha256": "f88506daa846f79d21482aee925bcf6210000763a53fd2cb33e50dbb7d0ee507"
     },
     "aoci.meta.txt": {
       "role": "index",
@@ -9352,15 +9352,15 @@
     },
     "worker/src/routes/auth.test.ts": {
       "role": "observe",
-      "sha256": "600ec35dc0b202a8519a4ecbbe095dc17776bffbad6242c7efda1d833d894357",
-      "size": 16739,
-      "normalized_sha256": "600ec35dc0b202a8519a4ecbbe095dc17776bffbad6242c7efda1d833d894357"
+      "sha256": "284e747431a38c52dc5bd1d7fbfffdaf371e09abcb56b60619928570780ac514",
+      "size": 22980,
+      "normalized_sha256": "284e747431a38c52dc5bd1d7fbfffdaf371e09abcb56b60619928570780ac514"
     },
     "worker/src/routes/auth.ts": {
       "role": "index",
-      "sha256": "68ff78539fd1f2e1e1544d4bb5aab353d8e2dc4cadf9074e684a90d0775accea",
-      "size": 12768,
-      "normalized_sha256": "68ff78539fd1f2e1e1544d4bb5aab353d8e2dc4cadf9074e684a90d0775accea"
+      "sha256": "112c377589185f65e83f2cfc7905eb6b36aabc3eb37d996c34626ca2c8f54602",
+      "size": 15906,
+      "normalized_sha256": "112c377589185f65e83f2cfc7905eb6b36aabc3eb37d996c34626ca2c8f54602"
     },
     "worker/src/routes/billing.test.ts": {
       "role": "observe",
@@ -9548,6 +9548,18 @@
       "size": 5125,
       "normalized_sha256": "9e3ce4dc7e5096761c5a6ca8ef56fa2c75f10f0ed55d1be9196e2d31c4934922"
     },
+    "worker/src/services/auth/admin-user-lookup.test.ts": {
+      "role": "observe",
+      "sha256": "5be19f811a22a6bec5b6845bd73a7217fd8ca395c68301b51abc7196b4978dc8",
+      "size": 4775,
+      "normalized_sha256": "5be19f811a22a6bec5b6845bd73a7217fd8ca395c68301b51abc7196b4978dc8"
+    },
+    "worker/src/services/auth/admin-user-lookup.ts": {
+      "role": "index",
+      "sha256": "b4920bb97f1d235f5fe997b91a0906f43897e9696a876cc06181ce441b600430",
+      "size": 4387,
+      "normalized_sha256": "b4920bb97f1d235f5fe997b91a0906f43897e9696a876cc06181ce441b600430"
+    },
     "worker/src/services/auth/anonymous-cleanup.test.ts": {
       "role": "observe",
       "sha256": "5cd8e76a215d31c9f7d35277788a308f54e05c1daa2d61de745f0f365b15a463",
@@ -9571,6 +9583,42 @@
       "sha256": "be9abdde6ac77026292b0719ef702a2d659a9bd5b6158f167aa1708181514aed",
       "size": 2937,
       "normalized_sha256": "be9abdde6ac77026292b0719ef702a2d659a9bd5b6158f167aa1708181514aed"
+    },
+    "worker/src/services/auth/bind-otp-codes.test.ts": {
+      "role": "observe",
+      "sha256": "979beff7f2042be0df06e449207166ad3d387fa8451a7c1d95a3e498c477017d",
+      "size": 2561,
+      "normalized_sha256": "979beff7f2042be0df06e449207166ad3d387fa8451a7c1d95a3e498c477017d"
+    },
+    "worker/src/services/auth/bind-otp-codes.ts": {
+      "role": "index",
+      "sha256": "40c4aa5585723e31bad64d7f365ea4c0ac345e58a49aaef18d1e52529467d12d",
+      "size": 7873,
+      "normalized_sha256": "40c4aa5585723e31bad64d7f365ea4c0ac345e58a49aaef18d1e52529467d12d"
+    },
+    "worker/src/services/auth/bind-otp-mail.test.ts": {
+      "role": "observe",
+      "sha256": "1e641e4b3758c9c14df24ba861f5af04005058bbfded2988936cfb007cab8ed9",
+      "size": 1933,
+      "normalized_sha256": "1e641e4b3758c9c14df24ba861f5af04005058bbfded2988936cfb007cab8ed9"
+    },
+    "worker/src/services/auth/bind-otp-mail.ts": {
+      "role": "index",
+      "sha256": "89342b6417e87ab8123cde3caca56b6d77a76e6dc4137cdca442efa90068cd9c",
+      "size": 2445,
+      "normalized_sha256": "89342b6417e87ab8123cde3caca56b6d77a76e6dc4137cdca442efa90068cd9c"
+    },
+    "worker/src/services/auth/bind-otp-service.test.ts": {
+      "role": "observe",
+      "sha256": "5d4a16baec95faf639ba398868a24406ba1b4ba13128d8b173da82c97ab0fd68",
+      "size": 11343,
+      "normalized_sha256": "5d4a16baec95faf639ba398868a24406ba1b4ba13128d8b173da82c97ab0fd68"
+    },
+    "worker/src/services/auth/bind-otp-service.ts": {
+      "role": "index",
+      "sha256": "ebd2308bdfe37647d9967204a7203b20fab5db512470787e08ab16c888defe0c",
+      "size": 10004,
+      "normalized_sha256": "ebd2308bdfe37647d9967204a7203b20fab5db512470787e08ab16c888defe0c"
     },
     "worker/src/services/auth/consume-extension-uninstall-revoke.test.ts": {
       "role": "observe",
@@ -9697,6 +9745,18 @@
       "sha256": "fbb1e7a0a270b61d9ef6b647f60472d2307854a1a1e61e88b884f65e6276d426",
       "size": 2693,
       "normalized_sha256": "fbb1e7a0a270b61d9ef6b647f60472d2307854a1a1e61e88b884f65e6276d426"
+    },
+    "worker/src/services/auth/turnstile-verify.test.ts": {
+      "role": "observe",
+      "sha256": "b680bf966d81e4ecb7fa66e6232bad36a6c25cfdbd56dac788fd5217258a35ff",
+      "size": 1660,
+      "normalized_sha256": "b680bf966d81e4ecb7fa66e6232bad36a6c25cfdbd56dac788fd5217258a35ff"
+    },
+    "worker/src/services/auth/turnstile-verify.ts": {
+      "role": "index",
+      "sha256": "ba2895d29e04b7798e221dadfa6f2da5b80ffdbd1febfcfa5b9c8441b1902a45",
+      "size": 2074,
+      "normalized_sha256": "ba2895d29e04b7798e221dadfa6f2da5b80ffdbd1febfcfa5b9c8441b1902a45"
     },
     "worker/src/services/auth/validation.ts": {
       "role": "index",
@@ -9898,9 +9958,9 @@
     },
     "worker/src/types/env.ts": {
       "role": "index",
-      "sha256": "ebc5f4b3d4f2f089a246a0475c2f8d814fce6fc8d641384989bbfc2f9cc7525a",
-      "size": 5343,
-      "normalized_sha256": "ebc5f4b3d4f2f089a246a0475c2f8d814fce6fc8d641384989bbfc2f9cc7525a"
+      "sha256": "98a05cbb6d4817ba8216fa97fa4fd3f9f160e5773dc1647a5d870a16348957b7",
+      "size": 5512,
+      "normalized_sha256": "98a05cbb6d4817ba8216fa97fa4fd3f9f160e5773dc1647a5d870a16348957b7"
     },
     "worker/src/utils/jwt.ts": {
       "role": "index",

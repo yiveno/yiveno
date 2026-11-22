@@ -117,6 +117,11 @@ export type Env = Cloudflare.Env & {
   /** API 端点；默认 https://dm.aliyuncs.com/ */
   ALIYUN_DM_ENDPOINT?: string
   /**
+   * Cloudflare Turnstile secret；须与 Supabase CAPTCHA 配置同一值。
+   * 缺失则发码拒绝（fail-closed）。
+   */
+  TURNSTILE_SECRET_KEY?: string
+  /**
    * Workers AI binding（wrangler `[ai]`）。
    * 跑 `bun run types:gen` 后也会出现在 Cloudflare.Env；此处作兜底。
    */
