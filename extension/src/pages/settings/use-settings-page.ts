@@ -163,7 +163,6 @@ export function useSettingsPage() {
   const promoteError = ref('')
   const promoteWorking = ref(false)
   const promoteSuccess = ref(false)
-  const promoteShowSignIn = ref(false)
 
   const signedIn = ref(false)
   const accountEmail = ref('')
@@ -1052,13 +1051,11 @@ export function useSettingsPage() {
       return
     }
     promoteError.value = ''
-    promoteShowSignIn.value = false
     promoteWorking.value = true
     try {
       const response = await convertAnonymousAccount(promoteEmail.value.trim())
       if (!response.ok) {
         promoteError.value = tAccountSyncError(response.errorCode)
-        promoteShowSignIn.value = response.errorCode === 'AUTH_PROMOTE_EMAIL_CONFLICT'
         return
       }
       promoteSuccess.value = true
@@ -2091,7 +2088,6 @@ export function useSettingsPage() {
     loadHostedQuota,
     promoteEmail,
     promoteError,
-    promoteShowSignIn,
     promoteSuccess,
     promoteWorking,
     trialEmbedLimit,

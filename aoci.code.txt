@@ -732,7 +732,7 @@ main.ts[EU5T]: F:Review 页入口：i18n boot 后挂载 ReviewPage.vue | R:code:
 Settings.vue[EU5S]: F:Settings 主页壳：分区导航与全局 Toast | R:code:extension/src/infrastructure/ui/AppPageHeader.vue,code:extension/src/infrastructure/ui/AppSectionTabs.vue,code:extension/src/pages/settings/SettingsSectionPanels.vue | A:扩展页 UI；provide settingsPage | S:h1 用 --text-display/--font-weight-semibold/--leading-tight；侧栏卡 stretch 与右栏等高
 SettingsActionRow.vue[EU5S]: F:设置页行式操作：左文案右按钮 | R:- | A:扩展页 UI | S:标题/副标题接 --text-body|--text-caption 与 --leading-snug；danger 仅改标题色
 SettingsPageDialogs.vue[EU6M]: F:Settings 对话框（退出/迁移/确认） | R:code:extension/src/pages/settings/use-settings-page.ts,code:extension/src/pages/shared/LoginMigrationDialog.vue | A:退出 opt-in；flush 失败导出/仍退出 | S:唯一扩展退出 UI；settings-* 样式来自 main 全局引入，本文件不再 scoped 引入 settings-panel.css
-SettingsSectionPanels.vue[EU6L]: F:Settings 各分区面板 | R:code:extension/src/pages/settings/use-settings-page.ts,code:extension/src/pages/settings/settings-panel.css | A:试用账号区+绑定邮箱表单；分区内容包 settings-card-stack | S:匿名态显示 trial 配额；冲突附登录合并；trailing error 保持 block 直挂勿并入 stack
+SettingsSectionPanels.vue[EU6L]: F:Settings 各分区面板 | R:code:extension/src/pages/settings/use-settings-page.ts,code:extension/src/pages/settings/settings-panel.css | A:试用账号区+绑定邮箱与去登录合并双按钮；分区内容包 settings-card-stack | S:匿名态隐藏退出登录；试用区常显去登录合并；trailing error 保持 block 直挂勿并入 stack
 SettingsThirdPartySourceGroup.vue[EU5T]: F:第三方语料来源分组：导入操作行 | R:code:extension/src/core/memory/third-party-corpus-source.ts,code:extension/src/infrastructure/ui/AppButton.vue,code:extension/src/pages/settings/settings-panel.css | A:扩展页 UI；无自有 style，依赖 settings 全局 CSS | S:导入中提示须带 settings-third-party-status 才有分隔与 padding
 chrome-bookmark-import-status-copy.ts[EU5T]: F:Chrome 书签导入状态映射为 Settings 展示文案 view | R:code:extension/src/core/memory/chrome-bookmark-import-state.ts,code:extension/src/core/memory/chrome-bookmark-import-state.ts | A:扩展页 UI | S:-
 dual-thread-learning-label.ts[EU5T]: F:学习面板标签种类：结果 outcome / 确认 label / 失败 stage | R:code:extension/src/core/i18n/translate.ts | A:扩展页 UI | S:-
@@ -742,7 +742,7 @@ settings-page-url-sync.ts[EU5T]: F:Settings 分区与 location.search / history 
 settings-panel.css[EU3L]: F:Settings 面板样式（间距/字阶/卡片） | R:code:extension/src/pages/settings/main.ts,code:packages/design-tokens/css/brand.css | A:块间 settings-card-stack gap；§4.5 字阶 token | S:h2=title/600；eyebrow×4 muted；交互500；行高三档
 settings-visibility-refresh.ts[EU5T]: F:从 Chrome 快捷键页返回后是否应静默刷新命令绑定 | R:- | A:扩展页 UI | S:-
 third-party-source-status-copy.ts[EU5T]: F:第三方语料导入状态行的摘要文案与错误码映射 | R:code:extension/src/core/memory/third-party-corpus-import-state.ts,code:extension/src/core/memory/third-party-corpus-source.ts | A:扩展页 UI | S:-
-use-settings-page.ts[EU7L]: F:Settings 页状态与账户动作 | R:code:extension/src/infrastructure/messaging/background-client.ts | A:handlePromoteAnonymous;loadHostedQuota trial* | S:配额拉取失败静默不展示试用数字
+use-settings-page.ts[EU7L]: F:Settings 页状态与账户动作 | R:code:extension/src/infrastructure/messaging/background-client.ts | A:handlePromoteAnonymous;loadHostedQuota trial*;isAnonymous | S:无 promoteShowSignIn；配额拉取失败静默不展示试用数字
 
 ===/<repository>/extension/src/pages/shared/===
 LoginMigrationDialog.vue[EU5S]: F:登录迁移对话框：本机摘录/书签处置确认 | R:code:extension/src/infrastructure/ui/AppButton.vue,code:extension/src/infrastructure/ui/AppConfirmModal.vue | A:扩展页 UI | S:-

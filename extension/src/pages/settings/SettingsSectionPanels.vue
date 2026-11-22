@@ -60,7 +60,6 @@ const {
   isAnonymous,
   promoteEmail,
   promoteError,
-  promoteShowSignIn,
   promoteSuccess,
   promoteWorking,
   trialEmbedLimit,
@@ -446,7 +445,6 @@ const {
                 {{ promoteWorking ? t('settings_promote_working') : t('settings_promote_submit') }}
               </AppButton>
               <AppButton
-                v-if="promoteShowSignIn"
                 type="button"
                 variant="outlined"
                 :disabled="signingIn"
@@ -609,7 +607,7 @@ const {
           </div>
         </div>
 
-        <div v-if="signedIn" class="settings-actions">
+        <div v-if="signedIn && !isAnonymous" class="settings-actions">
           <AppButton
             type="button"
             :disabled="signingOut || savingSync || orphanWorking"
