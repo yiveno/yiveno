@@ -4,7 +4,10 @@
  * 无法判断时返回空串（调用方不发该字段，由 Worker 兜底）。
  */
 
-export type DeviceLabelNav = Pick<Navigator, 'userAgent' | 'platform'> & {
+/** 生产取自 navigator；测试可注入（platform 须允许空串，勿绑死 DOM 联合字面）。 */
+export type DeviceLabelNav = {
+  userAgent: string
+  platform: string
   userAgentData?: { platform?: string }
 }
 
