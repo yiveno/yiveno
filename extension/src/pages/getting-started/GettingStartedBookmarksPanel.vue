@@ -62,6 +62,8 @@ const emit = defineEmits<{
 const bookmarkConsent = ref(false)
 const consentBusy = ref(false)
 const consentError = ref('')
+/** Try it 开壳失败时的可见提示 */
+const trySidePanelError = ref('')
 /** 持续同步开关（与 settings.chromeBookmarkSyncEnabled 同步）。 */
 const bookmarkSyncEnabled = ref(false)
 const syncSuggestionDismissed = ref(false)
@@ -379,6 +381,7 @@ async function handleTrySidePanel(clue: string): Promise<void> {
   if (!trimmed) {
     return
   }
+  trySidePanelError.value = ''
   try {
     // 先落引导完成标记，再开火开壳+写预填（storage 写毫秒级，仍在手势窗口内）
     await markInstallOnboardingDone()
@@ -391,6 +394,7 @@ async function handleTrySidePanel(clue: string): Promise<void> {
     window.close()
   } catch (error) {
     logger.warn('Onboarding', 'GS Try it 开壳失败', { error })
+    trySidePanelError.value = t('getting_started_open_side_panel_failed')
   }
 }
 
@@ -607,6 +611,9 @@ onUnmounted(() => {
         @found-yes="handleFoundYes"
         @try-side-panel="handleTrySidePanel"
       />
+      <p v-if="trySidePanelError" class="gs-bookmarks__consent-error" role="alert">
+        {{ trySidePanelError }}
+      </p>
     </div>
   </div>
 </template>

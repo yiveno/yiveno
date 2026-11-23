@@ -24,6 +24,8 @@ const activeTab = ref<GettingStartedTabId>(DEFAULT_GETTING_STARTED_TAB)
 /** 已授权书签灌库或已有摘录 → 强出口文案；否则弱出口 */
 const hasLibrarySeed = ref(false)
 const continueBusy = ref(false)
+/** Continue 开壳失败时的可见提示（footer 与 skip-continue 共用） */
+const continueError = ref('')
 
 const sectionTabsId = useId()
 const panelId = `${sectionTabsId}-panel`
@@ -63,6 +65,7 @@ async function handleContinue(): Promise<void> {
     return
   }
   continueBusy.value = true
+  continueError.value = ''
   try {
     // 先落引导完成标记，再开壳：避免 Panel 读到 done=false 又推回 Capture-first
     await markInstallOnboardingDone()
@@ -73,6 +76,7 @@ async function handleContinue(): Promise<void> {
     window.close()
   } catch (error) {
     logger.warn('Onboarding', 'GS Continue 开壳失败', { error })
+    continueError.value = t('getting_started_open_side_panel_failed')
   } finally {
     continueBusy.value = false
   }
@@ -134,6 +138,11 @@ onUnmounted(() => {
         <GettingStartedExcerptsPanel v-else />
       </section>
     </div>
+
+    <!-- 页底 Continue 与书签 skip-continue 共用；放 footer 外保证两条路径都可见 -->
+    <p v-if="continueError" class="getting-started__continue-error" role="alert">
+      {{ continueError }}
+    </p>
 
     <!-- 书签未授权：软出口在授权卡内；摘录 tab 不放页底 Continue；有库种后页底强出口 -->
     <footer v-if="hasLibrarySeed" class="getting-started__footer">
@@ -228,6 +237,14 @@ onUnmounted(() => {
 .getting-started__panel:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
+}
+
+.getting-started__continue-error {
+  margin: var(--space-md) 0 0;
+  font-size: var(--text-meta);
+  line-height: var(--leading-relaxed);
+  color: var(--danger);
+  text-align: center;
 }
 
 .getting-started__footer {

@@ -2738,6 +2738,9 @@
   "getting_started_open_result_failed": {
     "message": "Couldn’t open that link. Try again."
   },
+  "getting_started_open_side_panel_failed": {
+    "message": "Couldn't open the side panel. Try again."
+  },
   "popup_no_match_title_with_clue": {
     "message": "Nothing related to “$clue$”",
     "placeholders": {

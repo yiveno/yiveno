@@ -2735,6 +2735,9 @@
   "getting_started_open_result_failed": {
     "message": "打不开那个链接。请再试一次。"
   },
+  "getting_started_open_side_panel_failed": {
+    "message": "没能打开侧边面板，再试一次。"
+  },
   "popup_no_match_title_with_clue": {
     "message": "没有与「$clue$」相关的结果",
     "placeholders": {

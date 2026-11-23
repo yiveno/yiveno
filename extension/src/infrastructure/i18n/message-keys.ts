@@ -781,6 +781,7 @@ export const MESSAGE_KEYS = [
   'getting_started_recall_failed',
   'getting_started_open_result_aria',
   'getting_started_open_result_failed',
+  'getting_started_open_side_panel_failed',
   'popup_no_match_title_with_clue',
   'popup_no_match_title',
   'popup_no_match_body',

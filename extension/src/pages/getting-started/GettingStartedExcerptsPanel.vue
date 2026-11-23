@@ -22,6 +22,8 @@ import { useGettingStartedInPageRecall } from '@/pages/getting-started/use-getti
 defineOptions({ name: 'GettingStartedExcerptsPanel' })
 
 const libraryPhase = ref<GettingStartedLibraryPhase>('empty')
+/** Try it 开壳失败时的可见提示 */
+const trySidePanelError = ref('')
 /** 定稿示意 clue（Things we miss · 意义/感觉印象，非细节拼盘） */
 const oralClues = computed(() => [t('getting_started_sample_clue')])
 const sourceUnlocked = computed(() => true)
@@ -72,6 +74,7 @@ async function handleTrySidePanel(clue: string): Promise<void> {
   if (!trimmed) {
     return
   }
+  trySidePanelError.value = ''
   try {
     // 先落引导完成标记，再开火开壳+写预填（storage 写毫秒级，仍在手势窗口内）
     await markInstallOnboardingDone()
@@ -84,6 +87,7 @@ async function handleTrySidePanel(clue: string): Promise<void> {
     window.close()
   } catch (error) {
     logger.warn('Onboarding', 'GS 摘录 Try it 开壳失败', { error })
+    trySidePanelError.value = t('getting_started_open_side_panel_failed')
   }
 }
 
@@ -128,26 +132,30 @@ onUnmounted(() => {
   <div class="gs-excerpts">
     <GettingStartedPassage v-if="libraryPhase === 'empty'" />
 
-    <GettingStartedRecallPanel
-      v-else
-      v-model:clue="clueDraft"
-      clue-input-id="gs-recall-clue-excerpts"
-      :section-aria-label="t('getting_started_excerpt_recall_aria')"
-      :library-phase="libraryPhase"
-      :suggestions="[]"
-      :oral-clues="oralClues"
-      :show-composer="false"
-      :busy="recallBusy"
-      :error="recallError"
-      :primary-card="primaryCard"
-      :secondary-card="secondaryCard"
-      :recall-done="recallDone"
-      :empty-kind="emptyKind"
-      @submit="handleSubmitClue"
-      @open-card="handleOpenCard"
-      @found-yes="handleFoundYes"
-      @try-side-panel="handleTrySidePanel"
-    />
+    <template v-else>
+      <GettingStartedRecallPanel
+        v-model:clue="clueDraft"
+        clue-input-id="gs-recall-clue-excerpts"
+        :section-aria-label="t('getting_started_excerpt_recall_aria')"
+        :library-phase="libraryPhase"
+        :suggestions="[]"
+        :oral-clues="oralClues"
+        :show-composer="false"
+        :busy="recallBusy"
+        :error="recallError"
+        :primary-card="primaryCard"
+        :secondary-card="secondaryCard"
+        :recall-done="recallDone"
+        :empty-kind="emptyKind"
+        @submit="handleSubmitClue"
+        @open-card="handleOpenCard"
+        @found-yes="handleFoundYes"
+        @try-side-panel="handleTrySidePanel"
+      />
+      <p v-if="trySidePanelError" class="gs-excerpts__error" role="alert">
+        {{ trySidePanelError }}
+      </p>
+    </template>
   </div>
 </template>
 
@@ -155,5 +163,12 @@ onUnmounted(() => {
 .gs-excerpts {
   display: grid;
   gap: var(--space-md);
+}
+
+.gs-excerpts__error {
+  margin: 0;
+  font-size: var(--text-meta);
+  line-height: var(--leading-relaxed);
+  color: var(--danger);
 }
 </style>
