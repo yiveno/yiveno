@@ -262,7 +262,8 @@ export function extractContentTerms(residue: string): string[] {
 
   const terms: string[] = []
   const seen = new Set<string>()
-  const pattern = /[\p{L}\p{N}][\p{L}\p{N}._/-]*/gu
+  // 延续类含 +#&：保留 C++ / C# / R&D 等词面；首字符仍须字母或数字（#tag → tag）
+  const pattern = /[\p{L}\p{N}][\p{L}\p{N}._/+#&-]*/gu
   let match: RegExpExecArray | null
   while ((match = pattern.exec(normalized)) !== null) {
     const token = match[0]

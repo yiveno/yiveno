@@ -13,11 +13,13 @@ import {
   collectFilterIndexFields,
   compactRecallText,
   expandRecallHostClueVariants,
+  extractOrthographicAcronyms,
   latinInflectionVariants,
   looksLikeRecallHostClue,
   normalizeRecallText,
   stripRecallHostWwwPrefix
 } from '@/core/recall/keyword-filter'
+import { RECALL_ORTHOGRAPHIC_ACRONYM_MAX_LEN } from '@/core/recall/keyword-filter-weights'
 import { timeConfidenceForRelativeLabel } from '@/core/recall/parse-recall-clue'
 
 /**
@@ -114,7 +116,7 @@ export function normalizeContentTermsForCorroboration(
 
 /**
  * 单字段是否词面命中 contentTerm（与 keyword-filter exact 路径对齐：
- * 包含、compact、拉丁屈折、host www 变体；无同义词表）。
+ * 包含、compact、拉丁屈折、host www 变体、形态缩写；无同义词表 / 民间缩写词典）。
  */
 export function fieldCorroboratesTerm(originalField: string, term: string): boolean {
   const fieldText = normalizeRecallText(originalField)
@@ -147,6 +149,21 @@ export function fieldCorroboratesTerm(originalField: string, term: string): bool
     const tokenHost = stripRecallHostWwwPrefix(compactTerm.split('/')[0] ?? compactTerm)
     const fieldHost = stripRecallHostWwwPrefix(compactField.split('/')[0] ?? compactField)
     if (tokenHost.length >= 4 && fieldHost.includes(tokenHost)) {
+      return true
+    }
+  }
+  // 形态缩写（与 keyword-filter.shortLatinTokenHitsField 对齐；传原文保留大小写边界）
+  if (
+    term.length >= 2 &&
+    term.length <= RECALL_ORTHOGRAPHIC_ACRONYM_MAX_LEN &&
+    /^[a-z][a-z0-9]*$/i.test(term)
+  ) {
+    const needle = term.toLowerCase()
+    if (
+      extractOrthographicAcronyms(originalField).some(
+        acronym => acronym === needle || acronym.startsWith(needle)
+      )
+    ) {
       return true
     }
   }

@@ -73,6 +73,16 @@ describe('extractContentTerms', () => {
   it('提日文假名汉字整串（不再按 CJK 块错切）', () => {
     expect(extractContentTerms('昨日読んだ記事')).toEqual(['昨日読んだ記事'])
   })
+
+  it('延续类含 +#&：C++ / C# / R&D；#tag 不起 token；路径/点/斜杠回归', () => {
+    expect(extractContentTerms('C++')).toEqual(['c++'])
+    expect(extractContentTerms('C#')).toEqual(['c#'])
+    expect(extractContentTerms('R&D')).toEqual(['r&d'])
+    expect(extractContentTerms('#tag')).toEqual(['tag'])
+    expect(extractContentTerms('hello-world')).toEqual(['hello-world'])
+    expect(extractContentTerms('a.b')).toEqual(['a.b'])
+    expect(extractContentTerms('x/y')).toEqual(['x/y'])
+  })
 })
 
 describe('parseRecallClue', () => {

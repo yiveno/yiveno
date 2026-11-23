@@ -118,6 +118,35 @@ export const OMNIBOX_EVAL_CASES: OmniboxEvalCase[] = [
     clueClass: 'negative',
     expectation: { kind: 'no_match' },
     note: '纯助手发令零锚非找回（bored 作内容词时按正常召回）'
+  },
+  {
+    id: 'omnibox-negative-zh-only',
+    clue: '红白',
+    clueClass: 'negative',
+    expectation: { kind: 'no_match' },
+    note: '语料无中文文本；Omnibox 纯词面无翻译 → 诚实 no_match（锁不崩、不幻觉）'
+  },
+  {
+    id: 'omnibox-mixed-zh-deep-red',
+    clue: '红白 deep red',
+    clueClass: 'concrete',
+    expectation: {
+      kind: 'in_topk',
+      expectedId: RECALL_EVAL_IDS.excerptMatchEmbedded,
+      k: 3
+    },
+    note: '中英混合：中文 token 不破坏拉丁 deep red 匹配；期望夹心摘录进 top-3'
+  },
+  {
+    id: 'omnibox-mixed-zh-deploy',
+    clue: '关于 deploy',
+    clueClass: 'semi_fuzzy',
+    expectation: {
+      kind: 'in_topk',
+      expectedId: RECALL_EVAL_IDS.deployNoteExcerpt,
+      k: 3
+    },
+    note: '中英混合附注锚：中文前缀不破坏 deploy 字面；与 deep-red 用例覆盖不同锚点'
   }
 ]
 

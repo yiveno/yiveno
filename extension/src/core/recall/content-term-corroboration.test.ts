@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { MemoryItem } from '@/core/memory/memory-item'
 import {
+  fieldCorroboratesTerm,
   filterMatchesByContentTermCorroboration,
   HYBRID_CORROBORATION_SOFT_PENALTY,
   itemCorroboratesContentTerms,
@@ -79,6 +80,19 @@ const yesterdayHighParsed: ParsedRecallClue = {
   contentTerms: ['retention'],
   confidence: 'high'
 }
+
+describe('fieldCorroboratesTerm', () => {
+  it('形态缩写：js→JavaScript、rn→React Native（与评分层对齐）', () => {
+    expect(fieldCorroboratesTerm('JavaScript tutorial', 'js')).toBe(true)
+    expect(fieldCorroboratesTerm('React Native guide', 'rn')).toBe(true)
+  })
+
+  it('形态缩写负例：无关字段 / 单字符不进缩写分支', () => {
+    expect(fieldCorroboratesTerm('Python handbook', 'js')).toBe(false)
+    // 单字符：仍只走子串等既有分支（长度守卫与评分层一致）；无关字段无子串 → false
+    expect(fieldCorroboratesTerm('Python handbook', 'j')).toBe(false)
+  })
+})
 
 describe('content-term-corroboration', () => {
   it('normalizeContentTermsForCorroboration 去空去重', () => {

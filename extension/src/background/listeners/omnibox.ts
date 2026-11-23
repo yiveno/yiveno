@@ -281,7 +281,8 @@ async function handleOmniboxInputEntered(
   // 默认行确认 = 线索字面：仅当有可打开 Top Pick 才快跳。
   // 无命中接力只认第 2 行 handoff SuggestResult（勿在此接力，避免说明行误触）。
   if (lastOmniboxLookup?.clue === clue && !lastOmniboxLookup.hasNavigableTopPick) {
-    logger.info('Omnibox', '默认行确认且无快跳命中，忽略（请点无命中 CTA 行）', {
+    // lastOmniboxLookup 仅有 hasNavigableTopPick，无法区分「真无候选」与「弱候选可见」
+    logger.info('Omnibox', '默认行确认且无可导航 Top Pick，忽略（请点 CTA 行）', {
       clueLength: clue.length
     })
     return
