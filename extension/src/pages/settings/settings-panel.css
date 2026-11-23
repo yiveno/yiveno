@@ -77,11 +77,11 @@
   outline-offset: 2px;
 }
 
-/** 设置页卡片纵向堆叠：块间距统一用 --space-sm */
+/** 设置页卡片纵向堆叠：块间距统一用 --space-md */
 .settings-card-stack {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
+  gap: var(--space-md);
 }
 
 /** 数据分区等：分组标题 + 单卡内多行（Meta 式分组，非单行散卡） */
@@ -120,6 +120,10 @@
   background: transparent;
 }
 
+.settings-group__card .settings-toggle + .settings-toggle {
+  border-top: 1px solid var(--border);
+}
+
 .settings-group__card .settings-toggle + .settings-action-row--embedded,
 .settings-group__card .settings-action-row--embedded + .settings-toggle {
   border-top: 1px solid var(--border);
@@ -131,8 +135,68 @@
   border-top: 1px solid var(--border);
 }
 
+/** 组内状态行（导入/Pro 提示等）：与 third-party-status 同间距 */
+.settings-group__card .settings-group__status {
+  margin: 0;
+  padding: var(--space-xs) var(--space-md) var(--space-sm);
+  border-top: 1px solid var(--border);
+}
+
 /** 状态行与删除行之间：ActionRow 自有 + 规则够不着状态行 */
 .settings-group__card .settings-third-party-status + .settings-action-row--embedded {
+  border-top: 1px solid var(--border);
+}
+
+.settings-group__card .settings-group__status + .settings-toggle {
+  border-top: 1px solid var(--border);
+}
+
+.settings-group__card .settings-status-strip {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.settings-group__card .settings-toggle + .settings-status-strip,
+.settings-group__card .settings-group__status + .settings-status-strip {
+  border-top: 1px solid var(--border);
+}
+
+.settings-group__card .settings-command-list {
+  gap: 0;
+}
+
+.settings-group__card .settings-command-row {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.settings-group__card .settings-command-row + .settings-command-row {
+  border-top: 1px solid var(--border);
+}
+
+.settings-group__card .settings-command-list + .settings-action-row--embedded {
+  border-top: 1px solid var(--border);
+}
+
+.settings-group__card .settings-details {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.settings-group__card .settings-toggle + .settings-details {
+  border-top: 1px solid var(--border);
+}
+
+.settings-group__card .settings-language-option {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+}
+
+.settings-group__card .settings-language-option + .settings-language-option {
   border-top: 1px solid var(--border);
 }
 
@@ -199,34 +263,6 @@
   font-weight: var(--font-weight-regular);
   line-height: var(--leading-snug);
   color: var(--on-surface-muted);
-}
-
-/** 账号分区未登录：登录提示 + 按钮 */
-.settings-promote-label {
-  display: block;
-  margin-top: 0;
-  font-size: var(--text-caption);
-  font-weight: var(--font-weight-regular);
-  color: var(--on-surface-muted);
-}
-
-.settings-promote-input {
-  box-sizing: border-box;
-  width: 100%;
-  max-width: 28rem;
-  margin-top: 0;
-  padding: var(--space-xs) var(--space-sm);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-family: inherit;
-  font-size: var(--text-body);
-  color: var(--on-surface);
-  background: var(--surface);
-}
-
-.settings-promote-input:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
 }
 
 .settings-sign-in-row {
@@ -371,7 +407,7 @@
 }
 
 /**
- * 高级小节：stack gap 12 + 自身 margin-top 12 = 24px 语义分隔。
+ * 高级小节：stack gap 16（--space-md）+ 自身 margin-top 12（--space-sm）= 28px 语义分隔。
  */
 .settings-subsection {
   display: grid;

@@ -44,7 +44,7 @@ const {
 
       <section
         :id="settingsPanelId"
-        class="settings-panel surface-panel-white"
+        class="settings-panel"
         role="tabpanel"
         :aria-labelledby="settingsActiveTabId"
         :aria-label="activeSectionLabel"
@@ -108,6 +108,7 @@ const {
 .settings-panel {
   min-width: 0;
   min-height: 0;
+  padding: var(--space-md);
   overflow: hidden auto;
 }
 

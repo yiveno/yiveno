@@ -173,76 +173,85 @@ const {
 
       <template v-else>
         <div class="settings-card-stack">
-          <div class="settings-toggle">
-            <div class="settings-toggle-copy">
-              <span class="settings-toggle-title">{{
-                t('settings_toggle_selection_toolbar')
-              }}</span>
-              <span class="settings-toggle-hint">{{
-                t('settings_toggle_selection_toolbar_hint')
-              }}</span>
+          <section class="settings-group" :aria-label="t('settings_tab_capture')">
+            <div class="settings-group__card">
+              <div class="settings-toggle">
+                <div class="settings-toggle-copy">
+                  <span class="settings-toggle-title">{{
+                    t('settings_toggle_selection_toolbar')
+                  }}</span>
+                  <span class="settings-toggle-hint">{{
+                    t('settings_toggle_selection_toolbar_hint')
+                  }}</span>
+                </div>
+                <AppSwitch
+                  :aria-label="t('settings_toggle_selection_toolbar')"
+                  :model-value="selectionToolbarEnabled"
+                  :disabled="savingSelectionToolbar"
+                  @update:model-value="handleSelectionToolbarToggle"
+                />
+              </div>
+              <div :id="SETTINGS_HASH_CHROME_BOOKMARK_SYNC" class="settings-toggle">
+                <div class="settings-toggle-copy">
+                  <span class="settings-toggle-title">{{
+                    t('settings_toggle_chrome_bookmark_sync')
+                  }}</span>
+                  <span class="settings-toggle-hint">{{
+                    t('settings_chrome_bookmark_sync_intro')
+                  }}</span>
+                  <span v-if="chromeBookmarkSyncEnabled" class="settings-toggle-hint">{{
+                    t('settings_chrome_bookmark_sync_off_note')
+                  }}</span>
+                </div>
+                <AppSwitch
+                  :aria-label="t('settings_toggle_chrome_bookmark_sync')"
+                  :model-value="chromeBookmarkSyncEnabled"
+                  :disabled="savingChromeBookmarkSync"
+                  @update:model-value="handleChromeBookmarkSyncToggle"
+                />
+              </div>
+              <p
+                v-if="chromeBookmarkImportStatusKind !== 'none'"
+                :class="[
+                  chromeBookmarkImportStatusKind === 'query_failed' ||
+                  chromeBookmarkImportStatusKind === 'failed'
+                    ? 'settings-error'
+                    : 'settings-section-copy',
+                  'settings-group__status'
+                ]"
+                :role="
+                  chromeBookmarkImportStatusKind === 'query_failed' ||
+                  chromeBookmarkImportStatusKind === 'failed'
+                    ? 'alert'
+                    : 'status'
+                "
+              >
+                {{ chromeBookmarkImportStatusCopy }}
+              </p>
+              <div v-if="chromeBookmarkIngestEnabled" class="settings-toggle">
+                <div class="settings-toggle-copy">
+                  <span class="settings-toggle-title">{{
+                    t('settings_chrome_bookmark_reimport_title')
+                  }}</span>
+                  <span
+                    v-if="reimportChromeBookmarksDone"
+                    class="settings-toggle-hint"
+                    role="status"
+                  >
+                    {{ reimportChromeBookmarksDoneText }}
+                  </span>
+                </div>
+                <AppButton
+                  type="button"
+                  variant="tonal"
+                  :disabled="reimportChromeBookmarksBusy"
+                  @click="handleReimportChromeBookmarks"
+                >
+                  {{ t('settings_action_reimport_chrome_bookmarks') }}
+                </AppButton>
+              </div>
             </div>
-            <AppSwitch
-              :aria-label="t('settings_toggle_selection_toolbar')"
-              :model-value="selectionToolbarEnabled"
-              :disabled="savingSelectionToolbar"
-              @update:model-value="handleSelectionToolbarToggle"
-            />
-          </div>
-          <div :id="SETTINGS_HASH_CHROME_BOOKMARK_SYNC" class="settings-toggle">
-            <div class="settings-toggle-copy">
-              <span class="settings-toggle-title">{{
-                t('settings_toggle_chrome_bookmark_sync')
-              }}</span>
-              <span class="settings-toggle-hint">{{
-                t('settings_chrome_bookmark_sync_intro')
-              }}</span>
-              <span v-if="chromeBookmarkSyncEnabled" class="settings-toggle-hint">{{
-                t('settings_chrome_bookmark_sync_off_note')
-              }}</span>
-            </div>
-            <AppSwitch
-              :aria-label="t('settings_toggle_chrome_bookmark_sync')"
-              :model-value="chromeBookmarkSyncEnabled"
-              :disabled="savingChromeBookmarkSync"
-              @update:model-value="handleChromeBookmarkSyncToggle"
-            />
-          </div>
-          <p
-            v-if="chromeBookmarkImportStatusKind !== 'none'"
-            :class="
-              chromeBookmarkImportStatusKind === 'query_failed' ||
-              chromeBookmarkImportStatusKind === 'failed'
-                ? 'settings-error'
-                : 'settings-section-copy'
-            "
-            :role="
-              chromeBookmarkImportStatusKind === 'query_failed' ||
-              chromeBookmarkImportStatusKind === 'failed'
-                ? 'alert'
-                : 'status'
-            "
-          >
-            {{ chromeBookmarkImportStatusCopy }}
-          </p>
-          <div v-if="chromeBookmarkIngestEnabled" class="settings-toggle">
-            <div class="settings-toggle-copy">
-              <span class="settings-toggle-title">{{
-                t('settings_chrome_bookmark_reimport_title')
-              }}</span>
-              <span v-if="reimportChromeBookmarksDone" class="settings-toggle-hint" role="status">
-                {{ reimportChromeBookmarksDoneText }}
-              </span>
-            </div>
-            <AppButton
-              type="button"
-              variant="tonal"
-              :disabled="reimportChromeBookmarksBusy"
-              @click="handleReimportChromeBookmarks"
-            >
-              {{ t('settings_action_reimport_chrome_bookmarks') }}
-            </AppButton>
-          </div>
+          </section>
         </div>
       </template>
       <p v-if="settingsState === 'ready' && settingsError" class="settings-error" role="alert">
@@ -316,44 +325,50 @@ const {
 
       <template v-else>
         <div class="settings-card-stack">
-          <ul class="settings-command-list">
-            <li v-for="row in commandRows" :key="row.name" class="settings-command-row">
-              <div class="settings-command-meta">
-                <p class="settings-command-title">{{ row.title }}</p>
-                <p v-if="row.unbound" class="settings-command-hint">
-                  {{ t('settings_command_unbound_hint') }}
-                </p>
-                <p
-                  v-if="row.name === 'save_selection' || row.name === 'save_selection_with_note'"
-                  class="settings-command-hint"
-                >
-                  {{ t('settings_command_selection_hint') }}
-                </p>
-              </div>
-              <p
-                class="settings-command-shortcut"
-                :class="{ 'settings-command-shortcut--unbound': row.unbound }"
-              >
-                {{ row.shortcutLabel }}
-              </p>
-            </li>
-          </ul>
+          <section class="settings-group" :aria-label="t('settings_tab_shortcuts')">
+            <div class="settings-group__card">
+              <ul class="settings-command-list">
+                <li v-for="row in commandRows" :key="row.name" class="settings-command-row">
+                  <div class="settings-command-meta">
+                    <p class="settings-command-title">{{ row.title }}</p>
+                    <p v-if="row.unbound" class="settings-command-hint">
+                      {{ t('settings_command_unbound_hint') }}
+                    </p>
+                    <p
+                      v-if="
+                        row.name === 'save_selection' || row.name === 'save_selection_with_note'
+                      "
+                      class="settings-command-hint"
+                    >
+                      {{ t('settings_command_selection_hint') }}
+                    </p>
+                  </div>
+                  <p
+                    class="settings-command-shortcut"
+                    :class="{ 'settings-command-shortcut--unbound': row.unbound }"
+                  >
+                    {{ row.shortcutLabel }}
+                  </p>
+                </li>
+              </ul>
 
-          <SettingsActionRow :title="t('settings_open_shortcuts')">
-            <AppButton
-              type="button"
-              :disabled="openingShortcuts"
-              :title="t('settings_open_shortcuts')"
-              variant="outlined"
-              @click="handleOpenShortcutsPage"
-            >
-              {{
-                openingShortcuts
-                  ? t('settings_opening_shortcuts')
-                  : t('settings_open_shortcuts_action')
-              }}
-            </AppButton>
-          </SettingsActionRow>
+              <SettingsActionRow surface="embedded" :title="t('settings_open_shortcuts')">
+                <AppButton
+                  type="button"
+                  :disabled="openingShortcuts"
+                  :title="t('settings_open_shortcuts')"
+                  variant="outlined"
+                  @click="handleOpenShortcutsPage"
+                >
+                  {{
+                    openingShortcuts
+                      ? t('settings_opening_shortcuts')
+                      : t('settings_open_shortcuts_action')
+                  }}
+                </AppButton>
+              </SettingsActionRow>
+            </div>
+          </section>
         </div>
       </template>
       <p v-if="openShortcutsError" class="settings-error" role="alert">
@@ -448,54 +463,64 @@ const {
           </AppButton>
         </div>
 
-        <div class="settings-toggle">
-          <div class="settings-toggle-copy">
-            <span class="settings-toggle-title">{{ t('settings_sync_toggle') }}</span>
-          </div>
-          <AppSwitch
-            :aria-label="t('settings_sync_toggle')"
-            :model-value="syncEnabled"
-            :disabled="savingSync || !signedIn || !subscriptionIsPro"
-            @update:model-value="handleSyncToggle"
-          />
-        </div>
-        <p v-if="signedIn && !subscriptionIsPro" class="settings-status" role="status">
-          {{ t('settings_sync_pro_required_hint') }}
-          <a
-            class="settings-privacy-banner__link"
-            :href="pricingUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            {{ t('settings_legal_link_pricing') }}
-          </a>
-        </p>
+        <section class="settings-group" :aria-label="t('settings_tab_account_sync')">
+          <div class="settings-group__card">
+            <div class="settings-toggle">
+              <div class="settings-toggle-copy">
+                <span class="settings-toggle-title">{{ t('settings_sync_toggle') }}</span>
+              </div>
+              <AppSwitch
+                :aria-label="t('settings_sync_toggle')"
+                :model-value="syncEnabled"
+                :disabled="savingSync || !signedIn || !subscriptionIsPro"
+                @update:model-value="handleSyncToggle"
+              />
+            </div>
+            <p
+              v-if="signedIn && !subscriptionIsPro"
+              class="settings-status settings-group__status"
+              role="status"
+            >
+              {{ t('settings_sync_pro_required_hint') }}
+              <a
+                class="settings-privacy-banner__link"
+                :href="pricingUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {{ t('settings_legal_link_pricing') }}
+              </a>
+            </p>
 
-        <div v-if="signedIn" class="settings-status-strip">
-          <p class="settings-status-strip__line">
-            {{ t('settings_sync_local_count', [String(syncLocalCount)]) }}
-            ·
-            {{ t('settings_sync_remote_count', [String(syncRemoteCount)]) }}
-            <template v-if="syncEnabled && syncLastPulledAt">
-              ·
-              {{ t('settings_sync_last_pulled', [syncLastPulledAt]) }}
-            </template>
-          </p>
-          <p
-            v-if="accountDisplayName || accountEmail"
-            class="settings-status-strip__line settings-status-strip__line--account"
-          >
-            {{ accountDisplayName || accountEmail }}
-            <template v-if="accountDisplayName && accountEmail"> · {{ accountEmail }}</template>
-          </p>
-          <p
-            v-if="websiteAccountMismatch"
-            class="settings-status-strip__line settings-status-strip__line--mismatch"
-            role="status"
-          >
-            {{ t('settings_account_website_mismatch') }}
-          </p>
-        </div>
+            <div v-if="signedIn" class="settings-status-strip">
+              <p class="settings-status-strip__line">
+                {{ t('settings_sync_local_count', [String(syncLocalCount)]) }}
+                ·
+                {{ t('settings_sync_remote_count', [String(syncRemoteCount)]) }}
+                <template v-if="syncEnabled && syncLastPulledAt">
+                  ·
+                  {{ t('settings_sync_last_pulled', [syncLastPulledAt]) }}
+                </template>
+              </p>
+              <p
+                v-if="accountDisplayName || accountEmail"
+                class="settings-status-strip__line settings-status-strip__line--account"
+              >
+                {{ accountDisplayName || accountEmail }}
+                <template v-if="accountDisplayName && accountEmail">
+                  · {{ accountEmail }}
+                </template>
+              </p>
+              <p
+                v-if="websiteAccountMismatch"
+                class="settings-status-strip__line settings-status-strip__line--mismatch"
+                role="status"
+              >
+                {{ t('settings_account_website_mismatch') }}
+              </p>
+            </div>
+          </div>
+        </section>
 
         <div v-if="signedIn && syncEnabled" class="settings-actions">
           <AppButton
@@ -593,57 +618,61 @@ const {
       </div>
 
       <div class="settings-card-stack">
-        <div class="settings-toggle">
-          <div class="settings-toggle-copy">
-            <span class="settings-toggle-title">{{ t('settings_ai_toggle') }}</span>
-            <span class="settings-toggle-hint">{{ t('settings_ai_toggle_hint') }}</span>
-          </div>
-          <AppSwitch
-            :model-value="aiFeaturesEnabled"
-            :disabled="savingAiFeatures || settingsState !== 'ready'"
-            :aria-label="t('settings_ai_toggle')"
-            @update:model-value="handleAiFeaturesToggle"
-          />
-        </div>
-
-        <div class="settings-toggle">
-          <div class="settings-toggle-copy">
-            <span class="settings-toggle-title">{{ t('settings_link_sweep_toggle') }}</span>
-            <span class="settings-toggle-hint">{{ t('settings_link_sweep_toggle_hint') }}</span>
-          </div>
-          <AppSwitch
-            :model-value="linkStatusSweepEnabled"
-            :disabled="savingLinkStatusSweep || settingsState !== 'ready'"
-            :aria-label="t('settings_link_sweep_toggle')"
-            @update:model-value="handleLinkStatusSweepToggle"
-          />
-        </div>
-
-        <details class="settings-details">
-          <summary class="settings-details__summary">
-            <span class="settings-details__summary-label">
-              {{ t('settings_ai_details_summary') }}
-            </span>
-            <span class="settings-details__chevrons" aria-hidden="true">
-              <AppIcon
-                class="settings-details__chevron settings-details__chevron--down"
-                name="expand_more"
-                size="18px"
+        <section class="settings-group" :aria-label="t('settings_tab_ai')">
+          <div class="settings-group__card">
+            <div class="settings-toggle">
+              <div class="settings-toggle-copy">
+                <span class="settings-toggle-title">{{ t('settings_ai_toggle') }}</span>
+                <span class="settings-toggle-hint">{{ t('settings_ai_toggle_hint') }}</span>
+              </div>
+              <AppSwitch
+                :model-value="aiFeaturesEnabled"
+                :disabled="savingAiFeatures || settingsState !== 'ready'"
+                :aria-label="t('settings_ai_toggle')"
+                @update:model-value="handleAiFeaturesToggle"
               />
-              <AppIcon
-                class="settings-details__chevron settings-details__chevron--up"
-                name="chevron_up"
-                size="18px"
+            </div>
+
+            <div class="settings-toggle">
+              <div class="settings-toggle-copy">
+                <span class="settings-toggle-title">{{ t('settings_link_sweep_toggle') }}</span>
+                <span class="settings-toggle-hint">{{ t('settings_link_sweep_toggle_hint') }}</span>
+              </div>
+              <AppSwitch
+                :model-value="linkStatusSweepEnabled"
+                :disabled="savingLinkStatusSweep || settingsState !== 'ready'"
+                :aria-label="t('settings_link_sweep_toggle')"
+                @update:model-value="handleLinkStatusSweepToggle"
               />
-            </span>
-          </summary>
-          <p class="settings-details__lead">{{ t('settings_ai_model_note') }}</p>
-          <ul class="settings-details__list">
-            <li>{{ t('settings_ai_bullet_clue') }}</li>
-            <li>{{ t('settings_ai_bullet_enrichment') }}</li>
-            <li>{{ t('settings_ai_bullet_boundary') }}</li>
-          </ul>
-        </details>
+            </div>
+
+            <details class="settings-details">
+              <summary class="settings-details__summary">
+                <span class="settings-details__summary-label">
+                  {{ t('settings_ai_details_summary') }}
+                </span>
+                <span class="settings-details__chevrons" aria-hidden="true">
+                  <AppIcon
+                    class="settings-details__chevron settings-details__chevron--down"
+                    name="expand_more"
+                    size="18px"
+                  />
+                  <AppIcon
+                    class="settings-details__chevron settings-details__chevron--up"
+                    name="chevron_up"
+                    size="18px"
+                  />
+                </span>
+              </summary>
+              <p class="settings-details__lead">{{ t('settings_ai_model_note') }}</p>
+              <ul class="settings-details__list">
+                <li>{{ t('settings_ai_bullet_clue') }}</li>
+                <li>{{ t('settings_ai_bullet_enrichment') }}</li>
+                <li>{{ t('settings_ai_bullet_boundary') }}</li>
+              </ul>
+            </details>
+          </div>
+        </section>
 
         <div
           v-if="hostedQuotaLoading || hostedQuotaText || hostedQuotaError"
@@ -1167,7 +1196,7 @@ const {
         >
           <legend class="settings-language-legend">{{ t('settings_language_legend') }}</legend>
 
-          <div class="settings-card-stack">
+          <div class="settings-group__card">
             <label class="settings-language-option">
               <input
                 type="radio"
