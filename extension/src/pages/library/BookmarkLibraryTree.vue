@@ -7,6 +7,7 @@ import {
   collectDefaultExpandedFolderIdsFromIndex,
   flattenBookmarkLibraryVisibleRows
 } from '@/core/memory/bookmark-library-index'
+import { flattenBookmarkLibrarySearchVisibleRows } from '@/core/memory/bookmark-library-tree-search'
 import {
   buildBookmarkLibraryRowMetrics,
   resolveBookmarkLibraryVisibleSlice
@@ -21,21 +22,28 @@ import { createLibraryVirtualScrollHandler } from '@/pages/library/use-library-v
 
 defineOptions({ name: 'BookmarkLibraryTree' })
 
-const props = defineProps<{
-  index: BookmarkLibraryIndex
-  /** 全量导入完成后才展示「未同步」 */
-  showUnsyncedFlags?: boolean
-  /** detail export 多选 id 集合 */
-  selectedDetailExportIds?: Set<string>
-  /** 为 true 时书签行进入 detail export 多选（点行切换） */
-  showDetailExportSelection?: boolean
-  /** 多选 revision，配合 v-memo 减少无关行重绘。 */
-  detailExportSelectionRevision?: number
-  /** 正在删除的 MemoryItem id */
-  deletingId?: string | null | undefined
-}>()
+const props = withDefaults(
+  defineProps<{
+    index: BookmarkLibraryIndex
+    /** 全库搜索词；空=完整树 + 用户展开态 */
+    query?: string
+    /** 全量导入完成后才展示「未同步」 */
+    showUnsyncedFlags?: boolean
+    /** detail export 多选 id 集合 */
+    selectedDetailExportIds?: Set<string>
+    /** 为 true 时书签行进入 detail export 多选（点行切换） */
+    showDetailExportSelection?: boolean
+    /** 多选 revision，配合 v-memo 减少无关行重绘。 */
+    detailExportSelectionRevision?: number
+    /** 正在删除的 MemoryItem id */
+    deletingId?: string | null | undefined
+  }>(),
+  {
+    query: ''
+  }
+)
 
-defineEmits<{
+const emit = defineEmits<{
   editNote: [
     payload: {
       memoryItemId: string
@@ -52,6 +60,8 @@ defineEmits<{
   ]
   toggleDetailExportSelection: [memoryItemId: string]
   deleteBookmark: [memoryItemId: string]
+  /** 过滤后可见行数（含文件夹行）；父组件用于搜索无命中空态 */
+  visibleRowCountChange: [count: number]
 }>()
 
 const VIRTUAL_OVERSCAN = 8
@@ -63,8 +73,25 @@ const viewportHeight = shallowRef(480)
 
 const nodeById = computed(() => buildBookmarkLibraryNodeMap(props.index))
 
-const visibleRows = computed(() =>
-  flattenBookmarkLibraryVisibleRows(props.index, nodeById.value, expandedFolderIds.value)
+const activeSearchQuery = computed(() => props.query.trim())
+
+const visibleRows = computed(() => {
+  if (activeSearchQuery.value) {
+    return flattenBookmarkLibrarySearchVisibleRows(
+      props.index,
+      nodeById.value,
+      activeSearchQuery.value
+    )
+  }
+  return flattenBookmarkLibraryVisibleRows(props.index, nodeById.value, expandedFolderIds.value)
+})
+
+watch(
+  () => visibleRows.value.length,
+  count => {
+    emit('visibleRowCountChange', count)
+  },
+  { immediate: true }
 )
 
 const rowMetrics = computed(() => buildBookmarkLibraryRowMetrics(visibleRows.value))

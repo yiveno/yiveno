@@ -89,9 +89,12 @@ export class MemoryItemService {
     return this.repository.listByOwner(options)
   }
 
-  /** 统计当前用户未软删条目数（可按 type 过滤）。 */
-  async countActive(type?: SupportedMemoryItemType): Promise<number> {
-    return this.repository.countActiveByOwner(type)
+  /** 统计当前用户未软删条目数（可按 type / query 过滤）。 */
+  async countActive(type?: SupportedMemoryItemType, query?: string): Promise<number> {
+    if (query === undefined) {
+      return this.repository.countActiveByOwner(type)
+    }
+    return this.repository.countActiveByOwner(type, query)
   }
 
   /**

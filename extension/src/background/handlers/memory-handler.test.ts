@@ -414,4 +414,35 @@ describe('memory-handler', () => {
       countSpy.mockRestore()
     }
   })
+
+  it('handleListMemoryItems 透传 query/sort 且 total 为过滤后总数', async () => {
+    const { memoryItemService } = await import('@/application/memory/memory-item-service')
+    const listSpy = vi.spyOn(memoryItemService, 'list').mockResolvedValue([])
+    const countSpy = vi.spyOn(memoryItemService, 'countActive').mockResolvedValue(7)
+    try {
+      const response = await handleListMemoryItems({
+        type: 'text_excerpt',
+        limit: 50,
+        query: 'needle',
+        sort: 'oldest'
+      })
+      expect(response.ok).toBe(true)
+      if (!response.ok || !('total' in response)) {
+        return
+      }
+      expect(response.total).toBe(7)
+      expect(listSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          type: 'text_excerpt',
+          limit: 50,
+          query: 'needle',
+          sort: 'oldest'
+        })
+      )
+      expect(countSpy).toHaveBeenCalledWith('text_excerpt', 'needle')
+    } finally {
+      listSpy.mockRestore()
+      countSpy.mockRestore()
+    }
+  })
 })

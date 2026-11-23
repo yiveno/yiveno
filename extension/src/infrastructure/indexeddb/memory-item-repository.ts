@@ -48,6 +48,10 @@ import {
   extractDocumentIndexTokens,
   sameTokenSet
 } from '@/core/recall/extract-document-index-tokens'
+import { normalizeRecallText } from '@/core/recall/keyword-filter'
+
+/** 记忆库列表排序：newest=updatedAt 倒序（默认）· oldest=正序。 */
+export type ListMemoryItemsSort = 'newest' | 'oldest'
 
 export interface ListMemoryItemsOptions {
   type?: SupportedMemoryItemType
@@ -55,6 +59,38 @@ export interface ListMemoryItemsOptions {
   /** 跳过前 N 条活条目（软删不占名额；默认 0）。 */
   offset?: number
   includeDeleted?: boolean
+  /** 全库子串过滤；空/纯空白=不过滤。须在 offset/limit 之前应用。 */
+  query?: string
+  /** 默认 newest（与历史 openCursor prev 一致）。 */
+  sort?: ListMemoryItemsSort
+}
+
+/**
+ * 记忆库 LIST query 命中：归一化后子串包含（OR）。
+ * 字段：标题 / 摘录正文 / 附注 / URL 全文。
+ */
+function memoryItemMatchesLibraryQuery(item: MemoryItem, normalizedQuery: string): boolean {
+  if (!normalizedQuery) {
+    return true
+  }
+  const fields: string[] = []
+  const title = item.clues.title?.trim()
+  if (title) {
+    fields.push(title)
+  }
+  const note = item.clues.note?.trim()
+  if (note) {
+    fields.push(note)
+  }
+  if (item.type === 'bookmark') {
+    fields.push(item.payload.title)
+    fields.push(item.payload.url)
+  } else {
+    fields.push(item.payload.pageTitle)
+    fields.push(item.payload.selectedText)
+    fields.push(item.payload.sourceUrl)
+  }
+  return fields.some(field => normalizeRecallText(field).includes(normalizedQuery))
 }
 
 /** 书签树对齐：Chrome 书签 id / URL → MemoryItem.id */
@@ -444,6 +480,8 @@ export class MemoryItemRepository {
     const limit = options.limit ?? 100
     const offset = options.offset ?? 0
     const includeDeleted = options.includeDeleted ?? false
+    const cursorDirection = options.sort === 'oldest' ? 'next' : 'prev'
+    const normalizedQuery = options.query ? normalizeRecallText(options.query) : ''
 
     return indexedDBManager.withTransaction(MEMORY_ITEM_STORE, 'readonly', async transaction => {
       const store = transaction.objectStore(MEMORY_ITEM_STORE)
@@ -459,7 +497,7 @@ export class MemoryItemRepository {
       const items: MemoryItem[] = []
       let skipped = 0
       await new Promise<void>((resolve, reject) => {
-        const request = index.openCursor(range, 'prev')
+        const request = index.openCursor(range, cursorDirection)
 
         request.onsuccess = () => {
           const cursor = request.result
@@ -469,7 +507,11 @@ export class MemoryItemRepository {
           }
 
           const item = safeParseMemoryItem(cursor.value)
-          if (item && (includeDeleted || item.deletedAt == null)) {
+          if (
+            item &&
+            (includeDeleted || item.deletedAt == null) &&
+            memoryItemMatchesLibraryQuery(item, normalizedQuery)
+          ) {
             if (skipped < offset) {
               skipped += 1
             } else {
@@ -757,10 +799,11 @@ export class MemoryItemRepository {
     return last
   }
 
-  /** 统计当前用户未删除的 MemoryItem 数量。 */
-  async countActiveByOwner(type?: SupportedMemoryItemType): Promise<number> {
+  /** 统计当前用户未删除的 MemoryItem 数量（可选 query，与 listByOwner 同一过滤）。 */
+  async countActiveByOwner(type?: SupportedMemoryItemType, query?: string): Promise<number> {
     const items = await this.listByOwner({
       ...optionalProp('type', type),
+      ...optionalProp('query', query),
       limit: Number.MAX_SAFE_INTEGER
     })
     return items.length

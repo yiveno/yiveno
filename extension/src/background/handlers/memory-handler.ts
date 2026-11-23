@@ -146,16 +146,20 @@ export async function handleListMemoryItems(payload: unknown): Promise<MemoryBac
       memoryItemService.list({
         ...optionalProp('type', options?.type),
         ...optionalProp('limit', options?.limit),
-        ...optionalProp('offset', options?.offset)
+        ...optionalProp('offset', options?.offset),
+        ...optionalProp('query', options?.query),
+        ...optionalProp('sort', options?.sort)
       }),
-      memoryItemService.countActive(options?.type)
+      memoryItemService.countActive(options?.type, options?.query)
     ])
     flowOk('Memory', '列出条目', startedAt, {
       count: items.length,
       total,
       type: options?.type ?? null,
       limit: options?.limit ?? null,
-      offset: options?.offset ?? null
+      offset: options?.offset ?? null,
+      hasQuery: Boolean(options?.query?.trim()),
+      sort: options?.sort ?? 'newest'
     })
     return { ok: true, items, total }
   } catch (error) {

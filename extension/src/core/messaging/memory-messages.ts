@@ -33,7 +33,11 @@ const listMemoryItemsPayloadSchema = z
     type: SupportedMemoryItemTypeSchema.optional(),
     limit: z.number().int().positive().max(500).optional(),
     /** 跳过前 N 条活条目后再取 limit（软删不占名额；默认 0）。 */
-    offset: z.number().int().nonnegative().optional()
+    offset: z.number().int().nonnegative().optional(),
+    /** 全库子串过滤（标题/正文/附注/URL；空=不过滤）。 */
+    query: z.string().trim().max(200).optional(),
+    /** 按 updatedAt：newest=倒序（默认）· oldest=正序。 */
+    sort: z.enum(['newest', 'oldest']).optional() // newest=最新在前 · oldest=最早在前
   })
   .optional()
 

@@ -83,6 +83,10 @@ type DetailExportBulkAction = 'selectAll' | 'invert'
 
 /** 书签树静默刷新防抖（Chrome 批量改动时避免连打 getTree）。 */
 const BOOKMARK_TREE_REFRESH_DEBOUNCE_MS = 300
+/** 记忆库搜索框防抖：输入停 300ms 后生效。 */
+const LIBRARY_SEARCH_DEBOUNCE_MS = 300
+
+type LibraryListSort = 'newest' | 'oldest'
 
 const activeType = ref<SupportedMemoryItemType>(
   parseLibraryTypeFromLocationSearch(window.location.search)
@@ -95,6 +99,17 @@ const excerptTotal = ref(0)
 const listRows = shallowRef<ExcerptLibraryListRow[]>([])
 /** 摘录「加载更多」busy（防连点）。 */
 const loadingMoreExcerpts = ref(false)
+/** 搜索框即时输入；两 Tab 共用，切 Tab 不清空。 */
+const searchText = ref('')
+/** 防抖后的生效 query（LIST / 书签树过滤）。 */
+const debouncedQuery = ref('')
+/** 摘录 Tab 排序；书签树不排序。 */
+const sort = ref<LibraryListSort>('newest')
+/** 摘录 LIST 竞态守卫：只采纳最新一次请求。 */
+let excerptListRequestToken = 0
+let searchDebounceTimer: ReturnType<typeof setTimeout> | null = null
+/** 书签树过滤后可见行数（含文件夹）；搜索无命中空态用。 */
+const bookmarkVisibleRowCount = ref(0)
 const bookmarkIndex = shallowRef<BookmarkLibraryIndex | null>(null)
 const bookmarkStructureHash = ref('')
 const bookmarkSyncReady = ref(false)
@@ -152,9 +167,64 @@ function rebuildListRows(): void {
   listRows.value = buildExcerptLibraryListRows(items.value)
 }
 
+const hasActiveLibraryQuery = computed(() => debouncedQuery.value.trim().length > 0)
+
+const showExcerptSearchNoResults = computed(
+  () => hasActiveLibraryQuery.value && listRows.value.length === 0
+)
+
+const showBookmarkSearchNoResults = computed(
+  () =>
+    hasActiveLibraryQuery.value &&
+    (bookmarkIndex.value?.bookmarkCount ?? 0) > 0 &&
+    bookmarkVisibleRowCount.value === 0
+)
+
 const showExcerptListCapNote = computed(() =>
   shouldShowLibraryListCapNote(excerptTotal.value, listRows.value.length)
 )
+
+function scheduleLibrarySearchDebounce(nextText: string): void {
+  if (searchDebounceTimer !== null) {
+    clearTimeout(searchDebounceTimer)
+  }
+  searchDebounceTimer = setTimeout(() => {
+    searchDebounceTimer = null
+    debouncedQuery.value = nextText.trim()
+  }, LIBRARY_SEARCH_DEBOUNCE_MS)
+}
+
+function onLibrarySearchInput(event: Event): void {
+  const target = event.target
+  if (!(target instanceof HTMLInputElement)) {
+    return
+  }
+  searchText.value = target.value
+  scheduleLibrarySearchDebounce(target.value)
+}
+
+function onLibrarySortChange(event: Event): void {
+  const target = event.target
+  if (!(target instanceof HTMLSelectElement)) {
+    return
+  }
+  sort.value = target.value === 'oldest' ? 'oldest' : 'newest'
+}
+
+function handleBookmarkVisibleRowCountChange(count: number): void {
+  bookmarkVisibleRowCount.value = count
+}
+
+/** 摘录 LIST 共用 query/sort（三处调用点必须一致）。 */
+function buildExcerptListPayload(limit: number, offset: number) {
+  return {
+    type: 'text_excerpt' as const,
+    limit,
+    offset,
+    sort: sort.value,
+    ...(debouncedQuery.value.trim() ? { query: debouncedQuery.value.trim() } : {})
+  }
+}
 
 const excerptListCapNoteLabel = computed(() => {
   if (!showExcerptListCapNote.value) {
@@ -298,6 +368,7 @@ const activeTab = computed(() => {
 })
 
 const librarySectionTabsId = useId()
+const librarySortSelectId = useId()
 const libraryPanelId = `${librarySectionTabsId}-panel`
 const libraryActiveTabId = computed(() => `${librarySectionTabsId}-tab-${activeType.value}`)
 const libraryTypeTabItems = computed(() =>
@@ -504,12 +575,14 @@ async function refreshExcerptListSilent(): Promise<void> {
   if (showingBookmarkTree.value) {
     return
   }
+  const requestToken = ++excerptListRequestToken
   try {
-    const response = await listMemoryItems({
-      type: 'text_excerpt',
-      limit: Math.max(LIBRARY_LIST_LIMIT, items.value.length),
-      offset: 0
-    })
+    const response = await listMemoryItems(
+      buildExcerptListPayload(Math.max(LIBRARY_LIST_LIMIT, items.value.length), 0)
+    )
+    if (requestToken !== excerptListRequestToken) {
+      return
+    }
     if (!response.ok || !('items' in response)) {
       return
     }
@@ -534,12 +607,14 @@ async function loadMoreExcerpts(): Promise<void> {
     return
   }
   loadingMoreExcerpts.value = true
+  const requestToken = ++excerptListRequestToken
   try {
-    const response = await listMemoryItems({
-      type: 'text_excerpt',
-      limit: LIBRARY_LIST_LIMIT,
-      offset: listRows.value.length
-    })
+    const response = await listMemoryItems(
+      buildExcerptListPayload(LIBRARY_LIST_LIMIT, listRows.value.length)
+    )
+    if (requestToken !== excerptListRequestToken) {
+      return
+    }
     if (!response.ok) {
       showToastError(tMemoryError(response.errorCode))
       return
@@ -625,10 +700,11 @@ function handleLibraryRevisionStorageChanged(
 }
 
 async function loadExcerptList() {
-  const response = await listMemoryItems({
-    type: 'text_excerpt',
-    limit: LIBRARY_LIST_LIMIT
-  })
+  const requestToken = ++excerptListRequestToken
+  const response = await listMemoryItems(buildExcerptListPayload(LIBRARY_LIST_LIMIT, 0))
+  if (requestToken !== excerptListRequestToken) {
+    return
+  }
   if (!response.ok) {
     loadState.value = 'error'
     errorMessage.value = tMemoryError(response.errorCode)
@@ -869,6 +945,17 @@ watch(
   { immediate: true }
 )
 
+/** query / sort 变化：摘录从 offset 0 重拉（书签树仅靠 prop 过滤）。 */
+watch([debouncedQuery, sort], () => {
+  if (showingBookmarkTree.value) {
+    return
+  }
+  if (loadState.value === 'loading') {
+    return
+  }
+  void loadExcerptList()
+})
+
 onMounted(() => {
   chrome.runtime.onMessage.addListener(handleUiPushMessage)
   chrome.storage.onChanged.addListener(handleLibraryRevisionStorageChanged)
@@ -882,6 +969,10 @@ onUnmounted(() => {
   if (bookmarkTreeRefreshTimer !== null) {
     clearTimeout(bookmarkTreeRefreshTimer)
     bookmarkTreeRefreshTimer = null
+  }
+  if (searchDebounceTimer !== null) {
+    clearTimeout(searchDebounceTimer)
+    searchDebounceTimer = null
   }
 })
 </script>
@@ -938,6 +1029,34 @@ onUnmounted(() => {
           class="library-panel-body"
           :class="{ 'library-panel-body--inner-scroll': libraryPanelUsesInnerScroll }"
         >
+          <div class="library-toolbar" role="search">
+            <input
+              class="library-search-input"
+              type="search"
+              :value="searchText"
+              :placeholder="t('library_search_placeholder')"
+              :aria-label="t('library_search_aria')"
+              maxlength="200"
+              @input="onLibrarySearchInput"
+            />
+            <label
+              v-if="!showingBookmarkTree"
+              class="library-sort-label"
+              :for="librarySortSelectId"
+            >
+              <span class="library-sort-label-text">{{ t('library_sort_label') }}</span>
+              <select
+                :id="librarySortSelectId"
+                class="library-sort-select"
+                :value="sort"
+                @change="onLibrarySortChange"
+              >
+                <option value="newest">{{ t('library_sort_newest') }}</option>
+                <option value="oldest">{{ t('library_sort_oldest') }}</option>
+              </select>
+            </label>
+          </div>
+
           <p v-if="loadState === 'loading'" class="library-status" role="status">
             {{ t('library_loading') }}
           </p>
@@ -1028,8 +1147,14 @@ onUnmounted(() => {
                   }}
                 </AppButton>
               </div>
+              <div v-if="showBookmarkSearchNoResults" class="library-empty" role="status">
+                <p class="library-empty-title">{{ t('library_search_no_results_title') }}</p>
+                <p class="library-empty-copy">{{ t('library_search_no_results_body') }}</p>
+              </div>
               <BookmarkLibraryTree
+                v-show="!showBookmarkSearchNoResults"
                 :index="bookmarkIndex"
+                :query="debouncedQuery"
                 :show-unsynced-flags="bookmarkSyncReady"
                 :show-detail-export-selection="detailExportMode"
                 :selected-detail-export-ids="selectedDetailExportIds"
@@ -1039,6 +1164,7 @@ onUnmounted(() => {
                 @open-bookmark="handleOpenBookmark"
                 @toggle-detail-export-selection="handleToggleDetailExportSelection"
                 @delete-bookmark="handleDeleteBookmark"
+                @visible-row-count-change="handleBookmarkVisibleRowCountChange"
               />
             </div>
           </template>
@@ -1047,7 +1173,11 @@ onUnmounted(() => {
             <p v-if="showExcerptListCapNote" class="library-list-cap-note" role="status">
               {{ excerptListCapNoteLabel }}
             </p>
-            <div v-if="listRows.length === 0" class="library-empty">
+            <div v-if="showExcerptSearchNoResults" class="library-empty" role="status">
+              <p class="library-empty-title">{{ t('library_search_no_results_title') }}</p>
+              <p class="library-empty-copy">{{ t('library_search_no_results_body') }}</p>
+            </div>
+            <div v-else-if="listRows.length === 0" class="library-empty">
               <p class="library-empty-title">{{ activeTab.emptyTitle }}</p>
               <p class="library-empty-copy">{{ activeTab.emptyBody }}</p>
             </div>
@@ -1245,6 +1375,68 @@ onUnmounted(() => {
   justify-content: flex-end;
   padding: var(--space-sm) var(--space-md);
   border-bottom: 1px solid var(--border);
+}
+
+.library-toolbar {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  align-items: center;
+  margin-bottom: var(--space-sm);
+}
+
+.library-search-input {
+  box-sizing: border-box;
+  flex: 1 1 12rem;
+  min-width: 0;
+  margin: 0;
+  padding: var(--space-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
+  color: var(--on-surface);
+  background: var(--surface-white);
+}
+
+.library-search-input::placeholder {
+  color: var(--on-surface-muted);
+}
+
+.library-search-input:focus {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
+}
+
+.library-sort-label {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: var(--space-2xs);
+  align-items: center;
+  font-size: var(--text-caption);
+  color: var(--on-surface-muted);
+}
+
+.library-sort-label-text {
+  white-space: nowrap;
+}
+
+.library-sort-select {
+  margin: 0;
+  padding: var(--space-2xs) var(--space-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font: inherit;
+  font-size: var(--text-body);
+  color: var(--on-surface);
+  background: var(--surface-white);
+}
+
+.library-sort-select:focus {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
 }
 
 .library-detail-export-header-btn {

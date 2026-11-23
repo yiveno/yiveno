@@ -2190,6 +2190,27 @@
   "library_empty_excerpts_body": {
     "message": "在页面上选中文字保存，或用「保存到 Yiveno」。这些个人保存是找东西效果最好的材料。"
   },
+  "library_search_placeholder": {
+    "message": "在记忆库里找…"
+  },
+  "library_search_aria": {
+    "message": "在记忆库中查找"
+  },
+  "library_sort_label": {
+    "message": "排序"
+  },
+  "library_sort_newest": {
+    "message": "最新在前"
+  },
+  "library_sort_oldest": {
+    "message": "最早在前"
+  },
+  "library_search_no_results_title": {
+    "message": "没有找到匹配的内容"
+  },
+  "library_search_no_results_body": {
+    "message": "换个关键词试试，你的记忆库本身不是空的。"
+  },
   "library_loading": {
     "message": "加载中…"
   },

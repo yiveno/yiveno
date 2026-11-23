@@ -521,4 +521,216 @@ describe('memory-item-repository', () => {
     expect(beforeDeleteWindow).toHaveLength(1)
     expect(beforeDeleteWindow[0]?.id).toBe(created[1])
   })
+
+  it('listByOwner query 命中标题', async () => {
+    await memoryItemRepository.createTextExcerpt({
+      payload: {
+        selectedText: 'body alpha',
+        sourceUrl: 'https://query-title.example.com/a',
+        pageTitle: 'UniqueTitleNeedle'
+      },
+      now: () => '2026-07-22T06:00:00.000Z'
+    })
+    await memoryItemRepository.createTextExcerpt({
+      payload: {
+        selectedText: 'body beta',
+        sourceUrl: 'https://query-title.example.com/b',
+        pageTitle: 'Other'
+      },
+      now: () => '2026-07-22T06:01:00.000Z'
+    })
+
+    const listed = await memoryItemRepository.listByOwner({
+      type: 'text_excerpt',
+      query: 'uniquetitleneedle'
+    })
+    expect(listed).toHaveLength(1)
+    expect(listed[0]?.type === 'text_excerpt' && listed[0].payload.pageTitle).toBe(
+      'UniqueTitleNeedle'
+    )
+  })
+
+  it('listByOwner query 命中正文 selectedText', async () => {
+    await memoryItemRepository.createTextExcerpt({
+      payload: {
+        selectedText: 'the secret body phrase',
+        sourceUrl: 'https://query-body.example.com/a',
+        pageTitle: 'A'
+      }
+    })
+    await memoryItemRepository.createTextExcerpt({
+      payload: {
+        selectedText: 'unrelated',
+        sourceUrl: 'https://query-body.example.com/b',
+        pageTitle: 'B'
+      }
+    })
+
+    const listed = await memoryItemRepository.listByOwner({
+      type: 'text_excerpt',
+      query: 'secret body'
+    })
+    expect(listed).toHaveLength(1)
+    expect(listed[0]?.type === 'text_excerpt' && listed[0].payload.selectedText).toBe(
+      'the secret body phrase'
+    )
+  })
+
+  it('listByOwner query 命中附注 clues.note', async () => {
+    const { item } = await memoryItemRepository.createTextExcerpt({
+      payload: {
+        selectedText: 'plain body',
+        sourceUrl: 'https://query-note.example.com/a',
+        pageTitle: 'Note host'
+      },
+      clues: { note: 'shelf for quarterly review' }
+    })
+    await memoryItemRepository.createTextExcerpt({
+      payload: {
+        selectedText: 'other',
+        sourceUrl: 'https://query-note.example.com/b',
+        pageTitle: 'Other'
+      }
+    })
+
+    const listed = await memoryItemRepository.listByOwner({
+      type: 'text_excerpt',
+      query: 'quarterly review'
+    })
+    expect(listed).toHaveLength(1)
+    expect(listed[0]?.id).toBe(item.id)
+  })
+
+  it('listByOwner query 命中 URL 全文', async () => {
+    await memoryItemRepository.createBookmark({
+      payload: {
+        title: 'Docs',
+        url: 'https://docs.yiveno.example/path/retention'
+      }
+    })
+    await memoryItemRepository.createBookmark({
+      payload: {
+        title: 'Other',
+        url: 'https://other.example.com/'
+      }
+    })
+
+    const listed = await memoryItemRepository.listByOwner({
+      type: 'bookmark',
+      query: 'yiveno.example/path'
+    })
+    expect(listed).toHaveLength(1)
+    expect(listed[0]?.type === 'bookmark' && listed[0].payload.url).toContain('retention')
+  })
+
+  it('listByOwner 空 query 不过滤', async () => {
+    await memoryItemRepository.createTextExcerpt({
+      payload: {
+        selectedText: 'one',
+        sourceUrl: 'https://query-empty.example.com/1',
+        pageTitle: 'One'
+      }
+    })
+    await memoryItemRepository.createTextExcerpt({
+      payload: {
+        selectedText: 'two',
+        sourceUrl: 'https://query-empty.example.com/2',
+        pageTitle: 'Two'
+      }
+    })
+
+    const blank = await memoryItemRepository.listByOwner({
+      type: 'text_excerpt',
+      query: '   '
+    })
+    const omitted = await memoryItemRepository.listByOwner({ type: 'text_excerpt' })
+    expect(blank).toHaveLength(2)
+    expect(blank.map(item => item.id).sort()).toEqual(omitted.map(item => item.id).sort())
+  })
+
+  it('listByOwner sort oldest 顺序与 newest 相反', async () => {
+    const ids: string[] = []
+    for (let index = 0; index < 3; index += 1) {
+      const { item } = await memoryItemRepository.createTextExcerpt({
+        payload: {
+          selectedText: `sort order ${index}`,
+          sourceUrl: `https://sort-order.example.com/${index}`,
+          pageTitle: `S${index}`
+        },
+        now: () => `2026-07-22T1${index}:00:00.000Z`
+      })
+      ids.push(item.id)
+    }
+
+    const newest = await memoryItemRepository.listByOwner({
+      type: 'text_excerpt',
+      sort: 'newest'
+    })
+    const oldest = await memoryItemRepository.listByOwner({
+      type: 'text_excerpt',
+      sort: 'oldest'
+    })
+    expect(newest.map(item => item.id)).toEqual([ids[2], ids[1], ids[0]])
+    expect(oldest.map(item => item.id)).toEqual([ids[0], ids[1], ids[2]])
+  })
+
+  it('listByOwner query + offset/limit 先过滤再分页', async () => {
+    const matchingIds: string[] = []
+    for (let index = 0; index < 4; index += 1) {
+      const { item } = await memoryItemRepository.createTextExcerpt({
+        payload: {
+          selectedText: `filter page keep ${index}`,
+          sourceUrl: `https://filter-page.example.com/keep/${index}`,
+          pageTitle: `Keep${index}`
+        },
+        now: () => `2026-07-22T2${index}:00:00.000Z`
+      })
+      matchingIds.push(item.id)
+    }
+    await memoryItemRepository.createTextExcerpt({
+      payload: {
+        selectedText: 'noise',
+        sourceUrl: 'https://filter-page.example.com/noise',
+        pageTitle: 'Noise'
+      },
+      now: () => '2026-07-22T23:00:00.000Z'
+    })
+
+    const page = await memoryItemRepository.listByOwner({
+      type: 'text_excerpt',
+      query: 'filter page keep',
+      limit: 2,
+      offset: 1,
+      sort: 'newest'
+    })
+    // 命中倒序 keep3,2,1,0 → offset 1 limit 2 → keep2, keep1
+    expect(page.map(item => item.id)).toEqual([matchingIds[2], matchingIds[1]])
+  })
+
+  it('countActiveByOwner 带 query 返回过滤后总数', async () => {
+    await memoryItemRepository.createTextExcerpt({
+      payload: {
+        selectedText: 'count match alpha',
+        sourceUrl: 'https://count-query.example.com/a',
+        pageTitle: 'A'
+      }
+    })
+    await memoryItemRepository.createTextExcerpt({
+      payload: {
+        selectedText: 'count match beta',
+        sourceUrl: 'https://count-query.example.com/b',
+        pageTitle: 'B'
+      }
+    })
+    await memoryItemRepository.createTextExcerpt({
+      payload: {
+        selectedText: 'other',
+        sourceUrl: 'https://count-query.example.com/c',
+        pageTitle: 'C'
+      }
+    })
+
+    expect(await memoryItemRepository.countActiveByOwner('text_excerpt', 'count match')).toBe(2)
+    expect(await memoryItemRepository.countActiveByOwner('text_excerpt')).toBe(3)
+  })
 })

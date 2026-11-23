@@ -2193,6 +2193,27 @@
   "library_empty_excerpts_body": {
     "message": "Select text on a page to save, or use “Save to Yiveno”. Those personal saves are what Find works best on."
   },
+  "library_search_placeholder": {
+    "message": "Find in your library…"
+  },
+  "library_search_aria": {
+    "message": "Find in library"
+  },
+  "library_sort_label": {
+    "message": "Sort"
+  },
+  "library_sort_newest": {
+    "message": "Newest first"
+  },
+  "library_sort_oldest": {
+    "message": "Oldest first"
+  },
+  "library_search_no_results_title": {
+    "message": "No matches"
+  },
+  "library_search_no_results_body": {
+    "message": "Try different keywords. Your library itself isn't empty."
+  },
   "library_loading": {
     "message": "Loading…"
   },
