@@ -6,9 +6,31 @@ vi.mock('@/application/memory/schedule-async-memory-embedding', () => ({
     written: 1,
     failed: 0,
     scanned: 1,
-    quotaHit: false
+    quotaHit: false,
+    workerQuotaHit: false
   })),
-  enqueueMissingMemoryEmbeddings: vi.fn(async () => ({ enqueued: 0, scanned: 0 }))
+  enqueueMissingMemoryEmbeddings: vi.fn(async () => ({ enqueued: 0, scanned: 0 })),
+  clearWorkerQuotaEmbedPause: vi.fn(),
+  EMBEDDING_BACKFILL_BATCH_LIMIT: 40
+}))
+
+vi.mock('@/infrastructure/ai/hosted-quota-api-client', () => ({
+  fetchHostedQuota: vi.fn(async () => ({
+    model: 'm',
+    tier: 'anonymous',
+    used: 0,
+    limit: 15,
+    remaining: 15,
+    dailyUsed: 0,
+    dailyLimit: 15,
+    dailyRemaining: 15,
+    monthKey: 'lifetime',
+    embedRemaining: 30
+  }))
+}))
+
+vi.mock('@/infrastructure/identity/worker-api-access-token', () => ({
+  getWorkerApiAccessToken: vi.fn(async () => 'token')
 }))
 
 import {

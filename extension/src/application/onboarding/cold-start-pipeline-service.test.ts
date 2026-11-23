@@ -100,7 +100,8 @@ describe('runColdStartPipeline', () => {
       written: 0,
       failed: 0,
       scanned: 0,
-      quotaHit: false
+      quotaHit: false,
+      workerQuotaHit: false
     })
     listByOwnerMock.mockResolvedValue([])
     getWorkerApiAccessTokenMock.mockResolvedValue('tok')

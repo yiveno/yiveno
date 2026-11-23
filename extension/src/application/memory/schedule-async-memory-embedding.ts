@@ -44,8 +44,10 @@ let queue: Promise<void> = Promise.resolve()
 let queueGeneration = 0
 /** auth 失败后暂停入队，直至 clear / 显式恢复。 */
 let authPaused = false
-/** 本会话已因配额停止后续 embed 写库。 */
+/** 本会话已因 IndexedDB 配额停止后续 embed 写库。 */
 let quotaPaused = false
+/** 本会话已因 Worker embed 配额（quota_exceeded / http_429）停止入队与回填。 */
+let workerQuotaPaused = false
 
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => {
@@ -72,6 +74,14 @@ function isAuthEmbedError(error: unknown): boolean {
   )
 }
 
+/** Worker embed 配额错误：与 embed-api-client 抛出的 `quota_exceeded` / `http_429` 对齐。 */
+function isWorkerQuotaEmbedError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error)
+  return (
+    message === 'quota_exceeded' || message === 'http_429' || message.includes('quota_exceeded')
+  )
+}
+
 /**
  * 清空待执行的 embed 队列（已在飞的一条会跑完后停止后续）。
  * Chrome sync/reconcile 前调用，避免万级书签刷爆 Worker。
@@ -86,13 +96,36 @@ export function clearAsyncMemoryEmbeddingQueue(reason = 'manual'): void {
   })
 }
 
-/** 恢复因 auth 失败暂停的入队（登录成功后可调）。 */
+/** 恢复因 auth 失败暂停的入队（登录成功后可调）；身份已变时一并解除 Worker 配额熔断。 */
 export function resumeAsyncMemoryEmbeddingAfterAuth(): void {
+  if (workerQuotaPaused) {
+    workerQuotaPaused = false
+    logger.info('MemoryEmbed', '异步 embed 已清除 Worker 配额熔断（auth 恢复）')
+  }
   if (!authPaused) {
     return
   }
   authPaused = false
   logger.info('MemoryEmbed', '异步 embed 已恢复入队（auth）')
+}
+
+/**
+ * 无感维护预查到剩余额度 > 0 时清除 Worker 配额熔断（可再试）。
+ */
+export function clearWorkerQuotaEmbedPause(reason: string): void {
+  if (!workerQuotaPaused) {
+    return
+  }
+  workerQuotaPaused = false
+  logger.info('MemoryEmbed', '异步 embed 已清除 Worker 配额熔断', { reason })
+}
+
+/** 测试用：清空队列并解除熔断标志。 */
+export function resetAsyncMemoryEmbeddingStateForTests(): void {
+  authPaused = false
+  quotaPaused = false
+  workerQuotaPaused = false
+  clearAsyncMemoryEmbeddingQueue('test_reset')
 }
 
 /**
@@ -166,6 +199,7 @@ export type MemoryEmbedOutcome =
   | 'skipped' // 跳过（关 AI / 未登录 / 已有向量等）
   | 'failed' // API 或其它失败
   | 'quota' // IndexedDB 配额耗尽
+  | 'worker_quota' // Worker embed 配额耗尽
 
 /**
  * 对单条 MemoryItem 生成 embedding 并写回（不改 updatedAt）。
@@ -183,6 +217,11 @@ export async function runAsyncMemoryEmbedding(
   if (quotaPaused) {
     logger.info('MemoryEmbed', '异步 embed 跳过：IndexedDB 配额已熔断', { itemId })
     return 'quota'
+  }
+
+  if (workerQuotaPaused) {
+    logger.info('MemoryEmbed', '异步 embed 跳过：Worker 配额已熔断', { itemId })
+    return 'worker_quota'
   }
 
   const accessToken = await getWorkerApiAccessToken()
@@ -305,6 +344,15 @@ export async function runAsyncMemoryEmbedding(
       })
       return 'failed'
     }
+    if (isWorkerQuotaEmbedError(error)) {
+      workerQuotaPaused = true
+      clearAsyncMemoryEmbeddingQueue('worker_quota_exceeded')
+      logger.warn('MemoryEmbed', '异步 embed 因 Worker 配额耗尽熔断并清空队列', {
+        itemId,
+        error: error instanceof Error ? error.message : String(error)
+      })
+      return 'worker_quota'
+    }
     logger.warn('MemoryEmbed', '异步 embed 失败', {
       itemId,
       error: error instanceof Error ? error.message : String(error)
@@ -327,6 +375,10 @@ export function scheduleAsyncMemoryEmbedding(itemId: string): void {
   }
   if (quotaPaused) {
     logger.info('MemoryEmbed', '异步 embed 跳过入队：配额已熔断', { itemId: id })
+    return
+  }
+  if (workerQuotaPaused) {
+    logger.info('MemoryEmbed', '异步 embed 跳过入队：Worker 配额已熔断', { itemId: id })
     return
   }
 
@@ -433,6 +485,8 @@ export type MemoryEmbedBackfillResult = {
   scanned: number
   /** 任一条因 IDB 配额失败 */
   quotaHit: boolean
+  /** 任一条因 Worker embed 配额失败 */
+  workerQuotaHit: boolean
 }
 
 /**
@@ -448,7 +502,14 @@ export async function backfillMissingMemoryEmbeddings(
 ): Promise<MemoryEmbedBackfillResult> {
   const accessToken = await getWorkerApiAccessToken()
   if (!accessToken) {
-    return { attempted: 0, written: 0, failed: 0, scanned: 0, quotaHit: false }
+    return {
+      attempted: 0,
+      written: 0,
+      failed: 0,
+      scanned: 0,
+      quotaHit: false,
+      workerQuotaHit: false
+    }
   }
   resumeAsyncMemoryEmbeddingAfterAuth()
   // Rebuild 主动重试：用户可能已腾磁盘
@@ -464,6 +525,7 @@ export async function backfillMissingMemoryEmbeddings(
   let written = 0
   let failed = 0
   let quotaHit = false
+  let workerQuotaHit = false
   logger.info('MemoryEmbed', '同步回填开始（摘录）', {
     scanned,
     attempted: missing.length
@@ -477,7 +539,12 @@ export async function backfillMissingMemoryEmbeddings(
     } else if (outcome === 'quota') {
       failed += 1
       quotaHit = true
-      // 配额熔断后继续扫只会空转
+      // IndexedDB 配额熔断后继续扫只会空转
+      break
+    } else if (outcome === 'worker_quota') {
+      failed += 1
+      workerQuotaHit = true
+      // Worker 配额熔断后继续扫只会空转 / 再烧额度
       break
     }
     await sleep(EMBEDDING_JOB_GAP_MS)
@@ -486,7 +553,15 @@ export async function backfillMissingMemoryEmbeddings(
     attempted: missing.length,
     written,
     failed,
-    quotaHit
+    quotaHit,
+    workerQuotaHit
   })
-  return { attempted: missing.length, written, failed, scanned, quotaHit }
+  return {
+    attempted: missing.length,
+    written,
+    failed,
+    scanned,
+    quotaHit,
+    workerQuotaHit
+  }
 }
