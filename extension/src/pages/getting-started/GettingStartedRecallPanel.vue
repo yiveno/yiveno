@@ -17,7 +17,7 @@ const props = withDefaults(
     /** 书签 tab：LLM/模板示意 clue（单条展示 + 随机切换） */
     oralClues?: string[]
     oralCluesGenerating?: boolean
-    /** false：不展示页内 composer（书签主路径走 Try it → Side Panel） */
+    /** 默认 true：页内 composer 为试用输入；Try it 仍走 Side Panel */
     showComposer?: boolean
     busy: boolean
     error: string

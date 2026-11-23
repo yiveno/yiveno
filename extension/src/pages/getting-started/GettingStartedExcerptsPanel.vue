@@ -140,7 +140,6 @@ onUnmounted(() => {
         :library-phase="libraryPhase"
         :suggestions="[]"
         :oral-clues="oralClues"
-        :show-composer="false"
         :busy="recallBusy"
         :error="recallError"
         :primary-card="primaryCard"

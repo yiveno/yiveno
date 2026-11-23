@@ -599,7 +599,6 @@ onUnmounted(() => {
         :suggestions="[]"
         :oral-clues="oralClues"
         :oral-clues-generating="oralCluesGenerating"
-        :show-composer="false"
         :busy="recallBusy"
         :error="recallError"
         :primary-card="primaryCard"
