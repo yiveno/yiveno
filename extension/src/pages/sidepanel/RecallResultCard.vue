@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
 
 import type { RecallHighlightPart } from '@/core/recall/highlight-recall-text'
 import { isOpenableExternalSourceUrl } from '@/infrastructure/browser/active-tab-reader'
@@ -184,6 +184,56 @@ function isDetailExportItemDisabled(id: string): boolean {
 const cardGroupRef = ref<HTMLElement | null>(null)
 let stopEvidenceObserver: (() => void) | undefined
 
+/** 主卡正文/标题展开（本地态；勿复用 expanded prop——那是重复组兄弟列表） */
+const isBodyExpanded = ref(false)
+const isBodyTruncated = ref(false)
+const bodyClampRef = ref<HTMLElement | null>(null)
+let bodyResizeObserver: ResizeObserver | undefined
+
+const showBodyExpandControl = computed(
+  () => !props.showDetailExportSelection && (isBodyExpanded.value || isBodyTruncated.value)
+)
+
+/** 线夹 / 单行省略均可能截断：line-clamp 看高度，书签标题看宽度 */
+function measureBodyTruncation(): void {
+  const el = bodyClampRef.value
+  if (!el) {
+    isBodyTruncated.value = false
+    return
+  }
+  if (isBodyExpanded.value) {
+    return
+  }
+  isBodyTruncated.value = el.scrollHeight > el.clientHeight || el.scrollWidth > el.clientWidth
+}
+
+function setupBodyClampObserver(): void {
+  bodyResizeObserver?.disconnect()
+  const el = bodyClampRef.value
+  if (!el || typeof ResizeObserver === 'undefined') {
+    return
+  }
+  bodyResizeObserver = new ResizeObserver(() => {
+    measureBodyTruncation()
+  })
+  bodyResizeObserver.observe(el)
+}
+
+async function remountBodyClampMeasure(): Promise<void> {
+  await nextTick()
+  measureBodyTruncation()
+  setupBodyClampObserver()
+}
+
+function handleToggleBodyExpand(event: MouseEvent): void {
+  event.preventDefault()
+  event.stopPropagation()
+  isBodyExpanded.value = !isBodyExpanded.value
+  if (!isBodyExpanded.value) {
+    void remountBodyClampMeasure()
+  }
+}
+
 onMounted(() => {
   stopEvidenceObserver = scheduleRecallEvidenceWhenVisible(
     () => cardGroupRef.value,
@@ -194,11 +244,28 @@ onMounted(() => {
       }
     }
   )
+  void remountBodyClampMeasure()
 })
 
 onUnmounted(() => {
   stopEvidenceObserver?.()
+  bodyResizeObserver?.disconnect()
 })
+
+watch(
+  () =>
+    [
+      props.card.id,
+      props.card.excerpt,
+      props.card.title,
+      props.compact,
+      props.card.itemKind
+    ] as const,
+  () => {
+    isBodyExpanded.value = false
+    void remountBodyClampMeasure()
+  }
+)
 
 function handleMoreClick(event: MouseEvent): void {
   event.preventDefault()
@@ -242,6 +309,7 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
           showDetailExportSelection && isDetailExportItemSelected(card.id),
         'recall-card-shell--has-open-source':
           card.itemKind === 'text_excerpt' && Boolean(card.sourceUrl) && !showDetailExportSelection,
+        'recall-card-shell--has-expand': showBodyExpandControl,
         'is-keyboard-selected': keyboardSelected
       }"
     >
@@ -290,19 +358,27 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
         :aria-selected="showDetailExportSelection ? isDetailExportItemSelected(card.id) : undefined"
         @click="handleOpen($event, card.id, card.url, card.telemetryRank)"
       >
-        <!-- 摘录：正文 → 出处 → 附注 → 理由 → 时间；书签：标题 → 附注 → 理由 → 域名 → 时间 -->
+        <!-- 摘录：正文 → 出处+时间同排 → 附注 → 理由；书签：标题 → 附注 → 理由 → 域名+时间同排 -->
         <p
           v-if="card.excerpt"
+          ref="bodyClampRef"
           class="recall-card-body"
-          :class="{ 'recall-card-body--compact': compact }"
+          :class="{
+            'recall-card-body--compact': compact,
+            'recall-card-body--expanded': isBodyExpanded
+          }"
         >
           <RecallHighlightText :parts="card.excerptParts" />
         </p>
         <component
           :is="topPick ? 'h2' : 'h3'"
           v-else
+          ref="bodyClampRef"
           class="recall-card-title"
-          :class="{ 'recall-card-title--compact': compact }"
+          :class="{
+            'recall-card-title--compact': compact,
+            'recall-card-title--expanded': isBodyExpanded
+          }"
           :title="card.itemKind === 'bookmark' ? card.title : undefined"
         >
           <RecallHighlightText :parts="card.titleParts" />
@@ -347,21 +423,36 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
         >
           {{ card.reasonLine }}
         </p>
-        <p
+        <div
           v-if="card.itemKind === 'bookmark'"
-          class="recall-card-subtitle"
-          :title="card.subtitle || undefined"
+          class="recall-card-provenance-row"
+          :class="{ 'recall-card-provenance-row--compact': compact }"
         >
-          <span class="recall-card-subtitle-text">
-            <RecallHighlightText :parts="card.subtitleParts" />
-          </span>
-        </p>
-        <p v-if="card.itemKind === 'bookmark' && card.savedAtLabel" class="recall-card-saved">
-          <time :datetime="card.savedAtIso" :title="card.savedAtTitle">{{
-            card.savedAtLabel
-          }}</time>
-        </p>
+          <p class="recall-card-subtitle" :title="card.subtitle || undefined">
+            <span class="recall-card-subtitle-text">
+              <RecallHighlightText :parts="card.subtitleParts" />
+            </span>
+          </p>
+          <p v-if="card.savedAtLabel" class="recall-card-saved recall-card-saved--inline">
+            <time :datetime="card.savedAtIso" :title="card.savedAtTitle">{{
+              card.savedAtLabel
+            }}</time>
+          </p>
+        </div>
       </a>
+
+      <!-- 正文/标题展开：在 <a> 外，避免可交互嵌套；仅截断时出现 -->
+      <button
+        v-if="showBodyExpandControl"
+        type="button"
+        class="recall-card-body-expand"
+        :aria-expanded="isBodyExpanded"
+        :title="isBodyExpanded ? t('recall_card_body_collapse') : t('recall_card_body_expand')"
+        :aria-label="isBodyExpanded ? t('recall_card_body_collapse') : t('recall_card_body_expand')"
+        @click="handleToggleBodyExpand"
+      >
+        {{ isBodyExpanded ? t('recall_card_body_collapse') : t('recall_card_body_expand') }}
+      </button>
 
       <!-- 次要热区：在 <a> 外，避免可交互嵌套；减「详情再点打开原文」一步 -->
       <button
@@ -378,6 +469,7 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
         @click="handleOpenSource($event, card.id, card.sourceUrl, card.telemetryRank)"
       >
         <AppIcon name="open_in_new" size="14px" />
+        <span>{{ t('detail_open_source') }}</span>
       </button>
       <button
         v-if="isCollection"
@@ -403,7 +495,11 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
         class="recall-sibling-item"
         :class="{
           'recall-sibling-item--detail-export-selected':
-            showDetailExportSelection && isDetailExportItemSelected(sibling.id)
+            showDetailExportSelection && isDetailExportItemSelected(sibling.id),
+          'recall-sibling-item--has-open-source':
+            sibling.itemKind === 'text_excerpt' &&
+            Boolean(sibling.sourceUrl) &&
+            !showDetailExportSelection
         }"
       >
         <span
@@ -492,23 +588,24 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
           >
             {{ sibling.reasonLine }}
           </p>
-          <p
+          <div
             v-if="sibling.itemKind === 'bookmark'"
-            class="recall-card-subtitle"
-            :title="sibling.subtitle || undefined"
+            class="recall-card-provenance-row recall-card-provenance-row--compact"
           >
-            <span class="recall-card-subtitle-text">
-              <RecallHighlightText :parts="sibling.subtitleParts" />
-            </span>
-          </p>
-          <p
-            v-if="sibling.itemKind === 'bookmark' && sibling.savedAtLabel"
-            class="recall-card-saved recall-card-saved--compact"
-          >
-            <time :datetime="sibling.savedAtIso" :title="sibling.savedAtTitle">
-              {{ sibling.savedAtLabel }}
-            </time>
-          </p>
+            <p class="recall-card-subtitle" :title="sibling.subtitle || undefined">
+              <span class="recall-card-subtitle-text">
+                <RecallHighlightText :parts="sibling.subtitleParts" />
+              </span>
+            </p>
+            <p
+              v-if="sibling.savedAtLabel"
+              class="recall-card-saved recall-card-saved--inline recall-card-saved--compact"
+            >
+              <time :datetime="sibling.savedAtIso" :title="sibling.savedAtTitle">
+                {{ sibling.savedAtLabel }}
+              </time>
+            </p>
+          </div>
         </a>
         <button
           v-if="
@@ -528,6 +625,7 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
           "
         >
           <AppIcon name="open_in_new" size="14px" />
+          <span>{{ t('detail_open_source') }}</span>
         </button>
       </li>
     </ul>
@@ -642,7 +740,7 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
   padding-left: var(--space-md);
 }
 
-/* 书签：标题 / URL 单行省略；完整内容靠原生 title */
+/* 书签：标题 / URL 单行省略；完整内容靠原生 title；展开后见 --expanded */
 .recall-card--bookmark .recall-card-title {
   margin: 0 0 var(--space-2xs);
   font-weight: var(--font-weight-semibold);
@@ -650,6 +748,12 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.recall-card--bookmark .recall-card-title--expanded {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
 }
 
 .recall-card--bookmark .recall-card-subtitle {
@@ -692,6 +796,11 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
 .recall-sibling-item {
   position: relative;
   min-width: 0;
+}
+
+.recall-sibling-item--has-open-source > .recall-card {
+  /* 与主卡 pill「Open original」同宽右留白，避免盖住域名/正文 */
+  padding-right: 9rem;
 }
 
 .recall-sibling-item--detail-export-selected > .recall-card {
@@ -784,6 +893,13 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
   line-clamp: 2;
 }
 
+.recall-card-body--expanded {
+  display: block;
+  -webkit-line-clamp: unset;
+  line-clamp: unset;
+  overflow: visible;
+}
+
 .recall-card-note {
   display: -webkit-box;
   margin: 0 0 var(--space-2xs);
@@ -813,8 +929,8 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
   margin: 0 0 var(--space-2xs);
   font-size: var(--text-meta);
   line-height: var(--leading-relaxed);
-  /* 略高于纯 muted，扫读「为何贴合」不糊成灰墙 */
-  color: color-mix(in srgb, var(--on-surface) 72%, var(--on-surface-muted));
+  /* 与出处 .recall-card-subtitle--provenance 同级 78%，扫读「为何贴合」不糊成灰墙 */
+  color: color-mix(in srgb, var(--on-surface) 78%, var(--on-surface-muted));
   overflow: hidden;
   overflow-wrap: anywhere;
   -webkit-line-clamp: 2;
@@ -837,7 +953,7 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
   overflow-wrap: anywhere;
 }
 
-/* 摘录出处紧跟正文：页身份先于理由，服务 ECS「来源身份」扫读 */
+/* 出处/域名 + 时间同排：摘录出处（--provenance）或书签域名（caption muted）左，时间右 */
 .recall-card-provenance-row {
   display: flex;
   align-items: center;
@@ -848,6 +964,12 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
 
 .recall-card-provenance-row--compact {
   margin-bottom: var(--space-2xs);
+}
+
+.recall-card-provenance-row > .recall-card-subtitle {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
 }
 
 .recall-card-subtitle--provenance {
@@ -898,7 +1020,42 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
 }
 
 .recall-card-shell--has-open-source > .recall-card {
-  padding-right: 2.25rem;
+  /* 容纳英文最长「Open original」pill + 余量 */
+  padding-right: 9rem;
+}
+
+.recall-card-shell--has-expand > .recall-card {
+  padding-bottom: calc(var(--space-sm) + 2rem);
+}
+
+.recall-card-body-expand {
+  position: absolute;
+  left: var(--space-xs);
+  bottom: var(--space-xs);
+  z-index: 1;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 2rem;
+  margin: 0;
+  padding: 0 var(--space-sm);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: var(--text-meta);
+  white-space: nowrap;
+  color: var(--on-surface);
+  background: var(--surface-chrome);
+  cursor: pointer;
+}
+
+.recall-card-body-expand:hover {
+  background: color-mix(in srgb, var(--surface-chrome) 80%, var(--sage-muted) 20%);
+}
+
+.recall-card-body-expand:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .recall-card-open-source {
@@ -909,12 +1066,15 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  width: 1.75rem;
-  height: 1.75rem;
+  gap: var(--space-2xs);
+  min-height: 2rem;
   margin: 0;
-  padding: 0;
+  padding: 0 var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
+  font-family: inherit;
+  font-size: var(--text-meta);
+  white-space: nowrap;
   color: var(--on-surface);
   background: var(--surface-chrome);
   cursor: pointer;

@@ -261,6 +261,8 @@ export const MESSAGE_KEYS = [
   'recall_card_saved',
   'recall_card_saved_just_now',
   'recall_card_match_reason_aria',
+  'recall_card_body_expand',
+  'recall_card_body_collapse',
   'popup_duplicate_group_bookmark',
   'popup_duplicate_group_excerpt',
   'popup_duplicate_expand',

@@ -1042,6 +1042,12 @@
       }
     }
   },
+  "recall_card_body_expand": {
+    "message": "展开全文"
+  },
+  "recall_card_body_collapse": {
+    "message": "收起"
+  },
   "popup_duplicate_group_bookmark": {
     "message": "$1 个相同书签",
     "placeholders": {

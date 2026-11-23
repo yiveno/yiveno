@@ -1042,6 +1042,12 @@
       }
     }
   },
+  "recall_card_body_expand": {
+    "message": "Show full text"
+  },
+  "recall_card_body_collapse": {
+    "message": "Show less"
+  },
   "popup_duplicate_group_bookmark": {
     "message": "$1 identical bookmarks",
     "placeholders": {
