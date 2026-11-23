@@ -114,6 +114,64 @@ describe('completeOpenAiCompatibleChatDetailed request profiles', () => {
     expect(body).not.toHaveProperty('enable_thinking')
     expect(body).not.toHaveProperty('max_completion_tokens')
   })
+
+  it('sends a Perplexity Orchestrator body without vendor thinking fields', async () => {
+    const fetchMock = mockFetch()
+    await completeOpenAiCompatibleChatDetailed(
+      {
+        apiKey: 'test',
+        baseUrl: 'https://api.perplexity.ai/orchestrator/v1',
+        model: 'perplexity/glm-5.3-flash',
+        compat: 'perplexity'
+      },
+      messages
+    )
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe(
+      'https://api.perplexity.ai/orchestrator/v1/chat/completions'
+    )
+    const body = JSON.parse(fetchMock.mock.calls[0]?.[1]?.body as string)
+    expect(body).toEqual({
+      model: 'perplexity/glm-5.3-flash',
+      messages,
+      max_tokens: 400,
+      temperature: 0
+    })
+    expect(body).not.toHaveProperty('thinking')
+    expect(body).not.toHaveProperty('reasoning_effort')
+    expect(body).not.toHaveProperty('enable_thinking')
+    expect(body).not.toHaveProperty('max_completion_tokens')
+  })
+
+  it('parses Perplexity usage fields without inventing totals', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          choices: [{ message: { content: 'OK' } }],
+          usage: { prompt_tokens: 12, completion_tokens: 3, total_tokens: 15 }
+        }),
+        { status: 200 }
+      )
+    )
+    globalThis.fetch = fetchMock as typeof fetch
+
+    const result = await completeOpenAiCompatibleChatDetailed(
+      {
+        apiKey: 'test',
+        baseUrl: 'https://api.perplexity.ai/orchestrator/v1',
+        model: 'perplexity/glm-5.3-flash',
+        compat: 'perplexity'
+      },
+      messages
+    )
+
+    expect(result.text).toBe('OK')
+    expect(result.usage).toEqual({
+      promptTokens: 12,
+      completionTokens: 3,
+      totalTokens: 15
+    })
+  })
 })
 
 describe('createOpenAiCompatibleCompleter temperature 透传', () => {

@@ -1,0 +1,102 @@
+{
+  "created": "2026-11-23 15:00 +0800",
+  "updated": "2026-11-23 15:00 +0800",
+  "stopped": true,
+  "stopReason": "Stage 1 models HTTP 403: Orchestrator requires paid credits (restricted_api_key)",
+  "step0": {
+    "HEAD": "416e009a fix(getting-started): 开壳失败显示可重试可见文案",
+    "HEAD_hash": "416e009ac1e9b086944fef5f6ca691683a50394f",
+    "gitStatusShort": "M openai-compatible-chat.ts / .test.ts / recall-prototype-minimal.ts; ?? recall-glm-orchestrator-eval.mjs（本批允许文件）",
+    "gitStatusLines": 4,
+    "gates": {
+      "testMust": 127,
+      "testRunBeforeCompat": 1920,
+      "testRunAfterCompat": 1922,
+      "testRunDelta": 2,
+      "i18n": 902,
+      "worker": 308,
+      "website": 70
+    },
+    "keys": {
+      "PERPLEXITY_API_KEY": "present",
+      "DEEPSEEK_API_KEY": "present"
+    },
+    "p1Baseline": {
+      "source": "docs/audits/2026-11-19-recall-prototype-minimal.json legs[p1]",
+      "live": { "passed": 37, "total": 38 },
+      "pressure": { "passed": 24, "total": 24 },
+      "noise": { "passed": 27, "total": 116, "falseIntoParse": 84 },
+      "retrieval": {
+        "recallAt1": 0.8181818181818182,
+        "mrr": 0.9090909090909091,
+        "ndcgAt5": 0.9328963188311742,
+        "hitDenom": 11
+      },
+      "llmCalls": { "parse": 200, "rerank": 22, "total": 222 },
+      "tokens": {
+        "parsePrompt": 92773,
+        "parseCompletion": 3194,
+        "rerankPrompt": 14775,
+        "rerankCompletion": 2514
+      },
+      "latency": {
+        "parseMedianMs": 759,
+        "embedMedianMs": 1177,
+        "rerankMedianMs": 1175,
+        "totalMedianMs": 796
+      }
+    },
+    "ablationBaseline": {
+      "source": "docs/audits/2026-11-18-recall-ablation-audit.json arms[baseline]",
+      "live": { "passed": 38, "total": 38 },
+      "pressure": { "passed": 23, "total": 24 },
+      "noise": { "passed": 116, "total": 116 },
+      "retrieval": {
+        "recallAt1": 0.8181818181818182,
+        "mrr": 0.8787878787878788,
+        "ndcgAt5": 0.9090909090909091
+      },
+      "llmCalls": 62,
+      "latencyMedianMs": 1513.5
+    }
+  },
+  "stage1": {
+    "modelsUrl": "https://api.perplexity.ai/orchestrator/v1/models",
+    "modelsHttpStatus": 403,
+    "modelsErrorBody": "{\"error\":{\"message\":\"The Orchestrator API requires paid credits. Sign-up credits and Perplexity Pro or Max subscriptions do not count. Add credits at https://console.perplexity.ai to unlock it.\",\"type\":\"restricted_api_key\",\"code\":403}}",
+    "glm": null,
+    "deepseekPro": null,
+    "deepseekFlashInCatalog": null,
+    "probe": {
+      "ok": false,
+      "skipped": true,
+      "reason": "models catalog 403 → per Brief §4.2 stop before probe/eval"
+    },
+    "failoverNote": "provider failover 无法直接测试——无法主动让某个厂商部署失败；本批只验证网关路径通，不验证 failover 行为。"
+  },
+  "stage2": {
+    "status": "not_run",
+    "reason": "Stage 1 hard stop"
+  },
+  "stage3WorkerReadiness": {
+    "新provider实现": "需新增 worker/src/services/ai/perplexity-ai-chat-provider.ts 实现 AiChatProvider（isConfigured / complete）；env key=PERPLEXITY_API_KEY；请求体仅 model/messages/temperature/max_tokens，不可照搬 DeepSeek thinking 字段",
+    "resolveAiChatProvider": "worker/src/services/ai/ai-chat-provider.ts switch 增 case 'perplexity'；保留 default 对未知值抛 ai_provider_unsupported",
+    "模型ID流向": "resolveHostedModelForTask 在 worker/src/config/ai-task-kind.ts：经 AI_HOSTED_MODEL / AI_HOSTED_MODEL_NLU 等注入 request.model；生产切换需改默认或新 per-task 变量写入 perplexity/glm-5.3-flash",
+    "AIGateway": "DeepSeek 适配器默认经 Cloudflare AI Gateway（resolveDeepSeekChatCompletionsUrl）；Orchestrator 独立 base URL，不宜沿用 deepseek Gateway 路径；直连 https://api.perplexity.ai/orchestrator/v1 或另配 Gateway provider=perplexity-ai",
+    "预估改动规模": "约 2–4 个新/改文件（provider + resolve 分支 + env 类型 + 单测），测试增量约 5–15；本 Stage 只读估算，未动手"
+  },
+  "verdict": "无结论（Orchestrator 目录 403：账号无付费 credits / restricted_api_key）。网关路径未通到可用态；GLM 腿未跑；生产切换不做。",
+  "mappingGaps": [
+    "provider failover 无法直接测试",
+    "2000 行规模测试未做",
+    "Topic span 精确度无 gold",
+    "≥28 字无空格中文 mash 无专用 gold",
+    "目录动态：本批因 403 未读到实读价格"
+  ],
+  "deviations": [
+    "Stage 1 目录 403 → 按 §4.2 硬停；未跑试调、未跑 Stage 2 GLM eval",
+    "compat + 原型 glm 腿 + 入口 .mjs 已落地，便于账号开通 credits 后直接续跑",
+    "test:run 1920→1922（+2 perplexity 用例）"
+  ],
+  "rows": []
+}

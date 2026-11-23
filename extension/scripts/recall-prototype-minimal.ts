@@ -13,6 +13,7 @@
  *   DEEPSEEK_API_KEY | PARSE_GOLD_LLM_API_KEY（P1 解析+重排）
  *   DASHSCOPE_API_KEY（P2 qwen4-max）
  *   OPENAI_API_KEY（P2 gpt-6.2-sol 原生；缺则试 OPENROUTER_API_KEY 适配）
+ *   PERPLEXITY_API_KEY（P2 glm-5.3-flash · Orchestrator）
  *   腾讯 Hy4：本机无对应 key → 跳过
  *   SUPABASE_* 或 RETRIEVAL_ABLATION_ACCESS_TOKEN（真实 BGE）
  *   RETRIEVAL_ABLATION_API_BASE（默认 https://api.yiveno.com）
@@ -20,6 +21,7 @@
  * 输出：
  *   docs/audits/2026-11-19-recall-prototype-minimal.md
  *   docs/audits/2026-11-19-recall-prototype-minimal.json
+ *   （--legs=glm-5.3-flash 或 runGlmOrchestratorEval）docs/audits/2026-11-23-glm-orchestrator-eval.{md,json}
  *
  * 硬规则：不改产品文件；禁止 fake embedding；密钥不入库。
  */
@@ -64,10 +66,15 @@ const scriptDir = dirname(fileURLToPath(import.meta.url))
 const repoRoot = resolve(scriptDir, '../..')
 const OUT_JSON = resolve(repoRoot, 'docs/audits/2026-11-19-recall-prototype-minimal.json')
 const OUT_MD = resolve(repoRoot, 'docs/audits/2026-11-19-recall-prototype-minimal.md')
+const GLM_OUT_JSON = resolve(repoRoot, 'docs/audits/2026-11-23-glm-orchestrator-eval.json')
+const GLM_OUT_MD = resolve(repoRoot, 'docs/audits/2026-11-23-glm-orchestrator-eval.md')
 const ABLATION_JSON = resolve(repoRoot, 'docs/audits/2026-11-18-recall-ablation-audit.json')
+const P1_BASELINE_JSON = OUT_JSON
 const DEFAULT_EVAL_EMAIL = 'retrieval-ablation-local@yiveno.dev'
 
 const RERANK_MODEL = 'deepseek-v4-flash'
+const GLM_PARSE_MODEL = 'perplexity/glm-5.3-flash'
+const PERPLEXITY_ORCHESTRATOR_BASE_URL = 'https://api.perplexity.ai/orchestrator/v1'
 const PARSE_PROMPT_VERSION = 'prototype-minimal-v1'
 const TOP_K_SEMANTIC = 50
 const TOP_K_RERANK = 5
@@ -104,7 +111,7 @@ const RERANK_SYSTEM_PROMPT = [
 ].join('\n')
 
 type IntentLabel = 'recall' | 'chitchat' | 'question' | 'instruction'
-type LegId = 'p1' | 'gpt-6.2-sol' | 'qwen4-max' | 'hy4-flash'
+type LegId = 'p1' | 'gpt-6.2-sol' | 'qwen4-max' | 'hy4-flash' | 'glm-5.3-flash'
 
 interface TokenUsage {
   promptTokens: number | null
@@ -286,6 +293,7 @@ function isIntentLabel(value: string): value is IntentLabel {
 }
 
 function parseLegsArg(): Set<LegId> {
+  // 默认不含 glm：避免无意重写 11-19 报告；GLM 批走 --legs=glm-5.3-flash / runGlmOrchestratorEval
   const all: LegId[] = ['p1', 'gpt-6.2-sol', 'qwen4-max', 'hy4-flash']
   const arg = process.argv.find(a => a.startsWith('--legs='))
   if (!arg) return new Set(all)
@@ -295,6 +303,18 @@ function parseLegsArg(): Set<LegId> {
     .map(s => s.trim())
     .filter(Boolean) as LegId[]
   return new Set(list.length ? list : all)
+}
+
+function resolveReportPaths(legsWanted: Set<LegId>): {
+  json: string
+  md: string
+  reportId: string
+} {
+  const onlyGlm = legsWanted.size === 1 && legsWanted.has('glm-5.3-flash')
+  if (onlyGlm) {
+    return { json: GLM_OUT_JSON, md: GLM_OUT_MD, reportId: '2026-11-23-glm-orchestrator-eval' }
+  }
+  return { json: OUT_JSON, md: OUT_MD, reportId: '2026-11-19-recall-prototype-minimal' }
 }
 
 async function completeChat(
@@ -312,11 +332,12 @@ async function completeChat(
     temperature
   }
   // OpenRouter：走 openai 兼容但用 max_tokens，避免部分路由拒 reasoning_effort
+  // perplexity Orchestrator：标准 Chat Completions，禁止 thinking / reasoning_effort
   const viaOpenRouter = provider.keySource === 'OPENROUTER_API_KEY'
   if (compat === 'openai' && !viaOpenRouter) {
     body.max_completion_tokens = maxTokens
     body.reasoning_effort = 'none'
-  } else if (compat === 'dashscope' || viaOpenRouter) {
+  } else if (compat === 'dashscope' || compat === 'perplexity' || viaOpenRouter) {
     body.max_tokens = maxTokens
   } else {
     body.max_tokens = maxTokens
@@ -460,7 +481,25 @@ function resolveParseProviders(): Record<
     'hy4-flash': {
       skipped: true,
       reason: '本机 .env*.local 无腾讯 / Hunyuan / Hy4 API key'
-    }
+    },
+    'glm-5.3-flash': (() => {
+      const key = process.env.PERPLEXITY_API_KEY?.trim()
+      if (!key) return { skipped: true as const, reason: '缺少 PERPLEXITY_API_KEY' }
+      return {
+        legId: 'glm-5.3-flash' as const,
+        label: 'P2 GLM-5.3 Flash (Orchestrator)',
+        role: 'parse' as const,
+        model: GLM_PARSE_MODEL,
+        apiKey: key,
+        keySource: 'PERPLEXITY_API_KEY',
+        baseUrl: PERPLEXITY_ORCHESTRATOR_BASE_URL,
+        compat: 'perplexity' as const,
+        // 价格由 Stage 1 目录接口回填；此处占位 null
+        priceInPerM: null,
+        priceOutPerM: null,
+        note: 'Perplexity Orchestrator；解析模型 perplexity/glm-5.3-flash；重排仍 deepseek-v4-flash'
+      }
+    })()
   }
   return out
 }
@@ -1189,6 +1228,20 @@ function fmtIr(r: LegResult['retrieval']): string {
   return `${a} / ${b} / ${c}`
 }
 
+/** 从 11-19 原型 JSON 读出 P1 腿，供 GLM 单腿对照（不重跑 deepseek）。 */
+function loadP1BaselineLegFromDisk(): LegResult | null {
+  if (!existsSync(P1_BASELINE_JSON)) return null
+  try {
+    const raw = JSON.parse(readFileSync(P1_BASELINE_JSON, 'utf8')) as {
+      legs?: LegResult[]
+    }
+    const p1 = raw.legs?.find(l => l.legId === 'p1' && l.status === 'ran')
+    return p1 ?? null
+  } catch {
+    return null
+  }
+}
+
 function loadAblationBaseline(): {
   live: { passed: number; total: number }
   pressure: { passed: number; total: number }
@@ -1384,28 +1437,50 @@ function renderMd(input: {
   p1Judgment: ReturnType<typeof judgeP1> | null
   deviations: string[]
   mappingGaps: string[]
+  outJsonPath?: string
 }): string {
-  const { created, updated, step0, baseline, legs, p1Judgment, deviations, mappingGaps } = input
+  const {
+    created,
+    updated,
+    step0,
+    baseline,
+    legs,
+    p1Judgment,
+    deviations,
+    mappingGaps,
+    outJsonPath = OUT_JSON
+  } = input
   const p1 = legs.find(l => l.legId === 'p1' && l.status === 'ran')
+  const isGlmReport = outJsonPath.includes('glm-orchestrator')
   const lines: string[] = []
   lines.push('---')
-  lines.push('title: 2026-11-19 Recall 最小 LLM 原生原型（P1）+ 解析模型对照（P2）')
+  lines.push(
+    isGlmReport
+      ? 'title: 2026-11-23 GLM-5.3 Flash + Perplexity Orchestrator 解析对照'
+      : 'title: 2026-11-19 Recall 最小 LLM 原生原型（P1）+ 解析模型对照（P2）'
+  )
   lines.push(`created: ${created}`)
   lines.push(`updated: ${updated}`)
   lines.push('author: agent:cursor')
   lines.push(
-    'scope: 离线只读实验；P1 一次解析 + bge-m3 Top50 + 一次 LLM 重排；P2 只换解析模型；不改产品行为'
+    isGlmReport
+      ? 'scope: 离线只读；P2 式单腿只换解析模型为 perplexity/glm-5.3-flash；Orchestrator 连通性；不改产品/Worker'
+      : 'scope: 离线只读实验；P1 一次解析 + bge-m3 Top50 + 一次 LLM 重排；P2 只换解析模型；不改产品行为'
   )
   lines.push('status: complete')
   lines.push('upstream:')
+  lines.push('  - docs/audits/2026-11-19-recall-prototype-minimal.md')
   lines.push('  - docs/audits/2026-11-18-recall-ablation-audit.md')
-  lines.push('  - extension/scripts/recall-ablation-audit.ts')
-  lines.push('  - extension/src/core/recall/eval/retrieval-ablation-cases.ts')
+  lines.push('  - extension/scripts/recall-prototype-minimal.ts')
   lines.push('downstream:')
-  lines.push('  - 仅证据与判定；不重构管线；不推进模型接入')
+  lines.push('  - 仅证据与判定；不推进生产切换')
   lines.push('---')
   lines.push('')
-  lines.push('# 2026-11-19 Recall 最小 LLM 原生原型')
+  lines.push(
+    isGlmReport
+      ? '# 2026-11-23 GLM-5.3 Flash + Perplexity Orchestrator 解析对照'
+      : '# 2026-11-19 Recall 最小 LLM 原生原型'
+  )
   lines.push('')
   lines.push('## 1. Step 0 定锚')
   lines.push('')
@@ -1529,7 +1604,360 @@ function renderMd(input: {
     `- 解析超时 ${PARSE_TIMEOUT_MS}ms；重排超时 ${RERANK_TIMEOUT_MS}ms（脚本本地 fetch，非产品 12s）。`
   )
   lines.push('')
-  lines.push(`逐行 JSON：\`${OUT_JSON}\``)
+  lines.push(`逐行 JSON：\`${outJsonPath}\``)
+  lines.push('')
+  return lines.join('\n')
+}
+
+type OrchestratorModelPrice = {
+  id: string
+  inputPerM: number | null
+  outputPerM: number | null
+  cacheReadPerM: number | null
+  raw: Record<string, unknown>
+}
+
+type Stage1Connectivity = {
+  modelsHttpStatus: number
+  modelsErrorBody: string | null
+  glm: OrchestratorModelPrice | null
+  deepseekPro: OrchestratorModelPrice | null
+  deepseekFlashInCatalog: boolean
+  flashCatalogIds: string[]
+  probe: {
+    ok: boolean
+    latencyMs: number | null
+    contentPreview: string | null
+    usage: {
+      promptTokens: number | null
+      completionTokens: number | null
+      totalTokens: number | null
+    } | null
+    error: string | null
+  }
+  failoverNote: string
+}
+
+function pickPriceField(obj: Record<string, unknown>, keys: string[]): number | null {
+  for (const key of keys) {
+    const v = obj[key]
+    if (typeof v === 'number' && Number.isFinite(v)) return v
+    if (typeof v === 'string' && v.trim() && !Number.isNaN(Number(v))) return Number(v)
+  }
+  return null
+}
+
+function extractModelPrice(entry: Record<string, unknown>): OrchestratorModelPrice {
+  const id = typeof entry.id === 'string' ? entry.id : String(entry.id ?? '')
+  const nested =
+    typeof entry.pricing === 'object' && entry.pricing !== null
+      ? (entry.pricing as Record<string, unknown>)
+      : entry
+  // Orchestrator 目录：价格多为「每 token」美元；若数值 < 0.01 视为 per-token，换算成 $/1M
+  const rawIn = pickPriceField(nested, [
+    'input_token_price',
+    'prompt',
+    'input',
+    'input_cost_per_token',
+    'prompt_token_price'
+  ])
+  const rawOut = pickPriceField(nested, [
+    'output_token_price',
+    'completion',
+    'output',
+    'output_cost_per_token',
+    'completion_token_price'
+  ])
+  const rawCache = pickPriceField(nested, [
+    'cache_read_token_price',
+    'cache_read',
+    'cached_input',
+    'input_cache_read'
+  ])
+  const toPerM = (n: number | null): number | null => {
+    if (n == null) return null
+    if (n > 0 && n < 0.01) return n * 1_000_000
+    return n
+  }
+  return {
+    id,
+    inputPerM: toPerM(rawIn),
+    outputPerM: toPerM(rawOut),
+    cacheReadPerM: toPerM(rawCache),
+    raw: entry
+  }
+}
+
+async function runStage1OrchestratorConnectivity(apiKey: string): Promise<Stage1Connectivity> {
+  const { completeOpenAiCompatibleChatDetailed } =
+    await import('../src/core/recall/understand/openai-compatible-chat')
+  const modelsUrl = `${PERPLEXITY_ORCHESTRATOR_BASE_URL}/models`
+  const modelsRes = await fetch(modelsUrl, {
+    headers: { authorization: `Bearer ${apiKey}`, accept: 'application/json' }
+  })
+  const modelsText = await modelsRes.text()
+  let modelsErrorBody: string | null = null
+  let glm: OrchestratorModelPrice | null = null
+  let deepseekPro: OrchestratorModelPrice | null = null
+  let deepseekFlashInCatalog = false
+  const flashCatalogIds: string[] = []
+
+  if (!modelsRes.ok) {
+    modelsErrorBody = modelsText.slice(0, 2000)
+    return {
+      modelsHttpStatus: modelsRes.status,
+      modelsErrorBody,
+      glm: null,
+      deepseekPro: null,
+      deepseekFlashInCatalog: false,
+      flashCatalogIds: [],
+      probe: {
+        ok: false,
+        latencyMs: null,
+        contentPreview: null,
+        usage: null,
+        error: `models_http_${modelsRes.status}`
+      },
+      failoverNote:
+        'provider failover 无法直接测试——无法主动让某个厂商部署失败；本批只验证网关路径通，不验证 failover 行为。'
+    }
+  }
+
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(modelsText)
+  } catch {
+    throw new Error('orchestrator_models_invalid_json')
+  }
+  const list: unknown[] = Array.isArray(parsed)
+    ? parsed
+    : typeof parsed === 'object' &&
+        parsed !== null &&
+        Array.isArray((parsed as { data?: unknown }).data)
+      ? (parsed as { data: unknown[] }).data
+      : []
+
+  for (const item of list) {
+    if (typeof item !== 'object' || item === null) continue
+    const entry = item as Record<string, unknown>
+    const id = typeof entry.id === 'string' ? entry.id : ''
+    const price = extractModelPrice(entry)
+    if (id === GLM_PARSE_MODEL || id.endsWith('/glm-5.3-flash')) glm = price
+    if (id.includes('deepseek-v4-pro') || id === 'perplexity/deepseek-v4-pro-0813') {
+      deepseekPro = price
+    }
+    if (id.toLowerCase().includes('flash')) flashCatalogIds.push(id)
+    if (
+      id === 'deepseek-v4-flash' ||
+      id.endsWith('/deepseek-v4-flash') ||
+      id.includes('deepseek-v4-flash')
+    ) {
+      deepseekFlashInCatalog = true
+    }
+  }
+
+  let probe: Stage1Connectivity['probe']
+  try {
+    const detailed = await completeOpenAiCompatibleChatDetailed(
+      {
+        apiKey,
+        baseUrl: PERPLEXITY_ORCHESTRATOR_BASE_URL,
+        model: GLM_PARSE_MODEL,
+        compat: 'perplexity',
+        temperature: 0,
+        maxTokens: 16
+      },
+      [{ role: 'user', content: 'Say OK' }]
+    )
+    probe = {
+      ok: true,
+      latencyMs: detailed.latencyMs,
+      contentPreview: detailed.text.slice(0, 80),
+      usage: {
+        promptTokens: detailed.usage.promptTokens,
+        completionTokens: detailed.usage.completionTokens,
+        totalTokens: detailed.usage.totalTokens
+      },
+      error: null
+    }
+  } catch (error) {
+    probe = {
+      ok: false,
+      latencyMs: null,
+      contentPreview: null,
+      usage: null,
+      error: error instanceof Error ? error.message : String(error)
+    }
+  }
+
+  return {
+    modelsHttpStatus: modelsRes.status,
+    modelsErrorBody: null,
+    glm,
+    deepseekPro,
+    deepseekFlashInCatalog,
+    flashCatalogIds,
+    probe,
+    failoverNote:
+      'provider failover 无法直接测试——无法主动让某个厂商部署失败；本批只验证网关路径通，不验证 failover 行为。'
+  }
+}
+
+function renderGlmMd(input: {
+  created: string
+  updated: string
+  step0: Record<string, unknown>
+  stage1: Stage1Connectivity
+  baseline: ReturnType<typeof loadAblationBaseline>
+  p1Compare: ReturnType<typeof loadP1BaselineLegFromDisk>
+  leg: LegResult
+  workerReadiness: Record<string, string>
+  mappingGaps: string[]
+  deviations: string[]
+  verdict: string
+}): string {
+  const {
+    created,
+    updated,
+    step0,
+    stage1,
+    baseline,
+    p1Compare,
+    leg,
+    workerReadiness,
+    mappingGaps,
+    deviations,
+    verdict
+  } = input
+  const p1 = p1Compare
+  const lines: string[] = []
+  lines.push('---')
+  lines.push('title: 2026-11-23 GLM-5.3 Flash + Perplexity Orchestrator 解析对照')
+  lines.push(`created: ${created}`)
+  lines.push(`updated: ${updated}`)
+  lines.push('author: agent:cursor')
+  lines.push(
+    'scope: 离线只读；Orchestrator 连通性 + P2 式 GLM 单腿；对照 P1-deepseek；不改产品/Worker；不推进生产切换'
+  )
+  lines.push('status: complete')
+  lines.push('upstream:')
+  lines.push('  - docs/audits/2026-11-19-recall-prototype-minimal.md')
+  lines.push('  - docs/audits/2026-11-18-recall-ablation-audit.md')
+  lines.push('downstream:')
+  lines.push('  - 仅判定；生产切换另批')
+  lines.push('---')
+  lines.push('')
+  lines.push('# 2026-11-23 GLM-5.3 Flash + Perplexity Orchestrator 解析对照')
+  lines.push('')
+  lines.push('## 1. Step 0 定锚')
+  lines.push('')
+  lines.push('| 项 | 实测 |')
+  lines.push('| --- | --- |')
+  for (const [k, v] of Object.entries(step0)) {
+    lines.push(`| ${k} | ${typeof v === 'string' ? v : `\`${JSON.stringify(v)}\``} |`)
+  }
+  lines.push('')
+  lines.push('### P1-deepseek 对照基线（11-19 JSON 实读）')
+  lines.push('')
+  if (p1?.retrieval) {
+    lines.push(
+      `- 意图：live ${fmtRate(p1.live)} / pressure ${fmtRate(p1.pressure)} / noise ${fmtRate(p1.noise)}（误入 ${p1.noise.falseIntoParse}）`
+    )
+    lines.push(`- IR：${fmtIr(p1.retrieval)}`)
+    lines.push(
+      `- 延迟总中位 ${p1.latency.totalMedianMs} ms（parse ${p1.latency.parseMedianMs} / embed ${p1.latency.embedMedianMs} / rerank ${p1.latency.rerankMedianMs}）`
+    )
+    lines.push(
+      `- tokens parse ${p1.tokens.parsePrompt}/${p1.tokens.parseCompletion}；rerank ${p1.tokens.rerankPrompt}/${p1.tokens.rerankCompletion}；LLM ${p1.llmCalls.total}`
+    )
+  } else {
+    lines.push('- **缺失** P1 基线 JSON')
+  }
+  lines.push('')
+  lines.push('### 管线全开基线（11-18 消融 JSON 实读）')
+  lines.push('')
+  lines.push(
+    `- live ${fmtRate(baseline.live)} / pressure ${fmtRate(baseline.pressure)} / noise ${fmtRate(baseline.noise)}；IR ${baseline.retrieval.recallAt1.toFixed(4)} / ${baseline.retrieval.mrr.toFixed(4)} / ${baseline.retrieval.ndcgAt5.toFixed(4)}；LLM ${baseline.llmCalls}；中位延迟 ${baseline.latencyMedianMs} ms`
+  )
+  lines.push('')
+  lines.push('## 2. Stage 1 · Orchestrator 连通性')
+  lines.push('')
+  lines.push(`- 目录接口 HTTP **${stage1.modelsHttpStatus}**`)
+  if (stage1.modelsErrorBody) {
+    lines.push(`- 错误体：\`${stage1.modelsErrorBody.replace(/\|/g, '/')}\``)
+  }
+  if (stage1.glm) {
+    lines.push(
+      `- GLM \`${stage1.glm.id}\`：input $${stage1.glm.inputPerM ?? 'null'}/1M · output $${stage1.glm.outputPerM ?? 'null'}/1M · cache_read $${stage1.glm.cacheReadPerM ?? 'null'}/1M`
+    )
+  } else {
+    lines.push('- GLM `perplexity/glm-5.3-flash`：**未在目录中找到**')
+  }
+  if (stage1.deepseekPro) {
+    lines.push(
+      `- DeepSeek Pro \`${stage1.deepseekPro.id}\`：input $${stage1.deepseekPro.inputPerM ?? 'null'}/1M · output $${stage1.deepseekPro.outputPerM ?? 'null'}/1M`
+    )
+  } else {
+    lines.push('- DeepSeek Pro 条目：未找到')
+  }
+  lines.push(
+    `- deepseek-v4-flash 是否在列：**${stage1.deepseekFlashInCatalog ? '是' : '否'}**（flash 相关 id：${stage1.flashCatalogIds.join(', ') || '无'}）`
+  )
+  lines.push(
+    `- 试调：ok=${stage1.probe.ok} · 延迟 ${stage1.probe.latencyMs ?? '—'} ms · content=\`${(stage1.probe.contentPreview ?? '').replace(/`/g, "'")}\` · usage=${JSON.stringify(stage1.probe.usage)} · error=${stage1.probe.error ?? 'null'}`
+  )
+  lines.push(`- 已知缺口：${stage1.failoverNote}`)
+  lines.push('')
+  lines.push('## 3. Stage 2 · 对照表（P2 同列）')
+  lines.push('')
+  lines.push(
+    '| 模型 | 意图分类（live / pressure / noise） | IR（R@1 / MRR / nDCG@5） | 延迟中位 | tokens | 成本估算 | 结论 |'
+  )
+  lines.push('| --- | --- | --- | ---: | --- | ---: | --- |')
+  if (p1?.retrieval) {
+    lines.push(
+      `| P1 deepseek-v4-flash（对照） | ${fmtRate(p1.live)} / ${fmtRate(p1.pressure)} / ${fmtRate(p1.noise)} | ${fmtIr(p1.retrieval)} | ${p1.latency.totalMedianMs ?? '—'} | parse ${p1.tokens.parsePrompt}/${p1.tokens.parseCompletion}；rerank ${p1.tokens.rerankPrompt}/${p1.tokens.rerankCompletion} | 未估 | P1 基线 |`
+    )
+  }
+  if (leg.status !== 'ran') {
+    lines.push(
+      `| ${leg.label} | — | — | — | — | — | **${leg.verdict ?? leg.status}**（${leg.skipReason ?? ''}） |`
+    )
+  } else {
+    lines.push(
+      `| ${leg.label} | ${fmtRate(leg.live)} / ${fmtRate(leg.pressure)} / ${fmtRate(leg.noise)} | ${fmtIr(leg.retrieval)} | ${leg.latency.totalMedianMs ?? '—'} | parse ${leg.tokens.parsePrompt}/${leg.tokens.parseCompletion}；rerank ${leg.tokens.rerankPrompt}/${leg.tokens.rerankCompletion} | ${leg.costUsd ?? '未估'}（${leg.costNote}） | **${leg.verdict}** |`
+    )
+  }
+  lines.push('')
+  lines.push(`**判定（事先写死）：** ${verdict}`)
+  lines.push('')
+  lines.push('## 4. Stage 3 · Worker 接入就绪分析（只读）')
+  lines.push('')
+  for (const [k, v] of Object.entries(workerReadiness)) {
+    lines.push(`- **${k}**：${v}`)
+  }
+  lines.push('')
+  lines.push('## 5. 映射缺口清单')
+  lines.push('')
+  for (const g of mappingGaps) lines.push(`- ${g}`)
+  lines.push('')
+  lines.push('## 6. 偏差清单')
+  lines.push('')
+  for (const d of deviations) lines.push(`- ${d}`)
+  lines.push('')
+  lines.push('## 7. 总结论')
+  lines.push('')
+  lines.push(verdict)
+  lines.push('')
+  lines.push('## 附录 A · 解析 prompt（与 P1 同一文本）')
+  lines.push('')
+  lines.push('```')
+  lines.push(PROTOTYPE_PARSE_SYSTEM_PROMPT)
+  lines.push('```')
+  lines.push('')
+  lines.push(`promptVersion: ${PARSE_PROMPT_VERSION}`)
+  lines.push('')
+  lines.push(`逐行 JSON：\`${GLM_OUT_JSON}\``)
   lines.push('')
   return lines.join('\n')
 }
@@ -1565,7 +1993,7 @@ export async function runRecallPrototypeMinimal(): Promise<void> {
     )
   }
 
-  for (const legId of ['p1', 'gpt-6.2-sol', 'qwen4-max', 'hy4-flash'] as LegId[]) {
+  for (const legId of ['p1', 'gpt-6.2-sol', 'qwen4-max', 'hy4-flash', 'glm-5.3-flash'] as LegId[]) {
     if (!legsWanted.has(legId)) continue
     const prov = parseProviders[legId]
     if ('skipped' in prov && prov.skipped) {
@@ -1598,18 +2026,23 @@ export async function runRecallPrototypeMinimal(): Promise<void> {
     }
   }
 
-  const p1 = legs.find(l => l.legId === 'p1' && l.status === 'ran') ?? null
-  const p1Judgment = p1 ? judgeP1(p1, baseline) : null
+  const p1 = legs.find(l => l.legId === 'p1' && l.status === 'ran') ?? loadP1BaselineLegFromDisk()
+  const p1Judgment =
+    p1 && p1.legId === 'p1' && legs.some(l => l.legId === 'p1' && l.status === 'ran')
+      ? judgeP1(p1, baseline)
+      : null
   for (const leg of legs) {
     if (leg.legId === 'p1') {
       leg.verdict = p1Judgment?.overall ?? '无结论'
       continue
     }
-    if (leg.status === 'ran' && p1) {
+    if (leg.status === 'ran' && p1 && p1.status === 'ran' && p1.retrieval) {
       leg.verdict = judgeP2(leg, p1)
       leg.verdictNote = '质量不低于 P1-deepseek 才值得考虑'
     }
   }
+
+  const reportPaths = resolveReportPaths(legsWanted)
 
   const mappingGaps = [
     'Topic span 精确度无 gold → 无结论',
@@ -1643,7 +2076,7 @@ export async function runRecallPrototypeMinimal(): Promise<void> {
     HEAD: head,
     gitStatusShort: gitStatusShort || '（干净）',
     gitStatusLines: gitStatusShort ? gitStatusShort.split('\n').length : 0,
-    reportDate: '2026-11-19',
+    reportDate: reportPaths.reportId.startsWith('2026-11-23') ? '2026-11-23' : '2026-11-19',
     parsePromptVersion: PARSE_PROMPT_VERSION,
     corpusFingerprint: ablationCorpusFingerprint(baseCorpus),
     embedApi: apiBase,
@@ -1653,10 +2086,16 @@ export async function runRecallPrototypeMinimal(): Promise<void> {
     excerptClip: EXCERPT_CLIP,
     gatesFromSessionStep0: {
       testMust: 127,
-      testRun: 1789,
-      i18n: 817,
-      worker: 211
-    }
+      testRun: 1920,
+      i18n: 902,
+      worker: 308,
+      website: 70
+    },
+    p1CompareSource: legs.some(l => l.legId === 'p1' && l.status === 'ran')
+      ? 'this_run'
+      : p1
+        ? 'disk:2026-11-19-recall-prototype-minimal.json'
+        : 'missing'
   }
 
   const updated = nowStampShanghai()
@@ -1666,6 +2105,19 @@ export async function runRecallPrototypeMinimal(): Promise<void> {
     step0,
     baseline,
     p1Judgment,
+    p1Compare: p1
+      ? {
+          legId: p1.legId,
+          label: p1.label,
+          live: p1.live,
+          pressure: p1.pressure,
+          noise: p1.noise,
+          retrieval: p1.retrieval,
+          latency: p1.latency,
+          tokens: p1.tokens,
+          llmCalls: p1.llmCalls
+        }
+      : null,
     legs: legs.map(l => ({
       ...l,
       parseProvider: l.parseProvider ? { ...l.parseProvider, apiKey: '***' } : undefined,
@@ -1679,10 +2131,10 @@ export async function runRecallPrototypeMinimal(): Promise<void> {
     }
   }
 
-  mkdirSync(dirname(OUT_JSON), { recursive: true })
-  writeFileSync(OUT_JSON, JSON.stringify(payload, null, 2))
+  mkdirSync(dirname(reportPaths.json), { recursive: true })
+  writeFileSync(reportPaths.json, JSON.stringify(payload, null, 2))
   writeFileSync(
-    OUT_MD,
+    reportPaths.md,
     renderMd({
       created,
       updated,
@@ -1691,9 +2143,260 @@ export async function runRecallPrototypeMinimal(): Promise<void> {
       legs,
       p1Judgment,
       deviations,
-      mappingGaps
+      mappingGaps,
+      outJsonPath: reportPaths.json
     })
   )
-  console.info(`[prototype] wrote ${OUT_MD}`)
-  console.info(`[prototype] wrote ${OUT_JSON}`)
+  console.info(`[prototype] wrote ${reportPaths.md}`)
+  console.info(`[prototype] wrote ${reportPaths.json}`)
+}
+
+/**
+ * GLM + Orchestrator 本批入口：Stage 1 连通性 → Stage 2 单腿 → 写 2026-11-23 报告。
+ * 复用本文件 runLeg / prompt / 评分；不重写口径。
+ */
+export async function runGlmOrchestratorEval(): Promise<void> {
+  loadLocalEnvFiles()
+  const created = nowStampShanghai()
+  const apiKey = process.env.PERPLEXITY_API_KEY?.trim()
+  if (!apiKey) {
+    throw new Error('缺少 PERPLEXITY_API_KEY（Stage 1/2 硬前置）')
+  }
+
+  console.info('[glm-orch] Stage 1: GET /models + probe completion')
+  const stage1 = await runStage1OrchestratorConnectivity(apiKey)
+  console.info(
+    `[glm-orch] models status=${stage1.modelsHttpStatus} glm=${stage1.glm?.id ?? 'missing'} probe.ok=${stage1.probe.ok}`
+  )
+
+  if (stage1.modelsHttpStatus !== 200) {
+    const createdFail = created
+    const updated = nowStampShanghai()
+    const payload = {
+      created: createdFail,
+      updated,
+      stopped: true,
+      stopReason: `Stage 1 models HTTP ${stage1.modelsHttpStatus}`,
+      stage1
+    }
+    mkdirSync(dirname(GLM_OUT_JSON), { recursive: true })
+    writeFileSync(GLM_OUT_JSON, JSON.stringify(payload, null, 2))
+    writeFileSync(
+      GLM_OUT_MD,
+      `# 停下 · Orchestrator 目录接口失败\n\nHTTP ${stage1.modelsHttpStatus}\n\n\`\`\`\n${stage1.modelsErrorBody ?? ''}\n\`\`\`\n`
+    )
+    throw new Error(`orchestrator_models_http_${stage1.modelsHttpStatus}`)
+  }
+  if (!stage1.probe.ok) {
+    const updated = nowStampShanghai()
+    const payload = {
+      created,
+      updated,
+      stopped: true,
+      stopReason: `Stage 1 probe failed: ${stage1.probe.error}`,
+      stage1
+    }
+    mkdirSync(dirname(GLM_OUT_JSON), { recursive: true })
+    writeFileSync(GLM_OUT_JSON, JSON.stringify(payload, null, 2))
+    writeFileSync(GLM_OUT_MD, `# 停下 · Orchestrator 试调失败\n\n${stage1.probe.error}\n`)
+    throw new Error(`orchestrator_probe_failed:${stage1.probe.error}`)
+  }
+
+  const baseline = loadAblationBaseline()
+  const p1Compare = loadP1BaselineLegFromDisk()
+  if (!p1Compare?.retrieval) {
+    throw new Error('缺少 P1 对照基线 JSON（docs/audits/2026-11-19-recall-prototype-minimal.json）')
+  }
+
+  const parseProviders = resolveParseProviders()
+  const rerankProvider = resolveRerankProvider()
+  if (!rerankProvider) {
+    throw new Error('缺少 DEEPSEEK_API_KEY / PARSE_GOLD_LLM_API_KEY（重排必需）')
+  }
+  const glmProvRaw = parseProviders['glm-5.3-flash']
+  if ('skipped' in glmProvRaw && glmProvRaw.skipped) {
+    throw new Error(glmProvRaw.reason)
+  }
+  const glmProv: ProviderConfig = {
+    ...glmProvRaw,
+    priceInPerM: stage1.glm?.inputPerM ?? null,
+    priceOutPerM: stage1.glm?.outputPerM ?? null,
+    note: `${glmProvRaw.note}；价格来自 Stage 1 目录实读`
+  }
+
+  const apiBase = resolveApiBase()
+  const { token, source } = await resolveEmbedAccessToken()
+  console.info(`[glm-orch] embed token source=${source} api=${apiBase}`)
+  const embedClient = createWorkerEmbedClient(token, apiBase)
+  const baseCorpus = buildRetrievalAblationCorpus()
+  assertAblationCorpusHasNoEmbeddings(baseCorpus)
+  const corpus = await embedCorpus(baseCorpus, texts => embedClient.embedTexts(texts))
+
+  console.info(`[glm-orch] Stage 2: run glm-5.3-flash parse=${glmProv.model}`)
+  const leg = await runLeg({
+    legId: 'glm-5.3-flash',
+    parseProvider: glmProv,
+    rerankProvider,
+    corpus,
+    embedClient
+  })
+
+  // 成本：GLM 解析价来自目录；DeepSeek 重排价本批未核实 → 解析层可估，总成本标未估
+  if (glmProv.priceInPerM != null && glmProv.priceOutPerM != null) {
+    const parseOnly =
+      (leg.tokens.parsePrompt * glmProv.priceInPerM +
+        leg.tokens.parseCompletion * glmProv.priceOutPerM) /
+      1_000_000
+    leg.costUsd = null
+    leg.costNote = `解析层按目录价 $${glmProv.priceInPerM}/$${glmProv.priceOutPerM} 估 parse≈$${parseOnly.toFixed(6)}；重排 deepseek 官方价未核实 → 总成本未估`
+    ;(leg as LegResult & { costUsdParseOnly?: number }).costUsdParseOnly = parseOnly
+  } else {
+    leg.costUsd = null
+    leg.costNote = '目录未返回可用 GLM $/1M → 只报 tokens'
+  }
+
+  leg.verdict = judgeP2(leg, p1Compare)
+  leg.verdictNote = '质量不低于 P1-deepseek 才值得考虑'
+
+  const workerReadiness: Record<string, string> = {
+    新provider实现:
+      '需新增 `worker/src/services/ai/perplexity-ai-chat-provider.ts` 实现 AiChatProvider（isConfigured / complete）；env key=`PERPLEXITY_API_KEY`；请求体仅 model/messages/temperature/max_tokens，**不可**照搬 DeepSeek 的 `thinking` 字段',
+    resolveAiChatProvider:
+      "`worker/src/services/ai/ai-chat-provider.ts` 的 switch 增 `case 'perplexity'`；保留 default 对未知值抛 `ai_provider_unsupported`",
+    模型ID流向:
+      '`resolveHostedModelForTask` 在 `worker/src/config/ai-task-kind.ts`：把 `perplexity/glm-5.3-flash` 经 per-task env（如既有 `AI_HOSTED_MODEL_*`）或默认 `AI_HOSTED_MODEL` 注入 `request.model`；生产切换需新变量或改默认模型 id',
+    AIGateway:
+      'DeepSeek 适配器默认经 Cloudflare AI Gateway；Orchestrator 有独立 base URL，**不宜**沿用 DeepSeek Gateway 路径；直连 `https://api.perplexity.ai/orchestrator/v1` 或另配 Gateway provider=`perplexity-ai`（若启用）',
+    预估改动规模:
+      '约 2–4 个新/改文件（provider + resolve 分支 + env 类型 + 单测），测试增量约 5–15；本 Stage 只读估算，未动手'
+  }
+
+  const mappingGaps = [
+    'provider failover 无法直接测试（Stage 1 缺口声明）',
+    '2000 行规模测试未做；本批仅小规模金标',
+    'Topic span 精确度无 gold',
+    '≥28 字无空格中文 mash 无专用 gold',
+    '目录动态：模型与价格以 Stage 1 实读为准',
+    'noise 无 Gate A：GLM noise 只对照 P1 的 27/116，不对照管线 116/116'
+  ]
+  const deviations: string[] = [
+    '执行方式：在现有原型脚本内扩展 glm-5.3-flash 腿 + 导出 runGlmOrchestratorEval（非另起重写口径脚本）',
+    'P1 对照数字来自磁盘 2026-11-19 JSON，本批不重跑 deepseek 解析腿',
+    `解析超时 ${PARSE_TIMEOUT_MS}ms / 重排 ${RERANK_TIMEOUT_MS}ms（脚本层；未改产品 CLUE_LLM_COMPLETE_TIMEOUT_MS）`,
+    'DeepSeek 重排官方 $/1M 未核实 → 总成本未估；解析成本可按 Orchestrator 目录价估算'
+  ]
+
+  let head = 'unknown'
+  let gitStatusShort = ''
+  try {
+    const { execSync } = await import('node:child_process')
+    head = execSync('git log -1 --oneline', { cwd: repoRoot, encoding: 'utf8' }).trim()
+    gitStatusShort = execSync('git status --short', { cwd: repoRoot, encoding: 'utf8' }).trim()
+  } catch {
+    // ignore
+  }
+
+  const step0 = {
+    HEAD: head,
+    gitStatusShort: gitStatusShort || '（干净）',
+    gitStatusLines: gitStatusShort ? gitStatusShort.split('\n').length : 0,
+    reportDate: '2026-11-23',
+    parsePromptVersion: PARSE_PROMPT_VERSION,
+    keys: {
+      PERPLEXITY_API_KEY: 'present',
+      DEEPSEEK_API_KEY: process.env.DEEPSEEK_API_KEY?.trim() ? 'present' : 'missing'
+    },
+    gatesFromSessionStep0: {
+      testMust: 127,
+      testRunBeforeCompat: 1920,
+      testRunCompatDelta: '+2（openai-compatible-chat.test.ts）',
+      i18n: 902,
+      worker: 308,
+      website: 70
+    },
+    p1CompareSource: 'disk:2026-11-19-recall-prototype-minimal.json',
+    corpusFingerprint: ablationCorpusFingerprint(baseCorpus),
+    embedApi: apiBase,
+    embedTokenSource: source
+  }
+
+  const verdictOneLiner =
+    leg.verdict === '值得考虑'
+      ? 'GLM 质量不低于 P1-deepseek → 值得考虑；Orchestrator 路径已通；生产切换另批（见 Stage 3）。'
+      : leg.verdict === '不换'
+        ? 'GLM 质量低于 P1-deepseek → 不换；Orchestrator 路径已通；不推进生产切换。'
+        : `GLM 结论：${leg.verdict}；Orchestrator 试调=${stage1.probe.ok}。`
+
+  const updated = nowStampShanghai()
+  const payload = {
+    created,
+    updated,
+    step0,
+    stage1: {
+      ...stage1,
+      glm: stage1.glm
+        ? {
+            id: stage1.glm.id,
+            inputPerM: stage1.glm.inputPerM,
+            outputPerM: stage1.glm.outputPerM,
+            cacheReadPerM: stage1.glm.cacheReadPerM
+          }
+        : null,
+      deepseekPro: stage1.deepseekPro
+        ? {
+            id: stage1.deepseekPro.id,
+            inputPerM: stage1.deepseekPro.inputPerM,
+            outputPerM: stage1.deepseekPro.outputPerM,
+            cacheReadPerM: stage1.deepseekPro.cacheReadPerM
+          }
+        : null
+    },
+    baseline,
+    p1Compare: {
+      legId: p1Compare.legId,
+      label: p1Compare.label,
+      live: p1Compare.live,
+      pressure: p1Compare.pressure,
+      noise: p1Compare.noise,
+      retrieval: p1Compare.retrieval,
+      latency: p1Compare.latency,
+      tokens: p1Compare.tokens,
+      llmCalls: p1Compare.llmCalls
+    },
+    leg: {
+      ...leg,
+      parseProvider: leg.parseProvider ? { ...leg.parseProvider, apiKey: '***' } : undefined,
+      rerankProvider: leg.rerankProvider ? { ...leg.rerankProvider, apiKey: '***' } : undefined
+    },
+    workerReadiness,
+    mappingGaps,
+    deviations,
+    verdict: verdictOneLiner,
+    prompts: {
+      parseSystem: PROTOTYPE_PARSE_SYSTEM_PROMPT,
+      rerankSystem: RERANK_SYSTEM_PROMPT
+    }
+  }
+
+  mkdirSync(dirname(GLM_OUT_JSON), { recursive: true })
+  writeFileSync(GLM_OUT_JSON, JSON.stringify(payload, null, 2))
+  writeFileSync(
+    GLM_OUT_MD,
+    renderGlmMd({
+      created,
+      updated,
+      step0,
+      stage1,
+      baseline,
+      p1Compare,
+      leg,
+      workerReadiness,
+      mappingGaps,
+      deviations,
+      verdict: verdictOneLiner
+    })
+  )
+  console.info(`[glm-orch] wrote ${GLM_OUT_MD}`)
+  console.info(`[glm-orch] wrote ${GLM_OUT_JSON}`)
+  console.info(`[glm-orch] verdict=${leg.verdict}`)
 }

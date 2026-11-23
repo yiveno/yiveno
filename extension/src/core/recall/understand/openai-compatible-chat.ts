@@ -1,5 +1,5 @@
 /**
- * Eval 专用：OpenAI 兼容 Chat Completions（DeepSeek / OpenAI / DashScope 等）。
+ * Eval 专用：OpenAI 兼容 Chat Completions（DeepSeek / OpenAI / DashScope / Perplexity Orchestrator 等）。
  * 禁止接入产品主路径或数据平面。
  * 开发直连线索理解亦复用本函数，须与 hosted/clue 同 12s 预算。
  */
@@ -18,11 +18,13 @@ export interface OpenAiCompatibleChatMessage {
  * - deepseek：DeepSeek 官方兼容
  * - openai：OpenAI 官方
  * - dashscope：阿里云百炼兼容模式
+ * - perplexity：Perplexity Orchestrator（标准 Chat Completions；无 thinking / reasoning_effort）
  */
 export type OpenAiCompatibleChatCompat =
   | 'deepseek' // DeepSeek
   | 'openai' // OpenAI
   | 'dashscope' // 百炼 DashScope
+  | 'perplexity' // Perplexity Orchestrator
 
 export interface OpenAiCompatibleChatConfig {
   /** API Key */
@@ -101,8 +103,8 @@ export async function completeOpenAiCompatibleChatDetailed(
   if (compat === 'openai') {
     body.max_completion_tokens = maxTokens
     body.reasoning_effort = 'none'
-  } else if (compat === 'dashscope') {
-    // 百炼 OpenAI 兼容：max_tokens；初筛 omit enable_thinking / thinking / reasoning_effort
+  } else if (compat === 'dashscope' || compat === 'perplexity') {
+    // 百炼 / Orchestrator：标准 max_tokens；omit thinking / reasoning_effort / enable_thinking
     body.max_tokens = maxTokens
   } else {
     body.max_tokens = maxTokens
