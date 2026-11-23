@@ -74,6 +74,10 @@ export type AssistantTurn = {
    * 系统样式轻提示行（已翻译）：记录一次 dismiss 动作，不伪造用户发言。
    */
   systemNote?: string
+  /**
+   * 失败轮重试用的原线索；仅 tone 为 error 时设置。
+   */
+  retryClue?: string
   allowDismiss: boolean
 }
 

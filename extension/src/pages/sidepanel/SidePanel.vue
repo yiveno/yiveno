@@ -154,7 +154,7 @@ const isBrowserOnline = ref(readBrowserOnline())
 const showOfflineBanner = computed(() => !isBrowserOnline.value)
 /** header 横幅「更多提示」是否已展开（会话级）。 */
 const bannerStackExpanded = ref(false)
-const { error: showToastError } = useAppToast()
+const { error: showToastError, success: showToastSuccess } = useAppToast()
 const lastSentClue = ref('')
 /** 登录展示名；未登录或无名则空，问候退化为仅时段。 */
 const accountDisplayName = ref('')
@@ -955,6 +955,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
           id: nextTurnId(),
           tone: 'error',
           text: errorMessage.value,
+          retryClue: trimmed,
           ...contextStatusFields
         })
       )
@@ -1289,6 +1290,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
         id: nextTurnId(),
         tone: 'error',
         text: errorMessage.value,
+        retryClue: trimmed,
         ...contextStatusFields
       })
     )
@@ -1296,6 +1298,20 @@ async function runRecall(trimmedClue: string): Promise<void> {
       clueInputRef.value?.focus()
     })
   }
+}
+
+/**
+ * 失败轮重试：不经 commitSendTurn（避免重复用户气泡）；旧失败轮保留作历史。
+ */
+async function handleRetryTurn(payload: { clue: string }): Promise<void> {
+  const clueText = payload.clue.trim()
+  if (!clueText) {
+    return
+  }
+  stickToBottom.value = true
+  lastSentClue.value = clueText
+  lastSubmitAtMs.value = Date.now()
+  await runRecall(clueText)
 }
 
 /** 导航失败：走 toast，不写 errorMessage（留给 Recall 失败轮）。 */
@@ -1490,14 +1506,32 @@ function handleRecallVisibleProgressPush(message: unknown): void {
   enqueueRecallVisibleProgressStage(parsed.payload.stage)
 }
 
+/** Gate 放行（跳过 / 自然完成）后把焦点交回 composer */
+watch(showColdStartGate, (blocked, wasBlocked) => {
+  if (wasBlocked && !blocked) {
+    void nextTick(() => {
+      clueInputRef.value?.focus()
+    })
+  }
+})
+
 onMounted(() => {
   chrome.runtime.onMessage.addListener(handleRecallVisibleProgressPush)
   chrome.storage.onChanged.addListener(handleSidePanelStorageChanged)
   isBrowserOnline.value = readBrowserOnline()
   stopBrowserOnline = subscribeBrowserOnline(online => {
+    const wasOnline = isBrowserOnline.value
     isBrowserOnline.value = online
+    // 仅 false→true 跃迁 toast；初值已在订阅前读入，不会误弹
+    if (!wasOnline && online) {
+      showToastSuccess(t('sidepanel_back_online'))
+    }
   })
   void nextTick(() => {
+    // Gate 挂载时子组件先 focus；勿抢回 composer
+    if (showColdStartGate.value) {
+      return
+    }
     clueInputRef.value?.focus()
   })
   // 暗线贡献：Side Panel 打开时按门禁检查一次（失败静默）
@@ -1862,6 +1896,7 @@ onUnmounted(() => {
           @open-ai-settings="handleOpenAiSettings"
           @open-account-settings="handleOpenAccountSettings"
           @anonymous-bound="handleAnonymousBound"
+          @retry-turn="handleRetryTurn"
         />
       </div>
 
@@ -1880,6 +1915,7 @@ onUnmounted(() => {
           >
             <AppIcon name="arrow_downward" size="18px" />
           </span>
+          <span class="recall-scroll-jump__label">{{ scrollJumpLabel }}</span>
         </AppIconButton>
       </div>
 
@@ -2268,10 +2304,6 @@ onUnmounted(() => {
   margin-bottom: 2px;
 }
 
-.recall-header-top:deep(.app-page-header__nav) {
-  gap: 2px;
-}
-
 .recall-header-top:deep(.app-icon-button) {
   color: var(--on-surface-muted);
 }
@@ -2515,8 +2547,11 @@ onUnmounted(() => {
 }
 
 .recall-scroll-jump .recall-scroll-jump__btn {
-  width: 36px;
+  width: auto;
+  min-width: 36px;
   height: 36px;
+  gap: var(--space-2xs);
+  padding: 0 var(--space-sm);
   color: var(--on-surface);
   pointer-events: auto;
   background: color-mix(in srgb, var(--surface-white) 82%, transparent);
@@ -2524,6 +2559,12 @@ onUnmounted(() => {
   box-shadow: 0 2px 10px rgb(0 0 0 / 10%);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
+}
+
+.recall-scroll-jump__label {
+  font-size: var(--text-meta);
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .recall-scroll-jump .recall-scroll-jump__btn:hover:not(:disabled) {

@@ -103,6 +103,7 @@ export const MESSAGE_KEYS = [
   'sidepanel_offline_mode_chip',
   'sidepanel_offline_composer_hint',
   'sidepanel_offline_composer_placeholder',
+  'sidepanel_back_online',
   'popup_welcome_title',
   'popup_welcome_body',
   'popup_library_unknown_title',

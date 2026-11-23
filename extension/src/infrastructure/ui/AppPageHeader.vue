@@ -451,7 +451,7 @@ onUnmounted(() => {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0;
+  gap: var(--space-2xs);
 }
 
 .app-page-header__avatar-wrap {

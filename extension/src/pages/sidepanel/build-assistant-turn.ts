@@ -30,6 +30,8 @@ export function createAssistantTurn(input: {
   clueTruncatedTip?: string
   /** 系统样式轻提示行（dismiss 等）；不伪造用户发言 */
   systemNote?: string
+  /** 失败轮重试用的原线索；仅 tone 为 error 时设置 */
+  retryClue?: string
   allowDismiss?: boolean
 }): ConversationTurn {
   return {
@@ -66,6 +68,7 @@ export function createAssistantTurn(input: {
       : { showAnonymousPromote: input.showAnonymousPromote }),
     ...(input.clueTruncatedTip === undefined ? {} : { clueTruncatedTip: input.clueTruncatedTip }),
     ...(input.systemNote === undefined ? {} : { systemNote: input.systemNote }),
+    ...(input.retryClue === undefined ? {} : { retryClue: input.retryClue }),
     allowDismiss: input.allowDismiss ?? false
   }
 }

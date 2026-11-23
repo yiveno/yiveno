@@ -366,10 +366,13 @@
     "message": "On-device only"
   },
   "sidepanel_offline_composer_hint": {
-    "message": "Cloud reading unavailable — finding on this device."
+    "message": "Offline — finding on this device."
   },
   "sidepanel_offline_composer_placeholder": {
     "message": "Say a clue — finding on this device…"
+  },
+  "sidepanel_back_online": {
+    "message": "You're back online."
   },
   "popup_welcome_title": {
     "message": "What are you looking for?"

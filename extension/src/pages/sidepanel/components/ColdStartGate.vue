@@ -4,7 +4,7 @@
  * 书签 bulk 用户主进度在 Getting Started；本门禁 import 步为等待/对齐，非二次导入课。
  * P1-18：停滞可跳过、读失败可重试（不重启 pipeline）。
  */
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import AppButton from '@/infrastructure/ui/AppButton.vue'
 import AppLinearProgress from '@/infrastructure/ui/AppLinearProgress.vue'
 import {
@@ -13,6 +13,7 @@ import {
   type ColdStartStage
 } from '@/core/memory/cold-start-pipeline-state'
 import { t } from '@/infrastructure/i18n/t'
+import { setColdStartGateOutsideInert } from '@/pages/sidepanel/cold-start-gate-outside-inert'
 
 defineOptions({ name: 'ColdStartGate' })
 
@@ -28,6 +29,20 @@ const emit = defineEmits<{
   skip: []
   retry: []
 }>()
+
+/** Gate 根：inert 排除锚点 */
+const gateRootRef = ref<HTMLElement | null>(null)
+/** 面板焦点落点（无可聚焦控件时） */
+const panelRef = ref<HTMLElement | null>(null)
+
+onMounted(() => {
+  setColdStartGateOutsideInert(gateRootRef.value, true)
+  panelRef.value?.focus({ preventScroll: true })
+})
+
+onBeforeUnmount(() => {
+  setColdStartGateOutsideInert(gateRootRef.value, false)
+})
 
 const percent = computed(() => getColdStartOverallPercent(props.state))
 
@@ -95,8 +110,8 @@ const detailLine = computed(() => {
 </script>
 
 <template>
-  <div class="cold-start-gate" role="status" aria-live="polite">
-    <div class="cold-start-gate__panel">
+  <div ref="gateRootRef" class="cold-start-gate" role="status" aria-live="polite">
+    <div ref="panelRef" class="cold-start-gate__panel" tabindex="-1">
       <p class="cold-start-gate__eyebrow">{{ t('cold_start_eyebrow') }}</p>
       <h1 class="cold-start-gate__title">{{ t(stageTitleKey) }}</h1>
       <p class="cold-start-gate__body">{{ t(stageBodyKey) }}</p>

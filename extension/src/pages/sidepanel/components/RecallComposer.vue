@@ -963,7 +963,7 @@ defineExpose({ focus })
 
 .recall-composer-shell:focus-within {
   border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
-  outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
   box-shadow: none;
 }
@@ -1112,7 +1112,7 @@ defineExpose({ focus })
   width: 3px;
   min-height: 4px;
   border-radius: var(--radius-full);
-  background: color-mix(in srgb, var(--on-surface-muted) 72%, var(--accent) 28%);
+  background: var(--voice-meter-bar);
   transition: height var(--motion-duration-fast) linear;
 }
 

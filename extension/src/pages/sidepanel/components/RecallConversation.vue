@@ -80,6 +80,8 @@ const emit = defineEmits<{
   openAccountSettings: []
   /** 绑定 OTP 成功：父级刷新账号态并清 quota 提示 */
   anonymousBound: [payload: { branch: 'promote' | 'claim' }]
+  /** 失败轮重试：用原线索再召回（不重复用户气泡） */
+  retryTurn: [payload: { clue: string }]
 }>()
 
 /** 纠错菜单：`${turnId}::${chipId}`；null = 关闭。 */
@@ -134,7 +136,6 @@ watch(
   () => props.turns.length,
   (nextLength, previousLength) => {
     if (nextLength > previousLength) {
-      earlierRevealedCount.value = 0
       openEchoMenuKey.value = null
     }
   }
@@ -739,6 +740,18 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
             <template v-else>{{ turn.text }}</template>
           </p>
 
+          <AppButton
+            v-if="turn.tone === 'error' && turn.retryClue"
+            type="button"
+            variant="text"
+            class="assistant-turn-retry"
+            :title="t('action_retry')"
+            :aria-label="t('action_retry')"
+            @click="emit('retryTurn', { clue: turn.retryClue })"
+          >
+            {{ t('action_retry') }}
+          </AppButton>
+
           <!--
             快速反馈区：追问芯片（硬收窄）+「都不是」（否定本轮候选）同区异形。
             芯片在前；否定控件在末尾，用 text 钮而非 pill，避免读成又一条 clue。
@@ -811,11 +824,15 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
 
 <style scoped>
 .conversation-show-earlier {
+  position: sticky;
+  top: 0;
+  z-index: 1;
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
   gap: var(--space-xs) var(--space-sm);
   padding-bottom: var(--space-2xs);
+  background: var(--surface);
 }
 
 .conversation-list {

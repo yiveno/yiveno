@@ -69,7 +69,7 @@
     "message": "新找"
   },
   "nav_library": {
-    "message": "资料库"
+    "message": "记忆库"
   },
   "nav_settings": {
     "message": "设置"
@@ -366,10 +366,13 @@
     "message": "仅本机"
   },
   "sidepanel_offline_composer_hint": {
-    "message": "云端理解不可用 — 在本机找。"
+    "message": "离线 — 在本机找。"
   },
   "sidepanel_offline_composer_placeholder": {
     "message": "说一条线索 — 在本机找…"
+  },
+  "sidepanel_back_online": {
+    "message": "已恢复在线。"
   },
   "popup_welcome_title": {
     "message": "你想找什么？"
@@ -414,7 +417,7 @@
     "message": "晚上好"
   },
   "popup_greeting_night": {
-    "message": "夜深了"
+    "message": "晚安"
   },
   "popup_greeting_morning_named": {
     "message": "早上好，$NAME$",
@@ -706,7 +709,7 @@
     "message": "线索太长，我只按前面部分找。"
   },
   "sidepanel_recall_deeper_reading_unavailable": {
-    "message": "没拿到更深层理解 — 已改用更简单的本机通道。"
+    "message": "没拿到更深层理解 — 已改用更简单的本机处理。"
   },
   "popup_recall_progress_narrowing": {
     "message": "正在缩小记忆库范围…"
@@ -2533,7 +2536,7 @@
     "message": "可以先同步书签，或划存一段文字。有了内容，再用自己的话找到。"
   },
   "popup_empty_no_memory_body_ingest_on_empty": {
-    "message": "已开启书签同步，但库里还没有内容。先划存一段，或打开开始设置看看，再用自己的话找到。"
+    "message": "已开启书签同步，但库里还没有内容。先划存一段，或打开开始使用看看，再用自己的话找到。"
   },
   "popup_empty_library_empty_title": {
     "message": "还没有任何保存"
