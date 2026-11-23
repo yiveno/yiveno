@@ -65,4 +65,37 @@ describe('useAppToast', () => {
 
     expect(toasts.value.map(item => item.message)).toEqual(['two', 'three', 'four'])
   })
+
+  it('error 默认 6000ms 后自动消失', () => {
+    const { toasts, error } = useAppToast()
+    error('Could not open settings')
+
+    expect(toasts.value).toHaveLength(1)
+    vi.advanceTimersByTime(5999)
+    expect(toasts.value).toHaveLength(1)
+    vi.advanceTimersByTime(1)
+    expect(toasts.value).toHaveLength(0)
+  })
+
+  it('success 默认 3200ms 后自动消失', () => {
+    const { toasts, success } = useAppToast()
+    success('Saved')
+
+    expect(toasts.value).toHaveLength(1)
+    vi.advanceTimersByTime(3199)
+    expect(toasts.value).toHaveLength(1)
+    vi.advanceTimersByTime(1)
+    expect(toasts.value).toHaveLength(0)
+  })
+
+  it('显式 durationMs 覆盖语气默认值', () => {
+    const { toasts } = useAppToast()
+    showAppToast({ tone: 'error', message: 'Brief error', durationMs: 1000 })
+
+    expect(toasts.value).toHaveLength(1)
+    vi.advanceTimersByTime(999)
+    expect(toasts.value).toHaveLength(1)
+    vi.advanceTimersByTime(1)
+    expect(toasts.value).toHaveLength(0)
+  })
 })

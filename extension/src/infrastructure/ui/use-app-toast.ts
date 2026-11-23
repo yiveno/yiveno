@@ -1,5 +1,10 @@
 import { ref, type Ref } from 'vue'
 
+/**
+ * 页内 toast 规则：
+ * - 壳级操作失败（导航、设置、导入导出、账号同步等）统一走 toast（error 语气）。
+ * - 会话内失败（Recall 失败轮等）走气泡，不走 toast。
+ */
 /** Toast 语气：info=中性提示；success=操作成功；warning=需注意；error=失败可重试 */
 export type AppToastTone = 'info' | 'success' | 'warning' | 'error'
 
@@ -12,16 +17,27 @@ export interface AppToastItem {
 export interface AppToastShowInput {
   tone: AppToastTone
   message: string
-  /** 自动消失毫秒；默认 3200 */
+  /** 自动消失毫秒；未传时按语气：error=6000，其余=3200 */
   durationMs?: number
 }
 
+/** info / success / warning 默认停留时长 */
 const DEFAULT_DURATION_MS = 3200
+/** error 默认停留时长（更长，便于读完再关） */
+const ERROR_DURATION_MS = 6000
 const MAX_VISIBLE_TOASTS = 3
 
 const toasts: Ref<AppToastItem[]> = ref([])
 const dismissTimers = new Map<number, ReturnType<typeof setTimeout>>()
 let nextToastId = 0
+
+/** 解析停留时长：显式 durationMs 优先，否则按语气分流。 */
+function resolveDurationMs(tone: AppToastTone, durationMs?: number): number {
+  if (durationMs !== undefined) {
+    return durationMs
+  }
+  return tone === 'error' ? ERROR_DURATION_MS : DEFAULT_DURATION_MS
+}
 
 function scheduleDismiss(id: number, durationMs: number): void {
   const existing = dismissTimers.get(id)
@@ -48,7 +64,7 @@ export function showAppToast(input: AppToastShowInput): number {
     message
   }
   toasts.value = [...toasts.value, item].slice(-MAX_VISIBLE_TOASTS)
-  scheduleDismiss(id, input.durationMs ?? DEFAULT_DURATION_MS)
+  scheduleDismiss(id, resolveDurationMs(input.tone, input.durationMs))
   return id
 }
 

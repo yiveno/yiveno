@@ -5,6 +5,9 @@
   "app_description": {
     "message": "Save what matters. Find it later."
   },
+  "app_toast_dismiss": {
+    "message": "Dismiss"
+  },
   "context_menu_save_selection": {
     "message": "Save to Yiveno"
   },

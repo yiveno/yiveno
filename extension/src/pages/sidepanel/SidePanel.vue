@@ -1558,7 +1558,11 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <AppToastHost />
+  <!--
+    顶栏实测：壳 padding-top=space-sm；AppPageHeader=AppIconButton 40px。
+    Teleport fixed 相对视口 → 抬到顶栏下方再加 space-md 间距。
+  -->
+  <AppToastHost top-offset="calc(var(--space-sm) + 40px + var(--space-md))" />
   <LoginMigrationDialog
     :open="loginMigrationOpen"
     :loading="loginMigrationLoading"

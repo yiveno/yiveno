@@ -5,6 +5,7 @@
 export const MESSAGE_KEYS = [
   'app_name',
   'app_description',
+  'app_toast_dismiss',
   'context_menu_save_selection',
   'omnibox_default_suggestion',
   'omnibox_default_suggestion_with_shortcut',

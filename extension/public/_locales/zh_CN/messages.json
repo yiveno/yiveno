@@ -5,6 +5,9 @@
   "app_description": {
     "message": "存下重要的，之后找到它。"
   },
+  "app_toast_dismiss": {
+    "message": "关闭"
+  },
   "context_menu_save_selection": {
     "message": "保存到 Yiveno"
   },
