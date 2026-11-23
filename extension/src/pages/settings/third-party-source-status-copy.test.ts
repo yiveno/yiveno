@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 
 import type { ThirdPartyCorpusImportState } from '@/core/memory/third-party-corpus-import-state'
 import {
+  resolveThirdPartyDeleteMode,
   resolveThirdPartySourceStatusView,
   type ThirdPartyCorpusSummaryView
 } from '@/pages/settings/third-party-source-status-copy'
@@ -127,5 +128,76 @@ describe('resolveThirdPartySourceStatusView', () => {
         source: 'raindrop'
       })
     ).toEqual({ kind: 'imported', count: 3, lastImport: null })
+  })
+})
+
+describe('resolveThirdPartyDeleteMode', () => {
+  it('count > 0 → items', () => {
+    expect(
+      resolveThirdPartyDeleteMode({
+        summary: {
+          raindrop: { count: 4, lastImport: null },
+          pocket: { count: 0, lastImport: null }
+        },
+        source: 'raindrop'
+      })
+    ).toBe('items')
+  })
+
+  it('count 0 + failed lastImport → record', () => {
+    expect(
+      resolveThirdPartyDeleteMode({
+        summary: {
+          raindrop: {
+            count: 0,
+            lastImport: makeImport({
+              status: 'failed',
+              source: 'raindrop',
+              errorCode: 'THIRD_PARTY_IMPORT_INVALID_FORMAT'
+            })
+          },
+          pocket: { count: 0, lastImport: null }
+        },
+        source: 'raindrop'
+      })
+    ).toBe('record')
+  })
+
+  it('count 0 + completed lastImport → record', () => {
+    expect(
+      resolveThirdPartyDeleteMode({
+        summary: {
+          raindrop: { count: 0, lastImport: null },
+          pocket: {
+            count: 0,
+            lastImport: makeImport({
+              status: 'completed',
+              source: 'pocket',
+              importedCount: 0,
+              finishedAt: '2026-02-01T00:00:00.000Z'
+            })
+          }
+        },
+        source: 'pocket'
+      })
+    ).toBe('record')
+  })
+
+  it('count 0 + null lastImport → none', () => {
+    expect(
+      resolveThirdPartyDeleteMode({
+        summary: emptySummary(),
+        source: 'raindrop'
+      })
+    ).toBe('none')
+  })
+
+  it('summary null → none', () => {
+    expect(
+      resolveThirdPartyDeleteMode({
+        summary: null,
+        source: 'pocket'
+      })
+    ).toBe('none')
   })
 })

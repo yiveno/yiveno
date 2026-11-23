@@ -75,8 +75,10 @@ import {
 } from '@/infrastructure/i18n/background-error'
 import { resolveChromeBookmarkImportStatusView } from '@/pages/settings/chrome-bookmark-import-status-copy'
 import {
+  resolveThirdPartyDeleteMode,
   resolveThirdPartySourceStatusView,
-  type ThirdPartyCorpusSummaryView
+  type ThirdPartyCorpusSummaryView,
+  type ThirdPartyDeleteMode
 } from '@/pages/settings/third-party-source-status-copy'
 import { t } from '@/infrastructure/i18n/t'
 import { readBrowserOnline } from '@/infrastructure/browser/browser-online'
@@ -216,6 +218,8 @@ export function useSettingsPage() {
   /** 第三方摘要加载中（加载中不清空旧 summary）。 */
   const thirdPartySummaryLoading = ref(false)
   const pendingThirdPartyDeleteSource = ref<ThirdPartyCorpusSource | null>(null)
+  /** 确认框删除模式：有条目 / 仅清导入记录；关闭时与 source 同清。 */
+  const pendingThirdPartyDeleteMode = ref<'items' | 'record' | null>(null)
   /** Chrome 书签导入状态（capture 区状态行 / 轮询）。 */
   const chromeBookmarkImportState = ref<ChromeBookmarkImportState | null>(null)
   const chromeBookmarkImportQueryFailed = ref(false)
@@ -417,6 +421,14 @@ export function useSettingsPage() {
       }
     }
     return parts.join(' · ')
+  }
+
+  /** 删除按钮模式：经 resolver 判定 items / record / none。 */
+  function thirdPartyDeleteMode(source: ThirdPartyCorpusSource): ThirdPartyDeleteMode {
+    return resolveThirdPartyDeleteMode({
+      summary: thirdPartyCorpusSummary.value,
+      source
+    })
   }
 
   /** 查询 Chrome 书签导入状态；失败时置 queryFailed。 */
@@ -1365,7 +1377,9 @@ export function useSettingsPage() {
       case 'restore_backup':
         return t('settings_sync_restore_backup')
       case 'delete_third_party':
-        return t('settings_third_party_delete_all')
+        return pendingThirdPartyDeleteMode.value === 'record'
+          ? t('settings_third_party_clear_record')
+          : t('settings_third_party_delete_all')
       default:
         return ''
     }
@@ -1390,8 +1404,11 @@ export function useSettingsPage() {
         return t('settings_sync_restore_backup_confirm')
       case 'delete_third_party': {
         const source = pendingThirdPartyDeleteSource.value
-        const count = source ? (thirdPartyCorpusSummary.value?.[source]?.count ?? 0) : 0
         const sourceLabel = source === 'pocket' ? 'Pocket' : 'Raindrop'
+        if (pendingThirdPartyDeleteMode.value === 'record') {
+          return t('settings_third_party_clear_record_confirm', [sourceLabel])
+        }
+        const count = source ? (thirdPartyCorpusSummary.value?.[source]?.count ?? 0) : 0
         return t('settings_third_party_delete_confirm', [String(count), sourceLabel])
       }
       default:
@@ -1437,6 +1454,7 @@ export function useSettingsPage() {
     confirmDialogError.value = ''
     pendingSyncEnable.value = null
     pendingThirdPartyDeleteSource.value = null
+    pendingThirdPartyDeleteMode.value = null
   }
 
   async function executePrivacySyncEnable(): Promise<boolean> {
@@ -1508,10 +1526,11 @@ export function useSettingsPage() {
     }
   }
 
-  /** 确认框：按来源硬删第三方导入。 */
+  /** 确认框：按来源硬删第三方导入（含 0 条失败态清导入记录）。 */
   async function executeDeleteThirdPartyCorpus(): Promise<boolean> {
     const source = pendingThirdPartyDeleteSource.value
-    if (!source) {
+    const mode = pendingThirdPartyDeleteMode.value
+    if (!source || mode == null) {
       return false
     }
     thirdPartyDeleteWorking.value = true
@@ -1521,7 +1540,11 @@ export function useSettingsPage() {
         confirmDialogError.value = t('error_third_party_import_failed')
         return false
       }
-      showToastSuccess(t('settings_third_party_delete_done', [String(response.deletedCount)]))
+      if (mode === 'record') {
+        showToastSuccess(t('settings_third_party_clear_record_done'))
+      } else {
+        showToastSuccess(t('settings_third_party_delete_done', [String(response.deletedCount)]))
+      }
       await loadThirdPartyCorpusSummary()
       return true
     } catch {
@@ -1532,13 +1555,17 @@ export function useSettingsPage() {
     }
   }
 
-  /** 打开按来源删除确认框。 */
+  /** 打开按来源删除确认框（有条目或仅有导入记录均可）。 */
   function handleDeleteThirdPartyCorpus(source: ThirdPartyCorpusSource): void {
-    const count = thirdPartyCorpusSummary.value?.[source]?.count ?? 0
-    if (count <= 0 || thirdPartyDeleteWorking.value || thirdPartyImportWorking.value) {
+    const mode = resolveThirdPartyDeleteMode({
+      summary: thirdPartyCorpusSummary.value,
+      source
+    })
+    if (mode === 'none' || thirdPartyDeleteWorking.value || thirdPartyImportWorking.value) {
       return
     }
     pendingThirdPartyDeleteSource.value = source
+    pendingThirdPartyDeleteMode.value = mode
     confirmDialogError.value = ''
     confirmDialogAction.value = 'delete_third_party'
   }
@@ -1655,6 +1682,7 @@ export function useSettingsPage() {
       const response = await importThirdPartyCorpus({ source, content })
       if (!response.ok) {
         showToastError(tThirdPartyImportError(response.errorCode))
+        await loadThirdPartyCorpusSummary()
         return
       }
       showToastSuccess(
@@ -1666,6 +1694,7 @@ export function useSettingsPage() {
       await loadThirdPartyCorpusSummary()
     } catch {
       showToastError(t('error_third_party_import_failed'))
+      await loadThirdPartyCorpusSummary()
     } finally {
       thirdPartyImportWorking.value = false
     }
@@ -2175,6 +2204,7 @@ export function useSettingsPage() {
     syncRemoteCount,
     termsOfServiceUrl,
     thirdPartyCorpusSummary,
+    thirdPartyDeleteMode,
     thirdPartyDeleteWorking,
     thirdPartyImportWorking,
     thirdPartySourceStatusCopy,

@@ -1143,6 +1143,20 @@
       }
     }
   },
+  "settings_third_party_clear_record": {
+    "message": "Clear import record"
+  },
+  "settings_third_party_clear_record_confirm": {
+    "message": "Clear the $SOURCE$ import record? This can't be undone.",
+    "placeholders": {
+      "SOURCE": {
+        "content": "$1"
+      }
+    }
+  },
+  "settings_third_party_clear_record_done": {
+    "message": "Import record cleared"
+  },
   "settings_tab_shortcuts": {
     "message": "Shortcuts"
   },

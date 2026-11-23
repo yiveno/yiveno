@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { inject, type ComponentPublicInstance } from 'vue'
+import { computed, inject, type ComponentPublicInstance } from 'vue'
 import type { ThirdPartyCorpusSource } from '@/core/memory/third-party-corpus-source'
 import AppButton from '@/infrastructure/ui/AppButton.vue'
 import SettingsActionRow from '@/pages/settings/SettingsActionRow.vue'
@@ -7,7 +7,7 @@ import type { SettingsPageController } from '@/pages/settings/use-settings-page'
 
 defineOptions({ name: 'SettingsThirdPartySourceGroup' })
 
-defineProps<{
+const props = defineProps<{
   source: ThirdPartyCorpusSource
   titleKey: string
   guideKey: string
@@ -24,11 +24,20 @@ const {
   restoreWorking,
   signingOut,
   t,
-  thirdPartyCorpusSummary,
+  thirdPartyDeleteMode,
   thirdPartyDeleteWorking,
   thirdPartyImportWorking,
   thirdPartySourceStatusCopy
 } = inject<SettingsPageController>('settingsPage')!
+
+/** 当前来源删除模式（items / record / none）。 */
+const deleteMode = computed(() => thirdPartyDeleteMode(props.source))
+/** 删除/清除按钮与行标题文案。 */
+const deleteActionLabel = computed(() =>
+  deleteMode.value === 'record'
+    ? t('settings_third_party_clear_record')
+    : t('settings_third_party_delete_all')
+)
 </script>
 
 <template>
@@ -69,25 +78,21 @@ const {
       <p class="settings-section-copy settings-third-party-status" role="status">
         {{ thirdPartySourceStatusCopy(source) }}
       </p>
-      <SettingsActionRow surface="embedded" :title="t('settings_third_party_delete_all')">
+      <SettingsActionRow surface="embedded" :title="deleteActionLabel">
         <AppButton
           type="button"
           variant="outlined"
           :disabled="
-            (thirdPartyCorpusSummary?.[source].count ?? 0) <= 0 ||
+            deleteMode === 'none' ||
             thirdPartyDeleteWorking ||
             thirdPartyImportWorking ||
             dataWorking ||
             signingOut
           "
-          :title="t('settings_third_party_delete_all')"
+          :title="deleteActionLabel"
           @click="handleDeleteThirdPartyCorpus(source)"
         >
-          {{
-            thirdPartyDeleteWorking
-              ? t('settings_privacy_working')
-              : t('settings_third_party_delete_all')
-          }}
+          {{ thirdPartyDeleteWorking ? t('settings_privacy_working') : deleteActionLabel }}
         </AppButton>
       </SettingsActionRow>
     </div>

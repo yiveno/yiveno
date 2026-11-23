@@ -61,3 +61,28 @@ export function resolveThirdPartySourceStatusView(args: {
     lastImport
   }
 }
+
+/** 第三方删除按钮模式：有条目 / 仅清导入记录 / 不可删。 */
+export type ThirdPartyDeleteMode = 'items' | 'record' | 'none'
+
+/**
+ * 按摘要判定删除可用性与文案模式。
+ * summary null → none；count > 0 → items；count 0 且有 lastImport → record；否则 none。
+ */
+export function resolveThirdPartyDeleteMode(args: {
+  summary: ThirdPartyCorpusSummaryView | null
+  source: ThirdPartyCorpusSource
+}): ThirdPartyDeleteMode {
+  const { summary, source } = args
+  if (summary == null) {
+    return 'none'
+  }
+  const sourceSummary = summary[source]
+  if (sourceSummary.count > 0) {
+    return 'items'
+  }
+  if (sourceSummary.lastImport != null) {
+    return 'record'
+  }
+  return 'none'
+}
