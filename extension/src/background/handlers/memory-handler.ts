@@ -302,7 +302,7 @@ export async function handleRecordMemoryOpen(payload: unknown): Promise<MemoryBa
   }
 }
 
-/** 悬停浮层：取本机预览 Blob（无则 PAGE_PREVIEW_NOT_FOUND，UI 走骨架）。 */
+/** 悬停浮层：取本机预览字节（无则 PAGE_PREVIEW_NOT_FOUND，UI 走骨架）。 */
 export async function handleGetPagePreview(payload: unknown): Promise<MemoryBackgroundResponse> {
   const startedAt = flowStart('PagePreview', '读取预览')
   try {
@@ -313,7 +313,8 @@ export async function handleGetPagePreview(payload: unknown): Promise<MemoryBack
       return toErrorResponse('PAGE_PREVIEW_NOT_FOUND')
     }
     const ownerId = await getCurrentOwnerId()
-    const record = await pagePreviewRepository.getAndTouchShown(ownerId, urlKey)
+    // 回传 ArrayBuffer；面板 realm 再构 Blob（Blob 不可跨 chrome.runtime 消息）
+    const record = await pagePreviewRepository.getAndTouchShownBytes(ownerId, urlKey)
     if (!record) {
       flowOk('PagePreview', '读取预览', startedAt, { found: false })
       return toErrorResponse('PAGE_PREVIEW_NOT_FOUND')
@@ -325,7 +326,8 @@ export async function handleGetPagePreview(payload: unknown): Promise<MemoryBack
     })
     return {
       ok: true,
-      blob: record.blob,
+      bytes: record.bytes,
+      mimeType: record.mimeType,
       width: record.width,
       height: record.height
     }

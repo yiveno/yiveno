@@ -110,13 +110,37 @@ async function loadPreview(): Promise<void> {
     if (!props.visible) {
       return
     }
-    if (response.ok && 'blob' in response && response.blob instanceof Blob) {
-      objectUrl.value = URL.createObjectURL(response.blob)
+    // SW 回传 ArrayBuffer；在面板 realm 构造 Blob（Blob 不可跨扩展消息）
+    if (
+      response.ok &&
+      'bytes' in response &&
+      response.bytes instanceof ArrayBuffer &&
+      response.bytes.byteLength > 0
+    ) {
+      const blob = new Blob([response.bytes], { type: response.mimeType })
+      objectUrl.value = URL.createObjectURL(blob)
       loadState.value = 'ready'
       return
     }
+    const bytesField = 'bytes' in response ? response.bytes : undefined
+    console.warn('[HoverPreview] loadPreview missing', {
+      ok: response.ok,
+      bytesType:
+        bytesField == null ? String(bytesField) : Object.prototype.toString.call(bytesField),
+      byteLength: bytesField instanceof ArrayBuffer ? bytesField.byteLength : undefined,
+      width: 'width' in response ? response.width : undefined,
+      height: 'height' in response ? response.height : undefined
+    })
     loadState.value = 'missing'
-  } catch {
+  } catch (error) {
+    console.warn('[HoverPreview] loadPreview catch', {
+      error: error instanceof Error ? error.message : String(error),
+      ok: undefined,
+      bytesType: undefined,
+      byteLength: undefined,
+      width: undefined,
+      height: undefined
+    })
     if (props.visible) {
       loadState.value = 'missing'
     }

@@ -105,14 +105,25 @@ describe('RecallCardHoverPreview 查图 URL', () => {
     vi.unstubAllGlobals()
   })
 
-  it('摘录卡：detail.html + sourceUrl → getPagePreview(sourceUrl)，Blob 后 ready', async () => {
-    const sourceUrl = 'https://news.example.com/article/1'
-    getPagePreviewMock.mockResolvedValue({
+  function previewBytesOk(byteSource = 'jpeg'): {
+    ok: true
+    bytes: ArrayBuffer
+    mimeType: string
+    width: number
+    height: number
+  } {
+    return {
       ok: true,
-      blob: new Blob(['jpeg'], { type: 'image/jpeg' }),
+      bytes: new TextEncoder().encode(byteSource).buffer as ArrayBuffer,
+      mimeType: 'image/jpeg',
       width: 800,
       height: 500
-    })
+    }
+  }
+
+  it('摘录卡：detail.html + sourceUrl → getPagePreview(sourceUrl)，bytes 后 ready', async () => {
+    const sourceUrl = 'https://news.example.com/article/1'
+    getPagePreviewMock.mockResolvedValue(previewBytesOk())
     const mounted = mountPreview({
       card: baseCard({
         id: 'ex-1',
@@ -135,12 +146,7 @@ describe('RecallCardHoverPreview 查图 URL', () => {
 
   it('书签卡：无 sourceUrl → 仍以 card.url 调用', async () => {
     const bookmarkUrl = 'https://docs.example.com/guide'
-    getPagePreviewMock.mockResolvedValue({
-      ok: true,
-      blob: new Blob(['jpeg'], { type: 'image/jpeg' }),
-      width: 800,
-      height: 500
-    })
+    getPagePreviewMock.mockResolvedValue(previewBytesOk())
     const mounted = mountPreview({
       card: baseCard({
         id: 'bm-1',
@@ -221,5 +227,76 @@ describe('RecallCardHoverPreview 查图 URL', () => {
 
     const domain = mounted.root.querySelector('.recall-card-hover-preview__domain')
     expect(domain?.textContent).toBe('wiki.example.org')
+  })
+
+  it('bytes → 面板构造 Blob 后 ready，objectUrl 非空', async () => {
+    getPagePreviewMock.mockResolvedValue(previewBytesOk('payload'))
+    const mounted = mountPreview({
+      card: baseCard({
+        id: 'ex-bytes',
+        itemKind: 'text_excerpt',
+        typeLabel: 'Text excerpt',
+        url: 'chrome-extension://testid/detail.html?id=ex-bytes',
+        sourceUrl: 'https://news.example.com/bytes',
+        excerpt: 'Bytes path'
+      })
+    })
+    mounts.push(mounted)
+
+    await showPreview(mounted.state)
+
+    const img = mounted.root.querySelector('.recall-card-hover-preview__shot img')
+    expect(img).not.toBeNull()
+    expect(img?.getAttribute('src')).toBe('blob:mock-preview')
+    expect(URL.createObjectURL).toHaveBeenCalledTimes(1)
+    const blobArg = vi.mocked(URL.createObjectURL).mock.calls[0]?.[0]
+    expect(blobArg).toBeInstanceOf(Blob)
+    expect((blobArg as Blob).type).toBe('image/jpeg')
+  })
+
+  it('bytes 为空对象 / byteLength 0 → missing', async () => {
+    getPagePreviewMock.mockResolvedValueOnce({
+      ok: true,
+      bytes: {},
+      mimeType: 'image/jpeg',
+      width: 800,
+      height: 500
+    })
+    const mountedEmpty = mountPreview({
+      card: baseCard({
+        id: 'ex-empty-obj',
+        itemKind: 'text_excerpt',
+        typeLabel: 'Text excerpt',
+        url: 'chrome-extension://testid/detail.html?id=ex-empty-obj',
+        sourceUrl: 'https://example.com/empty-obj',
+        excerpt: 'Empty obj'
+      })
+    })
+    mounts.push(mountedEmpty)
+    await showPreview(mountedEmpty.state)
+    expect(mountedEmpty.root.querySelector('.recall-card-hover-preview__fallback')).not.toBeNull()
+    expect(mountedEmpty.root.querySelector('.recall-card-hover-preview__shot')).toBeNull()
+
+    getPagePreviewMock.mockResolvedValueOnce({
+      ok: true,
+      bytes: new ArrayBuffer(0),
+      mimeType: 'image/jpeg',
+      width: 800,
+      height: 500
+    })
+    const mountedZero = mountPreview({
+      card: baseCard({
+        id: 'ex-zero',
+        itemKind: 'text_excerpt',
+        typeLabel: 'Text excerpt',
+        url: 'chrome-extension://testid/detail.html?id=ex-zero',
+        sourceUrl: 'https://example.com/zero',
+        excerpt: 'Zero bytes'
+      })
+    })
+    mounts.push(mountedZero)
+    await showPreview(mountedZero.state)
+    expect(mountedZero.root.querySelector('.recall-card-hover-preview__fallback')).not.toBeNull()
+    expect(mountedZero.root.querySelector('.recall-card-hover-preview__shot')).toBeNull()
   })
 })

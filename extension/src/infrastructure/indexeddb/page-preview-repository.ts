@@ -109,12 +109,14 @@ export class PagePreviewRepository {
     )
   }
 
-  /** 读取并刷新 lastShownAt（悬停展示时调用）。 */
-  async getAndTouchShown(
+  /**
+   * 读取并刷新 lastShownAt，直接回传 IDB 行的 bytes（供跨消息；不构造 Blob）。
+   */
+  async getAndTouchShownBytes(
     ownerId: string,
     urlKey: string,
     shownAt = new Date().toISOString()
-  ): Promise<PagePreviewRecord | null> {
+  ): Promise<PagePreviewStoredRow | null> {
     await this.ensureReady()
     const id = buildPagePreviewId(ownerId, urlKey)
     return indexedDBManager.withTransaction(
@@ -152,12 +154,33 @@ export class PagePreviewRepository {
           mimeType
         }
         await requestToPromise(store.put(stored))
-        return {
-          ...meta.data,
-          blob: new Blob([row.bytes], { type: mimeType })
-        }
+        return stored
       }
     )
+  }
+
+  /** 读取并刷新 lastShownAt（悬停展示时调用；Blob API 面）。 */
+  async getAndTouchShown(
+    ownerId: string,
+    urlKey: string,
+    shownAt = new Date().toISOString()
+  ): Promise<PagePreviewRecord | null> {
+    const stored = await this.getAndTouchShownBytes(ownerId, urlKey, shownAt)
+    if (!stored) {
+      return null
+    }
+    return {
+      id: stored.id,
+      ownerId: stored.ownerId,
+      urlKey: stored.urlKey,
+      byteSize: stored.byteSize,
+      width: stored.width,
+      height: stored.height,
+      capturedAt: stored.capturedAt,
+      lastShownAt: stored.lastShownAt,
+      source: stored.source,
+      blob: new Blob([stored.bytes], { type: stored.mimeType })
+    }
   }
 
   async listByOwner(ownerId: string): Promise<PagePreviewRecord[]> {

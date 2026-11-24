@@ -145,6 +145,16 @@ describe('pagePreviewRepository', () => {
       '2026-11-24T12:00:00.000Z'
     )
     expect(touched?.lastShownAt).toBe('2026-11-24T12:00:00.000Z')
+
+    const touchedBytes = await pagePreviewRepository.getAndTouchShownBytes(
+      ownerId,
+      urlKey,
+      '2026-11-24T13:00:00.000Z'
+    )
+    expect(touchedBytes?.lastShownAt).toBe('2026-11-24T13:00:00.000Z')
+    expect(touchedBytes?.bytes).toBeInstanceOf(ArrayBuffer)
+    expect(touchedBytes?.bytes.byteLength).toBe(128)
+    expect(touchedBytes?.mimeType).toBe('image/jpeg')
   })
 
   it('clearOwner 清空该 owner 全部预览', async () => {
