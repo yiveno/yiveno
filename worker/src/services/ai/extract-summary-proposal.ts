@@ -14,13 +14,9 @@ export const ExtractCompleteRequestSchema = z.object({
   text: z.string().min(1).max(EXTRACT_TEXT_MAX_CHARS)
 })
 
-export type ExtractCompleteRequest = z.infer<typeof ExtractCompleteRequestSchema>
-
 const ExtractLlmPayloadSchema = z.object({
   summary: z.string().min(1).max(2000)
 })
-
-export type ExtractLlmPayload = z.infer<typeof ExtractLlmPayloadSchema>
 
 export function buildExtractSummarySystemPrompt(): string {
   return [
