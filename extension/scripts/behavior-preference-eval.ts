@@ -245,11 +245,7 @@ function buildCompleter(): LlmChatCompleter {
   })
 }
 
-function hasTopicIncludes(contentTerms: string[], expected: string[] | null): boolean {
-  if (expected == null) {
-    // 无 topic：允许空；若有 contentTerms 也不因本断言失败（算子/无算子主判）
-    return true
-  }
+function hasTopicIncludes(contentTerms: string[], expected: string[]): boolean {
   const set = new Set(contentTerms.map(term => term.toLowerCase()))
   return expected.every(term => set.has(term.toLowerCase()))
 }
@@ -270,26 +266,19 @@ function evaluateCase(
       ? true
       : gotTarget === (row.expect.target ?? 'site') ||
         (row.expect.target === 'site' && gotTarget == null && gotOp != null)
+  // 纯偏好（有算子、无主题期望）：contentTerms 必须空，否则生产会误判主题不支持
+  const isPurePreference = row.expect.operator != null && row.expect.topicIncludes == null
   const topicOk =
-    row.expect.topicIncludes == null
-      ? row.expect.operator != null
-        ? parsed.contentTerms.length === 0 || hasTopicIncludes(parsed.contentTerms, null)
+    row.expect.topicIncludes != null
+      ? hasTopicIncludes(parsed.contentTerms, row.expect.topicIncludes)
+      : isPurePreference
+        ? parsed.contentTerms.length === 0
         : true
-      : hasTopicIncludes(parsed.contentTerms, row.expect.topicIncludes)
 
-  // topic 有期望词时必须命中；无 topic 的偏好题不得把排序词当 contentTerms 卡死——只要求有 topicIncludes 时命中
-  let topicPass = true
-  if (row.expect.topicIncludes != null) {
-    topicPass = hasTopicIncludes(parsed.contentTerms, row.expect.topicIncludes)
-  } else if (row.expect.operator != null) {
-    // 偏好排序题：contentTerms 应尽量空；允许残留时仍以算子为准，但若含 rag 等意外主题则失败
-    topicPass = !parsed.contentTerms.some(term => ['rag'].includes(term.toLowerCase()))
-  }
-
-  const ok = opOk && targetOk && topicPass
+  const ok = opOk && targetOk && topicOk
   return {
     ok,
-    detail: `op=${gotOp} (want ${row.expect.operator}); target=${gotTarget} (want ${row.expect.target}); terms=[${parsed.contentTerms.join(',')}] topicOk=${topicOk && topicPass}`
+    detail: `op=${gotOp} (want ${row.expect.operator}); target=${gotTarget} (want ${row.expect.target}); terms=[${parsed.contentTerms.join(',')}] topicOk=${topicOk}`
   }
 }
 

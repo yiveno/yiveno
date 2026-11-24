@@ -83,6 +83,29 @@ describe('importBehaviorHistory', () => {
     expect(await behaviorStatsRepository.listByOwner(localProfile.localProfileId)).toHaveLength(0)
   })
 
+  it('已授权时 request 直通并继续 history.search', async () => {
+    const now = Date.now()
+    const chromeMock = createChromeMock({
+      granted: true,
+      batches: [
+        [
+          {
+            id: 'ok',
+            url: 'https://example.com/',
+            visitCount: 2,
+            lastVisitTime: now
+          }
+        ]
+      ]
+    })
+    vi.stubGlobal('chrome', chromeMock)
+    const state = await importBehaviorHistory()
+    expect(chromeMock.permissions.request).toHaveBeenCalledWith({ permissions: ['history'] })
+    expect(chromeMock.history.search).toHaveBeenCalled()
+    expect(state.status).toBe('completed')
+    expect(state.importedCount).toBe(1)
+  })
+
   it('分页游标 + 去 fragment + 跳过非 http + max 合并', async () => {
     const now = Date.now()
     // 第一批满 1000 才会继续翻页；单测用小批模拟末页 + 第二次导入测 max 合并

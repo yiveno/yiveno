@@ -814,6 +814,12 @@ export function useSettingsPage() {
     behaviorImportBusy.value = true
     settingsError.value = ''
     try {
+      // 第一个 await 必须是 permissions.request：用户手势只活到本 handler 的首个 await；
+      // 若先发 IMPORT_BEHAVIOR_HISTORY，SW 内 await bootstrap 后再 request 会丢手势、永不弹窗。
+      if (chrome.permissions?.request) {
+        await chrome.permissions.request({ permissions: ['history'] })
+      }
+      // 无论授权/拒绝都发消息：已授权则 SW request 直通；拒绝则 SW 写 failed + PERMISSION_DENIED
       const response = await importBehaviorHistoryMessage()
       if (!response.ok) {
         settingsError.value = tImportError(response.errorCode)

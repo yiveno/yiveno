@@ -974,14 +974,16 @@ async function runRecall(trimmedClue: string): Promise<void> {
     // 成功且有合并 parsed 时推进会话（噪音拒绝无 parsed，不污染 prior）
     // markRaw：避免 topic.embedding（Float32Array）被 deep reactive，跟进轮次才能 sendMessage
     if (response.result.parsed) {
+      // exhausted：保留计数，下一句「换一个」重复到顶文案（不循环回头）；其它行为空态仍清零
       const nextBehaviorShownCount = response.result.behaviorPreference
         ? response.result.behaviorPreference.shownOffset + 1
-        : response.result.emptyKind === 'behavior_not_imported' ||
-            response.result.emptyKind === 'behavior_empty' ||
-            response.result.emptyKind === 'behavior_topic_unsupported' ||
-            response.result.emptyKind === 'behavior_exhausted'
-          ? 0
-          : (dialogState.value.behaviorShownCount ?? 0)
+        : response.result.emptyKind === 'behavior_exhausted'
+          ? (dialogState.value.behaviorShownCount ?? 0)
+          : response.result.emptyKind === 'behavior_not_imported' ||
+              response.result.emptyKind === 'behavior_empty' ||
+              response.result.emptyKind === 'behavior_topic_unsupported'
+            ? 0
+            : (dialogState.value.behaviorShownCount ?? 0)
       dialogState.value = {
         priorUserUtterances: [...priorUserUtterances, trimmed].slice(-5),
         accumulated: markAccumulatedForDialogState(response.result.parsed),
