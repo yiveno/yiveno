@@ -3,6 +3,7 @@
  * 默认后端（Free/Pro 同档）；无向量 / 失败时降级关键词。
  */
 
+import { resolveBehaviorPreferenceRecall } from '@/application/recall/behavior-preference-recall'
 import { memoryItemService } from '@/application/memory/memory-item-service'
 import { mergeNoteMatchesForRecall } from '@/application/recall/note-match-merge'
 import {
@@ -34,6 +35,7 @@ import {
   filterRecallFollowUpChipsByCutPower,
   shouldOfferRecallFollowUpChips
 } from '@/core/recall/gate-recall-follow-up-chips'
+import { renderBehaviorPreferenceRulesBaseline } from '@/core/behavior/render-behavior-preference-framing'
 import { buildRecallFramingFacts } from '@/core/recall/build-recall-framing-facts'
 import { RECALL_RESULT_PAGE_SIZE } from '@/core/recall/build-recall-result'
 import { buildClueEmbeddingText } from '@/core/recall/build-clue-embedding-text'
@@ -166,6 +168,42 @@ function attachRecallFraming(result: RecallResult): RecallResult {
     recallFraming: {
       source: 'rules',
       text,
+      facts
+    }
+  }
+}
+
+/**
+ * 行为偏好路径 framing：规则基线含次数/时间依据；facts 仍走候选形态以便 LLM 润色。
+ */
+function attachBehaviorPreferenceFraming(result: RecallResult): RecallResult {
+  if (!result.behaviorPreference) {
+    return result
+  }
+  const baseline = renderBehaviorPreferenceRulesBaseline(result.behaviorPreference, t).trim()
+  const facts = buildRecallFramingFacts(result, { shownCount: RECALL_RESULT_PAGE_SIZE })
+  if (!baseline && !facts) {
+    return result
+  }
+  if (!facts) {
+    return {
+      ...result,
+      ...(baseline
+        ? {
+            recallFraming: {
+              source: 'rules' as const,
+              text: baseline,
+              facts: { kind: 'missing_topic' as const }
+            }
+          }
+        : {})
+    }
+  }
+  return {
+    ...result,
+    recallFraming: {
+      source: 'rules',
+      text: baseline || renderRecallFraming(facts, t).trim(),
       facts
     }
   }
@@ -385,6 +423,10 @@ function shouldPolishFramingWithLlm(result: RecallResult): boolean {
   if (!result.recallFraming?.facts || result.recallFraming.facts.kind !== 'candidates') {
     return false
   }
+  // 行为偏好：始终允许润色（需点名 top1 + 依据）
+  if (result.behaviorPreference && result.outcome === 'top_pick') {
+    return true
+  }
   if (result.outcome === 'need_a_clue') {
     return result.topPick !== null || result.alsoPossible.length > 0
   }
@@ -413,7 +455,10 @@ async function attachRecallFramingLlmPolish(
   }
 
   const facts = result.recallFraming.facts
-  const rulesBaseline = renderRecallFramingRulesBody(facts, t)
+  const rulesBaseline = result.behaviorPreference
+    ? renderBehaviorPreferenceRulesBaseline(result.behaviorPreference, t) ||
+      renderRecallFramingRulesBody(facts, t)
+    : renderRecallFramingRulesBody(facts, t)
 
   try {
     const mapped = await completeRecallFramingNlgWithLlm({
@@ -423,6 +468,7 @@ async function attachRecallFramingLlmPolish(
       facts,
       rulesBaseline,
       weakCandidateTitles: collectWeakCandidateTitles(result),
+      ...(result.behaviorPreference ? { behaviorPreference: result.behaviorPreference } : {}),
       complete: input.complete,
       ...(input.completeDetailed ? { completeDetailed: input.completeDetailed } : {}),
       trace: input.trace
@@ -887,6 +933,7 @@ export class HybridRecallBackend implements RecallBackend {
     const priorUserUtterances = context?.priorUserUtterances ?? []
     const accumulated = context?.accumulated ?? null
     const dismissedIds = context?.dismissedIds ?? []
+    const behaviorShownCount = context?.behaviorShownCount ?? 0
     const pageContextMode: PageContextMode = context?.pageContextMode ?? 'none'
     const currentTabDomain = pageContextMode === 'none' ? undefined : context?.currentTabDomain
 
@@ -999,6 +1046,59 @@ export class HybridRecallBackend implements RecallBackend {
       priorUserUtterances,
       currentUtterance: normalizedClue
     })
+
+    // 行为偏好路径：merge 之后、检索之前；Omnibox 永不进入（无算子 / 无 context）。
+    if (!isOmniboxEntry && merge.merged.preferenceOperator) {
+      const behaviorResult = await resolveBehaviorPreferenceRecall({
+        clue: normalizedClue,
+        merged: merge.merged,
+        currentParsed: understood.parsed,
+        behaviorShownCount
+      })
+      if (behaviorResult) {
+        const pipelineTiming: RecallPipelineTiming = {
+          understandMs,
+          candidateLoadMs: 0,
+          retrieveMs: 0,
+          totalMs: Date.now() - pipelineStartedAt,
+          understandSource: understood.source
+        }
+        const withMeta = attachDialogMeta(behaviorResult, {
+          parsed: merge.merged,
+          effectiveClue: merge.effectiveRaw,
+          clue: normalizedClue
+        })
+        const withFraming = attachBehaviorPreferenceFraming(withMeta)
+        const complete = shouldOmitClueLlmCompleterWhenBrowserOffline(readBrowserOnline())
+          ? null
+          : getClueLlmCompleter()
+        const completeDetailed = complete ? getClueLlmCompleterDetailed() : null
+        const withFramingLlm =
+          complete && withFraming.behaviorPreference && withFraming.outcome === 'top_pick'
+            ? await attachRecallFramingLlmPolish(withFraming, {
+                complete,
+                ...(completeDetailed ? { completeDetailed } : {}),
+                clue: normalizedClue,
+                parsed: merge.merged,
+                trace
+              })
+            : withFraming
+        trace('info', 'Hybrid Recall：行为偏好路径结束', {
+          emptyKind: withFramingLlm.emptyKind ?? null,
+          outcome: withFramingLlm.outcome,
+          topDomain:
+            withFramingLlm.behaviorPreference?.candidates[
+              withFramingLlm.behaviorPreference.shownOffset
+            ]?.domain
+        })
+        return {
+          ...withFramingLlm,
+          pipelineTiming,
+          ...pickUnderstandAttributionFields(understood),
+          visibleProgressStages: [...visibleProgressStages]
+        }
+      }
+    }
 
     // D3-C Gap 5：Topic embedding 注入（仅 Side Panel / 完整 Recall 轨）。
     // Omnibox（ADR-007）：完全本地——不注入 Topic embed，miss 也不联网兜底。

@@ -3,13 +3,16 @@ import {
   mapChromeBookmarkTreeToLibraryIndex
 } from '@/core/memory/bookmark-library-index'
 import type {
+  BehaviorHistoryImportStatusResponse,
   BookmarkSyncStalenessResponse,
   ChromeBookmarkImportStatusResponse,
+  ClearBehaviorHistoryResponse,
   ColdStartStatusResponse,
   DeleteThirdPartyCorpusBySourceResponse,
   EnsureChromeBookmarksImportedResponse,
   GenerateGettingStartedClueSamplesResponse,
   GetBookmarkLibraryTreeResponse,
+  ImportBehaviorHistoryResponse,
   ImportLocalMemoryResponse,
   ImportThirdPartyCorpusResponse,
   ThirdPartyCorpusSummaryResponse
@@ -21,6 +24,11 @@ import {
   parseImportThirdPartyCorpusPayload
 } from '@/core/messaging/import-messages'
 import { countUnsyncedChromeBookmarkLeaves } from '@/application/capture/chrome-bookmark-sync-staleness'
+import {
+  clearBehaviorHistoryData,
+  getBehaviorHistoryImportStatus,
+  importBehaviorHistory
+} from '@/application/behavior/import-behavior-history-service'
 import {
   ensureChromeBookmarksImported,
   getChromeBookmarkImportStatus,
@@ -65,6 +73,65 @@ export async function handleEnsureChromeBookmarksImported(): Promise<EnsureChrom
     return {
       ok: false,
       errorCode: 'IMPORT_STATUS_READ_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/** 返回浏览记录导入进度。 */
+export async function handleGetBehaviorHistoryImportStatus(): Promise<BehaviorHistoryImportStatusResponse> {
+  const startedAt = flowStart('Import', '读取浏览记录导入状态')
+  try {
+    const state = await getBehaviorHistoryImportStatus()
+    flowOk('Import', '读取浏览记录导入状态', startedAt, {
+      status: state?.status ?? null,
+      importedCount: state?.importedCount ?? null
+    })
+    return { ok: true, state }
+  } catch (error) {
+    flowFail('Import', '读取浏览记录导入状态', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'BEHAVIOR_IMPORT_STATUS_READ_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/** 启动浏览记录一次性导入。 */
+export async function handleImportBehaviorHistory(): Promise<ImportBehaviorHistoryResponse> {
+  const startedAt = flowStart('Import', '导入浏览记录')
+  try {
+    const state = await importBehaviorHistory()
+    flowOk('Import', '导入浏览记录', startedAt, {
+      status: state.status,
+      importedCount: state.importedCount,
+      skippedCount: state.skippedCount,
+      errorCode: state.errorCode ?? null
+    })
+    return { ok: true, state }
+  } catch (error) {
+    flowFail('Import', '导入浏览记录', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'BEHAVIOR_IMPORT_START_FAILED',
+      ...(error instanceof Error ? { error: error.message } : {})
+    }
+  }
+}
+
+/** 清除当前 owner 行为数据。 */
+export async function handleClearBehaviorHistory(): Promise<ClearBehaviorHistoryResponse> {
+  const startedAt = flowStart('Import', '清除行为数据')
+  try {
+    const { deleted } = await clearBehaviorHistoryData()
+    flowOk('Import', '清除行为数据', startedAt, { deleted })
+    return { ok: true, deleted }
+  } catch (error) {
+    flowFail('Import', '清除行为数据', startedAt, error)
+    return {
+      ok: false,
+      errorCode: 'BEHAVIOR_CLEAR_FAILED',
       ...(error instanceof Error ? { error: error.message } : {})
     }
   }

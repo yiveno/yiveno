@@ -54,6 +54,32 @@ export const RecallBehaviorHintSchema = z.enum([
 export type RecallBehaviorHint = z.infer<typeof RecallBehaviorHintSchema>
 
 /**
+ * 偏好排序算子（仅 LLM 语义识别；规则路径不产）。
+ * - most_frequent：最常看 / 看得最多（无标记偏好默认）
+ * - favorite：最喜欢（频次衰减近似）
+ * - recent_frequent：最近总看
+ */
+export const PreferenceOperatorSchema = z.enum([
+  'most_frequent', // 最常看
+  'favorite', // 最喜欢
+  'recent_frequent' // 最近总看
+])
+
+export type PreferenceOperator = z.infer<typeof PreferenceOperatorSchema>
+
+/**
+ * 偏好目标粒度。
+ * - site：网站
+ * - page：文章 / 具体页面（v1 仍按网站答，并说明）
+ */
+export const PreferenceTargetSchema = z.enum([
+  'site', // 网站
+  'page' // 文章 / 页面
+])
+
+export type PreferenceTarget = z.infer<typeof PreferenceTargetSchema>
+
+/**
  * 解析置信度：供编排层决定直给 / 候选 / 追问。
  * - high：多槽位齐全
  * - medium：部分约束
@@ -179,6 +205,15 @@ export const ParsedRecallClueSchema = z.object({
   objectTypeOther: z.string().min(1).max(40).optional(),
   /** 行为提示闭集；缺省 = 无行为槽 */
   behaviorHints: z.array(RecallBehaviorHintSchema).optional(),
+  /**
+   * 偏好排序算子（纯偏好问题）；缺省 = 非偏好排序。
+   * 与 behaviorHints（half_read 等）不同：本槽只触发独立行为排序路径。
+   */
+  preferenceOperator: PreferenceOperatorSchema.optional(),
+  /**
+   * 偏好目标；有 preferenceOperator 时通常有值；缺省按 site。
+   */
+  preferenceTarget: PreferenceTargetSchema.optional(),
   /** true = 线索指向附注（MemoryItem.clues.note） */
   noteHint: z.boolean().optional(),
   /** 剥掉时间/类型/行为/附注指向词与填充词后的检索词。 */

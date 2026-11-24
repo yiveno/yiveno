@@ -30,6 +30,7 @@ export type RecallShellBookmarkFuel =
 export type RecallShellTextSegment =
   | { kind: 'text'; text: string }
   | { kind: 'open_bookmark_ingest_settings'; text: string }
+  | { kind: 'open_behavior_import_settings'; text: string }
   | { kind: 'open_ai_settings'; text: string }
   | { kind: 'open_account_settings'; text: string }
 

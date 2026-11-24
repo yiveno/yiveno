@@ -32,6 +32,9 @@ export const DEFAULT_SETTINGS_SECTION: SettingsSectionId = 'capture'
  */
 export const SETTINGS_HASH_CHROME_BOOKMARK_SYNC = 'chrome-bookmark-sync' as const
 
+/** Settings 深链 hash：滚到浏览记录导入（偏好空态「去设置导入」）。 */
+export const SETTINGS_HASH_BEHAVIOR_IMPORT = 'behavior-history-import' as const
+
 /** URL 查询参数：设置分区（刷新后恢复）。 */
 export const SETTINGS_SECTION_QUERY_KEY = 'section'
 

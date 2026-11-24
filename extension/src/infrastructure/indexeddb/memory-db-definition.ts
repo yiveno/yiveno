@@ -19,11 +19,15 @@ import {
   MEMORY_NOTES_STORE,
   MEMORY_PAGE_PREVIEW_INDEX_BY_OWNER,
   MEMORY_PAGE_PREVIEW_INDEX_BY_OWNER_SHOWN,
-  MEMORY_PAGE_PREVIEW_STORE
+  MEMORY_PAGE_PREVIEW_STORE,
+  BEHAVIOR_STATS_STORE,
+  BEHAVIOR_STATS_INDEX_BY_OWNER_DOMAIN,
+  BEHAVIOR_STATS_INDEX_BY_OWNER_LAST_VISIT,
+  BEHAVIOR_STATS_INDEX_BY_OWNER_VISIT_COUNT
 } from '@/infrastructure/indexeddb/constants'
 import type { IndexedDBDefinition } from '@/infrastructure/indexeddb/manager'
 
-/** 创建或升级 memory_items 表与索引；v4 倒排；v5 dreaming；v6 死链；v7 命题向量；v8 页预览。 */
+/** 创建或升级 memory_items 表与索引；v4 倒排；v5 dreaming；v6 死链；v7 命题向量；v8 页预览；v9 行为统计。 */
 function upgradeMemoryDatabase(
   database: IDBDatabase,
   transaction: IDBTransaction,
@@ -121,6 +125,28 @@ function upgradeMemoryDatabase(
       previewStore.createIndex(
         MEMORY_PAGE_PREVIEW_INDEX_BY_OWNER_SHOWN,
         ['ownerId', 'lastShownAt'],
+        { unique: false }
+      )
+    }
+  }
+
+  // v9：浏览行为聚合（本地-only；不上云；build-only + contains guard）。
+  if (oldVersion < 9) {
+    if (!database.objectStoreNames.contains(BEHAVIOR_STATS_STORE)) {
+      const behaviorStore = database.createObjectStore(BEHAVIOR_STATS_STORE, {
+        keyPath: ['ownerId', 'url']
+      })
+      behaviorStore.createIndex(BEHAVIOR_STATS_INDEX_BY_OWNER_DOMAIN, ['ownerId', 'domain'], {
+        unique: false
+      })
+      behaviorStore.createIndex(
+        BEHAVIOR_STATS_INDEX_BY_OWNER_LAST_VISIT,
+        ['ownerId', 'lastVisitTime'],
+        { unique: false }
+      )
+      behaviorStore.createIndex(
+        BEHAVIOR_STATS_INDEX_BY_OWNER_VISIT_COUNT,
+        ['ownerId', 'visitCount'],
         { unique: false }
       )
     }

@@ -12,6 +12,7 @@ import {
   clearOrphanOwnerBuckets,
   exportOrphanOwnerBuckets
 } from '@/application/identity/orphan-owner-buckets'
+import { clearBehaviorHistoryData } from '@/application/behavior/import-behavior-history-service'
 import { resetChromeBookmarkImportAfterLocalClear } from '@/application/capture/import-chrome-bookmarks-service'
 import { invalidateBookmarkSyncAlignmentCache } from '@/application/memory/bookmark-sync-alignment-cache'
 import type {
@@ -342,6 +343,8 @@ export async function handleClearLocalMemory(): Promise<ClearLocalMemoryResponse
     // Memory 已空：抹掉 completed 导入进度，避免再开灌库时误以为已灌满
     await resetChromeBookmarkImportAfterLocalClear()
     await clearChromeBookmarkDeleteTombstones()
+    // 行为数据与导入状态一并清（同 owner）
+    await clearBehaviorHistoryData()
 
     const syncPrefs = await getSyncPrefs()
     let syncDisabled = false

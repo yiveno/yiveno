@@ -12,6 +12,8 @@ import { parseRecallClue, resolveRecallClueConfidence } from '@/core/recall/pars
 import {
   ParsedRecallClueSchema,
   type ParsedRecallClue,
+  type PreferenceOperator,
+  type PreferenceTarget,
   type RecallBehaviorHint,
   type RecallObjectType
 } from '@/core/recall/parse-recall-clue-types'
@@ -29,6 +31,11 @@ export type RecallDialogState = {
   accumulated: ParsedRecallClue | null
   /** 本会话已否定的 MemoryItem id。 */
   dismissedIds: string[]
+  /**
+   * 行为偏好轮换：本会话已展示过的候选位数（从 top1 起累计）。
+   * 会话内；不入 IndexedDB。
+   */
+  behaviorShownCount?: number
 }
 
 export type MergeRecallDialogTurnInput = {
@@ -151,6 +158,12 @@ export function mergeParsedRecallClues(
       : accumulated.objectTypes
   const behaviorHints = unionBehaviorHints(accumulated.behaviorHints, current.behaviorHints)
   const noteHint = current.noteHint === true || accumulated.noteHint === true ? true : undefined
+  // 偏好算子：本轮有则覆盖；无则继承 accumulated
+  const preferenceOperator: PreferenceOperator | undefined =
+    current.preferenceOperator ?? accumulated.preferenceOperator
+  const preferenceTarget: PreferenceTarget | undefined = current.preferenceOperator
+    ? (current.preferenceTarget ?? 'site')
+    : (current.preferenceTarget ?? accumulated.preferenceTarget)
 
   const hasTime = Boolean(timeRange)
   const hasObject = Boolean(objectTypes && objectTypes.length > 0)
@@ -172,6 +185,8 @@ export function mergeParsedRecallClues(
     ...(timeRange && timeConfidence ? { timeConfidence } : {}),
     ...(objectTypes && objectTypes.length > 0 ? { objectTypes } : {}),
     ...(behaviorHints ? { behaviorHints } : {}),
+    ...(preferenceOperator ? { preferenceOperator } : {}),
+    ...(preferenceTarget ? { preferenceTarget } : {}),
     ...(noteHint ? { noteHint } : {}),
     ...(excludeContentTerms.length > 0 ? { excludeContentTerms } : {})
   })
@@ -250,6 +265,9 @@ export function rollbackLastDialogUtterance(
   return {
     priorUserUtterances: remaining,
     accumulated: merged,
-    dismissedIds: [...state.dismissedIds]
+    dismissedIds: [...state.dismissedIds],
+    ...(state.behaviorShownCount !== undefined
+      ? { behaviorShownCount: state.behaviorShownCount }
+      : {})
   }
 }

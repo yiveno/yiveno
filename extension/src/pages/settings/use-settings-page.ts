@@ -11,6 +11,7 @@ import {
   DEFAULT_SETTINGS_SECTION,
   parseSettingsSectionFromLocationSearch,
   resolveSettingsSectionTab,
+  SETTINGS_HASH_BEHAVIOR_IMPORT,
   SETTINGS_HASH_CHROME_BOOKMARK_SYNC,
   SETTINGS_SECTION_TABS,
   type SettingsSectionId
@@ -24,8 +25,11 @@ import {
   clearOrphanOwners,
   deleteAccount,
   deleteCloudMemory,
+  clearBehaviorHistoryMessage,
   ensureChromeBookmarksImportedMessage,
   exportLocalMemory,
+  fetchBehaviorHistoryImportStatus,
+  importBehaviorHistoryMessage,
   exportOrphanOwners,
   fetchAuthState,
   retryAnonymousCaptcha,
@@ -56,6 +60,7 @@ import {
   type DualThreadContributeBlockReason,
   type DualThreadSketchUploadState
 } from '@/core/recall/dual-thread/dual-thread-consent'
+import type { BehaviorHistoryImportState } from '@/core/behavior/behavior-history-import-state'
 import type { ChromeBookmarkImportState } from '@/core/memory/chrome-bookmark-import-state'
 import type { ThirdPartyCorpusSource } from '@/core/memory/third-party-corpus-source'
 import type { ImportErrorCode } from '@/core/messaging/import-messages'
@@ -144,6 +149,12 @@ export function useSettingsPage() {
   const savingChromeBookmarkSync = ref(false)
   const reimportChromeBookmarksBusy = ref(false)
   const reimportChromeBookmarksDone = ref(false)
+  const behaviorImportState = ref<BehaviorHistoryImportState | null>(null)
+  const behaviorImportBusy = ref(false)
+  const behaviorClearBusy = ref(false)
+  const behaviorClearDone = ref(false)
+  let behaviorImportPollTimer: ReturnType<typeof setInterval> | null = null
+  let behaviorClearDoneTimer: ReturnType<typeof setTimeout> | null = null
   let reimportDoneTimer: ReturnType<typeof setTimeout> | null = null
   const savingAiFeatures = ref(false)
   const savingLinkStatusSweep = ref(false)
@@ -361,8 +372,10 @@ export function useSettingsPage() {
       }
       if (section === 'capture') {
         void loadChromeBookmarkImportStatus()
+        void refreshBehaviorImportStatus()
       } else {
         stopBookmarkImportPolling()
+        stopBehaviorImportPolling()
       }
     },
     { immediate: true }
@@ -647,6 +660,7 @@ export function useSettingsPage() {
         response.settings.dualThreadContributeAggregatesEnabled
       uiLocalePreference.value = response.settings.uiLocalePreference
       settingsState.value = 'ready'
+      void refreshBehaviorImportStatus()
       if (activeSection.value === 'privacy') {
         void loadDualThreadLearningStatus()
       }
@@ -735,6 +749,117 @@ export function useSettingsPage() {
       settingsError.value = t('settings_error_update')
     } finally {
       reimportChromeBookmarksBusy.value = false
+    }
+  }
+
+  function stopBehaviorImportPolling(): void {
+    if (behaviorImportPollTimer !== null) {
+      clearInterval(behaviorImportPollTimer)
+      behaviorImportPollTimer = null
+    }
+  }
+
+  function startBehaviorImportPolling(): void {
+    stopBehaviorImportPolling()
+    behaviorImportPollTimer = setInterval(() => {
+      void refreshBehaviorImportStatus()
+    }, 800)
+  }
+
+  async function refreshBehaviorImportStatus(): Promise<void> {
+    try {
+      const response = await fetchBehaviorHistoryImportStatus()
+      if (!response.ok) {
+        return
+      }
+      behaviorImportState.value = response.state
+      if (response.state?.status === 'running') {
+        if (behaviorImportPollTimer === null) {
+          startBehaviorImportPolling()
+        }
+      } else {
+        stopBehaviorImportPolling()
+        behaviorImportBusy.value = false
+      }
+    } catch {
+      // 轮询失败不打断 UI
+    }
+  }
+
+  const behaviorImportStatusCopy = computed(() => {
+    const state = behaviorImportState.value
+    if (!state) {
+      return ''
+    }
+    if (state.status === 'running') {
+      return t('settings_behavior_import_progress', [String(state.scannedCount ?? 0)])
+    }
+    if (state.status === 'completed') {
+      return t('settings_behavior_import_done', [String(state.importedCount)])
+    }
+    if (state.status === 'failed') {
+      if (state.errorCode === 'BEHAVIOR_IMPORT_PERMISSION_DENIED') {
+        return t('settings_behavior_import_permission_denied')
+      }
+      return t('settings_behavior_import_failed')
+    }
+    return ''
+  })
+
+  /** 导入浏览记录（含可选 history 权限请求）。 */
+  async function handleImportBehaviorHistory() {
+    if (behaviorImportBusy.value) {
+      return
+    }
+    behaviorImportBusy.value = true
+    settingsError.value = ''
+    try {
+      const response = await importBehaviorHistoryMessage()
+      if (!response.ok) {
+        settingsError.value = tImportError(response.errorCode)
+        behaviorImportBusy.value = false
+        return
+      }
+      behaviorImportState.value = response.state
+      if (response.state.status === 'running') {
+        startBehaviorImportPolling()
+      } else {
+        behaviorImportBusy.value = false
+      }
+    } catch {
+      settingsError.value = t('settings_error_update')
+      behaviorImportBusy.value = false
+    }
+  }
+
+  /** 清除当前 owner 行为数据。 */
+  async function handleClearBehaviorHistory() {
+    if (behaviorClearBusy.value) {
+      return
+    }
+    behaviorClearBusy.value = true
+    behaviorClearDone.value = false
+    settingsError.value = ''
+    if (behaviorClearDoneTimer !== null) {
+      clearTimeout(behaviorClearDoneTimer)
+      behaviorClearDoneTimer = null
+    }
+    try {
+      const response = await clearBehaviorHistoryMessage()
+      if (!response.ok) {
+        settingsError.value = tImportError(response.errorCode)
+        return
+      }
+      behaviorImportState.value = null
+      behaviorClearDone.value = true
+      behaviorClearDoneTimer = setTimeout(() => {
+        behaviorClearDone.value = false
+        behaviorClearDoneTimer = null
+      }, 2500)
+    } catch {
+      settingsError.value = t('settings_error_update')
+    } finally {
+      behaviorClearBusy.value = false
     }
   }
 
@@ -1967,7 +2092,10 @@ export function useSettingsPage() {
     if (!raw) {
       return
     }
-    if (raw === SETTINGS_HASH_CHROME_BOOKMARK_SYNC && activeSection.value !== 'capture') {
+    if (
+      (raw === SETTINGS_HASH_CHROME_BOOKMARK_SYNC || raw === SETTINGS_HASH_BEHAVIOR_IMPORT) &&
+      activeSection.value !== 'capture'
+    ) {
       activeSection.value = DEFAULT_SETTINGS_SECTION
     }
     requestAnimationFrame(() => {
@@ -2009,6 +2137,11 @@ export function useSettingsPage() {
     stopWatchWebsiteAuthUi?.()
     stopWatchWebsiteAuthUi = null
     stopBookmarkImportPolling()
+    stopBehaviorImportPolling()
+    if (behaviorClearDoneTimer !== null) {
+      clearTimeout(behaviorClearDoneTimer)
+      behaviorClearDoneTimer = null
+    }
     window.removeEventListener('popstate', handlePopState)
     window.removeEventListener('hashchange', handleHashChange)
     document.removeEventListener('visibilitychange', handleDocumentVisibilityChange)
@@ -2065,6 +2198,8 @@ export function useSettingsPage() {
     handleLinkStatusSweepToggle,
     handleChromeBookmarkSyncToggle,
     handleReimportChromeBookmarks,
+    handleImportBehaviorHistory,
+    handleClearBehaviorHistory,
     handleClearLocalMemory,
     handleClearLocalRecallAdaptation,
     handleClearOrphans,
@@ -2156,6 +2291,10 @@ export function useSettingsPage() {
     reimportChromeBookmarksBusy,
     reimportChromeBookmarksDone,
     reimportChromeBookmarksDoneText,
+    behaviorImportBusy,
+    behaviorClearBusy,
+    behaviorClearDone,
+    behaviorImportStatusCopy,
     savingMcpReadOnly,
     savingRecallOutcomeSoftAdjust,
     savingDualThreadLocalLearning,

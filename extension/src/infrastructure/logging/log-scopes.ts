@@ -11,6 +11,9 @@ export const LOG_SCOPES = [
   'Account', // 账号删除等云端账号操作
   'Auth', // 登录 / session / OAuth / 官网 handoff
   'Background', // SW 启动、bootstrap、安装更新
+  'BehaviorImport', // 浏览记录一次性导入（history → behavior_stats）
+  'BehaviorRecall', // 偏好问题行为排序召回路径
+  'BehaviorStats', // behavior_stats IDB 读写
   'Capture', // Capture 书签 / 摘录 / 选区
   'ChromeBookmarkImport', // Chrome 书签 bulk 灌库导入
   'ChromeBookmarkSync', // Chrome 书签增量同步 / reconcile

@@ -3598,5 +3598,167 @@
   },
   "error_open_review": {
     "message": "Could not open daily review"
+  },
+  "settings_behavior_group_label": {
+    "message": "Browsing activity"
+  },
+  "settings_behavior_import_title": {
+    "message": "Import browsing history"
+  },
+  "settings_behavior_import_hint": {
+    "message": "Reads URLs, visit counts, and timestamps from Chrome history for the last 90 days. Stored only on this device. You can clear it anytime."
+  },
+  "settings_behavior_import_action": {
+    "message": "Import browsing history"
+  },
+  "settings_behavior_import_progress": {
+    "message": "Importing… $1 pages scanned",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "settings_behavior_import_done": {
+    "message": "Imported $1 URLs covering the last 90 days",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "842"
+      }
+    }
+  },
+  "settings_behavior_import_permission_denied": {
+    "message": "Permission wasn’t granted. Nothing was imported. You can try again anytime."
+  },
+  "settings_behavior_import_failed": {
+    "message": "Import didn’t finish. You can try again."
+  },
+  "settings_behavior_clear_title": {
+    "message": "Clear browsing activity data"
+  },
+  "settings_behavior_clear_hint": {
+    "message": "Removes local visit stats for this account on this device. Doesn’t change Chrome history."
+  },
+  "settings_behavior_clear_action": {
+    "message": "Clear activity data"
+  },
+  "settings_behavior_clear_done": {
+    "message": "Browsing activity data cleared"
+  },
+  "behavior_pref_framing_top": {
+    "message": "I’d look at $1.",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "github.com"
+      }
+    }
+  },
+  "behavior_pref_evidence_most_frequent": {
+    "message": "Visited $1 times; last visit $2.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "42"
+      },
+      "when": {
+        "content": "$2",
+        "example": "yesterday"
+      }
+    }
+  },
+  "behavior_pref_evidence_favorite": {
+    "message": "Visited $1 times; last visit $2. Recent visits count more.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "42"
+      },
+      "when": {
+        "content": "$2",
+        "example": "yesterday"
+      }
+    }
+  },
+  "behavior_pref_evidence_recent_frequent": {
+    "message": "Been visiting often lately ($1 times); last visit $2.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "12"
+      },
+      "when": {
+        "content": "$2",
+        "example": "today"
+      }
+    }
+  },
+  "behavior_pref_relative_today": {
+    "message": "today"
+  },
+  "behavior_pref_relative_yesterday": {
+    "message": "yesterday"
+  },
+  "behavior_pref_relative_days_ago": {
+    "message": "$1 days ago",
+    "placeholders": {
+      "n": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "behavior_pref_relative_weeks_ago": {
+    "message": "$1 weeks ago",
+    "placeholders": {
+      "n": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "behavior_pref_relative_months_ago": {
+    "message": "$1 months ago",
+    "placeholders": {
+      "n": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "behavior_pref_page_as_site_note": {
+    "message": "I’m answering by website for now; ranking specific articles is still in the works."
+  },
+  "behavior_pref_topic_unsupported": {
+    "message": "I can’t filter by topic for browsing habits yet. Try something like “which site do I visit most?”"
+  },
+  "behavior_pref_exhausted": {
+    "message": "That’s all I have from your browsing activity for this."
+  },
+  "behavior_pref_not_imported": {
+    "message": "Browsing history isn’t imported yet."
+  },
+  "behavior_pref_not_imported_link": {
+    "message": "Import it in Settings"
+  },
+  "behavior_pref_empty": {
+    "message": "No countable visits in the imported browsing history."
+  },
+  "behavior_pref_try_another_hint": {
+    "message": "Not this one? Say “try another”."
+  },
+  "error_behavior_import_permission_denied": {
+    "message": "History permission wasn’t granted"
+  },
+  "error_behavior_import_status_read_failed": {
+    "message": "Couldn’t read browsing import status"
+  },
+  "error_behavior_import_start_failed": {
+    "message": "Couldn’t start browsing history import"
+  },
+  "error_behavior_clear_failed": {
+    "message": "Couldn’t clear browsing activity data"
   }
 }

@@ -44,7 +44,10 @@ import type {
   OpenRecallShellResponse
 } from '@/core/messaging/commands-messages'
 import type {
+  BehaviorHistoryImportStatusResponse,
   ChromeBookmarkImportStatusResponse,
+  ClearBehaviorHistoryMessage,
+  ClearBehaviorHistoryResponse,
   ColdStartStatusResponse,
   DeleteThirdPartyCorpusBySourceMessage,
   DeleteThirdPartyCorpusBySourceResponse,
@@ -52,12 +55,15 @@ import type {
   EnsureChromeBookmarksImportedResponse,
   GenerateGettingStartedClueSamplesMessage,
   GenerateGettingStartedClueSamplesResponse,
+  GetBehaviorHistoryImportStatusMessage,
   GetBookmarkLibraryTreeResponse,
   GetChromeBookmarkImportStatusMessage,
   GetColdStartStatusMessage,
   GetBookmarkLibraryTreeMessage,
   GetBookmarkSyncStalenessMessage,
   GetThirdPartyCorpusSummaryMessage,
+  ImportBehaviorHistoryMessage,
+  ImportBehaviorHistoryResponse,
   ImportLocalMemoryMessage,
   ImportLocalMemoryResponse,
   ImportThirdPartyCorpusMessage,
@@ -301,6 +307,33 @@ export async function ensureChromeBookmarksImportedMessage(): Promise<EnsureChro
     type: 'ENSURE_CHROME_BOOKMARKS_IMPORTED'
   }
   return sendBackgroundMessage<EnsureChromeBookmarksImportedResponse>(message)
+}
+
+/** 查询浏览记录导入进度。 */
+export async function fetchBehaviorHistoryImportStatus(): Promise<BehaviorHistoryImportStatusResponse> {
+  const message: GetBehaviorHistoryImportStatusMessage = {
+    scope: 'background',
+    type: 'GET_BEHAVIOR_HISTORY_IMPORT_STATUS'
+  }
+  return sendBackgroundMessage<BehaviorHistoryImportStatusResponse>(message)
+}
+
+/** Settings：导入浏览记录（含可选 history 权限）。 */
+export async function importBehaviorHistoryMessage(): Promise<ImportBehaviorHistoryResponse> {
+  const message: ImportBehaviorHistoryMessage = {
+    scope: 'background',
+    type: 'IMPORT_BEHAVIOR_HISTORY'
+  }
+  return sendBackgroundMessage<ImportBehaviorHistoryResponse>(message)
+}
+
+/** Settings：清除当前 owner 行为数据。 */
+export async function clearBehaviorHistoryMessage(): Promise<ClearBehaviorHistoryResponse> {
+  const message: ClearBehaviorHistoryMessage = {
+    scope: 'background',
+    type: 'CLEAR_BEHAVIOR_HISTORY'
+  }
+  return sendBackgroundMessage<ClearBehaviorHistoryResponse>(message)
 }
 
 /** 导入 Raindrop / Pocket 导出文件（§5.10.6）。 */

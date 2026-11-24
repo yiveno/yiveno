@@ -3,6 +3,7 @@
  * 输入仅 RecallFramingFacts + 规则基线；P6 计数由客户端 deterministic 拼接。
  */
 
+import type { BehaviorPreferenceRankingMeta } from '@/core/behavior/build-behavior-preference-result'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import type { RecallFramingFacts } from '@/core/recall/recall-framing-facts'
 import type { RecallOutcome } from '@/core/recall/recall-result'
@@ -15,6 +16,8 @@ export type BuildLlmFramingPromptInput = {
   /** 规则模板 P1–P5 基线（供模型对齐，不得偏离事实）。 */
   rulesBaseline: string
   weakCandidateTitles?: string[]
+  /** 行为偏好依据（次数/时间/算子）；有则按依据改写，勿报内部分数。 */
+  behaviorPreference?: BehaviorPreferenceRankingMeta
 }
 
 function previewList(values: string[] | undefined, limit = 3): string {
@@ -43,7 +46,8 @@ export function buildLlmFramingSystemPrompt(): string {
     '- Use ONLY facts in framingFacts / rulesBaseline / weakCandidateTitles. Never invent titles, URLs, sites, or memory items.',
     '- timeLabel in framingFacts is an internal slug (e.g. few_months_ago). Never show snake_case to the user; say natural English (a few months ago, last week, …). Prefer the wording already in rulesBaseline.',
     '- Do NOT include match counts or "showing 1–5" — the app appends counts separately.',
-    '- No preference profiling; no questionnaire; no markdown; no extra keys.',
+    '- No preference profiling beyond the visit facts provided; no questionnaire; no markdown; no extra keys.',
+    '- When behaviorPreference is present: name the top domain and ground the reply in visitCount + lastVisitTime only (never invent scores). most_frequent = total visits; favorite = visits with recent weight; recent_frequent = recently frequent. Never say "past 90 days" — counts accumulate across re-imports.',
     '- chips: 0–5 only when outcome is need_a_clue AND weakCandidateTitles lists ≥2 distinct candidates; else empty array.',
     '- chips must differentiate those candidates (type / host / unique word present in some but not all). Never meta chips like "I don\'t remember" / "not sure".',
     '- empty array for top_pick. label matches reply language; value MUST be stable English phrases.'
@@ -58,6 +62,9 @@ export function buildLlmFramingUserPrompt(input: BuildLlmFramingPromptInput): st
     `framingFacts: ${JSON.stringify(input.facts)}`,
     `rulesBaseline: ${input.rulesBaseline}`,
     `weakCandidateTitles: ${previewList(input.weakCandidateTitles)}`,
+    ...(input.behaviorPreference
+      ? [`behaviorPreference: ${JSON.stringify(input.behaviorPreference)}`]
+      : []),
     '',
     'Write the framing JSON now.'
   ].join('\n')

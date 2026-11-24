@@ -1,5 +1,6 @@
 import { z } from 'zod'
 
+import type { BehaviorHistoryImportState } from '@/core/behavior/behavior-history-import-state'
 import type { BookmarkLibraryIndex } from '@/core/memory/bookmark-library-index'
 import type { ChromeBookmarkImportState } from '@/core/memory/chrome-bookmark-import-state'
 import type { ColdStartEnrichmentBatch } from '@/core/memory/cold-start-enrichment-batch'
@@ -15,7 +16,10 @@ export const ImportErrorCodeSchema = z.enum([
   'IMPORT_STATUS_READ_FAILED', // 读取导入状态失败
   'LIBRARY_TREE_READ_FAILED', // 读取书签树失败
   'COLD_START_STATUS_READ_FAILED', // 读取冷启动门禁状态失败
-  'GS_CLUE_SAMPLES_FAILED' // Getting Started 示意 clue 生成失败
+  'GS_CLUE_SAMPLES_FAILED', // Getting Started 示意 clue 生成失败
+  'BEHAVIOR_IMPORT_STATUS_READ_FAILED', // 读取浏览记录导入状态失败
+  'BEHAVIOR_IMPORT_START_FAILED', // 启动浏览记录导入失败
+  'BEHAVIOR_CLEAR_FAILED' // 清除行为数据失败
 ])
 
 export type ImportErrorCode = z.infer<typeof ImportErrorCodeSchema>
@@ -31,6 +35,66 @@ export type EnsureChromeBookmarksImportedMessage = {
   scope: BackgroundMessageScope
   type: 'ENSURE_CHROME_BOOKMARKS_IMPORTED'
 }
+
+/** 查询浏览记录导入进度。 */
+export type GetBehaviorHistoryImportStatusMessage = {
+  scope: BackgroundMessageScope
+  type: 'GET_BEHAVIOR_HISTORY_IMPORT_STATUS'
+}
+
+/** 启动浏览记录一次性导入（含可选 history 权限请求）。 */
+export type ImportBehaviorHistoryMessage = {
+  scope: BackgroundMessageScope
+  type: 'IMPORT_BEHAVIOR_HISTORY'
+}
+
+/** 清除当前 owner 行为统计 + 导入状态。 */
+export type ClearBehaviorHistoryMessage = {
+  scope: BackgroundMessageScope
+  type: 'CLEAR_BEHAVIOR_HISTORY'
+}
+
+export type BehaviorHistoryImportStatusSuccessResponse = {
+  ok: true
+  state: BehaviorHistoryImportState | null
+}
+
+export type BehaviorHistoryImportStatusErrorResponse = {
+  ok: false
+  errorCode: ImportErrorCode
+  error?: string
+}
+
+export type BehaviorHistoryImportStatusResponse =
+  BehaviorHistoryImportStatusSuccessResponse | BehaviorHistoryImportStatusErrorResponse
+
+export type ImportBehaviorHistorySuccessResponse = {
+  ok: true
+  state: BehaviorHistoryImportState
+}
+
+export type ImportBehaviorHistoryErrorResponse = {
+  ok: false
+  errorCode: ImportErrorCode
+  error?: string
+}
+
+export type ImportBehaviorHistoryResponse =
+  ImportBehaviorHistorySuccessResponse | ImportBehaviorHistoryErrorResponse
+
+export type ClearBehaviorHistorySuccessResponse = {
+  ok: true
+  deleted: number
+}
+
+export type ClearBehaviorHistoryErrorResponse = {
+  ok: false
+  errorCode: ImportErrorCode
+  error?: string
+}
+
+export type ClearBehaviorHistoryResponse =
+  ClearBehaviorHistorySuccessResponse | ClearBehaviorHistoryErrorResponse
 
 export type EnsureChromeBookmarksImportedSuccessResponse = {
   ok: true
@@ -290,6 +354,9 @@ export type DeleteThirdPartyCorpusBySourceResponse =
 export type ImportBackgroundMessage =
   | GetChromeBookmarkImportStatusMessage
   | EnsureChromeBookmarksImportedMessage
+  | GetBehaviorHistoryImportStatusMessage
+  | ImportBehaviorHistoryMessage
+  | ClearBehaviorHistoryMessage
   | GetBookmarkLibraryTreeMessage
   | GetColdStartStatusMessage
   | GenerateGettingStartedClueSamplesMessage
@@ -302,6 +369,9 @@ export type ImportBackgroundMessage =
 export type ImportBackgroundResponse =
   | ChromeBookmarkImportStatusResponse
   | EnsureChromeBookmarksImportedResponse
+  | BehaviorHistoryImportStatusResponse
+  | ImportBehaviorHistoryResponse
+  | ClearBehaviorHistoryResponse
   | GetBookmarkLibraryTreeResponse
   | ColdStartStatusResponse
   | GenerateGettingStartedClueSamplesResponse

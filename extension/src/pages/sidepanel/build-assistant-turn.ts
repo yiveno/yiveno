@@ -32,6 +32,8 @@ export function createAssistantTurn(input: {
   systemNote?: string
   /** 失败轮重试用的原线索；仅 tone 为 error 时设置 */
   retryClue?: string
+  /** 行为偏好跟进提示（已翻译） */
+  behaviorTryAnotherHint?: string
   allowDismiss?: boolean
 }): ConversationTurn {
   return {
@@ -69,6 +71,9 @@ export function createAssistantTurn(input: {
     ...(input.clueTruncatedTip === undefined ? {} : { clueTruncatedTip: input.clueTruncatedTip }),
     ...(input.systemNote === undefined ? {} : { systemNote: input.systemNote }),
     ...(input.retryClue === undefined ? {} : { retryClue: input.retryClue }),
+    ...(input.behaviorTryAnotherHint === undefined
+      ? {}
+      : { behaviorTryAnotherHint: input.behaviorTryAnotherHint }),
     allowDismiss: input.allowDismiss ?? false
   }
 }

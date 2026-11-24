@@ -46,6 +46,10 @@ export const recallDialogContextSchema = z.object({
   /** 本会话已否定的 MemoryItem id（硬排除）。 */
   dismissedIds: z.array(z.string().uuid()).max(50).optional(),
   /**
+   * 行为偏好轮换：本会话已展示过的候选位数（会话内；不入 IDB）。
+   */
+  behaviorShownCount: z.number().int().nonnegative().max(20).optional(),
+  /**
    * 当前标签页域名（§7.1 Contextual Clue；不含路径）。
    * 仅在 pageContextMode 为 boost/restrict 时参与检索；none 时忽略。
    */

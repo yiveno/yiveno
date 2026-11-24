@@ -75,6 +75,8 @@ const emit = defineEmits<{
   toggleDetailExportSelection: [memoryItemId: string]
   /** 空库「导入书签」→ Settings 书签灌库开关 */
   openBookmarkIngestSettings: []
+  /** 偏好空态「导入浏览记录」→ Settings 行为分区 */
+  openBehaviorImportSettings: []
   /** miss 降级：Settings AI 分区 */
   openAiSettings: []
   /** miss 降级：Settings 账户与同步 */
@@ -576,6 +578,16 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
                   {{ segment.text }}
                 </button>
                 <button
+                  v-else-if="segment.kind === 'open_behavior_import_settings'"
+                  type="button"
+                  class="assistant-turn-inline-link"
+                  :title="segment.text"
+                  :aria-label="segment.text"
+                  @click="emit('openBehaviorImportSettings')"
+                >
+                  {{ segment.text }}
+                </button>
+                <button
                   v-else-if="segment.kind === 'open_ai_settings'"
                   type="button"
                   class="assistant-turn-inline-link"
@@ -734,6 +746,16 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
                   {{ segment.text }}
                 </button>
                 <button
+                  v-else-if="segment.kind === 'open_behavior_import_settings'"
+                  type="button"
+                  class="assistant-turn-inline-link"
+                  :title="segment.text"
+                  :aria-label="segment.text"
+                  @click="emit('openBehaviorImportSettings')"
+                >
+                  {{ segment.text }}
+                </button>
+                <button
                   v-else-if="segment.kind === 'open_ai_settings'"
                   type="button"
                   class="assistant-turn-inline-link"
@@ -757,6 +779,10 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
               </template>
             </template>
             <template v-else>{{ turn.text }}</template>
+          </p>
+
+          <p v-if="turn.behaviorTryAnotherHint" class="assistant-turn-behavior-hint" role="note">
+            {{ turn.behaviorTryAnotherHint }}
           </p>
 
           <AppButton
@@ -998,6 +1024,17 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
 }
 
 .assistant-turn-system-note {
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  font-size: var(--text-caption);
+  line-height: var(--leading-snug);
+  color: var(--on-surface-muted);
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
+}
+
+.assistant-turn-behavior-hint {
   min-width: 0;
   max-width: 100%;
   margin: 0;

@@ -1,6 +1,9 @@
 <script setup lang="ts">
 import { inject, type ComponentPublicInstance } from 'vue'
-import { SETTINGS_HASH_CHROME_BOOKMARK_SYNC } from '@/core/settings/settings-sections'
+import {
+  SETTINGS_HASH_BEHAVIOR_IMPORT,
+  SETTINGS_HASH_CHROME_BOOKMARK_SYNC
+} from '@/core/settings/settings-sections'
 import AppButton from '@/infrastructure/ui/AppButton.vue'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
 import AppSwitch from '@/infrastructure/ui/AppSwitch.vue'
@@ -49,6 +52,8 @@ const {
   handleLinkStatusSweepToggle,
   handleChromeBookmarkSyncToggle,
   handleReimportChromeBookmarks,
+  handleImportBehaviorHistory,
+  handleClearBehaviorHistory,
   handleSignIn,
   openBindOtpModal,
   handleRetryAnonymousCaptcha,
@@ -120,6 +125,10 @@ const {
   reimportChromeBookmarksBusy,
   reimportChromeBookmarksDone,
   reimportChromeBookmarksDoneText,
+  behaviorImportBusy,
+  behaviorClearBusy,
+  behaviorClearDone,
+  behaviorImportStatusCopy,
   savingMcpReadOnly,
   savingRecallOutcomeSoftAdjust,
   savingDualThreadLocalLearning,
@@ -250,6 +259,58 @@ const {
                   {{ t('settings_action_reimport_chrome_bookmarks') }}
                 </AppButton>
               </div>
+            </div>
+
+            <div class="settings-card-stack">
+              <section class="settings-group" :aria-label="t('settings_behavior_group_label')">
+                <h3 class="settings-group__label">{{ t('settings_behavior_group_label') }}</h3>
+                <div :id="SETTINGS_HASH_BEHAVIOR_IMPORT" class="settings-toggle">
+                  <div class="settings-toggle-copy">
+                    <span class="settings-toggle-title">{{
+                      t('settings_behavior_import_title')
+                    }}</span>
+                    <span class="settings-toggle-hint">{{
+                      t('settings_behavior_import_hint')
+                    }}</span>
+                    <span
+                      v-if="behaviorImportStatusCopy"
+                      class="settings-toggle-hint"
+                      role="status"
+                    >
+                      {{ behaviorImportStatusCopy }}
+                    </span>
+                  </div>
+                  <AppButton
+                    type="button"
+                    variant="tonal"
+                    :disabled="behaviorImportBusy"
+                    @click="handleImportBehaviorHistory"
+                  >
+                    {{ t('settings_behavior_import_action') }}
+                  </AppButton>
+                </div>
+                <div class="settings-toggle">
+                  <div class="settings-toggle-copy">
+                    <span class="settings-toggle-title">{{
+                      t('settings_behavior_clear_title')
+                    }}</span>
+                    <span class="settings-toggle-hint">{{
+                      t('settings_behavior_clear_hint')
+                    }}</span>
+                    <span v-if="behaviorClearDone" class="settings-toggle-hint" role="status">
+                      {{ t('settings_behavior_clear_done') }}
+                    </span>
+                  </div>
+                  <AppButton
+                    type="button"
+                    variant="tonal"
+                    :disabled="behaviorClearBusy"
+                    @click="handleClearBehaviorHistory"
+                  >
+                    {{ t('settings_behavior_clear_action') }}
+                  </AppButton>
+                </div>
+              </section>
             </div>
           </section>
         </div>

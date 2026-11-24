@@ -2,11 +2,12 @@
 export const MEMORY_DATABASE_NAME = 'YivenoMemoryDB' as const
 
 /**
+ * v9：浏览行为聚合 `behavior_stats`（本地-only；不上云；不进 Backup）。
  * v8：页面预览截图 `memory_page_previews`（本地-only Blob；不进 Backup / 云同步）。
  * v7：命题向量派生表 `memory_note_embeddings`（可重算缓存；不进 Backup；恢复后重建）。
  * v6：死链巡检派生表 `memory_link_status`（可重算；不进 Backup）。
  */
-export const MEMORY_DATABASE_VERSION = 8 as const
+export const MEMORY_DATABASE_VERSION = 9 as const
 
 export const MEMORY_ITEM_STORE = 'memory_items' as const
 
@@ -47,6 +48,21 @@ export const MEMORY_NOTE_EMBEDDING_STORE = 'memory_note_embeddings' as const
  * keyPath = id（`${ownerId}\0${urlKey}`）。
  */
 export const MEMORY_PAGE_PREVIEW_STORE = 'memory_page_previews' as const
+
+/**
+ * 浏览行为聚合（独立；本地-only；不上云；不进 Backup）。
+ * keyPath = [ownerId, url]（url 已去 fragment）。
+ */
+export const BEHAVIOR_STATS_STORE = 'behavior_stats' as const
+
+/** ownerId + domain，按域名枚举。 */
+export const BEHAVIOR_STATS_INDEX_BY_OWNER_DOMAIN = 'by_owner_domain' as const
+
+/** ownerId + lastVisitTime，按最近访问排序。 */
+export const BEHAVIOR_STATS_INDEX_BY_OWNER_LAST_VISIT = 'by_owner_last_visit' as const
+
+/** ownerId + visitCount，按访问次数排序。 */
+export const BEHAVIOR_STATS_INDEX_BY_OWNER_VISIT_COUNT = 'by_owner_visit_count' as const
 
 /** ownerId + lastCheckedAt，未检查优先排队。 */
 export const MEMORY_LINK_STATUS_INDEX_BY_OWNER_CHECKED = 'by_owner_checked' as const

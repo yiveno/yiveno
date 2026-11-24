@@ -14,7 +14,8 @@ const {
   clearRecallTelemetryEventsMock,
   resetChromeBookmarkImportAfterLocalClearMock,
   clearChromeBookmarkDeleteTombstonesMock,
-  invalidateBookmarkSyncAlignmentCacheMock
+  invalidateBookmarkSyncAlignmentCacheMock,
+  clearBehaviorHistoryDataMock
 } = vi.hoisted(() => ({
   getAccountBindingMock: vi.fn(),
   getOrCreateLocalProfileMock: vi.fn(),
@@ -29,14 +30,20 @@ const {
   clearRecallTelemetryEventsMock: vi.fn(),
   resetChromeBookmarkImportAfterLocalClearMock: vi.fn(),
   clearChromeBookmarkDeleteTombstonesMock: vi.fn(),
-  invalidateBookmarkSyncAlignmentCacheMock: vi.fn()
+  invalidateBookmarkSyncAlignmentCacheMock: vi.fn(),
+  clearBehaviorHistoryDataMock: vi.fn()
 }))
 
 vi.mock('@/infrastructure/identity/local-profile-service', () => ({
   getAccountBinding: getAccountBindingMock,
   getOrCreateLocalProfile: getOrCreateLocalProfileMock,
+  getCurrentOwnerId: vi.fn(async () => 'local-1'),
   clearAccountBinding: vi.fn(),
   setAccountBinding: vi.fn()
+}))
+
+vi.mock('@/application/behavior/import-behavior-history-service', () => ({
+  clearBehaviorHistoryData: clearBehaviorHistoryDataMock
 }))
 
 vi.mock('@/infrastructure/indexeddb/memory-item-repository', () => ({
@@ -112,6 +119,7 @@ describe('handleClearLocalMemory', () => {
     clearRecallTelemetryEventsMock.mockResolvedValue(undefined)
     resetChromeBookmarkImportAfterLocalClearMock.mockResolvedValue(undefined)
     clearChromeBookmarkDeleteTombstonesMock.mockResolvedValue(undefined)
+    clearBehaviorHistoryDataMock.mockResolvedValue({ deleted: 0 })
   })
 
   it('清除本机条目并关闭书签灌库，不依赖 Chrome bookmarks API', async () => {

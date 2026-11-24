@@ -1,0 +1,36 @@
+/**
+ * 用 Vite SSR 加载带 `@/` 的 TS CLI（Bun 原生不解析 paths）。
+ * 与 nlu-try.mjs / decider-flash-gate-a-eval.mjs 同款。
+ */
+import { createServer } from 'vite'
+import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+
+const scriptDir = dirname(fileURLToPath(import.meta.url))
+const root = resolve(scriptDir, '..')
+
+const server = await createServer({
+  configFile: false,
+  root,
+  resolve: {
+    alias: {
+      '@': resolve(root, 'src')
+    }
+  },
+  server: { middlewareMode: true },
+  appType: 'custom'
+})
+
+try {
+  const mod = await server.ssrLoadModule('/scripts/behavior-preference-eval.ts')
+  await mod.runBehaviorPreferenceEval()
+} catch (error) {
+  console.error(error instanceof Error ? error.stack || error.message : error)
+  process.exitCode = 1
+} finally {
+  await server.close()
+}
+
+if (process.exitCode && process.exitCode !== 0) {
+  process.exit(process.exitCode)
+}

@@ -74,7 +74,10 @@ const IMPORT_ERROR_MESSAGE_KEYS: Record<ImportErrorCode, MessageKey> = {
   IMPORT_STATUS_READ_FAILED: 'error_import_status_read_failed',
   LIBRARY_TREE_READ_FAILED: 'library_load_failed',
   COLD_START_STATUS_READ_FAILED: 'error_cold_start_status_read_failed',
-  GS_CLUE_SAMPLES_FAILED: 'error_gs_clue_samples_failed'
+  GS_CLUE_SAMPLES_FAILED: 'error_gs_clue_samples_failed',
+  BEHAVIOR_IMPORT_STATUS_READ_FAILED: 'error_behavior_import_status_read_failed',
+  BEHAVIOR_IMPORT_START_FAILED: 'error_behavior_import_start_failed',
+  BEHAVIOR_CLEAR_FAILED: 'error_behavior_clear_failed'
 }
 
 const COMMANDS_ERROR_MESSAGE_KEYS: Record<CommandsErrorCode, MessageKey> = {

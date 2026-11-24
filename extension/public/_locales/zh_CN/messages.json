@@ -3598,5 +3598,167 @@
   },
   "error_open_review": {
     "message": "无法打开每日回顾"
+  },
+  "settings_behavior_group_label": {
+    "message": "浏览行为"
+  },
+  "settings_behavior_import_title": {
+    "message": "导入浏览记录"
+  },
+  "settings_behavior_import_hint": {
+    "message": "会读取 Chrome 过去 90 天浏览记录里的网址、访问次数和时间戳。只存在本机，随时可清除。"
+  },
+  "settings_behavior_import_action": {
+    "message": "导入浏览记录"
+  },
+  "settings_behavior_import_progress": {
+    "message": "导入中… 已扫描 $1 个页面",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "1200"
+      }
+    }
+  },
+  "settings_behavior_import_done": {
+    "message": "已导入 $1 个网址，覆盖过去 90 天",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "842"
+      }
+    }
+  },
+  "settings_behavior_import_permission_denied": {
+    "message": "未获得权限，未导入任何记录。随时可以再试。"
+  },
+  "settings_behavior_import_failed": {
+    "message": "导入没完成，可以再试一次。"
+  },
+  "settings_behavior_clear_title": {
+    "message": "清除行为数据"
+  },
+  "settings_behavior_clear_hint": {
+    "message": "只删本机这个账号下的访问统计，不会改 Chrome 浏览记录。"
+  },
+  "settings_behavior_clear_action": {
+    "message": "清除行为数据"
+  },
+  "settings_behavior_clear_done": {
+    "message": "行为数据已清除"
+  },
+  "behavior_pref_framing_top": {
+    "message": "我会先看 $1。",
+    "placeholders": {
+      "domain": {
+        "content": "$1",
+        "example": "github.com"
+      }
+    }
+  },
+  "behavior_pref_evidence_most_frequent": {
+    "message": "共访问 $1 次，最近一次是 $2。",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "42"
+      },
+      "when": {
+        "content": "$2",
+        "example": "昨天"
+      }
+    }
+  },
+  "behavior_pref_evidence_favorite": {
+    "message": "共访问 $1 次，最近一次是 $2。最近的权重更高。",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "42"
+      },
+      "when": {
+        "content": "$2",
+        "example": "昨天"
+      }
+    }
+  },
+  "behavior_pref_evidence_recent_frequent": {
+    "message": "最近常看（$1 次），最近一次是 $2。",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "12"
+      },
+      "when": {
+        "content": "$2",
+        "example": "今天"
+      }
+    }
+  },
+  "behavior_pref_relative_today": {
+    "message": "今天"
+  },
+  "behavior_pref_relative_yesterday": {
+    "message": "昨天"
+  },
+  "behavior_pref_relative_days_ago": {
+    "message": "$1 天前",
+    "placeholders": {
+      "n": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "behavior_pref_relative_weeks_ago": {
+    "message": "$1 周前",
+    "placeholders": {
+      "n": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "behavior_pref_relative_months_ago": {
+    "message": "$1 个月前",
+    "placeholders": {
+      "n": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "behavior_pref_page_as_site_note": {
+    "message": "先按网站算的，按具体文章算还在做。"
+  },
+  "behavior_pref_topic_unsupported": {
+    "message": "还不能按主题筛选浏览习惯。可以改问「我最常看的网站是哪个」。"
+  },
+  "behavior_pref_exhausted": {
+    "message": "就这几个了。"
+  },
+  "behavior_pref_not_imported": {
+    "message": "还没导入浏览记录。"
+  },
+  "behavior_pref_not_imported_link": {
+    "message": "去设置里导入"
+  },
+  "behavior_pref_empty": {
+    "message": "浏览记录里没有可统计的访问。"
+  },
+  "behavior_pref_try_another_hint": {
+    "message": "不是这个？说「换一个」。"
+  },
+  "error_behavior_import_permission_denied": {
+    "message": "未获得浏览记录权限"
+  },
+  "error_behavior_import_status_read_failed": {
+    "message": "读不到浏览记录导入状态"
+  },
+  "error_behavior_import_start_failed": {
+    "message": "没法开始导入浏览记录"
+  },
+  "error_behavior_clear_failed": {
+    "message": "清除行为数据失败"
   }
 }

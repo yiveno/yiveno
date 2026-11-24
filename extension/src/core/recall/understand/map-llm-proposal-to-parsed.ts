@@ -72,6 +72,20 @@ export function mapLlmProposalToParsedClue(
 
   const noteHint = proposal.noteHint === true ? true : undefined
 
+  // 偏好算子：语义判断，不做词面 grounding；直接透传（坏值已在 proposal .catch 置空）
+  const preferenceOperator =
+    proposal.preferenceOperator === 'most_frequent' ||
+    proposal.preferenceOperator === 'favorite' ||
+    proposal.preferenceOperator === 'recent_frequent'
+      ? proposal.preferenceOperator
+      : undefined
+  const preferenceTarget =
+    proposal.preferenceTarget === 'site' || proposal.preferenceTarget === 'page'
+      ? proposal.preferenceTarget
+      : preferenceOperator
+        ? ('site' as const)
+        : undefined
+
   // R7：未知类型出口；非法/超长在此丢弃本字段（与 proposal schema catch 同口径）
   const objectTypeOtherTrimmed =
     typeof proposal.objectTypeOther === 'string' ? proposal.objectTypeOther.trim() : ''
@@ -139,6 +153,8 @@ export function mapLlmProposalToParsedClue(
     ...(hasObject ? { objectTypes } : {}),
     ...(objectTypeOther ? { objectTypeOther } : {}),
     ...(hasBehavior ? { behaviorHints } : {}),
+    ...(preferenceOperator ? { preferenceOperator } : {}),
+    ...(preferenceTarget ? { preferenceTarget } : {}),
     ...(noteHint ? { noteHint } : {}),
     ...(excludeContentTerms.length > 0 ? { excludeContentTerms } : {}),
     ...(proposal.intent !== 'recall' ? { intent: proposal.intent } : {}),

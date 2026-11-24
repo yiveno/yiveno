@@ -246,13 +246,24 @@ export function buildRecallFramingFacts(
     if (result.emptyKind === 'chitchat') {
       return null
     }
+    // 行为偏好空态：专属 miss 文案由 UI 消费 emptyKind / assistantReply
+    if (
+      result.emptyKind === 'behavior_not_imported' ||
+      result.emptyKind === 'behavior_empty' ||
+      result.emptyKind === 'behavior_topic_unsupported' ||
+      result.emptyKind === 'behavior_exhausted'
+    ) {
+      return null
+    }
     if (!result.relatedGuess) {
       return null
     }
     return {
       kind: 'guess',
       understood,
-      ...(result.emptyKind !== undefined ? { emptyKind: result.emptyKind } : {})
+      ...(result.emptyKind === 'constrained_none' || result.emptyKind === 'unconstrained'
+        ? { emptyKind: result.emptyKind }
+        : {})
     }
   }
 

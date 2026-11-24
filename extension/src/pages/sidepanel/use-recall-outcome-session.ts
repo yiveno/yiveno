@@ -230,6 +230,27 @@ export function useRecallOutcomeSession(
     if (input.emptyKind === 'missing_topic') {
       return { text: t('popup_reply_miss_missing_topic') }
     }
+    if (input.emptyKind === 'behavior_not_imported') {
+      return {
+        text: `${t('behavior_pref_not_imported')} ${t('behavior_pref_not_imported_link')}`,
+        textSegments: [
+          { kind: 'text', text: `${t('behavior_pref_not_imported')} ` },
+          {
+            kind: 'open_behavior_import_settings',
+            text: t('behavior_pref_not_imported_link')
+          }
+        ]
+      }
+    }
+    if (input.emptyKind === 'behavior_empty') {
+      return { text: t('behavior_pref_empty') }
+    }
+    if (input.emptyKind === 'behavior_topic_unsupported' && input.assistantReply?.trim()) {
+      return { text: input.assistantReply.trim() }
+    }
+    if (input.emptyKind === 'behavior_exhausted' && input.assistantReply?.trim()) {
+      return { text: input.assistantReply.trim() }
+    }
     if (input.library === 'empty') {
       const copy = getRecallShellNoMatchCopy(
         { library: 'empty', clue: input.clue, bookmarkFuel: bookmarkFuel.value },

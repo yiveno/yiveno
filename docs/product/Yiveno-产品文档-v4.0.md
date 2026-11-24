@@ -1016,6 +1016,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 | Detail export / copy-for-AI         | 已上线（Library + Side Panel）                 | Library / Recall 多选 ≥1 条 → 复制或下载 JSON + Markdown；§5.10.4 · ADR-008                                                                                                                                                                                                                                                                                                                                                                                                         |
 | 只读 MCP                            | 已上线（beta）                                 | Settings → 隐私开关；工具 `yiveno_recall_evidence` → detail export（1–5）；本机 `MCP_RECALL_EVIDENCE` / 云端 `GET\|POST /api/mcp/*`；关闭后本机与云端均拒绝；§5.10.5                                                                                                                                                                                                                                                                                                                |
 | Raindrop / Pocket 迁移导入          | 已上线（文件导入）                             | Settings → **第三方数据**（`third_party`）：Raindrop（HTML/CSV/JSON）与 Pocket（HTML）导出，≤50 条；按来源状态 + 一键硬删；`IMPORT_THIRD_PARTY_CORPUS` / `GET_THIRD_PARTY_CORPUS_SUMMARY` / `DELETE_THIRD_PARTY_CORPUS_BY_SOURCE`；§5.10.6 · R2 准入                                                                                                                                                                                                                                |
+| 偏好问题 · 行为排序 + 浏览记录导入  | **已上线**（第一片）                           | LLM 槽位 `preferenceOperator`/`preferenceTarget`（无关键词表）；`behavior_stats`（IDB v9）衰减排序；合成域级卡 + 访问事实 framing；**独立路径**（不进 RRF 第三池）；Omnibox 永不进入；Settings Capture 区可选 `history` 导入（90 天游标 · 本地-only · 可清）；主题筛选诚实短路；空态 `behavior_*`；`behavior-preference:eval` 守解析                                                                                                                                                |
 | TTE / Verified Retrieval 埋点       | 已上线（P0 本机）                              | 七事件 + `pipelineTiming` + ECS 打分 + `yiveno.recallTelemetry`；**未**达 §5.9 Beta 门槛、不对外宣称                                                                                                                                                                                                                                                                                                                                                                                |
 | 轻管理余项（标签/失效链接/统计）    | 目标 · Phase D                                 | 摘录 / 书签 Memory 删除已上线（书签 D-3 + 墓碑）；其余标签/失效链接/统计仍目标                                                                                                                                                                                                                                                                                                                                                                                                      |
 
@@ -1024,39 +1025,40 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 口径：**单测** = Vitest（含 handler/application/core）；**eval** = `extension/src/core/recall/eval` 的 `must`/`stretch`；**MCP** = Chrome DevTools MCP 真机 UI 抽测（扩展用户可感路径）；**手动** = 真机/扩展清单（发版或改到才验）。一项可多列并存。`缺口` = 尚无自动归属、仅靠偶然手测。  
 （历史曾用 `scripts/e2e-management.mjs` CDP 薄冒烟；**已退役**，不得再当作合入归属。）
 
-| 能力                                      | 单测 | eval | MCP | 手动 | 说明                                                                                        |
-| ----------------------------------------- | ---- | ---- | --- | ---- | ------------------------------------------------------------------------------------------- |
-| 右键保存选区                              | ✓    | —    | —   | ✓    | `context-menu` / capture 服务；真机右键需手动                                               |
-| 划词保存浮层                              | ✓    | —    | —   | ✓    | `selection-toolbar-*`；页面浮层需手动                                                       |
-| 书签/摘录事后附注                         | ✓    | ✓    | —   | ✓    | eval：`semi-fuzzy-type-b-note`；树编辑手测                                                  |
-| Chrome 书签导入 + 增量 sync               | ✓    | —    | —   | ✓    | import/sync 服务单测；真机 sync 手测                                                        |
-| LocalProfile / ownerId                    | ✓    | —    | —   | —    | `local-profile*`                                                                            |
-| Settings（最小）                          | ✓    | —    | ✓   | ✓    | MCP：打开 `settings.html`                                                                   |
-| Omnibox 找                                | ✓    | ✓    | —   | ✓    | ADR-007 本机快跳（无向量融合）；§5.10.8 手测 + `omnibox_must` + `omnibox-recall-entry` 单测 |
-| 快捷键找（开 Side Panel）                 | ✓    | —    | —   | ✓    | 真机按键/点图标开 Panel                                                                     |
-| 快捷键打开记忆库                          | ✓    | —    | —   | ✓    | 同上                                                                                        |
-| 快捷键打开设置                            | ✓    | —    | —   | ✓    | 同上                                                                                        |
-| 快捷键保存选中文字                        | ✓    | —    | —   | ✓    | selection 命令封装单测；真机手测                                                            |
-| 快捷键选中文字并附注                      | ✓    | —    | —   | ✓    | 同上                                                                                        |
-| 结果线索解释强化                          | ✓    | —    | —   | ✓    | `explain-recall-match*`；卡面手测                                                           |
-| 找壳空状态分层                            | ✓    | —    | —   | ✓    | `recall-shell-empty-copy.ts` + `popup_*` 遗留 i18n key；§5.8                                |
-| 冷启动存→找闭环（R1）                     | ✓    | ✓    | —   | ✓    | 空库/零锚点 eval；§5.8 A/B/C                                                                |
-| 摘录详情落地页                            | ✓    | —    | —   | ✓    | `GET_MEMORY_ITEM` / open-href；页手测                                                       |
-| 记忆库轻浏览                              | ✓    | —    | —   | ✓    | library tree/tabs；页手测                                                                   |
-| 摘录删除                                  | ✓    | —    | —   | ✓    | delete handler；库/详情手测                                                                 |
-| Need A Clue / 否定反馈                    | ✓    | ✓    | —   | ✓    | eval：`need-a-clue-*`；dismiss 单测；对话手测                                               |
-| 关键词 Recall 主路径（Filter + 口语解析） | ✓    | ✓    | ✓   | ✓    | eval=`must` 门禁；MCP=Side Panel 提交固定 clue→结果卡                                       |
-| 关键词倒排 Phase 1                        | ✓    | ✓    | —   | ✓    | `keyword-index-repository*`；extract-tokens；真机大库                                       |
-| Side Panel 对话式壳（多轮 UI）            | ✓    | ✓    | ✓   | ✓    | merge + eval；MCP `sidepanel.html`；芯片/dismiss 手测                                       |
-| Composer 双通道（§7.0 Placeholder×芯片）  | ✓    | —    | —   | ✓    | `compute-composer-placeholder*`；§5.2.1；旁挂工程文档                                       |
-| 多轮槽位 merge（§7.0）                    | ✓    | ✓    | —   | ✓    | `merge-recall-dialog-turn`；eval `dialog-*` must                                            |
-| Dodo Pro / 同步·托管门禁                  | ✓    | —    | —   | ✓    | webhook/account/sync Pro 拒绝；§5.7 手动付费全流程                                          |
-| 证据卡 ECS（Phase E）                     | ✓    | —    | —   | ✓    | §5.10.1–2；`explain-recall-match` + Side Panel/Omnibox 卡面                                 |
-| Detail export（Phase E）                  | —    | ✓    | —   | ✓    | §5.10.4；`detail-export.ts` + Library/Side Panel UI                                         |
-| TTE 埋点（Phase E）                       | ✓    | —    | —   | ✓    | §5.10.3；七事件 schema                                                                      |
-| R4 semi_fuzzy / 逛一簇 must               | —    | ✓    | —   | ✓    | §5.11.2 `r4-*` must 已绿；cluster 拆 product/design                                         |
-| 只读 MCP（Phase E）                       | ✓    | —    | —   | ✓    | §5.10.5；本机 Hybrid + 云端关键词；未达 §5.9 不对外宣传                                     |
-| Raindrop/Pocket 导入（Phase E）           | ✓    | ✓    | —   | ✓    | §5.10.6；解析单测 + Settings 文件导入                                                       |
+| 能力                                      | 单测 | eval | MCP | 手动 | 说明                                                                                                 |
+| ----------------------------------------- | ---- | ---- | --- | ---- | ---------------------------------------------------------------------------------------------------- |
+| 右键保存选区                              | ✓    | —    | —   | ✓    | `context-menu` / capture 服务；真机右键需手动                                                        |
+| 划词保存浮层                              | ✓    | —    | —   | ✓    | `selection-toolbar-*`；页面浮层需手动                                                                |
+| 书签/摘录事后附注                         | ✓    | ✓    | —   | ✓    | eval：`semi-fuzzy-type-b-note`；树编辑手测                                                           |
+| Chrome 书签导入 + 增量 sync               | ✓    | —    | —   | ✓    | import/sync 服务单测；真机 sync 手测                                                                 |
+| LocalProfile / ownerId                    | ✓    | —    | —   | —    | `local-profile*`                                                                                     |
+| Settings（最小）                          | ✓    | —    | ✓   | ✓    | MCP：打开 `settings.html`                                                                            |
+| Omnibox 找                                | ✓    | ✓    | —   | ✓    | ADR-007 本机快跳（无向量融合）；§5.10.8 手测 + `omnibox_must` + `omnibox-recall-entry` 单测          |
+| 快捷键找（开 Side Panel）                 | ✓    | —    | —   | ✓    | 真机按键/点图标开 Panel                                                                              |
+| 快捷键打开记忆库                          | ✓    | —    | —   | ✓    | 同上                                                                                                 |
+| 快捷键打开设置                            | ✓    | —    | —   | ✓    | 同上                                                                                                 |
+| 快捷键保存选中文字                        | ✓    | —    | —   | ✓    | selection 命令封装单测；真机手测                                                                     |
+| 快捷键选中文字并附注                      | ✓    | —    | —   | ✓    | 同上                                                                                                 |
+| 结果线索解释强化                          | ✓    | —    | —   | ✓    | `explain-recall-match*`；卡面手测                                                                    |
+| 找壳空状态分层                            | ✓    | —    | —   | ✓    | `recall-shell-empty-copy.ts` + `popup_*` 遗留 i18n key；§5.8                                         |
+| 冷启动存→找闭环（R1）                     | ✓    | ✓    | —   | ✓    | 空库/零锚点 eval；§5.8 A/B/C                                                                         |
+| 摘录详情落地页                            | ✓    | —    | —   | ✓    | `GET_MEMORY_ITEM` / open-href；页手测                                                                |
+| 记忆库轻浏览                              | ✓    | —    | —   | ✓    | library tree/tabs；页手测                                                                            |
+| 摘录删除                                  | ✓    | —    | —   | ✓    | delete handler；库/详情手测                                                                          |
+| Need A Clue / 否定反馈                    | ✓    | ✓    | —   | ✓    | eval：`need-a-clue-*`；dismiss 单测；对话手测                                                        |
+| 关键词 Recall 主路径（Filter + 口语解析） | ✓    | ✓    | ✓   | ✓    | eval=`must` 门禁；MCP=Side Panel 提交固定 clue→结果卡                                                |
+| 关键词倒排 Phase 1                        | ✓    | ✓    | —   | ✓    | `keyword-index-repository*`；extract-tokens；真机大库                                                |
+| Side Panel 对话式壳（多轮 UI）            | ✓    | ✓    | ✓   | ✓    | merge + eval；MCP `sidepanel.html`；芯片/dismiss 手测                                                |
+| Composer 双通道（§7.0 Placeholder×芯片）  | ✓    | —    | —   | ✓    | `compute-composer-placeholder*`；§5.2.1；旁挂工程文档                                                |
+| 多轮槽位 merge（§7.0）                    | ✓    | ✓    | —   | ✓    | `merge-recall-dialog-turn`；eval `dialog-*` must                                                     |
+| Dodo Pro / 同步·托管门禁                  | ✓    | —    | —   | ✓    | webhook/account/sync Pro 拒绝；§5.7 手动付费全流程                                                   |
+| 证据卡 ECS（Phase E）                     | ✓    | —    | —   | ✓    | §5.10.1–2；`explain-recall-match` + Side Panel/Omnibox 卡面                                          |
+| Detail export（Phase E）                  | —    | ✓    | —   | ✓    | §5.10.4；`detail-export.ts` + Library/Side Panel UI                                                  |
+| TTE 埋点（Phase E）                       | ✓    | —    | —   | ✓    | §5.10.3；七事件 schema                                                                               |
+| R4 semi_fuzzy / 逛一簇 must               | —    | ✓    | —   | ✓    | §5.11.2 `r4-*` must 已绿；cluster 拆 product/design                                                  |
+| 只读 MCP（Phase E）                       | ✓    | —    | —   | ✓    | §5.10.5；本机 Hybrid + 云端关键词；未达 §5.9 不对外宣传                                              |
+| Raindrop/Pocket 导入（Phase E）           | ✓    | ✓    | —   | ✓    | §5.10.6；解析单测 + Settings 文件导入                                                                |
+| 偏好问题 · 行为排序 + 浏览记录导入        | ✓    | ✓    | ✓   | ✓    | 单测：rank/import/slots；eval=`behavior-preference:eval`；MCP=Settings 导入区 + Side Panel 偏好 clue |
 
 **合入门禁（Normative）：**
 

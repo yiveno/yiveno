@@ -1,6 +1,8 @@
 import { z } from 'zod'
 
 import {
+  PreferenceOperatorSchema,
+  PreferenceTargetSchema,
   RecallBehaviorHintSchema,
   RecallClueConfidenceSchema,
   RecallClueIntentSchema,
@@ -47,6 +49,15 @@ export const LlmParsedClueProposalSchema = z.object({
   objectTypeOther: z.string().min(1).max(40).nullable().optional().catch(undefined),
   /** 行为提示；null = 明确无；缺省 = 未填；数组含坏元素 → 整字段置空 */
   behaviorHints: z.array(RecallBehaviorHintSchema).nullable().optional().catch(undefined),
+  /**
+   * 偏好排序算子；null/缺省 = 非偏好排序；越枚举 → 置空本字段不丢整单。
+   * 仅排序类偏好问题填写；针对具体站点的行为问题 / 时间回溯勿填。
+   */
+  preferenceOperator: PreferenceOperatorSchema.nullable().optional().catch(undefined),
+  /**
+   * 偏好目标 site|page；null/缺省 = 未指定（下游按 site）；越枚举 → 置空。
+   */
+  preferenceTarget: PreferenceTargetSchema.nullable().optional().catch(undefined),
   /** true = 指向附注；非布尔 → 置空 */
   noteHint: z.boolean().optional().catch(undefined),
   /** 内容检索词（模型提议；经 map 再落地）；畸形仍整单抛错，走规则降级 */

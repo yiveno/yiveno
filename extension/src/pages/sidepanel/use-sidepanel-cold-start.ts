@@ -32,7 +32,10 @@ import {
 import { getTimeOfDayGreeting } from '@/core/recall/time-of-day-greeting'
 import { openGettingStartedPage } from '@/infrastructure/browser/extension-pages'
 import { focusOrOpenSettingsTab } from '@/infrastructure/browser/extension-tab'
-import { SETTINGS_HASH_CHROME_BOOKMARK_SYNC } from '@/core/settings/settings-sections'
+import {
+  SETTINGS_HASH_BEHAVIOR_IMPORT,
+  SETTINGS_HASH_CHROME_BOOKMARK_SYNC
+} from '@/core/settings/settings-sections'
 import { t } from '@/infrastructure/i18n/t'
 import {
   readColdStartPostReleaseBannerDismissedReadyAt,
@@ -121,6 +124,8 @@ export type UseSidepanelColdStartResult = {
   handleOpenAiSettings: () => void
   /** miss 降级段：打开 Settings 账户与同步分区。 */
   handleOpenAccountSettings: () => void
+  /** 行为空态：打开 Settings 浏览记录导入锚点。 */
+  handleOpenBehaviorImportSettings: () => void
   probeMemoryLibrary: () => Promise<void>
   /** 本机书签语料条数；探测失败为 null。 */
   bookmarkCount: Ref<number | null>
@@ -578,6 +583,11 @@ export function useSidepanelColdStart(
     void focusOrOpenSettingsTab({ hash: SETTINGS_HASH_CHROME_BOOKMARK_SYNC })
   }
 
+  /** 偏好空态「导入浏览记录」→ Settings 保存分区行为导入。 */
+  function handleOpenBehaviorImportSettings(): void {
+    void focusOrOpenSettingsTab({ hash: SETTINGS_HASH_BEHAVIOR_IMPORT })
+  }
+
   function handleOpenAiSettings(): void {
     void focusOrOpenSettingsTab({ section: 'ai' })
   }
@@ -841,6 +851,7 @@ export function useSidepanelColdStart(
     handleSkipOnboarding,
     handleOpenGettingStarted,
     handleOpenBookmarkIngestSettings,
+    handleOpenBehaviorImportSettings,
     handleOpenAiSettings,
     handleOpenAccountSettings,
     probeMemoryLibrary,

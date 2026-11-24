@@ -47,14 +47,17 @@ import {
   handleOpenRecallShell
 } from '@/background/handlers/commands-handler'
 import {
+  handleClearBehaviorHistory,
   handleDeleteThirdPartyCorpusBySource,
   handleEnsureChromeBookmarksImported,
+  handleGetBehaviorHistoryImportStatus,
   handleGetBookmarkLibraryTree,
   handleGetChromeBookmarkImportStatus,
   handleGetColdStartStatus,
   handleGenerateGettingStartedClueSamples,
   handleGetBookmarkSyncStaleness,
   handleGetThirdPartyCorpusSummary,
+  handleImportBehaviorHistory,
   handleImportLocalMemory,
   handleImportThirdPartyCorpus
 } from '@/background/handlers/import-handler'
@@ -261,6 +264,12 @@ async function dispatchBackgroundMessage(
       return handleGetChromeBookmarkImportStatus()
     case 'ENSURE_CHROME_BOOKMARKS_IMPORTED':
       return handleEnsureChromeBookmarksImported()
+    case 'GET_BEHAVIOR_HISTORY_IMPORT_STATUS':
+      return handleGetBehaviorHistoryImportStatus()
+    case 'IMPORT_BEHAVIOR_HISTORY':
+      return handleImportBehaviorHistory()
+    case 'CLEAR_BEHAVIOR_HISTORY':
+      return handleClearBehaviorHistory()
     case 'GET_COLD_START_STATUS':
       return handleGetColdStartStatus()
     case 'GENERATE_GETTING_STARTED_CLUE_SAMPLES':

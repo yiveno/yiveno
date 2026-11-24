@@ -195,6 +195,7 @@ const {
   handleSkipOnboarding,
   handleOpenGettingStarted,
   handleOpenBookmarkIngestSettings,
+  handleOpenBehaviorImportSettings,
   handleOpenAiSettings,
   handleOpenAccountSettings,
   probeMemoryLibrary,
@@ -884,6 +885,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
     ? toCloneableAccumulated(dialogState.value.accumulated)
     : null
   const dismissedIds = [...dialogState.value.dismissedIds]
+  const behaviorShownCount = dialogState.value.behaviorShownCount ?? 0
   const contextStatusFields = continuingContextStatus(
     priorUserUtterances,
     accumulated,
@@ -903,7 +905,11 @@ async function runRecall(trimmedClue: string): Promise<void> {
     // 发送瞬间再读当前 Tab，避免开关展示的 host 已过期
     await refreshPageContextDomain()
   }
-  const hasDialogContext = priorUserUtterances.length > 0 || accumulated || dismissedIds.length > 0
+  const hasDialogContext =
+    priorUserUtterances.length > 0 ||
+    accumulated ||
+    dismissedIds.length > 0 ||
+    behaviorShownCount > 0
   const hasPageContext = activePageContextMode !== 'none'
   const hasSourceScope = recallSourceScope.value !== 'all'
   try {
@@ -918,6 +924,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
               ...(priorUserUtterances.length > 0 ? { priorUserUtterances } : {}),
               ...(accumulated ? { accumulated } : {}),
               ...(dismissedIds.length > 0 ? { dismissedIds } : {}),
+              ...(behaviorShownCount > 0 ? { behaviorShownCount } : {}),
               ...(hasPageContext
                 ? {
                     pageContextMode: activePageContextMode,
@@ -967,10 +974,19 @@ async function runRecall(trimmedClue: string): Promise<void> {
     // 成功且有合并 parsed 时推进会话（噪音拒绝无 parsed，不污染 prior）
     // markRaw：避免 topic.embedding（Float32Array）被 deep reactive，跟进轮次才能 sendMessage
     if (response.result.parsed) {
+      const nextBehaviorShownCount = response.result.behaviorPreference
+        ? response.result.behaviorPreference.shownOffset + 1
+        : response.result.emptyKind === 'behavior_not_imported' ||
+            response.result.emptyKind === 'behavior_empty' ||
+            response.result.emptyKind === 'behavior_topic_unsupported' ||
+            response.result.emptyKind === 'behavior_exhausted'
+          ? 0
+          : (dialogState.value.behaviorShownCount ?? 0)
       dialogState.value = {
         priorUserUtterances: [...priorUserUtterances, trimmed].slice(-5),
         accumulated: markAccumulatedForDialogState(response.result.parsed),
-        dismissedIds
+        dismissedIds,
+        ...(nextBehaviorShownCount > 0 ? { behaviorShownCount: nextBehaviorShownCount } : {})
       }
     }
 
@@ -1091,7 +1107,10 @@ async function runRecall(trimmedClue: string): Promise<void> {
           ...(response.result.composerNarrowExamples?.length
             ? { composerNarrowExamples: response.result.composerNarrowExamples }
             : {}),
-          allowDismiss: rankedCards.length > 0
+          ...(response.result.behaviorPreference && !response.result.behaviorPreference.exhausted
+            ? { behaviorTryAnotherHint: t('behavior_pref_try_another_hint') }
+            : {}),
+          allowDismiss: rankedCards.length > 0 && !response.result.behaviorPreference
         })
       )
       // Getting Started Step 2：邻域出现即算「召回到信息」，不必再点开结果
@@ -1895,6 +1914,7 @@ onUnmounted(() => {
           @use-suggestion="handleUseSuggestion"
           @correct-understanding="handleCorrectUnderstanding"
           @open-bookmark-ingest-settings="handleOpenBookmarkIngestSettings"
+          @open-behavior-import-settings="handleOpenBehaviorImportSettings"
           @open-ai-settings="handleOpenAiSettings"
           @open-account-settings="handleOpenAccountSettings"
           @anonymous-bound="handleAnonymousBound"

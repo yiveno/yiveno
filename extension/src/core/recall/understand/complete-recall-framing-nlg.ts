@@ -3,6 +3,7 @@
  * P6 计数仍由规则层 deterministic 拼接；芯片仅 need_a_clue。
  */
 
+import type { BehaviorPreferenceRankingMeta } from '@/core/behavior/build-behavior-preference-result'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import type { RecallFramingFacts } from '@/core/recall/recall-framing-facts'
 import type { RecallOutcome } from '@/core/recall/recall-result'
@@ -30,6 +31,7 @@ export type CompleteRecallFramingNlgInput = {
   facts: RecallFramingFacts
   rulesBaseline: string
   weakCandidateTitles?: string[]
+  behaviorPreference?: BehaviorPreferenceRankingMeta
   complete: LlmChatCompleter
   /** Q7：带 usage 的补全；有则记 prompt/completion token 到 trace。 */
   completeDetailed?: LlmChatCompleterDetailed
@@ -51,7 +53,8 @@ export async function completeRecallFramingNlgWithLlm(
     rulesBaseline: input.rulesBaseline,
     ...(input.weakCandidateTitles !== undefined
       ? { weakCandidateTitles: input.weakCandidateTitles }
-      : {})
+      : {}),
+    ...(input.behaviorPreference ? { behaviorPreference: input.behaviorPreference } : {})
   }
   const messages = buildLlmFramingMessages(promptInput)
 

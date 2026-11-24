@@ -5,6 +5,7 @@ import { formatSavedTitleForUserDisplay } from '@/core/recall/clue-plain-url'
 import { explainRecallMatch, getRecallMatchFieldLabel } from '@/core/recall/explain-recall-match'
 import type { TopicDescriptorSchema } from '@/core/recall/parse-recall-clue-types'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
+import type { BehaviorPreferenceRankingMeta } from '@/core/behavior/build-behavior-preference-result'
 import type { RecallFramingFacts } from '@/core/recall/recall-framing-facts'
 import type { RecallPipelineTiming } from '@/core/recall/recall-telemetry'
 import type {
@@ -83,6 +84,10 @@ export type RecallOutcome =
  * - missing_topic：无主题锚（H-topic 必填；未进检索，直接追问主题）
  * - rejected_noise：Gate A 拒绝的硬噪音；未进理解/检索，直接给专属提示
  * - chitchat：闲聊 / 寒暄；未进检索，自然回复并引回找东西
+ * - behavior_not_imported：偏好问题但尚未导入浏览记录
+ * - behavior_empty：已导入但无可统计访问
+ * - behavior_topic_unsupported：偏好 + 主题筛选尚未支持
+ * - behavior_exhausted：行为候选轮换已到顶
  */
 export type RecallEmptyKind =
   | 'constrained_none' // 强约束下库空
@@ -90,6 +95,10 @@ export type RecallEmptyKind =
   | 'missing_topic' // 缺主题，未检索
   | 'rejected_noise' // Gate A 拒绝的硬噪音；未进理解/检索，直接给专属提示
   | 'chitchat' // 闲聊意图短路；未进检索
+  | 'behavior_not_imported' // 未导入浏览记录
+  | 'behavior_empty' // 已导入但 0 行
+  | 'behavior_topic_unsupported' // 还不能按主题筛行为
+  | 'behavior_exhausted' // 行为轮换到顶
 
 /** 关键词 Filter / Hybrid 召回结果（UI 与 eval 共用）。 */
 export interface RecallResult {
@@ -194,6 +203,11 @@ export interface RecallResult {
    * Side Panel 据此挂轻提示。缺省 = 未截断。
    */
   clueTruncated?: boolean
+  /**
+   * 偏好行为排序元数据（独立行为路径；非文档池）。
+   * 供 framing 报次数/时间；UI 轮换计数。
+   */
+  behaviorPreference?: BehaviorPreferenceRankingMeta
 }
 
 /** UI 展示用的 MemoryItem 摘要（可见面；非存储契约）。 */
