@@ -55,7 +55,7 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   /** 授权卡旁软出口：不导入并继续进产品 */
-  'skip-continue': []
+  skipContinue: []
 }>()
 
 /** 书签一次性导入授权（与 settings.chromeBookmarkIngestEnabled 同步）。 */
@@ -500,7 +500,7 @@ onUnmounted(() => {
               variant="text"
               class="gs-bookmarks__consent-skip"
               :disabled="consentBusy || props.skipContinueBusy"
-              @click="emit('skip-continue')"
+              @click="emit('skipContinue')"
             >
               {{ props.skipContinueLabel }}
             </AppButton>

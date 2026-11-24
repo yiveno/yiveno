@@ -219,6 +219,7 @@ function excerptRowMemoDeps(row: ExcerptLibraryListRow): unknown[] {
   /* 与书签树 .tree-row 一致：stride 含 gap，padding 留缝，卡片不填满间距 */
   padding-bottom: var(--library-list-row-gap, var(--space-xs));
   content-visibility: auto;
+
   /* 无附注卡片 stride = BOOKMARK_LIBRARY_ROW_HEIGHT + GAP = 93+8 */
   contain-intrinsic-size: auto 101px;
 }

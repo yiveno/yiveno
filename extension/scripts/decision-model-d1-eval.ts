@@ -26,10 +26,7 @@ import { fileURLToPath } from 'node:url'
 import { INTENT_EVAL_MUST } from '../src/core/recall/eval/intent-eval-cases'
 import { buildNoiseGatewayEvalCases } from '../src/core/recall/eval/run-noise-gateway-eval'
 import type { NoiseGatewayCase } from '../src/core/recall/eval/noise-gateway-cases'
-import {
-  resolveOpenAiCompatibleChatCompletionsUrl,
-  type OpenAiCompatibleChatCompat
-} from '../src/core/recall/understand/openai-compatible-chat'
+import type { OpenAiCompatibleChatCompat } from '../src/core/recall/understand/openai-compatible-chat'
 import {
   createOpenAiCompatibleCompleter,
   type LlmChatCompleter

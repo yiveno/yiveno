@@ -210,6 +210,7 @@ onBeforeUnmount(() => {
   padding: 0 var(--space-md);
   border: 1px solid transparent;
   border-radius: var(--radius-full);
+  font-family: inherit;
   font-size: var(--text-body);
   font-weight: var(--font-weight-medium);
   line-height: var(--leading-tight);
@@ -219,7 +220,6 @@ onBeforeUnmount(() => {
     color var(--motion-duration-fast) var(--motion-easing-standard),
     border-color var(--motion-duration-fast) var(--motion-easing-standard),
     opacity var(--motion-duration-fast) var(--motion-easing-standard);
-  font: inherit;
 }
 
 .app-menu-button__trigger:disabled {
@@ -313,6 +313,7 @@ onBeforeUnmount(() => {
   padding: 0 var(--space-sm);
   border: none;
   border-radius: var(--radius-sm);
+  font-family: inherit;
   font-size: var(--text-body);
   line-height: var(--leading-tight);
   text-align: left;
@@ -320,7 +321,6 @@ onBeforeUnmount(() => {
   background: transparent;
   cursor: pointer;
   transition: background-color var(--motion-duration-fast) var(--motion-easing-standard);
-  font: inherit;
 }
 
 .app-menu-button__item:hover {

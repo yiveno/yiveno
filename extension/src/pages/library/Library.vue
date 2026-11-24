@@ -1379,22 +1379,22 @@ onUnmounted(() => {
 
 .library-toolbar {
   display: flex;
-  flex-shrink: 0;
   flex-wrap: wrap;
-  gap: var(--space-sm);
+  flex-shrink: 0;
   align-items: center;
+  gap: var(--space-sm);
   margin-bottom: var(--space-sm);
 }
 
 .library-search-input {
-  box-sizing: border-box;
   flex: 1 1 12rem;
+  box-sizing: border-box;
   min-width: 0;
   margin: 0;
   padding: var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  font: inherit;
+  font-family: inherit;
   font-size: var(--text-body);
   line-height: var(--leading-relaxed);
   color: var(--on-surface);
@@ -1413,8 +1413,8 @@ onUnmounted(() => {
 .library-sort-label {
   display: inline-flex;
   flex: 0 0 auto;
-  gap: var(--space-2xs);
   align-items: center;
+  gap: var(--space-2xs);
   font-size: var(--text-caption);
   color: var(--on-surface-muted);
 }
@@ -1521,16 +1521,16 @@ onUnmounted(() => {
 }
 
 .library-import-banner {
-  flex-shrink: 0;
   display: grid;
+  flex-shrink: 0;
   gap: var(--space-xs);
   margin-bottom: var(--space-sm);
   justify-items: start;
 }
 
 .library-load-more {
-  flex-shrink: 0;
   display: flex;
+  flex-shrink: 0;
   justify-content: center;
   margin-top: var(--space-sm);
 }

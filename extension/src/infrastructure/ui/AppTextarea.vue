@@ -60,12 +60,12 @@ function onInput(event: Event) {
   padding: var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
+  font-family: inherit;
   font-size: var(--text-body);
   line-height: var(--leading-relaxed);
   color: var(--on-surface);
   background: var(--surface-white);
   resize: vertical;
-  font: inherit;
 }
 
 .app-textarea--resize-none {

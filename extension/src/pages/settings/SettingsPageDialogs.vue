@@ -207,8 +207,8 @@ const {
 <style scoped>
 .settings-sign-out-opt-in {
   display: flex;
-  gap: var(--space-xs);
   align-items: flex-start;
+  gap: var(--space-xs);
   margin: var(--space-sm) 0 var(--space-md);
   font-size: var(--text-body);
   line-height: var(--leading-snug);
@@ -216,7 +216,7 @@ const {
 }
 
 .settings-sign-out-opt-in input {
-  margin-top: 0.15rem;
   flex-shrink: 0;
+  margin-top: 0.15rem;
 }
 </style>

@@ -728,7 +728,7 @@ function runHybridVariant(
     // A8：交付层 18 分门
     const best = ranked[0]
     let topPick = false
-    let topPickScore: number | null = best?.score ?? null
+    const topPickScore: number | null = best?.score ?? null
     if (best) {
       if (flags.skipTopPickMinScore) {
         topPick = true
@@ -1211,8 +1211,8 @@ export async function runRecallAblationAudit(): Promise<void> {
     ['baseline', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'A10', 'A11', 'C1'].includes(a)
   )
   let corpus: MemoryItem[] | null = null
-  let queryVectors = new Map<string, number[]>()
-  let rawClueVectors = new Map<string, number[]>()
+  const queryVectors = new Map<string, number[]>()
+  const rawClueVectors = new Map<string, number[]>()
   if (needRetrieval) {
     const apiBase = resolveApiBase()
     const { token, source } = await resolveEmbedAccessToken()

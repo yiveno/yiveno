@@ -1069,15 +1069,23 @@ export class HybridRecallBackend implements RecallBackend {
           clue: normalizedClue
         })
         const withFraming = attachBehaviorPreferenceFraming(withMeta)
-        const complete = shouldOmitClueLlmCompleterWhenBrowserOffline(readBrowserOnline())
+        const framingPolishComplete = shouldOmitClueLlmCompleterWhenBrowserOffline(
+          readBrowserOnline()
+        )
           ? null
           : getClueLlmCompleter()
-        const completeDetailed = complete ? getClueLlmCompleterDetailed() : null
+        const framingPolishCompleteDetailed = framingPolishComplete
+          ? getClueLlmCompleterDetailed()
+          : null
         const withFramingLlm =
-          complete && withFraming.behaviorPreference && withFraming.outcome === 'top_pick'
+          framingPolishComplete &&
+          withFraming.behaviorPreference &&
+          withFraming.outcome === 'top_pick'
             ? await attachRecallFramingLlmPolish(withFraming, {
-                complete,
-                ...(completeDetailed ? { completeDetailed } : {}),
+                complete: framingPolishComplete,
+                ...(framingPolishCompleteDetailed
+                  ? { completeDetailed: framingPolishCompleteDetailed }
+                  : {}),
                 clue: normalizedClue,
                 parsed: merge.merged,
                 trace

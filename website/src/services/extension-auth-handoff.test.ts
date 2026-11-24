@@ -77,7 +77,7 @@ describe('AN5：probeExtensionAuthStatus 匿名豁免', () => {
       }
     })
     vi.stubGlobal('window', {
-      setTimeout: (fn: () => void) => {
+      setTimeout: (_fn: () => void) => {
         // 探测路径不依赖超时回调；返回假 timer id
         return 1 as unknown as ReturnType<typeof setTimeout>
       },

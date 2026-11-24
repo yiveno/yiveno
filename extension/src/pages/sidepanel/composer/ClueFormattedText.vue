@@ -82,10 +82,11 @@ function onChipKeydown(href: string, event: KeyboardEvent): void {
 
 <template>
   <span class="clue-formatted-text">
-    <template v-for="(segment, index) in segments" :key="index">
-      <template v-if="segment.kind === 'text'">{{ segment.text }}</template>
+    <template v-for="(segment, index) in segments">
+      <span v-if="segment.kind === 'text'" :key="index">{{ segment.text }}</span>
       <button
         v-else
+        :key="index"
         type="button"
         class="clue-url-chip"
         :aria-label="segment.href"
@@ -111,6 +112,5 @@ function onChipKeydown(href: string, event: KeyboardEvent): void {
 .clue-formatted-text {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  word-break: break-word;
 }
 </style>

@@ -844,9 +844,9 @@ defineExpose({ focus })
 .recall-voice-permission__text {
   flex: 1 1 10rem;
   margin: 0;
-  color: var(--on-surface);
   font-size: var(--text-caption);
   line-height: var(--leading-snug);
+  color: var(--on-surface);
 }
 
 .recall-voice-permission__actions {
@@ -861,11 +861,11 @@ defineExpose({ focus })
   padding: var(--space-2xs) var(--space-xs);
   border: 0;
   border-radius: var(--radius-full);
-  color: var(--on-accent);
-  background: var(--accent);
-  font: inherit;
+  font-family: inherit;
   font-size: var(--text-caption);
   font-weight: var(--font-weight-semibold);
+  color: var(--on-accent);
+  background: var(--accent);
   cursor: pointer;
 }
 
@@ -928,9 +928,11 @@ defineExpose({ focus })
   padding: var(--space-sm) var(--space-sm) var(--space-xs);
   border: 1px solid color-mix(in srgb, var(--border) 85%, var(--ink));
   border-radius: var(--radius-xl);
+
   /* 毛玻璃放 ::before：backdrop-filter 会为 fixed 子孙建 containing block，困住设置遮罩 */
   background: transparent;
   box-shadow: none;
+
   /* 可见：壳内 leading 的悬浮设置面板可向上溢出 */
   overflow: visible;
 }
@@ -942,7 +944,6 @@ defineExpose({ focus })
   border-radius: inherit;
   background: color-mix(in srgb, var(--surface-white) 62%, transparent);
   box-shadow: none;
-  -webkit-backdrop-filter: blur(18px) saturate(1.15);
   backdrop-filter: blur(18px) saturate(1.15);
   pointer-events: none;
   content: '';
@@ -1009,14 +1010,12 @@ defineExpose({ focus })
   font-family: inherit;
   font-size: var(--text-body);
   line-height: var(--leading-relaxed);
+  white-space: pre-wrap;
   color: inherit;
   background: transparent;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden auto;
   overflow-anchor: none;
-  white-space: pre-wrap;
   overflow-wrap: anywhere;
-  word-break: break-word;
   caret-color: var(--on-surface);
 }
 
@@ -1025,11 +1024,11 @@ defineExpose({ focus })
 }
 
 .recall-input[data-empty='true']::before {
-  content: attr(data-placeholder);
+  height: 0;
   color: var(--on-surface-muted);
   pointer-events: none;
+  content: attr(data-placeholder);
   float: left;
-  height: 0;
 }
 
 .recall-input[aria-disabled='true'] {
@@ -1047,13 +1046,13 @@ defineExpose({ focus })
   padding: 0 var(--space-sm);
   border: 0;
   border-radius: var(--radius-full);
-  color: var(--on-surface-muted);
-  background: color-mix(in srgb, var(--ink) 5%, transparent);
-  cursor: pointer;
-  font: inherit;
+  font-family: inherit;
   font-size: var(--text-caption);
   line-height: var(--leading-tight);
   white-space: nowrap;
+  color: var(--on-surface-muted);
+  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  cursor: pointer;
   transition:
     background-color var(--motion-duration-short) ease-out,
     color var(--motion-duration-short) ease-out;
@@ -1118,9 +1117,9 @@ defineExpose({ focus })
 
 @media (prefers-reduced-motion: reduce) {
   .recall-voice-meter__bar {
-    transition: none;
     height: 8px !important;
     opacity: 0.7;
+    transition: none;
   }
 }
 

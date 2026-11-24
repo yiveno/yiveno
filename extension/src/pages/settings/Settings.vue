@@ -124,7 +124,7 @@ const {
 /* 本页独立入口：锁死视口，避免整页滚动条；仅右侧面板滚动 */
 html,
 body,
-#app {
+:where(#app) {
   height: 100%;
   overflow: hidden;
 }

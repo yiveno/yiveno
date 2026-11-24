@@ -1001,6 +1001,7 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
   margin: 0 0 var(--space-2xs);
   font-size: var(--text-meta);
   line-height: var(--leading-relaxed);
+
   /* 与出处 .recall-card-subtitle--provenance 同级 78%，扫读「为何贴合」不糊成灰墙 */
   color: color-mix(in srgb, var(--on-surface) 78%, var(--on-surface-muted));
   overflow: hidden;
@@ -1102,8 +1103,8 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
 
 .recall-card-body-expand {
   position: absolute;
-  left: var(--space-xs);
   bottom: var(--space-xs);
+  left: var(--space-xs);
   z-index: 1;
   display: inline-flex;
   justify-content: center;
@@ -1213,16 +1214,17 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
   max-height: calc(5 * 5.25rem + 4 * var(--space-xs));
   margin: 0;
   padding: 0;
+  animation: recall-siblings-enter var(--motion-duration-short) var(--motion-easing-standard) both;
   overflow: hidden auto;
   list-style: none;
   overscroll-behavior: contain;
-  animation: recall-siblings-enter var(--motion-duration-short) var(--motion-easing-standard) both;
 }
 
 @keyframes recall-siblings-enter {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }

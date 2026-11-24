@@ -1830,12 +1830,10 @@ onUnmounted(() => {
             </p>
             <p class="recall-empty-copy">
               <template v-if="idleEmptyCopy?.bodySegments && idleEmptyCopy.bodySegments.length > 0">
-                <template
-                  v-for="(segment, segmentIndex) in idleEmptyCopy.bodySegments"
-                  :key="segmentIndex"
-                >
+                <template v-for="(segment, segmentIndex) in idleEmptyCopy.bodySegments">
                   <button
                     v-if="segment.kind === 'open_bookmark_ingest_settings'"
+                    :key="segmentIndex"
                     type="button"
                     class="recall-empty-inline-link"
                     :title="t('popup_empty_import_bookmarks_aria')"
@@ -1846,6 +1844,7 @@ onUnmounted(() => {
                   </button>
                   <button
                     v-else-if="segment.kind === 'open_ai_settings'"
+                    :key="segmentIndex"
                     type="button"
                     class="recall-empty-inline-link"
                     :title="segment.text"
@@ -1856,6 +1855,7 @@ onUnmounted(() => {
                   </button>
                   <button
                     v-else-if="segment.kind === 'open_account_settings'"
+                    :key="segmentIndex"
                     type="button"
                     class="recall-empty-inline-link"
                     :title="segment.text"
@@ -1864,7 +1864,7 @@ onUnmounted(() => {
                   >
                     {{ segment.text }}
                   </button>
-                  <template v-else>{{ segment.text }}</template>
+                  <span v-else :key="segmentIndex">{{ segment.text }}</span>
                 </template>
               </template>
               <template v-else>{{ idleEmptyCopy?.body ?? t('popup_welcome_body') }}</template>
@@ -2134,13 +2134,14 @@ onUnmounted(() => {
   height: 100%;
   max-height: 100%;
   margin: 0;
+
   /* Edge Side Panel：禁止文档被 focus/textarea 长高滚出视口（整页下移） */
   overflow: hidden;
   overflow-anchor: none;
   overscroll-behavior: none;
 }
 
-:global(#app) {
+:global(:where(#app)) {
   height: 100%;
   max-height: 100%;
   overflow: hidden;
@@ -2177,6 +2178,7 @@ onUnmounted(() => {
   flex-direction: column;
   gap: var(--space-xs);
   box-sizing: border-box;
+
   /* 与 shell 左右 gutter 对齐后再略内收，滚动条可贴面板右缘 */
   padding: 0 calc(var(--space-md) + var(--space-xs)) var(--space-md);
   pointer-events: none;
@@ -2212,7 +2214,6 @@ onUnmounted(() => {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--surface-chrome) 88%, transparent);
-  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }
 
@@ -2241,14 +2242,14 @@ onUnmounted(() => {
   padding: var(--space-xs) var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: color-mix(in srgb, var(--ink) 3%, transparent);
-  color: var(--on-surface);
-  font: inherit;
+  font-family: inherit;
   font-size: var(--text-meta);
   line-height: var(--leading-snug);
   text-align: left;
-  overflow-wrap: anywhere;
+  color: var(--on-surface);
+  background: color-mix(in srgb, var(--ink) 3%, transparent);
   cursor: pointer;
+  overflow-wrap: anywhere;
 }
 
 .recall-outcome-exit__pick[aria-pressed='true'] {
@@ -2265,7 +2266,6 @@ onUnmounted(() => {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: color-mix(in srgb, var(--surface-white) 88%, transparent);
-  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }
 
@@ -2283,15 +2283,15 @@ onUnmounted(() => {
   max-height: 7.2em;
   margin: 0;
   padding: var(--space-xs) var(--space-sm);
-  overflow: auto;
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  background: color-mix(in srgb, var(--ink) 4%, transparent);
-  color: var(--on-surface-muted);
-  font: inherit;
+  font-family: inherit;
   font-size: var(--text-caption);
   line-height: var(--leading-relaxed);
   white-space: pre-wrap;
+  color: var(--on-surface-muted);
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+  overflow: auto;
   overflow-wrap: anywhere;
 }
 
@@ -2502,14 +2502,15 @@ onUnmounted(() => {
 
 /* 会话滚动区铺满；左右负边距让滚动条贴面板右缘；浮底 composer 叠在上方。 */
 .recall-scroll-region {
+  /* 由 syncRecallFloatDockClearance 写入；兜底避免首帧裁切 */
+  --recall-dock-clearance: 120px;
+
   position: relative;
   flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
   margin-right: calc(-1 * var(--space-md));
   margin-left: calc(-1 * var(--space-md));
-  /* 由 syncRecallFloatDockClearance 写入；兜底避免首帧裁切 */
-  --recall-dock-clearance: 120px;
 }
 
 .recall-body {
@@ -2526,6 +2527,7 @@ onUnmounted(() => {
   overflow: hidden auto;
   overscroll-behavior: contain;
   scroll-behavior: smooth;
+
   /* 细滚动条、低对比、贴边（Firefox） */
   scrollbar-width: thin;
   scrollbar-color: color-mix(in srgb, var(--ink) 22%, transparent) transparent;
@@ -2541,16 +2543,15 @@ onUnmounted(() => {
 }
 
 .recall-body::-webkit-scrollbar-thumb {
+  border: 1px solid transparent;
   border-radius: var(--radius-full);
   background: color-mix(in srgb, var(--ink) 18%, transparent);
   background-clip: padding-box;
-  border: 1px solid transparent;
 }
 
 .recall-body::-webkit-scrollbar-thumb:hover {
+  /* border / background-clip 继承自 thumb 基态；交互态只改颜色（yiveno/no-motion-on-interaction） */
   background: color-mix(in srgb, var(--ink) 32%, transparent);
-  background-clip: padding-box;
-  border: 1px solid transparent;
 }
 
 .recall-body--empty {
@@ -2560,6 +2561,7 @@ onUnmounted(() => {
 .recall-scroll-jump {
   position: absolute;
   right: 0;
+
   /* clearance 已含 dock 高 + 空隙；再略抬一点避开壳顶 */
   bottom: calc(var(--recall-dock-clearance) - var(--space-2xs));
   left: 0;
@@ -2571,17 +2573,16 @@ onUnmounted(() => {
 }
 
 .recall-scroll-jump .recall-scroll-jump__btn {
+  gap: var(--space-2xs);
   width: auto;
   min-width: 36px;
   height: 36px;
-  gap: var(--space-2xs);
   padding: 0 var(--space-sm);
-  color: var(--on-surface);
-  pointer-events: auto;
-  background: color-mix(in srgb, var(--surface-white) 82%, transparent);
   border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  color: var(--on-surface);
+  background: color-mix(in srgb, var(--surface-white) 82%, transparent);
+  pointer-events: auto;
   box-shadow: 0 2px 10px rgb(0 0 0 / 10%);
-  -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
 }
 
@@ -2678,28 +2679,28 @@ onUnmounted(() => {
 
 .recall-empty-inline-link {
   display: inline;
-  padding: 0;
   margin: 0;
-  font: inherit;
-  line-height: inherit;
-  color: var(--accent);
-  text-decoration: underline;
-  text-underline-offset: 0.12em;
-  cursor: pointer;
-  background: none;
+  padding: 0;
   border: none;
+  font-family: inherit;
+  line-height: inherit;
+  text-decoration: underline;
+  color: var(--accent);
+  background: none;
+  cursor: pointer;
+  text-underline-offset: 0.12em;
 }
 
 .recall-empty-inline-link:hover,
 .recall-empty-inline-link:focus-visible {
-  opacity: 0.85;
   outline: none;
+  opacity: 0.85;
 }
 
 .recall-empty-inline-link:focus-visible {
+  border-radius: 2px;
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
-  border-radius: 2px;
 }
 
 .recall-empty-actions {

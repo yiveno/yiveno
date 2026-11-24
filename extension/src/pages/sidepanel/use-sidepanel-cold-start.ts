@@ -308,13 +308,16 @@ export function useSidepanelColdStart(
    * - autoSubmit true：GS Try it / Omnibox 接力 → 门禁后自动提交
    * - autoSubmit false：选区富线索 → 只预填可改，不自动发
    */
-  function applyRecallPrefillClue(prefill: string, options?: { autoSubmit?: boolean }): void {
+  function applyRecallPrefillClue(
+    prefill: string,
+    prefillOptions?: { autoSubmit?: boolean }
+  ): void {
     const trimmed = prefill.trim()
     if (!trimmed) {
       return
     }
     clue.value = trimmed
-    if (options?.autoSubmit === false) {
+    if (prefillOptions?.autoSubmit === false) {
       pendingGsPrefillRecall.value = null
       void nextTick(() => {
         clueInputRef.value?.focus()

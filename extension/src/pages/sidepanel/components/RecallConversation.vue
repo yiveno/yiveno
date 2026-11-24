@@ -566,9 +566,10 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
             :class="{ 'assistant-turn-copy--error': turn.tone === 'error' }"
           >
             <template v-if="turn.textSegments && turn.textSegments.length > 0">
-              <template v-for="(segment, segmentIndex) in turn.textSegments" :key="segmentIndex">
+              <template v-for="(segment, segmentIndex) in turn.textSegments">
                 <button
                   v-if="segment.kind === 'open_bookmark_ingest_settings'"
+                  :key="segmentIndex"
                   type="button"
                   class="assistant-turn-inline-link"
                   :title="t('popup_empty_import_bookmarks_aria')"
@@ -579,6 +580,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
                 </button>
                 <button
                   v-else-if="segment.kind === 'open_behavior_import_settings'"
+                  :key="segmentIndex"
                   type="button"
                   class="assistant-turn-inline-link"
                   :title="segment.text"
@@ -589,6 +591,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
                 </button>
                 <button
                   v-else-if="segment.kind === 'open_ai_settings'"
+                  :key="segmentIndex"
                   type="button"
                   class="assistant-turn-inline-link"
                   :title="segment.text"
@@ -599,6 +602,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
                 </button>
                 <button
                   v-else-if="segment.kind === 'open_account_settings'"
+                  :key="segmentIndex"
                   type="button"
                   class="assistant-turn-inline-link"
                   :title="segment.text"
@@ -607,7 +611,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
                 >
                   {{ segment.text }}
                 </button>
-                <template v-else>{{ segment.text }}</template>
+                <span v-else :key="segmentIndex">{{ segment.text }}</span>
               </template>
             </template>
             <template v-else>{{ turn.text }}</template>
@@ -731,12 +735,10 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
             :class="{ 'assistant-turn-copy--error': turn.tone === 'error' }"
           >
             <template v-if="turn.textSegments && turn.textSegments.length > 0">
-              <template
-                v-for="(segment, segmentIndex) in turn.textSegments"
-                :key="`after-${segmentIndex}`"
-              >
+              <template v-for="(segment, segmentIndex) in turn.textSegments">
                 <button
                   v-if="segment.kind === 'open_bookmark_ingest_settings'"
+                  :key="`after-${segmentIndex}`"
                   type="button"
                   class="assistant-turn-inline-link"
                   :title="t('popup_empty_import_bookmarks_aria')"
@@ -747,6 +749,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
                 </button>
                 <button
                   v-else-if="segment.kind === 'open_behavior_import_settings'"
+                  :key="`after-${segmentIndex}`"
                   type="button"
                   class="assistant-turn-inline-link"
                   :title="segment.text"
@@ -757,6 +760,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
                 </button>
                 <button
                   v-else-if="segment.kind === 'open_ai_settings'"
+                  :key="`after-${segmentIndex}`"
                   type="button"
                   class="assistant-turn-inline-link"
                   :title="segment.text"
@@ -767,6 +771,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
                 </button>
                 <button
                   v-else-if="segment.kind === 'open_account_settings'"
+                  :key="`after-${segmentIndex}`"
                   type="button"
                   class="assistant-turn-inline-link"
                   :title="segment.text"
@@ -775,7 +780,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
                 >
                   {{ segment.text }}
                 </button>
-                <template v-else>{{ segment.text }}</template>
+                <span v-else :key="`after-${segmentIndex}`">{{ segment.text }}</span>
               </template>
             </template>
             <template v-else>{{ turn.text }}</template>
@@ -968,6 +973,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
   font-size: var(--text-meta);
   line-height: var(--leading-snug);
   color: var(--on-surface);
+
   /* 仅 opacity 呼吸；禁止几何变换（产品 §3） */
   animation: pending-label-breathe 2.4s ease-in-out infinite;
 }
@@ -977,6 +983,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
   100% {
     opacity: 0.78;
   }
+
   50% {
     opacity: 1;
   }
@@ -1090,7 +1097,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
   margin: 0;
   padding: 0;
   border: none;
-  font: inherit;
+  font-family: inherit;
   font-size: inherit;
   line-height: inherit;
   color: var(--on-surface);
@@ -1099,11 +1106,11 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
 }
 
 .assistant-turn-echo-chip--correctable {
+  border-radius: var(--radius-sm);
   text-decoration: underline;
+  cursor: pointer;
   text-decoration-style: dotted;
   text-underline-offset: 0.18em;
-  cursor: pointer;
-  border-radius: var(--radius-sm);
 }
 
 .assistant-turn-echo-chip--correctable:hover {
@@ -1117,28 +1124,28 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
 
 .assistant-turn-echo-menu {
   position: absolute;
-  z-index: 4;
   top: calc(100% + var(--space-2xs));
   left: 0;
+  z-index: 4;
   display: flex;
   flex-direction: column;
   gap: 2px;
   min-width: 9rem;
   max-width: min(16rem, 70vw);
   max-height: 14rem;
-  overflow: auto;
   padding: var(--space-2xs);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   background: var(--surface-white);
+  overflow: auto;
   box-shadow: var(--shadow-ink-sm);
 }
 
 .assistant-turn-echo-menu-title {
   padding: 2px var(--space-2xs);
   font-size: var(--text-caption);
-  line-height: var(--leading-tight);
   font-weight: var(--font-weight-semibold);
+  line-height: var(--leading-tight);
   color: var(--on-surface-muted);
 }
 
@@ -1203,29 +1210,29 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
 
 .assistant-turn-inline-link {
   display: inline;
-  padding: 0;
   margin: 0;
-  font: inherit;
-  line-height: inherit;
-  color: var(--accent);
-  text-decoration: underline;
-  text-underline-offset: 0.12em;
-  cursor: pointer;
-  background: none;
+  padding: 0;
   border: none;
+  font-family: inherit;
+  line-height: inherit;
+  text-decoration: underline;
+  color: var(--accent);
+  background: none;
+  cursor: pointer;
+  text-underline-offset: 0.12em;
 }
 
 .assistant-turn-inline-link:hover,
 .assistant-turn-inline-link:focus-visible {
+  outline: none;
   color: var(--accent);
   opacity: 0.85;
-  outline: none;
 }
 
 .assistant-turn-inline-link:focus-visible {
+  border-radius: 2px;
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
-  border-radius: 2px;
 }
 
 .assistant-turn-neighborhood {

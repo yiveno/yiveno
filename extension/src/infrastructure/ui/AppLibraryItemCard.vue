@@ -200,13 +200,13 @@ function handleSurfaceKeydown(event: KeyboardEvent): void {
   box-sizing: border-box;
   width: 100%;
   padding: var(--space-sm);
-  overflow: hidden;
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
   transition:
     background var(--motion-duration-short) var(--motion-easing-standard),
     border-color var(--motion-duration-short) var(--motion-easing-standard);
+  overflow: hidden;
 }
 
 /* 首行不低于 40px actions 覆盖层；与 bookmark-library-index 行高定额首行 min 对齐 */

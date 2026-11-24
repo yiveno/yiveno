@@ -29,6 +29,7 @@
 body {
   min-width: 320px;
   margin: 0;
+
   /* 显式设字栈：中文 UA 会给 body 写 system-ui/PingFang，仅 :root 无法靠继承盖掉 */
   font-family: var(--font-sans);
   color: inherit;

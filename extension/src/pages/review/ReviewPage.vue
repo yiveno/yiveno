@@ -336,23 +336,23 @@ onMounted(() => {
 
 .review-error-block {
   display: flex;
-  gap: var(--space-sm);
   align-items: center;
+  gap: var(--space-sm);
 }
 
 .review-empty {
   display: flex;
   flex-direction: column;
-  gap: var(--space-sm);
   align-items: flex-start;
+  gap: var(--space-sm);
   padding: var(--space-md);
   border-radius: var(--radius);
   background: var(--surface-raised);
 }
 
 .review-empty-title {
-  font-weight: var(--font-weight-semibold);
   font-size: var(--text-body);
+  font-weight: var(--font-weight-semibold);
 }
 
 .review-empty-copy {
@@ -393,9 +393,9 @@ onMounted(() => {
   display: inline-block;
   padding: 2px var(--space-xs);
   border-radius: var(--radius-sm);
-  background: var(--surface-2);
-  color: var(--on-surface);
   font-weight: var(--font-weight-medium);
+  color: var(--on-surface);
+  background: var(--surface-2);
 }
 
 .review-note-list {
@@ -426,8 +426,8 @@ onMounted(() => {
 .review-note-source {
   font-size: var(--text-meta);
   line-height: var(--leading-snug);
-  color: var(--accent);
   text-decoration: underline;
+  color: var(--accent);
   text-underline-offset: 2px;
 }
 

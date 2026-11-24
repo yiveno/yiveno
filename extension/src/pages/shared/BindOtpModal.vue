@@ -325,16 +325,16 @@ const sendLabel = computed(() => {
 }
 
 .bind-otp-modal__input {
-  width: 100%;
   box-sizing: border-box;
+  width: 100%;
   min-height: 40px;
   padding: 0 var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background: var(--surface-white);
-  color: var(--on-surface);
-  font: inherit;
+  font-family: inherit;
   font-size: var(--text-body);
+  color: var(--on-surface);
+  background: var(--surface-white);
 }
 
 .bind-otp-modal__input:focus-visible {

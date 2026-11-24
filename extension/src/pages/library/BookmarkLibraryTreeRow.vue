@@ -235,6 +235,7 @@ function handleBookmarkActivate(event: MouseEvent | KeyboardEvent) {
   padding-left: calc(var(--tree-depth, 0) * var(--library-tree-indent-step));
   overflow: visible;
   content-visibility: auto;
+
   /* 无附注卡片 stride = BOOKMARK_LIBRARY_ROW_HEIGHT + GAP = 93+8 */
   contain-intrinsic-size: auto 101px;
 }

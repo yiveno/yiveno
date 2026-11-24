@@ -62,6 +62,7 @@ withDefaults(
   padding: 0 var(--space-md);
   border: 1px solid transparent;
   border-radius: var(--radius-full);
+  font-family: inherit;
   font-size: var(--text-body);
   font-weight: var(--font-weight-medium);
   line-height: var(--leading-tight);
@@ -72,7 +73,6 @@ withDefaults(
     color var(--motion-duration-fast) var(--motion-easing-standard),
     border-color var(--motion-duration-fast) var(--motion-easing-standard),
     opacity var(--motion-duration-fast) var(--motion-easing-standard);
-  font: inherit;
 }
 
 .app-button:disabled {

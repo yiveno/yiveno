@@ -221,12 +221,12 @@ onUnmounted(() => {
 .recall-card-hover-preview {
   position: fixed;
   z-index: 40;
-  overflow: auto;
-  border-radius: var(--radius);
   border: 1px solid var(--border);
+  border-radius: var(--radius);
   background: var(--surface-white);
-  box-shadow: var(--shadow-ink-sm);
   pointer-events: none;
+  overflow: auto;
+  box-shadow: var(--shadow-ink-sm);
 }
 
 .recall-card-hover-preview__shot img {
@@ -267,6 +267,7 @@ onUnmounted(() => {
   0% {
     background-position: 100% 0;
   }
+
   100% {
     background-position: -100% 0;
   }
@@ -282,7 +283,7 @@ onUnmounted(() => {
 .recall-card-hover-preview__title-row {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: var(--space-xs);
   min-width: 0;
 }
 
@@ -302,30 +303,30 @@ onUnmounted(() => {
 }
 
 .recall-card-hover-preview__excerpt {
+  display: -webkit-box;
   margin: 0;
   font-size: var(--text-caption);
   line-height: 1.45;
   color: var(--muted);
-  display: -webkit-box;
+  overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 5;
-  overflow: hidden;
 }
 
 .recall-card-hover-preview__foot {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
   align-items: baseline;
+  gap: var(--space-xs);
   font-size: var(--text-caption);
   color: var(--muted);
 }
 
 .recall-card-hover-preview__domain {
   min-width: 0;
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .recall-card-hover-preview__saved {
@@ -333,13 +334,13 @@ onUnmounted(() => {
 }
 
 .recall-card-hover-preview__reason {
+  display: -webkit-box;
   margin: 0;
   font-size: var(--text-caption);
   line-height: 1.4;
   color: var(--muted);
-  display: -webkit-box;
+  overflow: hidden;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
-  overflow: hidden;
 }
 </style>

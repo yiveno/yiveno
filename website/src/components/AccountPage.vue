@@ -78,6 +78,8 @@ const devices = ref<AccountDevice[]>([])
 const devicesLoading = ref(false)
 const devicesError = ref('')
 const deviceActionId = ref<string | null>(null)
+/** 两段式撤销：首次点击进入确认态，再次点击才执行（不用 window.confirm） */
+const pendingRevokeDeviceId = ref<string | null>(null)
 const renamingDeviceId = ref<string | null>(null)
 const renameDraft = ref('')
 const renameError = ref('')
@@ -405,9 +407,11 @@ async function saveRename(deviceId: string): Promise<void> {
 async function revokeDevice(device: AccountDevice): Promise<void> {
   const token = accessToken.value?.trim()
   if (!token) return
-  if (!window.confirm(t('account.devices_revoke_confirm'))) {
+  if (pendingRevokeDeviceId.value !== device.deviceId) {
+    pendingRevokeDeviceId.value = device.deviceId
     return
   }
+  pendingRevokeDeviceId.value = null
   deviceActionId.value = device.deviceId
   devicesError.value = ''
   try {
@@ -636,13 +640,26 @@ function formatDeviceTime(iso: string): string {
                 <button
                   type="button"
                   class="ui-btn"
+                  :class="{ 'ui-btn--primary': pendingRevokeDeviceId === device.deviceId }"
                   :disabled="deviceActionId === device.deviceId"
+                  :title="
+                    pendingRevokeDeviceId === device.deviceId
+                      ? t('account.devices_revoke_confirm')
+                      : undefined
+                  "
+                  :aria-label="
+                    pendingRevokeDeviceId === device.deviceId
+                      ? t('account.devices_revoke_confirm')
+                      : t('account.devices_revoke')
+                  "
                   @click="revokeDevice(device)"
                 >
                   {{
                     deviceActionId === device.deviceId
                       ? t('account.devices_revoke_busy')
-                      : t('account.devices_revoke')
+                      : pendingRevokeDeviceId === device.deviceId
+                        ? t('account.devices_revoke_confirm')
+                        : t('account.devices_revoke')
                   }}
                 </button>
               </div>

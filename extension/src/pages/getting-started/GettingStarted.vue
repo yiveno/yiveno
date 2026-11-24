@@ -243,8 +243,8 @@ onUnmounted(() => {
   margin: var(--space-md) 0 0;
   font-size: var(--text-meta);
   line-height: var(--leading-relaxed);
-  color: var(--danger);
   text-align: center;
+  color: var(--danger);
 }
 
 .getting-started__footer {

@@ -334,10 +334,10 @@ defineExpose({
   padding: var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  font-family: inherit;
   line-height: var(--leading-relaxed);
   color: var(--on-surface);
   background: var(--surface-white);
-  font: inherit;
   resize: vertical;
 }
 
@@ -440,13 +440,13 @@ defineExpose({
   padding: var(--space-sm);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+  font-family: inherit;
   font-size: var(--text-meta);
   line-height: var(--leading-relaxed);
   text-align: start;
   color: var(--on-surface);
   background: color-mix(in srgb, var(--on-surface) 4%, var(--surface-white));
   cursor: pointer;
-  font: inherit;
   overflow-wrap: anywhere;
 }
 

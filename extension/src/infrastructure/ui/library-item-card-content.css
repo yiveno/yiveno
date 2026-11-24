@@ -43,6 +43,7 @@
   display: -webkit-box;
   font-weight: var(--font-weight-medium);
   overflow: hidden;
+
   /* 2 行上限；行高定额见 bookmark-library-index BOOKMARK_LIBRARY_ROW_HEIGHT* */
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -62,6 +63,7 @@
   line-height: var(--leading-relaxed);
   color: var(--on-surface);
   overflow: hidden;
+
   /* 2 行上限；有附注行高见 BOOKMARK_LIBRARY_ROW_HEIGHT_WITH_NOTE */
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
