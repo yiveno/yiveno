@@ -15,8 +15,6 @@ export const BehaviorHistoryImportErrorCodeSchema = z.enum([
   'BEHAVIOR_IMPORT_WRITE_FAILED' // 写入 behavior_stats / storage 失败
 ])
 
-export type BehaviorHistoryImportErrorCode = z.infer<typeof BehaviorHistoryImportErrorCodeSchema>
-
 export const BehaviorHistoryImportStateSchema = z.object({
   status: z.enum([
     'pending', // 待开始
