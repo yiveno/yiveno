@@ -25,9 +25,14 @@ import { mcpRouter } from './routes/mcp'
 import { researchRouter } from './routes/research'
 import { websiteRouter } from './routes/website'
 
+type AppVariables = {
+  /** 日志中间件生成；onError 写入 500 响应体便于扩展侧关联 */
+  requestId: string
+}
+
 /** 创建 Hono 应用实例 */
 export function createApp() {
-  const app = new Hono<{ Bindings: Env }>()
+  const app = new Hono<{ Bindings: Env; Variables: AppVariables }>()
 
   // ===== 全局中间件 =====
   app.use('*', secureHeadersMiddleware())
@@ -53,6 +58,7 @@ export function createApp() {
     const startTime = Date.now()
     const request = c.req.raw
     const requestId = request.headers.get('cf-ray') ?? crypto.randomUUID()
+    c.set('requestId', requestId)
     c.header('x-request-id', requestId)
 
     logRequest(request, { requestId })
@@ -103,8 +109,15 @@ export function createApp() {
     if (err instanceof HTTPException) {
       return err.getResponse()
     }
-    logError(err, { path: c.req.path, method: c.req.method })
-    return c.json({ error: 'Internal Server Error' }, 500)
+    const requestId = c.get('requestId')
+    logError(err, { path: c.req.path, method: c.req.method, requestId })
+    return c.json(
+      {
+        error: 'Internal Server Error',
+        ...(typeof requestId === 'string' && requestId ? { requestId } : {})
+      },
+      500
+    )
   })
 
   return app

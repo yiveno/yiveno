@@ -15,6 +15,10 @@ import {
   requestWorkerEmbeddings,
   WORKER_EMBEDDING_MODEL
 } from '@/infrastructure/ai/embed-api-client'
+import {
+  gateWorkerEmbedRequest,
+  tripEmbedQuotaBreakerFromError
+} from '@/infrastructure/ai/embed-quota-circuit-breaker'
 import { getCurrentOwnerId } from '@/infrastructure/identity/local-profile-service'
 import { getWorkerApiAccessToken } from '@/infrastructure/identity/worker-api-access-token'
 import { memoryNoteEmbeddingRepository } from '@/infrastructure/indexeddb/memory-note-embedding-repository'
@@ -94,6 +98,18 @@ export async function embedPropositionsForWrittenNotes(input: {
 
   for (let offset = 0; offset < pending.length; offset += DREAMING_PROPOSITION_EMBED_MAX_BATCH) {
     const batch = pending.slice(offset, offset + DREAMING_PROPOSITION_EMBED_MAX_BATCH)
+    const gate = await gateWorkerEmbedRequest({
+      accessToken: input.accessToken,
+      allowNetworkPrecheck: true
+    })
+    if (!gate.allow) {
+      logger.warn('Dreaming', '命题向量跳过：embed 熔断', {
+        batchSize: batch.length,
+        reason: gate.reason
+      })
+      skipped += batch.length
+      continue
+    }
     try {
       const result = await requestWorkerEmbeddings(
         input.accessToken,
@@ -130,6 +146,7 @@ export async function embedPropositionsForWrittenNotes(input: {
         written += 1
       }
     } catch (error) {
+      tripEmbedQuotaBreakerFromError(input.accessToken, error)
       logger.warn('Dreaming', '命题向量生产失败，fail-open', {
         batchSize: batch.length,
         error: error instanceof Error ? error.message : String(error)

@@ -93,6 +93,21 @@ export function deviceTokenLogSuffix(token: string): string {
   return token.slice(-4)
 }
 
+/** KV 读失败（与「无此 token」区分；勿再折成 null）。 */
+export class DeviceTokenKvUnavailableError extends Error {
+  readonly code = 'auth_unavailable' as const
+  constructor() {
+    super('auth_unavailable')
+    this.name = 'DeviceTokenKvUnavailableError'
+  }
+}
+
+export function isDeviceTokenKvUnavailableError(
+  error: unknown
+): error is DeviceTokenKvUnavailableError {
+  return error instanceof DeviceTokenKvUnavailableError
+}
+
 export async function getDeviceTokenRecord(
   env: Env,
   token: string
@@ -112,9 +127,14 @@ export async function getDeviceTokenRecord(
       return null
     }
     return parsed as DeviceTokenRecord
-  } catch {
-    warn('[DeviceAuth] 读取 devtok 失败')
-    return null
+  } catch (err) {
+    // JSON 解析失败仍视为无有效记录；仅 KV 传输/绑定故障上抛
+    if (err instanceof SyntaxError) {
+      warn('[DeviceAuth] 读取 devtok 解析失败')
+      return null
+    }
+    warn('[DeviceAuth] 读取 devtok 失败（KV 不可用）')
+    throw new DeviceTokenKvUnavailableError()
   }
 }
 
@@ -269,7 +289,15 @@ export async function listDevicesForUser(
       drifted = true
       continue
     }
-    const record = await getDeviceTokenRecord(env, token)
+    let record: DeviceTokenRecord | null
+    try {
+      record = await getDeviceTokenRecord(env, token)
+    } catch (err) {
+      if (isDeviceTokenKvUnavailableError(err)) {
+        return { ok: false, error: 'kv_unavailable' }
+      }
+      throw err
+    }
     if (!record || record.revokedAt || record.userId !== userId) {
       drifted = true
       continue
@@ -427,7 +455,15 @@ export async function revokeDeviceById(
     return { ok: true, revoked: false, reason: 'not_found' }
   }
 
-  const record = await getDeviceTokenRecord(env, token)
+  let record: DeviceTokenRecord | null
+  try {
+    record = await getDeviceTokenRecord(env, token)
+  } catch (err) {
+    if (isDeviceTokenKvUnavailableError(err)) {
+      return { ok: false, error: 'kv_unavailable' }
+    }
+    throw err
+  }
   if (!record || record.userId !== ownerUserId || record.deviceId !== trimmedId) {
     // 索引漂移：清掉该行
     index.devices = index.devices.filter(d => d.deviceId !== trimmedId)
@@ -472,7 +508,15 @@ export async function renameDeviceById(
     return { ok: true, notFound: true }
   }
 
-  const record = await getDeviceTokenRecord(env, token)
+  let record: DeviceTokenRecord | null
+  try {
+    record = await getDeviceTokenRecord(env, token)
+  } catch (err) {
+    if (isDeviceTokenKvUnavailableError(err)) {
+      return { ok: false, error: 'kv_unavailable' }
+    }
+    throw err
+  }
   if (!record || record.userId !== ownerUserId || record.deviceId !== trimmedId) {
     return { ok: true, notFound: true }
   }
@@ -508,7 +552,15 @@ export async function revokeDeviceTokenSelf(
   { ok: true; revoked: boolean; deviceId?: string } | { ok: false; error: 'kv_unavailable' }
 > {
   if (!env.AI_USAGE_KV) return { ok: false, error: 'kv_unavailable' }
-  const record = await getDeviceTokenRecord(env, token)
+  let record: DeviceTokenRecord | null
+  try {
+    record = await getDeviceTokenRecord(env, token)
+  } catch (err) {
+    if (isDeviceTokenKvUnavailableError(err)) {
+      return { ok: false, error: 'kv_unavailable' }
+    }
+    throw err
+  }
   if (!record || record.revokedAt) {
     return { ok: true, revoked: false }
   }

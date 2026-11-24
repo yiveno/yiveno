@@ -46,11 +46,27 @@ export function flowFail(
 }
 
 /** 把 Error / 未知值收成可 JSON 预览的结构，避免控制台只见 [object Object]。 */
-function formatFlowError(error: unknown): Record<string, unknown> | string {
+export function formatFlowError(error: unknown): Record<string, unknown> | string {
   if (error instanceof Error) {
+    const record = error as Error & {
+      detail?: unknown
+      status?: unknown
+      code?: unknown
+      requestId?: unknown
+    }
     return {
       name: error.name,
-      message: error.message
+      message: error.message,
+      ...(typeof record.detail === 'string' && record.detail.trim()
+        ? { detail: record.detail.trim() }
+        : {}),
+      ...(typeof record.status === 'number' ? { status: record.status } : {}),
+      ...(typeof record.code === 'string' && record.code.trim()
+        ? { code: record.code.trim() }
+        : {}),
+      ...(typeof record.requestId === 'string' && record.requestId.trim()
+        ? { requestId: record.requestId.trim() }
+        : {})
     }
   }
   if (typeof error === 'string') {
@@ -61,8 +77,10 @@ function formatFlowError(error: unknown): Record<string, unknown> | string {
     return {
       ...(typeof record.name === 'string' ? { name: record.name } : {}),
       ...(typeof record.message === 'string' ? { message: record.message } : {}),
+      ...(typeof record.detail === 'string' ? { detail: record.detail } : {}),
       ...(typeof record.code === 'string' ? { code: record.code } : {}),
-      ...(typeof record.status === 'number' ? { status: record.status } : {})
+      ...(typeof record.status === 'number' ? { status: record.status } : {}),
+      ...(typeof record.requestId === 'string' ? { requestId: record.requestId } : {})
     }
   }
   return String(error)

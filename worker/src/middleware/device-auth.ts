@@ -13,6 +13,7 @@ import {
   putUserDevicesIndex,
   getUserDevicesIndex,
   isDeviceTokenFormat,
+  isDeviceTokenKvUnavailableError,
   type DeviceTokenRecord
 } from '../services/auth/device-token-kv'
 import { info, warn } from '../utils/logger'
@@ -101,7 +102,7 @@ export function deviceAuth(): MiddlewareHandler<DeviceAuthEnv> {
     }
     const token = authHeader.slice('Bearer '.length).trim()
     if (!token || !isDeviceTokenFormat(token)) {
-      return c.json({ error: 'invalid_token' }, 401)
+      return c.json({ error: 'invalid_token', reason: 'malformed' }, 401)
     }
 
     if (!c.env.AI_USAGE_KV) {
@@ -118,22 +119,43 @@ export function deviceAuth(): MiddlewareHandler<DeviceAuthEnv> {
       c.set('supabaseAccessToken', '')
       c.set('supabaseUserEmail', cached.email)
       // 节流写仍需 record；缓存命中时异步读一次（失败则跳过 touch）
-      void getDeviceTokenRecord(c.env, token).then(record => {
-        if (record && !record.revokedAt) {
-          void maybeTouchLastSeen(c.env, token, record, cached, now)
-        }
-      })
+      void getDeviceTokenRecord(c.env, token)
+        .then(record => {
+          if (record && !record.revokedAt) {
+            void maybeTouchLastSeen(c.env, token, record, cached, now)
+          }
+        })
+        .catch(() => {
+          // KV 瞬断：跳过 touch，不扰动鉴权成功路径
+        })
       return await next()
     }
 
-    const record = await getDeviceTokenRecord(c.env, token)
-    if (!record || record.revokedAt) {
+    let record: DeviceTokenRecord | null
+    try {
+      record = await getDeviceTokenRecord(c.env, token)
+    } catch (err) {
+      if (isDeviceTokenKvUnavailableError(err)) {
+        warn('[DeviceAuth] KV 读失败，鉴权暂不可用', {
+          tokenSuffix: deviceTokenLogSuffix(token)
+        })
+        return c.json({ error: 'auth_unavailable' }, 503)
+      }
+      throw err
+    }
+    if (!record) {
       activeCache.delete(token)
-      warn('[DeviceAuth] token 无效或已撤销', {
-        tokenSuffix: deviceTokenLogSuffix(token),
-        hasRecord: Boolean(record)
+      warn('[DeviceAuth] token 不存在', {
+        tokenSuffix: deviceTokenLogSuffix(token)
       })
-      return c.json({ error: 'invalid_token' }, 401)
+      return c.json({ error: 'invalid_token', reason: 'unknown' }, 401)
+    }
+    if (record.revokedAt) {
+      activeCache.delete(token)
+      warn('[DeviceAuth] token 已撤销', {
+        tokenSuffix: deviceTokenLogSuffix(token)
+      })
+      return c.json({ error: 'invalid_token', reason: 'revoked' }, 401)
     }
 
     const meta = await getUserMeta(c.env, record.userId)

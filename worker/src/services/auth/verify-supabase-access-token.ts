@@ -43,7 +43,7 @@ export type VerifySupabaseAccessTokenResult =
   | { ok: true; user: VerifiedSupabaseUser }
   | {
       ok: false
-      reason: 'invalid_token' | 'auth_unreachable' | 'malformed_response'
+      reason: 'invalid_token' | 'expired' | 'auth_unreachable' | 'malformed_response'
     }
 
 export type VerifySupabaseAccessTokenOptions = {
@@ -263,6 +263,11 @@ async function verifyViaGetClaims(
     const { data, error } = await supabase.auth.getClaims(accessToken)
     if (error) {
       logGetClaimsFailure(accessToken, error)
+      const decoded = decodeJwtForDiagnostics(accessToken)
+      const exp = decoded?.claims.exp
+      if (typeof exp === 'number' && exp * 1000 < Date.now()) {
+        return { ok: false, reason: 'expired' }
+      }
       return { ok: false, reason: 'invalid_token' }
     }
     return claimsToUser(data?.claims)

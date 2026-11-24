@@ -6,6 +6,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const {
   requestWorkerEmbeddingsMock,
+  gateWorkerEmbedRequestMock,
+  tripEmbedQuotaBreakerFromErrorMock,
   putRecordMock,
   listByOwnerUpdatedMock,
   listByOwnerEmbedMock,
@@ -14,6 +16,8 @@ const {
   getCurrentOwnerIdMock
 } = vi.hoisted(() => ({
   requestWorkerEmbeddingsMock: vi.fn(),
+  gateWorkerEmbedRequestMock: vi.fn(),
+  tripEmbedQuotaBreakerFromErrorMock: vi.fn(),
   putRecordMock: vi.fn(),
   listByOwnerUpdatedMock: vi.fn(),
   listByOwnerEmbedMock: vi.fn(),
@@ -25,6 +29,11 @@ const {
 vi.mock('@/infrastructure/ai/embed-api-client', () => ({
   WORKER_EMBEDDING_MODEL: '@cf/baai/bge-m3',
   requestWorkerEmbeddings: requestWorkerEmbeddingsMock
+}))
+
+vi.mock('@/infrastructure/ai/embed-quota-circuit-breaker', () => ({
+  gateWorkerEmbedRequest: gateWorkerEmbedRequestMock,
+  tripEmbedQuotaBreakerFromError: tripEmbedQuotaBreakerFromErrorMock
 }))
 
 vi.mock('@/infrastructure/indexeddb/memory-note-embedding-repository', () => ({
@@ -76,6 +85,8 @@ function makeNoteInput(index: number, text: string) {
 describe('schedule-proposition-embeddings', () => {
   beforeEach(() => {
     requestWorkerEmbeddingsMock.mockReset()
+    gateWorkerEmbedRequestMock.mockReset()
+    tripEmbedQuotaBreakerFromErrorMock.mockReset()
     putRecordMock.mockReset()
     listByOwnerUpdatedMock.mockReset()
     listByOwnerEmbedMock.mockReset()
@@ -83,6 +94,7 @@ describe('schedule-proposition-embeddings', () => {
     getUserSettingsMock.mockReset()
     getCurrentOwnerIdMock.mockReset()
     putRecordMock.mockResolvedValue({})
+    gateWorkerEmbedRequestMock.mockResolvedValue({ allow: true })
     getUserSettingsMock.mockResolvedValue({ aiFeaturesEnabled: true })
     getWorkerApiAccessTokenMock.mockResolvedValue('tok')
     getCurrentOwnerIdMock.mockResolvedValue(OWNER)

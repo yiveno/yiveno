@@ -9,6 +9,7 @@
  * - 不缓存失败；超时剔除避免雪崩。
  */
 
+import { parseWorkerErrorResponse } from '@/infrastructure/ai/worker-api-error'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 
 /** 与 Worker `EMBEDDING_MODEL` 对齐。 */
@@ -184,14 +185,7 @@ export async function requestWorkerEmbeddings(
     })
     const body: unknown = await response.json().catch(() => null)
     if (!response.ok) {
-      const errorCode =
-        typeof body === 'object' &&
-        body !== null &&
-        'error' in body &&
-        typeof (body as { error: unknown }).error === 'string'
-          ? (body as { error: string }).error
-          : `http_${response.status}`
-      throw new Error(errorCode)
+      throw parseWorkerErrorResponse(response, body)
     }
     if (!isEmbedApiEnvelope(body)) {
       throw new Error('invalid_embed_response')

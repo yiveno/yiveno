@@ -147,7 +147,7 @@ describe('verifySupabaseAccessToken', () => {
   })
 
   test('getClaims 返回 error → invalid_token，并记 claims 诊断（不含 token 全文）', async () => {
-    const expiredAt = Math.floor(Date.now() / 1000) - 3600
+    const futureExp = Math.floor(Date.now() / 1000) + 3600
     const token = buildUnsignedJwt(
       { alg: 'ES256', kid: 'diag-kid', typ: 'JWT' },
       {
@@ -156,7 +156,7 @@ describe('verifySupabaseAccessToken', () => {
         aud: 'wrong-audience',
         iss: 'https://example.supabase.co/auth/v1',
         is_anonymous: false,
-        exp: expiredAt
+        exp: futureExp
       }
     )
 
@@ -187,10 +187,36 @@ describe('verifySupabaseAccessToken', () => {
     expect(logged).toContain('local_jwks')
     expect(logged).toContain('AuthApiError')
     expect(logged).toContain('invalid_jwt')
-    expect(logged).toContain(String(expiredAt))
+    expect(logged).toContain(String(futureExp))
     // 禁止泄漏 token 全文或签名段
     expect(logged).not.toContain(token)
     expect(logged).not.toContain('fakesig')
+  })
+
+  test('getClaims 失败且 JWT exp 已过 → expired', async () => {
+    const expiredAt = Math.floor(Date.now() / 1000) - 60
+    const token = buildUnsignedJwt(
+      { alg: 'ES256', kid: 'exp-kid', typ: 'JWT' },
+      {
+        sub: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc',
+        role: 'authenticated',
+        aud: 'authenticated',
+        exp: expiredAt
+      }
+    )
+    jest.spyOn(supabaseJs, 'createClient').mockReturnValue({
+      auth: {
+        getClaims: async () => ({
+          data: null,
+          error: { name: 'AuthApiError', message: 'JWT expired', code: 'bad_jwt' }
+        })
+      }
+    } as never)
+
+    const result = await verifySupabaseAccessToken('https://example.supabase.co', token, {
+      anonKey: 'anon-key'
+    })
+    expect(result).toEqual({ ok: false, reason: 'expired' })
   })
 
   test('getClaims 抛异常 → auth_unreachable', async () => {

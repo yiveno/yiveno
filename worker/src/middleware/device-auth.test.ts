@@ -79,7 +79,7 @@ describe('deviceAuth', () => {
     expect(data.isAnonymous).toBe(true)
   })
 
-  test('无效 / 已撤销 → 401 invalid_token', async () => {
+  test('无效 / 已撤销 → 401 invalid_token + reason', async () => {
     const kv = createKvMock()
     const env = createEnv(kv)
     const app = new Hono<{ Bindings: Env }>()
@@ -88,6 +88,9 @@ describe('deviceAuth', () => {
     const bad = createDeviceToken()
     const resBad = await app.request('/t', { headers: { authorization: `Bearer ${bad}` } }, env)
     expect(resBad.status).toBe(401)
+    const bodyBad = (await resBad.json()) as { error: string; reason: string }
+    expect(bodyBad.error).toBe('invalid_token')
+    expect(bodyBad.reason).toBe('unknown')
 
     const issued = await issueDeviceToken(env, { userId: 'u-rev', isAnonymous: false })
     expect(issued.ok).toBe(true)
@@ -103,6 +106,43 @@ describe('deviceAuth', () => {
       env
     )
     expect(resRev.status).toBe(401)
+    const bodyRev = (await resRev.json()) as { error: string; reason: string }
+    expect(bodyRev.error).toBe('invalid_token')
+    expect(bodyRev.reason).toBe('revoked')
+  })
+
+  test('token 格式异常 → 401 malformed', async () => {
+    const kv = createKvMock()
+    const env = createEnv(kv)
+    const app = new Hono<{ Bindings: Env }>()
+    app.get('/t', deviceAuth(), c => c.json({ ok: true }))
+    const res = await app.request('/t', { headers: { authorization: 'Bearer not-ydt' } }, env)
+    expect(res.status).toBe(401)
+    const body = (await res.json()) as { error: string; reason: string }
+    expect(body.error).toBe('invalid_token')
+    expect(body.reason).toBe('malformed')
+  })
+
+  test('KV 读失败 → 503 auth_unavailable', async () => {
+    const kv = {
+      get: async () => {
+        throw new Error('kv_transient')
+      },
+      put: async () => undefined,
+      delete: async () => undefined
+    }
+    const env = {
+      AI_USAGE_KV: kv as unknown as Env['AI_USAGE_KV'],
+      SUPABASE_URL: 'https://example.supabase.co',
+      SUPABASE_ANON_KEY: 'anon-key'
+    } as unknown as Env
+    const app = new Hono<{ Bindings: Env }>()
+    app.get('/t', deviceAuth(), c => c.json({ ok: true }))
+    const token = createDeviceToken()
+    const res = await app.request('/t', { headers: { authorization: `Bearer ${token}` } }, env)
+    expect(res.status).toBe(503)
+    const body = (await res.json()) as { error: string }
+    expect(body.error).toBe('auth_unavailable')
   })
 
   test('内存缓存 TTL：过期前不重复读 KV get 路径仍可用', async () => {

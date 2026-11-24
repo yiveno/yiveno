@@ -7,6 +7,7 @@ import {
   clearEmbedCacheForTests,
   requestWorkerEmbeddings
 } from '@/infrastructure/ai/embed-api-client'
+import { WorkerApiError } from '@/infrastructure/ai/worker-api-error'
 
 const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJ1c2VyLTEyMyJ9.aaaaaaaaaaaa'
 const TEXT = 'manifest v3'
@@ -74,6 +75,29 @@ describe('requestWorkerEmbeddings · 缓存行为（A2）', () => {
     const result = await requestWorkerEmbeddings(TOKEN, [TEXT])
     expect(fetchMock).toHaveBeenCalledTimes(2)
     expect(result.embeddings[0]).toEqual(VECTOR)
+  })
+
+  it('!ok 抛 WorkerApiError 且 message 仍为裸码', async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          error: 'quota_exceeded',
+          tier: 'free',
+          used: 100,
+          limit: 100,
+          remaining: 0
+        }),
+        { status: 429, headers: { 'content-type': 'application/json' } }
+      )
+    )
+    await expect(requestWorkerEmbeddings(TOKEN, [TEXT])).rejects.toSatisfy((err: unknown) => {
+      expect(err).toBeInstanceOf(WorkerApiError)
+      const e = err as WorkerApiError
+      expect(e.message).toBe('quota_exceeded')
+      expect(e.detail).toContain('free')
+      expect(e.status).toBe(429)
+      return true
+    })
   })
 
   it('不同 token 隔离缓存：tokenA 的命中不污染 tokenB', async () => {

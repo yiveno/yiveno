@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   formatLogTimestamp,
   logger,
+  resetLogDedupForTests,
   summarizeLogError,
   tagExternalServiceMessage
 } from '@/infrastructure/logging/logger'
@@ -41,6 +42,19 @@ describe('summarizeLogError', () => {
     ).toBe('http_401')
   })
 
+  it('嵌套 error 含 message + detail → message（detail）', () => {
+    expect(
+      summarizeLogError({
+        durationMs: 12,
+        error: {
+          name: 'WorkerApiError',
+          message: 'quota_exceeded',
+          detail: 'free，今日 100/100，UTC 午夜重置'
+        }
+      })
+    ).toBe('quota_exceeded（free，今日 100/100，UTC 午夜重置）')
+  })
+
   it('reads reason field (external service tagged text)', () => {
     expect(summarizeLogError({ reason: '[supabase_auth] Request rate limit reached' })).toBe(
       '[supabase_auth] Request rate limit reached'
@@ -50,11 +64,13 @@ describe('summarizeLogError', () => {
 
 describe('logger.error', () => {
   beforeEach(() => {
+    resetLogDedupForTests()
     vi.useFakeTimers()
     vi.setSystemTime(new Date(2026, 8, 11, 9, 5, 12))
   })
 
   afterEach(() => {
+    resetLogDedupForTests()
     vi.useRealTimers()
   })
 
@@ -80,15 +96,56 @@ describe('logger.error', () => {
     )
     spy.mockRestore()
   })
+
+  it('同 key 窗口内 3 次只记 1 行', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const data = {
+      error: { message: 'quota_exceeded', detail: 'free，今日 100/100，UTC 午夜重置' }
+    }
+    logger.error('Embed', 'Worker embed 请求：失败', data)
+    logger.error('Embed', 'Worker embed 请求：失败', data)
+    logger.error('Embed', 'Worker embed 请求：失败', data)
+    expect(spy).toHaveBeenCalledTimes(1)
+    spy.mockRestore()
+  })
+
+  it('窗口过期后记行带此前重复计数', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    const data = { error: { message: 'embed_failed', detail: '上游模型调用失败' } }
+    logger.error('Embed', 'Worker embed 请求：失败', data)
+    logger.error('Embed', 'Worker embed 请求：失败', data)
+    logger.error('Embed', 'Worker embed 请求：失败', data)
+    expect(spy).toHaveBeenCalledTimes(1)
+
+    vi.setSystemTime(new Date(2026, 8, 11, 9, 10, 13))
+    logger.error('Embed', 'Worker embed 请求：失败', data)
+    expect(spy).toHaveBeenCalledTimes(2)
+    expect(spy.mock.calls[1]?.[0]).toContain('（此前 5 分钟内重复 ×2）')
+    spy.mockRestore()
+  })
+
+  it('不同 detail 分开记', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => undefined)
+    logger.error('Embed', 'Worker embed 请求：失败', {
+      error: { message: 'quota_exceeded', detail: 'free，今日 99/100，UTC 午夜重置' }
+    })
+    logger.error('Embed', 'Worker embed 请求：失败', {
+      error: { message: 'quota_exceeded', detail: 'free，今日 100/100，UTC 午夜重置' }
+    })
+    expect(spy).toHaveBeenCalledTimes(2)
+    spy.mockRestore()
+  })
 })
 
 describe('logger.warn', () => {
   beforeEach(() => {
+    resetLogDedupForTests()
     vi.useFakeTimers()
     vi.setSystemTime(new Date(2026, 8, 11, 9, 5, 12))
   })
 
   afterEach(() => {
+    resetLogDedupForTests()
     vi.useRealTimers()
   })
 

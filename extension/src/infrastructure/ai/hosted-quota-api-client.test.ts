@@ -1,6 +1,11 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { isHostedQuotaSnapshot } from './hosted-quota-api-client'
+import { WorkerApiError } from '@/infrastructure/ai/worker-api-error'
+
+import { fetchHostedQuota, isHostedQuotaSnapshot } from './hosted-quota-api-client'
+
+const fetchMock = vi.fn()
+globalThis.fetch = fetchMock as unknown as typeof fetch
 
 describe('isHostedQuotaSnapshot', () => {
   const freeBase = {
@@ -56,5 +61,32 @@ describe('isHostedQuotaSnapshot', () => {
 
   it('未知 tier → 拒绝（不误判为 free/pro）', () => {
     expect(isHostedQuotaSnapshot({ ...freeBase, tier: 'enterprise' })).toBe(false)
+  })
+})
+
+describe('fetchHostedQuota · 失败分支', () => {
+  beforeEach(() => {
+    fetchMock.mockReset()
+  })
+
+  afterEach(() => {
+    fetchMock.mockReset()
+  })
+
+  it('!ok 抛 WorkerApiError 且 message 为裸码', async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ error: 'Internal Server Error', requestId: 'rid-1' }), {
+        status: 500,
+        headers: { 'content-type': 'application/json', 'x-request-id': 'hdr-1' }
+      })
+    )
+    await expect(fetchHostedQuota('tok')).rejects.toSatisfy((err: unknown) => {
+      expect(err).toBeInstanceOf(WorkerApiError)
+      const e = err as WorkerApiError
+      expect(e.message).toBe('Internal Server Error')
+      expect(e.requestId).toBe('rid-1')
+      expect(e.detail).toContain('rid-1')
+      return true
+    })
   })
 })

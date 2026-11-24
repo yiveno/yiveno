@@ -255,7 +255,8 @@ export function extractEmbeddingsFromAiResponse(
     throw new Error('invalid_ai_embedding_response')
   }
   return data.slice(0, expectedCount).map(entry => {
-    if (!Array.isArray(entry) || entry.length === 0) {
+    // 空向量留给 handleEmbed 的 dim==0 → empty_embedding；此处只拒非数组
+    if (!Array.isArray(entry)) {
       throw new Error('invalid_ai_embedding_response')
     }
     return entry.map(Number)
@@ -321,16 +322,41 @@ export async function handleEmbed(
     return errorJson({ error: 'invalid_texts' }, 400, origin)
   }
 
+  /** 子因标记：外泄仅枚举 cause，不带上游原文。 */
+  type EmbedFailCause = 'ai_run_failed' | 'invalid_ai_response' | 'empty_embedding'
+  class EmbedFailMarkedError extends Error {
+    readonly causeCode: EmbedFailCause
+    constructor(causeCode: EmbedFailCause) {
+      super(causeCode)
+      this.name = 'EmbedFailMarkedError'
+      this.causeCode = causeCode
+    }
+  }
+
   try {
     // bge-m3：text 支持 string | string[]；一次 batch 降低往返
-    const result = (await env.AI.run(EMBEDDING_MODEL, {
-      text: texts,
-      truncate_inputs: true
-    })) as unknown
-    const embeddings = extractEmbeddingsFromAiResponse(result, texts.length)
+    let result: unknown
+    try {
+      result = (await env.AI.run(EMBEDDING_MODEL, {
+        text: texts,
+        truncate_inputs: true
+      })) as unknown
+    } catch (err) {
+      logError(err, { path: '/api/ai/embed', userId, cause: 'ai_run_failed' })
+      throw new EmbedFailMarkedError('ai_run_failed')
+    }
+
+    let embeddings: number[][]
+    try {
+      embeddings = extractEmbeddingsFromAiResponse(result, texts.length)
+    } catch (err) {
+      logError(err, { path: '/api/ai/embed', userId, cause: 'invalid_ai_response' })
+      throw new EmbedFailMarkedError('invalid_ai_response')
+    }
+
     const dim = embeddings[0]?.length ?? 0
     if (dim === 0) {
-      throw new Error('empty_embedding')
+      throw new EmbedFailMarkedError('empty_embedding')
     }
 
     logInfo('embed_ok', {
@@ -360,6 +386,9 @@ export async function handleEmbed(
       origin
     )
   } catch (err) {
+    if (err instanceof EmbedFailMarkedError) {
+      return errorJson({ error: 'embed_failed', cause: err.causeCode }, 502, origin)
+    }
     logError(err, { path: '/api/ai/embed', userId })
     return errorJson({ error: 'embed_failed' }, 502, origin)
   }

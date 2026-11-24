@@ -2,6 +2,7 @@
  * 托管 Clue LLM 配额客户端（Background 调 Worker `GET /api/ai/hosted/quota`）。
  */
 
+import { parseWorkerErrorResponse } from '@/infrastructure/ai/worker-api-error'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 
 function getApiBaseUrl(): string {
@@ -73,14 +74,7 @@ export async function fetchHostedQuota(accessToken: string): Promise<HostedQuota
     })
     const body: unknown = await response.json().catch(() => null)
     if (!response.ok) {
-      const errorCode =
-        typeof body === 'object' &&
-        body !== null &&
-        'error' in body &&
-        typeof (body as { error: unknown }).error === 'string'
-          ? (body as { error: string }).error
-          : `http_${response.status}`
-      throw new Error(errorCode)
+      throw parseWorkerErrorResponse(response, body)
     }
     if (!isHostedQuotaSnapshot(body)) {
       throw new Error('invalid_hosted_quota_response')

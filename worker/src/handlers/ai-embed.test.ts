@@ -202,4 +202,78 @@ describe('handleEmbed', () => {
     expect(json.data.quota.used).toBe(0)
     expect(json.data.quota.limit).toBe(100)
   })
+
+  test('AI.run 抛错 → 502 embed_failed + cause ai_run_failed', async () => {
+    mock.module('../services/ai/require-pro-user', () => ({
+      isActiveProUser: async () => false
+    }))
+    const { handleEmbed: handle } = await import('./ai-embed')
+    const response = await handle(
+      new Request('http://localhost/api/ai/embed', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ texts: ['hello'] })
+      }),
+      createEnv({
+        AI: {
+          run: async () => {
+            throw new Error('upstream boom')
+          }
+        }
+      }),
+      'user-ai-run-fail'
+    )
+    expect(response.status).toBe(502)
+    const jsonRun = (await response.json()) as { error: string; cause: string }
+    expect(jsonRun.error).toBe('embed_failed')
+    expect(jsonRun.cause).toBe('ai_run_failed')
+  })
+
+  test('AI 响应异常 → 502 embed_failed + cause invalid_ai_response', async () => {
+    mock.module('../services/ai/require-pro-user', () => ({
+      isActiveProUser: async () => false
+    }))
+    const { handleEmbed: handle } = await import('./ai-embed')
+    const response = await handle(
+      new Request('http://localhost/api/ai/embed', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ texts: ['hello'] })
+      }),
+      createEnv({
+        AI: {
+          run: async () => ({ data: 'not-array' })
+        }
+      }),
+      'user-ai-shape-fail'
+    )
+    expect(response.status).toBe(502)
+    const jsonShape = (await response.json()) as { error: string; cause: string }
+    expect(jsonShape.error).toBe('embed_failed')
+    expect(jsonShape.cause).toBe('invalid_ai_response')
+  })
+
+  test('空向量 → 502 embed_failed + cause empty_embedding', async () => {
+    mock.module('../services/ai/require-pro-user', () => ({
+      isActiveProUser: async () => false
+    }))
+    const { handleEmbed: handle } = await import('./ai-embed')
+    const response = await handle(
+      new Request('http://localhost/api/ai/embed', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ texts: ['hello'] })
+      }),
+      createEnv({
+        AI: {
+          run: async () => ({ data: [[]] })
+        }
+      }),
+      'user-empty-embed'
+    )
+    expect(response.status).toBe(502)
+    const jsonEmpty = (await response.json()) as { error: string; cause: string }
+    expect(jsonEmpty.error).toBe('embed_failed')
+    expect(jsonEmpty.cause).toBe('empty_embedding')
+  })
 })
