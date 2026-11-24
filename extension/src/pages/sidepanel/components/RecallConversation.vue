@@ -569,7 +569,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
               <template v-for="(segment, segmentIndex) in turn.textSegments">
                 <button
                   v-if="segment.kind === 'open_bookmark_ingest_settings'"
-                  :key="segmentIndex"
+                  :key="`bookmark-${segmentIndex}`"
                   type="button"
                   class="assistant-turn-inline-link"
                   :title="t('popup_empty_import_bookmarks_aria')"
@@ -580,7 +580,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
                 </button>
                 <button
                   v-else-if="segment.kind === 'open_behavior_import_settings'"
-                  :key="segmentIndex"
+                  :key="`behavior-${segmentIndex}`"
                   type="button"
                   class="assistant-turn-inline-link"
                   :title="segment.text"
@@ -591,7 +591,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
                 </button>
                 <button
                   v-else-if="segment.kind === 'open_ai_settings'"
-                  :key="segmentIndex"
+                  :key="`ai-${segmentIndex}`"
                   type="button"
                   class="assistant-turn-inline-link"
                   :title="segment.text"
@@ -602,7 +602,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
                 </button>
                 <button
                   v-else-if="segment.kind === 'open_account_settings'"
-                  :key="segmentIndex"
+                  :key="`account-${segmentIndex}`"
                   type="button"
                   class="assistant-turn-inline-link"
                   :title="segment.text"
@@ -611,7 +611,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
                 >
                   {{ segment.text }}
                 </button>
-                <span v-else :key="segmentIndex">{{ segment.text }}</span>
+                <span v-else :key="`text-${segmentIndex}`">{{ segment.text }}</span>
               </template>
             </template>
             <template v-else>{{ turn.text }}</template>
@@ -738,7 +738,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
               <template v-for="(segment, segmentIndex) in turn.textSegments">
                 <button
                   v-if="segment.kind === 'open_bookmark_ingest_settings'"
-                  :key="`after-${segmentIndex}`"
+                  :key="`after-bookmark-${segmentIndex}`"
                   type="button"
                   class="assistant-turn-inline-link"
                   :title="t('popup_empty_import_bookmarks_aria')"
@@ -749,7 +749,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
                 </button>
                 <button
                   v-else-if="segment.kind === 'open_behavior_import_settings'"
-                  :key="`after-${segmentIndex}`"
+                  :key="`after-behavior-${segmentIndex}`"
                   type="button"
                   class="assistant-turn-inline-link"
                   :title="segment.text"
@@ -760,7 +760,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
                 </button>
                 <button
                   v-else-if="segment.kind === 'open_ai_settings'"
-                  :key="`after-${segmentIndex}`"
+                  :key="`after-ai-${segmentIndex}`"
                   type="button"
                   class="assistant-turn-inline-link"
                   :title="segment.text"
@@ -771,7 +771,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
                 </button>
                 <button
                   v-else-if="segment.kind === 'open_account_settings'"
-                  :key="`after-${segmentIndex}`"
+                  :key="`after-account-${segmentIndex}`"
                   type="button"
                   class="assistant-turn-inline-link"
                   :title="segment.text"
@@ -780,7 +780,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
                 >
                   {{ segment.text }}
                 </button>
-                <span v-else :key="`after-${segmentIndex}`">{{ segment.text }}</span>
+                <span v-else :key="`after-text-${segmentIndex}`">{{ segment.text }}</span>
               </template>
             </template>
             <template v-else>{{ turn.text }}</template>

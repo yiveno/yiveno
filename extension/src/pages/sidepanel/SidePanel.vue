@@ -1833,7 +1833,7 @@ onUnmounted(() => {
                 <template v-for="(segment, segmentIndex) in idleEmptyCopy.bodySegments">
                   <button
                     v-if="segment.kind === 'open_bookmark_ingest_settings'"
-                    :key="segmentIndex"
+                    :key="`bookmark-${segmentIndex}`"
                     type="button"
                     class="recall-empty-inline-link"
                     :title="t('popup_empty_import_bookmarks_aria')"
@@ -1844,7 +1844,7 @@ onUnmounted(() => {
                   </button>
                   <button
                     v-else-if="segment.kind === 'open_ai_settings'"
-                    :key="segmentIndex"
+                    :key="`ai-${segmentIndex}`"
                     type="button"
                     class="recall-empty-inline-link"
                     :title="segment.text"
@@ -1855,7 +1855,7 @@ onUnmounted(() => {
                   </button>
                   <button
                     v-else-if="segment.kind === 'open_account_settings'"
-                    :key="segmentIndex"
+                    :key="`account-${segmentIndex}`"
                     type="button"
                     class="recall-empty-inline-link"
                     :title="segment.text"
@@ -1864,7 +1864,7 @@ onUnmounted(() => {
                   >
                     {{ segment.text }}
                   </button>
-                  <span v-else :key="segmentIndex">{{ segment.text }}</span>
+                  <span v-else :key="`text-${segmentIndex}`">{{ segment.text }}</span>
                 </template>
               </template>
               <template v-else>{{ idleEmptyCopy?.body ?? t('popup_welcome_body') }}</template>
