@@ -21,7 +21,7 @@ function createEnv(overrides: Record<string, unknown> = {}): Env {
     SUPABASE_ANON_KEY: 'anon-key',
     SUPABASE_SERVICE_ROLE_KEY: 'service-role-key',
     WEBSITE_URL: 'https://example.com',
-    AI_USAGE_KV: createKvMock() as Env['AI_USAGE_KV'],
+    AI_USAGE_KV: createKvMock() as unknown as Env['AI_USAGE_KV'],
     DEEPSEEK_API_KEY: 'test-key',
     ...overrides
   } as unknown as Env
@@ -95,7 +95,7 @@ describe('handleExtractComplete', () => {
           choices: [{ message: { content: '{' }, finish_reason: 'stop' }]
         }),
         { status: 200, headers: { 'content-type': 'application/json' } }
-      )) as typeof fetch
+      )) as unknown as typeof fetch
 
     try {
       const kv = createKvMock()
