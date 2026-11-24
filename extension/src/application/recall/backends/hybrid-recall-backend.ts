@@ -109,6 +109,10 @@ import {
   type UnderstandRecallClueResult
 } from '@/core/recall/understand/understand-recall-clue'
 import { requestWorkerEmbeddings } from '@/infrastructure/ai/embed-api-client'
+import {
+  gateWorkerEmbedRequest,
+  tripEmbedQuotaBreakerFromError
+} from '@/infrastructure/ai/embed-quota-circuit-breaker'
 import { getWorkerApiAccessToken } from '@/infrastructure/identity/worker-api-access-token'
 import { memoryNotesMetaRepository } from '@/infrastructure/indexeddb/memory-notes-meta-repository'
 import { t } from '@/infrastructure/i18n/t'
@@ -714,6 +718,18 @@ export async function fuseHybridMatches(input: {
   if (input.queryVector != null && input.queryVector.length > 0) {
     queryVector = input.queryVector
   } else {
+    // fuseHybridMatches 仅 Side Panel Hybrid 轨调用（Omnibox 不进此函数）；可联网预查
+    const gate = await gateWorkerEmbedRequest({
+      accessToken,
+      allowNetworkPrecheck: true
+    })
+    if (!gate.allow) {
+      input.trace('info', 'embed 熔断开启，跳过 Worker 调用', {
+        reason: gate.reason,
+        site: 'hybrid_clue'
+      })
+      return null
+    }
     try {
       const embed = await requestWorkerEmbeddings(accessToken, [input.clueEmbeddingText])
       const vector = embed.embeddings[0]
@@ -722,6 +738,7 @@ export async function fuseHybridMatches(input: {
       }
       queryVector = vector
     } catch (error) {
+      tripEmbedQuotaBreakerFromError(accessToken, error)
       input.trace('info', 'Hybrid：clue embed 失败，降级关键词', {
         error: error instanceof Error ? error.message : String(error)
       })
@@ -991,13 +1008,25 @@ export class HybridRecallBackend implements RecallBackend {
       // Gap 5：注入 embedding 句柄（仅在登录态可用时）
       merged = await withRecallTopicAsync(merged, async (text: string) => {
         try {
+          const gate = await gateWorkerEmbedRequest({
+            accessToken,
+            allowNetworkPrecheck: true
+          })
+          if (!gate.allow) {
+            trace('info', 'embed 熔断开启，跳过 Worker 调用', {
+              reason: gate.reason,
+              site: 'topic'
+            })
+            return null
+          }
           const embed = await requestWorkerEmbeddings(accessToken, [text])
           const vector = embed.embeddings[0]
           if (!vector || vector.length === 0) {
             return null
           }
           return new Float32Array(vector)
-        } catch {
+        } catch (error) {
+          tripEmbedQuotaBreakerFromError(accessToken, error)
           return null
         }
       })
@@ -1056,19 +1085,31 @@ export class HybridRecallBackend implements RecallBackend {
     const wantSemanticNoteMatch =
       !isOmniboxEntry && DREAMING_PREFER_READ_ENABLED && DREAMING_SEMANTIC_NOTE_MATCH_ENABLED
     if (wantSemanticNoteMatch) {
-      try {
-        const bearer = await getWorkerApiAccessToken()
-        if (bearer) {
-          const embed = await requestWorkerEmbeddings(bearer, [clueEmbeddingText])
-          const vector = embed.embeddings[0]
-          if (vector?.length) {
-            queryVector = vector
+      const bearer = await getWorkerApiAccessToken()
+      if (bearer) {
+        try {
+          const gate = await gateWorkerEmbedRequest({
+            accessToken: bearer,
+            allowNetworkPrecheck: true
+          })
+          if (!gate.allow) {
+            trace('info', 'embed 熔断开启，跳过 Worker 调用', {
+              reason: gate.reason,
+              site: 'semantic_note'
+            })
+          } else {
+            const embed = await requestWorkerEmbeddings(bearer, [clueEmbeddingText])
+            const vector = embed.embeddings[0]
+            if (vector?.length) {
+              queryVector = vector
+            }
           }
+        } catch (error) {
+          tripEmbedQuotaBreakerFromError(bearer, error)
+          trace('info', '语义命题：查询向量获取失败，字面照旧', {
+            error: error instanceof Error ? error.message : String(error)
+          })
         }
-      } catch (error) {
-        trace('info', '语义命题：查询向量获取失败，字面照旧', {
-          error: error instanceof Error ? error.message : String(error)
-        })
       }
     }
 

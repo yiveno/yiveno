@@ -104,7 +104,7 @@ export async function runSilentMemoryEmbeddingMaintenance(
       // 同步写摘录：不被 sync finalize 清队列打断
       const excerptResult = await backfillMissingMemoryEmbeddings(undefined, syncLimit)
 
-      // 同步已触 Worker 配额：勿再入队（enqueue 开头 resume 会清熔断，徒增一次烧额度）
+      // 同步已触 Worker 配额：勿再入队（同身份 resume 不再清熔断；仍跳过入队以免空转）
       if (excerptResult.workerQuotaHit) {
         logger.info('MemoryEmbed', '无感 embedding 维护结束（同步已触 Worker 配额）', {
           reason,

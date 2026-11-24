@@ -22,6 +22,14 @@ import {
   requestWorkerEmbeddings,
   WORKER_EMBEDDING_MODEL
 } from '@/infrastructure/ai/embed-api-client'
+import {
+  clearEmbedQuotaBreaker,
+  clearEmbedQuotaBreakerIfIdentityChanged,
+  isEmbedQuotaBreakerOpenSync,
+  isWorkerQuotaEmbedError,
+  resetEmbedQuotaCircuitBreakerForTests,
+  tripEmbedQuotaBreakerFromError
+} from '@/infrastructure/ai/embed-quota-circuit-breaker'
 import { getWorkerApiAccessToken } from '@/infrastructure/identity/worker-api-access-token'
 import {
   memoryItemRepository,
@@ -46,8 +54,6 @@ let queueGeneration = 0
 let authPaused = false
 /** 本会话已因 IndexedDB 配额停止后续 embed 写库。 */
 let quotaPaused = false
-/** 本会话已因 Worker embed 配额（quota_exceeded / http_429）停止入队与回填。 */
-let workerQuotaPaused = false
 
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => {
@@ -74,14 +80,6 @@ function isAuthEmbedError(error: unknown): boolean {
   )
 }
 
-/** Worker embed 配额错误：与 embed-api-client 抛出的 `quota_exceeded` / `http_429` 对齐。 */
-function isWorkerQuotaEmbedError(error: unknown): boolean {
-  const message = error instanceof Error ? error.message : String(error)
-  return (
-    message === 'quota_exceeded' || message === 'http_429' || message.includes('quota_exceeded')
-  )
-}
-
 /**
  * 清空待执行的 embed 队列（已在飞的一条会跑完后停止后续）。
  * Chrome sync/reconcile 前调用，避免万级书签刷爆 Worker。
@@ -96,11 +94,16 @@ export function clearAsyncMemoryEmbeddingQueue(reason = 'manual'): void {
   })
 }
 
-/** 恢复因 auth 失败暂停的入队（登录成功后可调）；身份已变时一并解除 Worker 配额熔断。 */
-export function resumeAsyncMemoryEmbeddingAfterAuth(): void {
-  if (workerQuotaPaused) {
-    workerQuotaPaused = false
-    logger.info('MemoryEmbed', '异步 embed 已清除 Worker 配额熔断（auth 恢复）')
+/**
+ * 恢复因 auth 失败暂停的入队。
+ * Worker 配额熔断仅在 token 指纹相对 trip 时变化时清除（同身份 / 开 AI ≠ 换身份）。
+ */
+export async function resumeAsyncMemoryEmbeddingAfterAuth(
+  currentAccessToken?: string | null
+): Promise<void> {
+  const cleared = await clearEmbedQuotaBreakerIfIdentityChanged(currentAccessToken)
+  if (cleared) {
+    logger.info('MemoryEmbed', '异步 embed 已清除 Worker 配额熔断（auth 身份变化）')
   }
   if (!authPaused) {
     return
@@ -111,20 +114,18 @@ export function resumeAsyncMemoryEmbeddingAfterAuth(): void {
 
 /**
  * 无感维护预查到剩余额度 > 0 时清除 Worker 配额熔断（可再试）。
+ * 签名保留；内部清持久态 + 内存镜像。
  */
 export function clearWorkerQuotaEmbedPause(reason: string): void {
-  if (!workerQuotaPaused) {
-    return
-  }
-  workerQuotaPaused = false
+  clearEmbedQuotaBreaker(reason)
   logger.info('MemoryEmbed', '异步 embed 已清除 Worker 配额熔断', { reason })
 }
 
-/** 测试用：清空队列并解除熔断标志。 */
+/** 测试用：清空队列并解除熔断标志（含共享持久化熔断器）。 */
 export function resetAsyncMemoryEmbeddingStateForTests(): void {
   authPaused = false
   quotaPaused = false
-  workerQuotaPaused = false
+  resetEmbedQuotaCircuitBreakerForTests()
   clearAsyncMemoryEmbeddingQueue('test_reset')
 }
 
@@ -219,7 +220,7 @@ export async function runAsyncMemoryEmbedding(
     return 'quota'
   }
 
-  if (workerQuotaPaused) {
+  if (isEmbedQuotaBreakerOpenSync()) {
     logger.info('MemoryEmbed', '异步 embed 跳过：Worker 配额已熔断', { itemId })
     return 'worker_quota'
   }
@@ -345,7 +346,7 @@ export async function runAsyncMemoryEmbedding(
       return 'failed'
     }
     if (isWorkerQuotaEmbedError(error)) {
-      workerQuotaPaused = true
+      tripEmbedQuotaBreakerFromError(accessToken, error)
       clearAsyncMemoryEmbeddingQueue('worker_quota_exceeded')
       logger.warn('MemoryEmbed', '异步 embed 因 Worker 配额耗尽熔断并清空队列', {
         itemId,
@@ -377,7 +378,7 @@ export function scheduleAsyncMemoryEmbedding(itemId: string): void {
     logger.info('MemoryEmbed', '异步 embed 跳过入队：配额已熔断', { itemId: id })
     return
   }
-  if (workerQuotaPaused) {
+  if (isEmbedQuotaBreakerOpenSync()) {
     logger.info('MemoryEmbed', '异步 embed 跳过入队：Worker 配额已熔断', { itemId: id })
     return
   }
@@ -461,7 +462,7 @@ export async function enqueueMissingMemoryEmbeddings(
   if (!accessToken) {
     return { enqueued: 0, scanned: 0 }
   }
-  resumeAsyncMemoryEmbeddingAfterAuth()
+  await resumeAsyncMemoryEmbeddingAfterAuth(accessToken)
 
   const { missing, scanned, excerptEnqueued } = await collectMissingEmbeddingItems(
     repository,
@@ -511,7 +512,7 @@ export async function backfillMissingMemoryEmbeddings(
       workerQuotaHit: false
     }
   }
-  resumeAsyncMemoryEmbeddingAfterAuth()
+  await resumeAsyncMemoryEmbeddingAfterAuth(accessToken)
   // Rebuild 主动重试：用户可能已腾磁盘
   quotaPaused = false
 

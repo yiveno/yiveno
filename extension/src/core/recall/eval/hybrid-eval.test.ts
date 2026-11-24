@@ -35,6 +35,21 @@ vi.mock('@/infrastructure/ai/embed-api-client', () => ({
   }))
 }))
 
+// embed 预查门控：CI 不打真实 hosted/quota（fail-open 替身）
+vi.mock('@/infrastructure/ai/hosted-quota-api-client', () => ({
+  fetchHostedQuota: vi.fn(async () => ({
+    model: '@cf/meta/llama',
+    tier: 'free' as const,
+    used: 0,
+    limit: 100,
+    remaining: 100,
+    dailyUsed: 0,
+    dailyLimit: 100,
+    dailyRemaining: 100,
+    monthKey: '2026-11'
+  }))
+}))
+
 vi.mock('@/infrastructure/storage/recall-outcome-pairs-storage', () => ({
   listRecallOutcomePairs: vi.fn(async () => [])
 }))

@@ -58,11 +58,46 @@ import {
 } from '@/application/memory/ensure-memory-embedding-maintenance'
 import {
   clearAsyncMemoryEmbeddingQueue,
+  enqueueMissingMemoryEmbeddings,
   resetAsyncMemoryEmbeddingStateForTests,
+  resumeAsyncMemoryEmbeddingAfterAuth,
   runAsyncMemoryEmbedding,
   scheduleAsyncMemoryEmbedding
 } from '@/application/memory/schedule-async-memory-embedding'
+import {
+  isEmbedQuotaBreakerOpenSync,
+  resetEmbedQuotaCircuitBreakerForTests
+} from '@/infrastructure/ai/embed-quota-circuit-breaker'
 import { memoryItemRepository } from '@/infrastructure/indexeddb/memory-item-repository'
+
+type StorageMap = Record<string, unknown>
+
+function createChromeStorageMock(initial: StorageMap = {}) {
+  const store: StorageMap = { ...initial }
+  return {
+    storage: {
+      local: {
+        get: vi.fn(async (keys: string | string[] | Record<string, unknown>) => {
+          if (typeof keys === 'string') {
+            return { [keys]: store[keys] }
+          }
+          if (Array.isArray(keys)) {
+            return Object.fromEntries(keys.map(key => [key, store[key]]))
+          }
+          return { ...store, ...keys }
+        }),
+        set: vi.fn(async (items: StorageMap) => {
+          Object.assign(store, items)
+        }),
+        remove: vi.fn(async (keys: string | string[]) => {
+          for (const key of Array.isArray(keys) ? keys : [keys]) {
+            delete store[key]
+          }
+        })
+      }
+    }
+  }
+}
 
 function defaultSettings() {
   return {
@@ -159,6 +194,8 @@ async function flushAsyncQueue(rounds = 4): Promise<void> {
 
 describe('Worker embed 配额熔断', () => {
   beforeEach(() => {
+    vi.stubGlobal('chrome', createChromeStorageMock())
+    resetEmbedQuotaCircuitBreakerForTests()
     resetAsyncMemoryEmbeddingStateForTests()
     resetSilentMemoryEmbeddingMaintenanceForTests()
     requestWorkerEmbeddingsMock.mockReset()
@@ -179,6 +216,7 @@ describe('Worker embed 配额熔断', () => {
     clearAsyncMemoryEmbeddingQueue('test_teardown')
     resetAsyncMemoryEmbeddingStateForTests()
     resetSilentMemoryEmbeddingMaintenanceForTests()
+    resetEmbedQuotaCircuitBreakerForTests()
     vi.useRealTimers()
   })
 
@@ -276,7 +314,7 @@ describe('Worker embed 配额熔断', () => {
     expect(requestWorkerEmbeddingsMock).toHaveBeenCalledTimes(2)
   })
 
-  it('预查剩余 > 0 清除之前置起的 workerQuotaPaused', async () => {
+  it('预查剩余 > 0 清除之前置起的 Worker 配额熔断（持久化）', async () => {
     const a = excerptMissing('a')
     wireRepo([a])
     requestWorkerEmbeddingsMock.mockRejectedValueOnce(new Error('quota_exceeded'))
@@ -284,6 +322,7 @@ describe('Worker embed 配额熔断', () => {
     // 先熔断
     await runAsyncMemoryEmbedding(a.id, memoryItemRepository as MemoryItemRepository)
     expect(requestWorkerEmbeddingsMock).toHaveBeenCalledTimes(1)
+    expect(isEmbedQuotaBreakerOpenSync()).toBe(true)
 
     // 入队应被熔断挡住
     scheduleAsyncMemoryEmbedding(a.id)
@@ -296,5 +335,41 @@ describe('Worker embed 配额熔断', () => {
     await runSilentMemoryEmbeddingMaintenance('test_clear_pause')
 
     expect(requestWorkerEmbeddingsMock).toHaveBeenCalledTimes(2)
+    expect(isEmbedQuotaBreakerOpenSync()).toBe(false)
   }, 15_000)
+
+  it('回填入口同身份 resume 不再清熔断', async () => {
+    const a = excerptMissing('a')
+    wireRepo([a])
+    requestWorkerEmbeddingsMock.mockRejectedValue(new Error('quota_exceeded'))
+
+    await runAsyncMemoryEmbedding(a.id, memoryItemRepository as MemoryItemRepository)
+    expect(isEmbedQuotaBreakerOpenSync()).toBe(true)
+    expect(requestWorkerEmbeddingsMock).toHaveBeenCalledTimes(1)
+
+    // 同身份 resume / enqueue：熔断仍在，不再调 Worker
+    await resumeAsyncMemoryEmbeddingAfterAuth('device-token')
+    expect(isEmbedQuotaBreakerOpenSync()).toBe(true)
+
+    await enqueueMissingMemoryEmbeddings(memoryItemRepository as MemoryItemRepository, 10)
+    scheduleAsyncMemoryEmbedding(a.id)
+    await flushAsyncQueue(2)
+    expect(requestWorkerEmbeddingsMock).toHaveBeenCalledTimes(1)
+    expect(isEmbedQuotaBreakerOpenSync()).toBe(true)
+  })
+
+  it('换身份 resume 清熔断', async () => {
+    const a = excerptMissing('a')
+    wireRepo([a])
+    requestWorkerEmbeddingsMock.mockRejectedValueOnce(new Error('quota_exceeded'))
+    await runAsyncMemoryEmbedding(a.id, memoryItemRepository as MemoryItemRepository)
+    expect(isEmbedQuotaBreakerOpenSync()).toBe(true)
+
+    await resumeAsyncMemoryEmbeddingAfterAuth('other-device-token-xyz')
+    expect(isEmbedQuotaBreakerOpenSync()).toBe(false)
+
+    mockOkEmbeddings()
+    await runAsyncMemoryEmbedding(a.id, memoryItemRepository as MemoryItemRepository)
+    expect(requestWorkerEmbeddingsMock).toHaveBeenCalledTimes(2)
+  })
 })

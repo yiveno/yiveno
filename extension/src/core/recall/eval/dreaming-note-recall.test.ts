@@ -39,6 +39,20 @@ vi.mock('@/infrastructure/ai/embed-api-client', () => ({
   requestWorkerEmbeddings: requestWorkerEmbeddingsMock
 }))
 
+vi.mock('@/infrastructure/ai/hosted-quota-api-client', () => ({
+  fetchHostedQuota: vi.fn(async () => ({
+    model: '@cf/meta/llama',
+    tier: 'free' as const,
+    used: 0,
+    limit: 100,
+    remaining: 100,
+    dailyUsed: 0,
+    dailyLimit: 100,
+    dailyRemaining: 100,
+    monthKey: '2026-11'
+  }))
+}))
+
 vi.mock('@/infrastructure/identity/worker-api-access-token', () => ({
   getWorkerApiAccessToken: vi.fn(async () => 'dreaming-eval-token')
 }))

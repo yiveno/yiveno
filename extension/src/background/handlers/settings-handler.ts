@@ -98,9 +98,11 @@ export async function handleUpdateUserSettings(
       // AI 开关变更后立刻重挂 / 清空线索 LLM completer
       await refreshClueLlmCompleterFromDevConfig()
       if (patch.aiFeaturesEnabled) {
-        // 重新打开 AI：解除 enrichment 配额熔断与 embed auth 熔断，允许后续 Capture 再试
+        // 重新打开 AI：解除 enrichment 配额熔断与 embed auth 熔断；
+        // embed 配额熔断仅身份变化时清（开 AI ≠ 换身份）
         resumeAsyncMemoryLlmEnrichmentAfterQuota()
-        resumeAsyncMemoryEmbeddingAfterAuth()
+        const accessToken = await getWorkerApiAccessToken()
+        await resumeAsyncMemoryEmbeddingAfterAuth(accessToken)
       }
     }
     if (typeof patch.linkStatusSweepEnabled === 'boolean') {
