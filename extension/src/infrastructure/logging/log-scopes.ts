@@ -42,6 +42,7 @@ export const LOG_SCOPES = [
   'Nav', // 标签页导航打开
   'Omnibox', // 地址栏 Omnibox 找回
   'Onboarding', // 安装后引导页
+  'PagePreview', // 页面预览截图捕获 / 存储 / LRU
   'Privacy', // 隐私 ACK / 删云记忆 / 删账号 / 本机导出
   'Recall', // Recall 服务选型与主入口
   'RecallFlow', // Recall 理解流水线 trace

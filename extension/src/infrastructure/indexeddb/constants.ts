@@ -2,10 +2,11 @@
 export const MEMORY_DATABASE_NAME = 'YivenoMemoryDB' as const
 
 /**
+ * v8：页面预览截图 `memory_page_previews`（本地-only Blob；不进 Backup / 云同步）。
  * v7：命题向量派生表 `memory_note_embeddings`（可重算缓存；不进 Backup；恢复后重建）。
  * v6：死链巡检派生表 `memory_link_status`（可重算；不进 Backup）。
  */
-export const MEMORY_DATABASE_VERSION = 7 as const
+export const MEMORY_DATABASE_VERSION = 8 as const
 
 export const MEMORY_ITEM_STORE = 'memory_items' as const
 
@@ -41,11 +42,23 @@ export const MEMORY_LINK_STATUS_STORE = 'memory_link_status' as const
  */
 export const MEMORY_NOTE_EMBEDDING_STORE = 'memory_note_embeddings' as const
 
+/**
+ * 页面预览截图（独立；本地-only Blob；不进 Backup / 云同步）。
+ * keyPath = id（`${ownerId}\0${urlKey}`）。
+ */
+export const MEMORY_PAGE_PREVIEW_STORE = 'memory_page_previews' as const
+
 /** ownerId + lastCheckedAt，未检查优先排队。 */
 export const MEMORY_LINK_STATUS_INDEX_BY_OWNER_CHECKED = 'by_owner_checked' as const
 
 /** ownerId，按归属枚举命题向量（回填 / 清库）。 */
 export const MEMORY_NOTE_EMBEDDING_INDEX_BY_OWNER = 'by_owner' as const
+
+/** ownerId，按归属枚举预览截图（清库 / LRU 扫描）。 */
+export const MEMORY_PAGE_PREVIEW_INDEX_BY_OWNER = 'by_owner' as const
+
+/** ownerId + lastShownAt，LRU 淘汰最久未展示。 */
+export const MEMORY_PAGE_PREVIEW_INDEX_BY_OWNER_SHOWN = 'by_owner_shown' as const
 
 /** ownerId + sourceMemoryItemId，按源查命题。 */
 export const MEMORY_NOTES_INDEX_BY_OWNER_SOURCE = 'by_owner_source' as const

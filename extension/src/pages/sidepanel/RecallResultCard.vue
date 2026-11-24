@@ -13,6 +13,8 @@ import {
 } from '@/pages/sidepanel/recall-result-card-evidence'
 import { isFaviconBroken, withBrokenFavicon } from '@/pages/sidepanel/recall-result-card-favicon'
 import { resolveRecallCardClickAction } from '@/pages/sidepanel/recall-result-card-interaction'
+import { createHoverPreviewDelayController } from '@/pages/sidepanel/recall-card-hover-preview'
+import RecallCardHoverPreview from '@/pages/sidepanel/RecallCardHoverPreview.vue'
 import RecallHighlightText from '@/pages/sidepanel/RecallHighlightText.vue'
 
 /** 找回结果卡展示模型（含可选折叠组）。 */
@@ -184,6 +186,45 @@ function isDetailExportItemDisabled(id: string): boolean {
 const cardGroupRef = ref<HTMLElement | null>(null)
 let stopEvidenceObserver: (() => void) | undefined
 
+/** 悬停预览：延迟后出浮层；导出多选模式关闭 */
+const hoverPreviewVisible = ref(false)
+const hoverAnchorRect = ref<DOMRect | null>(null)
+const hoverPanelRect = ref<DOMRect | null>(null)
+const hoverPreviewController = createHoverPreviewDelayController()
+
+function readHoverRects(): { anchor: DOMRect; panel: DOMRect } | null {
+  const shell = cardGroupRef.value?.querySelector('.recall-card-shell') as HTMLElement | null
+  const anchorEl = shell ?? cardGroupRef.value
+  if (!anchorEl) {
+    return null
+  }
+  const panelEl =
+    (anchorEl.closest('.recall-shell') as HTMLElement | null) ?? document.documentElement
+  return { anchor: anchorEl.getBoundingClientRect(), panel: panelEl.getBoundingClientRect() }
+}
+
+function handlePreviewPointerEnter(): void {
+  if (props.showDetailExportSelection) {
+    return
+  }
+  hoverPreviewController.enter(props.card.id, () => {
+    const rects = readHoverRects()
+    if (!rects) {
+      return
+    }
+    hoverAnchorRect.value = rects.anchor
+    hoverPanelRect.value = rects.panel
+    hoverPreviewVisible.value = true
+  })
+}
+
+function handlePreviewPointerLeave(): void {
+  hoverPreviewController.leave(props.card.id)
+  hoverPreviewVisible.value = false
+  hoverAnchorRect.value = null
+  hoverPanelRect.value = null
+}
+
 /** 主卡正文/标题展开（本地态；勿复用 expanded prop——那是重复组兄弟列表） */
 const isBodyExpanded = ref(false)
 const isBodyTruncated = ref(false)
@@ -250,6 +291,8 @@ onMounted(() => {
 onUnmounted(() => {
   stopEvidenceObserver?.()
   bodyResizeObserver?.disconnect()
+  hoverPreviewController.cancelAll()
+  hoverPreviewVisible.value = false
 })
 
 watch(
@@ -312,6 +355,8 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
         'recall-card-shell--has-expand': showBodyExpandControl,
         'is-keyboard-selected': keyboardSelected
       }"
+      @pointerenter="handlePreviewPointerEnter"
+      @pointerleave="handlePreviewPointerLeave"
     >
       <span
         v-if="showDetailExportSelection && isDetailExportItemSelected(card.id)"
@@ -629,6 +674,15 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
         </button>
       </li>
     </ul>
+
+    <Teleport to="body">
+      <RecallCardHoverPreview
+        :card="card"
+        :visible="hoverPreviewVisible"
+        :anchor-rect="hoverAnchorRect"
+        :panel-rect="hoverPanelRect"
+      />
+    </Teleport>
   </div>
 </template>
 

@@ -4,12 +4,18 @@ import { isChromeBookmarkIngestEnabled } from '@/application/capture/chrome-book
 import { invalidateBookmarkLibraryTreeOnChromeChange } from '@/background/handlers/import-handler'
 import { invalidateBookmarkSyncAlignmentCache } from '@/application/memory/bookmark-sync-alignment-cache'
 import { memoryItemService } from '@/application/memory/memory-item-service'
+import {
+  capturePagePreviewOnSave,
+  schedulePagePreviewOpenBackfill
+} from '@/application/memory/page-preview-capture-service'
 import { backfillMissingMemoryEmbeddings } from '@/application/memory/schedule-async-memory-embedding'
 import {
   exportDetailExport,
   DetailExportError
 } from '@/application/recall/export-detail-export-service'
+import type { MemoryItem } from '@/core/memory/memory-item'
 import { getWorkerApiAccessToken } from '@/infrastructure/identity/worker-api-access-token'
+import { getCurrentOwnerId } from '@/infrastructure/identity/local-profile-service'
 import type { MemoryBackgroundResponse, MemoryErrorCode } from '@/core/messaging/memory-messages'
 import {
   MemoryErrorCodeSchema,
@@ -17,6 +23,7 @@ import {
   parseCaptureTextExcerptPayload,
   parseDeleteMemoryItemPayload,
   parseGetMemoryItemPayload,
+  parseGetPagePreviewPayload,
   parseListMemoryItemsPayload,
   parseRecordMemoryOpenPayload,
   parseRecordRecallDismissPayload,
@@ -26,11 +33,23 @@ import {
 } from '@/core/messaging/memory-messages'
 import { flashActionBadge } from '@/infrastructure/browser/action-badge'
 import { isSavablePageUrl } from '@/infrastructure/browser/active-tab-reader'
+import { pagePreviewRepository } from '@/infrastructure/indexeddb/page-preview-repository'
+import { normalizePagePreviewUrlKey } from '@/infrastructure/indexeddb/page-preview-types'
 import { flowFail, flowOk, flowStart, previewText } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
 import { addChromeBookmarkDeleteTombstone } from '@/infrastructure/storage/chrome-bookmark-delete-tombstone-storage'
 import { bumpExcerptCaptureCount } from '@/infrastructure/storage/first-recall-onboarding-storage'
 import { bumpMemoryLibraryRevision } from '@/infrastructure/storage/memory-library-revision-storage'
+
+/** 书签 URL / 摘录源站 URL，供预览截图键。 */
+function pageUrlOfMemoryItem(item: MemoryItem): string | null {
+  if (item.type === 'bookmark') {
+    const url = item.payload.url.trim()
+    return url || null
+  }
+  const url = item.payload.sourceUrl.trim()
+  return url || null
+}
 
 /** 将未知错误归约为 MemoryErrorCode（右键失败页内反馈等复用）。 */
 export function resolveMemoryErrorCode(error: unknown, fallback: MemoryErrorCode): MemoryErrorCode {
@@ -81,6 +100,9 @@ export async function handleCaptureBookmark(payload: unknown): Promise<MemoryBac
       entry: input.captureEntry ?? 'popup',
       url: previewText(input.url, 120)
     })
+    void capturePagePreviewOnSave({ pageUrl: input.url }).catch(error => {
+      logger.warn('PagePreview', '保存书签后截图失败', error)
+    })
     return { ok: true, item }
   } catch (error) {
     flowFail('Capture', '捕获书签', startedAt, error)
@@ -129,6 +151,11 @@ export async function handleCaptureTextExcerpt(
       hasNote: Boolean(input.note),
       duplicate
     })
+    if (!duplicate) {
+      void capturePagePreviewOnSave({ pageUrl: input.sourceUrl }).catch(error => {
+        logger.warn('PagePreview', '保存摘录后截图失败', error)
+      })
+    }
     return duplicate ? { ok: true, item, duplicate: true } : { ok: true, item }
   } catch (error) {
     flowFail('Capture', '捕获摘录', startedAt, error)
@@ -258,9 +285,46 @@ export async function handleRecordMemoryOpen(payload: unknown): Promise<MemoryBa
       id: item.id,
       openCount: item.clues.openCount ?? null
     })
+    const pageUrl = pageUrlOfMemoryItem(item)
+    if (pageUrl) {
+      schedulePagePreviewOpenBackfill({ pageUrl })
+    }
     return { ok: true, item }
   } catch (error) {
     flowFail('Memory', '记录打开', startedAt, error)
+    return toErrorResponse('MEMORY_OPERATION_FAILED', error)
+  }
+}
+
+/** 悬停浮层：取本机预览 Blob（无则 PAGE_PREVIEW_NOT_FOUND，UI 走骨架）。 */
+export async function handleGetPagePreview(payload: unknown): Promise<MemoryBackgroundResponse> {
+  const startedAt = flowStart('PagePreview', '读取预览')
+  try {
+    const input = parseGetPagePreviewPayload(payload)
+    const urlKey = normalizePagePreviewUrlKey(input.url)
+    if (!urlKey) {
+      flowOk('PagePreview', '读取预览', startedAt, { found: false, reason: 'bad_url' })
+      return toErrorResponse('PAGE_PREVIEW_NOT_FOUND')
+    }
+    const ownerId = await getCurrentOwnerId()
+    const record = await pagePreviewRepository.getAndTouchShown(ownerId, urlKey)
+    if (!record) {
+      flowOk('PagePreview', '读取预览', startedAt, { found: false })
+      return toErrorResponse('PAGE_PREVIEW_NOT_FOUND')
+    }
+    flowOk('PagePreview', '读取预览', startedAt, {
+      found: true,
+      byteSize: record.byteSize,
+      width: record.width
+    })
+    return {
+      ok: true,
+      blob: record.blob,
+      width: record.width,
+      height: record.height
+    }
+  } catch (error) {
+    flowFail('PagePreview', '读取预览', startedAt, error)
     return toErrorResponse('MEMORY_OPERATION_FAILED', error)
   }
 }

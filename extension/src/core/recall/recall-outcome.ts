@@ -46,6 +46,7 @@ export type RecallOutcomeConfidence = z.infer<typeof RecallOutcomeConfidenceSche
  * - settled_single：C1
  * - settled_last：C2
  * - copy：复制/单条 pack
+ * - open_confirm：结果卡点击打开即确认（v1 悬停预览闭环）
  * - unresolved：unknown
  */
 export const RecallOutcomeSourceSchema = z.enum([
@@ -56,6 +57,7 @@ export const RecallOutcomeSourceSchema = z.enum([
   'settled_single', // C1
   'settled_last', // C2
   'copy', // C5
+  'open_confirm', // 点击打开即确认
   'unresolved' // 未解析
 ])
 

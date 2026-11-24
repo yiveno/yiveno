@@ -1051,6 +1051,9 @@
   "recall_card_body_collapse": {
     "message": "收起"
   },
+  "recall_card_preview_aria": {
+    "message": "这条已存页面的预览"
+  },
   "popup_duplicate_group_bookmark": {
     "message": "$1 个相同书签",
     "placeholders": {
@@ -2408,6 +2411,9 @@
   },
   "error_detail_export_operation_failed": {
     "message": "无法复制或下载详情"
+  },
+  "error_page_preview_not_found": {
+    "message": "还没有这页的预览图"
   },
   "detail_title": {
     "message": "摘录详情"

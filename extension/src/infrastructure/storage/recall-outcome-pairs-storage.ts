@@ -31,6 +31,7 @@ const RecallOutcomePairRecordSchema = z.object({
     'settled_single',
     'settled_last',
     'copy',
+    'open_confirm',
     'unresolved'
   ]),
   createdAt: z.string().datetime()

@@ -68,6 +68,7 @@ import type {
 import type {
   ListMemoryItemsMessage,
   GetMemoryItemMessage,
+  GetPagePreviewMessage,
   DeleteMemoryItemMessage,
   UpdateMemoryNoteMessage,
   RecordMemoryOpenMessage,
@@ -267,6 +268,18 @@ export async function exportDetailExport(
   const message: ExportDetailExportMessage = {
     scope: 'background',
     type: 'EXPORT_DETAIL_EXPORT',
+    payload
+  }
+  return sendBackgroundMessage<MemoryBackgroundResponse>(message)
+}
+
+/** 悬停浮层：取本机页面预览 JPEG Blob。 */
+export async function getPagePreview(
+  payload: GetPagePreviewMessage['payload']
+): Promise<MemoryBackgroundResponse> {
+  const message: GetPagePreviewMessage = {
+    scope: 'background',
+    type: 'GET_PAGE_PREVIEW',
     payload
   }
   return sendBackgroundMessage<MemoryBackgroundResponse>(message)

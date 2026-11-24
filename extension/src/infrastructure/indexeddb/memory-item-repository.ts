@@ -39,6 +39,7 @@ import { buildCaptureDreamingPreprocess } from '@/core/dreaming/capture-dreaming
 import { dreamingDuplicateGroupRepository } from '@/infrastructure/indexeddb/dreaming-duplicate-group-repository'
 import { memoryLinkStatusRepository } from '@/infrastructure/indexeddb/memory-link-status-repository'
 import { memoryNoteEmbeddingRepository } from '@/infrastructure/indexeddb/memory-note-embedding-repository'
+import { pagePreviewRepository } from '@/infrastructure/indexeddb/page-preview-repository'
 import { memoryNotesMetaRepository } from '@/infrastructure/indexeddb/memory-notes-meta-repository'
 import { memoryNotesRepository } from '@/infrastructure/indexeddb/memory-notes-repository'
 import { indexedDBManager, requestToPromise } from '@/infrastructure/indexeddb/manager'
@@ -980,6 +981,7 @@ export class MemoryItemRepository {
     await memoryNotesMetaRepository.clearOwnerMeta(ownerId)
     await dreamingDuplicateGroupRepository.clearOwnerGroups(ownerId)
     await memoryLinkStatusRepository.clearOwner(ownerId)
+    await pagePreviewRepository.clearOwner(ownerId)
 
     return items.filter(item => item.ownerId === ownerId).length
   }

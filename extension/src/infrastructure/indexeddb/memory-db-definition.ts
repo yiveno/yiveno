@@ -16,11 +16,14 @@ import {
   MEMORY_NOTES_INDEX_BY_OWNER_SOURCE,
   MEMORY_NOTES_INDEX_BY_OWNER_UPDATED,
   MEMORY_NOTES_META_STORE,
-  MEMORY_NOTES_STORE
+  MEMORY_NOTES_STORE,
+  MEMORY_PAGE_PREVIEW_INDEX_BY_OWNER,
+  MEMORY_PAGE_PREVIEW_INDEX_BY_OWNER_SHOWN,
+  MEMORY_PAGE_PREVIEW_STORE
 } from '@/infrastructure/indexeddb/constants'
 import type { IndexedDBDefinition } from '@/infrastructure/indexeddb/manager'
 
-/** 创建或升级 memory_items 表与索引；v4 倒排；v5 dreaming；v6 死链；v7 命题向量。 */
+/** 创建或升级 memory_items 表与索引；v4 倒排；v5 dreaming；v6 死链；v7 命题向量；v8 页预览。 */
 function upgradeMemoryDatabase(
   database: IDBDatabase,
   transaction: IDBTransaction,
@@ -105,6 +108,21 @@ function upgradeMemoryDatabase(
         keyPath: 'id'
       })
       embedStore.createIndex(MEMORY_NOTE_EMBEDDING_INDEX_BY_OWNER, 'ownerId', { unique: false })
+    }
+  }
+
+  // v8：页面预览截图（本地-only Blob；不进 Backup；build-only + contains guard）。
+  if (oldVersion < 8) {
+    if (!database.objectStoreNames.contains(MEMORY_PAGE_PREVIEW_STORE)) {
+      const previewStore = database.createObjectStore(MEMORY_PAGE_PREVIEW_STORE, {
+        keyPath: 'id'
+      })
+      previewStore.createIndex(MEMORY_PAGE_PREVIEW_INDEX_BY_OWNER, 'ownerId', { unique: false })
+      previewStore.createIndex(
+        MEMORY_PAGE_PREVIEW_INDEX_BY_OWNER_SHOWN,
+        ['ownerId', 'lastShownAt'],
+        { unique: false }
+      )
     }
   }
 }

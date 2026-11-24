@@ -93,7 +93,7 @@ describe('memory_notes · v5 + 引用门 + 游标续跑', () => {
       }
     )
     expect(storeNames).toBe(true)
-    expect(MEMORY_DATABASE_VERSION).toBe(7)
+    expect(MEMORY_DATABASE_VERSION).toBeGreaterThanOrEqual(7)
     expect(MEMORY_DATABASE_NAME).toBe('YivenoMemoryDB')
   })
 

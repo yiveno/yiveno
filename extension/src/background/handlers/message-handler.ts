@@ -65,6 +65,7 @@ import {
   handleCaptureTextExcerpt,
   handleDeleteMemoryItem,
   handleGetMemoryItem,
+  handleGetPagePreview,
   handleListMemoryItems,
   handleBackfillMemoryEmbeddings,
   handleExportDetailExport,
@@ -210,6 +211,8 @@ async function dispatchBackgroundMessage(
       return handleBackfillMemoryEmbeddings()
     case 'EXPORT_DETAIL_EXPORT':
       return handleExportDetailExport(message.payload)
+    case 'GET_PAGE_PREVIEW':
+      return handleGetPagePreview(message.payload)
     case 'RECALL_WITH_CLUE':
       return handleRecallWithClue(message.payload)
     case 'RECALL_CANCEL':

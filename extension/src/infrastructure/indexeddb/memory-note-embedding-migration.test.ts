@@ -71,8 +71,8 @@ describe('memory_note_embeddings · v7 迁移', () => {
     }
   })
 
-  it('MEMORY_DATABASE_VERSION=7 且新库含 memory_note_embeddings', async () => {
-    expect(MEMORY_DATABASE_VERSION).toBe(7)
+  it('MEMORY_DATABASE_VERSION≥7 且新库含 memory_note_embeddings', async () => {
+    expect(MEMORY_DATABASE_VERSION).toBeGreaterThanOrEqual(7)
     const { item } = await memoryItemRepository.createTextExcerpt({
       payload: {
         selectedText: 'note embedding migration smoke',

@@ -68,6 +68,11 @@ const recordRecallSettlePayloadSchema = z.object({
   id: z.uuid()
 })
 
+/** 悬停浮层：按库内 URL 取本机预览 JPEG Blob。 */
+const getPagePreviewPayloadSchema = z.object({
+  url: z.url()
+})
+
 /** Memory 操作面向 UI 的稳定错误码。 */
 export const MemoryErrorCodeSchema = z.enum([
   'MEMORY_NOT_FOUND', // 条目不存在
@@ -78,7 +83,8 @@ export const MemoryErrorCodeSchema = z.enum([
   'EMBEDDING_BACKFILL_AUTH_REQUIRED', // 回填 embedding 须登录
   'DETAIL_EXPORT_INVALID_COUNT', // detail export 至少 1 条
   'DETAIL_EXPORT_ITEM_NOT_FOUND', // 所选条目不存在或已删
-  'DETAIL_EXPORT_OPERATION_FAILED' // detail export 导出失败
+  'DETAIL_EXPORT_OPERATION_FAILED', // detail export 导出失败
+  'PAGE_PREVIEW_NOT_FOUND' // 无本机预览截图（走骨架 fallback）
 ])
 
 export type MemoryErrorCode = z.infer<typeof MemoryErrorCodeSchema>
@@ -159,6 +165,13 @@ export type ExportDetailExportMessage = {
   payload: z.infer<typeof exportDetailExportPayloadSchema>
 }
 
+/** 读取本机页面预览截图（悬停浮层；无则 PAGE_PREVIEW_NOT_FOUND）。 */
+export type GetPagePreviewMessage = {
+  scope: BackgroundMessageScope
+  type: 'GET_PAGE_PREVIEW'
+  payload: z.infer<typeof getPagePreviewPayloadSchema>
+}
+
 export type MemoryBackgroundMessage =
   | CaptureBookmarkMessage
   | CaptureTextExcerptMessage
@@ -171,6 +184,7 @@ export type MemoryBackgroundMessage =
   | RecordRecallSettleMessage
   | BackfillMemoryEmbeddingsMessage
   | ExportDetailExportMessage
+  | GetPagePreviewMessage
 
 export type MemoryItemSuccessResponse = {
   ok: true
@@ -207,6 +221,14 @@ export type ExportDetailExportSuccessResponse = {
   markdown: string
 }
 
+/** 本机预览 JPEG（structured clone Blob）。 */
+export type PagePreviewSuccessResponse = {
+  ok: true
+  blob: Blob
+  width: number
+  height: number
+}
+
 export type MemoryItemErrorResponse = {
   ok: false
   errorCode: MemoryErrorCode
@@ -220,6 +242,7 @@ export type MemoryBackgroundResponse =
   | MemoryDismissSuccessResponse
   | MemoryEmbeddingBackfillSuccessResponse
   | ExportDetailExportSuccessResponse
+  | PagePreviewSuccessResponse
   | MemoryItemErrorResponse
 
 export function parseCaptureBookmarkPayload(value: unknown) {
@@ -260,4 +283,8 @@ export function parseRecordRecallSettlePayload(value: unknown) {
 
 export function parseExportDetailExportPayload(value: unknown) {
   return exportDetailExportPayloadSchema.parse(value)
+}
+
+export function parseGetPagePreviewPayload(value: unknown) {
+  return getPagePreviewPayloadSchema.parse(value)
 }

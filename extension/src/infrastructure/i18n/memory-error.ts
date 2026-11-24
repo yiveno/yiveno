@@ -11,7 +11,9 @@ const MEMORY_ERROR_MESSAGE_KEYS: Record<MemoryErrorCode, MessageKey> = {
   EMBEDDING_BACKFILL_AUTH_REQUIRED: 'settings_ai_quota_sign_in',
   DETAIL_EXPORT_INVALID_COUNT: 'error_detail_export_invalid_count',
   DETAIL_EXPORT_ITEM_NOT_FOUND: 'error_detail_export_item_not_found',
-  DETAIL_EXPORT_OPERATION_FAILED: 'error_detail_export_operation_failed'
+  DETAIL_EXPORT_OPERATION_FAILED: 'error_detail_export_operation_failed',
+  /** 悬停预览无截图：UI 走骨架，一般不 toast */
+  PAGE_PREVIEW_NOT_FOUND: 'error_page_preview_not_found'
 }
 
 /** 将 Memory errorCode 转为用户可见文案。 */

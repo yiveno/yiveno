@@ -146,6 +146,7 @@ export const RecallTelemetryEventSchema = z.discriminatedUnion('type', [
       'settled_single', // C1 单条 settled
       'settled_last', // C2 末条 settled
       'copy', // 复制等弱确认
+      'open_confirm', // 点击打开即确认
       'unresolved' // 未决议
     ]),
     memoryItemId: z.uuid().optional()

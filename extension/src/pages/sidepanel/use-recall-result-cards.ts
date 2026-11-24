@@ -11,6 +11,7 @@ import { resolveNextRecallVisibleCount } from '@/core/recall/recall-result-visib
 import type { RecallDialogState } from '@/core/recall/merge-recall-dialog-turn'
 import { commitRecallOutcome } from '@/application/recall/commit-recall-outcome'
 import type { RecallOutcomeSessionState } from '@/application/recall/commit-recall-outcome'
+import { recordOpenConfirmOutcomePair } from '@/application/recall/record-open-confirm-outcome'
 import {
   navigateActiveTab,
   recordMemoryOpen,
@@ -225,7 +226,7 @@ export function useRecallResultCards(
     clueInputRef.value?.focus?.()
   }
 
-  /** 打开结果：默认当前活动标签；⌘/Ctrl+点击新开。写 explore open（§7.2：≠ settled）。 */
+  /** 打开结果：默认当前活动标签；⌘/Ctrl+点击新开。写 explore open + 点击确认对。 */
   function handleRecallResultOpen(
     memoryItemId: string,
     openUrl: string,
@@ -243,6 +244,15 @@ export function useRecallResultCards(
     outcomeSession.value = {
       ...outcomeSession.value,
       opens: [...outcomeSession.value.opens, { id: memoryItemId, at: new Date().toISOString() }]
+    }
+    const confirmClue = outcomeSession.value.effectiveClue.trim()
+    if (confirmClue) {
+      void recordOpenConfirmOutcomePair({
+        effectiveClue: confirmClue,
+        targetId: memoryItemId
+      }).catch(() => {
+        // 忽略：确认对写入失败不影响打开
+      })
     }
     void navigateActiveTab({
       url: openUrl,

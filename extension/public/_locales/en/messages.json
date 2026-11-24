@@ -1051,6 +1051,9 @@
   "recall_card_body_collapse": {
     "message": "Show less"
   },
+  "recall_card_preview_aria": {
+    "message": "Preview of this saved page"
+  },
   "popup_duplicate_group_bookmark": {
     "message": "$1 identical bookmarks",
     "placeholders": {
@@ -2411,6 +2414,9 @@
   },
   "error_detail_export_operation_failed": {
     "message": "Could not copy or download details"
+  },
+  "error_page_preview_not_found": {
+    "message": "No saved preview for this page yet"
   },
   "detail_title": {
     "message": "Excerpt detail"

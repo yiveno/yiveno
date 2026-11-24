@@ -1,0 +1,302 @@
+<script setup lang="ts">
+/**
+ * 结果卡悬停预览浮层：有图显示截图；无图骨架 + favicon/标题/摘录/域名/时间/命中线索。
+ * 不访问目标站；仅读本机 GET_PAGE_PREVIEW。
+ */
+import { computed, onUnmounted, ref, watch } from 'vue'
+
+import { isOpenableExternalSourceUrl } from '@/infrastructure/browser/active-tab-reader'
+import { getChromeFaviconUrl } from '@/infrastructure/browser/chrome-favicon'
+import { t } from '@/infrastructure/i18n/t'
+import { getPagePreview } from '@/infrastructure/messaging/background-client'
+import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
+import type { AppIconName } from '@/infrastructure/ui/icons/icon-paths'
+import type { RecallCardModel } from '@/pages/sidepanel/RecallResultCard.vue'
+import {
+  placeHoverPreviewInPanel,
+  type HoverPreviewPlacement
+} from '@/pages/sidepanel/recall-card-hover-preview'
+
+defineOptions({ name: 'RecallCardHoverPreview' })
+
+const props = defineProps<{
+  card: RecallCardModel
+  visible: boolean
+  anchorRect: DOMRect | null
+  panelRect: DOMRect | null
+}>()
+
+const objectUrl = ref<string | null>(null)
+const loadState = ref<'idle' | 'loading' | 'ready' | 'missing'>('idle')
+const placement = ref<HoverPreviewPlacement | null>(null)
+
+const kindIcon = computed<AppIconName>(() =>
+  props.card.itemKind === 'bookmark' ? 'bookmark' : 'format_quote'
+)
+
+const domainLine = computed(() => {
+  const sub = props.card.subtitle.trim()
+  if (sub) {
+    return sub
+  }
+  try {
+    if (props.card.url && isOpenableExternalSourceUrl(props.card.url)) {
+      return new URL(props.card.url).hostname
+    }
+  } catch {
+    // ignore
+  }
+  return ''
+})
+
+const previewStyle = computed(() => {
+  const p = placement.value
+  if (!p) {
+    return undefined
+  }
+  return {
+    top: `${p.top}px`,
+    left: `${p.left}px`,
+    width: `${p.width}px`,
+    maxHeight: `${p.maxHeight}px`
+  }
+})
+
+function revokeObjectUrl(): void {
+  if (objectUrl.value) {
+    URL.revokeObjectURL(objectUrl.value)
+    objectUrl.value = null
+  }
+}
+
+function recomputePlacement(): void {
+  if (!props.anchorRect || !props.panelRect) {
+    placement.value = null
+    return
+  }
+  placement.value = placeHoverPreviewInPanel({
+    anchor: props.anchorRect,
+    panel: props.panelRect
+  })
+}
+
+async function loadPreview(): Promise<void> {
+  revokeObjectUrl()
+  loadState.value = 'loading'
+  const url = props.card.url?.trim()
+  if (!url || !isOpenableExternalSourceUrl(url)) {
+    loadState.value = 'missing'
+    return
+  }
+  try {
+    const response = await getPagePreview({ url })
+    if (!props.visible) {
+      return
+    }
+    if (response.ok && 'blob' in response && response.blob instanceof Blob) {
+      objectUrl.value = URL.createObjectURL(response.blob)
+      loadState.value = 'ready'
+      return
+    }
+    loadState.value = 'missing'
+  } catch {
+    if (props.visible) {
+      loadState.value = 'missing'
+    }
+  }
+}
+
+watch(
+  () => [props.visible, props.card.id, props.anchorRect, props.panelRect] as const,
+  ([visible]) => {
+    if (!visible) {
+      revokeObjectUrl()
+      loadState.value = 'idle'
+      placement.value = null
+      return
+    }
+    recomputePlacement()
+    void loadPreview()
+  }
+)
+
+onUnmounted(() => {
+  revokeObjectUrl()
+})
+</script>
+
+<template>
+  <div
+    v-if="visible && placement"
+    class="recall-card-hover-preview"
+    role="dialog"
+    :aria-label="t('recall_card_preview_aria')"
+    :style="previewStyle"
+    @pointerdown.stop
+  >
+    <div v-if="loadState === 'ready' && objectUrl" class="recall-card-hover-preview__shot">
+      <img :src="objectUrl" alt="" decoding="async" />
+    </div>
+    <div v-else class="recall-card-hover-preview__fallback">
+      <div class="recall-card-hover-preview__skeleton" aria-hidden="true" />
+      <div class="recall-card-hover-preview__meta">
+        <div class="recall-card-hover-preview__title-row">
+          <img
+            v-if="card.url && card.itemKind === 'bookmark'"
+            class="recall-card-hover-preview__favicon"
+            :src="getChromeFaviconUrl(card.url, 32)"
+            alt=""
+            width="16"
+            height="16"
+            loading="lazy"
+            decoding="async"
+          />
+          <AppIcon v-else :name="kindIcon" size="16px" />
+          <p class="recall-card-hover-preview__title">{{ card.title }}</p>
+        </div>
+        <p v-if="card.excerpt" class="recall-card-hover-preview__excerpt">{{ card.excerpt }}</p>
+        <p v-else-if="card.note" class="recall-card-hover-preview__excerpt">{{ card.note }}</p>
+        <div class="recall-card-hover-preview__foot">
+          <span v-if="domainLine" class="recall-card-hover-preview__domain">{{ domainLine }}</span>
+          <time
+            v-if="card.savedAtLabel"
+            class="recall-card-hover-preview__saved"
+            :datetime="card.savedAtIso"
+            :title="card.savedAtTitle"
+            >{{ card.savedAtLabel }}</time
+          >
+        </div>
+        <p v-if="card.reasonLine" class="recall-card-hover-preview__reason">
+          {{ card.reasonLine }}
+        </p>
+      </div>
+    </div>
+  </div>
+</template>
+
+<style scoped>
+.recall-card-hover-preview {
+  position: fixed;
+  z-index: 40;
+  overflow: auto;
+  border-radius: var(--radius-md, 10px);
+  border: 1px solid var(--color-outline-variant, rgba(0, 0, 0, 0.12));
+  background: var(--color-surface-container-high, #fff);
+  box-shadow: var(--elevation-2, 0 4px 16px rgba(0, 0, 0, 0.12));
+  pointer-events: none;
+}
+
+.recall-card-hover-preview__shot img {
+  display: block;
+  width: 100%;
+  height: auto;
+  vertical-align: top;
+}
+
+.recall-card-hover-preview__fallback {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm, 8px);
+  padding: var(--space-sm, 8px);
+}
+
+.recall-card-hover-preview__skeleton {
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  border-radius: var(--radius-sm, 6px);
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-variant, #e8e8e8) 0%,
+    var(--color-surface-container, #f3f3f3) 50%,
+    var(--color-surface-variant, #e8e8e8) 100%
+  );
+  background-size: 200% 100%;
+  animation: recall-preview-shimmer 1.2s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recall-card-hover-preview__skeleton {
+    animation: none;
+  }
+}
+
+@keyframes recall-preview-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+.recall-card-hover-preview__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+}
+
+.recall-card-hover-preview__title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.recall-card-hover-preview__favicon {
+  flex: 0 0 auto;
+  margin-top: 2px;
+  border-radius: 2px;
+}
+
+.recall-card-hover-preview__title {
+  margin: 0;
+  font-size: var(--font-size-sm, 13px);
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--color-on-surface, #1a1a1a);
+  overflow-wrap: anywhere;
+}
+
+.recall-card-hover-preview__excerpt {
+  margin: 0;
+  font-size: var(--font-size-xs, 12px);
+  line-height: 1.45;
+  color: var(--color-on-surface-variant, #5c5c5c);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 5;
+  overflow: hidden;
+}
+
+.recall-card-hover-preview__foot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: baseline;
+  font-size: var(--font-size-xs, 12px);
+  color: var(--color-on-surface-variant, #5c5c5c);
+}
+
+.recall-card-hover-preview__domain {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.recall-card-hover-preview__saved {
+  flex: 0 0 auto;
+}
+
+.recall-card-hover-preview__reason {
+  margin: 0;
+  font-size: var(--font-size-xs, 12px);
+  line-height: 1.4;
+  color: var(--color-on-surface-variant, #5c5c5c);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+</style>
