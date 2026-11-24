@@ -38,11 +38,6 @@ export async function ensurePagePreviewStoragePersist(): Promise<void> {
   }
 }
 
-/** 测试重置。 */
-export function resetPagePreviewPersistFlagForTests(): void {
-  persistRequested = false
-}
-
 async function storeCapturedPreview(input: {
   ownerId: string
   urlKey: string
@@ -164,14 +159,6 @@ export function schedulePagePreviewOpenBackfill(input: {
     })
   }, delay)
   pendingBackfillTimers.set(urlKey, timer)
-}
-
-/** 测试：清空待执行补图定时器。 */
-export function clearPagePreviewOpenBackfillTimersForTests(): void {
-  for (const timer of pendingBackfillTimers.values()) {
-    clearTimeout(timer)
-  }
-  pendingBackfillTimers.clear()
 }
 
 async function runOpenBackfill(input: {

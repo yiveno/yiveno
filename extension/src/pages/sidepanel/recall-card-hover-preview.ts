@@ -9,12 +9,6 @@ export const RECALL_CARD_PREVIEW_HOVER_DELAY_MS = 250
 /** 浮层目标宽（与截图 320px 对齐）。 */
 export const RECALL_CARD_PREVIEW_WIDTH_PX = 320
 
-export type HoverPreviewShowRequest = {
-  cardId: string
-  anchor: DOMRect
-  panel: DOMRect
-}
-
 export type HoverPreviewPlacement = {
   top: number
   left: number
