@@ -188,8 +188,9 @@ describe('deepseekAiChatProvider · 401 回退日志与原因区分（S6）', ()
   })
 
   function parseWarnLogs(): Array<Record<string, unknown>> {
-    return warnSpy.mock.calls
-      .map(call => {
+    const calls = warnSpy.mock.calls as unknown as Array<[unknown, ...unknown[]]>
+    return calls
+      .map((call): Record<string, unknown> | null => {
         const raw = call[0]
         if (typeof raw !== 'string') return null
         try {
