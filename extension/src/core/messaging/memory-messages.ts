@@ -4,6 +4,7 @@ import { CaptureEntrySchema } from '@/core/memory/capture-entry'
 import { SupportedMemoryItemTypeSchema } from '@/core/memory/memory-item-type'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import type { DetailExport } from '@/core/recall/detail-export'
+import { RECALL_RESULT_POOL_LIMIT } from '@/core/recall/build-recall-result'
 import type { BackgroundMessageScope } from '@/core/messaging/constants'
 
 const exportDetailExportPayloadSchema = z.object({
@@ -67,8 +68,9 @@ const recordMemoryOpenPayloadSchema = z.object({
   id: z.uuid()
 })
 
+/** 全池否定一次提交；上限对齐排序池软顶 {@link RECALL_RESULT_POOL_LIMIT}。 */
 const recordRecallDismissPayloadSchema = z.object({
-  ids: z.array(z.uuid()).min(1).max(20)
+  ids: z.array(z.uuid()).min(1).max(RECALL_RESULT_POOL_LIMIT)
 })
 
 /** §7.2：写入 settledCount（Mark / 经校准的 medium target），非裸 open。 */

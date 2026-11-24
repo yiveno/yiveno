@@ -391,6 +391,27 @@ describe('memory-handler', () => {
     expect(fetched.item.clues.lastDismissedAt).toBeTruthy()
   })
 
+  it('handleRecordRecallDismiss 接受全池 50 条 ids', async () => {
+    const { memoryItemService } = await import('@/application/memory/memory-item-service')
+    const ids = Array.from({ length: 50 }, (_, i) => {
+      const hex = i.toString(16).padStart(12, '0')
+      return `22222222-2222-4222-8222-${hex}`
+    })
+    const recordDismissSpy = vi.spyOn(memoryItemService, 'recordDismiss').mockResolvedValue(50)
+    try {
+      const response = await handleRecordRecallDismiss({ ids })
+      expect(response.ok).toBe(true)
+      if (!response.ok || !('updated' in response)) {
+        return
+      }
+      expect(response.updated).toBe(50)
+      expect(recordDismissSpy).toHaveBeenCalledWith(ids)
+      expect(recordDismissSpy.mock.calls[0]?.[0]).toHaveLength(50)
+    } finally {
+      recordDismissSpy.mockRestore()
+    }
+  })
+
   it('handleListMemoryItems 透传 offset 给 service.list', async () => {
     const { memoryItemService } = await import('@/application/memory/memory-item-service')
     const listSpy = vi.spyOn(memoryItemService, 'list').mockResolvedValue([])
