@@ -127,6 +127,7 @@ const markByTone: Record<SoftToastTone, string> = {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }

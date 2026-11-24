@@ -179,16 +179,16 @@ function pick(locale: WebsiteUiLocaleId): void {
   cursor: pointer;
 }
 
-.site-lang__trigger:hover,
-.site-lang__trigger:focus-visible,
-.site-lang[data-open='true'] .site-lang__trigger {
-  color: var(--nav-fg);
-}
-
 .site-lang__trigger:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
   border-radius: 2px;
+}
+
+.site-lang__trigger:hover,
+.site-lang__trigger:focus-visible,
+.site-lang[data-open='true'] .site-lang__trigger {
+  color: var(--nav-fg);
 }
 
 :global(body[data-chrome='home'][data-nav-over-hero='true']) .site-lang__trigger:focus-visible {

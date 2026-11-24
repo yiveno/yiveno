@@ -775,10 +775,8 @@ function scheduleClearLoadingIfStillHere(): void {
   width: min(100%, 26.5rem);
   max-width: 26.5rem;
   margin-inline: auto;
-  padding-top: clamp(var(--space-xl), 6vh, var(--space-3xl));
-  padding-bottom: clamp(40px, 8vh, 88px);
-  padding-left: var(--space-lg);
-  padding-right: var(--space-lg);
+  padding: clamp(var(--space-xl), 6vh, var(--space-3xl)) var(--space-lg) clamp(40px, 8vh, 88px)
+    var(--space-lg);
   transition: opacity var(--motion-duration-medium) var(--motion-easing-standard);
 }
 
@@ -800,18 +798,23 @@ function scheduleClearLoadingIfStillHere(): void {
 .login-form--ready .login-form__rise--1 {
   animation-delay: 0ms;
 }
+
 .login-form--ready .login-form__rise--2 {
   animation-delay: 50ms;
 }
+
 .login-form--ready .login-form__rise--3 {
   animation-delay: 100ms;
 }
+
 .login-form--ready .login-form__rise--4 {
   animation-delay: var(--motion-duration-short);
 }
+
 .login-form--ready .login-form__rise--5 {
   animation-delay: 200ms;
 }
+
 .login-form--ready .login-form__rise--6 {
   animation-delay: 250ms;
 }
@@ -830,16 +833,18 @@ function scheduleClearLoadingIfStillHere(): void {
   padding: 0;
   margin: -1px;
   overflow: hidden;
-  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
   white-space: nowrap;
   border: 0;
 }
 
 .login-form .page__title {
   font-size: clamp(var(--text-display), 4vw, 36px);
+
   /* 标题组内紧：标题下缘贴近说明 */
   margin: 0 0 var(--space-xs);
   max-width: 100%;
+
   /* 不用 balance：短标题会被刻意拆成两行；窄屏仍按词自然折 */
   text-wrap: wrap;
 }
@@ -859,6 +864,7 @@ function scheduleClearLoadingIfStillHere(): void {
   align-items: stretch;
   width: 100%;
   max-width: none;
+
   /* 标题组 ↔ 表单：分组间距 */
   margin: var(--space-lg) auto 0;
   gap: var(--space-xs);
@@ -885,6 +891,7 @@ function scheduleClearLoadingIfStillHere(): void {
   font-size: var(--text-body);
   font-weight: 300;
   line-height: var(--leading-relaxed);
+
   /* ⑥ 焦点环 / 边框；③ 禁用 opacity — 禁止 hover 几何变换 */
   transition:
     border-color var(--motion-duration-short) var(--motion-easing-standard),
@@ -915,9 +922,9 @@ function scheduleClearLoadingIfStillHere(): void {
 
 /* 盖掉 Chrome 自动填充浅蓝底（inset 阴影压过 UA 背景） */
 .login-form__input:autofill,
+.login-form__input:-webkit-autofill,
 .login-form__input:autofill:hover,
 .login-form__input:autofill:focus,
-.login-form__input:-webkit-autofill,
 .login-form__input:-webkit-autofill:hover,
 .login-form__input:-webkit-autofill:focus,
 .login-form__input:-webkit-autofill:active {
@@ -943,6 +950,7 @@ function scheduleClearLoadingIfStillHere(): void {
 .login-form__otp-block {
   display: flex;
   flex-direction: column;
+
   /* label→输入 8px；输入→换邮箱 / 块内节奏对齐表单 gap */
   gap: var(--space-xs);
   margin-top: 0.15rem;
@@ -993,6 +1001,7 @@ function scheduleClearLoadingIfStillHere(): void {
   min-width: 0;
   border: none;
   border-radius: 0;
+
   /* ≥16px：避免 iOS 聚焦自动缩放（故意不并入 --text-body=14px） */
   font-size: 1rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -1039,6 +1048,7 @@ function scheduleClearLoadingIfStillHere(): void {
   from {
     opacity: 0.35;
   }
+
   to {
     opacity: 1;
   }
@@ -1095,11 +1105,14 @@ function scheduleClearLoadingIfStillHere(): void {
 
 .login-form__email-submit {
   width: 100%;
+
   /* 表单 gap 0.5rem + 本边距 ≈ 16–20px，字段组与主 CTA 标准呼吸距 */
   margin-top: var(--space-sm);
+
   /* 与 OAuth 按钮同策略：文案切换不改宽高 */
   min-height: 44px;
   letter-spacing: 0.01em;
+
   /* ③ 与 pages.css ui-btn 对齐；禁用态 opacity 跟手 */
   transition:
     background var(--motion-duration-short) var(--motion-easing-standard),
@@ -1133,10 +1146,10 @@ function scheduleClearLoadingIfStillHere(): void {
 
 .login-form__oauth-row {
   display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
+  flex-flow: row wrap;
   justify-content: center;
   align-items: center;
+
   /* 原 5rem 过散；两枚图标钮用 lg 间距即可 */
   gap: var(--space-lg);
   width: 100%;
@@ -1184,7 +1197,7 @@ function scheduleClearLoadingIfStillHere(): void {
   line-height: var(--leading-relaxed);
 }
 
-@media (max-width: 480px) {
+@media (width <= 480px) {
   .login-form.page {
     padding-top: clamp(var(--space-lg), 4vh, 40px);
     padding-bottom: clamp(var(--space-xl), 6vh, var(--space-3xl));

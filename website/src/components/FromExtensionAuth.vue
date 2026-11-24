@@ -345,7 +345,7 @@ onMounted(async () => {
 .from-extension__accounts dd {
   margin: 0.15rem 0 0;
   font-weight: var(--font-weight-medium);
-  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .from-extension__warn {
@@ -376,6 +376,6 @@ onMounted(async () => {
 
 .from-extension__cancel {
   background: transparent;
-  border-color: color-mix(in srgb, currentColor 25%, transparent);
+  border-color: color-mix(in srgb, currentcolor 25%, transparent);
 }
 </style>
