@@ -24,6 +24,8 @@ const props = defineProps<{
   showDetailExportSelection?: boolean
   /** 正在删除的 MemoryItem id（禁用删钮） */
   deletingId?: string | null | undefined
+  /** 已提炼摘要详情页 href；有则显示徽标 */
+  extractedDetailHref?: string | null | undefined
 }>()
 
 const emit = defineEmits<{
@@ -97,6 +99,16 @@ function handleEditNote(event: Event) {
     title: props.row.title,
     note: props.row.note ?? ''
   })
+}
+
+function openExtractDetail(event: Event): void {
+  event.preventDefault()
+  event.stopPropagation()
+  const href = props.extractedDetailHref
+  if (!href) {
+    return
+  }
+  window.open(href, '_blank', 'noopener,noreferrer')
 }
 
 function handleDeleteBookmark(event: Event) {
@@ -186,6 +198,16 @@ function handleBookmarkActivate(event: MouseEvent | KeyboardEvent) {
           <span v-if="showUnsyncedFlags && !row.memoryItemId" class="lib-item-flag">{{
             t('library_bookmark_unsynced')
           }}</span>
+          <button
+            v-if="extractedDetailHref"
+            type="button"
+            class="lib-item-flag lib-item-flag--button"
+            :title="t('library_extracted_badge')"
+            :aria-label="t('library_extracted_badge')"
+            @click="openExtractDetail"
+          >
+            {{ t('library_extracted_badge') }}
+          </button>
         </span>
       </template>
       <template v-if="row.note" #note>

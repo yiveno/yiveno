@@ -48,6 +48,7 @@ describe('runAsyncMemoryLlmEnrichment', () => {
     vi.mocked(getUserSettings).mockResolvedValue({
       selectionToolbarEnabled: true,
       aiFeaturesEnabled: true,
+      contentExtractEnabled: false,
       linkStatusSweepEnabled: true,
       chromeBookmarkIngestEnabled: true,
       chromeBookmarkSyncEnabled: false,
@@ -63,6 +64,7 @@ describe('runAsyncMemoryLlmEnrichment', () => {
     vi.mocked(getUserSettings).mockResolvedValue({
       selectionToolbarEnabled: true,
       aiFeaturesEnabled: false,
+      contentExtractEnabled: false,
       linkStatusSweepEnabled: true,
       chromeBookmarkIngestEnabled: true,
       chromeBookmarkSyncEnabled: false,

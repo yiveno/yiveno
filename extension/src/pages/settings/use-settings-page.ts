@@ -128,6 +128,7 @@ export function useSettingsPage() {
   const chromeBookmarkIngestEnabled = ref(false)
   const chromeBookmarkSyncEnabled = ref(false)
   const aiFeaturesEnabled = ref(true)
+  const contentExtractEnabled = ref(false)
   const linkStatusSweepEnabled = ref(true)
   const mcpReadOnlyEnabled = ref(false)
   const recallOutcomePairSoftAdjustEnabled = ref(true)
@@ -157,6 +158,7 @@ export function useSettingsPage() {
   let behaviorClearDoneTimer: ReturnType<typeof setTimeout> | null = null
   let reimportDoneTimer: ReturnType<typeof setTimeout> | null = null
   const savingAiFeatures = ref(false)
+  const savingContentExtract = ref(false)
   const savingLinkStatusSweep = ref(false)
   const savingMcpReadOnly = ref(false)
   const savingRecallOutcomeSoftAdjust = ref(false)
@@ -651,6 +653,7 @@ export function useSettingsPage() {
       chromeBookmarkIngestEnabled.value = response.settings.chromeBookmarkIngestEnabled
       chromeBookmarkSyncEnabled.value = response.settings.chromeBookmarkSyncEnabled
       aiFeaturesEnabled.value = response.settings.aiFeaturesEnabled
+      contentExtractEnabled.value = response.settings.contentExtractEnabled
       linkStatusSweepEnabled.value = response.settings.linkStatusSweepEnabled
       mcpReadOnlyEnabled.value = response.settings.mcpReadOnlyEnabled
       recallOutcomePairSoftAdjustEnabled.value =
@@ -886,6 +889,26 @@ export function useSettingsPage() {
       settingsError.value = t('settings_error_update')
     } finally {
       savingAiFeatures.value = false
+    }
+  }
+
+  /** 内容提炼开关（打开库内页 → 云端摘要存摘录；须 AI 总开关开）。 */
+  async function handleContentExtractToggle(nextValue: boolean) {
+    savingContentExtract.value = true
+    settingsError.value = ''
+
+    try {
+      const response = await updateUserSettings({ contentExtractEnabled: nextValue })
+      if (!response.ok) {
+        settingsError.value = tSettingsError(response.errorCode)
+        return
+      }
+
+      contentExtractEnabled.value = response.settings.contentExtractEnabled
+    } catch {
+      settingsError.value = t('settings_error_update')
+    } finally {
+      savingContentExtract.value = false
     }
   }
 
@@ -2161,6 +2184,7 @@ export function useSettingsPage() {
     activeSectionLabel,
     activeSectionTab,
     aiFeaturesEnabled,
+    contentExtractEnabled,
     awaitingShortcutsReturn,
     chromeBookmarkIngestEnabled,
     chromeBookmarkImportStatusCopy,
@@ -2201,6 +2225,7 @@ export function useSettingsPage() {
     exportWorking,
     restoreWorking,
     handleAiFeaturesToggle,
+    handleContentExtractToggle,
     handleLinkStatusSweepToggle,
     handleChromeBookmarkSyncToggle,
     handleReimportChromeBookmarks,
@@ -2292,6 +2317,7 @@ export function useSettingsPage() {
     runThirdPartyCorpusImport,
     runningIncrementalSync,
     savingAiFeatures,
+    savingContentExtract,
     savingLinkStatusSweep,
     savingChromeBookmarkSync,
     reimportChromeBookmarksBusy,

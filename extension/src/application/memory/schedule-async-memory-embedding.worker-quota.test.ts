@@ -103,6 +103,7 @@ function defaultSettings() {
   return {
     selectionToolbarEnabled: true,
     aiFeaturesEnabled: true,
+    contentExtractEnabled: false,
     linkStatusSweepEnabled: true,
     chromeBookmarkIngestEnabled: true,
     chromeBookmarkSyncEnabled: false,

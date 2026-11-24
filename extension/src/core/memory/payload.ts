@@ -28,6 +28,12 @@ export const BookmarkPayloadSchema = z.object({
 
 export type BookmarkPayload = z.infer<typeof BookmarkPayloadSchema>
 
+/** 摘录来源：缺省 / user = 用户划词；auto_extract = 打开页自动提炼摘要。 */
+export const TextExcerptOriginSchema = z.enum([
+  'user', // 用户主动摘录
+  'auto_extract' // 打开库内页后自动提炼
+])
+
 /** Text Excerpt MemoryItem 载荷。 */
 export const TextExcerptPayloadSchema = z.object({
   /** 选区正文（摘录主内容） */
@@ -41,7 +47,12 @@ export const TextExcerptPayloadSchema = z.object({
   /** 选区前上下文（可选） */
   contextBefore: z.string().optional(),
   /** 选区后上下文（可选） */
-  contextAfter: z.string().optional()
+  contextAfter: z.string().optional(),
+  /**
+   * 来源标记；缺省视为用户摘录（兼容旧数据与云同步）。
+   * auto_extract = 打开页自动提炼，不参与自循环触发。
+   */
+  origin: TextExcerptOriginSchema.optional()
 })
 
 export type TextExcerptPayload = z.infer<typeof TextExcerptPayloadSchema>

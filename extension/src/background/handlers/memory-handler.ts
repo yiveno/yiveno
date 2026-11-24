@@ -4,6 +4,7 @@ import { isChromeBookmarkIngestEnabled } from '@/application/capture/chrome-book
 import { invalidateBookmarkLibraryTreeOnChromeChange } from '@/background/handlers/import-handler'
 import { invalidateBookmarkSyncAlignmentCache } from '@/application/memory/bookmark-sync-alignment-cache'
 import { memoryItemService } from '@/application/memory/memory-item-service'
+import { schedulePageContentExtractOnOpen } from '@/application/memory/page-content-extract-service'
 import {
   capturePagePreviewOnSave,
   schedulePagePreviewOpenBackfill
@@ -297,6 +298,7 @@ export async function handleRecordMemoryOpen(payload: unknown): Promise<MemoryBa
     const pageUrl = pageUrlOfMemoryItem(item)
     if (pageUrl) {
       schedulePagePreviewOpenBackfill({ pageUrl })
+      schedulePageContentExtractOnOpen({ item, pageUrl })
     }
     return { ok: true, item }
   } catch (error) {

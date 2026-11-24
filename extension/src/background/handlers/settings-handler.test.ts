@@ -45,6 +45,7 @@ import {
 const fullSettings = {
   selectionToolbarEnabled: true,
   aiFeaturesEnabled: true,
+  contentExtractEnabled: false,
   linkStatusSweepEnabled: true,
   chromeBookmarkIngestEnabled: true,
   chromeBookmarkSyncEnabled: false,

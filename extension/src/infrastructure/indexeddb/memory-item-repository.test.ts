@@ -251,6 +251,41 @@ describe('memory-item-repository', () => {
     expect(underNew[0]?.sourceLocalProfileId).toBe(localProfile.localProfileId)
   })
 
+  it('upsertAutoExtractExcerpt 新建 / 更新并刷新 updatedAt', async () => {
+    const sourceUrl = 'https://example.com/extract-upsert'
+    const first = await memoryItemRepository.upsertAutoExtractExcerpt({
+      sourceUrl,
+      pageTitle: 'Page',
+      summary: 'First summary body for auto extract.'
+    })
+    expect(first.created).toBe(true)
+    expect(first.item.type).toBe('text_excerpt')
+    if (first.item.type !== 'text_excerpt') {
+      return
+    }
+    expect(first.item.payload.origin).toBe('auto_extract')
+    expect(first.item.payload.selectedText).toBe('First summary body for auto extract.')
+
+    const beforeUpdatedAt = first.item.updatedAt
+    await new Promise(resolve => setTimeout(resolve, 5))
+
+    const second = await memoryItemRepository.upsertAutoExtractExcerpt({
+      sourceUrl,
+      pageTitle: 'Page',
+      summary: 'Second summary body after refresh.'
+    })
+    expect(second.created).toBe(false)
+    expect(second.item.id).toBe(first.item.id)
+    if (second.item.type !== 'text_excerpt') {
+      return
+    }
+    expect(second.item.payload.selectedText).toBe('Second summary body after refresh.')
+    expect(second.item.updatedAt > beforeUpdatedAt).toBe(true)
+
+    const listed = await memoryItemRepository.listAutoExtractExcerpts()
+    expect(listed).toHaveLength(1)
+  })
+
   it('createTextExcerpt 同页同文重复返回已有条目且不新增行', async () => {
     const payload = {
       selectedText: '  same excerpt body for dedupe  ',

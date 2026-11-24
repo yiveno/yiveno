@@ -14,7 +14,8 @@ export const AI_CHAT_TASK_KINDS = [
   'narrow_polish', // composer Narrow 举例润色
   'enrichment', // Capture enrichment（若走可配置层）
   'gs_samples', // Getting Started 示意 clue
-  'dreaming' // 夜间命题编译（批量；独立配额）
+  'dreaming', // 夜间命题编译（批量；独立配额）
+  'extract' // 打开库内页内容提炼（独立配额）
 ] as const
 
 export type AiChatTaskKind = (typeof AI_CHAT_TASK_KINDS)[number]
@@ -51,6 +52,8 @@ export type AiTaskModelEnv = {
   AI_HOSTED_MODEL_GS_SAMPLES?: string
   /** 可选：dreaming 覆盖（默认仍 AI_HOSTED_MODEL / deepseek-flash） */
   AI_HOSTED_MODEL_DREAMING?: string
+  /** 可选：extract 覆盖（打开页内容提炼） */
+  AI_HOSTED_MODEL_EXTRACT?: string
 }
 
 /**
@@ -82,6 +85,10 @@ export function resolveHostedModelForTask(env: AiTaskModelEnv, taskKind: AiChatT
       const override = env.AI_HOSTED_MODEL_DREAMING?.trim()
       return override || fallback
     }
+    case 'extract': {
+      const override = env.AI_HOSTED_MODEL_EXTRACT?.trim()
+      return override || fallback
+    }
   }
 }
 
@@ -101,7 +108,8 @@ export const AI_CHAT_TASK_MAX_TOKENS: Record<AiChatTaskKind, number> = {
   narrow_polish: 128,
   enrichment: 400,
   gs_samples: 400,
-  dreaming: 1200
+  dreaming: 1200,
+  extract: 800
 }
 
 /**

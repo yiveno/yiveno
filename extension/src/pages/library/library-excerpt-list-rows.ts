@@ -16,6 +16,8 @@ export interface ExcerptLibraryListRow {
   savedAt: string
   savedAtLabel: string
   sourceUrl?: string
+  /** 是否为打开页自动提炼摘要（自身不再叠「已提炼」徽标）。 */
+  isAutoExtract?: boolean
 }
 
 /** 从 MemoryItem 构建摘录列表行视图。 */
@@ -24,6 +26,8 @@ export function buildExcerptLibraryListRows(items: readonly MemoryItem[]): Excer
   return items.map(item => {
     const display = getMemoryItemDisplay(item, t)
     const savedAt = resolveMemoryItemSavedAtIso(item)
+    const isAutoExtract =
+      item.type === 'text_excerpt' && item.payload.origin === 'auto_extract' ? true : undefined
     return {
       id: item.id,
       title: display.title,
@@ -33,7 +37,8 @@ export function buildExcerptLibraryListRows(items: readonly MemoryItem[]): Excer
       href: getMemoryItemOpenHref(item, { detailPageUrl }),
       savedAt,
       savedAtLabel: formatLibrarySavedAt(savedAt),
-      ...(item.type === 'text_excerpt' ? { sourceUrl: item.payload.sourceUrl } : {})
+      ...(item.type === 'text_excerpt' ? { sourceUrl: item.payload.sourceUrl } : {}),
+      ...(isAutoExtract ? { isAutoExtract: true } : {})
     }
   })
 }

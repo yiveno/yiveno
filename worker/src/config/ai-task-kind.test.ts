@@ -14,6 +14,7 @@ describe('parseAiChatTaskKind', () => {
     expect(parseAiChatTaskKind('follow_up_nlg')).toBe('follow_up_nlg')
     expect(parseAiChatTaskKind('narrow_polish')).toBe('narrow_polish')
     expect(parseAiChatTaskKind('dreaming')).toBe('dreaming')
+    expect(parseAiChatTaskKind('extract')).toBe('extract')
   })
 
   test('缺省 / 未知 → nlu（兼容旧客户端）', () => {
@@ -65,6 +66,7 @@ describe('resolveHostedMaxTokensForTask', () => {
     expect(resolveHostedMaxTokensForTask('nlu', undefined)).toBe(400)
     expect(resolveHostedMaxTokensForTask('framing_nlg', undefined)).toBe(256)
     expect(resolveHostedMaxTokensForTask('narrow_polish', undefined)).toBe(128)
+    expect(resolveHostedMaxTokensForTask('extract', undefined)).toBe(800)
   })
 
   test('客户端过大 → 钳到任务 cap', () => {

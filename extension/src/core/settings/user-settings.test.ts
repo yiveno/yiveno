@@ -7,9 +7,10 @@ import {
 } from '@/core/settings/user-settings'
 
 describe('user-settings', () => {
-  it('默认开启划词浮层与 AI；书签导入与同步默认关', () => {
+  it('默认开启划词浮层与 AI；内容提炼默认关；书签导入与同步默认关', () => {
     expect(DEFAULT_USER_SETTINGS.selectionToolbarEnabled).toBe(true)
     expect(DEFAULT_USER_SETTINGS.aiFeaturesEnabled).toBe(true)
+    expect(DEFAULT_USER_SETTINGS.contentExtractEnabled).toBe(false)
     expect(DEFAULT_USER_SETTINGS.linkStatusSweepEnabled).toBe(true)
     expect(DEFAULT_USER_SETTINGS.chromeBookmarkIngestEnabled).toBe(false)
     expect(DEFAULT_USER_SETTINGS.chromeBookmarkSyncEnabled).toBe(false)
@@ -22,6 +23,7 @@ describe('user-settings', () => {
     expect(mergeUserSettings(DEFAULT_USER_SETTINGS, { selectionToolbarEnabled: false })).toEqual({
       selectionToolbarEnabled: false,
       aiFeaturesEnabled: true,
+      contentExtractEnabled: false,
       linkStatusSweepEnabled: true,
       chromeBookmarkIngestEnabled: false,
       chromeBookmarkSyncEnabled: false,
@@ -37,6 +39,7 @@ describe('user-settings', () => {
     expect(parseUserSettings({ selectionToolbarEnabled: false })).toEqual({
       selectionToolbarEnabled: false,
       aiFeaturesEnabled: true,
+      contentExtractEnabled: false,
       linkStatusSweepEnabled: true,
       chromeBookmarkIngestEnabled: false,
       chromeBookmarkSyncEnabled: false,
@@ -50,9 +53,10 @@ describe('user-settings', () => {
     expect(parseUserSettings({ uiLocalePreference: 'zh_CN' }).uiLocalePreference).toBe('zh_CN')
   })
 
-  it('暗线同意 flag 缺省为 false', () => {
+  it('暗线同意 flag 与内容提炼缺省为 false', () => {
     expect(parseUserSettings({}).dualThreadLocalLearningEnabled).toBe(false)
     expect(parseUserSettings({}).dualThreadContributeAggregatesEnabled).toBe(false)
+    expect(parseUserSettings({}).contentExtractEnabled).toBe(false)
   })
 
   it('存量缺 sync 且 ingest 开 → sync 真', () => {

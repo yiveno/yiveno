@@ -7,10 +7,12 @@ export type BookmarkLibraryRowMemoContext = {
   exportSelected: boolean
   deletingId: string | null
   showUnsyncedFlags: boolean
+  /** 已提炼徽标详情 href；无则 null。 */
+  extractedHref?: string | null
 }
 
 /**
- * 书签树行 v-memo 依赖（14 项）。
+ * 书签树行 v-memo 依赖（15 项）。
  * 缺项会导致展开/附注/标题等变更时行跳过更新。
  */
 export function buildBookmarkLibraryRowMemoDeps(
@@ -31,6 +33,7 @@ export function buildBookmarkLibraryRowMemoDeps(
     ctx.detailExportSelectionRevision,
     ctx.exportSelected,
     ctx.deletingId === row.memoryItemId,
-    ctx.showUnsyncedFlags
+    ctx.showUnsyncedFlags,
+    ctx.extractedHref ?? null
   ]
 }

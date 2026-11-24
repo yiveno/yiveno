@@ -101,6 +101,25 @@
   color: var(--sage-dark);
 }
 
+.lib-item-flag--button {
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.lib-item-flag--button:hover,
+.lib-item-flag--button:focus-visible {
+  outline: none;
+  text-decoration: underline;
+}
+
 .lib-item-favicon {
   display: block;
   width: 16px;

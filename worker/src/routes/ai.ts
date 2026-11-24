@@ -6,6 +6,7 @@
  * - `/gs-clue-samples/complete`：Getting Started 示意 clue（双栈 Bearer 含匿名；用户+IP 日配额）
  * - `/hosted/*`：托管口语 LLM（双栈 Bearer + 月/终身配额；[system,user] + system 指纹）
  * - `/dreaming/complete`：夜间命题批量编译（双栈 Bearer；匿名 403）
+ * - `/extract/complete`：打开库内页内容提炼（双栈 Bearer；匿名 403；独立配额）
  */
 
 import { Hono } from 'hono'
@@ -15,6 +16,7 @@ import { handleEmbed } from '../handlers/ai-embed'
 import { handleEnrichmentComplete } from '../handlers/ai-enrichment'
 import { handleGsClueSamplesComplete } from '../handlers/ai-gs-clue-samples'
 import { handleDreamingComplete } from '../handlers/ai-dreaming'
+import { handleExtractComplete } from '../handlers/ai-extract'
 import { handleHostedComplete, handleHostedQuota } from '../handlers/ai-hosted'
 import { deviceAuthOrSupabaseAuth } from '../middleware/device-or-supabase-auth'
 
@@ -103,4 +105,14 @@ aiRouter.post('/hosted/complete', deviceAuthOrSupabaseAuth(), async c => {
 aiRouter.post('/dreaming/complete', deviceAuthOrSupabaseAuth(), async c => {
   const userId = c.get('supabaseUserId')
   return handleDreamingComplete(c.req.raw, c.env, userId, readIsAnonymous(c))
+})
+
+/**
+ * POST /api/ai/extract/complete
+ *
+ * 打开库内页内容提炼；匿名 403；与 Dreaming 分桶记账。
+ */
+aiRouter.post('/extract/complete', deviceAuthOrSupabaseAuth(), async c => {
+  const userId = c.get('supabaseUserId')
+  return handleExtractComplete(c.req.raw, c.env, userId, readIsAnonymous(c))
 })

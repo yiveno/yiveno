@@ -1586,6 +1586,18 @@
   "settings_ai_toggle_hint": {
     "message": "关闭后不再调用 AI 理解线索与丰富内容；线索理解改回本地规则。"
   },
+  "settings_content_extract_toggle": {
+    "message": "提炼已保存页面"
+  },
+  "settings_content_extract_toggle_hint": {
+    "message": "打开已保存的页面时，正文会发送到云端 AI 提炼摘要并存为摘录。随时可关，已提炼的内容会保留。"
+  },
+  "settings_content_extract_ai_required_hint": {
+    "message": "须先开启 AI 功能。"
+  },
+  "library_extracted_badge": {
+    "message": "已提炼"
+  },
   "settings_link_sweep_toggle": {
     "message": "每周检查已存链接"
   },

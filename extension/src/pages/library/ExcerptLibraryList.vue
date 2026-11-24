@@ -11,6 +11,10 @@ import AppIconButton from '@/infrastructure/ui/AppIconButton.vue'
 import AppLibraryItemCard from '@/infrastructure/ui/AppLibraryItemCard.vue'
 import AppLibraryItemFavicon from '@/infrastructure/ui/AppLibraryItemFavicon.vue'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
+import {
+  resolveAutoExtractEntryForUrl,
+  type AutoExtractIndexEntry
+} from '@/pages/library/library-auto-extract-index'
 import type { ExcerptLibraryListRow } from '@/pages/library/library-excerpt-list-rows'
 import { createLibraryVirtualScrollHandler } from '@/pages/library/use-library-virtual-scroll'
 
@@ -23,6 +27,8 @@ const props = defineProps<{
   /** 多选变更时递增，配合 v-memo 避免无关行重绘。 */
   detailExportSelectionRevision: number
   deletingId: string | null
+  /** 本 owner auto_extract URL 索引（徽标）。 */
+  autoExtractIndex?: ReadonlyMap<string, AutoExtractIndexEntry>
 }>()
 
 const emit = defineEmits<{
@@ -94,6 +100,27 @@ function isDetailExportSelected(id: string): boolean {
   return props.selectedDetailExportIds.has(id)
 }
 
+function excerptExtractHref(row: ExcerptLibraryListRow): string | null {
+  if (row.isAutoExtract) {
+    return null
+  }
+  const index = props.autoExtractIndex
+  if (!index) {
+    return null
+  }
+  const entry = resolveAutoExtractEntryForUrl(index, row.sourceUrl)
+  if (!entry || entry.id === row.id) {
+    return null
+  }
+  return entry.href
+}
+
+function openExtractDetail(event: Event, href: string): void {
+  event.preventDefault()
+  event.stopPropagation()
+  window.open(href, '_blank', 'noopener,noreferrer')
+}
+
 function excerptRowMemoDeps(row: ExcerptLibraryListRow): unknown[] {
   return [
     row.id,
@@ -104,7 +131,8 @@ function excerptRowMemoDeps(row: ExcerptLibraryListRow): unknown[] {
     props.detailExportMode,
     props.detailExportSelectionRevision,
     isDetailExportSelected(row.id),
-    props.deletingId === row.id
+    props.deletingId === row.id,
+    excerptExtractHref(row)
   ]
 }
 </script>
@@ -142,8 +170,20 @@ function excerptRowMemoDeps(row: ExcerptLibraryListRow): unknown[] {
               <AppLibraryItemFavicon :page-url="row.sourceUrl" fallback-icon="format_quote" />
             </template>
             <template #title>
-              <p v-if="row.excerpt" class="lib-item-body">{{ row.excerpt }}</p>
-              <p v-else-if="row.title" class="lib-item-title">{{ row.title }}</p>
+              <span class="lib-item-title-with-flag">
+                <p v-if="row.excerpt" class="lib-item-body">{{ row.excerpt }}</p>
+                <p v-else-if="row.title" class="lib-item-title">{{ row.title }}</p>
+                <button
+                  v-if="excerptExtractHref(row)"
+                  type="button"
+                  class="lib-item-flag lib-item-flag--button"
+                  :title="t('library_extracted_badge')"
+                  :aria-label="t('library_extracted_badge')"
+                  @click="openExtractDetail($event, excerptExtractHref(row)!)"
+                >
+                  {{ t('library_extracted_badge') }}
+                </button>
+              </span>
             </template>
             <template v-if="row.note" #note>
               <p class="lib-item-note">

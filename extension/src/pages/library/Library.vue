@@ -55,6 +55,10 @@ import {
   resolveLibraryBookmarkRetryBlockedReason
 } from '@/pages/library/library-bookmark-import-ui'
 import {
+  buildAutoExtractUrlIndex,
+  type AutoExtractIndexEntry
+} from '@/pages/library/library-auto-extract-index'
+import {
   buildExcerptLibraryListRows,
   collectBookmarkExportableMemoryIds,
   type ExcerptLibraryListRow
@@ -97,6 +101,8 @@ const items = shallowRef<MemoryItem[]>([])
 /** 摘录 Tab：LIST 返回的全库活条目总数（可大于已加载条数）。 */
 const excerptTotal = ref(0)
 const listRows = shallowRef<ExcerptLibraryListRow[]>([])
+/** 本 owner auto_extract 摘录 URL 索引（徽标；批量一次，禁止逐卡查库）。 */
+const autoExtractIndex = shallowRef<ReadonlyMap<string, AutoExtractIndexEntry>>(new Map())
 /** 摘录「加载更多」busy（防连点）。 */
 const loadingMoreExcerpts = ref(false)
 /** 搜索框即时输入；两 Tab 共用，切 Tab 不清空。 */
@@ -165,6 +171,34 @@ const exportableDetailExportIds = computed(() => {
 
 function rebuildListRows(): void {
   listRows.value = buildExcerptLibraryListRows(items.value)
+}
+
+/** 分页拉本 owner 摘录并建成 auto_extract URL 索引（失败静默保留旧索引）。 */
+async function refreshAutoExtractIndex(): Promise<void> {
+  try {
+    const pageSize = 500
+    const collected: MemoryItem[] = []
+    let offset = 0
+    for (;;) {
+      const response = await listMemoryItems({
+        type: 'text_excerpt',
+        limit: pageSize,
+        offset
+      })
+      if (!response.ok || !('items' in response)) {
+        return
+      }
+      collected.push(...response.items)
+      if (response.items.length < pageSize || collected.length >= response.total) {
+        break
+      }
+      offset += response.items.length
+    }
+    const detailPageUrl = chrome.runtime.getURL('detail.html')
+    autoExtractIndex.value = buildAutoExtractUrlIndex(collected, detailPageUrl)
+  } catch {
+    // 忽略：徽标索引失败不影响列表本身
+  }
 }
 
 const hasActiveLibraryQuery = computed(() => debouncedQuery.value.trim().length > 0)
@@ -563,6 +597,7 @@ function refreshVisibleLibraryPanel(): void {
   if (document.visibilityState !== 'visible') {
     return
   }
+  void refreshAutoExtractIndex()
   if (showingBookmarkTree.value) {
     scheduleBookmarkTreeRefresh()
     return
@@ -733,6 +768,7 @@ async function loadPanel() {
   errorMessage.value = ''
 
   try {
+    void refreshAutoExtractIndex()
     if (showingBookmarkTree.value) {
       await loadBookmarkTree()
       return
@@ -1160,6 +1196,7 @@ onUnmounted(() => {
                 :selected-detail-export-ids="selectedDetailExportIds"
                 :detail-export-selection-revision="detailExportSelectionRevision"
                 :deleting-id="deletingId"
+                :auto-extract-index="autoExtractIndex"
                 @edit-note="openNoteEditor"
                 @open-bookmark="handleOpenBookmark"
                 @toggle-detail-export-selection="handleToggleDetailExportSelection"
@@ -1189,6 +1226,7 @@ onUnmounted(() => {
                 :selected-detail-export-ids="selectedDetailExportIds"
                 :detail-export-selection-revision="detailExportSelectionRevision"
                 :deleting-id="deletingId"
+                :auto-extract-index="autoExtractIndex"
                 @activate="handleLibraryRowActivate"
                 @edit-note="openNoteEditor"
                 @delete-excerpt="handleDeleteExcerpt"

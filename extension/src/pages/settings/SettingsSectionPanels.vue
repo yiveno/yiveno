@@ -38,6 +38,7 @@ const {
   websiteAccountMismatch,
   activeSection,
   aiFeaturesEnabled,
+  contentExtractEnabled,
   linkStatusSweepEnabled,
   chromeBookmarkIngestEnabled,
   chromeBookmarkImportStatusCopy,
@@ -49,6 +50,7 @@ const {
   dataWorking,
   exportWorking,
   handleAiFeaturesToggle,
+  handleContentExtractToggle,
   handleLinkStatusSweepToggle,
   handleChromeBookmarkSyncToggle,
   handleReimportChromeBookmarks,
@@ -117,6 +119,7 @@ const {
   restoringSyncBackup,
   runningIncrementalSync,
   savingAiFeatures,
+  savingContentExtract,
   savingLinkStatusSweep,
   savingChromeBookmarkSync,
   loadCommands,
@@ -691,6 +694,31 @@ const {
                 :disabled="savingAiFeatures || settingsState !== 'ready'"
                 :aria-label="t('settings_ai_toggle')"
                 @update:model-value="handleAiFeaturesToggle"
+              />
+            </div>
+
+            <div class="settings-toggle">
+              <div class="settings-toggle-copy">
+                <span class="settings-toggle-title">{{
+                  t('settings_content_extract_toggle')
+                }}</span>
+                <span class="settings-toggle-hint">{{
+                  t('settings_content_extract_toggle_hint')
+                }}</span>
+                <span v-if="!aiFeaturesEnabled" class="settings-toggle-hint" role="status">{{
+                  t('settings_content_extract_ai_required_hint')
+                }}</span>
+              </div>
+              <AppSwitch
+                :model-value="contentExtractEnabled"
+                :disabled="
+                  !aiFeaturesEnabled ||
+                  savingContentExtract ||
+                  savingAiFeatures ||
+                  settingsState !== 'ready'
+                "
+                :aria-label="t('settings_content_extract_toggle')"
+                @update:model-value="handleContentExtractToggle"
               />
             </div>
 

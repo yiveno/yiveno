@@ -40,6 +40,7 @@ import { dreamingDuplicateGroupRepository } from '@/infrastructure/indexeddb/dre
 import { memoryLinkStatusRepository } from '@/infrastructure/indexeddb/memory-link-status-repository'
 import { memoryNoteEmbeddingRepository } from '@/infrastructure/indexeddb/memory-note-embedding-repository'
 import { pagePreviewRepository } from '@/infrastructure/indexeddb/page-preview-repository'
+import { normalizePagePreviewUrlKey } from '@/infrastructure/indexeddb/page-preview-types'
 import { memoryNotesMetaRepository } from '@/infrastructure/indexeddb/memory-notes-meta-repository'
 import { memoryNotesRepository } from '@/infrastructure/indexeddb/memory-notes-repository'
 import { indexedDBManager, requestToPromise } from '@/infrastructure/indexeddb/manager'
@@ -570,6 +571,96 @@ export class MemoryItemRepository {
     }
 
     return { byChromeBookmarkId, byUrl, noteByMemoryId, savedAtByMemoryId }
+  }
+
+  /**
+   * 查找当前 owner 下某 URL 的自动提炼摘录（origin=auto_extract；未软删）。
+   * sourceUrl 用规范化键比较（与预览 URL 键一致）。
+   */
+  async findAutoExtractBySourceUrl(
+    sourceUrl: string,
+    ownerId?: string
+  ): Promise<MemoryItem | null> {
+    const urlKey = normalizePagePreviewUrlKey(sourceUrl)
+    if (!urlKey) {
+      return null
+    }
+    const resolvedOwnerId = ownerId ?? (await getCurrentOwnerId())
+    const items = await this.listByOwner({ type: 'text_excerpt', limit: 5000 })
+    for (const item of items) {
+      if (
+        item.ownerId !== resolvedOwnerId ||
+        item.type !== 'text_excerpt' ||
+        item.deletedAt != null
+      ) {
+        continue
+      }
+      if (item.payload.origin !== 'auto_extract') {
+        continue
+      }
+      const itemKey = normalizePagePreviewUrlKey(item.payload.sourceUrl)
+      if (itemKey === urlKey) {
+        return item
+      }
+    }
+    return null
+  }
+
+  /**
+   * 列出当前 owner 全部未软删的 auto_extract 摘录（Library 徽标批量索引用）。
+   */
+  async listAutoExtractExcerpts(ownerId?: string): Promise<MemoryItem[]> {
+    const resolvedOwnerId = ownerId ?? (await getCurrentOwnerId())
+    const items = await this.listByOwner({ type: 'text_excerpt', limit: 5000 })
+    return items.filter(
+      item =>
+        item.ownerId === resolvedOwnerId &&
+        item.type === 'text_excerpt' &&
+        item.deletedAt == null &&
+        item.payload.origin === 'auto_extract'
+    )
+  }
+
+  /**
+   * Upsert 自动提炼摘录：同 URL 已有 auto_extract 则更新正文/标题/updatedAt；否则新建。
+   * 走 put 副作用（倒排）；embedding 由调用方调度。
+   */
+  async upsertAutoExtractExcerpt(input: {
+    sourceUrl: string
+    pageTitle: string
+    summary: string
+  }): Promise<{ item: MemoryItem; created: boolean }> {
+    const summary = input.summary.trim()
+    if (!summary) {
+      throw new Error('upsertAutoExtractExcerpt 摘要为空')
+    }
+    const existing = await this.findAutoExtractBySourceUrl(input.sourceUrl)
+    if (existing && existing.type === 'text_excerpt') {
+      const updated: MemoryItem = {
+        ...existing,
+        payload: {
+          ...existing.payload,
+          selectedText: summary,
+          pageTitle: input.pageTitle,
+          origin: 'auto_extract'
+        },
+        updatedAt: new Date().toISOString()
+      }
+      await this.put(updated)
+      return { item: updated, created: false }
+    }
+
+    // 不走 createTextExcerpt 去重（按正文）；auto_extract 以 URL+origin 唯一，与用户摘录并存
+    const candidate = await this.buildTextExcerptItem({
+      payload: {
+        selectedText: summary,
+        sourceUrl: input.sourceUrl,
+        pageTitle: input.pageTitle,
+        origin: 'auto_extract'
+      }
+    })
+    await this.put(candidate)
+    return { item: candidate, created: true }
   }
 
   /**

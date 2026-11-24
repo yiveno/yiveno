@@ -18,6 +18,8 @@ import {
 } from '@/pages/library/bookmark-library-tree-expanded'
 import { buildBookmarkLibraryRowMemoDeps } from '@/pages/library/bookmark-library-tree-row-memo'
 import BookmarkLibraryTreeRow from '@/pages/library/BookmarkLibraryTreeRow.vue'
+import type { AutoExtractIndexEntry } from '@/pages/library/library-auto-extract-index'
+import { resolveAutoExtractEntryForUrl } from '@/pages/library/library-auto-extract-index'
 import { createLibraryVirtualScrollHandler } from '@/pages/library/use-library-virtual-scroll'
 
 defineOptions({ name: 'BookmarkLibraryTree' })
@@ -37,6 +39,8 @@ const props = withDefaults(
     detailExportSelectionRevision?: number
     /** 正在删除的 MemoryItem id */
     deletingId?: string | null | undefined
+    /** 本 owner auto_extract URL 索引（徽标）。 */
+    autoExtractIndex?: ReadonlyMap<string, AutoExtractIndexEntry>
   }>(),
   {
     query: ''
@@ -175,6 +179,13 @@ function toggleFolder(chromeId: string, depth: number): void {
 
 const handleScroll = createLibraryVirtualScrollHandler(scrollTop)
 
+function bookmarkExtractHref(row: (typeof renderedRows.value)[number]): string | null {
+  if (row.kind !== 'bookmark' || !props.autoExtractIndex) {
+    return null
+  }
+  return resolveAutoExtractEntryForUrl(props.autoExtractIndex, row.url)?.href ?? null
+}
+
 function bookmarkRowMemoDeps(row: (typeof renderedRows.value)[number]): unknown[] {
   const exportSelected =
     row.kind === 'bookmark' && row.memoryItemId
@@ -185,7 +196,8 @@ function bookmarkRowMemoDeps(row: (typeof renderedRows.value)[number]): unknown[
     detailExportSelectionRevision: props.detailExportSelectionRevision ?? 0,
     exportSelected,
     deletingId: props.deletingId ?? null,
-    showUnsyncedFlags: props.showUnsyncedFlags === true
+    showUnsyncedFlags: props.showUnsyncedFlags === true,
+    extractedHref: bookmarkExtractHref(row)
   })
 }
 </script>
@@ -211,6 +223,7 @@ function bookmarkRowMemoDeps(row: (typeof renderedRows.value)[number]): unknown[
           "
           :detail-export-selection-disabled="row.kind === 'bookmark' && !row.memoryItemId"
           :deleting-id="deletingId"
+          :extracted-detail-href="bookmarkExtractHref(row)"
           @toggle-folder="toggleFolder"
           @edit-note="$emit('editNote', $event)"
           @open-bookmark="$emit('openBookmark', $event)"

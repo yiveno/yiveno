@@ -11,6 +11,7 @@ import { tMemoryError } from '@/infrastructure/i18n/memory-error'
 import {
   deleteMemoryItem,
   getMemoryItem,
+  listMemoryItems,
   recordMemoryOpen,
   updateMemoryNote
 } from '@/infrastructure/messaging/background-client'
@@ -18,6 +19,11 @@ import { isOpenableExternalSourceUrl } from '@/infrastructure/browser/active-tab
 import { openExtensionLibraryPage } from '@/infrastructure/browser/extension-pages'
 import AppPageHeader from '@/infrastructure/ui/AppPageHeader.vue'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
+import {
+  buildAutoExtractUrlIndex,
+  resolveAutoExtractEntryForUrl,
+  type AutoExtractIndexEntry
+} from '@/pages/library/library-auto-extract-index'
 
 defineOptions({ name: 'DetailPage' })
 
@@ -42,6 +48,17 @@ const noteError = ref('')
 const excerpt = computed((): TextExcerptMemoryItem | null => {
   const current = item.value
   return current?.type === 'text_excerpt' ? current : null
+})
+
+const autoExtractEntry = ref<AutoExtractIndexEntry | null>(null)
+
+const showExtractedBadge = computed(() => {
+  const current = excerpt.value
+  if (!current || current.payload.origin === 'auto_extract') {
+    return false
+  }
+  const entry = autoExtractEntry.value
+  return Boolean(entry && entry.id !== current.id)
 })
 
 const noteText = computed(() => excerpt.value?.clues.note?.trim() || '')
@@ -112,16 +129,58 @@ async function loadDetail() {
     item.value = response.item
     if (response.item.type === 'text_excerpt') {
       viewState.value = 'ready'
+      void refreshDetailAutoExtractBadge(response.item)
       void recordMemoryOpen({ id: response.item.id }).catch(() => {
         // 忽略：打开记录失败不影响详情展示
       })
     } else {
       viewState.value = 'wrong_type'
+      autoExtractEntry.value = null
     }
   } catch {
     viewState.value = 'error'
     errorMessage.value = t('detail_load_failed')
   }
+}
+
+async function refreshDetailAutoExtractBadge(current: TextExcerptMemoryItem): Promise<void> {
+  if (current.payload.origin === 'auto_extract') {
+    autoExtractEntry.value = null
+    return
+  }
+  try {
+    const pageSize = 500
+    const collected: MemoryItem[] = []
+    let offset = 0
+    for (;;) {
+      const response = await listMemoryItems({
+        type: 'text_excerpt',
+        limit: pageSize,
+        offset
+      })
+      if (!response.ok || !('items' in response)) {
+        autoExtractEntry.value = null
+        return
+      }
+      collected.push(...response.items)
+      if (response.items.length < pageSize || collected.length >= response.total) {
+        break
+      }
+      offset += response.items.length
+    }
+    const index = buildAutoExtractUrlIndex(collected, chrome.runtime.getURL('detail.html'))
+    autoExtractEntry.value = resolveAutoExtractEntryForUrl(index, current.payload.sourceUrl)
+  } catch {
+    autoExtractEntry.value = null
+  }
+}
+
+function openExtractDetail(): void {
+  const href = autoExtractEntry.value?.href
+  if (!href) {
+    return
+  }
+  window.open(href, '_blank', 'noopener,noreferrer')
 }
 
 function openDeleteConfirm() {
@@ -285,6 +344,16 @@ onMounted(() => {
     <article v-else-if="viewState === 'ready' && excerpt" class="detail-article">
       <div class="detail-meta">
         <span class="detail-type">{{ t('detail_type_excerpt') }}</span>
+        <button
+          v-if="showExtractedBadge"
+          type="button"
+          class="detail-extracted-badge"
+          :title="t('library_extracted_badge')"
+          :aria-label="t('library_extracted_badge')"
+          @click="openExtractDetail"
+        >
+          {{ t('library_extracted_badge') }}
+        </button>
         <span v-if="excerpt.payload.pageTitle.trim()" class="detail-page">{{
           excerpt.payload.pageTitle
         }}</span>
@@ -462,6 +531,25 @@ onMounted(() => {
 .detail-type {
   font-weight: var(--font-weight-semibold);
   color: var(--accent);
+}
+
+.detail-extracted-badge {
+  margin: 0;
+  padding: 0;
+  border: none;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: var(--font-weight-semibold);
+  line-height: inherit;
+  color: var(--sage-dark);
+  background: transparent;
+  cursor: pointer;
+}
+
+.detail-extracted-badge:hover,
+.detail-extracted-badge:focus-visible {
+  outline: none;
+  text-decoration: underline;
 }
 
 .detail-page {

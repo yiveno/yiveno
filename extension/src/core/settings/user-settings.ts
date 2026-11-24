@@ -15,6 +15,11 @@ export const UserSettingsSchema = z.object({
    */
   aiFeaturesEnabled: z.boolean().default(true),
   /**
+   * 内容提炼：打开库内已保存页面时，把正文送云端 LLM 摘要并存为摘录。
+   * 默认关；须 aiFeaturesEnabled 开才生效（总开关关则不向模型发请求）。
+   */
+  contentExtractEnabled: z.boolean().default(false),
+  /**
    * 是否每周本机巡检书签/摘录 URL 死链（只降权、不删除）。
    * 不联动 aiFeaturesEnabled（巡检不调模型）；默认开。
    */
@@ -63,6 +68,7 @@ export const UserSettingsSchema = z.object({
 export const UserSettingsPatchSchema = z.object({
   selectionToolbarEnabled: z.boolean().optional(),
   aiFeaturesEnabled: z.boolean().optional(),
+  contentExtractEnabled: z.boolean().optional(),
   linkStatusSweepEnabled: z.boolean().optional(),
   chromeBookmarkIngestEnabled: z.boolean().optional(),
   chromeBookmarkSyncEnabled: z.boolean().optional(),
@@ -79,6 +85,7 @@ export type UserSettings = z.infer<typeof UserSettingsSchema>
 export const DEFAULT_USER_SETTINGS: UserSettings = {
   selectionToolbarEnabled: true,
   aiFeaturesEnabled: true,
+  contentExtractEnabled: false,
   linkStatusSweepEnabled: true,
   chromeBookmarkIngestEnabled: false,
   chromeBookmarkSyncEnabled: false,

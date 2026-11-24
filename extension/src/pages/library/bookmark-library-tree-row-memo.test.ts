@@ -72,7 +72,7 @@ describe('buildBookmarkLibraryRowMemoDeps', () => {
     const row = baseBookmarkRow()
     const a = buildBookmarkLibraryRowMemoDeps(row, baseCtx)
     const b = buildBookmarkLibraryRowMemoDeps(row, baseCtx)
-    expect(a).toHaveLength(14)
+    expect(a).toHaveLength(15)
     expect(a).toEqual(b)
   })
 })

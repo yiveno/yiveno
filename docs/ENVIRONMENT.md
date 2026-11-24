@@ -116,8 +116,10 @@ bun run env:check:prod
       - `AI_HOSTED_MODEL_NLU`：仅 `taskKind=nlu`
       - `AI_HOSTED_MODEL_NLG`：`framing_nlg` / `follow_up_nlg` / `narrow_polish`
       - `AI_HOSTED_MODEL_ENRICHMENT` / `AI_HOSTED_MODEL_GS_SAMPLES`：对应任务（若走可配置层）
+      - `AI_HOSTED_MODEL_DREAMING` / `AI_HOSTED_MODEL_EXTRACT`：夜间命题 / 打开页内容提炼（可选覆盖）
       - 请求体可带 `taskKind`（闭集；缺省 `nlu`）；**禁止**客户端传任意 `model` 名
-      - **maxTokens 服务端按 task 钳制**（nlu/enrichment/gs 400；framing/follow_up 256；narrow_polish 128）；客户端可传更小。方案见 `docs/architecture/2026-10-任务级模型路由方案.md`
+      - **maxTokens 服务端按 task 钳制**（nlu/enrichment/gs 400；framing/follow_up 256；narrow_polish 128；dreaming 1200；extract 800）；客户端可传更小。方案见 `docs/architecture/2026-10-任务级模型路由方案.md`
+      - **内容提炼独立配额**（KV 前缀 `extract_ai:`，与 `dreaming_ai:` 分桶）：`POST /api/ai/extract/complete`；可选覆盖 `AI_EXTRACT_FREE_DAILY_CAP` / `AI_EXTRACT_FREE_MONTHLY_QUOTA` / `AI_EXTRACT_PRO_DAILY_CAP` / `AI_EXTRACT_PRO_MONTHLY_QUOTA`（默认 Free 5/天·20/月，Pro 30/天·300/月）
     - `AI_GATEWAY_ACCOUNT_ID`：Cloudflare Account ID
     - `AI_GATEWAY_ID`：Gateway 名称（当前 `yiveno`）；Dashboard 需先创建同名 Gateway
     - 二者都非空时，DeepSeek 经 `gateway.ai.cloudflare.com` 转发；否则直连 `DEEPSEEK_API_BASE`

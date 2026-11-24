@@ -1589,6 +1589,18 @@
   "settings_ai_toggle_hint": {
     "message": "When off, Yiveno stops calling AI to understand clues and enrich content. Clue understanding falls back to local rules."
   },
+  "settings_content_extract_toggle": {
+    "message": "Summarize saved pages"
+  },
+  "settings_content_extract_toggle_hint": {
+    "message": "When you open a saved page, its text is sent to a cloud AI for a summary, saved as an excerpt. Turn off anytime; existing summaries stay."
+  },
+  "settings_content_extract_ai_required_hint": {
+    "message": "Turn on AI features first."
+  },
+  "library_extracted_badge": {
+    "message": "Summarized"
+  },
   "settings_link_sweep_toggle": {
     "message": "Check saved links weekly"
   },
