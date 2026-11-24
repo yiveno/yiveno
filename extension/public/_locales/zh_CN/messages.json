@@ -315,7 +315,7 @@
     "message": "关闭后台设置提示"
   },
   "sidepanel_website_connect_banner": {
-    "message": "已在网站登录"
+    "message": "已在网站登录。连接后将此设备关联到你的账号。"
   },
   "sidepanel_extension_displaced_banner": {
     "message": "此账号已在其他地方登录"
@@ -334,6 +334,9 @@
   },
   "sidepanel_website_connect_failed": {
     "message": "连接失败。请再试一次。"
+  },
+  "sidepanel_website_connect_failed_timeout": {
+    "message": "连接失败——网站没有及时响应。请再试一次。"
   },
   "sidepanel_website_connect_dismiss_aria": {
     "message": "关闭网站连接提示"

@@ -87,6 +87,7 @@ import { useSidepanelColdStart } from '@/pages/sidepanel/use-sidepanel-cold-star
 import { useRecallOutcomeSession } from '@/pages/sidepanel/use-recall-outcome-session'
 import { useDetailExport } from '@/pages/sidepanel/use-detail-export'
 import { useRecallResultCards } from '@/pages/sidepanel/use-recall-result-cards'
+import { resolveWebsiteConnectFailedMessageKey } from '@/pages/sidepanel/resolve-website-connect-failed-copy'
 import {
   formatRankedReplyText,
   resolveUnderstandingEchoChips,
@@ -825,11 +826,12 @@ async function connectWebsiteSessionFromBanner(): Promise<void> {
       await loadGreetingIdentity()
       return
     }
-    if (response.cancelled) {
-      // 用户取消 Connect：恢复条，不报错
+    const failedKey = resolveWebsiteConnectFailedMessageKey(response)
+    if (!failedKey) {
+      // cancelled：恢复条，不报错
       return
     }
-    websiteConnectError.value = t('sidepanel_website_connect_failed')
+    websiteConnectError.value = t(failedKey)
   } catch {
     websiteConnectError.value = t('sidepanel_website_connect_failed')
   } finally {

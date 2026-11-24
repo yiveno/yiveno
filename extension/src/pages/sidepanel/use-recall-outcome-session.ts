@@ -141,7 +141,7 @@ export function useRecallOutcomeSession(
     void onCompleteNewFindSession('exit_none')
   }
 
-  /** 出口条：跳过 → unknown。 */
+  /** 出口条：跳过 → 无显式出口标签，落入 C1/C2 行为推断。 */
   function handleOutcomeExitSkip(): void {
     void onCompleteNewFindSession('exit_skip')
   }

@@ -385,6 +385,7 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
           @error="markFaviconBroken(card.id)"
         />
         <AppIcon v-else :name="kindIcon" size="14px" />
+        <span class="recall-type-chip__label">{{ card.typeLabel }}</span>
       </span>
 
       <a
@@ -571,6 +572,7 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
             @error="markFaviconBroken(sibling.id)"
           />
           <AppIcon v-else :name="kindIconFor(sibling.itemKind)" size="14px" />
+          <span class="recall-type-chip__label">{{ sibling.typeLabel }}</span>
         </span>
         <a
           class="recall-card recall-card--sibling"
@@ -727,7 +729,7 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
 
 /*
  * 邻域卡壳：书签/摘录同底同描边同 hover，避免类型染色造成斑马纹与双套交互态。
- * 类型区分靠角标（quote / favicon）+ 内容形；摘录另加 1px 左侧 accent（非整卡铺色）。
+ * 类型区分靠角标（quote / favicon）+ 微文字 + 内容形；摘录另加 1px 左侧 accent（非整卡铺色）。
  */
 .recall-card-shell--bookmark,
 .recall-card-shell--excerpt {
@@ -866,14 +868,15 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
   display: inline-flex;
   justify-content: center;
   align-items: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
+  gap: var(--space-2xs);
+  width: auto;
+  min-height: 24px;
+  padding: 0 var(--space-xs);
   border-radius: var(--radius-full);
   line-height: 1;
 }
 
-/* 角落种类标记：不占文档流高度 */
+/* 角落种类标记：不占文档流高度；图标 + 可见 typeLabel 微文字 */
 .recall-type-chip--corner {
   position: absolute;
   top: var(--space-xs);
@@ -882,10 +885,22 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
   pointer-events: none;
 }
 
+.recall-type-chip__label {
+  font-size: var(--text-caption);
+  font-weight: var(--font-weight-medium);
+  line-height: 1;
+  white-space: nowrap;
+}
+
 .recall-type-chip--bookmark {
   color: var(--on-surface);
   background: color-mix(in srgb, var(--surface-chrome) 88%, var(--surface-white));
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--border) 80%, transparent);
+}
+
+.recall-type-chip .app-icon,
+.recall-card-favicon {
+  flex-shrink: 0;
 }
 
 .recall-card-favicon {
@@ -902,13 +917,16 @@ function handleOpenSource(event: MouseEvent, id: string, sourceUrl: string, rank
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
 }
 
-/* 主卡 / sibling 为角标让出左侧，避免压住标题首字 */
+/*
+ * 主卡 / sibling 为角标 pill 让出左侧，避免压住标题首字。
+ * pill 宽含 en「Text excerpt」（12 字符 caption）；约 120px 起跳。
+ */
 .recall-card-shell:has(> .recall-type-chip--corner) > .recall-card {
-  padding-left: calc(var(--space-xl) + var(--space-xs));
+  padding-left: calc(var(--space-3xl) + var(--space-xl) + var(--space-lg));
 }
 
 .recall-sibling-item:has(> .recall-type-chip--corner) > .recall-card {
-  padding-left: var(--space-xl);
+  padding-left: calc(var(--space-3xl) + var(--space-xl) + var(--space-md));
 }
 
 .recall-card-title {

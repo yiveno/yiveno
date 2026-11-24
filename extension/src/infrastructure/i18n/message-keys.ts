@@ -91,6 +91,7 @@ export const MESSAGE_KEYS = [
   'sidepanel_website_connect_cta_aria',
   'sidepanel_website_connect_cta_busy_aria',
   'sidepanel_website_connect_failed',
+  'sidepanel_website_connect_failed_timeout',
   'sidepanel_website_connect_dismiss_aria',
   'sidepanel_extension_displaced_dismiss_aria',
   'sidepanel_account_website_mismatch',
