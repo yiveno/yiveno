@@ -216,6 +216,34 @@ describe('schedule-proposition-embeddings', () => {
     expect(result.written).toBe(0)
   })
 
+  it('熔断拒绝：跳过 Worker 调用', async () => {
+    gateWorkerEmbedRequestMock.mockResolvedValue({ allow: false, reason: 'circuit_open' })
+    const result = await embedPropositionsForWrittenNotes({
+      accessToken: 'tok',
+      notes: [
+        makeNoteInput(0, 'Proposition text about travel costs.'),
+        makeNoteInput(1, 'Another proposition about lodging prices.')
+      ]
+    })
+    expect(gateWorkerEmbedRequestMock).toHaveBeenCalledTimes(1)
+    expect(requestWorkerEmbeddingsMock).not.toHaveBeenCalled()
+    expect(result.written).toBe(0)
+    expect(result.skipped).toBe(2)
+  })
+
+  it('quota 错误：trip 熔断', async () => {
+    const quotaError = new Error('quota_exceeded')
+    requestWorkerEmbeddingsMock.mockRejectedValue(quotaError)
+    const result = await embedPropositionsForWrittenNotes({
+      accessToken: 'tok',
+      notes: [makeNoteInput(0, 'Proposition text about travel costs.')]
+    })
+    expect(tripEmbedQuotaBreakerFromErrorMock).toHaveBeenCalledTimes(1)
+    expect(tripEmbedQuotaBreakerFromErrorMock).toHaveBeenCalledWith('tok', quotaError)
+    expect(result.written).toBe(0)
+    expect(result.skipped).toBe(1)
+  })
+
   it('回填 pacing：单次不超过 BACKFILL_BATCH_LIMIT 条缺口', async () => {
     const gaps = Array.from({ length: 45 }, (_v, i) => ({
       id: `${OWNER}\0${SOURCE}\0${i}`,

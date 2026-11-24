@@ -136,6 +136,10 @@ export function buildWorkerApiErrorDetail(input: {
     return undefined
   }
 
+  if (code === 'auth_unavailable') {
+    return '服务端鉴权暂不可用，请稍后重试'
+  }
+
   if (code === 'Internal Server Error') {
     return requestId ? `服务端内部错误，requestId: ${requestId}` : '服务端内部错误'
   }

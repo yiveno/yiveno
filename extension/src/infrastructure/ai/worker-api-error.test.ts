@@ -43,6 +43,12 @@ describe('buildWorkerApiErrorDetail', () => {
     expect(buildWorkerApiErrorDetail({ code: 'invalid_token' })).toBeUndefined()
   })
 
+  it('auth_unavailable 提示稍后重试', () => {
+    expect(buildWorkerApiErrorDetail({ code: 'auth_unavailable' })).toBe(
+      '服务端鉴权暂不可用，请稍后重试'
+    )
+  })
+
   it('Internal Server Error 带 requestId', () => {
     expect(
       buildWorkerApiErrorDetail({
