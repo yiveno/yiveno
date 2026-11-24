@@ -4,6 +4,7 @@
  * 默认经 Cloudflare AI Gateway 转发；未配置 Gateway 时直连 api.deepseek.com。
  * Gateway 若开启 Authenticated Gateway，需 Secret `AI_GATEWAY_TOKEN` → 头 `cf-aig-authorization`。
  * 经 Gateway 时发 `cf-aig-collect-log-payload: false`，关闭 prompt/response 正文落盘（元数据日志仍保留）。
+ * 经 Gateway 时发 `cf-aig-skip-cache: true`（缓存键不含用户身份且命中仍扣配额，收益近零故关闭）。
  */
 
 import {
@@ -14,6 +15,7 @@ import {
   clampCompletionMaxTokens
 } from '../../config/ai-hosted'
 import type { Env } from '../../types/env'
+import { warn as logWarn } from '../../utils/logger'
 import type {
   AiChatCompleteRequest,
   AiChatCompleteResult,
@@ -23,6 +25,7 @@ import type {
 
 const PROVIDER_ID = 'deepseek'
 
+/** Gateway / DeepSeek 错误体；code 2009 = provider 拒 key（可能是 number 或 string） */
 interface DeepSeekChatResponse {
   choices?: Array<{
     finish_reason?: string
@@ -38,7 +41,21 @@ interface DeepSeekChatResponse {
   }
   error?: {
     message?: string
+    code?: number | string
   }
+}
+
+/** 401 成因：2009 = provider 拒 key；否则按网关鉴权解释 */
+type AuthFailCause = 'provider_key_rejected' | 'gateway_auth' | 'unknown'
+
+function resolveAuthFailCause(errorCode: number | string | undefined): AuthFailCause {
+  if (errorCode !== undefined && String(errorCode) === '2009') {
+    return 'provider_key_rejected'
+  }
+  if (errorCode !== undefined) {
+    return 'gateway_auth'
+  }
+  return 'unknown'
 }
 
 function buildChatBody(
@@ -72,6 +89,7 @@ function buildAuthHeaders(env: Env, apiKey: string, viaGateway: boolean): Record
   // 只关 payload 正文日志；token/费用/延迟等元数据仍由 Gateway 采集
   if (viaGateway) {
     headers['cf-aig-collect-log-payload'] = 'false'
+    headers['cf-aig-skip-cache'] = 'true'
   }
   return headers
 }
@@ -80,8 +98,15 @@ function formatUpstreamError(
   viaGateway: boolean,
   status: number,
   message: string,
-  hasGatewayToken: boolean
+  hasGatewayToken: boolean,
+  errorCode?: number | string
 ): string {
+  if (status === 401 && String(errorCode) === '2009') {
+    return (
+      'deepseek_api_key_rejected: DeepSeek 拒绝了 API key（错误码 2009）。' +
+      '请检查 DEEPSEEK_API_KEY 是否有效或账户是否欠费。'
+    )
+  }
   if (viaGateway && status === 401) {
     if (!hasGatewayToken) {
       return (
@@ -133,6 +158,17 @@ export const deepseekAiChatProvider: AiChatProvider = {
 
     // Gateway 鉴权开了但未配 CF token：回退直连，避免本地线索理解整段挂死
     if (viaGateway && response.status === 401 && !hasGatewayToken) {
+      const gatewayFailPayload = (await response.json().catch(() => ({}))) as DeepSeekChatResponse
+      const gatewayErrorCode = gatewayFailPayload.error?.code
+      const authFailCause = resolveAuthFailCause(gatewayErrorCode)
+      logWarn('deepseek_gateway_401_fallback_direct', {
+        status: 401,
+        errorCode: gatewayErrorCode ?? null,
+        authFailCause,
+        path: 'direct_retry',
+        model
+      })
+
       const directUrl = `${DEEPSEEK_DEFAULT_BASE_URL}/v1/chat/completions`
       response = await fetch(directUrl, {
         method: 'POST',
@@ -143,16 +179,28 @@ export const deepseekAiChatProvider: AiChatProvider = {
         const failPayload = (await response.json().catch(() => ({}))) as DeepSeekChatResponse
         const failMessage =
           failPayload.error?.message || response.statusText || 'deepseek_request_failed'
+        const directErrorCode = failPayload.error?.code
         throw new Error(
-          formatUpstreamError(true, 401, failMessage, false) + `；直连回退亦失败: ${failMessage}`
+          formatUpstreamError(false, response.status, failMessage, false, directErrorCode) +
+            `；直连回退亦失败: ${failMessage}`
         )
       }
+      logWarn('deepseek_gateway_401_fallback_direct_ok', {
+        path: 'direct',
+        model
+      })
     } else if (!response.ok) {
       const failPayload = (await response.json().catch(() => ({}))) as DeepSeekChatResponse
       const failMessage =
         failPayload.error?.message || response.statusText || 'deepseek_request_failed'
       throw new Error(
-        formatUpstreamError(viaGateway, response.status, failMessage, hasGatewayToken)
+        formatUpstreamError(
+          viaGateway,
+          response.status,
+          failMessage,
+          hasGatewayToken,
+          failPayload.error?.code
+        )
       )
     }
 
