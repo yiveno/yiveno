@@ -18,6 +18,8 @@ const ExtractLlmPayloadSchema = z.object({
   summary: z.string().min(1).max(2000)
 })
 
+type ExtractLlmPayload = z.infer<typeof ExtractLlmPayloadSchema>
+
 export function buildExtractSummarySystemPrompt(): string {
   return [
     'You summarize the main content of a saved web page for personal recall.',
