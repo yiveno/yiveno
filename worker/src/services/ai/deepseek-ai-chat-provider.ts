@@ -3,6 +3,7 @@
  *
  * 默认经 Cloudflare AI Gateway 转发；未配置 Gateway 时直连 api.deepseek.com。
  * Gateway 若开启 Authenticated Gateway，需 Secret `AI_GATEWAY_TOKEN` → 头 `cf-aig-authorization`。
+ * 经 Gateway 时发 `cf-aig-collect-log-payload: false`，关闭 prompt/response 正文落盘（元数据日志仍保留）。
  */
 
 import {
@@ -67,6 +68,10 @@ function buildAuthHeaders(env: Env, apiKey: string, viaGateway: boolean): Record
   const gatewayToken = env.AI_GATEWAY_TOKEN?.trim()
   if (viaGateway && gatewayToken) {
     headers['cf-aig-authorization'] = `Bearer ${gatewayToken}`
+  }
+  // 只关 payload 正文日志；token/费用/延迟等元数据仍由 Gateway 采集
+  if (viaGateway) {
+    headers['cf-aig-collect-log-payload'] = 'false'
   }
   return headers
 }
