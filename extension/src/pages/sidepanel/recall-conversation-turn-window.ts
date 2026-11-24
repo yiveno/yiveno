@@ -48,3 +48,25 @@ export function resolveNextEarlierTurnReveal(
   }
   return currentEarlierRevealed + Math.min(RECALL_CONVERSATION_TURN_PAGE_SIZE, hidden)
 }
+
+/**
+ * 会话增长时钉住已展开的起点：新 turn 进尾部时同步抬高 earlierRevealed，
+ * 避免尾锚定窗口把已展开早轮推出视野。上限钳制留给 recallConversationVisibleStartIndex。
+ */
+export function resolvePinnedEarlierTurnReveal(
+  currentEarlierRevealed: number,
+  previousTotalTurns: number,
+  nextTotalTurns: number
+): number {
+  if (nextTotalTurns <= 0) {
+    return 0
+  }
+  if (currentEarlierRevealed <= 0) {
+    return currentEarlierRevealed
+  }
+  const delta = nextTotalTurns - previousTotalTurns
+  if (delta <= 0) {
+    return currentEarlierRevealed
+  }
+  return currentEarlierRevealed + delta
+}

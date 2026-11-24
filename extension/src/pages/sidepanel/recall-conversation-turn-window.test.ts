@@ -6,6 +6,7 @@ import {
   recallConversationVisibleStartIndex,
   recallHiddenEarlierTurnCount,
   resolveNextEarlierTurnReveal,
+  resolvePinnedEarlierTurnReveal,
   sliceVisibleConversationTurns
 } from '@/pages/sidepanel/recall-conversation-turn-window'
 
@@ -36,5 +37,25 @@ describe('recall-conversation-turn-window', () => {
     expect(next).toBe(6)
     expect(recallHiddenEarlierTurnCount(total, next)).toBe(0)
     expect(sliceVisibleConversationTurns(Array.from({ length: total }), next)).toHaveLength(total)
+  })
+
+  it('钉住起点：未展开时增长保持 0', () => {
+    expect(resolvePinnedEarlierTurnReveal(0, 14, 15)).toBe(0)
+  })
+
+  it('钉住起点：已展开时增长按 delta 抬高', () => {
+    expect(resolvePinnedEarlierTurnReveal(3, 20, 22)).toBe(5)
+  })
+
+  it('钉住起点：长度归 0 时展开归零', () => {
+    expect(resolvePinnedEarlierTurnReveal(6, 20, 0)).toBe(0)
+  })
+
+  it('钉住起点：长度缩小非 0 时保持原值', () => {
+    expect(resolvePinnedEarlierTurnReveal(4, 20, 18)).toBe(4)
+  })
+
+  it('钉住起点：长度不变时保持原值', () => {
+    expect(resolvePinnedEarlierTurnReveal(2, 16, 16)).toBe(2)
   })
 })

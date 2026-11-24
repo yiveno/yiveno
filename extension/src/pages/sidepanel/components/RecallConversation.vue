@@ -24,6 +24,7 @@ import {
   RECALL_CONVERSATION_TURN_PAGE_SIZE,
   recallHiddenEarlierTurnCount,
   resolveNextEarlierTurnReveal,
+  resolvePinnedEarlierTurnReveal,
   sliceVisibleConversationTurns
 } from '@/pages/sidepanel/recall-conversation-turn-window'
 import type { ConversationTurn, AssistantTurn } from '@/pages/sidepanel/recall-conversation-types'
@@ -135,8 +136,26 @@ const earlierRevealedCount = ref(0)
 watch(
   () => props.turns.length,
   (nextLength, previousLength) => {
+    earlierRevealedCount.value = resolvePinnedEarlierTurnReveal(
+      earlierRevealedCount.value,
+      previousLength,
+      nextLength
+    )
     if (nextLength > previousLength) {
       openEchoMenuKey.value = null
+    }
+  }
+)
+
+/**
+ * 新找同 tick 清空→首轮时 length watch 看不到 0（Vue 合并同 tick 变更），
+ * 且父级 v-else 可能不卸载本组件；首 turn id 换了即整段会话替换，展开归零。
+ */
+watch(
+  () => props.turns[0]?.id ?? null,
+  (nextId, previousId) => {
+    if (previousId != null && nextId != null && nextId !== previousId) {
+      earlierRevealedCount.value = 0
     }
   }
 )
