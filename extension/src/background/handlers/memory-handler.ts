@@ -34,7 +34,10 @@ import {
 import { flashActionBadge } from '@/infrastructure/browser/action-badge'
 import { isSavablePageUrl } from '@/infrastructure/browser/active-tab-reader'
 import { pagePreviewRepository } from '@/infrastructure/indexeddb/page-preview-repository'
-import { normalizePagePreviewUrlKey } from '@/infrastructure/indexeddb/page-preview-types'
+import {
+  bytesToDataUrl,
+  normalizePagePreviewUrlKey
+} from '@/infrastructure/indexeddb/page-preview-types'
 import { flowFail, flowOk, flowStart, previewText } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
 import { addChromeBookmarkDeleteTombstone } from '@/infrastructure/storage/chrome-bookmark-delete-tombstone-storage'
@@ -302,7 +305,7 @@ export async function handleRecordMemoryOpen(payload: unknown): Promise<MemoryBa
   }
 }
 
-/** 悬停浮层：取本机预览字节（无则 PAGE_PREVIEW_NOT_FOUND，UI 走骨架）。 */
+/** 悬停浮层：取本机预览并编成 data URL（无则 PAGE_PREVIEW_NOT_FOUND，UI 走骨架）。 */
 export async function handleGetPagePreview(payload: unknown): Promise<MemoryBackgroundResponse> {
   const startedAt = flowStart('PagePreview', '读取预览')
   try {
@@ -313,10 +316,15 @@ export async function handleGetPagePreview(payload: unknown): Promise<MemoryBack
       return toErrorResponse('PAGE_PREVIEW_NOT_FOUND')
     }
     const ownerId = await getCurrentOwnerId()
-    // 回传 ArrayBuffer；面板 realm 再构 Blob（Blob 不可跨 chrome.runtime 消息）
+    // IDB 仍是 ArrayBuffer；消息通道 JSON 序列化，须编 data URL 再回传
     const record = await pagePreviewRepository.getAndTouchShownBytes(ownerId, urlKey)
     if (!record) {
       flowOk('PagePreview', '读取预览', startedAt, { found: false })
+      return toErrorResponse('PAGE_PREVIEW_NOT_FOUND')
+    }
+    const dataUrl = bytesToDataUrl(record.bytes, record.mimeType)
+    if (!dataUrl) {
+      flowOk('PagePreview', '读取预览', startedAt, { found: false, reason: 'empty_bytes' })
       return toErrorResponse('PAGE_PREVIEW_NOT_FOUND')
     }
     flowOk('PagePreview', '读取预览', startedAt, {
@@ -326,8 +334,7 @@ export async function handleGetPagePreview(payload: unknown): Promise<MemoryBack
     })
     return {
       ok: true,
-      bytes: record.bytes,
-      mimeType: record.mimeType,
+      dataUrl,
       width: record.width,
       height: record.height
     }

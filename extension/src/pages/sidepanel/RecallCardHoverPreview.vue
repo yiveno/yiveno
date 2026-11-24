@@ -79,6 +79,10 @@ const previewStyle = computed(() => {
   }
 })
 
+/**
+ * 释放 objectUrl。
+ * data: URL 上 URL.revokeObjectURL 是无操作，无需特判——勿「修复」成跳过。
+ */
 function revokeObjectUrl(): void {
   if (objectUrl.value) {
     URL.revokeObjectURL(objectUrl.value)
@@ -110,24 +114,21 @@ async function loadPreview(): Promise<void> {
     if (!props.visible) {
       return
     }
-    // SW 回传 ArrayBuffer；在面板 realm 构造 Blob（Blob 不可跨扩展消息）
-    if (
-      response.ok &&
-      'bytes' in response &&
-      response.bytes instanceof ArrayBuffer &&
-      response.bytes.byteLength > 0
-    ) {
-      const blob = new Blob([response.bytes], { type: response.mimeType })
-      objectUrl.value = URL.createObjectURL(blob)
+    // SW 回传 data URL（消息通道 JSON 序列化；Blob/ArrayBuffer 到不了面板）
+    const dataUrl =
+      response.ok && 'dataUrl' in response && typeof response.dataUrl === 'string'
+        ? response.dataUrl
+        : undefined
+    if (dataUrl && dataUrl.startsWith('data:image/')) {
+      objectUrl.value = dataUrl
       loadState.value = 'ready'
       return
     }
-    const bytesField = 'bytes' in response ? response.bytes : undefined
     console.warn('[HoverPreview] loadPreview missing', {
       ok: response.ok,
-      bytesType:
-        bytesField == null ? String(bytesField) : Object.prototype.toString.call(bytesField),
-      byteLength: bytesField instanceof ArrayBuffer ? bytesField.byteLength : undefined,
+      dataUrlType: dataUrl == null ? String(dataUrl) : Object.prototype.toString.call(dataUrl),
+      dataUrlLength: typeof dataUrl === 'string' ? dataUrl.length : undefined,
+      dataUrlPrefix: typeof dataUrl === 'string' ? dataUrl.slice(0, 30) : undefined,
       width: 'width' in response ? response.width : undefined,
       height: 'height' in response ? response.height : undefined
     })
@@ -136,8 +137,9 @@ async function loadPreview(): Promise<void> {
     console.warn('[HoverPreview] loadPreview catch', {
       error: error instanceof Error ? error.message : String(error),
       ok: undefined,
-      bytesType: undefined,
-      byteLength: undefined,
+      dataUrlType: undefined,
+      dataUrlLength: undefined,
+      dataUrlPrefix: undefined,
       width: undefined,
       height: undefined
     })

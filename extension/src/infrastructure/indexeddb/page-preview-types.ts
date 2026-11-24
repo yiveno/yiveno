@@ -107,6 +107,27 @@ export const PAGE_PREVIEW_TARGET_WIDTH_PX = 320
 /** JPEG 质量（0–1）。 */
 export const PAGE_PREVIEW_JPEG_QUALITY = 0.5
 
+/**
+ * ArrayBuffer → data URL（base64）。
+ * 扩展消息通道 JSON 序列化，Blob/ArrayBuffer 到不了面板；须编成字符串再回传。
+ * 空 bytes（byteLength 0）返回空字符串。
+ * 分块 String.fromCharCode：单次 apply 有参数上限（块大小 0x8000）。
+ */
+export function bytesToDataUrl(bytes: ArrayBuffer, mimeType: string): string {
+  if (bytes.byteLength === 0) {
+    return ''
+  }
+  const CHUNK = 0x8000
+  const view = new Uint8Array(bytes)
+  let binary = ''
+  for (let offset = 0; offset < view.length; offset += CHUNK) {
+    const end = Math.min(offset + CHUNK, view.length)
+    const chunk = view.subarray(offset, end)
+    binary += String.fromCharCode.apply(null, chunk as unknown as number[])
+  }
+  return `data:${mimeType};base64,${btoa(binary)}`
+}
+
 /** LRU 候选行（不含刚写入的 keepId）。 */
 export type PagePreviewLruCandidate = {
   id: string

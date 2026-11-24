@@ -76,7 +76,7 @@ const recordRecallSettlePayloadSchema = z.object({
   id: z.uuid()
 })
 
-/** 悬停浮层：按库内 URL 取本机预览 JPEG 字节（ArrayBuffer）。 */
+/** 悬停浮层：按库内 URL 取本机预览（回传 data URL；IDB 仍存 ArrayBuffer）。 */
 const getPagePreviewPayloadSchema = z.object({
   url: z.url()
 })
@@ -231,12 +231,11 @@ export type ExportDetailExportSuccessResponse = {
 
 /**
  * 本机预览 JPEG。
- * SW 回传 ArrayBuffer，面板侧构造 Blob（Blob 不可跨扩展消息传递）。
+ * data URL（base64）：扩展消息通道 JSON 序列化，Blob/ArrayBuffer 到不了面板。
  */
 export type PagePreviewSuccessResponse = {
   ok: true
-  bytes: ArrayBuffer
-  mimeType: string
+  dataUrl: string
   width: number
   height: number
 }

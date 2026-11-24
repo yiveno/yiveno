@@ -273,7 +273,7 @@ export async function exportDetailExport(
   return sendBackgroundMessage<MemoryBackgroundResponse>(message)
 }
 
-/** 悬停浮层：取本机页面预览 JPEG 字节（ArrayBuffer；面板侧再构 Blob）。 */
+/** 悬停浮层：取本机页面预览（回传 data URL；消息通道 JSON 序列化）。 */
 export async function getPagePreview(
   payload: GetPagePreviewMessage['payload']
 ): Promise<MemoryBackgroundResponse> {
