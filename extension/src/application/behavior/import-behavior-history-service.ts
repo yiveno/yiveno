@@ -50,20 +50,13 @@ export async function clearBehaviorHistoryImportState(): Promise<void> {
   await removeChromeStorageLocal(BEHAVIOR_HISTORY_IMPORT_STORAGE_KEY)
 }
 
-/** 请求可选 history 权限；拒绝 → false。 */
+/**
+ * SW 内无用户手势，chrome.permissions.request 恒抛 gesture 错误——
+ * 即使权限已授予也一样（2026-11-24 真机实证：contains 为 true 时 request 仍抛）。
+ * 因此 SW 侧只做 contains 检查，绝不调 request；授权由 Settings 页点击 handler 内的 request 负责。
+ */
 export async function requestHistoryPermission(): Promise<boolean> {
-  if (!chrome.permissions?.request) {
-    logger.warn('BehaviorImport', 'chrome.permissions.request 不可用')
-    return false
-  }
-  try {
-    return await chrome.permissions.request({ permissions: ['history'] })
-  } catch (error) {
-    logger.warn('BehaviorImport', '请求 history 权限失败', {
-      error: error instanceof Error ? error.message : String(error)
-    })
-    return false
-  }
+  return chrome.permissions.contains({ permissions: ['history'] })
 }
 
 /**

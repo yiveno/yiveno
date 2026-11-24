@@ -51,6 +51,7 @@ function createChromeMock(options: { granted: boolean; batches: chrome.history.H
       }
     },
     permissions: {
+      contains: vi.fn(async () => options.granted),
       request: vi.fn(async () => options.granted)
     },
     history: {
@@ -80,6 +81,7 @@ describe('importBehaviorHistory', () => {
     const state = await importBehaviorHistory()
     expect(state.status).toBe('failed')
     expect(state.errorCode).toBe('BEHAVIOR_IMPORT_PERMISSION_DENIED')
+    expect(chromeMock.history.search).not.toHaveBeenCalled()
     expect(await behaviorStatsRepository.listByOwner(localProfile.localProfileId)).toHaveLength(0)
   })
 
@@ -100,7 +102,8 @@ describe('importBehaviorHistory', () => {
     })
     vi.stubGlobal('chrome', chromeMock)
     const state = await importBehaviorHistory()
-    expect(chromeMock.permissions.request).toHaveBeenCalledWith({ permissions: ['history'] })
+    expect(chromeMock.permissions.contains).toHaveBeenCalledWith({ permissions: ['history'] })
+    expect(chromeMock.permissions.request).not.toHaveBeenCalled()
     expect(chromeMock.history.search).toHaveBeenCalled()
     expect(state.status).toBe('completed')
     expect(state.importedCount).toBe(1)
