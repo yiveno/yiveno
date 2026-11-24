@@ -34,14 +34,31 @@ const kindIcon = computed<AppIconName>(() =>
   props.card.itemKind === 'bookmark' ? 'bookmark' : 'format_quote'
 )
 
+/**
+ * 悬停预览查图 / 域名用的外部 URL。
+ * 摘录卡 `card.url` 多为 detail.html；截图按 sourceUrl 存，须优先读 sourceUrl。
+ */
+function resolveHoverPreviewLookupUrl(card: RecallCardModel): string | null {
+  const fromSource = card.sourceUrl?.trim()
+  if (fromSource && isOpenableExternalSourceUrl(fromSource)) {
+    return fromSource
+  }
+  const fromCardUrl = card.url?.trim()
+  if (fromCardUrl && isOpenableExternalSourceUrl(fromCardUrl)) {
+    return fromCardUrl
+  }
+  return null
+}
+
 const domainLine = computed(() => {
   const sub = props.card.subtitle.trim()
   if (sub) {
     return sub
   }
   try {
-    if (props.card.url && isOpenableExternalSourceUrl(props.card.url)) {
-      return new URL(props.card.url).hostname
+    const lookup = resolveHoverPreviewLookupUrl(props.card)
+    if (lookup) {
+      return new URL(lookup).hostname
     }
   } catch {
     // ignore
@@ -83,8 +100,8 @@ function recomputePlacement(): void {
 async function loadPreview(): Promise<void> {
   revokeObjectUrl()
   loadState.value = 'loading'
-  const url = props.card.url?.trim()
-  if (!url || !isOpenableExternalSourceUrl(url)) {
+  const url = resolveHoverPreviewLookupUrl(props.card)
+  if (!url) {
     loadState.value = 'missing'
     return
   }
