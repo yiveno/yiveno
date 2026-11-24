@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 const {
   getWorkerApiAccessTokenMock,
   getUserSettingsMock,
-  readDevClueLlmConfigMock,
   setClueLlmCompleterMock,
   setClueLlmCompleterDetailedMock,
   createHostedMock,
@@ -13,7 +12,6 @@ const {
 } = vi.hoisted(() => ({
   getWorkerApiAccessTokenMock: vi.fn(),
   getUserSettingsMock: vi.fn(),
-  readDevClueLlmConfigMock: vi.fn(),
   setClueLlmCompleterMock: vi.fn(),
   setClueLlmCompleterDetailedMock: vi.fn(),
   createHostedMock: vi.fn(() => 'hosted'),
@@ -28,10 +26,6 @@ vi.mock('@/infrastructure/identity/worker-api-access-token', () => ({
 
 vi.mock('@/infrastructure/settings/user-settings-service', () => ({
   getUserSettings: getUserSettingsMock
-}))
-
-vi.mock('@/infrastructure/ai/dev-clue-llm-config', () => ({
-  readDevClueLlmConfig: readDevClueLlmConfigMock
 }))
 
 vi.mock('@/application/recall/clue-llm-completer-registry', () => ({
@@ -49,21 +43,15 @@ vi.mock('@/infrastructure/ai/clue-understand-api-client', () => ({
   createClueUnderstandApiCompleterDetailed: createClueDetailedMock
 }))
 
-vi.mock('@/core/recall/understand/parse-recall-clue-with-llm', () => ({
-  createOpenAiCompatibleCompleter: vi.fn(),
-  createOpenAiCompatibleCompleterDetailed: vi.fn()
-}))
-
 import { refreshClueLlmCompleterFromDevConfig } from '@/application/recall/refresh-clue-llm-completer'
 
 describe('refreshClueLlmCompleterFromDevConfig · device token', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     getUserSettingsMock.mockResolvedValue({ aiFeaturesEnabled: true })
-    readDevClueLlmConfigMock.mockResolvedValue(null)
   })
 
-  it('有 device token → hosted 分支', async () => {
+  it('有 device token → hosted 分支（不再读 yiveno.dev.clueLlm）', async () => {
     getWorkerApiAccessTokenMock.mockResolvedValue('ydt_' + 'h'.repeat(64))
     await refreshClueLlmCompleterFromDevConfig()
     expect(createHostedMock).toHaveBeenCalled()

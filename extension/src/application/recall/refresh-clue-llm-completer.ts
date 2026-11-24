@@ -1,6 +1,6 @@
 /**
  * 注册线索理解 LLM completer。
- * 优先级：关 AI → 空；开发直连 → 直连；已登录 → hosted（Free/Pro 配额分档）；
+ * 优先级：关 AI → 空；已登录 → hosted（Free/Pro 配额分档）；
  * 开发构建未登录 → clue IP 配额代理；正式未登录 → 规则。
  */
 
@@ -16,14 +16,9 @@ import {
   createHostedClueUnderstandApiCompleter,
   createHostedClueUnderstandApiCompleterDetailed
 } from '@/infrastructure/ai/hosted-clue-understand-api-client'
-import { readDevClueLlmConfig } from '@/infrastructure/ai/dev-clue-llm-config'
 import { getWorkerApiAccessToken } from '@/infrastructure/identity/worker-api-access-token'
 import { getUserSettings } from '@/infrastructure/settings/user-settings-service'
 import { logger } from '@/infrastructure/logging/logger'
-import {
-  createOpenAiCompatibleCompleter,
-  createOpenAiCompatibleCompleterDetailed
-} from '@/core/recall/understand/parse-recall-clue-with-llm'
 
 /** 启动时 / AI 开关 / 订阅刷新后挂载线索 LLM。 */
 export async function refreshClueLlmCompleterFromDevConfig(): Promise<void> {
@@ -32,24 +27,6 @@ export async function refreshClueLlmCompleterFromDevConfig(): Promise<void> {
     setClueLlmCompleter(null)
     setClueLlmCompleterDetailed(null)
     logger.info('ClueLlm', '用户已关闭 AI 功能，线索理解降级为规则')
-    return
-  }
-
-  const config = await readDevClueLlmConfig()
-  if (config) {
-    const shared = {
-      apiKey: config.apiKey,
-      baseUrl: config.baseUrl ?? 'https://api.deepseek.com',
-      model: config.model ?? 'deepseek-chat',
-      temperature: 0,
-      maxTokens: 400,
-      disableThinking: true
-    }
-    setClueLlmCompleter(createOpenAiCompatibleCompleter(shared))
-    setClueLlmCompleterDetailed(createOpenAiCompatibleCompleterDetailed(shared))
-    logger.info('ClueLlm', '已启用开发用直连线索理解 LLM（绕过 Cloudflare）', {
-      model: config.model ?? 'deepseek-chat'
-    })
     return
   }
 

@@ -1,5 +1,6 @@
 import { describe, expect, test, mock, afterEach } from 'bun:test'
 
+import { createApp } from '../app'
 import type { Env } from '../types/env'
 import { parseGsClueSamplesText } from '../services/ai/gs-clue-samples-proposal'
 
@@ -12,6 +13,8 @@ function createKvMock(initial: Record<string, string> = {}) {
     }
   }
 }
+
+const TEST_USER_ID = '11111111-1111-1111-1111-111111111111'
 
 function createBaseEnv(overrides: Record<string, unknown> = {}): Env {
   return {
@@ -64,7 +67,8 @@ describe('POST /api/ai/gs-clue-samples/complete', () => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({ bookmark: { url: 'https://example.com' } })
       }),
-      createBaseEnv()
+      createBaseEnv(),
+      TEST_USER_ID
     )
     expect(response.status).toBe(400)
     const payload = (await response.json()) as { error?: string }
@@ -103,7 +107,8 @@ describe('POST /api/ai/gs-clue-samples/complete', () => {
             }
           })
         }),
-        createBaseEnv()
+        createBaseEnv(),
+        TEST_USER_ID
       )
 
       expect(response.status).toBe(200)
@@ -151,7 +156,8 @@ describe('POST /api/ai/gs-clue-samples/complete', () => {
             }
           })
         }),
-        createBaseEnv({ AI_HOSTED_MODEL_GS_SAMPLES: 'deepseek-chat' })
+        createBaseEnv({ AI_HOSTED_MODEL_GS_SAMPLES: 'deepseek-chat' }),
+        TEST_USER_ID
       )
       expect(response.status).toBe(200)
       const firstFetchCall = fetchMock.mock.calls[0] as Parameters<typeof fetch> | undefined
@@ -194,7 +200,8 @@ describe('POST /api/ai/gs-clue-samples/complete', () => {
             }
           })
         }),
-        createBaseEnv()
+        createBaseEnv(),
+        TEST_USER_ID
       )
       expect(response.status).toBe(200)
       const firstFetchCall = fetchMock.mock.calls[0] as Parameters<typeof fetch> | undefined
@@ -203,5 +210,73 @@ describe('POST /api/ai/gs-clue-samples/complete', () => {
     } finally {
       globalThis.fetch = originalFetch
     }
+  })
+
+  test('无 Authorization → 401', async () => {
+    const app = createApp()
+    const response = await app.request(
+      '/api/ai/gs-clue-samples/complete',
+      {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          bookmark: { title: 'Why AI Agents Need Long-Term Memory' }
+        })
+      },
+      createBaseEnv()
+    )
+    expect(response.status).toBe(401)
+  })
+
+  test('用户日配额超限 → 429', async () => {
+    const { handleGsClueSamplesComplete } = await import('../handlers/ai-gs-clue-samples')
+    const day = new Date().toISOString().slice(0, 10)
+    const response = await handleGsClueSamplesComplete(
+      new Request('http://localhost/api/ai/gs-clue-samples/complete', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          bookmark: { title: 'Why AI Agents Need Long-Term Memory' }
+        })
+      }),
+      createBaseEnv({
+        AI_GS_CLUE_SAMPLES_DAILY_LIMIT: '1',
+        AI_USAGE_KV: createKvMock({
+          [`gs_clue_samples_ai:user:${TEST_USER_ID}:${day}`]: '1'
+        }) as unknown as Env['AI_USAGE_KV']
+      }),
+      TEST_USER_ID
+    )
+    expect(response.status).toBe(429)
+    const payload = (await response.json()) as { error?: string; limit?: number }
+    expect(payload.error).toBe('quota_exceeded')
+    expect(payload.limit).toBe(1)
+  })
+
+  test('IP 第二道配额超限 → 429', async () => {
+    const { handleGsClueSamplesComplete } = await import('../handlers/ai-gs-clue-samples')
+    const day = new Date().toISOString().slice(0, 10)
+    const response = await handleGsClueSamplesComplete(
+      new Request('http://localhost/api/ai/gs-clue-samples/complete', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'cf-connecting-ip': '203.0.113.9'
+        },
+        body: JSON.stringify({
+          bookmark: { title: 'Why AI Agents Need Long-Term Memory' }
+        })
+      }),
+      createBaseEnv({
+        AI_GS_CLUE_SAMPLES_DAILY_LIMIT: '2',
+        AI_USAGE_KV: createKvMock({
+          [`gs_clue_samples_ai:203.0.113.9:${day}`]: '2'
+        }) as unknown as Env['AI_USAGE_KV']
+      }),
+      TEST_USER_ID
+    )
+    expect(response.status).toBe(429)
+    const payload = (await response.json()) as { error?: string }
+    expect(payload.error).toBe('quota_exceeded')
   })
 })

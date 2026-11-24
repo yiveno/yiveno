@@ -13,6 +13,8 @@ function createKvMock(initial: Record<string, string> = {}) {
   }
 }
 
+const TEST_USER_ID = '11111111-1111-1111-1111-111111111111'
+
 function createBaseEnv(overrides: Record<string, unknown> = {}): Env {
   return {
     JWT_SECRET: 'test-secret',
@@ -41,7 +43,8 @@ describe('POST /api/ai/enrichment/complete', () => {
         headers: { 'content-type': 'application/json' },
         body: JSON.stringify({})
       }),
-      createBaseEnv()
+      createBaseEnv(),
+      TEST_USER_ID
     )
     expect(response.status).toBe(400)
     const payload = (await response.json()) as { error?: string }
@@ -87,7 +90,8 @@ describe('POST /api/ai/enrichment/complete', () => {
             ruleHints: { tags: ['video'], keywords: ['video'] }
           })
         }),
-        createBaseEnv()
+        createBaseEnv(),
+        TEST_USER_ID
       )
 
       expect(response.status).toBe(200)
@@ -134,7 +138,8 @@ describe('POST /api/ai/enrichment/complete', () => {
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ title: 'x' })
         }),
-        createBaseEnv()
+        createBaseEnv(),
+        TEST_USER_ID
       )
       expect(response.status).toBe(502)
       const payload = (await response.json()) as { error?: string }
@@ -144,18 +149,66 @@ describe('POST /api/ai/enrichment/complete', () => {
     }
   })
 
-  test('路由已挂载', async () => {
+  test('无 Authorization → 401', async () => {
     const app = createApp()
     const response = await app.request(
       '/api/ai/enrichment/complete',
       {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({})
+        body: JSON.stringify({ title: 'x' })
       },
-      createBaseEnv({ DEEPSEEK_API_KEY: '' })
+      createBaseEnv()
     )
-    expect([400, 503]).toContain(response.status)
+    expect(response.status).toBe(401)
+  })
+
+  test('用户日配额超限 → 429', async () => {
+    const { handleEnrichmentComplete } = await import('../handlers/ai-enrichment')
+    const day = new Date().toISOString().slice(0, 10)
+    const response = await handleEnrichmentComplete(
+      new Request('http://localhost/api/ai/enrichment/complete', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ title: 'quota' })
+      }),
+      createBaseEnv({
+        AI_ENRICHMENT_DAILY_LIMIT: '1',
+        AI_USAGE_KV: createKvMock({
+          [`enrich_ai:user:${TEST_USER_ID}:${day}`]: '1'
+        }) as unknown as Env['AI_USAGE_KV']
+      }),
+      TEST_USER_ID
+    )
+    expect(response.status).toBe(429)
+    const payload = (await response.json()) as { error?: string; used?: number; limit?: number }
+    expect(payload.error).toBe('quota_exceeded')
+    expect(payload.limit).toBe(1)
+  })
+
+  test('IP 第二道配额超限 → 429（用户侧数字）', async () => {
+    const { handleEnrichmentComplete } = await import('../handlers/ai-enrichment')
+    const day = new Date().toISOString().slice(0, 10)
+    const response = await handleEnrichmentComplete(
+      new Request('http://localhost/api/ai/enrichment/complete', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          'cf-connecting-ip': '203.0.113.9'
+        },
+        body: JSON.stringify({ title: 'ip quota' })
+      }),
+      createBaseEnv({
+        AI_ENRICHMENT_DAILY_LIMIT: '2',
+        AI_USAGE_KV: createKvMock({
+          [`enrich_ai:203.0.113.9:${day}`]: '2'
+        }) as unknown as Env['AI_USAGE_KV']
+      }),
+      TEST_USER_ID
+    )
+    expect(response.status).toBe(429)
+    const payload = (await response.json()) as { error?: string }
+    expect(payload.error).toBe('quota_exceeded')
   })
 
   test('AI_HOSTED_MODEL_ENRICHMENT 覆盖传入 provider.complete', async () => {
@@ -192,7 +245,8 @@ describe('POST /api/ai/enrichment/complete', () => {
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ title: 'override model' })
         }),
-        createBaseEnv({ AI_HOSTED_MODEL_ENRICHMENT: 'deepseek-chat' })
+        createBaseEnv({ AI_HOSTED_MODEL_ENRICHMENT: 'deepseek-chat' }),
+        TEST_USER_ID
       )
       expect(response.status).toBe(200)
       const firstFetchCall = fetchMock.mock.calls[0] as Parameters<typeof fetch> | undefined
@@ -237,7 +291,8 @@ describe('POST /api/ai/enrichment/complete', () => {
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ title: 'global model' })
         }),
-        createBaseEnv()
+        createBaseEnv(),
+        TEST_USER_ID
       )
       expect(response.status).toBe(200)
       const firstFetchCall = fetchMock.mock.calls[0] as Parameters<typeof fetch> | undefined

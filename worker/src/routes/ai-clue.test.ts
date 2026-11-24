@@ -141,4 +141,19 @@ describe('POST /api/ai/clue/complete', () => {
     // 无 key → 503；证明路由可达
     expect(response.status).toBe(503)
   })
+
+  test('AI_CLUE_PROXY_ENABLED=false → 403 clue_proxy_disabled', async () => {
+    const { handleClueComplete } = await import('../handlers/ai-clue')
+    const response = await handleClueComplete(
+      new Request('http://localhost/api/ai/clue/complete', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ prompt: 'hello' })
+      }),
+      createBaseEnv({ AI_CLUE_PROXY_ENABLED: 'false' })
+    )
+    expect(response.status).toBe(403)
+    const payload = (await response.json()) as { error?: string }
+    expect(payload.error).toBe('clue_proxy_disabled')
+  })
 })

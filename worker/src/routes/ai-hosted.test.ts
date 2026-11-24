@@ -1,6 +1,10 @@
 import { describe, expect, test, mock } from 'bun:test'
 import { createApp } from '../app'
 import type { Env } from '../types/env'
+import {
+  HOSTED_SYSTEM_PROMPT_PREFIXES,
+  validateHostedSystemPrompt
+} from '../services/ai/hosted-system-prompts'
 
 const TEST_USER_ID = '11111111-1111-1111-1111-111111111111'
 
@@ -35,6 +39,49 @@ async function importHostedHandlersAsPro() {
   return import('../handlers/ai-hosted')
 }
 
+/** 构造可通过指纹校验的最小合法 [system, user]（锚行来自 hosted-system-prompts）。 */
+function validMessages(
+  kind: 'nlu' | 'framing_nlg' | 'follow_up_nlg' | 'narrow_polish',
+  userContent = 'find that note'
+): Array<{ role: 'system' | 'user'; content: string }> {
+  let system: string
+  switch (kind) {
+    case 'nlu':
+      system = [
+        HOSTED_SYSTEM_PROMPT_PREFIXES.nluParse,
+        'Output ONLY one JSON object. No markdown, no commentary.',
+        '- Do not invent memory ids or database operations. JSON proposal only.'
+      ].join('\n')
+      break
+    case 'framing_nlg':
+      system = [
+        HOSTED_SYSTEM_PROMPT_PREFIXES.framing_nlg,
+        'Return ONLY JSON:',
+        '- empty array for top_pick. label matches reply language; value MUST be stable English phrases.'
+      ].join('\n')
+      break
+    case 'follow_up_nlg':
+      system = [
+        HOSTED_SYSTEM_PROMPT_PREFIXES.follow_up_nlg,
+        'Return ONLY a JSON object:',
+        '- Never invent memory items, titles, URLs, or facts not in weakCandidateTitles / context.'
+      ].join('\n')
+      break
+    case 'narrow_polish':
+      system = [
+        HOSTED_SYSTEM_PROMPT_PREFIXES.narrow_polish,
+        'Return ONLY a JSON object:',
+        '- Forbidden: inventing new words, synonyms, themes, extra tokens, or swapping to a different selected word.'
+      ].join('\n')
+      break
+  }
+  expect(validateHostedSystemPrompt(kind, system)).toBe(true)
+  return [
+    { role: 'system', content: system },
+    { role: 'user', content: userContent }
+  ]
+}
+
 describe('hosted ai routes', () => {
   test('GET /api/ai/hosted/quota rejects missing authorization', async () => {
     const app = createApp()
@@ -43,7 +90,25 @@ describe('hosted ai routes', () => {
     expect(response.status).toBe(401)
   })
 
-  test('handleHostedComplete rejects missing prompt', async () => {
+  test('handleHostedComplete rejects bare prompt → missing_messages', async () => {
+    const { handleHostedComplete } = await importHostedHandlersAsPro()
+
+    const response = await handleHostedComplete(
+      new Request('http://localhost/api/ai/hosted/complete', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ prompt: '整理书签' })
+      }),
+      createBaseEnv(),
+      TEST_USER_ID
+    )
+
+    expect(response.status).toBe(400)
+    const data = (await response.json()) as { error: string }
+    expect(data.error).toBe('missing_messages')
+  })
+
+  test('handleHostedComplete rejects empty body → missing_messages', async () => {
     const { handleHostedComplete } = await importHostedHandlersAsPro()
 
     const response = await handleHostedComplete(
@@ -58,7 +123,68 @@ describe('hosted ai routes', () => {
 
     expect(response.status).toBe(400)
     const data = (await response.json()) as { error: string }
-    expect(data.error).toBe('missing_prompt')
+    expect(data.error).toBe('missing_messages')
+  })
+
+  test('handleHostedComplete rejects assistant role → invalid_messages', async () => {
+    const { handleHostedComplete } = await importHostedHandlersAsPro()
+    const response = await handleHostedComplete(
+      new Request('http://localhost/api/ai/hosted/complete', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: HOSTED_SYSTEM_PROMPT_PREFIXES.nluParse },
+            { role: 'assistant', content: 'hi' }
+          ]
+        })
+      }),
+      createBaseEnv(),
+      TEST_USER_ID
+    )
+    expect(response.status).toBe(400)
+    const data = (await response.json()) as { error: string }
+    expect(data.error).toBe('invalid_messages')
+  })
+
+  test('handleHostedComplete rejects unknown system → invalid_system_prompt', async () => {
+    const { handleHostedComplete } = await importHostedHandlersAsPro()
+    const response = await handleHostedComplete(
+      new Request('http://localhost/api/ai/hosted/complete', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          messages: [
+            { role: 'system', content: 'you are a helpful assistant' },
+            { role: 'user', content: 'hi' }
+          ]
+        })
+      }),
+      createBaseEnv(),
+      TEST_USER_ID
+    )
+    expect(response.status).toBe(400)
+    const data = (await response.json()) as { error: string }
+    expect(data.error).toBe('invalid_system_prompt')
+  })
+
+  test('handleHostedComplete rejects non-hosted taskKind → invalid_task_kind', async () => {
+    const { handleHostedComplete } = await importHostedHandlersAsPro()
+    const response = await handleHostedComplete(
+      new Request('http://localhost/api/ai/hosted/complete', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          taskKind: 'enrichment',
+          messages: validMessages('nlu')
+        })
+      }),
+      createBaseEnv(),
+      TEST_USER_ID
+    )
+    expect(response.status).toBe(400)
+    const data = (await response.json()) as { error: string }
+    expect(data.error).toBe('invalid_task_kind')
   })
 
   test('handleHostedComplete returns daily_cap_exceeded when day limit reached', async () => {
@@ -69,7 +195,7 @@ describe('hosted ai routes', () => {
       new Request('http://localhost/api/ai/hosted/complete', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ prompt: '整理书签' })
+        body: JSON.stringify({ messages: validMessages('nlu') })
       }),
       createBaseEnv({
         AI_HOSTED_DAILY_CAP: '1',
@@ -92,7 +218,7 @@ describe('hosted ai routes', () => {
       new Request('http://localhost/api/ai/hosted/complete', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ prompt: '整理书签' })
+        body: JSON.stringify({ messages: validMessages('nlu') })
       }),
       createBaseEnv({
         AI_HOSTED_MONTHLY_QUOTA: '1',
@@ -130,7 +256,7 @@ describe('hosted ai routes', () => {
         new Request('http://localhost/api/ai/hosted/complete', {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({ prompt: '整理书签', maxTokens: 128 })
+          body: JSON.stringify({ messages: validMessages('nlu'), maxTokens: 128 })
         }),
         createBaseEnv({
           AI_USAGE_KV: kv as unknown as Env['AI_USAGE_KV']
@@ -194,7 +320,7 @@ describe('hosted ai routes', () => {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
-            prompt: 'polish',
+            messages: validMessages('framing_nlg', 'polish'),
             taskKind: 'framing_nlg',
             maxTokens: 64
           })
@@ -216,7 +342,6 @@ describe('hosted ai routes', () => {
         max_tokens?: number
       }
       expect(requestBody.model).toBe('deepseek-chat')
-      // 客户端传 64 < framing cap 256 → 保留 64
       expect(requestBody.max_tokens).toBe(64)
     } finally {
       globalThis.fetch = originalFetch
@@ -245,7 +370,7 @@ describe('hosted ai routes', () => {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
-            prompt: 'polish',
+            messages: validMessages('narrow_polish', 'polish'),
             taskKind: 'narrow_polish',
             maxTokens: 400
           })
@@ -299,7 +424,7 @@ describe('hosted ai routes', () => {
     expect(data.dailyLimit).toBe(10)
   })
 
-  test('handleHostedComplete accepts messages without prompt', async () => {
+  test('handleHostedComplete accepts valid parse messages（缺省 taskKind=nlu）', async () => {
     const { handleHostedComplete } = await importHostedHandlersAsPro()
     const originalFetch = globalThis.fetch
     const fetchMock = mock(
@@ -320,10 +445,7 @@ describe('hosted ai routes', () => {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
-            messages: [
-              { role: 'system', content: 'sys' },
-              { role: 'user', content: 'find that note' }
-            ]
+            messages: validMessages('nlu')
           })
         }),
         createBaseEnv(),
@@ -331,8 +453,9 @@ describe('hosted ai routes', () => {
       )
 
       expect(response.status).toBe(200)
-      const data = (await response.json()) as { text: string; provider: string }
+      const data = (await response.json()) as { text: string; provider: string; taskKind: string }
       expect(data.provider).toBe('hosted')
+      expect(data.taskKind).toBe('nlu')
       expect(data.text).toContain('intent')
     } finally {
       globalThis.fetch = originalFetch

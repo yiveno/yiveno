@@ -2,9 +2,9 @@
  * AI 路由
  *
  * - `/clue/complete`：开发/未登录降级路径（IP 日配额；正式 Pro 走 hosted）
- * - `/enrichment/complete`：Capture enrichment 结构化提议（扩展 merge 后写库）
- * - `/gs-clue-samples/complete`：Getting Started 示意 clue（一次 4 条；IP 日配额）
- * - `/hosted/*`：托管口语 LLM（双栈 Bearer + 月/终身配额）
+ * - `/enrichment/complete`：Capture enrichment（双栈 Bearer；用户+IP 日配额）
+ * - `/gs-clue-samples/complete`：Getting Started 示意 clue（双栈 Bearer 含匿名；用户+IP 日配额）
+ * - `/hosted/*`：托管口语 LLM（双栈 Bearer + 月/终身配额；[system,user] + system 指纹）
  * - `/dreaming/complete`：夜间命题批量编译（双栈 Bearer；匿名 403）
  */
 
@@ -47,18 +47,22 @@ aiRouter.post('/clue/complete', async c => {
  * POST /api/ai/enrichment/complete
  *
  * Capture enrichment 结构化提议（返回 proposal；扩展 Zod/merge 后写 IndexedDB）。
+ * 双栈 Bearer；用户日配额 + IP 日配额双道。
  */
-aiRouter.post('/enrichment/complete', async c => {
-  return handleEnrichmentComplete(c.req.raw, c.env)
+aiRouter.post('/enrichment/complete', deviceAuthOrSupabaseAuth(), async c => {
+  const userId = c.get('supabaseUserId')
+  return handleEnrichmentComplete(c.req.raw, c.env, userId, readIsAnonymous(c))
 })
 
 /**
  * POST /api/ai/gs-clue-samples/complete
  *
  * Getting Started：一次生成 4 条口语示意 clue（返回 JSON；扩展缓存后展示）。
+ * 双栈 Bearer（含匿名）；用户日配额 + IP 日配额双道。
  */
-aiRouter.post('/gs-clue-samples/complete', async c => {
-  return handleGsClueSamplesComplete(c.req.raw, c.env)
+aiRouter.post('/gs-clue-samples/complete', deviceAuthOrSupabaseAuth(), async c => {
+  const userId = c.get('supabaseUserId')
+  return handleGsClueSamplesComplete(c.req.raw, c.env, userId, readIsAnonymous(c))
 })
 
 /**
@@ -84,7 +88,7 @@ aiRouter.get('/hosted/quota', deviceAuthOrSupabaseAuth(), async c => {
 /**
  * POST /api/ai/hosted/complete
  *
- * 托管 LLM 文本补全（支持 prompt 或 messages）
+ * 托管 LLM 文本补全（须 [system, user]；taskKind 闭集 nlu/framing_nlg/follow_up_nlg/narrow_polish）
  */
 aiRouter.post('/hosted/complete', deviceAuthOrSupabaseAuth(), async c => {
   const userId = c.get('supabaseUserId')

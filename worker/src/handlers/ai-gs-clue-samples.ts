@@ -1,7 +1,7 @@
 /**
  * Getting Started 示意 clue：扩展侧调用的结构化生成代理（key 仅在 Worker）。
- * IP 日配额；未登录可用；与 enrichment 同档心智。
- * 配额仅在成功 parse 后扣减，避免模型垃圾 JSON 白烧额度。
+ * 鉴权后按 userId 计日配额；IP 日配额保留为第二道；匿名设备 token 放行。
+ * 配额仅在成功 parse 后扣减（peek-then-commit），避免模型垃圾 JSON 白烧额度。
  */
 
 import type { Env } from '../types/env'
@@ -39,21 +39,22 @@ function resolveDailyLimit(env: Env): number {
   return Number.isFinite(limit) && limit > 0 ? limit : DEFAULT_DAILY_LIMIT
 }
 
+type QuotaPeekOk = { allowed: true; used: number; limit: number }
+type QuotaPeekDenied = {
+  allowed: false
+  used: number
+  limit: number
+  reason: 'quota_exceeded' | 'kv_not_configured'
+}
+
 /** 只读探额：超限则拒绝；不写 KV。 */
-async function peekGsClueSamplesDailyQuota(
-  env: Env,
-  ip: string
-): Promise<
-  | { allowed: true; used: number; limit: number }
-  | { allowed: false; used: number; limit: number; reason: 'quota_exceeded' | 'kv_not_configured' }
-> {
+async function peekGsDailyQuota(env: Env, key: string): Promise<QuotaPeekOk | QuotaPeekDenied> {
   const dailyLimit = resolveDailyLimit(env)
   const kv = env.AI_USAGE_KV
   if (!kv) {
     return { allowed: false, used: 0, limit: dailyLimit, reason: 'kv_not_configured' }
   }
 
-  const key = `gs_clue_samples_ai:${ip}:${utcDayKey()}`
   const raw = await kv.get(key)
   const used = raw ? Number.parseInt(raw, 10) || 0 : 0
   if (used >= dailyLimit) {
@@ -63,16 +64,15 @@ async function peekGsClueSamplesDailyQuota(
 }
 
 /** 成功生成后再扣 1 次。 */
-async function commitGsClueSamplesDailyQuota(
+async function commitGsDailyQuota(
   env: Env,
-  ip: string,
+  key: string,
   peeked: { used: number; limit: number }
 ): Promise<{ used: number; limit: number }> {
   const kv = env.AI_USAGE_KV
   if (!kv) {
     return peeked
   }
-  const key = `gs_clue_samples_ai:${ip}:${utcDayKey()}`
   const nextUsed = peeked.used + 1
   await kv.put(key, String(nextUsed), { expirationTtl: 60 * 60 * 48 })
   return { used: nextUsed, limit: peeked.limit }
@@ -80,8 +80,14 @@ async function commitGsClueSamplesDailyQuota(
 
 /**
  * POST /api/ai/gs-clue-samples/complete
+ * @param isAnonymous 设备 token 路径读自 user_meta；匿名同样放行（GS 登录前会跑）
  */
-export async function handleGsClueSamplesComplete(request: Request, env: Env): Promise<Response> {
+export async function handleGsClueSamplesComplete(
+  request: Request,
+  env: Env,
+  userId: string,
+  _isAnonymous = false
+): Promise<Response> {
   const origin = request.headers.get('origin')
   const startedAt = Date.now()
   const ip = clientIp(request)
@@ -93,6 +99,7 @@ export async function handleGsClueSamplesComplete(request: Request, env: Env): P
     const message = err instanceof Error ? err.message : String(err)
     logInfo('gs_clue_samples_rejected', {
       reason: 'ai_provider_unsupported',
+      userId,
       ip,
       detail: message
     })
@@ -102,6 +109,7 @@ export async function handleGsClueSamplesComplete(request: Request, env: Env): P
   if (!isAiChatProviderConfigured(env)) {
     logInfo('gs_clue_samples_rejected', {
       reason: 'ai_provider_not_configured',
+      userId,
       ip,
       providerId
     })
@@ -109,21 +117,30 @@ export async function handleGsClueSamplesComplete(request: Request, env: Env): P
   }
 
   if (env.AI_GS_CLUE_SAMPLES_PROXY_ENABLED?.trim() === 'false') {
-    logInfo('gs_clue_samples_rejected', { reason: 'gs_clue_samples_proxy_disabled', ip })
+    logInfo('gs_clue_samples_rejected', {
+      reason: 'gs_clue_samples_proxy_disabled',
+      userId,
+      ip
+    })
     return errorJson({ error: 'gs_clue_samples_proxy_disabled' }, 403, origin)
   }
 
   const json = request.method === 'POST' ? await request.json().catch(() => null) : null
   const bodyParsed = GsClueSamplesCompleteRequestSchema.safeParse(json ?? {})
   if (!bodyParsed.success) {
-    logInfo('gs_clue_samples_rejected', { reason: 'invalid_body', ip })
+    logInfo('gs_clue_samples_rejected', { reason: 'invalid_body', userId, ip })
     return errorJson({ error: 'invalid_body' }, 400, origin)
   }
 
   const { bookmark } = bodyParsed.data
   const model = resolveHostedModelForTask(env, 'gs_samples')
   const viaAiGateway = isDeepSeekAiGatewayEnabled(env)
+  const day = utcDayKey()
+  const userKey = `gs_clue_samples_ai:user:${userId}:${day}`
+  const ipKey = `gs_clue_samples_ai:${ip}:${day}`
+
   logInfo('gs_clue_samples_start', {
+    userId,
     ip,
     providerId,
     model,
@@ -133,22 +150,48 @@ export async function handleGsClueSamplesComplete(request: Request, env: Env): P
     viaAiGateway
   })
 
-  const peek = await peekGsClueSamplesDailyQuota(env, ip)
-  if (!peek.allowed) {
-    if (peek.reason === 'kv_not_configured') {
-      logInfo('gs_clue_samples_rejected', { reason: 'kv_not_configured', ip })
+  const userPeek = await peekGsDailyQuota(env, userKey)
+  if (!userPeek.allowed) {
+    if (userPeek.reason === 'kv_not_configured') {
+      logInfo('gs_clue_samples_rejected', { reason: 'kv_not_configured', userId, ip })
       return errorJson({ error: 'kv_not_configured' }, 503, origin)
     }
     logInfo('gs_clue_samples_quota_exceeded', {
+      userId,
       ip,
-      used: peek.used,
-      limit: peek.limit
+      scope: 'user',
+      used: userPeek.used,
+      limit: userPeek.limit
     })
     return errorJson(
       {
         error: 'quota_exceeded',
-        used: peek.used,
-        limit: peek.limit
+        used: userPeek.used,
+        limit: userPeek.limit
+      },
+      429,
+      origin
+    )
+  }
+
+  const ipPeek = await peekGsDailyQuota(env, ipKey)
+  if (!ipPeek.allowed) {
+    if (ipPeek.reason === 'kv_not_configured') {
+      logInfo('gs_clue_samples_rejected', { reason: 'kv_not_configured', userId, ip })
+      return errorJson({ error: 'kv_not_configured' }, 503, origin)
+    }
+    logInfo('gs_clue_samples_quota_exceeded', {
+      userId,
+      ip,
+      scope: 'ip',
+      used: ipPeek.used,
+      limit: ipPeek.limit
+    })
+    return errorJson(
+      {
+        error: 'quota_exceeded',
+        used: userPeek.used,
+        limit: userPeek.limit
       },
       429,
       origin
@@ -172,25 +215,29 @@ export async function handleGsClueSamplesComplete(request: Request, env: Env): P
     const samples = parseGsClueSamplesText(result.text)
     if (!samples) {
       logInfo('gs_clue_samples_parse_failed', {
+        userId,
         ip,
         providerId,
-        textPreview: result.text.slice(0, 160),
+        textLength: result.text.length,
         durationMs: Date.now() - startedAt
       })
       return errorJson({ error: 'gs_clue_samples_parse_failed' }, 502, origin)
     }
 
-    const quota = await commitGsClueSamplesDailyQuota(env, ip, peek)
+    // 两道配额都按 peek-then-commit 扣费
+    const userQuota = await commitGsDailyQuota(env, userKey, userPeek)
+    await commitGsDailyQuota(env, ipKey, ipPeek)
 
     logInfo('gs_clue_samples_ok', {
+      userId,
       ip,
       durationMs: Date.now() - startedAt,
       providerId: result.providerId,
       model: result.model || resolveHostedModel(env),
       tokensUsed: result.tokensUsed,
       clueCount: samples.clues.length,
-      quotaUsed: quota.used,
-      quotaLimit: quota.limit,
+      quotaUsed: userQuota.used,
+      quotaLimit: userQuota.limit,
       viaAiGateway
     })
 
@@ -202,9 +249,9 @@ export async function handleGsClueSamplesComplete(request: Request, env: Env): P
         model: result.model || resolveHostedModel(env),
         tokensUsed: result.tokensUsed,
         quota: {
-          used: quota.used,
-          limit: quota.limit,
-          remaining: Math.max(0, quota.limit - quota.used)
+          used: userQuota.used,
+          limit: userQuota.limit,
+          remaining: Math.max(0, userQuota.limit - userQuota.used)
         }
       },
       origin
@@ -213,6 +260,7 @@ export async function handleGsClueSamplesComplete(request: Request, env: Env): P
     const message = err instanceof Error ? err.message : String(err)
     logError(err, {
       path: '/api/ai/gs-clue-samples/complete',
+      userId,
       ip,
       durationMs: Date.now() - startedAt,
       providerId,

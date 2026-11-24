@@ -1,6 +1,7 @@
 /**
  * Capture enrichment：经 Cloudflare Worker 拉取结构化提议（扩展不持有 API Key）。
  * 调用方负责 mergeMemoryClueEnrichment 后写 IndexedDB；本模块不落库。
+ * 须 Bearer（device token / 迁移窗 access）；无 token → enrichment_missing_auth，调用方降级规则-only。
  */
 
 import {
@@ -9,6 +10,7 @@ import {
 } from '@/core/memory/memory-enrichment-proposal'
 import type { MemoryClueEnrichment } from '@/core/memory/enrich-memory-clues'
 import { resolveApiBaseUrl } from '@/infrastructure/ai/clue-understand-api-client'
+import { getWorkerApiAccessToken } from '@/infrastructure/identity/worker-api-access-token'
 import { logger } from '@/infrastructure/logging/logger'
 
 export type MemoryEnrichmentCompleteInput = {
@@ -42,6 +44,11 @@ export async function requestMemoryEnrichmentProposal(
   input: MemoryEnrichmentCompleteInput,
   apiBaseUrl: string = resolveApiBaseUrl()
 ): Promise<MemoryEnrichmentCompleteResult> {
+  const accessToken = await getWorkerApiAccessToken()
+  if (!accessToken) {
+    throw new Error('enrichment_missing_auth')
+  }
+
   const base = apiBaseUrl.replace(/\/$/, '')
   const url = `${base}/api/ai/enrichment/complete`
 
@@ -56,7 +63,10 @@ export async function requestMemoryEnrichmentProposal(
   try {
     response = await fetch(url, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${accessToken}`
+      },
       body: JSON.stringify(input)
     })
   } catch (error) {

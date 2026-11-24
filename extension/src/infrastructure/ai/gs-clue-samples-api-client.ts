@@ -1,8 +1,10 @@
 /**
  * Getting Started 示意 clue：经 Cloudflare Worker 一次生成 4 条口语线索。
+ * 须 Bearer（含匿名 device token）；无 token → gs_missing_auth，调用方回退模板。
  */
 
 import { resolveApiBaseUrl } from '@/infrastructure/ai/clue-understand-api-client'
+import { getWorkerApiAccessToken } from '@/infrastructure/identity/worker-api-access-token'
 import { logger } from '@/infrastructure/logging/logger'
 import type { GsClueSampleSource } from '@/core/onboarding/gs-clue-samples'
 
@@ -43,6 +45,11 @@ export async function requestGettingStartedClueSamples(
   bookmark: Pick<GsClueSampleSource, 'title' | 'url' | 'description'>,
   apiBaseUrl: string = resolveApiBaseUrl()
 ): Promise<OnboardingCompleteResult> {
+  const accessToken = await getWorkerApiAccessToken()
+  if (!accessToken) {
+    throw new Error('gs_missing_auth')
+  }
+
   const base = apiBaseUrl.replace(/\/$/, '')
   const url = `${base}/api/ai/gs-clue-samples/complete`
 
@@ -58,7 +65,10 @@ export async function requestGettingStartedClueSamples(
   try {
     response = await fetch(url, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: {
+        'content-type': 'application/json',
+        authorization: `Bearer ${accessToken}`
+      },
       body: JSON.stringify({
         bookmark: {
           title: bookmark.title,

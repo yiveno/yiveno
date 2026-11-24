@@ -1,8 +1,20 @@
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+
+const { getWorkerApiAccessTokenMock } = vi.hoisted(() => ({
+  getWorkerApiAccessTokenMock: vi.fn()
+}))
+
+vi.mock('@/infrastructure/identity/worker-api-access-token', () => ({
+  getWorkerApiAccessToken: getWorkerApiAccessTokenMock
+}))
 
 import { buildMergedMemoryEnrichment } from '@/application/memory/build-merged-memory-enrichment'
 
 describe('buildMergedMemoryEnrichment', () => {
+  beforeEach(() => {
+    getWorkerApiAccessTokenMock.mockResolvedValue('ydt_test_token')
+  })
+
   afterEach(() => {
     vi.unstubAllGlobals()
     vi.restoreAllMocks()
@@ -103,5 +115,22 @@ describe('buildMergedMemoryEnrichment', () => {
     })
     expect(result.path).toBe('quota_exceeded')
     expect(result.proposal).toBeNull()
+  })
+
+  it('无 auth token → llm_failed_degraded（enrichment_missing_auth）', async () => {
+    getWorkerApiAccessTokenMock.mockResolvedValue(null)
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+
+    const result = await buildMergedMemoryEnrichment({
+      source: {
+        title: 'No token case',
+        url: 'https://example.com/b',
+        domain: 'example.com'
+      },
+      requestLlmProposal: true
+    })
+    expect(result.path).toBe('llm_failed_degraded')
+    expect(fetchMock).not.toHaveBeenCalled()
   })
 })
