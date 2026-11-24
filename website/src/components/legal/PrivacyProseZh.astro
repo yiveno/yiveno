@@ -49,7 +49,16 @@ const contactEmail = 'privacy@yiveno.com'
   </p>
   <h3>2.4 AI / 语言能力</h3>
   <p>
-    部分功能（例如理解你输入的线索）可能经我们的服务器向模型提供商发送有限请求。模型不会直接创建、修改或删除你存下的内容。我们不会默认把你的整库发给模型。
+    部分功能使用 AI 语言模型。当你使用这些功能时，相关内容会经我们的 Worker 与 Cloudflare AI Gateway
+    发给 <strong>DeepSeek</strong> 处理。范围包括：理解线索、提议标签 / 关键词 /
+    摘要（内容提炼）、Getting Started
+    示意线索，以及夜间命题编译（Dreaming）。发送内容按功能而定：理解线索时发送线索文本；内容提炼时发送标题、摘录与附注；Getting
+    Started 样本发送书签标题与链接（不含网页正文）；Dreaming 编译发送摘录原文。DeepSeek 在
+    <strong>中华人民共和国</strong>境内处理与存储这些数据。按 DeepSeek 隐私政策（2026-02-10
+    版），输入默认可用于训练与改进技术；Yiveno 正在向 DeepSeek 申请将本账号的 API
+    流量排除在训练之外。在本链路中，Yiveno 是终端用户数据的<strong>数据控制者</strong>
+    （controller）；DeepSeek
+    的隐私政策不覆盖基于其平台开发的下游应用的终端用户。模型不会直接创建、修改或删除你存下的内容。我们不会默认把你的整库发给模型。
   </p>
   <h3>2.4a 语音听写（可选）</h3>
   <p>
@@ -135,7 +144,8 @@ const contactEmail = 'privacy@yiveno.com'
       <strong>Google / Microsoft</strong> — 若你选择其 OAuth 登录
     </li>
     <li>
-      <strong>模型提供商</strong> — 仅当你使用的 AI 功能经我们的 Worker 路由时
+      <strong>DeepSeek</strong> — 你使用的 AI 功能的语言模型处理（经我们的 Worker 与 Cloudflare AI
+      Gateway 路由）；处理地：中国
     </li>
     <li>
       <strong>支付提供商</strong>（Dodo Payments）— 若你购买订阅
@@ -213,8 +223,10 @@ const contactEmail = 'privacy@yiveno.com'
   <h2>9. 国际用户</h2>
   <p>
     运营方位于中国杭州。账号数据以及（开启同步时）云 Memory 由 Supabase 存放在<strong>美国</strong>
-    （主库：<strong>美国东部 / 俄亥俄，us-east-2</strong>）。其他处理方（例如 Cloudflare Workers、AI
-    模型提供商，以及你购买方案时的支付提供商）可能在美国及其运营所在地处理数据。若你开启云同步或登录，即理解你的账号与同步数据可能存放在居住国以外。
+    （主库：<strong>美国东部 / 俄亥俄，us-east-2</strong>）。当你使用 AI 功能时，相关内容由 DeepSeek
+    在<strong>中华人民共和国</strong>境内处理（见 §2.4）。其他处理方（例如 Cloudflare
+    Workers，以及你购买方案时的支付提供商）可能在美国及其运营所在地处理数据。若你开启云同步、登录或使用
+    AI 功能，即理解你的账号、同步数据以及与 AI 相关的载荷可能存放或处理于居住国以外。
   </p>
 
   <h2>10. 变更</h2>

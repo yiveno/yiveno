@@ -23,7 +23,7 @@ function createBaseEnv(overrides: Record<string, unknown> = {}): Env {
     SUPABASE_SERVICE_ROLE_KEY: 'service-role-key',
     WEBSITE_URL: 'https://example.com',
     DEEPSEEK_API_KEY: 'deepseek-test-key',
-    AI_HOSTED_MODEL: 'deepseek-v4-flash',
+    AI_HOSTED_MODEL: 'deepseek-flash',
     AI_HOSTED_MONTHLY_QUOTA: '999',
     AI_USAGE_KV: createKvMock() as Env['AI_USAGE_KV'],
     ...overrides
@@ -297,7 +297,7 @@ describe('POST /api/ai/enrichment/complete', () => {
       expect(response.status).toBe(200)
       const firstFetchCall = fetchMock.mock.calls[0] as Parameters<typeof fetch> | undefined
       const requestBody = JSON.parse(String(firstFetchCall?.[1]?.body)) as { model?: string }
-      expect(requestBody.model).toBe('deepseek-v4-flash')
+      expect(requestBody.model).toBe('deepseek-flash')
     } finally {
       globalThis.fetch = originalFetch
     }

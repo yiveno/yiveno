@@ -4,7 +4,7 @@ import type { Env } from '../../types/env'
 function createEnv(overrides: Record<string, unknown> = {}): Env {
   return {
     DEEPSEEK_API_KEY: 'deepseek-test-key',
-    AI_HOSTED_MODEL: 'deepseek-v4-flash',
+    AI_HOSTED_MODEL: 'deepseek-flash',
     ...overrides
   } as unknown as Env
 }
@@ -33,7 +33,7 @@ describe('completeWithDeepSeek', () => {
       const result = await completeWithDeepSeek(createEnv(), 'hello', { maxTokens: 64 })
 
       expect(result.text).toBe('{"ok":true}')
-      expect(result.model).toBe('deepseek-v4-flash')
+      expect(result.model).toBe('deepseek-flash')
       expect(fetchMock).toHaveBeenCalled()
     } finally {
       globalThis.fetch = originalFetch

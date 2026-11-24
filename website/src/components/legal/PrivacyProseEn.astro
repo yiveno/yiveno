@@ -57,9 +57,19 @@ const contactEmail = 'privacy@yiveno.com'
   </p>
   <h3>2.4 AI / language features</h3>
   <p>
-    Some features (for example understanding what you typed) may send limited requests through our
-    servers to a model provider. The model does not directly create, change, or delete what you
-    saved. We do not default to sending your entire library to a model.
+    Some features use AI language models. When you use them, related content is sent through our
+    Worker and Cloudflare AI Gateway to <strong>DeepSeek</strong> for processing. That includes
+    understanding clues, proposing tags / keywords / summaries (enrichment), Getting Started sample
+    clues, and nighttime proposition compilation (Dreaming). What we send depends on the feature:
+    clue text for understanding; title, excerpt, and note for enrichment; bookmark titles and URLs
+    for Getting Started samples (no page body); and excerpt text for Dreaming compilation. DeepSeek
+    processes and stores this data in the <strong>People’s Republic of China</strong>. Under
+    DeepSeek’s privacy policy (dated 2026-02-10), inputs may by default be used to train and improve
+    their technology; Yiveno is requesting that DeepSeek exclude API traffic from this account from
+    training. Yiveno is the data <strong>controller</strong> for end-user data on this path;
+    DeepSeek’s privacy policy does not cover end users of downstream applications built on their
+    platform. The model does not directly create, change, or delete what you saved. We do not
+    default to sending your entire library to a model.
   </p>
   <h3>2.4a Voice dictation (optional)</h3>
   <p>
@@ -164,8 +174,8 @@ const contactEmail = 'privacy@yiveno.com'
       <strong>Google / Microsoft</strong> — if you choose their OAuth sign-in
     </li>
     <li>
-      <strong>Model providers</strong> — only when an AI feature you use is routed through our
-      Worker
+      <strong>DeepSeek</strong> — language-model processing for AI features you use (routed through
+      our Worker and Cloudflare AI Gateway); processing location: China
     </li>
     <li>
       <strong>Payment providers</strong> (Dodo Payments) — if you purchase a subscription
@@ -259,10 +269,12 @@ const contactEmail = 'privacy@yiveno.com'
   <p>
     The operator is based in Hangzhou, China. Account data and (when sync is on) cloud Memory are
     stored with Supabase in the <strong>United States</strong> (primary database:{' '}
-    <strong>East US / Ohio, us-east-2</strong>). Other processors (for example Cloudflare Workers,
-    AI model providers, and payment providers if you purchase a plan) may process data in the United
-    States and other locations where they operate. If you enable cloud sync or sign in, you
-    understand your account and synced data may be stored outside your country of residence.
+    <strong>East US / Ohio, us-east-2</strong>). When you use AI features, related content is
+    processed by DeepSeek in the <strong>People’s Republic of China</strong> (see §2.4). Other
+    processors (for example Cloudflare Workers and payment providers if you purchase a plan) may
+    process data in the United States and other locations where they operate. If you enable cloud
+    sync, sign in, or use AI features, you understand your account, synced data, and AI-related
+    payloads may be stored or processed outside your country of residence.
   </p>
 
   <h2>10. Changes</h2>

@@ -49,7 +49,7 @@ describe('buildMergedMemoryEnrichment', () => {
                 summary: 'WWII related BBC video'
               },
               providerId: 'deepseek',
-              model: 'deepseek-v4-flash',
+              model: 'deepseek-flash',
               tokensUsed: 20
             }),
             { status: 200, headers: { 'content-type': 'application/json' } }

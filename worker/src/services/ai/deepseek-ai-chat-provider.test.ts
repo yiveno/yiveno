@@ -8,7 +8,7 @@ import { deepseekAiChatProvider } from './deepseek-ai-chat-provider'
 function createEnv(overrides: Record<string, unknown> = {}): Env {
   return {
     DEEPSEEK_API_KEY: 'deepseek-test-key',
-    AI_HOSTED_MODEL: 'deepseek-v4-flash',
+    AI_HOSTED_MODEL: 'deepseek-flash',
     ...overrides
   } as unknown as Env
 }

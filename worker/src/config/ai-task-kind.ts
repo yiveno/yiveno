@@ -49,7 +49,7 @@ export type AiTaskModelEnv = {
   AI_HOSTED_MODEL_ENRICHMENT?: string
   /** 可选：gs_samples 覆盖 */
   AI_HOSTED_MODEL_GS_SAMPLES?: string
-  /** 可选：dreaming 覆盖（默认仍 AI_HOSTED_MODEL / v4-flash） */
+  /** 可选：dreaming 覆盖（默认仍 AI_HOSTED_MODEL / deepseek-flash） */
   AI_HOSTED_MODEL_DREAMING?: string
 }
 

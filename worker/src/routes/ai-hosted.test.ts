@@ -26,7 +26,7 @@ function createBaseEnv(overrides: Record<string, unknown> = {}): Env {
     SUPABASE_SERVICE_ROLE_KEY: 'service-role-key',
     WEBSITE_URL: 'https://example.com',
     DEEPSEEK_API_KEY: 'deepseek-test-key',
-    AI_HOSTED_MODEL: 'deepseek-v4-flash',
+    AI_HOSTED_MODEL: 'deepseek-flash',
     AI_USAGE_KV: createKvMock() as Env['AI_USAGE_KV'],
     ...overrides
   } as unknown as Env
@@ -277,7 +277,7 @@ describe('hosted ai routes', () => {
       }
       expect(data.text).toBe('{"folders":[]}')
       expect(data.provider).toBe('hosted')
-      expect(data.model).toBe('deepseek-v4-flash')
+      expect(data.model).toBe('deepseek-flash')
       expect(data.taskKind).toBe('nlu')
       expect(data.tokensUsed).toBe(42)
       expect(data.promptTokens).toBe(30)
@@ -292,7 +292,7 @@ describe('hosted ai routes', () => {
         model?: string
       }
       expect(requestBody.thinking).toEqual({ type: 'disabled' })
-      expect(requestBody.model).toBe('deepseek-v4-flash')
+      expect(requestBody.model).toBe('deepseek-flash')
     } finally {
       globalThis.fetch = originalFetch
     }
@@ -401,7 +401,7 @@ describe('hosted ai routes', () => {
 
     expect(response.status).toBe(200)
     const data = (await response.json()) as { model: string; limit: number }
-    expect(data.model).toBe('deepseek-v4-flash')
+    expect(data.model).toBe('deepseek-flash')
     expect(data.limit).toBe(1000)
   })
 

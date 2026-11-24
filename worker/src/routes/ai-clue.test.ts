@@ -21,7 +21,7 @@ function createBaseEnv(overrides: Record<string, unknown> = {}): Env {
     SUPABASE_SERVICE_ROLE_KEY: 'service-role-key',
     WEBSITE_URL: 'https://example.com',
     DEEPSEEK_API_KEY: 'deepseek-test-key',
-    AI_HOSTED_MODEL: 'deepseek-v4-flash',
+    AI_HOSTED_MODEL: 'deepseek-flash',
     AI_HOSTED_MONTHLY_QUOTA: '999',
     AI_USAGE_KV: createKvMock() as Env['AI_USAGE_KV'],
     ...overrides
