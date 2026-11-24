@@ -10,11 +10,18 @@ const exportDetailExportPayloadSchema = z.object({
   ids: z.array(z.uuid()).min(1)
 })
 
+/** 保存时截预览：调用方 / sender.tab 透传的窗与标签（SW 无可靠 currentWindow）。 */
+const capturePreviewTabContextSchema = {
+  tabId: z.number().int().positive().optional(),
+  windowId: z.number().int().nonnegative().optional()
+}
+
 const captureBookmarkPayloadSchema = z.object({
   title: z.string().min(1),
   url: z.url(),
   faviconUrl: z.url().optional(),
-  captureEntry: CaptureEntrySchema.optional()
+  captureEntry: CaptureEntrySchema.optional(),
+  ...capturePreviewTabContextSchema
 })
 
 const captureTextExcerptPayloadSchema = z.object({
@@ -25,7 +32,8 @@ const captureTextExcerptPayloadSchema = z.object({
   contextAfter: z.string().optional(),
   /** 用户附注（写入 clues.note；非独立 note 类型）。 */
   note: z.string().trim().max(500).optional(),
-  captureEntry: CaptureEntrySchema.optional()
+  captureEntry: CaptureEntrySchema.optional(),
+  ...capturePreviewTabContextSchema
 })
 
 const listMemoryItemsPayloadSchema = z

@@ -68,6 +68,7 @@ async function storeCapturedPreview(input: {
 
 /**
  * 保存书签/摘录后：对当前可见 tab 截一张（URL 须可截且与期望一致）。
+ * 须尽量传 windowId（右键 / 划词所在窗）；SW 下 currentWindow 不可靠。
  * fire-and-forget 安全；失败静默走无图。
  */
 export async function capturePagePreviewOnSave(input: {
@@ -87,23 +88,31 @@ export async function capturePagePreviewOnSave(input: {
       ...(input.windowId !== undefined ? { windowId: input.windowId } : {}),
       expectedUrl: input.pageUrl
     })
-    if (!captured) {
-      flowOk('PagePreview', '保存时截图', startedAt, { ok: false, reason: 'capture_failed' })
+    if (!captured.ok) {
+      flowOk('PagePreview', '保存时截图', startedAt, {
+        ok: false,
+        reason: 'capture_failed',
+        failureReason: captured.reason,
+        expectedHost: captured.expectedHost ?? null,
+        activeHost: captured.activeHost ?? null,
+        hasWindowId: input.windowId !== undefined
+      })
       return false
     }
     await storeCapturedPreview({
       ownerId,
       urlKey,
       source: 'capture',
-      blob: captured.blob,
-      width: captured.width,
-      height: captured.height,
-      byteSize: captured.byteSize
+      blob: captured.preview.blob,
+      width: captured.preview.width,
+      height: captured.preview.height,
+      byteSize: captured.preview.byteSize
     })
     flowOk('PagePreview', '保存时截图', startedAt, {
       ok: true,
-      byteSize: captured.byteSize,
-      width: captured.width
+      byteSize: captured.preview.byteSize,
+      width: captured.preview.width,
+      hasWindowId: input.windowId !== undefined
     })
     return true
   } catch (error) {
@@ -179,8 +188,15 @@ async function runOpenBackfill(input: {
       ...(input.windowId !== undefined ? { windowId: input.windowId } : {}),
       expectedUrl: input.pageUrl
     })
-    if (!captured) {
-      flowOk('PagePreview', '打开补图', startedAt, { ok: false, reason: 'capture_failed' })
+    if (!captured.ok) {
+      flowOk('PagePreview', '打开补图', startedAt, {
+        ok: false,
+        reason: 'capture_failed',
+        failureReason: captured.reason,
+        expectedHost: captured.expectedHost ?? null,
+        activeHost: captured.activeHost ?? null,
+        hasWindowId: input.windowId !== undefined
+      })
       return
     }
 
@@ -188,15 +204,16 @@ async function runOpenBackfill(input: {
       ownerId,
       urlKey: input.urlKey,
       source: 'open_backfill',
-      blob: captured.blob,
-      width: captured.width,
-      height: captured.height,
-      byteSize: captured.byteSize
+      blob: captured.preview.blob,
+      width: captured.preview.width,
+      height: captured.preview.height,
+      byteSize: captured.preview.byteSize
     })
     flowOk('PagePreview', '打开补图', startedAt, {
       ok: true,
-      byteSize: captured.byteSize,
-      hadExisting: Boolean(existing)
+      byteSize: captured.preview.byteSize,
+      hadExisting: Boolean(existing),
+      hasWindowId: input.windowId !== undefined
     })
   } catch (error) {
     logger.warn('PagePreview', '打开补图异常', error)

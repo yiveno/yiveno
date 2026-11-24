@@ -117,6 +117,40 @@ async function handleGetLocalIdentity(): Promise<GetLocalIdentityResponse> {
   }
 }
 
+/**
+ * 将 sender.tab 的 tabId/windowId 并入 CAPTURE payload（payload 已有则保留）。
+ * 划词浮层发消息时 content script 通常无 windowId；SW 侧从 sender 补全。
+ */
+function mergeCapturePreviewTabContext(
+  payload: unknown,
+  sender?: chrome.runtime.MessageSender
+): unknown {
+  if (payload === null || typeof payload !== 'object' || Array.isArray(payload)) {
+    return payload
+  }
+  const base = payload as Record<string, unknown>
+  const tabId =
+    typeof base.tabId === 'number'
+      ? base.tabId
+      : typeof sender?.tab?.id === 'number'
+        ? sender.tab.id
+        : undefined
+  const windowId =
+    typeof base.windowId === 'number'
+      ? base.windowId
+      : typeof sender?.tab?.windowId === 'number'
+        ? sender.tab.windowId
+        : undefined
+  if (tabId === undefined && windowId === undefined) {
+    return payload
+  }
+  return {
+    ...base,
+    ...(tabId !== undefined ? { tabId } : {}),
+    ...(windowId !== undefined ? { windowId } : {})
+  }
+}
+
 async function dispatchBackgroundMessage(
   message: BackgroundMessage,
   sender?: chrome.runtime.MessageSender
@@ -190,9 +224,9 @@ async function dispatchBackgroundMessage(
     case 'CLEAR_LOCAL_RECALL_ADAPTATION':
       return handleClearLocalRecallAdaptation()
     case 'CAPTURE_BOOKMARK':
-      return handleCaptureBookmark(message.payload)
+      return handleCaptureBookmark(mergeCapturePreviewTabContext(message.payload, sender))
     case 'CAPTURE_TEXT_EXCERPT':
-      return handleCaptureTextExcerpt(message.payload)
+      return handleCaptureTextExcerpt(mergeCapturePreviewTabContext(message.payload, sender))
     case 'LIST_MEMORY_ITEMS':
       return handleListMemoryItems(message.payload)
     case 'GET_MEMORY_ITEM':

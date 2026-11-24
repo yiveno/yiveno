@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 const ensureBackgroundBootstrappedMock = vi.hoisted(() => vi.fn(async () => undefined))
 const notifySelectionToolbarErrorMock = vi.hoisted(() => vi.fn(async () => false))
+const capturePagePreviewOnSaveMock = vi.hoisted(() => vi.fn(async () => true))
 
 vi.mock('@/background/bootstrap-ready', () => ({
   ensureBackgroundBootstrapped: ensureBackgroundBootstrappedMock
@@ -9,6 +10,10 @@ vi.mock('@/background/bootstrap-ready', () => ({
 
 vi.mock('@/infrastructure/browser/selection-toolbar-command', () => ({
   notifySelectionToolbarError: notifySelectionToolbarErrorMock
+}))
+
+vi.mock('@/application/memory/page-preview-capture-service', () => ({
+  capturePagePreviewOnSave: capturePagePreviewOnSaveMock
 }))
 
 import 'fake-indexeddb/auto'
@@ -169,7 +174,12 @@ describe('context-menu listener', () => {
         selectionText: 'retention analysis',
         pageUrl: 'https://example.com/post'
       } as chrome.contextMenus.OnClickData,
-      { id: 1, title: 'Growth notes', url: 'https://example.com/post' } as chrome.tabs.Tab
+      {
+        id: 1,
+        windowId: 7,
+        title: 'Growth notes',
+        url: 'https://example.com/post'
+      } as chrome.tabs.Tab
     )
 
     const items = await memoryItemRepository.listByOwner({ type: 'text_excerpt' })
@@ -178,6 +188,10 @@ describe('context-menu listener', () => {
       expect(items[0].payload.selectedText).toBe('retention analysis')
       expect(items[0].payload.pageTitle).toBe('Growth notes')
     }
+    expect(capturePagePreviewOnSaveMock).toHaveBeenCalledWith({
+      pageUrl: 'https://example.com/post',
+      windowId: 7
+    })
   })
 
   it('registerContextMenuListeners 只注册一次 onClicked', () => {

@@ -179,10 +179,10 @@ onUnmounted(() => {
   position: fixed;
   z-index: 40;
   overflow: auto;
-  border-radius: var(--radius-md, 10px);
-  border: 1px solid var(--color-outline-variant, rgba(0, 0, 0, 0.12));
-  background: var(--color-surface-container-high, #fff);
-  box-shadow: var(--elevation-2, 0 4px 16px rgba(0, 0, 0, 0.12));
+  border-radius: var(--radius);
+  border: 1px solid var(--border);
+  background: var(--surface-white);
+  box-shadow: var(--shadow-ink-sm);
   pointer-events: none;
 }
 
@@ -206,9 +206,9 @@ onUnmounted(() => {
   border-radius: var(--radius-sm, 6px);
   background: linear-gradient(
     90deg,
-    var(--color-surface-variant, #e8e8e8) 0%,
-    var(--color-surface-container, #f3f3f3) 50%,
-    var(--color-surface-variant, #e8e8e8) 100%
+    var(--surface-2) 0%,
+    var(--surface-raised) 50%,
+    var(--surface-2) 100%
   );
   background-size: 200% 100%;
   animation: recall-preview-shimmer 1.2s ease-in-out infinite;
@@ -251,18 +251,18 @@ onUnmounted(() => {
 
 .recall-card-hover-preview__title {
   margin: 0;
-  font-size: var(--font-size-sm, 13px);
+  font-size: var(--text-meta);
   font-weight: 600;
   line-height: 1.35;
-  color: var(--color-on-surface, #1a1a1a);
+  color: var(--charcoal);
   overflow-wrap: anywhere;
 }
 
 .recall-card-hover-preview__excerpt {
   margin: 0;
-  font-size: var(--font-size-xs, 12px);
+  font-size: var(--text-caption);
   line-height: 1.45;
-  color: var(--color-on-surface-variant, #5c5c5c);
+  color: var(--muted);
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 5;
@@ -274,8 +274,8 @@ onUnmounted(() => {
   flex-wrap: wrap;
   gap: 8px;
   align-items: baseline;
-  font-size: var(--font-size-xs, 12px);
-  color: var(--color-on-surface-variant, #5c5c5c);
+  font-size: var(--text-caption);
+  color: var(--muted);
 }
 
 .recall-card-hover-preview__domain {
@@ -291,9 +291,9 @@ onUnmounted(() => {
 
 .recall-card-hover-preview__reason {
   margin: 0;
-  font-size: var(--font-size-xs, 12px);
+  font-size: var(--text-caption);
   line-height: 1.4;
-  color: var(--color-on-surface-variant, #5c5c5c);
+  color: var(--muted);
   display: -webkit-box;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;

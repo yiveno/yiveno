@@ -100,7 +100,10 @@ export async function handleCaptureBookmark(payload: unknown): Promise<MemoryBac
       entry: input.captureEntry ?? 'popup',
       url: previewText(input.url, 120)
     })
-    void capturePagePreviewOnSave({ pageUrl: input.url }).catch(error => {
+    void capturePagePreviewOnSave({
+      pageUrl: input.url,
+      ...optionalProp('windowId', input.windowId)
+    }).catch(error => {
       logger.warn('PagePreview', '保存书签后截图失败', error)
     })
     return { ok: true, item }
@@ -152,7 +155,10 @@ export async function handleCaptureTextExcerpt(
       duplicate
     })
     if (!duplicate) {
-      void capturePagePreviewOnSave({ pageUrl: input.sourceUrl }).catch(error => {
+      void capturePagePreviewOnSave({
+        pageUrl: input.sourceUrl,
+        ...optionalProp('windowId', input.windowId)
+      }).catch(error => {
         logger.warn('PagePreview', '保存摘录后截图失败', error)
       })
     }

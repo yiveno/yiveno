@@ -2,6 +2,7 @@ import { CodedError } from '@/core/common/coded-error'
 import { optionalProp } from '@/core/common/optional-props'
 import { USER_SETTINGS_STORAGE_KEY } from '@/core/settings/user-settings'
 import { captureTextExcerptFromContextMenu } from '@/application/capture/capture-text-excerpt-service'
+import { capturePagePreviewOnSave } from '@/application/memory/page-preview-capture-service'
 import { ensureBackgroundBootstrapped } from '@/background/bootstrap-ready'
 import { resolveMemoryErrorCode } from '@/background/handlers/memory-handler'
 import { flashActionBadge } from '@/infrastructure/browser/action-badge'
@@ -112,6 +113,13 @@ export async function handleContextMenuClick(
 
   if (!duplicate) {
     void flashActionBadge('success')
+    // 右键不经 CAPTURE_TEXT_EXCERPT handler：此处补保存时截图，并透传 windowId
+    void capturePagePreviewOnSave({
+      pageUrl: sourceUrl,
+      ...optionalProp('windowId', tab?.windowId)
+    }).catch(error => {
+      logger.warn('PagePreview', '右键保存后截图失败', error)
+    })
   }
   logger.info('ContextMenu', '选区已保存为 Text Excerpt', {
     memoryItemId: item.id,
