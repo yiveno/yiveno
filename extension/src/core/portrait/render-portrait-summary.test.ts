@@ -6,6 +6,8 @@ import { describe, expect, it } from 'vitest'
 
 import { buildPortraitSummary } from '@/core/portrait/build-portrait-summary'
 import {
+  applyPortraitApproveToView,
+  applyPortraitDeclineToView,
   buildPortraitSummaryViewModel,
   renderPortraitFactLine
 } from '@/core/portrait/render-portrait-summary'
@@ -68,5 +70,53 @@ describe('render-portrait-summary', () => {
     const view = buildPortraitSummaryViewModel(buildPortraitSummary(facts), t)
     expect(view.pendingInferences).toHaveLength(1)
     expect(view.groups[0]?.key).toBe('unconfirmed')
+  })
+
+  it('批准后行文案改 direct 且在 verified 组', () => {
+    const facts: PortraitFactRecord[] = [
+      {
+        id: `${OWNER}\0contentTerm\0github.com`,
+        ownerId: OWNER,
+        slot: 'contentTerm',
+        value: 'github.com',
+        credibility: 0.4,
+        state: 'unconfirmed',
+        sources: [{ type: 'inference', ref: 'n', score: 0.4, observedAt: NOW }],
+        inPortrait: false,
+        createdAt: NOW,
+        updatedAt: NOW
+      }
+    ]
+    const view = buildPortraitSummaryViewModel(buildPortraitSummary(facts), t)
+    expect(view.pendingInferences[0]?.line).toBe('portrait_fact_paraphrase:github.com')
+    const next = applyPortraitApproveToView(view, `${OWNER}\0contentTerm\0github.com`, t)
+    expect(next.pendingInferences).toHaveLength(0)
+    const verified = next.groups.find(g => g.key === 'verified')
+    expect(verified?.items).toHaveLength(1)
+    expect(verified?.items[0]?.line).toBe('portrait_fact_direct:github.com')
+    expect(verified?.items[0]?.inPortrait).toBe(true)
+  })
+
+  it('忽略后该行从视图移除', () => {
+    const facts: PortraitFactRecord[] = [
+      {
+        id: `${OWNER}\0contentTerm\0rag`,
+        ownerId: OWNER,
+        slot: 'contentTerm',
+        value: 'rag',
+        credibility: 0.4,
+        state: 'unconfirmed',
+        sources: [{ type: 'inference', ref: 'n', score: 0.4, observedAt: NOW }],
+        inPortrait: false,
+        createdAt: NOW,
+        updatedAt: NOW
+      }
+    ]
+    const view = buildPortraitSummaryViewModel(buildPortraitSummary(facts), t)
+    const next = applyPortraitDeclineToView(view, `${OWNER}\0contentTerm\0rag`, t)
+    expect(next.pendingInferences).toHaveLength(0)
+    expect(
+      next.groups.every(g => g.items.every(i => i.factId !== `${OWNER}\0contentTerm\0rag`))
+    ).toBe(true)
   })
 })

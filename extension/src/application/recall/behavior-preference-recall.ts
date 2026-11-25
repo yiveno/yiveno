@@ -30,6 +30,30 @@ export type ResolveBehaviorPreferenceInput = {
 }
 
 /**
+ * 当前轮是否带新内容条件（只看本轮解析，不看 merged）。
+ * 用于行为分支让位：有新内容且无新算子 → 文档池；与 Gate A+ 豁免的裸跟进定义刻意不同（豁免不含 objectTypes）。
+ */
+export function hasFreshContentConditions(parsed: ParsedRecallClue): boolean {
+  return (
+    (parsed.contentTerms?.length ?? 0) > 0 ||
+    Boolean(parsed.timeRange) ||
+    (parsed.objectTypes?.length ?? 0) > 0
+  )
+}
+
+/**
+ * 文档路径用：去掉 preferenceOperator，其余字段原样（含 preferenceTarget / behaviorHints）。
+ * 仅清检索拷贝；accumulated / 回写会话的算子由调用方另行保留。
+ */
+export function stripPreferenceOperatorForDocumentPath(parsed: ParsedRecallClue): ParsedRecallClue {
+  if (!parsed.preferenceOperator) {
+    return parsed
+  }
+  const { preferenceOperator: _removed, ...rest } = parsed
+  return rest
+}
+
+/**
  * 若应走行为路径则返回结果；否则 null（交给文档池）。
  */
 export async function resolveBehaviorPreferenceRecall(

@@ -362,3 +362,278 @@ describe('HybridRecallBackend · 行为偏好空跟进 Gate A+ 豁免', () => {
     expect(result.recallFraming?.text).toMatch(/50/)
   })
 })
+
+describe('HybridRecallBackend · F5 累积算子让位文档池', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    setUiLocaleCatalogForTests('en', enMessages as never)
+    readBrowserOnlineMock.mockReturnValue(true)
+    getClueLlmCompleterMock.mockReturnValue(null)
+    getClueLlmCompleterDetailedMock.mockReturnValue(null)
+    getCurrentOwnerIdMock.mockResolvedValue(OWNER_ID)
+    getBehaviorHistoryImportStatusMock.mockResolvedValue({
+      status: 'completed',
+      importedCount: 5,
+      skippedCount: 0,
+      completedAt: '2026-11-24T00:00:00.000Z'
+    })
+    listByOwnerMock.mockResolvedValue(fiveDomainRows())
+  })
+
+  afterEach(() => {
+    setUiLocaleCatalogForTests('en', null)
+  })
+
+  it('本轮新算子 → 行为分支开火', async () => {
+    understandRecallClueMock.mockResolvedValue(proceedUnderstand(preferenceParsed()))
+    const backend = new HybridRecallBackend()
+    const result = await backend.recallWithClue('我最常看的网站', {
+      entry: 'sidepanel',
+      context: { priorUserUtterances: [], dismissedIds: [] }
+    })
+    expect(result.behaviorPreference).toBeTruthy()
+    expect(listByOwnerMock).toHaveBeenCalled()
+  })
+
+  it('裸跟进 → 行为分支开火', async () => {
+    understandRecallClueMock.mockResolvedValue(
+      proceedUnderstand(instructionFollowUpParsed('换一个'))
+    )
+    const backend = new HybridRecallBackend()
+    const result = await backend.recallWithClue('换一个', {
+      entry: 'sidepanel',
+      context: {
+        priorUserUtterances: ['我最常看的网站'],
+        accumulated: preferenceParsed(),
+        dismissedIds: [],
+        behaviorShownCount: 3
+      }
+    })
+    expect(result.behaviorPreference).toBeTruthy()
+    expect(result.topPick?.item.payload).toMatchObject({ domain: 'd.example' })
+  })
+
+  it('新内容词无算子 → 让位文档池（merged 算子已清检索、会话 parsed 仍保留）', async () => {
+    understandRecallClueMock.mockResolvedValue(
+      proceedUnderstand({
+        raw: '阮一峰的博客',
+        contentTerms: ['阮一峰', '博客'],
+        confidence: 'high',
+        intent: 'recall'
+      })
+    )
+    const backend = new HybridRecallBackend()
+    const result = await backend.recallWithClue('阮一峰的博客', {
+      entry: 'sidepanel',
+      context: {
+        priorUserUtterances: ['我最常看的网站'],
+        accumulated: preferenceParsed(),
+        dismissedIds: [],
+        behaviorShownCount: 3
+      }
+    })
+    expect(result.emptyKind).not.toBe('behavior_topic_unsupported')
+    expect(result.behaviorPreference).toBeUndefined()
+    expect(listByOwnerMock).not.toHaveBeenCalled()
+    // 回写会话仍带算子，供后续裸跟进
+    expect(result.parsed?.preferenceOperator).toBe('most_frequent')
+    // 文档 framing，非行为频次措辞
+    expect(result.recallFraming?.text ?? '').not.toMatch(/50/)
+  })
+
+  it('仅对象类型无算子 → 让位文档池', async () => {
+    understandRecallClueMock.mockResolvedValue(
+      proceedUnderstand({
+        raw: '文章呢',
+        contentTerms: [],
+        objectTypes: ['article'],
+        confidence: 'medium',
+        intent: 'recall'
+      })
+    )
+    const backend = new HybridRecallBackend()
+    const result = await backend.recallWithClue('文章呢', {
+      entry: 'sidepanel',
+      context: {
+        priorUserUtterances: ['我最常看的网站'],
+        accumulated: preferenceParsed(),
+        dismissedIds: [],
+        behaviorShownCount: 3
+      }
+    })
+    expect(result.behaviorPreference).toBeUndefined()
+    expect(listByOwnerMock).not.toHaveBeenCalled()
+    expect(result.emptyKind).not.toBe('behavior_topic_unsupported')
+    expect(result.parsed?.preferenceOperator).toBe('most_frequent')
+  })
+
+  it('仅时间范围无算子 → 让位文档池', async () => {
+    understandRecallClueMock.mockResolvedValue(
+      proceedUnderstand({
+        raw: '上周的',
+        contentTerms: [],
+        timeRange: {
+          from: '2026-11-17T00:00:00.000Z',
+          to: '2026-11-23T23:59:59.999Z',
+          label: 'last_week'
+        },
+        timeConfidence: 'high',
+        confidence: 'medium',
+        intent: 'recall'
+      })
+    )
+    const backend = new HybridRecallBackend()
+    const result = await backend.recallWithClue('上周的', {
+      entry: 'sidepanel',
+      context: {
+        priorUserUtterances: ['我最常看的网站'],
+        accumulated: preferenceParsed(),
+        dismissedIds: [],
+        behaviorShownCount: 3
+      }
+    })
+    expect(result.behaviorPreference).toBeUndefined()
+    expect(listByOwnerMock).not.toHaveBeenCalled()
+    expect(result.parsed?.preferenceOperator).toBe('most_frequent')
+  })
+
+  it('同轮算子+主题 → 仍 topic_unsupported', async () => {
+    understandRecallClueMock.mockResolvedValue(
+      proceedUnderstand(
+        preferenceParsed({
+          raw: '我最常看的 AI 网站',
+          contentTerms: ['AI']
+        })
+      )
+    )
+    const backend = new HybridRecallBackend()
+    const result = await backend.recallWithClue('我最常看的 AI 网站', {
+      entry: 'sidepanel',
+      context: { priorUserUtterances: [], dismissedIds: [] }
+    })
+    expect(result.emptyKind).toBe('behavior_topic_unsupported')
+    expect(result.behaviorPreference).toBeUndefined()
+  })
+
+  it('让位轮无 behaviorPreference → SidePanel 不推进 behaviorShownCount', async () => {
+    understandRecallClueMock.mockResolvedValue(
+      proceedUnderstand({
+        raw: '阮一峰的博客',
+        contentTerms: ['阮一峰'],
+        confidence: 'high',
+        intent: 'recall'
+      })
+    )
+    const backend = new HybridRecallBackend()
+    const result = await backend.recallWithClue('阮一峰的博客', {
+      entry: 'sidepanel',
+      context: {
+        priorUserUtterances: ['我最常看的网站'],
+        accumulated: preferenceParsed(),
+        dismissedIds: [],
+        behaviorShownCount: 3
+      }
+    })
+    // SidePanel 仅在 behaviorPreference / 行为空态时改计数；让位结果两者皆无 → 保留原计数
+    expect(result.behaviorPreference).toBeUndefined()
+    expect(result.emptyKind?.startsWith('behavior_') ?? false).toBe(false)
+  })
+
+  it('两轮：Q1 偏好 → 阮一峰的博客 → 文档结果、无 topic_unsupported', async () => {
+    const backend = new HybridRecallBackend()
+    understandRecallClueMock.mockResolvedValue(proceedUnderstand(preferenceParsed()))
+    const round1 = await backend.recallWithClue('我最常看的网站', {
+      entry: 'sidepanel',
+      context: { priorUserUtterances: [], dismissedIds: [] }
+    })
+    expect(round1.behaviorPreference).toBeTruthy()
+
+    understandRecallClueMock.mockResolvedValue(
+      proceedUnderstand({
+        raw: '阮一峰的博客',
+        contentTerms: ['阮一峰', '博客'],
+        confidence: 'high',
+        intent: 'recall'
+      })
+    )
+    const round2 = await backend.recallWithClue('阮一峰的博客', {
+      entry: 'sidepanel',
+      context: {
+        priorUserUtterances: ['我最常看的网站'],
+        accumulated: round1.parsed ?? preferenceParsed(),
+        dismissedIds: [],
+        behaviorShownCount: 3
+      }
+    })
+    expect(round2.emptyKind).not.toBe('behavior_topic_unsupported')
+    expect(round2.behaviorPreference).toBeUndefined()
+    expect(listByOwnerMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('两轮：Q1 偏好 → 换一个 → 仍出 #4–5（循环未破）', async () => {
+    const backend = new HybridRecallBackend()
+    understandRecallClueMock.mockResolvedValue(proceedUnderstand(preferenceParsed()))
+    const round1 = await backend.recallWithClue('我最常看的网站', {
+      entry: 'sidepanel',
+      context: { priorUserUtterances: [], dismissedIds: [] }
+    })
+    understandRecallClueMock.mockResolvedValue(
+      proceedUnderstand(instructionFollowUpParsed('换一个'))
+    )
+    const round2 = await backend.recallWithClue('换一个', {
+      entry: 'sidepanel',
+      context: {
+        priorUserUtterances: ['我最常看的网站'],
+        accumulated: round1.parsed ?? preferenceParsed(),
+        dismissedIds: [],
+        behaviorShownCount: 3
+      }
+    })
+    expect(round2.topPick?.item.payload).toMatchObject({ domain: 'd.example' })
+    expect(round2.alsoPossible.map(m => m.item.payload.domain)).toEqual(['e.example'])
+  })
+
+  it('已知近似：Q1 → 文档轮 → 换一个 → 仍续偏好循环', async () => {
+    const backend = new HybridRecallBackend()
+    understandRecallClueMock.mockResolvedValue(proceedUnderstand(preferenceParsed()))
+    const round1 = await backend.recallWithClue('我最常看的网站', {
+      entry: 'sidepanel',
+      context: { priorUserUtterances: [], dismissedIds: [] }
+    })
+
+    understandRecallClueMock.mockResolvedValue(
+      proceedUnderstand({
+        raw: '阮一峰的博客',
+        contentTerms: ['阮一峰', '博客'],
+        confidence: 'high',
+        intent: 'recall'
+      })
+    )
+    const docRound = await backend.recallWithClue('阮一峰的博客', {
+      entry: 'sidepanel',
+      context: {
+        priorUserUtterances: ['我最常看的网站'],
+        accumulated: round1.parsed ?? preferenceParsed(),
+        dismissedIds: [],
+        behaviorShownCount: 3
+      }
+    })
+    expect(docRound.parsed?.preferenceOperator).toBe('most_frequent')
+    expect(docRound.behaviorPreference).toBeUndefined()
+
+    understandRecallClueMock.mockResolvedValue(
+      proceedUnderstand(instructionFollowUpParsed('换一个'))
+    )
+    const follow = await backend.recallWithClue('换一个', {
+      entry: 'sidepanel',
+      context: {
+        priorUserUtterances: ['我最常看的网站', '阮一峰的博客'],
+        accumulated: docRound.parsed ?? preferenceParsed(),
+        dismissedIds: [],
+        behaviorShownCount: 3
+      }
+    })
+    expect(follow.behaviorPreference).toBeTruthy()
+    expect(follow.topPick?.item.payload).toMatchObject({ domain: 'd.example' })
+  })
+})

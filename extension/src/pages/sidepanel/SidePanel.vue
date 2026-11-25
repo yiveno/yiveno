@@ -35,7 +35,11 @@ import { parseRecallVisibleProgressMessage } from '@/core/messaging/ui-messages'
 import { tRecallError } from '@/infrastructure/i18n/background-error'
 import { t } from '@/infrastructure/i18n/t'
 import { commitRecallOutcome } from '@/application/recall/commit-recall-outcome'
-import { buildPortraitSummaryViewModel } from '@/core/portrait/render-portrait-summary'
+import {
+  applyPortraitApproveToView,
+  applyPortraitDeclineToView,
+  buildPortraitSummaryViewModel
+} from '@/core/portrait/render-portrait-summary'
 import {
   authConnectWebsite,
   cancelRecall,
@@ -1519,7 +1523,7 @@ function handleCorrectUnderstanding(value: string): void {
   handleUseSuggestion(value)
 }
 
-/** 画像推断项：批准 → 本地视图移出 pending 并标已核实措辞。 */
+/** 画像推断项：批准 → 本地视图移出 pending，行文案改 direct 措辞。 */
 async function handlePortraitApprove(factId: string): Promise<void> {
   const response = await portraitApproveFact(factId).catch(() => null)
   if (!response?.ok) {
@@ -1529,41 +1533,9 @@ async function handlePortraitApprove(factId: string): Promise<void> {
     if (turn.role !== 'assistant' || !turn.portraitSummaryView) {
       return turn
     }
-    const view = turn.portraitSummaryView
-    const pending = view.pendingInferences.find(item => item.factId === factId)
-    const nextPending = view.pendingInferences.filter(item => item.factId !== factId)
-    const nextGroups = view.groups
-      .map(group => ({
-        ...group,
-        items: group.items.filter(item => item.factId !== factId)
-      }))
-      .filter(group => group.items.length > 0)
-    if (pending) {
-      const item = {
-        factId,
-        line: pending.line,
-        inPortrait: true,
-        pendingInference: false
-      }
-      const verifiedGroup = nextGroups.find(g => g.key === 'verified')
-      if (verifiedGroup) {
-        verifiedGroup.items = [item, ...verifiedGroup.items]
-      } else {
-        nextGroups.unshift({
-          key: 'verified',
-          title: t('portrait_group_verified'),
-          items: [item]
-        })
-      }
-    }
     return {
       ...turn,
-      portraitSummaryView: {
-        ...view,
-        empty: nextGroups.every(g => g.items.length === 0) && nextPending.length === 0,
-        groups: nextGroups,
-        pendingInferences: nextPending
-      }
+      portraitSummaryView: applyPortraitApproveToView(turn.portraitSummaryView, factId, t)
     }
   })
 }
@@ -1578,25 +1550,11 @@ async function handlePortraitDecline(factId: string): Promise<void> {
     if (turn.role !== 'assistant' || !turn.portraitSummaryView) {
       return turn
     }
-    const view = turn.portraitSummaryView
-    const nextPending = view.pendingInferences.filter(item => item.factId !== factId)
-    const nextGroups = view.groups
-      .map(group => ({
-        ...group,
-        items: group.items.filter(item => item.factId !== factId)
-      }))
-      .filter(group => group.items.length > 0)
-    const empty = nextGroups.every(g => g.items.length === 0) && nextPending.length === 0
+    const nextView = applyPortraitDeclineToView(turn.portraitSummaryView, factId, t)
     return {
       ...turn,
-      text: empty ? t('portrait_empty') : turn.text,
-      portraitSummaryView: {
-        ...view,
-        empty,
-        emptyText: empty ? t('portrait_empty') : view.emptyText,
-        groups: nextGroups,
-        pendingInferences: nextPending
-      }
+      text: nextView.empty ? t('portrait_empty') : turn.text,
+      portraitSummaryView: nextView
     }
   })
 }

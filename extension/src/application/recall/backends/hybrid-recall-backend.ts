@@ -3,7 +3,11 @@
  * 默认后端（Free/Pro 同档）；无向量 / 失败时降级关键词。
  */
 
-import { resolveBehaviorPreferenceRecall } from '@/application/recall/behavior-preference-recall'
+import {
+  hasFreshContentConditions,
+  resolveBehaviorPreferenceRecall,
+  stripPreferenceOperatorForDocumentPath
+} from '@/application/recall/behavior-preference-recall'
 import { resolvePortraitInspect } from '@/application/portrait/resolve-portrait-inspect'
 import { memoryItemService } from '@/application/memory/memory-item-service'
 import { mergeNoteMatchesForRecall } from '@/application/recall/note-match-merge'
@@ -1191,11 +1195,32 @@ export class HybridRecallBackend implements RecallBackend {
     const conditionTurn = priorUserUtterances.length
 
     // 行为偏好路径：merge 之后、检索之前；Omnibox 永不进入（无算子 / 无 context）。
-    // 行为独立排序不动；conditions 仅回写会话态供后续轮次。
-    if (!isOmniboxEntry && merge.merged.preferenceOperator) {
+    // 开火：本轮新算子，或本轮无新内容条件（裸跟进，含「换一个」）；否则让位文档池（§9.6 软继承 gate）。
+    // 让位只清文档检索拷贝上的算子；回写会话仍带 merge.merged 的算子（F7 循环支柱）。
+    const hasFreshOperator = Boolean(understood.parsed.preferenceOperator)
+    const yieldBehaviorToDocument =
+      Boolean(merge.merged.preferenceOperator) &&
+      !hasFreshOperator &&
+      hasFreshContentConditions(understood.parsed)
+    if (yieldBehaviorToDocument) {
+      trace('info', 'Recall：累积算子让位文档池（本轮有新内容条件）', {
+        clue: normalizedClue,
+        contentTermCount: understood.parsed.contentTerms?.length ?? 0,
+        hasTimeRange: Boolean(understood.parsed.timeRange),
+        objectTypeCount: understood.parsed.objectTypes?.length ?? 0,
+        accumulatedOperator: merge.merged.preferenceOperator ?? null
+      })
+    }
+    if (!isOmniboxEntry && merge.merged.preferenceOperator && !yieldBehaviorToDocument) {
+      // 裸跟进：上一轮文档词可能仍在 merged.contentTerms；清掉再进行为路径，
+      // 避免误触 topic_unsupported，并让 isPureFollowUp 偏移继续（已知近似 · F7 循环支柱）。
+      const behaviorMerged =
+        !hasFreshOperator && !hasFreshContentConditions(understood.parsed)
+          ? { ...merge.merged, contentTerms: [] }
+          : merge.merged
       const behaviorResult = await resolveBehaviorPreferenceRecall({
         clue: normalizedClue,
-        merged: merge.merged,
+        merged: behaviorMerged,
         currentParsed: understood.parsed,
         behaviorShownCount
       })
@@ -1255,7 +1280,24 @@ export class HybridRecallBackend implements RecallBackend {
 
     // D3-C Gap 5：Topic embedding 注入（仅 Side Panel / 完整 Recall 轨）。
     // Omnibox（ADR-007）：完全本地——不注入 Topic embed，miss 也不联网兜底。
-    let merged = withRecallTopic(merge.merged)
+    // 让位轮：文档检索用清算子拷贝；会话回写仍用下方 restore 把算子挂回 parsed。
+    const retrievalMerged = yieldBehaviorToDocument
+      ? stripPreferenceOperatorForDocumentPath(merge.merged)
+      : merge.merged
+    /** 让位后检索 parsed 无算子；回写会话时把 merge 上的算子贴回，供后续裸跟进续循环。 */
+    const restorePreferenceOperatorForDialog = (parsed: ParsedRecallClue): ParsedRecallClue => {
+      if (!yieldBehaviorToDocument || !merge.merged.preferenceOperator) {
+        return parsed
+      }
+      return {
+        ...parsed,
+        preferenceOperator: merge.merged.preferenceOperator,
+        ...(merge.merged.preferenceTarget
+          ? { preferenceTarget: merge.merged.preferenceTarget }
+          : {})
+      }
+    }
+    let merged = withRecallTopic(retrievalMerged)
     const accessToken = await getWorkerApiAccessToken()
     if (accessToken && !isOmniboxEntry) {
       // Gap 5：注入 embedding 句柄（仅在登录态可用时）
@@ -1307,7 +1349,7 @@ export class HybridRecallBackend implements RecallBackend {
         alsoPossible: [],
         totalRankedCount: 0,
         clue: normalizedClue,
-        parsed: merged,
+        parsed: restorePreferenceOperatorForDialog(merged),
         effectiveClue: merge.effectiveRaw,
         emptyKind: 'missing_topic',
         relatedGuess: null,
@@ -1518,7 +1560,7 @@ export class HybridRecallBackend implements RecallBackend {
 
     const withMeta = attachDialogMeta(result, {
       clue: normalizedClue,
-      parsed: effectiveParsedForFraming,
+      parsed: restorePreferenceOperatorForDialog(effectiveParsedForFraming),
       effectiveClue: merge.effectiveRaw,
       conditions: sessionConditions
     })
