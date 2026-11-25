@@ -102,7 +102,7 @@ describe('runOffscreenSpeechDictation', () => {
     })
   })
 
-  it('快捷键路径 3s 静默停并返回终稿', async () => {
+  it('快捷键路径 2s 静默停并返回终稿', async () => {
     vi.useFakeTimers()
     const recognition = makeRecognition()
     createBrowserSpeechRecognition.mockReturnValue(recognition)

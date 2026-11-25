@@ -11,9 +11,9 @@ import {
 } from '@/core/speech/speech-dictation'
 
 describe('听写静默窗口常量', () => {
-  it('手动点麦 12s；语音快捷键 3s', () => {
+  it('手动点麦 12s；语音快捷键 2s', () => {
     expect(SPEECH_DICTATION_SILENCE_STOP_MS).toBe(12_000)
-    expect(VOICE_SHORTCUT_SILENCE_STOP_MS).toBe(3_000)
+    expect(VOICE_SHORTCUT_SILENCE_STOP_MS).toBe(2_000)
   })
 
   it('resolveComposerSpeechSilenceStopMs：自动提交用短窗，手动用长窗', () => {

@@ -26,7 +26,7 @@ export const SPEECH_DICTATION_SILENCE_STOP_MS = 12_000
  * 语音快捷键路径（offscreen / 面板 start_dictation 自动提交）静默窗口。
  * 比手动点麦更短，尽快结束听写并进入 Recall。
  */
-export const VOICE_SHORTCUT_SILENCE_STOP_MS = 3_000
+export const VOICE_SHORTCUT_SILENCE_STOP_MS = 2_000
 
 /**
  * composer 静默窗口：快捷键自动提交路径用短窗，手动点麦用长窗。

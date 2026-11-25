@@ -176,7 +176,7 @@ function captureSpeechInsertOffsetFromEditor(): void {
 const speech = useComposerSpeechDictation({
   model,
   disabled: computed(() => Boolean(disabledRef.value)),
-  // 快捷键自动提交路径 3s；手动点麦 12s
+  // 快捷键自动提交路径 2s；手动点麦 12s
   silenceStopMs: computed(() =>
     resolveComposerSpeechSilenceStopMs(Boolean(props.autoSubmitOnSilence))
   ),
@@ -220,10 +220,10 @@ const voiceButtonLabel = computed(() => {
   return isListening.value ? props.voiceStopLabel : props.voiceStartLabel
 })
 
-/** 听写中只读预览：live model；空则占位 Listening… */
+/** 听写中只读预览：仅展示已进 model 的转写；空则不占位（波形已表达「在听」）。 */
 const dictationPreviewText = computed(() => {
   const live = model.value.trim()
-  return live.length > 0 ? model.value : t('sidepanel_voice_listening')
+  return live.length > 0 ? model.value : ''
 })
 
 const showMicPermissionStrip = computed(
@@ -400,8 +400,11 @@ function handleKeydown(event: KeyboardEvent): void {
       return
     }
     event.preventDefault()
+    // 听写中 model 已是终稿；编辑器仍是点麦前快照，禁止 sync 回写清空
     if (speech.status.value === 'listening') {
       speech.endSessionForSend()
+      emit('send')
+      return
     }
     // 发送前收文末 URL 芯片（手打完整 URL 的收口）
     syncModelFromEditor({ chipTrailing: true, formatUrls: true })
@@ -636,8 +639,11 @@ function handleSendClick(): void {
     return
   }
   if (speech.status.value === 'listening') {
-    // 关闭前 model 仍是发送文案；abort 防 stop 迟到回填
+    // 关闭前 model 仍是发送文案；abort 防 stop 迟到回填。
+    // 听写中编辑器未跟 model 同步，切勿 syncModelFromEditor（会用空 DOM 盖掉 clue）。
     speech.endSessionForSend()
+    emit('send')
+    return
   }
   syncModelFromEditor({ chipTrailing: true })
   emit('send')
@@ -704,7 +710,13 @@ watch(isListening, async (listening, wasListening) => {
   }
   window.removeEventListener('keydown', handleListeningEscape)
   // 静默超时停：轻提示一次（手动停 / 取消不提示）
-  if (shouldToastSpeechSilenceStop(Boolean(wasListening), speech.lastStopReason.value)) {
+  if (
+    shouldToastSpeechSilenceStop(
+      Boolean(wasListening),
+      speech.lastStopReason.value,
+      Boolean(props.autoSubmitOnSilence)
+    )
+  ) {
     toast.info(t('sidepanel_voice_silence_stopped'))
   }
   await nextTick()
@@ -796,25 +808,20 @@ defineExpose({ focus, startVoiceDictation })
           @click="handleEditorClick"
         />
         <div
-          v-if="isListening"
+          v-if="isListening && dictationPreviewText"
           class="recall-voice-listening"
           role="status"
           :aria-label="t('sidepanel_voice_listening')"
         >
-          <div class="recall-voice-meter" aria-hidden="true">
-            <span
-              v-for="(style, index) in meterBarStyles"
-              :key="index"
-              class="recall-voice-meter__bar"
-              :style="style"
-            />
-          </div>
           <p class="recall-voice-transcript">{{ dictationPreviewText }}</p>
         </div>
       </div>
 
-      <!-- 下行：设置 / 取消 · 语音 · 发送 -->
-      <div class="recall-composer-toolbar">
+      <!-- 下行：设置 / 取消图标 · 居中波形 · 语音 · 发送 -->
+      <div
+        class="recall-composer-toolbar"
+        :class="{ 'recall-composer-toolbar--listening': isListening }"
+      >
         <button
           v-if="isListening"
           type="button"
@@ -824,9 +831,24 @@ defineExpose({ focus, startVoiceDictation })
           :disabled="props.disabled"
           @click="handleCancelVoice"
         >
-          {{ t('sidepanel_voice_cancel') }}
+          <AppIcon name="close" size="18px" />
         </button>
         <slot v-else name="leading" />
+        <div
+          v-if="isListening"
+          class="recall-voice-meter"
+          role="status"
+          :aria-label="t('sidepanel_voice_listening')"
+          aria-live="polite"
+        >
+          <span
+            v-for="(style, index) in meterBarStyles"
+            :key="index"
+            class="recall-voice-meter__bar"
+            :style="style"
+            aria-hidden="true"
+          />
+        </div>
         <div class="recall-composer-toolbar__end">
           <button
             type="button"
@@ -1028,6 +1050,30 @@ defineExpose({ focus, startVoiceDictation })
   min-height: 36px;
 }
 
+/** 听写态：左取消 · 中波形 · 右停/发；波形相对整行居中 */
+.recall-composer-toolbar--listening {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  justify-content: stretch;
+  align-items: center;
+  column-gap: var(--space-2xs);
+}
+
+.recall-composer-toolbar--listening .recall-voice-cancel {
+  justify-self: start;
+}
+
+.recall-composer-toolbar--listening .recall-voice-meter {
+  grid-column: 2;
+  justify-self: center;
+}
+
+.recall-composer-toolbar--listening .recall-composer-toolbar__end {
+  grid-column: 3;
+  justify-self: end;
+  margin-left: 0;
+}
+
 .recall-composer-toolbar__end {
   display: inline-flex;
   flex-shrink: 0;
@@ -1082,17 +1128,14 @@ defineExpose({ focus, startVoiceDictation })
   flex-shrink: 0;
   justify-content: center;
   align-items: center;
-  min-height: 32px;
+  width: 36px;
+  height: 36px;
   margin: 0;
-  padding: 0 var(--space-sm);
+  padding: 0;
   border: 0;
   border-radius: var(--radius-full);
-  font-family: inherit;
-  font-size: var(--text-caption);
-  line-height: var(--leading-tight);
-  white-space: nowrap;
   color: var(--on-surface-muted);
-  background: color-mix(in srgb, var(--ink) 5%, transparent);
+  background: transparent;
   cursor: pointer;
   transition:
     background-color var(--motion-duration-short) ease-out,
@@ -1101,7 +1144,7 @@ defineExpose({ focus, startVoiceDictation })
 
 .recall-voice-cancel:hover:not(:disabled) {
   color: var(--on-surface);
-  background: color-mix(in srgb, var(--ink) 10%, transparent);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
 }
 
 .recall-voice-cancel:disabled {
@@ -1118,7 +1161,6 @@ defineExpose({ focus, startVoiceDictation })
   display: flex;
   flex-direction: column;
   flex: 1 1 auto;
-  gap: var(--space-2xs);
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
@@ -1131,8 +1173,10 @@ defineExpose({ focus, startVoiceDictation })
   align-items: center;
   gap: 3px;
   box-sizing: border-box;
-  width: 100%;
+  width: auto;
+  min-width: 72px;
   min-height: 28px;
+  pointer-events: none;
 }
 
 .recall-voice-transcript {

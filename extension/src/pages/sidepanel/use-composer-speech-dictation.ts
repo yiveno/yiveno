@@ -42,7 +42,7 @@ export type UseComposerSpeechDictationOptions = {
   getInsertOffset?: () => number
   /**
    * 无新转写自动停的静默窗口（ms）。
-   * 缺省 = 手动点麦 12s；语音快捷键自动提交路径传 3s。
+   * 缺省 = 手动点麦 12s；语音快捷键自动提交路径传 2s。
    */
   silenceStopMs?: MaybeRefOrGetter<number>
 }
@@ -50,11 +50,18 @@ export type UseComposerSpeechDictationOptions = {
 /** 听写停止原因：静默超时 / 手动停 / 取消（还原）。 */
 export type SpeechDictationStopReason = 'silence' | 'manual' | 'cancel'
 
-/** 听写中→已停且原因为 silence 时弹一次轻提示（手动/取消不弹）。 */
+/**
+ * 听写中→静默停时是否弹「已停止，文案留着」轻提示。
+ * 手动/取消不弹；**自动提交静默停**也不弹（已在发 Recall，再说「留着」会误导）。
+ */
 export function shouldToastSpeechSilenceStop(
   wasListening: boolean,
-  reason: SpeechDictationStopReason | null
+  reason: SpeechDictationStopReason | null,
+  autoSubmitOnSilence = false
 ): boolean {
+  if (autoSubmitOnSilence) {
+    return false
+  }
   return wasListening === true && reason === 'silence'
 }
 

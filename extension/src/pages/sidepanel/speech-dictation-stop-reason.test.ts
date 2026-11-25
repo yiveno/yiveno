@@ -7,6 +7,10 @@ describe('shouldToastSpeechSilenceStop', () => {
     expect(shouldToastSpeechSilenceStop(true, 'silence')).toBe(true)
   })
 
+  it('自动提交的静默停 → 不提示（避免「留着」与已发送冲突）', () => {
+    expect(shouldToastSpeechSilenceStop(true, 'silence', true)).toBe(false)
+  })
+
   it('手动停 / 取消 → 不提示', () => {
     expect(shouldToastSpeechSilenceStop(true, 'manual')).toBe(false)
     expect(shouldToastSpeechSilenceStop(true, 'cancel')).toBe(false)

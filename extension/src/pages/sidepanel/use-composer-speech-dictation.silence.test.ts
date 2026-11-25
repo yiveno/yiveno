@@ -80,7 +80,7 @@ describe('useComposerSpeechDictation 静默窗口', () => {
     requestExtensionMicrophoneAccess.mockResolvedValue('granted')
   })
 
-  it('快捷键路径 silenceStopMs=3s：静默后 stop reason=silence', async () => {
+  it('快捷键路径 silenceStopMs=2s：静默后 stop reason=silence', async () => {
     const recognition = makeRecognition()
     createBrowserSpeechRecognition.mockReturnValue(recognition)
     const model = ref('')
@@ -105,7 +105,7 @@ describe('useComposerSpeechDictation 静默窗口', () => {
     expect(model.value).toContain('hello')
   })
 
-  it('手动听写默认 12s 静默，3s 内不停', async () => {
+  it('手动听写默认 12s 静默，短窗内不停', async () => {
     const recognition = makeRecognition()
     createBrowserSpeechRecognition.mockReturnValue(recognition)
     const model = ref('')

@@ -40,9 +40,11 @@ export function useVoiceInputMeter(active: Ref<boolean>): UseVoiceInputMeterResu
     const next: number[] = []
     for (let i = 0; i < BAR_COUNT; i += 1) {
       const wave = 0.5 + 0.5 * Math.sin(timeSec * 6.2 + i * 0.72)
+      const breath = 0.5 + 0.5 * Math.sin(timeSec * 2.4 + i * 0.35)
       const midBoost = 1 - Math.abs(i - (BAR_COUNT - 1) / 2) / ((BAR_COUNT - 1) / 2 + 0.01)
-      const base = 0.12 + midBoost * 0.1
-      const driven = base + clamped * (0.35 + midBoost * 0.45) * (0.55 + wave * 0.45)
+      // 静音也保留相位起伏，告知「正在等你说」；有麦电平再叠真实驱动
+      const idle = 0.14 + midBoost * 0.08 + wave * 0.1 + breath * 0.08
+      const driven = idle + clamped * (0.28 + midBoost * 0.42) * (0.55 + wave * 0.45)
       next.push(Math.min(1, Math.max(0.08, driven)))
     }
     barLevels.value = next
