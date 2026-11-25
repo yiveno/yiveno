@@ -1,19 +1,20 @@
 /**
- * 语音快捷键主流程：听写 → Recall → 高置信自动开新标签 / 低置信交接通知。
+ * 语音快捷键主流程：听写 → Recall → 有候选则开列表第一个 / 零候选通知。
  * Recall 直接调 recallService.recallWithClue（不经 Side Panel activeRecall 命名空间）。
  *
  * 手势铁律：异步阶段永不调 sidePanel.open。开面板只允许：
  * - 命令同步前缀（缓存 ready 且麦未授予）
  * - 通知点击
  * - 用户自己按 Alt+Shift+Y / 点工具栏
+ *
+ * 产品决策：语音快捷键**不设信度门**；首选 = topPick ?? alsoPossible[0]。
  */
 
 import { recallService } from '@/application/recall/recall-service'
 import { handleRecordMemoryOpen } from '@/background/handlers/memory-handler'
 import { speechRecognitionLangForUiLocale } from '@/core/speech/speech-dictation'
 import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
-import { shouldAutoOpenRecallResult } from '@/core/recall/recall-auto-open'
-import type { RecallResult } from '@/core/recall/recall-result'
+import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
 import { resolveUiLocale } from '@/core/i18n/ui-locale'
 import type { OffscreenSpeechDictationResponse } from '@/core/messaging/offscreen-speech'
 import {
@@ -111,57 +112,59 @@ export async function runVoiceDictationPreferOffscreen(): Promise<
 }
 
 /**
- * 打开 topPick 新标签。
+ * 语音快捷键自动打开的首选候选：列表第一个 = topPick ?? alsoPossible[0]。
+ * 不设信度门 / 分差门。
+ */
+export function pickVoiceRecallOpenCandidate(result: RecallResult): RecallMatch | null {
+  return result.topPick ?? result.alsoPossible[0] ?? null
+}
+
+/**
+ * 打开首选候选新标签。
  * 自动打开 ≠ 用户点击确认：不写 open_confirm 正例；仅导航成功后记 memory open。
  */
-export async function autoOpenRecallTopPick(
-  result: RecallResult,
+export async function autoOpenRecallCandidate(
+  candidate: RecallMatch,
   heardText: string
 ): Promise<{ opened: boolean; tabId?: number }> {
-  const top = result.topPick
-  if (!top) {
-    return { opened: false }
-  }
   const detailPageUrl = chrome.runtime.getURL('detail.html')
-  const openUrl = getMemoryItemOpenHref(top.item, { detailPageUrl })
+  const openUrl = getMemoryItemOpenHref(candidate.item, { detailPageUrl })
 
   try {
     const tab = await navigateTabToUrl(openUrl, 'newForegroundTab')
     // 导航成功后才记打开（行为信号）；不写 open_confirm（那是结果卡点击确认语义）
-    void handleRecordMemoryOpen({ id: top.item.id }).catch(() => {})
+    void handleRecordMemoryOpen({ id: candidate.item.id }).catch(() => {})
     const title =
-      top.item.type === 'bookmark'
-        ? top.item.payload.title || openUrl
-        : top.item.payload.pageTitle || openUrl
+      candidate.item.type === 'bookmark'
+        ? candidate.item.payload.title || openUrl
+        : candidate.item.payload.pageTitle || openUrl
     void showVoiceRecallNotification({
       title: title.slice(0, 120) || getMessage('app_name'),
       message: getMessage('voice_recall_notification_opened_body', heardText.slice(0, 80)),
       ...(typeof tab?.id === 'number' ? { tabId: tab.id } : {})
     })
     logger.info('VoiceRecall', '自动打开完成', {
-      memoryItemId: top.item.id,
+      memoryItemId: candidate.item.id,
       tabId: tab?.id ?? null,
-      score: top.score
+      score: candidate.score
     })
     return { opened: true, ...(typeof tab?.id === 'number' ? { tabId: tab.id } : {}) }
   } catch (error) {
     logger.warn('VoiceRecall', '自动打开导航失败', {
       error: error instanceof Error ? error.message : String(error),
-      memoryItemId: top.item.id
+      memoryItemId: candidate.item.id
     })
     return { opened: false }
   }
 }
 
-/** 是否为零候选 no_match（只通知、不开面板）。 */
+/** 是否为零候选（只通知、不打开）。 */
 export function isVoiceRecallEmptyNoMatch(result: RecallResult): boolean {
-  return (
-    result.outcome === 'no_match' && result.alsoPossible.length === 0 && result.topPick === null
-  )
+  return pickVoiceRecallOpenCandidate(result) === null
 }
 
 /**
- * 低置信交接：写 show_result handoff +「候选已备好」通知。
+ * 导航失败退路：写 show_result handoff +「候选已备好」通知。
  * 不调 sidePanel.open（异步阶段手势已过期）。
  */
 export async function handoffLowConfidenceAndNotify(
@@ -174,7 +177,7 @@ export async function handoffLowConfidenceAndNotify(
     message: getMessage('voice_recall_notification_candidates_ready'),
     openSidePanelOnClick: true
   })
-  logger.info('VoiceRecall', '低置信退路：已写交接并发通知（不开面板）', {
+  logger.info('VoiceRecall', '导航失败退路：已写交接并发通知（不开面板）', {
     outcome: result.outcome,
     alsoPossibleCount: result.alsoPossible.length,
     topScore: result.topPick?.score ?? null
@@ -207,7 +210,7 @@ async function openPanelForMicGrantOnGesture(): Promise<void> {
   }
 }
 
-/** offscreen 听写 → Recall → 门 → 开标签或交接通知（永不 open 面板）。 */
+/** offscreen 听写 → Recall → 有候选即开首选 / 零候选通知（永不 open 面板）。 */
 async function runOffscreenRecallFlow(): Promise<void> {
   const dictation = await runVoiceDictationPreferOffscreen()
   if (!dictation.ok) {
@@ -243,16 +246,8 @@ async function runOffscreenRecallFlow(): Promise<void> {
     return
   }
 
-  if (shouldAutoOpenRecallResult(result)) {
-    const open = await autoOpenRecallTopPick(result, dictation.transcript)
-    if (open.opened) {
-      return
-    }
-    await handoffLowConfidenceAndNotify(dictation.transcript, result)
-    return
-  }
-
-  if (isVoiceRecallEmptyNoMatch(result)) {
+  const candidate = pickVoiceRecallOpenCandidate(result)
+  if (!candidate) {
     void showVoiceRecallNotification({
       title: getMessage('app_name'),
       message: getMessage('voice_recall_notification_no_match')
@@ -260,6 +255,11 @@ async function runOffscreenRecallFlow(): Promise<void> {
     return
   }
 
+  const open = await autoOpenRecallCandidate(candidate, dictation.transcript)
+  if (open.opened) {
+    return
+  }
+  // 导航失败：不写学习信号；交接完整结果
   await handoffLowConfidenceAndNotify(dictation.transcript, result)
 }
 

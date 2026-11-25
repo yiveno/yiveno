@@ -66,7 +66,7 @@ import {
   VOICE_RECALL_HANDOFF_SESSION_KEY,
   type VoiceRecallHandoffPayload
 } from '@/infrastructure/storage/voice-recall-handoff-storage'
-import { shouldAutoOpenRecallResult } from '@/core/recall/recall-auto-open'
+import { pickVoiceRecallOpenCandidate } from '@/application/recall/voice-recall-open'
 import type { RecallResult } from '@/core/recall/recall-result'
 import { openExtensionReviewPage } from '@/infrastructure/browser/extension-pages'
 import { readBrowserOnline, subscribeBrowserOnline } from '@/infrastructure/browser/browser-online'
@@ -1385,12 +1385,13 @@ async function runRecall(
       })
     })
 
-    // 语音快捷键面板 fallback：过自动打开门则新开标签（与 SW 主路径同门）
+    // 语音快捷键面板 fallback：有候选即开首选（topPick ?? alsoPossible[0]；不设信度门）
     if (voiceOpenAutoOpenAfterResult.value) {
       voiceOpenAutoOpenAfterResult.value = false
       voiceDictationAutoSubmit.value = false
-      if (shouldAutoOpenRecallResult(response.result) && response.result.topPick) {
-        const topCard = toMatchCard(response.result.topPick, highlightClue, { rank: 0 })
+      const preferred = pickVoiceRecallOpenCandidate(response.result)
+      if (preferred) {
+        const topCard = toMatchCard(preferred, highlightClue, { rank: 0 })
         if (topCard.url) {
           handleRecallResultOpen(topCard.id, topCard.url, true, 0)
         }

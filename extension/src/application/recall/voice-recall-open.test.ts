@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createBookmarkMemoryItem } from '@/core/memory/create-memory-item'
 import { RECALL_TOP_PICK_MIN_SCORE } from '@/core/recall/keyword-filter-weights'
-import type { RecallResult } from '@/core/recall/recall-result'
+import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
 
 const recordOpenConfirmOutcomePair = vi.fn()
 const handleRecordMemoryOpen = vi.fn()
@@ -75,20 +75,24 @@ vi.mock('@/infrastructure/logging/logger', () => ({
 const OWNER = '11111111-1111-4111-8111-111111111111'
 const PROFILE = '22222222-2222-4222-8222-222222222222'
 
-function topPickResult(overrides?: Partial<RecallResult>): RecallResult {
+function bookmarkMatch(title: string, url: string, score: number): RecallMatch {
   const item = createBookmarkMemoryItem({
     ownerId: OWNER,
     sourceLocalProfileId: PROFILE,
-    payload: { title: 'Retention', url: 'https://example.com/retention' },
+    payload: { title, url },
     clues: {}
   })
+  return { item, score, matchedFields: ['title'] }
+}
+
+function topPickResult(overrides?: Partial<RecallResult>): RecallResult {
   return {
     outcome: 'top_pick',
-    topPick: {
-      item,
-      score: RECALL_TOP_PICK_MIN_SCORE + 20,
-      matchedFields: ['title']
-    },
+    topPick: bookmarkMatch(
+      'Retention',
+      'https://example.com/retention',
+      RECALL_TOP_PICK_MIN_SCORE + 20
+    ),
     alsoPossible: [],
     totalRankedCount: 1,
     clue: 'retention notes',
@@ -96,33 +100,7 @@ function topPickResult(overrides?: Partial<RecallResult>): RecallResult {
   }
 }
 
-function needClueResult(): RecallResult {
-  const item = createBookmarkMemoryItem({
-    ownerId: OWNER,
-    sourceLocalProfileId: PROFILE,
-    payload: { title: 'Maybe', url: 'https://example.com/maybe' },
-    clues: {}
-  })
-  return {
-    outcome: 'need_a_clue',
-    topPick: {
-      item,
-      score: RECALL_TOP_PICK_MIN_SCORE - 5,
-      matchedFields: ['title']
-    },
-    alsoPossible: [
-      {
-        item,
-        score: RECALL_TOP_PICK_MIN_SCORE - 8,
-        matchedFields: ['title']
-      }
-    ],
-    totalRankedCount: 2,
-    clue: 'vague clue'
-  }
-}
-
-describe('voice-recall-open 手势安全与学习信号', () => {
+describe('voice-recall-open 无信度门 + 学习信号', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     vi.stubGlobal('chrome', {
@@ -167,17 +145,47 @@ describe('voice-recall-open 手势安全与学习信号', () => {
     writeVoiceMicGranted.mockResolvedValue(undefined)
     openRecallSidePanel.mockResolvedValue(undefined)
     showVoiceRecallNotification.mockResolvedValue(true)
+    navigateTabToUrl.mockResolvedValue({ id: 42 })
+    ensureOffscreenDocumentForUserMedia.mockResolvedValue(true)
+  })
+
+  it('pickVoiceRecallOpenCandidate：topPick 优先，否则 alsoPossible[0]', async () => {
+    const { pickVoiceRecallOpenCandidate } = await import('@/application/recall/voice-recall-open')
+    const top = bookmarkMatch('A', 'https://a.example', 50)
+    const also = bookmarkMatch('B', 'https://b.example', 40)
+    expect(
+      pickVoiceRecallOpenCandidate(topPickResult({ topPick: top, alsoPossible: [also] }))
+    ).toBe(top)
+    expect(
+      pickVoiceRecallOpenCandidate({
+        outcome: 'need_a_clue',
+        topPick: null,
+        alsoPossible: [also],
+        totalRankedCount: 1,
+        clue: 'x'
+      })
+    ).toBe(also)
+    expect(
+      pickVoiceRecallOpenCandidate({
+        outcome: 'no_match',
+        topPick: null,
+        alsoPossible: [],
+        totalRankedCount: 0,
+        clue: 'x'
+      })
+    ).toBeNull()
   })
 
   it('自动打开成功：不写 open_confirm；导航成功后写一次 memory open', async () => {
-    navigateTabToUrl.mockResolvedValueOnce({ id: 42 })
-    const { autoOpenRecallTopPick } = await import('@/application/recall/voice-recall-open')
+    const { autoOpenRecallCandidate, pickVoiceRecallOpenCandidate } =
+      await import('@/application/recall/voice-recall-open')
     const result = topPickResult()
-    const out = await autoOpenRecallTopPick(result, 'retention notes')
+    const candidate = pickVoiceRecallOpenCandidate(result)!
+    const out = await autoOpenRecallCandidate(candidate, 'retention notes')
     expect(out.opened).toBe(true)
     expect(recordOpenConfirmOutcomePair).not.toHaveBeenCalled()
     expect(handleRecordMemoryOpen).toHaveBeenCalledTimes(1)
-    expect(handleRecordMemoryOpen).toHaveBeenCalledWith({ id: result.topPick!.item.id })
+    expect(handleRecordMemoryOpen).toHaveBeenCalledWith({ id: candidate.item.id })
     expect(navigateTabToUrl).toHaveBeenCalledWith(
       'https://example.com/retention',
       'newForegroundTab'
@@ -185,40 +193,78 @@ describe('voice-recall-open 手势安全与学习信号', () => {
     expect(showVoiceRecallNotification).toHaveBeenCalled()
   })
 
-  it('自动打开导航失败：不写 open_confirm / memory open；交接通知不开面板', async () => {
-    ensureOffscreenDocumentForUserMedia.mockResolvedValueOnce(true)
+  it('分差 9：仍自动打开首选（无信度门）', async () => {
+    const top = bookmarkMatch('A', 'https://a.example/gap9', RECALL_TOP_PICK_MIN_SCORE + 9)
+    const second = bookmarkMatch('B', 'https://b.example', RECALL_TOP_PICK_MIN_SCORE)
     vi.mocked(chrome.runtime.sendMessage).mockImplementationOnce(async () => ({
       ok: true,
-      transcript: 'retention notes',
+      transcript: 'gap nine',
       path: 'offscreen'
     }))
-    recallWithClue.mockResolvedValueOnce(topPickResult())
-    navigateTabToUrl.mockRejectedValueOnce(new Error('NAVIGATE_URL_INVALID'))
+    recallWithClue.mockResolvedValueOnce(
+      topPickResult({
+        topPick: top,
+        alsoPossible: [second],
+        totalRankedCount: 2,
+        clue: 'gap nine'
+      })
+    )
 
     const { handleVoiceRecallOpenCommand } = await import('@/application/recall/voice-recall-open')
     await handleVoiceRecallOpenCommand()
 
-    expect(recordOpenConfirmOutcomePair).not.toHaveBeenCalled()
-    expect(handleRecordMemoryOpen).not.toHaveBeenCalled()
-    expect(showVoiceRecallNotification).not.toHaveBeenCalledWith(
-      expect.objectContaining({
-        message: expect.stringContaining('Heard:')
-      })
-    )
-    expect(writeVoiceRecallHandoff).toHaveBeenCalledWith(
-      expect.objectContaining({ kind: 'show_result', clue: 'retention notes' })
-    )
-    expect(showVoiceRecallNotification).toHaveBeenCalledWith(
-      expect.objectContaining({
-        message: 'candidates ready',
-        openSidePanelOnClick: true
-      })
-    )
-    expect(openRecallSidePanel).not.toHaveBeenCalled()
+    expect(navigateTabToUrl).toHaveBeenCalledWith('https://a.example/gap9', 'newForegroundTab')
+    expect(handleRecordMemoryOpen).toHaveBeenCalledWith({ id: top.item.id })
+    expect(writeVoiceRecallHandoff).not.toHaveBeenCalled()
   })
 
-  it('no_match 零候选：只通知，不触发面板交接', async () => {
-    ensureOffscreenDocumentForUserMedia.mockResolvedValueOnce(true)
+  it('低分 topPick：仍自动打开', async () => {
+    const low = bookmarkMatch('Low', 'https://low.example', RECALL_TOP_PICK_MIN_SCORE - 20)
+    vi.mocked(chrome.runtime.sendMessage).mockImplementationOnce(async () => ({
+      ok: true,
+      transcript: 'low score',
+      path: 'offscreen'
+    }))
+    recallWithClue.mockResolvedValueOnce(
+      topPickResult({
+        outcome: 'need_a_clue',
+        topPick: low,
+        alsoPossible: [],
+        totalRankedCount: 1,
+        clue: 'low score'
+      })
+    )
+
+    const { handleVoiceRecallOpenCommand } = await import('@/application/recall/voice-recall-open')
+    await handleVoiceRecallOpenCommand()
+
+    expect(navigateTabToUrl).toHaveBeenCalledWith('https://low.example', 'newForegroundTab')
+    expect(handleRecordMemoryOpen).toHaveBeenCalledWith({ id: low.item.id })
+  })
+
+  it('仅 alsoPossible：打开第一个', async () => {
+    const first = bookmarkMatch('Only', 'https://only.example', 12)
+    vi.mocked(chrome.runtime.sendMessage).mockImplementationOnce(async () => ({
+      ok: true,
+      transcript: 'only also',
+      path: 'offscreen'
+    }))
+    recallWithClue.mockResolvedValueOnce({
+      outcome: 'need_a_clue',
+      topPick: null,
+      alsoPossible: [first],
+      totalRankedCount: 1,
+      clue: 'only also'
+    } satisfies RecallResult)
+
+    const { handleVoiceRecallOpenCommand } = await import('@/application/recall/voice-recall-open')
+    await handleVoiceRecallOpenCommand()
+
+    expect(navigateTabToUrl).toHaveBeenCalledWith('https://only.example', 'newForegroundTab')
+    expect(handleRecordMemoryOpen).toHaveBeenCalledWith({ id: first.item.id })
+  })
+
+  it('零候选：只通知 no_match，不打开', async () => {
     vi.mocked(chrome.runtime.sendMessage).mockImplementationOnce(async () => ({
       ok: true,
       transcript: 'zzzz nothing',
@@ -249,7 +295,39 @@ describe('voice-recall-open 手势安全与学习信号', () => {
     expect(showVoiceRecallNotification).toHaveBeenCalledWith(
       expect.objectContaining({ message: 'no match' })
     )
+    expect(navigateTabToUrl).not.toHaveBeenCalled()
     expect(writeVoiceRecallHandoff).not.toHaveBeenCalled()
+    expect(openRecallSidePanel).not.toHaveBeenCalled()
+  })
+
+  it('自动打开导航失败：不写 open_confirm / memory open；交接通知不开面板', async () => {
+    vi.mocked(chrome.runtime.sendMessage).mockImplementationOnce(async () => ({
+      ok: true,
+      transcript: 'retention notes',
+      path: 'offscreen'
+    }))
+    recallWithClue.mockResolvedValueOnce(topPickResult())
+    navigateTabToUrl.mockRejectedValueOnce(new Error('NAVIGATE_URL_INVALID'))
+
+    const { handleVoiceRecallOpenCommand } = await import('@/application/recall/voice-recall-open')
+    await handleVoiceRecallOpenCommand()
+
+    expect(recordOpenConfirmOutcomePair).not.toHaveBeenCalled()
+    expect(handleRecordMemoryOpen).not.toHaveBeenCalled()
+    expect(showVoiceRecallNotification).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: expect.stringContaining('Heard:')
+      })
+    )
+    expect(writeVoiceRecallHandoff).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'show_result', clue: 'retention notes' })
+    )
+    expect(showVoiceRecallNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: 'candidates ready',
+        openSidePanelOnClick: true
+      })
+    )
     expect(openRecallSidePanel).not.toHaveBeenCalled()
   })
 
@@ -276,7 +354,6 @@ describe('voice-recall-open 手势安全与学习信号', () => {
   })
 
   it('缓存 micGranted=true 且听写 aborted：只发 unclear 通知，不开面板', async () => {
-    ensureOffscreenDocumentForUserMedia.mockResolvedValueOnce(true)
     vi.mocked(chrome.runtime.sendMessage).mockImplementationOnce(async () => ({
       ok: false,
       error: 'aborted'
@@ -293,30 +370,6 @@ describe('voice-recall-open 手势安全与学习信号', () => {
     expect(patchVoiceCommandCacheMicGranted).not.toHaveBeenCalled()
   })
 
-  it('低置信：写 show_result + 候选通知，不开面板，命令不抛', async () => {
-    ensureOffscreenDocumentForUserMedia.mockResolvedValueOnce(true)
-    vi.mocked(chrome.runtime.sendMessage).mockImplementationOnce(async () => ({
-      ok: true,
-      transcript: 'vague clue',
-      path: 'offscreen'
-    }))
-    recallWithClue.mockResolvedValueOnce(needClueResult())
-
-    const { handleVoiceRecallOpenCommand } = await import('@/application/recall/voice-recall-open')
-    await expect(handleVoiceRecallOpenCommand()).resolves.toBeUndefined()
-
-    expect(writeVoiceRecallHandoff).toHaveBeenCalledWith(
-      expect.objectContaining({ kind: 'show_result', clue: 'vague clue' })
-    )
-    expect(showVoiceRecallNotification).toHaveBeenCalledWith(
-      expect.objectContaining({
-        message: 'candidates ready',
-        openSidePanelOnClick: true
-      })
-    )
-    expect(openRecallSidePanel).not.toHaveBeenCalled()
-  })
-
   it('缓存未 ready：补载后走 offscreen，仍不开面板', async () => {
     getVoiceCommandCacheSnapshot
       .mockReturnValueOnce({
@@ -329,7 +382,6 @@ describe('voice-recall-open 手势安全与学习信号', () => {
         voiceRecallOpenEnabled: true,
         micGranted: false
       })
-    ensureOffscreenDocumentForUserMedia.mockResolvedValueOnce(true)
     vi.mocked(chrome.runtime.sendMessage).mockImplementationOnce(async () => ({
       ok: false,
       error: 'not_allowed'
