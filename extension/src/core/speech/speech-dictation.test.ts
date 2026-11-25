@@ -4,13 +4,21 @@ import {
   composeSpeechDictationPreview,
   composeSpeechDictationWithCaretSuffix,
   mergeSpeechTranscriptIntoClue,
+  resolveComposerSpeechSilenceStopMs,
   SPEECH_DICTATION_SILENCE_STOP_MS,
-  speechRecognitionLangForUiLocale
+  speechRecognitionLangForUiLocale,
+  VOICE_SHORTCUT_SILENCE_STOP_MS
 } from '@/core/speech/speech-dictation'
 
-describe('SPEECH_DICTATION_SILENCE_STOP_MS', () => {
-  it('静默自动停窗口为 12s 量级', () => {
+describe('听写静默窗口常量', () => {
+  it('手动点麦 12s；语音快捷键 3s', () => {
     expect(SPEECH_DICTATION_SILENCE_STOP_MS).toBe(12_000)
+    expect(VOICE_SHORTCUT_SILENCE_STOP_MS).toBe(3_000)
+  })
+
+  it('resolveComposerSpeechSilenceStopMs：自动提交用短窗，手动用长窗', () => {
+    expect(resolveComposerSpeechSilenceStopMs(true)).toBe(VOICE_SHORTCUT_SILENCE_STOP_MS)
+    expect(resolveComposerSpeechSilenceStopMs(false)).toBe(SPEECH_DICTATION_SILENCE_STOP_MS)
   })
 })
 

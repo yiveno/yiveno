@@ -4,7 +4,7 @@
  */
 
 import {
-  SPEECH_DICTATION_SILENCE_STOP_MS,
+  VOICE_SHORTCUT_SILENCE_STOP_MS,
   composeSpeechDictationPreview
 } from '@/core/speech/speech-dictation'
 import type { OffscreenSpeechDictationResponse } from '@/core/messaging/offscreen-speech'
@@ -75,7 +75,7 @@ export async function runOffscreenSpeechDictation(
         silenceTimer = null
         const transcript = committed.trim()
         logger.info('VoiceRecall', 'offscreen 听写静默停', {
-          silenceMs: SPEECH_DICTATION_SILENCE_STOP_MS,
+          silenceMs: VOICE_SHORTCUT_SILENCE_STOP_MS,
           hasTranscript: transcript.length > 0
         })
         if (!transcript) {
@@ -83,7 +83,7 @@ export async function runOffscreenSpeechDictation(
           return
         }
         finish({ ok: true, transcript, path: 'offscreen' })
-      }, SPEECH_DICTATION_SILENCE_STOP_MS)
+      }, VOICE_SHORTCUT_SILENCE_STOP_MS)
     }
 
     recognition.onresult = event => {
@@ -152,7 +152,7 @@ export async function runOffscreenSpeechDictation(
       bumpSilence()
       logger.info('VoiceRecall', 'offscreen 听写开始', {
         lang,
-        silenceStopMs: SPEECH_DICTATION_SILENCE_STOP_MS
+        silenceStopMs: VOICE_SHORTCUT_SILENCE_STOP_MS
       })
     } catch (error) {
       finish({

@@ -24,6 +24,7 @@ import {
 } from '@/pages/sidepanel/composer/clue-editor-dom'
 import { enrichClueUrlChipsInEditor } from '@/pages/sidepanel/composer/enrich-clue-url-chips'
 import { normalizeClueUrl } from '@/pages/sidepanel/composer/clue-url'
+import { resolveComposerSpeechSilenceStopMs } from '@/core/speech/speech-dictation'
 import {
   shouldToastSpeechSilenceStop,
   useComposerSpeechDictation
@@ -175,6 +176,10 @@ function captureSpeechInsertOffsetFromEditor(): void {
 const speech = useComposerSpeechDictation({
   model,
   disabled: computed(() => Boolean(disabledRef.value)),
+  // 快捷键自动提交路径 3s；手动点麦 12s
+  silenceStopMs: computed(() =>
+    resolveComposerSpeechSilenceStopMs(Boolean(props.autoSubmitOnSilence))
+  ),
   getInsertOffset: () => {
     if (pendingSpeechInsertOffset !== null) {
       const offset = pendingSpeechInsertOffset

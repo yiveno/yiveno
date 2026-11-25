@@ -64,9 +64,10 @@ function makeRecognition(): BrowserSpeechRecognition & {
   return recognition
 }
 
-describe('runOffscreenSpeechDictation aborted 收尾', () => {
+describe('runOffscreenSpeechDictation', () => {
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.useRealTimers()
     requestExtensionMicrophoneAccess.mockResolvedValue('granted')
     isBrowserSpeechRecognitionAvailable.mockReturnValue(true)
   })
@@ -98,6 +99,34 @@ describe('runOffscreenSpeechDictation aborted 收尾', () => {
     await expect(promise).resolves.toEqual({
       ok: false,
       error: 'aborted'
+    })
+  })
+
+  it('快捷键路径 3s 静默停并返回终稿', async () => {
+    vi.useFakeTimers()
+    const recognition = makeRecognition()
+    createBrowserSpeechRecognition.mockReturnValue(recognition)
+
+    const { runOffscreenSpeechDictation } = await import('@/offscreen/run-speech-dictation')
+    const { VOICE_SHORTCUT_SILENCE_STOP_MS } = await import('@/core/speech/speech-dictation')
+    const promise = runOffscreenSpeechDictation('en-US')
+    await Promise.resolve()
+    recognition.triggerResultFinal('shortcut clue')
+
+    await vi.advanceTimersByTimeAsync(VOICE_SHORTCUT_SILENCE_STOP_MS - 1)
+    // 尚未超时
+    let settled = false
+    void promise.then(() => {
+      settled = true
+    })
+    await Promise.resolve()
+    expect(settled).toBe(false)
+
+    await vi.advanceTimersByTimeAsync(1)
+    await expect(promise).resolves.toEqual({
+      ok: true,
+      transcript: 'shortcut clue',
+      path: 'offscreen'
     })
   })
 })

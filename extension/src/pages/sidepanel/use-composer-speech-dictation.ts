@@ -5,7 +5,7 @@
  * Side Panel 常无法弹出麦克风授权 → 壳内轻条引导；页内 getUserMedia，再不行开站点设置。
  */
 
-import { onUnmounted, ref, type Ref } from 'vue'
+import { onUnmounted, ref, toValue, type MaybeRefOrGetter, type Ref } from 'vue'
 
 import { RECALL_CLUE_MAX_CHARS } from '@/core/messaging/recall-messages'
 import { clampRecallClueText } from '@/core/recall/clamp-recall-clue-text'
@@ -40,6 +40,11 @@ export type UseComposerSpeechDictationOptions = {
    * 缺省 / 非法 → 插到文末。
    */
   getInsertOffset?: () => number
+  /**
+   * 无新转写自动停的静默窗口（ms）。
+   * 缺省 = 手动点麦 12s；语音快捷键自动提交路径传 3s。
+   */
+  silenceStopMs?: MaybeRefOrGetter<number>
 }
 
 /** 听写停止原因：静默超时 / 手动停 / 取消（还原）。 */
@@ -92,22 +97,34 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
     }
   }
 
+  /** 解析本轮静默窗口（支持 Ref / getter）。 */
+  function resolveSilenceStopMs(): number {
+    if (options.silenceStopMs === undefined) {
+      return SPEECH_DICTATION_SILENCE_STOP_MS
+    }
+    const ms = toValue(options.silenceStopMs)
+    return typeof ms === 'number' && Number.isFinite(ms) && ms > 0
+      ? ms
+      : SPEECH_DICTATION_SILENCE_STOP_MS
+  }
+
   /** 有转写活动或刚开麦时重置；超时 → stop（保留文案）。 */
   function bumpSilenceWatch(): void {
     clearSilenceWatch()
     if (status.value !== 'listening') {
       return
     }
+    const silenceMs = resolveSilenceStopMs()
     silenceTimer = setTimeout(() => {
       silenceTimer = null
       if (status.value !== 'listening') {
         return
       }
       logger.info('SidePanel', '语音转写静默超时，自动停止', {
-        silenceMs: SPEECH_DICTATION_SILENCE_STOP_MS
+        silenceMs
       })
       stopListening('silence')
-    }, SPEECH_DICTATION_SILENCE_STOP_MS)
+    }, silenceMs)
   }
 
   function clearRecognitionHandlers(instance: BrowserSpeechRecognition): void {
@@ -321,7 +338,7 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
         lang,
         insertAt,
         suffixLen: caretSuffix.length,
-        silenceStopMs: SPEECH_DICTATION_SILENCE_STOP_MS
+        silenceStopMs: resolveSilenceStopMs()
       })
     } catch (error) {
       logger.warn('SidePanel', '语音转写 start 失败', {

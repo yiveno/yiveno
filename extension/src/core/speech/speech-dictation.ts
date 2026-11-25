@@ -17,10 +17,23 @@ export type SpeechDictationStatus =
   | 'requesting_permission' // 壳内轻条引导授权
 
 /**
- * 听写无新转写（无 onresult）自动停止的静默窗口。
+ * 手动点麦听写：无新转写自动停止的静默窗口。
  * 等同点停止：保留已写入文案；不 cancel。浏览器 `no-speech` 另计。
  */
 export const SPEECH_DICTATION_SILENCE_STOP_MS = 12_000
+
+/**
+ * 语音快捷键路径（offscreen / 面板 start_dictation 自动提交）静默窗口。
+ * 比手动点麦更短，尽快结束听写并进入 Recall。
+ */
+export const VOICE_SHORTCUT_SILENCE_STOP_MS = 3_000
+
+/**
+ * composer 静默窗口：快捷键自动提交路径用短窗，手动点麦用长窗。
+ */
+export function resolveComposerSpeechSilenceStopMs(autoSubmitOnSilence: boolean): number {
+  return autoSubmitOnSilence ? VOICE_SHORTCUT_SILENCE_STOP_MS : SPEECH_DICTATION_SILENCE_STOP_MS
+}
 
 /**
  * UI locale → SpeechRecognition `lang`（BCP 47）的**默认**映射。
