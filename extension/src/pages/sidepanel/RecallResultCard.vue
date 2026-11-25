@@ -16,7 +16,9 @@ import { resolveRecallCardClickAction } from '@/pages/sidepanel/recall-result-ca
 import {
   bindHoverPreviewScrollDismiss,
   createHoverPreviewDelayController,
-  resolveRecallHoverPreviewScrollRoot
+  createHoverPreviewScrollRearm,
+  resolveRecallHoverPreviewScrollRoot,
+  shouldIgnoreHoverPreviewPointerLeave
 } from '@/pages/sidepanel/recall-card-hover-preview'
 import RecallCardHoverPreview from '@/pages/sidepanel/RecallCardHoverPreview.vue'
 import RecallHighlightText from '@/pages/sidepanel/RecallHighlightText.vue'
@@ -190,11 +192,17 @@ function isDetailExportItemDisabled(id: string): boolean {
 const cardGroupRef = ref<HTMLElement | null>(null)
 let stopEvidenceObserver: (() => void) | undefined
 
-/** 悬停预览：延迟后出浮层；导出多选模式关闭；会话区滚动即收起 */
+/**
+ * 悬停预览：延迟出层；会话区滚动立刻收起；
+ * 停稳且指针仍在卡上则重武装（不必挪开再移入）。
+ */
 const hoverPreviewVisible = ref(false)
 const hoverAnchorRect = ref<DOMRect | null>(null)
 const hoverPanelRect = ref<DOMRect | null>(null)
 const hoverPreviewController = createHoverPreviewDelayController()
+const hoverPreviewScrollRearm = createHoverPreviewScrollRearm()
+/** 指针是否仍在本卡（scroll 收起不清除；leave 才清） */
+let hoverPointerInside = false
 /** 解绑会话区 scroll → 收起预览 */
 let stopHoverPreviewScrollDismiss: (() => void) | undefined
 
@@ -214,30 +222,19 @@ function detachHoverPreviewScrollDismiss(): void {
   stopHoverPreviewScrollDismiss = undefined
 }
 
-/** 指针仍在卡上时滚轮也会滚列表；须靠 scroll 收起，不能只靠 pointerleave。 */
-function dismissHoverPreview(): void {
-  detachHoverPreviewScrollDismiss()
+/** 只藏浮层 / 清待显示；不改 pointerInside，也不解绑 scroll。 */
+function hideHoverPreviewLayer(): void {
   hoverPreviewController.cancelAll()
   hoverPreviewVisible.value = false
   hoverAnchorRect.value = null
   hoverPanelRect.value = null
 }
 
-function attachHoverPreviewScrollDismiss(): void {
-  detachHoverPreviewScrollDismiss()
-  stopHoverPreviewScrollDismiss = bindHoverPreviewScrollDismiss(
-    resolveRecallHoverPreviewScrollRoot(cardGroupRef.value),
-    dismissHoverPreview
-  )
-}
-
-function handlePreviewPointerEnter(): void {
-  if (props.showDetailExportSelection) {
-    return
-  }
-  // 延迟未出层时滚动也要取消：进入即绑 scroll
-  attachHoverPreviewScrollDismiss()
+function scheduleHoverPreviewShow(): void {
   hoverPreviewController.enter(props.card.id, () => {
+    if (!hoverPointerInside || props.showDetailExportSelection) {
+      return
+    }
     const rects = readHoverRects()
     if (!rects) {
       return
@@ -248,12 +245,63 @@ function handlePreviewPointerEnter(): void {
   })
 }
 
-function handlePreviewPointerLeave(): void {
+/**
+ * 会话区滚动：立刻收起；停稳后若仍悬停则再延迟出层。
+ * 保持 scroll 监听，连续滚动只重置 settle 计时。
+ */
+function onHoverPreviewSessionScroll(): void {
+  hideHoverPreviewLayer()
+  hoverPreviewScrollRearm.noteScroll(
+    () => hoverPointerInside && !props.showDetailExportSelection,
+    () => {
+      scheduleHoverPreviewShow()
+    }
+  )
+}
+
+function attachHoverPreviewScrollDismiss(): void {
   detachHoverPreviewScrollDismiss()
-  hoverPreviewController.leave(props.card.id)
-  hoverPreviewVisible.value = false
-  hoverAnchorRect.value = null
-  hoverPanelRect.value = null
+  stopHoverPreviewScrollDismiss = bindHoverPreviewScrollDismiss(
+    resolveRecallHoverPreviewScrollRoot(cardGroupRef.value),
+    onHoverPreviewSessionScroll
+  )
+}
+
+/** 真正离开 / 卸载：清标记、取消重武装、解绑 scroll、藏层。 */
+function dismissHoverPreviewFully(): void {
+  hoverPointerInside = false
+  hoverPreviewScrollRearm.cancel()
+  detachHoverPreviewScrollDismiss()
+  hideHoverPreviewLayer()
+}
+
+function handlePreviewPointerEnter(): void {
+  if (props.showDetailExportSelection) {
+    return
+  }
+  hoverPointerInside = true
+  hoverPreviewScrollRearm.cancel()
+  // 延迟未出层时滚动也要取消：进入即绑 scroll
+  attachHoverPreviewScrollDismiss()
+  scheduleHoverPreviewShow()
+}
+
+function handlePreviewPointerLeave(event: PointerEvent): void {
+  // 滚轮滚动时偶发 leave 但坐标仍在主卡壳内：忽略，交给 scroll 收起 + 停稳重武装
+  // 边界用 shell（非整组），避免移到 sibling 列表时误保留预览
+  const shell =
+    (cardGroupRef.value?.querySelector('.recall-card-shell') as HTMLElement | null) ??
+    cardGroupRef.value
+  if (
+    shouldIgnoreHoverPreviewPointerLeave({
+      group: shell,
+      clientX: event.clientX,
+      clientY: event.clientY
+    })
+  ) {
+    return
+  }
+  dismissHoverPreviewFully()
 }
 
 /** 主卡正文/标题展开（本地态；勿复用 expanded prop——那是重复组兄弟列表） */
@@ -322,7 +370,7 @@ onMounted(() => {
 onUnmounted(() => {
   stopEvidenceObserver?.()
   bodyResizeObserver?.disconnect()
-  dismissHoverPreview()
+  dismissHoverPreviewFully()
 })
 
 watch(

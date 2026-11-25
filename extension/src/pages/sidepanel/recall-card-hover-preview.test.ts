@@ -3,9 +3,12 @@ import { describe, expect, it, vi } from 'vitest'
 import {
   bindHoverPreviewScrollDismiss,
   createHoverPreviewDelayController,
+  createHoverPreviewScrollRearm,
   placeHoverPreviewInPanel,
   resolveRecallHoverPreviewScrollRoot,
+  shouldIgnoreHoverPreviewPointerLeave,
   RECALL_CARD_PREVIEW_HOVER_DELAY_MS,
+  RECALL_CARD_PREVIEW_SCROLL_REARM_MS,
   RECALL_CARD_PREVIEW_WIDTH_PX
 } from '@/pages/sidepanel/recall-card-hover-preview'
 
@@ -106,5 +109,83 @@ describe('resolveRecallHoverPreviewScrollRoot / bindHoverPreviewScrollDismiss', 
 
   it('scrollRoot 为空时解绑为空操作', () => {
     expect(() => bindHoverPreviewScrollDismiss(null, () => {})()).not.toThrow()
+  })
+})
+
+describe('shouldIgnoreHoverPreviewPointerLeave', () => {
+  it('坐标仍落在卡组内则忽略 leave', () => {
+    const group = document.createElement('div')
+    const child = document.createElement('span')
+    group.appendChild(child)
+    expect(
+      shouldIgnoreHoverPreviewPointerLeave({
+        group,
+        clientX: 10,
+        clientY: 10,
+        elementFromPoint: () => child
+      })
+    ).toBe(true)
+  })
+
+  it('坐标落到卡外则不忽略', () => {
+    const group = document.createElement('div')
+    const outside = document.createElement('div')
+    expect(
+      shouldIgnoreHoverPreviewPointerLeave({
+        group,
+        clientX: 10,
+        clientY: 10,
+        elementFromPoint: () => outside
+      })
+    ).toBe(false)
+    expect(
+      shouldIgnoreHoverPreviewPointerLeave({
+        group: null,
+        clientX: 0,
+        clientY: 0,
+        elementFromPoint: () => null
+      })
+    ).toBe(false)
+  })
+})
+
+describe('createHoverPreviewScrollRearm', () => {
+  it('停稳后 shouldRearm 为真才 onRearm；连续 scroll 重置计时', () => {
+    vi.useFakeTimers()
+    const rearm = createHoverPreviewScrollRearm({
+      settleMs: RECALL_CARD_PREVIEW_SCROLL_REARM_MS
+    })
+    const onRearm = vi.fn()
+    let inside = true
+
+    rearm.noteScroll(() => inside, onRearm)
+    vi.advanceTimersByTime(RECALL_CARD_PREVIEW_SCROLL_REARM_MS - 20)
+    expect(onRearm).not.toHaveBeenCalled()
+
+    rearm.noteScroll(() => inside, onRearm)
+    vi.advanceTimersByTime(RECALL_CARD_PREVIEW_SCROLL_REARM_MS - 20)
+    expect(onRearm).not.toHaveBeenCalled()
+
+    vi.advanceTimersByTime(40)
+    expect(onRearm).toHaveBeenCalledTimes(1)
+
+    vi.useRealTimers()
+  })
+
+  it('停稳时已离开则不重武装；cancel 取消待重武装', () => {
+    vi.useFakeTimers()
+    const rearm = createHoverPreviewScrollRearm({ settleMs: 160 })
+    const onRearm = vi.fn()
+
+    rearm.noteScroll(() => false, onRearm)
+    vi.advanceTimersByTime(200)
+    expect(onRearm).not.toHaveBeenCalled()
+
+    rearm.noteScroll(() => true, onRearm)
+    rearm.cancel()
+    vi.advanceTimersByTime(200)
+    expect(onRearm).not.toHaveBeenCalled()
+
+    vi.useRealTimers()
   })
 })

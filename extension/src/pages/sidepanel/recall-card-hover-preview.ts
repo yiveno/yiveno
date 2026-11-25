@@ -89,6 +89,76 @@ export function bindHoverPreviewScrollDismiss(
   }
 }
 
+/**
+ * 滚动停稳后多久再尝试重出预览。
+ * 连续滚动会重置；避免停一下又滚时闪层。
+ */
+export const RECALL_CARD_PREVIEW_SCROLL_REARM_MS = 160
+
+/**
+ * 会话区滚动时浏览器偶发 pointerleave，但坐标仍落在卡组内。
+ * 此时应忽略 leave，保留 pointerInside 与停稳重武装。
+ */
+export function shouldIgnoreHoverPreviewPointerLeave(input: {
+  group: Element | null
+  clientX: number
+  clientY: number
+  elementFromPoint?: (x: number, y: number) => Element | null
+}): boolean {
+  if (!input.group) {
+    return false
+  }
+  const hit =
+    input.elementFromPoint?.(input.clientX, input.clientY) ??
+    (typeof document !== 'undefined'
+      ? document.elementFromPoint(input.clientX, input.clientY)
+      : null)
+  return Boolean(hit && input.group.contains(hit))
+}
+
+/**
+ * 滚动收起后的「停稳重武装」：指针仍在卡上时，settle 后再走一遍延迟出层。
+ * 真正离开由调用方 cancel，不再重武装。
+ */
+export function createHoverPreviewScrollRearm(options?: {
+  settleMs?: number
+  schedule?: (fn: () => void, ms: number) => ReturnType<typeof setTimeout>
+  cancel?: (id: ReturnType<typeof setTimeout>) => void
+}) {
+  const settleMs = options?.settleMs ?? RECALL_CARD_PREVIEW_SCROLL_REARM_MS
+  const schedule = options?.schedule ?? ((fn, ms) => setTimeout(fn, ms))
+  const cancelTimer = options?.cancel ?? ((id: ReturnType<typeof setTimeout>) => clearTimeout(id))
+
+  let timer: ReturnType<typeof setTimeout> | null = null
+
+  function clearTimer(): void {
+    if (timer !== null) {
+      cancelTimer(timer)
+      timer = null
+    }
+  }
+
+  return {
+    /**
+     * 每次 scroll 调用：清旧计时；settleMs 无新 scroll 后，
+     * 若 shouldRearm() 为真则 onRearm（通常再走 hover delay）。
+     */
+    noteScroll(shouldRearm: () => boolean, onRearm: () => void): void {
+      clearTimer()
+      timer = schedule(() => {
+        timer = null
+        if (shouldRearm()) {
+          onRearm()
+        }
+      }, settleMs)
+    },
+    /** 指针离开 / 卸载：取消待重武装。 */
+    cancel(): void {
+      clearTimer()
+    }
+  }
+}
+
 /** 延迟悬停控制器（同一时间只服务一张卡）。 */
 export function createHoverPreviewDelayController(options?: {
   delayMs?: number
