@@ -25,13 +25,19 @@ import { createSelectionToolbarScrollDismissHandler } from '@/content/selection-
 import {
   parseContentSelectionCommandMessage,
   parseContentSelectionErrorMessage,
+  parseContentVoiceFeedbackMessage,
   SELECTION_TOOLBAR_KEEPALIVE_PORT,
   SELECTION_TOOLBAR_PAGE_API_KEY,
   type ContentSelectionCommandResponse,
   type ContentSelectionErrorResponse,
+  type ContentVoiceFeedbackResponse,
   type SelectionToolbarCommandType,
   type SelectionToolbarPageApi
 } from '@/core/messaging/content-messages'
+import {
+  dismissVoiceFeedbackBanner,
+  showVoiceFeedbackBanner
+} from '@/content/selection-toolbar/voice-feedback-banner'
 import {
   DEFAULT_USER_SETTINGS,
   parseUserSettings,
@@ -1092,11 +1098,34 @@ function handleShowSelectionError(errorCode: string): boolean {
   return true
 }
 
+function handleShowVoiceFeedback(message: string, title?: string): boolean {
+  if (!ensureLiveContext()) {
+    return false
+  }
+  const dismissLabel = safeT('app_toast_dismiss') ?? 'Dismiss'
+  showVoiceFeedbackBanner({
+    message,
+    dismissLabel,
+    ...(title ? { title } : {})
+  })
+  return true
+}
+
 function handleRuntimeMessage(
   message: unknown,
   _sender: chrome.runtime.MessageSender,
-  sendResponse: (response: ContentSelectionCommandResponse | ContentSelectionErrorResponse) => void
+  sendResponse: (
+    response:
+      ContentSelectionCommandResponse | ContentSelectionErrorResponse | ContentVoiceFeedbackResponse
+  ) => void
 ): boolean {
+  const voiceFeedback = parseContentVoiceFeedbackMessage(message)
+  if (voiceFeedback) {
+    const shown = handleShowVoiceFeedback(voiceFeedback.message, voiceFeedback.title)
+    sendResponse({ shown })
+    return false
+  }
+
   const errorMessage = parseContentSelectionErrorMessage(message)
   if (errorMessage) {
     const shown = handleShowSelectionError(errorMessage.errorCode)
@@ -1523,6 +1552,7 @@ function teardown(): void {
   mouseDown = false
   lastSelectionKeyDownAt = null
   clearPendingCapture()
+  dismissVoiceFeedbackBanner()
 }
 
 function registerListeners(): void {

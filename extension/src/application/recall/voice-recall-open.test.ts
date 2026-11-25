@@ -9,6 +9,7 @@ const handleRecordMemoryOpen = vi.fn()
 const navigateTabToUrl = vi.fn()
 const openRecallSidePanel = vi.fn()
 const showVoiceRecallNotification = vi.fn()
+const showVoiceRecallPageOrNotify = vi.fn()
 const writeVoiceRecallHandoff = vi.fn()
 const getUserSettings = vi.fn()
 const recallWithClue = vi.fn()
@@ -36,6 +37,10 @@ vi.mock('@/infrastructure/browser/side-panel', () => ({
 
 vi.mock('@/infrastructure/browser/voice-recall-notification', () => ({
   showVoiceRecallNotification: (...args: unknown[]) => showVoiceRecallNotification(...args)
+}))
+
+vi.mock('@/infrastructure/browser/voice-recall-page-feedback', () => ({
+  showVoiceRecallPageOrNotify: (...args: unknown[]) => showVoiceRecallPageOrNotify(...args)
 }))
 
 vi.mock('@/infrastructure/storage/voice-recall-handoff-storage', () => ({
@@ -145,6 +150,7 @@ describe('voice-recall-open 无信度门 + 学习信号', () => {
     writeVoiceMicGranted.mockResolvedValue(undefined)
     openRecallSidePanel.mockResolvedValue(undefined)
     showVoiceRecallNotification.mockResolvedValue(true)
+    showVoiceRecallPageOrNotify.mockResolvedValue('banner')
     navigateTabToUrl.mockResolvedValue({ id: 42 })
     ensureOffscreenDocumentForUserMedia.mockResolvedValue(true)
   })
@@ -292,7 +298,10 @@ describe('voice-recall-open 无信度门 + 学习信号', () => {
 
     await handleVoiceRecallOpenCommand()
 
-    expect(showVoiceRecallNotification).toHaveBeenCalledWith(
+    expect(showVoiceRecallPageOrNotify).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'no match' })
+    )
+    expect(showVoiceRecallNotification).not.toHaveBeenCalledWith(
       expect.objectContaining({ message: 'no match' })
     )
     expect(navigateTabToUrl).not.toHaveBeenCalled()
@@ -300,7 +309,7 @@ describe('voice-recall-open 无信度门 + 学习信号', () => {
     expect(openRecallSidePanel).not.toHaveBeenCalled()
   })
 
-  it('自动打开导航失败：不写 open_confirm / memory open；交接通知不开面板', async () => {
+  it('自动打开导航失败：不写 open_confirm / memory open；交接反馈不开面板', async () => {
     vi.mocked(chrome.runtime.sendMessage).mockImplementationOnce(async () => ({
       ok: true,
       transcript: 'retention notes',
@@ -322,7 +331,7 @@ describe('voice-recall-open 无信度门 + 学习信号', () => {
     expect(writeVoiceRecallHandoff).toHaveBeenCalledWith(
       expect.objectContaining({ kind: 'show_result', clue: 'retention notes' })
     )
-    expect(showVoiceRecallNotification).toHaveBeenCalledWith(
+    expect(showVoiceRecallPageOrNotify).toHaveBeenCalledWith(
       expect.objectContaining({
         message: 'candidates ready',
         openSidePanelOnClick: true
@@ -353,7 +362,7 @@ describe('voice-recall-open 无信度门 + 学习信号', () => {
     expect(chrome.runtime.sendMessage).not.toHaveBeenCalled()
   })
 
-  it('缓存 micGranted=true 且听写 aborted：只发 unclear 通知，不开面板', async () => {
+  it('缓存 micGranted=true 且听写 aborted：只发 unclear 页内反馈，不开面板', async () => {
     vi.mocked(chrome.runtime.sendMessage).mockImplementationOnce(async () => ({
       ok: false,
       error: 'aborted'
@@ -362,7 +371,7 @@ describe('voice-recall-open 无信度门 + 学习信号', () => {
     const { handleVoiceRecallOpenCommand } = await import('@/application/recall/voice-recall-open')
     await handleVoiceRecallOpenCommand()
 
-    expect(showVoiceRecallNotification).toHaveBeenCalledWith(
+    expect(showVoiceRecallPageOrNotify).toHaveBeenCalledWith(
       expect.objectContaining({ message: 'unclear' })
     )
     expect(openRecallSidePanel).not.toHaveBeenCalled()
@@ -401,7 +410,7 @@ describe('voice-recall-open 无信度门 + 学习信号', () => {
     )
   })
 
-  it('offscreen 文档创建失败：只发 unclear 通知，不开面板、不写 handoff', async () => {
+  it('offscreen 文档创建失败：只发 unclear 页内反馈，不开面板、不写 handoff', async () => {
     ensureOffscreenDocumentForUserMedia.mockResolvedValueOnce(false)
 
     const { handleVoiceRecallOpenCommand } = await import('@/application/recall/voice-recall-open')
@@ -411,7 +420,7 @@ describe('voice-recall-open 无信度门 + 学习信号', () => {
     expect(chrome.runtime.sendMessage).not.toHaveBeenCalled()
     expect(openRecallSidePanel).not.toHaveBeenCalled()
     expect(writeVoiceRecallHandoff).not.toHaveBeenCalled()
-    expect(showVoiceRecallNotification).toHaveBeenCalledWith(
+    expect(showVoiceRecallPageOrNotify).toHaveBeenCalledWith(
       expect.objectContaining({ message: 'unclear' })
     )
   })

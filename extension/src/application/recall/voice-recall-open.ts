@@ -26,6 +26,7 @@ import { ensureOffscreenDocumentForUserMedia } from '@/infrastructure/browser/en
 import { navigateTabToUrl } from '@/infrastructure/browser/navigate-tab'
 import { openRecallSidePanel } from '@/infrastructure/browser/side-panel'
 import { showVoiceRecallNotification } from '@/infrastructure/browser/voice-recall-notification'
+import { showVoiceRecallPageOrNotify } from '@/infrastructure/browser/voice-recall-page-feedback'
 import { logger } from '@/infrastructure/logging/logger'
 import { getUserSettings } from '@/infrastructure/settings/user-settings-service'
 import { writeVoiceMicGranted } from '@/infrastructure/storage/voice-mic-granted-storage'
@@ -172,12 +173,12 @@ export async function handoffLowConfidenceAndNotify(
   result: RecallResult
 ): Promise<void> {
   await writeVoiceRecallHandoff({ kind: 'show_result', clue, result })
-  void showVoiceRecallNotification({
+  void showVoiceRecallPageOrNotify({
     title: getMessage('app_name'),
     message: getMessage('voice_recall_notification_candidates_ready'),
     openSidePanelOnClick: true
   })
-  logger.info('VoiceRecall', '导航失败退路：已写交接并发通知（不开面板）', {
+  logger.info('VoiceRecall', '导航失败退路：已写交接并发页内反馈（不开面板）', {
     outcome: result.outcome,
     alsoPossibleCount: result.alsoPossible.length,
     topScore: result.topPick?.score ?? null
@@ -221,7 +222,7 @@ async function runOffscreenRecallFlow(): Promise<void> {
         openSidePanelOnClick: true
       })
     } else if (dictation.reason === 'unclear') {
-      void showVoiceRecallNotification({
+      void showVoiceRecallPageOrNotify({
         title: getMessage('app_name'),
         message: getMessage('voice_recall_notification_unclear')
       })
@@ -239,7 +240,7 @@ async function runOffscreenRecallFlow(): Promise<void> {
     result = await recallService.recallWithClue(dictation.transcript, { entry: 'sidepanel' })
   } catch (error) {
     logger.error('VoiceRecall', 'Recall 失败', error)
-    void showVoiceRecallNotification({
+    void showVoiceRecallPageOrNotify({
       title: getMessage('app_name'),
       message: getMessage('voice_recall_notification_unclear')
     })
@@ -248,7 +249,7 @@ async function runOffscreenRecallFlow(): Promise<void> {
 
   const candidate = pickVoiceRecallOpenCandidate(result)
   if (!candidate) {
-    void showVoiceRecallNotification({
+    void showVoiceRecallPageOrNotify({
       title: getMessage('app_name'),
       message: getMessage('voice_recall_notification_no_match')
     })
@@ -301,7 +302,7 @@ export async function handleVoiceRecallOpenCommand(): Promise<void> {
     logger.warn('VoiceRecall', '语音快捷键命令意外失败（已吞，不抛命令分发）', {
       error: error instanceof Error ? error.message : String(error)
     })
-    void showVoiceRecallNotification({
+    void showVoiceRecallPageOrNotify({
       title: getMessage('app_name'),
       message: getMessage('voice_recall_notification_unclear')
     })

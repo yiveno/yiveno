@@ -61,7 +61,9 @@ export const SELECTION_TOOLBAR_CRITICAL_MESSAGE_KEYS: readonly MessageKey[] = [
   'selection_toolbar_failed',
   'selection_toolbar_saved',
   'selection_toolbar_saved_hint',
-  'selection_toolbar_saved_hint_generic'
+  'selection_toolbar_saved_hint_generic',
+  /** 语音页内横幅关闭按钮 */
+  'app_toast_dismiss'
 ]
 
 const CRITICAL_MESSAGE_KEYS_BY_CONTENT_SCRIPT: Record<

@@ -47,6 +47,22 @@ export type ContentSelectionErrorResponse = {
   shown: boolean
 }
 
+const contentVoiceFeedbackSchema = z.object({
+  scope: z.literal(CONTENT_MESSAGE_SCOPE),
+  type: z.literal('SHOW_VOICE_FEEDBACK'),
+  /** 页内横幅主文案（复用通知 i18n，不新开 key） */
+  message: z.string().min(1),
+  /** 可选标题；缺省仅展示 message */
+  title: z.string().optional()
+})
+
+/** SW → 页内：语音快捷键反馈横幅（无候选 / 没听清 / 导航失败交接）。 */
+export type ContentVoiceFeedbackMessage = z.infer<typeof contentVoiceFeedbackSchema>
+
+export type ContentVoiceFeedbackResponse = {
+  shown: boolean
+}
+
 export type ContentSelectionCommandSuccessResponse = {
   ok: true
   /** 无选区等：已忽略，调用方勿当失败提示 */
@@ -80,6 +96,13 @@ export function parseContentSelectionErrorMessage(
   value: unknown
 ): ContentSelectionErrorMessage | null {
   const parsed = contentSelectionErrorSchema.safeParse(value)
+  return parsed.success ? parsed.data : null
+}
+
+export function parseContentVoiceFeedbackMessage(
+  value: unknown
+): ContentVoiceFeedbackMessage | null {
+  const parsed = contentVoiceFeedbackSchema.safeParse(value)
   return parsed.success ? parsed.data : null
 }
 

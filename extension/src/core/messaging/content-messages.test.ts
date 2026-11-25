@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest'
 import {
   parseContentSelectionCommandMessage,
   parseContentSelectionErrorMessage,
+  parseContentVoiceFeedbackMessage,
   isContentScopedMessage
 } from '@/core/messaging/content-messages'
 
@@ -54,6 +55,36 @@ describe('content-messages', () => {
         scope: 'background',
         type: 'SHOW_SELECTION_ERROR',
         errorCode: 'x'
+      })
+    ).toBeNull()
+  })
+
+  it('解析 SHOW_VOICE_FEEDBACK', () => {
+    expect(
+      parseContentVoiceFeedbackMessage({
+        scope: 'content',
+        type: 'SHOW_VOICE_FEEDBACK',
+        message: 'Did not catch that',
+        title: 'Yiveno'
+      })
+    ).toEqual({
+      scope: 'content',
+      type: 'SHOW_VOICE_FEEDBACK',
+      message: 'Did not catch that',
+      title: 'Yiveno'
+    })
+    expect(
+      parseContentVoiceFeedbackMessage({
+        scope: 'content',
+        type: 'SHOW_VOICE_FEEDBACK',
+        message: ''
+      })
+    ).toBeNull()
+    expect(
+      parseContentVoiceFeedbackMessage({
+        scope: 'background',
+        type: 'SHOW_VOICE_FEEDBACK',
+        message: 'x'
       })
     ).toBeNull()
   })
