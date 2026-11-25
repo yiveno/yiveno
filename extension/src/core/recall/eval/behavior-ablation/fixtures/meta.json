@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "seed": 3195666689,
+  "nowMs": 1784980800000,
+  "nowIso": "2026-07-25T12:00:00.000Z",
+  "corpusItems": 120,
+  "topicClusters": 12,
+  "mainTasks": 100,
+  "conflictProd": 30,
+  "conflictMech": 30
+}

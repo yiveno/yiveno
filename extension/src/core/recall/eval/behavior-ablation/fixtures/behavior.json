@@ -1,0 +1,962 @@
+[
+  {
+    "itemId": "-4185ff0-0000-4000-8000-010000000000",
+    "openCount": 15,
+    "settledCount": 7,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-23T22:00:00.000Z",
+    "popularityDraw": 0.93
+  },
+  {
+    "itemId": "-4185ff0-0000-4001-8011-010000000001",
+    "openCount": 19,
+    "settledCount": 11,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-24T12:00:00.000Z",
+    "popularityDraw": 0.811
+  },
+  {
+    "itemId": "-4185ff0-0000-4002-8022-010000000002",
+    "openCount": 25,
+    "settledCount": 10,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-24T11:00:00.000Z",
+    "popularityDraw": 0.769
+  },
+  {
+    "itemId": "-4185ff0-0000-4003-8033-010000000003",
+    "openCount": 1,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-18T09:00:00.000Z",
+    "popularityDraw": 0.109
+  },
+  {
+    "itemId": "-4185ff0-0000-4004-8044-010000000004",
+    "openCount": 31,
+    "settledCount": 10,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-23T06:00:00.000Z",
+    "popularityDraw": 0.995
+  },
+  {
+    "itemId": "-4185ff0-0000-4005-8055-010000000005",
+    "openCount": 1,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-10T14:00:00.000Z",
+    "popularityDraw": 0.215
+  },
+  {
+    "itemId": "-4185ff0-0000-4006-8066-010000000006",
+    "openCount": 9,
+    "settledCount": 1,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-18T15:00:00.000Z",
+    "popularityDraw": 0.405
+  },
+  {
+    "itemId": "-4185ff0-0000-4007-8077-010000000007",
+    "openCount": 1,
+    "settledCount": 1,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-16T20:00:00.000Z",
+    "popularityDraw": 0.183
+  },
+  {
+    "itemId": "-4185ff0-0000-4008-8088-010000000008",
+    "openCount": 0,
+    "settledCount": 1,
+    "dismissCount": 0,
+    "lastOpenedAt": null,
+    "popularityDraw": 0.25
+  },
+  {
+    "itemId": "-4185ff0-0000-4009-8099-010000000009",
+    "openCount": 1,
+    "settledCount": 0,
+    "dismissCount": 3,
+    "lastOpenedAt": "2026-07-13T16:00:00.000Z",
+    "popularityDraw": 0.079
+  },
+  {
+    "itemId": "-4185fef-0000-4000-8000-010100000000",
+    "openCount": 15,
+    "settledCount": 11,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-20T19:00:00.000Z",
+    "popularityDraw": 0.907
+  },
+  {
+    "itemId": "-4185fef-0000-4001-8011-010100000001",
+    "openCount": 38,
+    "settledCount": 5,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-23T00:00:00.000Z",
+    "popularityDraw": 0.828
+  },
+  {
+    "itemId": "-4185fef-0000-4002-8022-010100000002",
+    "openCount": 25,
+    "settledCount": 10,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-24T16:00:00.000Z",
+    "popularityDraw": 0.766
+  },
+  {
+    "itemId": "-4185fef-0000-4003-8033-010100000003",
+    "openCount": 4,
+    "settledCount": 2,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-06-28T15:00:00.000Z",
+    "popularityDraw": 0.57
+  },
+  {
+    "itemId": "-4185fef-0000-4004-8044-010100000004",
+    "openCount": 1,
+    "settledCount": 1,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-02T19:00:00.000Z",
+    "popularityDraw": 0.09
+  },
+  {
+    "itemId": "-4185fef-0000-4005-8055-010100000005",
+    "openCount": 1,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-23T23:00:00.000Z",
+    "popularityDraw": 0.022
+  },
+  {
+    "itemId": "-4185fef-0000-4006-8066-010100000006",
+    "openCount": 0,
+    "settledCount": 1,
+    "dismissCount": 0,
+    "lastOpenedAt": null,
+    "popularityDraw": 0.261
+  },
+  {
+    "itemId": "-4185fef-0000-4007-8077-010100000007",
+    "openCount": 0,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": null,
+    "popularityDraw": 0.17
+  },
+  {
+    "itemId": "-4185fef-0000-4008-8088-010100000008",
+    "openCount": 1,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-14T16:00:00.000Z",
+    "popularityDraw": 0.019
+  },
+  {
+    "itemId": "-4185fef-0000-4009-8099-010100000009",
+    "openCount": 0,
+    "settledCount": 1,
+    "dismissCount": 0,
+    "lastOpenedAt": null,
+    "popularityDraw": 0.335
+  },
+  {
+    "itemId": "-4185fef-0000-4000-8000-010200000000",
+    "openCount": 33,
+    "settledCount": 4,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-23T14:00:00.000Z",
+    "popularityDraw": 0.908
+  },
+  {
+    "itemId": "-4185fef-0000-4001-8011-010200000001",
+    "openCount": 21,
+    "settledCount": 10,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-22T15:00:00.000Z",
+    "popularityDraw": 0.844
+  },
+  {
+    "itemId": "-4185fef-0000-4002-8022-010200000002",
+    "openCount": 27,
+    "settledCount": 4,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-22T21:00:00.000Z",
+    "popularityDraw": 0.891
+  },
+  {
+    "itemId": "-4185fef-0000-4003-8033-010200000003",
+    "openCount": 28,
+    "settledCount": 4,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-24T01:00:00.000Z",
+    "popularityDraw": 0.892
+  },
+  {
+    "itemId": "-4185fef-0000-4004-8044-010200000004",
+    "openCount": 0,
+    "settledCount": 0,
+    "dismissCount": 1,
+    "lastOpenedAt": null,
+    "popularityDraw": 0.032
+  },
+  {
+    "itemId": "-4185fef-0000-4005-8055-010200000005",
+    "openCount": 1,
+    "settledCount": 1,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-04T08:00:00.000Z",
+    "popularityDraw": 0.244
+  },
+  {
+    "itemId": "-4185fef-0000-4006-8066-010200000006",
+    "openCount": 0,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": null,
+    "popularityDraw": 0.196
+  },
+  {
+    "itemId": "-4185fef-0000-4007-8077-010200000007",
+    "openCount": 0,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": null,
+    "popularityDraw": 0.339
+  },
+  {
+    "itemId": "-4185fef-0000-4008-8088-010200000008",
+    "openCount": 0,
+    "settledCount": 0,
+    "dismissCount": 2,
+    "lastOpenedAt": null,
+    "popularityDraw": 0.07
+  },
+  {
+    "itemId": "-4185fef-0000-4009-8099-010200000009",
+    "openCount": 2,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-20T11:00:00.000Z",
+    "popularityDraw": 0.265
+  },
+  {
+    "itemId": "-4185fef-0000-4000-8000-010300000000",
+    "openCount": 33,
+    "settledCount": 3,
+    "dismissCount": 3,
+    "lastOpenedAt": "2026-07-25T08:00:00.000Z",
+    "popularityDraw": 0.916
+  },
+  {
+    "itemId": "-4185fef-0000-4001-8011-010300000001",
+    "openCount": 28,
+    "settledCount": 10,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-21T07:00:00.000Z",
+    "popularityDraw": 0.833
+  },
+  {
+    "itemId": "-4185fef-0000-4002-8022-010300000002",
+    "openCount": 16,
+    "settledCount": 4,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-22T22:00:00.000Z",
+    "popularityDraw": 0.942
+  },
+  {
+    "itemId": "-4185fef-0000-4003-8033-010300000003",
+    "openCount": 8,
+    "settledCount": 1,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-23T22:00:00.000Z",
+    "popularityDraw": 0.678
+  },
+  {
+    "itemId": "-4185fef-0000-4004-8044-010300000004",
+    "openCount": 38,
+    "settledCount": 9,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-21T22:00:00.000Z",
+    "popularityDraw": 0.95
+  },
+  {
+    "itemId": "-4185fef-0000-4005-8055-010300000005",
+    "openCount": 5,
+    "settledCount": 1,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-05T05:00:00.000Z",
+    "popularityDraw": 0.401
+  },
+  {
+    "itemId": "-4185fef-0000-4006-8066-010300000006",
+    "openCount": 10,
+    "settledCount": 3,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-06T09:00:00.000Z",
+    "popularityDraw": 0.505
+  },
+  {
+    "itemId": "-4185fef-0000-4007-8077-010300000007",
+    "openCount": 1,
+    "settledCount": 1,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-21T11:00:00.000Z",
+    "popularityDraw": 0.25
+  },
+  {
+    "itemId": "-4185fef-0000-4008-8088-010300000008",
+    "openCount": 1,
+    "settledCount": 0,
+    "dismissCount": 4,
+    "lastOpenedAt": "2026-07-05T02:00:00.000Z",
+    "popularityDraw": 0.278
+  },
+  {
+    "itemId": "-4185fef-0000-4009-8099-010300000009",
+    "openCount": 0,
+    "settledCount": 1,
+    "dismissCount": 1,
+    "lastOpenedAt": null,
+    "popularityDraw": 0.31
+  },
+  {
+    "itemId": "-4185fef-0000-4000-8000-010400000000",
+    "openCount": 35,
+    "settledCount": 7,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-22T18:00:00.000Z",
+    "popularityDraw": 0.926
+  },
+  {
+    "itemId": "-4185fef-0000-4001-8011-010400000001",
+    "openCount": 10,
+    "settledCount": 4,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-25T11:00:00.000Z",
+    "popularityDraw": 0.808
+  },
+  {
+    "itemId": "-4185fef-0000-4002-8022-010400000002",
+    "openCount": 24,
+    "settledCount": 11,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-23T00:00:00.000Z",
+    "popularityDraw": 0.758
+  },
+  {
+    "itemId": "-4185fef-0000-4003-8033-010400000003",
+    "openCount": 39,
+    "settledCount": 4,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-22T01:00:00.000Z",
+    "popularityDraw": 0.93
+  },
+  {
+    "itemId": "-4185fef-0000-4004-8044-010400000004",
+    "openCount": 2,
+    "settledCount": 2,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-24T10:00:00.000Z",
+    "popularityDraw": 0.692
+  },
+  {
+    "itemId": "-4185fef-0000-4005-8055-010400000005",
+    "openCount": 0,
+    "settledCount": 1,
+    "dismissCount": 0,
+    "lastOpenedAt": null,
+    "popularityDraw": 0.203
+  },
+  {
+    "itemId": "-4185fef-0000-4006-8066-010400000006",
+    "openCount": 6,
+    "settledCount": 2,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-22T07:00:00.000Z",
+    "popularityDraw": 0.655
+  },
+  {
+    "itemId": "-4185fef-0000-4007-8077-010400000007",
+    "openCount": 0,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": null,
+    "popularityDraw": 0.275
+  },
+  {
+    "itemId": "-4185fef-0000-4008-8088-010400000008",
+    "openCount": 2,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-09T19:00:00.000Z",
+    "popularityDraw": 0.18
+  },
+  {
+    "itemId": "-4185fef-0000-4009-8099-010400000009",
+    "openCount": 2,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-10T08:00:00.000Z",
+    "popularityDraw": 0.247
+  },
+  {
+    "itemId": "-4185fef-0000-4000-8000-010500000000",
+    "openCount": 30,
+    "settledCount": 3,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-23T11:00:00.000Z",
+    "popularityDraw": 0.901
+  },
+  {
+    "itemId": "-4185fef-0000-4001-8011-010500000001",
+    "openCount": 23,
+    "settledCount": 8,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-25T07:00:00.000Z",
+    "popularityDraw": 0.844
+  },
+  {
+    "itemId": "-4185fef-0000-4002-8022-010500000002",
+    "openCount": 24,
+    "settledCount": 3,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-23T02:00:00.000Z",
+    "popularityDraw": 0.743
+  },
+  {
+    "itemId": "-4185fef-0000-4003-8033-010500000003",
+    "openCount": 0,
+    "settledCount": 1,
+    "dismissCount": 1,
+    "lastOpenedAt": null,
+    "popularityDraw": 0.044
+  },
+  {
+    "itemId": "-4185fef-0000-4004-8044-010500000004",
+    "openCount": 1,
+    "settledCount": 1,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-10T00:00:00.000Z",
+    "popularityDraw": 0.033
+  },
+  {
+    "itemId": "-4185fef-0000-4005-8055-010500000005",
+    "openCount": 10,
+    "settledCount": 4,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-23T23:00:00.000Z",
+    "popularityDraw": 0.655
+  },
+  {
+    "itemId": "-4185fef-0000-4006-8066-010500000006",
+    "openCount": 28,
+    "settledCount": 4,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-21T17:00:00.000Z",
+    "popularityDraw": 0.998
+  },
+  {
+    "itemId": "-4185fef-0000-4007-8077-010500000007",
+    "openCount": 2,
+    "settledCount": 1,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-02T12:00:00.000Z",
+    "popularityDraw": 0.322
+  },
+  {
+    "itemId": "-4185fef-0000-4008-8088-010500000008",
+    "openCount": 1,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-18T05:00:00.000Z",
+    "popularityDraw": 0.372
+  },
+  {
+    "itemId": "-4185fef-0000-4009-8099-010500000009",
+    "openCount": 2,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-02T12:00:00.000Z",
+    "popularityDraw": 0.045
+  },
+  {
+    "itemId": "-4185fef-0000-4000-8000-010600000000",
+    "openCount": 15,
+    "settledCount": 8,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-24T13:00:00.000Z",
+    "popularityDraw": 0.906
+  },
+  {
+    "itemId": "-4185fef-0000-4001-8011-010600000001",
+    "openCount": 15,
+    "settledCount": 3,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-25T11:00:00.000Z",
+    "popularityDraw": 0.9
+  },
+  {
+    "itemId": "-4185fef-0000-4002-8022-010600000002",
+    "openCount": 39,
+    "settledCount": 3,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-20T14:00:00.000Z",
+    "popularityDraw": 0.75
+  },
+  {
+    "itemId": "-4185fef-0000-4003-8033-010600000003",
+    "openCount": 2,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-11T18:00:00.000Z",
+    "popularityDraw": 0.178
+  },
+  {
+    "itemId": "-4185fef-0000-4004-8044-010600000004",
+    "openCount": 2,
+    "settledCount": 3,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-09T19:00:00.000Z",
+    "popularityDraw": 0.552
+  },
+  {
+    "itemId": "-4185fef-0000-4005-8055-010600000005",
+    "openCount": 11,
+    "settledCount": 8,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-23T19:00:00.000Z",
+    "popularityDraw": 0.965
+  },
+  {
+    "itemId": "-4185fef-0000-4006-8066-010600000006",
+    "openCount": 10,
+    "settledCount": 1,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-22T00:00:00.000Z",
+    "popularityDraw": 0.467
+  },
+  {
+    "itemId": "-4185fef-0000-4007-8077-010600000007",
+    "openCount": 1,
+    "settledCount": 1,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-03T00:00:00.000Z",
+    "popularityDraw": 0.22
+  },
+  {
+    "itemId": "-4185fef-0000-4008-8088-010600000008",
+    "openCount": 1,
+    "settledCount": 1,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-04T17:00:00.000Z",
+    "popularityDraw": 0.352
+  },
+  {
+    "itemId": "-4185fef-0000-4009-8099-010600000009",
+    "openCount": 1,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-06-28T14:00:00.000Z",
+    "popularityDraw": 0.272
+  },
+  {
+    "itemId": "-4185fef-0000-4000-8000-010700000000",
+    "openCount": 34,
+    "settledCount": 11,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-24T12:00:00.000Z",
+    "popularityDraw": 0.92
+  },
+  {
+    "itemId": "-4185fef-0000-4001-8011-010700000001",
+    "openCount": 14,
+    "settledCount": 6,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-22T17:00:00.000Z",
+    "popularityDraw": 0.843
+  },
+  {
+    "itemId": "-4185fef-0000-4002-8022-010700000002",
+    "openCount": 35,
+    "settledCount": 10,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-22T10:00:00.000Z",
+    "popularityDraw": 0.765
+  },
+  {
+    "itemId": "-4185fef-0000-4003-8033-010700000003",
+    "openCount": 1,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-21T23:00:00.000Z",
+    "popularityDraw": 0.023
+  },
+  {
+    "itemId": "-4185fef-0000-4004-8044-010700000004",
+    "openCount": 38,
+    "settledCount": 11,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-23T21:00:00.000Z",
+    "popularityDraw": 0.988
+  },
+  {
+    "itemId": "-4185fef-0000-4005-8055-010700000005",
+    "openCount": 1,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-21T21:00:00.000Z",
+    "popularityDraw": 0.356
+  },
+  {
+    "itemId": "-4185fef-0000-4006-8066-010700000006",
+    "openCount": 1,
+    "settledCount": 1,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-12T06:00:00.000Z",
+    "popularityDraw": 0.249
+  },
+  {
+    "itemId": "-4185fef-0000-4007-8077-010700000007",
+    "openCount": 2,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-21T19:00:00.000Z",
+    "popularityDraw": 0.314
+  },
+  {
+    "itemId": "-4185fef-0000-4008-8088-010700000008",
+    "openCount": 1,
+    "settledCount": 1,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-06-26T08:00:00.000Z",
+    "popularityDraw": 0.332
+  },
+  {
+    "itemId": "-4185fef-0000-4009-8099-010700000009",
+    "openCount": 2,
+    "settledCount": 1,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-02T16:00:00.000Z",
+    "popularityDraw": 0.27
+  },
+  {
+    "itemId": "-4185fef-0000-4000-8000-010800000000",
+    "openCount": 34,
+    "settledCount": 4,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-22T15:00:00.000Z",
+    "popularityDraw": 0.901
+  },
+  {
+    "itemId": "-4185fef-0000-4001-8011-010800000001",
+    "openCount": 36,
+    "settledCount": 5,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-21T00:00:00.000Z",
+    "popularityDraw": 0.839
+  },
+  {
+    "itemId": "-4185fef-0000-4002-8022-010800000002",
+    "openCount": 11,
+    "settledCount": 7,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-22T19:00:00.000Z",
+    "popularityDraw": 0.916
+  },
+  {
+    "itemId": "-4185fef-0000-4003-8033-010800000003",
+    "openCount": 2,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-17T02:00:00.000Z",
+    "popularityDraw": 0.137
+  },
+  {
+    "itemId": "-4185fef-0000-4004-8044-010800000004",
+    "openCount": 2,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-07T16:00:00.000Z",
+    "popularityDraw": 0.272
+  },
+  {
+    "itemId": "-4185fef-0000-4005-8055-010800000005",
+    "openCount": 1,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-24T06:00:00.000Z",
+    "popularityDraw": 0.119
+  },
+  {
+    "itemId": "-4185fef-0000-4006-8066-010800000006",
+    "openCount": 30,
+    "settledCount": 12,
+    "dismissCount": 2,
+    "lastOpenedAt": "2026-07-22T14:00:00.000Z",
+    "popularityDraw": 0.905
+  },
+  {
+    "itemId": "-4185fef-0000-4007-8077-010800000007",
+    "openCount": 0,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": null,
+    "popularityDraw": 0.328
+  },
+  {
+    "itemId": "-4185fef-0000-4008-8088-010800000008",
+    "openCount": 2,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-01T13:00:00.000Z",
+    "popularityDraw": 0.36
+  },
+  {
+    "itemId": "-4185fef-0000-4009-8099-010800000009",
+    "openCount": 1,
+    "settledCount": 1,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-02T09:00:00.000Z",
+    "popularityDraw": 0.097
+  },
+  {
+    "itemId": "-4185fef-0000-4000-8000-010900000000",
+    "openCount": 19,
+    "settledCount": 5,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-21T18:00:00.000Z",
+    "popularityDraw": 0.917
+  },
+  {
+    "itemId": "-4185fef-0000-4001-8011-010900000001",
+    "openCount": 14,
+    "settledCount": 8,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-21T17:00:00.000Z",
+    "popularityDraw": 0.819
+  },
+  {
+    "itemId": "-4185fef-0000-4002-8022-010900000002",
+    "openCount": 35,
+    "settledCount": 12,
+    "dismissCount": 2,
+    "lastOpenedAt": "2026-07-25T10:00:00.000Z",
+    "popularityDraw": 0.76
+  },
+  {
+    "itemId": "-4185fef-0000-4003-8033-010900000003",
+    "openCount": 9,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-09T00:00:00.000Z",
+    "popularityDraw": 0.433
+  },
+  {
+    "itemId": "-4185fef-0000-4004-8044-010900000004",
+    "openCount": 2,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-13T20:00:00.000Z",
+    "popularityDraw": 0.15
+  },
+  {
+    "itemId": "-4185fef-0000-4005-8055-010900000005",
+    "openCount": 2,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-14T04:00:00.000Z",
+    "popularityDraw": 0.296
+  },
+  {
+    "itemId": "-4185fef-0000-4006-8066-010900000006",
+    "openCount": 3,
+    "settledCount": 3,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-03T09:00:00.000Z",
+    "popularityDraw": 0.566
+  },
+  {
+    "itemId": "-4185fef-0000-4007-8077-010900000007",
+    "openCount": 2,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-11T03:00:00.000Z",
+    "popularityDraw": 0.011
+  },
+  {
+    "itemId": "-4185fef-0000-4008-8088-010900000008",
+    "openCount": 1,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-24T09:00:00.000Z",
+    "popularityDraw": 0.33
+  },
+  {
+    "itemId": "-4185fef-0000-4009-8099-010900000009",
+    "openCount": 2,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-13T22:00:00.000Z",
+    "popularityDraw": 0.363
+  },
+  {
+    "itemId": "-4185fef-0000-4000-8000-010a00000000",
+    "openCount": 30,
+    "settledCount": 10,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-22T00:00:00.000Z",
+    "popularityDraw": 0.906
+  },
+  {
+    "itemId": "-4185fef-0000-4001-8011-010a00000001",
+    "openCount": 26,
+    "settledCount": 3,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-21T08:00:00.000Z",
+    "popularityDraw": 0.838
+  },
+  {
+    "itemId": "-4185fef-0000-4002-8022-010a00000002",
+    "openCount": 19,
+    "settledCount": 3,
+    "dismissCount": 1,
+    "lastOpenedAt": "2026-07-24T00:00:00.000Z",
+    "popularityDraw": 0.726
+  },
+  {
+    "itemId": "-4185fef-0000-4003-8033-010a00000003",
+    "openCount": 1,
+    "settledCount": 0,
+    "dismissCount": 2,
+    "lastOpenedAt": "2026-07-04T16:00:00.000Z",
+    "popularityDraw": 0.193
+  },
+  {
+    "itemId": "-4185fef-0000-4004-8044-010a00000004",
+    "openCount": 4,
+    "settledCount": 1,
+    "dismissCount": 4,
+    "lastOpenedAt": "2026-07-13T22:00:00.000Z",
+    "popularityDraw": 0.432
+  },
+  {
+    "itemId": "-4185fef-0000-4005-8055-010a00000005",
+    "openCount": 9,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-13T03:00:00.000Z",
+    "popularityDraw": 0.449
+  },
+  {
+    "itemId": "-4185fef-0000-4006-8066-010a00000006",
+    "openCount": 32,
+    "settledCount": 7,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-22T17:00:00.000Z",
+    "popularityDraw": 0.954
+  },
+  {
+    "itemId": "-4185fef-0000-4007-8077-010a00000007",
+    "openCount": 0,
+    "settledCount": 1,
+    "dismissCount": 0,
+    "lastOpenedAt": null,
+    "popularityDraw": 0.397
+  },
+  {
+    "itemId": "-4185fef-0000-4008-8088-010a00000008",
+    "openCount": 2,
+    "settledCount": 1,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-06T00:00:00.000Z",
+    "popularityDraw": 0.302
+  },
+  {
+    "itemId": "-4185fef-0000-4009-8099-010a00000009",
+    "openCount": 2,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-06-29T22:00:00.000Z",
+    "popularityDraw": 0.372
+  },
+  {
+    "itemId": "-4185fef-0000-4000-8000-010b00000000",
+    "openCount": 29,
+    "settledCount": 3,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-21T02:00:00.000Z",
+    "popularityDraw": 0.902
+  },
+  {
+    "itemId": "-4185fef-0000-4001-8011-010b00000001",
+    "openCount": 26,
+    "settledCount": 5,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-22T12:00:00.000Z",
+    "popularityDraw": 0.819
+  },
+  {
+    "itemId": "-4185fef-0000-4002-8022-010b00000002",
+    "openCount": 30,
+    "settledCount": 2,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-22T22:00:00.000Z",
+    "popularityDraw": 0.73
+  },
+  {
+    "itemId": "-4185fef-0000-4003-8033-010b00000003",
+    "openCount": 6,
+    "settledCount": 4,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-23T05:00:00.000Z",
+    "popularityDraw": 0.651
+  },
+  {
+    "itemId": "-4185fef-0000-4004-8044-010b00000004",
+    "openCount": 0,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": null,
+    "popularityDraw": 0.182
+  },
+  {
+    "itemId": "-4185fef-0000-4005-8055-010b00000005",
+    "openCount": 1,
+    "settledCount": 1,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-06-26T07:00:00.000Z",
+    "popularityDraw": 0.144
+  },
+  {
+    "itemId": "-4185fef-0000-4006-8066-010b00000006",
+    "openCount": 2,
+    "settledCount": 1,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-17T23:00:00.000Z",
+    "popularityDraw": 0.292
+  },
+  {
+    "itemId": "-4185fef-0000-4007-8077-010b00000007",
+    "openCount": 2,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-03T06:00:00.000Z",
+    "popularityDraw": 0.288
+  },
+  {
+    "itemId": "-4185fef-0000-4008-8088-010b00000008",
+    "openCount": 2,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-08T21:00:00.000Z",
+    "popularityDraw": 0.042
+  },
+  {
+    "itemId": "-4185fef-0000-4009-8099-010b00000009",
+    "openCount": 1,
+    "settledCount": 0,
+    "dismissCount": 0,
+    "lastOpenedAt": "2026-07-06T16:00:00.000Z",
+    "popularityDraw": 0.277
+  }
+]

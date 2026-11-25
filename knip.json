@@ -38,6 +38,7 @@
         "src/content/**/main.ts",
         "src/**/*.{test,spec}.ts",
         "src/tests/**/*.ts",
+        "src/core/recall/eval/behavior-ablation/stubs/*.ts",
         "vite/build-options.ts",
         "scripts/**/*.{js,ts,cjs}"
       ],

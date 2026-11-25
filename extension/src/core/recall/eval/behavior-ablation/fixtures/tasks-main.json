@@ -1,0 +1,1002 @@
+[
+  {
+    "id": "main-001",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "that berlin piece about kreuzberg, something with canal",
+    "targetId": "-4185fef-0000-4000-8000-010800000000",
+    "embeddingAnchor": "berlin::kreuzberg_canal::0",
+    "statementPullTerms": ["kreuzberg", "canal"],
+    "targetPullTerms": ["kreuzberg", "canal"]
+  },
+  {
+    "id": "main-002",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "neighborhood thing with prenzlauer",
+    "targetId": "-4185fef-0000-4001-8011-010800000001",
+    "embeddingAnchor": "berlin::prenzlauer_berg::1",
+    "statementPullTerms": ["prenzlauer", "berg"],
+    "targetPullTerms": ["prenzlauer", "berg"]
+  },
+  {
+    "id": "main-003",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "looking for tempelhofer berlin but I keep thinking spree",
+    "targetId": "-4185fef-0000-4002-8022-010800000002",
+    "embeddingAnchor": "berlin::tempelhofer_field::2",
+    "statementPullTerms": ["tempelhofer", "field"],
+    "targetPullTerms": ["tempelhofer", "field"]
+  },
+  {
+    "id": "main-004",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "I saved a berlin writeup on museum",
+    "targetId": "-4185fef-0000-4003-8033-010800000003",
+    "embeddingAnchor": "berlin::museum_island::3",
+    "statementPullTerms": ["museum", "island"],
+    "targetPullTerms": ["museum", "island"]
+  },
+  {
+    "id": "main-005",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "where did I put the spree notes",
+    "targetId": "-4185fef-0000-4004-8044-010800000004",
+    "embeddingAnchor": "berlin::spree_path::4",
+    "statementPullTerms": ["spree", "path"],
+    "targetPullTerms": ["spree", "path"]
+  },
+  {
+    "id": "main-006",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "the berlin article on neukolln, maybe it mentioned spree",
+    "targetId": "-4185fef-0000-4005-8055-010800000005",
+    "embeddingAnchor": "berlin::neukolln_market::5",
+    "statementPullTerms": ["neukolln", "market"],
+    "targetPullTerms": ["neukolln", "market"]
+  },
+  {
+    "id": "main-007",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "the berlin notes mentioning charlottenburg and palace",
+    "targetId": "-4185fef-0000-4006-8066-010800000006",
+    "embeddingAnchor": "berlin::charlottenburg_palace::6",
+    "statementPullTerms": ["charlottenburg", "palace"],
+    "targetPullTerms": ["charlottenburg", "palace"]
+  },
+  {
+    "id": "main-008",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "neighborhood thing with friedrichshain",
+    "targetId": "-4185fef-0000-4007-8077-010800000007",
+    "embeddingAnchor": "berlin::friedrichshain_boxes::7",
+    "statementPullTerms": ["friedrichshain", "boxes"],
+    "targetPullTerms": ["friedrichshain", "boxes"]
+  },
+  {
+    "id": "main-009",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "looking for schoneberg berlin but I keep thinking spree",
+    "targetId": "-4185fef-0000-4008-8088-010800000008",
+    "embeddingAnchor": "berlin::schoneberg_steps::8",
+    "statementPullTerms": ["schoneberg", "steps"],
+    "targetPullTerms": ["schoneberg", "steps"]
+  },
+  {
+    "id": "main-010",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "the berlin notes mentioning wedding and brewery",
+    "targetId": "-4185fef-0000-4009-8099-010800000009",
+    "embeddingAnchor": "berlin::wedding_brewery::9",
+    "statementPullTerms": ["wedding", "brewery"],
+    "targetPullTerms": ["wedding", "brewery"]
+  },
+  {
+    "id": "main-011",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "emissions thing with methane",
+    "targetId": "-4185fef-0000-4000-8000-010a00000000",
+    "embeddingAnchor": "climate::methane_leaks::0",
+    "statementPullTerms": ["methane", "leaks"],
+    "targetPullTerms": ["methane", "leaks"]
+  },
+  {
+    "id": "main-012",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "looking for heat climate but I keep thinking aviation",
+    "targetId": "-4185fef-0000-4001-8011-010a00000001",
+    "embeddingAnchor": "climate::heat_pump::1",
+    "statementPullTerms": ["heat", "pump"],
+    "targetPullTerms": ["heat", "pump"]
+  },
+  {
+    "id": "main-013",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "that climate piece about sea, something with level",
+    "targetId": "-4185fef-0000-4002-8022-010a00000002",
+    "embeddingAnchor": "climate::sea_level::2",
+    "statementPullTerms": ["sea", "level"],
+    "targetPullTerms": ["sea", "level"]
+  },
+  {
+    "id": "main-014",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "the one about grid",
+    "targetId": "-4185fef-0000-4003-8033-010a00000003",
+    "embeddingAnchor": "climate::grid_storage::3",
+    "statementPullTerms": ["grid", "storage"],
+    "targetPullTerms": ["grid", "storage"]
+  },
+  {
+    "id": "main-015",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "climate notes for soil — wait was it sea?",
+    "targetId": "-4185fef-0000-4004-8044-010a00000004",
+    "embeddingAnchor": "climate::soil_carbon::4",
+    "statementPullTerms": ["soil", "carbon"],
+    "targetPullTerms": ["soil", "carbon"]
+  },
+  {
+    "id": "main-016",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "I saved a climate writeup on aviation",
+    "targetId": "-4185fef-0000-4005-8055-010a00000005",
+    "embeddingAnchor": "climate::aviation_contrails::5",
+    "statementPullTerms": ["aviation", "contrails"],
+    "targetPullTerms": ["aviation", "contrails"]
+  },
+  {
+    "id": "main-017",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "emissions thing with permafrost",
+    "targetId": "-4185fef-0000-4006-8066-010a00000006",
+    "embeddingAnchor": "climate::permafrost_thaw::6",
+    "statementPullTerms": ["permafrost", "thaw"],
+    "targetPullTerms": ["permafrost", "thaw"]
+  },
+  {
+    "id": "main-018",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "looking for urban climate but I keep thinking sea",
+    "targetId": "-4185fef-0000-4007-8077-010a00000007",
+    "embeddingAnchor": "climate::urban_heat::7",
+    "statementPullTerms": ["urban", "heat"],
+    "targetPullTerms": ["urban", "heat"]
+  },
+  {
+    "id": "main-019",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "that climate piece about offset, something with quality",
+    "targetId": "-4185fef-0000-4008-8088-010a00000008",
+    "embeddingAnchor": "climate::offset_quality::8",
+    "statementPullTerms": ["offset", "quality"],
+    "targetPullTerms": ["offset", "quality"]
+  },
+  {
+    "id": "main-020",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "where did I put the adaptation notes",
+    "targetId": "-4185fef-0000-4009-8099-010a00000009",
+    "embeddingAnchor": "climate::adaptation_fund::9",
+    "statementPullTerms": ["adaptation", "fund"],
+    "targetPullTerms": ["adaptation", "fund"]
+  },
+  {
+    "id": "main-021",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "the typescript article on satisfies, maybe it mentioned project",
+    "targetId": "-4185fef-0000-4000-8000-010300000000",
+    "embeddingAnchor": "typescript::satisfies_operator::0",
+    "statementPullTerms": ["satisfies", "operator"],
+    "targetPullTerms": ["satisfies", "operator"]
+  },
+  {
+    "id": "main-022",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "I saved a typescript writeup on infer",
+    "targetId": "-4185fef-0000-4001-8011-010300000001",
+    "embeddingAnchor": "typescript::infer_keyword::1",
+    "statementPullTerms": ["infer", "keyword"],
+    "targetPullTerms": ["infer", "keyword"]
+  },
+  {
+    "id": "main-023",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "the one about branded",
+    "targetId": "-4185fef-0000-4002-8022-010300000002",
+    "embeddingAnchor": "typescript::branded_types::2",
+    "statementPullTerms": ["branded", "types"],
+    "targetPullTerms": ["branded", "types"]
+  },
+  {
+    "id": "main-024",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "typescript notes for const — wait was it project?",
+    "targetId": "-4185fef-0000-4003-8033-010300000003",
+    "embeddingAnchor": "typescript::const_assertions::3",
+    "statementPullTerms": ["const", "assertions"],
+    "targetPullTerms": ["const", "assertions"]
+  },
+  {
+    "id": "main-025",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "the typescript notes mentioning template and literals",
+    "targetId": "-4185fef-0000-4004-8044-010300000004",
+    "embeddingAnchor": "typescript::template_literals::4",
+    "statementPullTerms": ["template", "literals"],
+    "targetPullTerms": ["template", "literals"]
+  },
+  {
+    "id": "main-026",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "where did I put the discriminated notes",
+    "targetId": "-4185fef-0000-4005-8055-010300000005",
+    "embeddingAnchor": "typescript::discriminated_unions::5",
+    "statementPullTerms": ["discriminated", "unions"],
+    "targetPullTerms": ["discriminated", "unions"]
+  },
+  {
+    "id": "main-027",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "the typescript article on mapped, maybe it mentioned satisfies",
+    "targetId": "-4185fef-0000-4006-8066-010300000006",
+    "embeddingAnchor": "typescript::mapped_types::6",
+    "statementPullTerms": ["mapped", "types"],
+    "targetPullTerms": ["mapped", "types"]
+  },
+  {
+    "id": "main-028",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "the typescript notes mentioning declaration and merging",
+    "targetId": "-4185fef-0000-4007-8077-010300000007",
+    "embeddingAnchor": "typescript::declaration_merging::7",
+    "statementPullTerms": ["declaration", "merging"],
+    "targetPullTerms": ["declaration", "merging"]
+  },
+  {
+    "id": "main-029",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "where did I put the project notes",
+    "targetId": "-4185fef-0000-4008-8088-010300000008",
+    "embeddingAnchor": "typescript::project_references::8",
+    "statementPullTerms": ["project", "references"],
+    "targetPullTerms": ["project", "references"]
+  },
+  {
+    "id": "main-030",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "typescript notes for erasable — wait was it const?",
+    "targetId": "-4185fef-0000-4009-8099-010300000009",
+    "embeddingAnchor": "typescript::erasable_syntax::9",
+    "statementPullTerms": ["erasable", "syntax"],
+    "targetPullTerms": ["erasable", "syntax"]
+  },
+  {
+    "id": "main-031",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "the japanese notes mentioning tonkatsu and sauce",
+    "targetId": "-4185fef-0000-4000-8000-010400000000",
+    "embeddingAnchor": "japanese_food::tonkatsu_sauce::0",
+    "statementPullTerms": ["tonkatsu", "sauce"],
+    "targetPullTerms": ["tonkatsu", "sauce"]
+  },
+  {
+    "id": "main-032",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "where did I put the miso notes",
+    "targetId": "-4185fef-0000-4001-8011-010400000001",
+    "embeddingAnchor": "japanese_food::miso_glaze::1",
+    "statementPullTerms": ["miso", "glaze"],
+    "targetPullTerms": ["miso", "glaze"]
+  },
+  {
+    "id": "main-033",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "japanese notes for onigiri — wait was it yakitori?",
+    "targetId": "-4185fef-0000-4002-8022-010400000002",
+    "embeddingAnchor": "japanese_food::onigiri_fillings::2",
+    "statementPullTerms": ["onigiri", "fillings"],
+    "targetPullTerms": ["onigiri", "fillings"]
+  },
+  {
+    "id": "main-034",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "that japanese piece about tamagoyaki, something with roll",
+    "targetId": "-4185fef-0000-4003-8033-010400000003",
+    "embeddingAnchor": "japanese_food::tamagoyaki_roll::3",
+    "statementPullTerms": ["tamagoyaki", "roll"],
+    "targetPullTerms": ["tamagoyaki", "roll"]
+  },
+  {
+    "id": "main-035",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "recipe thing with yakitori",
+    "targetId": "-4185fef-0000-4004-8044-010400000004",
+    "embeddingAnchor": "japanese_food::yakitori_tare::4",
+    "statementPullTerms": ["yakitori", "tare"],
+    "targetPullTerms": ["yakitori", "tare"]
+  },
+  {
+    "id": "main-036",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "the japanese article on okonomiyaki, maybe it mentioned matcha",
+    "targetId": "-4185fef-0000-4005-8055-010400000005",
+    "embeddingAnchor": "japanese_food::okonomiyaki_batter::5",
+    "statementPullTerms": ["okonomiyaki", "batter"],
+    "targetPullTerms": ["okonomiyaki", "batter"]
+  },
+  {
+    "id": "main-037",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "I saved a japanese writeup on gyudon",
+    "targetId": "-4185fef-0000-4006-8066-010400000006",
+    "embeddingAnchor": "japanese_food::gyudon_broth::6",
+    "statementPullTerms": ["gyudon", "broth"],
+    "targetPullTerms": ["gyudon", "broth"]
+  },
+  {
+    "id": "main-038",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "recipe thing with ramen",
+    "targetId": "-4185fef-0000-4007-8077-010400000007",
+    "embeddingAnchor": "japanese_food::ramen_tare::7",
+    "statementPullTerms": ["ramen", "tare"],
+    "targetPullTerms": ["ramen", "tare"]
+  },
+  {
+    "id": "main-039",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "the japanese article on pickled, maybe it mentioned miso",
+    "targetId": "-4185fef-0000-4008-8088-010400000008",
+    "embeddingAnchor": "japanese_food::pickled_ginger::8",
+    "statementPullTerms": ["pickled", "ginger"],
+    "targetPullTerms": ["pickled", "ginger"]
+  },
+  {
+    "id": "main-040",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "the japanese notes mentioning matcha and latte",
+    "targetId": "-4185fef-0000-4009-8099-010400000009",
+    "embeddingAnchor": "japanese_food::matcha_latte::9",
+    "statementPullTerms": ["matcha", "latte"],
+    "targetPullTerms": ["matcha", "latte"]
+  },
+  {
+    "id": "main-041",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "budget thing with index",
+    "targetId": "-4185fef-0000-4000-8000-010600000000",
+    "embeddingAnchor": "finance::index_funds::0",
+    "statementPullTerms": ["index", "funds"],
+    "targetPullTerms": ["index", "funds"]
+  },
+  {
+    "id": "main-042",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "finance notes for emergency — wait was it rebalance?",
+    "targetId": "-4185fef-0000-4001-8011-010600000001",
+    "embeddingAnchor": "finance::emergency_fund::1",
+    "statementPullTerms": ["emergency", "fund"],
+    "targetPullTerms": ["emergency", "fund"]
+  },
+  {
+    "id": "main-043",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "I saved a finance writeup on taxloss",
+    "targetId": "-4185fef-0000-4002-8022-010600000002",
+    "embeddingAnchor": "finance::taxloss_harvest::2",
+    "statementPullTerms": ["taxloss", "harvest"],
+    "targetPullTerms": ["taxloss", "harvest"]
+  },
+  {
+    "id": "main-044",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "budget thing with roth",
+    "targetId": "-4185fef-0000-4003-8033-010600000003",
+    "embeddingAnchor": "finance::roth_conversion::3",
+    "statementPullTerms": ["roth", "conversion"],
+    "targetPullTerms": ["roth", "conversion"]
+  },
+  {
+    "id": "main-045",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "looking for expense finance but I keep thinking index",
+    "targetId": "-4185fef-0000-4004-8044-010600000004",
+    "embeddingAnchor": "finance::expense_ratio::4",
+    "statementPullTerms": ["expense", "ratio"],
+    "targetPullTerms": ["expense", "ratio"]
+  },
+  {
+    "id": "main-046",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "that finance piece about rebalance, something with band",
+    "targetId": "-4185fef-0000-4005-8055-010600000005",
+    "embeddingAnchor": "finance::rebalance_band::5",
+    "statementPullTerms": ["rebalance", "band"],
+    "targetPullTerms": ["rebalance", "band"]
+  },
+  {
+    "id": "main-047",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "budget thing with bond",
+    "targetId": "-4185fef-0000-4006-8066-010600000006",
+    "embeddingAnchor": "finance::bond_ladder::6",
+    "statementPullTerms": ["bond", "ladder"],
+    "targetPullTerms": ["bond", "ladder"]
+  },
+  {
+    "id": "main-048",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "looking for hysa finance but I keep thinking roth",
+    "targetId": "-4185fef-0000-4007-8077-010600000007",
+    "embeddingAnchor": "finance::hysa_rate::7",
+    "statementPullTerms": ["hysa", "rate"],
+    "targetPullTerms": ["hysa", "rate"]
+  },
+  {
+    "id": "main-049",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "that finance piece about dollar, something with cost",
+    "targetId": "-4185fef-0000-4008-8088-010600000008",
+    "embeddingAnchor": "finance::dollar_cost::8",
+    "statementPullTerms": ["dollar", "cost"],
+    "targetPullTerms": ["dollar", "cost"]
+  },
+  {
+    "id": "main-050",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "budget thing with fee",
+    "targetId": "-4185fef-0000-4009-8099-010600000009",
+    "embeddingAnchor": "finance::fee_drag::9",
+    "statementPullTerms": ["fee", "drag"],
+    "targetPullTerms": ["fee", "drag"]
+  },
+  {
+    "id": "main-051",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "lens notes for bokeh — wait was it prime?",
+    "targetId": "-4185fef-0000-4000-8000-010500000000",
+    "embeddingAnchor": "photography::bokeh_rendering::0",
+    "statementPullTerms": ["bokeh", "rendering"],
+    "targetPullTerms": ["bokeh", "rendering"]
+  },
+  {
+    "id": "main-052",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "that lens piece about macro, something with rail",
+    "targetId": "-4185fef-0000-4001-8011-010500000001",
+    "embeddingAnchor": "photography::macro_rail::1",
+    "statementPullTerms": ["macro", "rail"],
+    "targetPullTerms": ["macro", "rail"]
+  },
+  {
+    "id": "main-053",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "camera thing with anamorphic",
+    "targetId": "-4185fef-0000-4002-8022-010500000002",
+    "embeddingAnchor": "photography::anamorphic_flare::2",
+    "statementPullTerms": ["anamorphic", "flare"],
+    "targetPullTerms": ["anamorphic", "flare"]
+  },
+  {
+    "id": "main-054",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "lens notes for telephoto — wait was it anamorphic?",
+    "targetId": "-4185fef-0000-4003-8033-010500000003",
+    "embeddingAnchor": "photography::telephoto_compression::3",
+    "statementPullTerms": ["telephoto", "compression"],
+    "targetPullTerms": ["telephoto", "compression"]
+  },
+  {
+    "id": "main-055",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "I saved a lens writeup on wideangle",
+    "targetId": "-4185fef-0000-4004-8044-010500000004",
+    "embeddingAnchor": "photography::wideangle_distortion::4",
+    "statementPullTerms": ["wideangle", "distortion"],
+    "targetPullTerms": ["wideangle", "distortion"]
+  },
+  {
+    "id": "main-056",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "where did I put the prime notes",
+    "targetId": "-4185fef-0000-4005-8055-010500000005",
+    "embeddingAnchor": "photography::prime_nifty::5",
+    "statementPullTerms": ["prime", "nifty"],
+    "targetPullTerms": ["prime", "nifty"]
+  },
+  {
+    "id": "main-057",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "the lens article on stabilization, maybe it mentioned bokeh",
+    "targetId": "-4185fef-0000-4006-8066-010500000006",
+    "embeddingAnchor": "photography::stabilization_ibis::6",
+    "statementPullTerms": ["stabilization", "ibis"],
+    "targetPullTerms": ["stabilization", "ibis"]
+  },
+  {
+    "id": "main-058",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "that lens piece about autofocus, something with eye",
+    "targetId": "-4185fef-0000-4007-8077-010500000007",
+    "embeddingAnchor": "photography::autofocus_eye::7",
+    "statementPullTerms": ["autofocus", "eye"],
+    "targetPullTerms": ["autofocus", "eye"]
+  },
+  {
+    "id": "main-059",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "where did I put the filter notes",
+    "targetId": "-4185fef-0000-4008-8088-010500000008",
+    "embeddingAnchor": "photography::filter_nd::8",
+    "statementPullTerms": ["filter", "nd"],
+    "targetPullTerms": ["filter", "nd"]
+  },
+  {
+    "id": "main-060",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "lens notes for vintage — wait was it anamorphic?",
+    "targetId": "-4185fef-0000-4009-8099-010500000009",
+    "embeddingAnchor": "photography::vintage_coating::9",
+    "statementPullTerms": ["vintage", "coating"],
+    "targetPullTerms": ["vintage", "coating"]
+  },
+  {
+    "id": "main-061",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "that espresso piece about pressure, something with profiling",
+    "targetId": "-4185ff0-0000-4000-8000-010000000000",
+    "embeddingAnchor": "espresso::pressure_profiling::0",
+    "statementPullTerms": ["pressure", "profiling"],
+    "targetPullTerms": ["pressure", "profiling"]
+  },
+  {
+    "id": "main-062",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "where did I put the dual notes",
+    "targetId": "-4185ff0-0000-4001-8011-010000000001",
+    "embeddingAnchor": "espresso::dual_boiler::1",
+    "statementPullTerms": ["dual", "boiler"],
+    "targetPullTerms": ["dual", "boiler"]
+  },
+  {
+    "id": "main-063",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "espresso notes for pid — wait was it grouphead?",
+    "targetId": "-4185ff0-0000-4002-8022-010000000002",
+    "embeddingAnchor": "espresso::pid_controller::2",
+    "statementPullTerms": ["pid", "controller"],
+    "targetPullTerms": ["pid", "controller"]
+  },
+  {
+    "id": "main-064",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "I saved a espresso writeup on portafilter",
+    "targetId": "-4185ff0-0000-4003-8033-010000000003",
+    "embeddingAnchor": "espresso::portafilter_basket::3",
+    "statementPullTerms": ["portafilter", "basket"],
+    "targetPullTerms": ["portafilter", "basket"]
+  },
+  {
+    "id": "main-065",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "the one about steam",
+    "targetId": "-4185ff0-0000-4004-8044-010000000004",
+    "embeddingAnchor": "espresso::steam_wand::4",
+    "statementPullTerms": ["steam", "wand"],
+    "targetPullTerms": ["steam", "wand"]
+  },
+  {
+    "id": "main-066",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "the espresso article on preinfusion, maybe it mentioned steam",
+    "targetId": "-4185ff0-0000-4005-8055-010000000005",
+    "embeddingAnchor": "espresso::preinfusion_ramp::5",
+    "statementPullTerms": ["preinfusion", "ramp"],
+    "targetPullTerms": ["preinfusion", "ramp"]
+  },
+  {
+    "id": "main-067",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "the espresso notes mentioning flat and burr",
+    "targetId": "-4185ff0-0000-4006-8066-010000000006",
+    "embeddingAnchor": "espresso::flat_burr::6",
+    "statementPullTerms": ["flat", "burr"],
+    "targetPullTerms": ["flat", "burr"]
+  },
+  {
+    "id": "main-068",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "where did I put the volumetric notes",
+    "targetId": "-4185ff0-0000-4007-8077-010000000007",
+    "embeddingAnchor": "espresso::volumetric_dosing::7",
+    "statementPullTerms": ["volumetric", "dosing"],
+    "targetPullTerms": ["volumetric", "dosing"]
+  },
+  {
+    "id": "main-069",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "looking for grouphead espresso but I keep thinking volumetric",
+    "targetId": "-4185ff0-0000-4008-8088-010000000008",
+    "embeddingAnchor": "espresso::grouphead_gasket::8",
+    "statementPullTerms": ["grouphead", "gasket"],
+    "targetPullTerms": ["grouphead", "gasket"]
+  },
+  {
+    "id": "main-070",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "I saved a espresso writeup on flow",
+    "targetId": "-4185ff0-0000-4009-8099-010000000009",
+    "embeddingAnchor": "espresso::flow_control::9",
+    "statementPullTerms": ["flow", "control"],
+    "targetPullTerms": ["flow", "control"]
+  },
+  {
+    "id": "main-071",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "circadian thing with blue",
+    "targetId": "-4185fef-0000-4000-8000-010700000000",
+    "embeddingAnchor": "sleep::blue_light::0",
+    "statementPullTerms": ["blue", "light"],
+    "targetPullTerms": ["blue", "light"]
+  },
+  {
+    "id": "main-072",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "looking for caffeine sleep but I keep thinking white",
+    "targetId": "-4185fef-0000-4001-8011-010700000001",
+    "embeddingAnchor": "sleep::caffeine_cutoff::1",
+    "statementPullTerms": ["caffeine", "cutoff"],
+    "targetPullTerms": ["caffeine", "cutoff"]
+  },
+  {
+    "id": "main-073",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "I saved a sleep writeup on temperature",
+    "targetId": "-4185fef-0000-4002-8022-010700000002",
+    "embeddingAnchor": "sleep::temperature_cool::2",
+    "statementPullTerms": ["temperature", "cool"],
+    "targetPullTerms": ["temperature", "cool"]
+  },
+  {
+    "id": "main-074",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "where did I put the nap notes",
+    "targetId": "-4185fef-0000-4003-8033-010700000003",
+    "embeddingAnchor": "sleep::nap_protocol::3",
+    "statementPullTerms": ["nap", "protocol"],
+    "targetPullTerms": ["nap", "protocol"]
+  },
+  {
+    "id": "main-075",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "looking for melatonin sleep but I keep thinking rem",
+    "targetId": "-4185fef-0000-4004-8044-010700000004",
+    "embeddingAnchor": "sleep::melatonin_timing::4",
+    "statementPullTerms": ["melatonin", "timing"],
+    "targetPullTerms": ["melatonin", "timing"]
+  },
+  {
+    "id": "main-076",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "I saved a sleep writeup on sleep",
+    "targetId": "-4185fef-0000-4005-8055-010700000005",
+    "embeddingAnchor": "sleep::sleep_inertia::5",
+    "statementPullTerms": ["sleep", "inertia"],
+    "targetPullTerms": ["sleep", "inertia"]
+  },
+  {
+    "id": "main-077",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "where did I put the rem notes",
+    "targetId": "-4185fef-0000-4006-8066-010700000006",
+    "embeddingAnchor": "sleep::rem_cycles::6",
+    "statementPullTerms": ["rem", "cycles"],
+    "targetPullTerms": ["rem", "cycles"]
+  },
+  {
+    "id": "main-078",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "sleep notes for white — wait was it weekend?",
+    "targetId": "-4185fef-0000-4007-8077-010700000007",
+    "embeddingAnchor": "sleep::white_noise::7",
+    "statementPullTerms": ["white", "noise"],
+    "targetPullTerms": ["white", "noise"]
+  },
+  {
+    "id": "main-079",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "I saved a sleep writeup on breathing",
+    "targetId": "-4185fef-0000-4008-8088-010700000008",
+    "embeddingAnchor": "sleep::breathing_478::8",
+    "statementPullTerms": ["breathing", "478"],
+    "targetPullTerms": ["breathing", "478"]
+  },
+  {
+    "id": "main-080",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "where did I put the weekend notes",
+    "targetId": "-4185fef-0000-4009-8099-010700000009",
+    "embeddingAnchor": "sleep::weekend_catchup::9",
+    "statementPullTerms": ["weekend", "catchup"],
+    "targetPullTerms": ["weekend", "catchup"]
+  },
+  {
+    "id": "main-081",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "the privacy article on fingerprint, maybe it mentioned dnt",
+    "targetId": "-4185fef-0000-4000-8000-010100000000",
+    "embeddingAnchor": "privacy::fingerprint_canvas::0",
+    "statementPullTerms": ["fingerprint", "canvas"],
+    "targetPullTerms": ["fingerprint", "canvas"]
+  },
+  {
+    "id": "main-082",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "the privacy notes mentioning gdpr and timeline",
+    "targetId": "-4185fef-0000-4001-8011-010100000001",
+    "embeddingAnchor": "privacy::gdpr_timeline::1",
+    "statementPullTerms": ["gdpr", "timeline"],
+    "targetPullTerms": ["gdpr", "timeline"]
+  },
+  {
+    "id": "main-083",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "where did I put the cookie notes",
+    "targetId": "-4185fef-0000-4002-8022-010100000002",
+    "embeddingAnchor": "privacy::cookie_banner::2",
+    "statementPullTerms": ["cookie", "banner"],
+    "targetPullTerms": ["cookie", "banner"]
+  },
+  {
+    "id": "main-084",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "privacy notes for thirdparty — wait was it gdpr?",
+    "targetId": "-4185fef-0000-4003-8033-010100000003",
+    "embeddingAnchor": "privacy::thirdparty_pixels::3",
+    "statementPullTerms": ["thirdparty", "pixels"],
+    "targetPullTerms": ["thirdparty", "pixels"]
+  },
+  {
+    "id": "main-085",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "that privacy piece about storage, something with partition",
+    "targetId": "-4185fef-0000-4004-8044-010100000004",
+    "embeddingAnchor": "privacy::storage_partition::4",
+    "statementPullTerms": ["storage", "partition"],
+    "targetPullTerms": ["storage", "partition"]
+  },
+  {
+    "id": "main-086",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "the one about referrer",
+    "targetId": "-4185fef-0000-4005-8055-010100000005",
+    "embeddingAnchor": "privacy::referrer_policy::5",
+    "statementPullTerms": ["referrer", "policy"],
+    "targetPullTerms": ["referrer", "policy"]
+  },
+  {
+    "id": "main-087",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "privacy notes for dnt — wait was it fingerprint?",
+    "targetId": "-4185fef-0000-4006-8066-010100000006",
+    "embeddingAnchor": "privacy::dnt_signal::6",
+    "statementPullTerms": ["dnt", "signal"],
+    "targetPullTerms": ["dnt", "signal"]
+  },
+  {
+    "id": "main-088",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "that privacy piece about att, something with prompt",
+    "targetId": "-4185fef-0000-4007-8077-010100000007",
+    "embeddingAnchor": "privacy::att_prompt::7",
+    "statementPullTerms": ["att", "prompt"],
+    "targetPullTerms": ["att", "prompt"]
+  },
+  {
+    "id": "main-089",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "where did I put the cmp notes",
+    "targetId": "-4185fef-0000-4008-8088-010100000008",
+    "embeddingAnchor": "privacy::cmp_vendors::8",
+    "statementPullTerms": ["cmp", "vendors"],
+    "targetPullTerms": ["cmp", "vendors"]
+  },
+  {
+    "id": "main-090",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "the privacy article on sandbox, maybe it mentioned gdpr",
+    "targetId": "-4185fef-0000-4009-8099-010100000009",
+    "embeddingAnchor": "privacy::sandbox_iframe::9",
+    "statementPullTerms": ["sandbox", "iframe"],
+    "targetPullTerms": ["sandbox", "iframe"]
+  },
+  {
+    "id": "main-091",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "the kids notes mentioning syllable and games",
+    "targetId": "-4185fef-0000-4000-8000-010b00000000",
+    "embeddingAnchor": "kids_apps::syllable_games::0",
+    "statementPullTerms": ["syllable", "games"],
+    "targetPullTerms": ["syllable", "games"]
+  },
+  {
+    "id": "main-092",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "where did I put the number notes",
+    "targetId": "-4185fef-0000-4001-8011-010b00000001",
+    "embeddingAnchor": "kids_apps::number_bonds::1",
+    "statementPullTerms": ["number", "bonds"],
+    "targetPullTerms": ["number", "bonds"]
+  },
+  {
+    "id": "main-093",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "kids notes for story — wait was it vocab?",
+    "targetId": "-4185fef-0000-4002-8022-010b00000002",
+    "embeddingAnchor": "kids_apps::story_builder::2",
+    "statementPullTerms": ["story", "builder"],
+    "targetPullTerms": ["story", "builder"]
+  },
+  {
+    "id": "main-094",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "that kids piece about handwriting, something with trace",
+    "targetId": "-4185fef-0000-4003-8033-010b00000003",
+    "embeddingAnchor": "kids_apps::handwriting_trace::3",
+    "statementPullTerms": ["handwriting", "trace"],
+    "targetPullTerms": ["handwriting", "trace"]
+  },
+  {
+    "id": "main-095",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "learning thing with vocab",
+    "targetId": "-4185fef-0000-4004-8044-010b00000004",
+    "embeddingAnchor": "kids_apps::vocab_flash::4",
+    "statementPullTerms": ["vocab", "flash"],
+    "targetPullTerms": ["vocab", "flash"]
+  },
+  {
+    "id": "main-096",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "kids notes for music — wait was it vocab?",
+    "targetId": "-4185fef-0000-4005-8055-010b00000005",
+    "embeddingAnchor": "kids_apps::music_rhythm::5",
+    "statementPullTerms": ["music", "rhythm"],
+    "targetPullTerms": ["music", "rhythm"]
+  },
+  {
+    "id": "main-097",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "that kids piece about coding, something with blocks",
+    "targetId": "-4185fef-0000-4006-8066-010b00000006",
+    "embeddingAnchor": "kids_apps::coding_blocks::6",
+    "statementPullTerms": ["coding", "blocks"],
+    "targetPullTerms": ["coding", "blocks"]
+  },
+  {
+    "id": "main-098",
+    "track": "prod_main",
+    "kind": "partial",
+    "clue": "the one about emotion",
+    "targetId": "-4185fef-0000-4007-8077-010b00000007",
+    "embeddingAnchor": "kids_apps::emotion_cards::7",
+    "statementPullTerms": ["emotion", "cards"],
+    "targetPullTerms": ["emotion", "cards"]
+  },
+  {
+    "id": "main-099",
+    "track": "prod_main",
+    "kind": "wrong_detail",
+    "clue": "kids notes for bilingual — wait was it vocab?",
+    "targetId": "-4185fef-0000-4008-8088-010b00000008",
+    "embeddingAnchor": "kids_apps::bilingual_songs::8",
+    "statementPullTerms": ["bilingual", "songs"],
+    "targetPullTerms": ["bilingual", "songs"]
+  },
+  {
+    "id": "main-100",
+    "track": "prod_main",
+    "kind": "paraphrase",
+    "clue": "that kids piece about focus, something with timer",
+    "targetId": "-4185fef-0000-4009-8099-010b00000009",
+    "embeddingAnchor": "kids_apps::focus_timer::9",
+    "statementPullTerms": ["focus", "timer"],
+    "targetPullTerms": ["focus", "timer"]
+  }
+]
