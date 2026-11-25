@@ -1,13 +1,13 @@
 /**
  * 加载合成 Clue 测试集（Stage 1 · 仅 harness）。
+ * 纯 Zod + JSON import；无 node:fs（可进 tsconfig.app）。
  */
 
-import { readFileSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
 import { z } from 'zod'
 
 import type { ClueChainCase, ClueChainCategory } from '@/core/recall/eval/clue-chain/types'
+import clue20Expected from '@/core/recall/eval/clue-chain/fixtures/clue20_expected.json'
+import clue50Phase1Fixed from '@/core/recall/eval/clue-chain/fixtures/clue50_phase1_fixed.json'
 
 const CategorySchema = z.enum(['A', 'B', 'C', 'D'])
 
@@ -33,15 +33,15 @@ const CaseSchema = z.object({
 
 const CasesSchema = z.array(CaseSchema)
 
-const here = dirname(fileURLToPath(import.meta.url))
-
-/** 默认 fixture 目录（与本文件同树）。 */
-export const CLUE_CHAIN_FIXTURES_DIR = resolve(here, 'fixtures')
-
 export const DEFAULT_CLUE_CHAIN_FIXTURE_FILES = [
   'clue20_expected.json',
   'clue50_phase1_fixed.json'
 ] as const
+
+const FIXTURE_MODULES: Record<(typeof DEFAULT_CLUE_CHAIN_FIXTURE_FILES)[number], unknown> = {
+  'clue20_expected.json': clue20Expected,
+  'clue50_phase1_fixed.json': clue50Phase1Fixed
+}
 
 /** 解析并校验单文件用例数组（不改 JSON 原文；仅运行时校验）。 */
 export function parseClueChainCasesJson(raw: unknown, label: string): ClueChainCase[] {
@@ -55,20 +55,23 @@ export function parseClueChainCasesJson(raw: unknown, label: string): ClueChainC
   }))
 }
 
-/** 从磁盘读 fixture；`fileNames` 相对 fixtures 目录。 */
+/**
+ * 加载默认（或指定）fixture。
+ * `fixtureFiles` 返回逻辑名（非绝对路径），便于报告与 Node CLI 对照。
+ */
 export function loadClueChainCasesFromFixtures(
-  fileNames: readonly string[] = DEFAULT_CLUE_CHAIN_FIXTURE_FILES,
-  fixturesDir: string = CLUE_CHAIN_FIXTURES_DIR
+  fileNames: readonly string[] = DEFAULT_CLUE_CHAIN_FIXTURE_FILES
 ): { cases: ClueChainCase[]; fixtureFiles: string[] } {
   const cases: ClueChainCase[] = []
   const fixtureFiles: string[] = []
   for (const name of fileNames) {
-    const path = resolve(fixturesDir, name)
-    const text = readFileSync(path, 'utf8')
-    const json: unknown = JSON.parse(text)
-    const batch = parseClueChainCasesJson(json, name)
+    const mod = FIXTURE_MODULES[name as keyof typeof FIXTURE_MODULES]
+    if (mod === undefined) {
+      throw new Error(`clue-chain 未知 fixture：${name}`)
+    }
+    const batch = parseClueChainCasesJson(mod, name)
     cases.push(...batch)
-    fixtureFiles.push(path)
+    fixtureFiles.push(`extension/src/core/recall/eval/clue-chain/fixtures/${name}`)
   }
   const ids = new Set<string>()
   for (const item of cases) {

@@ -204,7 +204,10 @@ export function pickWorstClueChainCases(
   const failed = rows
     .filter(row => !row.score.corePassed)
     .map(row => {
-      const failedFields = row.score.fields.filter(field => field.scored && !field.passed)
+      const failedFields = row.score.fields.filter(
+        (field): field is Extract<ClueChainFieldScore, { scored: true }> =>
+          field.scored === true && field.passed === false
+      )
       return {
         id: row.run.id,
         category: row.run.category,

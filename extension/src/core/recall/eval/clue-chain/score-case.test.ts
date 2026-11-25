@@ -9,28 +9,42 @@ import {
   scoreTime,
   scoreType
 } from '@/core/recall/eval/clue-chain/score-case'
-import type { ClueChainParseRunCase } from '@/core/recall/eval/clue-chain/types'
+import type {
+  ClueChainFieldScore,
+  ClueChainParseRunCase
+} from '@/core/recall/eval/clue-chain/types'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
+
+function expectFieldPassed(field: ClueChainFieldScore, passed: boolean): void {
+  expect(field.scored).toBe(true)
+  if (field.scored) {
+    expect(field.passed).toBe(passed)
+  }
+}
 
 function stubRun(
   patch: Partial<ClueChainParseRunCase> & Pick<ClueChainParseRunCase, 'id'>
 ): ClueChainParseRunCase {
-  const parsed: ParsedRecallClue = {
-    raw: 'stub',
-    contentTerms: ['chicken'],
-    confidence: 'low',
-    intent: 'recall',
-    topic: { terms: ['chicken', 'fry'], source: 'content', strength: 'strong' },
-    timeRange: {
-      from: '2026-01-01T00:00:00.000Z',
-      to: '2026-01-02T00:00:00.000Z',
-      label: 'a_while_ago'
-    },
-    timeConfidence: 'low',
-    objectTypes: ['video'],
-    ...((patch.parsed as Partial<ParsedRecallClue> | null | undefined) ?? {})
-  }
-  return {
+  const parsedOverride =
+    patch.parsed === null
+      ? null
+      : ({
+          raw: 'stub',
+          contentTerms: ['chicken'],
+          confidence: 'low',
+          intent: 'recall',
+          topic: { terms: ['chicken', 'fry'], source: 'content', strength: 'strong' },
+          timeRange: {
+            from: '2026-01-01T00:00:00.000Z',
+            to: '2026-01-02T00:00:00.000Z',
+            label: 'a_while_ago'
+          },
+          timeConfidence: 'low',
+          objectTypes: ['video'],
+          ...(patch.parsed ?? {})
+        } as ParsedRecallClue)
+
+  const base: ClueChainParseRunCase = {
     id: patch.id,
     category: 'A',
     clue: '之前那个鸡胸肉视频',
@@ -46,56 +60,58 @@ function stubRun(
       behavior: null,
       certainty: 'low'
     },
-    parsed,
+    parsed: parsedOverride,
     source: 'llm',
-    intentActual: parsed.intent ?? 'recall',
-    topicTermsActual: parsed.topic?.terms ?? [],
-    timeLabelActual: parsed.timeRange?.label ?? null,
-    timeConfidenceActual: parsed.timeConfidence ?? null,
-    objectTypesActual: parsed.objectTypes ?? [],
+    intentActual: parsedOverride?.intent ?? 'recall',
+    topicTermsActual: parsedOverride?.topic?.terms ?? [],
+    timeLabelActual: parsedOverride?.timeRange?.label ?? null,
+    timeConfidenceActual: parsedOverride?.timeConfidence ?? null,
+    objectTypesActual: parsedOverride?.objectTypes ?? [],
     objectTypeOtherActual: null,
-    contentTermsActual: parsed.contentTerms,
+    contentTermsActual: parsedOverride?.contentTerms ?? [],
     excludeContentTermsActual: [],
-    confidenceActual: parsed.confidence,
+    confidenceActual: parsedOverride?.confidence ?? null,
     durationMs: 10,
     attempts: 1,
     error: null,
     timedOut: false,
-    skipped: false,
-    ...patch
+    skipped: false
   }
+
+  const { id: _id, parsed: _parsed, ...restPatch } = patch
+  return { ...base, ...restPatch, id: patch.id, parsed: parsedOverride }
 }
 
 describe('clue-chain score-case', () => {
   it('intent：recall / non_recall', () => {
-    expect(scoreIntent('recall', 'recall').passed).toBe(true)
-    expect(scoreIntent('recall', undefined).passed).toBe(true)
-    expect(scoreIntent('non_recall', 'question').passed).toBe(true)
-    expect(scoreIntent('non_recall', 'recall').passed).toBe(false)
+    expectFieldPassed(scoreIntent('recall', 'recall'), true)
+    expectFieldPassed(scoreIntent('recall', undefined), true)
+    expectFieldPassed(scoreIntent('non_recall', 'question'), true)
+    expectFieldPassed(scoreIntent('non_recall', 'recall'), false)
   })
 
   it('time：之前 → any_past；null ↔ 无 label', () => {
     expect(expandExpectedTimeCandidates('之前').kind).toBe('any_past')
-    expect(scoreTime('之前', 'a_while_ago').passed).toBe(true)
-    expect(scoreTime('之前', 'today').passed).toBe(false)
-    expect(scoreTime(null, null).passed).toBe(true)
-    expect(scoreTime(null, 'recent').passed).toBe(false)
-    expect(scoreTime('前几天', 'recent').passed).toBe(true)
+    expectFieldPassed(scoreTime('之前', 'a_while_ago'), true)
+    expectFieldPassed(scoreTime('之前', 'today'), false)
+    expectFieldPassed(scoreTime(null, null), true)
+    expectFieldPassed(scoreTime(null, 'recent'), false)
+    expectFieldPassed(scoreTime('前几天', 'recent'), true)
   })
 
   it('type：null 实际宽松过；候选集约束', () => {
     expect([...expandExpectedTypeCandidates('视频或文章')].sort()).toEqual(['article', 'video'])
-    expect(scoreType('视频', []).passed).toBe(true)
-    expect(scoreType('视频', ['video']).passed).toBe(true)
-    expect(scoreType('视频', ['song']).passed).toBe(false)
-    expect(scoreType('商品', ['page']).passed).toBe(false)
-    expect(scoreType('商品', []).passed).toBe(true)
+    expectFieldPassed(scoreType('视频', []), true)
+    expectFieldPassed(scoreType('视频', ['video']), true)
+    expectFieldPassed(scoreType('视频', ['song']), false)
+    expectFieldPassed(scoreType('商品', ['page']), false)
+    expectFieldPassed(scoreType('商品', []), true)
   })
 
   it('entities：子串命中 content/topic', () => {
-    expect(scoreEntities(['AI Agent'], ['agent', 'AI Agent tools']).passed).toBe(true)
-    expect(scoreEntities(['周杰伦'], ['jay']).passed).toBe(false)
-    expect(scoreEntities([], ['x']).passed).toBe(true)
+    expectFieldPassed(scoreEntities(['AI Agent'], ['agent', 'AI Agent tools']), true)
+    expectFieldPassed(scoreEntities(['周杰伦'], ['jay']), false)
+    expectFieldPassed(scoreEntities([], ['x']), true)
   })
 
   it('C 类只看 intent；topic 不计分', () => {
