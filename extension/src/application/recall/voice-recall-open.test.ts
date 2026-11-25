@@ -400,4 +400,19 @@ describe('voice-recall-open 无信度门 + 学习信号', () => {
       })
     )
   })
+
+  it('offscreen 文档创建失败：只发 unclear 通知，不开面板、不写 handoff', async () => {
+    ensureOffscreenDocumentForUserMedia.mockResolvedValueOnce(false)
+
+    const { handleVoiceRecallOpenCommand } = await import('@/application/recall/voice-recall-open')
+    await handleVoiceRecallOpenCommand()
+
+    expect(ensureOffscreenDocumentForUserMedia).toHaveBeenCalled()
+    expect(chrome.runtime.sendMessage).not.toHaveBeenCalled()
+    expect(openRecallSidePanel).not.toHaveBeenCalled()
+    expect(writeVoiceRecallHandoff).not.toHaveBeenCalled()
+    expect(showVoiceRecallNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ message: 'unclear' })
+    )
+  })
 })

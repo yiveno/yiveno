@@ -10,6 +10,7 @@ import {
   writeRecallPrefill
 } from '@/infrastructure/storage/first-recall-onboarding-storage'
 import { markInstallOnboardingDone } from '@/infrastructure/storage/install-onboarding-storage'
+import { openGettingStartedRecallShell } from '@/pages/getting-started/getting-started-actions'
 import {
   deriveGettingStartedExcerptPhase,
   shouldRefreshGettingStartedProgress,
@@ -76,11 +77,12 @@ async function handleTrySidePanel(clue: string): Promise<void> {
   }
   trySidePanelError.value = ''
   try {
-    // 先落引导完成标记，再开火开壳+写预填（storage 写毫秒级，仍在手势窗口内）
-    await markInstallOnboardingDone()
-    const opening = openRecallSidePanelFromExtensionPage()
-    await writeRecallPrefill(trimmed)
-    await opening
+    // 先开火开壳，再落 done + 预填（禁止先 await storage 丢手势）
+    await openGettingStartedRecallShell({
+      openShell: () => openRecallSidePanelFromExtensionPage(),
+      markDone: () => markInstallOnboardingDone(),
+      writePrefill: () => writeRecallPrefill(trimmed)
+    })
     logger.info('Onboarding', 'GS 摘录 Try it 已开 Side Panel 并预填', {
       cluePreview: trimmed.slice(0, 48)
     })

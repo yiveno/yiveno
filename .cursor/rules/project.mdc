@@ -121,6 +121,33 @@ alwaysApply: true
 - **`modern-web-guidance`：** 现代 Web/CSS/性能/无障碍；扩展 Vue UI 改动时可检索。
 - **优先级：** 与 Yiveno 术语表、产品文档、本文件分层/消息协议冲突时，**以本仓权威文档为准**。
 
+#### Yiveno 手势门 API（硬规则 · 补强 MWG）
+
+MWG 已明确：`chrome.permissions.request` 在 `await` 后丢失 user gesture；Side Panel 指引只要求 explicit open trigger，**未**写明 `chrome.sidePanel.open` 必须留在新鲜手势的同步前缀内。本仓补全如下。
+
+**门控调用（须在手势事件的同步前缀，或通知点击 / 扩展页按钮等新鲜手势回调内）：**
+
+| API / 能力 | 说明 |
+| --- | --- |
+| `chrome.sidePanel.open`（经 `openRecallSidePanel` / `openRecallSidePanelFromExtensionPage`） | 开 Recall 主壳 |
+| `chrome.permissions.request` | 可选权限弹窗；**禁止**在 SW 调 |
+| 依赖 `activeTab` 的临时页读 / `scripting` | 仅 commands / 右键 / action / Omnibox 等直接手势授予 |
+| 麦克风授权触发（页内 `getUserMedia` 弹窗、未授权时的 SpeechRecognition 授权链） | 须由当前页点击等新鲜手势发起 |
+
+**禁止出现在门控调用之前：** `await`、storage / settings 读、消息往返、bootstrap、听写、Recall、网络请求。只允许**缓存快照或同步路由决策**出现在门控调用之前。
+
+**异步失败退路：** 只写 handoff / storage 并通知；**不得**在异步阶段再调上表 API。由通知点击或扩展页按钮等新鲜手势再开面板或再请求权限。
+
+**`contains` ≠ `request`：** `chrome.permissions.contains` 可在 SW / 异步阶段；`request` 只能放在支持手势的页面 handler 同步前缀（首个 await 即 request，或 request 调用本身发生在任何 await 之前）。
+
+**检查方法：**
+
+1. 从手势入口（click / command / Omnibox 确认 / 通知点击 / content→SW 一跳）逐行追到门控调用。
+2. 标出该路径上**第一个 `await`**。
+3. 门控调用必须发生在第一个 `await` **之前**（发起调用即可；可随后 `await` 其返回的 Promise）。
+4. 扩展页开壳：**禁止** `sendMessage`→SW 再开（bootstrap / 往返丢手势）；本页直调 `openRecallSidePanelFromExtensionPage`。
+5. SW 收 `OPEN_RECALL_SHELL`：**禁止**先 `await ensureBackgroundBootstrapped`。
+
 ### `CHROMEWEBSTORE.md`（上架元数据 · 硬规则）
 
 创建或改动 Chrome 扩展时（含 `extension/public/manifest.json` 权限、`host_permissions`、准备上架、审核被拒、隐私披露），**创建并维护**根目录 `CHROMEWEBSTORE.md`。模板：`chrome-extensions` skill → `references/webstore/chromewebstore-template.md`。

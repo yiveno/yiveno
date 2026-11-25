@@ -1,6 +1,9 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 
-import { canSubmitGettingStartedRecall } from '@/pages/getting-started/getting-started-actions'
+import {
+  canSubmitGettingStartedRecall,
+  openGettingStartedRecallShell
+} from '@/pages/getting-started/getting-started-actions'
 
 describe('getting-started-actions', () => {
   it('canSubmitGettingStartedRecall 需解锁、可召、非忙、有 clue', () => {
@@ -44,5 +47,26 @@ describe('getting-started-actions', () => {
         sourceUnlocked: true
       })
     ).toBe(false)
+  })
+
+  it('openGettingStartedRecallShell：先开火 openShell，再 markDone / 预填', async () => {
+    const order: string[] = []
+    const openShell = vi.fn(() => {
+      order.push('open')
+      return Promise.resolve()
+    })
+    const markDone = vi.fn(async () => {
+      order.push('mark')
+    })
+    const writePrefill = vi.fn(async () => {
+      order.push('prefill')
+    })
+
+    await openGettingStartedRecallShell({ openShell, markDone, writePrefill })
+
+    expect(order).toEqual(['open', 'mark', 'prefill'])
+    expect(openShell).toHaveBeenCalledTimes(1)
+    expect(markDone).toHaveBeenCalledTimes(1)
+    expect(writePrefill).toHaveBeenCalledTimes(1)
   })
 })

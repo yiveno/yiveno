@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, useId } from 'vue'
 
 import { openRecallSidePanelFromExtensionPage } from '@/infrastructure/browser/side-panel'
+import { openGettingStartedRecallShell } from '@/pages/getting-started/getting-started-actions'
 import { t } from '@/infrastructure/i18n/t'
 import { logger } from '@/infrastructure/logging/logger'
 import { fetchUserSettings } from '@/infrastructure/messaging/background-client'
@@ -67,9 +68,11 @@ async function handleContinue(): Promise<void> {
   continueBusy.value = true
   continueError.value = ''
   try {
-    // 先落引导完成标记，再开壳：避免 Panel 读到 done=false 又推回 Capture-first
-    await markInstallOnboardingDone()
-    await openRecallSidePanelFromExtensionPage()
+    // 先开火开壳，再落 done（禁止先 await storage 丢手势）；Panel mount 前 done 通常已写完
+    await openGettingStartedRecallShell({
+      openShell: () => openRecallSidePanelFromExtensionPage(),
+      markDone: () => markInstallOnboardingDone()
+    })
     logger.info('Onboarding', 'GS Continue 已开 Side Panel', {
       hasLibrarySeed: hasLibrarySeed.value
     })
