@@ -25,7 +25,8 @@ const FIELD_LABEL_KEYS: Record<string, string> = {
   memory_note: 'explain_field_memory_note',
   embedding: 'explain_field_embedding',
   hybridRrf: 'explain_field_hybrid_rrf',
-  constraint_neighborhood: 'explain_field_constraint_neighborhood'
+  constraint_neighborhood: 'explain_field_constraint_neighborhood',
+  behavior_preference: 'explain_field_behavior_preference'
 }
 
 const FIELD_SHORT_LABEL_KEYS: Record<string, string> = {
@@ -42,7 +43,8 @@ const FIELD_SHORT_LABEL_KEYS: Record<string, string> = {
   memory_note: 'explain_field_short_memory_note',
   embedding: 'explain_field_short_embedding',
   hybridRrf: 'explain_field_short_hybrid_rrf',
-  constraint_neighborhood: 'explain_field_short_constraint_neighborhood'
+  constraint_neighborhood: 'explain_field_short_constraint_neighborhood',
+  behavior_preference: 'explain_field_short_behavior_preference'
 }
 
 /** 与 keyword-filter 一致的字段权重，用于选择主因字段。 */
@@ -63,6 +65,8 @@ const FIELD_PRIORITY: Record<string, number> = {
   embedding: 15,
   /** 约束邻域（仅类型/时间/刚存）：专用解释，不作「正文含 token」。 */
   constraint_neighborhood: 22,
+  /** 行为偏好排序：专用解释，不作「字段含 clue」。 */
+  behavior_preference: 28,
   /** RRF 标记字段：解释时不作主因。 */
   hybridRrf: 0
 }
@@ -208,26 +212,28 @@ export function explainRecallMatch(
     }
   }
 
-  // 约束邻域：类型/时间邻域，禁止写成「字段含 clue token」误导
+  // 约束邻域 / 行为偏好：专用解释，禁止写成「字段含 clue token」或漏出内部池名
   const primary =
     primaryField === 'constraint_neighborhood'
       ? translate('explain_reason_constraint_neighborhood')
-      : (() => {
-          const fieldLabel = getRecallMatchFieldLabel(primaryField, translate)
-          const token = findMatchedClueToken({
-            clue: input.clue,
-            primaryField,
-            ...optionalItem(input.item),
-            ...(input.noteMatchedTerms ? { noteMatchedTerms: input.noteMatchedTerms } : {})
-          })
-          return token
-            ? translate('explain_reason_field_contains', [
-                fieldLabel,
-                // 可见面：token 内 URL 缩短；契约面 clue / Filter 字面不变
-                formatExplainInterpolationForDisplay(token)
-              ])
-            : translate('explain_reason_field_related', fieldLabel)
-        })()
+      : primaryField === 'behavior_preference'
+        ? translate('explain_reason_behavior_preference')
+        : (() => {
+            const fieldLabel = getRecallMatchFieldLabel(primaryField, translate)
+            const token = findMatchedClueToken({
+              clue: input.clue,
+              primaryField,
+              ...optionalItem(input.item),
+              ...(input.noteMatchedTerms ? { noteMatchedTerms: input.noteMatchedTerms } : {})
+            })
+            return token
+              ? translate('explain_reason_field_contains', [
+                  fieldLabel,
+                  // 可见面：token 内 URL 缩短；契约面 clue / Filter 字面不变
+                  formatExplainInterpolationForDisplay(token)
+                ])
+              : translate('explain_reason_field_related', fieldLabel)
+          })()
 
   const secondaryFields = uniqueFields.filter(field => field !== primaryField)
   const secondary =

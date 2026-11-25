@@ -1036,6 +1036,15 @@
       }
     }
   },
+  "recall_card_last_visited": {
+    "message": "Last visited $time$",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "3 weeks ago"
+      }
+    }
+  },
   "recall_card_saved_just_now": {
     "message": "Just saved"
   },
@@ -2866,6 +2875,9 @@
   "explain_field_constraint_neighborhood": {
     "message": "type match"
   },
+  "explain_field_behavior_preference": {
+    "message": "browsing activity"
+  },
   "explain_field_short_title": {
     "message": "title"
   },
@@ -2908,11 +2920,17 @@
   "explain_field_short_constraint_neighborhood": {
     "message": "type"
   },
+  "explain_field_short_behavior_preference": {
+    "message": "activity"
+  },
   "explain_content_related": {
     "message": "Related to your clue"
   },
   "explain_reason_constraint_neighborhood": {
     "message": "Fits this type in your library"
+  },
+  "explain_reason_behavior_preference": {
+    "message": "Ranked from your browsing activity"
   },
   "explain_reason_field_contains": {
     "message": "Found “$token$” in $field$",

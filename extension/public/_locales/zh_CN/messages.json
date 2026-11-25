@@ -1036,6 +1036,15 @@
       }
     }
   },
+  "recall_card_last_visited": {
+    "message": "最近访问 $time$",
+    "placeholders": {
+      "time": {
+        "content": "$1",
+        "example": "3 周前"
+      }
+    }
+  },
   "recall_card_saved_just_now": {
     "message": "刚保存"
   },
@@ -2863,6 +2872,9 @@
   "explain_field_constraint_neighborhood": {
     "message": "类型匹配"
   },
+  "explain_field_behavior_preference": {
+    "message": "浏览习惯"
+  },
   "explain_field_short_title": {
     "message": "标题"
   },
@@ -2905,11 +2917,17 @@
   "explain_field_short_constraint_neighborhood": {
     "message": "类型"
   },
+  "explain_field_short_behavior_preference": {
+    "message": "习惯"
+  },
   "explain_content_related": {
     "message": "与你的线索相关"
   },
   "explain_reason_constraint_neighborhood": {
     "message": "符合记忆库中的此类型"
+  },
+  "explain_reason_behavior_preference": {
+    "message": "按你的浏览习惯排的"
   },
   "explain_reason_field_contains": {
     "message": "在$field$中找到「$token$」",

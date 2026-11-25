@@ -474,6 +474,21 @@ async function attachRecallFramingLlmPolish(
       trace: input.trace
     })
 
+    // 行为偏好：抛光必须点名 top1 域名；否则丢弃润色，保留规则基线（含次数/时间依据）
+    if (result.behaviorPreference) {
+      const topDomain =
+        result.behaviorPreference.candidates[
+          result.behaviorPreference.shownOffset
+        ]?.domain?.trim() ?? ''
+      if (topDomain && !mapped.text.includes(topDomain)) {
+        input.trace('info', 'LLM Framing：行为润色缺 top 域名，回退规则基线', {
+          topDomain,
+          polishedPreview: mapped.text.slice(0, 120)
+        })
+        return result
+      }
+    }
+
     const countsPart = facts.kind === 'candidates' ? renderRecallFramingCounts(facts, t) : ''
     const text = joinRecallFramingSentences(countsPart ? [mapped.text, countsPart] : [mapped.text])
 
@@ -1010,11 +1025,34 @@ export class HybridRecallBackend implements RecallBackend {
     }
 
     // Gate A+：非召回意图短路（须 intent + 非空回复双全；缺一则 fail-open 走正常 recall）
+    // 行为偏好空跟进豁免：活跃算子 + 本轮纯跟进 + instruction → 不短路，交给 merge / 行为轮换
+    // （口径与 behavior-preference-recall isPureFollowUp 的「当前解析」侧一致；不按「换一个」等词面匹配）
+    const currentParsedForGate = understood.parsed
+    const isPureBehaviorFollowUpForGate =
+      !currentParsedForGate.preferenceOperator &&
+      !currentParsedForGate.timeRange &&
+      (currentParsedForGate.contentTerms?.length ?? 0) === 0
+    const bypassNonRecallGateForBehaviorFollowUp =
+      !isOmniboxEntry &&
+      Boolean(accumulated?.preferenceOperator) &&
+      isPureBehaviorFollowUpForGate &&
+      currentParsedForGate.intent === 'instruction'
+    if (bypassNonRecallGateForBehaviorFollowUp) {
+      trace('info', 'Recall：行为偏好空跟进豁免 Gate A+', {
+        clue: normalizedClue,
+        intent: currentParsedForGate.intent ?? null,
+        accumulatedOperator: accumulated?.preferenceOperator ?? null
+      })
+    }
     const isNonRecallIntent =
       understood.parsed.intent === 'chitchat' ||
       understood.parsed.intent === 'question' ||
       understood.parsed.intent === 'instruction'
-    if (isNonRecallIntent && understood.parsed.assistantReply?.trim()) {
+    if (
+      isNonRecallIntent &&
+      understood.parsed.assistantReply?.trim() &&
+      !bypassNonRecallGateForBehaviorFollowUp
+    ) {
       const pipelineTiming: RecallPipelineTiming = {
         understandMs,
         candidateLoadMs: 0,

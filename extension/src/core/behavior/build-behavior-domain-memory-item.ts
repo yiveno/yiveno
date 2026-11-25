@@ -31,8 +31,14 @@ export function buildBehaviorDomainMemoryItem(input: {
   domain: string
   url: string
   nowIso?: string
+  /** 最近访问毫秒时间戳；有则写入 clues.lastOpenedAt 供卡面「最近访问」行 */
+  lastVisitTime?: number
 }): BookmarkMemoryItem {
   const domain = input.domain.trim() || extractDomainFromUrl(input.url) || 'unknown'
+  const lastVisitIso =
+    input.lastVisitTime !== undefined && input.lastVisitTime > 0
+      ? new Date(input.lastVisitTime).toISOString()
+      : undefined
   const item = createBookmarkMemoryItem({
     ownerId: input.ownerId,
     sourceLocalProfileId: input.ownerId,
@@ -42,7 +48,8 @@ export function buildBehaviorDomainMemoryItem(input: {
       title: domain,
       url: input.url,
       domain
-    }
+    },
+    ...(lastVisitIso ? { clues: { lastOpenedAt: lastVisitIso } } : {})
   })
   return { ...item, id: behaviorDomainSyntheticId(domain) }
 }

@@ -27,6 +27,19 @@ describe('explain-recall-match', () => {
     expect(pickPrimaryMatchedField([])).toBeNull()
   })
 
+  it('F9：行为偏好证据行不含 behavior_preference 字面量', () => {
+    const explanation = explainRecallMatch(
+      {
+        clue: '我最常看的网站',
+        matchedFields: ['behavior_preference']
+      },
+      testTranslateEn
+    )
+    expect(explanation.reasonLine).toBe('Ranked from your browsing activity')
+    expect(explanation.reasonLine).not.toContain('behavior_preference')
+    expect(explanation.primary).not.toContain('behavior_preference')
+  })
+
   it('explainRecallMatch 生成主因与次要字段', () => {
     const item = createBookmarkMemoryItem({
       ...baseContext,

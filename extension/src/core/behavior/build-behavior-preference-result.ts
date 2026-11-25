@@ -44,7 +44,8 @@ export function toBehaviorMatches(
     item: buildBehaviorDomainMemoryItem({
       ownerId,
       domain: entry.domain,
-      url: entry.topUrl
+      url: entry.topUrl,
+      ...(entry.lastVisitTime > 0 ? { lastVisitTime: entry.lastVisitTime } : {})
     }),
     score: entry.score,
     matchedFields: ['behavior_preference']

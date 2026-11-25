@@ -62,10 +62,16 @@ export function toRecallMatchCard(
         : t('popup_duplicate_group_excerpt', String(duplicateTotalCount))
       : undefined
 
-  const savedLabels = formatRecallSavedTime(match.item.createdAt, {
-    justSavedLabel: t('recall_card_saved_just_now'),
-    locale: getUILanguage()
-  })
+  // 行为合成卡：无真实保存时间；有最近访问则展示「最近访问」，否则隐藏该行
+  const isBehaviorPreferenceCard = match.matchedFields.includes('behavior_preference')
+  const behaviorLastVisitIso = match.item.clues.lastOpenedAt?.trim() || undefined
+  const savedTimeIso = isBehaviorPreferenceCard ? behaviorLastVisitIso : match.item.createdAt
+  const savedLabels = savedTimeIso
+    ? formatRecallSavedTime(savedTimeIso, {
+        ...(isBehaviorPreferenceCard ? {} : { justSavedLabel: t('recall_card_saved_just_now') }),
+        locale: getUILanguage()
+      })
+    : null
 
   const siblings =
     options.includeSiblings !== false && match.duplicateGroup
@@ -89,12 +95,15 @@ export function toRecallMatchCard(
       ? { sourceUrl: match.item.payload.sourceUrl.trim() }
       : {}),
     typeLabel: display.typeLabel,
-    savedAtIso: match.item.createdAt,
+    ...(savedTimeIso ? { savedAtIso: savedTimeIso } : {}),
     reasonLine: explanation.reasonLine,
     reasonCodes: [...new Set(match.matchedFields)],
     ...(savedLabels
       ? {
-          savedAtLabel: t('recall_card_saved', savedLabels.relative),
+          savedAtLabel: t(
+            isBehaviorPreferenceCard ? 'recall_card_last_visited' : 'recall_card_saved',
+            savedLabels.relative
+          ),
           savedAtTitle: savedLabels.absolute
         }
       : {}),

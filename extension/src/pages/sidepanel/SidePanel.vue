@@ -975,8 +975,11 @@ async function runRecall(trimmedClue: string): Promise<void> {
     // markRaw：避免 topic.embedding（Float32Array）被 deep reactive，跟进轮次才能 sendMessage
     if (response.result.parsed) {
       // exhausted：保留计数，下一句「换一个」重复到顶文案（不循环回头）；其它行为空态仍清零
+      // 已展示位数 = 本轮起点 + 本轮实际展示张数（下一批从其后接着，不按 +1 滑窗）
+      const behaviorShownThisRound =
+        (response.result.topPick ? 1 : 0) + response.result.alsoPossible.length
       const nextBehaviorShownCount = response.result.behaviorPreference
-        ? response.result.behaviorPreference.shownOffset + 1
+        ? response.result.behaviorPreference.shownOffset + behaviorShownThisRound
         : response.result.emptyKind === 'behavior_exhausted'
           ? (dialogState.value.behaviorShownCount ?? 0)
           : response.result.emptyKind === 'behavior_not_imported' ||

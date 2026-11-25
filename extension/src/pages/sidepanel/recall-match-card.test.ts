@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
+import { buildBehaviorDomainMemoryItem } from '@/core/behavior/build-behavior-domain-memory-item'
 import {
   createBookmarkMemoryItem,
   createTextExcerptMemoryItem
@@ -138,5 +139,46 @@ describe('toRecallMatchCard', () => {
 
     expect(card.duplicateTotalCount).toBeUndefined()
     expect(card.duplicateLabel).toBeUndefined()
+  })
+
+  it('F10：行为合成卡展示最近访问，不含「保存于」/假刚保存', () => {
+    const lastVisitMs = Date.parse('2026-07-01T12:00:00.000Z')
+    const match: RecallMatch = {
+      item: buildBehaviorDomainMemoryItem({
+        ownerId: baseContext.ownerId,
+        domain: 'github.com',
+        url: 'https://github.com/',
+        lastVisitTime: lastVisitMs,
+        nowIso: '2026-11-25T12:00:00.000Z'
+      }),
+      score: 42,
+      matchedFields: ['behavior_preference']
+    }
+
+    const card = toRecallMatchCard(match, '我最常看的网站', mockT, { detailPageUrl })
+
+    expect(card.savedAtLabel).toMatch(/^recall_card_last_visited:/)
+    expect(card.savedAtLabel).not.toContain('recall_card_saved')
+    expect(card.savedAtLabel).not.toContain('刚保存')
+    expect(card.savedAtLabel).not.toContain('Just saved')
+    expect(card.savedAtIso).toBe('2026-07-01T12:00:00.000Z')
+  })
+
+  it('F10：行为合成卡无最近访问时隐藏时间行', () => {
+    const match: RecallMatch = {
+      item: buildBehaviorDomainMemoryItem({
+        ownerId: baseContext.ownerId,
+        domain: 'example.com',
+        url: 'https://example.com/',
+        nowIso: '2026-11-25T12:00:00.000Z'
+      }),
+      score: 1,
+      matchedFields: ['behavior_preference']
+    }
+
+    const card = toRecallMatchCard(match, 'clue', mockT, { detailPageUrl })
+
+    expect(card.savedAtLabel).toBeUndefined()
+    expect(card.savedAtIso).toBeUndefined()
   })
 })
