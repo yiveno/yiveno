@@ -10,8 +10,8 @@
  * 产品决策：语音快捷键**不设信度门**；首选 = topPick ?? alsoPossible[0]。
  */
 
+import { recordMemoryOpen } from '@/application/memory/record-memory-open'
 import { recallService } from '@/application/recall/recall-service'
-import { handleRecordMemoryOpen } from '@/background/handlers/memory-handler'
 import { speechRecognitionLangForUiLocale } from '@/core/speech/speech-dictation'
 import { getMemoryItemOpenHref } from '@/core/recall/memory-open-href'
 import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
@@ -134,7 +134,7 @@ export async function autoOpenRecallCandidate(
   try {
     const tab = await navigateTabToUrl(openUrl, 'newForegroundTab')
     // 导航成功后才记打开（行为信号）；不写 open_confirm（那是结果卡点击确认语义）
-    void handleRecordMemoryOpen({ id: candidate.item.id }).catch(() => {})
+    void recordMemoryOpen({ id: candidate.item.id }).catch(() => {})
     const title =
       candidate.item.type === 'bookmark'
         ? candidate.item.payload.title || openUrl

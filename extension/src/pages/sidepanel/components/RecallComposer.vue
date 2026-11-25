@@ -1053,10 +1053,10 @@ defineExpose({ focus, startVoiceDictation })
 /** 听写态：左取消 · 中波形 · 右停/发；波形相对整行居中 */
 .recall-composer-toolbar--listening {
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
   justify-content: stretch;
   align-items: center;
   column-gap: var(--space-2xs);
+  grid-template-columns: 1fr auto 1fr;
 }
 
 .recall-composer-toolbar--listening .recall-voice-cancel {

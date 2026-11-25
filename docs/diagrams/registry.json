@@ -152,22 +152,22 @@
       "id": "auth.extension-session-mint-handoff",
       "kind": "flowchart",
       "status": "implemented",
-      "title": "扩展会话铸造并交接（Connect vs Sign in）",
+      "title": "设备注册并交接（Connect vs Sign in）",
       "doc": "docs/AUTH_GUIDE.md",
       "codePaths": [
         "website/src/services/extension-auth-handoff.ts",
-        "website/src/services/mint-extension-session.ts",
+        "website/src/services/register-device-from-website.ts",
         "website/src/services/run-extension-connect.ts",
-        "website/src/services/rollback-minted-extension-session.ts",
         "website/src/services/ui-bridge.ts",
         "website/src/components/UiBridgeHost.vue",
         "website/src/components/LoginForm.vue",
         "website/src/components/AuthCallback.vue",
-        "worker/src/services/auth/mint-extension-session.ts",
+        "worker/src/services/auth/device-register.ts",
         "extension/src/background/handlers/account-sync-handler.ts",
         "extension/src/background/listeners/external-auth-handoff.ts",
         "extension/src/background/listeners/ui-bridge.ts",
         "extension/src/core/identity/external-auth-handoff.ts",
+        "extension/src/infrastructure/auth/apply-incoming-device-session.ts",
         "extension/src/infrastructure/auth/auth-session-revalidate.ts",
         "extension/src/infrastructure/auth/extension-oauth.ts"
       ],
@@ -177,7 +177,7 @@
         "docs/architecture/decisions/ADR-018-account-profile-data-isolation.md",
         "docs/architecture/decisions/ADR-019-website-extension-ui-bridge.md"
       ],
-      "notes": "flowchart：入口→probe→mint/挤掉→handoff/回滚；不含 Turnstile/OTP、反铸 website-session；登录迁移见 auth.login-migration-gate；官网 session≠扩展 session"
+      "notes": "flowchart：入口→probe→device-register→handoff/回滚；不含 Turnstile/OTP、反铸 website-session；登录迁移见 auth.login-migration-gate；官网 session≠扩展 device session；id 保留旧名以免断链"
     },
     {
       "id": "auth.login-migration-gate",

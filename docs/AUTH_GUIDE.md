@@ -150,6 +150,8 @@ A: **官网→扩展** `device-register`（`website_connect`）可用匿名官�
 | 作废票 `uninstallRevokeToken` | 注册响应 → 卸载 URL / 回滚   | 一次性撤该 `deviceId`；**不是** refresh         |
 | UI 桥 Port 消息               | 同浏览器编排                 | **禁止**传任何 token（ADR-019）                 |
 
+<!-- diagram: id=auth.extension-session-mint-handoff kind=flowchart status=implemented -->
+
 ```mermaid
 flowchart TD
   Start([需要把官网账号接到扩展]) --> Entry{入口?}

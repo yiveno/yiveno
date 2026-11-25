@@ -156,7 +156,7 @@ describe('createHoverPreviewScrollRearm', () => {
       settleMs: RECALL_CARD_PREVIEW_SCROLL_REARM_MS
     })
     const onRearm = vi.fn()
-    let inside = true
+    const inside = true
 
     rearm.noteScroll(() => inside, onRearm)
     vi.advanceTimersByTime(RECALL_CARD_PREVIEW_SCROLL_REARM_MS - 20)

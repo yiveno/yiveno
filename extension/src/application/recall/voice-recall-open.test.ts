@@ -5,7 +5,7 @@ import { RECALL_TOP_PICK_MIN_SCORE } from '@/core/recall/keyword-filter-weights'
 import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
 
 const recordOpenConfirmOutcomePair = vi.fn()
-const handleRecordMemoryOpen = vi.fn()
+const recordMemoryOpen = vi.fn()
 const navigateTabToUrl = vi.fn()
 const openRecallSidePanel = vi.fn()
 const showVoiceRecallNotification = vi.fn()
@@ -23,8 +23,8 @@ vi.mock('@/application/recall/record-open-confirm-outcome', () => ({
   recordOpenConfirmOutcomePair: (...args: unknown[]) => recordOpenConfirmOutcomePair(...args)
 }))
 
-vi.mock('@/background/handlers/memory-handler', () => ({
-  handleRecordMemoryOpen: (...args: unknown[]) => handleRecordMemoryOpen(...args)
+vi.mock('@/application/memory/record-memory-open', () => ({
+  recordMemoryOpen: (...args: unknown[]) => recordMemoryOpen(...args)
 }))
 
 vi.mock('@/infrastructure/browser/navigate-tab', () => ({
@@ -145,7 +145,7 @@ describe('voice-recall-open 无信度门 + 学习信号', () => {
       micGranted: true
     })
     loadVoiceCommandCache.mockResolvedValue(undefined)
-    handleRecordMemoryOpen.mockResolvedValue({ ok: true })
+    recordMemoryOpen.mockResolvedValue({ ok: true })
     writeVoiceRecallHandoff.mockResolvedValue(undefined)
     writeVoiceMicGranted.mockResolvedValue(undefined)
     openRecallSidePanel.mockResolvedValue(undefined)
@@ -190,8 +190,8 @@ describe('voice-recall-open 无信度门 + 学习信号', () => {
     const out = await autoOpenRecallCandidate(candidate, 'retention notes')
     expect(out.opened).toBe(true)
     expect(recordOpenConfirmOutcomePair).not.toHaveBeenCalled()
-    expect(handleRecordMemoryOpen).toHaveBeenCalledTimes(1)
-    expect(handleRecordMemoryOpen).toHaveBeenCalledWith({ id: candidate.item.id })
+    expect(recordMemoryOpen).toHaveBeenCalledTimes(1)
+    expect(recordMemoryOpen).toHaveBeenCalledWith({ id: candidate.item.id })
     expect(navigateTabToUrl).toHaveBeenCalledWith(
       'https://example.com/retention',
       'newForegroundTab'
@@ -220,7 +220,7 @@ describe('voice-recall-open 无信度门 + 学习信号', () => {
     await handleVoiceRecallOpenCommand()
 
     expect(navigateTabToUrl).toHaveBeenCalledWith('https://a.example/gap9', 'newForegroundTab')
-    expect(handleRecordMemoryOpen).toHaveBeenCalledWith({ id: top.item.id })
+    expect(recordMemoryOpen).toHaveBeenCalledWith({ id: top.item.id })
     expect(writeVoiceRecallHandoff).not.toHaveBeenCalled()
   })
 
@@ -245,7 +245,7 @@ describe('voice-recall-open 无信度门 + 学习信号', () => {
     await handleVoiceRecallOpenCommand()
 
     expect(navigateTabToUrl).toHaveBeenCalledWith('https://low.example', 'newForegroundTab')
-    expect(handleRecordMemoryOpen).toHaveBeenCalledWith({ id: low.item.id })
+    expect(recordMemoryOpen).toHaveBeenCalledWith({ id: low.item.id })
   })
 
   it('仅 alsoPossible：打开第一个', async () => {
@@ -267,7 +267,7 @@ describe('voice-recall-open 无信度门 + 学习信号', () => {
     await handleVoiceRecallOpenCommand()
 
     expect(navigateTabToUrl).toHaveBeenCalledWith('https://only.example', 'newForegroundTab')
-    expect(handleRecordMemoryOpen).toHaveBeenCalledWith({ id: first.item.id })
+    expect(recordMemoryOpen).toHaveBeenCalledWith({ id: first.item.id })
   })
 
   it('零候选：只通知 no_match，不打开', async () => {
@@ -322,7 +322,7 @@ describe('voice-recall-open 无信度门 + 学习信号', () => {
     await handleVoiceRecallOpenCommand()
 
     expect(recordOpenConfirmOutcomePair).not.toHaveBeenCalled()
-    expect(handleRecordMemoryOpen).not.toHaveBeenCalled()
+    expect(recordMemoryOpen).not.toHaveBeenCalled()
     expect(showVoiceRecallNotification).not.toHaveBeenCalledWith(
       expect.objectContaining({
         message: expect.stringContaining('Heard:')

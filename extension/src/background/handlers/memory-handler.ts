@@ -4,17 +4,13 @@ import { isChromeBookmarkIngestEnabled } from '@/application/capture/chrome-book
 import { invalidateBookmarkLibraryTreeOnChromeChange } from '@/background/handlers/import-handler'
 import { invalidateBookmarkSyncAlignmentCache } from '@/application/memory/bookmark-sync-alignment-cache'
 import { memoryItemService } from '@/application/memory/memory-item-service'
-import { schedulePageContentExtractOnOpen } from '@/application/memory/page-content-extract-service'
-import {
-  capturePagePreviewOnSave,
-  schedulePagePreviewOpenBackfill
-} from '@/application/memory/page-preview-capture-service'
+import { capturePagePreviewOnSave } from '@/application/memory/page-preview-capture-service'
+import { recordMemoryOpen } from '@/application/memory/record-memory-open'
 import { backfillMissingMemoryEmbeddings } from '@/application/memory/schedule-async-memory-embedding'
 import {
   exportDetailExport,
   DetailExportError
 } from '@/application/recall/export-detail-export-service'
-import type { MemoryItem } from '@/core/memory/memory-item'
 import { getWorkerApiAccessToken } from '@/infrastructure/identity/worker-api-access-token'
 import { getCurrentOwnerId } from '@/infrastructure/identity/local-profile-service'
 import type { MemoryBackgroundResponse, MemoryErrorCode } from '@/core/messaging/memory-messages'
@@ -26,7 +22,6 @@ import {
   parseGetMemoryItemPayload,
   parseGetPagePreviewPayload,
   parseListMemoryItemsPayload,
-  parseRecordMemoryOpenPayload,
   parseRecordRecallDismissPayload,
   parseRecordRecallSettlePayload,
   parseExportDetailExportPayload,
@@ -44,16 +39,6 @@ import { logger } from '@/infrastructure/logging/logger'
 import { addChromeBookmarkDeleteTombstone } from '@/infrastructure/storage/chrome-bookmark-delete-tombstone-storage'
 import { bumpExcerptCaptureCount } from '@/infrastructure/storage/first-recall-onboarding-storage'
 import { bumpMemoryLibraryRevision } from '@/infrastructure/storage/memory-library-revision-storage'
-
-/** 书签 URL / 摘录源站 URL，供预览截图键。 */
-function pageUrlOfMemoryItem(item: MemoryItem): string | null {
-  if (item.type === 'bookmark') {
-    const url = item.payload.url.trim()
-    return url || null
-  }
-  const url = item.payload.sourceUrl.trim()
-  return url || null
-}
 
 /** 将未知错误归约为 MemoryErrorCode（右键失败页内反馈等复用）。 */
 export function resolveMemoryErrorCode(error: unknown, fallback: MemoryErrorCode): MemoryErrorCode {
@@ -281,30 +266,9 @@ export async function handleUpdateMemoryNote(payload: unknown): Promise<MemoryBa
   }
 }
 
-/** 记录 MemoryItem 打开（行为信号）。 */
+/** 记录 MemoryItem 打开（行为信号）；实现见 application/memory/record-memory-open。 */
 export async function handleRecordMemoryOpen(payload: unknown): Promise<MemoryBackgroundResponse> {
-  const startedAt = flowStart('Memory', '记录打开')
-  try {
-    const input = parseRecordMemoryOpenPayload(payload)
-    const item = await memoryItemService.recordOpen(input.id)
-    if (!item) {
-      flowOk('Memory', '记录打开', startedAt, { id: input.id, found: false })
-      return toErrorResponse('MEMORY_NOT_FOUND')
-    }
-    flowOk('Memory', '记录打开', startedAt, {
-      id: item.id,
-      openCount: item.clues.openCount ?? null
-    })
-    const pageUrl = pageUrlOfMemoryItem(item)
-    if (pageUrl) {
-      schedulePagePreviewOpenBackfill({ pageUrl })
-      schedulePageContentExtractOnOpen({ item, pageUrl })
-    }
-    return { ok: true, item }
-  } catch (error) {
-    flowFail('Memory', '记录打开', startedAt, error)
-    return toErrorResponse('MEMORY_OPERATION_FAILED', error)
-  }
+  return recordMemoryOpen(payload)
 }
 
 /** 悬停浮层：取本机预览并编成 data URL（无则 PAGE_PREVIEW_NOT_FOUND，UI 走骨架）。 */
