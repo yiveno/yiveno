@@ -1,7 +1,7 @@
 /**
  * 语音快捷键 → Side Panel 交接（session，消费一次）。
- * - start_dictation：offscreen 听写失败时的面板 fallback
- * - show_result：低置信度退路，把完整 RecallResult 交给面板渲染
+ * - start_dictation：命令同步前缀开面板请求麦授权听写
+ * - show_result：低置信退路；面板由通知点击 / 用户手势打开后消费渲染
  */
 
 import type { RecallResult } from '@/core/recall/recall-result'

@@ -41,6 +41,10 @@ vi.mock('@/application/recall/voice-recall-open', () => ({
   handleVoiceRecallOpenCommand: vi.fn().mockResolvedValue(undefined)
 }))
 
+vi.mock('@/infrastructure/browser/voice-command-cache', () => ({
+  ensureVoiceCommandCacheWarm: vi.fn()
+}))
+
 describe('command listeners', () => {
   const onCommandAddListener = vi.fn()
 

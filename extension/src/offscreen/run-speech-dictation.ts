@@ -115,6 +115,17 @@ export async function runOffscreenSpeechDictation(
         return
       }
       if (code === 'aborted') {
+        const transcript = committed.trim()
+        logger.warn('VoiceRecall', 'offscreen 听写 aborted 收尾', {
+          sawResult,
+          committedLength: committed.length,
+          hasTranscript: transcript.length > 0
+        })
+        if (transcript) {
+          finish({ ok: true, transcript, path: 'offscreen' })
+        } else {
+          finish({ ok: false, error: 'aborted' })
+        }
         return
       }
       finish({

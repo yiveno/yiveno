@@ -3869,6 +3869,12 @@
   "voice_recall_notification_no_match": {
     "message": "No strong match — check the side panel"
   },
+  "voice_recall_notification_mic_grant_guide": {
+    "message": "Allow the mic in the side panel (Alt+Shift+Y or the toolbar icon), then try again"
+  },
+  "voice_recall_notification_candidates_ready": {
+    "message": "Candidates ready — click to open the side panel"
+  },
   "settings_voice_recall_open_title": {
     "message": "Voice shortcut: find and open"
   },

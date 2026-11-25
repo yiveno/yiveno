@@ -4,6 +4,7 @@ import {
   registerExtensionCommandHandler
 } from '@/background/commands/registry'
 import { flashActionBadge } from '@/infrastructure/browser/action-badge'
+import { ensureVoiceCommandCacheWarm } from '@/infrastructure/browser/voice-command-cache'
 import {
   focusOrOpenLibraryTab,
   focusOrOpenSettingsTab
@@ -64,6 +65,7 @@ export function registerCommandListeners(): void {
     }
   })
 
+  // 须在同步前缀前完成 handler 注册；预载缓存异步、不挡注册
   registerExtensionCommandHandler('voice_recall_open', async () => {
     await handleVoiceRecallOpenCommand()
   })
@@ -73,6 +75,8 @@ export function registerCommandListeners(): void {
       logger.error('Commands', '命令分发失败', error)
     })
   })
+
+  ensureVoiceCommandCacheWarm()
 
   logger.info('Commands', '快捷键命令监听器已注册')
 }

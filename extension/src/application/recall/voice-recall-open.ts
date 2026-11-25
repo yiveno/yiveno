@@ -1,6 +1,11 @@
 /**
- * 语音快捷键主流程：听写 → Recall → 高置信自动开新标签 / 低置信开面板。
+ * 语音快捷键主流程：听写 → Recall → 高置信自动开新标签 / 低置信交接通知。
  * Recall 直接调 recallService.recallWithClue（不经 Side Panel activeRecall 命名空间）。
+ *
+ * 手势铁律：异步阶段永不调 sidePanel.open。开面板只允许：
+ * - 命令同步前缀（缓存 ready 且麦未授予）
+ * - 通知点击
+ * - 用户自己按 Alt+Shift+Y / 点工具栏
  */
 
 import { recallService } from '@/application/recall/recall-service'
@@ -11,16 +16,22 @@ import { shouldAutoOpenRecallResult } from '@/core/recall/recall-auto-open'
 import type { RecallResult } from '@/core/recall/recall-result'
 import { resolveUiLocale } from '@/core/i18n/ui-locale'
 import type { OffscreenSpeechDictationResponse } from '@/core/messaging/offscreen-speech'
+import {
+  getVoiceCommandCacheSnapshot,
+  loadVoiceCommandCache,
+  patchVoiceCommandCacheMicGranted
+} from '@/infrastructure/browser/voice-command-cache'
 import { ensureOffscreenDocumentForUserMedia } from '@/infrastructure/browser/ensure-offscreen-document'
 import { navigateTabToUrl } from '@/infrastructure/browser/navigate-tab'
 import { openRecallSidePanel } from '@/infrastructure/browser/side-panel'
 import { showVoiceRecallNotification } from '@/infrastructure/browser/voice-recall-notification'
 import { logger } from '@/infrastructure/logging/logger'
 import { getUserSettings } from '@/infrastructure/settings/user-settings-service'
+import { writeVoiceMicGranted } from '@/infrastructure/storage/voice-mic-granted-storage'
 import { writeVoiceRecallHandoff } from '@/infrastructure/storage/voice-recall-handoff-storage'
 
 /** 听写路径观测（日志 / 真机确认用）。 */
-export type VoiceDictationPath = 'offscreen' | 'panel_fallback'
+export type VoiceDictationPath = 'offscreen'
 
 function getMessage(key: string, substitutions?: string | string[]): string {
   try {
@@ -41,64 +52,62 @@ async function resolveSpeechLang(): Promise<string> {
   }
 }
 
+/** offscreen 返回 not_allowed 时置麦授权记忆为 false（不翻转 true→false 以外路径）。 */
+async function markMicNotGrantedFromOffscreen(): Promise<void> {
+  patchVoiceCommandCacheMicGranted(false)
+  await writeVoiceMicGranted(false)
+}
+
 /**
- * 首选 offscreen 听写；建文档 / recognition 失败 → 面板 fallback。
- * 判定条件与观测：日志 `VoiceRecall` scope 含 `dictationPath`。
+ * 仅 offscreen 听写；失败一律通知，绝不调 sidePanel.open。
  */
 export async function runVoiceDictationPreferOffscreen(): Promise<
   | { ok: true; transcript: string; dictationPath: VoiceDictationPath }
-  | { ok: false; reason: 'panel_fallback_started' | 'unclear' | 'disabled' }
+  | { ok: false; reason: 'unclear' | 'not_allowed' | 'disabled' }
 > {
   const lang = await resolveSpeechLang()
 
   const offscreenReady = await ensureOffscreenDocumentForUserMedia()
-  if (offscreenReady) {
-    try {
-      const response = (await chrome.runtime.sendMessage({
-        scope: 'offscreen',
-        type: 'RUN_SPEECH_DICTATION',
-        payload: { lang }
-      })) as OffscreenSpeechDictationResponse
-
-      if (response?.ok === true && response.transcript.trim()) {
-        logger.info('VoiceRecall', '听写完成', {
-          dictationPath: 'offscreen',
-          transcriptPreview: response.transcript.slice(0, 80)
-        })
-        return {
-          ok: true,
-          transcript: response.transcript.trim(),
-          dictationPath: 'offscreen'
-        }
-      }
-
-      logger.info('VoiceRecall', 'offscreen 听写未成功，改面板 fallback', {
-        error: response && 'error' in response ? response.error : 'empty'
-      })
-
-      if (response && 'error' in response && response.error === 'no_speech') {
-        return { ok: false, reason: 'unclear' }
-      }
-    } catch (error) {
-      logger.warn('VoiceRecall', 'offscreen 听写消息失败，改面板 fallback', {
-        error: error instanceof Error ? error.message : String(error)
-      })
-    }
-  } else {
-    logger.info('VoiceRecall', 'offscreen 不可用，改面板 fallback')
+  if (!offscreenReady) {
+    logger.info('VoiceRecall', 'offscreen 不可用，只通知')
+    return { ok: false, reason: 'unclear' }
   }
 
-  await writeVoiceRecallHandoff({ kind: 'start_dictation' })
   try {
-    await openRecallSidePanel()
+    const response = (await chrome.runtime.sendMessage({
+      scope: 'offscreen',
+      type: 'RUN_SPEECH_DICTATION',
+      payload: { lang }
+    })) as OffscreenSpeechDictationResponse
+
+    if (response?.ok === true && response.transcript.trim()) {
+      logger.info('VoiceRecall', '听写完成', {
+        dictationPath: 'offscreen',
+        transcriptPreview: response.transcript.slice(0, 80)
+      })
+      return {
+        ok: true,
+        transcript: response.transcript.trim(),
+        dictationPath: 'offscreen'
+      }
+    }
+
+    const errorCode = response && 'error' in response ? response.error : 'empty'
+    logger.info('VoiceRecall', 'offscreen 听写未成功', { error: errorCode })
+
+    if (errorCode === 'not_allowed') {
+      await markMicNotGrantedFromOffscreen()
+      return { ok: false, reason: 'not_allowed' }
+    }
+
+    // aborted / no_speech / failed / unavailable / empty → unclear 通知
+    return { ok: false, reason: 'unclear' }
   } catch (error) {
-    logger.warn('VoiceRecall', '面板 fallback 开壳失败', {
+    logger.warn('VoiceRecall', 'offscreen 听写消息失败', {
       error: error instanceof Error ? error.message : String(error)
     })
     return { ok: false, reason: 'unclear' }
   }
-  logger.info('VoiceRecall', '已开面板并请求自动听写', { dictationPath: 'panel_fallback' })
-  return { ok: false, reason: 'panel_fallback_started' }
 }
 
 /**
@@ -151,39 +160,69 @@ export function isVoiceRecallEmptyNoMatch(result: RecallResult): boolean {
   )
 }
 
-/** 低置信：把完整 RecallResult 交给面板。 */
-export async function handoffLowConfidenceToPanel(
+/**
+ * 低置信交接：写 show_result handoff +「候选已备好」通知。
+ * 不调 sidePanel.open（异步阶段手势已过期）。
+ */
+export async function handoffLowConfidenceAndNotify(
   clue: string,
   result: RecallResult
 ): Promise<void> {
   await writeVoiceRecallHandoff({ kind: 'show_result', clue, result })
-  await openRecallSidePanel()
-  logger.info('VoiceRecall', '低置信退路：已开面板并交接完整结果', {
+  void showVoiceRecallNotification({
+    title: getMessage('app_name'),
+    message: getMessage('voice_recall_notification_candidates_ready'),
+    openSidePanelOnClick: true
+  })
+  logger.info('VoiceRecall', '低置信退路：已写交接并发通知（不开面板）', {
     outcome: result.outcome,
     alsoPossibleCount: result.alsoPossible.length,
     topScore: result.topPick?.score ?? null
   })
 }
 
-/**
- * 命令入口：设置关则无动作；听写 → Recall → 门 → 开标签或开面板。
- */
-export async function handleVoiceRecallOpenCommand(): Promise<void> {
-  const settings = await getUserSettings()
-  if (!settings.voiceRecallOpenEnabled) {
-    logger.info('VoiceRecall', '语音快捷键已关，忽略')
-    return
+/** 同步前缀：未授予麦 → 赶手势开面板并写 start_dictation。 */
+async function openPanelForMicGrantOnGesture(): Promise<void> {
+  // 先调用、后 await：把 open 压在手势同步链上
+  const openPromise = openRecallSidePanel()
+  try {
+    await writeVoiceRecallHandoff({ kind: 'start_dictation' })
+  } catch (error) {
+    logger.warn('VoiceRecall', '写 start_dictation handoff 失败', {
+      error: error instanceof Error ? error.message : String(error)
+    })
   }
+  try {
+    await openPromise
+    logger.info('VoiceRecall', '同步前缀已开面板请求麦授权听写')
+  } catch (error) {
+    logger.warn('VoiceRecall', '同步前缀开面板失败', {
+      error: error instanceof Error ? error.message : String(error)
+    })
+    void showVoiceRecallNotification({
+      title: getMessage('app_name'),
+      message: getMessage('voice_recall_notification_mic_grant_guide'),
+      openSidePanelOnClick: true
+    })
+  }
+}
 
+/** offscreen 听写 → Recall → 门 → 开标签或交接通知（永不 open 面板）。 */
+async function runOffscreenRecallFlow(): Promise<void> {
   const dictation = await runVoiceDictationPreferOffscreen()
   if (!dictation.ok) {
-    if (dictation.reason === 'unclear') {
+    if (dictation.reason === 'not_allowed') {
+      void showVoiceRecallNotification({
+        title: getMessage('app_name'),
+        message: getMessage('voice_recall_notification_mic_grant_guide'),
+        openSidePanelOnClick: true
+      })
+    } else if (dictation.reason === 'unclear') {
       void showVoiceRecallNotification({
         title: getMessage('app_name'),
         message: getMessage('voice_recall_notification_unclear')
       })
     }
-    // panel_fallback_started：面板内继续听写；disabled 不应到这
     return
   }
 
@@ -194,7 +233,6 @@ export async function handleVoiceRecallOpenCommand(): Promise<void> {
 
   let result: RecallResult
   try {
-    // 直接应用服务；不经 handleRecallWithClue 的 sidepanel activeRecall 命名空间
     result = await recallService.recallWithClue(dictation.transcript, { entry: 'sidepanel' })
   } catch (error) {
     logger.error('VoiceRecall', 'Recall 失败', error)
@@ -210,8 +248,7 @@ export async function handleVoiceRecallOpenCommand(): Promise<void> {
     if (open.opened) {
       return
     }
-    // 导航失败：不写学习信号；退回面板交完整结果
-    await handoffLowConfidenceToPanel(dictation.transcript, result)
+    await handoffLowConfidenceAndNotify(dictation.transcript, result)
     return
   }
 
@@ -223,6 +260,50 @@ export async function handleVoiceRecallOpenCommand(): Promise<void> {
     return
   }
 
-  // need_a_clue / 分差不足等：有候选 → 面板交接完整 RecallResult
-  await handoffLowConfidenceToPanel(dictation.transcript, result)
+  await handoffLowConfidenceAndNotify(dictation.transcript, result)
+}
+
+/**
+ * 命令入口。
+ * 同步前缀（第一个 await 前）完成分流决策；异步阶段永不 sidePanel.open。
+ * 顶层捕获意外异常，命令分发不得再报失败。
+ */
+export async function handleVoiceRecallOpenCommand(): Promise<void> {
+  try {
+    const cache = getVoiceCommandCacheSnapshot()
+
+    // —— 同步分流（此块在第一个 await 之前）——
+    if (cache.ready && cache.voiceRecallOpenEnabled === false) {
+      logger.info('VoiceRecall', '语音快捷键已关（缓存），忽略')
+      return
+    }
+
+    if (cache.ready && cache.voiceRecallOpenEnabled && cache.micGranted !== true) {
+      await openPanelForMicGrantOnGesture()
+      return
+    }
+
+    if (cache.ready && cache.voiceRecallOpenEnabled && cache.micGranted === true) {
+      await runOffscreenRecallFlow()
+      return
+    }
+
+    // 缓存未 ready：异步补载后只走 offscreen / 通知，禁止开面板
+    logger.info('VoiceRecall', '语音命令缓存未 ready，异步补载后仅 offscreen')
+    await loadVoiceCommandCache()
+    const after = getVoiceCommandCacheSnapshot()
+    if (!after.voiceRecallOpenEnabled) {
+      logger.info('VoiceRecall', '语音快捷键已关（补载后），忽略')
+      return
+    }
+    await runOffscreenRecallFlow()
+  } catch (error) {
+    logger.warn('VoiceRecall', '语音快捷键命令意外失败（已吞，不抛命令分发）', {
+      error: error instanceof Error ? error.message : String(error)
+    })
+    void showVoiceRecallNotification({
+      title: getMessage('app_name'),
+      message: getMessage('voice_recall_notification_unclear')
+    })
+  }
 }

@@ -61,7 +61,11 @@ import {
   consumeRecallPrefillWithRetry,
   markFirstRecallOpenDone
 } from '@/infrastructure/storage/first-recall-onboarding-storage'
-import { consumeVoiceRecallHandoff } from '@/infrastructure/storage/voice-recall-handoff-storage'
+import {
+  consumeVoiceRecallHandoff,
+  VOICE_RECALL_HANDOFF_SESSION_KEY,
+  type VoiceRecallHandoffPayload
+} from '@/infrastructure/storage/voice-recall-handoff-storage'
 import { shouldAutoOpenRecallResult } from '@/core/recall/recall-auto-open'
 import type { RecallResult } from '@/core/recall/recall-result'
 import { openExtensionReviewPage } from '@/infrastructure/browser/extension-pages'
@@ -674,13 +678,53 @@ watch(
 /** 递增以丢弃过期找回响应，避免慢请求覆盖新线索结果。 */
 let recallRequestId = 0
 
-/** Side Panel 共用的 storage.onChanged：session 预填 + local 库成员信号。 */
+/** 消费语音快捷键交接（start_dictation / show_result）；一次性，防重复。 */
+async function applyVoiceRecallHandoff(payload: VoiceRecallHandoffPayload): Promise<void> {
+  if (payload.kind === 'start_dictation') {
+    voiceDictationAutoSubmit.value = true
+    voiceOpenAutoOpenAfterResult.value = true
+    await nextTick()
+    clueInputRef.value?.startVoiceDictation?.()
+    return
+  }
+  if (payload.kind === 'show_result') {
+    await commitSendTurn(payload.clue, { seedResult: payload.result })
+  }
+}
+
+/** session 写入语音 handoff 时消费（面板已开时通知点击不会 remount）。 */
+function handleVoiceRecallHandoffStorageChanged(
+  changes: Record<string, chrome.storage.StorageChange>,
+  areaName: string
+): void {
+  if (areaName !== 'session') {
+    return
+  }
+  const change = changes[VOICE_RECALL_HANDOFF_SESSION_KEY]
+  if (!change || change.newValue == null) {
+    return
+  }
+  void (async () => {
+    try {
+      const payload = await consumeVoiceRecallHandoff()
+      if (!payload) {
+        return
+      }
+      await applyVoiceRecallHandoff(payload)
+    } catch {
+      // 忽略：交接失败不阻塞主路径
+    }
+  })()
+}
+
+/** Side Panel 共用的 storage.onChanged：session 预填 + local 库成员信号 + 语音 handoff。 */
 function handleSidePanelStorageChanged(
   changes: Record<string, chrome.storage.StorageChange>,
   areaName: string
 ): void {
   handleRecallPrefillStorageChanged(changes, areaName)
   handleLibraryMembershipStorageChanged(changes, areaName)
+  handleVoiceRecallHandoffStorageChanged(changes, areaName)
 }
 
 /** 读取展示名供空态问候；无展示名时用邮箱本地段。失败不阻塞主路径。 */
@@ -1678,17 +1722,10 @@ onMounted(() => {
   document.addEventListener('visibilitychange', handleSidePanelVisibilityChange)
   void (async () => {
     try {
-      // 语音快捷键交接优先于普通 prefill
+      // 语音快捷键交接优先于普通 prefill（mount 时；运行中靠 storage.onChanged）
       const voiceHandoff = await consumeVoiceRecallHandoff()
-      if (voiceHandoff?.kind === 'start_dictation') {
-        voiceDictationAutoSubmit.value = true
-        voiceOpenAutoOpenAfterResult.value = true
-        await nextTick()
-        clueInputRef.value?.startVoiceDictation?.()
-        return
-      }
-      if (voiceHandoff?.kind === 'show_result') {
-        await commitSendTurn(voiceHandoff.clue, { seedResult: voiceHandoff.result })
+      if (voiceHandoff) {
+        await applyVoiceRecallHandoff(voiceHandoff)
         return
       }
       // Getting Started / Omnibox / 选区预填：写 session 与开壳可能竞态，短窗重试

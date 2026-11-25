@@ -3869,6 +3869,12 @@
   "voice_recall_notification_no_match": {
     "message": "没有足够有把握的结果 — 请看侧栏"
   },
+  "voice_recall_notification_mic_grant_guide": {
+    "message": "请先在侧栏允许麦克风（Alt+Shift+Y 或点工具栏图标），再试一次"
+  },
+  "voice_recall_notification_candidates_ready": {
+    "message": "候选已备好 — 点开侧栏查看"
+  },
   "settings_voice_recall_open_title": {
     "message": "语音快捷键：找并打开"
   },

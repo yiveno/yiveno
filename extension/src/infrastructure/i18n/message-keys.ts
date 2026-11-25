@@ -22,6 +22,8 @@ export const MESSAGE_KEYS = [
   'voice_recall_notification_opened_body',
   'voice_recall_notification_unclear',
   'voice_recall_notification_no_match',
+  'voice_recall_notification_mic_grant_guide',
+  'voice_recall_notification_candidates_ready',
   'settings_voice_recall_open_title',
   'settings_voice_recall_open_hint',
   'settings_voice_recall_privacy',

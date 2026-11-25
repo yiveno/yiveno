@@ -22,6 +22,7 @@ export type OffscreenSpeechDictationResponse =
         | 'unavailable' // 无 SpeechRecognition
         | 'not_allowed' // 麦克风未授权 / 拒绝
         | 'no_speech' // 静默或浏览器 no-speech
+        | 'aborted' // 被中止且无终稿
         | 'failed' // 其它
       message?: string
     }

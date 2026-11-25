@@ -1,9 +1,11 @@
 /**
  * 扩展源麦克风授权：优先在当前页 getUserMedia；失败则打开 Chrome 站点设置。
  * Side Panel 常弹不出系统提示，故需「页内再试一次 + 设置兜底」，避免整页授权。
+ * 成功/拒绝会 best-effort 写入 `yiveno.voiceMicGranted`（供 SW 语音命令同步分流）。
  */
 
 import { logger } from '@/infrastructure/logging/logger'
+import { writeVoiceMicGranted } from '@/infrastructure/storage/voice-mic-granted-storage'
 
 /**
  * 在当前扩展页请求麦克风（拿到即停轨，只为写入权限）。
@@ -12,6 +14,7 @@ import { logger } from '@/infrastructure/logging/logger'
 export async function requestExtensionMicrophoneAccess(): Promise<'granted' | 'denied'> {
   if (!navigator.mediaDevices?.getUserMedia) {
     logger.warn('SidePanel', '麦克风授权：无 mediaDevices.getUserMedia')
+    void writeVoiceMicGranted(false)
     return 'denied'
   }
   try {
@@ -20,11 +23,13 @@ export async function requestExtensionMicrophoneAccess(): Promise<'granted' | 'd
       track.stop()
     }
     logger.info('SidePanel', '麦克风授权：当前页已授予')
+    void writeVoiceMicGranted(true)
     return 'granted'
   } catch (error) {
     logger.warn('SidePanel', '麦克风授权：当前页被拒或失败', {
       error: error instanceof Error ? error.message : String(error)
     })
+    void writeVoiceMicGranted(false)
     return 'denied'
   }
 }
