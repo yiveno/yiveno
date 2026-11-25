@@ -37,6 +37,10 @@ vi.mock('@/infrastructure/logging/logger', () => ({
   }
 }))
 
+vi.mock('@/application/recall/voice-recall-open', () => ({
+  handleVoiceRecallOpenCommand: vi.fn().mockResolvedValue(undefined)
+}))
+
 describe('command listeners', () => {
   const onCommandAddListener = vi.fn()
 

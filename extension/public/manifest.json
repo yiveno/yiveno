@@ -14,7 +14,9 @@
     "scripting",
     "tabs",
     "sidePanel",
-    "favicon"
+    "favicon",
+    "offscreen",
+    "notifications"
   ],
   "optional_permissions": ["history"],
   "side_panel": {
@@ -63,6 +65,9 @@
     },
     "open_settings": {
       "description": "__MSG_command_open_settings__"
+    },
+    "voice_recall_open": {
+      "description": "__MSG_command_voice_recall_open__"
     },
     "save_selection": {
       "suggested_key": {

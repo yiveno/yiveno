@@ -57,7 +57,12 @@ export const UserSettingsSchema = z.object({
    * 界面语言偏好：system 跟浏览器；en / zh_CN 强制。
    * 只影响 UI 文案，不改变 Recall 线索理解语言策略。
    */
-  uiLocalePreference: z.enum(['system', 'en', 'zh_CN']).default('system')
+  uiLocalePreference: z.enum(['system', 'en', 'zh_CN']).default('system'),
+  /**
+   * 语音快捷键「听写 → 找 → 高置信自动开新标签」。
+   * 默认开（与 composer 麦克风听写同一浏览器语音服务）；关则按快捷键无动作。
+   */
+  voiceRecallOpenEnabled: z.boolean().default(true)
 })
 
 /**
@@ -76,7 +81,8 @@ export const UserSettingsPatchSchema = z.object({
   recallOutcomePairSoftAdjustEnabled: z.boolean().optional(),
   dualThreadLocalLearningEnabled: z.boolean().optional(),
   dualThreadContributeAggregatesEnabled: z.boolean().optional(),
-  uiLocalePreference: z.enum(['system', 'en', 'zh_CN']).optional()
+  uiLocalePreference: z.enum(['system', 'en', 'zh_CN']).optional(),
+  voiceRecallOpenEnabled: z.boolean().optional()
 })
 
 export type UserSettings = z.infer<typeof UserSettingsSchema>
@@ -93,7 +99,8 @@ export const DEFAULT_USER_SETTINGS: UserSettings = {
   recallOutcomePairSoftAdjustEnabled: true,
   dualThreadLocalLearningEnabled: false,
   dualThreadContributeAggregatesEnabled: false,
-  uiLocalePreference: 'system' satisfies UiLocalePreference
+  uiLocalePreference: 'system' satisfies UiLocalePreference,
+  voiceRecallOpenEnabled: true
 }
 
 /** 合并局部更新并校验。 */

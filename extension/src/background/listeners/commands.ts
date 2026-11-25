@@ -1,3 +1,4 @@
+import { handleVoiceRecallOpenCommand } from '@/application/recall/voice-recall-open'
 import {
   dispatchExtensionCommand,
   registerExtensionCommandHandler
@@ -61,6 +62,10 @@ export function registerCommandListeners(): void {
     } else if (result.status === 'ignored' && result.reason === 'unsavable_page') {
       await flashActionBadge('error')
     }
+  })
+
+  registerExtensionCommandHandler('voice_recall_open', async () => {
+    await handleVoiceRecallOpenCommand()
   })
 
   chrome.commands.onCommand.addListener(command => {

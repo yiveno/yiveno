@@ -111,7 +111,8 @@ function defaultSettings() {
     recallOutcomePairSoftAdjustEnabled: true,
     dualThreadLocalLearningEnabled: false,
     dualThreadContributeAggregatesEnabled: false,
-    uiLocalePreference: 'system' as const
+    uiLocalePreference: 'system' as const,
+    voiceRecallOpenEnabled: true
   }
 }
 

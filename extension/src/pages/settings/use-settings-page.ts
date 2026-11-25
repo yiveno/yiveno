@@ -124,6 +124,8 @@ export function useSettingsPage() {
   const awaitingShortcutsReturn = ref(false)
 
   const selectionToolbarEnabled = ref(true)
+  const voiceRecallOpenEnabled = ref(true)
+  const savingVoiceRecallOpen = ref(false)
   /** 只读：是否已授权一次性导入（控制「重新导入」显隐）。 */
   const chromeBookmarkIngestEnabled = ref(false)
   const chromeBookmarkSyncEnabled = ref(false)
@@ -650,6 +652,7 @@ export function useSettingsPage() {
       }
 
       selectionToolbarEnabled.value = response.settings.selectionToolbarEnabled
+      voiceRecallOpenEnabled.value = response.settings.voiceRecallOpenEnabled
       chromeBookmarkIngestEnabled.value = response.settings.chromeBookmarkIngestEnabled
       chromeBookmarkSyncEnabled.value = response.settings.chromeBookmarkSyncEnabled
       aiFeaturesEnabled.value = response.settings.aiFeaturesEnabled
@@ -689,6 +692,23 @@ export function useSettingsPage() {
       settingsError.value = t('settings_error_update')
     } finally {
       savingSelectionToolbar.value = false
+    }
+  }
+
+  async function handleVoiceRecallOpenToggle(nextValue: boolean) {
+    savingVoiceRecallOpen.value = true
+    settingsError.value = ''
+    try {
+      const response = await updateUserSettings({ voiceRecallOpenEnabled: nextValue })
+      if (!response.ok) {
+        settingsError.value = tSettingsError(response.errorCode)
+        return
+      }
+      voiceRecallOpenEnabled.value = response.settings.voiceRecallOpenEnabled
+    } catch {
+      settingsError.value = t('settings_error_update')
+    } finally {
+      savingVoiceRecallOpen.value = false
     }
   }
 
@@ -2332,9 +2352,12 @@ export function useSettingsPage() {
     savingDualThreadLocalLearning,
     savingDualThreadContribute,
     savingSelectionToolbar,
+    savingVoiceRecallOpen,
     savingSync,
     savingUiLocale,
     selectionToolbarEnabled,
+    voiceRecallOpenEnabled,
+    handleVoiceRecallOpenToggle,
     uiLocalePreference,
     settingsActiveTabId,
     settingsError,

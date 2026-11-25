@@ -17,6 +17,7 @@ describe('user-settings', () => {
     expect(DEFAULT_USER_SETTINGS.recallOutcomePairSoftAdjustEnabled).toBe(true)
     expect(DEFAULT_USER_SETTINGS.dualThreadLocalLearningEnabled).toBe(false)
     expect(DEFAULT_USER_SETTINGS.dualThreadContributeAggregatesEnabled).toBe(false)
+    expect(DEFAULT_USER_SETTINGS.voiceRecallOpenEnabled).toBe(true)
   })
 
   it('mergeUserSettings 合并局部更新', () => {
@@ -31,7 +32,8 @@ describe('user-settings', () => {
       recallOutcomePairSoftAdjustEnabled: true,
       dualThreadLocalLearningEnabled: false,
       dualThreadContributeAggregatesEnabled: false,
-      uiLocalePreference: 'system'
+      uiLocalePreference: 'system',
+      voiceRecallOpenEnabled: true
     })
   })
 
@@ -47,7 +49,8 @@ describe('user-settings', () => {
       recallOutcomePairSoftAdjustEnabled: true,
       dualThreadLocalLearningEnabled: false,
       dualThreadContributeAggregatesEnabled: false,
-      uiLocalePreference: 'system'
+      uiLocalePreference: 'system',
+      voiceRecallOpenEnabled: true
     })
     expect(parseUserSettings({ selectionToolbarEnabled: 'yes' })).toEqual(DEFAULT_USER_SETTINGS)
     expect(parseUserSettings({ uiLocalePreference: 'zh_CN' }).uiLocalePreference).toBe('zh_CN')

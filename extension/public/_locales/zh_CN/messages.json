@@ -3856,5 +3856,26 @@
   },
   "portrait_in_portrait_badge": {
     "message": "已进画像"
+  },
+  "command_voice_recall_open": {
+    "message": "语音找并打开（请在快捷键页自行绑定）"
+  },
+  "voice_recall_notification_opened_body": {
+    "message": "听到：$1 — 已在新标签页打开"
+  },
+  "voice_recall_notification_unclear": {
+    "message": "没听清，请再说一次"
+  },
+  "voice_recall_notification_no_match": {
+    "message": "没有足够有把握的结果 — 请看侧栏"
+  },
+  "settings_voice_recall_open_title": {
+    "message": "语音快捷键：找并打开"
+  },
+  "settings_voice_recall_open_hint": {
+    "message": "开启后，绑定的快捷键会听写、找东西，并在高置信时在新标签页打开。请到 Chrome 快捷键页自行绑定。"
+  },
+  "settings_voice_recall_privacy": {
+    "message": "语音由浏览器的语音服务转写。音频不会发到 Yiveno 服务器。"
   }
 }

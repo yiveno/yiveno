@@ -3856,5 +3856,26 @@
   },
   "portrait_in_portrait_badge": {
     "message": "In portrait"
+  },
+  "command_voice_recall_open": {
+    "message": "Voice find and open (bind in shortcuts)"
+  },
+  "voice_recall_notification_opened_body": {
+    "message": "Heard: $1 — opened in a new tab"
+  },
+  "voice_recall_notification_unclear": {
+    "message": "Didn't catch that — try saying it again"
+  },
+  "voice_recall_notification_no_match": {
+    "message": "No strong match — check the side panel"
+  },
+  "settings_voice_recall_open_title": {
+    "message": "Voice shortcut: find and open"
+  },
+  "settings_voice_recall_open_hint": {
+    "message": "When on, your bound shortcut listens, finds, and opens a high-confidence match in a new tab. Bind the key under Chrome shortcuts."
+  },
+  "settings_voice_recall_privacy": {
+    "message": "Speech is transcribed by your browser’s speech service. Audio is not sent to Yiveno servers."
   }
 }

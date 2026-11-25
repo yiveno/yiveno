@@ -56,7 +56,8 @@ describe('runAsyncMemoryLlmEnrichment', () => {
       recallOutcomePairSoftAdjustEnabled: true,
       dualThreadLocalLearningEnabled: false,
       dualThreadContributeAggregatesEnabled: false,
-      uiLocalePreference: 'system'
+      uiLocalePreference: 'system',
+      voiceRecallOpenEnabled: true
     })
   })
 
@@ -72,7 +73,8 @@ describe('runAsyncMemoryLlmEnrichment', () => {
       recallOutcomePairSoftAdjustEnabled: true,
       dualThreadLocalLearningEnabled: false,
       dualThreadContributeAggregatesEnabled: false,
-      uiLocalePreference: 'system'
+      uiLocalePreference: 'system',
+      voiceRecallOpenEnabled: true
     })
     const item = createBookmarkMemoryItem({
       ownerId: 'o',

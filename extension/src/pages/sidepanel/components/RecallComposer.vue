@@ -47,6 +47,11 @@ const props = defineProps<{
   disabled?: boolean
   /** 空线程时加重阴影（高度与有字态一致，避免跳变） */
   prominent?: boolean
+  /**
+   * 语音快捷键面板 fallback：静默停且有文案时自动 emit send。
+   * 普通点麦听写保持 false（只写入 composer）。
+   */
+  autoSubmitOnSilence?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -183,6 +188,20 @@ const speech = useComposerSpeechDictation({
     return getClueEditorPlainCaretOffset(el) ?? model.value.length
   }
 })
+
+/** 语音快捷键 fallback：静默停且有终稿 → 自动提交（与点发送同路径）。 */
+watch(
+  () => speech.lastStopReason.value,
+  reason => {
+    if (!props.autoSubmitOnSilence || reason !== 'silence') {
+      return
+    }
+    if (!model.value.trim()) {
+      return
+    }
+    emit('send')
+  }
+)
 
 const isListening = computed(() => speech.status.value === 'listening')
 const voiceMeter = useVoiceInputMeter(isListening)
@@ -699,7 +718,15 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleListeningEscape)
 })
 
-defineExpose({ focus })
+/** 供语音快捷键面板 fallback：外部触发开始听写。 */
+function startVoiceDictation(): void {
+  if (!speech.supported || speech.status.value === 'listening') {
+    return
+  }
+  speech.toggleListening()
+}
+
+defineExpose({ focus, startVoiceDictation })
 </script>
 
 <template>

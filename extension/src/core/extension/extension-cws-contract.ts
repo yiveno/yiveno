@@ -13,7 +13,9 @@ export const EXTENSION_CWS_PERMISSIONS = [
   'scripting',
   'tabs',
   'sidePanel',
-  'favicon'
+  'favicon',
+  'offscreen',
+  'notifications'
 ] as const
 
 /** public/manifest.json 开发源（含 localhost API）。 */

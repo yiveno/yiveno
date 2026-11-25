@@ -53,7 +53,8 @@ const fullSettings = {
   recallOutcomePairSoftAdjustEnabled: true,
   dualThreadLocalLearningEnabled: false,
   dualThreadContributeAggregatesEnabled: false,
-  uiLocalePreference: 'system' as const
+  uiLocalePreference: 'system' as const,
+  voiceRecallOpenEnabled: true
 }
 
 describe('settings-handler', () => {

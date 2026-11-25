@@ -84,6 +84,12 @@ export const CONTENT_COVERAGE_TERM_MIN_LEN = 3
 export const RECALL_BEHAVIOR_BOOST_CAP = 12
 
 /**
+ * half_read 线索下：曾打开过（openCount ≥ 1）的软加成（初值）。
+ * 计入 {@link RECALL_BEHAVIOR_BOOST_CAP}；openCount 为 0 不加。
+ */
+export const RECALL_HALF_READ_OPENED_BONUS = 6
+
+/**
  * 大小写贴合软加权上限。
  * 仅微调并列顺序；不得压过主文/域名等词面差。命中门槛仍忽略大小写。
  */

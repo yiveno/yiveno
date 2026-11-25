@@ -61,6 +61,9 @@ import {
   consumeRecallPrefillWithRetry,
   markFirstRecallOpenDone
 } from '@/infrastructure/storage/first-recall-onboarding-storage'
+import { consumeVoiceRecallHandoff } from '@/infrastructure/storage/voice-recall-handoff-storage'
+import { shouldAutoOpenRecallResult } from '@/core/recall/recall-auto-open'
+import type { RecallResult } from '@/core/recall/recall-result'
 import { openExtensionReviewPage } from '@/infrastructure/browser/extension-pages'
 import { readBrowserOnline, subscribeBrowserOnline } from '@/infrastructure/browser/browser-online'
 import { subscribeActiveTabNavigation } from '@/infrastructure/browser/subscribe-active-tab-navigation'
@@ -121,6 +124,10 @@ const {
 
 const clue = ref('')
 const clueInputRef = ref<InstanceType<typeof RecallComposer> | null>(null)
+/** 语音快捷键面板 fallback：静默停后自动提交 */
+const voiceDictationAutoSubmit = ref(false)
+/** 语音快捷键面板 fallback：结果过门则自动新开标签 */
+const voiceOpenAutoOpenAfterResult = ref(false)
 /** 有旧结果时后台刷新，避免拆掉列表 DOM。 */
 const isRecallRefreshing = ref(false)
 const errorMessage = ref('')
@@ -494,7 +501,8 @@ const {
   toggleDuplicateGroup,
   handleCardOpen,
   handleEvidenceVisible,
-  handleDismissCandidates
+  handleDismissCandidates,
+  handleRecallResultOpen
 } = useRecallResultCards({
   conversationTurns,
   dialogState,
@@ -862,7 +870,10 @@ async function refreshWebsiteUiDerivedBanners(): Promise<void> {
   await refreshWebsiteAccountMismatch(extensionSignedIn)
 }
 
-async function runRecall(trimmedClue: string): Promise<void> {
+async function runRecall(
+  trimmedClue: string,
+  options?: { seedResult?: RecallResult }
+): Promise<void> {
   const trimmed = trimmedClue.trim()
   if (!trimmed) {
     isRecallRefreshing.value = false
@@ -887,6 +898,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
     recallProgressStartedAt.value > 0 ? snapshotWaitProgress() : undefined
   isRecallRefreshing.value = true
   startRecallVisibleProgressUi(progressRequestId)
+  const seedResult = options?.seedResult
 
   const priorUserUtterances = [...dialogState.value.priorUserUtterances]
   // 跟进轮次：必须剥 Vue Proxy，否则 sendMessage structuredClone → DataCloneError
@@ -924,32 +936,34 @@ async function runRecall(trimmedClue: string): Promise<void> {
   const hasPageContext = activePageContextMode !== 'none'
   const hasSourceScope = recallSourceScope.value !== 'all'
   try {
-    const response = await recallWithClue({
-      clue: trimmed,
-      source: 'sidepanel',
-      recallId,
-      progressRequestId,
-      ...(hasDialogContext || hasPageContext || hasSourceScope
-        ? {
-            context: {
-              ...(priorUserUtterances.length > 0 ? { priorUserUtterances } : {}),
-              ...(accumulated ? { accumulated } : {}),
-              ...(dismissedIds.length > 0 ? { dismissedIds } : {}),
-              ...(priorConditions.length > 0 ? { conditions: priorConditions } : {}),
-              ...(behaviorShownCount > 0 ? { behaviorShownCount } : {}),
-              ...(hasPageContext
-                ? {
-                    pageContextMode: activePageContextMode,
-                    ...(pageContextDomain.value
-                      ? { currentTabDomain: pageContextDomain.value }
-                      : {})
-                  }
-                : {}),
-              ...(hasSourceScope ? { sourceScope: recallSourceScope.value } : {})
-            }
-          }
-        : {})
-    })
+    const response = seedResult
+      ? { ok: true as const, result: seedResult }
+      : await recallWithClue({
+          clue: trimmed,
+          source: 'sidepanel',
+          recallId,
+          progressRequestId,
+          ...(hasDialogContext || hasPageContext || hasSourceScope
+            ? {
+                context: {
+                  ...(priorUserUtterances.length > 0 ? { priorUserUtterances } : {}),
+                  ...(accumulated ? { accumulated } : {}),
+                  ...(dismissedIds.length > 0 ? { dismissedIds } : {}),
+                  ...(priorConditions.length > 0 ? { conditions: priorConditions } : {}),
+                  ...(behaviorShownCount > 0 ? { behaviorShownCount } : {}),
+                  ...(hasPageContext
+                    ? {
+                        pageContextMode: activePageContextMode,
+                        ...(pageContextDomain.value
+                          ? { currentTabDomain: pageContextDomain.value }
+                          : {})
+                      }
+                    : {}),
+                  ...(hasSourceScope ? { sourceScope: recallSourceScope.value } : {})
+                }
+              }
+            : {})
+        })
     if (requestId !== recallRequestId) {
       return
     }
@@ -1327,6 +1341,18 @@ async function runRecall(trimmedClue: string): Promise<void> {
       })
     })
 
+    // 语音快捷键面板 fallback：过自动打开门则新开标签（与 SW 主路径同门）
+    if (voiceOpenAutoOpenAfterResult.value) {
+      voiceOpenAutoOpenAfterResult.value = false
+      voiceDictationAutoSubmit.value = false
+      if (shouldAutoOpenRecallResult(response.result) && response.result.topPick) {
+        const topCard = toMatchCard(response.result.topPick, highlightClue, { rank: 0 })
+        if (topCard.url) {
+          handleRecallResultOpen(topCard.id, topCard.url, true, 0)
+        }
+      }
+    }
+
     void probeMemoryLibrary()
     void nextTick(() => {
       clueInputRef.value?.focus()
@@ -1436,7 +1462,10 @@ autoSubmitPrefillClue = (clueText: string) => {
 }
 
 /** 真正推入用户气泡并召回（已过软岔路口或芯片跳过）。 */
-async function commitSendTurn(trimmedClue: string): Promise<void> {
+async function commitSendTurn(
+  trimmedClue: string,
+  options?: { seedResult?: RecallResult }
+): Promise<void> {
   const trimmed = trimmedClue.trim()
   if (!trimmed) {
     return
@@ -1463,7 +1492,7 @@ async function commitSendTurn(trimmedClue: string): Promise<void> {
   })
 
   expandedDuplicateGroupId.value = null
-  await runRecall(trimmed)
+  await runRecall(trimmed, options)
 }
 
 /** 软岔路口：继续 refine 当前线程。 */
@@ -1649,6 +1678,19 @@ onMounted(() => {
   document.addEventListener('visibilitychange', handleSidePanelVisibilityChange)
   void (async () => {
     try {
+      // 语音快捷键交接优先于普通 prefill
+      const voiceHandoff = await consumeVoiceRecallHandoff()
+      if (voiceHandoff?.kind === 'start_dictation') {
+        voiceDictationAutoSubmit.value = true
+        voiceOpenAutoOpenAfterResult.value = true
+        await nextTick()
+        clueInputRef.value?.startVoiceDictation?.()
+        return
+      }
+      if (voiceHandoff?.kind === 'show_result') {
+        await commitSendTurn(voiceHandoff.clue, { seedResult: voiceHandoff.result })
+        return
+      }
       // Getting Started / Omnibox / 选区预填：写 session 与开壳可能竞态，短窗重试
       const payload = await consumeRecallPrefillWithRetry()
       if (!payload) {
@@ -2150,6 +2192,7 @@ onUnmounted(() => {
               :voiceStopLabel="t('sidepanel_voice_stop')"
               :voiceUnavailableLabel="t('sidepanel_voice_unavailable')"
               :prominent="isComposerProminent"
+              :autoSubmitOnSilence="voiceDictationAutoSubmit"
               @send="handleSendTurn"
             >
               <template #leading>

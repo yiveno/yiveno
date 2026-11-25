@@ -63,8 +63,9 @@ describe('manifest Action / Commands 契约', () => {
     expect(withSuggestedKey.length).toBe(4)
   })
 
-  it('open_settings 不设默认快捷键（用户自绑）', () => {
+  it('open_settings / voice_recall_open 不设默认快捷键（用户自绑）', () => {
     const manifest = readManifest()
     expect(manifest.commands?.open_settings?.suggested_key).toBeUndefined()
+    expect(manifest.commands?.voice_recall_open?.suggested_key).toBeUndefined()
   })
 })

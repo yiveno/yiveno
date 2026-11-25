@@ -57,6 +57,7 @@ export const LOG_SCOPES = [
   'SidePanel', // Side Panel 行为配置与打开
   'Subscription', // 云端订阅拉取 / 快照刷新
   'ThirdPartyImport', // Raindrop / Pocket 等第三方导入
+  'VoiceRecall', // 语音快捷键听写 → Recall → 自动开标签
   'i18n' // 扩展文案 key 缺失 / 未解析告警
 ] as const
 

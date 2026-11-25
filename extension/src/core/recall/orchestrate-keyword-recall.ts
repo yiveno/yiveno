@@ -14,12 +14,17 @@ import {
 import { collapseRecallMatches } from '@/core/recall/collapse-recall-duplicates'
 import {
   applyStalePenaltiesToMatches,
+  computeBehaviorBoost,
   filterMemoryItemsByKeyword,
   normalizeRecallText,
   RECALL_TOP_PICK_MIN_SCORE,
   type RecallBehaviorProfile,
   type RecallLinkStatusHint
 } from '@/core/recall/keyword-filter'
+import {
+  RECALL_BEHAVIOR_BOOST_CAP,
+  RECALL_HALF_READ_OPENED_BONUS
+} from '@/core/recall/keyword-filter-weights'
 import {
   looksLikeAssistantImperativeClue,
   looksLikeNonRecallLifeRequest
@@ -65,9 +70,6 @@ export const RECALL_ORCHESTRATION_OFTEN_OPENED_BOOST = 4
 
 /** recently_saved：近 7 天内创建的软加成。 */
 export const RECALL_ORCHESTRATION_RECENTLY_SAVED_BOOST = 5
-
-/** half_read：摘录类或低 openCount 书签的软加成。 */
-export const RECALL_ORCHESTRATION_HALF_READ_BOOST = 3
 
 /** 低置信时间：落在中心窗内的软加成（ADR-011）。 */
 export const RECALL_ORCHESTRATION_TIME_SOFT_IN_RANGE_BOOST = 12
@@ -543,10 +545,13 @@ export function applyParsedClueScoreBoosts(
     }
   }
 
+  // half_read：仅 openCount≥1 软加分，计入行为加成上限（不再抬「未打开」项）
   if (parsed.behaviorHints?.includes('half_read')) {
     const openCount = match.item.clues.openCount ?? 0
-    if (match.item.type === 'text_excerpt' || openCount <= 1) {
-      boost += RECALL_ORCHESTRATION_HALF_READ_BOOST
+    if (openCount >= 1) {
+      const already = computeBehaviorBoost(match.item, { nowMs })
+      const room = Math.max(0, RECALL_BEHAVIOR_BOOST_CAP - already)
+      boost += Math.min(RECALL_HALF_READ_OPENED_BONUS, room)
     }
   }
 

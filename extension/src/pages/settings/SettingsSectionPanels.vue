@@ -85,6 +85,7 @@ const {
   handleRestoreLatestSyncBackup,
   handleRunIncrementalSync,
   handleSelectionToolbarToggle,
+  handleVoiceRecallOpenToggle,
   handleSyncToggle,
   handleUiLocalePreferenceChange,
   hasOrphanOwners,
@@ -139,6 +140,8 @@ const {
   savingSync,
   savingUiLocale,
   selectionToolbarEnabled,
+  voiceRecallOpenEnabled,
+  savingVoiceRecallOpen,
   uiLocalePreference,
   settingsError,
   settingsState,
@@ -415,6 +418,23 @@ const {
                   </p>
                 </li>
               </ul>
+
+              <div class="settings-toggle">
+                <div class="settings-toggle-copy">
+                  <span class="settings-toggle-title">{{
+                    t('settings_voice_recall_open_title')
+                  }}</span>
+                  <span class="settings-toggle-hint">{{
+                    t('settings_voice_recall_open_hint')
+                  }}</span>
+                  <span class="settings-toggle-hint">{{ t('settings_voice_recall_privacy') }}</span>
+                </div>
+                <AppSwitch
+                  :model-value="voiceRecallOpenEnabled"
+                  :disabled="savingVoiceRecallOpen"
+                  @update:model-value="handleVoiceRecallOpenToggle"
+                />
+              </div>
 
               <SettingsActionRow surface="embedded" :title="t('settings_open_shortcuts')">
                 <AppButton

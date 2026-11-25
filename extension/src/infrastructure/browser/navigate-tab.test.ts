@@ -6,7 +6,10 @@ import { createMockTabsCreate, createMockTabsQuery } from '@/tests/chrome-mock'
 describe('navigateTabToUrl', () => {
   const tabsQuery = createMockTabsQuery()
   const tabsCreate = createMockTabsCreate()
-  const tabsUpdate = vi.fn(async () => undefined)
+  const tabsUpdate = vi.fn(async (_id: number, _props: { url: string; active: boolean }) => ({
+    id: 7,
+    windowId: 1
+  }))
   const windowsUpdate = vi.fn(async () => undefined)
 
   beforeEach(() => {
