@@ -2,7 +2,6 @@
  * 合成 Clue 闭环 · Stage 1 解析评测类型（仅 harness；不进产品主路径）。
  */
 
-import type { RecallRelativeTimeLabel } from '@/core/recall/parse-recall-clue-lexicon'
 import type {
   ParsedRecallClue,
   RecallClueConfidence,
@@ -10,9 +9,6 @@ import type {
   RecallObjectType,
   RecallTimeConfidence
 } from '@/core/recall/parse-recall-clue-types'
-
-/** 与 lexicon 同源的时间标签（评测侧引用）。 */
-export type ClueChainTimeLabel = RecallRelativeTimeLabel
 
 /** 测试集 category：A 主题 / B 难例 / C 非召回 / D 混合。 */
 export type ClueChainCategory = 'A' | 'B' | 'C' | 'D'
