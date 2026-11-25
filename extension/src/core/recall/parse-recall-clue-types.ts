@@ -122,6 +122,37 @@ export const RecallTimeConfidenceSchema = z.enum([
 export type RecallTimeConfidence = z.infer<typeof RecallTimeConfidenceSchema>
 
 /**
+ * 条件表达确定度（措辞坚定程度，非事实真假）。
+ * - hedge：好像是 / 大概
+ * - neutral：无标记
+ * - firm：我记得很清楚
+ */
+export const ConditionCertaintySchema = z.enum([
+  'hedge', // 犹豫
+  'neutral', // 中性
+  'firm' // 坚定
+])
+
+export type ConditionCertainty = z.infer<typeof ConditionCertaintySchema>
+
+/**
+ * 各槽位表达确定度（LLM 抽取；缺失默认 neutral）。
+ * behaviorHints / noteHint 不抽（非用户陈述条件）。
+ */
+export const ParsedClueCertaintySchema = z.object({
+  /** 时间槽确定度 */
+  timeRange: ConditionCertaintySchema.optional(),
+  /** 偏好算子确定度 */
+  preferenceOperator: ConditionCertaintySchema.optional(),
+  /** 内容词 → 确定度 */
+  contentTerms: z.record(z.string(), ConditionCertaintySchema).optional(),
+  /** 对象类型 → 确定度 */
+  objectTypes: z.record(z.string(), ConditionCertaintySchema).optional()
+})
+
+export type ParsedClueCertainty = z.infer<typeof ParsedClueCertaintySchema>
+
+/**
  * Recall 主题锚（H-topic · 根节点）——Recall 的必要条件，决定候选空间。
  * - source=content：内容大意（C）的非泛词
  * - source=goal：当时目标/附注指向（G）
@@ -226,6 +257,11 @@ export const ParsedRecallClueSchema = z.object({
   excludeContentTerms: z.array(z.string()).optional(),
   /** 解析整体置信度；编排据此决定直给 / 弱邻域 / 追问 */
   confidence: RecallClueConfidenceSchema,
+  /**
+   * 各槽位表达确定度（LLM 抽取；不参与 grounding；缺省 = 全 neutral）。
+   * 描述用户措辞坚定程度，不描述库内匹配。
+   */
+  certainty: ParsedClueCertaintySchema.optional(),
   /** 用户意图；缺省 = recall（规则路径不产意图） */
   intent: RecallClueIntentSchema.optional(),
   /** intent=chitchat|question|instruction 时的自然回复（LLM 生成，同 clue 语言）；recall 时缺省 */

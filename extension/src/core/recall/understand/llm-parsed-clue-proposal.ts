@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import {
+  ConditionCertaintySchema,
   PreferenceOperatorSchema,
   PreferenceTargetSchema,
   RecallBehaviorHintSchema,
@@ -8,6 +9,16 @@ import {
   RecallClueIntentSchema,
   RecallObjectTypeSchema
 } from '@/core/recall/parse-recall-clue-types'
+
+/** 单槽确定度；畸形 → 置空本字段。 */
+const CertaintyScalarSchema = ConditionCertaintySchema.nullable().optional().catch(undefined)
+
+/** 多值槽确定度 map；畸形 → 置空本字段。 */
+const CertaintyMapSchema = z
+  .record(z.string(), ConditionCertaintySchema)
+  .nullable()
+  .optional()
+  .catch(undefined)
 
 /**
  * 与词典 canonical 一致的时间标签（LLM 只许输出这些）。
@@ -83,7 +94,21 @@ export const LlmParsedClueProposalSchema = z.object({
    */
   assistantReply: z.string().nullable().optional(),
   /** 仅作提示；map 时会按槽位重算；越枚举 → 回落 low */
-  confidence: RecallClueConfidenceSchema.optional().default('low').catch('low')
+  confidence: RecallClueConfidenceSchema.optional().default('low').catch('low'),
+  /**
+   * 各槽表达确定度（措辞坚定程度）。
+   * 各子字段独立 catch：畸形只丢该槽，不丢整单；缺省 → map 层按 neutral。
+   */
+  certainty: z
+    .object({
+      timeRange: CertaintyScalarSchema,
+      preferenceOperator: CertaintyScalarSchema,
+      contentTerms: CertaintyMapSchema,
+      objectTypes: CertaintyMapSchema
+    })
+    .nullable()
+    .optional()
+    .catch(undefined)
 })
 
 /** schema.parse 之后的提案（含 default 填充）。 */

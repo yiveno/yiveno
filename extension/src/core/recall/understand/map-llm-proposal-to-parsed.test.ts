@@ -236,3 +236,53 @@ describe('R7 · objectTypeOther schema / prompt 出口', () => {
     expect(system).toMatch(/leave timeLabel null/i)
   })
 })
+
+describe('C1 · certainty 透传', () => {
+  it('prompt 含 certainty / hedge / firm 说明', () => {
+    const system = buildLlmParseClueMessages('clue').find(m => m.role === 'system')?.content ?? ''
+    expect(system).toContain('certainty')
+    expect(system).toMatch(/hedge/)
+    expect(system).toMatch(/firm/)
+    expect(system).toMatch(/I clearly remember|记得很清楚/)
+  })
+
+  it('map 透传 certainty；畸形槽位置空不丢整单', () => {
+    const parsed = mapLlmProposalToParsedClue(
+      'I clearly remember the poem about RAG',
+      {
+        timeLabel: null,
+        objectTypes: ['poem'],
+        contentTerms: ['rag'],
+        confidence: 'low',
+        certainty: {
+          timeRange: 'firm',
+          preferenceOperator: 'not-a-certainty' as unknown as 'hedge',
+          contentTerms: { rag: 'firm', bad: 'nope' as unknown as 'hedge' },
+          objectTypes: { poem: 'hedge' }
+        }
+      },
+      PARSE_GOLD_NOW_MS
+    )
+    expect(parsed.objectTypes).toEqual(['poem'])
+    expect(parsed.certainty?.contentTerms?.rag).toBe('firm')
+    expect(parsed.certainty?.objectTypes?.poem).toBe('hedge')
+    expect(parsed.certainty?.preferenceOperator).toBeUndefined()
+    expect(parsed.certainty?.contentTerms?.bad).toBeUndefined()
+  })
+
+  it('proposal schema：malformed certainty 子字段置空，其余保留', () => {
+    const proposal = LlmParsedClueProposalSchema.parse({
+      timeLabel: 'yesterday',
+      objectTypes: null,
+      contentTerms: ['rag'],
+      confidence: 'low',
+      certainty: {
+        timeRange: 'wat',
+        contentTerms: { rag: 'firm' }
+      }
+    })
+    expect(proposal.timeLabel).toBe('yesterday')
+    expect(proposal.certainty?.timeRange).toBeUndefined()
+    expect(proposal.certainty?.contentTerms?.rag).toBe('firm')
+  })
+})

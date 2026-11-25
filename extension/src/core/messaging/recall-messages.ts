@@ -1,5 +1,6 @@
 import { z } from 'zod'
 
+import { ScoredConditionSchema } from '@/core/recall/condition-credibility'
 import { ParsedRecallClueSchema } from '@/core/recall/parse-recall-clue-types'
 import { PAGE_CONTEXT_MODES } from '@/core/recall/page-context-mode'
 import { RECALL_SOURCE_SCOPES } from '@/core/recall/recall-source-scope'
@@ -45,6 +46,11 @@ export const recallDialogContextSchema = z.object({
   accumulated: z.preprocess(stripAccumulatedTopicEmbedding, ParsedRecallClueSchema).optional(),
   /** 本会话已否定的 MemoryItem id（硬排除）。 */
   dismissedIds: z.array(z.string().uuid()).max(50).optional(),
+  /**
+   * A 层会话条件（可信度计分；关 Panel 丢弃）。
+   * 检索侧作加权 boost，永不硬过滤。
+   */
+  conditions: z.array(ScoredConditionSchema).max(80).optional(),
   /**
    * 行为偏好轮换：本会话已展示过的候选位数（会话内；不入 IDB）。
    */

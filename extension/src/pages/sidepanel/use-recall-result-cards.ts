@@ -7,6 +7,10 @@
 import { nextTick, type ComputedRef, type Ref, ref } from 'vue'
 
 import { RECALL_RESULT_PAGE_SIZE } from '@/core/recall/build-recall-result'
+import {
+  applyUserConfirmToConditions,
+  applyUserRefuteToConditions
+} from '@/core/recall/condition-credibility'
 import { resolveNextRecallVisibleCount } from '@/core/recall/recall-result-visible-count'
 import type { RecallDialogState } from '@/core/recall/merge-recall-dialog-turn'
 import { commitRecallOutcome } from '@/application/recall/commit-recall-outcome'
@@ -167,9 +171,12 @@ export function useRecallResultCards(
     ]
 
     if (ids.length > 0) {
+      // dismiss：会话 conditions 矛盾 -0.10（整池无可归因值 → 全部施矛盾）
+      const nextConditions = applyUserRefuteToConditions(dialogState.value.conditions)
       dialogState.value = {
         ...dialogState.value,
-        dismissedIds: [...new Set([...dialogState.value.dismissedIds, ...ids])]
+        dismissedIds: [...new Set([...dialogState.value.dismissedIds, ...ids])],
+        conditions: nextConditions
       }
       outcomeSession.value = {
         ...outcomeSession.value,
@@ -243,6 +250,13 @@ export function useRecallResultCards(
       // 忽略：引导标记失败不影响打开
     })
     finalizeOpenDwell()
+    // 打开结果：跨类佐证 +0.15（无可归因条件值 → 全部条件加跨类）
+    if (dialogState.value.conditions.length > 0) {
+      dialogState.value = {
+        ...dialogState.value,
+        conditions: applyUserConfirmToConditions(dialogState.value.conditions)
+      }
+    }
     outcomeSession.value = {
       ...outcomeSession.value,
       opens: [...outcomeSession.value.opens, { id: memoryItemId, at: new Date().toISOString() }]

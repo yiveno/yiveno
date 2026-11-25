@@ -146,7 +146,8 @@ describe('mergeDialogUtterances / rollbackLastDialogUtterance', () => {
       {
         priorUserUtterances: ['poem Li Bai', 'yesterday'],
         accumulated: afterTwo.merged,
-        dismissedIds: ['11111111-1111-4111-8111-111111111101']
+        dismissedIds: ['11111111-1111-4111-8111-111111111101'],
+        conditions: afterTwo.conditions
       },
       { nowMs: NOW_MS }
     )

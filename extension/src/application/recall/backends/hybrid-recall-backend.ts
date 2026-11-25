@@ -66,6 +66,8 @@ import {
   type RecallLinkStatusHint
 } from '@/core/recall/keyword-filter'
 import { loadLinkStatusHintsByItemId } from '@/application/recall/load-link-status-hints'
+import { applyConditionBoosts, type ScoredCondition } from '@/core/recall/condition-credibility'
+import { conditionHitsRecallMatch } from '@/core/recall/condition-hit'
 import {
   excludeDismissedMemoryItems,
   mergeRecallDialogTurn
@@ -121,14 +123,51 @@ import { t } from '@/infrastructure/i18n/t'
 
 function attachDialogMeta(
   result: RecallResult,
-  meta: { parsed: ParsedRecallClue; effectiveClue: string; clue: string }
+  meta: {
+    parsed: ParsedRecallClue
+    effectiveClue: string
+    clue: string
+    conditions?: ScoredCondition[]
+  }
 ): RecallResult {
   return {
     ...result,
     clue: meta.clue,
     parsed: meta.parsed,
-    effectiveClue: meta.effectiveClue
+    effectiveClue: meta.effectiveClue,
+    ...(meta.conditions && meta.conditions.length > 0 ? { conditions: meta.conditions } : {})
   }
+}
+
+/**
+ * 条件可信度加权 boost（永不硬过滤）。
+ * 可信度 <0.3 / inactive 不参排；无命中候选仍凭语义分出现。
+ */
+function applySessionConditionBoosts(
+  matches: RecallMatch[],
+  conditions: readonly ScoredCondition[],
+  options: { currentTurn?: number; nowMs?: number; timeRange?: ParsedRecallClue['timeRange'] } = {}
+): RecallMatch[] {
+  if (conditions.length === 0 || matches.length === 0) {
+    return matches
+  }
+  const boosted = applyConditionBoosts(
+    matches,
+    conditions,
+    (match, condition) =>
+      conditionHitsRecallMatch(match, condition, {
+        ...(options.nowMs !== undefined ? { nowMs: options.nowMs } : {}),
+        ...(options.timeRange ? { timeRange: options.timeRange } : {})
+      }),
+    { ...(options.currentTurn !== undefined ? { currentTurn: options.currentTurn } : {}) }
+  )
+  boosted.sort((left, right) => {
+    if (right.score !== left.score) {
+      return right.score - left.score
+    }
+    return right.item.updatedAt.localeCompare(left.item.updatedAt)
+  })
+  return boosted
 }
 
 /** 透传理解引擎 + 失败归因字段（不改判定；仅附加元数据）。 */
@@ -223,6 +262,10 @@ async function finalizeKeywordResult(
     noteMatches?: NoteMatchSet
     /** 死链巡检；Omnibox 忽略。 */
     linkStatusByItemId?: ReadonlyMap<string, RecallLinkStatusHint>
+    /** A 层会话条件；Omnibox 不传。 */
+    conditions?: readonly ScoredCondition[]
+    /** 当前轮次（相关度衰减）。 */
+    conditionTurn?: number
   }
 ): Promise<{ result: RecallResult; effectiveParsed: ParsedRecallClue; timeSoftReopen: boolean }> {
   const linkStatusByItemId =
@@ -267,9 +310,19 @@ async function finalizeKeywordResult(
     corroborationTerms,
     options?.noteMatches
   )
+  // A 层条件 boost：Omnibox / 行为偏好不走；无条件时原样
+  const withConditionBoosts =
+    options?.behaviorProfile === 'omnibox' ||
+    !options?.conditions ||
+    options.conditions.length === 0
+      ? corroborated
+      : applySessionConditionBoosts(corroborated, options.conditions, {
+          currentTurn: options.conditionTurn ?? 0,
+          ...(effectiveParsed.timeRange ? { timeRange: effectiveParsed.timeRange } : {})
+        })
   return {
     result: injectTopic(
-      buildRecallResult(displayClue, corroborated, {
+      buildRecallResult(displayClue, withConditionBoosts, {
         contentTerms: corroborationTerms,
         ...(options?.noteMatches ? { noteMatches: options.noteMatches } : {}),
         ...(base.topic
@@ -302,6 +355,10 @@ export function fuseKeywordAndSemanticPools(input: {
   currentTabDomain?: string
   /** 死链罚 map：语义-only 在 fuse 补罚；关键词池 id 已在打分层扣过，跳过。 */
   linkStatusByItemId?: ReadonlyMap<string, RecallLinkStatusHint>
+  /** A 层会话条件；加权 boost，永不硬过滤。 */
+  conditions?: readonly ScoredCondition[]
+  /** 当前轮次（相关度衰减）；缺省 = 0 */
+  conditionTurn?: number
 }): RecallMatch[] {
   return fuseScoredPools(input)
 }
@@ -315,6 +372,10 @@ function fuseScoredPools(input: {
   currentTabDomain?: string
   /** 死链罚：仅对语义-only 候选补（keyword 池 id 已在打分层扣过）。 */
   linkStatusByItemId?: ReadonlyMap<string, RecallLinkStatusHint>
+  /** A 层会话条件；加权 boost，永不硬过滤。 */
+  conditions?: readonly ScoredCondition[]
+  /** 当前轮次（相关度衰减）；缺省 = 0 */
+  conditionTurn?: number
 }): RecallMatch[] {
   const keywordTimed = filterMatchesByParsedTimeRange(input.keywordMatches, input.parsed)
   const semanticTimed = filterMatchesByParsedTimeRange(input.semanticMatches, input.parsed)
@@ -407,6 +468,13 @@ function fuseScoredPools(input: {
     }
     return right.item.updatedAt.localeCompare(left.item.updatedAt)
   })
+  // A 层条件可信度：加权 boost，永不硬过滤（行为偏好路径不走本函数）
+  if (input.conditions && input.conditions.length > 0) {
+    return applySessionConditionBoosts(withStale, input.conditions, {
+      currentTurn: input.conditionTurn ?? 0,
+      ...(input.parsed.timeRange ? { timeRange: input.parsed.timeRange } : {})
+    })
+  }
   return withStale
 }
 
@@ -739,6 +807,10 @@ export async function fuseHybridMatches(input: {
   noteMatches?: NoteMatchSet
   /** 死链巡检；Side Panel 轨。 */
   linkStatusByItemId?: ReadonlyMap<string, RecallLinkStatusHint>
+  /** A 层会话条件；加权 boost，永不硬过滤。 */
+  conditions?: readonly ScoredCondition[]
+  /** 当前轮次（相关度衰减）。 */
+  conditionTurn?: number
 }): Promise<{
   result: RecallResult
   effectiveParsed: ParsedRecallClue
@@ -846,7 +918,10 @@ export async function fuseHybridMatches(input: {
       parsed,
       pageContextMode: input.pageContextMode ?? 'none',
       ...(input.currentTabDomain !== undefined ? { currentTabDomain: input.currentTabDomain } : {}),
-      ...(input.linkStatusByItemId ? { linkStatusByItemId: input.linkStatusByItemId } : {})
+      ...(input.linkStatusByItemId ? { linkStatusByItemId: input.linkStatusByItemId } : {}),
+      ...(input.conditions && input.conditions.length > 0
+        ? { conditions: input.conditions, conditionTurn: input.conditionTurn ?? 0 }
+        : {})
     })
 
   let fused = fuseWithParsed(input.parsed)
@@ -948,6 +1023,7 @@ export class HybridRecallBackend implements RecallBackend {
     const priorUserUtterances = context?.priorUserUtterances ?? []
     const accumulated = context?.accumulated ?? null
     const dismissedIds = context?.dismissedIds ?? []
+    const priorConditions = context?.conditions ?? []
     const behaviorShownCount = context?.behaviorShownCount ?? 0
     const pageContextMode: PageContextMode = context?.pageContextMode ?? 'none'
     const currentTabDomain = pageContextMode === 'none' ? undefined : context?.currentTabDomain
@@ -1082,10 +1158,15 @@ export class HybridRecallBackend implements RecallBackend {
       accumulated,
       currentParsed: understood.parsed,
       priorUserUtterances,
-      currentUtterance: normalizedClue
+      currentUtterance: normalizedClue,
+      priorConditions,
+      nowMs: pipelineStartedAt
     })
+    const sessionConditions = merge.conditions
+    const conditionTurn = priorUserUtterances.length
 
     // 行为偏好路径：merge 之后、检索之前；Omnibox 永不进入（无算子 / 无 context）。
+    // 行为独立排序不动；conditions 仅回写会话态供后续轮次。
     if (!isOmniboxEntry && merge.merged.preferenceOperator) {
       const behaviorResult = await resolveBehaviorPreferenceRecall({
         clue: normalizedClue,
@@ -1104,7 +1185,8 @@ export class HybridRecallBackend implements RecallBackend {
         const withMeta = attachDialogMeta(behaviorResult, {
           parsed: merge.merged,
           effectiveClue: merge.effectiveRaw,
-          clue: normalizedClue
+          clue: normalizedClue,
+          conditions: sessionConditions
         })
         const withFraming = attachBehaviorPreferenceFraming(withMeta)
         const framingPolishComplete = shouldOmitClueLlmCompleterWhenBrowserOffline(
@@ -1204,6 +1286,7 @@ export class HybridRecallBackend implements RecallBackend {
         effectiveClue: merge.effectiveRaw,
         emptyKind: 'missing_topic',
         relatedGuess: null,
+        ...(sessionConditions.length > 0 ? { conditions: sessionConditions } : {}),
         pipelineTiming,
         ...pickUnderstandAttributionFields(understood),
         visibleProgressStages: [...visibleProgressStages]
@@ -1337,7 +1420,8 @@ export class HybridRecallBackend implements RecallBackend {
         { mode: pageContextMode, currentTabDomain },
         pairClue,
         {
-          ...(linkStatusByItemId.size > 0 ? { linkStatusByItemId } : {})
+          ...(linkStatusByItemId.size > 0 ? { linkStatusByItemId } : {}),
+          ...(sessionConditions.length > 0 ? { conditions: sessionConditions, conditionTurn } : {})
         }
       )
       result = finalized.result
@@ -1374,7 +1458,8 @@ export class HybridRecallBackend implements RecallBackend {
           ...(currentTabDomain !== undefined ? { currentTabDomain } : {}),
           trace,
           ...(noteMatches.size > 0 ? { noteMatches } : {}),
-          ...(linkStatusByItemId.size > 0 ? { linkStatusByItemId } : {})
+          ...(linkStatusByItemId.size > 0 ? { linkStatusByItemId } : {}),
+          ...(sessionConditions.length > 0 ? { conditions: sessionConditions, conditionTurn } : {})
         })) ?? null
 
       if (hybrid) {
@@ -1391,7 +1476,10 @@ export class HybridRecallBackend implements RecallBackend {
           pairClue,
           {
             ...(noteMatches.size > 0 ? { noteMatches } : {}),
-            ...(linkStatusByItemId.size > 0 ? { linkStatusByItemId } : {})
+            ...(linkStatusByItemId.size > 0 ? { linkStatusByItemId } : {}),
+            ...(sessionConditions.length > 0
+              ? { conditions: sessionConditions, conditionTurn }
+              : {})
           }
         )
         result = finalized.result
@@ -1406,7 +1494,8 @@ export class HybridRecallBackend implements RecallBackend {
     const withMeta = attachDialogMeta(result, {
       clue: normalizedClue,
       parsed: effectiveParsedForFraming,
-      effectiveClue: merge.effectiveRaw
+      effectiveClue: merge.effectiveRaw,
+      conditions: sessionConditions
     })
 
     // Dreaming Phase 4：命题级命中计数（设计稿 §9.2；记在自有 store，不得复用 settledCount）。

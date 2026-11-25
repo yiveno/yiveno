@@ -248,7 +248,8 @@ function expandBannerStack(): void {
 const dialogState = ref<RecallDialogState>({
   priorUserUtterances: [],
   accumulated: null,
-  dismissedIds: []
+  dismissedIds: [],
+  conditions: []
 })
 
 /** handleCompleteNewFindSession 定义前占位；定义后改写，供出口条回调。 */
@@ -559,7 +560,8 @@ async function completeNewFindSession(reason: string): Promise<void> {
   dialogState.value = {
     priorUserUtterances: [],
     accumulated: null,
-    dismissedIds: []
+    dismissedIds: [],
+    conditions: []
   }
   resetOutcomeSession()
   recallTelemetry.clearActiveTask()
@@ -885,6 +887,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
     ? toCloneableAccumulated(dialogState.value.accumulated)
     : null
   const dismissedIds = [...dialogState.value.dismissedIds]
+  const priorConditions = [...dialogState.value.conditions]
   const behaviorShownCount = dialogState.value.behaviorShownCount ?? 0
   const contextStatusFields = continuingContextStatus(
     priorUserUtterances,
@@ -909,6 +912,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
     priorUserUtterances.length > 0 ||
     accumulated ||
     dismissedIds.length > 0 ||
+    priorConditions.length > 0 ||
     behaviorShownCount > 0
   const hasPageContext = activePageContextMode !== 'none'
   const hasSourceScope = recallSourceScope.value !== 'all'
@@ -924,6 +928,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
               ...(priorUserUtterances.length > 0 ? { priorUserUtterances } : {}),
               ...(accumulated ? { accumulated } : {}),
               ...(dismissedIds.length > 0 ? { dismissedIds } : {}),
+              ...(priorConditions.length > 0 ? { conditions: priorConditions } : {}),
               ...(behaviorShownCount > 0 ? { behaviorShownCount } : {}),
               ...(hasPageContext
                 ? {
@@ -991,6 +996,7 @@ async function runRecall(trimmedClue: string): Promise<void> {
         priorUserUtterances: [...priorUserUtterances, trimmed].slice(-5),
         accumulated: markAccumulatedForDialogState(response.result.parsed),
         dismissedIds,
+        conditions: response.result.conditions ?? [],
         ...(nextBehaviorShownCount > 0 ? { behaviorShownCount: nextBehaviorShownCount } : {})
       }
     }

@@ -17,9 +17,67 @@ import {
   timeConfidenceForRelativeLabel
 } from '@/core/recall/parse-recall-clue'
 import {
+  ConditionCertaintySchema,
   ParsedRecallClueSchema,
+  type ConditionCertainty,
+  type ParsedClueCertainty,
   type ParsedRecallClue
 } from '@/core/recall/parse-recall-clue-types'
+
+/** 标量确定度；非法 / 缺省 → undefined（消费侧按 neutral；不把畸形写成 neutral）。 */
+function normalizeCertaintyScalar(raw: unknown): ConditionCertainty | undefined {
+  if (raw === undefined || raw === null) {
+    return undefined
+  }
+  const parsed = ConditionCertaintySchema.safeParse(raw)
+  return parsed.success ? parsed.data : undefined
+}
+
+/** 多值 map；非法键值丢弃；空 map → undefined。 */
+function normalizeCertaintyMap(raw: unknown): Record<string, ConditionCertainty> | undefined {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+    return undefined
+  }
+  const out: Record<string, ConditionCertainty> = {}
+  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+    const normalizedKey = key.trim().toLowerCase()
+    if (!normalizedKey) {
+      continue
+    }
+    const parsed = ConditionCertaintySchema.safeParse(value)
+    if (!parsed.success) {
+      continue
+    }
+    out[normalizedKey] = parsed.data
+  }
+  return Object.keys(out).length > 0 ? out : undefined
+}
+
+/**
+ * LLM certainty → ParsedRecallClue.certainty（透传，不落地、不参与 grounding）。
+ * 缺省 / 畸形槽位不写（消费侧按 neutral）。
+ */
+function mapProposalCertainty(
+  proposal: LlmParsedClueProposalInput
+): ParsedClueCertainty | undefined {
+  const raw = proposal.certainty
+  if (!raw || typeof raw !== 'object') {
+    return undefined
+  }
+  const timeRange = normalizeCertaintyScalar(raw.timeRange)
+  const preferenceOperator = normalizeCertaintyScalar(raw.preferenceOperator)
+  const contentTerms = normalizeCertaintyMap(raw.contentTerms)
+  const objectTypes = normalizeCertaintyMap(raw.objectTypes)
+  if (!timeRange && !preferenceOperator && !contentTerms && !objectTypes) {
+    return undefined
+  }
+  return {
+    ...(timeRange ? { timeRange } : {}),
+    ...(preferenceOperator ? { preferenceOperator } : {}),
+    ...(contentTerms ? { contentTerms } : {}),
+    ...(objectTypes ? { objectTypes } : {})
+  }
+}
 
 /**
  * 约束槽位存在时剥掉的模型残留词（具名常量，原内联匿名 Set）。
@@ -52,6 +110,7 @@ const CONSTRAINT_SLOT_NOISE_TERMS = new Set([
  * - objectTypes / behaviorHints：须在线索中有词面支撑
  * - objectTypeOther：未知类型原文词 → 去重追加进 contentTerms，永不进 objectTypes 硬筛
  * - confidence：按槽位重算（忽略模型自评）
+ * - certainty：措辞确定度透传（不落地、不参与 grounding；与 preferenceOperator 同理）
  */
 export function mapLlmProposalToParsedClue(
   clue: string,
@@ -137,6 +196,7 @@ export function mapLlmProposalToParsedClue(
   const hasBehavior = behaviorHints.length > 0
   const hasNote = noteHint === true
   const hasContent = contentTerms.length > 0
+  const certainty = mapProposalCertainty(proposal)
 
   return ParsedRecallClueSchema.parse({
     raw,
@@ -157,6 +217,7 @@ export function mapLlmProposalToParsedClue(
     ...(preferenceTarget ? { preferenceTarget } : {}),
     ...(noteHint ? { noteHint } : {}),
     ...(excludeContentTerms.length > 0 ? { excludeContentTerms } : {}),
+    ...(certainty ? { certainty } : {}),
     ...(proposal.intent !== 'recall' ? { intent: proposal.intent } : {}),
     ...(proposal.intent !== 'recall' && proposal.assistantReply?.trim()
       ? { assistantReply: proposal.assistantReply.trim().slice(0, 280) }

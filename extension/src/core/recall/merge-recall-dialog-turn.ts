@@ -3,6 +3,7 @@
  * 本轮理解结果 refine accumulated；短补充（如 yesterday）不得冲掉 prior content。
  */
 
+import { mergeSessionConditions, type ScoredCondition } from '@/core/recall/condition-credibility'
 import {
   normalizeExcludeContentTerms,
   reconcilePositiveAndExcludeTerms
@@ -32,6 +33,11 @@ export type RecallDialogState = {
   /** 本会话已否定的 MemoryItem id。 */
   dismissedIds: string[]
   /**
+   * A 层会话条件（可信度计分；关 Panel / New find 丢弃）。
+   * 不入 IndexedDB；不晋升 B 层。
+   */
+  conditions: ScoredCondition[]
+  /**
    * 行为偏好轮换：本会话已展示过的候选位数（从 top1 起累计）。
    * 会话内；不入 IndexedDB。
    */
@@ -47,6 +53,10 @@ export type MergeRecallDialogTurnInput = {
   priorUserUtterances: readonly string[]
   /** 本轮用户原文 */
   currentUtterance: string
+  /** 上一轮会话条件；缺省 = [] */
+  priorConditions?: readonly ScoredCondition[]
+  /** 合并时刻（条件 effectiveAtMs）；缺省 = Date.now() */
+  nowMs?: number
 }
 
 export type MergeRecallDialogTurnResult = {
@@ -56,6 +66,8 @@ export type MergeRecallDialogTurnResult = {
   mergeMode: RecallDialogMergeMode
   /** 合并后的有效原文（空格拼接 prior + 本轮）。 */
   effectiveRaw: string
+  /** 合并后的 A 层会话条件 */
+  conditions: ScoredCondition[]
 }
 
 const MAX_PRIOR_UTTERANCES_IN_RAW = 5
@@ -121,6 +133,9 @@ export function mergeParsedRecallClues(
       raw: effectiveRaw || current.raw
     })
   }
+
+  // certainty：本轮有则覆盖对应展示；无则继承（条件计分走 conditions 数组）
+  const certainty = current.certainty ?? accumulated.certainty
 
   /** 本轮明确排除 ∩ prior 正词 → 纠错优先，不走「同轮双挂保正词」。 */
   const turnExcludeNormalized = normalizeExcludeContentTerms(current.excludeContentTerms ?? [])
@@ -188,11 +203,12 @@ export function mergeParsedRecallClues(
     ...(preferenceOperator ? { preferenceOperator } : {}),
     ...(preferenceTarget ? { preferenceTarget } : {}),
     ...(noteHint ? { noteHint } : {}),
-    ...(excludeContentTerms.length > 0 ? { excludeContentTerms } : {})
+    ...(excludeContentTerms.length > 0 ? { excludeContentTerms } : {}),
+    ...(certainty ? { certainty } : {})
   })
 }
 
-/** 将本轮理解结果 merge 进会话 accumulated。 */
+/** 将本轮理解结果 merge 进会话 accumulated（含 A 层条件计分）。 */
 export function mergeRecallDialogTurn(
   input: MergeRecallDialogTurnInput
 ): MergeRecallDialogTurnResult {
@@ -200,8 +216,16 @@ export function mergeRecallDialogTurn(
   const effectiveRaw = buildEffectiveRecallRaw(input.priorUserUtterances, currentUtterance)
   const mergeMode: RecallDialogMergeMode = input.accumulated ? 'refine' : 'initial'
   const merged = mergeParsedRecallClues(input.accumulated, input.currentParsed, effectiveRaw)
+  const turnIndex = input.priorUserUtterances.length
+  const nowMs = input.nowMs ?? Date.now()
+  const conditions = mergeSessionConditions({
+    existing: input.priorConditions ?? [],
+    incomingParsed: input.currentParsed,
+    turnIndex,
+    nowMs
+  })
 
-  return { merged, mergeMode, effectiveRaw }
+  return { merged, mergeMode, effectiveRaw, conditions }
 }
 
 /** 从候选列表硬排除本会话已否定的 id。 */
@@ -223,10 +247,10 @@ export function excludeDismissedMemoryItems<T extends { id: string }>(
 export function mergeDialogUtterances(
   utterances: readonly string[],
   options: { nowMs?: number } = {}
-): { merged: ParsedRecallClue | null; effectiveRaw: string } {
+): { merged: ParsedRecallClue | null; effectiveRaw: string; conditions: ScoredCondition[] } {
   const turns = utterances.map(part => part.trim()).filter(Boolean)
   if (turns.length === 0) {
-    return { merged: null, effectiveRaw: '' }
+    return { merged: null, effectiveRaw: '', conditions: [] }
   }
 
   const nowMs = options.nowMs
@@ -234,6 +258,7 @@ export function mergeDialogUtterances(
   let prior: string[] = []
   let lastEffectiveRaw = ''
   let lastMerged: ParsedRecallClue | null = null
+  let conditions: ScoredCondition[] = []
 
   for (const turn of turns) {
     const currentParsed = parseRecallClue(turn, nowMs === undefined ? {} : { nowMs })
@@ -241,31 +266,36 @@ export function mergeDialogUtterances(
       accumulated,
       currentParsed,
       priorUserUtterances: prior,
-      currentUtterance: turn
+      currentUtterance: turn,
+      priorConditions: conditions,
+      ...(nowMs !== undefined ? { nowMs } : {})
     })
     accumulated = result.merged
     lastMerged = result.merged
     lastEffectiveRaw = result.effectiveRaw
+    conditions = result.conditions
     prior = [...prior, turn]
   }
 
-  return { merged: lastMerged, effectiveRaw: lastEffectiveRaw }
+  return { merged: lastMerged, effectiveRaw: lastEffectiveRaw, conditions }
 }
 
 /**
  * 缩短再试：丢掉会话中最后一句用户原文，并按剩余句重算 accumulated。
- * dismissedIds 原样保留。
+ * dismissedIds 原样保留；conditions 按剩余句重算。
  */
 export function rollbackLastDialogUtterance(
   state: RecallDialogState,
   options: { nowMs?: number } = {}
 ): RecallDialogState {
   const remaining = state.priorUserUtterances.slice(0, -1)
-  const { merged } = mergeDialogUtterances(remaining, options)
+  const { merged, conditions } = mergeDialogUtterances(remaining, options)
+
   return {
     priorUserUtterances: remaining,
     accumulated: merged,
     dismissedIds: [...state.dismissedIds],
+    conditions,
     ...(state.behaviorShownCount !== undefined
       ? { behaviorShownCount: state.behaviorShownCount }
       : {})

@@ -4,6 +4,7 @@ import type { MemoryItem } from '@/core/memory/memory-item'
 import { formatSavedTitleForUserDisplay } from '@/core/recall/clue-plain-url'
 import { explainRecallMatch, getRecallMatchFieldLabel } from '@/core/recall/explain-recall-match'
 import type { TopicDescriptorSchema } from '@/core/recall/parse-recall-clue-types'
+import type { ScoredCondition } from '@/core/recall/condition-credibility'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import type { BehaviorPreferenceRankingMeta } from '@/core/behavior/build-behavior-preference-result'
 import type { RecallFramingFacts } from '@/core/recall/recall-framing-facts'
@@ -125,6 +126,11 @@ export interface RecallResult {
   topic?: z.infer<typeof TopicDescriptorSchema>
   /** 合并后（或单轮）解析结果；供追问模板；噪音拒绝时可能缺省。 */
   parsed?: ParsedRecallClue
+  /**
+   * A 层会话条件（本轮 merge 后）；供 UI 写入 dialogState。
+   * 缺省 = 无会话条件（Omnibox / 噪音短路等）。
+   */
+  conditions?: ScoredCondition[]
   /** 合并后的有效原文（高亮 / 调试）；单轮时约等于 clue。 */
   effectiveClue?: string
   /** 仅 outcome=no_match 时有意义。 */
