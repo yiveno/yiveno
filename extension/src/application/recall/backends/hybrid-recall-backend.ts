@@ -4,6 +4,7 @@
  */
 
 import { resolveBehaviorPreferenceRecall } from '@/application/recall/behavior-preference-recall'
+import { resolvePortraitInspect } from '@/application/portrait/resolve-portrait-inspect'
 import { memoryItemService } from '@/application/memory/memory-item-service'
 import { mergeNoteMatchesForRecall } from '@/application/recall/note-match-merge'
 import {
@@ -1094,6 +1095,30 @@ export class HybridRecallBackend implements RecallBackend {
         totalRankedCount: 0,
         clue: normalizedClue,
         emptyKind: 'rejected_noise',
+        pipelineTiming,
+        ...pickUnderstandAttributionFields(understood),
+        visibleProgressStages: [...visibleProgressStages]
+      }
+    }
+
+    // 画像可查性：在 Gate A+ 之前短路（「你了解我多少」常被标成 question）。
+    if (!isOmniboxEntry && understood.parsed.portraitQuery === true) {
+      const pipelineTiming: RecallPipelineTiming = {
+        understandMs,
+        candidateLoadMs: 0,
+        retrieveMs: 0,
+        totalMs: Date.now() - pipelineStartedAt,
+        understandSource: understood.source
+      }
+      const portraitResult = await resolvePortraitInspect({
+        clue: normalizedClue,
+        parsed: understood.parsed
+      })
+      trace('info', 'Hybrid Recall：画像可查性路径', {
+        empty: portraitResult.portraitSummary?.empty ?? true
+      })
+      return {
+        ...portraitResult,
         pipelineTiming,
         ...pickUnderstandAttributionFields(understood),
         visibleProgressStages: [...visibleProgressStages]

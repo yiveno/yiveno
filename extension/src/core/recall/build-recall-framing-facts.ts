@@ -246,6 +246,10 @@ export function buildRecallFramingFacts(
     if (result.emptyKind === 'chitchat') {
       return null
     }
+    // 画像可查性：专属摘要由 UI 消费 portraitSummary
+    if (result.emptyKind === 'portrait_inspect') {
+      return null
+    }
     // 行为偏好空态：专属 miss 文案由 UI 消费 emptyKind / assistantReply
     if (
       result.emptyKind === 'behavior_not_imported' ||

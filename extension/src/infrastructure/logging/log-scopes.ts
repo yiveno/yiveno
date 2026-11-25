@@ -46,6 +46,7 @@ export const LOG_SCOPES = [
   'Omnibox', // 地址栏 Omnibox 找回
   'Onboarding', // 安装后引导页
   'PagePreview', // 页面预览截图捕获 / 存储 / LRU
+  'Portrait', // B 层画像事实编译 / 晋升 / 可查性
   'ContentExtract', // 打开库内页内容提炼（摘要摘录）
   'Privacy', // 隐私 ACK / 删云记忆 / 删账号 / 本机导出
   'Recall', // Recall 服务选型与主入口

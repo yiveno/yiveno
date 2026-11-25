@@ -35,6 +35,7 @@ import { parseRecallVisibleProgressMessage } from '@/core/messaging/ui-messages'
 import { tRecallError } from '@/infrastructure/i18n/background-error'
 import { t } from '@/infrastructure/i18n/t'
 import { commitRecallOutcome } from '@/application/recall/commit-recall-outcome'
+import { buildPortraitSummaryViewModel } from '@/core/portrait/render-portrait-summary'
 import {
   authConnectWebsite,
   cancelRecall,
@@ -42,6 +43,8 @@ import {
   fetchAuthState,
   getRecallPageContext,
   maybeUploadDualThreadSketch,
+  portraitApproveFact,
+  portraitDeclineFact,
   probeWebsiteSignedIn,
   recallWithClue
 } from '@/infrastructure/messaging/background-client'
@@ -1035,8 +1038,11 @@ async function runRecall(trimmedClue: string): Promise<void> {
         dismissedPending: false,
         sawNoMatchFinal: false
       }
-    } else if (response.result.emptyKind === 'chitchat') {
-      // 闲聊短路：不是一次没找到的 recall，不计入 no_match 结算
+    } else if (
+      response.result.emptyKind === 'chitchat' ||
+      response.result.emptyKind === 'portrait_inspect'
+    ) {
+      // 闲聊 / 画像可查性：不是一次没找到的 recall，不计入 no_match 结算
       outcomeSession.value = {
         ...outcomeSession.value,
         effectiveClue: highlightClue,
@@ -1166,6 +1172,24 @@ async function runRecall(trimmedClue: string): Promise<void> {
           allowDismiss: candidateCards.length > 0
         })
       )
+    } else if (
+      response.result.emptyKind === 'portrait_inspect' &&
+      response.result.portraitSummary
+    ) {
+      const portraitView = buildPortraitSummaryViewModel(response.result.portraitSummary, t)
+      conversationTurns.value.push(
+        createAssistantTurn({
+          id: nextTurnId(),
+          tone: 'confident',
+          text: portraitView.empty ? portraitView.emptyText : portraitView.introText,
+          ...contextStatusFields,
+          ...deeperReadingTipFields,
+          ...anonymousPromoteFields,
+          ...clueTruncatedTipFields,
+          portraitSummaryView: portraitView,
+          allowDismiss: false
+        })
+      )
     } else {
       const relatedGuess = response.result.relatedGuess ?? null
       const usedRulesFallback = response.result.understandSource === 'rules_fallback'
@@ -1217,7 +1241,8 @@ async function runRecall(trimmedClue: string): Promise<void> {
       const missNarrowBlocked =
         missEmptyKind === 'missing_topic' ||
         missEmptyKind === 'rejected_noise' ||
-        missEmptyKind === 'chitchat'
+        missEmptyKind === 'chitchat' ||
+        missEmptyKind === 'portrait_inspect'
       const missNarrowWords =
         relatedGuessCard && !missNarrowBlocked
           ? extractMissNarrowExamples({
@@ -1492,6 +1517,88 @@ function handleUseSuggestion(value: string): void {
 /** 理解回声纠错：合成英文 refine → 同追问路径（merge 覆盖/排除）。 */
 function handleCorrectUnderstanding(value: string): void {
   handleUseSuggestion(value)
+}
+
+/** 画像推断项：批准 → 本地视图移出 pending 并标已核实措辞。 */
+async function handlePortraitApprove(factId: string): Promise<void> {
+  const response = await portraitApproveFact(factId).catch(() => null)
+  if (!response?.ok) {
+    return
+  }
+  conversationTurns.value = conversationTurns.value.map(turn => {
+    if (turn.role !== 'assistant' || !turn.portraitSummaryView) {
+      return turn
+    }
+    const view = turn.portraitSummaryView
+    const pending = view.pendingInferences.find(item => item.factId === factId)
+    const nextPending = view.pendingInferences.filter(item => item.factId !== factId)
+    const nextGroups = view.groups
+      .map(group => ({
+        ...group,
+        items: group.items.filter(item => item.factId !== factId)
+      }))
+      .filter(group => group.items.length > 0)
+    if (pending) {
+      const item = {
+        factId,
+        line: pending.line,
+        inPortrait: true,
+        pendingInference: false
+      }
+      const verifiedGroup = nextGroups.find(g => g.key === 'verified')
+      if (verifiedGroup) {
+        verifiedGroup.items = [item, ...verifiedGroup.items]
+      } else {
+        nextGroups.unshift({
+          key: 'verified',
+          title: t('portrait_group_verified'),
+          items: [item]
+        })
+      }
+    }
+    return {
+      ...turn,
+      portraitSummaryView: {
+        ...view,
+        empty: nextGroups.every(g => g.items.length === 0) && nextPending.length === 0,
+        groups: nextGroups,
+        pendingInferences: nextPending
+      }
+    }
+  })
+}
+
+/** 画像推断项：忽略 → 本地视图移除。 */
+async function handlePortraitDecline(factId: string): Promise<void> {
+  const response = await portraitDeclineFact(factId).catch(() => null)
+  if (!response?.ok) {
+    return
+  }
+  conversationTurns.value = conversationTurns.value.map(turn => {
+    if (turn.role !== 'assistant' || !turn.portraitSummaryView) {
+      return turn
+    }
+    const view = turn.portraitSummaryView
+    const nextPending = view.pendingInferences.filter(item => item.factId !== factId)
+    const nextGroups = view.groups
+      .map(group => ({
+        ...group,
+        items: group.items.filter(item => item.factId !== factId)
+      }))
+      .filter(group => group.items.length > 0)
+    const empty = nextGroups.every(g => g.items.length === 0) && nextPending.length === 0
+    return {
+      ...turn,
+      text: empty ? t('portrait_empty') : turn.text,
+      portraitSummaryView: {
+        ...view,
+        empty,
+        emptyText: empty ? t('portrait_empty') : view.emptyText,
+        groups: nextGroups,
+        pendingInferences: nextPending
+      }
+    }
+  })
 }
 
 /**
@@ -1924,6 +2031,8 @@ onUnmounted(() => {
           @show-more="handleShowMoreMatches"
           @use-suggestion="handleUseSuggestion"
           @correct-understanding="handleCorrectUnderstanding"
+          @portrait-approve="handlePortraitApprove"
+          @portrait-decline="handlePortraitDecline"
           @open-bookmark-ingest-settings="handleOpenBookmarkIngestSettings"
           @open-behavior-import-settings="handleOpenBehaviorImportSettings"
           @open-ai-settings="handleOpenAiSettings"

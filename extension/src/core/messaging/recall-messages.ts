@@ -213,11 +213,83 @@ export type ResolveClueUrlDisplayResponse =
       error?: string
     }
 
+/** 打开确认 → B 层晋升。 */
+export type PortraitPromoteOnConfirmMessage = {
+  scope: BackgroundMessageScope
+  type: 'PORTRAIT_PROMOTE_ON_CONFIRM'
+  payload: {
+    conditions: z.infer<typeof ScoredConditionSchema>[]
+  }
+}
+
+/** dismiss → B 层矛盾。 */
+export type PortraitRefuteOnDismissMessage = {
+  scope: BackgroundMessageScope
+  type: 'PORTRAIT_REFUTE_ON_DISMISS'
+  payload: {
+    conditions?: z.infer<typeof ScoredConditionSchema>[]
+    domainValues?: string[]
+    factIds?: string[]
+  }
+}
+
+/** 批准推断画像事实。 */
+export type PortraitApproveFactMessage = {
+  scope: BackgroundMessageScope
+  type: 'PORTRAIT_APPROVE_FACT'
+  payload: { factId: string }
+}
+
+/** 忽略推断画像事实。 */
+export type PortraitDeclineFactMessage = {
+  scope: BackgroundMessageScope
+  type: 'PORTRAIT_DECLINE_FACT'
+  payload: { factId: string }
+}
+
+export type PortraitOkResponse = { ok: true }
+export type PortraitErrorResponse = {
+  ok: false
+  errorCode: 'PORTRAIT_FAILED'
+  error?: string
+}
+export type PortraitMutationResponse = PortraitOkResponse | PortraitErrorResponse
+
 export type RecallBackgroundMessage =
   | RecallWithClueMessage
   | RecallCancelMessage
   | GetRecallPageContextMessage
   | ResolveClueUrlDisplayMessage
+  | PortraitPromoteOnConfirmMessage
+  | PortraitRefuteOnDismissMessage
+  | PortraitApproveFactMessage
+  | PortraitDeclineFactMessage
+
+const portraitPromotePayloadSchema = z.object({
+  conditions: z.array(ScoredConditionSchema).max(40)
+})
+
+const portraitRefutePayloadSchema = z.object({
+  conditions: z.array(ScoredConditionSchema).max(40).optional(),
+  domainValues: z.array(z.string().min(1).max(200)).max(20).optional(),
+  factIds: z.array(z.string().min(1).max(400)).max(40).optional()
+})
+
+const portraitFactIdPayloadSchema = z.object({
+  factId: z.string().min(1).max(400)
+})
+
+export function parsePortraitPromotePayload(value: unknown) {
+  return portraitPromotePayloadSchema.parse(value)
+}
+
+export function parsePortraitRefutePayload(value: unknown) {
+  return portraitRefutePayloadSchema.parse(value)
+}
+
+export function parsePortraitFactIdPayload(value: unknown) {
+  return portraitFactIdPayloadSchema.parse(value)
+}
 
 export type RecallSuccessResponse = {
   ok: true

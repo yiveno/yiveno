@@ -3790,5 +3790,71 @@
   },
   "error_behavior_clear_failed": {
     "message": "清除行为数据失败"
+  },
+  "portrait_intro": {
+    "message": "目前我对你的了解大概是这些。"
+  },
+  "portrait_empty": {
+    "message": "还没积累到可说的了解。"
+  },
+  "portrait_group_verified": {
+    "message": "已核实"
+  },
+  "portrait_group_corroborated": {
+    "message": "已佐证"
+  },
+  "portrait_group_unconfirmed": {
+    "message": "未确认"
+  },
+  "portrait_group_contested": {
+    "message": "有争议"
+  },
+  "portrait_fact_paraphrase": {
+    "message": "你提过喜欢 $1。",
+    "placeholders": {
+      "value": {
+        "content": "$1",
+        "example": "github.com"
+      }
+    }
+  },
+  "portrait_fact_hedged": {
+    "message": "你好像喜欢 $1。",
+    "placeholders": {
+      "value": {
+        "content": "$1",
+        "example": "github.com"
+      }
+    }
+  },
+  "portrait_fact_direct": {
+    "message": "你喜欢 $1。",
+    "placeholders": {
+      "value": {
+        "content": "$1",
+        "example": "github.com"
+      }
+    }
+  },
+  "portrait_fact_juxtapose": {
+    "message": "你说过喜欢 $1，但最近看起来不太一致。",
+    "placeholders": {
+      "value": {
+        "content": "$1",
+        "example": "github.com"
+      }
+    }
+  },
+  "portrait_pending_inferences": {
+    "message": "推断项 — 可批准或忽略"
+  },
+  "portrait_approve": {
+    "message": "批准"
+  },
+  "portrait_decline": {
+    "message": "忽略"
+  },
+  "portrait_in_portrait_badge": {
+    "message": "已进画像"
   }
 }

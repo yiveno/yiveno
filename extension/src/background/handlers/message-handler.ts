@@ -82,6 +82,12 @@ import {
   handleRecallCancel,
   handleRecallWithClue
 } from '@/background/handlers/recall-handler'
+import {
+  handlePortraitApproveFact,
+  handlePortraitDeclineFact,
+  handlePortraitPromoteOnConfirm,
+  handlePortraitRefuteOnDismiss
+} from '@/background/handlers/portrait-handler'
 import { handleResolveClueUrlDisplay } from '@/background/handlers/resolve-clue-url-display'
 import {
   handleGetAiHostedQuota,
@@ -252,6 +258,14 @@ async function dispatchBackgroundMessage(
       return handleGetPagePreview(message.payload)
     case 'RECALL_WITH_CLUE':
       return handleRecallWithClue(message.payload)
+    case 'PORTRAIT_PROMOTE_ON_CONFIRM':
+      return handlePortraitPromoteOnConfirm(message.payload)
+    case 'PORTRAIT_REFUTE_ON_DISMISS':
+      return handlePortraitRefuteOnDismiss(message.payload)
+    case 'PORTRAIT_APPROVE_FACT':
+      return handlePortraitApproveFact(message.payload)
+    case 'PORTRAIT_DECLINE_FACT':
+      return handlePortraitDeclineFact(message.payload)
     case 'RECALL_CANCEL':
       return handleRecallCancel(message.payload)
     case 'GET_RECALL_PAGE_CONTEXT':

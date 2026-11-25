@@ -43,6 +43,7 @@ import { pagePreviewRepository } from '@/infrastructure/indexeddb/page-preview-r
 import { normalizePagePreviewUrlKey } from '@/infrastructure/indexeddb/page-preview-types'
 import { memoryNotesMetaRepository } from '@/infrastructure/indexeddb/memory-notes-meta-repository'
 import { memoryNotesRepository } from '@/infrastructure/indexeddb/memory-notes-repository'
+import { portraitFactsRepository } from '@/infrastructure/indexeddb/portrait-facts-repository'
 import { indexedDBManager, requestToPromise } from '@/infrastructure/indexeddb/manager'
 import { logger } from '@/infrastructure/logging/logger'
 import { readChromeBookmarkDeleteTombstoneIds } from '@/infrastructure/storage/chrome-bookmark-delete-tombstone-storage'
@@ -1073,6 +1074,7 @@ export class MemoryItemRepository {
     await dreamingDuplicateGroupRepository.clearOwnerGroups(ownerId)
     await memoryLinkStatusRepository.clearOwner(ownerId)
     await pagePreviewRepository.clearOwner(ownerId)
+    await portraitFactsRepository.clearByOwner(ownerId)
 
     return items.filter(item => item.ownerId === ownerId).length
   }

@@ -286,3 +286,32 @@ describe('C1 · certainty 透传', () => {
     expect(proposal.certainty?.contentTerms?.rag).toBe('firm')
   })
 })
+
+describe('C2 · portraitQuery 透传', () => {
+  it('prompt 含 portraitQuery / what do you know about me', () => {
+    const system = buildLlmParseClueMessages('clue').find(m => m.role === 'system')?.content ?? ''
+    expect(system).toContain('portraitQuery')
+    expect(system).toMatch(/what do you know about me|你了解我多少/)
+  })
+
+  it('map 透传 portraitQuery=true；畸形置空', () => {
+    const parsed = mapLlmProposalToParsedClue(
+      'what do you know about me',
+      {
+        timeLabel: null,
+        objectTypes: [],
+        contentTerms: [],
+        confidence: 'low',
+        portraitQuery: true
+      },
+      PARSE_GOLD_NOW_MS
+    )
+    expect(parsed.portraitQuery).toBe(true)
+
+    const dropped = LlmParsedClueProposalSchema.parse({
+      contentTerms: [],
+      portraitQuery: 'yes'
+    })
+    expect(dropped.portraitQuery).toBeUndefined()
+  })
+})

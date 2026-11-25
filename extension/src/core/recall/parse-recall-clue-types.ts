@@ -262,6 +262,11 @@ export const ParsedRecallClueSchema = z.object({
    * 描述用户措辞坚定程度，不描述库内匹配。
    */
   certainty: ParsedClueCertaintySchema.optional(),
+  /**
+   * 画像可查性意图（「你了解我多少」）。
+   * true → 走画像摘要路径，不进文档池检索；与 behaviorHints/noteHint 无关。
+   */
+  portraitQuery: z.boolean().optional(),
   /** 用户意图；缺省 = recall（规则路径不产意图） */
   intent: RecallClueIntentSchema.optional(),
   /** intent=chitchat|question|instruction 时的自然回复（LLM 生成，同 clue 语言）；recall 时缺省 */

@@ -3790,5 +3790,71 @@
   },
   "error_behavior_clear_failed": {
     "message": "Couldn’t clear browsing activity data"
+  },
+  "portrait_intro": {
+    "message": "Here’s what I’ve picked up about you so far."
+  },
+  "portrait_empty": {
+    "message": "I haven’t built up anything solid about you yet."
+  },
+  "portrait_group_verified": {
+    "message": "Verified"
+  },
+  "portrait_group_corroborated": {
+    "message": "Corroborated"
+  },
+  "portrait_group_unconfirmed": {
+    "message": "Unconfirmed"
+  },
+  "portrait_group_contested": {
+    "message": "Contested"
+  },
+  "portrait_fact_paraphrase": {
+    "message": "You’ve mentioned liking $1.",
+    "placeholders": {
+      "value": {
+        "content": "$1",
+        "example": "github.com"
+      }
+    }
+  },
+  "portrait_fact_hedged": {
+    "message": "You seem to like $1.",
+    "placeholders": {
+      "value": {
+        "content": "$1",
+        "example": "github.com"
+      }
+    }
+  },
+  "portrait_fact_direct": {
+    "message": "You like $1.",
+    "placeholders": {
+      "value": {
+        "content": "$1",
+        "example": "github.com"
+      }
+    }
+  },
+  "portrait_fact_juxtapose": {
+    "message": "You’ve said you like $1, but recent visits look mixed.",
+    "placeholders": {
+      "value": {
+        "content": "$1",
+        "example": "github.com"
+      }
+    }
+  },
+  "portrait_pending_inferences": {
+    "message": "Inferred — approve or ignore"
+  },
+  "portrait_approve": {
+    "message": "Approve"
+  },
+  "portrait_decline": {
+    "message": "Ignore"
+  },
+  "portrait_in_portrait_badge": {
+    "message": "In portrait"
   }
 }

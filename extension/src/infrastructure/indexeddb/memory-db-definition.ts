@@ -23,11 +23,13 @@ import {
   BEHAVIOR_STATS_STORE,
   BEHAVIOR_STATS_INDEX_BY_OWNER_DOMAIN,
   BEHAVIOR_STATS_INDEX_BY_OWNER_LAST_VISIT,
-  BEHAVIOR_STATS_INDEX_BY_OWNER_VISIT_COUNT
+  BEHAVIOR_STATS_INDEX_BY_OWNER_VISIT_COUNT,
+  PORTRAIT_FACTS_STORE,
+  PORTRAIT_FACTS_INDEX_BY_OWNER
 } from '@/infrastructure/indexeddb/constants'
 import type { IndexedDBDefinition } from '@/infrastructure/indexeddb/manager'
 
-/** 创建或升级 memory_items 表与索引；v4 倒排；v5 dreaming；v6 死链；v7 命题向量；v8 页预览；v9 行为统计。 */
+/** 创建或升级 memory_items 表与索引；v4 倒排；v5 dreaming；v6 死链；v7 命题向量；v8 页预览；v9 行为统计；v10 画像事实。 */
 function upgradeMemoryDatabase(
   database: IDBDatabase,
   transaction: IDBTransaction,
@@ -149,6 +151,16 @@ function upgradeMemoryDatabase(
         ['ownerId', 'visitCount'],
         { unique: false }
       )
+    }
+  }
+
+  // v10：B 层画像事实（本地-only；不上云；build-only + contains guard）。
+  if (oldVersion < 10) {
+    if (!database.objectStoreNames.contains(PORTRAIT_FACTS_STORE)) {
+      const portraitStore = database.createObjectStore(PORTRAIT_FACTS_STORE, {
+        keyPath: 'id'
+      })
+      portraitStore.createIndex(PORTRAIT_FACTS_INDEX_BY_OWNER, 'ownerId', { unique: false })
     }
   }
 }

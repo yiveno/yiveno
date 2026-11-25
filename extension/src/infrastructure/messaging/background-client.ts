@@ -86,6 +86,9 @@ import type {
 } from '@/core/messaging/memory-messages'
 import type {
   GetRecallPageContextResponse,
+  PortraitMutationResponse,
+  PortraitPromoteOnConfirmMessage,
+  PortraitRefuteOnDismissMessage,
   RecallBackgroundResponse,
   RecallCancelResponse,
   RecallWithClueMessage,
@@ -253,6 +256,46 @@ export async function recordRecallDismiss(
     payload
   }
   return sendBackgroundMessage<MemoryBackgroundResponse>(message)
+}
+
+/** 打开确认 → B 层画像晋升。 */
+export async function portraitPromoteOnConfirm(
+  payload: PortraitPromoteOnConfirmMessage['payload']
+): Promise<PortraitMutationResponse> {
+  return sendBackgroundMessage({
+    scope: 'background',
+    type: 'PORTRAIT_PROMOTE_ON_CONFIRM',
+    payload
+  })
+}
+
+/** dismiss → B 层画像矛盾。 */
+export async function portraitRefuteOnDismiss(
+  payload: PortraitRefuteOnDismissMessage['payload']
+): Promise<PortraitMutationResponse> {
+  return sendBackgroundMessage({
+    scope: 'background',
+    type: 'PORTRAIT_REFUTE_ON_DISMISS',
+    payload
+  })
+}
+
+/** 批准推断画像事实。 */
+export async function portraitApproveFact(factId: string): Promise<PortraitMutationResponse> {
+  return sendBackgroundMessage({
+    scope: 'background',
+    type: 'PORTRAIT_APPROVE_FACT',
+    payload: { factId }
+  })
+}
+
+/** 忽略推断画像事实。 */
+export async function portraitDeclineFact(factId: string): Promise<PortraitMutationResponse> {
+  return sendBackgroundMessage({
+    scope: 'background',
+    type: 'PORTRAIT_DECLINE_FACT',
+    payload: { factId }
+  })
 }
 
 /** 记录 settled 正例（settledCount · §7.2）。 */

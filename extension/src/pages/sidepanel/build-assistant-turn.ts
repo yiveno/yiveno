@@ -1,3 +1,4 @@
+import type { PortraitSummaryViewModel } from '@/core/portrait/render-portrait-summary'
 import type { RecallUnderstandingEchoChip } from '@/core/recall/format-recall-understanding-echo'
 import type { RecallFramingFacts } from '@/core/recall/recall-framing-facts'
 import type { RecallShellTextSegment } from '@/core/recall/recall-shell-empty-copy'
@@ -34,6 +35,8 @@ export function createAssistantTurn(input: {
   retryClue?: string
   /** 行为偏好跟进提示（已翻译） */
   behaviorTryAnotherHint?: string
+  /** 画像可查性摘要视图 */
+  portraitSummaryView?: PortraitSummaryViewModel
   allowDismiss?: boolean
 }): ConversationTurn {
   return {
@@ -74,6 +77,9 @@ export function createAssistantTurn(input: {
     ...(input.behaviorTryAnotherHint === undefined
       ? {}
       : { behaviorTryAnotherHint: input.behaviorTryAnotherHint }),
+    ...(input.portraitSummaryView === undefined
+      ? {}
+      : { portraitSummaryView: input.portraitSummaryView }),
     allowDismiss: input.allowDismiss ?? false
   }
 }

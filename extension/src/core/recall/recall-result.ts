@@ -7,6 +7,7 @@ import type { TopicDescriptorSchema } from '@/core/recall/parse-recall-clue-type
 import type { ScoredCondition } from '@/core/recall/condition-credibility'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 import type { BehaviorPreferenceRankingMeta } from '@/core/behavior/build-behavior-preference-result'
+import type { PortraitSummary } from '@/core/portrait/build-portrait-summary'
 import type { RecallFramingFacts } from '@/core/recall/recall-framing-facts'
 import type { RecallPipelineTiming } from '@/core/recall/recall-telemetry'
 import type {
@@ -100,6 +101,7 @@ export type RecallEmptyKind =
   | 'behavior_empty' // 已导入但 0 行
   | 'behavior_topic_unsupported' // 还不能按主题筛行为
   | 'behavior_exhausted' // 行为轮换到顶
+  | 'portrait_inspect' // 画像可查性（「你了解我多少」）
 
 /** 关键词 Filter / Hybrid 召回结果（UI 与 eval 共用）。 */
 export interface RecallResult {
@@ -214,6 +216,11 @@ export interface RecallResult {
    * 供 framing 报次数/时间；UI 轮换计数。
    */
   behaviorPreference?: BehaviorPreferenceRankingMeta
+  /**
+   * 画像可查性摘要（emptyKind=portrait_inspect）。
+   * 确定性构建；UI 按状态分组 + 批准/忽略。
+   */
+  portraitSummary?: PortraitSummary
 }
 
 /** UI 展示用的 MemoryItem 摘要（可见面；非存储契约）。 */

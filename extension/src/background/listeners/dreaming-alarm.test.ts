@@ -14,6 +14,9 @@ const backfillPropositionEmbeddingsTickMock = vi.hoisted(() =>
   }))
 )
 const sweepOrphanMemoryNotesMock = vi.hoisted(() => vi.fn(async () => ({ removed: 0 })))
+const compilePortraitFactsTickMock = vi.hoisted(() =>
+  vi.fn(async () => ({ ok: true, ownerId: null, written: 0, stats: null }))
+)
 const ensureDreamingAlarmMock = vi.hoisted(() => vi.fn(async () => undefined))
 
 vi.mock('@/background/bootstrap-ready', () => ({
@@ -30,6 +33,10 @@ vi.mock('@/application/dreaming/schedule-proposition-embeddings', () => ({
 
 vi.mock('@/application/dreaming/sweep-orphan-memory-notes', () => ({
   sweepOrphanMemoryNotes: sweepOrphanMemoryNotesMock
+}))
+
+vi.mock('@/application/portrait/compile-portrait-facts', () => ({
+  compilePortraitFactsTick: compilePortraitFactsTickMock
 }))
 
 vi.mock('@/infrastructure/sync/dreaming-alarm', async importOriginal => {
@@ -116,6 +123,7 @@ describe('dreaming-alarm listener', () => {
     await vi.waitFor(() => {
       expect(compileMemoryNotesTickMock).toHaveBeenCalledTimes(1)
       expect(backfillPropositionEmbeddingsTickMock).toHaveBeenCalledTimes(1)
+      expect(compilePortraitFactsTickMock).toHaveBeenCalledTimes(1)
       expect(sweepOrphanMemoryNotesMock).toHaveBeenCalledTimes(1)
     })
     // 顺序：编译 → 回填 → 孤儿扫

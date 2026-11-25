@@ -961,7 +961,21 @@ export const MESSAGE_KEYS = [
   'error_behavior_import_permission_denied',
   'error_behavior_import_status_read_failed',
   'error_behavior_import_start_failed',
-  'error_behavior_clear_failed'
+  'error_behavior_clear_failed',
+  'portrait_intro',
+  'portrait_empty',
+  'portrait_group_verified',
+  'portrait_group_corroborated',
+  'portrait_group_unconfirmed',
+  'portrait_group_contested',
+  'portrait_fact_paraphrase',
+  'portrait_fact_hedged',
+  'portrait_fact_direct',
+  'portrait_fact_juxtapose',
+  'portrait_pending_inferences',
+  'portrait_approve',
+  'portrait_decline',
+  'portrait_in_portrait_badge'
 ] as const
 
 /** Chrome `_locales` message key。 */

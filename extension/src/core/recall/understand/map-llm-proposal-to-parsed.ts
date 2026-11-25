@@ -130,6 +130,7 @@ export function mapLlmProposalToParsedClue(
   behaviorHints = reinforceRecentlySavedBehavior(normalized, behaviorHints)
 
   const noteHint = proposal.noteHint === true ? true : undefined
+  const portraitQuery = proposal.portraitQuery === true ? true : undefined
 
   // 偏好算子：语义判断，不做词面 grounding；直接透传（坏值已在 proposal .catch 置空）
   const preferenceOperator =
@@ -216,6 +217,7 @@ export function mapLlmProposalToParsedClue(
     ...(preferenceOperator ? { preferenceOperator } : {}),
     ...(preferenceTarget ? { preferenceTarget } : {}),
     ...(noteHint ? { noteHint } : {}),
+    ...(portraitQuery ? { portraitQuery } : {}),
     ...(excludeContentTerms.length > 0 ? { excludeContentTerms } : {}),
     ...(certainty ? { certainty } : {}),
     ...(proposal.intent !== 'recall' ? { intent: proposal.intent } : {}),

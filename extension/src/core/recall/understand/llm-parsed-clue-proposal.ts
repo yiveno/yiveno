@@ -71,6 +71,11 @@ export const LlmParsedClueProposalSchema = z.object({
   preferenceTarget: PreferenceTargetSchema.nullable().optional().catch(undefined),
   /** true = 指向附注；非布尔 → 置空 */
   noteHint: z.boolean().optional().catch(undefined),
+  /**
+   * true = 画像可查性（你了解我多少 / what do you know about me）。
+   * 非布尔 → 置空本字段，不丢整单。
+   */
+  portraitQuery: z.boolean().nullable().optional().catch(undefined),
   /** 内容检索词（模型提议；经 map 再落地）；畸形仍整单抛错，走规则降级 */
   contentTerms: z.array(z.string()),
   /**

@@ -2,12 +2,14 @@
  * 注册 dreaming 定时闹钟监听。
  * Phase 3：读游标 → 编译分片 → 孤儿扫；失败只记日志。
  * Phase 4.1：编译后回填既有命题向量（fail-open，不阻断孤儿扫）。
+ * C2：挂画像夜间编译（fail-open，不另起调度）。
  */
 
 import { ensureBackgroundBootstrapped } from '@/background/bootstrap-ready'
 import { compileMemoryNotesTick } from '@/application/dreaming/compile-memory-notes'
 import { backfillPropositionEmbeddingsTick } from '@/application/dreaming/schedule-proposition-embeddings'
 import { sweepOrphanMemoryNotes } from '@/application/dreaming/sweep-orphan-memory-notes'
+import { compilePortraitFactsTick } from '@/application/portrait/compile-portrait-facts'
 import { DREAMING_ALARM_NAME, ensureDreamingAlarm } from '@/infrastructure/sync/dreaming-alarm'
 import { logger } from '@/infrastructure/logging/logger'
 
@@ -26,6 +28,15 @@ async function handleDreamingAlarmTick(): Promise<void> {
     logger.info('Dreaming', '定时 tick · 命题向量回填', backfill)
   } catch (error) {
     logger.warn('Dreaming', '定时 tick · 命题向量回填失败（fail-open）', {
+      error: error instanceof Error ? error.message : String(error)
+    })
+  }
+  // 画像编译：同闹钟节奏；失败不挡孤儿扫。
+  try {
+    const portrait = await compilePortraitFactsTick()
+    logger.info('Dreaming', '定时 tick · 画像编译', portrait)
+  } catch (error) {
+    logger.warn('Dreaming', '定时 tick · 画像编译失败（fail-open）', {
       error: error instanceof Error ? error.message : String(error)
     })
   }

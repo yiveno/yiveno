@@ -78,6 +78,10 @@ const emit = defineEmits<{
   openBookmarkIngestSettings: []
   /** 偏好空态「导入浏览记录」→ Settings 行为分区 */
   openBehaviorImportSettings: []
+  /** 画像推断：批准 */
+  portraitApprove: [factId: string]
+  /** 画像推断：忽略 */
+  portraitDecline: [factId: string]
   /** miss 降级：Settings AI 分区 */
   openAiSettings: []
   /** miss 降级：Settings 账户与同步 */
@@ -791,6 +795,67 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
             {{ turn.behaviorTryAnotherHint }}
           </p>
 
+          <section
+            v-if="turn.portraitSummaryView && !turn.portraitSummaryView.empty"
+            class="portrait-summary"
+            aria-label="portrait"
+          >
+            <div
+              v-for="group in turn.portraitSummaryView.groups"
+              :key="group.key"
+              class="portrait-summary__group"
+            >
+              <p class="portrait-summary__group-title">{{ group.title }}</p>
+              <ul class="portrait-summary__list">
+                <li v-for="item in group.items" :key="item.factId" class="portrait-summary__item">
+                  <span>{{ item.line }}</span>
+                  <span
+                    v-if="item.inPortrait"
+                    class="portrait-summary__badge"
+                    :title="t('portrait_in_portrait_badge')"
+                  >
+                    {{ t('portrait_in_portrait_badge') }}
+                  </span>
+                </li>
+              </ul>
+            </div>
+            <div
+              v-if="turn.portraitSummaryView.pendingInferences.length > 0"
+              class="portrait-summary__pending"
+            >
+              <p class="portrait-summary__group-title">{{ t('portrait_pending_inferences') }}</p>
+              <ul class="portrait-summary__list">
+                <li
+                  v-for="item in turn.portraitSummaryView.pendingInferences"
+                  :key="`pending-${item.factId}`"
+                  class="portrait-summary__item portrait-summary__item--pending"
+                >
+                  <span>{{ item.line }}</span>
+                  <span class="portrait-summary__actions">
+                    <AppButton
+                      type="button"
+                      variant="text"
+                      :title="t('portrait_approve')"
+                      :aria-label="t('portrait_approve')"
+                      @click="emit('portraitApprove', item.factId)"
+                    >
+                      {{ t('portrait_approve') }}
+                    </AppButton>
+                    <AppButton
+                      type="button"
+                      variant="text"
+                      :title="t('portrait_decline')"
+                      :aria-label="t('portrait_decline')"
+                      @click="emit('portraitDecline', item.factId)"
+                    >
+                      {{ t('portrait_decline') }}
+                    </AppButton>
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </section>
+
           <AppButton
             v-if="turn.tone === 'error' && turn.retryClue"
             type="button"
@@ -1051,6 +1116,53 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
   color: var(--on-surface-muted);
   text-wrap: pretty;
   overflow-wrap: anywhere;
+}
+
+.portrait-summary {
+  display: grid;
+  gap: var(--space-sm);
+  min-width: 0;
+  max-width: 100%;
+  margin-top: var(--space-xs);
+}
+
+.portrait-summary__group-title {
+  margin: 0 0 var(--space-2xs);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
+  line-height: var(--leading-snug);
+  color: var(--on-surface-muted);
+}
+
+.portrait-summary__list {
+  display: grid;
+  gap: var(--space-2xs);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.portrait-summary__item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-2xs) var(--space-xs);
+  min-width: 0;
+  font-size: var(--text-body);
+  line-height: var(--leading-snug);
+  color: var(--on-surface);
+  overflow-wrap: anywhere;
+}
+
+.portrait-summary__badge {
+  font-size: var(--text-caption);
+  color: var(--on-surface-muted);
+}
+
+.portrait-summary__actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--space-2xs);
 }
 
 .assistant-turn-echo {

@@ -2,12 +2,13 @@
 export const MEMORY_DATABASE_NAME = 'YivenoMemoryDB' as const
 
 /**
+ * v10：B 层画像事实 `portrait_facts`（本地-only；不上云；不进 Backup）。
  * v9：浏览行为聚合 `behavior_stats`（本地-only；不上云；不进 Backup）。
  * v8：页面预览截图 `memory_page_previews`（本地-only Blob；不进 Backup / 云同步）。
  * v7：命题向量派生表 `memory_note_embeddings`（可重算缓存；不进 Backup；恢复后重建）。
  * v6：死链巡检派生表 `memory_link_status`（可重算；不进 Backup）。
  */
-export const MEMORY_DATABASE_VERSION = 9 as const
+export const MEMORY_DATABASE_VERSION = 10 as const
 
 export const MEMORY_ITEM_STORE = 'memory_items' as const
 
@@ -54,6 +55,15 @@ export const MEMORY_PAGE_PREVIEW_STORE = 'memory_page_previews' as const
  * keyPath = [ownerId, url]（url 已去 fragment）。
  */
 export const BEHAVIOR_STATS_STORE = 'behavior_stats' as const
+
+/**
+ * B 层画像事实（独立；本地-only；不上云；不进 Backup）。
+ * keyPath = id（`${ownerId}\\0${slot}\\0${value}`）；永不因 decline 删行。
+ */
+export const PORTRAIT_FACTS_STORE = 'portrait_facts' as const
+
+/** ownerId，按归属枚举画像事实。 */
+export const PORTRAIT_FACTS_INDEX_BY_OWNER = 'by_owner' as const
 
 /** ownerId + domain，按域名枚举。 */
 export const BEHAVIOR_STATS_INDEX_BY_OWNER_DOMAIN = 'by_owner_domain' as const

@@ -18,6 +18,8 @@ import type { RecallOutcomeSessionState } from '@/application/recall/commit-reca
 import { recordOpenConfirmOutcomePair } from '@/application/recall/record-open-confirm-outcome'
 import {
   navigateActiveTab,
+  portraitPromoteOnConfirm,
+  portraitRefuteOnDismiss,
   recordMemoryOpen,
   recordRecallDismiss
 } from '@/infrastructure/messaging/background-client'
@@ -178,6 +180,8 @@ export function useRecallResultCards(
         dismissedIds: [...new Set([...dialogState.value.dismissedIds, ...ids])],
         conditions: nextConditions
       }
+      // B 层：若存在对应画像事实，矛盾 -0.10（与 A 层分开；失败不挡 dismiss）
+      void portraitRefuteOnDismiss({ conditions: nextConditions }).catch(() => {})
       outcomeSession.value = {
         ...outcomeSession.value,
         dismissedPending: true,
@@ -252,10 +256,13 @@ export function useRecallResultCards(
     finalizeOpenDwell()
     // 打开结果：跨类佐证 +0.15（无可归因条件值 → 全部条件加跨类）
     if (dialogState.value.conditions.length > 0) {
+      const nextConditions = applyUserConfirmToConditions(dialogState.value.conditions)
       dialogState.value = {
         ...dialogState.value,
-        conditions: applyUserConfirmToConditions(dialogState.value.conditions)
+        conditions: nextConditions
       }
+      // B 层晋升：确认即晋升（失败不挡打开）
+      void portraitPromoteOnConfirm({ conditions: nextConditions }).catch(() => {})
     }
     outcomeSession.value = {
       ...outcomeSession.value,

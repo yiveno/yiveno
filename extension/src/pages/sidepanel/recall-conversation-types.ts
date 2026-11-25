@@ -1,3 +1,4 @@
+import type { PortraitSummaryViewModel } from '@/core/portrait/render-portrait-summary'
 import type { RecallUnderstandingEchoChip } from '@/core/recall/format-recall-understanding-echo'
 import type { RecallFramingFacts } from '@/core/recall/recall-framing-facts'
 import type { RecallShellTextSegment } from '@/core/recall/recall-shell-empty-copy'
@@ -82,6 +83,10 @@ export type AssistantTurn = {
    * 行为偏好结果下方独立跟进提示（已翻译；不进 LLM 正文）。
    */
   behaviorTryAnotherHint?: string
+  /**
+   * 画像可查性摘要视图（已翻译分组/措辞；批准/忽略交互）。
+   */
+  portraitSummaryView?: PortraitSummaryViewModel
   allowDismiss: boolean
 }
 
