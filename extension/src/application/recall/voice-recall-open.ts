@@ -3,7 +3,6 @@
  * Recall 直接调 recallService.recallWithClue（不经 Side Panel activeRecall 命名空间）。
  */
 
-import { recordOpenConfirmOutcomePair } from '@/application/recall/record-open-confirm-outcome'
 import { recallService } from '@/application/recall/recall-service'
 import { handleRecordMemoryOpen } from '@/background/handlers/memory-handler'
 import { speechRecognitionLangForUiLocale } from '@/core/speech/speech-dictation'
@@ -102,7 +101,10 @@ export async function runVoiceDictationPreferOffscreen(): Promise<
   return { ok: false, reason: 'panel_fallback_started' }
 }
 
-/** 打开 topPick 新标签并复用手动打开的学习信号。 */
+/**
+ * 打开 topPick 新标签。
+ * 自动打开 ≠ 用户点击确认：不写 open_confirm 正例；仅导航成功后记 memory open。
+ */
 export async function autoOpenRecallTopPick(
   result: RecallResult,
   heardText: string
@@ -113,19 +115,11 @@ export async function autoOpenRecallTopPick(
   }
   const detailPageUrl = chrome.runtime.getURL('detail.html')
   const openUrl = getMemoryItemOpenHref(top.item, { detailPageUrl })
-  const effectiveClue = (result.effectiveClue ?? result.clue ?? heardText).trim()
-
-  // 与手动打开相同：先记确认对 + open，再导航（失败不挡打开）
-  if (effectiveClue) {
-    void recordOpenConfirmOutcomePair({
-      effectiveClue,
-      targetId: top.item.id
-    }).catch(() => {})
-  }
-  void handleRecordMemoryOpen({ id: top.item.id }).catch(() => {})
 
   try {
     const tab = await navigateTabToUrl(openUrl, 'newForegroundTab')
+    // 导航成功后才记打开（行为信号）；不写 open_confirm（那是结果卡点击确认语义）
+    void handleRecordMemoryOpen({ id: top.item.id }).catch(() => {})
     const title =
       top.item.type === 'bookmark'
         ? top.item.payload.title || openUrl
@@ -143,10 +137,18 @@ export async function autoOpenRecallTopPick(
     return { opened: true, ...(typeof tab?.id === 'number' ? { tabId: tab.id } : {}) }
   } catch (error) {
     logger.warn('VoiceRecall', '自动打开导航失败', {
-      error: error instanceof Error ? error.message : String(error)
+      error: error instanceof Error ? error.message : String(error),
+      memoryItemId: top.item.id
     })
     return { opened: false }
   }
+}
+
+/** 是否为零候选 no_match（只通知、不开面板）。 */
+export function isVoiceRecallEmptyNoMatch(result: RecallResult): boolean {
+  return (
+    result.outcome === 'no_match' && result.alsoPossible.length === 0 && result.topPick === null
+  )
 }
 
 /** 低置信：把完整 RecallResult 交给面板。 */
@@ -204,16 +206,23 @@ export async function handleVoiceRecallOpenCommand(): Promise<void> {
   }
 
   if (shouldAutoOpenRecallResult(result)) {
-    await autoOpenRecallTopPick(result, dictation.transcript)
+    const open = await autoOpenRecallTopPick(result, dictation.transcript)
+    if (open.opened) {
+      return
+    }
+    // 导航失败：不写学习信号；退回面板交完整结果
+    await handoffLowConfidenceToPanel(dictation.transcript, result)
     return
   }
 
-  if (result.outcome === 'no_match' && result.alsoPossible.length === 0 && !result.topPick) {
+  if (isVoiceRecallEmptyNoMatch(result)) {
     void showVoiceRecallNotification({
       title: getMessage('app_name'),
       message: getMessage('voice_recall_notification_no_match')
     })
+    return
   }
 
+  // need_a_clue / 分差不足等：有候选 → 面板交接完整 RecallResult
   await handoffLowConfidenceToPanel(dictation.transcript, result)
 }
