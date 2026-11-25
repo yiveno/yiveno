@@ -26,6 +26,7 @@
     "test:must": "vitest run src/core/recall/eval",
     "nlu:try": "bun scripts/nlu-try.mjs",
     "nlu:try:rules": "NLU_TRY_FORCE_MODE=lexical bun scripts/nlu-try.mjs",
+    "clue-chain:parse": "bun scripts/clue-chain-parse.mjs",
     "pressure:try": "bun scripts/pressure-try.mjs",
     "decider-flash:gate-a-eval": "bun scripts/decider-flash-gate-a-eval.mjs",
     "behavior-preference:eval": "bun scripts/behavior-preference-eval.mjs",

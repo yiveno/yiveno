@@ -1,0 +1,342 @@
+[
+  {
+    "category": "A",
+    "clue": "之前刷到过一个教做鸡胸肉的视频，不是那种水煮的，说是做出来很嫩，好像用什么腌一下再煎的，忘记收藏了。",
+    "difficulty": "easy",
+    "expected": {
+      "behavior": "忘记收藏",
+      "certainty": "low",
+      "entities": [],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "嫩鸡胸肉的做法（腌制后煎，非水煮）",
+      "type": "视频"
+    },
+    "id": "01",
+    "note": "内容大意召回 + 否定排除（不是水煮的）"
+  },
+  {
+    "category": "A",
+    "clue": "前段时间看到一个讲 AI Agent 的文章，里面好像说现在真正的 Agent 不是看能调用多少工具，而是看什么来着，那个观点挺有意思，想再找出来。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": null,
+      "certainty": "low",
+      "entities": ["AI Agent"],
+      "intent": "recall",
+      "time": "前段时间",
+      "time_certainty": "low",
+      "topic": "真正的 Agent 的评判标准（不是看工具调用数量）",
+      "type": "文章"
+    },
+    "id": "02",
+    "note": "语义召回——记得观点含义，关键结论词缺失（看什么来着）"
+  },
+  {
+    "category": "A",
+    "clue": "我之前在淘宝还是拼多多看到一个车载充气泵，体积很小，可以直接放手套箱里，评价好像还不错，忘了叫什么牌子了。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": null,
+      "certainty": "low",
+      "entities": ["淘宝", "拼多多"],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "小体积车载充气泵（可放手套箱）",
+      "type": "商品"
+    },
+    "id": "03",
+    "note": "商品多属性召回 + 来源平台二选一不确定 + 品牌缺失"
+  },
+  {
+    "category": "A",
+    "clue": "去年好像看到浙江有个地方，村子建在山里面还是峡谷里面的，拍出来特别像世外桃源，没怎么商业化，想找一下那个地方。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": null,
+      "certainty": "low",
+      "entities": ["浙江"],
+      "intent": "recall",
+      "time": "去年",
+      "time_certainty": "low",
+      "topic": "浙江山里或峡谷中未商业化的世外桃源村子",
+      "type": "地点"
+    },
+    "id": "04",
+    "note": "地点召回，地理信息不完整（山里还是峡谷不确定）"
+  },
+  {
+    "category": "A",
+    "clue": "我记得有个人说过，大概意思是一个人真正的自由不是有钱，而是不需要向别人解释自己为什么这么做，好像在小红书或者公众号看到的。",
+    "difficulty": "hard",
+    "expected": {
+      "behavior": null,
+      "certainty": "low",
+      "entities": ["小红书", "公众号"],
+      "intent": "recall",
+      "time": null,
+      "time_certainty": null,
+      "topic": "真正的自由是不需要向别人解释自己",
+      "type": null
+    },
+    "id": "05",
+    "note": "抽象语义检索——只记得观点含义，无原文关键词；媒介二选一"
+  },
+  {
+    "category": "A",
+    "clue": "之前看过一个解决前端页面性能问题的方案，不是虚拟列表，好像是浏览器原生的一个 API，可以让页面先显示大概的东西，然后再慢慢加载完整内容。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": null,
+      "certainty": "low",
+      "entities": [],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "浏览器原生 API 实现页面渐进式加载（先显示大概内容再加载完整）",
+      "type": null
+    },
+    "id": "06",
+    "note": "技术概念召回 + 否定排除（不是虚拟列表）；虚拟列表不应进实体；媒介未指明"
+  },
+  {
+    "category": "A",
+    "clue": "我之前收藏过一篇文章，说有一种油比普通植物油更适合长期炒菜，脂肪酸比例比较好，好像是菜籽油还是别的油，当时还比较过几种油。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": "收藏过",
+      "certainty": "low",
+      "entities": ["菜籽油"],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "适合长期炒菜的油（脂肪酸比例好，可能是菜籽油）",
+      "type": "文章"
+    },
+    "id": "07",
+    "note": "实体候选不确定（菜籽油还是别的油）"
+  },
+  {
+    "category": "A",
+    "clue": "前几天看到一个新闻，好像国外有个人把自己的公司做得特别小，几乎全靠 AI 运营，员工很少甚至没有员工，最后收入还挺高的，具体是哪家公司忘了。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": null,
+      "certainty": "low",
+      "entities": [],
+      "intent": "recall",
+      "time": "前几天",
+      "time_certainty": "low",
+      "topic": "几乎全靠 AI 运营的超小公司且收入很高",
+      "type": "新闻"
+    },
+    "id": "08",
+    "note": "实体完全缺失（公司名忘了），只剩事件大意"
+  },
+  {
+    "category": "A",
+    "clue": "有部电影之前有人推荐过，讲一个人好像可以不断回到过去，但不是传统那种拯救世界的科幻片，更偏人生和感情，评分也挺高的。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": "他人推荐",
+      "certainty": "low",
+      "entities": [],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "一个人不断回到过去、偏人生感情的电影",
+      "type": "电影"
+    },
+    "id": "09",
+    "note": "内容大意 + 类型排除（不是拯救世界科幻片）"
+  },
+  {
+    "category": "A",
+    "clue": "之前看到一个收纳神器，不是那种普通柜子，好像可以把床底空间利用起来，而且不用买新的床，那个设计还挺巧的。",
+    "difficulty": "easy",
+    "expected": {
+      "behavior": null,
+      "certainty": "low",
+      "entities": [],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "利用床底空间、无需换床的收纳设计",
+      "type": null
+    },
+    "id": "10",
+    "note": "内容大意 + 否定排除（不是普通柜子）；媒介未指明"
+  },
+  {
+    "category": "A",
+    "clue": "前段时间听到一首歌突然想起来小时候听过，好像是周杰伦早期的，MV 里面有一些欧洲建筑还是街景，旋律有点伤感，但我想不起来歌名了。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": null,
+      "certainty": "low",
+      "entities": ["周杰伦"],
+      "intent": "recall",
+      "time": "前段时间",
+      "time_certainty": "low",
+      "topic": "周杰伦早期伤感歌曲（MV 有欧洲建筑或街景）",
+      "type": "歌曲"
+    },
+    "id": "11",
+    "note": "实体不确定（好像是周杰伦）+ 歌名缺失 + 情绪与画面线索"
+  },
+  {
+    "category": "A",
+    "clue": "我之前看过一个测评，讲新能源车为什么有些车开几年之后续航掉得特别少，跟电池管理还是充电习惯有关系，想找那篇再看看。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": null,
+      "certainty": "low",
+      "entities": [],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "新能源车续航衰减少的原因（电池管理或充电习惯）",
+      "type": "文章"
+    },
+    "id": "12",
+    "note": "因果关系二选一不确定"
+  },
+  {
+    "category": "A",
+    "clue": "好像以前看过一个解释，说人类看到的颜色其实不是物体本身的颜色，而是光经过什么之后大脑产生的感觉，里面还提到不同的人可能看到的颜色不完全一样。",
+    "difficulty": "hard",
+    "expected": {
+      "behavior": null,
+      "certainty": "low",
+      "entities": [],
+      "intent": "recall",
+      "time": "以前",
+      "time_certainty": "low",
+      "topic": "人类颜色感知是大脑产生的感觉而非物体本身颜色",
+      "type": null
+    },
+    "id": "13",
+    "note": "认知知识检索——描述不精确，关键机制词缺失（光经过什么）；媒介未指明"
+  },
+  {
+    "category": "A",
+    "clue": "抖音之前刷到一个特别搞笑的视频，一只猫好像每天都在等主人下班，结果主人有一天提前回家，猫的反应特别夸张，好像还被拍到监控了。",
+    "difficulty": "easy",
+    "expected": {
+      "behavior": null,
+      "certainty": "low",
+      "entities": ["抖音"],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "猫每天等主人下班、主人提前回家猫反应夸张的搞笑视频",
+      "type": "视频"
+    },
+    "id": "14",
+    "note": "内容大意召回，情节细节丰富"
+  },
+  {
+    "category": "A",
+    "clue": "我之前规划自驾的时候查过一个沿海公路，应该是在福建或者浙江吧，路的一边是山一边是海，沿途有很多小村子，不像高速公路那种，适合慢慢开。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": "规划自驾时查过",
+      "certainty": "low",
+      "entities": ["福建", "浙江"],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "福建或浙江的沿海自驾公路（一边山一边海，沿途小村子）",
+      "type": "地点"
+    },
+    "id": "15",
+    "note": "地点二选一不确定（福建或者浙江）"
+  },
+  {
+    "category": "A",
+    "clue": "之前看到一个 AI 产品，不是 ChatGPT，好像可以把你以前跟它聊过的所有东西记住，甚至你不用重新告诉它背景，它就知道你在说什么，叫什么来着？",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": null,
+      "certainty": "low",
+      "entities": [],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "能记住全部聊天历史、无需重复背景的 AI 产品",
+      "type": null
+    },
+    "id": "16",
+    "note": "产品名完全缺失 + 否定排除（不是 ChatGPT）；ChatGPT 不应进实体；媒介未指明"
+  },
+  {
+    "category": "A",
+    "clue": "有一本书我忘了名字，好像讲的是人为什么总是在追求一些东西，等真正得到以后又觉得没意思，里面有个概念说人会不断适应已经得到的东西。",
+    "difficulty": "hard",
+    "expected": {
+      "behavior": null,
+      "certainty": "low",
+      "entities": [],
+      "intent": "recall",
+      "time": null,
+      "time_certainty": null,
+      "topic": "人不断追求又不断适应得到之物的书",
+      "type": "书籍"
+    },
+    "id": "17",
+    "note": "语义召回——只记得概念含义，书名缺失；无时间表达"
+  },
+  {
+    "category": "A",
+    "clue": "我之前在网上看到一个 Chrome 插件，可以把网页里面重要的内容直接保存下来，不是简单的收藏网址，好像还能以后通过自己说的话找到之前保存的内容。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": null,
+      "certainty": "low",
+      "entities": ["Chrome"],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "能保存网页重要内容、以后用自然语言找回的 Chrome 插件",
+      "type": null
+    },
+    "id": "18",
+    "note": "功能描述召回 + 否定排除（不是简单收藏网址）；类型为工具/插件"
+  },
+  {
+    "category": "A",
+    "clue": "前几天看明朝历史的时候看到一个皇帝，好像本来不是太想当皇帝，后来因为哥哥当皇帝之后发生了一些事情，他才当上的，最后兄弟之间关系也很复杂。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": null,
+      "certainty": "low",
+      "entities": ["明朝"],
+      "intent": "recall",
+      "time": "前几天",
+      "time_certainty": "low",
+      "topic": "明朝某位本不想当皇帝、因兄长变故继位的皇帝",
+      "type": null
+    },
+    "id": "19",
+    "note": "人物召回——靠事件链与兄弟关系定位人物；媒介未指明"
+  },
+  {
+    "category": "D",
+    "clue": "我之前看过一个东西，可能是视频也可能是文章，讲一个人每天只工作几个小时，通过互联网赚钱，不需要管理很多人。我记得当时还联想到一个做 AI 的工具，好像可以自动处理很多事情，另外那个视频的背景音乐有点像电影配乐，具体在哪个平台看到的完全忘了。",
+    "difficulty": "hard",
+    "expected": {
+      "behavior": null,
+      "certainty": "low",
+      "entities": [],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "每天只工作几小时、通过互联网赚钱、不需管理很多人的工作方式",
+      "type": null
+    },
+    "id": "20",
+    "note": "高噪声多线索——媒介与平台均不确定；联想的 AI 工具与背景音乐是干扰线索，不进 topic"
+  }
+]

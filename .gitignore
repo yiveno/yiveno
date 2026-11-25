@@ -163,3 +163,6 @@ tmp/*
 
 # 商店提交 ZIP（本地 pack:store 产出，勿入库）
 extension/yiveno-extension-store.zip
+
+# clue-chain harness 断点（可续跑，勿入库）
+extension/src/core/recall/eval/clue-chain/runs/checkpoint-parse.json

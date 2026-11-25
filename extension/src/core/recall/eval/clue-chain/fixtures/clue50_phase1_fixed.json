@@ -1,0 +1,852 @@
+[
+  {
+    "category": "A",
+    "clue": "那个讲怎么让衣服不容易起皱的，好像不是熨斗，有个喷的东西，出差的时候用的。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": "看到过相关产品，可能有购买或使用需求",
+      "certainty": "low",
+      "entities": [],
+      "intent": "recall",
+      "time": null,
+      "time_certainty": null,
+      "topic": "便携式衣物除皱喷雾或免熨除皱产品",
+      "type": "商品"
+    },
+    "id": "A01",
+    "note": "属性记忆不完整，主题与用途比较明确"
+  },
+  {
+    "category": "A",
+    "clue": "我记得有篇文章说人不要太早买房，好像不是说房价的问题，主要是年轻人会被固定在一个地方，后面选择就少了，在哪里看到的忘了。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": "读过文章，记住观点但忘记来源",
+      "certainty": "medium",
+      "entities": [],
+      "intent": "recall",
+      "time": null,
+      "time_certainty": null,
+      "topic": "年轻人过早买房可能限制人生选择和流动性",
+      "type": "文章"
+    },
+    "id": "A02",
+    "note": "抽象观点召回，区分主题与来源"
+  },
+  {
+    "category": "A",
+    "clue": "有个做咖啡的机器，不用胶囊也不用手冲，直接放咖啡豆进去就能喝，体积不大，之前看到过。",
+    "difficulty": "easy",
+    "expected": {
+      "behavior": "看过产品介绍",
+      "certainty": "high",
+      "entities": [],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "小型全自动咖啡机",
+      "type": "商品"
+    },
+    "id": "A03",
+    "note": "根据功能属性识别商品类别"
+  },
+  {
+    "category": "A",
+    "clue": "之前好像看过一个讲为什么人会拖延的视频，不是懒，好像跟大脑逃避痛苦或者害怕失败有关系，具体讲的啥忘了。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": "看过视频",
+      "certainty": "medium",
+      "entities": [],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "拖延行为背后的心理机制及其与逃避痛苦或失败的关系",
+      "type": "视频"
+    },
+    "id": "A04",
+    "note": "语义描述心理学主题而非具体关键词"
+  },
+  {
+    "category": "A",
+    "clue": "我想找之前看过的那个可以测自己睡眠质量的网站，测完好像会给你一个评分，还能分析睡眠习惯。",
+    "difficulty": "easy",
+    "expected": {
+      "behavior": "使用或浏览过测试网站，想再次找到",
+      "certainty": "high",
+      "entities": [],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "睡眠质量和睡眠习惯测试分析工具",
+      "type": "网站或工具"
+    },
+    "id": "A05",
+    "note": "目标明确但实体名称缺失"
+  },
+  {
+    "category": "A",
+    "clue": "有个纪录片我之前看了一点，讲好像人类从很早以前就开始迁徙，跟气候变化有关的，画面特别好，可能是BBC拍的。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": "看了一部分纪录片",
+      "certainty": "low",
+      "entities": ["BBC"],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "人类早期迁徙与气候变化相关的纪录片",
+      "type": "纪录片"
+    },
+    "id": "A06",
+    "note": "类型明确，主题和制作方均有不确定性"
+  },
+  {
+    "category": "A",
+    "clue": "去年还是前年看过一个关于装修的帖子，讲卫生间不要装什么壁龛，说后期特别容易积水发霉，评论区还吵了起来。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": "看过帖子并记得评论区讨论",
+      "certainty": "medium",
+      "entities": [],
+      "intent": "recall",
+      "time": "去年或前年",
+      "time_certainty": "low",
+      "topic": "卫生间装修壁龛设计的优缺点及容易积水发霉的问题",
+      "type": "帖子"
+    },
+    "id": "A07",
+    "note": "时间范围模糊且包含评论区的次要线索"
+  },
+  {
+    "category": "A",
+    "clue": "找下之前看过的一个介绍敦煌壁画修复的视频吧，记得有人拿着特别细的笔一点点修，那个过程挺震撼的。",
+    "difficulty": "easy",
+    "expected": {
+      "behavior": "看过视频，印象深刻",
+      "certainty": "high",
+      "entities": ["敦煌"],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "敦煌壁画的保护与修复过程",
+      "type": "视频"
+    },
+    "id": "A08",
+    "note": "明确内容主题与地点实体"
+  },
+  {
+    "category": "A",
+    "clue": "之前收藏过一个教做那种日式溏心蛋的教程，蛋黄不是完全熟的，酱汁好像是酱油加什么甜的东西，想找出来。",
+    "difficulty": "easy",
+    "expected": {
+      "behavior": "收藏过教程",
+      "certainty": "high",
+      "entities": [],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "日式溏心卤蛋的制作方法和调味配方",
+      "type": "教程"
+    },
+    "id": "A09",
+    "note": "主题明确，细节属性模糊"
+  },
+  {
+    "category": "A",
+    "clue": "我之前在公众号看到一个观点，意思是不要把自己的时间卖得太便宜，因为时间是不可再生的，好像还算过一小时到底值多少钱。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": "阅读过公众号文章",
+      "certainty": "medium",
+      "entities": ["微信公众号"],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "个人时间价值及时间成本的计算与认知",
+      "type": "文章"
+    },
+    "id": "A10",
+    "note": "抽象主题召回，来源平台较明确"
+  },
+  {
+    "category": "A",
+    "clue": "有个可以把手机照片里面的人或者东西抠出来，然后贴到另外一张图片里的功能，苹果自带的还是哪个软件来着。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": "使用过或看到过图片编辑功能",
+      "certainty": "low",
+      "entities": ["Apple"],
+      "intent": "recall",
+      "time": null,
+      "time_certainty": null,
+      "topic": "手机图片主体抠图与复制粘贴到其他图片的功能",
+      "type": "功能或教程"
+    },
+    "id": "A11",
+    "note": "功能描述清楚但工具来源不确定"
+  },
+  {
+    "category": "A",
+    "clue": "我之前看过一个讲日本泡沫经济的东西，房价特别夸张，后来好像经济崩了之后很多人几十年都缓不过来，想重新看看。",
+    "difficulty": "easy",
+    "expected": {
+      "behavior": "看过相关内容，希望重新阅读或观看",
+      "certainty": "high",
+      "entities": ["日本"],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "日本泡沫经济形成、破裂及其长期经济影响",
+      "type": "视频或文章"
+    },
+    "id": "A12",
+    "note": "历史经济主题与事件实体识别"
+  },
+  {
+    "category": "A",
+    "clue": "之前看到一个说法，好像洗衣机洗完衣服不要马上关门，不然容易滋生细菌还是什么的，我忘记具体原因了。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": "看到过生活知识分享",
+      "certainty": "medium",
+      "entities": [],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "洗衣机使用后保持通风以避免潮湿环境滋生霉菌或细菌",
+      "type": "文章或生活科普"
+    },
+    "id": "A13",
+    "note": "利用用户不精确的因果记忆解析主题"
+  },
+  {
+    "category": "A",
+    "clue": "想找一下之前刷到那个介绍极光的，讲为什么有时候是绿色有时候是红色，还跟太阳活动有关，画面特别漂亮。",
+    "difficulty": "easy",
+    "expected": {
+      "behavior": "刷到过视频，印象深刻",
+      "certainty": "high",
+      "entities": [],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "极光形成机制及不同颜色与太阳活动的关系",
+      "type": "视频"
+    },
+    "id": "A14",
+    "note": "知识主题、颜色特征和成因组合解析"
+  },
+  {
+    "category": "A",
+    "clue": "有个桌面小风扇可以夹在床头那种，我记得是静音的，晚上睡觉用，不占地方，可能是小米的，也可能不是。",
+    "difficulty": "easy",
+    "expected": {
+      "behavior": "浏览过商品，可能考虑购买",
+      "certainty": "medium",
+      "entities": ["小米"],
+      "intent": "recall",
+      "time": null,
+      "time_certainty": null,
+      "topic": "床头使用的可夹式静音小风扇",
+      "type": "商品"
+    },
+    "id": "A15",
+    "note": "商品属性清晰但品牌记忆不确定"
+  },
+  {
+    "category": "A",
+    "clue": "我想起来之前在B站看过一个视频，讲为什么有些人一听到别人批评自己就会特别生气，甚至直接翻脸，好像跟自尊或者防御机制有关系。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": "看过视频并记住部分心理解释",
+      "certainty": "high",
+      "entities": ["B站"],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "人面对批评时产生强烈情绪反应的心理机制及自我防御",
+      "type": "视频"
+    },
+    "id": "A16",
+    "note": "心理学语义检索与主题抽取"
+  },
+  {
+    "category": "A",
+    "clue": "去年买车之前看过一个对比，应该是讲混动车跟纯电车长期使用成本的，不光算油费电费，还算维修保养什么的，那个表做得挺详细。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": "买车前看过对比分析",
+      "certainty": "medium",
+      "entities": [],
+      "intent": "recall",
+      "time": "去年",
+      "time_certainty": "high",
+      "topic": "混合动力汽车与纯电动汽车的长期使用成本对比",
+      "type": "文章或测评"
+    },
+    "id": "A17",
+    "note": "时间、目标行为、比较主题共同解析"
+  },
+  {
+    "category": "A",
+    "clue": "我记得有个地方能看全国各地实时的天气云图，不是普通天气预报，就是那种地图上云在动，风好像也能看，叫什么网站来着。",
+    "difficulty": "easy",
+    "expected": {
+      "behavior": "使用或浏览过天气可视化网站",
+      "certainty": "high",
+      "entities": [],
+      "intent": "recall",
+      "time": null,
+      "time_certainty": null,
+      "topic": "全国范围实时天气云图、云层和风场可视化地图工具",
+      "type": "网站或工具"
+    },
+    "id": "A18",
+    "note": "功能描述型实体召回"
+  },
+  {
+    "category": "B",
+    "clue": "那个讲房价的",
+    "difficulty": "hard",
+    "expected": {
+      "behavior": null,
+      "certainty": "low",
+      "entities": [],
+      "intent": "recall",
+      "time": null,
+      "time_certainty": null,
+      "topic": "房价相关内容，具体主题不明",
+      "type": null
+    },
+    "id": "B01",
+    "note": "超短碎片，信息量极低"
+  },
+  {
+    "category": "B",
+    "clue": "之前我有一次晚上睡觉前刷到过一个东西，也不是最近吧，可能上个月，也可能更早，然后它好像是讲人为什么晚上总是想很多事情，白天没感觉，一到晚上就开始想以前的事或者担心以后，反正那个内容我当时还觉得说得挺对的，可能是在抖音也可能是小红书，具体账号也不知道，想找找看。",
+    "difficulty": "hard",
+    "expected": {
+      "behavior": "睡前刷到过，记住观点，希望再次找到",
+      "certainty": "low",
+      "entities": ["抖音", "小红书"],
+      "intent": "recall",
+      "time": "上个月或更早",
+      "time_certainty": "low",
+      "topic": "夜间容易产生过度思考、回忆过去或担忧未来的心理现象",
+      "type": "内容，具体形式不明"
+    },
+    "id": "B02",
+    "note": "超长啰嗦表达，时间和平台不确定，提取核心主题"
+  },
+  {
+    "category": "B",
+    "clue": "有个那个那个讲猫咪那个，猫为什么会踩奶的，踩奶不是踩地啊就是在被子上揉来揉去那个，视频还是文章来着",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": "看过相关内容",
+      "certainty": "high",
+      "entities": [],
+      "intent": "recall",
+      "time": null,
+      "time_certainty": null,
+      "topic": "猫咪踩奶行为的原因和机制",
+      "type": "视频或文章"
+    },
+    "id": "B03",
+    "note": "口语重复、自我解释、纠正歧义词"
+  },
+  {
+    "category": "B",
+    "clue": "之前那个讲如何提高专注力的 pomodoro，番茄钟吧，还是番茄工作法那个，里面有个网页可以计时。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": "看过或使用过网页计时工具",
+      "certainty": "high",
+      "entities": [],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "番茄工作法及专注计时工具",
+      "type": "网站或工具"
+    },
+    "id": "B04",
+    "note": "中英混合表达和术语自我修正"
+  },
+  {
+    "category": "B",
+    "clue": "我之前看过一个讲那个手机电池健康的，怎么充电才能让电池寿命长一点，快充是不是不好，那个battery health的东西。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": "看过电池维护相关内容",
+      "certainty": "high",
+      "entities": [],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "手机电池健康维护及充电习惯对电池寿命的影响",
+      "type": "文章或视频"
+    },
+    "id": "B05",
+    "note": "中英混杂与不完整术语描述"
+  },
+  {
+    "category": "B",
+    "clue": "那个地图，能看海拔的，叫什么来着",
+    "difficulty": "hard",
+    "expected": {
+      "behavior": "使用或见过相关地图工具",
+      "certainty": "low",
+      "entities": [],
+      "intent": "recall",
+      "time": null,
+      "time_certainty": null,
+      "topic": "能够查看地形海拔的地图工具",
+      "type": "工具或网站"
+    },
+    "id": "B06",
+    "note": "短句中只有功能特征，主题边界较宽"
+  },
+  {
+    "category": "B",
+    "clue": "有个讲如何把PDF里面的表格转换成excel的教程，pdf to excel那个，应该是免费的，不用注册的，在哪来着",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": "看过相关教程或工具介绍",
+      "certainty": "medium",
+      "entities": [],
+      "intent": "recall",
+      "time": null,
+      "time_certainty": null,
+      "topic": "将PDF中的表格转换为Excel的免费工具或方法",
+      "type": "教程或工具"
+    },
+    "id": "B07",
+    "note": "拼写、英语关键词与功能性描述混杂"
+  },
+  {
+    "category": "B",
+    "clue": "我去年好像有收藏过那个什么人体工学椅的评测，Ergonomic chair，讲腰部支撑，坐久了不会那么累，可能是B站的，不确定是不是去年，反正当时看完就想买。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": "收藏过评测，产生购买意向",
+      "certainty": "medium",
+      "entities": ["B站"],
+      "intent": "recall",
+      "time": "去年或其他时间",
+      "time_certainty": "low",
+      "topic": "人体工学椅及腰部支撑功能的评测或购买参考",
+      "type": "视频或评测"
+    },
+    "id": "B08",
+    "note": "中英混合、时间不确定及行为意图提取"
+  },
+  {
+    "category": "B",
+    "clue": "帮我找那个那个讲海水为什么是蓝色的，不对应该是海水颜色跟深度关系的，浅海跟深海看着颜色不一样，之前看到过。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": "看过科普内容",
+      "certainty": "medium",
+      "entities": [],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "海水颜色与水深、光线吸收和散射之间的关系",
+      "type": "视频或科普文章"
+    },
+    "id": "B09",
+    "note": "口语修正及主题逐步收窄"
+  },
+  {
+    "category": "B",
+    "clue": "之前看到过个讲怎么做meal prep的，就是提前准备一周的饭，放冰箱然后每天拿出来吃的那个，好像有个博主专门教这个。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": "看到过博主分享的备餐方法",
+      "certainty": "high",
+      "entities": [],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "一周餐食预备、批量备餐和冷藏保存方法",
+      "type": "视频或教程"
+    },
+    "id": "B10",
+    "note": "英文词汇与中文主题混合"
+  },
+  {
+    "category": "B",
+    "clue": "那个怎么说呢，讲睡眠的，睡眠周期，90分钟一个周期然后几点睡几点醒比较好，好像有个计算器能算的。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": "见过相关计算工具",
+      "certainty": "high",
+      "entities": [],
+      "intent": "recall",
+      "time": null,
+      "time_certainty": null,
+      "topic": "基于睡眠周期计算入睡和起床时间的工具或方法",
+      "type": "工具或网站"
+    },
+    "id": "B11",
+    "note": "口语填充词、概念与工具混合"
+  },
+  {
+    "category": "B",
+    "clue": "我想找个之前看过的那个城市规划的东西，讲城市为什么有的地方走路方便，有的地方必须开车，那个什么walkability，街道设计跟人的生活关系，文章还是视频来着。",
+    "difficulty": "hard",
+    "expected": {
+      "behavior": "看过城市规划相关内容",
+      "certainty": "high",
+      "entities": [],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "城市步行友好性、街道设计与城市生活方式之间的关系",
+      "type": "文章或视频"
+    },
+    "id": "B12",
+    "note": "长句、英文概念、内容形式不确定"
+  },
+  {
+    "category": "B",
+    "clue": "我之前在小红书刷到那个说什么不要用塑料饭盒放微波炉的，微波塑料会释放有害物质吧，还是说只有某几种塑料不行，那个帖子找不到了。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": "刷到过帖子，无法再次找到",
+      "certainty": "medium",
+      "entities": ["小红书"],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "塑料容器在微波炉加热时的安全性及不同塑料材质的区别",
+      "type": "帖子"
+    },
+    "id": "B13",
+    "note": "平台明确但知识记忆存在不确定性"
+  },
+  {
+    "category": "B",
+    "clue": "有个免费的在线工具可以把图片变成那种矢量图，png转svg，vectorize的，不用下载软件的。",
+    "difficulty": "medium",
+    "expected": {
+      "behavior": "见过或使用过在线转换工具",
+      "certainty": "high",
+      "entities": [],
+      "intent": "recall",
+      "time": null,
+      "time_certainty": null,
+      "topic": "在线将位图PNG图片转换为SVG矢量图的工具",
+      "type": "网站或工具"
+    },
+    "id": "B14",
+    "note": "英文术语、工具功能与格式名称组合解析"
+  },
+  {
+    "category": "C",
+    "clue": "最近总感觉每天时间过得特别快，有什么办法能改善这种感觉吗？",
+    "difficulty": "easy",
+    "expected": {
+      "behavior": null,
+      "certainty": "high",
+      "entities": [],
+      "intent": "non_recall",
+      "time": "最近",
+      "time_certainty": "high",
+      "topic": "改善日常时间感知和生活体验",
+      "type": null
+    },
+    "id": "C01",
+    "note": "求建议型输入，不是找历史内容"
+  },
+  {
+    "category": "C",
+    "clue": "帮我分析一下现在国内新能源车市场为什么竞争这么激烈。",
+    "difficulty": "easy",
+    "expected": {
+      "behavior": null,
+      "certainty": "high",
+      "entities": [],
+      "intent": "non_recall",
+      "time": "现在",
+      "time_certainty": "high",
+      "topic": "中国新能源汽车市场竞争激烈的原因分析",
+      "type": null
+    },
+    "id": "C02",
+    "note": "直接分析请求，不涉及历史记忆召回"
+  },
+  {
+    "category": "C",
+    "clue": "我想买一个行车记录仪，预算三百以内，最好夜间拍得清楚一点，推荐几个吧。",
+    "difficulty": "easy",
+    "expected": {
+      "behavior": "发起购买咨询",
+      "certainty": "high",
+      "entities": [],
+      "intent": "non_recall",
+      "time": null,
+      "time_certainty": null,
+      "topic": "购买三百元以内夜间画质较好的行车记录仪",
+      "type": null
+    },
+    "id": "C03",
+    "note": "明确购物咨询，不是找之前看过的商品"
+  },
+  {
+    "category": "C",
+    "clue": "给我写一段朋友圈文案，今天终于把拖了很久的事情做完了，想表达轻松一点但不要太矫情。",
+    "difficulty": "easy",
+    "expected": {
+      "behavior": "要求生成文案",
+      "certainty": "high",
+      "entities": [],
+      "intent": "non_recall",
+      "time": "今天",
+      "time_certainty": "high",
+      "topic": "撰写表达完成长期拖延事项后的轻松感的朋友圈文案",
+      "type": null
+    },
+    "id": "C04",
+    "note": "内容创作指令，应识别为非召回"
+  },
+  {
+    "category": "C",
+    "clue": "你觉得现在学Python还有必要吗？我本身做前端，想转AI方向。",
+    "difficulty": "easy",
+    "expected": {
+      "behavior": "询问学习建议",
+      "certainty": "high",
+      "entities": ["Python", "AI"],
+      "intent": "non_recall",
+      "time": "现在",
+      "time_certainty": "high",
+      "topic": "前端开发者转向AI领域是否有必要学习Python",
+      "type": null
+    },
+    "id": "C05",
+    "note": "对话咨询型问题，非历史内容检索"
+  },
+  {
+    "category": "C",
+    "clue": "我收藏的东西是不是太多了，感觉什么都想留，最后又从来不看。",
+    "difficulty": "easy",
+    "expected": {
+      "behavior": "表达感慨并寻求潜在建议",
+      "certainty": "high",
+      "entities": [],
+      "intent": "non_recall",
+      "time": null,
+      "time_certainty": null,
+      "topic": "收藏信息过多但很少回顾的行为及其改善方法",
+      "type": null
+    },
+    "id": "C06",
+    "note": "感慨式表达，虽然涉及收藏但没有明确召回目标"
+  },
+  {
+    "category": "C",
+    "clue": "把这句话翻译成英文：人生最重要的资源其实是时间。",
+    "difficulty": "easy",
+    "expected": {
+      "behavior": "要求翻译",
+      "certainty": "high",
+      "entities": [],
+      "intent": "non_recall",
+      "time": null,
+      "time_certainty": null,
+      "topic": "将关于人生重要资源是时间的中文句子翻译为英文",
+      "type": null
+    },
+    "id": "C07",
+    "note": "文本处理指令，不应触发历史召回"
+  },
+  {
+    "category": "C",
+    "clue": "今天开车开了五个小时，累死了，腰也疼，明天还要继续赶路。",
+    "difficulty": "easy",
+    "expected": {
+      "behavior": "表达疲劳和身体不适",
+      "certainty": "high",
+      "entities": [],
+      "intent": "non_recall",
+      "time": "今天及明天",
+      "time_certainty": "high",
+      "topic": "长时间驾驶后的疲劳和腰部不适",
+      "type": null
+    },
+    "id": "C08",
+    "note": "纯闲聊或状态表达，不是找历史内容"
+  },
+  {
+    "category": "D",
+    "clue": "之前看过一个做红烧肉的视频，但不是那种特别油的，好像讲怎么把肥肉处理得不腻，那个视频应该是教做糖醋排骨的？",
+    "difficulty": "hard",
+    "expected": {
+      "behavior": "看过视频，记忆中混入糖醋排骨",
+      "certainty": "low",
+      "entities": [],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "红烧肉减少油腻感的制作方法",
+      "type": "视频"
+    },
+    "id": "D01",
+    "note": "记忆污染：红烧肉与糖醋排骨两个菜名混淆，主题应优先根据主体描述判断"
+  },
+  {
+    "category": "D",
+    "clue": "那个我收藏的，之前说过的那个东西，你帮我找一下。",
+    "difficulty": "hard",
+    "expected": {
+      "behavior": "声称收藏过，但未提供有效线索",
+      "certainty": "low",
+      "entities": [],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "无法确定具体主题",
+      "type": null
+    },
+    "id": "D02",
+    "note": "极度缺乏信息，检验系统是否诚实保留空主题而非臆造"
+  },
+  {
+    "category": "D",
+    "clue": "我记得有个介绍西藏旅游的文章，不是西藏，可能是新疆吧，讲那种草原上骑马的地方，或者内蒙古也有。",
+    "difficulty": "hard",
+    "expected": {
+      "behavior": "看过旅游介绍文章，地点记忆不确定",
+      "certainty": "low",
+      "entities": ["新疆", "内蒙古"],
+      "intent": "recall",
+      "time": null,
+      "time_certainty": null,
+      "topic": "中国西部或北部草原地区的旅游及骑马体验",
+      "type": "文章"
+    },
+    "id": "D03",
+    "note": "多个地名互相冲突，主题应保留草原旅游体验"
+  },
+  {
+    "category": "D",
+    "clue": "帮我找那个讲如何清理电脑缓存的视频，或者之前看过的一个关于手机照片备份的文章，反正是数据存储的东西。",
+    "difficulty": "hard",
+    "expected": {
+      "behavior": "提出两个可能的历史内容目标",
+      "certainty": "low",
+      "entities": [],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "存在两个可能目标：电脑缓存清理方法或手机照片备份方案",
+      "type": "视频或文章"
+    },
+    "id": "D04",
+    "note": "双意图输入，检验是否错误合并为单一主题"
+  },
+  {
+    "category": "D",
+    "clue": "之前刷到那个讲如何提高跑步速度的视频，应该是B站，不是抖音，里面好像有个Nike的鞋子测评，但我主要想找跑步训练方法。",
+    "difficulty": "hard",
+    "expected": {
+      "behavior": "刷到过视频，记得鞋子测评但主要目标是训练方法",
+      "certainty": "medium",
+      "entities": ["B站", "Nike"],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "提高跑步速度的训练方法",
+      "type": "视频"
+    },
+    "id": "D05",
+    "note": "否定平台纠正与次要商品实体干扰，主题以用户明确目标为准"
+  },
+  {
+    "category": "D",
+    "clue": "我上个月看过一个讲如何用Excel做数据分析的教程，好像是用Python写的，里面还教怎么做PPT，具体哪个部分记不清了。",
+    "difficulty": "hard",
+    "expected": {
+      "behavior": "看过教程，记忆中混入多个工具和技能",
+      "certainty": "low",
+      "entities": ["Excel", "Python", "PPT"],
+      "intent": "recall",
+      "time": "上个月",
+      "time_certainty": "high",
+      "topic": "使用Excel进行数据分析的教程",
+      "type": "教程"
+    },
+    "id": "D06",
+    "note": "多个工具和主题干扰，解析核心目标并保留实体"
+  },
+  {
+    "category": "D",
+    "clue": "找一下前几天那个关于买空气净化器的对比吧，不是空气净化器，应该是除湿机，我记得还比较了小米跟美的。",
+    "difficulty": "hard",
+    "expected": {
+      "behavior": "看过购买对比内容",
+      "certainty": "medium",
+      "entities": ["小米", "美的"],
+      "intent": "recall",
+      "time": "前几天",
+      "time_certainty": "high",
+      "topic": "除湿机购买对比及小米和美的产品比较",
+      "type": "商品对比或测评"
+    },
+    "id": "D07",
+    "note": "主题自我纠正，空气净化器为被否定的错误实体类别"
+  },
+  {
+    "category": "D",
+    "clue": "之前在淘宝看到一个能测血压的手表，好像华为的，那个不是血压计，是可以监测心率的手环，叫什么来着。",
+    "difficulty": "hard",
+    "expected": {
+      "behavior": "浏览过商品，记忆中混淆血压监测和心率监测功能",
+      "certainty": "low",
+      "entities": ["淘宝", "华为"],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "能够监测心率的智能手环或手表产品",
+      "type": "商品"
+    },
+    "id": "D08",
+    "note": "商品类别和功能自我纠正，品牌记忆不确定"
+  },
+  {
+    "category": "D",
+    "clue": "我想找之前看过的那个讲秦始皇统一文字的东西，应该是汉武帝时期吧，里面还讲了怎么统一货币，那个历史视频。",
+    "difficulty": "hard",
+    "expected": {
+      "behavior": "看过历史视频，混淆历史人物或朝代",
+      "certainty": "medium",
+      "entities": ["秦始皇", "汉武帝"],
+      "intent": "recall",
+      "time": "之前",
+      "time_certainty": "low",
+      "topic": "秦始皇统一文字、货币及相关制度的历史内容",
+      "type": "视频"
+    },
+    "id": "D09",
+    "note": "历史实体混淆，系统不应因错误人物实体丢失核心主题"
+  },
+  {
+    "category": "D",
+    "clue": "上次看过一个讲如何备份电脑文件的教程，可能是Mac的Time Machine吧，还是Windows那个系统还原，反正是电脑数据备份，帮我找找。",
+    "difficulty": "hard",
+    "expected": {
+      "behavior": "看过备份教程，希望再次找到",
+      "certainty": "medium",
+      "entities": ["Mac", "Time Machine", "Windows"],
+      "intent": "recall",
+      "time": "上次",
+      "time_certainty": "low",
+      "topic": "电脑文件或系统数据备份方法",
+      "type": "教程"
+    },
+    "id": "D10",
+    "note": "两个操作系统及备份概念混杂，主题层需抽象到数据备份"
+  }
+]
