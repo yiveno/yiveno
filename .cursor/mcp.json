@@ -1,8 +1,3 @@
 {
-  "mcpServers": {
-    "aoci": {
-      "command": "${userHome}/bin/aoci",
-      "args": ["--repo", "${workspaceFolder}", "mcp"]
-    }
-  }
+  "mcpServers": {}
 }
