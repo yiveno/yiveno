@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
 
 import {
+  bindHoverPreviewScrollDismiss,
   createHoverPreviewDelayController,
   placeHoverPreviewInPanel,
+  resolveRecallHoverPreviewScrollRoot,
   RECALL_CARD_PREVIEW_HOVER_DELAY_MS,
   RECALL_CARD_PREVIEW_WIDTH_PX
 } from '@/pages/sidepanel/recall-card-hover-preview'
@@ -66,5 +68,43 @@ describe('createHoverPreviewDelayController', () => {
     expect(first).not.toHaveBeenCalled()
     expect(second).toHaveBeenCalledTimes(1)
     vi.useRealTimers()
+  })
+
+  it('cancelAll 取消待显示（会话区滚动收起路径）', () => {
+    vi.useFakeTimers()
+    const onShow = vi.fn()
+    const controller = createHoverPreviewDelayController({ delayMs: 250 })
+    controller.enter('card-1', onShow)
+    controller.cancelAll()
+    vi.advanceTimersByTime(300)
+    expect(onShow).not.toHaveBeenCalled()
+    expect(controller.getActiveCardId()).toBeNull()
+    vi.useRealTimers()
+  })
+})
+
+describe('resolveRecallHoverPreviewScrollRoot / bindHoverPreviewScrollDismiss', () => {
+  it('从卡节点上溯到 .recall-body', () => {
+    const root = document.createElement('div')
+    root.className = 'recall-body'
+    const card = document.createElement('div')
+    root.appendChild(card)
+    expect(resolveRecallHoverPreviewScrollRoot(card)).toBe(root)
+    expect(resolveRecallHoverPreviewScrollRoot(null)).toBeNull()
+  })
+
+  it('scroll 回调 onDismiss；解绑后不再触发', () => {
+    const root = document.createElement('div')
+    const onDismiss = vi.fn()
+    const stop = bindHoverPreviewScrollDismiss(root, onDismiss)
+    root.dispatchEvent(new Event('scroll'))
+    expect(onDismiss).toHaveBeenCalledTimes(1)
+    stop()
+    root.dispatchEvent(new Event('scroll'))
+    expect(onDismiss).toHaveBeenCalledTimes(1)
+  })
+
+  it('scrollRoot 为空时解绑为空操作', () => {
+    expect(() => bindHoverPreviewScrollDismiss(null, () => {})()).not.toThrow()
   })
 })

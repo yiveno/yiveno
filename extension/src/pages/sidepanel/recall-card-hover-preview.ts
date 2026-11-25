@@ -58,6 +58,37 @@ export function placeHoverPreviewInPanel(input: {
   return { top, left, width, maxHeight }
 }
 
+/**
+ * 悬停预览锚定的会话滚动根（`.recall-body`）。
+ * 浮层 `position: fixed` 不跟列表滚；会话区一滚就必须收起，否则盖住内容。
+ */
+export function resolveRecallHoverPreviewScrollRoot(from: Element | null): HTMLElement | null {
+  if (!from) {
+    return null
+  }
+  return from.closest('.recall-body')
+}
+
+/**
+ * 会话区滚动 → 收起悬停预览（含延迟未出层时取消）。
+ * 不锁滚动：预览是 ephemeral 悬停层，不是模态。
+ */
+export function bindHoverPreviewScrollDismiss(
+  scrollRoot: EventTarget | null,
+  onDismiss: () => void
+): () => void {
+  if (!scrollRoot) {
+    return () => {}
+  }
+  const handler = (): void => {
+    onDismiss()
+  }
+  scrollRoot.addEventListener('scroll', handler, { passive: true })
+  return () => {
+    scrollRoot.removeEventListener('scroll', handler)
+  }
+}
+
 /** 延迟悬停控制器（同一时间只服务一张卡）。 */
 export function createHoverPreviewDelayController(options?: {
   delayMs?: number

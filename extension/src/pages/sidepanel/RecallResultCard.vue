@@ -13,7 +13,11 @@ import {
 } from '@/pages/sidepanel/recall-result-card-evidence'
 import { isFaviconBroken, withBrokenFavicon } from '@/pages/sidepanel/recall-result-card-favicon'
 import { resolveRecallCardClickAction } from '@/pages/sidepanel/recall-result-card-interaction'
-import { createHoverPreviewDelayController } from '@/pages/sidepanel/recall-card-hover-preview'
+import {
+  bindHoverPreviewScrollDismiss,
+  createHoverPreviewDelayController,
+  resolveRecallHoverPreviewScrollRoot
+} from '@/pages/sidepanel/recall-card-hover-preview'
 import RecallCardHoverPreview from '@/pages/sidepanel/RecallCardHoverPreview.vue'
 import RecallHighlightText from '@/pages/sidepanel/RecallHighlightText.vue'
 
@@ -186,11 +190,13 @@ function isDetailExportItemDisabled(id: string): boolean {
 const cardGroupRef = ref<HTMLElement | null>(null)
 let stopEvidenceObserver: (() => void) | undefined
 
-/** 悬停预览：延迟后出浮层；导出多选模式关闭 */
+/** 悬停预览：延迟后出浮层；导出多选模式关闭；会话区滚动即收起 */
 const hoverPreviewVisible = ref(false)
 const hoverAnchorRect = ref<DOMRect | null>(null)
 const hoverPanelRect = ref<DOMRect | null>(null)
 const hoverPreviewController = createHoverPreviewDelayController()
+/** 解绑会话区 scroll → 收起预览 */
+let stopHoverPreviewScrollDismiss: (() => void) | undefined
 
 function readHoverRects(): { anchor: DOMRect; panel: DOMRect } | null {
   const shell = cardGroupRef.value?.querySelector('.recall-card-shell') as HTMLElement | null
@@ -203,10 +209,34 @@ function readHoverRects(): { anchor: DOMRect; panel: DOMRect } | null {
   return { anchor: anchorEl.getBoundingClientRect(), panel: panelEl.getBoundingClientRect() }
 }
 
+function detachHoverPreviewScrollDismiss(): void {
+  stopHoverPreviewScrollDismiss?.()
+  stopHoverPreviewScrollDismiss = undefined
+}
+
+/** 指针仍在卡上时滚轮也会滚列表；须靠 scroll 收起，不能只靠 pointerleave。 */
+function dismissHoverPreview(): void {
+  detachHoverPreviewScrollDismiss()
+  hoverPreviewController.cancelAll()
+  hoverPreviewVisible.value = false
+  hoverAnchorRect.value = null
+  hoverPanelRect.value = null
+}
+
+function attachHoverPreviewScrollDismiss(): void {
+  detachHoverPreviewScrollDismiss()
+  stopHoverPreviewScrollDismiss = bindHoverPreviewScrollDismiss(
+    resolveRecallHoverPreviewScrollRoot(cardGroupRef.value),
+    dismissHoverPreview
+  )
+}
+
 function handlePreviewPointerEnter(): void {
   if (props.showDetailExportSelection) {
     return
   }
+  // 延迟未出层时滚动也要取消：进入即绑 scroll
+  attachHoverPreviewScrollDismiss()
   hoverPreviewController.enter(props.card.id, () => {
     const rects = readHoverRects()
     if (!rects) {
@@ -219,6 +249,7 @@ function handlePreviewPointerEnter(): void {
 }
 
 function handlePreviewPointerLeave(): void {
+  detachHoverPreviewScrollDismiss()
   hoverPreviewController.leave(props.card.id)
   hoverPreviewVisible.value = false
   hoverAnchorRect.value = null
@@ -291,8 +322,7 @@ onMounted(() => {
 onUnmounted(() => {
   stopEvidenceObserver?.()
   bodyResizeObserver?.disconnect()
-  hoverPreviewController.cancelAll()
-  hoverPreviewVisible.value = false
+  dismissHoverPreview()
 })
 
 watch(

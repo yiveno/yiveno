@@ -2015,7 +2015,6 @@ onUnmounted(() => {
           >
             <AppIcon name="arrow_downward" size="18px" />
           </span>
-          <span class="recall-scroll-jump__label">{{ scrollJumpLabel }}</span>
         </AppIconButton>
       </div>
 
@@ -2648,24 +2647,17 @@ onUnmounted(() => {
   pointer-events: none;
 }
 
+/* 圆形图标钮：仅 arrow；文案只走 title / aria-label（产品文档 §7.0 交互 9） */
 .recall-scroll-jump .recall-scroll-jump__btn {
-  gap: var(--space-2xs);
-  width: auto;
-  min-width: 36px;
+  width: 36px;
   height: 36px;
-  padding: 0 var(--space-sm);
+  padding: 0;
   border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
   color: var(--on-surface);
   background: color-mix(in srgb, var(--surface-white) 82%, transparent);
   pointer-events: auto;
   box-shadow: 0 2px 10px rgb(0 0 0 / 10%);
   backdrop-filter: blur(10px);
-}
-
-.recall-scroll-jump__label {
-  font-size: var(--text-meta);
-  line-height: 1;
-  white-space: nowrap;
 }
 
 .recall-scroll-jump .recall-scroll-jump__btn:hover:not(:disabled) {
