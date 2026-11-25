@@ -7,6 +7,7 @@ import {
   RECALL_RESULT_PAGE_SIZE
 } from '@/core/recall/build-recall-result'
 import {
+  formatEchoCorrectAriaLabel,
   recallObjectTypeLabelKey,
   recallTimeLabelMessageKey,
   type RecallUnderstandingEchoChip
@@ -286,7 +287,7 @@ function closeEchoMenu(): void {
 }
 
 function echoCorrectAria(chip: RecallUnderstandingEchoChip): string {
-  return t('popup_recall_echo_correct_aria', [chip.label])
+  return formatEchoCorrectAriaLabel(chip.label, t)
 }
 
 /** 时间纠错选项：排除当前 label。 */

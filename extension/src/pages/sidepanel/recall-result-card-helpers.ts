@@ -73,8 +73,16 @@ export function resolveListReplyText(
   const omitUnderstood = options.omitUnderstood === true
   const omitCounts = options.omitCounts === true
   const facts = result.recallFraming?.facts
+  // 行为路径：attachBehaviorPreferenceFraming 恒挂 facts，但 .text 才是点名 top1+次数的基线/抛光结果。
+  // 有行为元数据且 .text 非空时优先用 .text，勿从 facts 重渲通用 P2+P4（与回声芯片不重复，omitUnderstood 仍可展示）。
+  const behaviorFramingText =
+    result.behaviorPreference && result.recallFraming?.text.trim()
+      ? result.recallFraming.text.trim()
+      : ''
   let text: string
-  if (facts) {
+  if (behaviorFramingText) {
+    text = behaviorFramingText
+  } else if (facts) {
     text = renderFramingWithShownCount(facts, total, visibleCount, {
       omitUnderstood,
       omitCounts

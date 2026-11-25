@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import {
+  formatEchoCorrectAriaLabel,
   formatRecallUnderstandingEchoChips,
   recallUnderstandingEchoSourceFromParsed
 } from '@/core/recall/format-recall-understanding-echo'
@@ -89,6 +90,23 @@ describe('formatRecallUnderstandingEchoChips', () => {
       translate
     )
     expect(chips.map(chip => chip.label)).toEqual(['article', 'yesterday'])
+  })
+})
+
+describe('formatEchoCorrectAriaLabel', () => {
+  it('内容词芯片已有外层引号时 aria 恰好包一层', () => {
+    const translateZh = (key: string, subs?: string | string[]) => {
+      if (key !== 'popup_recall_echo_correct_aria') {
+        return key
+      }
+      const value = Array.isArray(subs) ? (subs[0] ?? '') : (subs ?? '')
+      return `改掉「${value}」`
+    }
+    // 模拟 popup_recall_echo_term 已包「」的 label
+    expect(formatEchoCorrectAriaLabel('「换一个」', translateZh)).toBe('改掉「换一个」')
+    expect(formatEchoCorrectAriaLabel('「ai」', translateZh)).toBe('改掉「ai」')
+    // 无外层引号（类型芯片）仍包一层
+    expect(formatEchoCorrectAriaLabel('页面', translateZh)).toBe('改掉「页面」')
   })
 })
 

@@ -103,11 +103,13 @@ export function useRecallResultCards(
         Boolean(turn.primaryCard) ||
         Boolean(turn.relatedGuessCard) ||
         (turn.candidateCards?.length ?? 0) > 0
+      // 有卡时 omitCounts：Framing 正文不含随可见数变化的 P6；保留既有 text
+      //（行为路径的 .text 基线也不会被 facts 通用 P2+P4 盖掉）。
       const nextText =
-        turn.recallFramingFacts !== undefined
+        turn.recallFramingFacts !== undefined && !hasCards
           ? renderFramingWithShownCount(turn.recallFramingFacts, rankedTotal, nextVisible, {
               omitUnderstood,
-              omitCounts: hasCards
+              omitCounts: false
             })
           : hasCards
             ? turn.text

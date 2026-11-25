@@ -182,3 +182,26 @@ export function formatRecallUnderstandingEchoChips(
 
   return chips
 }
+
+/**
+ * 去掉芯片 label 外层引号，避免 aria「改掉「…」」双重包裹。
+ * 内容词芯片 label 已是 `popup_recall_echo_term`（「$1」/ “$1”）；纠错 aria 再包一层会成「「…」」。
+ */
+export function stripEchoChipOuterQuotes(label: string): string {
+  const trimmed = label.trim()
+  if (trimmed.length < 2) {
+    return trimmed
+  }
+  const start = trimmed[0]
+  const end = trimmed[trimmed.length - 1]
+  const paired =
+    (start === '「' && end === '」') ||
+    (start === '\u201c' && end === '\u201d') ||
+    (start === '"' && end === '"')
+  return paired ? trimmed.slice(1, -1) : trimmed
+}
+
+/** 纠错控件 aria/title：恰好包一层引号（经 i18n）。 */
+export function formatEchoCorrectAriaLabel(label: string, translate: TranslateFn): string {
+  return translate('popup_recall_echo_correct_aria', [stripEchoChipOuterQuotes(label)])
+}
