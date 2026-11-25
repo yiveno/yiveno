@@ -131,3 +131,90 @@ describe('useComposerSpeechDictation 静默窗口', () => {
     expect(speech.lastStopReason.value).toBe('silence')
   })
 })
+
+describe('useComposerSpeechDictation endSessionForSend 防回填', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.useRealTimers()
+    isBrowserSpeechRecognitionAvailable.mockReturnValue(true)
+    requestExtensionMicrophoneAccess.mockResolvedValue('granted')
+  })
+
+  it('静默自动提交后：endSessionForSend 后迟到 onresult 不回填', async () => {
+    const recognition = makeRecognition()
+    createBrowserSpeechRecognition.mockReturnValue(recognition)
+    const model = ref('')
+    const { useComposerSpeechDictation } =
+      await import('@/pages/sidepanel/use-composer-speech-dictation')
+    const speech = useComposerSpeechDictation({
+      model,
+      disabled: ref(false),
+      silenceStopMs: VOICE_SHORTCUT_SILENCE_STOP_MS
+    })
+
+    speech.toggleListening()
+    await nextTick()
+    recognition.triggerResultFinal('send me')
+    // 模拟静默停（stop 仍可能补送 onresult）
+    speech.stopListening('silence')
+    expect(model.value).toContain('send me')
+
+    // 发送路径：先关会话再清空（父组件清空 clue）
+    speech.endSessionForSend()
+    model.value = ''
+    // 模拟 recognition.stop() 迟到终稿
+    recognition.triggerResultFinal('late fillback')
+    expect(model.value).toBe('')
+    expect(speech.status.value).toBe('idle')
+    expect(recognition.abort).toHaveBeenCalled()
+  })
+
+  it('listening 中 endSessionForSend：会话关闭且 model 保留发送文案', async () => {
+    const recognition = makeRecognition()
+    createBrowserSpeechRecognition.mockReturnValue(recognition)
+    const model = ref('')
+    const { useComposerSpeechDictation } =
+      await import('@/pages/sidepanel/use-composer-speech-dictation')
+    const speech = useComposerSpeechDictation({
+      model,
+      disabled: ref(false)
+    })
+
+    speech.toggleListening()
+    await nextTick()
+    recognition.triggerResultFinal('keep for send')
+    expect(speech.status.value).toBe('listening')
+
+    speech.endSessionForSend()
+    expect(speech.status.value).toBe('idle')
+    expect(model.value).toContain('keep for send')
+    // 父组件清空后迟到结果不回填
+    model.value = ''
+    recognition.triggerResultFinal('should not appear')
+    expect(model.value).toBe('')
+  })
+
+  it('手动停后 endSessionForSend：可正常清空且迟到结果不回填', async () => {
+    const recognition = makeRecognition()
+    createBrowserSpeechRecognition.mockReturnValue(recognition)
+    const model = ref('')
+    const { useComposerSpeechDictation } =
+      await import('@/pages/sidepanel/use-composer-speech-dictation')
+    const speech = useComposerSpeechDictation({
+      model,
+      disabled: ref(false)
+    })
+
+    speech.toggleListening()
+    await nextTick()
+    recognition.triggerResultFinal('manual then send')
+    speech.stopListening('manual')
+    expect(speech.lastStopReason.value).toBe('manual')
+
+    speech.endSessionForSend()
+    model.value = ''
+    recognition.triggerResultFinal('ghost')
+    expect(model.value).toBe('')
+    expect(speech.status.value).toBe('idle')
+  })
+})

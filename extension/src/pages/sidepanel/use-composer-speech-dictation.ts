@@ -85,6 +85,11 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
   /** 点麦时光标后原文（听写过程中不变） */
   let caretSuffix = ''
   let intentionalStop = false
+  /**
+   * 本轮听写是否仍接受 onresult 写 model。
+   * 发送前 endSessionForSend 置 false，挡住 recognition.stop() 迟到的终稿回填。
+   */
+  let sessionAcceptsResults = false
   /** 无转写静默自动停 */
   let silenceTimer: ReturnType<typeof setTimeout> | null = null
   /** 听写超长 tip 节流 */
@@ -135,6 +140,7 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
 
   function teardownRecognition(): void {
     clearSilenceWatch()
+    sessionAcceptsResults = false
     if (!recognition) {
       return
     }
@@ -145,6 +151,29 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
       // 已结束时 abort 可能抛；忽略
     }
     recognition = null
+  }
+
+  /**
+   * 发送前关闭听写会话：清静默计时、卸 handlers 并 abort、status→idle。
+   * 不改 model（发送文案取关闭前内容）；迟到 onresult 不再写回。
+   */
+  function endSessionForSend(): void {
+    clearSilenceWatch()
+    sessionAcceptsResults = false
+    intentionalStop = true
+    if (recognition) {
+      clearRecognitionHandlers(recognition)
+      try {
+        recognition.abort()
+      } catch {
+        // 已结束
+      }
+      recognition = null
+    }
+    if (status.value === 'listening' || status.value === 'requesting_permission') {
+      status.value = 'idle'
+    }
+    logger.info('SidePanel', '语音转写会话已为发送关闭（防迟到 onresult 回填）')
   }
 
   function resolveInsertOffset(full: string): number {
@@ -264,7 +293,12 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
     }
 
     recognition = instance
+    sessionAcceptsResults = true
     instance.onresult = event => {
+      // 发送后 / abort 后：忽略 stop() 补送的终稿，避免清空的 clue 被回填
+      if (!sessionAcceptsResults || recognition !== instance) {
+        return
+      }
       const pieces = extractSpeechRecognitionPieces(event)
       const hasText = pieces.some(piece => piece.transcript.trim().length > 0)
       if (hasText) {
@@ -376,6 +410,7 @@ export function useComposerSpeechDictation(options: UseComposerSpeechDictationOp
     toggleListening,
     stopListening,
     cancelListening,
+    endSessionForSend,
     allowMicrophoneFromPanel,
     dismissPermissionPrompt
   }

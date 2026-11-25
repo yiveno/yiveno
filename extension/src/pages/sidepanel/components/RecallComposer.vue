@@ -204,6 +204,8 @@ watch(
     if (!model.value.trim()) {
       return
     }
+    // 先关会话，挡住 recognition.stop() 迟到 onresult 把已清空的 clue 回填
+    speech.endSessionForSend()
     emit('send')
   }
 )
@@ -398,6 +400,9 @@ function handleKeydown(event: KeyboardEvent): void {
       return
     }
     event.preventDefault()
+    if (speech.status.value === 'listening') {
+      speech.endSessionForSend()
+    }
     // 发送前收文末 URL 芯片（手打完整 URL 的收口）
     syncModelFromEditor({ chipTrailing: true, formatUrls: true })
     emit('send')
@@ -629,6 +634,10 @@ function handleCancelVoice(): void {
 function handleSendClick(): void {
   if (props.disabled || !model.value.trim()) {
     return
+  }
+  if (speech.status.value === 'listening') {
+    // 关闭前 model 仍是发送文案；abort 防 stop 迟到回填
+    speech.endSessionForSend()
   }
   syncModelFromEditor({ chipTrailing: true })
   emit('send')
