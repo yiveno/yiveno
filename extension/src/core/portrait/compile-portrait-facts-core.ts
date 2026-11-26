@@ -11,6 +11,7 @@ import {
   buildPortraitFactId,
   looksLikeSiteFact,
   normalizePortraitValue,
+  portraitContestedSlots,
   reevaluatePortraitFact,
   resolvePortraitFactState,
   shouldEnterPortrait,
@@ -61,33 +62,6 @@ function emptyStats(): CompilePortraitFactsResult['stats'] {
     crossBoosted: 0,
     crossContradicted: 0
   }
-}
-
-/** 同槽多值是否有争议（分差 ≤0.15）。 */
-function contestedSlots(facts: readonly PortraitFactRecord[]): Set<string> {
-  const bySlot = new Map<string, PortraitFactRecord[]>()
-  for (const fact of facts) {
-    if (fact.state === 'invalid') {
-      continue
-    }
-    const list = bySlot.get(fact.slot) ?? []
-    list.push(fact)
-    bySlot.set(fact.slot, list)
-  }
-  const contested = new Set<string>()
-  for (const [slot, rows] of bySlot) {
-    if (rows.length < 2) {
-      continue
-    }
-    for (let i = 0; i < rows.length; i += 1) {
-      for (let j = i + 1; j < rows.length; j += 1) {
-        if (Math.abs(rows[i]!.credibility - rows[j]!.credibility) <= 0.15) {
-          contested.add(slot)
-        }
-      }
-    }
-  }
-  return contested
 }
 
 function upsertMap(existing: readonly PortraitFactRecord[]): Map<string, PortraitFactRecord> {
@@ -311,7 +285,7 @@ export function compilePortraitFactsCore(
   mergeInferenceFacts(map, input, stats)
   applyBehaviorCrossCheck(map, input, stats)
 
-  const contested = contestedSlots([...map.values()])
+  const contested = portraitContestedSlots([...map.values()])
   const upserts: PortraitFactRecord[] = []
   for (const fact of map.values()) {
     const next = reevaluatePortraitFact(fact, {

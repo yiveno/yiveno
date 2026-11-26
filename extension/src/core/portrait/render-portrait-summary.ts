@@ -26,6 +26,8 @@ export function renderPortraitFactLine(item: PortraitSummaryItem, t: TranslateFn
       return t('portrait_fact_hedged', [value])
     case 'juxtapose':
       return t('portrait_fact_juxtapose', [value])
+    case 'inferred':
+      return t('portrait_fact_inferred', [value])
     case 'paraphrase':
     default:
       return t('portrait_fact_paraphrase', [value])

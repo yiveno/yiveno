@@ -50,6 +50,12 @@ describe('render-portrait-summary', () => {
     expect(renderPortraitFactLine({ ...item, wording: 'juxtapose', state: 'contested' }, t)).toBe(
       'portrait_fact_juxtapose:github.com'
     )
+    expect(
+      renderPortraitFactLine(
+        { ...item, wording: 'inferred', credibility: 0.4, state: 'unconfirmed' },
+        t
+      )
+    ).toBe('portrait_fact_inferred:github.com')
   })
 
   it('分组视图含 pending', () => {
@@ -69,7 +75,45 @@ describe('render-portrait-summary', () => {
     ]
     const view = buildPortraitSummaryViewModel(buildPortraitSummary(facts), t)
     expect(view.pendingInferences).toHaveLength(1)
+    expect(view.pendingInferences[0]?.line).toBe('portrait_fact_inferred:rag')
     expect(view.groups[0]?.key).toBe('unconfirmed')
+  })
+
+  it('存量 contested contentTerm 读侧自愈为 unconfirmed + inferred', () => {
+    const facts: PortraitFactRecord[] = [
+      {
+        id: `${OWNER}\0contentTerm\0rag`,
+        ownerId: OWNER,
+        slot: 'contentTerm',
+        value: 'rag',
+        credibility: 0.4,
+        state: 'contested',
+        sources: [{ type: 'inference', ref: 'n1', score: 0.4, observedAt: NOW }],
+        inPortrait: false,
+        createdAt: NOW,
+        updatedAt: NOW
+      },
+      {
+        id: `${OWNER}\0contentTerm\0vector`,
+        ownerId: OWNER,
+        slot: 'contentTerm',
+        value: 'vector',
+        credibility: 0.4,
+        state: 'contested',
+        sources: [{ type: 'inference', ref: 'n2', score: 0.4, observedAt: NOW }],
+        inPortrait: false,
+        createdAt: NOW,
+        updatedAt: NOW
+      }
+    ]
+    const summary = buildPortraitSummary(facts)
+    expect(summary.groups.contested).toHaveLength(0)
+    expect(summary.groups.unconfirmed).toHaveLength(2)
+    expect(summary.groups.unconfirmed.every(i => i.wording === 'inferred')).toBe(true)
+    const view = buildPortraitSummaryViewModel(summary, t)
+    expect(view.pendingInferences.every(i => i.line.startsWith('portrait_fact_inferred:'))).toBe(
+      true
+    )
   })
 
   it('批准后行文案改 direct 且在 verified 组', () => {
@@ -88,7 +132,7 @@ describe('render-portrait-summary', () => {
       }
     ]
     const view = buildPortraitSummaryViewModel(buildPortraitSummary(facts), t)
-    expect(view.pendingInferences[0]?.line).toBe('portrait_fact_paraphrase:github.com')
+    expect(view.pendingInferences[0]?.line).toBe('portrait_fact_inferred:github.com')
     const next = applyPortraitApproveToView(view, `${OWNER}\0contentTerm\0github.com`, t)
     expect(next.pendingInferences).toHaveLength(0)
     const verified = next.groups.find(g => g.key === 'verified')

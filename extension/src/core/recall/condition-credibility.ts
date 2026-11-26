@@ -314,13 +314,21 @@ export function mergeConditionValues(
 }
 
 /**
+ * 互斥槽：同槽多值冲突时只留高分胜者。
+ * contentTerm / objectType 多值可并存，不在此集合。
+ */
+export const EXCLUSIVE_CONDITION_SLOTS: ReadonlySet<ConditionSlot> = new Set([
+  'timeRange', // 相对时间
+  'preferenceOperator' // 偏好算子
+])
+
+/**
  * 互斥槽冲突：高分胜；平局后有效时间胜；败者 active=false，不删除。
  * contentTerm / objectType 多值可并存，不做互斥失效。
  */
 export function resolveConditionConflicts(
   conditions: readonly ScoredCondition[]
 ): ScoredCondition[] {
-  const exclusiveSlots: ReadonlySet<ConditionSlot> = new Set(['timeRange', 'preferenceOperator'])
   const bySlot = new Map<ConditionSlot, ScoredCondition[]>()
   for (const row of conditions) {
     const list = bySlot.get(row.slot) ?? []
@@ -330,7 +338,7 @@ export function resolveConditionConflicts(
 
   const out: ScoredCondition[] = []
   for (const [slot, rows] of bySlot) {
-    if (!exclusiveSlots.has(slot) || rows.length <= 1) {
+    if (!EXCLUSIVE_CONDITION_SLOTS.has(slot) || rows.length <= 1) {
       out.push(...rows.map(row => ({ ...row, active: row.active !== false })))
       continue
     }

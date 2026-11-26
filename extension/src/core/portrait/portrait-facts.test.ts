@@ -173,10 +173,11 @@ describe('portrait-facts · trait / 措辞 / 摘要', () => {
   })
 
   it('四态措辞', () => {
-    expect(portraitWordingKind(0.5, 'unconfirmed')).toBe('paraphrase')
-    expect(portraitWordingKind(0.7, 'corroborated')).toBe('hedged')
-    expect(portraitWordingKind(0.85, 'verified')).toBe('direct')
-    expect(portraitWordingKind(0.7, 'contested')).toBe('juxtapose')
+    expect(portraitWordingKind(0.4, 'unconfirmed', ['inference'])).toBe('inferred')
+    expect(portraitWordingKind(0.5, 'unconfirmed', ['statement'])).toBe('paraphrase')
+    expect(portraitWordingKind(0.7, 'corroborated', ['behavior'])).toBe('hedged')
+    expect(portraitWordingKind(0.85, 'verified', ['statement', 'behavior'])).toBe('direct')
+    expect(portraitWordingKind(0.7, 'contested', ['statement'])).toBe('juxtapose')
   })
 
   it('摘要分组 + 空态 + pending 推断', () => {

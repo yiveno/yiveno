@@ -3837,7 +3837,16 @@
     }
   },
   "portrait_fact_juxtapose": {
-    "message": "You’ve said you like $1, but recent visits look mixed.",
+    "message": "The signals on $1 don’t line up yet.",
+    "placeholders": {
+      "value": {
+        "content": "$1",
+        "example": "github.com"
+      }
+    }
+  },
+  "portrait_fact_inferred": {
+    "message": "I’m guessing you might be into $1.",
     "placeholders": {
       "value": {
         "content": "$1",

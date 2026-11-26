@@ -3837,7 +3837,16 @@
     }
   },
   "portrait_fact_juxtapose": {
-    "message": "你说过喜欢 $1，但最近看起来不太一致。",
+    "message": "关于 $1，我看到的线索还对不上。",
+    "placeholders": {
+      "value": {
+        "content": "$1",
+        "example": "github.com"
+      }
+    }
+  },
+  "portrait_fact_inferred": {
+    "message": "我猜你可能关注 $1。",
     "placeholders": {
       "value": {
         "content": "$1",

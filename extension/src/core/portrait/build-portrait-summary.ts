@@ -3,7 +3,9 @@
  */
 
 import {
+  portraitContestedSlots,
   portraitWordingKind,
+  resolvePortraitFactState,
   type PortraitFactRecord,
   type PortraitFactState,
   type PortraitWordingKind
@@ -45,20 +47,29 @@ function toGroup(state: Exclude<PortraitFactState, 'invalid'>): PortraitSummaryG
   return state
 }
 
-function toItem(fact: PortraitFactRecord): PortraitSummaryItem | null {
+function toItem(
+  fact: PortraitFactRecord,
+  contested: ReadonlySet<string>
+): PortraitSummaryItem | null {
   if (fact.state === 'invalid') {
     return null
   }
   const sourceTypes = [...new Set(fact.sources.map(s => s.type))]
+  const effectiveState = resolvePortraitFactState(fact.credibility, {
+    hasCloseContradiction: contested.has(fact.slot)
+  })
+  if (effectiveState === 'invalid') {
+    return null
+  }
   const pendingInference = !fact.inPortrait && fact.sources.some(s => s.type === 'inference')
   return {
     factId: fact.id,
     slot: fact.slot,
     value: fact.value,
     credibility: fact.credibility,
-    state: fact.state,
+    state: effectiveState,
     inPortrait: fact.inPortrait,
-    wording: portraitWordingKind(fact.credibility, fact.state),
+    wording: portraitWordingKind(fact.credibility, effectiveState, sourceTypes),
     pendingInference,
     sourceTypes
   }
@@ -67,8 +78,10 @@ function toItem(fact: PortraitFactRecord): PortraitSummaryItem | null {
 /**
  * 从 B 层行构建摘要（排除 invalid）。
  * pendingInferences：推断来源且未进画像，单独列出。
+ * 读侧按互斥槽重算 contested，存量误标 contentTerm 可自愈。
  */
 export function buildPortraitSummary(facts: readonly PortraitFactRecord[]): PortraitSummary {
+  const contested = portraitContestedSlots(facts)
   const groups: Record<PortraitSummaryGroup, PortraitSummaryItem[]> = {
     verified: [],
     corroborated: [],
@@ -79,7 +92,7 @@ export function buildPortraitSummary(facts: readonly PortraitFactRecord[]): Port
   let any = false
 
   for (const fact of facts) {
-    const item = toItem(fact)
+    const item = toItem(fact, contested)
     if (!item) {
       continue
     }

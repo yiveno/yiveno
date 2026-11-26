@@ -104,4 +104,75 @@ describe('compilePortraitFactsCore', () => {
     expect(row!.credibility).toBeGreaterThanOrEqual(0.65)
     expect(result.stats.crossBoosted).toBeGreaterThanOrEqual(1)
   })
+
+  it('多条 contentTerm inference 同分 → 均 unconfirmed、无一 contested', () => {
+    const note = (topic: string, idx: number): MemoryNoteRecord =>
+      ({
+        id: `${OWNER}\u0000note\u0000${idx}`,
+        ownerId: OWNER,
+        sourceMemoryItemId: '22222222-2222-4222-8222-222222222222',
+        sourceType: 'text_excerpt',
+        text: `User explores ${topic}`,
+        sourceQuote: topic,
+        topicAnchor: [topic],
+        dreamRunId: 'run',
+        version: 1,
+        schemaVersion: 1,
+        sourceUpdatedAt: NOW_ISO,
+        createdAt: NOW_ISO,
+        updatedAt: NOW_ISO
+      }) satisfies MemoryNoteRecord
+    const result = compilePortraitFactsCore({
+      ownerId: OWNER,
+      existing: [],
+      behaviorRows: [],
+      notes: [note('rag', 0), note('vector', 1), note('embeddings', 2)],
+      nowMs: NOW_MS,
+      nowIso: NOW_ISO
+    })
+    const inferences = result.upserts.filter(r => r.slot === 'contentTerm')
+    expect(inferences.length).toBeGreaterThanOrEqual(3)
+    expect(inferences.every(r => r.state === 'unconfirmed')).toBe(true)
+    expect(inferences.every(r => r.state !== 'contested')).toBe(true)
+  })
+
+  it('互斥槽 timeRange 真冲突 → contested', () => {
+    const existing: PortraitFactRecord[] = [
+      {
+        id: `${OWNER}\0timeRange\0last_week`,
+        ownerId: OWNER,
+        slot: 'timeRange',
+        value: 'last_week',
+        credibility: 0.7,
+        state: 'corroborated',
+        sources: [{ type: 'statement', ref: 's1', score: 0.7, observedAt: NOW_ISO }],
+        inPortrait: true,
+        createdAt: NOW_ISO,
+        updatedAt: NOW_ISO
+      },
+      {
+        id: `${OWNER}\0timeRange\0last_month`,
+        ownerId: OWNER,
+        slot: 'timeRange',
+        value: 'last_month',
+        credibility: 0.75,
+        state: 'corroborated',
+        sources: [{ type: 'statement', ref: 's2', score: 0.75, observedAt: NOW_ISO }],
+        inPortrait: true,
+        createdAt: NOW_ISO,
+        updatedAt: NOW_ISO
+      }
+    ]
+    const result = compilePortraitFactsCore({
+      ownerId: OWNER,
+      existing,
+      behaviorRows: [],
+      notes: [],
+      nowMs: NOW_MS,
+      nowIso: NOW_ISO
+    })
+    const timeRows = result.upserts.filter(r => r.slot === 'timeRange')
+    expect(timeRows).toHaveLength(2)
+    expect(timeRows.every(r => r.state === 'contested')).toBe(true)
+  })
 })

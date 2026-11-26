@@ -8,6 +8,7 @@ import { z } from 'zod'
 import {
   ConditionSlotSchema,
   ConditionSourceSchema,
+  EXCLUSIVE_CONDITION_SLOTS,
   applyCredibilityEvent,
   clampCredibility,
   credibilityState,
@@ -343,7 +344,46 @@ export function looksLikeSiteFact(value: string): boolean {
 }
 
 /**
+ * 互斥槽同槽分差 ≤0.15 且不同 value → contested。
+ * 多值槽（contentTerm / objectType）永不因并存计入。
+ */
+export function portraitContestedSlots(facts: readonly PortraitFactRecord[]): Set<string> {
+  const bySlot = new Map<string, PortraitFactRecord[]>()
+  for (const fact of facts) {
+    if (fact.state === 'invalid') {
+      continue
+    }
+    if (!EXCLUSIVE_CONDITION_SLOTS.has(fact.slot)) {
+      continue
+    }
+    const list = bySlot.get(fact.slot) ?? []
+    list.push(fact)
+    bySlot.set(fact.slot, list)
+  }
+  const contested = new Set<string>()
+  for (const [slot, rows] of bySlot) {
+    if (rows.length < 2) {
+      continue
+    }
+    for (let i = 0; i < rows.length; i += 1) {
+      for (let j = i + 1; j < rows.length; j += 1) {
+        const left = rows[i]!
+        const right = rows[j]!
+        if (left.value === right.value) {
+          continue
+        }
+        if (Math.abs(left.credibility - right.credibility) <= 0.15) {
+          contested.add(slot)
+        }
+      }
+    }
+  }
+  return contested
+}
+
+/**
  * §9.7 回答措辞档。
+ * inferred = 纯推断来源，不得写成用户陈述；优先于 paraphrase/juxtapose。
  * contested → juxtapose；其余按分数。
  */
 export type PortraitWordingKind =
@@ -351,13 +391,19 @@ export type PortraitWordingKind =
   | 'hedged' // 0.6–0.8：你好像喜欢 X
   | 'direct' // ≥0.8：你喜欢 X
   | 'juxtapose' // 有争议：并列
+  | 'inferred' // 纯推断来源：我猜你可能关注 X
 
 export function portraitWordingKind(
   credibility: number,
-  state: PortraitFactState
+  state: PortraitFactState,
+  sourceTypes: readonly string[] = []
 ): PortraitWordingKind {
   if (state === 'invalid') {
     return 'paraphrase'
+  }
+  // 纯推断：不得写成用户陈述 / 假行为冲突
+  if (sourceTypes.length > 0 && sourceTypes.every(type => type === 'inference')) {
+    return 'inferred'
   }
   if (state === 'contested') {
     return 'juxtapose'

@@ -981,6 +981,7 @@ export const MESSAGE_KEYS = [
   'portrait_fact_hedged',
   'portrait_fact_direct',
   'portrait_fact_juxtapose',
+  'portrait_fact_inferred',
   'portrait_pending_inferences',
   'portrait_approve',
   'portrait_decline',
