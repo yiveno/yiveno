@@ -63,6 +63,27 @@ import {
 } from '@/infrastructure/storage/install-onboarding-storage'
 import { showAppToast } from '@/infrastructure/ui/use-app-toast'
 
+/**
+ * 冷启动库探测签名：pipeline / enrichment 批次指纹。
+ * 轮询期间相同签名不重复 probe，避免 SW 日志刷屏。
+ * `state` 为 null 时返回固定值 `'none'`。
+ */
+export function coldStartProbeSignature(
+  state: ColdStartPipelineState | null,
+  batch: ColdStartEnrichmentBatch | null
+): string {
+  if (!state) {
+    return 'none'
+  }
+  return [
+    state.status,
+    state.readyAt ?? '',
+    batch?.status ?? '',
+    String(batch?.settled ?? ''),
+    String(batch?.total ?? '')
+  ].join('|')
+}
+
 export type UseSidepanelColdStartOptions = {
   /** composer 线索（预填写入）。 */
   clue: Ref<string>
@@ -187,6 +208,10 @@ export function useSidepanelColdStart(
 
   let importPollTimer: ReturnType<typeof setInterval> | null = null
   let coldStartPollTimer: ReturnType<typeof setInterval> | null = null
+  /** 上次已触发 probe 的冷启动签名；相同则跳过，止轮询刷屏。 */
+  let lastColdStartProbeSig: string | null = null
+  /** probe 进行中则后续调用直接返回（不排队）。 */
+  let probeInFlight = false
 
   /** 本 Panel 会话跳过门禁（不写持久化）。 */
   const coldStartGateSessionSkipped = ref(false)
@@ -600,6 +625,11 @@ export function useSidepanelColdStart(
   }
 
   async function probeMemoryLibrary() {
+    // 并发合并：已有一次未完成则直接返回，不排队
+    if (probeInFlight) {
+      return
+    }
+    probeInFlight = true
     try {
       const [allResponse, bookmarkResponse, settingsResponse, stalenessResponse] =
         await Promise.all([
@@ -638,6 +668,8 @@ export function useSidepanelColdStart(
       bookmarkCount.value = null
       aiFeaturesEnabled.value = null
       unsyncedBookmarkCount.value = null
+    } finally {
+      probeInFlight = false
     }
   }
 
@@ -721,7 +753,12 @@ export function useSidepanelColdStart(
         startColdStartPolling()
       }
       if (response.state.status === 'ready') {
-        void probeMemoryLibrary()
+        // 签名未变则跳过：enrichment 活跃时 400ms 轮询不停，避免每轮打 4 条 SW 消息刷屏
+        const nextSig = coldStartProbeSignature(response.state, response.enrichmentBatch)
+        if (nextSig !== lastColdStartProbeSig) {
+          lastColdStartProbeSig = nextSig
+          void probeMemoryLibrary()
+        }
       }
     }
   }
