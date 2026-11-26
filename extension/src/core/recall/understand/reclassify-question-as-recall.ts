@@ -15,7 +15,7 @@ export interface QuestionAsRecallInput {
   /** 已抽出的正向内容词 */
   contentTerms: readonly string[]
   /** 未知类型原文（若有） */
-  objectTypeOther?: string | null
+  objectTypeOther?: string | null | undefined
 }
 
 /**
