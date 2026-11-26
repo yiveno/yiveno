@@ -668,9 +668,9 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 
 **Canonical 规则（Normative · 实现约束）：**
 
-1. **对象类型**：内部 slug 与主检索词面用英文（`poem` / `article` / `song` / `code` / `video` …），不用「诗 / 文章 / 歌 / 视频」等本地化词当 canonical。闭集 **10 类**装不下时（播客 / 菜谱等），LLM 填 `objectTypeOther` 原文词 → 只进 `contentTerms`，**永不**进 `objectTypes` 硬筛（R7）。
+1. **对象类型**：内部 slug 与主检索词面用英文（`poem` / `article` / `song` / `code` / `video` …），不用「诗 / 文章 / 歌 / 视频」等本地化词当 canonical。闭集 **10 类**装不下时（播客 / 菜谱等），LLM 填 `objectTypeOther` 原文词 → 只进 `contentTerms`，**永不**进 `objectTypes` 硬筛（R7）。**形式证据：** 仅在线索明确点名对象形态时填 `objectTypes`；「可能是视频也可能是文章 / 视频还是文章来着」等形态不确定套话 → **留空、禁止多类型堆叠**；明确「视频/文章/歌/诗…」仍正常标型。`page` 仅认强表面（`网站` / `website` / `webpage` / `web page`）；场景名词「页面/网页/page/site」不够撑 `page`。
 2. **时间 / 行为 / 附注指向**：parser 词典仅维护英文 surface（`yesterday` / `last week` / `half read` / `my note` …）；不再为中文等 locale 保留 alias。相对时间 **9 标签**装不下时（绝对日期 / 季节 / 事件），`timeLabel` 留空，表达留在 `contentTerms`（R7 · prompt 出口，无新槽）。
-3. **实体**：规则 enrichment **不**写专名 allowlist；`entities` 仅来自 LLM enrichment 提议、用户附注或其它明示路径；写入时 canonical 仍统一英文（如 `Li Bai`）。禁止主题/实体硬编码 seed 冒充通解。
+3. **实体**：规则 enrichment **不**写专名 allowlist；`entities` 仅来自 LLM enrichment 提议、用户附注或其它明示路径；写入时 canonical 仍统一英文（如 `Li Bai`）。禁止主题/实体硬编码 seed 冒充通解。**平台/渠道来源**（闭集表面：公众号、抖音、小红书、B站、知乎、YouTube、微博等中英常见写法）：线索中出现则须保留进 `contentTerms`（prompt + 接地层补回），不得被主题词挤掉；此为来源表面保留，**不是**开放内容同义灰名单。
 4. **追问芯片**：`label` 本地化展示；**点击填入 composer 的 `value` 用稳定英文**（或稳定 canonical token），保证跨 locale 下 parser 行为一致。
 5. **单测与验收语料**：以**英语真实口语**为唯一主路径；不再保留中文 Recall alias 回归用例。
 

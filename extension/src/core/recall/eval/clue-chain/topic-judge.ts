@@ -62,8 +62,28 @@ export function parseTopicJudgeResponse(raw: string): ClueChainTopicJudgeResult 
 }
 
 /**
+ * 期望主题是否为「无法确定 / indeterminate / unspecified」类金标。
+ * 仅 harness：这类金标表示诚实空主题，不是具体题材。
+ */
+export function isIndeterminateExpectedTopic(expectedTopic: string): boolean {
+  const normalized = expectedTopic.trim().toLowerCase()
+  if (!normalized) {
+    return true
+  }
+  return (
+    /无法确定|主题不明|不确定具体主题|具体主题不明|indeterminate|unspecified|unclear topic|topic unclear|no specific topic|主题不确定/.test(
+      normalized
+    ) ||
+    normalized === 'unknown' ||
+    normalized === 'n/a'
+  )
+}
+
+/**
  * 对一条 topic 做语义裁判。
- * expectedTopic 为空/null → 不调 LLM：实际无 terms 算过，有 terms 也算过（宽松；本集 A/B 几乎都有 topic）。
+ * - expectedTopic 为空/null → 不调 LLM：记通过（宽松）
+ * - 期望 indeterminate/unspecified 且实际 terms 为空 → 确定性 match（禁止 LLM 自由裁量抖动）
+ * - 期望有具体主题且实际为空 → 确定性失败（仍不调 LLM）
  */
 export async function judgeTopicSemantic(input: {
   clue: string
@@ -75,6 +95,21 @@ export async function judgeTopicSemantic(input: {
     return {
       match: true,
       reason: '期望 topic 为空，跳过语义比对（记通过）'
+    }
+  }
+  const actualEmpty =
+    input.actualTopicTerms.length === 0 ||
+    input.actualTopicTerms.every(term => term.trim().length === 0)
+  if (actualEmpty) {
+    if (isIndeterminateExpectedTopic(input.expectedTopic)) {
+      return {
+        match: true,
+        reason: '期望主题 indeterminate/unspecified 且解析 terms 为空：确定性约定 match'
+      }
+    }
+    return {
+      match: false,
+      reason: '期望有具体主题，实际 topic terms 为空'
     }
   }
   const text = await input.complete(

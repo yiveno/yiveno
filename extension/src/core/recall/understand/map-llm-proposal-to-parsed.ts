@@ -4,6 +4,7 @@ import {
   groundBehaviorHints,
   groundObjectTypes,
   groundTimeLabel,
+  preservePlatformChannelTerms,
   stripGroundedSurfacesFromTerms
 } from '@/core/recall/understand/ground-llm-parse-slots'
 import { shouldReclassifyQuestionAsRecall } from '@/core/recall/understand/reclassify-question-as-recall'
@@ -165,6 +166,8 @@ export function mapLlmProposalToParsedClue(
     }
   )
   contentTerms = dropMisleadingNoteContentTerm(normalized, contentTerms)
+  // 平台/渠道表面：clue 中出现则确定性补回，避免模型只留主题词挤掉来源实体
+  contentTerms = preservePlatformChannelTerms(clue, contentTerms)
 
   // 刚存/类型约束线索：剥掉模型常残留的虚词，避免挡约束邻域；保留真实内容词
   const hasConstraintSlots =
