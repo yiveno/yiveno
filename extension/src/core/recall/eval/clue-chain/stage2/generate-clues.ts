@@ -272,8 +272,10 @@ export function generateStage2ClueTasks(input: Stage2ClueGenerationInput): Stage
     })
   }
 
-  if (tasks.length !== CLUE_CHAIN_STAGE2_SIZES.totalTasks) {
-    throw new Error(`总任务数 ${tasks.length}`)
+  // 正例断言后 TS 会把 length 收窄成 240；push 负例后用局部变量再比 total
+  const totalCount: number = tasks.length
+  if (totalCount !== CLUE_CHAIN_STAGE2_SIZES.totalTasks) {
+    throw new Error(`总任务数 ${totalCount}`)
   }
 
   return tasks
