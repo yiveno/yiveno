@@ -159,4 +159,44 @@ describe('selectClueProcessingDisposition', () => {
       rejectReason: null
     })
   })
+
+  it('中文长句夹短拉丁缩写 / 纯中文 → proceed（勿因 BBC 邻接比误拦）', () => {
+    const a06 =
+      '有个纪录片我之前看了一点，讲好像人类从很早以前就开始迁徙，跟气候变化有关的，画面特别好，可能是BBC拍的。'
+    expect(selectClueProcessingDisposition(a06)).toEqual({
+      disposition: 'proceed',
+      rejectReason: null
+    })
+    expect(
+      selectClueProcessingDisposition('之前看过一篇CNN报道，讲的是北极冰层融化对迁徙鸟类的影响')
+    ).toEqual({ disposition: 'proceed', rejectReason: null })
+    expect(
+      selectClueProcessingDisposition(
+        '有个功能可以把照片里的人抠出来贴到另一张图，苹果自带还是别的软件'
+      )
+    ).toEqual({ disposition: 'proceed', rejectReason: null })
+  })
+
+  it('拉丁占主导的乱输 / 数字糊 / 纯符号仍拒绝', () => {
+    expect(selectClueProcessingDisposition('asdf zxcv')).toEqual({
+      disposition: 'reject_noise',
+      rejectReason: 'keyboard_mash'
+    })
+    expect(selectClueProcessingDisposition('asdf zxcv qwer')).toEqual({
+      disposition: 'reject_noise',
+      rejectReason: 'keyboard_mash'
+    })
+    expect(selectClueProcessingDisposition('asdasd')).toEqual({
+      disposition: 'reject_noise',
+      rejectReason: 'keyboard_mash'
+    })
+    expect(selectClueProcessingDisposition('123123')).toEqual({
+      disposition: 'reject_noise',
+      rejectReason: 'digit_mash'
+    })
+    expect(selectClueProcessingDisposition('!!!')).toEqual({
+      disposition: 'reject_noise',
+      rejectReason: 'pure_symbol'
+    })
+  })
 })

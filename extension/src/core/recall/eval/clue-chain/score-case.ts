@@ -241,7 +241,42 @@ export function scoreType(
   }
 }
 
-/** entities：期望实体须出现在 contentTerms / topic / exclude / objectTypeOther 拼合文本中。 */
+/**
+ * 实体别名组（仅 harness · 解析 terms 侧互认）。
+ * 同组不同语言/形式互认；绝不回退到原 clue。
+ */
+const ENTITY_ALIAS_GROUPS: readonly (readonly string[])[] = [
+  ['apple', '苹果'],
+  ['微信公众号', '公众号']
+]
+
+/** 大小写 / 空白 / 标点归一（保留字母数字与 CJK）。 */
+export function normalizeEntityToken(raw: string): string {
+  return raw.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '')
+}
+
+/** 期望实体 → 归一后可接受的别名集合（含自身）。 */
+export function expandEntityAliasNeedles(entity: string): string[] {
+  const normalized = normalizeEntityToken(entity)
+  if (!normalized) {
+    return []
+  }
+  const needles = new Set<string>([normalized])
+  for (const group of ENTITY_ALIAS_GROUPS) {
+    const normalizedGroup = group.map(normalizeEntityToken).filter(Boolean)
+    if (normalizedGroup.includes(normalized)) {
+      for (const alias of normalizedGroup) {
+        needles.add(alias)
+      }
+    }
+  }
+  return [...needles]
+}
+
+/**
+ * entities：期望实体须出现在**解析出的** contentTerms / topic / exclude / objectTypeOther 中。
+ * 含别名归一；禁止用原 clue 文本兜底。
+ */
 export function scoreEntities(
   expectedEntities: readonly string[],
   haystackParts: readonly (string | null | undefined)[]
@@ -256,11 +291,15 @@ export function scoreEntities(
   }
   const haystack = haystackParts
     .filter((part): part is string => typeof part === 'string' && part.length > 0)
+    .map(normalizeEntityToken)
+    .filter(part => part.length > 0)
     .join('\u0000')
-    .toLowerCase()
   const missing = expectedEntities.filter(entity => {
-    const needle = entity.trim().toLowerCase()
-    return needle.length > 0 && !haystack.includes(needle)
+    const needles = expandEntityAliasNeedles(entity)
+    if (needles.length === 0) {
+      return false
+    }
+    return !needles.some(needle => haystack.includes(needle))
   })
   const passed = missing.length === 0
   return {
@@ -365,13 +404,13 @@ export function scoreClueChainCase(
   } else {
     fields.push(scoreTime(run.expected.time, run.timeLabelActual))
     fields.push(scoreType(run.expected.type, run.objectTypesActual))
+    // 只查解析 terms；禁止把原 clue 拼进 haystack（否则实体虚高）
     fields.push(
       scoreEntities(run.expected.entities, [
         ...run.contentTermsActual,
         ...run.topicTermsActual,
         ...run.excludeContentTermsActual,
-        run.objectTypeOtherActual,
-        run.clue
+        run.objectTypeOtherActual
       ])
     )
   }

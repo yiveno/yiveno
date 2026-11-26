@@ -698,15 +698,15 @@ Yiveno 要跨越“内容搜索”的分水岭，必须具备**对象理解（ob
 **相对时间标签闭集（Normative · 与 `RecallRelativeTimeLabel` / lexicon 对齐 · ADR-011）：**  
 绝对日期 / 季节 / 事件（「去年夏天」「2024年3月」「世界杯期间」）**不要**就近套入下表 9 标签；`timeLabel` 留空，表达留在 `contentTerms`（R7 · prompt 出口）。
 
-| label                                          | 口语例（非穷举）                        | 滚动窗（相对「今天」UTC 日界） | **timeConfidence** | Filter                       |
-| ---------------------------------------------- | --------------------------------------- | ------------------------------ | ------------------ | ---------------------------- |
-| `today` / `yesterday` / `day_before_yesterday` | today, yesterday, day before yesterday  | 单日                           | **high**           | **硬筛**                     |
-| `last_week`                                    | last week                               | 近 7 日（不含今天）            | **high**           | **硬筛**                     |
-| `last_month`                                   | last month, a month ago                 | 约 14–60 日前                  | **high**           | **硬筛**                     |
-| `recent`                                       | recently, a few days ago, the other day | 近 7 日含此刻                  | **low**            | **软排**（窗内加分；不硬空） |
-| `a_while_ago`                                  | a while ago, some time ago              | 约 3–30 日前（数周）           | **low**            | **软排**                     |
-| `few_months_ago`                               | a few months back/ago, a while back     | 约 45–180 日前                 | **low**            | **软排**                     |
-| `long_ago`                                     | long ago, a long time ago               | 约 30–365 日前                 | **low**            | **软排**                     |
+| label                                          | 口语例（非穷举）                                                                                  | 滚动窗（相对「今天」UTC 日界） | **timeConfidence** | Filter                       |
+| ---------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------ | ------------------ | ---------------------------- |
+| `today` / `yesterday` / `day_before_yesterday` | today, yesterday, day before yesterday                                                            | 单日                           | **high**           | **硬筛**                     |
+| `last_week`                                    | last week                                                                                         | 近 7 日（不含今天）            | **high**           | **硬筛**                     |
+| `last_month`                                   | last month, a month ago                                                                           | 约 14–60 日前                  | **high**           | **硬筛**                     |
+| `recent`                                       | recently, a few days ago, the other day；最近 / 前几天                                            | 近 7 日含此刻                  | **low**            | **软排**（窗内加分；不硬空） |
+| `a_while_ago`                                  | a while ago, some time ago；之前 / 以前 / 上次 / 前一阵 / 前段时间                                | 约 3–30 日前（数周）           | **low**            | **软排**                     |
+| `few_months_ago`                               | a few months back/ago, a while back；几个月前 / 前几个月                                          | 约 45–180 日前                 | **low**            | **软排**                     |
+| `long_ago`                                     | long ago, a long time ago；去年 / 前年 / 去年或前年 / 很久以前（「去年夏天」等季节复合仍留 null） | 约 30–365 日前                 | **low**            | **软排**                     |
 
 **时间置信度（Normative · ADR-011）：** 置信由 label **确定性派生**（写入 `ParsedRecallClue.timeConfidence`）；禁止 LLM 自报 confidence。
 

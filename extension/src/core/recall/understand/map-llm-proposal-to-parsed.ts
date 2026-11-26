@@ -6,6 +6,7 @@ import {
   groundTimeLabel,
   stripGroundedSurfacesFromTerms
 } from '@/core/recall/understand/ground-llm-parse-slots'
+import { shouldReclassifyQuestionAsRecall } from '@/core/recall/understand/reclassify-question-as-recall'
 import { normalizeRecallText } from '@/core/recall/keyword-filter'
 import { reconcilePositiveAndExcludeTerms } from '@/core/recall/exclude-content-terms'
 import {
@@ -199,6 +200,15 @@ export function mapLlmProposalToParsedClue(
   const hasContent = contentTerms.length > 0
   const certainty = mapProposalCertainty(proposal)
 
+  // 问句式召回护栏：已有具体槽位 + 找回锚 → 改判 recall，清空 assistantReply
+  const reclassifyAsRecall = shouldReclassifyQuestionAsRecall({
+    clue: raw,
+    intent: proposal.intent,
+    contentTerms,
+    objectTypeOther
+  })
+  const resolvedIntent = reclassifyAsRecall ? 'recall' : proposal.intent
+
   return ParsedRecallClueSchema.parse({
     raw,
     contentTerms,
@@ -220,8 +230,8 @@ export function mapLlmProposalToParsedClue(
     ...(portraitQuery ? { portraitQuery } : {}),
     ...(excludeContentTerms.length > 0 ? { excludeContentTerms } : {}),
     ...(certainty ? { certainty } : {}),
-    ...(proposal.intent !== 'recall' ? { intent: proposal.intent } : {}),
-    ...(proposal.intent !== 'recall' && proposal.assistantReply?.trim()
+    ...(resolvedIntent && resolvedIntent !== 'recall' ? { intent: resolvedIntent } : {}),
+    ...(resolvedIntent && resolvedIntent !== 'recall' && proposal.assistantReply?.trim()
       ? { assistantReply: proposal.assistantReply.trim().slice(0, 280) }
       : {})
   })

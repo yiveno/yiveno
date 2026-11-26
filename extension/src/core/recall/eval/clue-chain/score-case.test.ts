@@ -114,6 +114,81 @@ describe('clue-chain score-case', () => {
     expectFieldPassed(scoreEntities([], ['x']), true)
   })
 
+  it('entities：原 clue 有实体但解析 terms 为空 → 失败（禁止 clue 兜底）', () => {
+    expectFieldPassed(scoreEntities(['BBC'], []), false)
+    expectFieldPassed(scoreEntities(['Apple'], []), false)
+    const run = stubRun({
+      id: 'ent-clue-only',
+      clue: '可能是BBC拍的纪录片',
+      expected: {
+        intent: 'recall',
+        topic: '迁徙',
+        time: '之前',
+        time_certainty: 'low',
+        type: '视频',
+        entities: ['BBC'],
+        behavior: null,
+        certainty: 'low'
+      },
+      contentTermsActual: [],
+      topicTermsActual: [],
+      excludeContentTermsActual: [],
+      objectTypeOtherActual: null,
+      parsed: {
+        raw: '可能是BBC拍的纪录片',
+        contentTerms: [],
+        confidence: 'low',
+        intent: 'recall'
+      }
+    })
+    const score = scoreClueChainCase(run, { match: true, reason: 'ok' })
+    expectFieldPassed(
+      score.fields.find(f => f.field === 'entities')!,
+      false
+    )
+  })
+
+  it('entities：解析 terms 命中 → 通过；别名互认', () => {
+    expectFieldPassed(scoreEntities(['BBC'], ['bbc', 'migration']), true)
+    expectFieldPassed(scoreEntities(['Apple'], ['苹果', '功能']), true)
+    expectFieldPassed(scoreEntities(['微信公众号'], ['公众号']), true)
+    expectFieldPassed(scoreEntities(['公众号'], ['微信公众号']), true)
+    expectFieldPassed(scoreEntities(['Apple'], ['banana']), false)
+    expectFieldPassed(scoreEntities(['微信公众号'], ['抖音']), false)
+  })
+
+  it('entities：scoreClueChainCase 不把 clue 拼进 haystack', () => {
+    const run = stubRun({
+      id: 'ent-parsed-ok',
+      clue: '苹果自带的功能',
+      expected: {
+        intent: 'recall',
+        topic: '抠图',
+        time: null,
+        time_certainty: null,
+        type: '功能',
+        entities: ['Apple'],
+        behavior: null,
+        certainty: 'low'
+      },
+      contentTermsActual: ['苹果', '抠图'],
+      topicTermsActual: ['抠图'],
+      objectTypeOtherActual: '功能',
+      parsed: {
+        raw: '苹果自带的功能',
+        contentTerms: ['苹果', '抠图'],
+        confidence: 'low',
+        intent: 'recall',
+        objectTypeOther: '功能'
+      }
+    })
+    const score = scoreClueChainCase(run, { match: true, reason: 'ok' })
+    expectFieldPassed(
+      score.fields.find(f => f.field === 'entities')!,
+      true
+    )
+  })
+
   it('C 类只看 intent；topic 不计分', () => {
     const run = stubRun({
       id: 'C01',

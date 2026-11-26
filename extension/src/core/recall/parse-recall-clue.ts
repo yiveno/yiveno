@@ -8,6 +8,7 @@
 import { applyRuleExcludeToContentTerms } from '@/core/recall/exclude-content-terms'
 import { normalizeRecallText } from '@/core/recall/keyword-filter'
 import {
+  isYearScaleTimeSurfaceBlockedBySeason,
   RECALL_BEHAVIOR_LEXICON,
   RECALL_CLUE_FILLER_SURFACES,
   RECALL_NOTE_HINT_LEXICON,
@@ -333,7 +334,10 @@ export function parseRecallClue(
 
   // 各类词典共用占用表，按 surface 长度优先，避免交叉重叠误吞
   const occupied = new Array<boolean>(normalized.length).fill(false)
-  const timeHits = collectLexiconHits(normalized, RECALL_TIME_LEXICON, occupied)
+  const timeLexicon = RECALL_TIME_LEXICON.filter(
+    entry => !isYearScaleTimeSurfaceBlockedBySeason(entry.surface, normalized)
+  )
+  const timeHits = collectLexiconHits(normalized, timeLexicon, occupied)
   const objectHits = collectLexiconHits(normalized, RECALL_OBJECT_TYPE_LEXICON, occupied)
   const behaviorHits = collectLexiconHits(normalized, RECALL_BEHAVIOR_LEXICON, occupied)
   const noteHits = collectLexiconHits(normalized, RECALL_NOTE_HINT_LEXICON, occupied)

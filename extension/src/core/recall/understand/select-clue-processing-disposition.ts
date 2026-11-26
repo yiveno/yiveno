@@ -67,6 +67,26 @@ function digitsOnly(raw: string): string {
   return raw.replace(/\D/g, '')
 }
 
+/** 只保留拉丁字母（键盘邻接启发式的样本面）。 */
+function latinLettersOnly(raw: string): string {
+  return raw.replace(/[^a-zA-Z]/g, '').toLowerCase()
+}
+
+/**
+ * 拉丁键盘启发式是否可启用。
+ * 样本太少、或含 CJK 且拉丁不占主导 → fail-open（避免中文长句夹 BBC/CNN 被邻接比误杀）。
+ */
+function shouldApplyLatinKeyboardHeuristics(allLetters: string): boolean {
+  const latin = latinLettersOnly(allLetters)
+  if (latin.length < 6) {
+    return false
+  }
+  if (CJK_LETTERS.test(allLetters) && latin.length / allLetters.length < 0.5) {
+    return false
+  }
+  return true
+}
+
 /** 相邻字母在 QWERTY 上曼哈顿距离 ≤1 的比例（仅统计双方都是字母键的对）。 */
 function keyboardAdjacentRatio(letters: string): number {
   const lower = letters.toLowerCase()
@@ -186,15 +206,30 @@ function isKeyboardMash(raw: string): boolean {
   // 多段乱输：去空白后整串仍符合单串判定（P0 噪声防御）。
   // - 重复分支加 5+ 辅音簇条件：纯靠低多样性会误伤真短语（sweet street / deer street / free street 去空白后 unique 比 ≤ 0.5）。
   // - 邻接分支阈值 0.7、下限 12 字母：能走到本分支的真短语邻接比实测最高 0.4（sweet dreams），邻接分支拦住的乱输最低 0.73（asdf zxcv qwer）。注意邻接是曼哈顿距离（对角不算），不要按切比雪夫重算。
+  // - 拉丁启发式须样本充足且拉丁占主导：中文长句夹 BBC/CNN 时 lettersOnly 把 CJK+拉丁拼在一起，邻接比只看拉丁对会虚高。
+  // - 短多词砸键（asdf zxcv）：每段 ≥4 且段内邻接高、无正常词 → 拦；不要求拼接后 ≥12。
+  const latin = latinLettersOnly(letters)
+  const latinHeuristicsOk = shouldApplyLatinKeyboardHeuristics(letters)
   if (hasWhitespace) {
     if (
-      letters.length >= 10 &&
-      isRepetitiveMash(letters) &&
-      /[bcdfghjklmnpqrstvwxz]{5,}/i.test(letters)
+      latinHeuristicsOk &&
+      tokens.length >= 2 &&
+      normalLooking.length === 0 &&
+      tokens.every(
+        token => /^[a-z]+$/i.test(token) && token.length >= 4 && keyboardAdjacentRatio(token) >= 0.7
+      )
     ) {
       return true
     }
-    if (letters.length >= 12 && keyboardAdjacentRatio(letters) >= 0.7) {
+    if (
+      latinHeuristicsOk &&
+      latin.length >= 10 &&
+      isRepetitiveMash(latin) &&
+      /[bcdfghjklmnpqrstvwxz]{5,}/i.test(latin)
+    ) {
+      return true
+    }
+    if (latinHeuristicsOk && latin.length >= 12 && keyboardAdjacentRatio(latin) >= 0.7) {
       return true
     }
   }
@@ -207,12 +242,12 @@ function isKeyboardMash(raw: string): boolean {
     if (letters.length >= 28 && !CJK_LETTERS.test(letters)) {
       return true
     }
-    // 中长无空白 + 高键盘邻接 或 重复单元
-    if (letters.length >= 12 && keyboardAdjacentRatio(letters) >= 0.45) {
+    // 中长无空白 + 高键盘邻接：只在拉丁样本充足且占主导时启用
+    if (latinHeuristicsOk && latin.length >= 12 && keyboardAdjacentRatio(latin) >= 0.45) {
       return true
     }
-    // 无空白长串重复：须含拉丁（砸键盘现象）；纯中文叠字如「哈哈哈哈哈哈哈」放行
-    if (letters.length >= 10 && /[a-z]/i.test(letters) && isRepetitiveMash(letters)) {
+    // 无空白长串重复：须拉丁占主导；纯中文叠字 / 中文+短缩写放行
+    if (latinHeuristicsOk && latin.length >= 10 && isRepetitiveMash(latin)) {
       return true
     }
     // 短串但整段重复（asdasd）：须含拉丁；低多样性须同时高邻接（sweetest/banana 是真词）
@@ -226,10 +261,11 @@ function isKeyboardMash(raw: string): boolean {
     }
     // 分号等切开后每段都不像正常词，且整体邻接偏高
     if (
+      latinHeuristicsOk &&
       tokens.length >= 3 &&
-      letters.length >= 16 &&
+      latin.length >= 16 &&
       normalLooking.length === 0 &&
-      keyboardAdjacentRatio(letters) >= 0.35
+      keyboardAdjacentRatio(latin) >= 0.35
     ) {
       return true
     }

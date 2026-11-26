@@ -1,5 +1,7 @@
 import { normalizeRecallText } from '@/core/recall/keyword-filter'
 import {
+  isChineseYearSeasonCompound,
+  isYearScaleTimeSurfaceBlockedBySeason,
   RECALL_BEHAVIOR_LEXICON,
   RECALL_OBJECT_TYPE_LEXICON,
   RECALL_TIME_LEXICON,
@@ -145,24 +147,58 @@ function shouldRejectProposedTimeLabelWithoutLexicon(
 }
 
 /**
+ * 确定性中文糊时间兜底：词典未命中且模型未给 label 时补槽。
+ * 之前/以前/上次 → a_while_ago；去年/前年/去年或前年 → long_ago（季节复合除外）。
+ */
+function groundFuzzyChineseTimeFallback(
+  normalizedClue: string
+): RecallRelativeTimeLabel | undefined {
+  if (/去年或前年/.test(normalizedClue) && !isChineseYearSeasonCompound(normalizedClue)) {
+    return 'long_ago'
+  }
+  if (
+    /前年/.test(normalizedClue) &&
+    !/(?:前年)(?:春天|夏天|秋天|冬天|[春夏秋冬])/.test(normalizedClue)
+  ) {
+    return 'long_ago'
+  }
+  if (
+    /去年/.test(normalizedClue) &&
+    !/(?:去年)(?:春天|夏天|秋天|冬天|[春夏秋冬])/.test(normalizedClue)
+  ) {
+    return 'long_ago'
+  }
+  if (/之前|以前|上次/.test(normalizedClue)) {
+    return 'a_while_ago'
+  }
+  return undefined
+}
+
+/**
  * 时间标签：若线索命中词典词面，优先用最长 surface 对应 label（纠偏 LLM 的 recent/a_while_ago 混淆）。
- * 无线索词面时才回退模型提议；但若仅有公历年份或 soft「old」、无相对时间词面，丢弃模型 timeLabel。
+ * 无线索词面时才回退模型提议；再无则中文糊时间兜底。
+ * 仅有公历年份或 soft「old」、无相对时间词面时，丢弃模型 timeLabel。
  */
 export function groundTimeLabel(
   clue: string,
   proposed: RecallRelativeTimeLabel | null | undefined
 ): RecallRelativeTimeLabel | undefined {
   const normalized = normalizeRecallText(clue)
-  const hits = RECALL_TIME_LEXICON.filter(entry => clueHasSurface(normalized, entry.surface)).sort(
-    (a, b) => b.surface.length - a.surface.length
-  )
+  const hits = RECALL_TIME_LEXICON.filter(
+    entry =>
+      clueHasSurface(normalized, entry.surface) &&
+      !isYearScaleTimeSurfaceBlockedBySeason(entry.surface, normalized)
+  ).sort((a, b) => b.surface.length - a.surface.length)
   if (hits[0]) {
     return hits[0].value
   }
   if (shouldRejectProposedTimeLabelWithoutLexicon(normalized, proposed)) {
     return undefined
   }
-  return proposed ?? undefined
+  if (proposed) {
+    return proposed
+  }
+  return groundFuzzyChineseTimeFallback(normalized)
 }
 
 /**

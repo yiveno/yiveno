@@ -107,9 +107,35 @@ export const RECALL_TIME_LEXICON: RecallLexiconEntry<RecallRelativeTimeLabel>[] 
   { surface: '前几个月', value: 'few_months_ago' },
   { surface: '很久以前', value: 'long_ago' },
   { surface: '好久以前', value: 'long_ago' },
+  // 糊过去（低置信软排）：长于「以前」的复合先登记；裸「以前/之前/上次」兜底
+  { surface: '去年或前年', value: 'long_ago' },
+  { surface: '前年', value: 'long_ago' },
+  { surface: '去年', value: 'long_ago' },
   { surface: '前一阵', value: 'a_while_ago' },
-  { surface: '前段时间', value: 'a_while_ago' }
+  { surface: '前段时间', value: 'a_while_ago' },
+  { surface: '之前', value: 'a_while_ago' },
+  { surface: '以前', value: 'a_while_ago' },
+  { surface: '上次', value: 'a_while_ago' }
 ]
+
+/**
+ * 「去年/前年」后紧跟季节 → 绝对季节表达，不得就近套 long_ago（R7）。
+ * 例：去年夏天 / 前年冬天。规则 parse 与 LLM grounding 共用。
+ */
+export function isChineseYearSeasonCompound(normalizedClue: string): boolean {
+  return /(?:去年|前年)(?:春天|夏天|秋天|冬天|[春夏秋冬])/.test(normalizedClue)
+}
+
+/** 裸年尺度 surface：季节复合时从词典命中里剔除。 */
+export function isYearScaleTimeSurfaceBlockedBySeason(
+  surface: string,
+  normalizedClue: string
+): boolean {
+  if (!isChineseYearSeasonCompound(normalizedClue)) {
+    return false
+  }
+  return surface === '去年' || surface === '前年' || surface === '去年或前年'
+}
 
 /**
  * 对象类型词：闭集 objectType 的用户口语 surface（§0.1.4 槽位接地）。
