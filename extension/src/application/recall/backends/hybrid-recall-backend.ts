@@ -71,7 +71,11 @@ import {
   type RecallLinkStatusHint
 } from '@/core/recall/keyword-filter'
 import { loadLinkStatusHintsByItemId } from '@/application/recall/load-link-status-hints'
-import { applyConditionBoosts, type ScoredCondition } from '@/core/recall/condition-credibility'
+import {
+  applyConditionBoosts,
+  CONDITION_BOOST_FUSION_CALIBRATION_SCALE,
+  type ScoredCondition
+} from '@/core/recall/condition-credibility'
 import { conditionHitsRecallMatch } from '@/core/recall/condition-hit'
 import {
   excludeDismissedMemoryItems,
@@ -164,7 +168,10 @@ function applySessionConditionBoosts(
         ...(options.nowMs !== undefined ? { nowMs: options.nowMs } : {}),
         ...(options.timeRange ? { timeRange: options.timeRange } : {})
       }),
-    { ...(options.currentTurn !== undefined ? { currentTurn: options.currentTurn } : {}) }
+    {
+      scale: CONDITION_BOOST_FUSION_CALIBRATION_SCALE,
+      ...(options.currentTurn !== undefined ? { currentTurn: options.currentTurn } : {})
+    }
   )
   boosted.sort((left, right) => {
     if (right.score !== left.score) {

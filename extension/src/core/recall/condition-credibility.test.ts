@@ -265,6 +265,51 @@ describe('applyConditionBoosts / 回显', () => {
     expect(credibilityWeight(0.8, 0.5)).toBeCloseTo(0.4)
     expect(CONDITION_CREDIBILITY_CONSTANTS.RANK_MIN_CREDIBILITY).toBe(0.3)
   })
+
+  it('scale 缺省=1 与显式 1 逐字一致；scale>1 按比例放大 boost', () => {
+    const conditions: ScoredCondition[] = [
+      scored({ slot: 'contentTerm', value: 'rag', credibility: 0.8 })
+    ]
+    type Cand = { id: string; score: number; hit: string }
+    const candidates: Cand[] = [
+      { id: 'a', score: 10, hit: 'rag' },
+      { id: 'b', score: 10.5, hit: 'other' }
+    ]
+    const hitFn = (cand: Cand, condition: ScoredCondition) => cand.hit === condition.value
+    const defaultScale = applyConditionBoosts(candidates, conditions, hitFn, { currentTurn: 0 })
+    const explicitOne = applyConditionBoosts(candidates, conditions, hitFn, {
+      currentTurn: 0,
+      scale: 1
+    })
+    expect(defaultScale).toEqual(explicitOne)
+    expect(defaultScale.find(row => row.id === 'a')?.score).toBeCloseTo(10.8)
+    expect(defaultScale.find(row => row.id === 'b')?.score).toBeCloseTo(10.5)
+
+    const scaled = applyConditionBoosts(candidates, conditions, hitFn, {
+      currentTurn: 0,
+      scale: 4
+    })
+    // a: 10 + 0.8*4 = 13.2
+    expect(scaled.find(row => row.id === 'a')?.score).toBeCloseTo(13.2)
+    expect(scaled.find(row => row.id === 'b')?.score).toBeCloseTo(10.5)
+  })
+
+  it('<0.3 条件在任意 scale 下仍不参排', () => {
+    const conditions: ScoredCondition[] = [
+      scored({ slot: 'contentTerm', value: 'weak', credibility: 0.25 })
+    ]
+    type Cand = { id: string; score: number; hit: string }
+    const candidates: Cand[] = [{ id: 'c', score: 1.0, hit: 'weak' }]
+    for (const scale of [1, 4, 12]) {
+      const boosted = applyConditionBoosts(
+        candidates,
+        conditions,
+        (cand, condition) => cand.hit === condition.value,
+        { currentTurn: 0, scale }
+      )
+      expect(boosted[0]?.score).toBe(1.0)
+    }
+  })
 })
 
 describe('用户确认 / 否定接线纯函数', () => {

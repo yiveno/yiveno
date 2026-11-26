@@ -126,6 +126,21 @@ const MERGE_OLD_PENALTY = 0.1
 const RANK_MIN_CREDIBILITY = 0.3
 const RELEVANCE_FLOOR = 0.2
 
+/**
+ * 条件加权 → 融合分的校准缩放。
+ *
+ * 融合分粒度：`hybrid-recall-backend` RRF 后 `score += max(0, 40-index)`，相邻名次差 ≥1；
+ * 单条件 boost = credibility×relevance ≤1，scale=1 时几乎翻不动排名（behavior-ablation 机制轨零差异）。
+ * 本常量只放大消费侧 boost，不改可信度初值/事件/状态阈值。
+ *
+ * 标定（2026-11-26 · `behavior-ablation` 冻结 fixture · 合成语料 + fake embedding）：
+ * 逐档 1/2/4/6/8/9/10/11/12；取同时满足
+ * ① 机制轨冲突子集 B-on vs B-off 出现可测排名差
+ * ② 生产轨 ON-prod R@1 不低于修复前 74.62%
+ * 的最小档 → **12**（≤11 机制轨仍零差异；12 起 2 条任务 top 排名变化，R@1 delta 仍为 0）。
+ */
+export const CONDITION_BOOST_FUSION_CALIBRATION_SCALE = 12
+
 /** 钳制到 [0.2, 1.0]。 */
 export function clampCredibility(score: number): number {
   if (!Number.isFinite(score)) {
@@ -438,17 +453,24 @@ export function applyUserRefuteToConditions(
 }
 
 /**
- * 检索消费：候选分 += Σ (命中 × 可信度 × 相关度)；永不硬过滤。
+ * 检索消费：候选分 += Σ (命中 × 可信度 × 相关度) × scale；永不硬过滤。
  * 可信度 <0.3 或 inactive 的条件不参与排序。
+ * `scale` 缺省 1：保持纯函数既有语义（单测 / 直接调用不变）。
  */
 export function applyConditionBoosts<T extends { score: number }>(
   candidates: readonly T[],
   conditions: readonly ScoredCondition[],
   hitFn: (candidate: T, condition: ScoredCondition) => boolean,
-  options: { currentTurn?: number } = {}
+  options: { currentTurn?: number; scale?: number } = {}
 ): T[] {
   const currentTurn =
     options.currentTurn ?? Math.max(0, ...conditions.map(row => row.lastMentionedTurn), 0)
+  const scale =
+    options.scale === undefined
+      ? 1
+      : Number.isFinite(options.scale) && options.scale > 0
+        ? options.scale
+        : 1
 
   const rankingConditions = conditions.filter(
     row => row.active !== false && row.credibility >= RANK_MIN_CREDIBILITY
@@ -466,7 +488,7 @@ export function applyConditionBoosts<T extends { score: number }>(
     if (boost === 0) {
       return candidate
     }
-    return { ...candidate, score: candidate.score + boost }
+    return { ...candidate, score: candidate.score + boost * scale }
   })
 }
 
