@@ -276,4 +276,70 @@ describe('handleEmbed', () => {
     expect(jsonEmpty.error).toBe('embed_failed')
     expect(jsonEmpty.cause).toBe('empty_embedding')
   })
+
+  test('豁免账号日配额已满仍 200，计数 +1，limit=MAX_SAFE_INTEGER', async () => {
+    mock.module('../services/ai/require-pro-user', () => ({
+      isActiveProUser: async () => false
+    }))
+    const { handleEmbed: handle } = await import('./ai-embed')
+    const now = new Date()
+    const day = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`
+    const userId = 'exempt-embed-user'
+    const store = new Map<string, string>([[`embed_ai:${userId}:${day}`, '100']])
+    const kv = {
+      get: async (key: string) => store.get(key) ?? null,
+      put: async (key: string, value: string) => {
+        store.set(key, value)
+      }
+    }
+    const response = await handle(
+      new Request('http://localhost/api/ai/embed', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ texts: ['hello'] })
+      }),
+      createEnv({
+        AI_USAGE_KV: kv,
+        AI_HOSTED_QUOTA_EXEMPT_USER_IDS: 'exempt-embed-user'
+      }),
+      userId
+    )
+    expect(response.status).toBe(200)
+    const json = (await response.json()) as {
+      success: boolean
+      data: { quota: { used: number; limit: number; remaining: number } }
+    }
+    expect(json.success).toBe(true)
+    expect(json.data.quota.used).toBe(101)
+    expect(json.data.quota.limit).toBe(Number.MAX_SAFE_INTEGER)
+    expect(store.get(`embed_ai:${userId}:${day}`)).toBe('101')
+  })
+
+  test('非豁免账号日配额已满 → 429 quota_exceeded', async () => {
+    mock.module('../services/ai/require-pro-user', () => ({
+      isActiveProUser: async () => false
+    }))
+    const { handleEmbed: handle } = await import('./ai-embed')
+    const now = new Date()
+    const day = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`
+    const userId = 'normal-embed-user'
+    const kv = createKvMock({ [`embed_ai:${userId}:${day}`]: '100' })
+    const response = await handle(
+      new Request('http://localhost/api/ai/embed', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ texts: ['hello'] })
+      }),
+      createEnv({
+        AI_USAGE_KV: kv as Env['AI_USAGE_KV'],
+        AI_HOSTED_QUOTA_EXEMPT_USER_IDS: 'exempt-embed-user'
+      }),
+      userId
+    )
+    expect(response.status).toBe(429)
+    const json = (await response.json()) as { error: string; used: number; limit: number }
+    expect(json.error).toBe('quota_exceeded')
+    expect(json.used).toBe(100)
+    expect(json.limit).toBe(100)
+  })
 })

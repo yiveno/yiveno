@@ -4,6 +4,7 @@
  */
 
 import type { Env } from '../types/env'
+import { isQuotaExemptUser } from '../config/ai-hosted'
 import { isActiveProUser } from '../services/ai/require-pro-user'
 import { okJson, errorJson } from '../utils/response'
 import { info as logInfo, logError } from '../utils/logger'
@@ -82,7 +83,9 @@ export async function peekAnonymousEmbedQuota(
   env: Env,
   userId: string
 ): Promise<{ used: number; limit: number; remaining: number }> {
-  const limit = resolveAnonEmbedLimit(env)
+  const limit = isQuotaExemptUser(env, userId)
+    ? Number.MAX_SAFE_INTEGER
+    : resolveAnonEmbedLimit(env)
   const kv = env.AI_USAGE_KV
   if (!kv) {
     return { used: 0, limit, remaining: limit }
@@ -100,17 +103,18 @@ async function consumeEmbedAnonymousQuota(
   env: Env,
   userId: string
 ): Promise<EmbedQuotaOk | EmbedQuotaDenied> {
-  const limit = resolveAnonEmbedLimit(env)
+  const exempt = isQuotaExemptUser(env, userId)
+  const limit = exempt ? Number.MAX_SAFE_INTEGER : resolveAnonEmbedLimit(env)
   const kv = env.AI_USAGE_KV
   if (!kv) {
     return {
       allowed: false,
       used: 0,
-      limit,
+      limit: resolveAnonEmbedLimit(env),
       remaining: 0,
       tier: 'anonymous',
       dailyUsed: 0,
-      dailyLimit: limit,
+      dailyLimit: resolveAnonEmbedLimit(env),
       dailyRemaining: 0,
       reason: 'kv_not_configured'
     }
@@ -119,15 +123,16 @@ async function consumeEmbedAnonymousQuota(
   try {
     const raw = await kv.get(key)
     const used = raw ? Number.parseInt(raw, 10) || 0 : 0
-    if (used >= limit) {
+    // 豁免账号跳过拒绝，仍递增计数
+    if (!exempt && used >= resolveAnonEmbedLimit(env)) {
       return {
         allowed: false,
         used,
-        limit,
+        limit: resolveAnonEmbedLimit(env),
         remaining: 0,
         tier: 'anonymous',
         dailyUsed: used,
-        dailyLimit: limit,
+        dailyLimit: resolveAnonEmbedLimit(env),
         dailyRemaining: 0,
         reason: 'quota_exceeded'
       }
@@ -169,18 +174,20 @@ async function consumeEmbedDailyQuota(
   const envKey = isPro ? env.AI_EMBED_DAILY_LIMIT : env.AI_EMBED_FREE_DAILY_LIMIT
   const fallback = isPro ? DEFAULT_PRO_DAILY_LIMIT : DEFAULT_FREE_DAILY_LIMIT
   const parsed = Number.parseInt(envKey ?? '', 10)
-  const dailyLimit = Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
+  const resolvedDailyLimit = Number.isFinite(parsed) && parsed > 0 ? parsed : fallback
+  const exempt = isQuotaExemptUser(env, userId)
+  const dailyLimit = exempt ? Number.MAX_SAFE_INTEGER : resolvedDailyLimit
   const tier = isPro ? ('pro' as const) : ('free' as const)
   const kv = env.AI_USAGE_KV
   if (!kv) {
     return {
       allowed: false,
       used: 0,
-      limit: dailyLimit,
+      limit: resolvedDailyLimit,
       remaining: 0,
       tier,
       dailyUsed: 0,
-      dailyLimit,
+      dailyLimit: resolvedDailyLimit,
       dailyRemaining: 0,
       reason: 'kv_not_configured'
     }
@@ -191,15 +198,16 @@ async function consumeEmbedDailyQuota(
   try {
     const raw = await kv.get(key)
     const used = raw ? Number.parseInt(raw, 10) || 0 : 0
-    if (used >= dailyLimit) {
+    // 豁免账号跳过拒绝，仍递增计数
+    if (!exempt && used >= resolvedDailyLimit) {
       return {
         allowed: false,
         used,
-        limit: dailyLimit,
+        limit: resolvedDailyLimit,
         remaining: 0,
         tier,
         dailyUsed: used,
-        dailyLimit,
+        dailyLimit: resolvedDailyLimit,
         dailyRemaining: 0,
         reason: 'quota_exceeded'
       }

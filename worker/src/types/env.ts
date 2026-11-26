@@ -44,6 +44,11 @@ export type Env = Cloudflare.Env & {
   AI_HOSTED_DAILY_CAP?: string
   /** 匿名档 LLM 终身配额覆盖（默认 15） */
   AI_HOSTED_ANONYMOUS_LIFETIME_QUOTA?: string
+  /**
+   * 逗号分隔的测试账号 userId 白名单；服务端已验身份、客户端不可伪造。
+   * 名单内照常计数，但永不因配额被拒；空 = 无豁免。
+   */
+  AI_HOSTED_QUOTA_EXEMPT_USER_IDS?: string
   /** 匿名档 embedding 终身调用上限覆盖（默认 30） */
   AI_EMBED_ANONYMOUS_LIFETIME_LIMIT?: string
   /**

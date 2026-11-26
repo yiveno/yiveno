@@ -1,6 +1,41 @@
 import { describe, expect, test } from 'bun:test'
 
-import { isDeepSeekAiGatewayEnabled, resolveDeepSeekChatCompletionsUrl } from './ai-hosted'
+import {
+  isDeepSeekAiGatewayEnabled,
+  isQuotaExemptUser,
+  resolveDeepSeekChatCompletionsUrl
+} from './ai-hosted'
+
+describe('isQuotaExemptUser', () => {
+  test('未设 env → false', () => {
+    expect(isQuotaExemptUser({}, 'user-a')).toBe(false)
+  })
+
+  test('空字符串 → false', () => {
+    expect(isQuotaExemptUser({ AI_HOSTED_QUOTA_EXEMPT_USER_IDS: '' }, 'user-a')).toBe(false)
+    expect(isQuotaExemptUser({ AI_HOSTED_QUOTA_EXEMPT_USER_IDS: '   ' }, 'user-a')).toBe(false)
+  })
+
+  test('单 id 命中 → true', () => {
+    expect(isQuotaExemptUser({ AI_HOSTED_QUOTA_EXEMPT_USER_IDS: 'user-a' }, 'user-a')).toBe(true)
+  })
+
+  test('多 id 逗号分隔含空格命中 → true', () => {
+    expect(
+      isQuotaExemptUser({ AI_HOSTED_QUOTA_EXEMPT_USER_IDS: ' user-a , user-b ,user-c ' }, 'user-b')
+    ).toBe(true)
+  })
+
+  test('名单外 → false', () => {
+    expect(isQuotaExemptUser({ AI_HOSTED_QUOTA_EXEMPT_USER_IDS: 'user-a,user-b' }, 'user-z')).toBe(
+      false
+    )
+  })
+
+  test('子串不算命中', () => {
+    expect(isQuotaExemptUser({ AI_HOSTED_QUOTA_EXEMPT_USER_IDS: 'ab' }, 'abc')).toBe(false)
+  })
+})
 
 describe('resolveDeepSeekChatCompletionsUrl', () => {
   test('未配 Gateway → 直连 DeepSeek /v1/chat/completions', () => {

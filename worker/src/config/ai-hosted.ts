@@ -46,6 +46,11 @@ export type HostedQuotaEnv = {
   AI_HOSTED_DAILY_CAP?: string // Pro 日盖覆盖
   AI_HOSTED_FREE_DAILY_CAP?: string // Free 日盖覆盖
   AI_HOSTED_ANONYMOUS_LIFETIME_QUOTA?: string // 匿名终身配额覆盖
+  /**
+   * 逗号分隔的测试账号 userId 白名单；服务端已验身份、客户端不可伪造。
+   * 名单内照常计数，但永不因配额被拒；空 = 无豁免。
+   */
+  AI_HOSTED_QUOTA_EXEMPT_USER_IDS?: string
 }
 
 /**
@@ -92,6 +97,20 @@ function parsePositiveInt(raw: string | undefined, fallback: number): number {
     return parsed
   }
   return fallback
+}
+
+/**
+ * 是否为配额豁免测试账号（env 白名单精确匹配）。
+ * env 未设或为空 → false；按逗号/空白切分后 trim、去空项。
+ */
+export function isQuotaExemptUser(env: HostedQuotaEnv, userId: string): boolean {
+  const raw = env.AI_HOSTED_QUOTA_EXEMPT_USER_IDS
+  if (!raw || !raw.trim()) return false
+  const ids = raw
+    .split(/[,\s]+/)
+    .map(part => part.trim())
+    .filter(Boolean)
+  return ids.includes(userId)
 }
 
 /**

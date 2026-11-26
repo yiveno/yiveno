@@ -1,11 +1,13 @@
 /**
  * 托管 LLM 配额服务：Free/Pro 月度+日盖；匿名终身档（无月重置、无日盖）。
+ * 测试账号可通过 AI_HOSTED_QUOTA_EXEMPT_USER_IDS 豁免拒绝（仍计数）。
  */
 
 import {
   buildDailyUsageKey,
   buildLifetimeUsageKey,
   buildMonthlyUsageKey,
+  isQuotaExemptUser,
   resolveHostedAnonymousLifetimeQuota,
   resolveHostedDailyCap,
   resolveHostedMonthlyQuota
@@ -29,8 +31,10 @@ export type HostedQuotaOptions = {
   isPro: boolean
 }
 
-function anonymousSnapshot(env: Env, used: number): HostedQuotaSnapshot {
-  const limit = resolveHostedAnonymousLifetimeQuota(env)
+function anonymousSnapshot(env: Env, userId: string, used: number): HostedQuotaSnapshot {
+  const limit = isQuotaExemptUser(env, userId)
+    ? Number.MAX_SAFE_INTEGER
+    : resolveHostedAnonymousLifetimeQuota(env)
   const remaining = Math.max(0, limit - used)
   return {
     used,
@@ -48,6 +52,7 @@ function anonymousSnapshot(env: Env, used: number): HostedQuotaSnapshot {
 /**
  * 读取配额快照（不递增）。
  * 匿名分支必须在 isPro 判断之前短路。
+ * 豁免账号：limit/dailyLimit 展示为 Number.MAX_SAFE_INTEGER；used 仍为真实计数。
  */
 export async function getHostedQuotaSnapshot(
   env: Env,
@@ -64,12 +69,13 @@ export async function getHostedQuotaSnapshot(
     const key = buildLifetimeUsageKey(userId)
     const raw = kv ? await kv.get(key) : null
     const used = Number.parseInt(raw ?? '0', 10) || 0
-    return anonymousSnapshot(env, used)
+    return anonymousSnapshot(env, userId, used)
   }
 
   const isPro = opts.isPro
-  const limit = resolveHostedMonthlyQuota(env, isPro)
-  const dailyLimit = resolveHostedDailyCap(env, isPro)
+  const exempt = isQuotaExemptUser(env, userId)
+  const limit = exempt ? Number.MAX_SAFE_INTEGER : resolveHostedMonthlyQuota(env, isPro)
+  const dailyLimit = exempt ? Number.MAX_SAFE_INTEGER : resolveHostedDailyCap(env, isPro)
   const monthKey = buildMonthlyUsageKey(userId)
   const dayKey = buildDailyUsageKey(userId)
   const kv = env.AI_USAGE_KV
@@ -92,7 +98,8 @@ export async function getHostedQuotaSnapshot(
 
 /**
  * 在配额允许时递增一次调用计数。
- * 未绑定 AI_USAGE_KV 时拒绝（避免无上限调用）。
+ * 未绑定 AI_USAGE_KV 时拒绝（避免无上限调用）；豁免不绕过 kv_not_configured。
+ * 豁免账号跳过 quota_exceeded / daily_cap_exceeded，仍递增 KV。
  */
 export async function consumeHostedQuota(
   env: Env,
@@ -113,7 +120,7 @@ export async function consumeHostedQuota(
 
   if (!env.AI_USAGE_KV) {
     if (opts.isAnonymous) {
-      const snapshot = anonymousSnapshot(env, 0)
+      const snapshot = anonymousSnapshot(env, userId, 0)
       return {
         allowed: false,
         reason: 'kv_not_configured',
@@ -139,23 +146,25 @@ export async function consumeHostedQuota(
     }
   }
 
+  const exempt = isQuotaExemptUser(env, userId)
+
   if (opts.isAnonymous) {
     const snapshot = await getHostedQuotaSnapshot(env, userId, opts)
-    if (snapshot.used >= snapshot.limit) {
+    if (!exempt && snapshot.used >= snapshot.limit) {
       return { allowed: false, reason: 'quota_exceeded', snapshot }
     }
     const nextUsed = snapshot.used + 1
     await env.AI_USAGE_KV.put(buildLifetimeUsageKey(userId), String(nextUsed))
-    const updated = anonymousSnapshot(env, nextUsed)
+    const updated = anonymousSnapshot(env, userId, nextUsed)
     return { allowed: true, snapshot: updated }
   }
 
   const snapshot = await getHostedQuotaSnapshot(env, userId, opts)
 
-  if (snapshot.used >= snapshot.limit) {
+  if (!exempt && snapshot.used >= snapshot.limit) {
     return { allowed: false, reason: 'quota_exceeded', snapshot }
   }
-  if (snapshot.dailyUsed >= snapshot.dailyLimit) {
+  if (!exempt && snapshot.dailyUsed >= snapshot.dailyLimit) {
     return { allowed: false, reason: 'daily_cap_exceeded', snapshot }
   }
 
