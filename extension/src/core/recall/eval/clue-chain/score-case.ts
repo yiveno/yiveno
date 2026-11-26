@@ -297,11 +297,6 @@ export function expandEntityAliasForms(entity: string): string[] {
   return [...forms]
 }
 
-/** 期望实体 → 归一后可接受的别名集合（含自身；整串 needle，供子串补充）。 */
-export function expandEntityAliasNeedles(entity: string): string[] {
-  return expandEntityAliasForms(entity).map(normalizeEntityToken).filter(Boolean)
-}
-
 /**
  * 期望实体是否出现在解析 token 集 / 整串 haystack 中。
  * 先 token-set（实体全部 token 均在集合），再整串归一子串；别名同规。
