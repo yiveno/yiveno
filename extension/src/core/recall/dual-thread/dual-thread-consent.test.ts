@@ -78,7 +78,8 @@ describe('dual-thread-consent', () => {
   })
 
   it('贡献展示：失败 / 从未 / 今天 / 昨天 / 日期', () => {
-    const now = new Date('2026-11-17T15:00:00+08:00')
+    // 用本地日历构造，避免写死 +08:00 墙钟在 UTC CI 跨日判 yesterday
+    const now = new Date(2026, 10, 17, 15, 0, 0)
     expect(
       resolveDualThreadContributionDisplay({
         state: { lastSuccessAtIso: null, lastAttemptFailed: true },
@@ -93,19 +94,28 @@ describe('dual-thread-consent', () => {
     ).toEqual({ kind: 'never' })
     expect(
       resolveDualThreadContributionDisplay({
-        state: { lastSuccessAtIso: '2026-11-17T02:00:00+08:00', lastAttemptFailed: false },
+        state: {
+          lastSuccessAtIso: new Date(2026, 10, 17, 2, 0, 0).toISOString(),
+          lastAttemptFailed: false
+        },
         now
       })
     ).toEqual({ kind: 'today' })
     expect(
       resolveDualThreadContributionDisplay({
-        state: { lastSuccessAtIso: '2026-11-16T10:00:00+08:00', lastAttemptFailed: false },
+        state: {
+          lastSuccessAtIso: new Date(2026, 10, 16, 10, 0, 0).toISOString(),
+          lastAttemptFailed: false
+        },
         now
       })
     ).toEqual({ kind: 'yesterday' })
     expect(
       resolveDualThreadContributionDisplay({
-        state: { lastSuccessAtIso: '2026-11-10T10:00:00+08:00', lastAttemptFailed: false },
+        state: {
+          lastSuccessAtIso: new Date(2026, 10, 10, 10, 0, 0).toISOString(),
+          lastAttemptFailed: false
+        },
         now
       })
     ).toEqual({ kind: 'date', isoDate: '2026-11-10' })
