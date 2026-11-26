@@ -101,11 +101,25 @@ function recomputePlacement(): void {
   })
 }
 
+/**
+ * 悬停预览诊断：单参数字符串（Chrome 扩展错误页会把第二参数对象串成 [object Object]）。
+ */
+function formatHoverPreviewDiag(
+  kind: 'missing' | 'catch',
+  fields: Record<string, string | number | boolean | undefined>
+): string {
+  const parts = Object.entries(fields)
+    .filter(([, value]) => value !== undefined)
+    .map(([key, value]) => `${key}=${String(value)}`)
+  return `[HoverPreview] loadPreview ${kind} ${parts.join(' ')}`
+}
+
 async function loadPreview(): Promise<void> {
   revokeObjectUrl()
   loadState.value = 'loading'
   const url = resolveHoverPreviewLookupUrl(props.card)
   if (!url) {
+    // 路径①：无 lookup URL（如摘录仅 detail.html）— 静默 fallback，不打日志
     loadState.value = 'missing'
     return
   }
@@ -124,7 +138,10 @@ async function loadPreview(): Promise<void> {
       loadState.value = 'ready'
       return
     }
-    console.warn('[HoverPreview] loadPreview missing', {
+    // 路径②：有响应但无有效 dataUrl
+    const diag = formatHoverPreviewDiag('missing', {
+      cardId: props.card.id,
+      url,
       ok: response.ok,
       dataUrlType: dataUrl == null ? String(dataUrl) : Object.prototype.toString.call(dataUrl),
       dataUrlLength: typeof dataUrl === 'string' ? dataUrl.length : undefined,
@@ -132,17 +149,21 @@ async function loadPreview(): Promise<void> {
       width: 'width' in response ? response.width : undefined,
       height: 'height' in response ? response.height : undefined
     })
+    // ok=true 但无图：SW 无缓存预览属预期 → debug；ok=false 才 warn
+    if (response.ok) {
+      console.debug(diag)
+    } else {
+      console.warn(diag)
+    }
     loadState.value = 'missing'
   } catch (error) {
-    console.warn('[HoverPreview] loadPreview catch', {
-      error: error instanceof Error ? error.message : String(error),
-      ok: undefined,
-      dataUrlType: undefined,
-      dataUrlLength: undefined,
-      dataUrlPrefix: undefined,
-      width: undefined,
-      height: undefined
-    })
+    console.warn(
+      formatHoverPreviewDiag('catch', {
+        cardId: props.card.id,
+        url,
+        error: error instanceof Error ? error.message : String(error)
+      })
+    )
     if (props.visible) {
       loadState.value = 'missing'
     }

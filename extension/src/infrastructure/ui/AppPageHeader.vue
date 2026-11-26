@@ -382,9 +382,17 @@ onUnmounted(() => {
   justify-content: flex-end;
 }
 
-/* 无品牌、有会话标题：标题吃左侧剩余宽，导航靠右 */
+/* 无品牌、有会话标题：标题吃左侧剩余宽，导航靠右；窄宽时整组换行 */
 .app-page-header--with-session {
+  flex-wrap: wrap;
   justify-content: space-between;
+  row-gap: var(--space-2xs);
+}
+
+/* basis 让窄宽先整行换行；min-width:0 仍保证标题单行省略 */
+.app-page-header--with-session .app-page-header__session {
+  flex: 1 1 12rem;
+  min-width: 0;
 }
 
 .app-page-header__brand-row {
@@ -449,9 +457,11 @@ onUnmounted(() => {
 
 .app-page-header__nav {
   display: flex;
-  flex-wrap: wrap;
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
   align-items: center;
   gap: var(--space-2xs);
+  margin-left: auto;
 }
 
 .app-page-header__avatar-wrap {

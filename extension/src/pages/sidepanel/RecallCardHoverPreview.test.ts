@@ -181,6 +181,8 @@ describe('RecallCardHoverPreview 查图 URL', () => {
   })
 
   it('getPagePreview 返回 PAGE_PREVIEW_NOT_FOUND → fallback', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const debugSpy = vi.spyOn(console, 'debug').mockImplementation(() => undefined)
     getPagePreviewMock.mockResolvedValue({
       ok: false,
       errorCode: 'PAGE_PREVIEW_NOT_FOUND'
@@ -202,6 +204,68 @@ describe('RecallCardHoverPreview 查图 URL', () => {
     expect(getPagePreviewMock).toHaveBeenCalledWith({ url: 'https://example.com/miss' })
     expect(mounted.root.querySelector('.recall-card-hover-preview__fallback')).not.toBeNull()
     expect(mounted.root.querySelector('.recall-card-hover-preview__shot')).toBeNull()
+    // ok=false → warn 单参字符串，含 cardId/url（勿把对象当第二参）
+    expect(warnSpy).toHaveBeenCalledTimes(1)
+    expect(warnSpy.mock.calls[0]).toHaveLength(1)
+    expect(String(warnSpy.mock.calls[0]?.[0])).toContain('cardId=ex-miss')
+    expect(String(warnSpy.mock.calls[0]?.[0])).toContain('url=https://example.com/miss')
+    expect(debugSpy).not.toHaveBeenCalled()
+  })
+
+  it('ok=true 但无有效 dataUrl → debug（非 warn），含 cardId/url', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const debugSpy = vi.spyOn(console, 'debug').mockImplementation(() => undefined)
+    getPagePreviewMock.mockResolvedValue({
+      ok: true,
+      dataUrl: '',
+      width: 800,
+      height: 500
+    })
+    const mounted = mountPreview({
+      card: baseCard({
+        id: 'ex-empty-diag',
+        itemKind: 'text_excerpt',
+        typeLabel: 'Text excerpt',
+        url: 'chrome-extension://testid/detail.html?id=ex-empty-diag',
+        sourceUrl: 'https://example.com/empty-diag',
+        excerpt: 'Empty dataUrl diag'
+      })
+    })
+    mounts.push(mounted)
+
+    await showPreview(mounted.state)
+
+    expect(mounted.root.querySelector('.recall-card-hover-preview__fallback')).not.toBeNull()
+    expect(debugSpy).toHaveBeenCalledTimes(1)
+    expect(debugSpy.mock.calls[0]).toHaveLength(1)
+    expect(String(debugSpy.mock.calls[0]?.[0])).toContain('cardId=ex-empty-diag')
+    expect(String(debugSpy.mock.calls[0]?.[0])).toContain('url=https://example.com/empty-diag')
+    expect(warnSpy).not.toHaveBeenCalled()
+  })
+
+  it('无 lookup URL → 不打 HoverPreview 日志', async () => {
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    const debugSpy = vi.spyOn(console, 'debug').mockImplementation(() => undefined)
+    const mounted = mountPreview({
+      card: baseCard({
+        id: 'ex-no-log',
+        itemKind: 'text_excerpt',
+        typeLabel: 'Text excerpt',
+        url: 'chrome-extension://testid/detail.html?id=ex-no-log',
+        excerpt: 'Silent missing'
+      })
+    })
+    mounts.push(mounted)
+
+    await showPreview(mounted.state)
+
+    expect(getPagePreviewMock).not.toHaveBeenCalled()
+    expect(warnSpy.mock.calls.some(call => String(call[0] ?? '').includes('[HoverPreview]'))).toBe(
+      false
+    )
+    expect(debugSpy.mock.calls.some(call => String(call[0] ?? '').includes('[HoverPreview]'))).toBe(
+      false
+    )
   })
 
   it('domainLine：subtitle 空时用 sourceUrl 主机名', async () => {

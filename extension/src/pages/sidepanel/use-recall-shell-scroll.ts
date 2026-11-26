@@ -57,6 +57,9 @@ export function useRecallShellScroll(
   const scrollJumpDirection = ref<RecallShellScrollJumpDirection | null>(null)
   let recallBodyResizeObserver: ResizeObserver | null = null
   let recallFloatDockResizeObserver: ResizeObserver | null = null
+  /** 合并 ResizeObserver → 下一帧布局同步，避免 loop 警告。 */
+  let recallBodyResizeRaf: number | null = null
+  let recallFloatDockResizeRaf: number | null = null
 
   /** 浮底高度 → CSS 变量，供 body 底垫与跳转钮定位。 */
   function syncRecallFloatDockClearance(): void {
@@ -68,7 +71,12 @@ export function useRecallShellScroll(
     const height = dock ? Math.ceil(dock.getBoundingClientRect().height) : 0
     // 跳转钮与浮底之间再留一小段空隙
     const clearance = Math.max(96, height + 12)
-    region.style.setProperty('--recall-dock-clearance', `${clearance}px`)
+    const next = `${clearance}px`
+    // 同值守卫：未变则跳过 setProperty，减少 RO 反馈环
+    if (region.style.getPropertyValue('--recall-dock-clearance') === next) {
+      return
+    }
+    region.style.setProperty('--recall-dock-clearance', next)
   }
 
   function applyRecallShellScrollState(state: RecallShellScrollState): void {
@@ -197,10 +205,21 @@ export function useRecallShellScroll(
       return
     }
     recallBodyResizeObserver = new ResizeObserver(() => {
-      syncRecallShellScrollState()
+      // 同步写 Vue refs 会再触发布局；合并到下一帧，避免 RO loop 警告
+      if (recallBodyResizeRaf != null) {
+        return
+      }
+      recallBodyResizeRaf = requestAnimationFrame(() => {
+        recallBodyResizeRaf = null
+        syncRecallShellScrollState()
+      })
     })
     recallBodyResizeObserver.observe(element)
     onCleanup(() => {
+      if (recallBodyResizeRaf != null) {
+        cancelAnimationFrame(recallBodyResizeRaf)
+        recallBodyResizeRaf = null
+      }
       recallBodyResizeObserver?.disconnect()
       recallBodyResizeObserver = null
     })
@@ -214,11 +233,22 @@ export function useRecallShellScroll(
       return
     }
     recallFloatDockResizeObserver = new ResizeObserver(() => {
-      syncRecallFloatDockClearance()
-      syncRecallShellScrollState()
+      // 同步写 CSS 变量 + 滚动状态会再触发 RO；合并到下一帧
+      if (recallFloatDockResizeRaf != null) {
+        return
+      }
+      recallFloatDockResizeRaf = requestAnimationFrame(() => {
+        recallFloatDockResizeRaf = null
+        syncRecallFloatDockClearance()
+        syncRecallShellScrollState()
+      })
     })
     recallFloatDockResizeObserver.observe(element)
     onCleanup(() => {
+      if (recallFloatDockResizeRaf != null) {
+        cancelAnimationFrame(recallFloatDockResizeRaf)
+        recallFloatDockResizeRaf = null
+      }
       recallFloatDockResizeObserver?.disconnect()
       recallFloatDockResizeObserver = null
     })
