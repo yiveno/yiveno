@@ -1,0 +1,155 @@
+{
+  "promptVersion": 1,
+  "head": "517b007774163505d51e9b67a7091d99b94d7a94",
+  "ids": ["01", "05", "18", "20", "A01", "A08", "B02", "C01", "C04", "D05"],
+  "rows": [
+    {
+      "id": "01",
+      "category": "A",
+      "clue": "之前刷到过一个教做鸡胸肉的视频，不是那种水煮的，说是做出来很嫩，好像用什么腌一下再煎的，忘记收藏了。",
+      "expectedTopic": "嫩鸡胸肉的做法（腌制后煎，非水煮）",
+      "actualTopicTerms": ["chicken", "breast", "tender", "marinade", "pan", "fry"],
+      "judge": {
+        "match": true,
+        "reason": "Actual terms (chicken breast, tender, marinade, pan fry) directly match the expected topic of making tender chicken breast via marinating and pan-frying, not boiling.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms (chicken breast, tender, marinade, pan fry) directly match the expected topic of making tender chicken breast via marinating and pan-frying, not boiling.\"}"
+      },
+      "humanAgree": null,
+      "humanNote": ""
+    },
+    {
+      "id": "05",
+      "category": "A",
+      "clue": "我记得有个人说过，大概意思是一个人真正的自由不是有钱，而是不需要向别人解释自己为什么这么做，好像在小红书或者公众号看到的。",
+      "expectedTopic": "真正的自由是不需要向别人解释自己",
+      "actualTopicTerms": ["自由", "有钱", "不需要", "解释", "小红书", "公众号"],
+      "judge": {
+        "match": true,
+        "reason": "Actual terms capture the core idea: freedom vs money, not needing to explain, plus source platforms. Same topic.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms capture the core idea: freedom vs money, not needing to explain, plus source platforms. Same topic.\"}"
+      },
+      "humanAgree": null,
+      "humanNote": ""
+    },
+    {
+      "id": "18",
+      "category": "A",
+      "clue": "我之前在网上看到一个 Chrome 插件，可以把网页里面重要的内容直接保存下来，不是简单的收藏网址，好像还能以后通过自己说的话找到之前保存的内容。",
+      "expectedTopic": "能保存网页重要内容、以后用自然语言找回的 Chrome 插件",
+      "actualTopicTerms": ["chrome", "插件", "内容", "保存", "网址", "收藏", "说话", "找到"],
+      "judge": {
+        "match": true,
+        "reason": "Actual terms cover Chrome plugin, saving content, and finding via speech—same topic as expected.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms cover Chrome plugin, saving content, and finding via speech—same topic as expected.\"}"
+      },
+      "humanAgree": null,
+      "humanNote": ""
+    },
+    {
+      "id": "20",
+      "category": "D",
+      "clue": "我之前看过一个东西，可能是视频也可能是文章，讲一个人每天只工作几个小时，通过互联网赚钱，不需要管理很多人。我记得当时还联想到一个做 AI 的工具，好像可以自动处理很多事情，另外那个视频的背景音乐有点像电影配乐，具体在哪个平台看到的完全忘了。",
+      "expectedTopic": "每天只工作几小时、通过互联网赚钱、不需管理很多人的工作方式",
+      "actualTopicTerms": [
+        "work",
+        "hours",
+        "internet",
+        "money",
+        "ai",
+        "tool",
+        "automate",
+        "music",
+        "soundtrack"
+      ],
+      "judge": {
+        "match": true,
+        "reason": "Actual terms capture the core topic: few work hours, internet money, AI automation tool; extra music terms are incidental details from the clue.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms capture the core topic: few work hours, internet money, AI automation tool; extra music terms are incidental details from the clue.\"}"
+      },
+      "humanAgree": null,
+      "humanNote": ""
+    },
+    {
+      "id": "A01",
+      "category": "A",
+      "clue": "那个讲怎么让衣服不容易起皱的，好像不是熨斗，有个喷的东西，出差的时候用的。",
+      "expectedTopic": "便携式衣物除皱喷雾或免熨除皱产品",
+      "actualTopicTerms": ["衣服", "起皱", "喷", "出差", "防皱"],
+      "judge": {
+        "match": true,
+        "reason": "Actual terms cover clothes, wrinkles, spray, travel, anti-wrinkle—same portable wrinkle-spray topic.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms cover clothes, wrinkles, spray, travel, anti-wrinkle—same portable wrinkle-spray topic.\"}"
+      },
+      "humanAgree": null,
+      "humanNote": ""
+    },
+    {
+      "id": "A08",
+      "category": "A",
+      "clue": "找下之前看过的一个介绍敦煌壁画修复的视频吧，记得有人拿着特别细的笔一点点修，那个过程挺震撼的。",
+      "expectedTopic": "敦煌壁画的保护与修复过程",
+      "actualTopicTerms": ["dunhuang", "mural", "restoration", "brush"],
+      "judge": {
+        "match": true,
+        "reason": "Both refer to Dunhuang mural restoration, including fine brush work; terms align with the expected topic.",
+        "raw": "{\"match\":true,\"reason\":\"Both refer to Dunhuang mural restoration, including fine brush work; terms align with the expected topic.\"}"
+      },
+      "humanAgree": null,
+      "humanNote": ""
+    },
+    {
+      "id": "B02",
+      "category": "B",
+      "clue": "之前我有一次晚上睡觉前刷到过一个东西，也不是最近吧，可能上个月，也可能更早，然后它好像是讲人为什么晚上总是想很多事情，白天没感觉，一到晚上就开始想以前的事或者担心以后，反正那个内容我当时还觉得说得挺对的，可能是在抖音也可能是小红书，具体账号也不知道，想找找看。",
+      "expectedTopic": "夜间容易产生过度思考、回忆过去或担忧未来的心理现象",
+      "actualTopicTerms": ["晚上", "想", "事情", "白天", "担心", "以后", "睡前"],
+      "judge": {
+        "match": true,
+        "reason": "Terms capture nighttime overthinking and worry about the future, matching the expected psychological phenomenon.",
+        "raw": "{\"match\":true,\"reason\":\"Terms capture nighttime overthinking and worry about the future, matching the expected psychological phenomenon.\"}"
+      },
+      "humanAgree": null,
+      "humanNote": ""
+    },
+    {
+      "id": "C01",
+      "category": "C",
+      "clue": "最近总感觉每天时间过得特别快，有什么办法能改善这种感觉吗？",
+      "expectedTopic": "改善日常时间感知和生活体验",
+      "actualTopicTerms": [],
+      "judge": {
+        "match": true,
+        "reason": "C 类跳过 topic judge"
+      },
+      "humanAgree": null,
+      "humanNote": ""
+    },
+    {
+      "id": "C04",
+      "category": "C",
+      "clue": "给我写一段朋友圈文案，今天终于把拖了很久的事情做完了，想表达轻松一点但不要太矫情。",
+      "expectedTopic": "撰写表达完成长期拖延事项后的轻松感的朋友圈文案",
+      "actualTopicTerms": [],
+      "judge": {
+        "match": true,
+        "reason": "C 类跳过 topic judge"
+      },
+      "humanAgree": null,
+      "humanNote": ""
+    },
+    {
+      "id": "D05",
+      "category": "D",
+      "clue": "之前刷到那个讲如何提高跑步速度的视频，应该是B站，不是抖音，里面好像有个Nike的鞋子测评，但我主要想找跑步训练方法。",
+      "expectedTopic": "提高跑步速度的训练方法",
+      "actualTopicTerms": ["跑步", "速度", "b站", "nike", "鞋子", "测评", "训练", "方法"],
+      "judge": {
+        "match": true,
+        "reason": "Actual terms include 跑步、速度、训练、方法, matching the expected topic of training methods to improve running speed; extra B站/Nike/shoe terms are modifiers.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms include 跑步、速度、训练、方法, matching the expected topic of training methods to improve running speed; extra B站/Nike/shoe terms are modifiers.\"}"
+      },
+      "humanAgree": null,
+      "humanNote": ""
+    }
+  ]
+}

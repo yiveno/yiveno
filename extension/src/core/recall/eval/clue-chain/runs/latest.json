@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "kind": "clue-chain-parse",
-  "head": "b5368559eec903f49dd079d25af3fb1093416c43",
-  "startedAt": "2026-11-26T15:02:51.408Z",
-  "finishedAt": "2026-11-26T15:05:18.748Z",
+  "head": "517b007774163505d51e9b67a7091d99b94d7a94",
+  "startedAt": "2026-11-26T15:25:49.238Z",
+  "finishedAt": "2026-11-26T15:27:57.333Z",
   "fixtureFiles": [
     "extension/src/core/recall/eval/clue-chain/fixtures/clue20_expected.json",
     "extension/src/core/recall/eval/clue-chain/fixtures/clue50_phase1_fixed.json"
@@ -22,8 +22,8 @@
     "skipped": 0,
     "core": {
       "scored": 70,
-      "passed": 70,
-      "rate": 1
+      "passed": 69,
+      "rate": 0.9857142857142858
     },
     "intent": {
       "scored": 70,
@@ -32,8 +32,8 @@
     },
     "topic": {
       "scored": 62,
-      "passed": 62,
-      "rate": 1
+      "passed": 61,
+      "rate": 0.9838709677419355
     },
     "topicCategoryA": {
       "scored": 37,
@@ -57,8 +57,8 @@
     },
     "entities": {
       "scored": 62,
-      "passed": 61,
-      "rate": 0.9838709677419355
+      "passed": 60,
+      "rate": 0.967741935483871
     },
     "gates": {
       "intentCategoryC": true,
@@ -67,8 +67,28 @@
       "allPassed": true
     }
   },
-  "clusters": [],
-  "worst10": [],
+  "clusters": [
+    {
+      "key": "D::极度缺乏信息，检验系统是否诚实保留空主题而非臆造::topic",
+      "category": "D",
+      "note": "极度缺乏信息，检验系统是否诚实保留空主题而非臆造",
+      "count": 1,
+      "ids": ["D02"],
+      "fields": ["topic"]
+    }
+  ],
+  "worst10": [
+    {
+      "id": "D02",
+      "category": "D",
+      "clue": "那个我收藏的，之前说过的那个东西，你帮我找一下。",
+      "note": "极度缺乏信息，检验系统是否诚实保留空主题而非臆造",
+      "failedFields": ["topic"],
+      "details": [
+        "Expected topic is indeterminate/unspecified, but actual terms are empty, providing no subject matter to match."
+      ]
+    }
+  ],
   "cases": [
     {
       "run": {
@@ -124,7 +144,7 @@
         "contentTermsActual": ["chicken", "breast", "tender", "marinade", "pan", "fry"],
         "excludeContentTermsActual": ["boiled"],
         "confidenceActual": "high",
-        "durationMs": 1616,
+        "durationMs": 1428,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -146,7 +166,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Terms cover chicken breast, tender, marinade, pan-fry—same topic as expected tender chicken breast recipe (marinated then pan-fried, not boiled)."
+            "detail": "Actual terms (chicken breast, tender, marinade, pan fry) directly match the expected topic of making tender chicken breast via marinating and pan-frying, not boiling."
           },
           {
             "field": "time",
@@ -174,8 +194,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Terms cover chicken breast, tender, marinade, pan-fry—same topic as expected tender chicken breast recipe (marinated then pan-fried, not boiled).",
-        "raw": "{\"match\":true,\"reason\":\"Terms cover chicken breast, tender, marinade, pan-fry—same topic as expected tender chicken breast recipe (marinated then pan-fried, not boiled).\"}"
+        "reason": "Actual terms (chicken breast, tender, marinade, pan fry) directly match the expected topic of making tender chicken breast via marinating and pan-frying, not boiling.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms (chicken breast, tender, marinade, pan fry) directly match the expected topic of making tender chicken breast via marinating and pan-frying, not boiling.\"}"
       }
     },
     {
@@ -230,7 +250,7 @@
         "contentTermsActual": ["ai", "agent", "工具", "调用", "观点"],
         "excludeContentTermsActual": [],
         "confidenceActual": "high",
-        "durationMs": 1306,
+        "durationMs": 974,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -334,8 +354,8 @@
               "体积": "neutral",
               "小": "neutral",
               "手套箱": "neutral",
-              "评价": "hedge",
-              "不错": "hedge",
+              "评价": "neutral",
+              "不错": "neutral",
               "牌子": "neutral"
             }
           }
@@ -374,7 +394,7 @@
         ],
         "excludeContentTermsActual": [],
         "confidenceActual": "medium",
-        "durationMs": 941,
+        "durationMs": 1323,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -396,7 +416,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms include 车载充气泵, 体积小, 手套箱, matching the expected small portable car air pump topic."
+            "detail": "Actual terms include 车载充气泵, 体积小, 手套箱, matching the expected small portable car tire inflator topic."
           },
           {
             "field": "time",
@@ -424,8 +444,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms include 车载充气泵, 体积小, 手套箱, matching the expected small portable car air pump topic.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms include 车载充气泵, 体积小, 手套箱, matching the expected small portable car air pump topic.\"}"
+        "reason": "Actual terms include 车载充气泵, 体积小, 手套箱, matching the expected small portable car tire inflator topic.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms include 车载充气泵, 体积小, 手套箱, matching the expected small portable car tire inflator topic.\"}"
       }
     },
     {
@@ -477,7 +497,7 @@
         "contentTermsActual": ["浙江", "村子", "山", "峡谷", "世外桃源", "商业化"],
         "excludeContentTermsActual": [],
         "confidenceActual": "medium",
-        "durationMs": 1336,
+        "durationMs": 1334,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -499,7 +519,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms capture Zhejiang, village, mountain/canyon, hidden-paradise, and commercialization—same topic as expected."
+            "detail": "Actual terms cover Zhejiang, village, mountain/canyon, hidden-paradise, non-commercialized—same topic as expected."
           },
           {
             "field": "time",
@@ -527,8 +547,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms capture Zhejiang, village, mountain/canyon, hidden-paradise, and commercialization—same topic as expected.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms capture Zhejiang, village, mountain/canyon, hidden-paradise, and commercialization—same topic as expected.\"}"
+        "reason": "Actual terms cover Zhejiang, village, mountain/canyon, hidden-paradise, non-commercialized—same topic as expected.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms cover Zhejiang, village, mountain/canyon, hidden-paradise, non-commercialized—same topic as expected.\"}"
       }
     },
     {
@@ -550,16 +570,17 @@
         },
         "parsed": {
           "raw": "我记得有个人说过，大概意思是一个人真正的自由不是有钱，而是不需要向别人解释自己为什么这么做，好像在小红书或者公众号看到的。",
-          "contentTerms": ["freedom", "money", "explain", "xiaohongshu", "gongzhonghao"],
+          "contentTerms": ["自由", "有钱", "不需要", "解释", "小红书", "公众号"],
           "confidence": "low",
           "certainty": {
             "timeRange": "neutral",
             "contentTerms": {
-              "freedom": "hedge",
-              "money": "hedge",
-              "explain": "hedge",
-              "xiaohongshu": "hedge",
-              "gongzhonghao": "hedge"
+              "自由": "hedge",
+              "有钱": "hedge",
+              "不需要": "hedge",
+              "解释": "hedge",
+              "小红书": "hedge",
+              "公众号": "hedge"
             },
             "objectTypes": {
               "article": "hedge"
@@ -568,15 +589,15 @@
         },
         "source": "llm",
         "intentActual": "recall",
-        "topicTermsActual": ["freedom", "money", "explain", "xiaohongshu", "gongzhonghao"],
+        "topicTermsActual": ["自由", "有钱", "不需要", "解释", "小红书", "公众号"],
         "timeLabelActual": null,
         "timeConfidenceActual": null,
         "objectTypesActual": [],
         "objectTypeOtherActual": null,
-        "contentTermsActual": ["freedom", "money", "explain", "xiaohongshu", "gongzhonghao"],
+        "contentTermsActual": ["自由", "有钱", "不需要", "解释", "小红书", "公众号"],
         "excludeContentTermsActual": [],
         "confidenceActual": "low",
-        "durationMs": 1154,
+        "durationMs": 770,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -598,7 +619,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms capture freedom, money, explanation, and source platforms, matching the expected topic about true freedom not requiring explanation to others."
+            "detail": "Actual terms capture the core idea: freedom vs money, not needing to explain, plus source platforms. Same topic."
           },
           {
             "field": "time",
@@ -626,8 +647,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms capture freedom, money, explanation, and source platforms, matching the expected topic about true freedom not requiring explanation to others.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms capture freedom, money, explanation, and source platforms, matching the expected topic about true freedom not requiring explanation to others.\"}"
+        "reason": "Actual terms capture the core idea: freedom vs money, not needing to explain, plus source platforms. Same topic.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms capture the core idea: freedom vs money, not needing to explain, plus source platforms. Same topic.\"}"
       }
     },
     {
@@ -656,7 +677,7 @@
           },
           "timeConfidence": "low",
           "objectTypes": ["page"],
-          "contentTerms": ["前端", "性能", "方案", "浏览器", "原生", "api", "渐进", "加载"],
+          "contentTerms": ["前端", "性能", "方案", "浏览器", "原生", "api", "加载", "内容"],
           "excludeContentTerms": ["虚拟列表"],
           "confidence": "high",
           "certainty": {
@@ -668,26 +689,23 @@
               "方案": "neutral",
               "浏览器": "neutral",
               "原生": "neutral",
-              "api": "neutral",
-              "渐进": "neutral",
-              "加载": "neutral"
-            },
-            "objectTypes": {
-              "article": "hedge"
+              "api": "hedge",
+              "加载": "neutral",
+              "内容": "neutral"
             }
           }
         },
         "source": "llm",
         "intentActual": "recall",
-        "topicTermsActual": ["前端", "性能", "方案", "浏览器", "原生", "api", "渐进", "加载"],
+        "topicTermsActual": ["前端", "性能", "方案", "浏览器", "原生", "api", "加载", "内容"],
         "timeLabelActual": "a_while_ago",
         "timeConfidenceActual": "low",
         "objectTypesActual": ["page"],
         "objectTypeOtherActual": null,
-        "contentTermsActual": ["前端", "性能", "方案", "浏览器", "原生", "api", "渐进", "加载"],
+        "contentTermsActual": ["前端", "性能", "方案", "浏览器", "原生", "api", "加载", "内容"],
         "excludeContentTermsActual": ["虚拟列表"],
         "confidenceActual": "high",
-        "durationMs": 1336,
+        "durationMs": 1471,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -709,7 +727,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms cover frontend performance, browser native API, and progressive loading, matching the expected topic of a native browser API for progressive page loading."
+            "detail": "Actual terms cover frontend performance, browser native API, and loading content, matching the expected topic of a browser-native API for progressive page loading."
           },
           {
             "field": "time",
@@ -737,8 +755,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms cover frontend performance, browser native API, and progressive loading, matching the expected topic of a native browser API for progressive page loading.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms cover frontend performance, browser native API, and progressive loading, matching the expected topic of a native browser API for progressive page loading.\"}"
+        "reason": "Actual terms cover frontend performance, browser native API, and loading content, matching the expected topic of a browser-native API for progressive page loading.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms cover frontend performance, browser native API, and loading content, matching the expected topic of a browser-native API for progressive page loading.\"}"
       }
     },
     {
@@ -767,28 +785,18 @@
           },
           "timeConfidence": "low",
           "objectTypes": ["article"],
-          "contentTerms": [
-            "oil",
-            "cooking",
-            "vegetable",
-            "fatty",
-            "acid",
-            "ratio",
-            "rapeseed",
-            "compare"
-          ],
+          "contentTerms": ["oil", "cooking", "fatty", "acid", "ratio", "rapeseed", "vegetable"],
           "confidence": "high",
           "certainty": {
             "timeRange": "neutral",
             "contentTerms": {
-              "oil": "hedge",
+              "oil": "neutral",
               "cooking": "neutral",
-              "vegetable": "neutral",
-              "fatty": "neutral",
-              "acid": "neutral",
-              "ratio": "neutral",
+              "fatty": "hedge",
+              "acid": "hedge",
+              "ratio": "hedge",
               "rapeseed": "hedge",
-              "compare": "neutral"
+              "vegetable": "neutral"
             },
             "objectTypes": {
               "article": "neutral"
@@ -797,33 +805,15 @@
         },
         "source": "llm",
         "intentActual": "recall",
-        "topicTermsActual": [
-          "oil",
-          "cooking",
-          "vegetable",
-          "fatty",
-          "acid",
-          "ratio",
-          "rapeseed",
-          "compare"
-        ],
+        "topicTermsActual": ["oil", "cooking", "fatty", "acid", "ratio", "rapeseed", "vegetable"],
         "timeLabelActual": "a_while_ago",
         "timeConfidenceActual": "low",
         "objectTypesActual": ["article"],
         "objectTypeOtherActual": null,
-        "contentTermsActual": [
-          "oil",
-          "cooking",
-          "vegetable",
-          "fatty",
-          "acid",
-          "ratio",
-          "rapeseed",
-          "compare"
-        ],
+        "contentTermsActual": ["oil", "cooking", "fatty", "acid", "ratio", "rapeseed", "vegetable"],
         "excludeContentTermsActual": [],
         "confidenceActual": "high",
-        "durationMs": 1367,
+        "durationMs": 1185,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -845,7 +835,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms cover cooking oil, fatty acid ratio, rapeseed, and comparison—same topic as expected."
+            "detail": "Both refer to cooking oil with good fatty acid ratio, mentioning rapeseed/vegetable oil comparison."
           },
           {
             "field": "time",
@@ -873,8 +863,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms cover cooking oil, fatty acid ratio, rapeseed, and comparison—same topic as expected.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms cover cooking oil, fatty acid ratio, rapeseed, and comparison—same topic as expected.\"}"
+        "reason": "Both refer to cooking oil with good fatty acid ratio, mentioning rapeseed/vegetable oil comparison.",
+        "raw": "{\"match\":true,\"reason\":\"Both refer to cooking oil with good fatty acid ratio, mentioning rapeseed/vegetable oil comparison.\"}"
       }
     },
     {
@@ -967,7 +957,7 @@
         ],
         "excludeContentTermsActual": [],
         "confidenceActual": "medium",
-        "durationMs": 1169,
+        "durationMs": 827,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -989,7 +979,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms capture the same topic: a small AI-operated company with few/no employees and high revenue, matching the expected Chinese topic."
+            "detail": "Actual terms capture the same topic: a small AI-operated company with few/no employees and high revenue, matching the expected subject."
           },
           {
             "field": "time",
@@ -1017,8 +1007,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms capture the same topic: a small AI-operated company with few/no employees and high revenue, matching the expected Chinese topic.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms capture the same topic: a small AI-operated company with few/no employees and high revenue, matching the expected Chinese topic.\"}"
+        "reason": "Actual terms capture the same topic: a small AI-operated company with few/no employees and high revenue, matching the expected subject.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms capture the same topic: a small AI-operated company with few/no employees and high revenue, matching the expected subject.\"}"
       }
     },
     {
@@ -1075,7 +1065,7 @@
         "contentTermsActual": ["recommend", "回到过去", "人生", "感情", "评分", "高"],
         "excludeContentTermsActual": ["拯救世界", "科幻"],
         "confidenceActual": "high",
-        "durationMs": 1022,
+        "durationMs": 1423,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -1097,7 +1087,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms capture returning to the past, life, and emotion, matching the expected film topic."
+            "detail": "Actual terms capture the core elements: returning to the past, life, and emotion, matching the expected topic of a film about repeatedly going back in time with a life/relationship focus."
           },
           {
             "field": "time",
@@ -1125,8 +1115,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms capture returning to the past, life, and emotion, matching the expected film topic.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms capture returning to the past, life, and emotion, matching the expected film topic.\"}"
+        "reason": "Actual terms capture the core elements: returning to the past, life, and emotion, matching the expected topic of a film about repeatedly going back in time with a life/relationship focus.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms capture the core elements: returning to the past, life, and emotion, matching the expected topic of a film about repeatedly going back in time with a life/relationship focus.\"}"
       }
     },
     {
@@ -1159,7 +1149,7 @@
           "excludeContentTerms": ["柜子", "普通"],
           "confidence": "medium",
           "certainty": {
-            "timeRange": "hedge",
+            "timeRange": "neutral",
             "contentTerms": {
               "收纳": "hedge",
               "神器": "hedge",
@@ -1202,7 +1192,7 @@
         ],
         "excludeContentTermsActual": ["柜子", "普通"],
         "confidenceActual": "medium",
-        "durationMs": 1266,
+        "durationMs": 1028,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -1224,7 +1214,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms cover storage, under-bed space, utilization, and clever design—same topic as expected."
+            "detail": "Actual terms include storage, bed-bottom, space utilization, design—same topic as under-bed storage design without replacing bed."
           },
           {
             "field": "time",
@@ -1252,8 +1242,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms cover storage, under-bed space, utilization, and clever design—same topic as expected.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms cover storage, under-bed space, utilization, and clever design—same topic as expected.\"}"
+        "reason": "Actual terms include storage, bed-bottom, space utilization, design—same topic as under-bed storage design without replacing bed.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms include storage, bed-bottom, space utilization, design—same topic as under-bed storage design without replacing bed.\"}"
       }
     },
     {
@@ -1310,7 +1300,7 @@
         "contentTermsActual": ["周杰伦", "早期", "欧洲", "建筑", "街景", "伤感", "旋律"],
         "excludeContentTermsActual": [],
         "confidenceActual": "medium",
-        "durationMs": 1127,
+        "durationMs": 992,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -1332,7 +1322,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms cover Jay Chou, early period, European architecture/street scenes, and sad melody—same topic as expected."
+            "detail": "Actual terms cover Jay Chou, early period, Europe, architecture/street scenes, and sad melody—same topic as the expected early sad Jay Chou song with European MV."
           },
           {
             "field": "time",
@@ -1360,8 +1350,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms cover Jay Chou, early period, European architecture/street scenes, and sad melody—same topic as expected.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms cover Jay Chou, early period, European architecture/street scenes, and sad melody—same topic as expected.\"}"
+        "reason": "Actual terms cover Jay Chou, early period, Europe, architecture/street scenes, and sad melody—same topic as the expected early sad Jay Chou song with European MV.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms cover Jay Chou, early period, Europe, architecture/street scenes, and sad melody—same topic as the expected early sad Jay Chou song with European MV.\"}"
       }
     },
     {
@@ -1415,7 +1405,7 @@
         "contentTermsActual": ["测评", "新能源车", "续航", "电池管理", "充电习惯"],
         "excludeContentTermsActual": [],
         "confidenceActual": "medium",
-        "durationMs": 1130,
+        "durationMs": 922,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -1494,7 +1484,7 @@
             "label": "a_while_ago"
           },
           "timeConfidence": "low",
-          "contentTerms": ["颜色", "光", "大脑", "感觉", "人类", "解释"],
+          "contentTerms": ["颜色", "光", "大脑", "感觉", "人类", "解释", "不同", "人"],
           "confidence": "medium",
           "certainty": {
             "timeRange": "hedge",
@@ -1504,21 +1494,23 @@
               "大脑": "hedge",
               "感觉": "hedge",
               "人类": "hedge",
-              "解释": "hedge"
+              "解释": "hedge",
+              "不同": "hedge",
+              "人": "hedge"
             }
           }
         },
         "source": "llm",
         "intentActual": "recall",
-        "topicTermsActual": ["颜色", "光", "大脑", "感觉", "人类", "解释"],
+        "topicTermsActual": ["颜色", "光", "大脑", "感觉", "人类", "解释", "不同", "人"],
         "timeLabelActual": "a_while_ago",
         "timeConfidenceActual": "low",
         "objectTypesActual": [],
         "objectTypeOtherActual": null,
-        "contentTermsActual": ["颜色", "光", "大脑", "感觉", "人类", "解释"],
+        "contentTermsActual": ["颜色", "光", "大脑", "感觉", "人类", "解释", "不同", "人"],
         "excludeContentTermsActual": [],
         "confidenceActual": "medium",
-        "durationMs": 1821,
+        "durationMs": 937,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -1540,7 +1532,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Terms cover color, light, brain, perception—same topic of human color perception as brain-generated sensation."
+            "detail": "Actual terms cover color, light, brain, perception, humans, and individual differences—same topic as expected."
           },
           {
             "field": "time",
@@ -1568,8 +1560,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Terms cover color, light, brain, perception—same topic of human color perception as brain-generated sensation.",
-        "raw": "{\"match\":true,\"reason\":\"Terms cover color, light, brain, perception—same topic of human color perception as brain-generated sensation.\"}"
+        "reason": "Actual terms cover color, light, brain, perception, humans, and individual differences—same topic as expected.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms cover color, light, brain, perception, humans, and individual differences—same topic as expected.\"}"
       }
     },
     {
@@ -1598,7 +1590,16 @@
           },
           "timeConfidence": "low",
           "objectTypes": ["video"],
-          "contentTerms": ["douyin", "cat", "owner", "funny", "monitor", "waiting", "home"],
+          "contentTerms": [
+            "douyin",
+            "cat",
+            "owner",
+            "wait",
+            "home",
+            "funny",
+            "monitor",
+            "reaction"
+          ],
           "confidence": "high",
           "certainty": {
             "timeRange": "neutral",
@@ -1606,10 +1607,11 @@
               "douyin": "neutral",
               "cat": "neutral",
               "owner": "neutral",
+              "wait": "neutral",
+              "home": "neutral",
               "funny": "neutral",
               "monitor": "hedge",
-              "waiting": "neutral",
-              "home": "neutral"
+              "reaction": "neutral"
             },
             "objectTypes": {
               "video": "neutral"
@@ -1618,15 +1620,33 @@
         },
         "source": "llm",
         "intentActual": "recall",
-        "topicTermsActual": ["douyin", "cat", "owner", "funny", "monitor", "waiting", "home"],
+        "topicTermsActual": [
+          "douyin",
+          "cat",
+          "owner",
+          "wait",
+          "home",
+          "funny",
+          "monitor",
+          "reaction"
+        ],
         "timeLabelActual": "a_while_ago",
         "timeConfidenceActual": "low",
         "objectTypesActual": ["video"],
         "objectTypeOtherActual": null,
-        "contentTermsActual": ["douyin", "cat", "owner", "funny", "monitor", "waiting", "home"],
+        "contentTermsActual": [
+          "douyin",
+          "cat",
+          "owner",
+          "wait",
+          "home",
+          "funny",
+          "monitor",
+          "reaction"
+        ],
         "excludeContentTermsActual": [],
         "confidenceActual": "high",
-        "durationMs": 1531,
+        "durationMs": 836,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -1648,7 +1668,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Terms capture Douyin funny cat waiting for owner, monitor footage—same topic as expected."
+            "detail": "Actual terms capture the Douyin funny cat waiting for owner, home, monitor, exaggerated reaction—same subject as expected."
           },
           {
             "field": "time",
@@ -1676,8 +1696,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Terms capture Douyin funny cat waiting for owner, monitor footage—same topic as expected.",
-        "raw": "{\"match\":true,\"reason\":\"Terms capture Douyin funny cat waiting for owner, monitor footage—same topic as expected.\"}"
+        "reason": "Actual terms capture the Douyin funny cat waiting for owner, home, monitor, exaggerated reaction—same subject as expected.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms capture the Douyin funny cat waiting for owner, home, monitor, exaggerated reaction—same subject as expected.\"}"
       }
     },
     {
@@ -1721,7 +1741,7 @@
           "excludeContentTerms": ["highway"],
           "confidence": "medium",
           "certainty": {
-            "timeRange": "neutral",
+            "timeRange": "hedge",
             "contentTerms": {
               "coastal": "hedge",
               "road": "neutral",
@@ -1771,7 +1791,7 @@
         ],
         "excludeContentTermsActual": ["highway"],
         "confidenceActual": "medium",
-        "durationMs": 1403,
+        "durationMs": 1090,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -1793,7 +1813,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms cover coastal road in Fujian/Zhejiang with mountain, sea, villages, and slow self-driving—same topic as expected."
+            "detail": "Terms cover coastal road in Fujian/Zhejiang with mountain, sea, villages, and slow self-driving—same topic."
           },
           {
             "field": "time",
@@ -1821,8 +1841,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms cover coastal road in Fujian/Zhejiang with mountain, sea, villages, and slow self-driving—same topic as expected.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms cover coastal road in Fujian/Zhejiang with mountain, sea, villages, and slow self-driving—same topic as expected.\"}"
+        "reason": "Terms cover coastal road in Fujian/Zhejiang with mountain, sea, villages, and slow self-driving—same topic.",
+        "raw": "{\"match\":true,\"reason\":\"Terms cover coastal road in Fujian/Zhejiang with mountain, sea, villages, and slow self-driving—same topic.\"}"
       }
     },
     {
@@ -1876,7 +1896,7 @@
         "contentTermsActual": ["ai", "产品", "记住", "聊天", "背景", "上下文"],
         "excludeContentTermsActual": ["chatgpt"],
         "confidenceActual": "medium",
-        "durationMs": 847,
+        "durationMs": 1040,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -1898,7 +1918,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Terms capture AI product that remembers chats and context without repeating background, matching expected topic."
+            "detail": "Actual terms capture AI product that remembers chats and context/background, matching the expected topic of an AI with full chat memory and no repeated context."
           },
           {
             "field": "time",
@@ -1926,8 +1946,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Terms capture AI product that remembers chats and context without repeating background, matching expected topic.",
-        "raw": "{\"match\":true,\"reason\":\"Terms capture AI product that remembers chats and context without repeating background, matching expected topic.\"}"
+        "reason": "Actual terms capture AI product that remembers chats and context/background, matching the expected topic of an AI with full chat memory and no repeated context.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms capture AI product that remembers chats and context/background, matching the expected topic of an AI with full chat memory and no repeated context.\"}"
       }
     },
     {
@@ -1975,7 +1995,7 @@
         "contentTermsActual": ["追求", "得到", "没意思", "适应", "概念"],
         "excludeContentTermsActual": [],
         "confidenceActual": "low",
-        "durationMs": 1248,
+        "durationMs": 1052,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -1997,7 +2017,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Terms capture the core idea of pursuing, obtaining, then adapting/losing interest—same subject as the described book."
+            "detail": "Actual terms capture the core idea of pursuing, obtaining, then adapting/losing interest—same subject as expected topic."
           },
           {
             "field": "time",
@@ -2025,8 +2045,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Terms capture the core idea of pursuing, obtaining, then adapting/losing interest—same subject as the described book.",
-        "raw": "{\"match\":true,\"reason\":\"Terms capture the core idea of pursuing, obtaining, then adapting/losing interest—same subject as the described book.\"}"
+        "reason": "Actual terms capture the core idea of pursuing, obtaining, then adapting/losing interest—same subject as expected topic.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms capture the core idea of pursuing, obtaining, then adapting/losing interest—same subject as expected topic.\"}"
       }
     },
     {
@@ -2056,7 +2076,7 @@
           "timeConfidence": "low",
           "objectTypes": ["page"],
           "objectTypeOther": "Chrome 插件",
-          "contentTerms": ["chrome", "插件", "保存", "内容", "网址", "收藏", "说话", "找到"],
+          "contentTerms": ["chrome", "插件", "内容", "保存", "网址", "收藏", "说话", "找到"],
           "confidence": "high",
           "certainty": {
             "timeRange": "neutral",
@@ -2064,8 +2084,8 @@
               "chrome": "hedge",
               "插件": "hedge",
               "网页": "hedge",
-              "保存": "hedge",
               "内容": "hedge",
+              "保存": "hedge",
               "网址": "hedge",
               "收藏": "hedge",
               "说话": "hedge",
@@ -2075,15 +2095,15 @@
         },
         "source": "llm",
         "intentActual": "recall",
-        "topicTermsActual": ["chrome", "插件", "保存", "内容", "网址", "收藏", "说话", "找到"],
+        "topicTermsActual": ["chrome", "插件", "内容", "保存", "网址", "收藏", "说话", "找到"],
         "timeLabelActual": "a_while_ago",
         "timeConfidenceActual": "low",
         "objectTypesActual": ["page"],
         "objectTypeOtherActual": "Chrome 插件",
-        "contentTermsActual": ["chrome", "插件", "保存", "内容", "网址", "收藏", "说话", "找到"],
+        "contentTermsActual": ["chrome", "插件", "内容", "保存", "网址", "收藏", "说话", "找到"],
         "excludeContentTermsActual": [],
         "confidenceActual": "high",
-        "durationMs": 2021,
+        "durationMs": 1119,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -2105,7 +2125,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms cover Chrome extension, saving content/URLs, and finding via speech, matching the expected topic of a Chrome extension that saves web content and retrieves it via natural language."
+            "detail": "Actual terms cover Chrome plugin, saving content, and finding via speech—same topic as expected."
           },
           {
             "field": "time",
@@ -2133,8 +2153,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms cover Chrome extension, saving content/URLs, and finding via speech, matching the expected topic of a Chrome extension that saves web content and retrieves it via natural language.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms cover Chrome extension, saving content/URLs, and finding via speech, matching the expected topic of a Chrome extension that saves web content and retrieves it via natural language.\"}"
+        "reason": "Actual terms cover Chrome plugin, saving content, and finding via speech—same topic as expected.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms cover Chrome plugin, saving content, and finding via speech—same topic as expected.\"}"
       }
     },
     {
@@ -2185,7 +2205,7 @@
         "contentTermsActual": ["明朝", "历史", "皇帝", "哥哥", "兄弟"],
         "excludeContentTermsActual": [],
         "confidenceActual": "medium",
-        "durationMs": 1017,
+        "durationMs": 1225,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -2207,7 +2227,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Terms capture Ming dynasty, emperor, brother dynamics, matching the expected topic of a Ming emperor who succeeded due to his brother's circumstances."
+            "detail": "Terms capture Ming dynasty, emperor, brother dynamics—same subject as the expected topic of a Ming emperor who succeeded due to his brother's circumstances."
           },
           {
             "field": "time",
@@ -2235,8 +2255,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Terms capture Ming dynasty, emperor, brother dynamics, matching the expected topic of a Ming emperor who succeeded due to his brother's circumstances.",
-        "raw": "{\"match\":true,\"reason\":\"Terms capture Ming dynasty, emperor, brother dynamics, matching the expected topic of a Ming emperor who succeeded due to his brother's circumstances.\"}"
+        "reason": "Terms capture Ming dynasty, emperor, brother dynamics—same subject as the expected topic of a Ming emperor who succeeded due to his brother's circumstances.",
+        "raw": "{\"match\":true,\"reason\":\"Terms capture Ming dynasty, emperor, brother dynamics—same subject as the expected topic of a Ming emperor who succeeded due to his brother's circumstances.\"}"
       }
     },
     {
@@ -2326,7 +2346,7 @@
         ],
         "excludeContentTermsActual": [],
         "confidenceActual": "high",
-        "durationMs": 1313,
+        "durationMs": 1469,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -2348,7 +2368,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms capture work hours, internet money, AI automation—same core topic of low-hour internet income work."
+            "detail": "Actual terms capture the core topic: few work hours, internet money, AI automation tool; extra music terms are incidental details from the clue."
           },
           {
             "field": "time",
@@ -2376,8 +2396,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms capture work hours, internet money, AI automation—same core topic of low-hour internet income work.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms capture work hours, internet money, AI automation—same core topic of low-hour internet income work.\"}"
+        "reason": "Actual terms capture the core topic: few work hours, internet money, AI automation tool; extra music terms are incidental details from the clue.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms capture the core topic: few work hours, internet money, AI automation tool; extra music terms are incidental details from the clue.\"}"
       }
     },
     {
@@ -2423,7 +2443,7 @@
         "contentTermsActual": ["衣服", "起皱", "喷", "出差", "防皱"],
         "excludeContentTermsActual": ["熨斗"],
         "confidenceActual": "low",
-        "durationMs": 1160,
+        "durationMs": 947,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -2445,7 +2465,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms cover clothes, wrinkles, spray, travel, anti-wrinkle—same topic as portable wrinkle-release spray for travel."
+            "detail": "Actual terms cover clothes, wrinkles, spray, travel, anti-wrinkle—same portable wrinkle-spray topic."
           },
           {
             "field": "time",
@@ -2473,8 +2493,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms cover clothes, wrinkles, spray, travel, anti-wrinkle—same topic as portable wrinkle-release spray for travel.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms cover clothes, wrinkles, spray, travel, anti-wrinkle—same topic as portable wrinkle-release spray for travel.\"}"
+        "reason": "Actual terms cover clothes, wrinkles, spray, travel, anti-wrinkle—same portable wrinkle-spray topic.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms cover clothes, wrinkles, spray, travel, anti-wrinkle—same portable wrinkle-spray topic.\"}"
       }
     },
     {
@@ -2503,14 +2523,14 @@
           "certainty": {
             "timeRange": "neutral",
             "contentTerms": {
-              "买房": "firm",
-              "年轻人": "neutral",
-              "固定": "neutral",
-              "地方": "neutral",
-              "选择": "neutral"
+              "买房": "hedge",
+              "年轻人": "hedge",
+              "固定": "hedge",
+              "地方": "hedge",
+              "选择": "hedge"
             },
             "objectTypes": {
-              "article": "firm"
+              "article": "hedge"
             }
           }
         },
@@ -2524,7 +2544,7 @@
         "contentTermsActual": ["买房", "年轻人", "固定", "地方", "选择"],
         "excludeContentTermsActual": ["房价"],
         "confidenceActual": "medium",
-        "durationMs": 733,
+        "durationMs": 884,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -2546,7 +2566,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Terms capture buying a home early, young people, being fixed in place, and reduced choices—same topic as expected."
+            "detail": "Terms capture young people, buying a home, being fixed in place, and reduced choices—same topic as early homeownership limiting life options and mobility."
           },
           {
             "field": "time",
@@ -2574,8 +2594,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Terms capture buying a home early, young people, being fixed in place, and reduced choices—same topic as expected.",
-        "raw": "{\"match\":true,\"reason\":\"Terms capture buying a home early, young people, being fixed in place, and reduced choices—same topic as expected.\"}"
+        "reason": "Terms capture young people, buying a home, being fixed in place, and reduced choices—same topic as early homeownership limiting life options and mobility.",
+        "raw": "{\"match\":true,\"reason\":\"Terms capture young people, buying a home, being fixed in place, and reduced choices—same topic as early homeownership limiting life options and mobility.\"}"
       }
     },
     {
@@ -2604,31 +2624,50 @@
           },
           "timeConfidence": "low",
           "objectTypeOther": "咖啡机",
-          "contentTerms": ["咖啡", "机器", "咖啡豆", "胶囊", "手冲", "体积", "咖啡机"],
+          "contentTerms": [
+            "coffee",
+            "machine",
+            "bean",
+            "capsule",
+            "pour",
+            "over",
+            "small",
+            "咖啡机"
+          ],
           "confidence": "medium",
           "certainty": {
             "timeRange": "neutral",
             "contentTerms": {
-              "咖啡": "neutral",
-              "机器": "neutral",
-              "咖啡豆": "neutral",
-              "胶囊": "neutral",
-              "手冲": "neutral",
-              "体积": "neutral"
+              "coffee": "neutral",
+              "machine": "neutral",
+              "bean": "neutral",
+              "capsule": "neutral",
+              "pour": "neutral",
+              "over": "neutral",
+              "small": "neutral"
             }
           }
         },
         "source": "llm",
         "intentActual": "recall",
-        "topicTermsActual": ["咖啡", "机器", "咖啡豆", "胶囊", "手冲", "体积", "咖啡机"],
+        "topicTermsActual": ["coffee", "machine", "bean", "capsule", "pour", "small", "咖啡机"],
         "timeLabelActual": "a_while_ago",
         "timeConfidenceActual": "low",
         "objectTypesActual": [],
         "objectTypeOtherActual": "咖啡机",
-        "contentTermsActual": ["咖啡", "机器", "咖啡豆", "胶囊", "手冲", "体积", "咖啡机"],
+        "contentTermsActual": [
+          "coffee",
+          "machine",
+          "bean",
+          "capsule",
+          "pour",
+          "over",
+          "small",
+          "咖啡机"
+        ],
         "excludeContentTermsActual": [],
         "confidenceActual": "medium",
-        "durationMs": 1020,
+        "durationMs": 1035,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -2650,7 +2689,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms include 咖啡机, 咖啡豆, 机器, 体积, matching a small automatic coffee machine that takes beans; extra terms are modifiers."
+            "detail": "Terms cover coffee machine, beans, no capsule/pour, small size—same topic as small automatic coffee machine."
           },
           {
             "field": "time",
@@ -2678,8 +2717,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms include 咖啡机, 咖啡豆, 机器, 体积, matching a small automatic coffee machine that takes beans; extra terms are modifiers.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms include 咖啡机, 咖啡豆, 机器, 体积, matching a small automatic coffee machine that takes beans; extra terms are modifiers.\"}"
+        "reason": "Terms cover coffee machine, beans, no capsule/pour, small size—same topic as small automatic coffee machine.",
+        "raw": "{\"match\":true,\"reason\":\"Terms cover coffee machine, beans, no capsule/pour, small size—same topic as small automatic coffee machine.\"}"
       }
     },
     {
@@ -2760,7 +2799,7 @@
         ],
         "excludeContentTermsActual": [],
         "confidenceActual": "high",
-        "durationMs": 1159,
+        "durationMs": 825,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -2840,34 +2879,34 @@
           },
           "timeConfidence": "low",
           "objectTypes": ["page"],
-          "contentTerms": ["sleep", "quality", "test", "score", "habit", "analysis"],
+          "contentTerms": ["sleep", "quality", "test", "score", "habit", "analyze"],
           "confidence": "high",
           "certainty": {
             "timeRange": "neutral",
             "contentTerms": {
-              "sleep": "hedge",
-              "quality": "hedge",
-              "test": "hedge",
-              "score": "hedge",
-              "habit": "hedge",
-              "analysis": "hedge"
+              "sleep": "neutral",
+              "quality": "neutral",
+              "test": "neutral",
+              "score": "neutral",
+              "habit": "neutral",
+              "analyze": "neutral"
             },
             "objectTypes": {
-              "page": "hedge"
+              "page": "neutral"
             }
           }
         },
         "source": "llm",
         "intentActual": "recall",
-        "topicTermsActual": ["sleep", "quality", "test", "score", "habit", "analysis"],
+        "topicTermsActual": ["sleep", "quality", "test", "score", "habit", "analyze"],
         "timeLabelActual": "a_while_ago",
         "timeConfidenceActual": "low",
         "objectTypesActual": ["page"],
         "objectTypeOtherActual": null,
-        "contentTermsActual": ["sleep", "quality", "test", "score", "habit", "analysis"],
+        "contentTermsActual": ["sleep", "quality", "test", "score", "habit", "analyze"],
         "excludeContentTermsActual": [],
         "confidenceActual": "high",
-        "durationMs": 1048,
+        "durationMs": 1198,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -2889,7 +2928,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms directly correspond to sleep quality test, score, habit analysis—same topic as expected."
+            "detail": "Actual terms directly translate the expected topic: sleep quality test, score, habit analysis."
           },
           {
             "field": "time",
@@ -2917,8 +2956,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms directly correspond to sleep quality test, score, habit analysis—same topic as expected.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms directly correspond to sleep quality test, score, habit analysis—same topic as expected.\"}"
+        "reason": "Actual terms directly translate the expected topic: sleep quality test, score, habit analysis.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms directly translate the expected topic: sleep quality test, score, habit analysis.\"}"
       }
     },
     {
@@ -2959,7 +2998,7 @@
               "bbc": "hedge"
             },
             "objectTypes": {
-              "video": "neutral"
+              "video": "hedge"
             }
           }
         },
@@ -2973,7 +3012,7 @@
         "contentTermsActual": ["human", "migration", "climate", "change", "bbc", "documentary"],
         "excludeContentTermsActual": [],
         "confidenceActual": "medium",
-        "durationMs": 1051,
+        "durationMs": 1309,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -2995,7 +3034,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Terms cover human migration, climate change, BBC documentary—same subject as expected."
+            "detail": "Terms directly cover human migration, climate change, BBC documentary—same subject as expected topic."
           },
           {
             "field": "time",
@@ -3023,8 +3062,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Terms cover human migration, climate change, BBC documentary—same subject as expected.",
-        "raw": "{\"match\":true,\"reason\":\"Terms cover human migration, climate change, BBC documentary—same subject as expected.\"}"
+        "reason": "Terms directly cover human migration, climate change, BBC documentary—same subject as expected topic.",
+        "raw": "{\"match\":true,\"reason\":\"Terms directly cover human migration, climate change, BBC documentary—same subject as expected topic.\"}"
       }
     },
     {
@@ -3080,7 +3119,7 @@
         "contentTermsActual": ["装修", "卫生间", "壁龛", "积水", "发霉", "评论区"],
         "excludeContentTermsActual": [],
         "confidenceActual": "high",
-        "durationMs": 1233,
+        "durationMs": 978,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -3185,7 +3224,7 @@
         "contentTermsActual": ["dunhuang", "mural", "restoration", "brush"],
         "excludeContentTermsActual": [],
         "confidenceActual": "high",
-        "durationMs": 1178,
+        "durationMs": 927,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -3207,7 +3246,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms (Dunhuang, mural, restoration, brush) directly correspond to the expected topic of Dunhuang mural protection and restoration process."
+            "detail": "Both refer to Dunhuang mural restoration, including fine brush work; terms align with the expected topic."
           },
           {
             "field": "time",
@@ -3235,8 +3274,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms (Dunhuang, mural, restoration, brush) directly correspond to the expected topic of Dunhuang mural protection and restoration process.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms (Dunhuang, mural, restoration, brush) directly correspond to the expected topic of Dunhuang mural protection and restoration process.\"}"
+        "reason": "Both refer to Dunhuang mural restoration, including fine brush work; terms align with the expected topic.",
+        "raw": "{\"match\":true,\"reason\":\"Both refer to Dunhuang mural restoration, including fine brush work; terms align with the expected topic.\"}"
       }
     },
     {
@@ -3289,7 +3328,7 @@
         "contentTermsActual": ["日式", "溏心蛋", "蛋黄", "酱汁", "酱油", "甜", "教程"],
         "excludeContentTermsActual": [],
         "confidenceActual": "medium",
-        "durationMs": 1028,
+        "durationMs": 881,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -3368,34 +3407,33 @@
             "label": "a_while_ago"
           },
           "timeConfidence": "low",
-          "contentTerms": ["公众号", "时间", "不可再生", "一小时", "值多少钱", "观点"],
+          "contentTerms": ["时间", "不可再生", "一小时", "值多少钱", "观点"],
           "confidence": "medium",
           "certainty": {
             "timeRange": "neutral",
             "contentTerms": {
-              "公众号": "neutral",
-              "时间": "neutral",
+              "时间": "hedge",
               "不可再生": "hedge",
               "一小时": "hedge",
               "值多少钱": "hedge",
-              "观点": "neutral"
+              "观点": "hedge"
             },
             "objectTypes": {
-              "article": "neutral"
+              "article": "hedge"
             }
           }
         },
         "source": "llm",
         "intentActual": "recall",
-        "topicTermsActual": ["公众号", "时间", "不可再生", "一小时", "值多少钱", "观点"],
+        "topicTermsActual": ["时间", "不可再生", "一小时", "值多少钱", "观点"],
         "timeLabelActual": "a_while_ago",
         "timeConfidenceActual": "low",
         "objectTypesActual": [],
         "objectTypeOtherActual": null,
-        "contentTermsActual": ["公众号", "时间", "不可再生", "一小时", "值多少钱", "观点"],
+        "contentTermsActual": ["时间", "不可再生", "一小时", "值多少钱", "观点"],
         "excludeContentTermsActual": [],
         "confidenceActual": "medium",
-        "durationMs": 984,
+        "durationMs": 1141,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -3417,7 +3455,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms capture the same topic: time as non-renewable, hourly value, and the viewpoint from a public account article."
+            "detail": "Actual terms capture time as non-renewable and hourly value calculation, matching personal time value/cost topic."
           },
           {
             "field": "time",
@@ -3434,8 +3472,8 @@
           {
             "field": "entities",
             "scored": true,
-            "passed": true,
-            "detail": "实体齐全 [微信公众号]"
+            "passed": false,
+            "detail": "缺少实体 [微信公众号]"
           }
         ],
         "certaintyRecord": {
@@ -3445,8 +3483,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms capture the same topic: time as non-renewable, hourly value, and the viewpoint from a public account article.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms capture the same topic: time as non-renewable, hourly value, and the viewpoint from a public account article.\"}"
+        "reason": "Actual terms capture time as non-renewable and hourly value calculation, matching personal time value/cost topic.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms capture time as non-renewable and hourly value calculation, matching personal time value/cost topic.\"}"
       }
     },
     {
@@ -3494,7 +3532,7 @@
         "contentTermsActual": ["抠图", "照片", "人", "东西", "贴", "图片", "苹果", "软件"],
         "excludeContentTermsActual": [],
         "confidenceActual": "low",
-        "durationMs": 1189,
+        "durationMs": 807,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -3516,7 +3554,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms cover cutout, photos, people, pasting, images, Apple, software—same subject as extracting subjects and pasting into other images."
+            "detail": "Terms cover cutout, photos, people, pasting, images, Apple, software—same subject as extracting subjects and pasting into other images."
           },
           {
             "field": "time",
@@ -3544,8 +3582,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms cover cutout, photos, people, pasting, images, Apple, software—same subject as extracting subjects and pasting into other images.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms cover cutout, photos, people, pasting, images, Apple, software—same subject as extracting subjects and pasting into other images.\"}"
+        "reason": "Terms cover cutout, photos, people, pasting, images, Apple, software—same subject as extracting subjects and pasting into other images.",
+        "raw": "{\"match\":true,\"reason\":\"Terms cover cutout, photos, people, pasting, images, Apple, software—same subject as extracting subjects and pasting into other images.\"}"
       }
     },
     {
@@ -3597,7 +3635,7 @@
         "contentTermsActual": ["japan", "bubble", "economy", "housing", "prices", "collapse"],
         "excludeContentTermsActual": [],
         "confidenceActual": "medium",
-        "durationMs": 1217,
+        "durationMs": 1194,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -3619,7 +3657,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms (Japan, bubble, economy, housing prices, collapse) directly cover the expected topic of Japan's bubble economy formation, burst, and impact."
+            "detail": "Actual terms cover Japan bubble economy, housing prices, and collapse—same subject as expected topic."
           },
           {
             "field": "time",
@@ -3647,8 +3685,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms (Japan, bubble, economy, housing prices, collapse) directly cover the expected topic of Japan's bubble economy formation, burst, and impact.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms (Japan, bubble, economy, housing prices, collapse) directly cover the expected topic of Japan's bubble economy formation, burst, and impact.\"}"
+        "reason": "Actual terms cover Japan bubble economy, housing prices, and collapse—same subject as expected topic.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms cover Japan bubble economy, housing prices, and collapse—same subject as expected topic.\"}"
       }
     },
     {
@@ -3699,7 +3737,7 @@
         "contentTermsActual": ["洗衣机", "洗完", "关门", "细菌", "原因"],
         "excludeContentTermsActual": [],
         "confidenceActual": "medium",
-        "durationMs": 840,
+        "durationMs": 1497,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -3805,7 +3843,7 @@
         "contentTermsActual": ["极光", "绿色", "红色", "太阳", "活动", "漂亮"],
         "excludeContentTermsActual": [],
         "confidenceActual": "medium",
-        "durationMs": 964,
+        "durationMs": 1270,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -3879,67 +3917,32 @@
         "parsed": {
           "raw": "有个桌面小风扇可以夹在床头那种，我记得是静音的，晚上睡觉用，不占地方，可能是小米的，也可能不是。",
           "objectTypeOther": "桌面小风扇",
-          "contentTerms": [
-            "桌面",
-            "小风扇",
-            "夹",
-            "床头",
-            "静音",
-            "晚上",
-            "睡觉",
-            "不占地方",
-            "小米",
-            "桌面小风扇"
-          ],
+          "contentTerms": ["桌面", "风扇", "夹", "床头", "静音", "睡觉", "小米", "桌面小风扇"],
           "confidence": "low",
           "certainty": {
             "timeRange": "neutral",
             "contentTerms": {
               "桌面": "hedge",
-              "小风扇": "hedge",
-              "夹": "hedge",
-              "床头": "hedge",
+              "风扇": "neutral",
+              "夹": "neutral",
+              "床头": "neutral",
               "静音": "hedge",
-              "晚上": "hedge",
-              "睡觉": "hedge",
-              "不占地方": "hedge",
+              "睡觉": "neutral",
               "小米": "hedge"
             }
           }
         },
         "source": "llm",
         "intentActual": "recall",
-        "topicTermsActual": [
-          "桌面",
-          "小风扇",
-          "夹",
-          "床头",
-          "静音",
-          "晚上",
-          "睡觉",
-          "不占地方",
-          "小米",
-          "桌面小风扇"
-        ],
+        "topicTermsActual": ["桌面", "风扇", "夹", "床头", "静音", "睡觉", "小米", "桌面小风扇"],
         "timeLabelActual": null,
         "timeConfidenceActual": null,
         "objectTypesActual": [],
         "objectTypeOtherActual": "桌面小风扇",
-        "contentTermsActual": [
-          "桌面",
-          "小风扇",
-          "夹",
-          "床头",
-          "静音",
-          "晚上",
-          "睡觉",
-          "不占地方",
-          "小米",
-          "桌面小风扇"
-        ],
+        "contentTermsActual": ["桌面", "风扇", "夹", "床头", "静音", "睡觉", "小米", "桌面小风扇"],
         "excludeContentTermsActual": [],
         "confidenceActual": "low",
-        "durationMs": 868,
+        "durationMs": 865,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -3961,7 +3964,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms include desktop small fan, clip, bedside, quiet, night use, space-saving—same topic as expected clip-on quiet bedside fan."
+            "detail": "Actual terms include desktop fan, clip, bedside, quiet, sleep, Xiaomi—matching the expected clip-on quiet bedside fan."
           },
           {
             "field": "time",
@@ -3989,8 +3992,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms include desktop small fan, clip, bedside, quiet, night use, space-saving—same topic as expected clip-on quiet bedside fan.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms include desktop small fan, clip, bedside, quiet, night use, space-saving—same topic as expected clip-on quiet bedside fan.\"}"
+        "reason": "Actual terms include desktop fan, clip, bedside, quiet, sleep, Xiaomi—matching the expected clip-on quiet bedside fan.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms include desktop fan, clip, bedside, quiet, sleep, Xiaomi—matching the expected clip-on quiet bedside fan.\"}"
       }
     },
     {
@@ -4022,18 +4025,18 @@
           "contentTerms": ["b站", "批评", "生气", "翻脸", "自尊", "防御", "机制"],
           "confidence": "high",
           "certainty": {
-            "timeRange": "neutral",
+            "timeRange": "hedge",
             "contentTerms": {
-              "b站": "neutral",
-              "批评": "neutral",
-              "生气": "neutral",
-              "翻脸": "neutral",
+              "b站": "hedge",
+              "批评": "hedge",
+              "生气": "hedge",
+              "翻脸": "hedge",
               "自尊": "hedge",
               "防御": "hedge",
               "机制": "hedge"
             },
             "objectTypes": {
-              "video": "neutral"
+              "video": "hedge"
             }
           }
         },
@@ -4047,7 +4050,7 @@
         "contentTermsActual": ["b站", "批评", "生气", "翻脸", "自尊", "防御", "机制"],
         "excludeContentTermsActual": [],
         "confidenceActual": "high",
-        "durationMs": 1546,
+        "durationMs": 952,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -4069,7 +4072,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms cover B站 video about criticism, anger, self-esteem, defense mechanisms—same psychological topic as expected."
+            "detail": "Actual terms cover B站 video about criticism, anger, self-esteem, defense mechanisms—same topic as expected."
           },
           {
             "field": "time",
@@ -4097,8 +4100,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms cover B站 video about criticism, anger, self-esteem, defense mechanisms—same psychological topic as expected.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms cover B站 video about criticism, anger, self-esteem, defense mechanisms—same psychological topic as expected.\"}"
+        "reason": "Actual terms cover B站 video about criticism, anger, self-esteem, defense mechanisms—same topic as expected.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms cover B站 video about criticism, anger, self-esteem, defense mechanisms—same topic as expected.\"}"
       }
     },
     {
@@ -4194,7 +4197,7 @@
         ],
         "excludeContentTermsActual": [],
         "confidenceActual": "medium",
-        "durationMs": 1572,
+        "durationMs": 1246,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -4216,7 +4219,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms cover hybrid vs pure EV long-term cost comparison including fuel/electricity, maintenance, and comparison table—same topic."
+            "detail": "Actual terms cover hybrid vs pure EV long-term cost comparison including fuel/electricity, maintenance, and table—same topic."
           },
           {
             "field": "time",
@@ -4244,8 +4247,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms cover hybrid vs pure EV long-term cost comparison including fuel/electricity, maintenance, and comparison table—same topic.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms cover hybrid vs pure EV long-term cost comparison including fuel/electricity, maintenance, and comparison table—same topic.\"}"
+        "reason": "Actual terms cover hybrid vs pure EV long-term cost comparison including fuel/electricity, maintenance, and table—same topic.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms cover hybrid vs pure EV long-term cost comparison including fuel/electricity, maintenance, and table—same topic.\"}"
       }
     },
     {
@@ -4294,7 +4297,7 @@
         "contentTermsActual": ["weather", "cloud", "map", "real", "time", "wind", "nationwide"],
         "excludeContentTermsActual": ["forecast"],
         "confidenceActual": "medium",
-        "durationMs": 1167,
+        "durationMs": 1275,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -4316,7 +4319,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Terms weather, cloud, map, real, wind, nationwide directly correspond to real-time nationwide weather cloud and wind visualization map."
+            "detail": "Terms weather, cloud, map, real, wind, nationwide directly match real-time nationwide weather cloud and wind map visualization."
           },
           {
             "field": "time",
@@ -4344,8 +4347,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Terms weather, cloud, map, real, wind, nationwide directly correspond to real-time nationwide weather cloud and wind visualization map.",
-        "raw": "{\"match\":true,\"reason\":\"Terms weather, cloud, map, real, wind, nationwide directly correspond to real-time nationwide weather cloud and wind visualization map.\"}"
+        "reason": "Terms weather, cloud, map, real, wind, nationwide directly match real-time nationwide weather cloud and wind map visualization.",
+        "raw": "{\"match\":true,\"reason\":\"Terms weather, cloud, map, real, wind, nationwide directly match real-time nationwide weather cloud and wind map visualization.\"}"
       }
     },
     {
@@ -4386,7 +4389,7 @@
         "contentTermsActual": ["房价"],
         "excludeContentTermsActual": [],
         "confidenceActual": "low",
-        "durationMs": 1025,
+        "durationMs": 664,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -4465,7 +4468,7 @@
             "label": "last_month"
           },
           "timeConfidence": "high",
-          "contentTerms": ["晚上", "想", "事情", "白天", "以前", "担心", "以后", "抖音", "小红书"],
+          "contentTerms": ["晚上", "想", "事情", "白天", "以前", "担心", "以后", "睡前"],
           "confidence": "medium",
           "certainty": {
             "timeRange": "hedge",
@@ -4477,8 +4480,7 @@
               "以前": "hedge",
               "担心": "hedge",
               "以后": "hedge",
-              "抖音": "hedge",
-              "小红书": "hedge"
+              "睡前": "hedge"
             },
             "objectTypes": {
               "video": "hedge"
@@ -4487,25 +4489,15 @@
         },
         "source": "llm",
         "intentActual": "recall",
-        "topicTermsActual": ["晚上", "想", "事情", "白天", "担心", "以后", "抖音", "小红书"],
+        "topicTermsActual": ["晚上", "想", "事情", "白天", "担心", "以后", "睡前"],
         "timeLabelActual": "last_month",
         "timeConfidenceActual": "high",
         "objectTypesActual": [],
         "objectTypeOtherActual": null,
-        "contentTermsActual": [
-          "晚上",
-          "想",
-          "事情",
-          "白天",
-          "以前",
-          "担心",
-          "以后",
-          "抖音",
-          "小红书"
-        ],
+        "contentTermsActual": ["晚上", "想", "事情", "白天", "以前", "担心", "以后", "睡前"],
         "excludeContentTermsActual": [],
         "confidenceActual": "medium",
-        "durationMs": 1191,
+        "durationMs": 1046,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -4527,7 +4519,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Terms capture nighttime overthinking/worrying about past/future, matching the expected psychological phenomenon despite being generic."
+            "detail": "Terms capture nighttime overthinking and worry about the future, matching the expected psychological phenomenon."
           },
           {
             "field": "time",
@@ -4544,8 +4536,8 @@
           {
             "field": "entities",
             "scored": true,
-            "passed": true,
-            "detail": "实体齐全 [抖音, 小红书]"
+            "passed": false,
+            "detail": "缺少实体 [抖音, 小红书]"
           }
         ],
         "certaintyRecord": {
@@ -4555,8 +4547,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Terms capture nighttime overthinking/worrying about past/future, matching the expected psychological phenomenon despite being generic.",
-        "raw": "{\"match\":true,\"reason\":\"Terms capture nighttime overthinking/worrying about past/future, matching the expected psychological phenomenon despite being generic.\"}"
+        "reason": "Terms capture nighttime overthinking and worry about the future, matching the expected psychological phenomenon.",
+        "raw": "{\"match\":true,\"reason\":\"Terms capture nighttime overthinking and worry about the future, matching the expected psychological phenomenon.\"}"
       }
     },
     {
@@ -4606,7 +4598,7 @@
         "contentTermsActual": ["cat", "knead", "kneading", "blanket", "why"],
         "excludeContentTermsActual": [],
         "confidenceActual": "medium",
-        "durationMs": 1238,
+        "durationMs": 1144,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -4628,7 +4620,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms (cat, knead, blanket, why) directly capture the topic of why cats knead on blankets, matching the expected subject."
+            "detail": "Both refer to why cats knead (踩奶) on blankets; terms align with the expected topic of cat kneading behavior."
           },
           {
             "field": "time",
@@ -4656,8 +4648,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms (cat, knead, blanket, why) directly capture the topic of why cats knead on blankets, matching the expected subject.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms (cat, knead, blanket, why) directly capture the topic of why cats knead on blankets, matching the expected subject.\"}"
+        "reason": "Both refer to why cats knead (踩奶) on blankets; terms align with the expected topic of cat kneading behavior.",
+        "raw": "{\"match\":true,\"reason\":\"Both refer to why cats knead (踩奶) on blankets; terms align with the expected topic of cat kneading behavior.\"}"
       }
     },
     {
@@ -4711,7 +4703,7 @@
         "contentTermsActual": ["pomodoro", "focus", "timer", "technique"],
         "excludeContentTermsActual": [],
         "confidenceActual": "high",
-        "durationMs": 729,
+        "durationMs": 777,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -4733,7 +4725,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Both refer to Pomodoro technique/focus timer; terms align with expected topic of Pomodoro method and focus timing tool."
+            "detail": "Both refer to Pomodoro technique/focus timer; actual terms align with expected topic of Pomodoro method and focus timing tool."
           },
           {
             "field": "time",
@@ -4761,8 +4753,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Both refer to Pomodoro technique/focus timer; terms align with expected topic of Pomodoro method and focus timing tool.",
-        "raw": "{\"match\":true,\"reason\":\"Both refer to Pomodoro technique/focus timer; terms align with expected topic of Pomodoro method and focus timing tool.\"}"
+        "reason": "Both refer to Pomodoro technique/focus timer; actual terms align with expected topic of Pomodoro method and focus timing tool.",
+        "raw": "{\"match\":true,\"reason\":\"Both refer to Pomodoro technique/focus timer; actual terms align with expected topic of Pomodoro method and focus timing tool.\"}"
       }
     },
     {
@@ -4790,7 +4782,7 @@
             "label": "a_while_ago"
           },
           "timeConfidence": "low",
-          "contentTerms": ["battery", "health", "charge", "charging", "fast", "lifespan", "phone"],
+          "contentTerms": ["battery", "health", "charge", "charging", "lifespan", "fast"],
           "confidence": "medium",
           "certainty": {
             "timeRange": "neutral",
@@ -4799,39 +4791,22 @@
               "health": "neutral",
               "charge": "neutral",
               "charging": "neutral",
-              "fast": "neutral",
               "lifespan": "neutral",
-              "phone": "neutral"
+              "fast": "neutral"
             }
           }
         },
         "source": "llm",
         "intentActual": "recall",
-        "topicTermsActual": [
-          "battery",
-          "health",
-          "charge",
-          "charging",
-          "fast",
-          "lifespan",
-          "phone"
-        ],
+        "topicTermsActual": ["battery", "health", "charge", "charging", "lifespan", "fast"],
         "timeLabelActual": "a_while_ago",
         "timeConfidenceActual": "low",
         "objectTypesActual": [],
         "objectTypeOtherActual": null,
-        "contentTermsActual": [
-          "battery",
-          "health",
-          "charge",
-          "charging",
-          "fast",
-          "lifespan",
-          "phone"
-        ],
+        "contentTermsActual": ["battery", "health", "charge", "charging", "lifespan", "fast"],
         "excludeContentTermsActual": [],
         "confidenceActual": "medium",
-        "durationMs": 1287,
+        "durationMs": 1177,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -4853,7 +4828,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms cover phone battery health, charging, fast charging, and lifespan—same topic as expected."
+            "detail": "Actual terms battery, health, charging, lifespan, fast directly cover phone battery health and charging habits affecting longevity."
           },
           {
             "field": "time",
@@ -4881,8 +4856,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms cover phone battery health, charging, fast charging, and lifespan—same topic as expected.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms cover phone battery health, charging, fast charging, and lifespan—same topic as expected.\"}"
+        "reason": "Actual terms battery, health, charging, lifespan, fast directly cover phone battery health and charging habits affecting longevity.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms battery, health, charging, lifespan, fast directly cover phone battery health and charging habits affecting longevity.\"}"
       }
     },
     {
@@ -4904,27 +4879,27 @@
         },
         "parsed": {
           "raw": "那个地图，能看海拔的，叫什么来着",
-          "contentTerms": ["地图", "海拔"],
+          "contentTerms": ["map", "elevation"],
           "confidence": "low",
           "certainty": {
             "timeRange": "neutral",
             "contentTerms": {
-              "地图": "neutral",
-              "海拔": "neutral"
+              "map": "neutral",
+              "elevation": "neutral"
             }
           }
         },
         "source": "llm",
         "intentActual": "recall",
-        "topicTermsActual": ["地图", "海拔"],
+        "topicTermsActual": ["map", "elevation"],
         "timeLabelActual": null,
         "timeConfidenceActual": null,
         "objectTypesActual": [],
         "objectTypeOtherActual": null,
-        "contentTermsActual": ["地图", "海拔"],
+        "contentTermsActual": ["map", "elevation"],
         "excludeContentTermsActual": [],
         "confidenceActual": "low",
-        "durationMs": 771,
+        "durationMs": 816,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -4946,7 +4921,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Both refer to a map tool showing elevation/altitude; actual terms 地图+海拔 capture the same subject."
+            "detail": "Both refer to a map tool showing elevation/terrain altitude; terms map+elevation capture the same topic."
           },
           {
             "field": "time",
@@ -4974,8 +4949,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Both refer to a map tool showing elevation/altitude; actual terms 地图+海拔 capture the same subject.",
-        "raw": "{\"match\":true,\"reason\":\"Both refer to a map tool showing elevation/altitude; actual terms 地图+海拔 capture the same subject.\"}"
+        "reason": "Both refer to a map tool showing elevation/terrain altitude; terms map+elevation capture the same topic.",
+        "raw": "{\"match\":true,\"reason\":\"Both refer to a map tool showing elevation/terrain altitude; terms map+elevation capture the same topic.\"}"
       }
     },
     {
@@ -5016,9 +4991,9 @@
               "table": "neutral",
               "convert": "neutral",
               "tutorial": "neutral",
-              "free": "hedge",
-              "no": "hedge",
-              "registration": "hedge"
+              "free": "neutral",
+              "no": "neutral",
+              "registration": "neutral"
             },
             "objectTypes": {
               "article": "neutral"
@@ -5053,7 +5028,7 @@
         ],
         "excludeContentTermsActual": [],
         "confidenceActual": "low",
-        "durationMs": 1275,
+        "durationMs": 781,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -5160,7 +5135,7 @@
         "contentTermsActual": ["ergonomic", "chair", "评测", "腰部", "支撑", "bilibili", "b站"],
         "excludeContentTermsActual": [],
         "confidenceActual": "medium",
-        "durationMs": 1211,
+        "durationMs": 952,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -5182,7 +5157,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Both refer to ergonomic chair reviews focusing on lumbar support, including Bilibili source; terms align with expected topic."
+            "detail": "Both refer to ergonomic chair reviews focusing on lumbar support, including Bilibili context."
           },
           {
             "field": "time",
@@ -5210,8 +5185,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Both refer to ergonomic chair reviews focusing on lumbar support, including Bilibili source; terms align with expected topic.",
-        "raw": "{\"match\":true,\"reason\":\"Both refer to ergonomic chair reviews focusing on lumbar support, including Bilibili source; terms align with expected topic.\"}"
+        "reason": "Both refer to ergonomic chair reviews focusing on lumbar support, including Bilibili context.",
+        "raw": "{\"match\":true,\"reason\":\"Both refer to ergonomic chair reviews focusing on lumbar support, including Bilibili context.\"}"
       }
     },
     {
@@ -5239,31 +5214,31 @@
             "label": "a_while_ago"
           },
           "timeConfidence": "low",
-          "contentTerms": ["海水", "颜色", "深度", "浅海", "深海", "蓝色"],
+          "contentTerms": ["海水", "蓝色", "颜色", "深度", "浅海", "深海"],
           "confidence": "medium",
           "certainty": {
             "timeRange": "neutral",
             "contentTerms": {
               "海水": "neutral",
+              "蓝色": "neutral",
               "颜色": "neutral",
               "深度": "neutral",
               "浅海": "neutral",
-              "深海": "neutral",
-              "蓝色": "hedge"
+              "深海": "neutral"
             }
           }
         },
         "source": "llm",
         "intentActual": "recall",
-        "topicTermsActual": ["海水", "颜色", "深度", "浅海", "深海", "蓝色"],
+        "topicTermsActual": ["海水", "蓝色", "颜色", "深度", "浅海", "深海"],
         "timeLabelActual": "a_while_ago",
         "timeConfidenceActual": "low",
         "objectTypesActual": [],
         "objectTypeOtherActual": null,
-        "contentTermsActual": ["海水", "颜色", "深度", "浅海", "深海", "蓝色"],
+        "contentTermsActual": ["海水", "蓝色", "颜色", "深度", "浅海", "深海"],
         "excludeContentTermsActual": [],
         "confidenceActual": "medium",
-        "durationMs": 1164,
+        "durationMs": 1220,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -5285,7 +5260,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms cover sea water color, depth, shallow/deep sea, and blue—same topic as expected relationship between water color and depth/light."
+            "detail": "Actual terms cover sea water, color, depth, shallow/deep sea—same topic as expected relationship between ocean color and depth."
           },
           {
             "field": "time",
@@ -5313,8 +5288,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms cover sea water color, depth, shallow/deep sea, and blue—same topic as expected relationship between water color and depth/light.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms cover sea water color, depth, shallow/deep sea, and blue—same topic as expected relationship between water color and depth/light.\"}"
+        "reason": "Actual terms cover sea water, color, depth, shallow/deep sea—same topic as expected relationship between ocean color and depth.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms cover sea water, color, depth, shallow/deep sea—same topic as expected relationship between ocean color and depth.\"}"
       }
     },
     {
@@ -5367,7 +5342,7 @@
         "contentTermsActual": ["meal", "prep", "一周", "饭", "冰箱", "博主"],
         "excludeContentTermsActual": [],
         "confidenceActual": "medium",
-        "durationMs": 1236,
+        "durationMs": 871,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -5448,7 +5423,7 @@
             "minutes",
             "calculator",
             "wake",
-            "bedtime",
+            "time",
             "计算器"
           ],
           "confidence": "low",
@@ -5461,22 +5436,13 @@
               "minutes": "hedge",
               "calculator": "hedge",
               "wake": "hedge",
-              "bedtime": "hedge"
+              "time": "hedge"
             }
           }
         },
         "source": "llm",
         "intentActual": "recall",
-        "topicTermsActual": [
-          "sleep",
-          "cycle",
-          "90",
-          "minutes",
-          "calculator",
-          "wake",
-          "bedtime",
-          "计算器"
-        ],
+        "topicTermsActual": ["sleep", "cycle", "90", "minutes", "calculator", "wake", "计算器"],
         "timeLabelActual": null,
         "timeConfidenceActual": null,
         "objectTypesActual": [],
@@ -5488,12 +5454,12 @@
           "minutes",
           "calculator",
           "wake",
-          "bedtime",
+          "time",
           "计算器"
         ],
         "excludeContentTermsActual": [],
         "confidenceActual": "low",
-        "durationMs": 908,
+        "durationMs": 1142,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -5515,7 +5481,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Both refer to a sleep-cycle-based calculator for bedtime/wake times using 90-minute cycles."
+            "detail": "Both refer to a sleep-cycle 90-minute calculator for bedtime/wake time; terms align with expected topic."
           },
           {
             "field": "time",
@@ -5543,8 +5509,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Both refer to a sleep-cycle-based calculator for bedtime/wake times using 90-minute cycles.",
-        "raw": "{\"match\":true,\"reason\":\"Both refer to a sleep-cycle-based calculator for bedtime/wake times using 90-minute cycles.\"}"
+        "reason": "Both refer to a sleep-cycle 90-minute calculator for bedtime/wake time; terms align with expected topic.",
+        "raw": "{\"match\":true,\"reason\":\"Both refer to a sleep-cycle 90-minute calculator for bedtime/wake time; terms align with expected topic.\"}"
       }
     },
     {
@@ -5630,7 +5596,7 @@
         ],
         "excludeContentTermsActual": [],
         "confidenceActual": "high",
-        "durationMs": 1049,
+        "durationMs": 1055,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -5652,7 +5618,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms cover urban planning, walkability, street design, and car vs walk life, matching the expected topic of walkability and street design's relation to urban life."
+            "detail": "Actual terms cover urban planning, walkability, street design, life, car, and walking—same topic as expected."
           },
           {
             "field": "time",
@@ -5680,8 +5646,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms cover urban planning, walkability, street design, and car vs walk life, matching the expected topic of walkability and street design's relation to urban life.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms cover urban planning, walkability, street design, and car vs walk life, matching the expected topic of walkability and street design's relation to urban life.\"}"
+        "reason": "Actual terms cover urban planning, walkability, street design, life, car, and walking—same topic as expected.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms cover urban planning, walkability, street design, life, car, and walking—same topic as expected.\"}"
       }
     },
     {
@@ -5710,19 +5676,7 @@
           },
           "timeConfidence": "low",
           "objectTypes": ["article"],
-          "objectTypeOther": "帖子",
-          "contentTerms": [
-            "小红书",
-            "塑料",
-            "饭盒",
-            "微波炉",
-            "微波",
-            "释放",
-            "有害",
-            "物质",
-            "塑料种类",
-            "帖子"
-          ],
+          "contentTerms": ["小红书", "塑料", "饭盒", "微波炉", "微波", "有害", "物质", "释放"],
           "confidence": "high",
           "certainty": {
             "timeRange": "neutral",
@@ -5732,46 +5686,26 @@
               "饭盒": "neutral",
               "微波炉": "neutral",
               "微波": "neutral",
-              "释放": "neutral",
               "有害": "neutral",
               "物质": "neutral",
-              "塑料种类": "neutral"
+              "释放": "neutral"
+            },
+            "objectTypes": {
+              "article": "hedge"
             }
           }
         },
         "source": "llm",
         "intentActual": "recall",
-        "topicTermsActual": [
-          "小红书",
-          "塑料",
-          "饭盒",
-          "微波炉",
-          "微波",
-          "释放",
-          "有害",
-          "物质",
-          "塑料种类",
-          "帖子"
-        ],
+        "topicTermsActual": ["小红书", "塑料", "饭盒", "微波炉", "微波", "有害", "物质", "释放"],
         "timeLabelActual": "a_while_ago",
         "timeConfidenceActual": "low",
         "objectTypesActual": ["article"],
-        "objectTypeOtherActual": "帖子",
-        "contentTermsActual": [
-          "小红书",
-          "塑料",
-          "饭盒",
-          "微波炉",
-          "微波",
-          "释放",
-          "有害",
-          "物质",
-          "塑料种类",
-          "帖子"
-        ],
+        "objectTypeOtherActual": null,
+        "contentTermsActual": ["小红书", "塑料", "饭盒", "微波炉", "微波", "有害", "物质", "释放"],
         "excludeContentTermsActual": [],
         "confidenceActual": "high",
-        "durationMs": 1159,
+        "durationMs": 1405,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -5793,7 +5727,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms cover plastic lunch boxes, microwaving, harmful substance release, and plastic types—same topic as expected."
+            "detail": "Actual terms cover plastic lunch boxes, microwave heating, and harmful substance release—same topic as plastic container microwave safety."
           },
           {
             "field": "time",
@@ -5821,8 +5755,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms cover plastic lunch boxes, microwaving, harmful substance release, and plastic types—same topic as expected.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms cover plastic lunch boxes, microwaving, harmful substance release, and plastic types—same topic as expected.\"}"
+        "reason": "Actual terms cover plastic lunch boxes, microwave heating, and harmful substance release—same topic as plastic container microwave safety.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms cover plastic lunch boxes, microwave heating, and harmful substance release—same topic as plastic container microwave safety.\"}"
       }
     },
     {
@@ -5889,7 +5823,7 @@
         ],
         "excludeContentTermsActual": ["下载", "软件"],
         "confidenceActual": "low",
-        "durationMs": 1286,
+        "durationMs": 1041,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -5911,7 +5845,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Both describe a free online tool converting PNG images to SVG vector graphics; terms align directly with expected topic."
+            "detail": "Actual terms cover PNG-to-SVG vectorization, free, online, image, vector graphic—same topic as expected."
           },
           {
             "field": "time",
@@ -5939,8 +5873,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Both describe a free online tool converting PNG images to SVG vector graphics; terms align directly with expected topic.",
-        "raw": "{\"match\":true,\"reason\":\"Both describe a free online tool converting PNG images to SVG vector graphics; terms align directly with expected topic.\"}"
+        "reason": "Actual terms cover PNG-to-SVG vectorization, free, online, image, vector graphic—same topic as expected.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms cover PNG-to-SVG vectorization, free, online, image, vector graphic—same topic as expected.\"}"
       }
     },
     {
@@ -5971,7 +5905,7 @@
           "contentTerms": [],
           "confidence": "low",
           "intent": "question",
-          "assistantReply": "时间过得快，往往是因为日子太相似、注意力又总被打断；不妨每天做点小改变，再留些不被打扰的空白，时间会显得慢一些。你之前有没有存过时间管理或习惯方面的内容？"
+          "assistantReply": "这很正常，忙碌和重复会让时间“压缩”，试着每天留一点新鲜的小事、随手记几句，日子会更有质感些。想找找你之前存过的相关文章吗？"
         },
         "source": "llm",
         "intentActual": "question",
@@ -5983,7 +5917,7 @@
         "contentTermsActual": [],
         "excludeContentTermsActual": [],
         "confidenceActual": "low",
-        "durationMs": 2291,
+        "durationMs": 2461,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -6054,7 +5988,7 @@
           "contentTerms": [],
           "confidence": "low",
           "intent": "question",
-          "assistantReply": "这问题我没法替你分析，只能简单说竞争激烈通常和玩家多、产能扩张快、价格战有关——不过我更擅长帮你找保存过的东西，你之前存过新能源车相关的文章吗？"
+          "assistantReply": "竞争激烈主要是因为入局的车企多、产能扩张快，价格战和产品迭代也都很猛，加上补贴退坡后大家更拼命抢份额。这个我分析不了太深，但能帮你翻翻之前存过的相关文章。"
         },
         "source": "llm",
         "intentActual": "question",
@@ -6066,7 +6000,7 @@
         "contentTermsActual": [],
         "excludeContentTermsActual": [],
         "confidenceActual": "low",
-        "durationMs": 2341,
+        "durationMs": 2246,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -6137,7 +6071,7 @@
           "contentTerms": [],
           "confidence": "low",
           "intent": "instruction",
-          "assistantReply": "这个我帮不了你——我不会推荐或购买商品，只会帮你找回你保存过的内容。你想找之前存过的什么吗？"
+          "assistantReply": "这个我帮不了哦，我没法给你推荐或购买商品，只会帮你找回保存过的内容。你之前有没有存过行车记录仪相关的笔记，我可以帮你找找。"
         },
         "source": "llm",
         "intentActual": "instruction",
@@ -6149,7 +6083,7 @@
         "contentTermsActual": [],
         "excludeContentTermsActual": [],
         "confidenceActual": "low",
-        "durationMs": 2719,
+        "durationMs": 2557,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -6226,7 +6160,7 @@
           "contentTerms": [],
           "confidence": "low",
           "intent": "instruction",
-          "assistantReply": "写文案这个我做不了，我只会帮你找存过的东西。不过你要是想翻翻以前收藏的文案或灵感，我可以帮你找。"
+          "assistantReply": "这个我写不了哦，我只会帮你找东西——不过你想找点什么保存过的内容，随时说一声。"
         },
         "source": "llm",
         "intentActual": "instruction",
@@ -6238,7 +6172,7 @@
         "contentTermsActual": [],
         "excludeContentTermsActual": [],
         "confidenceActual": "low",
-        "durationMs": 2147,
+        "durationMs": 1818,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -6309,7 +6243,7 @@
           "contentTerms": [],
           "confidence": "low",
           "intent": "question",
-          "assistantReply": "有必要，Python 仍是 AI 领域最主流的语言，前端转 AI 学它很值当。——你之前有没有存过 Python 或 AI 学习方面的东西？"
+          "assistantReply": "有必要，Python 仍是 AI 领域最主流的语言，生态和资料最齐全，从前端转过去用它上手最顺。我只能帮你找存过的东西——你之前有没有收藏过 Python 或 AI 入门的资料？"
         },
         "source": "llm",
         "intentActual": "question",
@@ -6321,7 +6255,7 @@
         "contentTermsActual": [],
         "excludeContentTermsActual": [],
         "confidenceActual": "low",
-        "durationMs": 2085,
+        "durationMs": 2376,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -6392,7 +6326,7 @@
           "contentTerms": [],
           "confidence": "low",
           "intent": "chitchat",
-          "assistantReply": "留着安心、翻起来却无从下手，这种感觉挺常见的。你要是想找哪件收藏，跟我说说大概是什么，我帮你翻出来。"
+          "assistantReply": "留着不看的收藏确实会越攒越多，不过想找的时候我能帮你翻出来——说个大概时间或者类型就行。"
         },
         "source": "llm",
         "intentActual": "chitchat",
@@ -6404,7 +6338,7 @@
         "contentTermsActual": [],
         "excludeContentTermsActual": [],
         "confidenceActual": "low",
-        "durationMs": 2285,
+        "durationMs": 1986,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -6475,7 +6409,7 @@
           "contentTerms": [],
           "confidence": "low",
           "intent": "instruction",
-          "assistantReply": "这个翻译我做不了，我只会帮你找东西——不过你要是想找之前存过的翻译或句子，跟我说一声就行。"
+          "assistantReply": "这个我帮不上，我只会帮你找存过的东西，不会翻译。你想找点什么，说一声就行。"
         },
         "source": "llm",
         "intentActual": "instruction",
@@ -6487,7 +6421,7 @@
         "contentTermsActual": [],
         "excludeContentTermsActual": [],
         "confidenceActual": "low",
-        "durationMs": 2483,
+        "durationMs": 2047,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -6564,7 +6498,7 @@
           "contentTerms": [],
           "confidence": "low",
           "intent": "chitchat",
-          "assistantReply": "开了五小时车还腰疼，真是辛苦了，今晚好好歇一歇。明天路上注意安全，想找点什么随时跟我说。"
+          "assistantReply": "辛苦啦，开这么久车腰一定很吃不消，先好好歇歇。明天路上注意安全，想找之前存过的东西随时喊我。"
         },
         "source": "llm",
         "intentActual": "chitchat",
@@ -6576,7 +6510,7 @@
         "contentTermsActual": [],
         "excludeContentTermsActual": [],
         "confidenceActual": "low",
-        "durationMs": 2474,
+        "durationMs": 2003,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -6657,13 +6591,13 @@
           "certainty": {
             "timeRange": "neutral",
             "contentTerms": {
-              "红烧肉": "neutral",
-              "肥肉": "neutral",
-              "不腻": "neutral",
+              "红烧肉": "hedge",
+              "肥肉": "hedge",
+              "不腻": "hedge",
               "糖醋排骨": "hedge"
             },
             "objectTypes": {
-              "video": "neutral"
+              "video": "hedge"
             }
           }
         },
@@ -6677,7 +6611,7 @@
         "contentTermsActual": ["红烧肉", "肥肉", "不腻", "糖醋排骨"],
         "excludeContentTermsActual": ["油"],
         "confidenceActual": "high",
-        "durationMs": 1550,
+        "durationMs": 1062,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -6772,7 +6706,7 @@
         "contentTermsActual": [],
         "excludeContentTermsActual": [],
         "confidenceActual": "low",
-        "durationMs": 1217,
+        "durationMs": 983,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -6782,7 +6716,7 @@
         "id": "D02",
         "category": "D",
         "note": "极度缺乏信息，检验系统是否诚实保留空主题而非臆造",
-        "corePassed": true,
+        "corePassed": false,
         "fields": [
           {
             "field": "intent",
@@ -6793,8 +6727,8 @@
           {
             "field": "topic",
             "scored": true,
-            "passed": true,
-            "detail": "Expected topic is indeterminate and actual terms are empty; neither specifies a subject, so no clear mismatch."
+            "passed": false,
+            "detail": "Expected topic is indeterminate/unspecified, but actual terms are empty, providing no subject matter to match."
           },
           {
             "field": "time",
@@ -6821,9 +6755,9 @@
         }
       },
       "topicJudge": {
-        "match": true,
-        "reason": "Expected topic is indeterminate and actual terms are empty; neither specifies a subject, so no clear mismatch.",
-        "raw": "{\"match\":true,\"reason\":\"Expected topic is indeterminate and actual terms are empty; neither specifies a subject, so no clear mismatch.\"}"
+        "match": false,
+        "reason": "Expected topic is indeterminate/unspecified, but actual terms are empty, providing no subject matter to match.",
+        "raw": "{\"match\":false,\"reason\":\"Expected topic is indeterminate/unspecified, but actual terms are empty, providing no subject matter to match.\"}"
       }
     },
     {
@@ -6848,24 +6782,23 @@
           "objectTypes": ["article"],
           "contentTerms": [
             "travel",
-            "tibet",
-            "xinjiang",
             "grassland",
             "horse",
             "riding",
+            "xinjiang",
             "inner",
             "mongolia"
           ],
+          "excludeContentTerms": ["tibet"],
           "confidence": "medium",
           "certainty": {
             "timeRange": "neutral",
             "contentTerms": {
               "travel": "hedge",
-              "tibet": "hedge",
-              "xinjiang": "hedge",
               "grassland": "hedge",
               "horse": "hedge",
               "riding": "hedge",
+              "xinjiang": "hedge",
               "inner": "hedge",
               "mongolia": "hedge"
             },
@@ -6878,11 +6811,10 @@
         "intentActual": "recall",
         "topicTermsActual": [
           "travel",
-          "tibet",
-          "xinjiang",
           "grassland",
           "horse",
           "riding",
+          "xinjiang",
           "inner",
           "mongolia"
         ],
@@ -6892,17 +6824,16 @@
         "objectTypeOtherActual": null,
         "contentTermsActual": [
           "travel",
-          "tibet",
-          "xinjiang",
           "grassland",
           "horse",
           "riding",
+          "xinjiang",
           "inner",
           "mongolia"
         ],
-        "excludeContentTermsActual": [],
+        "excludeContentTermsActual": ["tibet"],
         "confidenceActual": "medium",
-        "durationMs": 1436,
+        "durationMs": 1259,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -6924,7 +6855,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms cover Tibet, Xinjiang, Inner Mongolia, grassland, horse riding, and travel—same subject as western/northern China grassland tourism and horseback experiences."
+            "detail": "Actual terms cover travel, grassland, horse riding, Xinjiang and Inner Mongolia, matching the expected topic of western/northern China grassland tourism and horseback riding."
           },
           {
             "field": "time",
@@ -6952,8 +6883,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms cover Tibet, Xinjiang, Inner Mongolia, grassland, horse riding, and travel—same subject as western/northern China grassland tourism and horseback experiences.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms cover Tibet, Xinjiang, Inner Mongolia, grassland, horse riding, and travel—same subject as western/northern China grassland tourism and horseback experiences.\"}"
+        "reason": "Actual terms cover travel, grassland, horse riding, Xinjiang and Inner Mongolia, matching the expected topic of western/northern China grassland tourism and horseback riding.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms cover travel, grassland, horse riding, Xinjiang and Inner Mongolia, matching the expected topic of western/northern China grassland tourism and horseback riding.\"}"
       }
     },
     {
@@ -7012,7 +6943,7 @@
         "contentTermsActual": ["清理", "电脑", "缓存", "手机", "照片", "备份", "数据", "存储"],
         "excludeContentTermsActual": [],
         "confidenceActual": "high",
-        "durationMs": 1525,
+        "durationMs": 1090,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -7122,7 +7053,7 @@
         "contentTermsActual": ["跑步", "速度", "b站", "nike", "鞋子", "测评", "训练", "方法"],
         "excludeContentTermsActual": ["抖音"],
         "confidenceActual": "high",
-        "durationMs": 1161,
+        "durationMs": 1221,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -7144,7 +7075,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms include 跑步、速度、训练、方法, matching the expected topic of running speed training methods; extra terms are modifiers."
+            "detail": "Actual terms include 跑步、速度、训练、方法, matching the expected topic of training methods to improve running speed; extra B站/Nike/shoe terms are modifiers."
           },
           {
             "field": "time",
@@ -7172,8 +7103,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms include 跑步、速度、训练、方法, matching the expected topic of running speed training methods; extra terms are modifiers.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms include 跑步、速度、训练、方法, matching the expected topic of running speed training methods; extra terms are modifiers.\"}"
+        "reason": "Actual terms include 跑步、速度、训练、方法, matching the expected topic of training methods to improve running speed; extra B站/Nike/shoe terms are modifiers.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms include 跑步、速度、训练、方法, matching the expected topic of training methods to improve running speed; extra B站/Nike/shoe terms are modifiers.\"}"
       }
     },
     {
@@ -7201,7 +7132,7 @@
             "label": "last_month"
           },
           "timeConfidence": "high",
-          "contentTerms": ["excel", "data", "analysis", "python", "ppt"],
+          "contentTerms": ["excel", "data", "analysis", "python", "ppt", "tutorial"],
           "confidence": "medium",
           "certainty": {
             "timeRange": "neutral",
@@ -7210,7 +7141,8 @@
               "data": "hedge",
               "analysis": "hedge",
               "python": "hedge",
-              "ppt": "hedge"
+              "ppt": "hedge",
+              "tutorial": "hedge"
             },
             "objectTypes": {
               "article": "hedge"
@@ -7219,15 +7151,15 @@
         },
         "source": "llm",
         "intentActual": "recall",
-        "topicTermsActual": ["excel", "data", "analysis", "python", "ppt"],
+        "topicTermsActual": ["excel", "data", "analysis", "python", "ppt", "tutorial"],
         "timeLabelActual": "last_month",
         "timeConfidenceActual": "high",
         "objectTypesActual": [],
         "objectTypeOtherActual": null,
-        "contentTermsActual": ["excel", "data", "analysis", "python", "ppt"],
+        "contentTermsActual": ["excel", "data", "analysis", "python", "ppt", "tutorial"],
         "excludeContentTermsActual": [],
         "confidenceActual": "medium",
-        "durationMs": 1145,
+        "durationMs": 706,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -7249,7 +7181,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms cover Excel, data analysis, Python, and PPT, matching the expected Excel data-analysis tutorial."
+            "detail": "Actual terms cover Excel data analysis tutorial with Python and PPT, matching the expected topic."
           },
           {
             "field": "time",
@@ -7277,8 +7209,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms cover Excel, data analysis, Python, and PPT, matching the expected Excel data-analysis tutorial.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms cover Excel, data analysis, Python, and PPT, matching the expected Excel data-analysis tutorial.\"}"
+        "reason": "Actual terms cover Excel data analysis tutorial with Python and PPT, matching the expected topic.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms cover Excel data analysis tutorial with Python and PPT, matching the expected topic.\"}"
       }
     },
     {
@@ -7329,7 +7261,7 @@
         "contentTermsActual": ["除湿机", "对比", "小米", "美的"],
         "excludeContentTermsActual": ["空气净化器"],
         "confidenceActual": "medium",
-        "durationMs": 1078,
+        "durationMs": 884,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -7408,7 +7340,17 @@
             "label": "a_while_ago"
           },
           "timeConfidence": "low",
-          "contentTerms": ["taobao", "blood", "pressure", "huawei", "heart", "rate", "band"],
+          "objectTypeOther": "手表",
+          "contentTerms": [
+            "taobao",
+            "blood",
+            "pressure",
+            "huawei",
+            "heart",
+            "rate",
+            "band",
+            "手表"
+          ],
           "excludeContentTerms": ["monitor"],
           "confidence": "medium",
           "certainty": {
@@ -7427,15 +7369,33 @@
         },
         "source": "llm",
         "intentActual": "recall",
-        "topicTermsActual": ["taobao", "blood", "pressure", "huawei", "heart", "rate", "band"],
+        "topicTermsActual": [
+          "taobao",
+          "blood",
+          "pressure",
+          "huawei",
+          "heart",
+          "rate",
+          "band",
+          "手表"
+        ],
         "timeLabelActual": "a_while_ago",
         "timeConfidenceActual": "low",
         "objectTypesActual": [],
-        "objectTypeOtherActual": null,
-        "contentTermsActual": ["taobao", "blood", "pressure", "huawei", "heart", "rate", "band"],
+        "objectTypeOtherActual": "手表",
+        "contentTermsActual": [
+          "taobao",
+          "blood",
+          "pressure",
+          "huawei",
+          "heart",
+          "rate",
+          "band",
+          "手表"
+        ],
         "excludeContentTermsActual": ["monitor"],
         "confidenceActual": "medium",
-        "durationMs": 1041,
+        "durationMs": 1214,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -7457,7 +7417,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Terms cover Taobao, Huawei, blood pressure, heart rate, band—same topic of Huawei wearable monitoring heart rate/blood pressure."
+            "detail": "Actual terms include Huawei, blood pressure, heart rate, band, watch — same subject as heart-rate-monitoring smart band/watch."
           },
           {
             "field": "time",
@@ -7485,8 +7445,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Terms cover Taobao, Huawei, blood pressure, heart rate, band—same topic of Huawei wearable monitoring heart rate/blood pressure.",
-        "raw": "{\"match\":true,\"reason\":\"Terms cover Taobao, Huawei, blood pressure, heart rate, band—same topic of Huawei wearable monitoring heart rate/blood pressure.\"}"
+        "reason": "Actual terms include Huawei, blood pressure, heart rate, band, watch — same subject as heart-rate-monitoring smart band/watch.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms include Huawei, blood pressure, heart rate, band, watch — same subject as heart-rate-monitoring smart band/watch.\"}"
       }
     },
     {
@@ -7515,7 +7475,7 @@
           },
           "timeConfidence": "low",
           "objectTypes": ["video"],
-          "contentTerms": ["qin", "shihuang", "unify", "script", "currency", "history"],
+          "contentTerms": ["qin", "shihuang", "unify", "script", "han", "wudi", "currency"],
           "confidence": "high",
           "certainty": {
             "timeRange": "neutral",
@@ -7524,8 +7484,9 @@
               "shihuang": "neutral",
               "unify": "neutral",
               "script": "neutral",
-              "currency": "neutral",
-              "history": "neutral"
+              "han": "neutral",
+              "wudi": "neutral",
+              "currency": "neutral"
             },
             "objectTypes": {
               "video": "neutral"
@@ -7534,15 +7495,15 @@
         },
         "source": "llm",
         "intentActual": "recall",
-        "topicTermsActual": ["qin", "shihuang", "unify", "script", "currency", "history"],
+        "topicTermsActual": ["qin", "shihuang", "unify", "script", "han", "wudi", "currency"],
         "timeLabelActual": "a_while_ago",
         "timeConfidenceActual": "low",
         "objectTypesActual": ["video"],
         "objectTypeOtherActual": null,
-        "contentTermsActual": ["qin", "shihuang", "unify", "script", "currency", "history"],
+        "contentTermsActual": ["qin", "shihuang", "unify", "script", "han", "wudi", "currency"],
         "excludeContentTermsActual": [],
         "confidenceActual": "high",
-        "durationMs": 1210,
+        "durationMs": 1257,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -7564,7 +7525,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms cover Qin Shihuang, unifying script and currency, and history—same subject as expected topic."
+            "detail": "Actual terms cover Qin Shihuang unifying script and currency, plus Han Wudi, matching the expected historical topic on Qin unification of writing and currency."
           },
           {
             "field": "time",
@@ -7581,8 +7542,8 @@
           {
             "field": "entities",
             "scored": true,
-            "passed": false,
-            "detail": "缺少实体 [汉武帝]"
+            "passed": true,
+            "detail": "实体齐全 [秦始皇, 汉武帝]"
           }
         ],
         "certaintyRecord": {
@@ -7592,8 +7553,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms cover Qin Shihuang, unifying script and currency, and history—same subject as expected topic.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms cover Qin Shihuang, unifying script and currency, and history—same subject as expected topic.\"}"
+        "reason": "Actual terms cover Qin Shihuang unifying script and currency, plus Han Wudi, matching the expected historical topic on Qin unification of writing and currency.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms cover Qin Shihuang unifying script and currency, plus Han Wudi, matching the expected historical topic on Qin unification of writing and currency.\"}"
       }
     },
     {
@@ -7636,19 +7597,19 @@
           ],
           "confidence": "medium",
           "certainty": {
-            "timeRange": "hedge",
+            "timeRange": "neutral",
             "contentTerms": {
               "backup": "hedge",
-              "computer": "hedge",
-              "files": "hedge",
-              "tutorial": "hedge",
+              "computer": "neutral",
+              "files": "neutral",
+              "tutorial": "neutral",
               "mac": "hedge",
               "time": "hedge",
               "machine": "hedge",
               "windows": "hedge",
               "system": "hedge",
               "restore": "hedge",
-              "data": "hedge"
+              "data": "neutral"
             },
             "objectTypes": {
               "article": "hedge",
@@ -7689,7 +7650,7 @@
         ],
         "excludeContentTermsActual": [],
         "confidenceActual": "medium",
-        "durationMs": 1522,
+        "durationMs": 1083,
         "attempts": 1,
         "error": null,
         "timedOut": false,
@@ -7711,7 +7672,7 @@
             "field": "topic",
             "scored": true,
             "passed": true,
-            "detail": "Actual terms cover computer file/system backup, Mac Time Machine, Windows restore, and data—same topic as expected."
+            "detail": "Actual terms cover computer file/system data backup, Mac Time Machine, and Windows restore—same topic as expected."
           },
           {
             "field": "time",
@@ -7739,8 +7700,8 @@
       },
       "topicJudge": {
         "match": true,
-        "reason": "Actual terms cover computer file/system backup, Mac Time Machine, Windows restore, and data—same topic as expected.",
-        "raw": "{\"match\":true,\"reason\":\"Actual terms cover computer file/system backup, Mac Time Machine, Windows restore, and data—same topic as expected.\"}"
+        "reason": "Actual terms cover computer file/system data backup, Mac Time Machine, and Windows restore—same topic as expected.",
+        "raw": "{\"match\":true,\"reason\":\"Actual terms cover computer file/system data backup, Mac Time Machine, and Windows restore—same topic as expected.\"}"
       }
     }
   ]
