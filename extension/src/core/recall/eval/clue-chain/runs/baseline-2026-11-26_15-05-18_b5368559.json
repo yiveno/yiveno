@@ -57,8 +57,8 @@
     },
     "entities": {
       "scored": 62,
-      "passed": 51,
-      "rate": 0.8225806451612904
+      "passed": 61,
+      "rate": 0.9838709677419355
     },
     "gates": {
       "intentCategoryC": true,
@@ -269,8 +269,8 @@
           {
             "field": "entities",
             "scored": true,
-            "passed": false,
-            "detail": "缺少实体 [AI Agent]"
+            "passed": true,
+            "detail": "实体齐全 [AI Agent]"
           }
         ],
         "certaintyRecord": {
@@ -615,8 +615,8 @@
           {
             "field": "entities",
             "scored": true,
-            "passed": false,
-            "detail": "缺少实体 [小红书, 公众号]"
+            "passed": true,
+            "detail": "实体齐全 [小红书, 公众号]"
           }
         ],
         "certaintyRecord": {
@@ -862,8 +862,8 @@
           {
             "field": "entities",
             "scored": true,
-            "passed": false,
-            "detail": "缺少实体 [菜籽油]"
+            "passed": true,
+            "detail": "实体齐全 [菜籽油]"
           }
         ],
         "certaintyRecord": {
@@ -1665,8 +1665,8 @@
           {
             "field": "entities",
             "scored": true,
-            "passed": false,
-            "detail": "缺少实体 [抖音]"
+            "passed": true,
+            "detail": "实体齐全 [抖音]"
           }
         ],
         "certaintyRecord": {
@@ -1810,8 +1810,8 @@
           {
             "field": "entities",
             "scored": true,
-            "passed": false,
-            "detail": "缺少实体 [福建, 浙江]"
+            "passed": true,
+            "detail": "实体齐全 [福建, 浙江]"
           }
         ],
         "certaintyRecord": {
@@ -3224,8 +3224,8 @@
           {
             "field": "entities",
             "scored": true,
-            "passed": false,
-            "detail": "缺少实体 [敦煌]"
+            "passed": true,
+            "detail": "实体齐全 [敦煌]"
           }
         ],
         "certaintyRecord": {
@@ -3636,8 +3636,8 @@
           {
             "field": "entities",
             "scored": true,
-            "passed": false,
-            "detail": "缺少实体 [日本]"
+            "passed": true,
+            "detail": "实体齐全 [日本]"
           }
         ],
         "certaintyRecord": {
@@ -6941,8 +6941,8 @@
           {
             "field": "entities",
             "scored": true,
-            "passed": false,
-            "detail": "缺少实体 [新疆, 内蒙古]"
+            "passed": true,
+            "detail": "实体齐全 [新疆, 内蒙古]"
           }
         ],
         "certaintyRecord": {
@@ -7474,8 +7474,8 @@
           {
             "field": "entities",
             "scored": true,
-            "passed": false,
-            "detail": "缺少实体 [淘宝, 华为]"
+            "passed": true,
+            "detail": "实体齐全 [淘宝, 华为]"
           }
         ],
         "certaintyRecord": {
@@ -7582,7 +7582,7 @@
             "field": "entities",
             "scored": true,
             "passed": false,
-            "detail": "缺少实体 [秦始皇, 汉武帝]"
+            "detail": "缺少实体 [汉武帝]"
           }
         ],
         "certaintyRecord": {
@@ -7728,8 +7728,8 @@
           {
             "field": "entities",
             "scored": true,
-            "passed": false,
-            "detail": "缺少实体 [Time Machine]"
+            "passed": true,
+            "detail": "实体齐全 [Mac, Time Machine, Windows]"
           }
         ],
         "certaintyRecord": {

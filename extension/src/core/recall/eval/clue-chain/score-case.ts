@@ -243,39 +243,90 @@ export function scoreType(
 
 /**
  * 实体别名组（仅 harness · 解析 terms 侧互认）。
- * 同组不同语言/形式互认；绝不回退到原 clue。
+ * 同组不同语言/形式互认；别名可为多 token；绝不回退到原 clue。
  */
 const ENTITY_ALIAS_GROUPS: readonly (readonly string[])[] = [
   ['apple', '苹果'],
-  ['微信公众号', '公众号']
+  ['微信公众号', '公众号', 'gongzhonghao'],
+  ['小红书', 'xiaohongshu'],
+  ['菜籽油', 'rapeseed'],
+  ['抖音', 'douyin'],
+  ['福建', 'fujian'],
+  ['浙江', 'zhejiang'],
+  ['敦煌', 'dunhuang'],
+  ['日本', 'japan'],
+  ['新疆', 'xinjiang'],
+  ['内蒙古', 'inner mongolia'],
+  ['淘宝', 'taobao'],
+  ['华为', 'huawei'],
+  ['秦始皇', 'qin shihuang'],
+  ['汉武帝', 'han wudi']
 ]
 
-/** 大小写 / 空白 / 标点归一（保留字母数字与 CJK）。 */
-export function normalizeEntityToken(raw: string): string {
-  return raw.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, '')
+/** 按空白 / 标点拆成小写 token（保留字母数字与 CJK）。 */
+export function tokenizeEntitySurface(raw: string): string[] {
+  return raw
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}]+/u)
+    .map(part => part.trim())
+    .filter(part => part.length > 0)
 }
 
-/** 期望实体 → 归一后可接受的别名集合（含自身）。 */
-export function expandEntityAliasNeedles(entity: string): string[] {
+/** 大小写 / 空白 / 标点归一（保留字母数字与 CJK；整串压扁）。 */
+export function normalizeEntityToken(raw: string): string {
+  return tokenizeEntitySurface(raw).join('')
+}
+
+/** 期望实体 → 可接受表面形式（含自身与同组别名；可多 token）。 */
+export function expandEntityAliasForms(entity: string): string[] {
   const normalized = normalizeEntityToken(entity)
   if (!normalized) {
     return []
   }
-  const needles = new Set<string>([normalized])
+  const forms = new Set<string>([entity])
   for (const group of ENTITY_ALIAS_GROUPS) {
     const normalizedGroup = group.map(normalizeEntityToken).filter(Boolean)
     if (normalizedGroup.includes(normalized)) {
-      for (const alias of normalizedGroup) {
-        needles.add(alias)
+      for (const alias of group) {
+        if (alias.trim().length > 0) {
+          forms.add(alias)
+        }
       }
     }
   }
-  return [...needles]
+  return [...forms]
+}
+
+/** 期望实体 → 归一后可接受的别名集合（含自身；整串 needle，供子串补充）。 */
+export function expandEntityAliasNeedles(entity: string): string[] {
+  return expandEntityAliasForms(entity).map(normalizeEntityToken).filter(Boolean)
+}
+
+/**
+ * 期望实体是否出现在解析 token 集 / 整串 haystack 中。
+ * 先 token-set（实体全部 token 均在集合），再整串归一子串；别名同规。
+ */
+export function entityPresentInParsedTerms(
+  entity: string,
+  tokenSet: ReadonlySet<string>,
+  haystackJoined: string
+): boolean {
+  for (const form of expandEntityAliasForms(entity)) {
+    const tokens = tokenizeEntitySurface(form)
+    if (tokens.length > 0 && tokens.every(token => tokenSet.has(token))) {
+      return true
+    }
+    const needle = normalizeEntityToken(form)
+    if (needle && haystackJoined.includes(needle)) {
+      return true
+    }
+  }
+  return false
 }
 
 /**
  * entities：期望实体须出现在**解析出的** contentTerms / topic / exclude / objectTypeOther 中。
- * 含别名归一；禁止用原 clue 文本兜底。
+ * token-set + 别名 + 整串子串补充；禁止用原 clue 文本兜底。
  */
 export function scoreEntities(
   expectedEntities: readonly string[],
@@ -289,18 +340,22 @@ export function scoreEntities(
       detail: '期望无实体'
     }
   }
-  const haystack = haystackParts
-    .filter((part): part is string => typeof part === 'string' && part.length > 0)
+  const parts = haystackParts.filter(
+    (part): part is string => typeof part === 'string' && part.length > 0
+  )
+  const tokenSet = new Set<string>()
+  for (const part of parts) {
+    for (const token of tokenizeEntitySurface(part)) {
+      tokenSet.add(token)
+    }
+  }
+  const haystackJoined = parts
     .map(normalizeEntityToken)
     .filter(part => part.length > 0)
     .join('\u0000')
-  const missing = expectedEntities.filter(entity => {
-    const needles = expandEntityAliasNeedles(entity)
-    if (needles.length === 0) {
-      return false
-    }
-    return !needles.some(needle => haystack.includes(needle))
-  })
+  const missing = expectedEntities.filter(
+    entity => !entityPresentInParsedTerms(entity, tokenSet, haystackJoined)
+  )
   const passed = missing.length === 0
   return {
     field: 'entities',

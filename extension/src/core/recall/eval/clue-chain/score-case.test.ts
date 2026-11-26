@@ -114,9 +114,29 @@ describe('clue-chain score-case', () => {
     expectFieldPassed(scoreEntities([], ['x']), true)
   })
 
+  it('entities：token-set 分词实体通过；部分 token 缺失失败', () => {
+    expectFieldPassed(scoreEntities(['AI Agent'], ['ai', 'agent', 'tools']), true)
+    expectFieldPassed(scoreEntities(['Time Machine'], ['mac', 'time', 'machine', 'windows']), true)
+    expectFieldPassed(scoreEntities(['Time Machine'], ['time']), false)
+    expectFieldPassed(scoreEntities(['AI Agent'], ['agent']), false)
+  })
+
+  it('entities：拼音 / 英译别名通过；多 token 别名走 token-set', () => {
+    expectFieldPassed(scoreEntities(['小红书', '公众号'], ['xiaohongshu', 'gongzhonghao']), true)
+    expectFieldPassed(scoreEntities(['菜籽油'], ['rapeseed', 'oil']), true)
+    expectFieldPassed(scoreEntities(['抖音'], ['douyin']), true)
+    expectFieldPassed(scoreEntities(['福建', '浙江'], ['fujian', 'zhejiang']), true)
+    expectFieldPassed(scoreEntities(['敦煌'], ['dunhuang']), true)
+    expectFieldPassed(scoreEntities(['日本'], ['japan']), true)
+    expectFieldPassed(scoreEntities(['新疆', '内蒙古'], ['xinjiang', 'inner', 'mongolia']), true)
+    expectFieldPassed(scoreEntities(['淘宝', '华为'], ['taobao', 'huawei']), true)
+    expectFieldPassed(scoreEntities(['秦始皇'], ['qin', 'shihuang']), true)
+  })
+
   it('entities：原 clue 有实体但解析 terms 为空 → 失败（禁止 clue 兜底）', () => {
     expectFieldPassed(scoreEntities(['BBC'], []), false)
     expectFieldPassed(scoreEntities(['Apple'], []), false)
+    expectFieldPassed(scoreEntities(['小红书'], []), false)
     const run = stubRun({
       id: 'ent-clue-only',
       clue: '可能是BBC拍的纪录片',
@@ -148,13 +168,19 @@ describe('clue-chain score-case', () => {
     )
   })
 
-  it('entities：解析 terms 命中 → 通过；别名互认', () => {
+  it('entities：解析 terms 命中 → 通过；别名互认；无关 / 真缺失失败', () => {
     expectFieldPassed(scoreEntities(['BBC'], ['bbc', 'migration']), true)
     expectFieldPassed(scoreEntities(['Apple'], ['苹果', '功能']), true)
     expectFieldPassed(scoreEntities(['微信公众号'], ['公众号']), true)
     expectFieldPassed(scoreEntities(['公众号'], ['微信公众号']), true)
     expectFieldPassed(scoreEntities(['Apple'], ['banana']), false)
     expectFieldPassed(scoreEntities(['微信公众号'], ['抖音']), false)
+    // 汉武帝式：别名 token 未出现在解析 terms → 仍失败（禁止 clue 兜底）
+    expectFieldPassed(
+      scoreEntities(['秦始皇', '汉武帝'], ['qin', 'shihuang', 'unify', 'history']),
+      false
+    )
+    expectFieldPassed(scoreEntities(['汉武帝'], ['qin', 'shihuang']), false)
   })
 
   it('entities：scoreClueChainCase 不把 clue 拼进 haystack', () => {
