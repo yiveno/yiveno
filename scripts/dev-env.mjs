@@ -20,6 +20,7 @@ const websiteEnvPath = path.join(repoRoot, 'website', '.env')
 const extensionRuntimeDir = path.join(repoRoot, '.env.runtime')
 
 const PROFILES = /** @type {const} */ (['development', 'production'])
+const VALID_TARGETS = /** @type {const} */ (['all', 'extension', 'website', 'worker'])
 
 const PROFILE_DEFAULTS = {
   development: {
@@ -200,6 +201,36 @@ const PROCESS_ENV_SOURCE_KEYS = [
   ])
 ]
 
+/**
+ * 判定 Supabase key 角色。
+ * @param {string | undefined} value
+ * @returns {'publishable' | 'anon' | 'service_role' | 'invalid'}
+ */
+function classifySupabaseKeyRole(value) {
+  const raw = typeof value === 'string' ? value.trim() : ''
+  if (!raw) return 'invalid'
+  if (raw.startsWith('sb_publishable_')) return 'publishable'
+  if (raw.startsWith('sb_secret_')) return 'service_role'
+
+  const parts = raw.split('.')
+  if (parts.length !== 3) return 'invalid'
+
+  try {
+    let b64 = parts[1].replace(/-/gu, '+').replace(/_/gu, '/')
+    while (b64.length % 4 !== 0) b64 += '='
+    const payload = JSON.parse(Buffer.from(b64, 'base64').toString('utf8'))
+    if (payload?.role === 'anon') return 'anon'
+    if (payload?.role === 'service_role') return 'service_role'
+    return 'invalid'
+  } catch {
+    return 'invalid'
+  }
+}
+
+function isPublicSupabaseRole(role) {
+  return role === 'publishable' || role === 'anon'
+}
+
 function parseArgs(argv) {
   const args = argv.slice(2)
   const options = {
@@ -231,7 +262,11 @@ function parseArgs(argv) {
     throw new Error(`Unsupported profile: ${options.profile}`)
   }
 
-  return /** @type {{command:'sync'|'check', profile:'development'|'production', target:string, quiet:boolean}} */ (
+  if (!VALID_TARGETS.includes(/** @type {(typeof VALID_TARGETS)[number]} */ (options.target))) {
+    throw new Error(`Unsupported target: ${options.target}`)
+  }
+
+  return /** @type {{command:'sync'|'check', profile:'development'|'production', target:(typeof VALID_TARGETS)[number], quiet:boolean}} */ (
     options
   )
 }
@@ -242,6 +277,15 @@ async function readEnvFile(filePath) {
     return parseEnv(raw)
   } catch {
     return {}
+  }
+}
+
+async function pathExists(filePath) {
+  try {
+    await fs.access(filePath)
+    return true
+  } catch {
+    return false
   }
 }
 
@@ -302,7 +346,12 @@ function pickProcessEnvOverrides() {
   return result
 }
 
-async function loadSourceEnv(profile) {
+/**
+ * @param {'development' | 'production'} profile
+ * @param {{ applyProcessEnv?: boolean }} [options]
+ */
+async function loadSourceEnv(profile, options = {}) {
+  const applyProcessEnv = options.applyProcessEnv !== false
   const legacyEnv = await readEnvFile(envLegacyDevPath)
   const sharedEnv = {
     ...pickEnv(legacyEnv, LEGACY_SHARED_FALLBACK_KEYS),
@@ -316,7 +365,7 @@ async function loadSourceEnv(profile) {
   return {
     ...sharedEnv,
     ...profileEnv,
-    ...pickProcessEnvOverrides()
+    ...(applyProcessEnv ? pickProcessEnvOverrides() : {})
   }
 }
 
@@ -433,16 +482,23 @@ function isRemoteHttps(url) {
 }
 
 /**
+ * 按 target 返回必需键。
+ * @param {string} target
+ */
+function getRequiredKeysForTarget(target) {
+  if (target === 'website' || target === 'extension') {
+    return ['SUPABASE_URL', 'SUPABASE_ANON_KEY']
+  }
+  return ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'JWT_SECRET']
+}
+
+/**
  * @param {Record<string, string>} env
  * @param {{ target?: string }} [options]
- * — target=website 时不要求 worker-only 机密（SERVICE_ROLE / JWT）；
- *   官网硬门仍由 getChecks 的 PUBLIC_* 三项判定（不改阈值）。
  */
 function getMissing(env, options = {}) {
-  const requiredKeys =
-    options.target === 'website'
-      ? ['SUPABASE_URL', 'SUPABASE_ANON_KEY']
-      : ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'JWT_SECRET']
+  const target = options.target || 'all'
+  const requiredKeys = getRequiredKeysForTarget(target)
   return {
     required: requiredKeys.filter(key => !env[key]),
     oauth: [
@@ -510,20 +566,97 @@ function hasUnsafeProductionValues(env) {
   return candidates.some(value => /localhost|127\.0\.0\.1/u.test(value))
 }
 
+/**
+ * 公开键角色门 / Turnstile 撞 secret / service_role 校验。
+ * 只输出键名与角色结论，绝不打印值。
+ * @param {Record<string, string>} env
+ * @param {{ target: string, profile: string }} options
+ * @returns {boolean}
+ */
+function printSecurityGates(env, options) {
+  let ok = true
+  const target = options.target
+  const needsWorkerSecrets = target === 'worker' || target === 'all'
+
+  const anonRole = classifySupabaseKeyRole(env.SUPABASE_ANON_KEY)
+  if (env.SUPABASE_ANON_KEY) {
+    if (isPublicSupabaseRole(anonRole)) {
+      console.log(`OK  SUPABASE_ANON_KEY role=${anonRole}`)
+    } else {
+      console.log(`ERR SUPABASE_ANON_KEY invalid role=${anonRole}`)
+      ok = false
+    }
+  }
+
+  const viteAnonRole = classifySupabaseKeyRole(env.VITE_SUPABASE_ANON_KEY)
+  if (env.VITE_SUPABASE_ANON_KEY) {
+    if (isPublicSupabaseRole(viteAnonRole)) {
+      console.log(`OK  VITE_SUPABASE_ANON_KEY role=${viteAnonRole}`)
+    } else {
+      console.log(`ERR VITE_SUPABASE_ANON_KEY invalid role=${viteAnonRole}`)
+      ok = false
+    }
+  }
+
+  if (needsWorkerSecrets && env.SUPABASE_SERVICE_ROLE_KEY) {
+    const serviceRole = classifySupabaseKeyRole(env.SUPABASE_SERVICE_ROLE_KEY)
+    if (serviceRole !== 'service_role') {
+      console.log(`ERR SUPABASE_SERVICE_ROLE_KEY invalid role=${serviceRole}`)
+      ok = false
+    } else if (
+      env.SUPABASE_ANON_KEY &&
+      env.SUPABASE_SERVICE_ROLE_KEY === env.SUPABASE_ANON_KEY
+    ) {
+      console.log('ERR SUPABASE_SERVICE_ROLE_KEY must not equal SUPABASE_ANON_KEY')
+      ok = false
+    } else {
+      console.log('OK  SUPABASE_SERVICE_ROLE_KEY role=service_role')
+    }
+  }
+
+  const siteKey = (env.PUBLIC_TURNSTILE_SITE_KEY || '').trim()
+  const turnstileSecret = (env.TURNSTILE_SECRET_KEY || '').trim()
+  if (siteKey && turnstileSecret && siteKey === turnstileSecret) {
+    console.log('ERR PUBLIC_TURNSTILE_SITE_KEY must not equal TURNSTILE_SECRET_KEY')
+    ok = false
+  }
+
+  if (
+    needsWorkerSecrets &&
+    options.profile === 'production' &&
+    env.JWT_SECRET &&
+    env.JWT_SECRET.length < 32
+  ) {
+    console.log('WARN JWT_SECRET length < 32')
+  }
+
+  return ok
+}
+
+function printProcessEnvOverrides(overrideKeys) {
+  if (!overrideKeys.length) return
+  console.log(`process.env overrides: ${overrideKeys.join(', ')}`)
+}
+
 function printCheck(profile, env, options = {}) {
-  const missing = getMissing(env, options)
-  console.log(`Env Check (${profile}${options.target === 'website' ? ', target=website' : ''})`)
+  const target = options.target || 'all'
+  const missing = getMissing(env, { target })
+  const targetLabel = target === 'all' ? '' : `, target=${target}`
+  console.log(`Env Check (${profile}${targetLabel})`)
 
   for (const [key, value, ok] of getChecks(profile, env)) {
     console.log(`${ok ? 'OK ' : 'ERR'} ${key}=${value || '(missing)'}`)
   }
+
+  const securityOk = printSecurityGates(env, { target, profile })
 
   if (profile === 'production' && hasUnsafeProductionValues(env)) {
     console.log('ERR production profile contains localhost / 127.0.0.1')
   }
 
   if (missing.required.length) console.log(`ERR required missing: ${missing.required.join(', ')}`)
-  else if (options.target === 'website') console.log('OK required website secrets complete')
+  else if (target === 'website' || target === 'extension')
+    console.log(`OK required ${target} secrets complete`)
   else console.log('OK required worker secrets complete')
 
   if (missing.oauth.length) console.log(`WARN oauth missing: ${missing.oauth.join(', ')}`)
@@ -533,10 +666,86 @@ function printCheck(profile, env, options = {}) {
   else console.log('OK dodo credentials complete')
 
   return (
+    securityOk &&
     missing.required.length === 0 &&
     !getChecks(profile, env).some(([, , ok]) => !ok) &&
     !(profile === 'production' && hasUnsafeProductionValues(env))
   )
+}
+
+/**
+ * check 只读：用「仅文件源」渲染期望内容，与磁盘比对（process.env 覆盖不改写磁盘期望，避免负例/临时覆盖误判 stale）。
+ * 无本地源文件时跳过（Pages Git 构建场景）。
+ * @returns {Promise<boolean>}
+ */
+async function verifyGeneratedFiles(options, fileOnlyNormalized) {
+  const hasLocalSources =
+    (await pathExists(envSharedPath)) ||
+    (await pathExists(getProfileSourcePath(options.profile))) ||
+    (await pathExists(envLegacyDevPath))
+
+  if (!hasLocalSources) {
+    console.log('OK generated file check skipped (no local env source files)')
+    return true
+  }
+
+  /** @type {Array<{ rel: string, path: string, expected: string }>} */
+  const comparisons = []
+  const targets = new Set(
+    options.target === 'all'
+      ? ['extension', 'website', ...(options.profile === 'development' ? ['worker'] : [])]
+      : [options.target]
+  )
+
+  if (targets.has('extension')) {
+    const extensionEnvPath = path.join(extensionRuntimeDir, `.env.${options.profile}`)
+    comparisons.push({
+      rel: path.relative(repoRoot, extensionEnvPath),
+      path: extensionEnvPath,
+      expected: buildExtensionEnvFile(options.profile, fileOnlyNormalized)
+    })
+  }
+
+  if (targets.has('worker') && options.profile === 'development') {
+    comparisons.push({
+      rel: 'worker/.dev.vars',
+      path: workerEnvPath,
+      expected: buildWorkerEnvFile(fileOnlyNormalized)
+    })
+  }
+
+  if (targets.has('website')) {
+    comparisons.push({
+      rel: 'website/.env',
+      path: websiteEnvPath,
+      expected: buildWebsiteEnvFile(options.profile, fileOnlyNormalized)
+    })
+  }
+
+  // production + worker：无生成文件，跳过
+  let ok = true
+  for (const item of comparisons) {
+    try {
+      const current = await fs.readFile(item.path, 'utf8')
+      if (current !== item.expected) {
+        console.log(`ERR generated file stale: ${item.rel} (run env:sync first)`)
+        ok = false
+      }
+    } catch {
+      console.log(`ERR generated file stale: ${item.rel} (missing; run env:sync first)`)
+      ok = false
+    }
+  }
+
+  if (ok && comparisons.length) {
+    console.log(
+      `OK generated files match (${comparisons.map(item => item.rel).join(', ')})`
+    )
+  } else if (ok) {
+    console.log('OK generated file check skipped (no applicable files for target/profile)')
+  }
+
+  return ok
 }
 
 async function sync(options) {
@@ -577,19 +786,36 @@ async function sync(options) {
   if (!options.quiet) {
     if (changed.length) console.log(`synced env files: ${changed.join(', ')}`)
     else console.log('env files already up to date')
+    printProcessEnvOverrides(Object.keys(pickProcessEnvOverrides()).sort())
   }
 
   return normalizedEnv
 }
 
+async function runCheck(options) {
+  const overrideKeys = Object.keys(pickProcessEnvOverrides()).sort()
+  printProcessEnvOverrides(overrideKeys)
+
+  const sourceEnv = await loadSourceEnv(options.profile)
+  const fileOnlySourceEnv = await loadSourceEnv(options.profile, { applyProcessEnv: false })
+  const workerEnv = await readEnvFile(workerEnvPath)
+  const normalizedEnv = normalizeEnv(options.profile, sourceEnv, workerEnv, {})
+  const fileOnlyNormalized = normalizeEnv(options.profile, fileOnlySourceEnv, workerEnv, {})
+
+  const staleOk = await verifyGeneratedFiles(options, fileOnlyNormalized)
+  const checkOk = printCheck(options.profile, normalizedEnv, { target: options.target })
+  return staleOk && checkOk
+}
+
 async function main() {
   const options = parseArgs(process.argv)
-  const normalizedEnv = await sync(options)
 
   if (options.command === 'check') {
-    const ok = printCheck(options.profile, normalizedEnv, { target: options.target })
+    const ok = await runCheck(options)
     process.exit(ok ? 0 : 1)
   }
+
+  await sync(options)
 }
 
 await main()

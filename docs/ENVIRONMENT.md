@@ -99,9 +99,12 @@ bun run env:check:prod
 含义：
 
 - `env:sync:*`：把 3 个源文件生成到各子项目运行时文件
-- `env:check:*`：校验当前 profile 是否缺字段、是否把 `localhost` 混进错误环境
+- `env:check:*`：**只读**校验——不写生成文件；按 target 渲染期望内容与磁盘比对（stale → 失败，提示先 `env:sync`）；无本地源文件（Pages）则跳过 stale。另校验缺字段、`localhost` 混进错误环境、公开键角色门等
+- **公开键角色门（development / production 均生效）：** `SUPABASE_ANON_KEY` / `VITE_SUPABASE_ANON_KEY` 必须为 publishable（`sb_publishable_…`）或 JWT `role=anon`；`sb_secret_…` / `service_role` / 无法判定 → `ERR … invalid role`（只报键名与角色，**永不打印值**）。`target=worker|all` 且存在 `SUPABASE_SERVICE_ROLE_KEY` 时须为 service_role，且不得与 anon 相等。`PUBLIC_TURNSTILE_SITE_KEY` 与合并后 `TURNSTILE_SECRET_KEY` 相等 → 失败。`target=worker|all` + production 且 `JWT_SECRET` 长度 < 32 → WARN（不失败）
+- **target 必需集：** `website` / `extension` 只要求 `SUPABASE_URL` + `SUPABASE_ANON_KEY`；`worker` / `all` 另要求 `SUPABASE_SERVICE_ROLE_KEY` + `JWT_SECRET`（避免 extension `build:prod` 被 worker 机密绑架）
 - **production 额外硬门：** 合并后的 `PUBLIC_SUPABASE_URL`、`PUBLIC_SUPABASE_ANON_KEY`、`PUBLIC_TURNSTILE_SITE_KEY` 任一为空即失败（官网 `/login` Supabase session + Turnstile；通常来自 `.env.shared.local`，`PUBLIC_SUPABASE_*` 可由 `SUPABASE_*` 映射）。`website` 的 `build:prod` 会先跑该 check；check 日志只报变量名与 `(set)/(missing)`，不打印值。缺失即失败，避免静默部署后出现 `PUBLIC_SUPABASE_ANON_KEY 未配置` / bot check not configured
-- **Pages Git 构建：** 无本地 `.env.*.local` 时，`scripts/dev-env.mjs` 会从构建环境变量（白名单键）合并进源 env；**变量名与 `.env.shared.local` 一致**（`SUPABASE_URL` / `SUPABASE_ANON_KEY` / `PUBLIC_TURNSTILE_SITE_KEY`），后台 Production 机密即构建输入。旧名 `PUBLIC_SUPABASE_URL` / `PUBLIC_SUPABASE_ANON_KEY` 仍可作为 `SUPABASE_*` 别名。`build:prod` 带 `--target=website` 时只要求官网所需键，不拦 worker-only 机密（`SERVICE_ROLE` / `JWT`）。调用一律 `bun --no-env-file`（避免 Bun 自动灌入本地 `.env.*.local` 污染 production）
+- **process.env 覆盖可见性：** check（及 sync 非 quiet）会列出被 `process.env` 覆盖的**键名**（不列值）
+- **Pages Git 构建：** 无本地 `.env.*.local` 时，`scripts/dev-env.mjs` 会从构建环境变量（白名单键）合并进源 env；**变量名与 `.env.shared.local` 一致**（`SUPABASE_URL` / `SUPABASE_ANON_KEY` / `PUBLIC_TURNSTILE_SITE_KEY`），后台 Production 机密即构建输入。旧名 `PUBLIC_SUPABASE_URL` / `PUBLIC_SUPABASE_ANON_KEY` 仍可作为 `SUPABASE_*` 别名。`build:prod` 带 `--target=website` 时只要求官网所需键，不拦 worker-only 机密（`SERVICE_ROLE` / `JWT`）。调用一律 `bun --no-env-file`（避免 Bun 自动灌入本地 `.env.*.local` 污染 production）；遗留 `worker/scripts/sync-env.sh` / `website/dev.sh` 同此
 
 ## 子项目读取方式
 
@@ -111,6 +114,8 @@ bun run env:check:prod
 - `worker`
   - 本地开发读取 `worker/.dev.vars`
   - Cloudflare 线上环境变量在 Worker Dashboard / Wrangler 环境中维护
+  - **生产 `[env.production]`：** `workers_dev = false`；`REDIRECT_URI_ALLOWLIST` 仅 `https://yiveno.com`（顶层 `[vars]` 本地默认段可含 localhost，勿与生产混淆）。redirect 校验为 origin 精确匹配，禁止 `https://yiveno.com` 前缀匹配到 `yiveno.com.evil.com`
+  - **`bun run deploy`（`worker/package.json`）：** 先跑 `scripts/check-prod-secrets.mjs`（`wrangler secret list --env production`，只对账名称）再 `wrangler deploy --env production`。核心必需：`SUPABASE_SERVICE_ROLE_KEY` / `DEEPSEEK_API_KEY` / `TURNSTILE_SECRET_KEY` / `JWT_SECRET`。Dodo 组部分存在 → 失败；全缺 → WARN（若 `[env.production.vars]` 中 `DODO_PAYMENTS_ENVIRONMENT=live_mode` 则全缺也失败）。遗留 OAuth Google/Microsoft 两组同「部分失败 / 全缺 WARN」
   - **AI Gateway（非 Secret，写在 `worker/wrangler.toml` `[vars]`）**
     - `AI_PROVIDER`（可选）：聊天补全实现，默认 `deepseek`；换厂商时加 Worker adapter + 改此变量
     - `AI_ROUTING_MODE`（可选 · Batch 3）：`single`（缺省 · kill switch）| `shadow` | `quota`。生产保持缺省 `single`（行为与现行一致；不触账本、不查注册表）。`shadow` 只记候选决策仍走现行单 provider。`quota` 按注册表顺序真实切换候选（隐私门 / reserve / failover）；账本不可用或无合格候选时安全回落 DeepSeek 单路。**生产未启用 quota**；gemini/groq 仍未合格。未知值 → misconfigured

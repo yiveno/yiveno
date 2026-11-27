@@ -44,16 +44,34 @@ function isHttpsLikeLocal(u: URL): boolean {
 }
 
 /**
- * 检查 HTTPS 主机是否在许可列表中
+ * 检查 HTTPS 主机是否在许可列表中（精确 origin / 路径前缀；禁止 href 前缀偷渡）。
  */
 function isAllowedHttpsHost(u: URL, env: Env): boolean {
   const host = u.hostname.toLowerCase()
   if (DEFAULT_ALLOWED_REDIRECT_HOST_SUFFIXES.some(suf => host.endsWith(suf))) return true
   const allow = parseAllowlist(env)
   if (!allow.length) return false
-  const href = u.toString()
-  const origin = `${u.protocol}//${u.host}`
-  return allow.some(item => href.startsWith(item) || origin === item || host === item)
+  const requestOrigin = `${u.protocol}//${u.host}`
+  return allow.some(item => {
+    const trimmed = item.trim()
+    if (!trimmed) return false
+    try {
+      const allowed = new URL(trimmed.includes('://') ? trimmed : `https://${trimmed}`)
+      // 裸 host 条目（无 scheme 传入时仍按 host 精确相等）
+      if (!trimmed.includes('://')) {
+        return host === trimmed.toLowerCase()
+      }
+      const allowedOrigin = `${allowed.protocol}//${allowed.host}`
+      if (requestOrigin !== allowedOrigin) return false
+      const allowedPath = allowed.pathname || '/'
+      if (allowedPath === '/') return true
+      const reqPath = u.pathname || '/'
+      return reqPath === allowedPath || reqPath.startsWith(`${allowedPath}/`)
+    } catch {
+      // 无法解析为 URL：按裸 host 精确匹配
+      return host === trimmed.toLowerCase()
+    }
+  })
 }
 
 /**
