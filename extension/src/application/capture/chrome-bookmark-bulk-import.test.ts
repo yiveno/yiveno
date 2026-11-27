@@ -2,6 +2,18 @@ import 'fake-indexeddb/auto'
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
+/**
+ * 生产 BATCH_SIZE=2000。本文件只验证「跨批 putMany」契约，不必真写 2010 行：
+ * fake-idb 在全仓并行下反复 30s timeout（单文件约 12–14s），根因是测试负载而非产品路径。
+ */
+vi.mock('@/infrastructure/indexeddb/constants', async importOriginal => {
+  const actual = await importOriginal<typeof import('@/infrastructure/indexeddb/constants')>()
+  return {
+    ...actual,
+    MEMORY_ITEM_BULK_IMPORT_BATCH_SIZE: 5
+  }
+})
+
 import { bulkPutChromeBookmarkLeaves } from '@/application/capture/chrome-bookmark-bulk-import'
 import { LOCAL_PROFILE_STORAGE_KEY, type LocalProfile } from '@/core/identity/local-profile'
 import type { ChromeBookmarkLeaf } from '@/infrastructure/browser/chrome-bookmark-reader'
@@ -66,15 +78,16 @@ describe('chrome-bookmark-bulk-import', () => {
     }
   })
 
-  // fake-idb 大批量 putMany 在全仓并行时偶发贴近默认 10s；单独跑约 7s
-  it('bulkPutChromeBookmarkLeaves 按批 putMany 写入', { timeout: 30_000 }, async () => {
+  it('bulkPutChromeBookmarkLeaves 按批 putMany 写入', async () => {
     const putManySpy = vi.spyOn(memoryItemRepository, 'putMany')
-    const leaves = createLeaves(MEMORY_ITEM_BULK_IMPORT_BATCH_SIZE + 10)
+    const remainder = 2
+    const leaves = createLeaves(MEMORY_ITEM_BULK_IMPORT_BATCH_SIZE + remainder)
 
     const imported = await bulkPutChromeBookmarkLeaves(leaves)
     expect(imported).toBe(leaves.length)
     expect(putManySpy).toHaveBeenCalledTimes(2)
     expect(putManySpy.mock.calls[0]?.[0]).toHaveLength(MEMORY_ITEM_BULK_IMPORT_BATCH_SIZE)
+    expect(putManySpy.mock.calls[1]?.[0]).toHaveLength(remainder)
 
     const stored = await memoryItemRepository.listByOwner({
       type: 'bookmark',
