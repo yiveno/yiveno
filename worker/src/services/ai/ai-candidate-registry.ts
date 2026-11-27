@@ -72,8 +72,6 @@ export const AI_CANDIDATE_KNOWN_API_KEY_ENV_NAMES = [
   'GROQ_API_KEY'
 ] as const
 
-export type AiCandidateKnownApiKeyEnv = (typeof AI_CANDIDATE_KNOWN_API_KEY_ENV_NAMES)[number]
-
 /** 全量候选（顺序稳定；路由取第一个可用）。 */
 export const AI_CANDIDATE_REGISTRY: readonly AiCandidateEntry[] = [
   {

@@ -51,7 +51,8 @@
     },
     "worker": {
       "entry": ["src/**/*.test.ts"],
-      "project": ["src/**/*.ts"]
+      "project": ["src/**/*.ts"],
+      "ignoreDependencies": ["cloudflare"]
     },
     "website": {
       "entry": ["src/pages/**/*.astro", "src/**/*.vue", "src/**/*.test.ts"],
