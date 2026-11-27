@@ -74,8 +74,9 @@ export type Env = Cloudflare.Env & {
   AI_EXTRACT_PRO_DAILY_CAP?: string
   AI_EXTRACT_PRO_MONTHLY_QUOTA?: string
   /**
-   * 聊天补全 Provider：deepseek（默认）。未知值 → 503 ai_provider_unsupported。
-   * 换厂商时加 adapter + 改此变量，业务 handler 不改。
+   * 聊天补全 Provider：deepseek（默认）| gateway-compat。
+   * 未知值 → 503 ai_provider_unsupported。换厂商时加 adapter + 改此变量，业务 handler 不改。
+   * 生产默认保持 deepseek；gateway-compat 仅作可插拔证明 / 本地切换。
    */
   AI_PROVIDER?: string
   /**
@@ -83,6 +84,14 @@ export type Env = Cloudflare.Env & {
    * 写入请求头 `cf-aig-authorization`；未配置且 Gateway 开鉴权时会 401（客户端将回退直连）。
    */
   AI_GATEWAY_TOKEN?: string
+  /**
+   * OpenAI API key（可选；仅 `AI_PROVIDER=gateway-compat` 且模型前缀 openai/ 时需要）。
+   */
+  OPENAI_API_KEY?: string
+  /**
+   * Google AI Studio API key（可选；仅 `AI_PROVIDER=gateway-compat` 且模型前缀 google-ai-studio/ 时需要）。
+   */
+  GOOGLE_AI_API_KEY?: string
   /** 定时清理总开关；"false" 关闭。 */
   CLEANUP_SCHEDULED_ENABLED?: string
   /** 每个 owner 保留的 memory_sync_backups 条数。 */

@@ -17,6 +17,11 @@ describe('resolveAiChatProvider', () => {
     expect(resolveAiChatProvider(env({ AI_PROVIDER: 'DeepSeek' })).id).toBe('deepseek')
   })
 
+  test('gateway-compat → gateway compat adapter', () => {
+    expect(resolveAiChatProvider(env({ AI_PROVIDER: 'gateway-compat' })).id).toBe('gateway-compat')
+    expect(resolveAiChatProvider(env({ AI_PROVIDER: 'Gateway-Compat' })).id).toBe('gateway-compat')
+  })
+
   test('未知 provider 抛错', () => {
     expect(() => resolveAiChatProvider(env({ AI_PROVIDER: 'openai' }))).toThrow(
       'ai_provider_unsupported:openai'

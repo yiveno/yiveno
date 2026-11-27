@@ -5,6 +5,7 @@
 
 import type { Env } from '../../types/env'
 import { deepseekAiChatProvider } from './deepseek-ai-chat-provider'
+import { gatewayCompatAiChatProvider } from './gateway-compat-ai-chat-provider'
 
 /** 聊天消息角色。 */
 export type AiChatRole = 'system' | 'user' | 'assistant'
@@ -65,6 +66,8 @@ export function resolveAiChatProvider(env: Env): AiChatProvider {
     case '':
     case 'deepseek':
       return deepseekAiChatProvider
+    case 'gateway-compat':
+      return gatewayCompatAiChatProvider
     default:
       throw new Error(`ai_provider_unsupported:${raw}`)
   }
