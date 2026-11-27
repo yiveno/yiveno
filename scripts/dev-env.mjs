@@ -1,4 +1,11 @@
 #!/usr/bin/env bun
+/**
+ * 环境同步 / 硬门检查。
+ *
+ * 调用方须使用 `bun --no-env-file`（见根 / website / extension / worker package.json），
+ * 否则 Bun 会自动灌入 `.env.development.local` 等，经 process.env 合并后污染 production profile。
+ * Pages 后台机密仍在 process.env，不受 --no-env-file 影响。
+ */
 
 import fs from 'node:fs/promises'
 import path from 'node:path'
@@ -176,6 +183,23 @@ const LEGACY_PROFILE_KEYS = {
   production: ['JWT_SECRET']
 }
 
+/** 允许从 process.env 读入的源键（Pages Git 构建无本地 env 文件时用）。 */
+const PROCESS_ENV_SOURCE_KEYS = [
+  ...new Set([
+    ...SHARED_OPTIONAL_KEYS,
+    ...EXTENSION_KEYS,
+    ...WORKER_KEYS,
+    ...LEGACY_SHARED_FALLBACK_KEYS,
+    ...LEGACY_PROFILE_KEYS.development,
+    ...LEGACY_PROFILE_KEYS.production,
+    ...WEBSITE_KEYS.flatMap(([targetKey, sourceKey]) => [targetKey, sourceKey]),
+    'SUPABASE_URL',
+    'SUPABASE_ANON_KEY',
+    'PUBLIC_TURNSTILE_SITE_KEY',
+    'JWT_SECRET'
+  ])
+]
+
 function parseArgs(argv) {
   const args = argv.slice(2)
   const options = {
@@ -261,6 +285,23 @@ function getProfileSourcePath(profile) {
   return SOURCE_FILE_MAP[profile]
 }
 
+/**
+ * 从 process.env 拾取白名单键；仅非空字符串覆盖文件值（空串 / 未设忽略）。
+ * 本地无相关环境变量时结果与只读文件一致。
+ */
+function pickProcessEnvOverrides() {
+  /** @type {Record<string, string>} */
+  const result = {}
+  for (const key of PROCESS_ENV_SOURCE_KEYS) {
+    const raw = process.env[key]
+    if (typeof raw !== 'string') continue
+    const value = raw.trim()
+    if (!value) continue
+    result[key] = value
+  }
+  return result
+}
+
 async function loadSourceEnv(profile) {
   const legacyEnv = await readEnvFile(envLegacyDevPath)
   const sharedEnv = {
@@ -271,9 +312,11 @@ async function loadSourceEnv(profile) {
     ...pickEnv(legacyEnv, LEGACY_PROFILE_KEYS[profile]),
     ...(await readEnvFile(getProfileSourcePath(profile)))
   }
+  // 文件在前，process.env 非空覆盖——供 Pages Git 构建无本地 env 文件时注入
   return {
     ...sharedEnv,
-    ...profileEnv
+    ...profileEnv,
+    ...pickProcessEnvOverrides()
   }
 }
 
@@ -307,6 +350,10 @@ function normalizeEnv(profile, sourceEnv, workerEnv, websiteEnv) {
     'PUBLIC_API_BASE_URL',
     normalized.VITE_API_BASE_URL || defaults.PUBLIC_API_BASE_URL
   )
+
+  // 兼容 Pages 旧机密名：PUBLIC_SUPABASE_* 可作为 SUPABASE_* 别名来源（硬门 getChecks 亦有回退）
+  setIfMissing(normalized, 'SUPABASE_URL', normalized.PUBLIC_SUPABASE_URL)
+  setIfMissing(normalized, 'SUPABASE_ANON_KEY', normalized.PUBLIC_SUPABASE_ANON_KEY)
 
   if (profile === 'development') {
     setIfMissing(normalized, 'SUPABASE_URL', workerEnv.SUPABASE_URL)
@@ -385,14 +432,19 @@ function isRemoteHttps(url) {
   return /^https:\/\//u.test(url) && !/localhost|127\.0\.0\.1/u.test(url)
 }
 
-function getMissing(env) {
+/**
+ * @param {Record<string, string>} env
+ * @param {{ target?: string }} [options]
+ * — target=website 时不要求 worker-only 机密（SERVICE_ROLE / JWT）；
+ *   官网硬门仍由 getChecks 的 PUBLIC_* 三项判定（不改阈值）。
+ */
+function getMissing(env, options = {}) {
+  const requiredKeys =
+    options.target === 'website'
+      ? ['SUPABASE_URL', 'SUPABASE_ANON_KEY']
+      : ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'JWT_SECRET']
   return {
-    required: [
-      'SUPABASE_URL',
-      'SUPABASE_ANON_KEY',
-      'SUPABASE_SERVICE_ROLE_KEY',
-      'JWT_SECRET'
-    ].filter(key => !env[key]),
+    required: requiredKeys.filter(key => !env[key]),
     oauth: [
       'AUTH_GOOGLE_CLIENT_ID',
       'AUTH_GOOGLE_CLIENT_SECRET',
@@ -458,9 +510,9 @@ function hasUnsafeProductionValues(env) {
   return candidates.some(value => /localhost|127\.0\.0\.1/u.test(value))
 }
 
-function printCheck(profile, env) {
-  const missing = getMissing(env)
-  console.log(`Env Check (${profile})`)
+function printCheck(profile, env, options = {}) {
+  const missing = getMissing(env, options)
+  console.log(`Env Check (${profile}${options.target === 'website' ? ', target=website' : ''})`)
 
   for (const [key, value, ok] of getChecks(profile, env)) {
     console.log(`${ok ? 'OK ' : 'ERR'} ${key}=${value || '(missing)'}`)
@@ -471,6 +523,7 @@ function printCheck(profile, env) {
   }
 
   if (missing.required.length) console.log(`ERR required missing: ${missing.required.join(', ')}`)
+  else if (options.target === 'website') console.log('OK required website secrets complete')
   else console.log('OK required worker secrets complete')
 
   if (missing.oauth.length) console.log(`WARN oauth missing: ${missing.oauth.join(', ')}`)
@@ -534,7 +587,7 @@ async function main() {
   const normalizedEnv = await sync(options)
 
   if (options.command === 'check') {
-    const ok = printCheck(options.profile, normalizedEnv)
+    const ok = printCheck(options.profile, normalizedEnv, { target: options.target })
     process.exit(ok ? 0 : 1)
   }
 }

@@ -101,6 +101,7 @@ bun run env:check:prod
 - `env:sync:*`：把 3 个源文件生成到各子项目运行时文件
 - `env:check:*`：校验当前 profile 是否缺字段、是否把 `localhost` 混进错误环境
 - **production 额外硬门：** 合并后的 `PUBLIC_SUPABASE_URL`、`PUBLIC_SUPABASE_ANON_KEY`、`PUBLIC_TURNSTILE_SITE_KEY` 任一为空即失败（官网 `/login` Supabase session + Turnstile；通常来自 `.env.shared.local`，`PUBLIC_SUPABASE_*` 可由 `SUPABASE_*` 映射）。`website` 的 `build:prod` 会先跑该 check；check 日志只报变量名与 `(set)/(missing)`，不打印值。缺失即失败，避免静默部署后出现 `PUBLIC_SUPABASE_ANON_KEY 未配置` / bot check not configured
+- **Pages Git 构建：** 无本地 `.env.*.local` 时，`scripts/dev-env.mjs` 会从构建环境变量（白名单键）合并进源 env；**变量名与 `.env.shared.local` 一致**（`SUPABASE_URL` / `SUPABASE_ANON_KEY` / `PUBLIC_TURNSTILE_SITE_KEY`），后台 Production 机密即构建输入。旧名 `PUBLIC_SUPABASE_URL` / `PUBLIC_SUPABASE_ANON_KEY` 仍可作为 `SUPABASE_*` 别名。`build:prod` 带 `--target=website` 时只要求官网所需键，不拦 worker-only 机密（`SERVICE_ROLE` / `JWT`）。调用一律 `bun --no-env-file`（避免 Bun 自动灌入本地 `.env.*.local` 污染 production）
 
 ## 子项目读取方式
 
@@ -135,9 +136,9 @@ bun run env:check:prod
   - 本地读取 `website/.env`（由 `env:sync:dev` 生成）
   - **Cloudflare Pages（`yiveno-website` · Git 连 `main`）**
     - 根目录留空（monorepo 根，才能读到 `bun.lock`）；勿再设 `website` 为 root（会触发 `npm install` → `workspace:*` 失败）
-    - Build command：`bun install --frozen-lockfile && bun run --cwd website build:prod:compile`
+    - Build command：`bun install --frozen-lockfile && bun run --cwd website build:prod`
     - Build output：`website/dist`
-    - Env：`SKIP_DEPENDENCY_INSTALL=true`、`BUN_VERSION=1.4.0`，以及 `PUBLIC_API_BASE_URL` / `PUBLIC_SUPABASE_*` / `PUBLIC_WEBSITE_URL` / `PUBLIC_TURNSTILE_SITE_KEY`（Turnstile **sitekey**；Secret 只在 Supabase）
+    - Env：`SKIP_DEPENDENCY_INSTALL=true`、`BUN_VERSION=1.4.0`；Production 机密名与 `.env.shared.local` 一致：`SUPABASE_URL` / `SUPABASE_ANON_KEY` / `PUBLIC_TURNSTILE_SITE_KEY`（可并存旧名 `PUBLIC_SUPABASE_*`；Turnstile **sitekey**；Secret 只在 Supabase）。可选再设 `PUBLIC_API_BASE_URL` / `PUBLIC_WEBSITE_URL`（缺省由 production profile 默认填）
     - Path includes：`website/*`、`packages/*`（design-tokens）
     - 本机直推仍可用：`bun run deploy:web`
     - **软性 geo 域名跳转（与 UI 语言无关）**
