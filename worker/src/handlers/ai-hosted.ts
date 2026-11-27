@@ -11,6 +11,7 @@ import { okJson, errorJson } from '../utils/response'
 import { resolveHostedModel } from '../config/ai-hosted'
 import { resolveHostedMaxTokensForTask, resolveHostedModelForTask } from '../config/ai-task-kind'
 import { isAiChatProviderConfigured, resolveAiChatProvider } from '../services/ai/ai-chat-provider'
+import { resolveAiChatCompleter } from '../services/ai/ai-chat-router'
 import { peekAnonymousEmbedQuota } from './ai-embed'
 import { consumeHostedQuota, getHostedQuotaSnapshot } from '../services/ai/usage-quota'
 import { isActiveProUser } from '../services/ai/require-pro-user'
@@ -233,13 +234,15 @@ export async function handleHostedComplete(
   })
 
   try {
-    const provider = resolveAiChatProvider(env)
-    const result = await provider.complete(env, {
+    const completer = resolveAiChatCompleter(env)
+    const result = await completer.complete(env, {
       messages,
       maxTokens,
       ...(body.temperature !== undefined ? { temperature: body.temperature } : {}),
       model,
-      disableThinking: true
+      disableThinking: true,
+      taskKind,
+      priority: 'interactive'
     })
 
     logInfo('hosted_complete_ok', {

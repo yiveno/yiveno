@@ -111,6 +111,8 @@ bun run env:check:prod
   - Cloudflare 线上环境变量在 Worker Dashboard / Wrangler 环境中维护
   - **AI Gateway（非 Secret，写在 `worker/wrangler.toml` `[vars]`）**
     - `AI_PROVIDER`（可选）：聊天补全实现，默认 `deepseek`；换厂商时加 Worker adapter + 改此变量
+    - `AI_ROUTING_MODE`（可选 · Batch 2）：`single`（缺省）| `shadow` | `quota`。生产保持缺省 `single`（行为与现行一致）。`shadow` 只记候选决策仍走现行单 provider；`quota` 本批等同 shadow（真实切换下一批）。未知值 → misconfigured
+    - Durable Object 绑定 `AI_QUOTA_LEDGER`（类 `AiQuotaLedger`，migration tag `v1-ai-quota-ledger`）：上游候选额度账本；须随下次 `wrangler deploy` 生效。未绑定 / stub 失败时客户端 no-op，不挡请求。`single` 模式不调用账本
     - `AI_HOSTED_MODEL`：全局默认 chat 模型（现网 `deepseek-v4-flash`）
     - **任务级模型覆盖（可选 · Phase 1 插座；未设 = 全任务同 `AI_HOSTED_MODEL`，勿当已分模上线）**
       - `AI_HOSTED_MODEL_NLU`：仅 `taskKind=nlu`
@@ -125,7 +127,7 @@ bun run env:check:prod
     - 二者都非空时，DeepSeek 经 `gateway.ai.cloudflare.com` 转发；否则直连 `DEEPSEEK_API_BASE`
     - Secret 仍是 `DEEPSEEK_API_KEY`（经 `env:sync:dev` 写入 `.dev.vars`）
     - 若 Gateway 开启 Authenticated Gateway：另需 Secret `AI_GATEWAY_TOKEN`（`cf-aig-authorization`）；未配时 Worker 遇 401 会回退直连 DeepSeek
-    - Handler 经 `resolveAiChatProvider(env)` 调用上游，业务不直连 DeepSeek 客户端
+    - Handler 经 `resolveAiChatCompleter(env)` 走路由层；`resolveAiChatProvider(env)` 仍解析现行单 provider。业务不直连 DeepSeek 客户端
     - Capture enrichment：`POST /api/ai/enrichment/complete`；可选 `AI_ENRICHMENT_PROXY_ENABLED=false` 关闭；`AI_ENRICHMENT_DAILY_LIMIT`（默认 80，按 IP）
     - Getting Started 示意 clue：`POST /api/ai/gs-clue-samples/complete`；可选 `AI_GS_CLUE_SAMPLES_PROXY_ENABLED=false` 关闭；`AI_GS_CLUE_SAMPLES_DAILY_LIMIT`（默认 40，按 IP）
 - `website`

@@ -8,6 +8,7 @@ import type { Env } from '../types/env'
 import { isDeepSeekAiGatewayEnabled, resolveHostedModel } from '../config/ai-hosted'
 import { resolveHostedModelForTask, resolveHostedMaxTokensForTask } from '../config/ai-task-kind'
 import { isAiChatProviderConfigured, resolveAiChatProvider } from '../services/ai/ai-chat-provider'
+import { resolveAiChatCompleter } from '../services/ai/ai-chat-router'
 import {
   GsClueSamplesCompleteRequestSchema,
   buildGsClueSamplesSystemPrompt,
@@ -200,8 +201,8 @@ export async function handleGsClueSamplesComplete(
   }
 
   try {
-    const provider = resolveAiChatProvider(env)
-    const result = await provider.complete(env, {
+    const completer = resolveAiChatCompleter(env)
+    const result = await completer.complete(env, {
       prompt: ' ',
       maxTokens: resolveHostedMaxTokensForTask('gs_samples', undefined),
       temperature: 0.4,
@@ -210,7 +211,9 @@ export async function handleGsClueSamplesComplete(
       messages: [
         { role: 'system', content: buildGsClueSamplesSystemPrompt() },
         { role: 'user', content: buildGsClueSamplesUserPrompt(bookmark) }
-      ]
+      ],
+      taskKind: 'gs_samples',
+      priority: 'background'
     })
 
     const samples = parseGsClueSamplesText(result.text, bookmark)

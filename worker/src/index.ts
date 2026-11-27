@@ -13,6 +13,9 @@ import { handleScheduledCleanup } from './handlers/scheduled-cleanup'
 import { handleScheduledSubscriptionReconcile } from './handlers/scheduled-subscription-reconcile'
 import type { Env } from './types/env'
 
+/** AI 额度账本 Durable Object（Batch 2；须 export 供 wrangler 绑定） */
+export { AiQuotaLedger } from './services/ai/quota-ledger-do'
+
 /**
  * 创建 Hono 应用实例
  */

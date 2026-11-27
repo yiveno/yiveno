@@ -12,6 +12,7 @@ import {
   type AiChatTaskKind
 } from '../config/ai-task-kind'
 import { isAiChatProviderConfigured, resolveAiChatProvider } from '../services/ai/ai-chat-provider'
+import { resolveAiChatCompleter } from '../services/ai/ai-chat-router'
 import { okJson, errorJson } from '../utils/response'
 import { info as logInfo, logError } from '../utils/logger'
 
@@ -159,14 +160,16 @@ export async function handleClueComplete(request: Request, env: Env): Promise<Re
   }
 
   try {
-    const provider = resolveAiChatProvider(env)
-    const result = await provider.complete(env, {
+    const completer = resolveAiChatCompleter(env)
+    const result = await completer.complete(env, {
       prompt: prompt || ' ',
       maxTokens,
       temperature: body.temperature ?? 0,
       disableThinking: true,
       model,
-      ...(hasMessages ? { messages: body.messages } : {})
+      ...(hasMessages ? { messages: body.messages } : {}),
+      taskKind,
+      priority: 'interactive'
     })
 
     logInfo('clue_complete_ok', {

@@ -5,6 +5,7 @@
 import type { Env } from '../types/env'
 import { resolveHostedModelForTask, resolveHostedMaxTokensForTask } from '../config/ai-task-kind'
 import { isAiChatProviderConfigured, resolveAiChatProvider } from '../services/ai/ai-chat-provider'
+import { resolveAiChatCompleter } from '../services/ai/ai-chat-router'
 import {
   DreamingCompileRequestSchema,
   buildDreamingCompileSystemPrompt,
@@ -86,7 +87,7 @@ export async function handleDreamingComplete(
 
   const model = resolveHostedModelForTask(env, taskKind)
   const maxTokens = resolveHostedMaxTokensForTask(taskKind, undefined)
-  const provider = resolveAiChatProvider(env)
+  const completer = resolveAiChatCompleter(env)
 
   let rawText: string
   let completionUsage: {
@@ -95,7 +96,7 @@ export async function handleDreamingComplete(
     completionTokens?: number
   } = {}
   try {
-    const completion = await provider.complete(env, {
+    const completion = await completer.complete(env, {
       model,
       maxTokens,
       temperature: 0,
@@ -103,7 +104,9 @@ export async function handleDreamingComplete(
       messages: [
         { role: 'system', content: buildDreamingCompileSystemPrompt() },
         { role: 'user', content: buildDreamingCompileUserPrompt(sources) }
-      ]
+      ],
+      taskKind,
+      priority: 'background'
     })
     rawText = completion.text
     completionUsage = {
@@ -163,7 +166,7 @@ export async function handleDreamingComplete(
     {
       results,
       model,
-      provider: provider.id,
+      provider: resolveAiChatProvider(env).id,
       taskKind,
       tokensUsed: completionUsage.tokensUsed,
       promptTokens: completionUsage.promptTokens,

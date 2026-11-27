@@ -3,6 +3,7 @@
  * Handler 只依赖本接口；具体厂商由 AI_PROVIDER 选择（默认 deepseek）。
  */
 
+import type { AiChatTaskKind } from '../../config/ai-task-kind'
 import type { Env } from '../../types/env'
 import { AiProviderError } from './ai-provider-error'
 import { deepseekAiChatProvider } from './deepseek-ai-chat-provider'
@@ -15,6 +16,9 @@ export type AiChatMessage = {
   role: AiChatRole
   content: string
 }
+
+/** 路由优先级：交互路径 vs 后台批处理。 */
+export type AiChatRequestPriority = 'interactive' | 'background'
 
 /** 统一补全请求（任务无关）。 */
 export type AiChatCompleteRequest = {
@@ -30,6 +34,15 @@ export type AiChatCompleteRequest = {
    * 缺省时 provider 回退 resolveHostedModel(env)。
    */
   model?: string
+  /**
+   * 路由上下文（Batch 2）：taskKind / priority / requestId。
+   * Provider adapter 忽略；由 resolveAiChatCompleter 消费。
+   */
+  taskKind?: AiChatTaskKind
+  /** 缺省 interactive */
+  priority?: AiChatRequestPriority
+  /** 可选关联 id（决策日志） */
+  requestId?: string
 }
 
 /** 统一补全结果。 */
@@ -44,6 +57,10 @@ export type AiChatCompleteResult = {
   promptTokens?: number
   /** completion 侧 token；上游未返回则缺省。 */
   completionTokens?: number
+  /** 路由尝试次数（Batch 2；single 缺省可不填） */
+  attempts?: number
+  /** 回退原因（Batch 2 quota 模式预留） */
+  fallbackReason?: string
 }
 
 /**

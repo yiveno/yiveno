@@ -8,6 +8,7 @@ import type { Env } from '../types/env'
 import { isDeepSeekAiGatewayEnabled, resolveHostedModel } from '../config/ai-hosted'
 import { resolveHostedModelForTask, resolveHostedMaxTokensForTask } from '../config/ai-task-kind'
 import { isAiChatProviderConfigured, resolveAiChatProvider } from '../services/ai/ai-chat-provider'
+import { resolveAiChatCompleter } from '../services/ai/ai-chat-router'
 import {
   EnrichmentCompleteRequestSchema,
   buildEnrichmentSystemPrompt,
@@ -218,8 +219,8 @@ export async function handleEnrichmentComplete(
   await commitEnrichmentDailyQuota(env, ipKey, ipPeek)
 
   try {
-    const provider = resolveAiChatProvider(env)
-    const result = await provider.complete(env, {
+    const completer = resolveAiChatCompleter(env)
+    const result = await completer.complete(env, {
       prompt: ' ',
       maxTokens: resolveHostedMaxTokensForTask('enrichment', undefined),
       temperature: 0,
@@ -228,7 +229,9 @@ export async function handleEnrichmentComplete(
       messages: [
         { role: 'system', content: buildEnrichmentSystemPrompt() },
         { role: 'user', content: buildEnrichmentUserPrompt(body) }
-      ]
+      ],
+      taskKind: 'enrichment',
+      priority: 'background'
     })
 
     const proposal = parseEnrichmentProposalText(result.text, body)

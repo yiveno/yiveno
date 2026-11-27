@@ -80,6 +80,13 @@ export type Env = Cloudflare.Env & {
    */
   AI_PROVIDER?: string
   /**
+   * 路由模式（Batch 2）：single（缺省）| shadow | quota。
+   * 生产保持缺省 single；shadow 只记决策仍走现行单 provider；quota 本批等同 shadow。
+   * 未知值 → AiProviderError misconfigured。
+   * 不写入 wrangler vars（缺省 = single）；本地 `.dev.vars` 可显式设 shadow 观测。
+   */
+  AI_ROUTING_MODE?: string
+  /**
    * AI Gateway Authenticated Gateway 的 Run token。
    * 写入请求头 `cf-aig-authorization`；未配置且 Gateway 开鉴权时会 401（客户端将回退直连）。
    */

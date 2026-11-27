@@ -77,6 +77,16 @@ remote = true
 name = "EMAIL"
 remote = true
 
+# AI 上游额度账本（Batch 2）：按 candidateId 分桶；single 模式不调用。
+# 迁移随下次 deploy 生效；本地无绑定或 stub 失败时客户端降级 no-op。
+[[durable_objects.bindings]]
+name = "AI_QUOTA_LEDGER"
+class_name = "AiQuotaLedger"
+
+[[migrations]]
+tag = "v1-ai-quota-ledger"
+new_sqlite_classes = ["AiQuotaLedger"]
+
 # Custom Domain 仅挂 production（`bun run deploy` → wrangler deploy --env production）。
 # 顶层不声明 routes，避免默认/其它 env 误继承抢占域名。
 [env.production]
@@ -131,3 +141,7 @@ binding = "AI"
 
 [[env.production.send_email]]
 name = "EMAIL"
+
+[[env.production.durable_objects.bindings]]
+name = "AI_QUOTA_LEDGER"
+class_name = "AiQuotaLedger"
