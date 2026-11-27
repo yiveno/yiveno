@@ -17,7 +17,9 @@ import {
 import type { MemoryItem } from '@/core/memory/memory-item'
 import {
   requestDreamingCompileBatch,
-  type DreamingCompileSourceInput
+  type DreamingCompileResultRow,
+  type DreamingCompileSourceInput,
+  type DreamingCompileSourceStatus
 } from '@/application/dreaming/dreaming-llm-client'
 import { embedPropositionsForWrittenNotes } from '@/application/dreaming/schedule-proposition-embeddings'
 import { getCurrentOwnerId } from '@/infrastructure/identity/local-profile-service'
@@ -148,13 +150,44 @@ async function writePropositionsForSource(input: {
   return written
 }
 
+/**
+ * 解析某 source 的编译行状态。
+ * 缺行 → omitted；有行则用行内 status（客户端已兼容旧 Worker）。
+ */
+export function resolveCompileSourceStatus(
+  row: DreamingCompileResultRow | undefined
+): DreamingCompileSourceStatus {
+  if (row == null) {
+    return 'omitted'
+  }
+  return row.status
+}
+
 export type CompileMemoryNotesTickResult = {
   skipped: boolean
   reason?: string
+  /** 仅 ok + empty（已写库替换） */
   processedSources: number
+  /** dropped + omitted（跳过写入、旧命题保留） */
+  failedSources: number
   writtenPropositions: number
   deferred: boolean
   dreamRunId: string | null
+  /** 本 tick 因 failed source 开了新 run，供下一 tick 重试 */
+  restartedRunForRetry: boolean
+}
+
+function skippedTickResult(reason: string, deferred: boolean): CompileMemoryNotesTickResult {
+  return {
+    skipped: true,
+    reason,
+    processedSources: 0,
+    failedSources: 0,
+    writtenPropositions: 0,
+    deferred,
+    dreamRunId: null,
+    restartedRunForRetry: false
+  }
 }
 
 /** 一次 alarm tick：有界批次数；中断后续跑靠游标。 */
@@ -162,27 +195,13 @@ export async function compileMemoryNotesTick(): Promise<CompileMemoryNotesTickRe
   const settings = await getUserSettings()
   if (!settings.aiFeaturesEnabled) {
     logger.info('Dreaming', '编译跳过：aiFeaturesEnabled=false')
-    return {
-      skipped: true,
-      reason: 'ai_disabled',
-      processedSources: 0,
-      writtenPropositions: 0,
-      deferred: false,
-      dreamRunId: null
-    }
+    return skippedTickResult('ai_disabled', false)
   }
 
   const accessToken = await getWorkerApiAccessToken()
   if (!accessToken) {
     logger.info('Dreaming', '编译跳过：未登录（Embed/托管门）')
-    return {
-      skipped: true,
-      reason: 'not_signed_in',
-      processedSources: 0,
-      writtenPropositions: 0,
-      deferred: true,
-      dreamRunId: null
-    }
+    return skippedTickResult('not_signed_in', true)
   }
 
   const ownerId = await getCurrentOwnerId()
@@ -201,6 +220,7 @@ export async function compileMemoryNotesTick(): Promise<CompileMemoryNotesTickRe
   })
 
   let processedSources = 0
+  let failedSources = 0
   let writtenPropositions = 0
   let deferred = false
 
@@ -245,20 +265,43 @@ export async function compileMemoryNotesTick(): Promise<CompileMemoryNotesTickRe
     // Q7：累计编译 prompt/completion token（与 commitRunCursor 串行，避免丢更新）
     await memoryNotesMetaRepository.recordCompileUsage(ownerId, llm.usage)
 
-    const bySource = new Map(llm.results.map(row => [row.sourceId, row.propositions]))
+    const bySource = new Map(llm.results.map(row => [row.sourceId, row]))
     for (const item of items) {
-      const propositions = bySource.get(item.id) ?? []
-      writtenPropositions += await writePropositionsForSource({
-        ownerId,
-        item,
-        dreamRunId: cursor.dreamRunId,
-        propositions,
-        accessToken
-      })
+      const row = bySource.get(item.id)
+      const status = resolveCompileSourceStatus(row)
+
+      if (status === 'ok' || status === 'empty') {
+        writtenPropositions += await writePropositionsForSource({
+          ownerId,
+          item,
+          dreamRunId: cursor.dreamRunId,
+          propositions: row?.propositions ?? [],
+          accessToken
+        })
+        processedSources += 1
+      } else {
+        // dropped / omitted：不删旧 notes / embeddings，保持可重试
+        failedSources += 1
+        logger.info('Dreaming', '编译跳过写入（保留旧命题）', {
+          sourceId: item.id,
+          status
+        })
+      }
+
       cursor = advanceDreamRunCursor(cursor, item.id)
-      processedSources += 1
       await memoryNotesMetaRepository.commitRunCursor(ownerId, cursor)
     }
+  }
+
+  // 有 failed source 时开新 run：下一 tick 重新扫 gap 并重试（避免游标越过后永不重试）
+  let restartedRunForRetry = false
+  if (failedSources > 0) {
+    cursor = startDreamRun()
+    restartedRunForRetry = true
+    logger.info('Dreaming', '因 failed source 开新 run 供重试', {
+      failedSources,
+      dreamRunId: cursor.dreamRunId
+    })
   }
 
   const itemCount = await memoryNotesRepository.countByOwner(ownerId)
@@ -267,16 +310,20 @@ export async function compileMemoryNotesTick(): Promise<CompileMemoryNotesTickRe
   logger.info('Dreaming', '编译 tick 完成', {
     dreamRunId: cursor.dreamRunId,
     processedSources,
+    failedSources,
     writtenPropositions,
     deferred,
+    restartedRunForRetry,
     itemCount
   })
 
   return {
     skipped: false,
     processedSources,
+    failedSources,
     writtenPropositions,
     deferred,
-    dreamRunId: cursor.dreamRunId
+    dreamRunId: cursor.dreamRunId,
+    restartedRunForRetry
   }
 }

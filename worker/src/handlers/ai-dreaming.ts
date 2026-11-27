@@ -134,7 +134,7 @@ export async function handleDreamingComplete(
     return errorJson({ error: 'parse_failed' }, 422, origin)
   }
 
-  // 逐字 sourceQuote 校验：编造引用丢弃（不改 prompt，只补校验）
+  // 逐字 sourceQuote 校验：编造引用丢弃（不改 prompt，只补校验）；结果按请求 source 全覆盖 + status
   const { results, droppedQuoteCount } = filterDreamingCompileResults(parsed, sources, allowedIds)
   if (droppedQuoteCount > 0) {
     logInfo('dreaming_complete_quote_dropped', {
@@ -147,6 +147,17 @@ export async function handleDreamingComplete(
     })
   }
 
+  let statusOk = 0
+  let statusEmpty = 0
+  let statusDropped = 0
+  let statusOmitted = 0
+  for (const row of results) {
+    if (row.status === 'ok') statusOk += 1
+    else if (row.status === 'empty') statusEmpty += 1
+    else if (row.status === 'dropped') statusDropped += 1
+    else statusOmitted += 1
+  }
+
   const snapshot = await commitDreamingQuota(env, peek.snapshot)
   logInfo('dreaming_complete_ok', {
     userId,
@@ -154,6 +165,10 @@ export async function handleDreamingComplete(
     sourceCount: sources.length,
     resultCount: results.length,
     droppedQuoteCount,
+    statusOk,
+    statusEmpty,
+    statusDropped,
+    statusOmitted,
     durationMs: Date.now() - startedAt,
     used: snapshot.used,
     limit: snapshot.limit,

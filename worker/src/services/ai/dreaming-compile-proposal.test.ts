@@ -53,7 +53,7 @@ describe('dreaming-compile-proposal', () => {
     expect(parsed!.results[0]!.propositions[0]!.sourceQuote).toBe('organize information')
   })
 
-  it('编造引用被丢弃', () => {
+  it('编造引用被丢弃 → status dropped', () => {
     const source = makeSource()
     const filtered = filterDreamingCompileResults(
       {
@@ -72,11 +72,13 @@ describe('dreaming-compile-proposal', () => {
       [source],
       new Set([SOURCE_ID])
     )
+    expect(filtered.results).toHaveLength(1)
+    expect(filtered.results[0]!.status).toBe('dropped')
     expect(filtered.results[0]!.propositions).toHaveLength(0)
     expect(filtered.droppedQuoteCount).toBe(1)
   })
 
-  it('逐字引用保留', () => {
+  it('逐字引用保留 → status ok', () => {
     const source = makeSource()
     const filtered = filterDreamingCompileResults(
       {
@@ -95,11 +97,12 @@ describe('dreaming-compile-proposal', () => {
       [source],
       new Set([SOURCE_ID])
     )
+    expect(filtered.results[0]!.status).toBe('ok')
     expect(filtered.results[0]!.propositions).toHaveLength(1)
     expect(filtered.droppedQuoteCount).toBe(0)
   })
 
-  it('title 引用保留', () => {
+  it('title 引用保留 → status ok', () => {
     const source = makeSource()
     const filtered = filterDreamingCompileResults(
       {
@@ -118,7 +121,60 @@ describe('dreaming-compile-proposal', () => {
       [source],
       new Set([SOURCE_ID])
     )
+    expect(filtered.results[0]!.status).toBe('ok')
     expect(filtered.results[0]!.propositions).toHaveLength(1)
+    expect(filtered.droppedQuoteCount).toBe(0)
+  })
+
+  it('omitted：LLM 未返回该 source 时仍有一行且 status=omitted', () => {
+    const source = makeSource()
+    const filtered = filterDreamingCompileResults({ results: [] }, [source], new Set([SOURCE_ID]))
+    expect(filtered.results).toHaveLength(1)
+    expect(filtered.results[0]).toEqual({
+      sourceId: SOURCE_ID,
+      status: 'omitted',
+      propositions: []
+    })
+    expect(filtered.droppedQuoteCount).toBe(0)
+  })
+
+  it('empty：LLM 返回行且 propositions 原本为 0', () => {
+    const source = makeSource()
+    const filtered = filterDreamingCompileResults(
+      {
+        results: [{ sourceId: SOURCE_ID, propositions: [] }]
+      },
+      [source],
+      new Set([SOURCE_ID])
+    )
+    expect(filtered.results[0]!.status).toBe('empty')
+    expect(filtered.results[0]!.propositions).toHaveLength(0)
+    expect(filtered.droppedQuoteCount).toBe(0)
+  })
+
+  it('未知 sourceId 仍排除；请求 source 仍全覆盖为 omitted', () => {
+    const source = makeSource()
+    const unknownId = '33333333-3333-4333-8333-333333333333'
+    const filtered = filterDreamingCompileResults(
+      {
+        results: [
+          {
+            sourceId: unknownId,
+            propositions: [
+              {
+                text: 'Should not appear.',
+                sourceQuote: 'organize information'
+              }
+            ]
+          }
+        ]
+      },
+      [source],
+      new Set([SOURCE_ID])
+    )
+    expect(filtered.results).toHaveLength(1)
+    expect(filtered.results[0]!.sourceId).toBe(SOURCE_ID)
+    expect(filtered.results[0]!.status).toBe('omitted')
     expect(filtered.droppedQuoteCount).toBe(0)
   })
 })

@@ -102,37 +102,67 @@ export function isVerbatimSourceQuote(
   return false
 }
 
+/** 每个请求 source 在过滤后的行状态（全覆盖）。 */
+export type DreamingCompileSourceStatus = 'ok' | 'empty' | 'dropped' | 'omitted'
+
+export type DreamingCompileFilteredRow = {
+  sourceId: string
+  status: DreamingCompileSourceStatus
+  propositions: DreamingCompileLlmPayload['results'][number]['propositions']
+}
+
 export type DreamingCompileFilterResult = {
-  results: Array<{
-    sourceId: string
-    propositions: DreamingCompileLlmPayload['results'][number]['propositions']
-  }>
-  /** 因空引用或非逐字引用丢弃的命题条数 */
+  /** 对每个请求 source 恰好一行（未知 LLM sourceId 已排除） */
+  results: DreamingCompileFilteredRow[]
+  /** 因空引用或非逐字引用丢弃的命题条数（总数语义不变） */
   droppedQuoteCount: number
 }
 
 /**
- * 按 allowedIds + 逐字 sourceQuote 过滤编译结果。
+ * 按请求 source 全覆盖输出 + 逐字 sourceQuote 过滤。
+ * - ok：过滤后 propositions ≥ 1
+ * - empty：LLM 对该 source 返回了行且原始 propositions 为 0
+ * - dropped：LLM 返回 ≥ 1 条但全部因空引用/非逐字被过滤
+ * - omitted：LLM 未返回该 source 的行
  */
 export function filterDreamingCompileResults(
   parsed: DreamingCompileLlmPayload,
   sources: readonly DreamingCompileSource[],
   allowedIds: ReadonlySet<string>
 ): DreamingCompileFilterResult {
-  const sourceById = new Map(sources.map(source => [source.id, source]))
+  const llmBySourceId = new Map<string, DreamingCompileLlmPayload['results'][number]>()
+  for (const row of parsed.results) {
+    if (!allowedIds.has(row.sourceId)) {
+      continue
+    }
+    if (!llmBySourceId.has(row.sourceId)) {
+      llmBySourceId.set(row.sourceId, row)
+    }
+  }
+
   let droppedQuoteCount = 0
-  const results = parsed.results
-    .filter(row => allowedIds.has(row.sourceId))
-    .map(row => {
-      const source = sourceById.get(row.sourceId)
-      const propositions = row.propositions.filter(prop => {
-        if (source == null || !isVerbatimSourceQuote(prop.sourceQuote, source)) {
-          droppedQuoteCount += 1
-          return false
-        }
-        return true
-      })
-      return { sourceId: row.sourceId, propositions }
+  const results: DreamingCompileFilteredRow[] = sources.map(source => {
+    const row = llmBySourceId.get(source.id)
+    if (row == null) {
+      return { sourceId: source.id, status: 'omitted', propositions: [] }
+    }
+
+    const propositions = row.propositions.filter(prop => {
+      if (!isVerbatimSourceQuote(prop.sourceQuote, source)) {
+        droppedQuoteCount += 1
+        return false
+      }
+      return true
     })
+
+    if (row.propositions.length === 0) {
+      return { sourceId: source.id, status: 'empty', propositions: [] }
+    }
+    if (propositions.length === 0) {
+      return { sourceId: source.id, status: 'dropped', propositions: [] }
+    }
+    return { sourceId: source.id, status: 'ok', propositions }
+  })
+
   return { results, droppedQuoteCount }
 }

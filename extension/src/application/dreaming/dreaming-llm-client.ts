@@ -10,6 +10,9 @@ import { parseLlmChatUsage, type LlmChatUsage } from '@/core/recall/understand/l
 import { getWorkerApiAccessToken } from '@/infrastructure/identity/worker-api-access-token'
 import { logger } from '@/infrastructure/logging/logger'
 
+/** Worker 过滤后的 source 行状态（与 dreaming-compile-proposal 对齐）。 */
+export type DreamingCompileSourceStatus = 'ok' | 'empty' | 'dropped' | 'omitted'
+
 const PropositionSchema = z.object({
   text: z.string().min(1),
   sourceQuote: z.string().min(1),
@@ -18,7 +21,9 @@ const PropositionSchema = z.object({
 
 const ResultRowSchema = z.object({
   sourceId: z.string().uuid(),
-  propositions: z.array(PropositionSchema)
+  propositions: z.array(PropositionSchema),
+  /** 新 Worker 必带；旧 Worker 缺省时由客户端兼容推断 */
+  status: z.enum(['ok', 'empty', 'dropped', 'omitted']).optional()
 })
 
 const DreamingCompleteResponseSchema = z.object({
@@ -39,18 +44,36 @@ export type DreamingCompileSourceInput = {
   note?: string
 }
 
+export type DreamingCompileResultRow = {
+  sourceId: string
+  status: DreamingCompileSourceStatus
+  propositions: Array<{ text: string; sourceQuote: string; topicAnchor: string[] }>
+}
+
 export type DreamingCompileClientResult =
   | {
       ok: true
-      results: Array<{
-        sourceId: string
-        propositions: Array<{ text: string; sourceQuote: string; topicAnchor: string[] }>
-      }>
+      results: DreamingCompileResultRow[]
       model: string | null
       usage: LlmChatUsage
     }
   | { ok: false; deferred: true; errorCode: string }
   | { ok: false; deferred: false; errorCode: string }
+
+/**
+ * 解析行 status；兼容旧 Worker（无 status）：
+ * 行内 propositions>0 → ok；行内为 0 → dropped（保护旧命题）。
+ * 缺行由 compile 侧视为 omitted。
+ */
+export function resolveDreamingCompileRowStatus(row: {
+  status?: DreamingCompileSourceStatus
+  propositions: readonly unknown[]
+}): DreamingCompileSourceStatus {
+  if (row.status != null) {
+    return row.status
+  }
+  return row.propositions.length > 0 ? 'ok' : 'dropped'
+}
 
 function resolveApiBaseUrl(): string {
   const fromEnv = import.meta.env.VITE_API_BASE_URL?.trim()
@@ -140,6 +163,7 @@ export async function requestDreamingCompileBatch(
     usage: parseLlmChatUsage(parsed.data),
     results: parsed.data.results.map(row => ({
       sourceId: row.sourceId,
+      status: resolveDreamingCompileRowStatus(row),
       propositions: row.propositions.map(prop => ({
         text: prop.text,
         sourceQuote: prop.sourceQuote,
