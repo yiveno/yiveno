@@ -18,3 +18,25 @@ export function formatDate(dateStr: string | undefined): string {
     return t('account.date.unknown')
   }
 }
+
+/**
+ * 将 ISO / 可解析日期串格式化为本地年月日 + 时:分。
+ * 用于取消续订后的「Pro 至 …」到期时刻。
+ */
+export function formatDateTime(dateStr: string | undefined): string {
+  if (!dateStr) return t('account.date.unknown')
+  try {
+    const d = new Date(dateStr)
+    if (Number.isNaN(d.getTime())) return t('account.date.unknown')
+    const locale = toWebsiteBcp47LangTag(getWebsiteEffectiveUiLocale())
+    return d.toLocaleString(locale, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  } catch {
+    return t('account.date.unknown')
+  }
+}

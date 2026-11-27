@@ -7,7 +7,7 @@ import {
   loadUserSubscription,
   type UserSubscription
 } from '../services/subscription'
-import { formatDate } from '../services/date'
+import { formatDate, formatDateTime } from '../services/date'
 import {
   captureExtensionConnectParamsFromUrl,
   clearExtensionConnectParams,
@@ -142,11 +142,161 @@ const checkoutReturnHintText = computed(() => {
   return ''
 })
 
-const renewsLabel = computed(() => {
+/** 订阅周期文案：续订中用日期；已取消续订用本地到期时刻。 */
+const periodLabel = computed(() => {
   const end = subscription.value?.currentPeriodEnd
   if (!end) return ''
+  if (subscription.value?.cancelAtPeriodEnd) {
+    return tFormat('account.plan.pro_until', { datetime: formatDateTime(end) })
+  }
   return tFormat('account.plan.renews', { date: formatDate(end) })
 })
+
+/** 退出确认弹窗（点退出按钮后打开；确认前不改登录态）。 */
+const showSignOutConfirm = ref(false)
+/** 扩展账号切换确认（from-extension 带回 extension_switch）。 */
+const showExtensionSwitchConfirm = ref(false)
+const pendingExtensionSwitchId = ref('')
+const pendingExtensionDisplayName = ref('')
+const pendingExtensionEmail = ref('')
+
+const extensionSwitchLabel = computed(() => {
+  return (
+    pendingExtensionDisplayName.value ||
+    pendingExtensionEmail.value ||
+    t('from_extension.anonymous_extension')
+  )
+})
+
+type ChromeRuntimeMessenger = {
+  sendMessage: (
+    extensionId: string,
+    message: unknown,
+    responseCallback?: (response: unknown) => void
+  ) => void
+  lastError?: { message?: string }
+}
+
+function getChromeRuntime(): ChromeRuntimeMessenger | null {
+  const chromeApi = (globalThis as { chrome?: { runtime?: ChromeRuntimeMessenger } }).chrome
+  return chromeApi?.runtime ?? null
+}
+
+function sendToExtension(extensionId: string, message: unknown): Promise<unknown> {
+  const runtime = getChromeRuntime()
+  if (!runtime?.sendMessage) {
+    return Promise.resolve(null)
+  }
+  return new Promise(resolve => {
+    try {
+      runtime.sendMessage(extensionId, message, response => {
+        void runtime.lastError
+        resolve(response ?? null)
+      })
+    } catch {
+      resolve(null)
+    }
+  })
+}
+
+function readProbeUser(probe: unknown): {
+  signedIn: boolean
+  userId: string
+  email: string
+  displayName: string
+} {
+  if (typeof probe !== 'object' || probe === null || (probe as { ok?: unknown }).ok !== true) {
+    return { signedIn: false, userId: '', email: '', displayName: '' }
+  }
+  const row = probe as {
+    signedIn?: unknown
+    userId?: unknown
+    email?: unknown
+    displayName?: unknown
+  }
+  return {
+    signedIn: row.signedIn === true,
+    userId: typeof row.userId === 'string' ? row.userId.trim() : '',
+    email: typeof row.email === 'string' ? row.email.trim() : '',
+    displayName: typeof row.displayName === 'string' ? row.displayName.trim() : ''
+  }
+}
+
+function clearExtensionSwitchParams(): void {
+  const clean = new URL(window.location.href)
+  clean.searchParams.delete('extension_switch')
+  clean.searchParams.delete('extension_id')
+  window.history.replaceState({}, '', clean.pathname + clean.search)
+}
+
+function openSignOutConfirm(): void {
+  showSignOutConfirm.value = true
+}
+
+function closeSignOutConfirm(): void {
+  showSignOutConfirm.value = false
+}
+
+function confirmSignOut(): void {
+  showSignOutConfirm.value = false
+  void handleSignOut()
+}
+
+function keepWebsiteAccountOnExtensionSwitch(): void {
+  showExtensionSwitchConfirm.value = false
+  pendingExtensionSwitchId.value = ''
+  pendingExtensionDisplayName.value = ''
+  pendingExtensionEmail.value = ''
+  clearExtensionSwitchParams()
+}
+
+function switchToExtensionAccount(): void {
+  const extensionId = pendingExtensionSwitchId.value.trim()
+  if (!extensionId) return
+  const next = encodeURIComponent('/account')
+  window.location.assign(
+    `/auth/from-extension/?extension_id=${encodeURIComponent(extensionId)}&next=${next}&confirm=1`
+  )
+}
+
+function onAccountDialogKeydown(event: KeyboardEvent): void {
+  if (event.key !== 'Escape') return
+  if (showSignOutConfirm.value) {
+    closeSignOutConfirm()
+    return
+  }
+  if (showExtensionSwitchConfirm.value) {
+    keepWebsiteAccountOnExtensionSwitch()
+  }
+}
+
+/**
+ * URL 带 extension_switch=1 时探测扩展账号；异账号则弹确认，否则只清参数。
+ */
+async function maybePromptExtensionSwitch(websiteUserId: string): Promise<void> {
+  const params = new URLSearchParams(window.location.search)
+  if (params.get('extension_switch') !== '1') return
+  const extensionId = params.get('extension_id')?.trim() ?? ''
+  if (!extensionId) {
+    clearExtensionSwitchParams()
+    return
+  }
+
+  const probe = await sendToExtension(extensionId, {
+    type: 'YIVENO_EXTENSION_AUTH_STATUS_PROBE',
+    payload: {}
+  })
+  const extension = readProbeUser(probe)
+  if (!extension.signedIn || !extension.userId || extension.userId === websiteUserId) {
+    clearExtensionSwitchParams()
+    return
+  }
+
+  pendingExtensionSwitchId.value = extensionId
+  pendingExtensionDisplayName.value = extension.displayName
+  pendingExtensionEmail.value = extension.email
+  showExtensionSwitchConfirm.value = true
+}
 
 /**
  * 拉订阅（Worker 内强制对账，约数秒）。
@@ -270,6 +420,8 @@ onMounted(async () => {
       tFormat('from_extension.signed_in_via_extension', { account: fromExtensionLabel })
     )
   }
+  void maybePromptExtensionSwitch(data.session.user.id)
+  document.addEventListener('keydown', onAccountDialogKeydown)
   document.addEventListener('visibilitychange', refreshSubscriptionOnVisible)
   const becamePro = await loadSubscription()
   // 已是 Pro：不必再挂「核对中」；失败提示保留到用户 Dismiss
@@ -313,6 +465,7 @@ onMounted(async () => {
 
 onUnmounted(() => {
   document.removeEventListener('visibilitychange', refreshSubscriptionOnVisible)
+  document.removeEventListener('keydown', onAccountDialogKeydown)
   if (checkoutPollTimer) {
     clearTimeout(checkoutPollTimer)
     checkoutPollTimer = null
@@ -487,10 +640,9 @@ function formatDeviceTime(iso: string): string {
       </div>
       <!-- 4. 结束会话（仅本浏览器官网；不联动扩展） -->
       <div class="account__sign-out-wrap">
-        <button type="button" class="account__sign-out" @click="handleSignOut">
+        <button type="button" class="account__sign-out" @click="openSignOutConfirm">
           {{ t('account.sign_out') }}
         </button>
-        <p class="account__sign-out-hint">{{ t('account.sign_out_scope_hint') }}</p>
       </div>
     </header>
 
@@ -532,7 +684,7 @@ function formatDeviceTime(iso: string): string {
         </p>
         <p v-else-if="isPro && subscription?.status" class="account__plan-renew">
           <span class="account__plan-status">{{ subscription.status }}</span>
-          <template v-if="subscription.currentPeriodEnd"> · {{ renewsLabel }} </template>
+          <template v-if="subscription.currentPeriodEnd"> · {{ periodLabel }} </template>
         </p>
         <div class="account__plan-actions">
           <button
@@ -670,6 +822,68 @@ function formatDeviceTime(iso: string): string {
     </section>
   </div>
   <div v-else class="ui-status">{{ t('account.loading') }}</div>
+
+  <!-- 退出确认：打开时不改登录态；确认才调 handleSignOut -->
+  <div
+    v-if="showSignOutConfirm"
+    class="account__dialog-overlay"
+    role="dialog"
+    aria-modal="true"
+    :aria-label="t('account.sign_out')"
+    @click.self="closeSignOutConfirm"
+  >
+    <div class="account__dialog-card">
+      <h2 class="account__dialog-title">{{ t('account.sign_out') }}</h2>
+      <p class="account__dialog-body">{{ t('account.sign_out_scope_hint') }}</p>
+      <div class="account__dialog-actions">
+        <button type="button" class="ui-btn ui-btn--ghost" @click="closeSignOutConfirm">
+          {{ t('account.cancel') }}
+        </button>
+        <button type="button" class="ui-btn ui-btn--primary" @click="confirmSignOut">
+          {{ t('account.sign_out') }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 扩展异账号切换确认（与退出弹窗共用 overlay/card） -->
+  <div
+    v-if="showExtensionSwitchConfirm"
+    class="account__dialog-overlay"
+    role="dialog"
+    aria-modal="true"
+    :aria-label="t('from_extension.title')"
+    @click.self="keepWebsiteAccountOnExtensionSwitch"
+  >
+    <div class="account__dialog-card">
+      <h2 class="account__dialog-title">{{ t('from_extension.title') }}</h2>
+      <p class="account__dialog-body">{{ t('from_extension.copy_switch') }}</p>
+      <p class="account__dialog-body">{{ t('from_extension.switch_warn') }}</p>
+      <dl class="account__dialog-accounts">
+        <div>
+          <dt>{{ t('from_extension.extension_account') }}</dt>
+          <dd>{{ extensionSwitchLabel }}</dd>
+        </div>
+        <div>
+          <dt>{{ t('from_extension.website_account') }}</dt>
+          <dd>{{ user?.email || t('from_extension.unknown_account') }}</dd>
+        </div>
+      </dl>
+      <div class="account__dialog-actions">
+        <button
+          type="button"
+          class="ui-btn ui-btn--ghost"
+          @click="keepWebsiteAccountOnExtensionSwitch"
+        >
+          {{ t('from_extension.keep_current') }}
+        </button>
+        <button type="button" class="ui-btn ui-btn--primary" @click="switchToExtensionAccount">
+          {{ t('from_extension.continue') }}
+        </button>
+      </div>
+    </div>
+  </div>
+
   <SoftToastHost />
 </template>
 
@@ -875,12 +1089,7 @@ function formatDeviceTime(iso: string): string {
 
 .account__sign-out-wrap {
   flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: var(--space-2xs);
   margin-top: var(--space-2xs);
-  max-width: 14rem;
 }
 
 .account__sign-out {
@@ -895,14 +1104,6 @@ function formatDeviceTime(iso: string): string {
   cursor: pointer;
 }
 
-.account__sign-out-hint {
-  margin: 0;
-  font-size: var(--text-caption);
-  line-height: var(--leading-snug);
-  color: var(--muted);
-  text-align: right;
-}
-
 .account__sign-out:hover {
   background: color-mix(in srgb, var(--paper-dim) 80%, transparent);
   color: var(--charcoal);
@@ -911,6 +1112,68 @@ function formatDeviceTime(iso: string): string {
 .account__sign-out:focus-visible {
   outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
+}
+
+.account__dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-md);
+  background: color-mix(in srgb, var(--ink) 36%, transparent);
+}
+
+.account__dialog-card {
+  width: min(100%, 26rem);
+  padding: clamp(var(--space-lg), 3vw, var(--space-xl));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--paper);
+  box-shadow: 0 12px 40px color-mix(in srgb, var(--ink) 12%, transparent);
+}
+
+.account__dialog-title {
+  margin: 0 0 var(--space-sm);
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+  font-weight: var(--font-weight-regular);
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.account__dialog-body {
+  margin: 0 0 var(--space-sm);
+  font-size: var(--text-body);
+  line-height: var(--leading-relaxed);
+  color: var(--charcoal);
+}
+
+.account__dialog-accounts {
+  display: grid;
+  gap: var(--space-sm);
+  margin: 0 0 var(--space-md);
+}
+
+.account__dialog-accounts dt {
+  font-size: var(--text-caption);
+  color: var(--muted);
+}
+
+.account__dialog-accounts dd {
+  margin: 0.15rem 0 0;
+  font-weight: var(--font-weight-medium);
+  overflow-wrap: break-word;
+  color: var(--ink);
+}
+
+.account__dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-xs);
+  margin-top: var(--space-md);
 }
 
 .account__section-label {

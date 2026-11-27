@@ -98,19 +98,12 @@ function readProbeUser(probe: unknown): {
 
 const extensionAccountLabel = computed(() => {
   return (
-    extensionDisplayName.value ||
-    extensionEmail.value ||
-    (extensionUserId.value
-      ? extensionUserId.value.slice(0, 8)
-      : t('from_extension.unknown_account'))
+    extensionDisplayName.value || extensionEmail.value || t('from_extension.anonymous_extension')
   )
 })
 
 const websiteAccountLabel = computed(() => {
-  return (
-    websiteEmail.value ||
-    (websiteUserId.value ? websiteUserId.value.slice(0, 8) : t('from_extension.unknown_account'))
-  )
+  return websiteEmail.value || t('from_extension.unknown_account')
 })
 
 async function applyMintedSession(
@@ -265,8 +258,25 @@ onMounted(async () => {
     return
   }
 
+  // decided === confirm_switch
   websiteUserId.value = websiteId
   websiteEmail.value = websiteMail
+
+  // 账号页弹窗确认后带回：跳过确认 UI，直接铸会话
+  if (params.get('confirm') === '1') {
+    await continueFromExtension()
+    return
+  }
+
+  // 目标为账号页：改由 AccountPage 弹窗确认，避免本页稀疏二选一
+  if (nextPath.startsWith('/account')) {
+    const target = new URL(nextPath, window.location.origin)
+    target.searchParams.set('extension_switch', '1')
+    target.searchParams.set('extension_id', extensionId)
+    window.location.replace(`${target.pathname}${target.search}${target.hash}`)
+    return
+  }
+
   phase.value = 'confirm_switch'
   status.value = t('from_extension.copy_switch')
 })
