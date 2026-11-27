@@ -211,14 +211,6 @@ function finalizeSummary(rawSummary: string, sourceText: string): ExtractLlmPayl
   return { summary: truncated }
 }
 
-/**
- * 摘要机器校验（归一化 + 截断后口径）：长度 + 语言粗检。
- * 保留导出供单测/旁路；主路径走 finalizeSummary。
- */
-export function isValidExtractSummary(summary: string, sourceText: string): boolean {
-  return finalizeSummary(summary, sourceText) != null
-}
-
 /** 从模型原文解析摘要；失败返回 null（走 422，不扣费）。 */
 export function parseExtractSummaryText(raw: string, sourceText: string): ExtractLlmPayload | null {
   const withoutFence = stripCodeFence(raw)
