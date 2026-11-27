@@ -9,6 +9,7 @@ import AppIconButton from '@/infrastructure/ui/AppIconButton.vue'
 import AppLinearProgress from '@/infrastructure/ui/AppLinearProgress.vue'
 import AppIcon from '@/infrastructure/ui/icons/AppIcon.vue'
 
+import { isWebsiteAccountMismatch } from '@/core/identity/website-account-mismatch'
 import { watchAuthSessionStorage } from '@/infrastructure/auth/watch-auth-session-storage'
 import { watchWebsiteAuthUiStorage } from '@/infrastructure/auth/watch-website-auth-ui-storage'
 import { readWebsiteAuthUiState } from '@/infrastructure/auth/website-auth-ui-storage'
@@ -190,6 +191,8 @@ const lastSentClue = ref('')
 const accountDisplayName = ref('')
 /** 扩展绑定账号 id（对照官网 UI 桥） */
 const extensionAccountId = ref<string | null>(null)
+/** 扩展当前是否匿名占位（异账号提示豁免） */
+const extensionIsAnonymous = ref(false)
 
 /** handleSendTurn 定义前占位；定义后改写，供预填自动提交。 */
 let autoSubmitPrefillClue: (clueText: string) => void = () => {}
@@ -746,6 +749,7 @@ async function loadGreetingIdentity(): Promise<void> {
       signedIn.value = null
       accountDisplayName.value = ''
       extensionAccountId.value = null
+      extensionIsAnonymous.value = false
       showWebsiteAccountMismatch.value = false
       void refreshWebsiteConnectBanner(false)
       void refreshSignOutRemapNotice()
@@ -753,6 +757,7 @@ async function loadGreetingIdentity(): Promise<void> {
     }
     signedIn.value = response.signedIn
     extensionAccountId.value = response.binding?.accountId?.trim() || null
+    extensionIsAnonymous.value = response.isAnonymous === true
     void refreshWebsiteConnectBanner(response.signedIn)
     void refreshWebsiteAccountMismatch(response.signedIn)
     void refreshSignOutRemapNotice()
@@ -777,6 +782,7 @@ async function loadGreetingIdentity(): Promise<void> {
     signedIn.value = null
     accountDisplayName.value = ''
     extensionAccountId.value = null
+    extensionIsAnonymous.value = false
     showWebsiteAccountMismatch.value = false
   }
 }
@@ -802,14 +808,15 @@ async function refreshSignOutRemapNotice(): Promise<void> {
 }
 
 async function refreshWebsiteAccountMismatch(extensionSignedIn: boolean): Promise<void> {
-  if (!extensionSignedIn || !extensionAccountId.value) {
-    showWebsiteAccountMismatch.value = false
-    return
-  }
   try {
     const ui = await readWebsiteAuthUiState()
     const websiteId = ui?.signedIn ? ui.userId?.trim() : ''
-    showWebsiteAccountMismatch.value = Boolean(websiteId && websiteId !== extensionAccountId.value)
+    showWebsiteAccountMismatch.value = isWebsiteAccountMismatch({
+      extensionSignedIn,
+      extensionAccountId: extensionAccountId.value,
+      websiteUserId: websiteId || null,
+      isAnonymous: extensionIsAnonymous.value
+    })
   } catch {
     showWebsiteAccountMismatch.value = false
   }

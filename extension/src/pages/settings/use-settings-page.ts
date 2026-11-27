@@ -7,6 +7,7 @@ import type { ExtensionCommandInfo } from '@/core/messaging/commands-messages'
 import type { AuthSignOutMode } from '@/core/messaging/account-sync-messages'
 import type { UiLocalePreference } from '@/core/i18n/ui-locale'
 import { shouldShowAnonymousCaptchaRetry } from '@/core/identity/anonymous-captcha-retry'
+import { isWebsiteAccountMismatch } from '@/core/identity/website-account-mismatch'
 import {
   DEFAULT_SETTINGS_SECTION,
   parseSettingsSectionFromLocationSearch,
@@ -191,17 +192,15 @@ export function useSettingsPage() {
   /** 官网 UI 桥登录态 userId（无桥行则为 null） */
   const websiteAuthUserId = ref<string | null>(null)
   const subscriptionIsPro = ref(false)
-  /** 扩展与官网登录账号不一致 */
-  const websiteAccountMismatch = computed(() => {
-    if (!signedIn.value || !accountId.value) {
-      return false
-    }
-    const websiteId = websiteAuthUserId.value?.trim()
-    if (!websiteId) {
-      return false
-    }
-    return websiteId !== accountId.value
-  })
+  /** 扩展与官网登录账号不一致（匿名占位豁免，见 AN5） */
+  const websiteAccountMismatch = computed(() =>
+    isWebsiteAccountMismatch({
+      extensionSignedIn: signedIn.value,
+      extensionAccountId: accountId.value,
+      websiteUserId: websiteAuthUserId.value,
+      isAnonymous: isAnonymous.value
+    })
+  )
   const showAnonymousCaptchaRetry = computed(() =>
     shouldShowAnonymousCaptchaRetry({
       signedIn: signedIn.value,

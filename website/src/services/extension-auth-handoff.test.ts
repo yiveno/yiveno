@@ -120,4 +120,17 @@ describe('AN5：probeExtensionAuthStatus 匿名豁免', () => {
       userId: 'A'
     })
   })
+
+  it('同账号 → same_account', async () => {
+    stubSendMessage({
+      ok: true,
+      signedIn: true,
+      userId: 'same',
+      isAnonymous: false
+    })
+    await expect(probeExtensionAuthStatus('ext-id', 'same')).resolves.toEqual({
+      kind: 'same_account',
+      userId: 'same'
+    })
+  })
 })

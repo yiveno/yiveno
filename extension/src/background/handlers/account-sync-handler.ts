@@ -101,6 +101,7 @@ import {
   getUiBridgePortCount
 } from '@/background/listeners/ui-bridge'
 import { AUTH_SESSION_STORAGE_KEY } from '@/core/identity/auth-session'
+import { DEVICE_SESSION_STORAGE_KEY } from '@/core/identity/device-session'
 import {
   fetchRemoteSyncStatus,
   pullRemoteMemoryItems,
@@ -157,11 +158,17 @@ export async function handleAuthConnectWebsite(): Promise<AuthConnectWebsiteResp
   const startedAt = flowStart('Auth', 'AUTH_CONNECT_WEBSITE')
   const extensionId = chrome.runtime.id
 
-  // 已是登录态：幂等成功（device 或迁移窗旧会话）
+  // 已是**真实**登录态：幂等成功（device 或迁移窗旧会话）
+  // AN5：匿名会话是可接通占位，不得当 alreadySignedIn 短路——否则 Connect 永不 register/handoff
   const existingDevice = await getDeviceSession()
-  if (existingDevice?.userId) {
+  if (existingDevice?.userId && existingDevice.isAnonymous !== true) {
     flowOk('Auth', 'AUTH_CONNECT_WEBSITE', startedAt, { alreadySignedIn: true })
     return { ok: true, path: 'bridge' }
+  }
+  if (existingDevice?.isAnonymous === true) {
+    logger.info('Auth', 'Connect：扩展为匿名占位，继续接通官网账号', {
+      anonymousUserId: existingDevice.userId
+    })
   }
   const existing = await getAuthSession()
   if (existing?.userId) {
@@ -195,12 +202,29 @@ export async function handleAuthConnectWebsite(): Promise<AuthConnectWebsiteResp
       changes: Record<string, chrome.storage.StorageChange>,
       area: string
     ): void => {
-      if (area !== 'local' || !(AUTH_SESSION_STORAGE_KEY in changes)) {
+      if (area !== 'local') {
         return
       }
-      const next = changes[AUTH_SESSION_STORAGE_KEY]?.newValue
-      if (next && typeof next === 'object' && next !== null && 'userId' in next) {
-        finish({ ok: true, path })
+      // handoff 写 device session（非 legacy auth）；真实账号写入即接通成功
+      if (DEVICE_SESSION_STORAGE_KEY in changes) {
+        const nextDevice = changes[DEVICE_SESSION_STORAGE_KEY]?.newValue
+        if (
+          nextDevice &&
+          typeof nextDevice === 'object' &&
+          nextDevice !== null &&
+          'userId' in nextDevice &&
+          (nextDevice as { isAnonymous?: unknown }).isAnonymous !== true
+        ) {
+          finish({ ok: true, path })
+          return
+        }
+      }
+      // 迁移窗：旧 auth_session 仍可能被写入
+      if (AUTH_SESSION_STORAGE_KEY in changes) {
+        const next = changes[AUTH_SESSION_STORAGE_KEY]?.newValue
+        if (next && typeof next === 'object' && next !== null && 'userId' in next) {
+          finish({ ok: true, path })
+        }
       }
     }
     chrome.storage.onChanged.addListener(onStorageChanged)
