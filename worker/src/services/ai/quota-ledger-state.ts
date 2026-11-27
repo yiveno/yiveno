@@ -68,9 +68,14 @@ export type QuotaSnapshot = {
   pendingCount: number
   /**
    * 日窗剩余比例（0–1）：对 freeTier 的 rpd / tpd 分别算剩余后取最小值。
-   * 无日限额字段时缺省；供 background 预留线判定。
+   * 无日限额字段时缺省；供 background 预留线判定与策略排序。
    */
   dailyRemainingRatio?: number
+  /**
+   * 分钟窗剩余比例（0–1）：对 freeTier 的 rpm / tpm 分别算剩余后取最小值。
+   * 无分钟限额字段时缺省；供策略排序。
+   */
+  minuteRemainingRatio?: number
 }
 
 export function createEmptyQuotaLedgerState(): QuotaLedgerState {
@@ -284,6 +289,26 @@ export function computeDailyRemainingRatio(
   return Math.min(...ratios)
 }
 
+/**
+ * 分钟窗剩余比例：rpm / tpm 各自 (limit - used) / limit，取最小值。
+ * 无分钟限额 → undefined。
+ */
+export function computeMinuteRemainingRatio(
+  minuteWindow: Pick<QuotaMinuteWindow, 'requestCount' | 'tokenEstimate'>,
+  freeTier?: AiCandidateFreeTier
+): number | undefined {
+  if (!freeTier) return undefined
+  const ratios: number[] = []
+  if (freeTier.rpm !== undefined && freeTier.rpm > 0) {
+    ratios.push(Math.max(0, (freeTier.rpm - minuteWindow.requestCount) / freeTier.rpm))
+  }
+  if (freeTier.tpm !== undefined && freeTier.tpm > 0) {
+    ratios.push(Math.max(0, (freeTier.tpm - minuteWindow.tokenEstimate) / freeTier.tpm))
+  }
+  if (ratios.length === 0) return undefined
+  return Math.min(...ratios)
+}
+
 /** 只读快照（会滚动过期窗口）。 */
 export function snapshotQuota(input: {
   state: QuotaLedgerState
@@ -295,6 +320,7 @@ export function snapshotQuota(input: {
   if (!existing) return null
   rollWindows(existing, input.nowMs, input.freeTier)
   const dailyRemainingRatio = computeDailyRemainingRatio(existing.dayWindow, input.freeTier)
+  const minuteRemainingRatio = computeMinuteRemainingRatio(existing.minuteWindow, input.freeTier)
   return {
     candidateId: input.candidateId,
     minuteWindow: { ...existing.minuteWindow },
@@ -305,6 +331,7 @@ export function snapshotQuota(input: {
       ? { needsManualRecovery: existing.needsManualRecovery }
       : {}),
     pendingCount: Object.keys(existing.pending).length,
-    ...(dailyRemainingRatio !== undefined ? { dailyRemainingRatio } : {})
+    ...(dailyRemainingRatio !== undefined ? { dailyRemainingRatio } : {}),
+    ...(minuteRemainingRatio !== undefined ? { minuteRemainingRatio } : {})
   }
 }

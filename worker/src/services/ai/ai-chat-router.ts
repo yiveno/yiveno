@@ -1,9 +1,9 @@
 /**
- * AI chat 路由层（Batch 3）：single / shadow / quota 模式。
+ * AI chat 路由层（Batch 4）：single / shadow / quota 模式。
  *
- * - single（缺省 · kill switch）：与现行 resolveAiChatProvider.complete 逐字一致，不触账本、不查注册表。
- * - shadow：查候选 → reserve → 记决策日志 → 仍走现行单 provider；成功/失败 reconcile。
- * - quota：按注册表顺序真实切换候选；隐私门 / reserve / 失败 failover；账本不可用或无合格候选时安全退化。
+ * - single（缺省 · kill switch）：与现行 resolveAiChatProvider.complete 逐字一致，不触账本、不查注册表、不跑策略模块。
+ * - shadow：过滤 → 策略排序 → reserve 记决策日志 → 仍走现行单 provider；成功/失败 reconcile。
+ * - quota：过滤 → 策略排序 → 按序真实切换；隐私门 / 分档预留线 / reserve / 失败 failover；账本不可用时安全退化。
  *
  * 不切换生产流量：默认 AI_ROUTING_MODE 缺省 = single。
  */
@@ -21,23 +21,34 @@ import {
   type AiChatRequestPriority
 } from './ai-chat-provider'
 import { AiProviderError } from './ai-provider-error'
+import {
+  isPrivacyRoutable,
+  rankCandidates,
+  reserveFloorForTask,
+  type AiRoutingSnapshotMap
+} from './ai-routing-policy'
 import { deepseekAiChatProvider } from './deepseek-ai-chat-provider'
 import { gatewayCompatAiChatProvider } from './gateway-compat-ai-chat-provider'
 import { resolveQuotaLedger, type QuotaLedgerPort } from './quota-ledger-client'
 import {
   computeDailyRemainingRatio,
   type QuotaReconcileOutcome,
-  type QuotaReserveResult
+  type QuotaReserveResult,
+  type QuotaSnapshot
 } from './quota-ledger-state'
 
 /** 路由模式。 */
 export type AiRoutingMode = 'single' | 'shadow' | 'quota'
 
 /**
- * background 优先级下，免费候选（有 freeTier）日窗剩余比例须**高于**此值才可 reserve。
- * 保护 interactive 高峰；付费候选与 interactive 不受此限。
+ * 默认 background 预留线（enrichment / gs_samples / 其余 background = 0.2）。
+ * 与 `reserveFloorForTask('enrichment', 'background')` 对齐，保留常量名供 Batch 3 测试兼容。
+ * dreaming / extract 分档为 0.35，见 `reserveFloorForTask`。
  */
-export const BACKGROUND_FREE_TIER_DAILY_RESERVE_FLOOR = 0.2
+export const BACKGROUND_FREE_TIER_DAILY_RESERVE_FLOOR = reserveFloorForTask(
+  'enrichment',
+  'background'
+)
 
 /** 带路由的补全入口。 */
 export type AiChatCompleter = {
@@ -140,7 +151,7 @@ export async function routedComplete(
   const mode = parseAiRoutingMode(env.AI_ROUTING_MODE)
   const resolveProvider = deps?.resolveProvider ?? resolveAiChatProvider
 
-  // kill switch：与 Batch 2 single 逐字一致——不触账本、不查注册表
+  // kill switch：与 Batch 2/3 single 逐字一致——不触账本、不查注册表、不跑策略模块
   if (mode === 'single') {
     return resolveProvider(env).complete(env, request)
   }
@@ -178,13 +189,18 @@ async function shadowComplete(
   const taskKind = resolveTaskKind(request)
   const priority = resolvePriority(request)
   const requestId = request.requestId
+  const reserveFloorApplied = reserveFloorForTask(taskKind, priority)
   const candidates = deps.listCandidates(taskKind)
-  const chosen = candidates[0]
-  const chosenCandidateId = chosen?.candidateId ?? null
+  const privacyFiltered = candidates.filter(isPrivacyRoutable)
   const estimatedTokens = estimateTokensForRequest(request)
   const nowMs = deps.nowMs()
 
   const ledger = deps.resolveLedger(env)
+  const snapshots = await collectSnapshots(ledger, privacyFiltered, nowMs)
+  const ranked = rankCandidates(privacyFiltered, snapshots)
+  const chosen = ranked[0]
+  const chosenCandidateId = chosen?.candidateId ?? null
+
   let reservationId: string | undefined
   let reserveAllowed: boolean | null = null
   let reserveReason: string | undefined
@@ -205,6 +221,8 @@ async function shadowComplete(
     priority,
     mode,
     chosenCandidateId,
+    rankedCandidateIds: ranked.map(c => c.candidateId),
+    reserveFloorApplied,
     estimatedTokens,
     reserveAllowed,
     reserveReason: reserveReason ?? null
@@ -257,6 +275,7 @@ async function quotaComplete(
   const priority = resolvePriority(request)
   const requestId = request.requestId
   const estimatedTokens = estimateTokensForRequest(request)
+  const reserveFloorApplied = reserveFloorForTask(taskKind, priority)
   const candidates = deps.listCandidates(taskKind)
 
   if (candidates.length === 0) {
@@ -303,15 +322,12 @@ async function quotaComplete(
     }
   }
 
+  // 先隐私门过滤（并记跳过日志），再策略排序
+  const privacyFiltered: AiCandidateEntry[] = []
   let attemptIndex = 0
-  let providerAttempts = 0
   let lastFallbackReason: string | undefined
-  let lastError: AiProviderError | undefined
-  let anyProviderCalled = false
-
   for (const candidate of candidates) {
-    // 隐私门：free_terms_unverified 永不进入 quota 选择
-    if (candidate.privacyTier === 'free_terms_unverified') {
+    if (!isPrivacyRoutable(candidate)) {
       lastFallbackReason = 'privacy_free_terms_unverified'
       logInfo('ai_routing_attempt', {
         requestId: requestId ?? null,
@@ -326,13 +342,42 @@ async function quotaComplete(
       attemptIndex += 1
       continue
     }
+    privacyFiltered.push(candidate)
+  }
 
+  const snapshots: AiRoutingSnapshotMap = ledgerAvailable
+    ? await collectSnapshots(ledger, privacyFiltered, deps.nowMs())
+    : {}
+  const ranked = rankCandidates(privacyFiltered, snapshots)
+
+  logInfo('ai_routing_decision', {
+    requestId: requestId ?? null,
+    taskKind,
+    priority,
+    mode: 'quota',
+    rankedCandidateIds: ranked.map(c => c.candidateId),
+    reserveFloorApplied,
+    estimatedTokens,
+    chosenCandidateId: ranked[0]?.candidateId ?? null
+    // 不含 prompt / key
+  })
+
+  let providerAttempts = 0
+  let lastError: AiProviderError | undefined
+  let anyProviderCalled = false
+
+  for (const candidate of ranked) {
     let reservationId: string | undefined
 
     if (ledgerAvailable) {
-      // background 预留线：免费候选日窗剩余须高于 FLOOR
-      if (priority === 'background' && candidate.freeTier) {
-        const blocked = await isBlockedByBackgroundReserveFloor(ledger, candidate, deps.nowMs())
+      // background 预留线：免费候选日窗剩余须高于分档 floor
+      if (priority === 'background' && candidate.freeTier && reserveFloorApplied > 0) {
+        const blocked = await isBlockedByBackgroundReserveFloor(
+          ledger,
+          candidate,
+          deps.nowMs(),
+          reserveFloorApplied
+        )
         if (blocked) {
           lastFallbackReason = 'background_reserve_floor'
           logInfo('ai_routing_attempt', {
@@ -462,14 +507,36 @@ async function quotaComplete(
   })
 }
 
+async function collectSnapshots(
+  ledger: QuotaLedgerPort,
+  candidates: readonly AiCandidateEntry[],
+  nowMs: number
+): Promise<AiRoutingSnapshotMap> {
+  const out: Record<string, QuotaSnapshot | null> = {}
+  for (const candidate of candidates) {
+    try {
+      out[candidate.candidateId] = await ledger.snapshot(candidate.candidateId, nowMs)
+    } catch (err) {
+      const detail = err instanceof Error ? err.message : String(err)
+      logWarn('ai_quota_ledger_snapshot_failed', {
+        candidateId: candidate.candidateId,
+        detail
+      })
+      out[candidate.candidateId] = null
+    }
+  }
+  return out
+}
+
 /**
- * background + 免费候选：日窗剩余比例须高于 BACKGROUND_FREE_TIER_DAILY_RESERVE_FLOOR。
+ * background + 免费候选：日窗剩余比例须高于本次 reserveFloor。
  * 无日限额字段 → 不拦；无桶（从未用过）→ 视为剩余 1。
  */
 async function isBlockedByBackgroundReserveFloor(
   ledger: QuotaLedgerPort,
   candidate: AiCandidateEntry,
-  nowMs: number
+  nowMs: number,
+  reserveFloor: number
 ): Promise<boolean> {
   const freeTier = candidate.freeTier
   if (!freeTier) return false
@@ -479,7 +546,7 @@ async function isBlockedByBackgroundReserveFloor(
       snap?.dailyRemainingRatio ??
       computeDailyRemainingRatio(snap?.dayWindow ?? { requestCount: 0, tokenEstimate: 0 }, freeTier)
     if (ratio === undefined) return false
-    return ratio <= BACKGROUND_FREE_TIER_DAILY_RESERVE_FLOOR
+    return ratio <= reserveFloor
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err)
     logWarn('ai_quota_ledger_snapshot_failed', {

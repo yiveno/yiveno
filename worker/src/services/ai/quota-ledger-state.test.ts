@@ -5,6 +5,7 @@
 import { describe, expect, test } from 'bun:test'
 import {
   computeDailyRemainingRatio,
+  computeMinuteRemainingRatio,
   computeNextDayResetMs,
   createEmptyQuotaLedgerState,
   DEFAULT_MINUTE_COOLDOWN_MS,
@@ -277,6 +278,32 @@ describe('reserveQuota / reconcileQuota', () => {
     expect(computeDailyRemainingRatio({ requestCount: 4, tokenEstimate: 100 }, FREE)).toBeCloseTo(
       0.2
     )
+  })
+
+  test('snapshot 含 minuteRemainingRatio（rpm/tpm 取最小）', () => {
+    const state = createEmptyQuotaLedgerState()
+    const now = 5_100_000
+    expect(
+      reserveQuota({
+        state,
+        candidateId: 'gemini',
+        estimatedTokens: 40,
+        nowMs: now,
+        freeTier: FREE
+      }).allowed
+    ).toBe(true)
+    const snap = snapshotQuota({
+      state,
+      candidateId: 'gemini',
+      nowMs: now,
+      freeTier: FREE
+    })
+    // rpm=2 used=1 → 0.5；tpm=100 used=40 → 0.6 → min=0.5
+    expect(snap?.minuteRemainingRatio).toBe(0.5)
+    expect(computeMinuteRemainingRatio({ requestCount: 1, tokenEstimate: 50 }, FREE)).toBeCloseTo(
+      0.5
+    )
+    expect(computeMinuteRemainingRatio({ requestCount: 0, tokenEstimate: 0 }, {})).toBeUndefined()
   })
 
   test('预留后对账校准估算 token', () => {

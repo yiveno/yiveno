@@ -168,6 +168,8 @@ describe('resolveAiChatCompleter / routedComplete · single / shadow', () => {
     expect(decision.chosenCandidateId).toBe('deepseek-flash')
     expect(decision.mode).toBe('shadow')
     expect(decision.reserveAllowed).toBe(true)
+    expect(decision.rankedCandidateIds).toEqual(['deepseek-flash'])
+    expect(decision.reserveFloorApplied).toBe(0)
     expect(Object.prototype.hasOwnProperty.call(decision, 'prompt')).toBe(false)
 
     if (prevTestLogs === undefined) {
@@ -359,7 +361,7 @@ describe('quota 模式 · 真实切换 / failover / 退化', () => {
     ])
   })
 
-  test('background 预留线拦截免费候选；interactive 放行', async () => {
+  test('background 预留线拦截免费候选（enrichment=0.2）；interactive 放行', async () => {
     const free = freeCandidate('free-c', {
       freeTier: { rpd: 100, tpd: 10_000 },
       privacyTier: 'free_terms_ok'
@@ -367,15 +369,17 @@ describe('quota 模式 · 真实切换 / failover / 退化', () => {
     const paid = paidCandidate('paid-c', { model: 'paid-model' })
 
     const lowRemainingLedger = trackingLedger({
-      snapshotImpl: async () =>
-        ({
-          candidateId: 'free-c',
-          minuteWindow: { requestCount: 0, tokenEstimate: 0, windowStartMs: 0 },
-          dayWindow: { requestCount: 85, tokenEstimate: 0, resetAtMs: 1 },
-          pendingCount: 0,
-          // 15% < 20% 预留线
-          dailyRemainingRatio: 0.15
-        }) satisfies QuotaSnapshot
+      snapshotImpl: async candidateId =>
+        candidateId === 'free-c'
+          ? ({
+              candidateId: 'free-c',
+              minuteWindow: { requestCount: 0, tokenEstimate: 0, windowStartMs: 0 },
+              dayWindow: { requestCount: 85, tokenEstimate: 0, resetAtMs: 1 },
+              pendingCount: 0,
+              // 15% < enrichment 0.2 预留线
+              dailyRemainingRatio: 0.15
+            } satisfies QuotaSnapshot)
+          : null
     })
 
     const bgCalls: string[] = []
@@ -399,14 +403,16 @@ describe('quota 模式 · 真实切换 / failover / 退化', () => {
 
     const interactiveCalls: string[] = []
     const interactiveLedger = trackingLedger({
-      snapshotImpl: async () =>
-        ({
-          candidateId: 'free-c',
-          minuteWindow: { requestCount: 0, tokenEstimate: 0, windowStartMs: 0 },
-          dayWindow: { requestCount: 85, tokenEstimate: 0, resetAtMs: 1 },
-          pendingCount: 0,
-          dailyRemainingRatio: 0.15
-        }) satisfies QuotaSnapshot
+      snapshotImpl: async candidateId =>
+        candidateId === 'free-c'
+          ? ({
+              candidateId: 'free-c',
+              minuteWindow: { requestCount: 0, tokenEstimate: 0, windowStartMs: 0 },
+              dayWindow: { requestCount: 85, tokenEstimate: 0, resetAtMs: 1 },
+              pendingCount: 0,
+              dailyRemainingRatio: 0.15
+            } satisfies QuotaSnapshot)
+          : null
     })
     const interactiveResult = await routedComplete(
       env({ AI_ROUTING_MODE: 'quota' }),
@@ -428,6 +434,191 @@ describe('quota 模式 · 真实切换 / failover / 退化', () => {
     )
     expect(interactiveResult.text).toBe('free-ok')
     expect(interactiveCalls[0]).toBe(free.model)
+  })
+
+  test('dreaming background 在剩余 0.30 时被 0.35 预留线拦截；enrichment 放行', async () => {
+    const free = freeCandidate('free-c', {
+      freeTier: { rpd: 100 },
+      privacyTier: 'free_terms_ok'
+    })
+    const paid = paidCandidate('paid-c', { model: 'paid-model' })
+    const midSnap = (candidateId: string): QuotaSnapshot | null =>
+      candidateId === 'free-c'
+        ? {
+            candidateId: 'free-c',
+            minuteWindow: { requestCount: 0, tokenEstimate: 0, windowStartMs: 0 },
+            dayWindow: { requestCount: 70, tokenEstimate: 0, resetAtMs: 1 },
+            pendingCount: 0,
+            // 0.30：低于 dreaming 0.35，高于 enrichment 0.20
+            dailyRemainingRatio: 0.3
+          }
+        : null
+
+    const dreamCalls: string[] = []
+    const dreamResult = await routedComplete(
+      env({ AI_ROUTING_MODE: 'quota' }),
+      { prompt: 'dream', maxTokens: 10, taskKind: 'dreaming', priority: 'background' },
+      {
+        resolveLedger: () => trackingLedger({ snapshotImpl: async id => midSnap(id) }).port,
+        listCandidates: () => [free, paid],
+        resolveProviderForCandidate: () =>
+          fakeProvider(async (_e, req) => {
+            dreamCalls.push(req.model ?? '')
+            return { text: 'paid', model: req.model ?? '', providerId: 'deepseek', tokensUsed: 1 }
+          })
+      }
+    )
+    expect(dreamResult.fallbackReason).toBe('background_reserve_floor')
+    expect(dreamCalls).toEqual(['paid-model'])
+
+    const enrichCalls: string[] = []
+    const enrichResult = await routedComplete(
+      env({ AI_ROUTING_MODE: 'quota' }),
+      { prompt: 'enrich', maxTokens: 10, taskKind: 'enrichment', priority: 'background' },
+      {
+        resolveLedger: () => trackingLedger({ snapshotImpl: async id => midSnap(id) }).port,
+        listCandidates: () => [free, paid],
+        resolveProviderForCandidate: () =>
+          fakeProvider(async (_e, req) => {
+            enrichCalls.push(req.model ?? '')
+            return {
+              text: 'free-ok',
+              model: req.model ?? '',
+              providerId: 'gateway-compat',
+              tokensUsed: 1
+            }
+          })
+      }
+    )
+    expect(enrichResult.text).toBe('free-ok')
+    expect(enrichCalls).toEqual([free.model])
+    expect(enrichResult.fallbackReason).toBeUndefined()
+  })
+
+  test('策略排序改变首选后 failover 顺序随之变化', async () => {
+    // 注册表顺序：付费在前；免费剩余更高 → 策略把免费排到首位
+    const paid = paidCandidate('paid-first', { model: 'paid-model' })
+    const free = freeCandidate('free-second', {
+      model: 'free-model',
+      privacyTier: 'free_terms_ok'
+    })
+    const calls: string[] = []
+    const ledger = trackingLedger({
+      snapshotImpl: async candidateId =>
+        candidateId === 'free-second'
+          ? ({
+              candidateId: 'free-second',
+              minuteWindow: { requestCount: 0, tokenEstimate: 0, windowStartMs: 0 },
+              dayWindow: { requestCount: 10, tokenEstimate: 0, resetAtMs: 1 },
+              pendingCount: 0,
+              dailyRemainingRatio: 0.9,
+              minuteRemainingRatio: 0.9
+            } satisfies QuotaSnapshot)
+          : ({
+              candidateId: 'paid-first',
+              minuteWindow: { requestCount: 0, tokenEstimate: 0, windowStartMs: 0 },
+              dayWindow: { requestCount: 0, tokenEstimate: 0, resetAtMs: 1 },
+              pendingCount: 0
+            } satisfies QuotaSnapshot)
+    })
+
+    const result = await routedComplete(
+      env({ AI_ROUTING_MODE: 'quota' }),
+      { prompt: 'hi', maxTokens: 10, taskKind: 'nlu', priority: 'interactive' },
+      {
+        resolveLedger: () => ledger.port,
+        listCandidates: () => [paid, free],
+        resolveProviderForCandidate: () =>
+          fakeProvider(async (_e, req) => {
+            calls.push(req.model ?? '')
+            if (req.model === 'free-model') {
+              throw new AiProviderError({
+                kind: 'rate_limit_minute',
+                providerId: 'gateway-compat',
+                causeMessage: '429'
+              })
+            }
+            return {
+              text: 'paid-ok',
+              model: req.model ?? '',
+              providerId: 'deepseek',
+              tokensUsed: 2
+            }
+          })
+      }
+    )
+
+    expect(calls).toEqual(['free-model', 'paid-model'])
+    expect(result.text).toBe('paid-ok')
+    expect(result.attempts).toBe(2)
+    expect(result.fallbackReason).toBe('rate_limit_minute')
+  })
+
+  test('quota 决策日志含 rankedCandidateIds 与 reserveFloorApplied', async () => {
+    const decisionLogs: Record<string, unknown>[] = []
+    const prevTestLogs = process.env.WORKER_TEST_LOGS
+    process.env.WORKER_TEST_LOGS = '1'
+    console.warn = ((message?: unknown) => {
+      if (typeof message !== 'string') return
+      try {
+        const parsed = JSON.parse(message) as { message?: string; [k: string]: unknown }
+        if (parsed.message === 'ai_routing_decision') {
+          decisionLogs.push(parsed)
+        }
+      } catch {
+        /* ignore */
+      }
+    }) as typeof console.warn
+
+    const free = freeCandidate('free-a', { privacyTier: 'free_terms_ok' })
+    const paid = paidCandidate('paid-b', { model: 'paid-model' })
+    await routedComplete(
+      env({ AI_ROUTING_MODE: 'quota' }),
+      {
+        prompt: 'bg',
+        maxTokens: 10,
+        taskKind: 'dreaming',
+        priority: 'background',
+        requestId: 'req-decision'
+      },
+      {
+        resolveLedger: () =>
+          trackingLedger({
+            snapshotImpl: async candidateId =>
+              candidateId === 'free-a'
+                ? ({
+                    candidateId: 'free-a',
+                    minuteWindow: { requestCount: 0, tokenEstimate: 0, windowStartMs: 0 },
+                    dayWindow: { requestCount: 0, tokenEstimate: 0, resetAtMs: 1 },
+                    pendingCount: 0,
+                    dailyRemainingRatio: 0.9
+                  } satisfies QuotaSnapshot)
+                : null
+          }).port,
+        listCandidates: () => [paid, free],
+        resolveProviderForCandidate: () =>
+          fakeProvider(async () => ({
+            text: 'ok',
+            model: 'x',
+            providerId: 'gateway-compat',
+            tokensUsed: 1
+          }))
+      }
+    )
+
+    expect(decisionLogs.length).toBeGreaterThanOrEqual(1)
+    const decision = decisionLogs[0]!
+    expect(decision.requestId).toBe('req-decision')
+    expect(decision.mode).toBe('quota')
+    expect(decision.rankedCandidateIds).toEqual(['free-a', 'paid-b'])
+    expect(decision.reserveFloorApplied).toBe(0.35)
+    expect(Object.prototype.hasOwnProperty.call(decision, 'prompt')).toBe(false)
+
+    if (prevTestLogs === undefined) {
+      delete process.env.WORKER_TEST_LOGS
+    } else {
+      process.env.WORKER_TEST_LOGS = prevTestLogs
+    }
   })
 
   test('privacyTier=free_terms_unverified 即使 qualified 也不被选', async () => {
