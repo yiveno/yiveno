@@ -18,10 +18,63 @@ const EN_CONFLICT = /don'?t line up|conflicting/i
 const ZH_ASSERT = /喜欢|偏好|热衷/
 const EN_ASSERT = /you(?:'re| are) into|you like|you love/i
 
-const INTERNAL_TERMS = /可信度|credibility|画像事实|分组|inPortrait|pendingInference/i
+const INTERNAL_TERMS =
+  /可信度|credibility|画像事实|分组|inPortrait|pendingInference|portrait\s*fact/i
 
 const MARKDOWN_MARK = /[#*`]/m
 const DOMAIN_LIKE = /\b[a-z0-9][a-z0-9-]*\.[a-z]{2,}\b/gi
+const CJK_CHAR = /[\u3400-\u9fff]/
+/** 中文数字 + 项/个/条（含十二、二十一等组合） */
+const CN_COUNT = /([一二三四五六七八九十两]{1,3})\s*([项个条])/g
+
+const CN_DIGIT: Record<string, number> = {
+  零: 0,
+  〇: 0,
+  一: 1,
+  二: 2,
+  两: 2,
+  三: 3,
+  四: 4,
+  五: 5,
+  六: 6,
+  七: 7,
+  八: 8,
+  九: 9,
+  十: 10
+}
+
+/** 解析常见中文数量词（1–99）。失败返回 null。 */
+export function parseChineseCountToken(token: string): number | null {
+  const trimmed = token.trim()
+  if (!trimmed) {
+    return null
+  }
+  if (trimmed === '十') {
+    return 10
+  }
+  if (trimmed.length === 1) {
+    return CN_DIGIT[trimmed] ?? null
+  }
+  if (trimmed.startsWith('十')) {
+    const ones = CN_DIGIT[trimmed.slice(1)]
+    return ones == null ? null : 10 + ones
+  }
+  if (trimmed.endsWith('十')) {
+    const tens = CN_DIGIT[trimmed.slice(0, -1)]
+    return tens == null ? null : tens * 10
+  }
+  const tenIndex = trimmed.indexOf('十')
+  if (tenIndex > 0) {
+    const tens = CN_DIGIT[trimmed.slice(0, tenIndex)]
+    const onesPart = trimmed.slice(tenIndex + 1)
+    const ones = onesPart ? CN_DIGIT[onesPart] : 0
+    if (tens == null || ones == null) {
+      return null
+    }
+    return tens * 10 + ones
+  }
+  return null
+}
 
 /** zh 字数 / en 词数上限。 */
 export function portraitNarrativeLengthLimit(locale: UiLocaleId): number {
@@ -125,6 +178,15 @@ export function validatePortraitNarrative(
     reasons.push('internal_terms')
   }
 
+  // 语言粗检：locale 与回复语言须一致
+  const replyHasCjk = CJK_CHAR.test(trimmed)
+  if (locale === 'zh_CN' && !replyHasCjk) {
+    reasons.push('language_mismatch')
+  }
+  if (locale === 'en' && replyHasCjk) {
+    reasons.push('language_mismatch')
+  }
+
   // 长度
   const limit = portraitNarrativeLengthLimit(locale)
   if (measurePortraitNarrativeLength(trimmed, locale) > limit) {
@@ -209,6 +271,21 @@ export function validatePortraitNarrative(
     }
     if (!allowed.has(n)) {
       reasons.push(`bad_count:${n}`)
+    }
+  }
+
+  // 中文数字计数：一二…十（含十二）+ 项/个/条
+  for (const match of trimmed.matchAll(CN_COUNT)) {
+    const token = match[1]
+    if (!token) {
+      continue
+    }
+    const n = parseChineseCountToken(token)
+    if (n == null) {
+      continue
+    }
+    if (!allowed.has(n)) {
+      reasons.push(`bad_count_cn:${n}`)
     }
   }
 

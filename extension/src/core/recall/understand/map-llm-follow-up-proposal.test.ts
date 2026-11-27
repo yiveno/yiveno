@@ -89,4 +89,58 @@ describe('mapLlmFollowUpProposal', () => {
       )
     ).toBeNull()
   })
+
+  it('有弱候选标题时丢弃全标题共有词 chip，保留区分词', () => {
+    const parsed = parseRecallClue('the article about memory', { nowMs: NOW_MS })
+    const titles = [
+      'Why AI Agents Need Long-Term Memory',
+      'Building Agents with Durable Memory Stores'
+    ]
+    const mapped = mapLlmFollowUpProposal(
+      {
+        reply: 'Which title feels closer?',
+        chips: [
+          { label: 'Agents', value: 'agents' },
+          { label: 'Durable', value: 'durable' }
+        ]
+      },
+      { parsed, outcome: 'need_a_clue', weakCandidateTitles: titles }
+    )
+    expect(mapped?.suggestions.map(item => item.value)).toEqual(['durable'])
+  })
+
+  it('reply 含 snake_case 标识符整段拒收', () => {
+    const parsed = parseRecallClue('the article about RAG', { nowMs: NOW_MS })
+    expect(
+      mapLlmFollowUpProposal(
+        {
+          reply: 'I found a need_a_clue outcome for you.',
+          chips: [{ label: 'RAG', value: 'RAG' }]
+        },
+        { parsed, outcome: 'need_a_clue' }
+      )
+    ).toBeNull()
+  })
+
+  it('reply 含计数播报整段拒收', () => {
+    const parsed = parseRecallClue('the article about RAG', { nowMs: NOW_MS })
+    expect(
+      mapLlmFollowUpProposal(
+        {
+          reply: 'Showing 12 results that might match.',
+          chips: []
+        },
+        { parsed, outcome: 'need_a_clue' }
+      )
+    ).toBeNull()
+    expect(
+      mapLlmFollowUpProposal(
+        {
+          reply: '找到 3 条结果，看看哪条更像？',
+          chips: []
+        },
+        { parsed, outcome: 'need_a_clue' }
+      )
+    ).toBeNull()
+  })
 })

@@ -212,7 +212,7 @@ export async function handleGsClueSamplesComplete(
       ]
     })
 
-    const samples = parseGsClueSamplesText(result.text)
+    const samples = parseGsClueSamplesText(result.text, bookmark)
     if (!samples) {
       logInfo('gs_clue_samples_parse_failed', {
         userId,

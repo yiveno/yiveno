@@ -149,8 +149,53 @@ export function buildGsClueSamplesUserPrompt(bookmark: GsClueSamplesBookmark): s
   return lines.join('\n')
 }
 
-/** 从模型原文解析 4 条 clue。 */
-export function parseGsClueSamplesText(raw: string): GsClueSamplesResult | null {
+const CJK_CHAR = /[\u3400-\u9fff]/
+
+function normalizeClueKey(text: string): string {
+  return text.toLowerCase().replace(/\s+/g, ' ').trim()
+}
+
+function wordCount(text: string): number {
+  return text.split(/\s+/).filter(Boolean).length
+}
+
+/**
+ * Zod 通过后的硬校验：互异 / 无 CJK / 词数 6–40 / 不含完整 title / 不含 url。
+ */
+export function validateGsClueSamplesResult(
+  result: GsClueSamplesResult,
+  bookmark: GsClueSamplesBookmark
+): boolean {
+  const texts = result.clues.map(clue => clue.text)
+  const keys = texts.map(normalizeClueKey)
+  if (new Set(keys).size !== keys.length) {
+    return false
+  }
+  const titleKey = normalizeClueKey(bookmark.title)
+  const urlRaw = bookmark.url?.trim() ?? ''
+  for (const text of texts) {
+    if (CJK_CHAR.test(text)) {
+      return false
+    }
+    const words = wordCount(text)
+    if (words < 6 || words > 40) {
+      return false
+    }
+    if (titleKey && normalizeClueKey(text).includes(titleKey)) {
+      return false
+    }
+    if (urlRaw && text.includes(urlRaw)) {
+      return false
+    }
+  }
+  return true
+}
+
+/** 从模型原文解析 4 条 clue；校验不过返回 null（handler 502、不扣配额）。 */
+export function parseGsClueSamplesText(
+  raw: string,
+  bookmark: GsClueSamplesBookmark
+): GsClueSamplesResult | null {
   const trimmed = raw.trim()
   if (!trimmed) {
     return null
@@ -176,5 +221,11 @@ export function parseGsClueSamplesText(raw: string): GsClueSamplesResult | null 
     return null
   }
   const parsed = GsClueSamplesResultSchema.safeParse(candidate)
-  return parsed.success ? parsed.data : null
+  if (!parsed.success) {
+    return null
+  }
+  if (!validateGsClueSamplesResult(parsed.data, bookmark)) {
+    return null
+  }
+  return parsed.data
 }

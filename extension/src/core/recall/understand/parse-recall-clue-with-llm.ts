@@ -25,6 +25,64 @@ function isNonRecallIntent(
   return intent === 'chitchat' || intent === 'question' || intent === 'instruction'
 }
 
+const CJK_CHAR = /[\u3400-\u9fff]/
+const DELETE_CLUE = /删|删除|delete|remove|清空/i
+const DELETE_BOUNDARY = /不会删|不删|做不了|never delete|cannot delete|can't delete/i
+
+/** 文本是否含 CJK 字符。 */
+export function textHasCjk(text: string): boolean {
+  return CJK_CHAR.test(text)
+}
+
+/** 按 CJK 字符占比判主语言（>0.3 → 中文为主）。 */
+export function isCjkPrimary(text: string): boolean {
+  const trimmed = text.trim()
+  if (!trimmed) {
+    return false
+  }
+  const cjkCount = (trimmed.match(/[\u3400-\u9fff]/g) ?? []).length
+  return cjkCount / trimmed.length > 0.3
+}
+
+export type ChitchatReplyGateReason = 'too_long' | 'language_mismatch' | 'missing_delete_boundary'
+
+/**
+ * 非召回二次回复门禁：长度 / 语言粗检 / 删除边界。
+ * 失败返回 reason；通过返回 null。
+ */
+export function gateChitchatReply(clue: string, reply: string): ChitchatReplyGateReason | null {
+  const trimmed = reply.trim()
+  if (!trimmed) {
+    return null
+  }
+
+  if (isCjkPrimary(trimmed)) {
+    if (trimmed.length > 160) {
+      return 'too_long'
+    }
+  } else {
+    const words = trimmed.split(/\s+/).filter(Boolean)
+    if (words.length > 80) {
+      return 'too_long'
+    }
+  }
+
+  const clueHasCjk = textHasCjk(clue)
+  const replyHasCjk = textHasCjk(trimmed)
+  if (clueHasCjk && !replyHasCjk) {
+    return 'language_mismatch'
+  }
+  if (!clueHasCjk && replyHasCjk) {
+    return 'language_mismatch'
+  }
+
+  if (DELETE_CLUE.test(clue) && !DELETE_BOUNDARY.test(trimmed)) {
+    return 'missing_delete_boundary'
+  }
+
+  return null
+}
+
 /** 可注入的补全函数（单测 mock / 真 API）；须带 taskKind。 */
 export type LlmChatCompleter = (
   messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }>,
@@ -81,6 +139,16 @@ async function refreshChitchatReply(args: {
       trace('warn', 'LLM 非召回回复：空回复，回落', {
         durationMs: Date.now() - startedAt,
         reason: 'empty',
+        hasPreviousReply: Boolean(previousReply?.trim())
+      })
+      return null
+    }
+    const gateReason = gateChitchatReply(clue, trimmed)
+    if (gateReason != null) {
+      trace('warn', 'LLM 非召回回复：门禁拒收，回落', {
+        durationMs: Date.now() - startedAt,
+        reason: gateReason,
+        textLength: trimmed.length,
         hasPreviousReply: Boolean(previousReply?.trim())
       })
       return null

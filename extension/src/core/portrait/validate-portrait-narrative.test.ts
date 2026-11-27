@@ -156,4 +156,60 @@ describe('validatePortraitNarrative', () => {
     )
     expect(good.ok).toBe(true)
   })
+
+  it('语言粗检：zh 无 CJK / en 含 CJK → language_mismatch', () => {
+    const zhBad = validatePortraitNarrative(
+      'You seem to like github.com a lot.',
+      basePoints(),
+      'zh_CN'
+    )
+    expect(zhBad.ok).toBe(false)
+    expect(zhBad.reasons).toContain('language_mismatch')
+
+    const enBad = validatePortraitNarrative(
+      'You seem into github.com，还挺喜欢的。',
+      {
+        locale: 'en',
+        groups: [{ key: 'verified', label: 'verified', values: ['github.com'], total: 1 }],
+        pendingValues: [],
+        pendingTotal: 0,
+        contestedValues: [],
+        contestedTotal: 0
+      },
+      'en'
+    )
+    expect(enBad.ok).toBe(false)
+    expect(enBad.reasons).toContain('language_mismatch')
+  })
+
+  it('中文数字计数不对 → bad_count_cn', () => {
+    const points = basePoints({
+      pendingValues: ['alpha', 'beta'],
+      pendingTotal: 2,
+      groups: [
+        { key: 'verified', label: '确定', values: ['github.com'], total: 1 },
+        { key: 'unconfirmed', label: '待确认', values: ['alpha', 'beta'], total: 2 }
+      ]
+    })
+    const bad = validatePortraitNarrative('还有九项待你确认。', points, 'zh_CN')
+    expect(bad.ok).toBe(false)
+    expect(bad.reasons).toContain('bad_count_cn:9')
+
+    const good = validatePortraitNarrative(
+      '比较确定的是，你喜欢 github.com。还有两项待你确认。',
+      points,
+      'zh_CN'
+    )
+    expect(good.ok).toBe(true)
+  })
+
+  it('含 portrait fact 内部术语不过', () => {
+    const result = validatePortraitNarrative(
+      '按 portrait fact 看你喜欢 github.com。',
+      basePoints(),
+      'zh_CN'
+    )
+    expect(result.ok).toBe(false)
+    expect(result.reasons).toContain('internal_terms')
+  })
 })

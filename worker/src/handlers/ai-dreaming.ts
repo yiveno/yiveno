@@ -9,6 +9,7 @@ import {
   DreamingCompileRequestSchema,
   buildDreamingCompileSystemPrompt,
   buildDreamingCompileUserPrompt,
+  filterDreamingCompileResults,
   parseDreamingCompileText
 } from '../services/ai/dreaming-compile-proposal'
 import { commitDreamingQuota, peekDreamingQuota } from '../services/ai/dreaming-quota'
@@ -128,12 +129,8 @@ export async function handleDreamingComplete(
     return errorJson({ error: 'parse_failed' }, 422, origin)
   }
 
-  const results = parsed.results
-    .filter(row => allowedIds.has(row.sourceId))
-    .map(row => ({
-      sourceId: row.sourceId,
-      propositions: row.propositions.filter(prop => prop.sourceQuote.trim().length > 0)
-    }))
+  // 逐字 sourceQuote 校验：编造引用丢弃（不改 prompt，只补校验）
+  const { results, droppedQuoteCount } = filterDreamingCompileResults(parsed, sources, allowedIds)
 
   const snapshot = await commitDreamingQuota(env, peek.snapshot)
   logInfo('dreaming_complete_ok', {
@@ -141,6 +138,7 @@ export async function handleDreamingComplete(
     model,
     sourceCount: sources.length,
     resultCount: results.length,
+    droppedQuoteCount,
     durationMs: Date.now() - startedAt,
     used: snapshot.used,
     limit: snapshot.limit,

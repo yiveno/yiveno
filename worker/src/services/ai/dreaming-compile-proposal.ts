@@ -77,3 +77,62 @@ export function parseDreamingCompileText(raw: string): DreamingCompileLlmPayload
     return null
   }
 }
+
+/**
+ * sourceQuote 须为该 source 的 text / title / note 任一字段的逐字子串。
+ * 空串一律不通过（`String.includes('')` 恒为 true，不能靠 includes  alone）。
+ */
+export function isVerbatimSourceQuote(
+  sourceQuote: string,
+  source: Pick<DreamingCompileSource, 'text' | 'title' | 'note'>
+): boolean {
+  const quote = sourceQuote.trim()
+  if (!quote) {
+    return false
+  }
+  if (source.text.includes(quote)) {
+    return true
+  }
+  if (source.title != null && source.title.includes(quote)) {
+    return true
+  }
+  if (source.note != null && source.note.includes(quote)) {
+    return true
+  }
+  return false
+}
+
+export type DreamingCompileFilterResult = {
+  results: Array<{
+    sourceId: string
+    propositions: DreamingCompileLlmPayload['results'][number]['propositions']
+  }>
+  /** 因空引用或非逐字引用丢弃的命题条数 */
+  droppedQuoteCount: number
+}
+
+/**
+ * 按 allowedIds + 逐字 sourceQuote 过滤编译结果。
+ */
+export function filterDreamingCompileResults(
+  parsed: DreamingCompileLlmPayload,
+  sources: readonly DreamingCompileSource[],
+  allowedIds: ReadonlySet<string>
+): DreamingCompileFilterResult {
+  const sourceById = new Map(sources.map(source => [source.id, source]))
+  let droppedQuoteCount = 0
+  const results = parsed.results
+    .filter(row => allowedIds.has(row.sourceId))
+    .map(row => {
+      const source = sourceById.get(row.sourceId)
+      const propositions = row.propositions.filter(prop => {
+        if (source == null || !isVerbatimSourceQuote(prop.sourceQuote, source)) {
+          droppedQuoteCount += 1
+          return false
+        }
+        return true
+      })
+      return { sourceId: row.sourceId, propositions }
+    })
+  return { results, droppedQuoteCount }
+}

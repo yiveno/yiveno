@@ -122,7 +122,7 @@ export async function handleExtractComplete(
     return errorJson({ error: 'provider_failed' }, 502, origin)
   }
 
-  const parsed = parseExtractSummaryText(rawText)
+  const parsed = parseExtractSummaryText(rawText, bodyParsed.data.text)
   if (parsed == null) {
     logInfo('extract_complete_parse_failed', {
       userId,

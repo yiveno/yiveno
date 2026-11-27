@@ -90,7 +90,10 @@ export async function completeRecallFramingNlgWithLlm(
 
   const mapped = mapLlmFollowUpProposal(gatedProposal, {
     parsed: input.parsed,
-    outcome: 'need_a_clue'
+    outcome: 'need_a_clue',
+    ...(input.weakCandidateTitles !== undefined
+      ? { weakCandidateTitles: input.weakCandidateTitles }
+      : {})
   })
   if (!mapped) {
     trace('warn', 'LLM Framing：门禁拒收提议', {

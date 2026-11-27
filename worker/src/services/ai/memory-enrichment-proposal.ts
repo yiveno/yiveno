@@ -128,8 +128,87 @@ export function buildEnrichmentUserPrompt(input: EnrichmentCompleteRequest): str
   return lines.join('\n')
 }
 
-/** 从模型原文解析提议。 */
-export function parseEnrichmentProposalText(raw: string): MemoryEnrichmentProposal | null {
+const CJK_CHAR = /[\u3400-\u9fff]/
+
+function dropCjkTokens(tokens: readonly string[] | undefined): string[] | undefined {
+  if (tokens == null) {
+    return undefined
+  }
+  const kept = tokens.filter(token => !CJK_CHAR.test(token))
+  return kept.length > 0 ? kept : undefined
+}
+
+function buildGroundingHaystack(context: EnrichmentCompleteRequest): string {
+  return [context.title, context.text, context.url, context.domain, context.note]
+    .filter((part): part is string => typeof part === 'string' && part.trim().length > 0)
+    .join('\n')
+    .toLowerCase()
+}
+
+function tokenWeaklyGrounded(
+  token: string,
+  haystack: string,
+  hintList: readonly string[] | undefined
+): boolean {
+  const lower = token.toLowerCase().trim()
+  if (!lower) {
+    return false
+  }
+  if (haystack.includes(lower)) {
+    return true
+  }
+  const parts = lower.split(/[^a-z0-9]+/i).filter(Boolean)
+  for (const part of parts) {
+    if (haystack.includes(part)) {
+      return true
+    }
+  }
+  if (hintList) {
+    const hintSet = new Set(hintList.map(hint => hint.toLowerCase().trim()).filter(Boolean))
+    if (hintSet.has(lower)) {
+      return true
+    }
+    for (const part of parts) {
+      if (hintSet.has(part)) {
+        return true
+      }
+    }
+  }
+  return false
+}
+
+/**
+ * 解析后过滤：丢 CJK token；keywords/entities 须弱接地（正文拼接或 ruleHints）。
+ * tags 只丢 CJK，不做接地。空字段变 undefined。
+ */
+export function filterEnrichmentProposal(
+  proposal: MemoryEnrichmentProposal,
+  context: EnrichmentCompleteRequest
+): MemoryEnrichmentProposal {
+  const haystack = buildGroundingHaystack(context)
+  const tags = dropCjkTokens(proposal.tags)
+  const keywordsRaw = dropCjkTokens(proposal.keywords)
+  const entitiesRaw = dropCjkTokens(proposal.entities)
+  const keywords = keywordsRaw?.filter(token =>
+    tokenWeaklyGrounded(token, haystack, context.ruleHints?.keywords)
+  )
+  const entities = entitiesRaw?.filter(token =>
+    tokenWeaklyGrounded(token, haystack, context.ruleHints?.entities)
+  )
+  return {
+    ...(proposal.objectType !== undefined ? { objectType: proposal.objectType } : {}),
+    ...(tags !== undefined && tags.length > 0 ? { tags } : {}),
+    ...(keywords !== undefined && keywords.length > 0 ? { keywords } : {}),
+    ...(entities !== undefined && entities.length > 0 ? { entities } : {}),
+    ...(proposal.summary !== undefined ? { summary: proposal.summary } : {})
+  }
+}
+
+/** 从模型原文解析提议；传入 context 时做 CJK / 弱接地过滤。 */
+export function parseEnrichmentProposalText(
+  raw: string,
+  context?: EnrichmentCompleteRequest
+): MemoryEnrichmentProposal | null {
   const trimmed = raw.trim()
   if (!trimmed) {
     return null
@@ -155,5 +234,11 @@ export function parseEnrichmentProposalText(raw: string): MemoryEnrichmentPropos
     return null
   }
   const parsed = MemoryEnrichmentProposalSchema.safeParse(candidate)
-  return parsed.success ? parsed.data : null
+  if (!parsed.success) {
+    return null
+  }
+  if (context == null) {
+    return parsed.data
+  }
+  return filterEnrichmentProposal(parsed.data, context)
 }

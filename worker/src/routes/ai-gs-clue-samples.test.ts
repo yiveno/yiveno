@@ -40,16 +40,24 @@ const fourCluesJson = JSON.stringify({
   ]
 })
 
+const sampleBookmark = {
+  title: 'Why AI Agents Need Long-Term Memory',
+  url: 'https://example.com/agents-memory'
+}
+
 describe('parseGsClueSamplesText', () => {
   test('解析恰好 4 条 clue', () => {
-    const parsed = parseGsClueSamplesText(fourCluesJson)
+    const parsed = parseGsClueSamplesText(fourCluesJson, sampleBookmark)
     expect(parsed?.clues).toHaveLength(4)
     expect(parsed?.clues[0]?.text).toContain('agents')
   })
 
   test('条数不对 → null', () => {
     expect(
-      parseGsClueSamplesText(JSON.stringify({ clues: [{ text: 'too short alone for schema' }] }))
+      parseGsClueSamplesText(
+        JSON.stringify({ clues: [{ text: 'too short alone for schema' }] }),
+        sampleBookmark
+      )
     ).toBeNull()
   })
 })

@@ -84,7 +84,8 @@ describe('POST /api/ai/enrichment/complete', () => {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({
-            title: '希特勒死亡80年後',
+            title: '希特勒死亡80年後 WWII documentary on Hitler',
+            text: 'A BBC documentary about Hitler and the wwii legacy.',
             url: 'https://www.youtube.com/watch?v=x',
             domain: 'youtube.com',
             ruleHints: { tags: ['video'], keywords: ['video'] }

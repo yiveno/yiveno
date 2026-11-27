@@ -230,7 +230,7 @@ export async function handleEnrichmentComplete(
       ]
     })
 
-    const proposal = parseEnrichmentProposalText(result.text)
+    const proposal = parseEnrichmentProposalText(result.text, body)
     if (!proposal) {
       logInfo('enrichment_complete_parse_failed', {
         userId,

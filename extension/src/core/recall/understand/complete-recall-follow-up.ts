@@ -61,7 +61,10 @@ export async function completeRecallFollowUpWithLlm(
 
   const mapped = mapLlmFollowUpProposal(proposal, {
     parsed: input.parsed,
-    outcome: 'need_a_clue'
+    outcome: 'need_a_clue',
+    ...(input.weakCandidateTitles !== undefined
+      ? { weakCandidateTitles: input.weakCandidateTitles }
+      : {})
   })
   if (!mapped) {
     trace('warn', 'LLM 追问：门禁拒收提议', {

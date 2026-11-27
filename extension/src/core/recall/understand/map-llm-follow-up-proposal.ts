@@ -41,10 +41,46 @@ export type MappedLlmFollowUp = {
 export type MapLlmFollowUpContext = {
   parsed: ParsedRecallClue
   outcome: 'need_a_clue'
+  /** need_a_clue 弱候选标题；有则 chip 须含区分词（出现在部分非全部标题） */
+  weakCandidateTitles?: string[]
 }
+
+/** 回复含 snake_case 标识符 → 整段拒收。 */
+const SNAKE_CASE_ID = /\b[a-z]+_[a-z_]+\b/
+
+/** 计数播报（showing + 数字 / 数字 + results|条结果）→ 整段拒收。 */
+const COUNT_BROADCAST = /\bshowing\s+\d+|\d+\s+results\b|\d+\s*条结果/i
 
 function normalizeValue(value: string): string {
   return value.trim().replace(/\s+/g, ' ')
+}
+
+/**
+ * chip.value 至少一词须出现在部分（非全部）标题中；单标题时出现即可。
+ */
+function chipValueGroundsInPartialTitles(value: string, titles: readonly string[]): boolean {
+  if (titles.length === 0) {
+    return true
+  }
+  const words = value
+    .toLowerCase()
+    .split(/\s+/)
+    .map(part => part.trim())
+    .filter(Boolean)
+  if (words.length === 0) {
+    return false
+  }
+  const lowerTitles = titles.map(title => title.toLowerCase())
+  for (const word of words) {
+    const hitCount = lowerTitles.filter(title => title.includes(word)).length
+    if (hitCount === 0) {
+      continue
+    }
+    if (lowerTitles.length === 1 || hitCount < lowerTitles.length) {
+      return true
+    }
+  }
+  return false
 }
 
 /**
@@ -70,6 +106,11 @@ export function mapLlmFollowUpProposal(
     return null
   }
 
+  if (SNAKE_CASE_ID.test(reply) || COUNT_BROADCAST.test(reply)) {
+    return null
+  }
+
+  const titles = context.weakCandidateTitles
   const suggestions: MappedLlmFollowUp['suggestions'] = []
   for (const [index, chip] of proposal.chips.entries()) {
     const label = chip.label.trim()
@@ -81,6 +122,9 @@ export function mapLlmFollowUpProposal(
       continue
     }
     if (hasObjectTypes && TYPE_CHIP_VALUES.has(value.toLowerCase())) {
+      continue
+    }
+    if (titles != null && titles.length > 0 && !chipValueGroundsInPartialTitles(value, titles)) {
       continue
     }
     suggestions.push({

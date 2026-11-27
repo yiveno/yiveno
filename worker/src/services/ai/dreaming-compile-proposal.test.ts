@@ -3,8 +3,23 @@ import { describe, expect, it } from 'bun:test'
 import {
   DREAMING_BATCH_MAX_SOURCES,
   DreamingCompileRequestSchema,
-  parseDreamingCompileText
+  filterDreamingCompileResults,
+  parseDreamingCompileText,
+  type DreamingCompileSource
 } from './dreaming-compile-proposal'
+
+const SOURCE_ID = '22222222-2222-4222-8222-222222222222'
+
+function makeSource(overrides: Partial<DreamingCompileSource> = {}): DreamingCompileSource {
+  return {
+    id: SOURCE_ID,
+    type: 'text_excerpt',
+    text: 'People organize information in personal libraries.',
+    title: 'Personal Libraries Guide',
+    note: 'saved for later recall',
+    ...overrides
+  }
+}
 
 describe('dreaming-compile-proposal', () => {
   it('batch 上限为 8', () => {
@@ -23,7 +38,7 @@ describe('dreaming-compile-proposal', () => {
     const raw = JSON.stringify({
       results: [
         {
-          sourceId: '22222222-2222-4222-8222-222222222222',
+          sourceId: SOURCE_ID,
           propositions: [
             {
               text: 'People organize information.',
@@ -36,5 +51,74 @@ describe('dreaming-compile-proposal', () => {
     const parsed = parseDreamingCompileText(raw)
     expect(parsed).not.toBeNull()
     expect(parsed!.results[0]!.propositions[0]!.sourceQuote).toBe('organize information')
+  })
+
+  it('编造引用被丢弃', () => {
+    const source = makeSource()
+    const filtered = filterDreamingCompileResults(
+      {
+        results: [
+          {
+            sourceId: SOURCE_ID,
+            propositions: [
+              {
+                text: 'Invented claim.',
+                sourceQuote: 'this quote was never in the source'
+              }
+            ]
+          }
+        ]
+      },
+      [source],
+      new Set([SOURCE_ID])
+    )
+    expect(filtered.results[0]!.propositions).toHaveLength(0)
+    expect(filtered.droppedQuoteCount).toBe(1)
+  })
+
+  it('逐字引用保留', () => {
+    const source = makeSource()
+    const filtered = filterDreamingCompileResults(
+      {
+        results: [
+          {
+            sourceId: SOURCE_ID,
+            propositions: [
+              {
+                text: 'People organize information.',
+                sourceQuote: 'organize information'
+              }
+            ]
+          }
+        ]
+      },
+      [source],
+      new Set([SOURCE_ID])
+    )
+    expect(filtered.results[0]!.propositions).toHaveLength(1)
+    expect(filtered.droppedQuoteCount).toBe(0)
+  })
+
+  it('title 引用保留', () => {
+    const source = makeSource()
+    const filtered = filterDreamingCompileResults(
+      {
+        results: [
+          {
+            sourceId: SOURCE_ID,
+            propositions: [
+              {
+                text: 'About personal libraries.',
+                sourceQuote: 'Personal Libraries'
+              }
+            ]
+          }
+        ]
+      },
+      [source],
+      new Set([SOURCE_ID])
+    )
+    expect(filtered.results[0]!.propositions).toHaveLength(1)
+    expect(filtered.droppedQuoteCount).toBe(0)
   })
 })
