@@ -3,7 +3,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   advanceDreamRunCursor,
   pickPendingSourceIdsAfterCursor,
-  startDreamRun
+  startDreamRun,
+  type DreamRunCursor
 } from '@/core/dreaming/dream-run-cursor'
 import { DREAMING_COMPILE_BATCH_SIZE } from '@/core/dreaming/dreaming-constants'
 import type { MemoryNoteRecord } from '@/infrastructure/indexeddb/memory-notes-types'
@@ -333,13 +334,15 @@ describe('compile-memory-notes', () => {
     vi.mocked(memoryItemRepository.getById).mockResolvedValue(item)
     vi.mocked(memoryNotesRepository.listBySource).mockResolvedValue([oldNote])
 
-    let storedCursor: ReturnType<typeof startDreamRun> | null = null
+    const cursorBox: { current: DreamRunCursor | null } = { current: null }
     vi.mocked(memoryNotesMetaRepository.commitRunCursor).mockImplementation(
       async (_ownerId, cursor) => {
-        storedCursor = { ...cursor }
+        cursorBox.current = { ...cursor }
       }
     )
-    vi.mocked(memoryNotesMetaRepository.readRunCursor).mockImplementation(async () => storedCursor)
+    vi.mocked(memoryNotesMetaRepository.readRunCursor).mockImplementation(
+      async () => cursorBox.current
+    )
 
     vi.mocked(requestDreamingCompileBatch)
       .mockResolvedValueOnce({
@@ -371,7 +374,7 @@ describe('compile-memory-notes', () => {
     expect(first.failedSources).toBe(1)
     expect(first.restartedRunForRetry).toBe(true)
     expect(memoryNotesRepository.deleteBySource).not.toHaveBeenCalled()
-    expect(storedCursor?.lastCursor).toBe('')
+    expect(cursorBox.current?.lastCursor).toBe('')
 
     const written = makeStaleNote(item.id, item.updatedAt)
     written.text = 'retry proposition'

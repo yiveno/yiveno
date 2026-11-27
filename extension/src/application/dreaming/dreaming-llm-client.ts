@@ -66,7 +66,8 @@ export type DreamingCompileClientResult =
  * 缺行由 compile 侧视为 omitted。
  */
 export function resolveDreamingCompileRowStatus(row: {
-  status?: DreamingCompileSourceStatus
+  /** 显式含 undefined，兼容 Zod optional + exactOptionalPropertyTypes */
+  status?: DreamingCompileSourceStatus | undefined
   propositions: readonly unknown[]
 }): DreamingCompileSourceStatus {
   if (row.status != null) {
