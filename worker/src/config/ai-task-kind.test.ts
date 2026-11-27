@@ -14,6 +14,7 @@ describe('parseAiChatTaskKind', () => {
     expect(parseAiChatTaskKind('follow_up_nlg')).toBe('follow_up_nlg')
     expect(parseAiChatTaskKind('narrow_polish')).toBe('narrow_polish')
     expect(parseAiChatTaskKind('portrait_narrative')).toBe('portrait_narrative')
+    expect(parseAiChatTaskKind('portrait_cluster')).toBe('portrait_cluster')
     expect(parseAiChatTaskKind('dreaming')).toBe('dreaming')
     expect(parseAiChatTaskKind('extract')).toBe('extract')
   })
@@ -43,7 +44,7 @@ describe('resolveHostedModelForTask', () => {
     expect(resolveHostedModelForTask(env, 'framing_nlg')).toBe('deepseek-flash')
   })
 
-  test('NLG 覆盖作用于 framing / follow_up / narrow / portrait_narrative', () => {
+  test('NLG 覆盖作用于 framing / follow_up / narrow / portrait_narrative / portrait_cluster', () => {
     const env = {
       AI_HOSTED_MODEL: 'deepseek-flash',
       AI_HOSTED_MODEL_NLG: 'deepseek-chat'
@@ -52,6 +53,7 @@ describe('resolveHostedModelForTask', () => {
     expect(resolveHostedModelForTask(env, 'follow_up_nlg')).toBe('deepseek-chat')
     expect(resolveHostedModelForTask(env, 'narrow_polish')).toBe('deepseek-chat')
     expect(resolveHostedModelForTask(env, 'portrait_narrative')).toBe('deepseek-chat')
+    expect(resolveHostedModelForTask(env, 'portrait_cluster')).toBe('deepseek-chat')
     expect(resolveHostedModelForTask(env, 'nlu')).toBe('deepseek-flash')
   })
 })
@@ -60,6 +62,7 @@ describe('isNlgAiChatTaskKind', () => {
   test('浅 NLG 为 true，nlu 为 false', () => {
     expect(isNlgAiChatTaskKind('framing_nlg')).toBe(true)
     expect(isNlgAiChatTaskKind('portrait_narrative')).toBe(true)
+    expect(isNlgAiChatTaskKind('portrait_cluster')).toBe(true)
     expect(isNlgAiChatTaskKind('nlu')).toBe(false)
   })
 })
@@ -70,6 +73,7 @@ describe('resolveHostedMaxTokensForTask', () => {
     expect(resolveHostedMaxTokensForTask('framing_nlg', undefined)).toBe(256)
     expect(resolveHostedMaxTokensForTask('narrow_polish', undefined)).toBe(128)
     expect(resolveHostedMaxTokensForTask('portrait_narrative', undefined)).toBe(256)
+    expect(resolveHostedMaxTokensForTask('portrait_cluster', undefined)).toBe(512)
     expect(resolveHostedMaxTokensForTask('extract', undefined)).toBe(800)
   })
 

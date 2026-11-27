@@ -41,7 +41,13 @@ async function importHostedHandlersAsPro() {
 
 /** 构造可通过指纹校验的最小合法 [system, user]（锚行来自 hosted-system-prompts）。 */
 function validMessages(
-  kind: 'nlu' | 'framing_nlg' | 'follow_up_nlg' | 'narrow_polish' | 'portrait_narrative',
+  kind:
+    | 'nlu'
+    | 'framing_nlg'
+    | 'follow_up_nlg'
+    | 'narrow_polish'
+    | 'portrait_narrative'
+    | 'portrait_cluster',
   userContent = 'find that note'
 ): Array<{ role: 'system' | 'user'; content: string }> {
   let system: string
@@ -79,6 +85,13 @@ function validMessages(
         HOSTED_SYSTEM_PROMPT_PREFIXES.portrait_narrative,
         '- Use ONLY the given content points. Do not invent, infer, or complete any preference or fact not listed.',
         '- Output plain text as one paragraph. No markdown.'
+      ].join('\n')
+      break
+    case 'portrait_cluster':
+      system = [
+        HOSTED_SYSTEM_PROMPT_PREFIXES.portrait_cluster,
+        '- Every input item must appear in exactly one cluster. No omissions, no duplicates, no invented items.',
+        '- Output ONLY one JSON object. No markdown, no commentary.'
       ].join('\n')
       break
   }
@@ -241,6 +254,73 @@ describe('hosted ai routes', () => {
           taskKind: 'portrait_narrative',
           messages: [
             { role: 'system', content: 'wrong portrait system prompt' },
+            { role: 'user', content: 'hi' }
+          ]
+        })
+      }),
+      createBaseEnv(),
+      TEST_USER_ID
+    )
+    expect(response.status).toBe(400)
+    const data = (await response.json()) as { error: string }
+    expect(data.error).toBe('invalid_system_prompt')
+  })
+
+  test('handleHostedComplete accepts portrait_cluster with valid fingerprint', async () => {
+    const { handleHostedComplete } = await importHostedHandlersAsPro()
+    const kv = createKvMock()
+    const fetchMock = mock(
+      async () =>
+        new Response(
+          JSON.stringify({
+            choices: [
+              {
+                message: {
+                  content: JSON.stringify({
+                    clusters: [{ label: 'fruit', items: ['apple', 'pear'] }]
+                  })
+                }
+              }
+            ],
+            usage: { prompt_tokens: 20, completion_tokens: 8, total_tokens: 28 }
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } }
+        )
+    )
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+    try {
+      const response = await handleHostedComplete(
+        new Request('http://localhost/api/ai/hosted/complete', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            taskKind: 'portrait_cluster',
+            messages: validMessages('portrait_cluster', '["apple","pear"]')
+          })
+        }),
+        createBaseEnv({ AI_USAGE_KV: kv as unknown as Env['AI_USAGE_KV'] }),
+        TEST_USER_ID
+      )
+      expect(response.status).toBe(200)
+      const data = (await response.json()) as { taskKind: string; text: string }
+      expect(data.taskKind).toBe('portrait_cluster')
+      expect(data.text).toContain('fruit')
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test('handleHostedComplete rejects portrait_cluster bad fingerprint → invalid_system_prompt', async () => {
+    const { handleHostedComplete } = await importHostedHandlersAsPro()
+    const response = await handleHostedComplete(
+      new Request('http://localhost/api/ai/hosted/complete', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          taskKind: 'portrait_cluster',
+          messages: [
+            { role: 'system', content: 'wrong cluster system prompt' },
             { role: 'user', content: 'hi' }
           ]
         })

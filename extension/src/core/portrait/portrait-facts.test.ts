@@ -214,9 +214,9 @@ describe('portrait-facts · trait / 措辞 / 摘要', () => {
     ])
     expect(summary.empty).toBe(false)
     expect(summary.groups.verified).toHaveLength(1)
-    expect(summary.groups.unconfirmed).toHaveLength(1)
-    expect(summary.clusters).toHaveLength(1)
-    expect(summary.clusters[0]?.label).toBe('zig')
-    expect(summary.hiddenPendingCount).toBe(1)
+    // rag 与 zig 共享 note:1 → 共现成一簇（≥2）浮出
+    expect(summary.groups.unconfirmed).toHaveLength(2)
+    expect(summary.clusters.filter(c => c.surfaced)).toHaveLength(1)
+    expect(summary.hiddenPendingCount).toBe(0)
   })
 })

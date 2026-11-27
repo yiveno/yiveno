@@ -64,6 +64,7 @@ function makeView(overrides: Partial<PortraitSummaryViewModel> = {}): PortraitSu
     ],
     pendingNarrative: '',
     clusters: [],
+    hiddenPendingItems: [],
     hiddenPendingCount: 0,
     factSignature: 'sig-abc',
     ...overrides

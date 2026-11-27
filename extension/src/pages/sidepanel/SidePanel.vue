@@ -35,7 +35,13 @@ import { parseRecallVisibleProgressMessage } from '@/core/messaging/ui-messages'
 import { tRecallError } from '@/infrastructure/i18n/background-error'
 import { t } from '@/infrastructure/i18n/t'
 import { commitRecallOutcome } from '@/application/recall/commit-recall-outcome'
+import { generatePortraitClusters } from '@/application/portrait/generate-portrait-clusters'
 import { generatePortraitNarrative } from '@/application/portrait/generate-portrait-narrative'
+import {
+  collectPendingItemsFromPortraitSummary,
+  replacePortraitSummaryClusters,
+  type PortraitSummary
+} from '@/core/portrait/build-portrait-summary'
 import {
   applyPortraitApproveClusterToView,
   applyPortraitApproveToView,
@@ -1243,7 +1249,8 @@ async function runRecall(
       response.result.emptyKind === 'portrait_inspect' &&
       response.result.portraitSummary
     ) {
-      const portraitView = buildPortraitSummaryViewModel(response.result.portraitSummary, t)
+      const portraitSummary = response.result.portraitSummary
+      const portraitView = buildPortraitSummaryViewModel(portraitSummary, t)
       const turnId = nextTurnId()
       conversationTurns.value.push(
         createAssistantTurn({
@@ -1258,7 +1265,7 @@ async function runRecall(
           allowDismiss: false
         })
       )
-      schedulePortraitNarrativeRefresh(turnId, portraitView)
+      schedulePortraitClusterThenNarrative(turnId, portraitSummary, portraitView)
     } else {
       const relatedGuess = response.result.relatedGuess ?? null
       const usedRulesFallback = response.result.understandSource === 'rules_fallback'
@@ -1602,6 +1609,48 @@ function handleUseSuggestion(value: string): void {
 /** 理解回声纠错：合成英文 refine → 同追问路径（merge 覆盖/排除）。 */
 function handleCorrectUnderstanding(value: string): void {
   handleUseSuggestion(value)
+}
+
+/**
+ * 确定性摘要先上屏；异步语义聚类（失败回退共现）后再跑 LLM 叙事。
+ */
+function schedulePortraitClusterThenNarrative(
+  turnId: string,
+  summary: PortraitSummary,
+  initialView: PortraitSummaryViewModel
+): void {
+  const { clusterItems } = collectPendingItemsFromPortraitSummary(summary)
+  const locale = getEffectiveUiLocale()
+  void (async () => {
+    let view = initialView
+    if (clusterItems.length > 0) {
+      const clustered = await generatePortraitClusters({
+        items: clusterItems.map(item => ({
+          factId: item.factId,
+          value: item.value,
+          credibility: item.credibility,
+          state: item.state,
+          sourceNoteRefs: item.sourceNoteRefs
+        })),
+        locale
+      })
+      if (clustered.source === 'llm' || clustered.source === 'cache') {
+        const nextSummary = replacePortraitSummaryClusters(summary, clustered.clusters)
+        view = buildPortraitSummaryViewModel(nextSummary, t)
+        conversationTurns.value = conversationTurns.value.map(turn => {
+          if (turn.role !== 'assistant' || turn.id !== turnId || !turn.portraitSummaryView) {
+            return turn
+          }
+          return {
+            ...turn,
+            text: view.empty ? view.emptyText : turn.text,
+            portraitSummaryView: view
+          }
+        })
+      }
+    }
+    schedulePortraitNarrativeRefresh(turnId, view)
+  })()
 }
 
 /**
@@ -2194,6 +2243,7 @@ onUnmounted(() => {
           @portrait-decline="handlePortraitDecline"
           @portrait-approve-cluster="handlePortraitApproveCluster"
           @portrait-decline-cluster="handlePortraitDeclineCluster"
+          @portrait-decline-hidden-all="handlePortraitDeclineCluster"
           @open-bookmark-ingest-settings="handleOpenBookmarkIngestSettings"
           @open-behavior-import-settings="handleOpenBehaviorImportSettings"
           @open-ai-settings="handleOpenAiSettings"

@@ -26,18 +26,18 @@ const t = (key: string, subs?: string | string[]) => {
   return `${key}:${list.join('|')}`
 }
 
-function dualSourcePending(value: string, refs: string[]): PortraitFactRecord {
+function dualSourcePending(value: string, refs: string[], credibility = 0.55): PortraitFactRecord {
   return {
     id: `${OWNER}\0contentTerm\0${value}`,
     ownerId: OWNER,
     slot: 'contentTerm',
     value,
-    credibility: 0.4,
+    credibility,
     state: 'unconfirmed',
     sources: refs.map(ref => ({
       type: 'inference' as const,
       ref,
-      score: 0.4,
+      score: credibility,
       observedAt: NOW
     })),
     inPortrait: false,
@@ -84,7 +84,7 @@ describe('render-portrait-summary', () => {
     ).toBe('portrait_fact_inferred:github.com')
   })
 
-  it('分组视图含达门槛 pending 簇', () => {
+  it('分组视图含浮出 pending 簇', () => {
     const facts: PortraitFactRecord[] = [dualSourcePending('rag', ['note:1', 'note:2'])]
     const view = buildPortraitSummaryViewModel(buildPortraitSummary(facts), t)
     expect(view.clusters).toHaveLength(1)
@@ -99,11 +99,11 @@ describe('render-portrait-summary', () => {
         ownerId: OWNER,
         slot: 'contentTerm',
         value: 'rag',
-        credibility: 0.4,
+        credibility: 0.55,
         state: 'contested',
         sources: [
-          { type: 'inference', ref: 'n1', score: 0.4, observedAt: NOW },
-          { type: 'inference', ref: 'n1b', score: 0.4, observedAt: NOW }
+          { type: 'inference', ref: 'n1', score: 0.55, observedAt: NOW },
+          { type: 'inference', ref: 'n1b', score: 0.55, observedAt: NOW }
         ],
         inPortrait: false,
         createdAt: NOW,
@@ -114,11 +114,11 @@ describe('render-portrait-summary', () => {
         ownerId: OWNER,
         slot: 'contentTerm',
         value: 'vector',
-        credibility: 0.4,
+        credibility: 0.55,
         state: 'contested',
         sources: [
-          { type: 'inference', ref: 'n2', score: 0.4, observedAt: NOW },
-          { type: 'inference', ref: 'n2b', score: 0.4, observedAt: NOW }
+          { type: 'inference', ref: 'n2', score: 0.55, observedAt: NOW },
+          { type: 'inference', ref: 'n2b', score: 0.55, observedAt: NOW }
         ],
         inPortrait: false,
         createdAt: NOW,
@@ -159,9 +159,9 @@ describe('render-portrait-summary', () => {
 
   it('整簇批准后簇移除且 narrative 更新', () => {
     const facts: PortraitFactRecord[] = [
-      dualSourcePending('rag', ['note:shared', 'note:a']),
-      dualSourcePending('vector', ['note:shared', 'note:b']),
-      dualSourcePending('zig', ['note:z1', 'note:z2'])
+      dualSourcePending('rag', ['note:shared', 'note:a'], 0.4),
+      dualSourcePending('vector', ['note:shared', 'note:b'], 0.4),
+      dualSourcePending('zig', ['note:z1', 'note:z2'], 0.55)
     ]
     const view = buildPortraitSummaryViewModel(buildPortraitSummary(facts), t)
     expect(view.clusters.length).toBeGreaterThanOrEqual(2)

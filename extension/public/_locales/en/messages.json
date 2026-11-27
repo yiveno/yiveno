@@ -3866,12 +3866,46 @@
       }
     }
   },
+  "portrait_pending_entry_hidden": {
+    "message": "Review low-evidence preferences ($1)",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
   "portrait_pending_hidden_note": {
     "message": "$1 more items lack enough evidence and aren’t listed.",
     "placeholders": {
       "count": {
         "content": "$1",
         "example": "12"
+      }
+    }
+  },
+  "portrait_pending_hidden_section": {
+    "message": "Low-evidence items ($1)",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "portrait_pending_ignore_all": {
+    "message": "Ignore all"
+  },
+  "portrait_pending_cluster_members_more": {
+    "message": "$1 and $2 more",
+    "placeholders": {
+      "values": {
+        "content": "$1",
+        "example": "apple, pear"
+      },
+      "rest": {
+        "content": "$2",
+        "example": "3"
       }
     }
   },

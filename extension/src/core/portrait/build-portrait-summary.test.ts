@@ -1,5 +1,5 @@
 /**
- * 画像摘要：pending 展示门槛 / 功能词 / hiddenPendingCount。
+ * 画像摘要：按簇浮出 / 隐藏 / 功能词过滤。
  */
 
 import { describe, expect, it } from 'vitest'
@@ -37,38 +37,55 @@ function inferenceFact(
   }
 }
 
-describe('buildPortraitSummary pending 门槛', () => {
-  it('单来源项被隐藏且 hiddenPendingCount 计数', () => {
-    const summary = buildPortraitSummary([inferenceFact('rag', { refs: ['note:1'] })])
-    expect(summary.clusters).toHaveLength(0)
-    expect(summary.hiddenPendingCount).toBe(1)
-    expect(summary.empty).toBe(true)
-  })
-
-  it('双来源项展示', () => {
-    const summary = buildPortraitSummary([inferenceFact('rag', { refs: ['note:1', 'note:2'] })])
-    expect(summary.hiddenPendingCount).toBe(0)
-    expect(summary.clusters).toHaveLength(1)
-    expect(summary.clusters[0]?.label).toBe('rag')
+describe('buildPortraitSummary pending 按簇浮出', () => {
+  it('多成员簇浮出', () => {
+    const summary = buildPortraitSummary(
+      [
+        inferenceFact('苹果', { refs: ['note:fruit'] }),
+        inferenceFact('梨', { refs: ['note:fruit'] })
+      ],
+      {
+        clusterPartition: [{ label: '水果', items: ['苹果', '梨'] }]
+      }
+    )
+    const surfaced = summary.clusters.filter(c => c.surfaced)
+    expect(surfaced).toHaveLength(1)
+    expect(surfaced[0]?.label).toBe('水果')
+    expect(summary.hiddenPendingItems).toHaveLength(0)
     expect(summary.empty).toBe(false)
   })
 
-  it('credibility ≥ 0.5 单来源也展示', () => {
+  it('单成员低证据进隐藏', () => {
+    const summary = buildPortraitSummary([inferenceFact('rag', { refs: ['note:1'] })])
+    expect(summary.clusters.every(c => !c.surfaced)).toBe(true)
+    expect(summary.hiddenPendingItems).toHaveLength(1)
+    expect(summary.hiddenPendingItems[0]?.value).toBe('rag')
+    expect(summary.hiddenPendingCount).toBe(1)
+    expect(summary.empty).toBe(false)
+  })
+
+  it('单成员 credibility ≥ 0.5 浮出', () => {
     const summary = buildPortraitSummary([
       inferenceFact('zig', { credibility: 0.5, refs: ['note:1'] })
     ])
-    expect(summary.clusters).toHaveLength(1)
-    expect(summary.hiddenPendingCount).toBe(0)
+    expect(summary.clusters.filter(c => c.surfaced)).toHaveLength(1)
+    expect(summary.hiddenPendingItems).toHaveLength(0)
   })
 
-  it('功能词行不展示', () => {
+  it('功能词全过滤', () => {
     const summary = buildPortraitSummary([
       inferenceFact('联系', { refs: ['note:1', 'note:2'] }),
       inferenceFact('contact', { credibility: 0.6, refs: ['note:3'] }),
-      inferenceFact('rag', { refs: ['note:4', 'note:5'] })
+      inferenceFact('rag', { refs: ['note:4', 'note:5'] }),
+      inferenceFact('vector', { refs: ['note:4'] })
     ])
-    expect(summary.clusters).toHaveLength(1)
-    expect(summary.clusters[0]?.label).toBe('rag')
-    expect(summary.hiddenPendingCount).toBe(2)
+    const values = [
+      ...summary.clusters.flatMap(c => c.items.map(i => i.value)),
+      ...summary.hiddenPendingItems.map(i => i.value)
+    ]
+    expect(values).not.toContain('联系')
+    expect(values).not.toContain('contact')
+    expect(values).toContain('rag')
+    expect(values).toContain('vector')
   })
 })

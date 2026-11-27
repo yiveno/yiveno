@@ -13,6 +13,7 @@ export const AI_CHAT_TASK_KINDS = [
   'follow_up_nlg', // need_a_clue 追问
   'narrow_polish', // composer Narrow 举例润色
   'portrait_narrative', // 画像摘要自然语言组装
+  'portrait_cluster', // 待确认项语义聚类（结构化 JSON）
   'enrichment', // Capture enrichment（若走可配置层）
   'gs_samples', // Getting Started 示意 clue
   'dreaming', // 夜间命题编译（批量；独立配额）
@@ -29,7 +30,8 @@ const NLG_TASK_KINDS = new Set<AiChatTaskKind>([
   'framing_nlg',
   'follow_up_nlg',
   'narrow_polish',
-  'portrait_narrative'
+  'portrait_narrative',
+  'portrait_cluster'
 ])
 
 /**
@@ -76,7 +78,8 @@ export function resolveHostedModelForTask(env: AiTaskModelEnv, taskKind: AiChatT
     case 'framing_nlg':
     case 'follow_up_nlg':
     case 'narrow_polish':
-    case 'portrait_narrative': {
+    case 'portrait_narrative':
+    case 'portrait_cluster': {
       const override = env.AI_HOSTED_MODEL_NLG?.trim()
       return override || fallback
     }
@@ -114,6 +117,7 @@ export const AI_CHAT_TASK_MAX_TOKENS: Record<AiChatTaskKind, number> = {
   follow_up_nlg: 256,
   narrow_polish: 128,
   portrait_narrative: 256,
+  portrait_cluster: 512,
   enrichment: 400,
   gs_samples: 400,
   dreaming: 1200,

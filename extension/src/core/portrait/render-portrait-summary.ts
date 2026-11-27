@@ -68,7 +68,7 @@ export type PortraitSummaryViewItem = {
   state: PortraitSummaryItem['state']
 }
 
-/** 视图层待确认簇。 */
+/** 视图层待确认簇（仅浮出簇）。 */
 export type PortraitPendingClusterView = {
   clusterId: string
   label: string
@@ -79,6 +79,14 @@ export type PortraitPendingClusterView = {
     value: string
     credibility: number
   }>
+}
+
+/** 视图层隐藏待确认项。 */
+export type PortraitHiddenPendingViewItem = {
+  factId: string
+  line: string
+  value: string
+  credibility: number
 }
 
 export type PortraitSummaryViewModel = {
@@ -94,24 +102,38 @@ export type PortraitSummaryViewModel = {
     narrative: string
     items: PortraitSummaryViewItem[]
   }>
-  /** pending 区叙事（按簇 label） */
+  /** pending 区叙事（按浮出簇 label） */
   pendingNarrative: string
-  /** 达门槛待确认簇 */
+  /** 浮出待确认簇 */
   clusters: PortraitPendingClusterView[]
-  /** 未列出（证据不足 / 功能词）计数 */
+  /** 隐藏区可操作项 */
+  hiddenPendingItems: PortraitHiddenPendingViewItem[]
+  /** = hiddenPendingItems.length */
   hiddenPendingCount: number
   /** 事实签名（LLM 缓存键） */
   factSignature: string
 }
 
-/** 代表项拼接：zh 顿号 / en 逗号空格（由文案语言侧适应；此处统一顿号+逗号兼容）。 */
+/** 代表项拼接：zh 顿号 / en 逗号空格。 */
 function joinRepresentativeValues(values: string[]): string {
   if (values.length <= 1) {
     return values[0] ?? ''
   }
-  // 含非 ASCII → 顿号；否则英文逗号
   const useIdeographic = values.some(v => /[^\u0000-\u007f]/.test(v))
   return values.join(useIdeographic ? '、' : ', ')
+}
+
+/**
+ * 簇副行：至多 5 个成员 + 等 N 项。
+ */
+export function formatPortraitClusterMemberLine(values: readonly string[], t: TranslateFn): string {
+  const top = values.slice(0, 5)
+  const rest = values.length - top.length
+  const joined = joinRepresentativeValues([...top])
+  if (rest > 0) {
+    return t('portrait_pending_cluster_members_more', [joined, String(rest)])
+  }
+  return joined
 }
 
 /**
@@ -137,7 +159,7 @@ export function renderPortraitGroupNarrative(
 }
 
 /**
- * pending 叙事提炼：按簇 label；前 3 + 总簇数余量。
+ * pending 叙事提炼：按浮出簇 label；前 3 + 总簇数余量。
  */
 export function renderPortraitPendingNarrative(
   clusters: Array<{ label: string; credibility?: number }>,
@@ -160,7 +182,7 @@ export function renderPortraitPendingNarrative(
 
 /**
  * 组装总述：lead（verified）+ contested/pending 计数；无 verified 时用首个非空组 narrative。
- * pendingCount = 簇数。
+ * pendingCount = 浮出簇数。
  */
 export function buildPortraitSummaryText(input: {
   groups: Array<{
@@ -228,12 +250,21 @@ function toClusterView(
   }
 }
 
+function toHiddenView(item: PortraitSummaryItem, t: TranslateFn): PortraitHiddenPendingViewItem {
+  return {
+    factId: item.factId,
+    line: renderPortraitFactLine(item, t),
+    value: item.value,
+    credibility: item.credibility
+  }
+}
+
 /** 簇内最高 credibility（叙事排序）。 */
 function clusterMaxCredibility(cluster: PortraitPendingClusterView): number {
   return cluster.items[0]?.credibility ?? 0
 }
 
-/** 从当前 groups/clusters 重算叙事与签名（批准/忽略后调用）。 */
+/** 从当前 groups/clusters/hidden 重算叙事与签名。 */
 export function refreshPortraitSummaryNarratives(
   view: PortraitSummaryViewModel,
   t: TranslateFn
@@ -275,17 +306,18 @@ export function refreshPortraitSummaryNarratives(
       }))
     ),
     ...view.clusters.flatMap(c =>
-      c.items.map(p => {
-        const fromGroup = groups.flatMap(g => g.items).find(i => i.factId === p.factId)
-        return {
-          factId: p.factId,
-          state: fromGroup?.state ?? ('unconfirmed' as const),
-          inPortrait: false
-        }
-      })
-    )
+      c.items.map(p => ({
+        factId: p.factId,
+        state: 'unconfirmed' as const,
+        inPortrait: false
+      }))
+    ),
+    ...view.hiddenPendingItems.map(p => ({
+      factId: p.factId,
+      state: 'unconfirmed' as const,
+      inPortrait: false
+    }))
   ]
-  // pending 可能已在 groups 中，按 factId 去重
   const seen = new Set<string>()
   const deduped = signatureParts.filter(p => {
     if (seen.has(p.factId)) {
@@ -303,7 +335,7 @@ export function refreshPortraitSummaryNarratives(
   }
 }
 
-/** 构建可渲染视图模型。 */
+/** 构建可渲染视图模型（clusters 仅浮出簇）。 */
 export function buildPortraitSummaryViewModel(
   summary: PortraitSummary,
   t: TranslateFn
@@ -317,7 +349,8 @@ export function buildPortraitSummaryViewModel(
       groups: [],
       pendingNarrative: '',
       clusters: [],
-      hiddenPendingCount: summary.hiddenPendingCount,
+      hiddenPendingItems: [],
+      hiddenPendingCount: 0,
       factSignature: ''
     }
   }
@@ -343,7 +376,10 @@ export function buildPortraitSummaryViewModel(
     })
     .filter((row): row is NonNullable<typeof row> => row != null)
 
-  const clusters = summary.clusters.map(cluster => toClusterView(cluster, t))
+  const clusters = summary.clusters
+    .filter(c => c.surfaced)
+    .map(cluster => toClusterView(cluster, t))
+  const hiddenPendingItems = summary.hiddenPendingItems.map(item => toHiddenView(item, t))
 
   const base: PortraitSummaryViewModel = {
     empty: false,
@@ -353,13 +389,14 @@ export function buildPortraitSummaryViewModel(
     groups,
     pendingNarrative: '',
     clusters,
-    hiddenPendingCount: summary.hiddenPendingCount,
+    hiddenPendingItems,
+    hiddenPendingCount: hiddenPendingItems.length,
     factSignature: ''
   }
   return refreshPortraitSummaryNarratives(base, t)
 }
 
-/** 从簇中移除若干 factId；空簇丢弃；重算 label。 */
+/** 从簇中移除若干 factId；空簇丢弃；单成员时 label 回落为 value。 */
 function removeFactsFromClusters(
   clusters: PortraitPendingClusterView[],
   factIds: ReadonlySet<string>
@@ -370,9 +407,7 @@ function removeFactsFromClusters(
     if (items.length === 0) {
       continue
     }
-    const label =
-      [...items].sort((a, b) => b.credibility - a.credibility || a.value.localeCompare(b.value))[0]
-        ?.value ?? cluster.label
+    const label = items.length === 1 ? (items[0]?.value ?? cluster.label) : cluster.label
     next.push({
       clusterId: cluster.clusterId,
       label,
@@ -388,6 +423,32 @@ function removeFactsFromClusters(
   return next
 }
 
+function findPendingInView(
+  view: PortraitSummaryViewModel,
+  factId: string
+): { value: string; credibility: number } | null {
+  for (const cluster of view.clusters) {
+    const hit = cluster.items.find(item => item.factId === factId)
+    if (hit) {
+      return hit
+    }
+  }
+  const hidden = view.hiddenPendingItems.find(item => item.factId === factId)
+  return hidden ?? null
+}
+
+function isViewEffectivelyEmpty(view: {
+  groups: Array<{ items: unknown[] }>
+  clusters: unknown[]
+  hiddenPendingItems: unknown[]
+}): boolean {
+  return (
+    view.groups.every(g => g.items.length === 0) &&
+    view.clusters.length === 0 &&
+    view.hiddenPendingItems.length === 0
+  )
+}
+
 /**
  * 批准推断项：移入 verified，行文案改 direct 措辞（与已核实组一致）。
  * 纯本地视图更新；调用方负责先写库。
@@ -397,8 +458,9 @@ export function applyPortraitApproveToView(
   factId: string,
   t: TranslateFn
 ): PortraitSummaryViewModel {
-  const pending = view.clusters.flatMap(c => c.items).find(item => item.factId === factId)
+  const pending = findPendingInView(view, factId)
   const nextClusters = removeFactsFromClusters(view.clusters, new Set([factId]))
+  const nextHidden = view.hiddenPendingItems.filter(item => item.factId !== factId)
   const nextGroups = view.groups
     .map(group => ({
       ...group,
@@ -443,9 +505,15 @@ export function applyPortraitApproveToView(
   }
   const next: PortraitSummaryViewModel = {
     ...view,
-    empty: nextGroups.every(g => g.items.length === 0) && nextClusters.length === 0,
+    empty: isViewEffectivelyEmpty({
+      groups: nextGroups,
+      clusters: nextClusters,
+      hiddenPendingItems: nextHidden
+    }),
     groups: nextGroups,
-    clusters: nextClusters
+    clusters: nextClusters,
+    hiddenPendingItems: nextHidden,
+    hiddenPendingCount: nextHidden.length
   }
   if (next.empty) {
     return {
@@ -475,7 +543,7 @@ export function applyPortraitApproveClusterToView(
 }
 
 /**
- * 忽略推断项：从 clusters 与各组移除；若清空则标 empty。
+ * 忽略推断项：从 clusters / hidden / 各组移除；若清空则标 empty。
  */
 export function applyPortraitDeclineToView(
   view: PortraitSummaryViewModel,
@@ -483,19 +551,26 @@ export function applyPortraitDeclineToView(
   t?: TranslateFn
 ): PortraitSummaryViewModel {
   const nextClusters = removeFactsFromClusters(view.clusters, new Set([factId]))
+  const nextHidden = view.hiddenPendingItems.filter(item => item.factId !== factId)
   const nextGroups = view.groups
     .map(group => ({
       ...group,
       items: group.items.filter(item => item.factId !== factId)
     }))
     .filter(group => group.items.length > 0)
-  const empty = nextGroups.every(g => g.items.length === 0) && nextClusters.length === 0
+  const empty = isViewEffectivelyEmpty({
+    groups: nextGroups,
+    clusters: nextClusters,
+    hiddenPendingItems: nextHidden
+  })
   const next: PortraitSummaryViewModel = {
     ...view,
     empty,
     emptyText: empty && t ? t('portrait_empty') : view.emptyText,
     groups: nextGroups,
-    clusters: nextClusters
+    clusters: nextClusters,
+    hiddenPendingItems: nextHidden,
+    hiddenPendingCount: nextHidden.length
   }
   if (empty || !t) {
     return {
@@ -509,7 +584,7 @@ export function applyPortraitDeclineToView(
 }
 
 /**
- * 整簇忽略。
+ * 整簇忽略 / 隐藏区全部忽略。
  */
 export function applyPortraitDeclineClusterToView(
   view: PortraitSummaryViewModel,

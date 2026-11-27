@@ -15,7 +15,8 @@ export const HOSTED_COMPLETE_TASK_KINDS = [
   'framing_nlg', // Framing 润色
   'follow_up_nlg', // need_a_clue 追问
   'narrow_polish', // composer Narrow 举例润色
-  'portrait_narrative' // 画像摘要自然语言组装
+  'portrait_narrative', // 画像摘要自然语言组装
+  'portrait_cluster' // 待确认项语义聚类
 ] as const
 
 export type HostedCompleteTaskKind = (typeof HOSTED_COMPLETE_TASK_KINDS)[number]
@@ -83,6 +84,16 @@ const PORTRAIT_NARRATIVE: SystemFingerprint = {
   ]
 }
 
+/** 与扩展 portrait-cluster-prompt.ts 首段 / 锚行逐字一致。 */
+const PORTRAIT_CLUSTER: SystemFingerprint = {
+  prefix:
+    'You cluster pending preference items into higher-level groups for Yiveno (Chrome extension personal memory finder).',
+  anchors: [
+    '- Every input item must appear in exactly one cluster. No omissions, no duplicates, no invented items.',
+    '- Output ONLY one JSON object. No markdown, no commentary.'
+  ]
+}
+
 function matchesFingerprint(system: string, fp: SystemFingerprint): boolean {
   if (!system.startsWith(fp.prefix)) {
     return false
@@ -129,6 +140,8 @@ export function validateHostedSystemPrompt(
       return matchesFingerprint(text, NARROW_POLISH)
     case 'portrait_narrative':
       return matchesFingerprint(text, PORTRAIT_NARRATIVE)
+    case 'portrait_cluster':
+      return matchesFingerprint(text, PORTRAIT_CLUSTER)
   }
 }
 
@@ -139,5 +152,6 @@ export const HOSTED_SYSTEM_PROMPT_PREFIXES = {
   framing_nlg: FRAMING_NLG.prefix,
   follow_up_nlg: FOLLOW_UP_NLG.prefix,
   narrow_polish: NARROW_POLISH.prefix,
-  portrait_narrative: PORTRAIT_NARRATIVE.prefix
+  portrait_narrative: PORTRAIT_NARRATIVE.prefix,
+  portrait_cluster: PORTRAIT_CLUSTER.prefix
 } as const

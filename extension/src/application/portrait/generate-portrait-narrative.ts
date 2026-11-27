@@ -66,10 +66,18 @@ export function contentPointsFromPortraitView(
     .filter((row): row is NonNullable<typeof row> => row != null)
 
   const contested = view.groups.find(g => g.key === 'contested')
+  // 待确认内容点：浮出簇 label + 代表成员（非整表逐项堆叠）
+  const pendingValues = view.clusters.flatMap(cluster => {
+    const reps = cluster.items
+      .slice(0, 2)
+      .map(item => item.value)
+      .filter(value => value !== cluster.label)
+    return [cluster.label, ...reps]
+  })
   return buildPortraitNarrativeContentPoints({
     locale,
     groups,
-    pendingValues: view.clusters.flatMap(c => c.items.map(p => p.value)),
+    pendingValues,
     contestedValues: contested?.items.map(i => i.value) ?? []
   })
 }

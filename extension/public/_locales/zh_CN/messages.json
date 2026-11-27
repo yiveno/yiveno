@@ -3866,12 +3866,46 @@
       }
     }
   },
+  "portrait_pending_entry_hidden": {
+    "message": "查看证据不足的偏好（$1 项）",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
   "portrait_pending_hidden_note": {
     "message": "另有 $1 项证据不足，未列出",
     "placeholders": {
       "count": {
         "content": "$1",
         "example": "12"
+      }
+    }
+  },
+  "portrait_pending_hidden_section": {
+    "message": "证据不足（$1 项）",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
+  "portrait_pending_ignore_all": {
+    "message": "全部忽略"
+  },
+  "portrait_pending_cluster_members_more": {
+    "message": "$1 等 $2 项",
+    "placeholders": {
+      "values": {
+        "content": "$1",
+        "example": "苹果、梨"
+      },
+      "rest": {
+        "content": "$2",
+        "example": "3"
       }
     }
   },

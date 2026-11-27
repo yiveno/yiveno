@@ -87,6 +87,8 @@ const emit = defineEmits<{
   portraitApproveCluster: [factIds: string[]]
   /** 画像推断：整簇忽略 */
   portraitDeclineCluster: [factIds: string[]]
+  /** 画像隐藏区：全部忽略 */
+  portraitDeclineHiddenAll: [factIds: string[]]
   /** miss 降级：Settings AI 分区 */
   openAiSettings: []
   /** miss 降级：Settings 账户与同步 */
@@ -140,19 +142,41 @@ function togglePendingClusterExpanded(clusterId: string): void {
   expandedPendingClusterIds.value = next
 }
 
-/** 簇代表词：至多 5 个 value，顿号/逗号分隔。 */
+/** 簇副行：至多 5 个成员 + 等 N 项。 */
 function formatClusterRepresentativeValues(values: string[]): string {
   const top = values.slice(0, 5)
-  if (top.length <= 1) {
-    return top[0] ?? ''
+  const rest = values.length - top.length
+  if (top.length === 0) {
+    return ''
   }
   const useIdeographic = top.some(v => /[^\u0000-\u007f]/.test(v))
-  return top.join(useIdeographic ? '、' : ', ')
+  const joined = top.join(useIdeographic ? '、' : ', ')
+  if (rest > 0) {
+    return t('portrait_pending_cluster_members_more', [joined, String(rest)])
+  }
+  return joined
 }
 
-// 整簇处理后若无剩余簇，自动关弹窗
+function pendingEntryLabel(view: { clusters: unknown[]; hiddenPendingItems: unknown[] }): string {
+  if (view.clusters.length > 0) {
+    return t('portrait_pending_entry', [String(view.clusters.length)])
+  }
+  return t('portrait_pending_entry_hidden', [String(view.hiddenPendingItems.length)])
+}
+
+function hasPendingEntry(view: { clusters: unknown[]; hiddenPendingItems: unknown[] }): boolean {
+  return view.clusters.length > 0 || view.hiddenPendingItems.length > 0
+}
+
+// 浮出簇与隐藏项皆空时关弹窗
 watch(
-  () => pendingClustersModalView.value?.clusters.length ?? 0,
+  () => {
+    const view = pendingClustersModalView.value
+    if (!view) {
+      return 0
+    }
+    return view.clusters.length + view.hiddenPendingItems.length
+  },
   count => {
     if (pendingClustersModalTurnId.value && count === 0) {
       closePendingClustersModal()
@@ -875,10 +899,7 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
                 {{ group.narrative }}
               </p>
             </div>
-            <div
-              v-if="turn.portraitSummaryView.clusters.length > 0"
-              class="portrait-summary__pending"
-            >
+            <div v-if="hasPendingEntry(turn.portraitSummaryView)" class="portrait-summary__pending">
               <p class="portrait-summary__group-title">{{ t('portrait_pending_inferences') }}</p>
               <p
                 v-if="turn.portraitSummaryView.pendingNarrative"
@@ -890,17 +911,11 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
                 type="button"
                 variant="tonal"
                 class="portrait-summary__pending-entry"
-                :title="
-                  t('portrait_pending_entry', [String(turn.portraitSummaryView.clusters.length)])
-                "
-                :aria-label="
-                  t('portrait_pending_entry', [String(turn.portraitSummaryView.clusters.length)])
-                "
+                :title="pendingEntryLabel(turn.portraitSummaryView)"
+                :aria-label="pendingEntryLabel(turn.portraitSummaryView)"
                 @click="openPendingClustersModal(turn.id)"
               >
-                {{
-                  t('portrait_pending_entry', [String(turn.portraitSummaryView.clusters.length)])
-                }}
+                {{ pendingEntryLabel(turn.portraitSummaryView) }}
               </AppButton>
             </div>
           </section>
@@ -988,7 +1003,9 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
 
   <AppModal
     :open="
-      pendingClustersModalTurnId !== null && (pendingClustersModalView?.clusters.length ?? 0) > 0
+      pendingClustersModalTurnId !== null &&
+      pendingClustersModalView != null &&
+      hasPendingEntry(pendingClustersModalView)
     "
     :title="t('portrait_pending_inferences')"
     size="md"
@@ -1004,7 +1021,6 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
           <p class="portrait-pending-cluster__label">{{ cluster.label }}</p>
           <p class="portrait-pending-cluster__meta">
             {{ formatClusterRepresentativeValues(cluster.items.map(item => item.value)) }}
-            · {{ cluster.count }}
           </p>
         </header>
         <div class="portrait-pending-cluster__actions">
@@ -1081,14 +1097,62 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
           </li>
         </ul>
       </article>
-      <p
-        v-if="pendingClustersModalView.hiddenPendingCount > 0"
+      <section
+        v-if="pendingClustersModalView.hiddenPendingItems.length > 0"
         class="portrait-pending-modal__hidden"
       >
-        {{
-          t('portrait_pending_hidden_note', [String(pendingClustersModalView.hiddenPendingCount)])
-        }}
-      </p>
+        <p class="portrait-pending-modal__hidden-title">
+          {{
+            t('portrait_pending_hidden_section', [
+              String(pendingClustersModalView.hiddenPendingItems.length)
+            ])
+          }}
+        </p>
+        <ul class="portrait-pending-cluster__list">
+          <li
+            v-for="item in pendingClustersModalView.hiddenPendingItems"
+            :key="item.factId"
+            class="portrait-pending-cluster__item"
+          >
+            <span>{{ item.value }}</span>
+            <span class="portrait-summary__actions">
+              <AppButton
+                type="button"
+                variant="text"
+                :title="t('portrait_approve')"
+                :aria-label="t('portrait_approve')"
+                @click="emit('portraitApprove', item.factId)"
+              >
+                {{ t('portrait_approve') }}
+              </AppButton>
+              <AppButton
+                type="button"
+                variant="text"
+                :title="t('portrait_decline')"
+                :aria-label="t('portrait_decline')"
+                @click="emit('portraitDecline', item.factId)"
+              >
+                {{ t('portrait_decline') }}
+              </AppButton>
+            </span>
+          </li>
+        </ul>
+        <AppButton
+          type="button"
+          variant="text"
+          class="portrait-pending-modal__ignore-all"
+          :title="t('portrait_pending_ignore_all')"
+          :aria-label="t('portrait_pending_ignore_all')"
+          @click="
+            emit(
+              'portraitDeclineHiddenAll',
+              pendingClustersModalView.hiddenPendingItems.map(item => item.factId)
+            )
+          "
+        >
+          {{ t('portrait_pending_ignore_all') }}
+        </AppButton>
+      </section>
     </div>
     <template #actions>
       <AppButton type="button" variant="outlined" @click="closePendingClustersModal">
@@ -1400,6 +1464,16 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
   line-height: var(--leading-snug);
   color: var(--on-surface);
   overflow-wrap: anywhere;
+}
+
+.portrait-pending-modal__hidden-title {
+  margin: 0;
+  font-size: var(--text-caption);
+  color: var(--on-surface-muted);
+}
+
+.portrait-pending-modal__ignore-all {
+  justify-self: start;
 }
 
 .portrait-pending-modal__hidden {
