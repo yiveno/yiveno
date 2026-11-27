@@ -122,6 +122,24 @@ export function summarizeLogError(data: unknown): string | undefined {
   if (typeof record.code === 'string' && record.code.trim()) {
     return record.code.trim()
   }
+  // extract / Worker API 常用 errorCode + HTTP status
+  const errorCode =
+    typeof record.errorCode === 'string' && record.errorCode.trim() ? record.errorCode.trim() : ''
+  const status =
+    typeof record.status === 'number' && Number.isFinite(record.status)
+      ? record.status
+      : typeof record.status === 'string' && /^\d+$/.test(record.status.trim())
+        ? Number(record.status.trim())
+        : undefined
+  if (errorCode && status !== undefined) {
+    return `${errorCode} (HTTP ${status})`
+  }
+  if (errorCode) {
+    return errorCode
+  }
+  if (status !== undefined) {
+    return `HTTP ${status}`
+  }
   return undefined
 }
 

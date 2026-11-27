@@ -60,6 +60,20 @@ describe('summarizeLogError', () => {
       '[supabase_auth] Request rate limit reached'
     )
   })
+
+  it('reads errorCode + status → errorCode (HTTP status)', () => {
+    expect(summarizeLogError({ status: 422, errorCode: 'parse_failed' })).toBe(
+      'parse_failed (HTTP 422)'
+    )
+  })
+
+  it('reads errorCode only', () => {
+    expect(summarizeLogError({ errorCode: 'parse_failed' })).toBe('parse_failed')
+  })
+
+  it('reads numeric status only → HTTP status', () => {
+    expect(summarizeLogError({ status: 502 })).toBe('HTTP 502')
+  })
 })
 
 describe('logger.error', () => {
@@ -159,6 +173,18 @@ describe('logger.warn', () => {
       '[2026-09-11 09:05:12] [Yiveno:i18n] 加载文案目录失败，回退 chrome.i18n — Failed to fetch'
     )
     expect(spy).toHaveBeenCalledTimes(1)
+    spy.mockRestore()
+  })
+
+  it('ContentExtract 提炼失败首行含 parse_failed (HTTP 422)', () => {
+    const spy = vi.spyOn(console, 'warn').mockImplementation(() => undefined)
+    logger.warn('ContentExtract', '提炼失败（不重试）', {
+      status: 422,
+      errorCode: 'parse_failed'
+    })
+    expect(spy).toHaveBeenCalledTimes(1)
+    expect(String(spy.mock.calls[0]?.[0])).toContain('parse_failed (HTTP 422)')
+    expect(spy.mock.calls[0]?.length).toBe(1)
     spy.mockRestore()
   })
 })
