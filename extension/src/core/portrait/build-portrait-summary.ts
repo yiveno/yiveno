@@ -28,9 +28,6 @@ export const PENDING_DISPLAY_MIN_CREDIBILITY = 0.5
 /** 送入语义/共现聚类的待确认项上限；超出按 credibility 取前 N，其余进隐藏。 */
 export const PORTRAIT_CLUSTER_INPUT_CAP = 60
 
-/** @deprecated 旧单条门槛来源数；浮出已改按簇，仅保留兼容引用。 */
-export const PENDING_DISPLAY_MIN_SOURCE_REFS = 2
-
 /** 单条摘要项（供 UI / i18n 渲染）。 */
 export type PortraitSummaryItem = {
   factId: string
@@ -76,26 +73,10 @@ function toGroup(state: Exclude<PortraitFactState, 'invalid'>): PortraitSummaryG
   return state
 }
 
-/** 独立来源数：sources 中不同 ref（同一 note 多次只算 1）。 */
-export function countDistinctPortraitSourceRefs(sources: readonly { ref: string }[]): number {
-  return new Set(sources.map(s => s.ref)).size
-}
-
 /** 簇是否浮出展示。 */
 export function isPortraitClusterSurfaced(items: readonly { credibility: number }[]): boolean {
   return (
     items.length >= 2 || items.some(item => item.credibility >= PENDING_DISPLAY_MIN_CREDIBILITY)
-  )
-}
-
-/** @deprecated 旧单条门槛；新浮出按簇。保留供旧测试/探针对照。 */
-export function meetsPendingInferenceDisplayThreshold(fact: {
-  credibility: number
-  sources: readonly { ref: string }[]
-}): boolean {
-  return (
-    fact.credibility >= PENDING_DISPLAY_MIN_CREDIBILITY ||
-    countDistinctPortraitSourceRefs(fact.sources) >= PENDING_DISPLAY_MIN_SOURCE_REFS
   )
 }
 

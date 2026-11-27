@@ -37,6 +37,7 @@ import {
 import ClueFormattedText from '@/pages/sidepanel/composer/ClueFormattedText.vue'
 import RecallResultCard from '@/pages/sidepanel/RecallResultCard.vue'
 import BindOtpModal from '@/pages/shared/BindOtpModal.vue'
+import { formatPortraitClusterMemberLine } from '@/core/portrait/render-portrait-summary'
 import { t } from '@/infrastructure/i18n/t'
 
 defineOptions({ name: 'RecallConversation' })
@@ -144,17 +145,7 @@ function togglePendingClusterExpanded(clusterId: string): void {
 
 /** 簇副行：至多 5 个成员 + 等 N 项。 */
 function formatClusterRepresentativeValues(values: string[]): string {
-  const top = values.slice(0, 5)
-  const rest = values.length - top.length
-  if (top.length === 0) {
-    return ''
-  }
-  const useIdeographic = top.some(v => /[^\u0000-\u007f]/.test(v))
-  const joined = top.join(useIdeographic ? '、' : ', ')
-  if (rest > 0) {
-    return t('portrait_pending_cluster_members_more', [joined, String(rest)])
-  }
-  return joined
+  return formatPortraitClusterMemberLine(values, t)
 }
 
 function pendingEntryLabel(view: { clusters: unknown[]; hiddenPendingItems: unknown[] }): string {
