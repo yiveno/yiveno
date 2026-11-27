@@ -100,7 +100,7 @@ bun run env:check:prod
 
 - `env:sync:*`：把 3 个源文件生成到各子项目运行时文件
 - `env:check:*`：校验当前 profile 是否缺字段、是否把 `localhost` 混进错误环境
-- **production 额外硬门：** 合并后的 `PUBLIC_TURNSTILE_SITE_KEY` 必须非空（官网 `/login` Turnstile；通常来自 `.env.shared.local`）。`website` 的 `build:prod` 会先跑该 check，缺失即失败，避免静默部署后出现 bot check not configured
+- **production 额外硬门：** 合并后的 `PUBLIC_SUPABASE_URL`、`PUBLIC_SUPABASE_ANON_KEY`、`PUBLIC_TURNSTILE_SITE_KEY` 任一为空即失败（官网 `/login` Supabase session + Turnstile；通常来自 `.env.shared.local`，`PUBLIC_SUPABASE_*` 可由 `SUPABASE_*` 映射）。`website` 的 `build:prod` 会先跑该 check；check 日志只报变量名与 `(set)/(missing)`，不打印值。缺失即失败，避免静默部署后出现 `PUBLIC_SUPABASE_ANON_KEY 未配置` / bot check not configured
 
 ## 子项目读取方式
 

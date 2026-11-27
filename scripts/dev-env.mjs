@@ -419,7 +419,10 @@ function getChecks(profile, env) {
     ]
   }
 
-  // Turnstile sitekey：合并后 env 非空即过（通常来自 .env.shared.local）；展示值脱敏，避免 check 日志刷公钥
+  // 官网生产硬门：PUBLIC_SUPABASE_* / Turnstile sitekey 任一空则失败。
+  // 值来自合并后 env（通常 .env.shared.local → WEBSITE_KEYS 映射）；展示一律脱敏，禁止刷密钥。
+  const publicSupabaseUrl = (env.PUBLIC_SUPABASE_URL || env.SUPABASE_URL || '').trim()
+  const publicSupabaseAnonKey = (env.PUBLIC_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY || '').trim()
   const turnstileSiteKey = (env.PUBLIC_TURNSTILE_SITE_KEY || '').trim()
   return [
     ['WEBSITE_URL', env.WEBSITE_URL, isRemoteHttps(env.WEBSITE_URL || '')],
@@ -427,6 +430,16 @@ function getChecks(profile, env) {
     ['VITE_API_BASE_URL', env.VITE_API_BASE_URL, isRemoteHttps(env.VITE_API_BASE_URL || '')],
     ['SUPABASE_URL', env.SUPABASE_URL, isRemoteHttps(env.SUPABASE_URL || '')],
     ['VITE_SUPABASE_URL', env.VITE_SUPABASE_URL, isRemoteHttps(env.VITE_SUPABASE_URL || '')],
+    [
+      'PUBLIC_SUPABASE_URL',
+      publicSupabaseUrl ? '(set)' : '(missing)',
+      publicSupabaseUrl.length > 0 && isRemoteHttps(publicSupabaseUrl)
+    ],
+    [
+      'PUBLIC_SUPABASE_ANON_KEY',
+      publicSupabaseAnonKey ? '(set)' : '(missing)',
+      publicSupabaseAnonKey.length > 0
+    ],
     [
       'PUBLIC_TURNSTILE_SITE_KEY',
       turnstileSiteKey ? '(set)' : '(missing)',
