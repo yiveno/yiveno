@@ -3857,6 +3857,24 @@
   "portrait_pending_inferences": {
     "message": "Inferred — approve or ignore"
   },
+  "portrait_pending_entry": {
+    "message": "Review pending preferences ($1 clusters)",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "portrait_pending_hidden_note": {
+    "message": "$1 more items lack enough evidence and aren’t listed.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
   "portrait_approve": {
     "message": "Approve"
   },

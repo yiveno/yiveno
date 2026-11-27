@@ -180,7 +180,7 @@ describe('portrait-facts · trait / 措辞 / 摘要', () => {
     expect(portraitWordingKind(0.7, 'contested', ['statement'])).toBe('juxtapose')
   })
 
-  it('摘要分组 + 空态 + pending 推断', () => {
+  it('摘要分组 + 空态 + pending 推断门槛', () => {
     expect(buildPortraitSummary([]).empty).toBe(true)
     const summary = buildPortraitSummary([
       fact({
@@ -199,11 +199,24 @@ describe('portrait-facts · trait / 措辞 / 摘要', () => {
         state: 'unconfirmed',
         inPortrait: false,
         sources: [{ type: 'inference', ref: 'note:1', score: 0.4, observedAt: NOW }]
+      }),
+      fact({
+        id: `${OWNER}\0contentTerm\0zig`,
+        value: 'zig',
+        credibility: 0.4,
+        state: 'unconfirmed',
+        inPortrait: false,
+        sources: [
+          { type: 'inference', ref: 'note:1', score: 0.4, observedAt: NOW },
+          { type: 'inference', ref: 'note:2', score: 0.4, observedAt: NOW }
+        ]
       })
     ])
     expect(summary.empty).toBe(false)
     expect(summary.groups.verified).toHaveLength(1)
     expect(summary.groups.unconfirmed).toHaveLength(1)
-    expect(summary.pendingInferences).toHaveLength(1)
+    expect(summary.clusters).toHaveLength(1)
+    expect(summary.clusters[0]?.label).toBe('zig')
+    expect(summary.hiddenPendingCount).toBe(1)
   })
 })

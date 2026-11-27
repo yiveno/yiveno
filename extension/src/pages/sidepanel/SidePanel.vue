@@ -37,7 +37,9 @@ import { t } from '@/infrastructure/i18n/t'
 import { commitRecallOutcome } from '@/application/recall/commit-recall-outcome'
 import { generatePortraitNarrative } from '@/application/portrait/generate-portrait-narrative'
 import {
+  applyPortraitApproveClusterToView,
   applyPortraitApproveToView,
+  applyPortraitDeclineClusterToView,
   applyPortraitDeclineToView,
   buildPortraitSummaryViewModel,
   type PortraitSummaryViewModel
@@ -1659,6 +1661,35 @@ async function handlePortraitApprove(factId: string): Promise<void> {
   }
 }
 
+/** 整簇批准：依次写库后一次性更新视图。 */
+async function handlePortraitApproveCluster(factIds: string[]): Promise<void> {
+  const okIds: string[] = []
+  for (const factId of factIds) {
+    const response = await portraitApproveFact(factId).catch(() => null)
+    if (response?.ok) {
+      okIds.push(factId)
+    }
+  }
+  if (okIds.length === 0) {
+    return
+  }
+  let targetTurnId: string | null = null
+  conversationTurns.value = conversationTurns.value.map(turn => {
+    if (turn.role !== 'assistant' || !turn.portraitSummaryView) {
+      return turn
+    }
+    targetTurnId = turn.id
+    return {
+      ...turn,
+      portraitSummaryView: applyPortraitApproveClusterToView(turn.portraitSummaryView, okIds, t)
+    }
+  })
+  const updated = conversationTurns.value.find(turn => turn.id === targetTurnId)
+  if (updated?.role === 'assistant' && updated.portraitSummaryView) {
+    schedulePortraitNarrativeRefresh(updated.id, updated.portraitSummaryView)
+  }
+}
+
 /** 画像推断项：忽略 → 本地视图移除。 */
 async function handlePortraitDecline(factId: string): Promise<void> {
   const response = await portraitDeclineFact(factId).catch(() => null)
@@ -1672,6 +1703,41 @@ async function handlePortraitDecline(factId: string): Promise<void> {
     }
     targetTurnId = turn.id
     const nextView = applyPortraitDeclineToView(turn.portraitSummaryView, factId, t)
+    return {
+      ...turn,
+      text: nextView.empty ? t('portrait_empty') : turn.text,
+      portraitSummaryView: nextView
+    }
+  })
+  const updated = conversationTurns.value.find(turn => turn.id === targetTurnId)
+  if (
+    updated?.role === 'assistant' &&
+    updated.portraitSummaryView &&
+    !updated.portraitSummaryView.empty
+  ) {
+    schedulePortraitNarrativeRefresh(updated.id, updated.portraitSummaryView)
+  }
+}
+
+/** 整簇忽略。 */
+async function handlePortraitDeclineCluster(factIds: string[]): Promise<void> {
+  const okIds: string[] = []
+  for (const factId of factIds) {
+    const response = await portraitDeclineFact(factId).catch(() => null)
+    if (response?.ok) {
+      okIds.push(factId)
+    }
+  }
+  if (okIds.length === 0) {
+    return
+  }
+  let targetTurnId: string | null = null
+  conversationTurns.value = conversationTurns.value.map(turn => {
+    if (turn.role !== 'assistant' || !turn.portraitSummaryView) {
+      return turn
+    }
+    targetTurnId = turn.id
+    const nextView = applyPortraitDeclineClusterToView(turn.portraitSummaryView, okIds, t)
     return {
       ...turn,
       text: nextView.empty ? t('portrait_empty') : turn.text,
@@ -2126,6 +2192,8 @@ onUnmounted(() => {
           @correct-understanding="handleCorrectUnderstanding"
           @portrait-approve="handlePortraitApprove"
           @portrait-decline="handlePortraitDecline"
+          @portrait-approve-cluster="handlePortraitApproveCluster"
+          @portrait-decline-cluster="handlePortraitDeclineCluster"
           @open-bookmark-ingest-settings="handleOpenBookmarkIngestSettings"
           @open-behavior-import-settings="handleOpenBehaviorImportSettings"
           @open-ai-settings="handleOpenAiSettings"

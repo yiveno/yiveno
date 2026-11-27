@@ -5,6 +5,7 @@
 
 import type { TranslateFn } from '@/core/i18n/translate'
 import type {
+  PortraitPendingCluster,
   PortraitSummary,
   PortraitSummaryGroup,
   PortraitSummaryItem
@@ -67,6 +68,19 @@ export type PortraitSummaryViewItem = {
   state: PortraitSummaryItem['state']
 }
 
+/** 视图层待确认簇。 */
+export type PortraitPendingClusterView = {
+  clusterId: string
+  label: string
+  count: number
+  items: Array<{
+    factId: string
+    line: string
+    value: string
+    credibility: number
+  }>
+}
+
 export type PortraitSummaryViewModel = {
   empty: boolean
   emptyText: string
@@ -80,13 +94,12 @@ export type PortraitSummaryViewModel = {
     narrative: string
     items: PortraitSummaryViewItem[]
   }>
-  /** pending 区叙事 */
+  /** pending 区叙事（按簇 label） */
   pendingNarrative: string
-  pendingInferences: Array<{
-    factId: string
-    line: string
-    value: string
-  }>
+  /** 达门槛待确认簇 */
+  clusters: PortraitPendingClusterView[]
+  /** 未列出（证据不足 / 功能词）计数 */
+  hiddenPendingCount: number
   /** 事实签名（LLM 缓存键） */
   factSignature: string
 }
@@ -123,18 +136,20 @@ export function renderPortraitGroupNarrative(
   return t(keys.base, [joined])
 }
 
-/** pending 叙事提炼。 */
+/**
+ * pending 叙事提炼：按簇 label；前 3 + 总簇数余量。
+ */
 export function renderPortraitPendingNarrative(
-  items: Array<{ value: string; credibility?: number }>,
+  clusters: Array<{ label: string; credibility?: number }>,
   t: TranslateFn
 ): string {
-  if (items.length === 0) {
+  if (clusters.length === 0) {
     return ''
   }
-  const sorted = [...items].sort(
-    (a, b) => (b.credibility ?? 0) - (a.credibility ?? 0) || a.value.localeCompare(b.value)
+  const sorted = [...clusters].sort(
+    (a, b) => (b.credibility ?? 0) - (a.credibility ?? 0) || a.label.localeCompare(b.label)
   )
-  const top = sorted.slice(0, 3).map(i => i.value)
+  const top = sorted.slice(0, 3).map(c => c.label)
   const rest = sorted.length - top.length
   const joined = joinRepresentativeValues(top)
   if (rest > 0) {
@@ -145,6 +160,7 @@ export function renderPortraitPendingNarrative(
 
 /**
  * 组装总述：lead（verified）+ contested/pending 计数；无 verified 时用首个非空组 narrative。
+ * pendingCount = 簇数。
  */
 export function buildPortraitSummaryText(input: {
   groups: Array<{
@@ -195,7 +211,29 @@ function toViewItem(item: PortraitSummaryItem, t: TranslateFn): PortraitSummaryV
   }
 }
 
-/** 从当前 groups/pending 重算叙事与签名（批准/忽略后调用）。 */
+function toClusterView(
+  cluster: PortraitPendingCluster,
+  t: TranslateFn
+): PortraitPendingClusterView {
+  return {
+    clusterId: cluster.clusterId,
+    label: cluster.label,
+    count: cluster.count,
+    items: cluster.items.map(item => ({
+      factId: item.factId,
+      line: renderPortraitFactLine(item, t),
+      value: item.value,
+      credibility: item.credibility
+    }))
+  }
+}
+
+/** 簇内最高 credibility（叙事排序）。 */
+function clusterMaxCredibility(cluster: PortraitPendingClusterView): number {
+  return cluster.items[0]?.credibility ?? 0
+}
+
+/** 从当前 groups/clusters 重算叙事与签名（批准/忽略后调用）。 */
 export function refreshPortraitSummaryNarratives(
   view: PortraitSummaryViewModel,
   t: TranslateFn
@@ -213,7 +251,10 @@ export function refreshPortraitSummaryNarratives(
     narrative: renderPortraitGroupNarrative(group.key, group.items, t)
   }))
   const pendingNarrative = renderPortraitPendingNarrative(
-    view.pendingInferences.map(p => ({ value: p.value, credibility: 0 })),
+    view.clusters.map(c => ({
+      label: c.label,
+      credibility: clusterMaxCredibility(c)
+    })),
     t
   )
   const contestedCount =
@@ -221,7 +262,7 @@ export function refreshPortraitSummaryNarratives(
     groups.reduce((n, g) => n + (g.key === 'contested' ? g.items.length : 0), 0)
   const summaryText = buildPortraitSummaryText({
     groups,
-    pendingCount: view.pendingInferences.length,
+    pendingCount: view.clusters.length,
     contestedCount,
     t
   })
@@ -233,14 +274,16 @@ export function refreshPortraitSummaryNarratives(
         inPortrait: i.inPortrait
       }))
     ),
-    ...view.pendingInferences.map(p => {
-      const fromGroup = groups.flatMap(g => g.items).find(i => i.factId === p.factId)
-      return {
-        factId: p.factId,
-        state: fromGroup?.state ?? 'unconfirmed',
-        inPortrait: false
-      }
-    })
+    ...view.clusters.flatMap(c =>
+      c.items.map(p => {
+        const fromGroup = groups.flatMap(g => g.items).find(i => i.factId === p.factId)
+        return {
+          factId: p.factId,
+          state: fromGroup?.state ?? ('unconfirmed' as const),
+          inPortrait: false
+        }
+      })
+    )
   ]
   // pending 可能已在 groups 中，按 factId 去重
   const seen = new Set<string>()
@@ -273,7 +316,8 @@ export function buildPortraitSummaryViewModel(
       summaryText: '',
       groups: [],
       pendingNarrative: '',
-      pendingInferences: [],
+      clusters: [],
+      hiddenPendingCount: summary.hiddenPendingCount,
       factSignature: ''
     }
   }
@@ -299,11 +343,7 @@ export function buildPortraitSummaryViewModel(
     })
     .filter((row): row is NonNullable<typeof row> => row != null)
 
-  const pendingInferences = summary.pendingInferences.map(item => ({
-    factId: item.factId,
-    line: renderPortraitFactLine(item, t),
-    value: item.value
-  }))
+  const clusters = summary.clusters.map(cluster => toClusterView(cluster, t))
 
   const base: PortraitSummaryViewModel = {
     empty: false,
@@ -312,10 +352,40 @@ export function buildPortraitSummaryViewModel(
     summaryText: '',
     groups,
     pendingNarrative: '',
-    pendingInferences,
+    clusters,
+    hiddenPendingCount: summary.hiddenPendingCount,
     factSignature: ''
   }
   return refreshPortraitSummaryNarratives(base, t)
+}
+
+/** 从簇中移除若干 factId；空簇丢弃；重算 label。 */
+function removeFactsFromClusters(
+  clusters: PortraitPendingClusterView[],
+  factIds: ReadonlySet<string>
+): PortraitPendingClusterView[] {
+  const next: PortraitPendingClusterView[] = []
+  for (const cluster of clusters) {
+    const items = cluster.items.filter(item => !factIds.has(item.factId))
+    if (items.length === 0) {
+      continue
+    }
+    const label =
+      [...items].sort((a, b) => b.credibility - a.credibility || a.value.localeCompare(b.value))[0]
+        ?.value ?? cluster.label
+    next.push({
+      clusterId: cluster.clusterId,
+      label,
+      count: items.length,
+      items
+    })
+  }
+  next.sort((a, b) => {
+    const maxA = a.items[0]?.credibility ?? 0
+    const maxB = b.items[0]?.credibility ?? 0
+    return maxB - maxA || b.count - a.count || a.label.localeCompare(b.label)
+  })
+  return next
 }
 
 /**
@@ -327,8 +397,8 @@ export function applyPortraitApproveToView(
   factId: string,
   t: TranslateFn
 ): PortraitSummaryViewModel {
-  const pending = view.pendingInferences.find(item => item.factId === factId)
-  const nextPending = view.pendingInferences.filter(item => item.factId !== factId)
+  const pending = view.clusters.flatMap(c => c.items).find(item => item.factId === factId)
+  const nextClusters = removeFactsFromClusters(view.clusters, new Set([factId]))
   const nextGroups = view.groups
     .map(group => ({
       ...group,
@@ -349,7 +419,8 @@ export function applyPortraitApproveToView(
           inPortrait: true,
           wording: 'direct',
           pendingInference: false,
-          sourceTypes: []
+          sourceTypes: [],
+          sourceNoteRefs: []
         },
         t
       ),
@@ -372,9 +443,9 @@ export function applyPortraitApproveToView(
   }
   const next: PortraitSummaryViewModel = {
     ...view,
-    empty: nextGroups.every(g => g.items.length === 0) && nextPending.length === 0,
+    empty: nextGroups.every(g => g.items.length === 0) && nextClusters.length === 0,
     groups: nextGroups,
-    pendingInferences: nextPending
+    clusters: nextClusters
   }
   if (next.empty) {
     return {
@@ -389,27 +460,42 @@ export function applyPortraitApproveToView(
 }
 
 /**
- * 忽略推断项：从 pending 与各组移除；若清空则标 empty。
+ * 整簇批准：依次按单项批准语义更新视图。
+ */
+export function applyPortraitApproveClusterToView(
+  view: PortraitSummaryViewModel,
+  factIds: readonly string[],
+  t: TranslateFn
+): PortraitSummaryViewModel {
+  let next = view
+  for (const factId of factIds) {
+    next = applyPortraitApproveToView(next, factId, t)
+  }
+  return next
+}
+
+/**
+ * 忽略推断项：从 clusters 与各组移除；若清空则标 empty。
  */
 export function applyPortraitDeclineToView(
   view: PortraitSummaryViewModel,
   factId: string,
   t?: TranslateFn
 ): PortraitSummaryViewModel {
-  const nextPending = view.pendingInferences.filter(item => item.factId !== factId)
+  const nextClusters = removeFactsFromClusters(view.clusters, new Set([factId]))
   const nextGroups = view.groups
     .map(group => ({
       ...group,
       items: group.items.filter(item => item.factId !== factId)
     }))
     .filter(group => group.items.length > 0)
-  const empty = nextGroups.every(g => g.items.length === 0) && nextPending.length === 0
+  const empty = nextGroups.every(g => g.items.length === 0) && nextClusters.length === 0
   const next: PortraitSummaryViewModel = {
     ...view,
     empty,
     emptyText: empty && t ? t('portrait_empty') : view.emptyText,
     groups: nextGroups,
-    pendingInferences: nextPending
+    clusters: nextClusters
   }
   if (empty || !t) {
     return {
@@ -420,4 +506,19 @@ export function applyPortraitDeclineToView(
     }
   }
   return refreshPortraitSummaryNarratives(next, t)
+}
+
+/**
+ * 整簇忽略。
+ */
+export function applyPortraitDeclineClusterToView(
+  view: PortraitSummaryViewModel,
+  factIds: readonly string[],
+  t?: TranslateFn
+): PortraitSummaryViewModel {
+  let next = view
+  for (const factId of factIds) {
+    next = applyPortraitDeclineToView(next, factId, t)
+  }
+  return next
 }

@@ -983,6 +983,8 @@ export const MESSAGE_KEYS = [
   'portrait_fact_juxtapose',
   'portrait_fact_inferred',
   'portrait_pending_inferences',
+  'portrait_pending_entry',
+  'portrait_pending_hidden_note',
   'portrait_approve',
   'portrait_decline',
   'portrait_in_portrait_badge',

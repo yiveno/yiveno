@@ -175,4 +175,60 @@ describe('compilePortraitFactsCore', () => {
     expect(timeRows).toHaveLength(2)
     expect(timeRows.every(r => r.state === 'contested')).toBe(true)
   })
+
+  it('功能词 topicAnchor 不生成 inference 行', () => {
+    const note = {
+      id: `${OWNER}\u0000item\u0000fn`,
+      ownerId: OWNER,
+      sourceMemoryItemId: '22222222-2222-4222-8222-222222222222',
+      sourceType: 'text_excerpt',
+      text: 'Footer links only',
+      sourceQuote: 'contact',
+      topicAnchor: ['联系', 'contact', 'subscribe', '周五发布'],
+      dreamRunId: 'run',
+      version: 1,
+      schemaVersion: 1,
+      sourceUpdatedAt: NOW_ISO,
+      createdAt: NOW_ISO,
+      updatedAt: NOW_ISO
+    } satisfies MemoryNoteRecord
+    const result = compilePortraitFactsCore({
+      ownerId: OWNER,
+      existing: [],
+      behaviorRows: [],
+      notes: [note],
+      nowMs: NOW_MS,
+      nowIso: NOW_ISO
+    })
+    expect(result.stats.inferenceCandidates).toBe(0)
+    expect(result.upserts.filter(r => r.sources.some(s => s.type === 'inference'))).toHaveLength(0)
+  })
+
+  it('正常词 topicAnchor 仍生成 inference 行', () => {
+    const note = {
+      id: `${OWNER}\u0000item\u0000ok`,
+      ownerId: OWNER,
+      sourceMemoryItemId: '22222222-2222-4222-8222-222222222222',
+      sourceType: 'text_excerpt',
+      text: 'Notes about retrieval',
+      sourceQuote: 'rag',
+      topicAnchor: ['rag'],
+      dreamRunId: 'run',
+      version: 1,
+      schemaVersion: 1,
+      sourceUpdatedAt: NOW_ISO,
+      createdAt: NOW_ISO,
+      updatedAt: NOW_ISO
+    } satisfies MemoryNoteRecord
+    const result = compilePortraitFactsCore({
+      ownerId: OWNER,
+      existing: [],
+      behaviorRows: [],
+      notes: [note],
+      nowMs: NOW_MS,
+      nowIso: NOW_ISO
+    })
+    expect(result.stats.inferenceCandidates).toBe(1)
+    expect(result.upserts.some(r => r.value === 'rag')).toBe(true)
+  })
 })

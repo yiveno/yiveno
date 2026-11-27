@@ -19,7 +19,8 @@ export async function resolvePortraitInspect(input: {
   logger.info('Portrait', '画像可查性摘要', {
     ownerId,
     empty: summary.empty,
-    pendingInferences: summary.pendingInferences.length,
+    pendingClusters: summary.clusters.length,
+    hiddenPendingCount: summary.hiddenPendingCount,
     verified: summary.groups.verified.length,
     corroborated: summary.groups.corroborated.length,
     unconfirmed: summary.groups.unconfirmed.length,

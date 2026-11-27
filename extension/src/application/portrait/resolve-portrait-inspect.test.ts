@@ -91,6 +91,8 @@ describe('resolvePortraitInspect', () => {
     })
     expect(result.portraitSummary?.empty).toBe(false)
     expect(result.portraitSummary?.groups.verified).toHaveLength(1)
-    expect(result.portraitSummary?.pendingInferences).toHaveLength(1)
+    // 单来源 credibility 0.4 → 未达展示门槛，计入 hidden
+    expect(result.portraitSummary?.clusters).toHaveLength(0)
+    expect(result.portraitSummary?.hiddenPendingCount).toBe(1)
   })
 })

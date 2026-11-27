@@ -18,6 +18,7 @@ import {
   type PortraitFactRecord,
   type PortraitFactSource
 } from '@/core/portrait/portrait-facts'
+import { isPortraitFunctionalTopicAnchor } from '@/core/portrait/portrait-functional-terms'
 import type { BehaviorStatsRecord } from '@/infrastructure/indexeddb/behavior-stats-types'
 import type { MemoryNoteRecord } from '@/infrastructure/indexeddb/memory-notes-types'
 
@@ -143,7 +144,8 @@ function mergeInferenceFacts(
     const candidates: string[] = []
     for (const term of note.topicAnchor) {
       const t = normalizePortraitValue(term)
-      if (t) {
+      // 功能词（联系/订阅等）不生成 inference 行
+      if (t && !isPortraitFunctionalTopicAnchor(t) && !isPortraitFunctionalTopicAnchor(term)) {
         candidates.push(t)
       }
     }

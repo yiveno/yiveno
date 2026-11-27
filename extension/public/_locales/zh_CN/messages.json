@@ -3857,6 +3857,24 @@
   "portrait_pending_inferences": {
     "message": "推断项 — 可批准或忽略"
   },
+  "portrait_pending_entry": {
+    "message": "查看待确认的偏好（$1 簇）",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "portrait_pending_hidden_note": {
+    "message": "另有 $1 项证据不足，未列出",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "12"
+      }
+    }
+  },
   "portrait_approve": {
     "message": "批准"
   },

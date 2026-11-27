@@ -1,11 +1,12 @@
 /**
- * 画像摘要措辞 / 空态。
+ * 画像摘要措辞 / 空态 / 簇视图同步。
  */
 
 import { describe, expect, it } from 'vitest'
 
 import { buildPortraitSummary } from '@/core/portrait/build-portrait-summary'
 import {
+  applyPortraitApproveClusterToView,
   applyPortraitApproveToView,
   applyPortraitDeclineToView,
   buildPortraitSummaryViewModel,
@@ -25,6 +26,26 @@ const t = (key: string, subs?: string | string[]) => {
   return `${key}:${list.join('|')}`
 }
 
+function dualSourcePending(value: string, refs: string[]): PortraitFactRecord {
+  return {
+    id: `${OWNER}\0contentTerm\0${value}`,
+    ownerId: OWNER,
+    slot: 'contentTerm',
+    value,
+    credibility: 0.4,
+    state: 'unconfirmed',
+    sources: refs.map(ref => ({
+      type: 'inference' as const,
+      ref,
+      score: 0.4,
+      observedAt: NOW
+    })),
+    inPortrait: false,
+    createdAt: NOW,
+    updatedAt: NOW
+  }
+}
+
 describe('render-portrait-summary', () => {
   it('空态文案', () => {
     const view = buildPortraitSummaryViewModel(buildPortraitSummary([]), t)
@@ -42,7 +63,8 @@ describe('render-portrait-summary', () => {
       inPortrait: true,
       wording: 'direct' as const,
       pendingInference: false,
-      sourceTypes: ['behavior']
+      sourceTypes: ['behavior'],
+      sourceNoteRefs: [] as string[]
     }
     expect(renderPortraitFactLine(item, t)).toBe('portrait_fact_direct:github.com')
     expect(renderPortraitFactLine({ ...item, wording: 'paraphrase', credibility: 0.4 }, t)).toBe(
@@ -62,24 +84,11 @@ describe('render-portrait-summary', () => {
     ).toBe('portrait_fact_inferred:github.com')
   })
 
-  it('分组视图含 pending', () => {
-    const facts: PortraitFactRecord[] = [
-      {
-        id: `${OWNER}\0contentTerm\0rag`,
-        ownerId: OWNER,
-        slot: 'contentTerm',
-        value: 'rag',
-        credibility: 0.4,
-        state: 'unconfirmed',
-        sources: [{ type: 'inference', ref: 'n', score: 0.4, observedAt: NOW }],
-        inPortrait: false,
-        createdAt: NOW,
-        updatedAt: NOW
-      }
-    ]
+  it('分组视图含达门槛 pending 簇', () => {
+    const facts: PortraitFactRecord[] = [dualSourcePending('rag', ['note:1', 'note:2'])]
     const view = buildPortraitSummaryViewModel(buildPortraitSummary(facts), t)
-    expect(view.pendingInferences).toHaveLength(1)
-    expect(view.pendingInferences[0]?.line).toBe('portrait_fact_inferred:rag')
+    expect(view.clusters).toHaveLength(1)
+    expect(view.clusters[0]?.items[0]?.line).toBe('portrait_fact_inferred:rag')
     expect(view.groups[0]?.key).toBe('unconfirmed')
   })
 
@@ -92,7 +101,10 @@ describe('render-portrait-summary', () => {
         value: 'rag',
         credibility: 0.4,
         state: 'contested',
-        sources: [{ type: 'inference', ref: 'n1', score: 0.4, observedAt: NOW }],
+        sources: [
+          { type: 'inference', ref: 'n1', score: 0.4, observedAt: NOW },
+          { type: 'inference', ref: 'n1b', score: 0.4, observedAt: NOW }
+        ],
         inPortrait: false,
         createdAt: NOW,
         updatedAt: NOW
@@ -104,7 +116,10 @@ describe('render-portrait-summary', () => {
         value: 'vector',
         credibility: 0.4,
         state: 'contested',
-        sources: [{ type: 'inference', ref: 'n2', score: 0.4, observedAt: NOW }],
+        sources: [
+          { type: 'inference', ref: 'n2', score: 0.4, observedAt: NOW },
+          { type: 'inference', ref: 'n2b', score: 0.4, observedAt: NOW }
+        ],
         inPortrait: false,
         createdAt: NOW,
         updatedAt: NOW
@@ -115,30 +130,17 @@ describe('render-portrait-summary', () => {
     expect(summary.groups.unconfirmed).toHaveLength(2)
     expect(summary.groups.unconfirmed.every(i => i.wording === 'inferred')).toBe(true)
     const view = buildPortraitSummaryViewModel(summary, t)
-    expect(view.pendingInferences.every(i => i.line.startsWith('portrait_fact_inferred:'))).toBe(
-      true
-    )
+    expect(
+      view.clusters.every(c => c.items.every(i => i.line.startsWith('portrait_fact_inferred:')))
+    ).toBe(true)
   })
 
   it('批准后行文案改 direct 且在 verified 组', () => {
-    const facts: PortraitFactRecord[] = [
-      {
-        id: `${OWNER}\0contentTerm\0github.com`,
-        ownerId: OWNER,
-        slot: 'contentTerm',
-        value: 'github.com',
-        credibility: 0.4,
-        state: 'unconfirmed',
-        sources: [{ type: 'inference', ref: 'n', score: 0.4, observedAt: NOW }],
-        inPortrait: false,
-        createdAt: NOW,
-        updatedAt: NOW
-      }
-    ]
+    const facts: PortraitFactRecord[] = [dualSourcePending('github.com', ['note:1', 'note:2'])]
     const view = buildPortraitSummaryViewModel(buildPortraitSummary(facts), t)
-    expect(view.pendingInferences[0]?.line).toBe('portrait_fact_inferred:github.com')
+    expect(view.clusters[0]?.items[0]?.line).toBe('portrait_fact_inferred:github.com')
     const next = applyPortraitApproveToView(view, `${OWNER}\0contentTerm\0github.com`, t)
-    expect(next.pendingInferences).toHaveLength(0)
+    expect(next.clusters).toHaveLength(0)
     const verified = next.groups.find(g => g.key === 'verified')
     expect(verified?.items).toHaveLength(1)
     expect(verified?.items[0]?.line).toBe('portrait_fact_direct:github.com')
@@ -146,26 +148,31 @@ describe('render-portrait-summary', () => {
   })
 
   it('忽略后该行从视图移除', () => {
-    const facts: PortraitFactRecord[] = [
-      {
-        id: `${OWNER}\0contentTerm\0rag`,
-        ownerId: OWNER,
-        slot: 'contentTerm',
-        value: 'rag',
-        credibility: 0.4,
-        state: 'unconfirmed',
-        sources: [{ type: 'inference', ref: 'n', score: 0.4, observedAt: NOW }],
-        inPortrait: false,
-        createdAt: NOW,
-        updatedAt: NOW
-      }
-    ]
+    const facts: PortraitFactRecord[] = [dualSourcePending('rag', ['note:1', 'note:2'])]
     const view = buildPortraitSummaryViewModel(buildPortraitSummary(facts), t)
     const next = applyPortraitDeclineToView(view, `${OWNER}\0contentTerm\0rag`, t)
-    expect(next.pendingInferences).toHaveLength(0)
+    expect(next.clusters).toHaveLength(0)
     expect(
       next.groups.every(g => g.items.every(i => i.factId !== `${OWNER}\0contentTerm\0rag`))
     ).toBe(true)
+  })
+
+  it('整簇批准后簇移除且 narrative 更新', () => {
+    const facts: PortraitFactRecord[] = [
+      dualSourcePending('rag', ['note:shared', 'note:a']),
+      dualSourcePending('vector', ['note:shared', 'note:b']),
+      dualSourcePending('zig', ['note:z1', 'note:z2'])
+    ]
+    const view = buildPortraitSummaryViewModel(buildPortraitSummary(facts), t)
+    expect(view.clusters.length).toBeGreaterThanOrEqual(2)
+    expect(view.pendingNarrative).toContain('portrait_narrative_pending')
+    const shared = view.clusters.find(c => c.items.some(i => i.value === 'rag'))
+    expect(shared).toBeTruthy()
+    const factIds = shared!.items.map(i => i.factId)
+    const next = applyPortraitApproveClusterToView(view, factIds, t)
+    expect(next.clusters.every(c => !c.items.some(i => factIds.includes(i.factId)))).toBe(true)
+    expect(next.pendingNarrative).not.toContain('rag')
+    expect(next.groups.find(g => g.key === 'verified')?.items.length).toBe(factIds.length)
   })
 
   it('确定性叙事：前 3 代表 + 计数', () => {
@@ -201,18 +208,7 @@ describe('render-portrait-summary', () => {
         createdAt: NOW,
         updatedAt: NOW
       },
-      {
-        id: `${OWNER}\0contentTerm\0zig`,
-        ownerId: OWNER,
-        slot: 'contentTerm',
-        value: 'zig',
-        credibility: 0.4,
-        state: 'unconfirmed',
-        sources: [{ type: 'inference', ref: 'n', score: 0.4, observedAt: NOW }],
-        inPortrait: false,
-        createdAt: NOW,
-        updatedAt: NOW
-      }
+      dualSourcePending('zig', ['note:1', 'note:2'])
     ]
     const view = buildPortraitSummaryViewModel(buildPortraitSummary(facts), t)
     expect(view.summaryText).toContain('portrait_summary_lead:github.com')

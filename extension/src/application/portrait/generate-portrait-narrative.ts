@@ -69,7 +69,7 @@ export function contentPointsFromPortraitView(
   return buildPortraitNarrativeContentPoints({
     locale,
     groups,
-    pendingValues: view.pendingInferences.map(p => p.value),
+    pendingValues: view.clusters.flatMap(c => c.items.map(p => p.value)),
     contestedValues: contested?.items.map(i => i.value) ?? []
   })
 }
