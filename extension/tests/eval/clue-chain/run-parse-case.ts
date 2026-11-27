@@ -110,6 +110,10 @@ export async function runClueChainParseCase(
         skipped: false
       })
     } catch (error) {
+      // 日配额耗尽等不可恢复错误：上抛给 batch / CLI，便于 checkpoint 后停跑
+      if (error instanceof Error && error.name === 'DailyQuotaExhaustedError') {
+        throw error
+      }
       const message = error instanceof Error ? error.message : String(error)
       lastError = message
       if (message.startsWith('timeout after')) {

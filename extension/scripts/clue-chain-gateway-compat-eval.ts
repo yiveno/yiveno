@@ -4,8 +4,9 @@
  * 用法：
  *   cd extension && bun scripts/clue-chain-gateway-compat-eval.mjs --arm=deepseek
  *   cd extension && bun scripts/clue-chain-gateway-compat-eval.mjs --arm=gemini
+ *   cd extension && bun scripts/clue-chain-gateway-compat-eval.mjs --arm=groq
  *
- * 环境：.env.shared.local 的 DEEPSEEK_API_KEY / GOOGLE_AI_API_KEY；
+ * 环境：.env.shared.local 的 DEEPSEEK_API_KEY / GOOGLE_AI_API_KEY / GROQ_API_KEY；
  * Gateway 账号/id 从 worker/wrangler.toml vars 读（不打印）。
  */
 
@@ -42,19 +43,40 @@ const extensionRoot = resolve(scriptDir, '..')
 const repoRoot = resolve(extensionRoot, '..')
 const runsDir = resolve(extensionRoot, 'tests/eval/clue-chain/runs')
 
-/** 与 Stage 2 harness 同固定时钟，两组可比。 */
+/** 与 Stage 2 harness 同固定时钟，三组可比。 */
 const FIXED_NOW_MS = Date.parse('2026-07-25T12:00:00.000Z')
 
-type EvalArm = 'deepseek' | 'gemini'
+/**
+ * Groq GPT-OSS：官方最小 reasoning = `low`（无 `none`）；字段为 `max_completion_tokens`。
+ * 见 https://console.groq.com/docs/reasoning （2026-11-27 核实）。
+ * 既有两组 maxTokens=400；低 reasoning 会吃 completion 预算，故抬到 1024，报告中记差异。
+ */
+const GROQ_MAX_COMPLETION_TOKENS = 1024
+const GROQ_REASONING_EFFORT = 'low' as const
+/** 免费层 TPM 8K 紧约束下的分钟预算上限（预留余量）。 */
+const GROQ_TPM_BUDGET = 7_000
+/** 发请求前预占估算（入+出）；回包后按 usage 校正。 */
+const GROQ_ESTIMATED_TOKENS_PER_CALL = 3_200
+
+type EvalArm = 'deepseek' | 'gemini' | 'groq'
+
+/** eval-only 体型：`groq` 不进产品 OpenAiCompatibleChatCompat。 */
+type EvalBodyCompat = OpenAiCompatibleChatCompat | 'groq'
 
 interface ArmConfig {
   arm: EvalArm
   model: string
-  /** openai-compatible-chat profile：决定请求体字段（google ≡ dashscope：max_tokens、不发思考）。 */
-  bodyCompat: OpenAiCompatibleChatCompat
-  apiKeyEnv: 'DEEPSEEK_API_KEY' | 'GOOGLE_AI_API_KEY'
-  /** 每分钟最大 HTTP 请求数；null = 不限速。 */
+  /** 请求体字段分档（google ≡ dashscope；groq = GPT-OSS 官方字段）。 */
+  bodyCompat: EvalBodyCompat
+  apiKeyEnv: 'DEEPSEEK_API_KEY' | 'GOOGLE_AI_API_KEY' | 'GROQ_API_KEY'
+  /** 每分钟最大 HTTP 请求数；null = 不按 RPM 限速。 */
   maxRpm: number | null
+  /** 分钟窗口 token 预算；null = 不按 TPM 限速。 */
+  maxTpmBudget: number | null
+  /** 发请求前预占 token 估算；仅 maxTpmBudget 生效时用。 */
+  estimatedTokensPerCall: number | null
+  /** completion 上限；未设则 400（与既有两组一致）。 */
+  maxCompletionTokens: number
   label: string
 }
 
@@ -65,6 +87,9 @@ const ARM_CONFIGS: Record<EvalArm, ArmConfig> = {
     bodyCompat: 'deepseek',
     apiKeyEnv: 'DEEPSEEK_API_KEY',
     maxRpm: null,
+    maxTpmBudget: null,
+    estimatedTokensPerCall: null,
+    maxCompletionTokens: 400,
     label: 'control-deepseek-flash'
   },
   gemini: {
@@ -74,7 +99,22 @@ const ARM_CONFIGS: Record<EvalArm, ArmConfig> = {
     bodyCompat: 'dashscope',
     apiKeyEnv: 'GOOGLE_AI_API_KEY',
     maxRpm: 12,
+    maxTpmBudget: null,
+    estimatedTokensPerCall: null,
+    maxCompletionTokens: 400,
     label: 'candidate-gemini-3.5-flash-lite'
+  },
+  groq: {
+    arm: 'groq',
+    model: 'groq/openai/gpt-oss-120b',
+    bodyCompat: 'groq',
+    apiKeyEnv: 'GROQ_API_KEY',
+    // 约 ≤2 HTTP/min，与 7K TPM 预算同向；硬约束仍走 maxTpmBudget
+    maxRpm: 2,
+    maxTpmBudget: GROQ_TPM_BUDGET,
+    estimatedTokensPerCall: GROQ_ESTIMATED_TOKENS_PER_CALL,
+    maxCompletionTokens: GROQ_MAX_COMPLETION_TOKENS,
+    label: 'candidate-groq-gpt-oss-120b'
   }
 }
 
@@ -139,8 +179,8 @@ function parseArm(): EvalArm {
   const arg = process.argv.find(a => a.startsWith('--arm='))?.slice('--arm='.length)
   const env = process.env.COMPAT_EVAL_ARM?.trim()
   const raw = arg || env || ''
-  if (raw === 'deepseek' || raw === 'gemini') return raw
-  throw new Error('须指定 --arm=deepseek|gemini 或 COMPAT_EVAL_ARM')
+  if (raw === 'deepseek' || raw === 'gemini' || raw === 'groq') return raw
+  throw new Error('须指定 --arm=deepseek|gemini|groq 或 COMPAT_EVAL_ARM')
 }
 
 function percentile(sorted: number[], p: number): number | null {
@@ -153,6 +193,20 @@ function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
+interface RateLimitSnapshot {
+  at: string
+  attempt: number
+  status: number
+  retryAfter: string | null
+  limitRequests: string | null
+  remainingRequests: string | null
+  resetRequests: string | null
+  limitTokens: string | null
+  remainingTokens: string | null
+  resetTokens: string | null
+  errorPreview: string
+}
+
 interface RequestMeter {
   latenciesMs: number[]
   promptTokens: number
@@ -162,21 +216,54 @@ interface RequestMeter {
   httpCalls: number
   retries429: number
   jsonEmptyOrFail: number
+  rateLimitEvents: RateLimitSnapshot[]
 }
 
-/** 滑动窗口 RPM 限速 + 429 退避（最多再试 2 次）。 */
+class DailyQuotaExhaustedError extends Error {
+  readonly kind = 'daily_quota_exhausted' as const
+  constructor(message: string) {
+    super(message)
+    this.name = 'DailyQuotaExhaustedError'
+  }
+}
+
+function isDailyQuotaMessage(message: string): boolean {
+  return /tokens?\s*per\s*day|TPD|daily\s*(token|quota|limit)|requests?\s*per\s*day|RPD|per day/i.test(
+    message
+  )
+}
+
+function readRateLimitHeaders(
+  response: Response
+): Omit<RateLimitSnapshot, 'at' | 'attempt' | 'status' | 'errorPreview'> {
+  return {
+    retryAfter: response.headers.get('retry-after'),
+    limitRequests: response.headers.get('x-ratelimit-limit-requests'),
+    remainingRequests: response.headers.get('x-ratelimit-remaining-requests'),
+    resetRequests: response.headers.get('x-ratelimit-reset-requests'),
+    limitTokens: response.headers.get('x-ratelimit-limit-tokens'),
+    remainingTokens: response.headers.get('x-ratelimit-remaining-tokens'),
+    resetTokens: response.headers.get('x-ratelimit-reset-tokens')
+  }
+}
+
+/** 滑动窗口 RPM / TPM 限速 + 429 退避（最多再试 2 次）。 */
 function createGatewayCompatCompleter(input: {
   completionsUrl: string
   apiKey: string
   model: string
-  bodyCompat: OpenAiCompatibleChatCompat
+  bodyCompat: EvalBodyCompat
   maxRpm: number | null
+  maxTpmBudget: number | null
+  estimatedTokensPerCall: number | null
+  maxCompletionTokens: number
   gatewayToken?: string
   meter: RequestMeter
   /** eval 专用 fetch 超时（毫秒）；默认 60s，避免限速排队后 12s 产品预算误杀。 */
   fetchTimeoutMs: number
 }): LlmChatCompleter {
   const recentStarts: number[] = []
+  const tokenWindow: Array<{ at: number; tokens: number }> = []
 
   async function waitForRpmSlot(): Promise<void> {
     if (input.maxRpm == null || input.maxRpm <= 0) return
@@ -194,6 +281,31 @@ function createGatewayCompatCompleter(input: {
     }
   }
 
+  async function waitForTpmSlot(estimate: number): Promise<number> {
+    if (input.maxTpmBudget == null || input.maxTpmBudget <= 0) return -1
+    for (;;) {
+      const now = Date.now()
+      while (tokenWindow.length > 0 && now - tokenWindow[0]!.at >= 60_000) {
+        tokenWindow.shift()
+      }
+      const used = tokenWindow.reduce((sum, row) => sum + row.tokens, 0)
+      if (used + estimate <= input.maxTpmBudget) {
+        tokenWindow.push({ at: now, tokens: estimate })
+        return tokenWindow.length - 1
+      }
+      const waitMs = 60_000 - (now - tokenWindow[0]!.at) + 50
+      console.info(
+        `[compat-eval] TPM 预算等待 ${Math.round(waitMs)}ms（used=${used}+est=${estimate} > budget=${input.maxTpmBudget}）`
+      )
+      await sleep(Math.max(waitMs, 500))
+    }
+  }
+
+  function settleTokenReservation(index: number, actualTokens: number): void {
+    if (index < 0 || index >= tokenWindow.length) return
+    tokenWindow[index] = { ...tokenWindow[index]!, tokens: Math.max(1, actualTokens) }
+  }
+
   function buildBody(
     messages: Array<{ role: string; content: string }>,
     temperature: number,
@@ -203,6 +315,15 @@ function createGatewayCompatCompleter(input: {
       model: input.model,
       messages,
       temperature
+    }
+    if (input.bodyCompat === 'groq') {
+      // Groq GPT-OSS：官方最小 reasoning_effort=low；max_completion_tokens；隐藏 reasoning 以利 JSON
+      return JSON.stringify({
+        ...base,
+        max_completion_tokens: maxTokens,
+        reasoning_effort: GROQ_REASONING_EFFORT,
+        include_reasoning: false
+      })
     }
     if (input.bodyCompat === 'openai') {
       return JSON.stringify({
@@ -227,6 +348,8 @@ function createGatewayCompatCompleter(input: {
     temperature: number
   ): Promise<string> {
     await waitForRpmSlot()
+    const estimate = input.estimatedTokensPerCall ?? 0
+    const reserveIndex = await waitForTpmSlot(estimate)
     const headers: Record<string, string> = {
       'content-type': 'application/json',
       authorization: `Bearer ${input.apiKey}`,
@@ -242,13 +365,14 @@ function createGatewayCompatCompleter(input: {
     const response = await fetch(input.completionsUrl, {
       method: 'POST',
       headers,
-      body: buildBody(messages, temperature, 400),
+      body: buildBody(messages, temperature, input.maxCompletionTokens),
       signal: AbortSignal.timeout(input.fetchTimeoutMs)
     })
+    const rateHeaders = readRateLimitHeaders(response)
     const payload = (await response.json().catch(() => ({}))) as {
       choices?: Array<{
         finish_reason?: string
-        message?: { content?: string; reasoning_content?: string }
+        message?: { content?: string; reasoning_content?: string; reasoning?: string }
       }>
       usage?: {
         prompt_tokens?: number
@@ -263,19 +387,42 @@ function createGatewayCompatCompleter(input: {
 
     if (!response.ok) {
       const rawMessage = payload.error?.message || response.statusText || 'chat_completions_failed'
-      const err = new Error(rawMessage) as Error & { status?: number }
+      settleTokenReservation(reserveIndex, 0)
+      const snapshot: RateLimitSnapshot = {
+        at: new Date().toISOString(),
+        attempt: input.meter.retries429 + 1,
+        status: response.status,
+        ...rateHeaders,
+        errorPreview: rawMessage.slice(0, 240)
+      }
+      if (response.status === 429) {
+        input.meter.rateLimitEvents.push(snapshot)
+        console.warn(
+          `[compat-eval] 429 headers remaining-tokens=${rateHeaders.remainingTokens} reset-tokens=${rateHeaders.resetTokens} remaining-requests=${rateHeaders.remainingRequests} reset-requests=${rateHeaders.resetRequests} retry-after=${rateHeaders.retryAfter}`
+        )
+      }
+      if (response.status === 429 && isDailyQuotaMessage(rawMessage)) {
+        throw new DailyQuotaExhaustedError(rawMessage)
+      }
+      const err = new Error(rawMessage) as Error & {
+        status?: number
+        rateLimit?: Omit<RateLimitSnapshot, 'at' | 'attempt' | 'status' | 'errorPreview'>
+      }
       err.status = response.status
+      err.rateLimit = rateHeaders
       throw err
     }
 
     const usage = parseLlmChatUsage(payload.usage)
+    const actualTotal =
+      usage.totalTokens ?? (usage.promptTokens ?? 0) + (usage.completionTokens ?? 0)
+    settleTokenReservation(reserveIndex, actualTotal > 0 ? actualTotal : estimate || 1)
     if (usage.promptTokens == null && usage.completionTokens == null && usage.totalTokens == null) {
       input.meter.usageMissing += 1
     } else {
       input.meter.promptTokens += usage.promptTokens ?? 0
       input.meter.completionTokens += usage.completionTokens ?? 0
-      input.meter.totalTokens +=
-        usage.totalTokens ?? (usage.promptTokens ?? 0) + (usage.completionTokens ?? 0)
+      input.meter.totalTokens += actualTotal
     }
 
     const message = payload.choices?.[0]?.message
@@ -295,6 +442,9 @@ function createGatewayCompatCompleter(input: {
         return await once(messages, temperature)
       } catch (error) {
         lastError = error
+        if (error instanceof DailyQuotaExhaustedError) {
+          throw error
+        }
         const status = (error as { status?: number })?.status
         const msg = error instanceof Error ? error.message : String(error)
         const is429 = status === 429 || /\b429\b|rate.?limit|too many requests/i.test(msg)
@@ -302,7 +452,12 @@ function createGatewayCompatCompleter(input: {
           throw error
         }
         input.meter.retries429 += 1
-        const backoffMs = 5_000 * (attempt + 1)
+        const rateLimit = (error as { rateLimit?: RateLimitSnapshot })?.rateLimit
+        const retryAfterSec = Number(rateLimit?.retryAfter)
+        const backoffMs =
+          Number.isFinite(retryAfterSec) && retryAfterSec > 0
+            ? Math.ceil(retryAfterSec * 1000) + 250
+            : 5_000 * (attempt + 1)
         console.warn(`[compat-eval] 429 退避 ${backoffMs}ms（第 ${attempt + 1} 次重试）`)
         await sleep(backoffMs)
       }
@@ -371,7 +526,10 @@ export async function runClueChainGatewayCompatEval(): Promise<void> {
   }
   const cases = allCases.slice(0, limit)
   const nowMs = Number(process.env.CLUE_CHAIN_NOW_MS?.trim() || FIXED_NOW_MS)
-  const timeoutMs = Number(process.env.CLUE_CHAIN_TIMEOUT_MS?.trim() || 60_000)
+  // Groq 2 RPM / TPM 预算排队会使单条 understand（含 chitchat 二次调用）远超 60s；
+  // 未设环境变量时默认 5min，避免限速等待被误记为模型超时。
+  const defaultTimeoutMs = cfg.arm === 'groq' ? 300_000 : 60_000
+  const timeoutMs = Number(process.env.CLUE_CHAIN_TIMEOUT_MS?.trim() || defaultTimeoutMs)
   const maxAttempts = Number(process.env.CLUE_CHAIN_MAX_ATTEMPTS?.trim() || 2)
   const fetchTimeoutMs = Number(process.env.COMPAT_EVAL_FETCH_TIMEOUT_MS?.trim() || 60_000)
   const checkpointPath = resolve(runsDir, `checkpoint-compat-${cfg.arm}.json`)
@@ -385,7 +543,8 @@ export async function runClueChainGatewayCompatEval(): Promise<void> {
     usageMissing: 0,
     httpCalls: 0,
     retries429: 0,
-    jsonEmptyOrFail: 0
+    jsonEmptyOrFail: 0,
+    rateLimitEvents: []
   }
 
   const complete = createGatewayCompatCompleter({
@@ -394,15 +553,23 @@ export async function runClueChainGatewayCompatEval(): Promise<void> {
     model: cfg.model,
     bodyCompat: cfg.bodyCompat,
     maxRpm: cfg.maxRpm,
+    maxTpmBudget: cfg.maxTpmBudget,
+    estimatedTokensPerCall: cfg.estimatedTokensPerCall,
+    maxCompletionTokens: cfg.maxCompletionTokens,
     gatewayToken,
     meter,
     fetchTimeoutMs
   })
 
   console.info(
-    `[compat-eval] arm=${arm} model=${cfg.model} bodyCompat=${cfg.bodyCompat} key=${cfg.apiKeyEnv} rpm=${cfg.maxRpm ?? 'unlimited'} cases=${cases.length} head=${head.slice(0, 8)} nowMs=${nowMs} fetchTimeoutMs=${fetchTimeoutMs}`
+    `[compat-eval] arm=${arm} model=${cfg.model} bodyCompat=${cfg.bodyCompat} key=${cfg.apiKeyEnv} rpm=${cfg.maxRpm ?? 'unlimited'} tpmBudget=${cfg.maxTpmBudget ?? 'unlimited'} maxCompletionTokens=${cfg.maxCompletionTokens} cases=${cases.length} head=${head.slice(0, 8)} nowMs=${nowMs} fetchTimeoutMs=${fetchTimeoutMs}`
   )
   console.info(`[compat-eval] endpoint=compat/chat/completions cache=skip useCache=cleared`)
+  if (cfg.arm === 'groq') {
+    console.info(
+      `[compat-eval] groq body: reasoning_effort=${GROQ_REASONING_EFFORT} include_reasoning=false max_completion_tokens=${GROQ_MAX_COMPLETION_TOKENS} (既有两组=400)`
+    )
+  }
 
   type CheckpointShape = {
     parseRuns?: ClueChainParseRunCase[]
@@ -424,6 +591,9 @@ export async function runClueChainGatewayCompatEval(): Promise<void> {
       meter.httpCalls += checkpoint.meterPartial.httpCalls ?? 0
       meter.retries429 += checkpoint.meterPartial.retries429 ?? 0
       meter.jsonEmptyOrFail += checkpoint.meterPartial.jsonEmptyOrFail ?? 0
+      if (checkpoint.meterPartial.rateLimitEvents) {
+        meter.rateLimitEvents.push(...checkpoint.meterPartial.rateLimitEvents)
+      }
     }
   }
 
@@ -446,7 +616,8 @@ export async function runClueChainGatewayCompatEval(): Promise<void> {
             usageMissing: meter.usageMissing,
             httpCalls: meter.httpCalls,
             retries429: meter.retries429,
-            jsonEmptyOrFail: meter.jsonEmptyOrFail
+            jsonEmptyOrFail: meter.jsonEmptyOrFail,
+            rateLimitEvents: meter.rateLimitEvents
           }
         },
         null,
@@ -463,25 +634,39 @@ export async function runClueChainGatewayCompatEval(): Promise<void> {
     }
   }
 
-  const parseRuns = await runClueChainParseBatch({
-    cases,
-    nowMs,
-    maxAttempts,
-    timeoutMs,
-    checkpoint: parseCheckpoint,
-    understand: (clue, options) =>
-      understandRecallClue(clue, {
-        nowMs: options.nowMs,
-        complete
-      }),
-    onCaseDone: (result, index, total) => {
-      const status = result.error ? `ERR ${result.error}` : `ok src=${result.source}`
-      console.info(`[compat-eval] parse ${index + 1}/${total} id=${result.id} ${status}`)
-      // 边跑边存，便于限速长跑中断后续跑
-      const merged = new Map(parseCheckpoint)
-      // onCaseDone 在 batch 内顺序推入；用当前已输出列表不便，落盘整批已完成靠下方最终 + 周期性
+  let parseRuns: ClueChainParseRunCase[]
+  try {
+    parseRuns = await runClueChainParseBatch({
+      cases,
+      nowMs,
+      maxAttempts,
+      timeoutMs,
+      checkpoint: parseCheckpoint,
+      understand: (clue, options) =>
+        understandRecallClue(clue, {
+          nowMs: options.nowMs,
+          complete
+        }),
+      onCaseDone: (result, index, total) => {
+        const status = result.error ? `ERR ${result.error}` : `ok src=${result.source}`
+        console.info(`[compat-eval] parse ${index + 1}/${total} id=${result.id} ${status}`)
+        // 边跑边存：写入同一 Map，限速/TPD 中断后续跑
+        parseCheckpoint.set(result.id, result)
+        saveCheckpoint([...parseCheckpoint.values()], new Map(checkpoint.topicJudges ?? []))
+      }
+    })
+  } catch (error) {
+    if (error instanceof DailyQuotaExhaustedError) {
+      const done = parseCheckpoint.size
+      saveCheckpoint([...parseCheckpoint.values()], new Map(checkpoint.topicJudges ?? []))
+      console.error(
+        `[compat-eval] TPD/日配额耗尽，已 checkpoint。parse 已完成 ${done}/${cases.length}。用 CLUE_CHAIN_RESUME=1 续跑。msg=${error.message}`
+      )
+      process.exitCode = 2
+      return
     }
-  })
+    throw error
+  }
 
   const enrichedRuns = parseRuns.map(withResolvedTopicTerms)
   const topicJudges = new Map<string, ClueChainTopicJudgeResult>(checkpoint.topicJudges ?? [])
@@ -517,6 +702,14 @@ export async function runClueChainGatewayCompatEval(): Promise<void> {
         `[compat-eval] judge ${index + 1}/${enrichedRuns.length} id=${run.id} match=${judge.match}`
       )
     } catch (error) {
+      if (error instanceof DailyQuotaExhaustedError) {
+        saveCheckpoint(enrichedRuns, topicJudges)
+        console.error(
+          `[compat-eval] TPD/日配额耗尽于 judge，已 checkpoint。judge 已完成 ${topicJudges.size}/${enrichedRuns.length}。用 CLUE_CHAIN_RESUME=1 续跑。msg=${error.message}`
+        )
+        process.exitCode = 2
+        return
+      }
       const message = error instanceof Error ? error.message : String(error)
       topicJudges.set(run.id, { match: false, reason: `judge 异常: ${message}` })
       console.warn(
@@ -568,8 +761,22 @@ export async function runClueChainGatewayCompatEval(): Promise<void> {
     parseCacheCleared: true,
     temperature: 0,
     nowMs,
+    maxCompletionTokens: cfg.maxCompletionTokens,
+    maxRpm: cfg.maxRpm,
+    maxTpmBudget: cfg.maxTpmBudget,
+    groqRequestBody:
+      cfg.arm === 'groq'
+        ? {
+            reasoning_effort: GROQ_REASONING_EFFORT,
+            include_reasoning: false,
+            max_completion_tokens: GROQ_MAX_COMPLETION_TOKENS,
+            vsOtherArmsMaxTokens: 400,
+            note: 'GPT-OSS 官方无 reasoning_effort=none；最小为 low。completion 抬到 1024 以免低 reasoning 占满 400 截断 JSON。'
+          }
+        : null,
     httpCalls: meter.httpCalls,
     retries429: meter.retries429,
+    rateLimitEvents: meter.rateLimitEvents,
     jsonParseFailures,
     jsonEmptyOrFail: meter.jsonEmptyOrFail,
     latencyMs: {
