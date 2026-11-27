@@ -23,9 +23,9 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { INTENT_EVAL_MUST } from '../src/core/recall/eval/intent-eval-cases'
-import { buildNoiseGatewayEvalCases } from '../src/core/recall/eval/run-noise-gateway-eval'
-import type { NoiseGatewayCase } from '../src/core/recall/eval/noise-gateway-cases'
+import { INTENT_EVAL_MUST } from '../tests/eval/intent-eval-cases'
+import { buildNoiseGatewayEvalCases } from '../tests/eval/run-noise-gateway-eval'
+import type { NoiseGatewayCase } from '../tests/eval/noise-gateway-cases'
 import type { OpenAiCompatibleChatCompat } from '../src/core/recall/understand/openai-compatible-chat'
 import {
   createOpenAiCompatibleCompleter,

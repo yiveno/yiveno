@@ -2,7 +2,7 @@
 
 > **Normative 摘要：** [`Yiveno-产品文档-v4.0.md`](../product/Yiveno-产品文档-v4.0.md) **§5.10.8**。  
 > **架构：** [`ADR-007`](../architecture/decisions/ADR-007-omnibox-offline-lookup.md)。  
-> **自动化 must：** `extension/src/core/recall/eval/omnibox-eval.test.ts`（`omnibox_must`）。  
+> **自动化 must：** `extension/tests/eval/omnibox-eval.test.ts`（`omnibox_must`）。  
 > **DEV API 总索引：** [`DEV-调试API.md`](./DEV-调试API.md)（`yiveno.seedRecallProbe` · `yiveno.runProbeOmniboxSmoke` 等）。
 
 ---

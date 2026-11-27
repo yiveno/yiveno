@@ -3,7 +3,7 @@
  */
 import { describe, expect, it } from 'vitest'
 
-import { PARSE_GOLD_NOW_MS } from '@/core/recall/eval/parse-gold-now'
+import { PARSE_GOLD_NOW_MS } from '../../../../tests/eval/parse-gold-now'
 import {
   clueHasObjectTypeFormUncertainty,
   groundObjectTypes,

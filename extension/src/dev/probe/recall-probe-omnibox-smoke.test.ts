@@ -4,7 +4,7 @@ import {
   createBookmarkMemoryItem,
   createTextExcerptMemoryItem
 } from '@/core/memory/create-memory-item'
-import { RECALL_EVAL_NOW_MS } from '@/core/recall/eval/recall-eval-now'
+import { RECALL_EVAL_NOW_MS } from '../../../tests/eval/recall-eval-now'
 import { recallByKeywordWithParsedClue } from '@/core/recall/orchestrate-keyword-recall'
 import { understandRecallClue } from '@/core/recall/understand/understand-recall-clue'
 import {

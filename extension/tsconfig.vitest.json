@@ -14,6 +14,7 @@
     "src/**/*.spec.ts",
     "src/**/*.spec.tsx",
     "src/tests/**/*",
+    "tests/**/*.ts",
     "**/__tests__/**/*"
   ],
   "exclude": ["node_modules", "dist", "coverage"]

@@ -13,7 +13,7 @@ import {
   DREAMING_EVAL_IDS,
   DREAMING_EVAL_OWNER_ID,
   makeDreamingEvalNote
-} from '@/core/recall/eval/dreaming-eval-corpus'
+} from '../../../tests/eval/dreaming-eval-corpus'
 import {
   buildNoteVirtualFieldText,
   classifyMatchedTermKind,

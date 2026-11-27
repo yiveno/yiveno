@@ -13,7 +13,6 @@ import {
   completeOpenAiCompatibleChatDetailed,
   type OpenAiCompatibleChatConfig
 } from '@/core/recall/understand/openai-compatible-chat'
-import { PARSE_GOLD_NOW_MS } from '@/core/recall/eval/parse-gold-now'
 import type { ParsedRecallClue, RecallClueIntent } from '@/core/recall/parse-recall-clue-types'
 import type { LlmChatCompleteOptions } from '@/core/recall/understand/ai-chat-task-kind'
 import type { LlmChatDetailedResult } from '@/core/recall/understand/llm-chat-usage'
@@ -119,7 +118,7 @@ export async function parseRecallClueWithLlm(
   clue: string,
   options: ParseRecallClueWithLlmOptions
 ): Promise<ParsedRecallClue> {
-  const nowMs = options.nowMs ?? PARSE_GOLD_NOW_MS
+  const nowMs = options.nowMs ?? Date.now()
   const trace = options.trace ?? noopClueFlowTrace
   const useCache = options.useCache !== false
   const messages = buildLlmParseClueMessages(clue)

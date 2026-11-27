@@ -39,13 +39,13 @@ import {
   compareRetrievalAblationToBaseline,
   extractRetrievalAblationReport,
   formatRetrievalAblationBaselineCompareSummary
-} from '../src/core/recall/eval/compare-retrieval-ablation-baseline'
+} from '../tests/eval/compare-retrieval-ablation-baseline'
 import {
   formatRetrievalAblationSummary,
   runRetrievalAblation,
   type RetrievalAblationEmbedClient
-} from '../src/core/recall/eval/run-retrieval-ablation'
-import { WORKER_EMBEDDING_MODEL_HINT } from '../src/core/recall/eval/retrieval-ablation-fusion-constants'
+} from '../tests/eval/run-retrieval-ablation'
+import { WORKER_EMBEDDING_MODEL_HINT } from '../tests/eval/retrieval-ablation-fusion-constants'
 
 const scriptDir = dirname(fileURLToPath(import.meta.url))
 const repoRoot = resolve(scriptDir, '../..')

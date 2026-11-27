@@ -17,26 +17,23 @@ import { fileURLToPath } from 'node:url'
 import {
   CLUE_CHAIN_STAGE2_NOW_MS,
   CLUE_CHAIN_STAGE2_SEED
-} from '../src/core/recall/eval/clue-chain/stage2/constants'
+} from '../tests/eval/clue-chain/stage2/constants'
 import {
   compareStage2Baseline,
   formatStage2BaselineDelta
-} from '../src/core/recall/eval/clue-chain/stage2/compare-baseline'
-import { generateStage2Dataset } from '../src/core/recall/eval/clue-chain/stage2/generate-dataset'
+} from '../tests/eval/clue-chain/stage2/compare-baseline'
+import { generateStage2Dataset } from '../tests/eval/clue-chain/stage2/generate-dataset'
 import {
   buildStage2Report,
   formatStage2ReportConsole
-} from '../src/core/recall/eval/clue-chain/stage2/report'
-import { runStage2Case } from '../src/core/recall/eval/clue-chain/stage2/run-case'
-import type {
-  Stage2CaseResult,
-  Stage2Report
-} from '../src/core/recall/eval/clue-chain/stage2/types'
+} from '../tests/eval/clue-chain/stage2/report'
+import { runStage2Case } from '../tests/eval/clue-chain/stage2/run-case'
+import type { Stage2CaseResult, Stage2Report } from '../tests/eval/clue-chain/stage2/types'
 
 const scriptDir = dirname(fileURLToPath(import.meta.url))
 const extensionRoot = resolve(scriptDir, '..')
 const repoRoot = resolve(extensionRoot, '..')
-const runsDir = resolve(extensionRoot, 'src/core/recall/eval/clue-chain/stage2/runs')
+const runsDir = resolve(extensionRoot, 'tests/eval/clue-chain/stage2/runs')
 
 function resolveGitHead(): string {
   try {

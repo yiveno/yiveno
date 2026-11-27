@@ -1023,7 +1023,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 
 ### 1.1 「已上线」验证归属（Normative）
 
-口径：**单测** = Vitest（含 handler/application/core）；**eval** = `extension/src/core/recall/eval` 的 `must`/`stretch`；**MCP** = Chrome DevTools MCP 真机 UI 抽测（扩展用户可感路径）；**手动** = 真机/扩展清单（发版或改到才验）。一项可多列并存。`缺口` = 尚无自动归属、仅靠偶然手测。  
+口径：**单测** = Vitest（含 handler/application/core）；**eval** = `extension/tests/eval` 的 `must`/`stretch`；**MCP** = Chrome DevTools MCP 真机 UI 抽测（扩展用户可感路径）；**手动** = 真机/扩展清单（发版或改到才验）。一项可多列并存。`缺口` = 尚无自动归属、仅靠偶然手测。  
 （历史曾用 `scripts/e2e-management.mjs` CDP 薄冒烟；**已退役**，不得再当作合入归属。）
 
 | 能力                                      | 单测 | eval | MCP | 手动 | 说明                                                                                                 |
@@ -1070,7 +1070,7 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 3. **MCP 真机边界：** 扩展用户可感路径须 UI 抽测（装载 `dist/` → Side Panel 等入口 → `fill`/`click` 提交 clue → 断言结果卡）。**不上**全量可视化回归、大型 Playwright/Puppeteer 套件、逐 UI 状态自动化 E2E。
 4. 未标「已上线」的能力不得用 MCP 抽测记录或文案暗示可用。
 5. **CI vs 真实模型（工程门禁 · 与 §5.9 分计）：**
-   - PR / `main` CI：`test:run` **加**显式 `bun run test:must`（`extension/src/core/recall/eval`；另有 eval `*.test.ts` 数量地板）。守的是**确定性替身**（规则 parse、fake/mock embed、工厂 must）。
+   - PR / `main` CI：`test:run` **加**显式 `bun run test:must`（`extension/tests/eval`；另有 eval `*.test.ts` 数量地板）。守的是**确定性替身**（规则 parse、fake/mock embed、工厂 must）。
    - **真实评测（Recall Real Eval · 不挡 PR）：** 真实 BGE **不**进每次 PR。改 embed 前跑 `.github/workflows/recall-real-eval.yml`（`workflow_dispatch` + 每周一 UTC cron 兜底；需 Actions Secrets；仅消融）。BGE 消融默认 `vs_baseline`（对照 B2 real-run；召回/MRR/nDCG 不得降、negFP 不得升）。鉴权：`SUPABASE_*` mint 或短期 access token（见 `docs/ENVIRONMENT.md`）。**理解验收：** 真实输入 `bun run nlu:try`；定死 `PARSE_GOLD_CASES` 批跑 must **已退役**（原 `parse-gold:llm` CLI 亦已移除）。**有意取舍：** 消融 vs_baseline 只防退步；红须人工判读后再合模型。
 
 ---
@@ -1579,7 +1579,7 @@ schema：`extension/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 
 ### 5.11 recall-eval must 规格（R4 · Normative）
 
-> **实现位置：** `extension/src/core/recall/eval/`；旁挂 [`docs/archive/engineering/R4-Phase-E-验收与eval.md`](../archive/engineering/R4-Phase-E-验收与eval.md)（已归档）
+> **实现位置：** `extension/tests/eval/`；旁挂 [`docs/archive/engineering/R4-Phase-E-验收与eval.md`](../archive/engineering/R4-Phase-E-验收与eval.md)（已归档）
 
 #### 5.11.1 期望形态（与代码对齐）
 

@@ -18,23 +18,23 @@ import { fileURLToPath } from 'node:url'
 import {
   compareClueChainBaseline,
   formatClueChainBaselineDelta
-} from '../src/core/recall/eval/clue-chain/compare-baseline'
+} from '../tests/eval/clue-chain/compare-baseline'
 import {
   DEFAULT_CLUE_CHAIN_FIXTURE_FILES,
   loadClueChainCasesFromFixtures
-} from '../src/core/recall/eval/clue-chain/load-cases'
+} from '../tests/eval/clue-chain/load-cases'
 import {
   buildClueChainParseReport,
   formatClueChainReportConsole
-} from '../src/core/recall/eval/clue-chain/report'
-import { runClueChainParseBatch } from '../src/core/recall/eval/clue-chain/run-parse-case'
-import { scoreClueChainCase } from '../src/core/recall/eval/clue-chain/score-case'
-import { judgeTopicSemantic } from '../src/core/recall/eval/clue-chain/topic-judge'
+} from '../tests/eval/clue-chain/report'
+import { runClueChainParseBatch } from '../tests/eval/clue-chain/run-parse-case'
+import { scoreClueChainCase } from '../tests/eval/clue-chain/score-case'
+import { judgeTopicSemantic } from '../tests/eval/clue-chain/topic-judge'
 import type {
   ClueChainParseReport,
   ClueChainParseRunCase,
   ClueChainTopicJudgeResult
-} from '../src/core/recall/eval/clue-chain/types'
+} from '../tests/eval/clue-chain/types'
 import {
   resolveOpenAiCompatibleChatCompletionsUrl,
   type OpenAiCompatibleChatCompat
@@ -64,7 +64,7 @@ function withResolvedTopicTerms(run: ClueChainParseRunCase): ClueChainParseRunCa
 const scriptDir = dirname(fileURLToPath(import.meta.url))
 const extensionRoot = resolve(scriptDir, '..')
 const repoRoot = resolve(extensionRoot, '..')
-const runsDir = resolve(extensionRoot, 'src/core/recall/eval/clue-chain/runs')
+const runsDir = resolve(extensionRoot, 'tests/eval/clue-chain/runs')
 
 function loadLocalEnvFiles(): void {
   const roots = [repoRoot, extensionRoot]

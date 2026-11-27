@@ -1,0 +1,443 @@
+import {
+  createBookmarkMemoryItem,
+  createTextExcerptMemoryItem
+} from '@/core/memory/create-memory-item'
+import type { MemoryItem } from '@/core/memory/memory-item'
+import { RECALL_EVAL_IDS } from './recall-eval-ids'
+
+const ownerId = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa'
+const sourceLocalProfileId = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb'
+
+/** 为工厂产物覆写稳定 ID 与时间戳，便于 eval 断言。 */
+function withStableIdentity(item: MemoryItem, id: string, updatedAt: string): MemoryItem {
+  return {
+    ...item,
+    id,
+    createdAt: updatedAt,
+    updatedAt
+  }
+}
+
+/**
+ * 固定记忆库（corpus）。
+ * 模拟用户真实书签 + 摘录；后续调 Filter 只用同一库，避免用例漂移。
+ */
+export function buildRecallEvalCorpus(): MemoryItem[] {
+  return [
+    withStableIdentity(
+      createBookmarkMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          title: 'Yiveno Product Doc v4.0',
+          url: 'https://docs.yiveno.com/product/v4'
+        },
+        now: () => '2026-07-20T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.yivenoProductDoc,
+      '2026-07-20T08:00:00.000Z'
+    ),
+    withStableIdentity(
+      createBookmarkMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          title: 'Yiveno Design Principles',
+          // 与 product 不同 host，避免同域互斥把逛一簇挤成一条代表
+          url: 'https://design.yiveno.com/principles'
+        },
+        clues: {
+          openCount: 20,
+          settledCount: 20,
+          lastOpenedAt: '2026-07-24T10:00:00.000Z',
+          lastSettledAt: '2026-07-24T10:00:00.000Z'
+        },
+        now: () => '2026-07-19T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.yivenoDesignPrinciples,
+      '2026-07-19T08:00:00.000Z'
+    ),
+    withStableIdentity(
+      createBookmarkMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          title: 'cqw/yiveno',
+          url: 'https://github.com/cqw/yiveno'
+        },
+        now: () => '2026-07-18T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.githubRepo,
+      '2026-07-18T08:00:00.000Z'
+    ),
+    withStableIdentity(
+      createBookmarkMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          title: 'Retention Analysis Framework',
+          url: 'https://growth.example.com/retention-framework'
+        },
+        now: () => '2026-07-17T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.retentionFramework,
+      '2026-07-17T08:00:00.000Z'
+    ),
+    withStableIdentity(
+      createBookmarkMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          title: 'Cloudflare Workers Guide',
+          url: 'https://developers.cloudflare.com/workers/'
+        },
+        now: () => '2026-07-16T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.cloudflareWorkersGuide,
+      '2026-07-16T08:00:00.000Z'
+    ),
+    withStableIdentity(
+      createTextExcerptMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          selectedText:
+            'Local keyword Filter scans MemoryItem first, then scores by field weights; embeddings stay in Phase B.',
+          sourceUrl: 'https://notes.example.com/vector-index',
+          pageTitle: 'Vector index notes'
+        },
+        now: () => '2026-07-15T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.vectorIndexExcerpt,
+      '2026-07-15T08:00:00.000Z'
+    ),
+    withStableIdentity(
+      createTextExcerptMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          selectedText:
+            'Pre-release checklist: env:sync:prod, typecheck, i18n:check, then package the extension.',
+          sourceUrl: 'https://notes.example.com/deploy-checklist',
+          pageTitle: 'Release checklist'
+        },
+        now: () => '2026-07-14T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.deployChecklistExcerpt,
+      '2026-07-14T08:00:00.000Z'
+    ),
+    withStableIdentity(
+      createBookmarkMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          title: 'Braised pork belly recipe',
+          url: 'https://cooking.example.com/hongshaorou'
+        },
+        now: () => '2026-07-13T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.cookingRecipeNoise,
+      '2026-07-13T08:00:00.000Z'
+    ),
+    withStableIdentity(
+      createBookmarkMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          title: 'Chrome Extension Manifest V3 migration notes',
+          url: 'https://developer.chrome.com/docs/extensions/mv3/intro/'
+        },
+        now: () => '2026-07-12T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.chromeExtensionMv3,
+      '2026-07-12T08:00:00.000Z'
+    ),
+    withStableIdentity(
+      createTextExcerptMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          selectedText:
+            'This week: popup empty-state tiers, excerpt detail page, and lightweight library browse.',
+          sourceUrl: 'https://notes.example.com/weekly-review',
+          pageTitle: 'Weekly review'
+        },
+        now: () => '2026-07-11T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.weeklyReviewNote,
+      '2026-07-11T08:00:00.000Z'
+    ),
+    withStableIdentity(
+      createTextExcerptMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          selectedText: 'Sequence still matters.',
+          sourceUrl: 'https://www.gushiwen.cn/context-only',
+          pageTitle: 'Palette notes',
+          contextBefore: 'Deep red and white appear side by side.',
+          contextAfter: 'Do not mix the order.'
+        },
+        clues: {
+          openCount: 30,
+          settledCount: 30,
+          lastOpenedAt: '2026-07-24T18:00:00.000Z',
+          lastSettledAt: '2026-07-24T18:00:00.000Z'
+        },
+        now: () => '2026-07-25T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.hongbaiContextOnly,
+      '2026-07-25T08:00:00.000Z'
+    ),
+    withStableIdentity(
+      createTextExcerptMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          selectedText: 'deep red white tone',
+          sourceUrl: 'https://www.gushiwen.cn/in-selected',
+          pageTitle: 'Palette notes'
+        },
+        now: () => '2026-07-10T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.excerptMatchEmbedded,
+      '2026-07-10T08:00:00.000Z'
+    ),
+    withStableIdentity(
+      createTextExcerptMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          selectedText: 'red white ok',
+          sourceUrl: 'https://www.gushiwen.cn/prefix-tight',
+          pageTitle: 'Palette notes'
+        },
+        now: () => '2026-07-09T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.excerptMatchPrefixTight,
+      '2026-07-09T08:00:00.000Z'
+    ),
+    withStableIdentity(
+      createTextExcerptMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          // 与中文夹心摘录同词面会触发折叠键碰撞；英文探针用独立正文
+          selectedText: 'deep red white pigment blend',
+          sourceUrl: 'https://notes.example.com/embedded-en',
+          pageTitle: 'Palette notes'
+        },
+        now: () => '2026-07-08T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.excerptMatchEmbeddedEn,
+      '2026-07-08T08:00:00.000Z'
+    ),
+    withStableIdentity(
+      createTextExcerptMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          // 与中文起首摘录同词面会触发折叠键碰撞；英文探针用独立正文
+          selectedText: 'red white pigment swatch',
+          sourceUrl: 'https://notes.example.com/prefix-en',
+          pageTitle: 'Palette notes'
+        },
+        now: () => '2026-07-07T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.excerptMatchPrefixTightEn,
+      '2026-07-07T08:00:00.000Z'
+    ),
+    withStableIdentity(
+      createTextExcerptMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          selectedText: 'This note covers growth metrics and cohort analysis methods.',
+          sourceUrl: 'https://notes.example.com/type-b-retention',
+          pageTitle: 'Growth notes'
+        },
+        // 对齐 RECALL_EVAL_NOW（2026-07-25）的 yesterday，供多轮补时间 must 用例硬过滤命中
+        clues: { note: 'retention note for the leadership sync' },
+        now: () => '2026-07-24T10:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.typeBRetentionNote,
+      '2026-07-24T10:00:00.000Z'
+    ),
+    withStableIdentity(
+      createTextExcerptMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          selectedText:
+            'A powerful, visually spectacular drama that demands your full concentration, Oppenheimer is unmistakably the work of writer-director Christopher Nolan.',
+          sourceUrl: 'https://www.rottentomatoes.com/m/oppenheimer_2023',
+          pageTitle: 'Oppenheimer (2023) | Rotten Tomatoes'
+        },
+        now: () => '2026-08-24T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.oppenheimerRtExcerpt,
+      '2026-08-24T08:00:00.000Z'
+    ),
+    withStableIdentity(
+      createTextExcerptMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          selectedText:
+            'The Million Pound Note (1954) is a classic Gregory Peck comedy about a man handed a banknote he cannot spend.',
+          sourceUrl: 'https://en.wikipedia.org/wiki/The_Million_Pound_Note',
+          pageTitle: 'The Million Pound Note - Wikipedia'
+        },
+        now: () => '2026-08-20T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.millionPoundPeckExcerpt,
+      '2026-08-20T08:00:00.000Z'
+    ),
+    withStableIdentity(
+      createBookmarkMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          title: 'Why note-taking apps fail researchers',
+          url: 'https://notes.example.com/note-taking-apps-fail'
+        },
+        clues: { note: 'disagree with section 3' },
+        now: () => '2026-08-18T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.noteAnchorDisagreeSection,
+      '2026-08-18T08:00:00.000Z'
+    ),
+    withStableIdentity(
+      createTextExcerptMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          selectedText:
+            'Boredom is not empty time; it is unstructured time that still belongs to you.',
+          sourceUrl: 'https://essays.example.com/joy-of-being-bored',
+          pageTitle: 'The joy of being bored'
+        },
+        clues: { note: 'use in newsletter opener' },
+        now: () => '2026-08-17T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.noteSharedWordNewsletterRival,
+      '2026-08-17T08:00:00.000Z'
+    ),
+    withStableIdentity(
+      createBookmarkMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          title: 'Untitled document',
+          url: 'https://docs.example.com/d/eval-grant-notes'
+        },
+        clues: { note: 'NSF grant narrative outline — revise budget table' },
+        now: () => '2026-08-16T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.weakTitleNoteGrant,
+      '2026-08-16T08:00:00.000Z'
+    ),
+    withStableIdentity(
+      createBookmarkMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          title: 'Phones listening for ads',
+          url: 'https://news.example.com/story/phone-listening-ads-privacy/'
+        },
+        now: () => '2026-07-22T12:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.recentPrivacyArticle,
+      '2026-07-22T12:00:00.000Z'
+    ),
+    withStableIdentity(
+      createBookmarkMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          title: 'Dense Passage Retrieval for Open-Domain QA',
+          url: 'https://papers.example.com/abs/2004.04906-dpr'
+        },
+        now: () => '2025-06-01T12:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.oldDensePassagePaper,
+      '2025-06-01T12:00:00.000Z'
+    ),
+    // RECALL_EVAL_NOW = 2026-07-25 → last_week ≈ 7–13 天前
+    withStableIdentity(
+      createTextExcerptMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          selectedText:
+            "Long article on remote work habits. I didn't finish reading past the third section about deep work.",
+          sourceUrl: 'https://essays.example.com/remote-work-habits-half',
+          pageTitle: 'Remote work habits (draft)'
+        },
+        now: () => '2026-07-20T09:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.halfReadArticleExcerpt,
+      '2026-07-20T09:00:00.000Z'
+    ),
+    withStableIdentity(
+      createTextExcerptMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          selectedText: 'Ops page for staging rollouts and rollback steps.',
+          sourceUrl: 'https://notes.example.com/ops-staging-page',
+          pageTitle: 'Staging ops page'
+        },
+        clues: { note: 'deploy checklist reminder' },
+        now: () => '2026-07-18T11:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.deployNoteExcerpt,
+      '2026-07-18T11:00:00.000Z'
+    ),
+    withStableIdentity(
+      createTextExcerptMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          selectedText: 'Remember to run i18n:check before shipping locale strings.',
+          sourceUrl: 'https://notes.example.com/i18n-ship-check',
+          pageTitle: 'Locale ship notes'
+        },
+        now: () => '2026-07-25T08:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.recentI18nExcerpt,
+      '2026-07-25T08:00:00.000Z'
+    ),
+    // RECALL_EVAL_NOW = 2026-07-25 → yesterday = 2026-07-24；无 retention 词面
+    withStableIdentity(
+      createTextExcerptMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          selectedText: 'Standup scrap — blockers copied from yesterday.',
+          sourceUrl: 'https://docs.google.com/document/d/eval-standup-scrap',
+          pageTitle: 'Notes'
+        },
+        clues: { note: 'wait on vendor SSO reply' },
+        now: () => '2026-07-24T12:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.weakYesterdayStandupScrap,
+      '2026-07-24T12:00:00.000Z'
+    ),
+    // 窗外（非 07-24）专有锚点：测 high 硬筛空佐证后 soft 回退
+    withStableIdentity(
+      createTextExcerptMemoryItem({
+        ownerId,
+        sourceLocalProfileId,
+        payload: {
+          selectedText: 'Handbook section on xenonretentionprotocol for vendor audits.',
+          sourceUrl: 'https://docs.example.com/xenonretentionprotocol',
+          pageTitle: 'Vendor audit handbook'
+        },
+        now: () => '2026-07-10T12:00:00.000Z'
+      }),
+      RECALL_EVAL_IDS.softReopenXenonRetention,
+      '2026-07-10T12:00:00.000Z'
+    )
+  ]
+}

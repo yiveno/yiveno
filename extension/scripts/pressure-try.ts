@@ -18,7 +18,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { PRESSURE_CASES } from '../src/core/recall/eval/arbitrary-input-pressure-cases'
+import { PRESSURE_CASES } from '../tests/eval/arbitrary-input-pressure-cases'
 import {
   resolveOpenAiCompatibleChatCompletionsUrl,
   type OpenAiCompatibleChatCompat

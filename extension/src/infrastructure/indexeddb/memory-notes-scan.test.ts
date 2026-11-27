@@ -9,7 +9,7 @@ import {
   DREAMING_EVAL_IDS,
   DREAMING_EVAL_OWNER_ID,
   makeDreamingEvalNote
-} from '@/core/recall/eval/dreaming-eval-corpus'
+} from '../../../tests/eval/dreaming-eval-corpus'
 import {
   DREAMING_NOTE_MAX_ATTACHED_SOURCES,
   DREAMING_NOTE_SCAN_LIMIT,

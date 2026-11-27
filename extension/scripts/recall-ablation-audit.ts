@@ -37,8 +37,8 @@ import {
   softPenalizeMatchesByContentTermCorroboration
 } from '../src/core/recall/content-term-corroboration'
 import { filterMatchesByExcludeContentTerms } from '../src/core/recall/exclude-content-terms'
-import { PRESSURE_CASES } from '../src/core/recall/eval/arbitrary-input-pressure-cases'
-import { INTENT_EVAL_MUST } from '../src/core/recall/eval/intent-eval-cases'
+import { PRESSURE_CASES } from '../tests/eval/arbitrary-input-pressure-cases'
+import { INTENT_EVAL_MUST } from '../tests/eval/intent-eval-cases'
 import {
   meanMrr,
   meanNdcgAtK,
@@ -47,22 +47,22 @@ import {
   ndcgAtK,
   recallAtK,
   stabilizeRankedIds
-} from '../src/core/recall/eval/metrics'
+} from '../tests/eval/metrics'
 import {
   RETRIEVAL_ABLATION_CASES,
   type RetrievalAblationCase
-} from '../src/core/recall/eval/retrieval-ablation-cases'
+} from '../tests/eval/retrieval-ablation-cases'
 import {
   ablationCorpusFingerprint,
   assertAblationCorpusHasNoEmbeddings,
   buildRetrievalAblationCorpus,
   RETRIEVAL_ABLATION_NOW_MS
-} from '../src/core/recall/eval/retrieval-ablation-corpus'
-import { WORKER_EMBEDDING_MODEL_HINT } from '../src/core/recall/eval/retrieval-ablation-fusion-constants'
+} from '../tests/eval/retrieval-ablation-corpus'
+import { WORKER_EMBEDDING_MODEL_HINT } from '../tests/eval/retrieval-ablation-fusion-constants'
 import {
   buildNoiseGatewayEvalCases,
   runNoiseGatewayEval
-} from '../src/core/recall/eval/run-noise-gateway-eval'
+} from '../tests/eval/run-noise-gateway-eval'
 import {
   HYBRID_KEYWORD_POOL,
   HYBRID_MIN_COSINE_SIMILARITY,
@@ -1088,7 +1088,7 @@ function buildMarkdown(payload: {
   lines.push('upstream:')
   lines.push('  - HEAD daf526f4')
   lines.push('  - GitHub Actions run 44315251740（Recall Real Eval · success）')
-  lines.push('  - extension/src/core/recall/eval/run-retrieval-ablation.ts')
+  lines.push('  - extension/tests/eval/run-retrieval-ablation.ts')
   lines.push('  - extension/src/core/recall/understand/understand-recall-clue.ts')
   lines.push('downstream:')
   lines.push('  - 仅证据与判定；不重构管线；原型另批')
@@ -1164,7 +1164,7 @@ export async function runRecallAblationAudit(): Promise<void> {
     '≥28 字无空格中文 mash 无专用 gold → 不测',
     '2000 行规模 / ANN：本批未测',
     'must 127：产品代码未改，vitest 恒 127；检索承重以 RETRIEVAL_ABLATION_CASES IR 为准',
-    'noise 路径：`extension/src/core/recall/eval/noise-gateway-cases.ts` + `build-synth-noise-gateway-cases.ts`；must 门 116'
+    'noise 路径：`extension/tests/eval/noise-gateway-cases.ts` + `build-synth-noise-gateway-cases.ts`；must 门 116'
   ]
 
   const step0 = {

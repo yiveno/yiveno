@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url'
 
 const scriptDir = dirname(fileURLToPath(import.meta.url))
 const root = resolve(scriptDir, '..')
-const stubs = resolve(root, 'src/core/recall/eval/behavior-ablation/stubs')
+const stubs = resolve(root, 'tests/eval/behavior-ablation/stubs')
 
 const server = await createServer({
   configFile: false,

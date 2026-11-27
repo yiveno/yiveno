@@ -7,7 +7,7 @@ import { createTextExcerptMemoryItem } from '@/core/memory/create-memory-item'
 import {
   HYBRID_FAKE_EMBEDDING_DIM,
   makeFakeEmbedding
-} from '@/core/recall/eval/hybrid-fake-embedding'
+} from '../../../../tests/eval/hybrid-fake-embedding'
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
 
 const {

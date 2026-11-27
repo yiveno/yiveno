@@ -10,13 +10,13 @@ import {
   DREAMING_EVAL_IDS,
   DREAMING_EVAL_OWNER_ID,
   makeDreamingEvalNote
-} from '@/core/recall/eval/dreaming-eval-corpus'
+} from '../../../tests/eval/dreaming-eval-corpus'
 import { findNoteMatchesForQuery } from '@/core/recall/note-match'
 import {
   filterMemoryItemsByKeyword,
   scoreNoteSemanticVirtualField
 } from '@/core/recall/keyword-filter'
-import { makeFakeEmbedding } from '@/core/recall/eval/hybrid-fake-embedding'
+import { makeFakeEmbedding } from '../../../tests/eval/hybrid-fake-embedding'
 import type { NoteMatchSet } from '@/core/recall/note-match'
 import { logger } from '@/infrastructure/logging/logger'
 

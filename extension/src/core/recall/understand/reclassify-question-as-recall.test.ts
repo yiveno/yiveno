@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { PARSE_GOLD_NOW_MS } from '@/core/recall/eval/parse-gold-now'
+import { PARSE_GOLD_NOW_MS } from '../../../../tests/eval/parse-gold-now'
 import { buildLlmParseClueMessages } from '@/core/recall/understand/build-llm-parse-prompt'
 import { mapLlmProposalToParsedClue } from '@/core/recall/understand/map-llm-proposal-to-parsed'
 import { shouldReclassifyQuestionAsRecall } from '@/core/recall/understand/reclassify-question-as-recall'

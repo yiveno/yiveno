@@ -60,7 +60,7 @@ jobs:
       - name: Recall eval must (explicit)
         run: |
           set -euo pipefail
-          EVAL_TESTS=$(find extension/src/core/recall/eval -name '*.test.ts' | wc -l | tr -d ' ')
+          EVAL_TESTS=$(find extension/tests/eval -name '*.test.ts' | wc -l | tr -d ' ')
           echo "eval test files: ${EVAL_TESTS} (floor=${RECALL_EVAL_TEST_FILE_FLOOR})"
           if [ "${EVAL_TESTS}" -lt "${RECALL_EVAL_TEST_FILE_FLOOR}" ]; then
             echo "eval test files below floor — check include/exclude or directory move"

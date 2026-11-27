@@ -14,30 +14,30 @@ import { fileURLToPath } from 'node:url'
 import {
   BEHAVIOR_ABLATION_NOW_MS,
   BEHAVIOR_ABLATION_SEED
-} from '../src/core/recall/eval/behavior-ablation/constants'
+} from '../tests/eval/behavior-ablation/constants'
 import {
   datasetToFixtureFiles,
   FIXTURE_FILE_NAMES,
   fixtureFilesToDataset,
   type BehaviorAblationFixtureFiles
-} from '../src/core/recall/eval/behavior-ablation/fixtures-io'
-import { generateBehaviorAblationDataset } from '../src/core/recall/eval/behavior-ablation/generate-dataset'
-import { formatBehaviorAblationMarkdown } from '../src/core/recall/eval/behavior-ablation/report'
-import { runBehaviorAblationTwice } from '../src/core/recall/eval/behavior-ablation/run-behavior-ablation'
-import { computeArmMetrics } from '../src/core/recall/eval/behavior-ablation/score'
-import { runArmCase } from '../src/core/recall/eval/behavior-ablation/run-case'
-import { buildProdArmsForTask } from '../src/core/recall/eval/behavior-ablation/arms'
+} from '../tests/eval/behavior-ablation/fixtures-io'
+import { generateBehaviorAblationDataset } from '../tests/eval/behavior-ablation/generate-dataset'
+import { formatBehaviorAblationMarkdown } from '../tests/eval/behavior-ablation/report'
+import { runBehaviorAblationTwice } from '../tests/eval/behavior-ablation/run-behavior-ablation'
+import { computeArmMetrics } from '../tests/eval/behavior-ablation/score'
+import { runArmCase } from '../tests/eval/behavior-ablation/run-case'
+import { buildProdArmsForTask } from '../tests/eval/behavior-ablation/arms'
 import { parseRecallClue } from '../src/core/recall/parse-recall-clue'
 import type { OpenAiCompatibleChatCompat } from '../src/core/recall/understand/openai-compatible-chat'
 import { createOpenAiCompatibleCompleter } from '../src/core/recall/understand/parse-recall-clue-with-llm'
 import { understandRecallClue } from '../src/core/recall/understand/understand-recall-clue'
-import type { BehaviorAblationDataset } from '../src/core/recall/eval/behavior-ablation/types'
+import type { BehaviorAblationDataset } from '../tests/eval/behavior-ablation/types'
 
 const scriptDir = dirname(fileURLToPath(import.meta.url))
 const extensionRoot = resolve(scriptDir, '..')
 const repoRoot = resolve(extensionRoot, '..')
-const fixturesDir = resolve(extensionRoot, 'src/core/recall/eval/behavior-ablation/fixtures')
-const runsDir = resolve(extensionRoot, 'src/core/recall/eval/behavior-ablation/runs')
+const fixturesDir = resolve(extensionRoot, 'tests/eval/behavior-ablation/fixtures')
+const runsDir = resolve(extensionRoot, 'tests/eval/behavior-ablation/runs')
 
 function loadLocalEnvFiles(): void {
   const roots = [repoRoot, extensionRoot]

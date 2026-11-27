@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url'
 
 import { buildProbeGeneratedFixture } from '@yiveno/probe'
 
-import { runProbeGeneratedEval } from '@/core/recall/eval/probe-generated-eval'
+import { runProbeGeneratedEval } from '../tests/eval/probe-generated-eval'
 
 function round4(n: number): number {
   return Math.round(n * 10000) / 10000
@@ -31,7 +31,7 @@ export async function runExportProbeEvalFixture(): Promise<void> {
   })
 
   const here = dirname(fileURLToPath(import.meta.url))
-  const outDir = resolve(here, '../src/core/recall/eval/fixtures')
+  const outDir = resolve(here, '../tests/eval/fixtures')
   mkdirSync(outDir, { recursive: true })
   const outPath = resolve(outDir, `${fixture.meta.id}.json`)
   writeFileSync(outPath, `${JSON.stringify(fixture, null, 2)}\n`, 'utf8')

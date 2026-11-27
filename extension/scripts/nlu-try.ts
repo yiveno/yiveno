@@ -23,7 +23,7 @@ import { existsSync, readFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { INTENT_EVAL_MUST } from '../src/core/recall/eval/intent-eval-cases'
+import { INTENT_EVAL_MUST } from '../tests/eval/intent-eval-cases'
 import type { ParsedRecallClue } from '../src/core/recall/parse-recall-clue-types'
 import {
   resolveOpenAiCompatibleChatCompletionsUrl,

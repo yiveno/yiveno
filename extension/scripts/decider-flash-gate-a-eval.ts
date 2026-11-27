@@ -20,8 +20,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-import { PRESSURE_CASES } from '../src/core/recall/eval/arbitrary-input-pressure-cases'
-import { INTENT_EVAL_MUST } from '../src/core/recall/eval/intent-eval-cases'
+import { PRESSURE_CASES } from '../tests/eval/arbitrary-input-pressure-cases'
+import { INTENT_EVAL_MUST } from '../tests/eval/intent-eval-cases'
 import {
   resolveOpenAiCompatibleChatCompletionsUrl,
   type OpenAiCompatibleChatCompat
@@ -496,9 +496,9 @@ scope: Gate A+ 意图分类对照（Decider Flash vs deepseek-v4-flash）；topi
 status: complete
 upstream:
   - HEAD ${input.head}
-  - extension/src/core/recall/eval/intent-eval-cases.ts（INTENT_EVAL_MUST · 38）
-  - extension/src/core/recall/eval/arbitrary-input-pressure-cases.ts（p21–p24 附录）
-  - extension/src/core/recall/eval/recall-topic.test.ts（topic 探针 20）
+  - extension/tests/eval/intent-eval-cases.ts（INTENT_EVAL_MUST · 38）
+  - extension/tests/eval/arbitrary-input-pressure-cases.ts（p21–p24 附录）
+  - extension/tests/eval/recall-topic.test.ts（topic 探针 20）
 downstream:
   - 仅决策记录；不直接改产品模型路由
 ---

@@ -149,10 +149,8 @@ async function loadPreview(): Promise<void> {
       width: 'width' in response ? response.width : undefined,
       height: 'height' in response ? response.height : undefined
     })
-    // ok=true 但无图：SW 无缓存预览属预期 → debug；ok=false 才 warn
-    if (response.ok) {
-      console.debug(diag)
-    } else {
+    // ok=true 但无图：SW 无缓存预览属预期，不打日志；ok=false 才 warn
+    if (!response.ok) {
       console.warn(diag)
     }
     loadState.value = 'missing'

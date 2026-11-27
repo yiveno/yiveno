@@ -38,11 +38,12 @@
         "src/content/**/main.ts",
         "src/**/*.{test,spec}.ts",
         "src/tests/**/*.ts",
-        "src/core/recall/eval/behavior-ablation/stubs/*.ts",
+        "tests/eval/behavior-ablation/stubs/*.ts",
+        "tests/**/*.{test,spec}.ts",
         "vite/build-options.ts",
         "scripts/**/*.{js,ts,cjs}"
       ],
-      "project": ["src/**/*.{ts,vue}", "vite/**/*.ts", "scripts/**/*.{js,ts,cjs}"]
+      "project": ["src/**/*.{ts,vue}", "tests/**/*.ts", "vite/**/*.ts", "scripts/**/*.{js,ts,cjs}"]
     },
     "packages/yiveno-probe": {
       "entry": ["src/**/*.test.ts"],

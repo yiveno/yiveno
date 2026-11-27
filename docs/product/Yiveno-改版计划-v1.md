@@ -62,7 +62,7 @@
 
 **本波关键路径：**
 
-- `extension/src/core/recall/eval/*`
+- `extension/tests/eval/*`
 - `extension/src/core/recall/understand/build-llm-follow-up-prompt.ts`
 - `extension/src/core/recall/understand/map-llm-follow-up-proposal.ts`
 - `extension/public/_locales/en/messages.json`（空结果 / miss 追问；当时路径曾含 `zh_CN`，已下线）

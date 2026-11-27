@@ -34,8 +34,8 @@ import { fileURLToPath } from 'node:url'
 import { buildEmbeddingTextFromMemoryItem } from '../src/core/memory/build-embedding-text'
 import type { MemoryItem } from '../src/core/memory/memory-item'
 import { buildClueEmbeddingText } from '../src/core/recall/build-clue-embedding-text'
-import { PRESSURE_CASES } from '../src/core/recall/eval/arbitrary-input-pressure-cases'
-import { INTENT_EVAL_MUST } from '../src/core/recall/eval/intent-eval-cases'
+import { PRESSURE_CASES } from '../tests/eval/arbitrary-input-pressure-cases'
+import { INTENT_EVAL_MUST } from '../tests/eval/intent-eval-cases'
 import {
   meanMrr,
   meanNdcgAtK,
@@ -44,15 +44,15 @@ import {
   ndcgAtK,
   recallAtK,
   stabilizeRankedIds
-} from '../src/core/recall/eval/metrics'
-import { RETRIEVAL_ABLATION_CASES } from '../src/core/recall/eval/retrieval-ablation-cases'
+} from '../tests/eval/metrics'
+import { RETRIEVAL_ABLATION_CASES } from '../tests/eval/retrieval-ablation-cases'
 import {
   ablationCorpusFingerprint,
   assertAblationCorpusHasNoEmbeddings,
   buildRetrievalAblationCorpus
-} from '../src/core/recall/eval/retrieval-ablation-corpus'
-import { WORKER_EMBEDDING_MODEL_HINT } from '../src/core/recall/eval/retrieval-ablation-fusion-constants'
-import { buildNoiseGatewayEvalCases } from '../src/core/recall/eval/run-noise-gateway-eval'
+} from '../tests/eval/retrieval-ablation-corpus'
+import { WORKER_EMBEDDING_MODEL_HINT } from '../tests/eval/retrieval-ablation-fusion-constants'
+import { buildNoiseGatewayEvalCases } from '../tests/eval/run-noise-gateway-eval'
 import { cosineSimilarity } from '../src/core/recall/hybrid-fusion'
 import { extractContentTerms } from '../src/core/recall/parse-recall-clue'
 import { parseJsonObjectFromLlmText } from '../src/core/recall/understand/extract-llm-json'
@@ -2049,7 +2049,7 @@ export async function runRecallPrototypeMinimal(): Promise<void> {
     '≥28 字无空格中文 mash 无专用 gold → 不测',
     '2000 行规模 / ANN：本批未测（语义池仍暴力扫表）',
     'BRIDGE 对照组不在本批',
-    'noise 路径：`extension/src/core/recall/eval/noise-gateway-cases.ts` + `build-synth-noise-gateway-cases.ts`；must 门 116；原型无 Gate A，期望 intent!=recall'
+    'noise 路径：`extension/tests/eval/noise-gateway-cases.ts` + `build-synth-noise-gateway-cases.ts`；must 门 116；原型无 Gate A，期望 intent!=recall'
   ]
 
   deviations.push(

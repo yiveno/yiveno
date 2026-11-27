@@ -17,7 +17,7 @@ export default defineConfig({
     // 无测试文件时失败，避免空跑被当成通过
     passWithNoTests: false,
 
-    // 本配置只跑 src 旁挂单测；扩展 UI 验收走 MCP 真机，不上 Playwright E2E
+    // 本配置跑 src 旁挂单测 + tests/ 下 eval 与集成测试；扩展 UI 验收走 MCP 真机，不上 Playwright E2E
     exclude: ['**/node_modules/**', '**/dist/**'],
 
     // 并行测试

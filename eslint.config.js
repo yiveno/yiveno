@@ -43,6 +43,10 @@ function eslintScopePath(repoRelativePath) {
   if (isExtensionCwd && repoRelativePath.startsWith('extension/src/')) {
     return `**/${repoRelativePath.slice('extension/src/'.length)}`
   }
+  // extension/tests/ 与 src 同理：子目录跑 lint 时需双星号前缀才能命中
+  if (isExtensionCwd && repoRelativePath.startsWith('extension/tests/')) {
+    return `**/tests/${repoRelativePath.slice('extension/tests/'.length)}`
+  }
   if (isWorkerCwd && repoRelativePath.startsWith('worker/src/')) {
     return `**/${repoRelativePath.slice('worker/src/'.length)}`
   }
@@ -59,7 +63,7 @@ function eslintScopePaths(...paths) {
 // files/ignores 相对 eslint.config.js 所在目录（仓库根），与 process.cwd 无关。
 // 从 extension/ 子目录跑 eslint 时若写成 src/**，会匹配不到 extension/src/**。
 const extensionVueFiles = ['extension/src/**/*.vue']
-const extensionTsFiles = ['extension/src/**/*.{ts,tsx}']
+const extensionTsFiles = ['extension/src/**/*.{ts,tsx}', 'extension/tests/**/*.{ts,tsx}']
 const extensionScriptTsFiles = ['extension/scripts/**/*.ts']
 const workerTsFiles = ['worker/src/**/*.ts']
 const websiteTsFiles = ['website/src/**/*.{ts,tsx}']
@@ -71,6 +75,9 @@ const testFiles = eslintScopePaths(
   'extension/src/**/*.test.{ts,tsx,js}',
   'extension/src/**/*.spec.{ts,tsx,js}',
   'extension/src/**/__tests__/**/*.{ts,tsx,js}',
+  'extension/tests/**/*.{ts,tsx,js}',
+  'extension/tests/**/*.test.{ts,tsx,js}',
+  'extension/tests/**/*.spec.{ts,tsx,js}',
   'worker/src/**/*.test.{ts,tsx,js}',
   'worker/src/**/*.spec.{ts,tsx,js}'
 )

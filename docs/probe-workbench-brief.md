@@ -13,7 +13,7 @@
 - 判定零件已存在但未装配：`packages/yiveno-probe/src/verify/neighborhood.ts` 的 `judgeProbeNeighborhood`（top1/in_topk/miss）、`packages/yiveno-probe/src/catalog/fixture-catalog.ts` 能展开全部精选线索。
 - 唯一的自动检查是 `extension/src/dev/probe/recall-probe-omnibox-smoke.ts` 里写死的 11 条关键词式用例（按标题子串判定），与手测文档对齐用，不是数据驱动的评测。
 - 种库服务在 `extension/src/dev/probe/recall-probe-seed-service.ts`：精选走 capture 路径（可 enrich），diversity/noise 直写、不生成 embedding；返回的 probeKeys 仅含精选。
-- 召回入口：`extension/src/application/recall/recall-service.ts` 的 `recallWithClue`。真正的评测体系在 `extension/src/core/recall/eval/`，与工作台互不连通。
+- 召回入口：`extension/src/application/recall/recall-service.ts` 的 `recallWithClue`。真正的评测体系在 `extension/tests/eval/`，与工作台互不连通。
 
 ## 总目标
 
@@ -43,7 +43,7 @@
 
 ## 里程碑 4：打通 eval（冻结夹具导出）
 
-1. 提供导出动作/脚本：以固定种子生成一版冻结数据集（条目 + 带类型标注线索 + expected 映射），导出为 JSON 夹具放入 `extension/src/core/recall/eval/fixtures/`（probe-generated 命名）。
+1. 提供导出动作/脚本：以固定种子生成一版冻结数据集（条目 + 带类型标注线索 + expected 映射），导出为 JSON 夹具放入 `extension/tests/eval/fixtures/`（probe-generated 命名）。
 2. 仿照现有 hybrid-eval 的写法，加一个确定性 vitest：离线（假向量、无网络、无真实 LLM）对该夹具跑关键词/混合路径评测，断言核心指标不低于夹具内记录的基线（基线值写进夹具元数据，注释说明其来源与刷新方式）。
 
 ## 硬约束

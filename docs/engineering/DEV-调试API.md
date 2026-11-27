@@ -289,7 +289,7 @@ await yiveno.backdateMemorySavedAt({
 | Omnibox 手测复制块 / 负例                      | [Omnibox-手测步骤](./Omnibox-手测步骤.md)                                          |
 | 探针语料 Normative（量级、压力轮）             | 产品文档 §5.11.1a                                                                  |
 | TTE 埋点与验收                                 | [R4-Phase-E-验收与eval](../archive/engineering/R4-Phase-E-验收与eval.md)（已归档） |
-| `recall-eval` / `omnibox-eval`（CI，非探针库） | `extension/src/core/recall/eval/`                                                  |
+| `recall-eval` / `omnibox-eval`（CI，非探针库） | `extension/tests/eval/`                                                            |
 | Background 全量 message type                   | [background-message-types.registry](./background-message-types.registry)           |
 
 ---

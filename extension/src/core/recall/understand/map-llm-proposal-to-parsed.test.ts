@@ -4,7 +4,7 @@
  */
 import { describe, expect, it } from 'vitest'
 
-import { PARSE_GOLD_NOW_MS } from '@/core/recall/eval/parse-gold-now'
+import { PARSE_GOLD_NOW_MS } from '../../../../tests/eval/parse-gold-now'
 import { normalizeRecallText } from '@/core/recall/keyword-filter'
 import { parseRecallClue } from '@/core/recall/parse-recall-clue'
 import { buildLlmParseClueMessages } from '@/core/recall/understand/build-llm-parse-prompt'

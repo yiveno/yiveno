@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest'
 
 import { recallByKeyword } from '@/core/recall/build-recall-result'
-import { buildRecallEvalCorpus } from '@/core/recall/eval/recall-eval-corpus'
-import { RECALL_EVAL_IDS } from '@/core/recall/eval/recall-eval-ids'
-import { RECALL_EVAL_NOW_MS } from '@/core/recall/eval/recall-eval-now'
+import { buildRecallEvalCorpus } from '../../../tests/eval/recall-eval-corpus'
+import { RECALL_EVAL_IDS } from '../../../tests/eval/recall-eval-ids'
+import { RECALL_EVAL_NOW_MS } from '../../../tests/eval/recall-eval-now'
 import type { MemoryItem } from '@/core/memory/memory-item'
 import type { RecallMatch, RecallResult } from '@/core/recall/recall-result'
 
