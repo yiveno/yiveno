@@ -32,15 +32,15 @@ downstream: Partner Center 首次提交前必过
 
 ## 工程侧已验证（本机）
 
-| 项                                                      | 结果                                                             |
-| ------------------------------------------------------- | ---------------------------------------------------------------- |
-| `/Applications/Microsoft Edge.app` 存在                 | OK（Edg/156.0.4314.50）                                          |
-| 仓库根 `dist/` 生产构建                                 | OK（`cd extension && bun run build`；**不是** `extension/dist`） |
-| 隔离 Profile `--load-extension=<repo>/dist` + CDP       | OK · Getting Started / SW / Side Panel / Settings / example.com  |
-| `getExtensionShortcutsSettingsUrl` Edge UA → `edge://…` | 单测通过                                                         |
-| `externally_connectable` 含 `yiveno.cn`                 | 契约单测 + Edge runtime manifest 可见                            |
-| `pack:store` 路径                                       | 已改为 `cd ../dist` → `extension/yiveno-extension-store.zip`     |
-| Chrome DevTools MCP 冒充 Edge                           | **不做**（规范禁止）                                             |
+| 项                                                      | 结果                                                              |
+| ------------------------------------------------------- | ----------------------------------------------------------------- |
+| `/Applications/Microsoft Edge.app` 存在                 | OK（Edg/156.0.4314.50）                                           |
+| 仓库根 `dist/` 生产构建                                 | OK（`cd extension && bun run build`；**不是** `extension/dist`）  |
+| 隔离 Profile `--load-extension=<repo>/dist` + CDP       | OK · Getting Started / SW / Side Panel / Settings / example.com   |
+| `getExtensionShortcutsSettingsUrl` Edge UA → `edge://…` | 单测通过                                                          |
+| `externally_connectable` 含 `yiveno.cn`                 | 契约单测 + Edge runtime manifest 可见                             |
+| `pack:store` 路径                                       | 已改为 `cd ../dist-prod` → `extension/yiveno-extension-store.zip` |
+| Chrome DevTools MCP 冒充 Edge                           | **不做**（规范禁止）                                              |
 
 隔离 Profile 冒烟启动：
 

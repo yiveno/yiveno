@@ -1,7 +1,7 @@
 /** 将 content script 打成单文件 IIFE（无 ESM import），供 MV3 content_scripts 加载。 */
 import { build as viteBuild } from 'vite'
 import { resolve } from 'path'
-import { DEBUG_MODE, OUT_DIR, ROOT_DIR, SRC_DIR } from './constants'
+import { DEBUG_MODE, resolveOutDir, ROOT_DIR, SRC_DIR } from './constants'
 
 const CONTENT_SCRIPT_ENTRIES = [
   {
@@ -21,11 +21,12 @@ function toIifeGlobalName(entryName: string): string {
 }
 
 /**
- * 打包全部 content script IIFE 到 dist 根目录。
+ * 打包全部 content script IIFE 到当前输出目录根（dist / dist-prod）。
  * 由 extension-post-build 在主包 closeBundle 内串行调用，避免与 watch 下一轮竞态。
  */
 export async function buildContentScriptIifes(): Promise<void> {
   const isWatchBuild = process.argv.includes('--watch')
+  const outDir = resolveOutDir()
 
   for (const script of CONTENT_SCRIPT_ENTRIES) {
     await viteBuild({
@@ -42,7 +43,7 @@ export async function buildContentScriptIifes(): Promise<void> {
         __VUE_PROD_DEVTOOLS__: false
       },
       build: {
-        outDir: OUT_DIR,
+        outDir,
         emptyOutDir: false,
         sourcemap: DEBUG_MODE,
         target: ['chrome116', 'es2022'],

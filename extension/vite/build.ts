@@ -1,6 +1,6 @@
 /** Chrome 扩展 Vite 构建选项。 */
 import type { BuildOptions } from 'vite'
-import { OUT_DIR, DEBUG_MODE } from './constants'
+import { resolveOutDir, DEBUG_MODE } from './constants'
 import { createBuildOptions } from './build-options'
 
 /** `vite build --watch`：本地迭代；一次性 `vite build`：干净产物。 */
@@ -15,9 +15,10 @@ export const WATCH_BUILD_DELAY_MS = 400
 /** 创建扩展打包构建配置（sidepanel / settings / background / offscreen 占位等）。 */
 export function createBuildConfig(mode: string): BuildOptions {
   const includeProbeConsole = mode !== 'production'
+  const outDir = resolveOutDir(mode)
   return {
-    outDir: OUT_DIR,
-    // watch 不清空 dist，避免与收尾竞态删掉仍被 HTML 引用的 CSS
+    outDir,
+    // watch 不清空输出目录，避免与收尾竞态删掉仍被 HTML 引用的 CSS
     emptyOutDir: !isWatchBuild,
     // SW 无 document：必须关 polyfill，否则动态 import 预加载会抛 window/document is not defined
     modulePreload: false,
@@ -37,7 +38,7 @@ export function createBuildConfig(mode: string): BuildOptions {
             buildDelay: WATCH_BUILD_DELAY_MS,
             // concurrently 多路日志时，清屏会冲掉 be/web 输出
             clearScreen: false,
-            exclude: ['**/node_modules/**', '**/dist/**', '**/.git/**']
+            exclude: ['**/node_modules/**', '**/dist/**', '**/dist-prod/**', '**/.git/**']
           }
         }
       : {})

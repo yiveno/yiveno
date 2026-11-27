@@ -113,7 +113,7 @@ bun run build:prod
 # 仅构建扩展
 bun run --cwd extension build:prod
 
-# 构建产物位置: ./dist/（扩展）
+# 生产构建产物: ./dist-prod/（扩展；development/watch 仍写 ./dist/）
 # 官网产物: ./website/dist/
 ```
 
@@ -425,7 +425,7 @@ cd extension && bun run test   # 交互式 Vitest
 bun run --cwd extension build:prod
 
 # 2. 打包扩展 (手动)
-cd dist
+cd dist-prod
 zip -r ../yiveno-v1.0.0.zip .
 
 # 3. 上传到 Chrome Web Store

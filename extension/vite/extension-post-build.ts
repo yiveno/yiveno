@@ -9,7 +9,7 @@ import type { Plugin } from 'vite'
 import { createRequire } from 'node:module'
 import { readdirSync, statSync } from 'node:fs'
 import { resolve } from 'node:path'
-import { SRC_DIR } from './constants'
+import { resolveOutDir, SRC_DIR } from './constants'
 import { buildContentScriptIifes, CONTENT_SCRIPT_ENTRIES } from './content-scripts-iife'
 import { isContentScriptPath, pathInvalidatesContentScript } from './extension-post-build-paths'
 
@@ -58,8 +58,9 @@ function schedulePublicAssetSync(reason: string): void {
     publicSyncTimer = null
     console.log(`[extension-post-build] 同步 public 资产（${reason}）`)
     syncExtensionPublicAssets()
+    const outDirName = resolveOutDir().split(/[/\\]/).pop() ?? 'dist'
     console.log(
-      '[extension-post-build] _locales 已同步 → chrome://extensions 刷新本扩展后生效（MV3 无热替换）'
+      `[extension-post-build] _locales 已同步到 ${outDirName}/ → chrome://extensions 刷新本扩展后生效（MV3 无热替换）`
     )
   }, PUBLIC_SYNC_DEBOUNCE_MS)
 }
@@ -155,7 +156,7 @@ export function extensionPostBuildPlugin(): Plugin {
         for (const file of listSourceFilesRecursive(resolve(SRC_DIR, 'content'))) {
           this.addWatchFile(file)
         }
-        // i18n / manifest 不在 Vite graph：watch public 白名单，改 messages 即同步 dist/_locales
+        // i18n / manifest 不在 Vite graph：watch public 白名单，改 messages 即同步输出目录/_locales
         this.addWatchFile(resolve(frontendPublicDir, 'manifest.json'))
         this.addWatchFile(resolve(frontendPublicDir, '_locales/en/messages.json'))
         this.addWatchFile(resolve(frontendPublicDir, '_locales/zh_CN/messages.json'))
@@ -206,8 +207,9 @@ export function extensionPostBuildPlugin(): Plugin {
         )
         // MV3 无真 HMR：watch 重建后需在 chrome://extensions 点刷新（或重新加载 unpacked）
         if (isWatchBuild) {
+          const outDirName = resolveOutDir().split(/[/\\]/).pop() ?? 'dist'
           console.log(
-            '[extension-post-build] dist 已更新 → chrome://extensions 刷新本扩展后验证（MV3 无热替换；content 按需重打）'
+            `[extension-post-build] ${outDirName}/ 已更新 → chrome://extensions 刷新本扩展后验证（MV3 无热替换；content 按需重打）`
           )
         }
       } finally {

@@ -3,6 +3,7 @@ node_modules/
 worker/.cache/
 worker/.wrangler/
 dist/
+dist-prod/
 .DS_Store
 **/.DS_Store
 artifacts/

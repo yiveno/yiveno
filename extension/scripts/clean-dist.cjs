@@ -1,15 +1,17 @@
 /**
- * 将 Vite 产物整理为 Chrome 扩展可加载的 dist/ 布局。
+ * 将 Vite 产物整理为 Chrome 扩展可加载的布局。
  *
- * - sidepanel.html / settings.html 等到 dist 根目录
+ * - sidepanel.html / settings.html 等到输出目录根
  * - 修正 HTML 内 ../../../ 资源引用为 ./
  * - 仅复制扩展运行所需的 public 白名单资产（不含 models / 营销 logo）
+ * - NODE_ENV=production → 仓库根 dist-prod；其余 → dist
  */
 const fs = require('fs')
 const path = require('path')
 
 const frontendDir = path.resolve(__dirname, '..')
-const distDir = path.resolve(frontendDir, '..', 'dist')
+const distDirName = process.env.NODE_ENV === 'production' ? 'dist-prod' : 'dist'
+const distDir = path.resolve(frontendDir, '..', distDirName)
 const publicDir = path.join(frontendDir, 'public')
 
 function copyIfPresent(source, destination) {
@@ -24,14 +26,14 @@ function removeIfPresent(target) {
   }
 }
 
-/** 将嵌套页面 HTML 平铺到 dist 根目录并修正资源路径。 */
+/** 将嵌套页面 HTML 平铺到输出目录根并修正资源路径。 */
 function flattenPageHtml(page) {
   const source = path.join(distDir, 'src', 'pages', page, 'index.html')
   const destination = path.join(distDir, `${page}.html`)
   flattenHtmlFile(source, destination, page)
 }
 
-/** DEV-only：`src/dev/<name>/index.html` → dist 根 `<name>.html`。 */
+/** DEV-only：`src/dev/<name>/index.html` → 输出目录根 `<name>.html`。 */
 function flattenDevHtml(name) {
   const source = path.join(distDir, 'src', 'dev', name, 'index.html')
   const destination = path.join(distDir, `${name}.html`)
@@ -80,10 +82,10 @@ function purgeNonExtensionAssets() {
   }
 }
 
-/** 同步 manifest / _locales / images 等 public 白名单到 dist（不依赖 Vite 图）。 */
+/** 同步 manifest / _locales / images 等 public 白名单到输出目录（不依赖 Vite 图）。 */
 function syncExtensionPublicAssets() {
   if (!fs.existsSync(distDir)) {
-    console.warn('[clean-dist] dist/ 不存在，跳过 public 同步')
+    console.warn(`[clean-dist] ${distDirName}/ 不存在，跳过 public 同步`)
     return
   }
 
@@ -110,7 +112,7 @@ function syncExtensionPublicAssets() {
   }
 }
 
-/** production dist：剔除 localhost Worker host（与 extension-manifest-profile.ts 同步）。 */
+/** production 输出目录：剔除 localhost Worker host（与 extension-manifest-profile.ts 同步）。 */
 const EXTENSION_CWS_HOST_PERMISSIONS_PRODUCTION = [
   'https://*.supabase.co/*',
   'https://api.yiveno.com/*',
@@ -134,7 +136,7 @@ function applyDistManifestHostProfile(distManifestPath) {
 
 function finalizeExtensionDist() {
   if (!fs.existsSync(distDir)) {
-    console.warn('[clean-dist] dist/ 不存在，跳过')
+    console.warn(`[clean-dist] ${distDirName}/ 不存在，跳过`)
     return
   }
 

@@ -3,7 +3,7 @@
 > Last Updated: 2026-10-28
 
 <!-- 开发者向：上架草稿本，与 extension/public/manifest.json 同步维护。商店用户向文案仅美式英语。 -->
-<!-- 同包双店：Edge Add-ons 见根目录 EDGEADDONS.md（ADR-020）。打 ZIP：`cd extension && bun run pack:store`（源=仓库根 dist/）。 -->
+<!-- 同包双店：Edge Add-ons 见根目录 EDGEADDONS.md（ADR-020）。打 ZIP：`cd extension && bun run pack:store`（源=仓库根 dist-prod/）。 -->
 
 ## Store Listing
 
@@ -194,7 +194,7 @@ https://yiveno.com
 - **Local-first:** Memories stay in IndexedDB until the user enables cloud sync.
 - **Not a bookmark manager primary pitch:** Bookmark import is optional; core value is Capture + Find from personal traces.
 - **Find delivers a neighborhood, not a single oracle answer:** Store copy must not promise “always picks the right one.”
-- **`localhost:8787` host permission:** Present in dev `public/manifest.json` only. **`bun run --cwd extension build:prod`** / `cd extension && bun run pack:store`（`NODE_ENV=production`）strips it from repo-root `dist/manifest.json` via `clean-dist` before store upload. ZIP 落在 `extension/yiveno-extension-store.zip`（CWS 与 Edge 同包 · ADR-020）。
+- **`localhost:8787` host permission:** Present in dev `public/manifest.json` only. **`bun run --cwd extension build:prod`** / `cd extension && bun run pack:store`（`NODE_ENV=production`）strips it from repo-root `dist-prod/manifest.json` via `clean-dist` before store upload. ZIP 落在 `extension/yiveno-extension-store.zip`（CWS 与 Edge 同包 · ADR-020）。
 - **Dual store:** Same ZIP for Chrome Web Store and Microsoft Edge Add-ons; listing metadata split across this file and `EDGEADDONS.md`.
 - **Store screenshots / promo tiles:** Screenshot 1–3 + promo tiles ready (see Graphics table). Capture toolbar still pending; prefer re-shoot Side Panel/Library on a daily library before public listing.
 - **MCP beta:** Read-only MCP exists; not marketed as a primary user feature in the listing.
