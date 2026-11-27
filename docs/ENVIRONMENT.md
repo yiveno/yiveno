@@ -100,6 +100,7 @@ bun run env:check:prod
 
 - `env:sync:*`：把 3 个源文件生成到各子项目运行时文件
 - `env:check:*`：校验当前 profile 是否缺字段、是否把 `localhost` 混进错误环境
+- **production 额外硬门：** 合并后的 `PUBLIC_TURNSTILE_SITE_KEY` 必须非空（官网 `/login` Turnstile；通常来自 `.env.shared.local`）。`website` 的 `build:prod` 会先跑该 check，缺失即失败，避免静默部署后出现 bot check not configured
 
 ## 子项目读取方式
 

@@ -419,12 +419,19 @@ function getChecks(profile, env) {
     ]
   }
 
+  // Turnstile sitekey：合并后 env 非空即过（通常来自 .env.shared.local）；展示值脱敏，避免 check 日志刷公钥
+  const turnstileSiteKey = (env.PUBLIC_TURNSTILE_SITE_KEY || '').trim()
   return [
     ['WEBSITE_URL', env.WEBSITE_URL, isRemoteHttps(env.WEBSITE_URL || '')],
     ['VITE_WEBSITE_URL', env.VITE_WEBSITE_URL, isRemoteHttps(env.VITE_WEBSITE_URL || '')],
     ['VITE_API_BASE_URL', env.VITE_API_BASE_URL, isRemoteHttps(env.VITE_API_BASE_URL || '')],
     ['SUPABASE_URL', env.SUPABASE_URL, isRemoteHttps(env.SUPABASE_URL || '')],
-    ['VITE_SUPABASE_URL', env.VITE_SUPABASE_URL, isRemoteHttps(env.VITE_SUPABASE_URL || '')]
+    ['VITE_SUPABASE_URL', env.VITE_SUPABASE_URL, isRemoteHttps(env.VITE_SUPABASE_URL || '')],
+    [
+      'PUBLIC_TURNSTILE_SITE_KEY',
+      turnstileSiteKey ? '(set)' : '(missing)',
+      turnstileSiteKey.length > 0
+    ]
   ]
 }
 
