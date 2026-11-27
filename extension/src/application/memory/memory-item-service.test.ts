@@ -29,6 +29,7 @@ vi.mock('@/infrastructure/indexeddb/keyword-index-repository', () => ({
 import { MemoryItemService } from '@/application/memory/memory-item-service'
 import { scheduleAsyncMemoryEmbedding } from '@/application/memory/schedule-async-memory-embedding'
 import { scheduleAsyncMemoryLlmEnrichment } from '@/application/memory/schedule-async-memory-llm-enrichment'
+import { RECALL_FALLBACK_SCAN_LIMIT } from '@/application/recall/backends/recall-scan-limit'
 import {
   createBookmarkMemoryItem,
   createTextExcerptMemoryItem
@@ -488,13 +489,10 @@ describe('MemoryItemService listForKeywordRecall', () => {
   })
 
   /**
-   * 摘录覆盖回归（本批新增；失败=发现，不在本批修产品）：
-   * mergeExcerptsIntoCandidates 用 listByOwner(text_excerpt, limit:500)，
-   * 超过 500 条时旧摘录不应从 Recall 候选中消失。
-   *
-   * it.fails：断言目标行为；当前实现会截掉第 501+ 条 → 期望失败记为发现。
+   * 摘录覆盖回归：mergeExcerptsIntoCandidates 须以 RECALL_FALLBACK_SCAN_LIMIT 为上限，
+   * 不得按新近顺序截到 500；倒排无关命中时旧摘录仍须进入候选。
    */
-  it.fails('摘录超过 500 条时，旧摘录仍可被召回', async () => {
+  it('摘录超过 500 条时，旧摘录仍可被召回', async () => {
     const oldExcerpt = createTextExcerptMemoryItem({
       ownerId: 'o',
       sourceLocalProfileId: 'p',
@@ -534,8 +532,8 @@ describe('MemoryItemService listForKeywordRecall', () => {
     vi.mocked(memoryItemRepository.listByOwner).mockImplementation(async options => {
       if (options?.type === 'text_excerpt') {
         const limit = options.limit ?? 100
-        // 模拟仓库 newest-first + limit：旧摘录落在第 501 位，limit=500 时被截掉
-        return newerExcerpts.slice(0, limit)
+        // 模拟仓库 newest-first + limit：旧摘录在第 501 位；limit≥501 时纳入
+        return [...newerExcerpts, oldExcerpt].slice(0, limit)
       }
       return [oldExcerpt, ...newerExcerpts, unrelatedBookmark]
     })
@@ -547,7 +545,12 @@ describe('MemoryItemService listForKeywordRecall', () => {
       parsed: parseRecallClue(clue)
     })
 
+    expect(result.source).toBe('inverted')
     expect(result.items.map(item => item.id)).toContain(oldExcerpt.id)
+    expect(memoryItemRepository.listByOwner).toHaveBeenCalledWith({
+      type: 'text_excerpt',
+      limit: RECALL_FALLBACK_SCAN_LIMIT
+    })
   })
 
   /**

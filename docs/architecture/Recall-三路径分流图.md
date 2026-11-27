@@ -30,7 +30,7 @@ downstream:
 
 **主题闸：** 无 topic anchor 且非时间/类型约束邻域 → **不进检索**，`emptyKind=missing_topic`，只追问一次。
 
-**候选加载**（`memory-item-service`）：优先关键词倒排 → 倒排空/失败/无命中 → 全表扫；`RECALL_SCAN_LIMIT=20000`；fallback `RECALL_FALLBACK_SCAN_LIMIT=100000`；摘录前置合并 `listByOwner({ type: 'text_excerpt', limit: 500 })`。
+**候选加载**（`memory-item-service`）：优先关键词倒排 → 倒排空/失败/无命中 → 全表扫；`RECALL_SCAN_LIMIT=20000`；fallback `RECALL_FALLBACK_SCAN_LIMIT=100000`；摘录前置合并 `listByOwner({ type: 'text_excerpt', limit: RECALL_FALLBACK_SCAN_LIMIT })`（与全表 fallback 同安全上限；达上限截断并打日志，禁止按新近截到 500）。
 
 **关键词 Filter**（`keyword-filter.ts`）字段权重：title 24 / note 26 / pageTitle 20 / textExcerpt 18 / summary 16 / domain 14 / url 10 / keywords 12 / tags 12 / **excerptContext 8**。Omnibox 另有抬标题压正文的变体权重 `OMNIBOX_FIELD_WEIGHTS`（title 28 / note 30 / domain 18 / url 14 / pageTitle 22 / textExcerpt 12 / excerptContext 4 / summary 12），见 `keyword-filter.ts`。  
 门槛：`RECALL_MIN_MATCH_SCORE=10`，`RECALL_TOP_PICK_MIN_SCORE=18`。  

@@ -100,11 +100,24 @@ export class MemoryItemService {
   /**
    * 倒排候选并入摘录：书签 posting 常漏摘录 token，而摘录才是核心资产。
    * 摘录放前面，避免 inverted 已达 cap 时被 slice 丢掉。
+   *
+   * 上限与全表 fallback 对齐（`RECALL_FALLBACK_SCAN_LIMIT`）：禁止按新近顺序截到 500，
+   * 否则第 501+ 条旧摘录在倒排无关命中路径下永远进不了候选。
    */
   private async mergeExcerptsIntoCandidates(items: MemoryItem[]): Promise<MemoryItem[]> {
-    const excerpts = await this.repository.listByOwner({ type: 'text_excerpt', limit: 500 })
+    const excerpts = await this.repository.listByOwner({
+      type: 'text_excerpt',
+      limit: RECALL_FALLBACK_SCAN_LIMIT
+    })
     if (excerpts.length === 0) {
       return items
+    }
+    const truncated = excerpts.length >= RECALL_FALLBACK_SCAN_LIMIT
+    if (truncated) {
+      logger.info('Memory', 'Recall 候选：摘录合并达安全上限，已截断', {
+        excerptCount: excerpts.length,
+        limit: RECALL_FALLBACK_SCAN_LIMIT
+      })
     }
     const excerptIds = new Set(excerpts.map(item => item.id))
     const trailing = items.filter(item => !excerptIds.has(item.id))
