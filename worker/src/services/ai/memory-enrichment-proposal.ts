@@ -5,6 +5,11 @@
 
 import { z } from 'zod'
 
+/**
+ * Capture enrichment 对象类型闭集（9 类）。
+ * 与扩展 parse canonical（RecallObjectTypeSchema 10 类）的差集：无 `bookmark`。
+ * 理由：enrichment 面向 capture 正文对象，不是书签保存形态；bookmark 不作 enrichment objectType。
+ */
 const OBJECT_TYPES = [
   'poem', // 诗
   'article', // 文章
@@ -16,6 +21,9 @@ const OBJECT_TYPES = [
   'password', // 密码
   'quote' // 引文
 ] as const
+
+/** 测试导出：enrichment 枚举字面量集。 */
+export const ENRICHMENT_OBJECT_TYPES = OBJECT_TYPES
 
 function cappedTokenList(max: number) {
   // Zod 4 + exactOptionalPropertyTypes：先 transform 再 optional，键才保持可缺省

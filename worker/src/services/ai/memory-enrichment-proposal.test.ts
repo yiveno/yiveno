@@ -1,12 +1,30 @@
 import { describe, expect, test } from 'bun:test'
 
 import {
+  ENRICHMENT_OBJECT_TYPES,
   parseEnrichmentProposalText,
   buildEnrichmentUserPrompt,
   filterEnrichmentProposal
 } from './memory-enrichment-proposal'
 
 describe('memory-enrichment-proposal', () => {
+  test('objectType 枚举 = parse canonical 10 类减 bookmark', () => {
+    // 期望值显式列出（扩展 RecallObjectTypeSchema 减 bookmark）；勿从其它包隐式导入冒充。
+    const canonicalMinusBookmark = [
+      'poem',
+      'article',
+      'song',
+      'video',
+      'code',
+      'command',
+      'page',
+      'password',
+      'quote'
+    ] as const
+    expect([...ENRICHMENT_OBJECT_TYPES].sort()).toEqual([...canonicalMinusBookmark].sort())
+    expect(ENRICHMENT_OBJECT_TYPES).not.toContain('bookmark')
+  })
+
   test('解析围栏 JSON', () => {
     const proposal = parseEnrichmentProposalText(`\`\`\`json
 {"objectType":"video","keywords":["wwii"],"entities":["Hitler"]}

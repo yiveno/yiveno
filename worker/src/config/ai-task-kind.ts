@@ -1,38 +1,78 @@
 /**
- * 托管 / 线索 chat 补全的任务种类（taskKind）。
+ * 托管 / 线索 chat 补全的任务种类（taskKind）单一事实源。
  * Phase 0–1：观测 + 模型/maxTokens 路由插座；未配分档 env 时模型与全局 AI_HOSTED_MODEL 一致。
  * 见 docs/architecture/2026-10-任务级模型路由方案.md
+ *
+ * ## 新增 taskKind checklist（四处一次改齐）
+ * 1. 本注册表登记（kind / route / maxTokens / tier）
+ * 2. route=hosted 须在 `hosted-system-prompts.ts` 登记指纹（前缀 + 锚行）
+ * 3. 扩展侧镜像表同步（`extension/.../ai-chat-task-kind.ts`）
+ * 4. 配额口径确认（hosted 月/日 vs dedicated 专用端点日配额 / 独立配额）
  */
 
 import { clampCompletionMaxTokens, resolveHostedModel } from './ai-hosted'
 
-/** 已支持的 chat 任务种类（闭集）。 */
-export const AI_CHAT_TASK_KINDS = [
-  'nlu', // clue 理解 → 结构化槽位
-  'framing_nlg', // Framing 润色
-  'follow_up_nlg', // need_a_clue 追问
-  'narrow_polish', // composer Narrow 举例润色
-  'portrait_narrative', // 画像摘要自然语言组装
-  'portrait_cluster', // 待确认项语义聚类（结构化 JSON）
-  'enrichment', // Capture enrichment（若走可配置层）
-  'gs_samples', // Getting Started 示意 clue
-  'dreaming', // 夜间命题编译（批量；独立配额）
-  'extract' // 打开库内页内容提炼（独立配额）
-] as const
+/** 请求路由：hosted=/api/ai/hosted/complete；dedicated=专用端点。 */
+export type AiChatTaskRoute = 'hosted' | 'dedicated'
 
-export type AiChatTaskKind = (typeof AI_CHAT_TASK_KINDS)[number]
+/**
+ * 模型分档（对应可选 env 覆盖组）。
+ * - nlu / nlg / enrichment / gs_samples / dreaming / extract
+ */
+export type AiChatTaskTier =
+  | 'nlu' // 线索理解
+  | 'nlg' // Framing / 追问 / Narrow / 画像
+  | 'enrichment' // Capture enrichment
+  | 'gs_samples' // Getting Started 示意 clue
+  | 'dreaming' // 夜间命题编译
+  | 'extract' // 打开页内容提炼
+
+export type AiChatTaskRegistryEntry = {
+  kind: string
+  route: AiChatTaskRoute
+  maxTokens: number
+  tier: AiChatTaskTier
+}
+
+/**
+ * 全量 taskKind 注册表（顺序稳定；派生闭集 / maxTokens / hosted 路由均由此出）。
+ * maxTokens = 现网生效值（gs_samples 以 handler 700 为准，非旧 cap 表 400）。
+ */
+export const AI_CHAT_TASK_REGISTRY = [
+  { kind: 'nlu', route: 'hosted', maxTokens: 400, tier: 'nlu' }, // clue 理解 → 结构化槽位
+  { kind: 'framing_nlg', route: 'hosted', maxTokens: 256, tier: 'nlg' }, // Framing 润色
+  { kind: 'follow_up_nlg', route: 'hosted', maxTokens: 256, tier: 'nlg' }, // need_a_clue 追问
+  { kind: 'narrow_polish', route: 'hosted', maxTokens: 128, tier: 'nlg' }, // composer Narrow 举例润色
+  { kind: 'portrait_narrative', route: 'hosted', maxTokens: 256, tier: 'nlg' }, // 画像摘要自然语言组装
+  { kind: 'portrait_cluster', route: 'hosted', maxTokens: 512, tier: 'nlg' }, // 待确认项语义聚类
+  { kind: 'enrichment', route: 'dedicated', maxTokens: 400, tier: 'enrichment' }, // Capture enrichment
+  { kind: 'gs_samples', route: 'dedicated', maxTokens: 700, tier: 'gs_samples' }, // Getting Started 示意 clue
+  { kind: 'dreaming', route: 'dedicated', maxTokens: 1200, tier: 'dreaming' }, // 夜间命题编译
+  { kind: 'extract', route: 'dedicated', maxTokens: 800, tier: 'extract' } // 打开库内页内容提炼
+] as const satisfies readonly AiChatTaskRegistryEntry[]
+
+/** 已支持的 chat 任务种类（闭集；由注册表派生）。 */
+export const AI_CHAT_TASK_KINDS = AI_CHAT_TASK_REGISTRY.map(entry => entry.kind)
+
+export type AiChatTaskKind = (typeof AI_CHAT_TASK_REGISTRY)[number]['kind']
 
 /** 缺省任务（兼容旧客户端未传 taskKind）。 */
 export const AI_CHAT_TASK_KIND_DEFAULT: AiChatTaskKind = 'nlu'
 
+/** route=hosted 的 kind 集（供 hosted/complete 闭集派生）。 */
+export const HOSTED_ROUTE_TASK_KINDS = AI_CHAT_TASK_REGISTRY.filter(
+  entry => entry.route === 'hosted'
+).map(entry => entry.kind) as AiChatTaskKind[]
+
+export type HostedRouteTaskKind = Extract<
+  (typeof AI_CHAT_TASK_REGISTRY)[number],
+  { route: 'hosted' }
+>['kind']
+
 /** NLG 浅任务（可共享 AI_HOSTED_MODEL_NLG 覆盖）。 */
-const NLG_TASK_KINDS = new Set<AiChatTaskKind>([
-  'framing_nlg',
-  'follow_up_nlg',
-  'narrow_polish',
-  'portrait_narrative',
-  'portrait_cluster'
-])
+const NLG_TASK_KINDS = new Set<AiChatTaskKind>(
+  AI_CHAT_TASK_REGISTRY.filter(entry => entry.tier === 'nlg').map(entry => entry.kind)
+)
 
 /**
  * 解析请求体 taskKind；未知或空 → 默认 nlu（不 400，兼容旧客户端）。
@@ -64,22 +104,26 @@ export type AiTaskModelEnv = {
   AI_HOSTED_MODEL_EXTRACT?: string
 }
 
+function resolveTier(taskKind: AiChatTaskKind): AiChatTaskTier {
+  const entry = AI_CHAT_TASK_REGISTRY.find(item => item.kind === taskKind)
+  if (!entry) {
+    return 'nlu'
+  }
+  return entry.tier
+}
+
 /**
  * 按 taskKind 解析模型名；未配分档 env 时回退全局 AI_HOSTED_MODEL。
  * 客户端不得传 model 字符串——仅服务端由此决定。
  */
 export function resolveHostedModelForTask(env: AiTaskModelEnv, taskKind: AiChatTaskKind): string {
   const fallback = resolveHostedModel(env)
-  switch (taskKind) {
+  switch (resolveTier(taskKind)) {
     case 'nlu': {
       const override = env.AI_HOSTED_MODEL_NLU?.trim()
       return override || fallback
     }
-    case 'framing_nlg':
-    case 'follow_up_nlg':
-    case 'narrow_polish':
-    case 'portrait_narrative':
-    case 'portrait_cluster': {
+    case 'nlg': {
       const override = env.AI_HOSTED_MODEL_NLG?.trim()
       return override || fallback
     }
@@ -109,20 +153,11 @@ export function isNlgAiChatTaskKind(taskKind: AiChatTaskKind): boolean {
 
 /**
  * 各 task 的 maxTokens 服务端上限（亦作未传 requested 时的默认）。
- * NLG / polish 更短，压费用与超时；nlu 保持现网 400。
+ * 由注册表派生；NLG / polish 更短，压费用与超时。
  */
-export const AI_CHAT_TASK_MAX_TOKENS: Record<AiChatTaskKind, number> = {
-  nlu: 400,
-  framing_nlg: 256,
-  follow_up_nlg: 256,
-  narrow_polish: 128,
-  portrait_narrative: 256,
-  portrait_cluster: 512,
-  enrichment: 400,
-  gs_samples: 400,
-  dreaming: 1200,
-  extract: 800
-}
+export const AI_CHAT_TASK_MAX_TOKENS: Record<AiChatTaskKind, number> = Object.fromEntries(
+  AI_CHAT_TASK_REGISTRY.map(entry => [entry.kind, entry.maxTokens])
+) as Record<AiChatTaskKind, number>
 
 /**
  * 按 taskKind 解析 maxTokens：先落到合法区间，再钳到该任务上限。

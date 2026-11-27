@@ -6,7 +6,7 @@
 
 import type { Env } from '../types/env'
 import { isDeepSeekAiGatewayEnabled, resolveHostedModel } from '../config/ai-hosted'
-import { resolveHostedModelForTask } from '../config/ai-task-kind'
+import { resolveHostedModelForTask, resolveHostedMaxTokensForTask } from '../config/ai-task-kind'
 import { isAiChatProviderConfigured, resolveAiChatProvider } from '../services/ai/ai-chat-provider'
 import {
   GsClueSamplesCompleteRequestSchema,
@@ -202,7 +202,7 @@ export async function handleGsClueSamplesComplete(
     const provider = resolveAiChatProvider(env)
     const result = await provider.complete(env, {
       prompt: ' ',
-      maxTokens: 700,
+      maxTokens: resolveHostedMaxTokensForTask('gs_samples', undefined),
       temperature: 0.4,
       disableThinking: true,
       model,

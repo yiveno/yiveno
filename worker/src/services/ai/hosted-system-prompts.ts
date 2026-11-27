@@ -9,17 +9,15 @@
  *   且受自有配额约束（匿名终身 15 次），滥用价值有限。
  */
 
-/** hosted/complete 允许的 taskKind（闭集；enrichment/gs/dreaming 有专用端点）。 */
-export const HOSTED_COMPLETE_TASK_KINDS = [
-  'nlu', // 线索理解 / 闲聊二次回复
-  'framing_nlg', // Framing 润色
-  'follow_up_nlg', // need_a_clue 追问
-  'narrow_polish', // composer Narrow 举例润色
-  'portrait_narrative', // 画像摘要自然语言组装
-  'portrait_cluster' // 待确认项语义聚类
-] as const
+import { HOSTED_ROUTE_TASK_KINDS, type HostedRouteTaskKind } from '../../config/ai-task-kind'
 
-export type HostedCompleteTaskKind = (typeof HOSTED_COMPLETE_TASK_KINDS)[number]
+/**
+ * hosted/complete 允许的 taskKind（由注册表 route=hosted 派生；
+ * enrichment / gs / dreaming / extract 走专用端点）。
+ */
+export const HOSTED_COMPLETE_TASK_KINDS = HOSTED_ROUTE_TASK_KINDS as readonly HostedRouteTaskKind[]
+
+export type HostedCompleteTaskKind = HostedRouteTaskKind
 
 type SystemFingerprint = {
   /** system 须以此首段开头（扩展 builder 原文逐字） */

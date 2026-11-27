@@ -3,22 +3,21 @@
  * 仅服务 need_a_clue（候选收窄）。
  */
 
-import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
+import {
+  RecallObjectTypeSchema,
+  type ParsedRecallClue
+} from '@/core/recall/parse-recall-clue-types'
 import { isNonCuttingFollowUpMetaValue } from '@/core/recall/gate-recall-follow-up-chips'
 import type { LlmFollowUpProposal } from '@/core/recall/understand/llm-follow-up-proposal'
 
-/** 已解析出的对象类型时，禁止再问类型的芯片 value（canonical 英文）。 */
-const TYPE_CHIP_VALUES = new Set([
-  'article',
-  'poem',
-  'code',
-  'song',
-  'video',
-  'command',
-  'page',
-  'password',
-  'quote'
-])
+/**
+ * 已解析出的对象类型时，禁止再问类型的芯片 value。
+ * 自 parse canonical（RecallObjectTypeSchema 10 类）去掉 bookmark 派生：
+ * bookmark 是保存形态（MemoryItem.type），非内容类型，不作追问 chip。
+ */
+const TYPE_CHIP_VALUES: ReadonlySet<string> = new Set(
+  RecallObjectTypeSchema.options.filter(type => type !== 'bookmark')
+)
 
 /** 回复里若出现这些「类型问卷」句式且已有 objectTypes → 整段拒收。 */
 const TYPE_QUESTIONNAIRE_REPLY =
