@@ -66,6 +66,11 @@ export type QuotaSnapshot = {
   lastErrorKind?: AiProviderErrorKind
   needsManualRecovery?: boolean
   pendingCount: number
+  /**
+   * 日窗剩余比例（0–1）：对 freeTier 的 rpd / tpd 分别算剩余后取最小值。
+   * 无日限额字段时缺省；供 background 预留线判定。
+   */
+  dailyRemainingRatio?: number
 }
 
 export function createEmptyQuotaLedgerState(): QuotaLedgerState {
@@ -249,10 +254,34 @@ export function reconcileQuota(input: {
     return
   }
 
-  if (input.outcome === 'payment_required' || input.outcome === 'auth_failed') {
+  if (
+    input.outcome === 'payment_required' ||
+    input.outcome === 'auth_failed' ||
+    input.outcome === 'misconfigured'
+  ) {
     bucket.cooldownUntil = input.nowMs + LONG_COOLDOWN_MS
     bucket.needsManualRecovery = true
   }
+}
+
+/**
+ * 日窗剩余比例：rpd / tpd 各自 (limit - used) / limit，取最小值。
+ * 无日限额 → undefined。
+ */
+export function computeDailyRemainingRatio(
+  dayWindow: Pick<QuotaDayWindow, 'requestCount' | 'tokenEstimate'>,
+  freeTier?: AiCandidateFreeTier
+): number | undefined {
+  if (!freeTier) return undefined
+  const ratios: number[] = []
+  if (freeTier.rpd !== undefined && freeTier.rpd > 0) {
+    ratios.push(Math.max(0, (freeTier.rpd - dayWindow.requestCount) / freeTier.rpd))
+  }
+  if (freeTier.tpd !== undefined && freeTier.tpd > 0) {
+    ratios.push(Math.max(0, (freeTier.tpd - dayWindow.tokenEstimate) / freeTier.tpd))
+  }
+  if (ratios.length === 0) return undefined
+  return Math.min(...ratios)
 }
 
 /** 只读快照（会滚动过期窗口）。 */
@@ -265,6 +294,7 @@ export function snapshotQuota(input: {
   const existing = input.state.buckets[input.candidateId]
   if (!existing) return null
   rollWindows(existing, input.nowMs, input.freeTier)
+  const dailyRemainingRatio = computeDailyRemainingRatio(existing.dayWindow, input.freeTier)
   return {
     candidateId: input.candidateId,
     minuteWindow: { ...existing.minuteWindow },
@@ -274,6 +304,7 @@ export function snapshotQuota(input: {
     ...(existing.needsManualRecovery !== undefined
       ? { needsManualRecovery: existing.needsManualRecovery }
       : {}),
-    pendingCount: Object.keys(existing.pending).length
+    pendingCount: Object.keys(existing.pending).length,
+    ...(dailyRemainingRatio !== undefined ? { dailyRemainingRatio } : {})
   }
 }

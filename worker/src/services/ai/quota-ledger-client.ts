@@ -10,6 +10,12 @@ import type { QuotaReconcileOutcome, QuotaReserveResult, QuotaSnapshot } from '.
 
 /** 账本端口（DO stub 或 no-op）。 */
 export type QuotaLedgerPort = {
+  /**
+   * false = 绑定缺失 / stub 失败后的 no-op；
+   * quota 模式应跳过 reserve，直接按序尝试候选。
+   * 缺省视为可用。
+   */
+  readonly available?: boolean
   reserve(candidateId: string, estimatedTokens: number, nowMs: number): Promise<QuotaReserveResult>
   reconcile(
     candidateId: string,
@@ -27,10 +33,11 @@ const NOOP_ALLOW: QuotaReserveResult = {
   reservationId: 'noop'
 }
 
-/** 内存 no-op：reserve 恒允许；reconcile / snapshot 空操作。 */
+/** 内存 no-op：reserve 恒允许；reconcile / snapshot 空操作；available=false。 */
 export function createNoOpQuotaLedger(reason: string): QuotaLedgerPort {
   logWarn('ai_quota_ledger_noop', { reason })
   return {
+    available: false,
     async reserve() {
       return NOOP_ALLOW
     },

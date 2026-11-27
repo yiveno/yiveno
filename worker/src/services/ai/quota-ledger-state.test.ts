@@ -4,6 +4,7 @@
 
 import { describe, expect, test } from 'bun:test'
 import {
+  computeDailyRemainingRatio,
   computeNextDayResetMs,
   createEmptyQuotaLedgerState,
   DEFAULT_MINUTE_COOLDOWN_MS,
@@ -226,6 +227,56 @@ describe('reserveQuota / reconcileQuota', () => {
     expect(snap?.cooldownUntil).toBe(now + LONG_COOLDOWN_MS)
     expect(snap?.needsManualRecovery).toBe(true)
     expect(snap?.lastErrorKind).toBe('payment_required')
+  })
+
+  test('misconfigured 同样设长冷却与 needsManualRecovery', () => {
+    const state = createEmptyQuotaLedgerState()
+    const now = 3_100_000
+    const reserved = reserveQuota({
+      state,
+      candidateId: 'paid',
+      estimatedTokens: 10,
+      nowMs: now
+    })
+    expect(reserved.allowed).toBe(true)
+    if (!reserved.allowed) return
+
+    reconcileQuota({
+      state,
+      candidateId: 'paid',
+      reservationId: reserved.reservationId,
+      outcome: 'misconfigured',
+      nowMs: now
+    })
+    const snap = snapshotQuota({ state, candidateId: 'paid', nowMs: now })
+    expect(snap?.cooldownUntil).toBe(now + LONG_COOLDOWN_MS)
+    expect(snap?.needsManualRecovery).toBe(true)
+    expect(snap?.lastErrorKind).toBe('misconfigured')
+  })
+
+  test('snapshot 含 dailyRemainingRatio（rpd/tpd 取最小）', () => {
+    const state = createEmptyQuotaLedgerState()
+    const now = 5_000_000
+    expect(
+      reserveQuota({
+        state,
+        candidateId: 'gemini',
+        estimatedTokens: 100,
+        nowMs: now,
+        freeTier: FREE
+      }).allowed
+    ).toBe(true)
+    const snap = snapshotQuota({
+      state,
+      candidateId: 'gemini',
+      nowMs: now,
+      freeTier: FREE
+    })
+    // rpd=5 used=1 → 0.8；tpd=500 used=100 → 0.8
+    expect(snap?.dailyRemainingRatio).toBe(0.8)
+    expect(computeDailyRemainingRatio({ requestCount: 4, tokenEstimate: 100 }, FREE)).toBeCloseTo(
+      0.2
+    )
   })
 
   test('预留后对账校准估算 token', () => {

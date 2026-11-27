@@ -111,8 +111,8 @@ bun run env:check:prod
   - Cloudflare 线上环境变量在 Worker Dashboard / Wrangler 环境中维护
   - **AI Gateway（非 Secret，写在 `worker/wrangler.toml` `[vars]`）**
     - `AI_PROVIDER`（可选）：聊天补全实现，默认 `deepseek`；换厂商时加 Worker adapter + 改此变量
-    - `AI_ROUTING_MODE`（可选 · Batch 2）：`single`（缺省）| `shadow` | `quota`。生产保持缺省 `single`（行为与现行一致）。`shadow` 只记候选决策仍走现行单 provider；`quota` 本批等同 shadow（真实切换下一批）。未知值 → misconfigured
-    - Durable Object 绑定 `AI_QUOTA_LEDGER`（类 `AiQuotaLedger`，migration tag `v1-ai-quota-ledger`）：上游候选额度账本；须随下次 `wrangler deploy` 生效。未绑定 / stub 失败时客户端 no-op，不挡请求。`single` 模式不调用账本
+    - `AI_ROUTING_MODE`（可选 · Batch 3）：`single`（缺省 · kill switch）| `shadow` | `quota`。生产保持缺省 `single`（行为与现行一致；不触账本、不查注册表）。`shadow` 只记候选决策仍走现行单 provider。`quota` 按注册表顺序真实切换候选（隐私门 / reserve / failover）；账本不可用或无合格候选时安全回落 DeepSeek 单路。**生产未启用 quota**；gemini/groq 仍未合格。未知值 → misconfigured
+    - Durable Object 绑定 `AI_QUOTA_LEDGER`（类 `AiQuotaLedger`，migration tag `v1-ai-quota-ledger`）：上游候选额度账本；须随下次 `wrangler deploy` 生效。未绑定 / stub 失败时客户端 no-op（`available=false`），quota 模式跳过 reserve 不挡请求。`single` 模式不调用账本
     - `AI_HOSTED_MODEL`：全局默认 chat 模型（现网 `deepseek-v4-flash`）
     - **任务级模型覆盖（可选 · Phase 1 插座；未设 = 全任务同 `AI_HOSTED_MODEL`，勿当已分模上线）**
       - `AI_HOSTED_MODEL_NLU`：仅 `taskKind=nlu`
