@@ -4,6 +4,7 @@
  */
 
 import type { Env } from '../../types/env'
+import { AiProviderError } from './ai-provider-error'
 import { deepseekAiChatProvider } from './deepseek-ai-chat-provider'
 import { gatewayCompatAiChatProvider } from './gateway-compat-ai-chat-provider'
 
@@ -69,7 +70,11 @@ export function resolveAiChatProvider(env: Env): AiChatProvider {
     case 'gateway-compat':
       return gatewayCompatAiChatProvider
     default:
-      throw new Error(`ai_provider_unsupported:${raw}`)
+      throw new AiProviderError({
+        kind: 'misconfigured',
+        providerId: 'unknown',
+        causeMessage: `ai_provider_unsupported:${raw}`
+      })
   }
 }
 

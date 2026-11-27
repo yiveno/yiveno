@@ -1,8 +1,9 @@
 /**
- * DeepSeek adapter：Gateway 跳缓存 / 关 payload 日志；401 回退日志与原因区分。
+ * DeepSeek adapter：Gateway 跳缓存 / 关 payload 日志；401 回退日志与原因区分；结构化错误。
  */
 import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from 'bun:test'
 import type { Env } from '../../types/env'
+import { AiProviderError } from './ai-provider-error'
 import { deepseekAiChatProvider } from './deepseek-ai-chat-provider'
 
 function createEnv(overrides: Record<string, unknown> = {}): Env {
@@ -337,11 +338,123 @@ describe('deepseekAiChatProvider · 401 回退日志与原因区分（S6）', ()
         await deepseekAiChatProvider.complete(gatewayEnv(), { prompt: 'hello' })
         expect.unreachable('应抛错')
       } catch (err) {
-        const msg = err instanceof Error ? err.message : String(err)
+        expect(err).toBeInstanceOf(AiProviderError)
+        const e = err as AiProviderError
+        const msg = e.message
         expect(msg).toContain('upstream_overloaded')
         expect(msg).toContain('直连回退亦失败')
         expect(msg).not.toContain('Authenticated Gateway')
         expect(msg).not.toContain('ai_gateway_unauthorized')
+        expect(e.kind).toBe('upstream_5xx')
+        expect(e.status).toBe(503)
+        expect(JSON.stringify(e.details)).toContain('direct')
+      }
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+})
+
+describe('deepseekAiChatProvider · 结构化上游错误', () => {
+  test('DeepSeek 402 → payment_required', async () => {
+    const fetchMock = mock(
+      async () =>
+        new Response(
+          JSON.stringify({ error: { message: 'Insufficient Balance', code: 'payment_required' } }),
+          { status: 402, headers: { 'content-type': 'application/json' } }
+        )
+    )
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+    try {
+      try {
+        await deepseekAiChatProvider.complete(createEnv(), { prompt: 'hello' })
+        expect.unreachable('应抛错')
+      } catch (err) {
+        const e = err as AiProviderError
+        expect(e.kind).toBe('payment_required')
+        expect(e.status).toBe(402)
+        expect(e.vendorCode).toBe('payment_required')
+        expect(e.providerId).toBe('deepseek')
+      }
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test('DeepSeek 401 code 2009 → auth_failed + 既有归因文案', async () => {
+    const fetchMock = mock(
+      async () =>
+        new Response(JSON.stringify({ error: { message: 'Invalid API key', code: 2009 } }), {
+          status: 401,
+          headers: { 'content-type': 'application/json' }
+        })
+    )
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+    try {
+      try {
+        await deepseekAiChatProvider.complete(createEnv(), { prompt: 'hello' })
+        expect.unreachable('应抛错')
+      } catch (err) {
+        const e = err as AiProviderError
+        expect(e.kind).toBe('auth_failed')
+        expect(e.status).toBe(401)
+        expect(e.vendorCode).toBe('2009')
+        expect(e.message).toContain('deepseek_api_key_rejected')
+        expect(e.message).toContain('2009')
+      }
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test('5xx → upstream_5xx', async () => {
+    const fetchMock = mock(
+      async () =>
+        new Response(JSON.stringify({ error: { message: 'server_error', code: '500' } }), {
+          status: 500,
+          headers: { 'content-type': 'application/json' }
+        })
+    )
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+    try {
+      try {
+        await deepseekAiChatProvider.complete(createEnv(), { prompt: 'hello' })
+        expect.unreachable('应抛错')
+      } catch (err) {
+        const e = err as AiProviderError
+        expect(e.kind).toBe('upstream_5xx')
+        expect(e.status).toBe(500)
+        expect(e.vendorCode).toBe('500')
+      }
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test('空响应 → empty_response', async () => {
+    const fetchMock = mock(
+      async () =>
+        new Response(
+          JSON.stringify({
+            choices: [{ message: { content: '' }, finish_reason: 'length' }]
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } }
+        )
+    )
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+    try {
+      try {
+        await deepseekAiChatProvider.complete(createEnv(), { prompt: 'hello' })
+        expect.unreachable('应抛错')
+      } catch (err) {
+        const e = err as AiProviderError
+        expect(e.kind).toBe('empty_response')
+        expect(e.message).toBe('deepseek_empty_response:length')
+        expect(e.status).toBe(200)
       }
     } finally {
       globalThis.fetch = originalFetch

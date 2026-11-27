@@ -92,6 +92,11 @@ export type Env = Cloudflare.Env & {
    * Google AI Studio API key（可选；仅 `AI_PROVIDER=gateway-compat` 且模型前缀 google-ai-studio/ 时需要）。
    */
   GOOGLE_AI_API_KEY?: string
+  /**
+   * Groq API key（可选；仅 `AI_PROVIDER=gateway-compat` 且模型前缀 groq/ 时需要）。
+   * 不写入 wrangler 生产 vars；本地 `.dev.vars` / 可选 Secret 即可。
+   */
+  GROQ_API_KEY?: string
   /** 定时清理总开关；"false" 关闭。 */
   CLEANUP_SCHEDULED_ENABLED?: string
   /** 每个 owner 保留的 memory_sync_backups 条数。 */

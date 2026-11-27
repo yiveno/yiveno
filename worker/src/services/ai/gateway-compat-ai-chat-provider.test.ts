@@ -1,8 +1,9 @@
 /**
- * Gateway compat adapter：URL / 配置门禁 / 三档请求体 / key 选择 / usage / 空响应。
+ * Gateway compat adapter：URL / 配置门禁 / 三档请求体 / key 选择 / usage / 空响应 / 结构化错误。
  */
 import { describe, expect, mock, test } from 'bun:test'
 import type { Env } from '../../types/env'
+import { AiProviderError } from './ai-provider-error'
 import { gatewayCompatAiChatProvider } from './gateway-compat-ai-chat-provider'
 
 function createEnv(overrides: Record<string, unknown> = {}): Env {
@@ -45,6 +46,11 @@ describe('gatewayCompatAiChatProvider · isConfigured', () => {
         createEnv({ DEEPSEEK_API_KEY: '', GOOGLE_AI_API_KEY: 'google-key' })
       )
     ).toBe(true)
+    expect(
+      gatewayCompatAiChatProvider.isConfigured(
+        createEnv({ DEEPSEEK_API_KEY: '', GROQ_API_KEY: 'groq-key' })
+      )
+    ).toBe(true)
   })
 
   test('缺 Gateway env 或全部 key → false', () => {
@@ -57,7 +63,8 @@ describe('gatewayCompatAiChatProvider · isConfigured', () => {
         createEnv({
           DEEPSEEK_API_KEY: '',
           OPENAI_API_KEY: '',
-          GOOGLE_AI_API_KEY: ''
+          GOOGLE_AI_API_KEY: '',
+          GROQ_API_KEY: ''
         })
       )
     ).toBe(false)
@@ -221,6 +228,33 @@ describe('gatewayCompatAiChatProvider · 三档请求体', () => {
       globalThis.fetch = originalFetch
     }
   })
+
+  test('groq：max_tokens；无 thinking / reasoning', async () => {
+    let body: Record<string, unknown> = {}
+    const fetchMock = mock(async (_input: RequestInfo | URL, init?: RequestInit) => {
+      body = parseBody(init)
+      return okResponse('groq-ok')
+    })
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+    try {
+      await gatewayCompatAiChatProvider.complete(
+        createEnv({ GROQ_API_KEY: 'groq-test-key', DEEPSEEK_API_KEY: '' }),
+        {
+          prompt: 'hello',
+          model: 'groq/openai/gpt-oss-120b',
+          disableThinking: true
+        }
+      )
+      expect(body.max_tokens).toBe(256)
+      expect(body).not.toHaveProperty('max_completion_tokens')
+      expect(body).not.toHaveProperty('thinking')
+      expect(body).not.toHaveProperty('reasoning_effort')
+      expect(body.model).toBe('groq/openai/gpt-oss-120b')
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
 })
 
 describe('gatewayCompatAiChatProvider · key 选择与鉴权头', () => {
@@ -368,12 +402,222 @@ describe('gatewayCompatAiChatProvider · 响应与 usage', () => {
     const originalFetch = globalThis.fetch
     globalThis.fetch = fetchMock as unknown as typeof fetch
     try {
-      await expect(
-        gatewayCompatAiChatProvider.complete(createEnv(), {
+      try {
+        await gatewayCompatAiChatProvider.complete(createEnv(), {
           prompt: 'hello',
           model: 'deepseek/deepseek-flash'
         })
-      ).rejects.toThrow('gateway_compat_empty_response:deepseek:length')
+        expect.unreachable('应抛错')
+      } catch (err) {
+        expect(err).toBeInstanceOf(AiProviderError)
+        const e = err as AiProviderError
+        expect(e.kind).toBe('empty_response')
+        expect(e.message).toBe('gateway_compat_empty_response:deepseek:length')
+        expect(e.vendor).toBe('deepseek')
+        expect(e.status).toBe(200)
+      }
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+})
+
+describe('gatewayCompatAiChatProvider · 结构化上游错误', () => {
+  test('Google 429 quota_exceeded → quota_exhausted_daily', async () => {
+    const fetchMock = mock(
+      async () =>
+        new Response(
+          JSON.stringify({
+            error: {
+              message: 'You exceeded your current quota',
+              code: 429,
+              status: 'RESOURCE_EXHAUSTED',
+              details: [
+                {
+                  '@type': 'type.googleapis.com/google.rpc.ErrorInfo',
+                  reason: 'quota_exceeded',
+                  metadata: { quota_metric: 'generate_requests_per_day' }
+                },
+                {
+                  '@type': 'type.googleapis.com/google.rpc.RetryInfo',
+                  retryDelay: '21s'
+                }
+              ]
+            }
+          }),
+          {
+            status: 429,
+            headers: { 'content-type': 'application/json', 'retry-after': '21' }
+          }
+        )
+    )
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+    try {
+      try {
+        await gatewayCompatAiChatProvider.complete(
+          createEnv({ GOOGLE_AI_API_KEY: 'google-test-key', DEEPSEEK_API_KEY: '' }),
+          { prompt: 'hello', model: 'google-ai-studio/gemini-2.5-flash-lite' }
+        )
+        expect.unreachable('应抛错')
+      } catch (err) {
+        expect(err).toBeInstanceOf(AiProviderError)
+        const e = err as AiProviderError
+        expect(e.kind).toBe('quota_exhausted_daily')
+        expect(e.status).toBe(429)
+        expect(e.vendorCode).toBe('429')
+        expect(e.vendor).toBe('google-ai-studio')
+        expect(e.retryAfterMs).toBe(21_000)
+      }
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test('Google 429 rate_limit_exceeded → rate_limit_minute', async () => {
+    const fetchMock = mock(
+      async () =>
+        new Response(
+          JSON.stringify({
+            error: {
+              message: 'Rate limit exceeded for RPM',
+              code: 'rate_limit_exceeded',
+              details: [{ reason: 'rate_limit_exceeded' }]
+            }
+          }),
+          { status: 429, headers: { 'content-type': 'application/json', 'retry-after': '8' } }
+        )
+    )
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+    try {
+      try {
+        await gatewayCompatAiChatProvider.complete(
+          createEnv({ GOOGLE_AI_API_KEY: 'google-test-key', DEEPSEEK_API_KEY: '' }),
+          { prompt: 'hello', model: 'google-ai-studio/gemini-2.5-flash-lite' }
+        )
+        expect.unreachable('应抛错')
+      } catch (err) {
+        const e = err as AiProviderError
+        expect(e.kind).toBe('rate_limit_minute')
+        expect(e.status).toBe(429)
+        expect(e.vendorCode).toBe('rate_limit_exceeded')
+        expect(e.retryAfterMs).toBe(8000)
+      }
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test('Groq 429 带限额头 → rate_limit_minute + retryAfterMs', async () => {
+    const fetchMock = mock(
+      async () =>
+        new Response(
+          JSON.stringify({
+            error: { message: 'Rate limit reached', code: 'rate_limit_exceeded' }
+          }),
+          {
+            status: 429,
+            headers: {
+              'content-type': 'application/json',
+              'retry-after': '12',
+              'x-ratelimit-remaining-requests': '0',
+              'x-ratelimit-remaining-tokens': '0',
+              'x-ratelimit-reset-requests': '12s',
+              'x-ratelimit-reset-tokens': '12s'
+            }
+          }
+        )
+    )
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+    try {
+      try {
+        await gatewayCompatAiChatProvider.complete(
+          createEnv({ GROQ_API_KEY: 'groq-test-key', DEEPSEEK_API_KEY: '' }),
+          { prompt: 'hello', model: 'groq/llama-3.1-8b-instant' }
+        )
+        expect.unreachable('应抛错')
+      } catch (err) {
+        const e = err as AiProviderError
+        expect(e.kind).toBe('rate_limit_minute')
+        expect(e.status).toBe(429)
+        expect(e.vendorCode).toBe('rate_limit_exceeded')
+        expect(e.vendor).toBe('groq')
+        expect(e.retryAfterMs).toBe(12_000)
+        expect(e.rateLimitHeaders?.['x-ratelimit-remaining-requests']).toBe('0')
+        expect(e.rateLimitHeaders?.['retry-after']).toBe('12')
+      }
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test('5xx → upstream_5xx', async () => {
+    const fetchMock = mock(
+      async () =>
+        new Response(
+          JSON.stringify({ error: { message: 'upstream boom', code: 'server_error' } }),
+          {
+            status: 502,
+            headers: { 'content-type': 'application/json' }
+          }
+        )
+    )
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+    try {
+      try {
+        await gatewayCompatAiChatProvider.complete(createEnv(), {
+          prompt: 'hello',
+          model: 'deepseek/deepseek-flash'
+        })
+        expect.unreachable('应抛错')
+      } catch (err) {
+        const e = err as AiProviderError
+        expect(e.kind).toBe('upstream_5xx')
+        expect(e.status).toBe(502)
+        expect(e.vendorCode).toBe('server_error')
+      }
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test('Google 数组包装错误体仍抽出 code/message/status', async () => {
+    // 真机 compat 探针：Google 404 返回 `[{ error: { code, message, status } }]`
+    const fetchMock = mock(
+      async () =>
+        new Response(
+          JSON.stringify([
+            {
+              error: {
+                code: 404,
+                message: 'models/yiveno-nonexistent-model-batch1-probe is not found',
+                status: 'NOT_FOUND'
+              }
+            }
+          ]),
+          { status: 404, headers: { 'content-type': 'application/json; charset=UTF-8' } }
+        )
+    )
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+    try {
+      try {
+        await gatewayCompatAiChatProvider.complete(
+          createEnv({ GOOGLE_AI_API_KEY: 'google-test-key', DEEPSEEK_API_KEY: '' }),
+          { prompt: 'hello', model: 'google-ai-studio/yiveno-nonexistent-model-batch1-probe' }
+        )
+        expect.unreachable('应抛错')
+      } catch (err) {
+        const e = err as AiProviderError
+        expect(e.status).toBe(404)
+        expect(e.vendorCode).toBe('404')
+        expect(e.message).toContain('models/yiveno-nonexistent-model-batch1-probe is not found')
+        expect(e.details).toEqual({ status: 'NOT_FOUND' })
+        expect(e.kind).toBe('unknown')
+      }
     } finally {
       globalThis.fetch = originalFetch
     }

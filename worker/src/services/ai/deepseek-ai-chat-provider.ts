@@ -5,6 +5,7 @@
  * Gateway 若开启 Authenticated Gateway，需 Secret `AI_GATEWAY_TOKEN` → 头 `cf-aig-authorization`。
  * 经 Gateway 时发 `cf-aig-collect-log-payload: false`，关闭 prompt/response 正文落盘（元数据日志仍保留）。
  * 经 Gateway 时发 `cf-aig-skip-cache: true`（缓存键不含用户身份且命中仍扣配额，收益近零故关闭）。
+ * 上游失败抛 AiProviderError（结构化 kind / status / vendorCode）；保留 2009 与 Gateway 401 归因文案。
  */
 
 import {
@@ -22,6 +23,15 @@ import type {
   AiChatMessage,
   AiChatProvider
 } from './ai-chat-provider'
+import {
+  AiProviderError,
+  classifyAiProviderError,
+  classifyFetchFailure,
+  normalizeVendorCode,
+  parseRetryAfterMs,
+  pickRateLimitHeaders,
+  sanitizeAiProviderDetails
+} from './ai-provider-error'
 
 const PROVIDER_ID = 'deepseek'
 
@@ -42,6 +52,8 @@ interface DeepSeekChatResponse {
   error?: {
     message?: string
     code?: number | string
+    type?: string
+    details?: unknown
   }
 }
 
@@ -127,6 +139,77 @@ function resolveMessages(request: AiChatCompleteRequest): AiChatMessage[] {
   return [{ role: 'user', content: prompt || ' ' }]
 }
 
+async function readJsonPayload(
+  response: Response
+): Promise<{ ok: true; payload: DeepSeekChatResponse } | { ok: false; rawPreview: string }> {
+  const raw = await response.text()
+  try {
+    return { ok: true, payload: JSON.parse(raw) as DeepSeekChatResponse }
+  } catch {
+    return { ok: false, rawPreview: raw.slice(0, 200) }
+  }
+}
+
+function throwDeepSeekUpstreamFailure(args: {
+  viaGateway: boolean
+  path: 'gateway' | 'direct'
+  model: string
+  status: number
+  statusText: string
+  headers: Headers
+  hasGatewayToken: boolean
+  payload: DeepSeekChatResponse | null
+  rawPreview?: string
+  /** 直连回退失败时附加说明 */
+  directFallbackSuffix?: string
+}): never {
+  const err = args.payload?.error
+  const failMessage = err?.message || args.statusText || 'deepseek_request_failed'
+  const vendorCode = normalizeVendorCode(err?.code)
+  const causeCore = formatUpstreamError(
+    args.viaGateway,
+    args.status,
+    failMessage,
+    args.hasGatewayToken,
+    err?.code
+  )
+  const causeMessage = args.directFallbackSuffix
+    ? `${causeCore}${args.directFallbackSuffix}`
+    : causeCore
+
+  const detailsSource = {
+    path: args.path,
+    ...(err?.type !== undefined ? { type: err.type } : {}),
+    ...(err?.details !== undefined ? { vendorDetails: err.details } : {}),
+    ...(args.rawPreview ? { rawPreview: args.rawPreview } : {}),
+    ...(args.directFallbackSuffix ? { directFallback: true } : {})
+  }
+  const details = sanitizeAiProviderDetails(detailsSource)
+  const rateLimitHeaders = pickRateLimitHeaders(args.headers)
+  const retryAfterMs = parseRetryAfterMs(args.headers, err?.details)
+  const classifyDetails = err?.details ?? detailsSource
+  const kind = classifyAiProviderError({
+    status: args.status,
+    message: causeMessage,
+    headers: args.headers,
+    ...(vendorCode !== undefined ? { vendorCode } : {}),
+    ...(classifyDetails !== undefined ? { details: classifyDetails } : {})
+  })
+
+  throw new AiProviderError({
+    kind,
+    providerId: PROVIDER_ID,
+    vendor: 'deepseek',
+    model: args.model,
+    status: args.status,
+    causeMessage,
+    ...(vendorCode !== undefined ? { vendorCode } : {}),
+    ...(retryAfterMs !== undefined ? { retryAfterMs } : {}),
+    ...(rateLimitHeaders !== undefined ? { rateLimitHeaders } : {}),
+    ...(details !== undefined ? { details } : {})
+  })
+}
+
 export const deepseekAiChatProvider: AiChatProvider = {
   id: PROVIDER_ID,
 
@@ -137,7 +220,12 @@ export const deepseekAiChatProvider: AiChatProvider = {
   async complete(env: Env, request: AiChatCompleteRequest): Promise<AiChatCompleteResult> {
     const apiKey = env.DEEPSEEK_API_KEY?.trim()
     if (!apiKey) {
-      throw new Error('DEEPSEEK_API_KEY 未配置')
+      throw new AiProviderError({
+        kind: 'misconfigured',
+        providerId: PROVIDER_ID,
+        vendor: 'deepseek',
+        causeMessage: 'DEEPSEEK_API_KEY 未配置'
+      })
     }
 
     const viaGateway = isDeepSeekAiGatewayEnabled(env)
@@ -150,15 +238,30 @@ export const deepseekAiChatProvider: AiChatProvider = {
     const messages = resolveMessages(request)
     const body = buildChatBody(model, messages, maxTokens, temperature, disableThinking)
 
-    let response = await fetch(completionsUrl, {
-      method: 'POST',
-      headers: buildAuthHeaders(env, apiKey, viaGateway),
-      body
-    })
+    let response: Response
+    try {
+      response = await fetch(completionsUrl, {
+        method: 'POST',
+        headers: buildAuthHeaders(env, apiKey, viaGateway),
+        body
+      })
+    } catch (err) {
+      const kind = classifyFetchFailure(err)
+      const causeMessage =
+        err instanceof Error ? err.message : `deepseek_fetch_failed:${String(err)}`
+      throw new AiProviderError({
+        kind,
+        providerId: PROVIDER_ID,
+        vendor: 'deepseek',
+        model,
+        causeMessage
+      })
+    }
 
     // Gateway 鉴权开了但未配 CF token：回退直连，避免本地线索理解整段挂死
     if (viaGateway && response.status === 401 && !hasGatewayToken) {
-      const gatewayFailPayload = (await response.json().catch(() => ({}))) as DeepSeekChatResponse
+      const gatewayParsed = await readJsonPayload(response)
+      const gatewayFailPayload = gatewayParsed.ok ? gatewayParsed.payload : {}
       const gatewayErrorCode = gatewayFailPayload.error?.code
       const authFailCause = resolveAuthFailCause(gatewayErrorCode)
       logWarn('deepseek_gateway_401_fallback_direct', {
@@ -170,47 +273,115 @@ export const deepseekAiChatProvider: AiChatProvider = {
       })
 
       const directUrl = `${DEEPSEEK_DEFAULT_BASE_URL}/v1/chat/completions`
-      response = await fetch(directUrl, {
-        method: 'POST',
-        headers: buildAuthHeaders(env, apiKey, false),
-        body
-      })
+      try {
+        response = await fetch(directUrl, {
+          method: 'POST',
+          headers: buildAuthHeaders(env, apiKey, false),
+          body
+        })
+      } catch (err) {
+        const kind = classifyFetchFailure(err)
+        const causeMessage =
+          err instanceof Error ? err.message : `deepseek_fetch_failed:${String(err)}`
+        throw new AiProviderError({
+          kind,
+          providerId: PROVIDER_ID,
+          vendor: 'deepseek',
+          model,
+          causeMessage: `${causeMessage}；直连回退亦失败: ${causeMessage}`,
+          details: sanitizeAiProviderDetails({ path: 'direct', directFallback: true })
+        })
+      }
+
       if (!response.ok) {
-        const failPayload = (await response.json().catch(() => ({}))) as DeepSeekChatResponse
-        const failMessage =
-          failPayload.error?.message || response.statusText || 'deepseek_request_failed'
-        const directErrorCode = failPayload.error?.code
-        throw new Error(
-          formatUpstreamError(false, response.status, failMessage, false, directErrorCode) +
-            `；直连回退亦失败: ${failMessage}`
-        )
+        const parsed = await readJsonPayload(response)
+        if (parsed.ok) {
+          const failMessage =
+            parsed.payload.error?.message || response.statusText || 'deepseek_request_failed'
+          throwDeepSeekUpstreamFailure({
+            viaGateway: false,
+            path: 'direct',
+            model,
+            status: response.status,
+            statusText: response.statusText,
+            headers: response.headers,
+            hasGatewayToken: false,
+            payload: parsed.payload,
+            directFallbackSuffix: `；直连回退亦失败: ${failMessage}`
+          })
+        }
+        throwDeepSeekUpstreamFailure({
+          viaGateway: false,
+          path: 'direct',
+          model,
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers,
+          hasGatewayToken: false,
+          payload: null,
+          rawPreview: parsed.rawPreview,
+          directFallbackSuffix: `；直连回退亦失败: ${response.statusText || 'deepseek_request_failed'}`
+        })
       }
       logWarn('deepseek_gateway_401_fallback_direct_ok', {
         path: 'direct',
         model
       })
     } else if (!response.ok) {
-      const failPayload = (await response.json().catch(() => ({}))) as DeepSeekChatResponse
-      const failMessage =
-        failPayload.error?.message || response.statusText || 'deepseek_request_failed'
-      throw new Error(
-        formatUpstreamError(
+      const parsed = await readJsonPayload(response)
+      if (parsed.ok) {
+        throwDeepSeekUpstreamFailure({
           viaGateway,
-          response.status,
-          failMessage,
+          path: viaGateway ? 'gateway' : 'direct',
+          model,
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers,
           hasGatewayToken,
-          failPayload.error?.code
-        )
-      )
+          payload: parsed.payload
+        })
+      }
+      throwDeepSeekUpstreamFailure({
+        viaGateway,
+        path: viaGateway ? 'gateway' : 'direct',
+        model,
+        status: response.status,
+        statusText: response.statusText,
+        headers: response.headers,
+        hasGatewayToken,
+        payload: null,
+        rawPreview: parsed.rawPreview
+      })
     }
 
-    const payload = (await response.json().catch(() => ({}))) as DeepSeekChatResponse
+    const parsed = await readJsonPayload(response)
+    if (!parsed.ok) {
+      throw new AiProviderError({
+        kind: 'invalid_response',
+        providerId: PROVIDER_ID,
+        vendor: 'deepseek',
+        model,
+        status: response.status,
+        causeMessage: 'deepseek_invalid_response:json_parse_failed',
+        details: sanitizeAiProviderDetails({ rawPreview: parsed.rawPreview })
+      })
+    }
+
+    const payload = parsed.payload
     const choice = payload.choices?.[0]
     const message = choice?.message
     const text = message?.content?.trim() || message?.reasoning_content?.trim()
     if (!text) {
       const finishReason = choice?.finish_reason ?? 'unknown'
-      throw new Error(`deepseek_empty_response:${finishReason}`)
+      throw new AiProviderError({
+        kind: 'empty_response',
+        providerId: PROVIDER_ID,
+        vendor: 'deepseek',
+        model,
+        status: response.status,
+        causeMessage: `deepseek_empty_response:${finishReason}`,
+        details: sanitizeAiProviderDetails({ finishReason })
+      })
     }
 
     const usage = payload.usage
