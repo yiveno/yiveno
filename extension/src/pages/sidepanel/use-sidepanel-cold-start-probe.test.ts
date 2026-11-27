@@ -2,9 +2,14 @@
  * 冷启动库探测签名：轮询去重用指纹。
  */
 import { describe, expect, it } from 'vitest'
+import type { ChromeBookmarkImportState } from '@/core/memory/chrome-bookmark-import-state'
 import type { ColdStartEnrichmentBatch } from '@/core/memory/cold-start-enrichment-batch'
 import type { ColdStartPipelineState } from '@/core/memory/cold-start-pipeline-state'
-import { coldStartProbeSignature } from './use-sidepanel-cold-start'
+import {
+  chromeBookmarkImportProbeSignature,
+  coldStartProbeSignature,
+  isChromeBookmarkImportInProgress
+} from './use-sidepanel-cold-start'
 
 function readyState(partial?: Partial<ColdStartPipelineState>): ColdStartPipelineState {
   return {
@@ -65,5 +70,33 @@ describe('coldStartProbeSignature', () => {
     expect(coldStartProbeSignature(state, null)).not.toBe(
       coldStartProbeSignature(state, runningBatch())
     )
+  })
+})
+
+describe('chromeBookmarkImportProbeSignature / isChromeBookmarkImportInProgress', () => {
+  function completed(partial?: Partial<ChromeBookmarkImportState>): ChromeBookmarkImportState {
+    return {
+      status: 'completed',
+      importedCount: 10,
+      completedAt: '2026-11-27T12:00:00.000Z',
+      ...partial
+    }
+  }
+
+  it('相同 completed 签名相等；importedCount 变化则不等', () => {
+    const a = completed()
+    expect(chromeBookmarkImportProbeSignature(a)).toBe(chromeBookmarkImportProbeSignature(a))
+    expect(chromeBookmarkImportProbeSignature(a)).not.toBe(
+      chromeBookmarkImportProbeSignature(completed({ importedCount: 11 }))
+    )
+  })
+
+  it('null 为 none；仅 pending/running 视为进行中', () => {
+    expect(chromeBookmarkImportProbeSignature(null)).toBe('none')
+    expect(isChromeBookmarkImportInProgress(null)).toBe(false)
+    expect(isChromeBookmarkImportInProgress(completed())).toBe(false)
+    expect(isChromeBookmarkImportInProgress({ status: 'failed', importedCount: 0 })).toBe(false)
+    expect(isChromeBookmarkImportInProgress({ status: 'pending', importedCount: 0 })).toBe(true)
+    expect(isChromeBookmarkImportInProgress({ status: 'running', importedCount: 1 })).toBe(true)
   })
 })

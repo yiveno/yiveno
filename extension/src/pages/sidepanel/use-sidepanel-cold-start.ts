@@ -84,6 +84,30 @@ export function coldStartProbeSignature(
   ].join('|')
 }
 
+/**
+ * 书签导入 completed 后触发库探测的状态签名。
+ * 同一 completed 快照不重复 probe，避免与 startImportPolling 互重启死循环。
+ * `state` 为 null 时返回 `'none'`（无持久化记录，不走 completed 分支）。
+ */
+export function chromeBookmarkImportProbeSignature(
+  state: ChromeBookmarkImportState | null
+): string {
+  if (!state) {
+    return 'none'
+  }
+  return [
+    state.status,
+    String(state.importedCount),
+    state.completedAt ?? '',
+    state.errorCode ?? ''
+  ].join('|')
+}
+
+/** 导入仍在进行（pending/running）时才应从 probe 启轮询。 */
+export function isChromeBookmarkImportInProgress(state: ChromeBookmarkImportState | null): boolean {
+  return state?.status === 'pending' || state?.status === 'running'
+}
+
 export type UseSidepanelColdStartOptions = {
   /** composer 线索（预填写入）。 */
   clue: Ref<string>
@@ -210,6 +234,8 @@ export function useSidepanelColdStart(
   let coldStartPollTimer: ReturnType<typeof setInterval> | null = null
   /** 上次已触发 probe 的冷启动签名；相同则跳过，止轮询刷屏。 */
   let lastColdStartProbeSig: string | null = null
+  /** 上次已因 import completed 触发的 probe 签名；相同则跳过。 */
+  let lastImportCompletedProbeSig: string | null = null
   /** probe 进行中则后续调用直接返回（不排队）。 */
   let probeInFlight = false
 
@@ -652,7 +678,12 @@ export function useSidepanelColdStart(
       if (settingsResponse.ok) {
         aiFeaturesEnabled.value = settingsResponse.settings.aiFeaturesEnabled
         bookmarkIngestEnabled.value = settingsResponse.settings.chromeBookmarkIngestEnabled
-        if (bookmarkIngestEnabled.value && !importPollTimer) {
+        // 仅 running/pending 启轮询；completed/failed/无记录为终态，禁止与 refresh 互重启
+        if (
+          bookmarkIngestEnabled.value &&
+          !importPollTimer &&
+          isChromeBookmarkImportInProgress(importState.value)
+        ) {
           startImportPolling()
         }
       } else {
@@ -682,9 +713,12 @@ export function useSidepanelColdStart(
       }
       bookmarkIngestEnabled.value = response.settings.chromeBookmarkIngestEnabled
       aiFeaturesEnabled.value = response.settings.aiFeaturesEnabled
-      // 用户在 GS 刚打开开关时，确保导入轮询已启动
+      // 用户在 GS 刚打开开关时，确保导入轮询已启动（终态 completed/failed 不启）
       if (bookmarkIngestEnabled.value && !importPollTimer) {
-        startImportPolling()
+        const status = importState.value?.status
+        if (status !== 'completed' && status !== 'failed') {
+          startImportPolling()
+        }
       }
     } catch {
       // 忽略：缺省关，文案走 ingest_off
@@ -706,7 +740,12 @@ export function useSidepanelColdStart(
     ) {
       stopImportPolling()
       if (response.state?.status === 'completed') {
-        void probeMemoryLibrary()
+        // 同一 completed 快照只 probe 一次，切断与 startImportPolling 的互重启
+        const nextSig = chromeBookmarkImportProbeSignature(response.state)
+        if (nextSig !== lastImportCompletedProbeSig) {
+          lastImportCompletedProbeSig = nextSig
+          void probeMemoryLibrary()
+        }
       }
     }
   }
