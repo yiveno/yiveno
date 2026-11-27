@@ -3,11 +3,16 @@
  * Phase 0–1：观测 + 模型/maxTokens 路由插座；未配分档 env 时模型与全局 AI_HOSTED_MODEL 一致。
  * 见 docs/architecture/2026-10-任务级模型路由方案.md
  *
- * ## 新增 taskKind checklist（四处一次改齐）
+ * ## 新增 taskKind checklist（一次改齐）
  * 1. 本注册表登记（kind / route / maxTokens / tier）
  * 2. route=hosted 须在 `hosted-system-prompts.ts` 登记指纹（前缀 + 锚行）
  * 3. 扩展侧镜像表同步（`extension/.../ai-chat-task-kind.ts`）
  * 4. 配额口径确认（hosted 月/日 vs dedicated 专用端点日配额 / 独立配额）
+ * 5. 更新 `docs/engineering/prompt-constraints-map.md` §1（约束 / 校验 / eval）
+ * 6. hosted：指纹契约测覆盖新常量；补扩展 builder 最小样例路径
+ * 7. 用户可见 NLG：接入 `nlg-gate-metrics` 计数口径
+ *
+ * 改既有 prompt 文案：见同文档 §2（指纹同步 / Stage 1 或门禁计数 / 对照表 / 缓存版本自然失效）。
  */
 
 import { clampCompletionMaxTokens, resolveHostedModel } from './ai-hosted'

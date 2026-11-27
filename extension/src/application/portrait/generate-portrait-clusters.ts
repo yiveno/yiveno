@@ -4,7 +4,10 @@
  */
 
 import { clusterPendingInferences } from '@/core/portrait/cluster-pending-inferences'
-import { buildPortraitClusterMessages } from '@/core/portrait/portrait-cluster-prompt'
+import {
+  buildPortraitClusterMessages,
+  buildPortraitClusterSystemPrompt
+} from '@/core/portrait/portrait-cluster-prompt'
 import {
   buildPortraitFactSignature,
   type PortraitFactSignaturePart
@@ -57,7 +60,7 @@ export function buildPortraitClusterSignature(
     state: item.state,
     inPortrait: false
   }))
-  return buildPortraitFactSignature(parts)
+  return buildPortraitFactSignature(parts, buildPortraitClusterSystemPrompt())
 }
 
 /** 共现回退：label 取簇内最高 credibility 的 value。 */

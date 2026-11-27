@@ -10,7 +10,16 @@ import type {
   PortraitSummaryGroup,
   PortraitSummaryItem
 } from '@/core/portrait/build-portrait-summary'
+import { buildPortraitNarrativeSystemPrompt } from '@/core/portrait/portrait-narrative-prompt'
 import { buildPortraitFactSignature } from '@/core/portrait/portrait-narrative-signature'
+
+/** 叙事 system 版本材料（en+zh_CN 并入，locale 已另作缓存键）。 */
+function portraitNarrativeSystemVersionMaterial(): string {
+  return [
+    buildPortraitNarrativeSystemPrompt('en'),
+    buildPortraitNarrativeSystemPrompt('zh_CN')
+  ].join('\n')
+}
 
 const GROUP_I18N: Record<PortraitSummaryGroup, string> = {
   verified: 'portrait_group_verified',
@@ -331,7 +340,7 @@ export function refreshPortraitSummaryNarratives(
     groups,
     pendingNarrative,
     summaryText,
-    factSignature: buildPortraitFactSignature(deduped)
+    factSignature: buildPortraitFactSignature(deduped, portraitNarrativeSystemVersionMaterial())
   }
 }
 

@@ -1,9 +1,14 @@
 import { afterEach, describe, expect, it } from 'vitest'
 
+import { buildLlmParseClueMessages } from '@/core/recall/understand/build-llm-parse-prompt'
 import {
+  buildLlmParseCacheKey,
   clearLlmParseCache,
+  clearLlmParsePromptVersionMemo,
   getCachedLlmParse,
   getLlmParseCacheSize,
+  getLlmParsePromptVersion,
+  hashLlmParsePromptVersion,
   LLM_PARSE_CACHE_MAX_ENTRIES,
   setCachedLlmParse
 } from '@/core/recall/understand/llm-parse-cache'
@@ -19,6 +24,7 @@ const baseProposal = {
 describe('llm-parse-cache', () => {
   afterEach(() => {
     clearLlmParseCache()
+    clearLlmParsePromptVersionMemo()
   })
 
   it('normalize：trim + lowercase 后命中', () => {
@@ -102,5 +108,31 @@ describe('llm-parse-cache', () => {
     setCachedLlmParse('same clue', baseProposal, { nowMs: 1000 })
     setCachedLlmParse('other', baseProposal, { nowMs: 1001, model: 'model-b' })
     expect(getCachedLlmParse('same clue', { nowMs: 1002 })).toBeNull()
+  })
+
+  it('prompt 版本：system 文案变化 → 版本哈希不同；相同文案 → 相同', () => {
+    const a = hashLlmParsePromptVersion('system-a')
+    const b = hashLlmParsePromptVersion('system-b')
+    const a2 = hashLlmParsePromptVersion('system-a')
+    expect(a).toBe(a2)
+    expect(a).not.toBe(b)
+  })
+
+  it('prompt 版本：不同版本键互不命中；同版本命中', () => {
+    setCachedLlmParse('cloudflare', baseProposal, { nowMs: 1000, promptVersion: 'v1' })
+    expect(getCachedLlmParse('cloudflare', { nowMs: 1001, promptVersion: 'v1' })).toEqual(
+      baseProposal
+    )
+    expect(getCachedLlmParse('cloudflare', { nowMs: 1001, promptVersion: 'v2' })).toBeNull()
+  })
+
+  it('buildLlmParseCacheKey：含版本段；空 clue → null', () => {
+    expect(buildLlmParseCacheKey('  Hello ', 'abcd1234')).toBe('abcd1234:hello')
+    expect(buildLlmParseCacheKey('   ', 'abcd1234')).toBeNull()
+  })
+
+  it('getLlmParsePromptVersion：与当前 parse system 哈希一致', () => {
+    const system = buildLlmParseClueMessages('').find(m => m.role === 'system')?.content ?? ''
+    expect(getLlmParsePromptVersion()).toBe(hashLlmParsePromptVersion(system))
   })
 })
