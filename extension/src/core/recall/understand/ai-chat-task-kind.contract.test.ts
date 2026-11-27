@@ -10,6 +10,7 @@ import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
 
 import {
+  AI_CHAT_TASK_KINDS,
   AI_CHAT_TASK_REGISTRY,
   type AiChatTaskRoute
 } from '@/core/recall/understand/ai-chat-task-kind'
@@ -65,6 +66,7 @@ describe('ai-chat-task-kind 跨包契约', () => {
     const workerEntries = parseWorkerRegistryEntries(source)
 
     expect(workerEntries).toHaveLength(AI_CHAT_TASK_REGISTRY.length)
+    expect(AI_CHAT_TASK_KINDS).toEqual(AI_CHAT_TASK_REGISTRY.map(entry => entry.kind))
 
     for (let i = 0; i < AI_CHAT_TASK_REGISTRY.length; i += 1) {
       const mirror = AI_CHAT_TASK_REGISTRY[i]
