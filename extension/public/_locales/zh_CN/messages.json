@@ -3866,6 +3866,156 @@
   "portrait_in_portrait_badge": {
     "message": "已进画像"
   },
+  "portrait_narrative_verified": {
+    "message": "你喜欢 $1。",
+    "placeholders": {
+      "values": {
+        "content": "$1",
+        "example": "github.com"
+      }
+    }
+  },
+  "portrait_narrative_verified_more": {
+    "message": "你喜欢 $1 等另外 $2 项。",
+    "placeholders": {
+      "values": {
+        "content": "$1",
+        "example": "github.com、rag"
+      },
+      "rest": {
+        "content": "$2",
+        "example": "2"
+      }
+    }
+  },
+  "portrait_narrative_corroborated": {
+    "message": "看起来你也关注 $1。",
+    "placeholders": {
+      "values": {
+        "content": "$1",
+        "example": "typescript"
+      }
+    }
+  },
+  "portrait_narrative_corroborated_more": {
+    "message": "看起来你也关注 $1 等另外 $2 项。",
+    "placeholders": {
+      "values": {
+        "content": "$1",
+        "example": "typescript"
+      },
+      "rest": {
+        "content": "$2",
+        "example": "2"
+      }
+    }
+  },
+  "portrait_narrative_unconfirmed": {
+    "message": "你提过 $1，不过我还拿不准。",
+    "placeholders": {
+      "values": {
+        "content": "$1",
+        "example": "rust"
+      }
+    }
+  },
+  "portrait_narrative_unconfirmed_more": {
+    "message": "你提过 $1 等另外 $2 项，不过我还拿不准。",
+    "placeholders": {
+      "values": {
+        "content": "$1",
+        "example": "rust"
+      },
+      "rest": {
+        "content": "$2",
+        "example": "2"
+      }
+    }
+  },
+  "portrait_narrative_contested": {
+    "message": "关于 $1，我看到的线索还对不上。",
+    "placeholders": {
+      "values": {
+        "content": "$1",
+        "example": "vim"
+      }
+    }
+  },
+  "portrait_narrative_contested_more": {
+    "message": "关于 $1 等另外 $2 项，我看到的线索还对不上。",
+    "placeholders": {
+      "values": {
+        "content": "$1",
+        "example": "vim"
+      },
+      "rest": {
+        "content": "$2",
+        "example": "2"
+      }
+    }
+  },
+  "portrait_narrative_pending": {
+    "message": "我猜你可能关注 $1，还不确定。",
+    "placeholders": {
+      "values": {
+        "content": "$1",
+        "example": "zig"
+      }
+    }
+  },
+  "portrait_narrative_pending_more": {
+    "message": "我猜你可能关注 $1 等另外 $2 项，还不确定。",
+    "placeholders": {
+      "values": {
+        "content": "$1",
+        "example": "zig"
+      },
+      "rest": {
+        "content": "$2",
+        "example": "2"
+      }
+    }
+  },
+  "portrait_summary_lead": {
+    "message": "比较确定的是，你喜欢 $1。",
+    "placeholders": {
+      "values": {
+        "content": "$1",
+        "example": "github.com"
+      }
+    }
+  },
+  "portrait_summary_lead_more": {
+    "message": "比较确定的是，你喜欢 $1 等另外 $2 项。",
+    "placeholders": {
+      "values": {
+        "content": "$1",
+        "example": "github.com"
+      },
+      "rest": {
+        "content": "$2",
+        "example": "2"
+      }
+    }
+  },
+  "portrait_summary_pending_count": {
+    "message": "还有 $1 项待你确认。",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "portrait_summary_contested_count": {
+    "message": "有 $1 处线索对不上。",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
   "command_voice_recall_open": {
     "message": "语音找并打开（请在快捷键页自行绑定）"
   },

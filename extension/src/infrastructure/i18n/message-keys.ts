@@ -985,7 +985,21 @@ export const MESSAGE_KEYS = [
   'portrait_pending_inferences',
   'portrait_approve',
   'portrait_decline',
-  'portrait_in_portrait_badge'
+  'portrait_in_portrait_badge',
+  'portrait_narrative_verified',
+  'portrait_narrative_verified_more',
+  'portrait_narrative_corroborated',
+  'portrait_narrative_corroborated_more',
+  'portrait_narrative_unconfirmed',
+  'portrait_narrative_unconfirmed_more',
+  'portrait_narrative_contested',
+  'portrait_narrative_contested_more',
+  'portrait_narrative_pending',
+  'portrait_narrative_pending_more',
+  'portrait_summary_lead',
+  'portrait_summary_lead_more',
+  'portrait_summary_pending_count',
+  'portrait_summary_contested_count'
 ] as const
 
 /** Chrome `_locales` message key。 */

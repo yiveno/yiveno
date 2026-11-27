@@ -90,7 +90,7 @@ aiRouter.get('/hosted/quota', deviceAuthOrSupabaseAuth(), async c => {
 /**
  * POST /api/ai/hosted/complete
  *
- * 托管 LLM 文本补全（须 [system, user]；taskKind 闭集 nlu/framing_nlg/follow_up_nlg/narrow_polish）
+ * 托管 LLM 文本补全（须 [system, user]；taskKind 闭集含 nlu/framing_nlg/follow_up_nlg/narrow_polish/portrait_narrative）
  */
 aiRouter.post('/hosted/complete', deviceAuthOrSupabaseAuth(), async c => {
   const userId = c.get('supabaseUserId')

@@ -3866,6 +3866,156 @@
   "portrait_in_portrait_badge": {
     "message": "In portrait"
   },
+  "portrait_narrative_verified": {
+    "message": "You like $1.",
+    "placeholders": {
+      "values": {
+        "content": "$1",
+        "example": "github.com"
+      }
+    }
+  },
+  "portrait_narrative_verified_more": {
+    "message": "You like $1 and $2 more.",
+    "placeholders": {
+      "values": {
+        "content": "$1",
+        "example": "github.com, rag"
+      },
+      "rest": {
+        "content": "$2",
+        "example": "2"
+      }
+    }
+  },
+  "portrait_narrative_corroborated": {
+    "message": "You also seem to follow $1.",
+    "placeholders": {
+      "values": {
+        "content": "$1",
+        "example": "typescript"
+      }
+    }
+  },
+  "portrait_narrative_corroborated_more": {
+    "message": "You also seem to follow $1 and $2 more.",
+    "placeholders": {
+      "values": {
+        "content": "$1",
+        "example": "typescript"
+      },
+      "rest": {
+        "content": "$2",
+        "example": "2"
+      }
+    }
+  },
+  "portrait_narrative_unconfirmed": {
+    "message": "You’ve mentioned $1, but I’m not sure yet.",
+    "placeholders": {
+      "values": {
+        "content": "$1",
+        "example": "rust"
+      }
+    }
+  },
+  "portrait_narrative_unconfirmed_more": {
+    "message": "You’ve mentioned $1 and $2 more, but I’m not sure yet.",
+    "placeholders": {
+      "values": {
+        "content": "$1",
+        "example": "rust"
+      },
+      "rest": {
+        "content": "$2",
+        "example": "2"
+      }
+    }
+  },
+  "portrait_narrative_contested": {
+    "message": "On $1, the signals I see don’t line up yet.",
+    "placeholders": {
+      "values": {
+        "content": "$1",
+        "example": "vim"
+      }
+    }
+  },
+  "portrait_narrative_contested_more": {
+    "message": "On $1 and $2 more, the signals I see don’t line up yet.",
+    "placeholders": {
+      "values": {
+        "content": "$1",
+        "example": "vim"
+      },
+      "rest": {
+        "content": "$2",
+        "example": "2"
+      }
+    }
+  },
+  "portrait_narrative_pending": {
+    "message": "I’m guessing you might be into $1 — still not sure.",
+    "placeholders": {
+      "values": {
+        "content": "$1",
+        "example": "zig"
+      }
+    }
+  },
+  "portrait_narrative_pending_more": {
+    "message": "I’m guessing you might be into $1 and $2 more — still not sure.",
+    "placeholders": {
+      "values": {
+        "content": "$1",
+        "example": "zig"
+      },
+      "rest": {
+        "content": "$2",
+        "example": "2"
+      }
+    }
+  },
+  "portrait_summary_lead": {
+    "message": "What’s clearer is, you like $1.",
+    "placeholders": {
+      "values": {
+        "content": "$1",
+        "example": "github.com"
+      }
+    }
+  },
+  "portrait_summary_lead_more": {
+    "message": "What’s clearer is, you like $1 and $2 more.",
+    "placeholders": {
+      "values": {
+        "content": "$1",
+        "example": "github.com"
+      },
+      "rest": {
+        "content": "$2",
+        "example": "2"
+      }
+    }
+  },
+  "portrait_summary_pending_count": {
+    "message": "There are still $1 items waiting for you to confirm.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "portrait_summary_contested_count": {
+    "message": "There are $1 spots where the signals don’t line up.",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
   "command_voice_recall_open": {
     "message": "Voice find and open (bind in shortcuts)"
   },

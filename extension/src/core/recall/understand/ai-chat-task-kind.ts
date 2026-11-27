@@ -9,6 +9,7 @@ export const AI_CHAT_TASK_KINDS = [
   'framing_nlg', // Framing 润色
   'follow_up_nlg', // 追问 NLG
   'narrow_polish', // Narrow 举例润色
+  'portrait_narrative', // 画像摘要自然语言组装
   'enrichment', // enrichment（若经同一 completer）
   'gs_samples', // GS 示意 clue
   'dreaming' // 夜间命题编译（ADR-022；批量 peek-then-commit）
@@ -31,6 +32,7 @@ export const AI_CHAT_TASK_MAX_TOKENS: Record<AiChatTaskKind, number> = {
   framing_nlg: 256,
   follow_up_nlg: 256,
   narrow_polish: 128,
+  portrait_narrative: 256,
   enrichment: 400,
   gs_samples: 400,
   dreaming: 1200

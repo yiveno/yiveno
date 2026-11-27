@@ -13,6 +13,7 @@ describe('parseAiChatTaskKind', () => {
     expect(parseAiChatTaskKind('framing_nlg')).toBe('framing_nlg')
     expect(parseAiChatTaskKind('follow_up_nlg')).toBe('follow_up_nlg')
     expect(parseAiChatTaskKind('narrow_polish')).toBe('narrow_polish')
+    expect(parseAiChatTaskKind('portrait_narrative')).toBe('portrait_narrative')
     expect(parseAiChatTaskKind('dreaming')).toBe('dreaming')
     expect(parseAiChatTaskKind('extract')).toBe('extract')
   })
@@ -42,7 +43,7 @@ describe('resolveHostedModelForTask', () => {
     expect(resolveHostedModelForTask(env, 'framing_nlg')).toBe('deepseek-flash')
   })
 
-  test('NLG 覆盖作用于 framing / follow_up / narrow', () => {
+  test('NLG 覆盖作用于 framing / follow_up / narrow / portrait_narrative', () => {
     const env = {
       AI_HOSTED_MODEL: 'deepseek-flash',
       AI_HOSTED_MODEL_NLG: 'deepseek-chat'
@@ -50,6 +51,7 @@ describe('resolveHostedModelForTask', () => {
     expect(resolveHostedModelForTask(env, 'framing_nlg')).toBe('deepseek-chat')
     expect(resolveHostedModelForTask(env, 'follow_up_nlg')).toBe('deepseek-chat')
     expect(resolveHostedModelForTask(env, 'narrow_polish')).toBe('deepseek-chat')
+    expect(resolveHostedModelForTask(env, 'portrait_narrative')).toBe('deepseek-chat')
     expect(resolveHostedModelForTask(env, 'nlu')).toBe('deepseek-flash')
   })
 })
@@ -57,6 +59,7 @@ describe('resolveHostedModelForTask', () => {
 describe('isNlgAiChatTaskKind', () => {
   test('浅 NLG 为 true，nlu 为 false', () => {
     expect(isNlgAiChatTaskKind('framing_nlg')).toBe(true)
+    expect(isNlgAiChatTaskKind('portrait_narrative')).toBe(true)
     expect(isNlgAiChatTaskKind('nlu')).toBe(false)
   })
 })
@@ -66,6 +69,7 @@ describe('resolveHostedMaxTokensForTask', () => {
     expect(resolveHostedMaxTokensForTask('nlu', undefined)).toBe(400)
     expect(resolveHostedMaxTokensForTask('framing_nlg', undefined)).toBe(256)
     expect(resolveHostedMaxTokensForTask('narrow_polish', undefined)).toBe(128)
+    expect(resolveHostedMaxTokensForTask('portrait_narrative', undefined)).toBe(256)
     expect(resolveHostedMaxTokensForTask('extract', undefined)).toBe(800)
   })
 

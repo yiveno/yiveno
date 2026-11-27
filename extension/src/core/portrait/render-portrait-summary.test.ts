@@ -9,7 +9,8 @@ import {
   applyPortraitApproveToView,
   applyPortraitDeclineToView,
   buildPortraitSummaryViewModel,
-  renderPortraitFactLine
+  renderPortraitFactLine,
+  renderPortraitGroupNarrative
 } from '@/core/portrait/render-portrait-summary'
 import type { PortraitFactRecord } from '@/core/portrait/portrait-facts'
 
@@ -17,8 +18,11 @@ const OWNER = '11111111-1111-4111-8111-111111111111'
 const NOW = '2026-11-25T08:00:00.000Z'
 
 const t = (key: string, subs?: string | string[]) => {
-  const value = Array.isArray(subs) ? subs[0] : subs
-  return value ? `${key}:${value}` : key
+  if (!subs) {
+    return key
+  }
+  const list = Array.isArray(subs) ? subs : [subs]
+  return `${key}:${list.join('|')}`
 }
 
 describe('render-portrait-summary', () => {
@@ -162,5 +166,61 @@ describe('render-portrait-summary', () => {
     expect(
       next.groups.every(g => g.items.every(i => i.factId !== `${OWNER}\0contentTerm\0rag`))
     ).toBe(true)
+  })
+
+  it('确定性叙事：前 3 代表 + 计数', () => {
+    const items = [
+      { value: 'a', credibility: 0.9 },
+      { value: 'b', credibility: 0.8 },
+      { value: 'c', credibility: 0.7 },
+      { value: 'd', credibility: 0.6 },
+      { value: 'e', credibility: 0.5 }
+    ]
+    expect(renderPortraitGroupNarrative('verified', items, t)).toBe(
+      'portrait_narrative_verified_more:a, b, c|2'
+    )
+    expect(renderPortraitGroupNarrative('verified', items.slice(0, 2), t)).toBe(
+      'portrait_narrative_verified:a, b'
+    )
+  })
+
+  it('视图含 summaryText / narrative / factSignature', () => {
+    const facts: PortraitFactRecord[] = [
+      {
+        id: `${OWNER}\0contentTerm\0github.com`,
+        ownerId: OWNER,
+        slot: 'contentTerm',
+        value: 'github.com',
+        credibility: 0.9,
+        state: 'verified',
+        sources: [
+          { type: 'statement', ref: 'a', score: 0.5, observedAt: NOW },
+          { type: 'behavior', ref: 'b', score: 0.8, observedAt: NOW }
+        ],
+        inPortrait: true,
+        createdAt: NOW,
+        updatedAt: NOW
+      },
+      {
+        id: `${OWNER}\0contentTerm\0zig`,
+        ownerId: OWNER,
+        slot: 'contentTerm',
+        value: 'zig',
+        credibility: 0.4,
+        state: 'unconfirmed',
+        sources: [{ type: 'inference', ref: 'n', score: 0.4, observedAt: NOW }],
+        inPortrait: false,
+        createdAt: NOW,
+        updatedAt: NOW
+      }
+    ]
+    const view = buildPortraitSummaryViewModel(buildPortraitSummary(facts), t)
+    expect(view.summaryText).toContain('portrait_summary_lead:github.com')
+    expect(view.summaryText).toContain('portrait_summary_pending_count:1')
+    expect(view.groups.find(g => g.key === 'verified')?.narrative).toBe(
+      'portrait_narrative_verified:github.com'
+    )
+    expect(view.pendingNarrative).toBe('portrait_narrative_pending:zig')
+    expect(view.factSignature.length).toBeGreaterThan(0)
   })
 })

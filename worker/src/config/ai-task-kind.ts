@@ -12,6 +12,7 @@ export const AI_CHAT_TASK_KINDS = [
   'framing_nlg', // Framing 润色
   'follow_up_nlg', // need_a_clue 追问
   'narrow_polish', // composer Narrow 举例润色
+  'portrait_narrative', // 画像摘要自然语言组装
   'enrichment', // Capture enrichment（若走可配置层）
   'gs_samples', // Getting Started 示意 clue
   'dreaming', // 夜间命题编译（批量；独立配额）
@@ -24,7 +25,12 @@ export type AiChatTaskKind = (typeof AI_CHAT_TASK_KINDS)[number]
 export const AI_CHAT_TASK_KIND_DEFAULT: AiChatTaskKind = 'nlu'
 
 /** NLG 浅任务（可共享 AI_HOSTED_MODEL_NLG 覆盖）。 */
-const NLG_TASK_KINDS = new Set<AiChatTaskKind>(['framing_nlg', 'follow_up_nlg', 'narrow_polish'])
+const NLG_TASK_KINDS = new Set<AiChatTaskKind>([
+  'framing_nlg',
+  'follow_up_nlg',
+  'narrow_polish',
+  'portrait_narrative'
+])
 
 /**
  * 解析请求体 taskKind；未知或空 → 默认 nlu（不 400，兼容旧客户端）。
@@ -69,7 +75,8 @@ export function resolveHostedModelForTask(env: AiTaskModelEnv, taskKind: AiChatT
     }
     case 'framing_nlg':
     case 'follow_up_nlg':
-    case 'narrow_polish': {
+    case 'narrow_polish':
+    case 'portrait_narrative': {
       const override = env.AI_HOSTED_MODEL_NLG?.trim()
       return override || fallback
     }
@@ -106,6 +113,7 @@ export const AI_CHAT_TASK_MAX_TOKENS: Record<AiChatTaskKind, number> = {
   framing_nlg: 256,
   follow_up_nlg: 256,
   narrow_polish: 128,
+  portrait_narrative: 256,
   enrichment: 400,
   gs_samples: 400,
   dreaming: 1200,

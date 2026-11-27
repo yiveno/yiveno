@@ -800,21 +800,47 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
             class="portrait-summary"
             aria-label="portrait"
           >
+            <p v-if="turn.portraitSummaryView.summaryText" class="portrait-summary__summary">
+              {{ turn.portraitSummaryView.summaryText }}
+            </p>
             <div
               v-for="group in turn.portraitSummaryView.groups"
               :key="group.key"
               class="portrait-summary__group"
             >
               <p class="portrait-summary__group-title">{{ group.title }}</p>
-              <ul class="portrait-summary__list">
-                <li v-for="item in group.items" :key="item.factId" class="portrait-summary__item">
-                  <span>{{ item.line }}</span>
-                  <span
-                    v-if="item.inPortrait"
-                    class="portrait-summary__badge"
-                    :title="t('portrait_in_portrait_badge')"
-                  >
-                    {{ t('portrait_in_portrait_badge') }}
+              <p v-if="group.narrative" class="portrait-summary__narrative">
+                {{ group.narrative }}
+              </p>
+              <ul
+                v-if="group.items.some(item => item.pendingInference)"
+                class="portrait-summary__list"
+              >
+                <li
+                  v-for="item in group.items.filter(row => row.pendingInference)"
+                  :key="item.factId"
+                  class="portrait-summary__item portrait-summary__item--pending"
+                >
+                  <span>{{ item.value }}</span>
+                  <span class="portrait-summary__actions">
+                    <AppButton
+                      type="button"
+                      variant="text"
+                      :title="t('portrait_approve')"
+                      :aria-label="t('portrait_approve')"
+                      @click="emit('portraitApprove', item.factId)"
+                    >
+                      {{ t('portrait_approve') }}
+                    </AppButton>
+                    <AppButton
+                      type="button"
+                      variant="text"
+                      :title="t('portrait_decline')"
+                      :aria-label="t('portrait_decline')"
+                      @click="emit('portraitDecline', item.factId)"
+                    >
+                      {{ t('portrait_decline') }}
+                    </AppButton>
                   </span>
                 </li>
               </ul>
@@ -824,13 +850,19 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
               class="portrait-summary__pending"
             >
               <p class="portrait-summary__group-title">{{ t('portrait_pending_inferences') }}</p>
+              <p
+                v-if="turn.portraitSummaryView.pendingNarrative"
+                class="portrait-summary__narrative"
+              >
+                {{ turn.portraitSummaryView.pendingNarrative }}
+              </p>
               <ul class="portrait-summary__list">
                 <li
                   v-for="item in turn.portraitSummaryView.pendingInferences"
                   :key="`pending-${item.factId}`"
                   class="portrait-summary__item portrait-summary__item--pending"
                 >
-                  <span>{{ item.line }}</span>
+                  <span>{{ item.value }}</span>
                   <span class="portrait-summary__actions">
                     <AppButton
                       type="button"
@@ -1124,6 +1156,14 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
   min-width: 0;
   max-width: 100%;
   margin-top: var(--space-xs);
+}
+
+.portrait-summary__summary,
+.portrait-summary__narrative {
+  margin: 0 0 var(--space-2xs);
+  font-size: var(--text-body);
+  line-height: var(--leading-snug);
+  color: var(--on-surface);
 }
 
 .portrait-summary__group-title {

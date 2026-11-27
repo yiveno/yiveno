@@ -14,7 +14,8 @@ export const HOSTED_COMPLETE_TASK_KINDS = [
   'nlu', // 线索理解 / 闲聊二次回复
   'framing_nlg', // Framing 润色
   'follow_up_nlg', // need_a_clue 追问
-  'narrow_polish' // composer Narrow 举例润色
+  'narrow_polish', // composer Narrow 举例润色
+  'portrait_narrative' // 画像摘要自然语言组装
 ] as const
 
 export type HostedCompleteTaskKind = (typeof HOSTED_COMPLETE_TASK_KINDS)[number]
@@ -72,6 +73,16 @@ const NARROW_POLISH: SystemFingerprint = {
   ]
 }
 
+/** 与扩展 portrait-narrative-prompt.ts 首段 / 锚行逐字一致。 */
+const PORTRAIT_NARRATIVE: SystemFingerprint = {
+  prefix:
+    'You write a short natural-language portrait summary for Yiveno (Chrome extension personal memory finder).',
+  anchors: [
+    '- Use ONLY the given content points. Do not invent, infer, or complete any preference or fact not listed.',
+    '- Output plain text as one paragraph. No markdown.'
+  ]
+}
+
 function matchesFingerprint(system: string, fp: SystemFingerprint): boolean {
   if (!system.startsWith(fp.prefix)) {
     return false
@@ -80,7 +91,7 @@ function matchesFingerprint(system: string, fp: SystemFingerprint): boolean {
 }
 
 /**
- * 解析 hosted taskKind：缺省/空 → nlu；显式但不在四者内 → null（调用方 400）。
+ * 解析 hosted taskKind：缺省/空 → nlu；显式但不在闭集内 → null（调用方 400）。
  */
 export function parseHostedCompleteTaskKind(raw: unknown): HostedCompleteTaskKind | null {
   if (raw === undefined || raw === null) {
@@ -116,6 +127,8 @@ export function validateHostedSystemPrompt(
       return matchesFingerprint(text, FOLLOW_UP_NLG)
     case 'narrow_polish':
       return matchesFingerprint(text, NARROW_POLISH)
+    case 'portrait_narrative':
+      return matchesFingerprint(text, PORTRAIT_NARRATIVE)
   }
 }
 
@@ -125,5 +138,6 @@ export const HOSTED_SYSTEM_PROMPT_PREFIXES = {
   nluChitchat: NLU_CHITCHAT.prefix,
   framing_nlg: FRAMING_NLG.prefix,
   follow_up_nlg: FOLLOW_UP_NLG.prefix,
-  narrow_polish: NARROW_POLISH.prefix
+  narrow_polish: NARROW_POLISH.prefix,
+  portrait_narrative: PORTRAIT_NARRATIVE.prefix
 } as const

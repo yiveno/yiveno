@@ -35,11 +35,14 @@ import { parseRecallVisibleProgressMessage } from '@/core/messaging/ui-messages'
 import { tRecallError } from '@/infrastructure/i18n/background-error'
 import { t } from '@/infrastructure/i18n/t'
 import { commitRecallOutcome } from '@/application/recall/commit-recall-outcome'
+import { generatePortraitNarrative } from '@/application/portrait/generate-portrait-narrative'
 import {
   applyPortraitApproveToView,
   applyPortraitDeclineToView,
-  buildPortraitSummaryViewModel
+  buildPortraitSummaryViewModel,
+  type PortraitSummaryViewModel
 } from '@/core/portrait/render-portrait-summary'
+import { getEffectiveUiLocale } from '@/infrastructure/i18n/t'
 import {
   authConnectWebsite,
   cancelRecall,
@@ -1239,9 +1242,10 @@ async function runRecall(
       response.result.portraitSummary
     ) {
       const portraitView = buildPortraitSummaryViewModel(response.result.portraitSummary, t)
+      const turnId = nextTurnId()
       conversationTurns.value.push(
         createAssistantTurn({
-          id: nextTurnId(),
+          id: turnId,
           tone: 'confident',
           text: portraitView.empty ? portraitView.emptyText : portraitView.introText,
           ...contextStatusFields,
@@ -1252,6 +1256,7 @@ async function runRecall(
           allowDismiss: false
         })
       )
+      schedulePortraitNarrativeRefresh(turnId, portraitView)
     } else {
       const relatedGuess = response.result.relatedGuess ?? null
       const usedRulesFallback = response.result.understandSource === 'rules_fallback'
@@ -1597,21 +1602,61 @@ function handleCorrectUnderstanding(value: string): void {
   handleUseSuggestion(value)
 }
 
+/**
+ * 确定性摘要先上屏；异步 LLM 叙事返回后替换 summaryText（失败静默保留兜底）。
+ */
+function schedulePortraitNarrativeRefresh(turnId: string, view: PortraitSummaryViewModel): void {
+  if (view.empty || !view.summaryText) {
+    return
+  }
+  const signature = view.factSignature
+  void generatePortraitNarrative({
+    view,
+    locale: getEffectiveUiLocale()
+  }).then(result => {
+    if (result.source === 'deterministic') {
+      return
+    }
+    conversationTurns.value = conversationTurns.value.map(turn => {
+      if (turn.role !== 'assistant' || turn.id !== turnId || !turn.portraitSummaryView) {
+        return turn
+      }
+      // 批准/忽略后签名已变 → 丢弃过期 LLM 文案
+      if (turn.portraitSummaryView.factSignature !== signature) {
+        return turn
+      }
+      return {
+        ...turn,
+        portraitSummaryView: {
+          ...turn.portraitSummaryView,
+          summaryText: result.text
+        }
+      }
+    })
+  })
+}
+
 /** 画像推断项：批准 → 本地视图移出 pending，行文案改 direct 措辞。 */
 async function handlePortraitApprove(factId: string): Promise<void> {
   const response = await portraitApproveFact(factId).catch(() => null)
   if (!response?.ok) {
     return
   }
+  let targetTurnId: string | null = null
   conversationTurns.value = conversationTurns.value.map(turn => {
     if (turn.role !== 'assistant' || !turn.portraitSummaryView) {
       return turn
     }
+    targetTurnId = turn.id
     return {
       ...turn,
       portraitSummaryView: applyPortraitApproveToView(turn.portraitSummaryView, factId, t)
     }
   })
+  const updated = conversationTurns.value.find(turn => turn.id === targetTurnId)
+  if (updated?.role === 'assistant' && updated.portraitSummaryView) {
+    schedulePortraitNarrativeRefresh(updated.id, updated.portraitSummaryView)
+  }
 }
 
 /** 画像推断项：忽略 → 本地视图移除。 */
@@ -1620,10 +1665,12 @@ async function handlePortraitDecline(factId: string): Promise<void> {
   if (!response?.ok) {
     return
   }
+  let targetTurnId: string | null = null
   conversationTurns.value = conversationTurns.value.map(turn => {
     if (turn.role !== 'assistant' || !turn.portraitSummaryView) {
       return turn
     }
+    targetTurnId = turn.id
     const nextView = applyPortraitDeclineToView(turn.portraitSummaryView, factId, t)
     return {
       ...turn,
@@ -1631,6 +1678,14 @@ async function handlePortraitDecline(factId: string): Promise<void> {
       portraitSummaryView: nextView
     }
   })
+  const updated = conversationTurns.value.find(turn => turn.id === targetTurnId)
+  if (
+    updated?.role === 'assistant' &&
+    updated.portraitSummaryView &&
+    !updated.portraitSummaryView.empty
+  ) {
+    schedulePortraitNarrativeRefresh(updated.id, updated.portraitSummaryView)
+  }
 }
 
 /**
