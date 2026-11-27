@@ -2856,31 +2856,6 @@ onUnmounted(() => {
   overflow: hidden auto;
   overscroll-behavior: contain;
   scroll-behavior: smooth;
-
-  /* 细滚动条、低对比、贴边（Firefox） */
-  scrollbar-width: thin;
-  scrollbar-color: color-mix(in srgb, var(--ink) 22%, transparent) transparent;
-}
-
-.recall-body::-webkit-scrollbar {
-  width: 5px;
-}
-
-.recall-body::-webkit-scrollbar-track {
-  margin: var(--space-2xs) 0;
-  background: transparent;
-}
-
-.recall-body::-webkit-scrollbar-thumb {
-  border: 1px solid transparent;
-  border-radius: var(--radius-full);
-  background: color-mix(in srgb, var(--ink) 18%, transparent);
-  background-clip: padding-box;
-}
-
-.recall-body::-webkit-scrollbar-thumb:hover {
-  /* border / background-clip 继承自 thumb 基态；交互态只改颜色（yiveno/no-motion-on-interaction） */
-  background: color-mix(in srgb, var(--ink) 32%, transparent);
 }
 
 .recall-body--empty {

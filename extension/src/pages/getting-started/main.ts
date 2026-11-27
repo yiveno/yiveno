@@ -3,7 +3,7 @@ import GettingStartedPage from './GettingStarted.vue'
 import { bootSelectionToolbar, isSelectionToolbarBooted } from '@/content/selection-toolbar/main'
 import { bootExtensionPage } from '@/infrastructure/i18n/extension-i18n-boot'
 import { logger } from '@/infrastructure/logging/logger'
-import '@/styles/extension-ui.css'
+import '@/styles/bootstrap-extension-ui'
 
 void bootExtensionPage('getting_started').then(() => {
   /** 扩展页无法 executeScript 注入划词脚本；显式 boot 并写入 DOM 供真机探测（跨隔离世界）。 */

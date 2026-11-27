@@ -5,6 +5,6 @@
 
 import { createApp, type Component } from 'vue'
 import { ProbeConsole } from '@yiveno/probe/console'
-import '@/styles/extension-ui.css'
+import '@/styles/bootstrap-extension-ui'
 
 createApp(ProbeConsole as Component).mount('#app')

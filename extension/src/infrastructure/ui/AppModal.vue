@@ -100,8 +100,8 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <!-- 遮罩仅挡操作；点外部不关闭，须显式 Cancel / 操作按钮 / Esc -->
-  <div v-if="open" class="app-modal-backdrop">
+  <!-- 点遮罩本身关闭（.self）；内容区点击不关；Esc / 操作按钮不变 -->
+  <div v-if="open" class="app-modal-backdrop" @click.self="requestClose">
     <div
       ref="panelRef"
       class="app-modal"

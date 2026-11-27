@@ -97,3 +97,44 @@ select {
   align-items: center;
   gap: var(--space-xs);
 }
+
+/*
+ * 全局细滚动条：默认拇指透明；容器 :hover 或 .is-scrolling（滚动中 JS 类）时显示。
+ * 停止滚动约 800ms 后由 bind-scrolling-scrollbar 移除 .is-scrolling。
+ * 标准属性 + WebKit 伪元素；色值只用既有 token（--border）。
+ */
+:root {
+  --scrollbar-size: 6px;
+  --scrollbar-thumb: var(--border);
+  --scrollbar-track: transparent;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: transparent var(--scrollbar-track);
+}
+
+*:hover,
+*.is-scrolling {
+  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar {
+  width: var(--scrollbar-size);
+  height: var(--scrollbar-size);
+}
+
+*::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+*::-webkit-scrollbar-thumb {
+  border-radius: var(--radius-full);
+  background-color: transparent;
+  transition: background-color 0.2s ease;
+}
+
+*:hover::-webkit-scrollbar-thumb,
+*.is-scrolling::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar-thumb);
+}
