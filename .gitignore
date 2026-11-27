@@ -166,3 +166,4 @@ extension/yiveno-extension-store.zip
 
 # clue-chain harness 断点（可续跑，勿入库）
 extension/tests/eval/clue-chain/runs/checkpoint-parse.json
+extension/tests/eval/clue-chain/runs/checkpoint-compat-*.json
