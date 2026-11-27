@@ -18,9 +18,6 @@ export function resolveOutDir(mode?: string): string {
   return resolve(PROJECT_ROOT, dirName)
 }
 
-/** 模块加载时按 NODE_ENV 解析（content IIFE 等无 mode 入口）。 */
-export const OUT_DIR = resolveOutDir()
-
 /** 生产构建默认丢弃 console；KEEP_CONSOLE=true 可强制保留。 */
 export const SHOULD_DROP_CONSOLE =
   process.env.NODE_ENV === 'production' && process.env.KEEP_CONSOLE !== 'true'
