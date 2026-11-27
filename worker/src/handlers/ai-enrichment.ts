@@ -14,6 +14,7 @@ import {
   buildEnrichmentUserPrompt,
   parseEnrichmentProposalText
 } from '../services/ai/memory-enrichment-proposal'
+import { buildAiGateRejectedLogFields } from '../services/ai/ai-gate-log'
 import { okJson, errorJson } from '../utils/response'
 import { info as logInfo, logError } from '../utils/logger'
 
@@ -233,6 +234,7 @@ export async function handleEnrichmentComplete(
     const proposal = parseEnrichmentProposalText(result.text, body)
     if (!proposal) {
       logInfo('enrichment_complete_parse_failed', {
+        ...buildAiGateRejectedLogFields('enrichment', 'parse_failed'),
         userId,
         ip,
         providerId,

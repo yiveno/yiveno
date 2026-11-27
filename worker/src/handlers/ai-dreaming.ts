@@ -12,6 +12,7 @@ import {
   filterDreamingCompileResults,
   parseDreamingCompileText
 } from '../services/ai/dreaming-compile-proposal'
+import { buildAiGateRejectedLogFields } from '../services/ai/ai-gate-log'
 import { commitDreamingQuota, peekDreamingQuota } from '../services/ai/dreaming-quota'
 import { isActiveProUser } from '../services/ai/require-pro-user'
 import { okJson, errorJson } from '../utils/response'
@@ -120,6 +121,7 @@ export async function handleDreamingComplete(
   const parsed = parseDreamingCompileText(rawText)
   if (parsed == null) {
     logInfo('dreaming_complete_parse_failed', {
+      ...buildAiGateRejectedLogFields('dreaming', 'parse_failed'),
       userId,
       model,
       durationMs: Date.now() - startedAt,
@@ -131,6 +133,16 @@ export async function handleDreamingComplete(
 
   // 逐字 sourceQuote 校验：编造引用丢弃（不改 prompt，只补校验）
   const { results, droppedQuoteCount } = filterDreamingCompileResults(parsed, sources, allowedIds)
+  if (droppedQuoteCount > 0) {
+    logInfo('dreaming_complete_quote_dropped', {
+      ...buildAiGateRejectedLogFields('dreaming', 'quote_dropped'),
+      userId,
+      model,
+      droppedQuoteCount,
+      resultCount: results.length,
+      durationMs: Date.now() - startedAt
+    })
+  }
 
   const snapshot = await commitDreamingQuota(env, peek.snapshot)
   logInfo('dreaming_complete_ok', {

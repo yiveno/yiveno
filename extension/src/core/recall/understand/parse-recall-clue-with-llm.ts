@@ -17,6 +17,7 @@ import type { ParsedRecallClue, RecallClueIntent } from '@/core/recall/parse-rec
 import type { LlmChatCompleteOptions } from '@/core/recall/understand/ai-chat-task-kind'
 import type { LlmChatDetailedResult } from '@/core/recall/understand/llm-chat-usage'
 import type { LlmParsedClueProposal } from '@/core/recall/understand/llm-parsed-clue-proposal'
+import { recordNlgGateOutcome } from '@/core/recall/understand/nlg-gate-metrics'
 
 /** 非召回意图：走二次回复 + 短路，不进检索。 */
 function isNonRecallIntent(
@@ -151,6 +152,7 @@ async function refreshChitchatReply(args: {
         textLength: trimmed.length,
         hasPreviousReply: Boolean(previousReply?.trim())
       })
+      recordNlgGateOutcome('chitchat', `rejected:${gateReason}`)
       return null
     }
     trace('info', 'LLM 非召回回复：completer 返回', {
@@ -158,6 +160,7 @@ async function refreshChitchatReply(args: {
       textLength: trimmed.length,
       hasPreviousReply: Boolean(previousReply?.trim())
     })
+    recordNlgGateOutcome('chitchat', 'accepted')
     return trimmed
   } catch (error) {
     const aborted =

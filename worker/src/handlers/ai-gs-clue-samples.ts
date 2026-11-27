@@ -14,6 +14,7 @@ import {
   buildGsClueSamplesUserPrompt,
   parseGsClueSamplesText
 } from '../services/ai/gs-clue-samples-proposal'
+import { buildAiGateRejectedLogFields } from '../services/ai/ai-gate-log'
 import { okJson, errorJson } from '../utils/response'
 import { info as logInfo, logError } from '../utils/logger'
 
@@ -215,6 +216,7 @@ export async function handleGsClueSamplesComplete(
     const samples = parseGsClueSamplesText(result.text, bookmark)
     if (!samples) {
       logInfo('gs_clue_samples_parse_failed', {
+        ...buildAiGateRejectedLogFields('gs_samples', 'parse_failed'),
         userId,
         ip,
         providerId,

@@ -13,6 +13,7 @@ import {
 } from '../services/ai/extract-summary-proposal'
 import { commitExtractQuota, peekExtractQuota } from '../services/ai/extract-quota'
 import { isActiveProUser } from '../services/ai/require-pro-user'
+import { buildAiGateRejectedLogFields } from '../services/ai/ai-gate-log'
 import { okJson, errorJson } from '../utils/response'
 import { info as logInfo, logError } from '../utils/logger'
 
@@ -125,6 +126,7 @@ export async function handleExtractComplete(
   const parsed = parseExtractSummaryText(rawText, bodyParsed.data.text)
   if (parsed == null) {
     logInfo('extract_complete_parse_failed', {
+      ...buildAiGateRejectedLogFields('extract', 'parse_failed'),
       userId,
       model,
       durationMs: Date.now() - startedAt,

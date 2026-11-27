@@ -14,6 +14,7 @@ import {
   type PortraitClusterPartitionCluster
 } from '@/core/portrait/validate-portrait-clusters'
 import type { UiLocaleId } from '@/core/i18n/ui-locale'
+import { recordNlgGateOutcome } from '@/core/recall/understand/nlg-gate-metrics'
 import type { LlmChatCompleter } from '@/core/recall/understand/parse-recall-clue-with-llm'
 import { getClueLlmCompleter } from '@/application/recall/clue-llm-completer-registry'
 import { createHostedClueUnderstandApiCompleter } from '@/infrastructure/ai/hosted-clue-understand-api-client'
@@ -154,9 +155,11 @@ export async function generatePortraitClusters(
   const firstCheck = validatePortraitClusters(first, values)
   if (firstCheck.ok) {
     await writePortraitClusterCache(signature, input.locale, firstCheck.clusters)
+    recordNlgGateOutcome('portrait_cluster', 'accepted')
     return { clusters: firstCheck.clusters, source: 'llm', signature }
   }
 
+  recordNlgGateOutcome('portrait_cluster', 'rejected:partition')
   logger.info('Portrait', '画像语义聚类首次校验未过，纠正重试', {
     reasons: firstCheck.reasons
   })
@@ -168,11 +171,13 @@ export async function generatePortraitClusters(
   const secondCheck = validatePortraitClusters(second, values)
   if (secondCheck.ok) {
     await writePortraitClusterCache(signature, input.locale, secondCheck.clusters)
+    recordNlgGateOutcome('portrait_cluster', 'accepted')
     return { clusters: secondCheck.clusters, source: 'llm', signature }
   }
 
   logger.info('Portrait', '画像语义聚类二次校验未过，回退共现且不缓存', {
     reasons: secondCheck.reasons
   })
+  recordNlgGateOutcome('portrait_cluster', 'rejected:partition')
   return { clusters: fallback, source: 'cooccurrence', signature }
 }

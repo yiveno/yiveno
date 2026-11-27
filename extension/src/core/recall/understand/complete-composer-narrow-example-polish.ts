@@ -15,6 +15,7 @@ import type { ClueFlowTrace } from '@/core/recall/understand/clue-flow-trace'
 import { noopClueFlowTrace } from '@/core/recall/understand/clue-flow-trace'
 import { parseJsonObjectFromLlmText } from '@/core/recall/understand/extract-llm-json'
 import { LlmNarrowExamplePolishProposalSchema } from '@/core/recall/understand/llm-narrow-example-polish-proposal'
+import { recordNlgGateOutcome } from '@/core/recall/understand/nlg-gate-metrics'
 import type { LlmChatCompleter } from '@/core/recall/understand/parse-recall-clue-with-llm'
 
 export type CompleteComposerNarrowExamplePolishInput = {
@@ -59,6 +60,13 @@ export async function completeComposerNarrowExamplePolishWithLlm(
   const rawJson = parseJsonObjectFromLlmText(rawText)
   const proposal = LlmNarrowExamplePolishProposalSchema.parse(rawJson)
   const corpusTexts = input.candidateCorpusTexts ?? input.candidateTextPreviews ?? selected
+  // 长度不一致 → 整表回退；逐位回退不单独计数
+  if (proposal.examples.length !== selected.length) {
+    recordNlgGateOutcome('narrow_polish', 'fallback')
+  } else {
+    recordNlgGateOutcome('narrow_polish', 'accepted')
+  }
+
   const gated = gatePolishedComposerNarrowExamples({
     selected,
     polished: proposal.examples,

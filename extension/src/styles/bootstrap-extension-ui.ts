@@ -4,6 +4,11 @@
  */
 
 import '@/styles/extension-ui.css'
+import { installNlgGateMetricsChromeStorage } from '@/infrastructure/storage/nlg-gate-metrics-storage'
 import { bindScrollingScrollbarIndicator } from '@/infrastructure/ui/bind-scrolling-scrollbar'
 
 bindScrollingScrollbarIndicator()
+// 画像叙事 / 聚类等在扩展页跑 LLM 门禁；预热本地度量落盘
+void installNlgGateMetricsChromeStorage().catch(() => {
+  // 静默
+})

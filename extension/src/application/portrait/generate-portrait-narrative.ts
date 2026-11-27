@@ -16,6 +16,7 @@ import {
   validatePortraitNarrative
 } from '@/core/portrait/validate-portrait-narrative'
 import type { UiLocaleId } from '@/core/i18n/ui-locale'
+import { recordNlgGateOutcome } from '@/core/recall/understand/nlg-gate-metrics'
 import type { LlmChatCompleter } from '@/core/recall/understand/parse-recall-clue-with-llm'
 import { getClueLlmCompleter } from '@/application/recall/clue-llm-completer-registry'
 import { createHostedClueUnderstandApiCompleter } from '@/infrastructure/ai/hosted-clue-understand-api-client'
@@ -163,6 +164,7 @@ export async function generatePortraitNarrative(
   const points = contentPointsFromPortraitView(view, locale)
   const first = await completeOnce(complete, points)
   if (!first) {
+    recordNlgGateOutcome('portrait_narrative', 'fallback')
     return { text: fallback, source: 'deterministic' }
   }
 
@@ -171,15 +173,19 @@ export async function generatePortraitNarrative(
     if (signature) {
       await writePortraitNarrativeCache(signature, locale, first)
     }
+    recordNlgGateOutcome('portrait_narrative', 'accepted')
     return { text: first, source: 'llm' }
   }
 
+  const firstReason = firstCheck.reasons[0] ?? 'validation_failed'
+  recordNlgGateOutcome('portrait_narrative', `rejected:${firstReason}`)
   logger.info('Portrait', '画像叙事首次校验未过，纠正重试', {
     reasons: firstCheck.reasons
   })
 
   const second = await completeOnce(complete, points, firstCheck.reasons)
   if (!second) {
+    recordNlgGateOutcome('portrait_narrative', 'fallback')
     return { text: fallback, source: 'deterministic' }
   }
   const secondCheck = validatePortraitNarrative(second, points, locale)
@@ -187,11 +193,13 @@ export async function generatePortraitNarrative(
     if (signature) {
       await writePortraitNarrativeCache(signature, locale, second)
     }
+    recordNlgGateOutcome('portrait_narrative', 'accepted')
     return { text: second, source: 'llm' }
   }
 
   logger.info('Portrait', '画像叙事二次校验未过，回退确定性文案且不缓存', {
     reasons: secondCheck.reasons
   })
+  recordNlgGateOutcome('portrait_narrative', 'fallback')
   return { text: fallback, source: 'deterministic' }
 }

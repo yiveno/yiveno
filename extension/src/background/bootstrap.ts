@@ -30,6 +30,7 @@ import { initializeMemoryDatabase } from '@/infrastructure/indexeddb/memory-db'
 import { initUiLocaleFromSettings } from '@/infrastructure/i18n/t'
 import { logger } from '@/infrastructure/logging/logger'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
+import { installNlgGateMetricsChromeStorage } from '@/infrastructure/storage/nlg-gate-metrics-storage'
 import { logChromeStorageQuotaSample } from '@/infrastructure/storage/chrome-storage-quota'
 
 /**
@@ -103,6 +104,9 @@ async function bootstrapBackground(): Promise<void> {
     // 暗线贡献：启动时按门禁尝试上传一次（失败静默，不挡启动）
     void maybeUploadDualThreadSketch().catch(error => {
       logger.warn('Background', '暗线汇总上传检查失败（静默）', error)
+    })
+    void installNlgGateMetricsChromeStorage().catch(error => {
+      logger.warn('Background', 'NLG 门禁度量落盘接线失败（静默）', error)
     })
     void logChromeStorageQuotaSample('bootstrap')
     flowOk('Background', 'bootstrap 完成', startedAt)

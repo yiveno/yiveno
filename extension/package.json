@@ -34,6 +34,7 @@
     "behavior-preference:eval": "bun scripts/behavior-preference-eval.mjs",
     "condition-certainty:eval": "bun scripts/condition-certainty-eval.mjs",
     "portrait-query:eval": "bun scripts/portrait-query-eval.mjs",
+    "portrait-cluster:eval": "bun scripts/portrait-cluster-eval.mjs",
     "probe-eval:export-fixture": "bun scripts/export-probe-eval-fixture.mjs",
     "retrieval-ablation:real": "bun scripts/run-retrieval-ablation-real.mjs",
     "i18n:check": "bun scripts/check-i18n-keys.mjs",

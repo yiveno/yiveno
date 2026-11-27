@@ -19,6 +19,7 @@ import {
   mapLlmFollowUpProposal,
   type MappedLlmFollowUp
 } from '@/core/recall/understand/map-llm-follow-up-proposal'
+import { recordNlgGateOutcome } from '@/core/recall/understand/nlg-gate-metrics'
 import type {
   LlmChatCompleter,
   LlmChatCompleterDetailed
@@ -99,11 +100,13 @@ export async function completeRecallFramingNlgWithLlm(
     trace('warn', 'LLM Framing：门禁拒收提议', {
       replyPreview: proposal.reply.slice(0, 80)
     })
+    recordNlgGateOutcome('framing_nlg', 'rejected:map')
     throw new Error('framing_nlg_gate_rejected')
   }
 
   trace('info', 'LLM Framing：门禁通过', {
     suggestionCount: mapped.suggestions.length
   })
+  recordNlgGateOutcome('framing_nlg', 'accepted')
   return mapped
 }
