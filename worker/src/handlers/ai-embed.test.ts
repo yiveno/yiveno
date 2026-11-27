@@ -6,11 +6,17 @@ import { extractEmbeddingsFromAiResponse } from './ai-embed'
 function createKvMock(initial: Record<string, string> = {}) {
   const store = new Map(Object.entries(initial))
   return {
+    store,
     get: async (key: string) => store.get(key) ?? null,
     put: async (key: string, value: string) => {
       store.set(key, value)
     }
   }
+}
+
+function utcDay(): string {
+  const now = new Date()
+  return `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`
 }
 
 function createEnv(overrides: Record<string, unknown> = {}): Env {
@@ -20,7 +26,7 @@ function createEnv(overrides: Record<string, unknown> = {}): Env {
     SUPABASE_ANON_KEY: 'anon-key',
     SUPABASE_SERVICE_ROLE_KEY: 'service-role-key',
     WEBSITE_URL: 'https://example.com',
-    AI_USAGE_KV: createKvMock() as Env['AI_USAGE_KV'],
+    AI_USAGE_KV: createKvMock() as unknown as Env['AI_USAGE_KV'],
     AI: {
       run: async () => ({
         data: [
@@ -320,8 +326,7 @@ describe('handleEmbed', () => {
       isActiveProUser: async () => false
     }))
     const { handleEmbed: handle } = await import('./ai-embed')
-    const now = new Date()
-    const day = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}-${String(now.getUTCDate()).padStart(2, '0')}`
+    const day = utcDay()
     const userId = 'normal-embed-user'
     const kv = createKvMock({ [`embed_ai:${userId}:${day}`]: '100' })
     const response = await handle(
@@ -331,7 +336,7 @@ describe('handleEmbed', () => {
         body: JSON.stringify({ texts: ['hello'] })
       }),
       createEnv({
-        AI_USAGE_KV: kv as Env['AI_USAGE_KV'],
+        AI_USAGE_KV: kv as unknown as Env['AI_USAGE_KV'],
         AI_HOSTED_QUOTA_EXEMPT_USER_IDS: 'exempt-embed-user'
       }),
       userId
@@ -341,5 +346,166 @@ describe('handleEmbed', () => {
     expect(json.error).toBe('quota_exceeded')
     expect(json.used).toBe(100)
     expect(json.limit).toBe(100)
+  })
+})
+
+describe('handleEmbed 成功计费', () => {
+  afterEach(() => {
+    mock.restore()
+  })
+
+  test('invalid_json 后 used 不变', async () => {
+    mock.module('../services/ai/require-pro-user', () => ({
+      isActiveProUser: async () => false
+    }))
+    const { handleEmbed: handle } = await import('./ai-embed')
+    const userId = 'embed-billing-json'
+    const day = utcDay()
+    const key = `embed_ai:${userId}:${day}`
+    const kv = createKvMock({ [key]: '3' })
+    let aiCalls = 0
+    const response = await handle(
+      new Request('http://localhost/api/ai/embed', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: '{not-json'
+      }),
+      createEnv({
+        AI_USAGE_KV: kv as unknown as Env['AI_USAGE_KV'],
+        AI: {
+          run: async () => {
+            aiCalls += 1
+            return { data: [[0.1]] }
+          }
+        }
+      }),
+      userId
+    )
+    expect(response.status).toBe(400)
+    const json = (await response.json()) as { error: string }
+    expect(json.error).toBe('invalid_json')
+    expect(kv.store.get(key)).toBe('3')
+    expect(aiCalls).toBe(0)
+  })
+
+  test('invalid_texts 后 used 不变', async () => {
+    mock.module('../services/ai/require-pro-user', () => ({
+      isActiveProUser: async () => false
+    }))
+    const { handleEmbed: handle } = await import('./ai-embed')
+    const userId = 'embed-billing-texts'
+    const day = utcDay()
+    const key = `embed_ai:${userId}:${day}`
+    const kv = createKvMock({ [key]: '4' })
+    let aiCalls = 0
+    const response = await handle(
+      new Request('http://localhost/api/ai/embed', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ texts: [] })
+      }),
+      createEnv({
+        AI_USAGE_KV: kv as unknown as Env['AI_USAGE_KV'],
+        AI: {
+          run: async () => {
+            aiCalls += 1
+            return { data: [[0.1]] }
+          }
+        }
+      }),
+      userId
+    )
+    expect(response.status).toBe(400)
+    const json = (await response.json()) as { error: string }
+    expect(json.error).toBe('invalid_texts')
+    expect(kv.store.get(key)).toBe('4')
+    expect(aiCalls).toBe(0)
+  })
+
+  test('AI 失败后 used 不变', async () => {
+    mock.module('../services/ai/require-pro-user', () => ({
+      isActiveProUser: async () => false
+    }))
+    const { handleEmbed: handle } = await import('./ai-embed')
+    const userId = 'embed-billing-ai-fail'
+    const day = utcDay()
+    const key = `embed_ai:${userId}:${day}`
+    const kv = createKvMock({ [key]: '5' })
+    const response = await handle(
+      new Request('http://localhost/api/ai/embed', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ texts: ['hello'] })
+      }),
+      createEnv({
+        AI_USAGE_KV: kv as unknown as Env['AI_USAGE_KV'],
+        AI: {
+          run: async () => {
+            throw new Error('upstream boom')
+          }
+        }
+      }),
+      userId
+    )
+    expect(response.status).toBe(502)
+    expect(kv.store.get(key)).toBe('5')
+  })
+
+  test('成功后 used +1', async () => {
+    mock.module('../services/ai/require-pro-user', () => ({
+      isActiveProUser: async () => false
+    }))
+    const { handleEmbed: handle } = await import('./ai-embed')
+    const userId = 'embed-billing-ok'
+    const day = utcDay()
+    const key = `embed_ai:${userId}:${day}`
+    const kv = createKvMock({ [key]: '7' })
+    const response = await handle(
+      new Request('http://localhost/api/ai/embed', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ texts: ['hello'] })
+      }),
+      createEnv({ AI_USAGE_KV: kv as unknown as Env['AI_USAGE_KV'] }),
+      userId
+    )
+    expect(response.status).toBe(200)
+    const json = (await response.json()) as {
+      data: { quota: { used: number } }
+    }
+    expect(json.data.quota.used).toBe(8)
+    expect(kv.store.get(key)).toBe('8')
+  })
+
+  test('配额不足仍 429 且不调用 AI', async () => {
+    mock.module('../services/ai/require-pro-user', () => ({
+      isActiveProUser: async () => false
+    }))
+    const { handleEmbed: handle } = await import('./ai-embed')
+    const userId = 'embed-billing-deny'
+    const day = utcDay()
+    const key = `embed_ai:${userId}:${day}`
+    const kv = createKvMock({ [key]: '100' })
+    let aiCalls = 0
+    const response = await handle(
+      new Request('http://localhost/api/ai/embed', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ texts: ['hello'] })
+      }),
+      createEnv({
+        AI_USAGE_KV: kv as unknown as Env['AI_USAGE_KV'],
+        AI: {
+          run: async () => {
+            aiCalls += 1
+            return { data: [[0.1, 0.2]] }
+          }
+        }
+      }),
+      userId
+    )
+    expect(response.status).toBe(429)
+    expect(kv.store.get(key)).toBe('100')
+    expect(aiCalls).toBe(0)
   })
 })

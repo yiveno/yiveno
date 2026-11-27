@@ -1,5 +1,6 @@
 /**
  * 托管 LLM 配额服务：Free/Pro 月度+日盖；匿名终身档（无月重置、无日盖）。
+ * peek-then-commit：先探额，成功后再扣。
  * 测试账号可通过 AI_HOSTED_QUOTA_EXEMPT_USER_IDS 豁免拒绝（仍计数）。
  */
 
@@ -31,6 +32,8 @@ export type HostedQuotaOptions = {
   isPro: boolean
 }
 
+type HostedQuotaDeniedReason = 'quota_exceeded' | 'daily_cap_exceeded' | 'kv_not_configured'
+
 function anonymousSnapshot(env: Env, userId: string, used: number): HostedQuotaSnapshot {
   const limit = isQuotaExemptUser(env, userId)
     ? Number.MAX_SAFE_INTEGER
@@ -49,6 +52,12 @@ function anonymousSnapshot(env: Env, userId: string, used: number): HostedQuotaS
   }
 }
 
+function resolveOpts(isProOrOptions: boolean | HostedQuotaOptions): HostedQuotaOptions {
+  return typeof isProOrOptions === 'boolean'
+    ? { isPro: isProOrOptions, isAnonymous: false }
+    : isProOrOptions
+}
+
 /**
  * 读取配额快照（不递增）。
  * 匿名分支必须在 isPro 判断之前短路。
@@ -59,10 +68,7 @@ export async function getHostedQuotaSnapshot(
   userId: string,
   isProOrOptions: boolean | HostedQuotaOptions
 ): Promise<HostedQuotaSnapshot> {
-  const opts: HostedQuotaOptions =
-    typeof isProOrOptions === 'boolean'
-      ? { isPro: isProOrOptions, isAnonymous: false }
-      : isProOrOptions
+  const opts = resolveOpts(isProOrOptions)
 
   if (opts.isAnonymous) {
     const kv = env.AI_USAGE_KV
@@ -96,12 +102,35 @@ export async function getHostedQuotaSnapshot(
   }
 }
 
+function kvMissingSnapshot(
+  env: Env,
+  userId: string,
+  opts: HostedQuotaOptions
+): HostedQuotaSnapshot {
+  if (opts.isAnonymous) {
+    const snapshot = anonymousSnapshot(env, userId, 0)
+    return { ...snapshot, remaining: 0, dailyRemaining: 0 }
+  }
+  const limit = resolveHostedMonthlyQuota(env, opts.isPro)
+  const dailyLimit = resolveHostedDailyCap(env, opts.isPro)
+  return {
+    used: 0,
+    limit,
+    remaining: 0,
+    monthKey: buildMonthlyUsageKey(userId),
+    dailyUsed: 0,
+    dailyLimit,
+    dailyRemaining: 0,
+    tier: opts.isPro ? 'pro' : 'free'
+  }
+}
+
 /**
- * 在配额允许时递增一次调用计数。
+ * 只读探额：不写 KV。
  * 未绑定 AI_USAGE_KV 时拒绝（避免无上限调用）；豁免不绕过 kv_not_configured。
- * 豁免账号跳过 quota_exceeded / daily_cap_exceeded，仍递增 KV。
+ * 豁免账号跳过 quota_exceeded / daily_cap_exceeded，仍允许后续 commit 计数。
  */
-export async function consumeHostedQuota(
+export async function peekHostedQuota(
   env: Env,
   userId: string,
   isProOrOptions: boolean | HostedQuotaOptions
@@ -110,56 +139,28 @@ export async function consumeHostedQuota(
   | {
       allowed: false
       snapshot: HostedQuotaSnapshot
-      reason?: 'quota_exceeded' | 'daily_cap_exceeded' | 'kv_not_configured'
+      reason: HostedQuotaDeniedReason
     }
 > {
-  const opts: HostedQuotaOptions =
-    typeof isProOrOptions === 'boolean'
-      ? { isPro: isProOrOptions, isAnonymous: false }
-      : isProOrOptions
+  const opts = resolveOpts(isProOrOptions)
 
   if (!env.AI_USAGE_KV) {
-    if (opts.isAnonymous) {
-      const snapshot = anonymousSnapshot(env, userId, 0)
-      return {
-        allowed: false,
-        reason: 'kv_not_configured',
-        snapshot: { ...snapshot, remaining: 0, dailyRemaining: 0 }
-      }
-    }
-    const limit = resolveHostedMonthlyQuota(env, opts.isPro)
-    const dailyLimit = resolveHostedDailyCap(env, opts.isPro)
-    const monthKey = buildMonthlyUsageKey(userId)
     return {
       allowed: false,
       reason: 'kv_not_configured',
-      snapshot: {
-        used: 0,
-        limit,
-        remaining: 0,
-        monthKey,
-        dailyUsed: 0,
-        dailyLimit,
-        dailyRemaining: 0,
-        tier: opts.isPro ? 'pro' : 'free'
-      }
+      snapshot: kvMissingSnapshot(env, userId, opts)
     }
   }
 
   const exempt = isQuotaExemptUser(env, userId)
+  const snapshot = await getHostedQuotaSnapshot(env, userId, opts)
 
   if (opts.isAnonymous) {
-    const snapshot = await getHostedQuotaSnapshot(env, userId, opts)
     if (!exempt && snapshot.used >= snapshot.limit) {
       return { allowed: false, reason: 'quota_exceeded', snapshot }
     }
-    const nextUsed = snapshot.used + 1
-    await env.AI_USAGE_KV.put(buildLifetimeUsageKey(userId), String(nextUsed))
-    const updated = anonymousSnapshot(env, userId, nextUsed)
-    return { allowed: true, snapshot: updated }
+    return { allowed: true, snapshot }
   }
-
-  const snapshot = await getHostedQuotaSnapshot(env, userId, opts)
 
   if (!exempt && snapshot.used >= snapshot.limit) {
     return { allowed: false, reason: 'quota_exceeded', snapshot }
@@ -168,21 +169,44 @@ export async function consumeHostedQuota(
     return { allowed: false, reason: 'daily_cap_exceeded', snapshot }
   }
 
-  const nextUsed = snapshot.used + 1
-  const nextDailyUsed = snapshot.dailyUsed + 1
+  return { allowed: true, snapshot }
+}
+
+/**
+ * 成功后扣 1 次（按 peek 时的 used 递增）。
+ * 豁免账号照常计数，永不因配额拒绝（拒绝只发生在 peek）。
+ */
+export async function commitHostedQuota(
+  env: Env,
+  userId: string,
+  peeked: HostedQuotaSnapshot,
+  isProOrOptions: boolean | HostedQuotaOptions
+): Promise<HostedQuotaSnapshot> {
+  const opts = resolveOpts(isProOrOptions)
+  const kv = env.AI_USAGE_KV
+  if (!kv) {
+    return peeked
+  }
+
+  if (opts.isAnonymous || peeked.tier === 'anonymous') {
+    const nextUsed = peeked.used + 1
+    await kv.put(buildLifetimeUsageKey(userId), String(nextUsed))
+    return anonymousSnapshot(env, userId, nextUsed)
+  }
+
+  const nextUsed = peeked.used + 1
+  const nextDailyUsed = peeked.dailyUsed + 1
   const dayKey = buildDailyUsageKey(userId)
-  await env.AI_USAGE_KV.put(snapshot.monthKey, String(nextUsed))
-  await env.AI_USAGE_KV.put(dayKey, String(nextDailyUsed), {
+  await kv.put(peeked.monthKey, String(nextUsed))
+  await kv.put(dayKey, String(nextDailyUsed), {
     expirationTtl: 60 * 60 * 48
   })
 
-  const updated: HostedQuotaSnapshot = {
-    ...snapshot,
+  return {
+    ...peeked,
     used: nextUsed,
-    remaining: Math.max(0, snapshot.limit - nextUsed),
+    remaining: Math.max(0, peeked.limit - nextUsed),
     dailyUsed: nextDailyUsed,
-    dailyRemaining: Math.max(0, snapshot.dailyLimit - nextDailyUsed)
+    dailyRemaining: Math.max(0, peeked.dailyLimit - nextDailyUsed)
   }
-
-  return { allowed: true, snapshot: updated }
 }

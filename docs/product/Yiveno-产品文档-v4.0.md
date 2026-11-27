@@ -1263,7 +1263,7 @@ schema：`extension/src/core/messaging/*`、`chrome-bookmark-import-state.ts`。
 | 登录 Free | **60 次/月**         | **10 次/日**  | 降级规则理解，**不禁止找** |
 | Pro       | **1 000 次/月**      | **120 次/日** | 同左                       |
 
-计量：一次成功的 `POST /api/ai/hosted/complete` = 1；正式路径须登录 Bearer。`/api/ai/clue/complete` 仅开发/兜底（IP 日配额）。Enrichment 月配额（Free 30 / Pro 500）后续接线；此前仍走现有 IP 日配额。
+计量（成功计费 · peek-then-commit）：一次成功的 `POST /api/ai/hosted/complete` = 1；`POST /api/ai/embed` 一次成功 batch = 1；`POST /api/ai/enrichment/complete` 用户日配额与 IP 日配额均在成功 parse 后各 +1。校验失败 / provider 失败 / parse 失败 / 无效 body **不扣**。正式 hosted/embed 路径须登录 Bearer。`/api/ai/clue/complete` 仅开发/兜底（IP 日配额）。Enrichment 月配额（Free 30 / Pro 500）后续接线；此前仍走现有日配额。
 
 ### 5.2 已交付基线验收
 

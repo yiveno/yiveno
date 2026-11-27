@@ -49,7 +49,7 @@ type QuotaPeekDenied = {
   reason: 'quota_exceeded' | 'kv_not_configured'
 }
 
-/** 只读探额（调用前；两道都过再扣）。 */
+/** 只读探额（用户道 / IP 道共用；两道都过再调上游）。 */
 async function peekEnrichmentDailyQuota(
   env: Env,
   key: string
@@ -68,7 +68,10 @@ async function peekEnrichmentDailyQuota(
   return { allowed: true, used, limit: dailyLimit }
 }
 
-/** 调用前扣 1 次（须已 peek 通过）。 */
+/**
+ * 成功后扣 1 次（须已 peek 通过）。
+ * IP 道与用户道同为成功计费；peek 仍作滥用闸门（超限直接 429，不进上游）。
+ */
 async function commitEnrichmentDailyQuota(
   env: Env,
   key: string,
@@ -164,7 +167,7 @@ export async function handleEnrichmentComplete(
     viaAiGateway
   })
 
-  // 用户配额主道；IP 第二道；两道 peek 都过再调用前扣（失败不白烧另一道）
+  // 用户配额主道；IP 第二道滥用闸门。两道 peek 都过再调上游；成功后才 commit（parse/provider 失败不扣）
   const userKey = `enrich_ai:user:${userId}:${day}`
   const ipKey = `enrich_ai:${ip}:${day}`
   const userPeek = await peekEnrichmentDailyQuota(env, userKey)
@@ -215,9 +218,6 @@ export async function handleEnrichmentComplete(
     )
   }
 
-  const userQuota = await commitEnrichmentDailyQuota(env, userKey, userPeek)
-  await commitEnrichmentDailyQuota(env, ipKey, ipPeek)
-
   try {
     const completer = resolveAiChatCompleter(env)
     const result = await completer.complete(env, {
@@ -244,8 +244,13 @@ export async function handleEnrichmentComplete(
         textLength: result.text.length,
         durationMs: Date.now() - startedAt
       })
+      // parse 失败不扣（用户道 + IP 道同语义）
       return errorJson({ error: 'enrichment_parse_failed' }, 502, origin)
     }
+
+    // 两道配额都按成功计费；IP peek 仍作滥用闸门
+    const userQuota = await commitEnrichmentDailyQuota(env, userKey, userPeek)
+    await commitEnrichmentDailyQuota(env, ipKey, ipPeek)
 
     logInfo('enrichment_complete_ok', {
       userId,
@@ -278,6 +283,7 @@ export async function handleEnrichmentComplete(
       origin
     )
   } catch (err) {
+    // provider 失败不扣（peek-then-commit）
     const message = err instanceof Error ? err.message : String(err)
     logError(err, {
       path: '/api/ai/enrichment/complete',

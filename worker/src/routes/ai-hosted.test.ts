@@ -11,6 +11,7 @@ const TEST_USER_ID = '11111111-1111-1111-1111-111111111111'
 function createKvMock(initial: Record<string, string> = {}) {
   const store = new Map(Object.entries(initial))
   return {
+    store,
     get: async (key: string) => store.get(key) ?? null,
     put: async (key: string, value: string) => {
       store.set(key, value)
@@ -27,7 +28,7 @@ function createBaseEnv(overrides: Record<string, unknown> = {}): Env {
     WEBSITE_URL: 'https://example.com',
     DEEPSEEK_API_KEY: 'deepseek-test-key',
     AI_HOSTED_MODEL: 'deepseek-flash',
-    AI_USAGE_KV: createKvMock() as Env['AI_USAGE_KV'],
+    AI_USAGE_KV: createKvMock() as unknown as Env['AI_USAGE_KV'],
     ...overrides
   } as unknown as Env
 }
@@ -622,6 +623,65 @@ describe('hosted ai routes', () => {
       expect(data.provider).toBe('hosted')
       expect(data.taskKind).toBe('nlu')
       expect(data.text).toContain('intent')
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test('provider 失败后 used 不变', async () => {
+    const { handleHostedComplete } = await importHostedHandlersAsPro()
+    const monthKey = `ai_usage:${TEST_USER_ID}:${new Date().toISOString().slice(0, 7)}`
+    const kv = createKvMock({ [monthKey]: '2' })
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = mock(async () => {
+      throw new Error('provider down')
+    }) as unknown as typeof fetch
+
+    try {
+      const response = await handleHostedComplete(
+        new Request('http://localhost/api/ai/hosted/complete', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ messages: validMessages('nlu') })
+        }),
+        createBaseEnv({ AI_USAGE_KV: kv as unknown as Env['AI_USAGE_KV'] }),
+        TEST_USER_ID
+      )
+      expect(response.status).toBe(500)
+      const data = (await response.json()) as { error: string }
+      expect(data.error).toBe('hosted_complete_failed')
+      expect(kv.store.get(monthKey)).toBe('2')
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test('校验失败不扣配额（missing_messages）', async () => {
+    const { handleHostedComplete } = await importHostedHandlersAsPro()
+    const monthKey = `ai_usage:${TEST_USER_ID}:${new Date().toISOString().slice(0, 7)}`
+    const kv = createKvMock({ [monthKey]: '4' })
+    let fetchCalls = 0
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = mock(async () => {
+      fetchCalls += 1
+      return new Response('{}', { status: 200 })
+    }) as unknown as typeof fetch
+
+    try {
+      const response = await handleHostedComplete(
+        new Request('http://localhost/api/ai/hosted/complete', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ prompt: '整理书签' })
+        }),
+        createBaseEnv({ AI_USAGE_KV: kv as unknown as Env['AI_USAGE_KV'] }),
+        TEST_USER_ID
+      )
+      expect(response.status).toBe(400)
+      const data = (await response.json()) as { error: string }
+      expect(data.error).toBe('missing_messages')
+      expect(kv.store.get(monthKey)).toBe('4')
+      expect(fetchCalls).toBe(0)
     } finally {
       globalThis.fetch = originalFetch
     }

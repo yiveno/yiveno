@@ -2,7 +2,7 @@ import { describe, expect, test } from 'bun:test'
 
 import { buildLifetimeUsageKey } from '../../config/ai-hosted'
 import type { Env } from '../../types/env'
-import { consumeHostedQuota, getHostedQuotaSnapshot } from './usage-quota'
+import { commitHostedQuota, getHostedQuotaSnapshot, peekHostedQuota } from './usage-quota'
 
 function createKvMock(initial: Record<string, string> = {}) {
   const store = new Map(Object.entries(initial))
@@ -27,17 +27,19 @@ describe('匿名终身配额', () => {
     const userId = 'anon-user-1'
     const kv = createKvMock({ [buildLifetimeUsageKey(userId)]: '14' })
     const env = createEnv(kv, { AI_HOSTED_ANONYMOUS_LIFETIME_QUOTA: '15' })
+    const opts = { isAnonymous: true, isPro: true }
 
-    const ok = await consumeHostedQuota(env, userId, { isAnonymous: true, isPro: true })
-    expect(ok.allowed).toBe(true)
-    if (!ok.allowed) return
-    expect(ok.snapshot.used).toBe(15)
-    expect(ok.snapshot.tier).toBe('anonymous')
-    expect(ok.snapshot.monthKey).toBe('lifetime')
-    expect(ok.snapshot.dailyUsed).toBe(15)
-    expect(ok.snapshot.dailyLimit).toBe(15)
+    const peek = await peekHostedQuota(env, userId, opts)
+    expect(peek.allowed).toBe(true)
+    if (!peek.allowed) return
+    const ok = await commitHostedQuota(env, userId, peek.snapshot, opts)
+    expect(ok.used).toBe(15)
+    expect(ok.tier).toBe('anonymous')
+    expect(ok.monthKey).toBe('lifetime')
+    expect(ok.dailyUsed).toBe(15)
+    expect(ok.dailyLimit).toBe(15)
 
-    const denied = await consumeHostedQuota(env, userId, { isAnonymous: true, isPro: true })
+    const denied = await peekHostedQuota(env, userId, opts)
     expect(denied.allowed).toBe(false)
     if (denied.allowed) return
     expect(denied.reason).toBe('quota_exceeded')

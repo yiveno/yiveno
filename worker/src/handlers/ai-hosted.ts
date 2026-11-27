@@ -1,7 +1,8 @@
 /**
  * 托管 LLM 接口处理器（登录可用；Free/Pro 配额分档）。
  *
- * hosted/complete 在扣配额前做形状 + system 指纹校验（见 hosted-system-prompts.ts）。
+ * hosted/complete 在 peek 配额前做形状 + system 指纹校验（见 hosted-system-prompts.ts）；
+ * provider 成功后才 commit（失败不扣）。
  * 残留：非服务端模板渲染；后缀注入风险受 device token + 自有配额约束。更彻底的服务端模板另立批。
  */
 
@@ -13,7 +14,11 @@ import { resolveHostedMaxTokensForTask, resolveHostedModelForTask } from '../con
 import { isAiChatProviderConfigured, resolveAiChatProvider } from '../services/ai/ai-chat-provider'
 import { resolveAiChatCompleter } from '../services/ai/ai-chat-router'
 import { peekAnonymousEmbedQuota } from './ai-embed'
-import { consumeHostedQuota, getHostedQuotaSnapshot } from '../services/ai/usage-quota'
+import {
+  commitHostedQuota,
+  getHostedQuotaSnapshot,
+  peekHostedQuota
+} from '../services/ai/usage-quota'
 import { isActiveProUser } from '../services/ai/require-pro-user'
 import {
   parseHostedCompleteTaskKind,
@@ -193,30 +198,32 @@ export async function handleHostedComplete(
   const maxTokens = resolveHostedMaxTokensForTask(taskKind, body.maxTokens)
 
   const isPro = isAnonymous ? false : await isActiveProUser(env, userId)
-  const quotaResult = await consumeHostedQuota(env, userId, { isAnonymous, isPro })
-  if (!quotaResult.allowed) {
+  const quotaOpts = { isAnonymous, isPro }
+  // peek-then-commit：不足仍 429/503；provider 失败不扣
+  const quotaPeek = await peekHostedQuota(env, userId, quotaOpts)
+  if (!quotaPeek.allowed) {
     logInfo('hosted_complete_quota_exceeded', {
       userId,
       taskKind,
       model,
-      reason: quotaResult.reason ?? 'quota_exceeded',
-      tier: quotaResult.snapshot.tier,
-      used: quotaResult.snapshot.used,
-      limit: quotaResult.snapshot.limit
+      reason: quotaPeek.reason ?? 'quota_exceeded',
+      tier: quotaPeek.snapshot.tier,
+      used: quotaPeek.snapshot.used,
+      limit: quotaPeek.snapshot.limit
     })
-    if (quotaResult.reason === 'kv_not_configured') {
+    if (quotaPeek.reason === 'kv_not_configured') {
       return errorJson({ error: 'kv_not_configured' }, 503, origin)
     }
     return errorJson(
       {
-        error: quotaResult.reason ?? 'quota_exceeded',
-        tier: quotaResult.snapshot.tier,
-        used: quotaResult.snapshot.used,
-        limit: quotaResult.snapshot.limit,
-        remaining: quotaResult.snapshot.remaining,
-        dailyUsed: quotaResult.snapshot.dailyUsed,
-        dailyLimit: quotaResult.snapshot.dailyLimit,
-        dailyRemaining: quotaResult.snapshot.dailyRemaining
+        error: quotaPeek.reason ?? 'quota_exceeded',
+        tier: quotaPeek.snapshot.tier,
+        used: quotaPeek.snapshot.used,
+        limit: quotaPeek.snapshot.limit,
+        remaining: quotaPeek.snapshot.remaining,
+        dailyUsed: quotaPeek.snapshot.dailyUsed,
+        dailyLimit: quotaPeek.snapshot.dailyLimit,
+        dailyRemaining: quotaPeek.snapshot.dailyRemaining
       },
       429,
       origin
@@ -245,6 +252,8 @@ export async function handleHostedComplete(
       priority: 'interactive'
     })
 
+    const snapshot = await commitHostedQuota(env, userId, quotaPeek.snapshot, quotaOpts)
+
     logInfo('hosted_complete_ok', {
       userId,
       taskKind,
@@ -269,18 +278,19 @@ export async function handleHostedComplete(
         promptTokens: result.promptTokens,
         completionTokens: result.completionTokens,
         quota: {
-          tier: quotaResult.snapshot.tier,
-          used: quotaResult.snapshot.used,
-          limit: quotaResult.snapshot.limit,
-          remaining: quotaResult.snapshot.remaining,
-          dailyUsed: quotaResult.snapshot.dailyUsed,
-          dailyLimit: quotaResult.snapshot.dailyLimit,
-          dailyRemaining: quotaResult.snapshot.dailyRemaining
+          tier: snapshot.tier,
+          used: snapshot.used,
+          limit: snapshot.limit,
+          remaining: snapshot.remaining,
+          dailyUsed: snapshot.dailyUsed,
+          dailyLimit: snapshot.dailyLimit,
+          dailyRemaining: snapshot.dailyRemaining
         }
       },
       origin
     )
   } catch (err) {
+    // provider 失败不扣（peek-then-commit）
     const message = err instanceof Error ? err.message : String(err)
     logError(err, {
       path: '/api/ai/hosted/complete',

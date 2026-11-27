@@ -1,6 +1,7 @@
 /**
  * 登录可用：Workers AI embedding（bge-m3）。
  * 鉴权：双栈 Bearer（device token 或 Supabase）；按用户日/终身配额防刷。
+ * peek-then-commit：先校验 body 再探额，AI 成功拿到合法 embeddings 后才扣。
  */
 
 import type { Env } from '../types/env'
@@ -58,7 +59,10 @@ type EmbedQuotaOk = {
   dailyUsed: number
   dailyLimit: number
   dailyRemaining: number
+  /** KV 读写故障 fail-open；used 未递增 */
   degraded?: true
+  /** commit 用的 KV key（degraded peek 无） */
+  key?: string
 }
 
 type EmbedQuotaDenied = {
@@ -99,7 +103,7 @@ export async function peekAnonymousEmbedQuota(
   }
 }
 
-async function consumeEmbedAnonymousQuota(
+async function peekEmbedAnonymousQuota(
   env: Env,
   userId: string
 ): Promise<EmbedQuotaOk | EmbedQuotaDenied> {
@@ -123,7 +127,7 @@ async function consumeEmbedAnonymousQuota(
   try {
     const raw = await kv.get(key)
     const used = raw ? Number.parseInt(raw, 10) || 0 : 0
-    // 豁免账号跳过拒绝，仍递增计数
+    // 豁免账号跳过拒绝，仍允许后续 commit 计数
     if (!exempt && used >= resolveAnonEmbedLimit(env)) {
       return {
         allowed: false,
@@ -137,18 +141,17 @@ async function consumeEmbedAnonymousQuota(
         reason: 'quota_exceeded'
       }
     }
-    const next = used + 1
-    await kv.put(key, String(next))
-    const remaining = Math.max(0, limit - next)
+    const remaining = Math.max(0, limit - used)
     return {
       allowed: true,
-      used: next,
+      used,
       limit,
       remaining,
       tier: 'anonymous',
-      dailyUsed: next,
+      dailyUsed: used,
       dailyLimit: limit,
-      dailyRemaining: remaining
+      dailyRemaining: remaining,
+      key
     }
   } catch (err) {
     logError(err, { path: '/api/ai/embed', userId })
@@ -166,7 +169,7 @@ async function consumeEmbedAnonymousQuota(
   }
 }
 
-async function consumeEmbedDailyQuota(
+async function peekEmbedDailyQuota(
   env: Env,
   userId: string,
   isPro: boolean
@@ -194,11 +197,11 @@ async function consumeEmbedDailyQuota(
   }
 
   const key = `embed_ai:${userId}:${utcDayKey()}`
-  // 配额是防刷守卫，不是核心操作：KV 读写故障（含同 key 写限流）时 fail-open
+  // 配额是防刷守卫，不是核心操作：KV 读故障时 fail-open
   try {
     const raw = await kv.get(key)
     const used = raw ? Number.parseInt(raw, 10) || 0 : 0
-    // 豁免账号跳过拒绝，仍递增计数
+    // 豁免账号跳过拒绝，仍允许后续 commit 计数
     if (!exempt && used >= resolvedDailyLimit) {
       return {
         allowed: false,
@@ -213,18 +216,17 @@ async function consumeEmbedDailyQuota(
       }
     }
 
-    const next = used + 1
-    await kv.put(key, String(next), { expirationTtl: 60 * 60 * 48 })
-    const remaining = Math.max(0, dailyLimit - next)
+    const remaining = Math.max(0, dailyLimit - used)
     return {
       allowed: true,
-      used: next,
+      used,
       limit: dailyLimit,
       remaining,
       tier,
-      dailyUsed: next,
+      dailyUsed: used,
       dailyLimit,
-      dailyRemaining: remaining
+      dailyRemaining: remaining,
+      key
     }
   } catch (err) {
     logError(err, { path: '/api/ai/embed', userId })
@@ -237,6 +239,52 @@ async function consumeEmbedDailyQuota(
       dailyUsed: 0,
       dailyLimit,
       dailyRemaining: dailyLimit,
+      degraded: true
+    }
+  }
+}
+
+/**
+ * 成功后扣 1 次。degraded peek 跳过写；put 故障 → fail-open（used=0 + degraded）。
+ */
+async function commitEmbedQuota(env: Env, peeked: EmbedQuotaOk): Promise<EmbedQuotaOk> {
+  if (peeked.degraded || !peeked.key) {
+    return peeked
+  }
+  const kv = env.AI_USAGE_KV
+  if (!kv) {
+    return peeked
+  }
+  const next = peeked.used + 1
+  try {
+    if (peeked.tier === 'anonymous') {
+      await kv.put(peeked.key, String(next))
+    } else {
+      await kv.put(peeked.key, String(next), { expirationTtl: 60 * 60 * 48 })
+    }
+    const remaining = Math.max(0, peeked.limit - next)
+    return {
+      allowed: true,
+      used: next,
+      limit: peeked.limit,
+      remaining,
+      tier: peeked.tier,
+      dailyUsed: next,
+      dailyLimit: peeked.dailyLimit,
+      dailyRemaining: remaining,
+      key: peeked.key
+    }
+  } catch (err) {
+    logError(err, { path: '/api/ai/embed', stage: 'commit_quota' })
+    return {
+      allowed: true,
+      used: 0,
+      limit: peeked.limit,
+      remaining: peeked.limit,
+      tier: peeked.tier,
+      dailyUsed: 0,
+      dailyLimit: peeked.dailyLimit,
+      dailyRemaining: peeked.dailyLimit,
       degraded: true
     }
   }
@@ -289,35 +337,7 @@ export async function handleEmbed(
     return errorJson({ error: 'ai_binding_missing' }, 503, origin)
   }
 
-  const quota = isAnonymous
-    ? await consumeEmbedAnonymousQuota(env, userId)
-    : await consumeEmbedDailyQuota(env, userId, await isActiveProUser(env, userId))
-  if (!quota.allowed) {
-    logInfo('embed_rejected', {
-      reason: quota.reason,
-      userId,
-      used: quota.used,
-      limit: quota.limit,
-      tier: quota.tier
-    })
-    const status = quota.reason === 'kv_not_configured' ? 503 : 429
-    return errorJson(
-      {
-        error: quota.reason,
-        tier: quota.tier,
-        used: quota.used,
-        limit: quota.limit,
-        remaining: quota.remaining,
-        dailyUsed: quota.dailyUsed,
-        dailyLimit: quota.dailyLimit,
-        dailyRemaining: quota.dailyRemaining,
-        quota: { used: quota.used, limit: quota.limit }
-      },
-      status,
-      origin
-    )
-  }
-
+  // 先解析并校验 body：无效请求永不碰配额
   let body: EmbedRequestBody = {}
   try {
     body = (await request.json()) as EmbedRequestBody
@@ -328,6 +348,35 @@ export async function handleEmbed(
   const texts = normalizeTexts(body.texts)
   if (!texts) {
     return errorJson({ error: 'invalid_texts' }, 400, origin)
+  }
+
+  const peek = isAnonymous
+    ? await peekEmbedAnonymousQuota(env, userId)
+    : await peekEmbedDailyQuota(env, userId, await isActiveProUser(env, userId))
+  if (!peek.allowed) {
+    logInfo('embed_rejected', {
+      reason: peek.reason,
+      userId,
+      used: peek.used,
+      limit: peek.limit,
+      tier: peek.tier
+    })
+    const status = peek.reason === 'kv_not_configured' ? 503 : 429
+    return errorJson(
+      {
+        error: peek.reason,
+        tier: peek.tier,
+        used: peek.used,
+        limit: peek.limit,
+        remaining: peek.remaining,
+        dailyUsed: peek.dailyUsed,
+        dailyLimit: peek.dailyLimit,
+        dailyRemaining: peek.dailyRemaining,
+        quota: { used: peek.used, limit: peek.limit }
+      },
+      status,
+      origin
+    )
   }
 
   /** 子因标记：外泄仅枚举 cause，不带上游原文。 */
@@ -366,6 +415,9 @@ export async function handleEmbed(
     if (dim === 0) {
       throw new EmbedFailMarkedError('empty_embedding')
     }
+
+    // 仅成功拿到合法 embeddings 后才扣配额（embed_failed 各路径不扣）
+    const quota = await commitEmbedQuota(env, peek)
 
     logInfo('embed_ok', {
       userId,

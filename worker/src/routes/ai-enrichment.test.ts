@@ -6,6 +6,7 @@ import type { Env } from '../types/env'
 function createKvMock(initial: Record<string, string> = {}) {
   const store = new Map(Object.entries(initial))
   return {
+    store,
     get: async (key: string) => store.get(key) ?? null,
     put: async (key: string, value: string) => {
       store.set(key, value)
@@ -25,7 +26,7 @@ function createBaseEnv(overrides: Record<string, unknown> = {}): Env {
     DEEPSEEK_API_KEY: 'deepseek-test-key',
     AI_HOSTED_MODEL: 'deepseek-flash',
     AI_HOSTED_MONTHLY_QUOTA: '999',
-    AI_USAGE_KV: createKvMock() as Env['AI_USAGE_KV'],
+    AI_USAGE_KV: createKvMock() as unknown as Env['AI_USAGE_KV'],
     ...overrides
   } as unknown as Env
 }
@@ -299,6 +300,135 @@ describe('POST /api/ai/enrichment/complete', () => {
       const firstFetchCall = fetchMock.mock.calls[0] as Parameters<typeof fetch> | undefined
       const requestBody = JSON.parse(String(firstFetchCall?.[1]?.body)) as { model?: string }
       expect(requestBody.model).toBe('deepseek-flash')
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test('parse 失败后用户与 IP used 均不变', async () => {
+    const day = new Date().toISOString().slice(0, 10)
+    const ip = '203.0.113.44'
+    const userKey = `enrich_ai:user:${TEST_USER_ID}:${day}`
+    const ipKey = `enrich_ai:${ip}:${day}`
+    const kv = createKvMock({ [userKey]: '3', [ipKey]: '5' })
+    const fetchMock = mock(
+      async () =>
+        new Response(
+          JSON.stringify({
+            choices: [{ message: { content: 'not json' }, finish_reason: 'stop' }],
+            usage: { total_tokens: 3 }
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } }
+        )
+    )
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    try {
+      const { handleEnrichmentComplete } = await import('../handlers/ai-enrichment')
+      const response = await handleEnrichmentComplete(
+        new Request('http://localhost/api/ai/enrichment/complete', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'cf-connecting-ip': ip
+          },
+          body: JSON.stringify({ title: 'parse fail billing' })
+        }),
+        createBaseEnv({ AI_USAGE_KV: kv as unknown as Env['AI_USAGE_KV'] }),
+        TEST_USER_ID
+      )
+      expect(response.status).toBe(502)
+      expect(kv.store.get(userKey)).toBe('3')
+      expect(kv.store.get(ipKey)).toBe('5')
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test('provider 失败后用户与 IP used 均不变', async () => {
+    const day = new Date().toISOString().slice(0, 10)
+    const ip = '203.0.113.45'
+    const userKey = `enrich_ai:user:${TEST_USER_ID}:${day}`
+    const ipKey = `enrich_ai:${ip}:${day}`
+    const kv = createKvMock({ [userKey]: '6', [ipKey]: '8' })
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = mock(async () => {
+      throw new Error('provider down')
+    }) as unknown as typeof fetch
+
+    try {
+      const { handleEnrichmentComplete } = await import('../handlers/ai-enrichment')
+      const response = await handleEnrichmentComplete(
+        new Request('http://localhost/api/ai/enrichment/complete', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'cf-connecting-ip': ip
+          },
+          body: JSON.stringify({ title: 'provider fail billing' })
+        }),
+        createBaseEnv({ AI_USAGE_KV: kv as unknown as Env['AI_USAGE_KV'] }),
+        TEST_USER_ID
+      )
+      expect(response.status).toBe(500)
+      expect(kv.store.get(userKey)).toBe('6')
+      expect(kv.store.get(ipKey)).toBe('8')
+    } finally {
+      globalThis.fetch = originalFetch
+    }
+  })
+
+  test('成功后用户与 IP used 各 +1', async () => {
+    const day = new Date().toISOString().slice(0, 10)
+    const ip = '203.0.113.46'
+    const userKey = `enrich_ai:user:${TEST_USER_ID}:${day}`
+    const ipKey = `enrich_ai:${ip}:${day}`
+    const kv = createKvMock({ [userKey]: '1', [ipKey]: '2' })
+    const fetchMock = mock(
+      async () =>
+        new Response(
+          JSON.stringify({
+            choices: [
+              {
+                message: {
+                  content: JSON.stringify({
+                    objectType: 'article',
+                    keywords: ['ok'],
+                    entities: [],
+                    summary: 'billing ok'
+                  })
+                },
+                finish_reason: 'stop'
+              }
+            ],
+            usage: { total_tokens: 10 }
+          }),
+          { status: 200, headers: { 'content-type': 'application/json' } }
+        )
+    )
+    const originalFetch = globalThis.fetch
+    globalThis.fetch = fetchMock as unknown as typeof fetch
+
+    try {
+      const { handleEnrichmentComplete } = await import('../handlers/ai-enrichment')
+      const response = await handleEnrichmentComplete(
+        new Request('http://localhost/api/ai/enrichment/complete', {
+          method: 'POST',
+          headers: {
+            'content-type': 'application/json',
+            'cf-connecting-ip': ip
+          },
+          body: JSON.stringify({ title: 'billing ok' })
+        }),
+        createBaseEnv({ AI_USAGE_KV: kv as unknown as Env['AI_USAGE_KV'] }),
+        TEST_USER_ID
+      )
+      expect(response.status).toBe(200)
+      const json = (await response.json()) as { quota: { used: number } }
+      expect(json.quota.used).toBe(2)
+      expect(kv.store.get(userKey)).toBe('2')
+      expect(kv.store.get(ipKey)).toBe('3')
     } finally {
       globalThis.fetch = originalFetch
     }

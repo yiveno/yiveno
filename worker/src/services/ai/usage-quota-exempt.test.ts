@@ -6,7 +6,7 @@ import { describe, expect, test } from 'bun:test'
 
 import { buildDailyUsageKey, buildMonthlyUsageKey } from '../../config/ai-hosted'
 import type { Env } from '../../types/env'
-import { consumeHostedQuota, getHostedQuotaSnapshot } from './usage-quota'
+import { commitHostedQuota, getHostedQuotaSnapshot, peekHostedQuota } from './usage-quota'
 
 function createKvMock(initial: Record<string, string> = {}) {
   const store = new Map(Object.entries(initial))
@@ -48,13 +48,14 @@ describe('配额豁免白名单', () => {
     expect(snap.remaining).toBe(Number.MAX_SAFE_INTEGER - 60)
     expect(snap.tier).toBe('free')
 
-    const ok = await consumeHostedQuota(env, userId, false)
-    expect(ok.allowed).toBe(true)
-    if (!ok.allowed) return
-    expect(ok.snapshot.used).toBe(61)
-    expect(ok.snapshot.dailyUsed).toBe(1)
-    expect(ok.snapshot.limit).toBe(Number.MAX_SAFE_INTEGER)
-    expect(ok.snapshot.dailyLimit).toBe(Number.MAX_SAFE_INTEGER)
+    const peek = await peekHostedQuota(env, userId, false)
+    expect(peek.allowed).toBe(true)
+    if (!peek.allowed) return
+    const ok = await commitHostedQuota(env, userId, peek.snapshot, false)
+    expect(ok.used).toBe(61)
+    expect(ok.dailyUsed).toBe(1)
+    expect(ok.limit).toBe(Number.MAX_SAFE_INTEGER)
+    expect(ok.dailyLimit).toBe(Number.MAX_SAFE_INTEGER)
     expect(kv.store.get(monthKey)).toBe('61')
   })
 
@@ -69,11 +70,12 @@ describe('配额豁免白名单', () => {
       AI_HOSTED_QUOTA_EXEMPT_USER_IDS: 'exempt-user'
     })
 
-    const ok = await consumeHostedQuota(env, userId, false)
-    expect(ok.allowed).toBe(true)
-    if (!ok.allowed) return
-    expect(ok.snapshot.used).toBe(6)
-    expect(ok.snapshot.dailyUsed).toBe(11)
+    const peek = await peekHostedQuota(env, userId, false)
+    expect(peek.allowed).toBe(true)
+    if (!peek.allowed) return
+    const ok = await commitHostedQuota(env, userId, peek.snapshot, false)
+    expect(ok.used).toBe(6)
+    expect(ok.dailyUsed).toBe(11)
     expect(kv.store.get(dayKey)).toBe('11')
   })
 
@@ -87,7 +89,7 @@ describe('配额豁免白名单', () => {
       AI_HOSTED_QUOTA_EXEMPT_USER_IDS: 'exempt-user'
     })
 
-    const denied = await consumeHostedQuota(env, userId, false)
+    const denied = await peekHostedQuota(env, userId, false)
     expect(denied.allowed).toBe(false)
     if (denied.allowed) return
     expect(denied.reason).toBe('quota_exceeded')
@@ -106,7 +108,7 @@ describe('配额豁免白名单', () => {
       AI_HOSTED_QUOTA_EXEMPT_USER_IDS: 'exempt-user'
     })
 
-    const denied = await consumeHostedQuota(env, userId, false)
+    const denied = await peekHostedQuota(env, userId, false)
     expect(denied.allowed).toBe(false)
     if (denied.allowed) return
     expect(denied.reason).toBe('daily_cap_exceeded')
@@ -119,7 +121,7 @@ describe('配额豁免白名单', () => {
       AI_HOSTED_QUOTA_EXEMPT_USER_IDS: 'exempt-user'
     })
 
-    const denied = await consumeHostedQuota(env, 'exempt-user', false)
+    const denied = await peekHostedQuota(env, 'exempt-user', false)
     expect(denied.allowed).toBe(false)
     if (denied.allowed) return
     expect(denied.reason).toBe('kv_not_configured')
