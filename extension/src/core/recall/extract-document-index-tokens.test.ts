@@ -112,4 +112,26 @@ describe('extract-document-index-tokens', () => {
       removed: ['a']
     })
   })
+
+  /**
+   * 摘录覆盖回归（本批新增；失败=发现，不在本批修产品）：
+   * CJK ngram 目前只扫 compact 前 120 字符；线索落在其后时仍应可被倒排命中。
+   */
+  it('CJK 线索位于 compact 文本 120 字符之后时仍可召回', () => {
+    const prefix = '甲'.repeat(120)
+    const lateMarker = '珍稀兰花孢子'
+    const item = createTextExcerptMemoryItem({
+      ownerId,
+      sourceLocalProfileId,
+      payload: {
+        selectedText: `${prefix}${lateMarker}`,
+        sourceUrl: 'https://example.com/late-cjk-orchid',
+        pageTitle: 'CJK late marker'
+      }
+    })
+    const docTokens = new Set(extractDocumentIndexTokens(item))
+    const queryTokens = pickPostingLookupTokens(lateMarker)
+    expect(queryTokens.length).toBeGreaterThan(0)
+    expect(queryTokens.some(token => docTokens.has(token))).toBe(true)
+  })
 })

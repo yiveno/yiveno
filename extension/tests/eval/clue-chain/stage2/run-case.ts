@@ -75,11 +75,20 @@ export function attributeNegativeCase(rankedIds: readonly string[]): {
   return { stage: 'ok', detail: '负例无命中' }
 }
 
+/** harness / sweep 门槛覆盖（产品默认勿改；仅评测传入）。 */
+export type Stage2EvalOverrides = {
+  minScore?: number
+  topPickMinScore?: number
+  semanticNeighborLimit?: number
+}
+
 /** 跑单案（确定性轨）。 */
 export async function runStage2Case(input: {
   task: Stage2Task
   corpus: readonly MemoryItem[]
   nowMs?: number
+  /** 门槛 sweep 覆盖；缺省走产品默认。 */
+  evalOverrides?: Stage2EvalOverrides
 }): Promise<Stage2CaseResult> {
   const nowMs = input.nowMs ?? CLUE_CHAIN_STAGE2_NOW_MS
   const started = Date.now()
@@ -99,7 +108,8 @@ export async function runStage2Case(input: {
       parsed,
       clueEmbeddingText: input.task.embeddingAnchor,
       queryVector,
-      trace: () => {}
+      trace: () => {},
+      ...(input.evalOverrides ? { evalOverrides: input.evalOverrides } : {})
     })
 
     const result = fused?.result ?? null

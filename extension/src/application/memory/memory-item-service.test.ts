@@ -486,4 +486,114 @@ describe('MemoryItemService listForKeywordRecall', () => {
     // 截断到 100K（OOM 安全阀）
     expect(result.items.length).toBeLessThanOrEqual(100000)
   })
+
+  /**
+   * 摘录覆盖回归（本批新增；失败=发现，不在本批修产品）：
+   * mergeExcerptsIntoCandidates 用 listByOwner(text_excerpt, limit:500)，
+   * 超过 500 条时旧摘录不应从 Recall 候选中消失。
+   *
+   * it.fails：断言目标行为；当前实现会截掉第 501+ 条 → 期望失败记为发现。
+   */
+  it.fails('摘录超过 500 条时，旧摘录仍可被召回', async () => {
+    const oldExcerpt = createTextExcerptMemoryItem({
+      ownerId: 'o',
+      sourceLocalProfileId: 'p',
+      payload: {
+        selectedText:
+          'Ancient orchid spore print colors under humid greenhouse lamps — unique marker phrase.',
+        sourceUrl: 'https://example.com/ancient-orchid-spore',
+        pageTitle: 'Orchid spore notes'
+      }
+    })
+    const newerExcerpts = Array.from({ length: 500 }, (_, index) =>
+      createTextExcerptMemoryItem({
+        ownerId: 'o',
+        sourceLocalProfileId: 'p',
+        payload: {
+          selectedText: `Newer filler excerpt body number ${index} about gardening tips.`,
+          sourceUrl: `https://example.com/filler-excerpt-${index}`,
+          pageTitle: `Filler ${index}`
+        }
+      })
+    )
+    // 倒排返回无关书签，且书签正文能过关键词探针 → 锁死 inverted 路径（不降级全表扫）
+    const unrelatedBookmark = createBookmarkMemoryItem({
+      ownerId: 'o',
+      sourceLocalProfileId: 'p',
+      payload: {
+        title: 'orchid greenhouse humid lamps',
+        url: 'https://example.com/unrelated-bookmark'
+      }
+    })
+
+    vi.mocked(keywordIndexRepository.lookupCandidateIds).mockResolvedValue({
+      ids: [unrelatedBookmark.id],
+      rebuilt: false
+    })
+    vi.mocked(memoryItemRepository.getManyByIds).mockResolvedValue([unrelatedBookmark])
+    vi.mocked(memoryItemRepository.listByOwner).mockImplementation(async options => {
+      if (options?.type === 'text_excerpt') {
+        const limit = options.limit ?? 100
+        // 模拟仓库 newest-first + limit：旧摘录落在第 501 位，limit=500 时被截掉
+        return newerExcerpts.slice(0, limit)
+      }
+      return [oldExcerpt, ...newerExcerpts, unrelatedBookmark]
+    })
+
+    const service = new MemoryItemService(memoryItemRepository)
+    const clue = 'ancient orchid spore print colors'
+    const result = await service.listForKeywordRecall({
+      rawClue: clue,
+      parsed: parseRecallClue(clue)
+    })
+
+    expect(result.items.map(item => item.id)).toContain(oldExcerpt.id)
+  })
+
+  /**
+   * 倒排存在无关命中时，目标摘录仍须进入候选（mergeExcerpts 护栏）。
+   */
+  it('倒排索引存在无关命中时，目标摘录仍可召回', async () => {
+    const targetExcerpt = createTextExcerptMemoryItem({
+      ownerId: 'o',
+      sourceLocalProfileId: 'p',
+      payload: {
+        selectedText:
+          'Dart frog bioactive vivarium substrate recipe with leaf litter and springtails.',
+        sourceUrl: 'https://example.com/dart-frog-vivarium',
+        pageTitle: 'Vivarium notes'
+      }
+    })
+    const noiseBookmark = createBookmarkMemoryItem({
+      ownerId: 'o',
+      sourceLocalProfileId: 'p',
+      payload: {
+        title: 'Unrelated news about city traffic',
+        url: 'https://example.com/traffic-noise'
+      }
+    })
+
+    vi.mocked(keywordIndexRepository.lookupCandidateIds).mockResolvedValue({
+      ids: [noiseBookmark.id],
+      rebuilt: false
+    })
+    vi.mocked(memoryItemRepository.getManyByIds).mockResolvedValue([noiseBookmark])
+    vi.mocked(memoryItemRepository.listByOwner).mockImplementation(async options => {
+      if (options?.type === 'text_excerpt') {
+        return [targetExcerpt]
+      }
+      return [noiseBookmark, targetExcerpt]
+    })
+
+    const service = new MemoryItemService(memoryItemRepository)
+    const clue = 'dart frog bioactive vivarium springtails'
+    const result = await service.listForKeywordRecall({
+      rawClue: clue,
+      parsed: parseRecallClue(clue)
+    })
+
+    // 期望仍走 inverted（merge 后探针命中摘录），且目标在候选内
+    expect(result.source).toBe('inverted')
+    expect(result.items.map(item => item.id)).toContain(targetExcerpt.id)
+  })
 })

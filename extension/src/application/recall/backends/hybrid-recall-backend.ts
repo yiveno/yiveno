@@ -823,6 +823,17 @@ export async function fuseHybridMatches(input: {
   conditions?: readonly ScoredCondition[]
   /** 当前轮次（相关度衰减）。 */
   conditionTurn?: number
+  /**
+   * harness / sweep 门槛覆盖（产品路径勿传；默认保持生产常量）。
+   * - minScore：关键词纳入候选最低分
+   * - topPickMinScore：outcome gate（top_pick vs need_a_clue）
+   * - semanticNeighborLimit：语义近邻 K（keyword 非空时）
+   */
+  evalOverrides?: {
+    minScore?: number
+    topPickMinScore?: number
+    semanticNeighborLimit?: number
+  }
 }): Promise<{
   result: RecallResult
   effectiveParsed: ParsedRecallClue
@@ -835,12 +846,14 @@ export async function fuseHybridMatches(input: {
   }
 
   const corroborationTerms = effectiveContentTermsForRecall(input.parsed)
+  const evalOverrides = input.evalOverrides
 
   // 先全量打分再折叠到 Hybrid 关键词池，避免重复书签占满 HYBRID_KEYWORD_POOL
   const keywordScored = collapseRecallMatches(
     filterKeywordMatchesBeforeCollapse(input.items, input.filterClue, {
       ...(input.noteMatches ? { noteMatches: input.noteMatches } : {}),
-      ...(input.linkStatusByItemId ? { linkStatusByItemId: input.linkStatusByItemId } : {})
+      ...(input.linkStatusByItemId ? { linkStatusByItemId: input.linkStatusByItemId } : {}),
+      ...(evalOverrides?.minScore === undefined ? {} : { minScore: evalOverrides.minScore })
     })
       .map(match => applyParsedClueScoreBoosts(match, input.parsed))
       .filter(match => !isGenericOnlyHitAgainstSpecificClue(input.filterClue, match.item)),
@@ -898,7 +911,7 @@ export async function fuseHybridMatches(input: {
   const semanticLimit =
     keywordScored.length === 0
       ? HYBRID_SEMANTIC_NEIGHBOR_LIMIT_EXPANDED
-      : HYBRID_SEMANTIC_NEIGHBOR_LIMIT
+      : (evalOverrides?.semanticNeighborLimit ?? HYBRID_SEMANTIC_NEIGHBOR_LIMIT)
   const semanticScored = rankIdsByCosineToQuery(queryVector, embeddedCandidates, {
     limit: semanticLimit
   }).flatMap(neighbor => {
@@ -1000,7 +1013,10 @@ export async function fuseHybridMatches(input: {
   })
   const result = buildRecallResult(input.displayClue, collapsed, {
     contentTerms: corroborationTerms,
-    ...(input.noteMatches ? { noteMatches: input.noteMatches } : {})
+    ...(input.noteMatches ? { noteMatches: input.noteMatches } : {}),
+    ...(evalOverrides?.topPickMinScore === undefined
+      ? {}
+      : { topPickMinScore: evalOverrides.topPickMinScore })
   })
   // 交付硬滤后空邻域 → 降级关键词（soft 回退后仍无词面佐证、或仅噪音 soft 池）
   if (result.outcome === 'no_match') {

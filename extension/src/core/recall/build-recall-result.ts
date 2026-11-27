@@ -129,11 +129,17 @@ export function buildRecallResult(
     topic?: TopicDescriptor
     /** 命题命中集（Phase 4）；约束邻域与 Omnibox 路径不传。 */
     noteMatches?: NoteMatchSet
+    /**
+     * Top Pick 分数门槛覆盖（默认 {@link RECALL_TOP_PICK_MIN_SCORE}）。
+     * 仅 harness / sweep 传入；产品路径勿传。
+     */
+    topPickMinScore?: number
   }
 ): RecallResult {
   const contentTerms = options?.contentTerms
   const topic = options?.topic
   const noteMatches = options?.noteMatches
+  const topPickMinScore = options?.topPickMinScore ?? RECALL_TOP_PICK_MIN_SCORE
   const groups =
     contentTerms && contentTerms.length > 0
       ? collapsedGroups.filter(match =>
@@ -161,7 +167,7 @@ export function buildRecallResult(
   }
 
   // 有词面命中但未达 Top Pick：Need A Clue（弱候选池，请用户再补线索）
-  if (best.score < RECALL_TOP_PICK_MIN_SCORE) {
+  if (best.score < topPickMinScore) {
     const pool = buildRankedRecallPool(groups, { withTopConflictFilter: false })
     return {
       outcome: 'need_a_clue',

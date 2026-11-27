@@ -1,0 +1,898 @@
+{
+  "schemaVersion": 1,
+  "kind": "clue-chain-stage2-sweep",
+  "head": "e3370e9ab48767b233028ff7a566f1f77f430336",
+  "startedAt": "2026-11-27T14:55:04.258Z",
+  "finishedAt": "2026-11-27T15:09:16.916Z",
+  "seed": 3252814338,
+  "nowMs": 1784980800000,
+  "track": {
+    "parse": "rules",
+    "embedding": "fake",
+    "llm": false
+  },
+  "grid": {
+    "minScores": [5, 10, 15],
+    "outcomeGates": [12, 18, 24],
+    "semanticKs": [12, 24, 48]
+  },
+  "productDefaults": {
+    "minScore": 10,
+    "topPickMinScore": 18,
+    "semanticNeighborLimit": 24
+  },
+  "defaultCell": {
+    "minScore": 10,
+    "topPickMinScore": 18,
+    "semanticNeighborLimit": 24,
+    "isDefault": true,
+    "vague": {
+      "n": 80,
+      "recallAt1": 0.0625,
+      "recallAt3": 0.175,
+      "recallAt5": 0.3,
+      "mrr": 0.17926486061596353,
+      "missRate": 0.3
+    },
+    "negative": {
+      "n": 24,
+      "falseHitRate": 0.5833333333333334
+    },
+    "positive": {
+      "recallAt1": 0.6375,
+      "recallAt3": 0.7166666666666667,
+      "recallAt5": 0.7583333333333333,
+      "mrr": 0.6952978828315839,
+      "missRate": 0.10416666666666667
+    },
+    "deltaVsDefault": {
+      "vagueRecallAt5": 0,
+      "vagueMissRate": 0,
+      "negativeFalseHitRate": 0
+    }
+  },
+  "cells": [
+    {
+      "minScore": 5,
+      "topPickMinScore": 12,
+      "semanticNeighborLimit": 12,
+      "isDefault": false,
+      "vague": {
+        "n": 80,
+        "recallAt1": 0.0625,
+        "recallAt3": 0.175,
+        "recallAt5": 0.3,
+        "mrr": 0.17926486061596353,
+        "missRate": 0.3
+      },
+      "negative": {
+        "n": 24,
+        "falseHitRate": 0.5833333333333334
+      },
+      "positive": {
+        "recallAt1": 0.6375,
+        "recallAt3": 0.7166666666666667,
+        "recallAt5": 0.7583333333333333,
+        "mrr": 0.6952978828315839,
+        "missRate": 0.10416666666666667
+      },
+      "deltaVsDefault": {
+        "vagueRecallAt5": 0,
+        "vagueMissRate": 0,
+        "negativeFalseHitRate": 0
+      }
+    },
+    {
+      "minScore": 5,
+      "topPickMinScore": 12,
+      "semanticNeighborLimit": 24,
+      "isDefault": false,
+      "vague": {
+        "n": 80,
+        "recallAt1": 0.0625,
+        "recallAt3": 0.175,
+        "recallAt5": 0.3,
+        "mrr": 0.17926486061596353,
+        "missRate": 0.3
+      },
+      "negative": {
+        "n": 24,
+        "falseHitRate": 0.5833333333333334
+      },
+      "positive": {
+        "recallAt1": 0.6375,
+        "recallAt3": 0.7166666666666667,
+        "recallAt5": 0.7583333333333333,
+        "mrr": 0.6952978828315839,
+        "missRate": 0.10416666666666667
+      },
+      "deltaVsDefault": {
+        "vagueRecallAt5": 0,
+        "vagueMissRate": 0,
+        "negativeFalseHitRate": 0
+      }
+    },
+    {
+      "minScore": 5,
+      "topPickMinScore": 12,
+      "semanticNeighborLimit": 48,
+      "isDefault": false,
+      "vague": {
+        "n": 80,
+        "recallAt1": 0.0625,
+        "recallAt3": 0.175,
+        "recallAt5": 0.3,
+        "mrr": 0.17926486061596353,
+        "missRate": 0.3
+      },
+      "negative": {
+        "n": 24,
+        "falseHitRate": 0.5833333333333334
+      },
+      "positive": {
+        "recallAt1": 0.6375,
+        "recallAt3": 0.7166666666666667,
+        "recallAt5": 0.7583333333333333,
+        "mrr": 0.6952978828315839,
+        "missRate": 0.10416666666666667
+      },
+      "deltaVsDefault": {
+        "vagueRecallAt5": 0,
+        "vagueMissRate": 0,
+        "negativeFalseHitRate": 0
+      }
+    },
+    {
+      "minScore": 5,
+      "topPickMinScore": 18,
+      "semanticNeighborLimit": 12,
+      "isDefault": false,
+      "vague": {
+        "n": 80,
+        "recallAt1": 0.0625,
+        "recallAt3": 0.175,
+        "recallAt5": 0.3,
+        "mrr": 0.17926486061596353,
+        "missRate": 0.3
+      },
+      "negative": {
+        "n": 24,
+        "falseHitRate": 0.5833333333333334
+      },
+      "positive": {
+        "recallAt1": 0.6375,
+        "recallAt3": 0.7166666666666667,
+        "recallAt5": 0.7583333333333333,
+        "mrr": 0.6952978828315839,
+        "missRate": 0.10416666666666667
+      },
+      "deltaVsDefault": {
+        "vagueRecallAt5": 0,
+        "vagueMissRate": 0,
+        "negativeFalseHitRate": 0
+      }
+    },
+    {
+      "minScore": 5,
+      "topPickMinScore": 18,
+      "semanticNeighborLimit": 24,
+      "isDefault": false,
+      "vague": {
+        "n": 80,
+        "recallAt1": 0.0625,
+        "recallAt3": 0.175,
+        "recallAt5": 0.3,
+        "mrr": 0.17926486061596353,
+        "missRate": 0.3
+      },
+      "negative": {
+        "n": 24,
+        "falseHitRate": 0.5833333333333334
+      },
+      "positive": {
+        "recallAt1": 0.6375,
+        "recallAt3": 0.7166666666666667,
+        "recallAt5": 0.7583333333333333,
+        "mrr": 0.6952978828315839,
+        "missRate": 0.10416666666666667
+      },
+      "deltaVsDefault": {
+        "vagueRecallAt5": 0,
+        "vagueMissRate": 0,
+        "negativeFalseHitRate": 0
+      }
+    },
+    {
+      "minScore": 5,
+      "topPickMinScore": 18,
+      "semanticNeighborLimit": 48,
+      "isDefault": false,
+      "vague": {
+        "n": 80,
+        "recallAt1": 0.0625,
+        "recallAt3": 0.175,
+        "recallAt5": 0.3,
+        "mrr": 0.17926486061596353,
+        "missRate": 0.3
+      },
+      "negative": {
+        "n": 24,
+        "falseHitRate": 0.5833333333333334
+      },
+      "positive": {
+        "recallAt1": 0.6375,
+        "recallAt3": 0.7166666666666667,
+        "recallAt5": 0.7583333333333333,
+        "mrr": 0.6952978828315839,
+        "missRate": 0.10416666666666667
+      },
+      "deltaVsDefault": {
+        "vagueRecallAt5": 0,
+        "vagueMissRate": 0,
+        "negativeFalseHitRate": 0
+      }
+    },
+    {
+      "minScore": 5,
+      "topPickMinScore": 24,
+      "semanticNeighborLimit": 12,
+      "isDefault": false,
+      "vague": {
+        "n": 80,
+        "recallAt1": 0.0625,
+        "recallAt3": 0.175,
+        "recallAt5": 0.3,
+        "mrr": 0.17926486061596353,
+        "missRate": 0.3
+      },
+      "negative": {
+        "n": 24,
+        "falseHitRate": 0.5833333333333334
+      },
+      "positive": {
+        "recallAt1": 0.6375,
+        "recallAt3": 0.7166666666666667,
+        "recallAt5": 0.7583333333333333,
+        "mrr": 0.6952978828315839,
+        "missRate": 0.10416666666666667
+      },
+      "deltaVsDefault": {
+        "vagueRecallAt5": 0,
+        "vagueMissRate": 0,
+        "negativeFalseHitRate": 0
+      }
+    },
+    {
+      "minScore": 5,
+      "topPickMinScore": 24,
+      "semanticNeighborLimit": 24,
+      "isDefault": false,
+      "vague": {
+        "n": 80,
+        "recallAt1": 0.0625,
+        "recallAt3": 0.175,
+        "recallAt5": 0.3,
+        "mrr": 0.17926486061596353,
+        "missRate": 0.3
+      },
+      "negative": {
+        "n": 24,
+        "falseHitRate": 0.5833333333333334
+      },
+      "positive": {
+        "recallAt1": 0.6375,
+        "recallAt3": 0.7166666666666667,
+        "recallAt5": 0.7583333333333333,
+        "mrr": 0.6952978828315839,
+        "missRate": 0.10416666666666667
+      },
+      "deltaVsDefault": {
+        "vagueRecallAt5": 0,
+        "vagueMissRate": 0,
+        "negativeFalseHitRate": 0
+      }
+    },
+    {
+      "minScore": 5,
+      "topPickMinScore": 24,
+      "semanticNeighborLimit": 48,
+      "isDefault": false,
+      "vague": {
+        "n": 80,
+        "recallAt1": 0.0625,
+        "recallAt3": 0.175,
+        "recallAt5": 0.3,
+        "mrr": 0.17926486061596353,
+        "missRate": 0.3
+      },
+      "negative": {
+        "n": 24,
+        "falseHitRate": 0.5833333333333334
+      },
+      "positive": {
+        "recallAt1": 0.6375,
+        "recallAt3": 0.7166666666666667,
+        "recallAt5": 0.7583333333333333,
+        "mrr": 0.6952978828315839,
+        "missRate": 0.10416666666666667
+      },
+      "deltaVsDefault": {
+        "vagueRecallAt5": 0,
+        "vagueMissRate": 0,
+        "negativeFalseHitRate": 0
+      }
+    },
+    {
+      "minScore": 10,
+      "topPickMinScore": 12,
+      "semanticNeighborLimit": 12,
+      "isDefault": false,
+      "vague": {
+        "n": 80,
+        "recallAt1": 0.0625,
+        "recallAt3": 0.175,
+        "recallAt5": 0.3,
+        "mrr": 0.17926486061596353,
+        "missRate": 0.3
+      },
+      "negative": {
+        "n": 24,
+        "falseHitRate": 0.5833333333333334
+      },
+      "positive": {
+        "recallAt1": 0.6375,
+        "recallAt3": 0.7166666666666667,
+        "recallAt5": 0.7583333333333333,
+        "mrr": 0.6952978828315839,
+        "missRate": 0.10416666666666667
+      },
+      "deltaVsDefault": {
+        "vagueRecallAt5": 0,
+        "vagueMissRate": 0,
+        "negativeFalseHitRate": 0
+      }
+    },
+    {
+      "minScore": 10,
+      "topPickMinScore": 12,
+      "semanticNeighborLimit": 24,
+      "isDefault": false,
+      "vague": {
+        "n": 80,
+        "recallAt1": 0.0625,
+        "recallAt3": 0.175,
+        "recallAt5": 0.3,
+        "mrr": 0.17926486061596353,
+        "missRate": 0.3
+      },
+      "negative": {
+        "n": 24,
+        "falseHitRate": 0.5833333333333334
+      },
+      "positive": {
+        "recallAt1": 0.6375,
+        "recallAt3": 0.7166666666666667,
+        "recallAt5": 0.7583333333333333,
+        "mrr": 0.6952978828315839,
+        "missRate": 0.10416666666666667
+      },
+      "deltaVsDefault": {
+        "vagueRecallAt5": 0,
+        "vagueMissRate": 0,
+        "negativeFalseHitRate": 0
+      }
+    },
+    {
+      "minScore": 10,
+      "topPickMinScore": 12,
+      "semanticNeighborLimit": 48,
+      "isDefault": false,
+      "vague": {
+        "n": 80,
+        "recallAt1": 0.0625,
+        "recallAt3": 0.175,
+        "recallAt5": 0.3,
+        "mrr": 0.17926486061596353,
+        "missRate": 0.3
+      },
+      "negative": {
+        "n": 24,
+        "falseHitRate": 0.5833333333333334
+      },
+      "positive": {
+        "recallAt1": 0.6375,
+        "recallAt3": 0.7166666666666667,
+        "recallAt5": 0.7583333333333333,
+        "mrr": 0.6952978828315839,
+        "missRate": 0.10416666666666667
+      },
+      "deltaVsDefault": {
+        "vagueRecallAt5": 0,
+        "vagueMissRate": 0,
+        "negativeFalseHitRate": 0
+      }
+    },
+    {
+      "minScore": 10,
+      "topPickMinScore": 18,
+      "semanticNeighborLimit": 12,
+      "isDefault": false,
+      "vague": {
+        "n": 80,
+        "recallAt1": 0.0625,
+        "recallAt3": 0.175,
+        "recallAt5": 0.3,
+        "mrr": 0.17926486061596353,
+        "missRate": 0.3
+      },
+      "negative": {
+        "n": 24,
+        "falseHitRate": 0.5833333333333334
+      },
+      "positive": {
+        "recallAt1": 0.6375,
+        "recallAt3": 0.7166666666666667,
+        "recallAt5": 0.7583333333333333,
+        "mrr": 0.6952978828315839,
+        "missRate": 0.10416666666666667
+      },
+      "deltaVsDefault": {
+        "vagueRecallAt5": 0,
+        "vagueMissRate": 0,
+        "negativeFalseHitRate": 0
+      }
+    },
+    {
+      "minScore": 10,
+      "topPickMinScore": 18,
+      "semanticNeighborLimit": 24,
+      "isDefault": true,
+      "vague": {
+        "n": 80,
+        "recallAt1": 0.0625,
+        "recallAt3": 0.175,
+        "recallAt5": 0.3,
+        "mrr": 0.17926486061596353,
+        "missRate": 0.3
+      },
+      "negative": {
+        "n": 24,
+        "falseHitRate": 0.5833333333333334
+      },
+      "positive": {
+        "recallAt1": 0.6375,
+        "recallAt3": 0.7166666666666667,
+        "recallAt5": 0.7583333333333333,
+        "mrr": 0.6952978828315839,
+        "missRate": 0.10416666666666667
+      },
+      "deltaVsDefault": {
+        "vagueRecallAt5": 0,
+        "vagueMissRate": 0,
+        "negativeFalseHitRate": 0
+      }
+    },
+    {
+      "minScore": 10,
+      "topPickMinScore": 18,
+      "semanticNeighborLimit": 48,
+      "isDefault": false,
+      "vague": {
+        "n": 80,
+        "recallAt1": 0.0625,
+        "recallAt3": 0.175,
+        "recallAt5": 0.3,
+        "mrr": 0.17926486061596353,
+        "missRate": 0.3
+      },
+      "negative": {
+        "n": 24,
+        "falseHitRate": 0.5833333333333334
+      },
+      "positive": {
+        "recallAt1": 0.6375,
+        "recallAt3": 0.7166666666666667,
+        "recallAt5": 0.7583333333333333,
+        "mrr": 0.6952978828315839,
+        "missRate": 0.10416666666666667
+      },
+      "deltaVsDefault": {
+        "vagueRecallAt5": 0,
+        "vagueMissRate": 0,
+        "negativeFalseHitRate": 0
+      }
+    },
+    {
+      "minScore": 10,
+      "topPickMinScore": 24,
+      "semanticNeighborLimit": 12,
+      "isDefault": false,
+      "vague": {
+        "n": 80,
+        "recallAt1": 0.0625,
+        "recallAt3": 0.175,
+        "recallAt5": 0.3,
+        "mrr": 0.17926486061596353,
+        "missRate": 0.3
+      },
+      "negative": {
+        "n": 24,
+        "falseHitRate": 0.5833333333333334
+      },
+      "positive": {
+        "recallAt1": 0.6375,
+        "recallAt3": 0.7166666666666667,
+        "recallAt5": 0.7583333333333333,
+        "mrr": 0.6952978828315839,
+        "missRate": 0.10416666666666667
+      },
+      "deltaVsDefault": {
+        "vagueRecallAt5": 0,
+        "vagueMissRate": 0,
+        "negativeFalseHitRate": 0
+      }
+    },
+    {
+      "minScore": 10,
+      "topPickMinScore": 24,
+      "semanticNeighborLimit": 24,
+      "isDefault": false,
+      "vague": {
+        "n": 80,
+        "recallAt1": 0.0625,
+        "recallAt3": 0.175,
+        "recallAt5": 0.3,
+        "mrr": 0.17926486061596353,
+        "missRate": 0.3
+      },
+      "negative": {
+        "n": 24,
+        "falseHitRate": 0.5833333333333334
+      },
+      "positive": {
+        "recallAt1": 0.6375,
+        "recallAt3": 0.7166666666666667,
+        "recallAt5": 0.7583333333333333,
+        "mrr": 0.6952978828315839,
+        "missRate": 0.10416666666666667
+      },
+      "deltaVsDefault": {
+        "vagueRecallAt5": 0,
+        "vagueMissRate": 0,
+        "negativeFalseHitRate": 0
+      }
+    },
+    {
+      "minScore": 10,
+      "topPickMinScore": 24,
+      "semanticNeighborLimit": 48,
+      "isDefault": false,
+      "vague": {
+        "n": 80,
+        "recallAt1": 0.0625,
+        "recallAt3": 0.175,
+        "recallAt5": 0.3,
+        "mrr": 0.17926486061596353,
+        "missRate": 0.3
+      },
+      "negative": {
+        "n": 24,
+        "falseHitRate": 0.5833333333333334
+      },
+      "positive": {
+        "recallAt1": 0.6375,
+        "recallAt3": 0.7166666666666667,
+        "recallAt5": 0.7583333333333333,
+        "mrr": 0.6952978828315839,
+        "missRate": 0.10416666666666667
+      },
+      "deltaVsDefault": {
+        "vagueRecallAt5": 0,
+        "vagueMissRate": 0,
+        "negativeFalseHitRate": 0
+      }
+    },
+    {
+      "minScore": 15,
+      "topPickMinScore": 12,
+      "semanticNeighborLimit": 12,
+      "isDefault": false,
+      "vague": {
+        "n": 80,
+        "recallAt1": 0.0625,
+        "recallAt3": 0.175,
+        "recallAt5": 0.3,
+        "mrr": 0.17926486061596353,
+        "missRate": 0.3
+      },
+      "negative": {
+        "n": 24,
+        "falseHitRate": 0.5833333333333334
+      },
+      "positive": {
+        "recallAt1": 0.6375,
+        "recallAt3": 0.7166666666666667,
+        "recallAt5": 0.7583333333333333,
+        "mrr": 0.6952978828315839,
+        "missRate": 0.10416666666666667
+      },
+      "deltaVsDefault": {
+        "vagueRecallAt5": 0,
+        "vagueMissRate": 0,
+        "negativeFalseHitRate": 0
+      }
+    },
+    {
+      "minScore": 15,
+      "topPickMinScore": 12,
+      "semanticNeighborLimit": 24,
+      "isDefault": false,
+      "vague": {
+        "n": 80,
+        "recallAt1": 0.0625,
+        "recallAt3": 0.175,
+        "recallAt5": 0.3,
+        "mrr": 0.17926486061596353,
+        "missRate": 0.3
+      },
+      "negative": {
+        "n": 24,
+        "falseHitRate": 0.5833333333333334
+      },
+      "positive": {
+        "recallAt1": 0.6375,
+        "recallAt3": 0.7166666666666667,
+        "recallAt5": 0.7583333333333333,
+        "mrr": 0.6952978828315839,
+        "missRate": 0.10416666666666667
+      },
+      "deltaVsDefault": {
+        "vagueRecallAt5": 0,
+        "vagueMissRate": 0,
+        "negativeFalseHitRate": 0
+      }
+    },
+    {
+      "minScore": 15,
+      "topPickMinScore": 12,
+      "semanticNeighborLimit": 48,
+      "isDefault": false,
+      "vague": {
+        "n": 80,
+        "recallAt1": 0.0625,
+        "recallAt3": 0.175,
+        "recallAt5": 0.3,
+        "mrr": 0.17926486061596353,
+        "missRate": 0.3
+      },
+      "negative": {
+        "n": 24,
+        "falseHitRate": 0.5833333333333334
+      },
+      "positive": {
+        "recallAt1": 0.6375,
+        "recallAt3": 0.7166666666666667,
+        "recallAt5": 0.7583333333333333,
+        "mrr": 0.6952978828315839,
+        "missRate": 0.10416666666666667
+      },
+      "deltaVsDefault": {
+        "vagueRecallAt5": 0,
+        "vagueMissRate": 0,
+        "negativeFalseHitRate": 0
+      }
+    },
+    {
+      "minScore": 15,
+      "topPickMinScore": 18,
+      "semanticNeighborLimit": 12,
+      "isDefault": false,
+      "vague": {
+        "n": 80,
+        "recallAt1": 0.0625,
+        "recallAt3": 0.175,
+        "recallAt5": 0.3,
+        "mrr": 0.17926486061596353,
+        "missRate": 0.3
+      },
+      "negative": {
+        "n": 24,
+        "falseHitRate": 0.5833333333333334
+      },
+      "positive": {
+        "recallAt1": 0.6375,
+        "recallAt3": 0.7166666666666667,
+        "recallAt5": 0.7583333333333333,
+        "mrr": 0.6952978828315839,
+        "missRate": 0.10416666666666667
+      },
+      "deltaVsDefault": {
+        "vagueRecallAt5": 0,
+        "vagueMissRate": 0,
+        "negativeFalseHitRate": 0
+      }
+    },
+    {
+      "minScore": 15,
+      "topPickMinScore": 18,
+      "semanticNeighborLimit": 24,
+      "isDefault": false,
+      "vague": {
+        "n": 80,
+        "recallAt1": 0.0625,
+        "recallAt3": 0.175,
+        "recallAt5": 0.3,
+        "mrr": 0.17926486061596353,
+        "missRate": 0.3
+      },
+      "negative": {
+        "n": 24,
+        "falseHitRate": 0.5833333333333334
+      },
+      "positive": {
+        "recallAt1": 0.6375,
+        "recallAt3": 0.7166666666666667,
+        "recallAt5": 0.7583333333333333,
+        "mrr": 0.6952978828315839,
+        "missRate": 0.10416666666666667
+      },
+      "deltaVsDefault": {
+        "vagueRecallAt5": 0,
+        "vagueMissRate": 0,
+        "negativeFalseHitRate": 0
+      }
+    },
+    {
+      "minScore": 15,
+      "topPickMinScore": 18,
+      "semanticNeighborLimit": 48,
+      "isDefault": false,
+      "vague": {
+        "n": 80,
+        "recallAt1": 0.0625,
+        "recallAt3": 0.175,
+        "recallAt5": 0.3,
+        "mrr": 0.17926486061596353,
+        "missRate": 0.3
+      },
+      "negative": {
+        "n": 24,
+        "falseHitRate": 0.5833333333333334
+      },
+      "positive": {
+        "recallAt1": 0.6375,
+        "recallAt3": 0.7166666666666667,
+        "recallAt5": 0.7583333333333333,
+        "mrr": 0.6952978828315839,
+        "missRate": 0.10416666666666667
+      },
+      "deltaVsDefault": {
+        "vagueRecallAt5": 0,
+        "vagueMissRate": 0,
+        "negativeFalseHitRate": 0
+      }
+    },
+    {
+      "minScore": 15,
+      "topPickMinScore": 24,
+      "semanticNeighborLimit": 12,
+      "isDefault": false,
+      "vague": {
+        "n": 80,
+        "recallAt1": 0.0625,
+        "recallAt3": 0.175,
+        "recallAt5": 0.3,
+        "mrr": 0.17926486061596353,
+        "missRate": 0.3
+      },
+      "negative": {
+        "n": 24,
+        "falseHitRate": 0.5833333333333334
+      },
+      "positive": {
+        "recallAt1": 0.6375,
+        "recallAt3": 0.7166666666666667,
+        "recallAt5": 0.7583333333333333,
+        "mrr": 0.6952978828315839,
+        "missRate": 0.10416666666666667
+      },
+      "deltaVsDefault": {
+        "vagueRecallAt5": 0,
+        "vagueMissRate": 0,
+        "negativeFalseHitRate": 0
+      }
+    },
+    {
+      "minScore": 15,
+      "topPickMinScore": 24,
+      "semanticNeighborLimit": 24,
+      "isDefault": false,
+      "vague": {
+        "n": 80,
+        "recallAt1": 0.0625,
+        "recallAt3": 0.175,
+        "recallAt5": 0.3,
+        "mrr": 0.17926486061596353,
+        "missRate": 0.3
+      },
+      "negative": {
+        "n": 24,
+        "falseHitRate": 0.5833333333333334
+      },
+      "positive": {
+        "recallAt1": 0.6375,
+        "recallAt3": 0.7166666666666667,
+        "recallAt5": 0.7583333333333333,
+        "mrr": 0.6952978828315839,
+        "missRate": 0.10416666666666667
+      },
+      "deltaVsDefault": {
+        "vagueRecallAt5": 0,
+        "vagueMissRate": 0,
+        "negativeFalseHitRate": 0
+      }
+    },
+    {
+      "minScore": 15,
+      "topPickMinScore": 24,
+      "semanticNeighborLimit": 48,
+      "isDefault": false,
+      "vague": {
+        "n": 80,
+        "recallAt1": 0.0625,
+        "recallAt3": 0.175,
+        "recallAt5": 0.3,
+        "mrr": 0.17926486061596353,
+        "missRate": 0.3
+      },
+      "negative": {
+        "n": 24,
+        "falseHitRate": 0.5833333333333334
+      },
+      "positive": {
+        "recallAt1": 0.6375,
+        "recallAt3": 0.7166666666666667,
+        "recallAt5": 0.7583333333333333,
+        "mrr": 0.6952978828315839,
+        "missRate": 0.10416666666666667
+      },
+      "deltaVsDefault": {
+        "vagueRecallAt5": 0,
+        "vagueMissRate": 0,
+        "negativeFalseHitRate": 0
+      }
+    }
+  ],
+  "recommended": {
+    "minScore": 10,
+    "topPickMinScore": 18,
+    "semanticNeighborLimit": 24,
+    "isDefault": true,
+    "vague": {
+      "n": 80,
+      "recallAt1": 0.0625,
+      "recallAt3": 0.175,
+      "recallAt5": 0.3,
+      "mrr": 0.17926486061596353,
+      "missRate": 0.3
+    },
+    "negative": {
+      "n": 24,
+      "falseHitRate": 0.5833333333333334
+    },
+    "positive": {
+      "recallAt1": 0.6375,
+      "recallAt3": 0.7166666666666667,
+      "recallAt5": 0.7583333333333333,
+      "mrr": 0.6952978828315839,
+      "missRate": 0.10416666666666667
+    },
+    "deltaVsDefault": {
+      "vagueRecallAt5": 0,
+      "vagueMissRate": 0,
+      "negativeFalseHitRate": 0
+    },
+    "rationale": "本网格 27 格 vague R@5 / negFH / 正例指标相对默认全零变化：拧 minScore(5–15)、outcome gate(12–24)、semantic K(12–48) 对 deterministic 残差无杠杆。建议保持默认（10/18/24）；vague/negative 残差需机制面（理解强度 / 佐证 / 负例抑制），勿只拧门槛。"
+  },
+  "note": "deterministic 轨 sweep；不冒充真实找回效果；不落地改产品默认。"
+}
