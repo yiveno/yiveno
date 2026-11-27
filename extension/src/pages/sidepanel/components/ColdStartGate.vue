@@ -200,6 +200,11 @@ const detailLine = computed(() => {
   min-width: 0;
 }
 
+/* 程序聚焦落点：保留 tabindex/-focus，不显示浏览器默认蓝框 */
+.cold-start-gate__panel:focus {
+  outline: none;
+}
+
 .cold-start-gate__eyebrow {
   margin: 0;
   font-size: var(--text-caption);
