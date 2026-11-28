@@ -193,7 +193,7 @@ describe('collapse-recall-duplicates', () => {
     expect(collapsed[0]?.duplicateGroup?.totalCount).toBe(2)
   })
 
-  it('同域名不同 path：折叠键不同，相对 Top 视为冲突', () => {
+  it('同域名不同 path：折叠键不同，相对 Top 不冲突（可同进 Also）', () => {
     const top = bookmarkMatch({ url: 'https://ai-bot.cn/', title: '首页', score: 50 })
     const sameDomainOtherPath = bookmarkMatch({
       url: 'https://ai-bot.cn/tools',
@@ -206,7 +206,7 @@ describe('collapse-recall-duplicates', () => {
       score: 30
     })
 
-    expect(recallMatchConflictsWithTopPick(top, sameDomainOtherPath)).toBe(true)
+    expect(recallMatchConflictsWithTopPick(top, sameDomainOtherPath)).toBe(false)
     expect(recallMatchConflictsWithTopPick(top, otherDomain)).toBe(false)
 
     const collapsed = collapseRecallMatches([top, sameDomainOtherPath, otherDomain], {
@@ -214,5 +214,14 @@ describe('collapse-recall-duplicates', () => {
     })
     expect(collapsed).toHaveLength(3)
     expect(collapsed[0]?.duplicateGroup).toBeUndefined()
+  })
+
+  it('同折叠键相对 Top 仍互斥', () => {
+    const top = bookmarkMatch({ url: 'https://ai-bot.cn/', title: '首页', score: 50 })
+    const sameKey = bookmarkMatch({ url: 'https://ai-bot.cn', title: '首页副本', score: 40 })
+    expect(serializeRecallDuplicateKey(getRecallDuplicateKey(top.item))).toBe(
+      serializeRecallDuplicateKey(getRecallDuplicateKey(sameKey.item))
+    )
+    expect(recallMatchConflictsWithTopPick(top, sameKey)).toBe(true)
   })
 })

@@ -47,19 +47,12 @@ export function serializeRecallDuplicateKey(key: RecallDuplicateKey): string {
 
 /**
  * Top 与 Also 是否冲突（互斥）。
- * - 同一折叠键（同规范化 URL / 同摘录正文）
- * - 双方均为书签且规范化域名相同（同站其它 path 不进 Also，也不并进 stacks N）
+ * 仅同一折叠键（同规范化 URL / 同摘录正文）互斥；同域名不同 path 可同进邻域。
  */
 export function recallMatchConflictsWithTopPick(top: RecallMatch, candidate: RecallMatch): boolean {
   const topKey = serializeRecallDuplicateKey(getRecallDuplicateKey(top.item))
   const candidateKey = serializeRecallDuplicateKey(getRecallDuplicateKey(candidate.item))
-  if (topKey === candidateKey) {
-    return true
-  }
-
-  const topDomain = getBookmarkDuplicateDomain(top.item)
-  const candidateDomain = getBookmarkDuplicateDomain(candidate.item)
-  return Boolean(topDomain && candidateDomain && topDomain === candidateDomain)
+  return topKey === candidateKey
 }
 
 function hasNote(match: RecallMatch): boolean {

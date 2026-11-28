@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest'
 
 import { createBookmarkMemoryItem } from '@/core/memory/create-memory-item'
 import {
+  RECALL_RESULT_POOL_LIMIT,
+  buildRankedRecallPool,
   buildRecallResult,
   filterKeywordMatchesBeforeCollapse,
   recallByKeyword
@@ -115,14 +117,10 @@ describe('build-recall-result Top/Also 互斥', () => {
       : null
     for (const also of result.alsoPossible) {
       expect(serializeRecallDuplicateKey(getRecallDuplicateKey(also.item))).not.toBe(topKey)
-      if (also.item.type === 'bookmark') {
-        expect(also.item.payload.domain).not.toBe('ai-bot.cn')
-        expect(also.item.payload.domain).not.toBe('www.ai-bot.cn')
-      }
     }
   })
 
-  it('同站其它 path 不并入 stacks N，也不进 Also', () => {
+  it('同站其它 path 不并入 stacks N，但可进 Also', () => {
     const items = [
       createBookmarkMemoryItem({
         ...baseContext,
@@ -149,13 +147,101 @@ describe('build-recall-result Top/Also 互斥', () => {
     const result = recallByKeyword(items, 'AI')
     expect(result.outcome).toBe('top_pick')
     expect(result.topPick?.duplicateGroup?.totalCount).toBe(2)
-    expect(result.alsoPossible).toHaveLength(2)
-    for (const also of result.alsoPossible) {
-      expect(also.item.type).toBe('bookmark')
-      if (also.item.type === 'bookmark') {
-        expect(also.item.payload.domain).not.toBe('ai-bot.cn')
-      }
-    }
+    expect(result.alsoPossible).toHaveLength(3)
+    const alsoTitles = result.alsoPossible.map(m =>
+      m.item.type === 'bookmark' ? m.item.payload.title : ''
+    )
+    expect(alsoTitles).toContain('AI工具集官网 深页')
+  })
+
+  it('同域名书签排在融合序第 2 位时进入 alsoPossible', () => {
+    const top = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: { title: '站首页', url: 'https://docs.example/' }
+    })
+    const sameDomainSecond = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: { title: '站深页', url: 'https://docs.example/guide' }
+    })
+    const other = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: { title: '外站', url: 'https://other.example/a' }
+    })
+    const matches: RecallMatch[] = [
+      { item: top, score: 40, matchedFields: ['title'] },
+      { item: sameDomainSecond, score: 35, matchedFields: ['title'] },
+      { item: other, score: 30, matchedFields: ['title'] }
+    ]
+    const result = buildRecallResult('站', matches)
+    expect(result.outcome).toBe('top_pick')
+    expect(result.topPick?.item.id).toBe(top.id)
+    expect(result.alsoPossible.map(m => m.item.id)).toEqual([sameDomainSecond.id, other.id])
+  })
+
+  it('同折叠键候选经 buildRankedRecallPool 仍被互斥', () => {
+    const a = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: { title: '同 URL A', url: 'https://same.example/path' }
+    })
+    const b = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: { title: '同 URL B', url: 'https://same.example/path' }
+    })
+    const c = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: { title: '其它', url: 'https://else.example/x' }
+    })
+    expect(serializeRecallDuplicateKey(getRecallDuplicateKey(a))).toBe(
+      serializeRecallDuplicateKey(getRecallDuplicateKey(b))
+    )
+    const pool = buildRankedRecallPool(
+      [
+        { item: a, score: 40, matchedFields: ['title'] },
+        { item: b, score: 35, matchedFields: ['title'] },
+        { item: c, score: 30, matchedFields: ['title'] }
+      ],
+      { withTopConflictFilter: true }
+    )
+    expect(pool.map(m => m.item.id)).toEqual([a.id, c.id])
+  })
+
+  it('need_a_clue 路径 withTopConflictFilter=false：同键候选仍按序截取进池', () => {
+    const a = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: { title: '弱同键 A', url: 'https://weak-same.example/p' }
+    })
+    const b = createBookmarkMemoryItem({
+      ...baseContext,
+      payload: { title: '弱同键 B', url: 'https://weak-same.example/p' }
+    })
+    const matches: RecallMatch[] = [
+      { item: a, score: RECALL_TOP_PICK_MIN_SCORE - 2, matchedFields: ['title'] },
+      { item: b, score: RECALL_TOP_PICK_MIN_SCORE - 3, matchedFields: ['title'] }
+    ]
+    const result = buildRecallResult('弱同键', matches)
+    expect(result.outcome).toBe('need_a_clue')
+    expect(result.topPick).toBeNull()
+    // need_a_clue 不做同键互斥，按序保留（折叠前若已去重则另论；此处直接传两组）
+    expect(result.alsoPossible.map(m => m.item.id)).toEqual([a.id, b.id])
+
+    const poolNoFilter = buildRankedRecallPool(matches, { withTopConflictFilter: false })
+    expect(poolNoFilter.map(m => m.item.id)).toEqual([a.id, b.id])
+  })
+
+  it(`池上限仍为 RECALL_RESULT_POOL_LIMIT=${RECALL_RESULT_POOL_LIMIT}，超限截断`, () => {
+    const matches: RecallMatch[] = Array.from({ length: RECALL_RESULT_POOL_LIMIT + 10 }, (_, i) => {
+      const item = createBookmarkMemoryItem({
+        ...baseContext,
+        payload: { title: `截断${i}`, url: `https://cap-${i}.example/${i}` }
+      })
+      return { item, score: 40, matchedFields: ['title'] }
+    })
+    const withFilter = buildRankedRecallPool(matches, { withTopConflictFilter: true })
+    const withoutFilter = buildRankedRecallPool(matches, { withTopConflictFilter: false })
+    expect(withFilter).toHaveLength(RECALL_RESULT_POOL_LIMIT)
+    expect(withoutFilter).toHaveLength(RECALL_RESULT_POOL_LIMIT)
+    const result = buildRecallResult('截断', matches)
+    expect(result.totalRankedCount).toBe(RECALL_RESULT_POOL_LIMIT)
   })
 
   it('大量同 URL 重复书签不得在折叠前挤掉其它互异组（js→JavaScript）', () => {

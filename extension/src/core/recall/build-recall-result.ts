@@ -87,7 +87,7 @@ function emptyRecallResult(clue: string, topic?: TopicDescriptor): RecallResult 
 
 /**
  * 从已折叠组构建排序池（≤ {@link RECALL_RESULT_POOL_LIMIT}）。
- * - withTopConflictFilter：相对头名做同站/同键互斥（top_pick 路径）
+ * - withTopConflictFilter：相对头名做同键互斥（top_pick 路径）
  * - 否则按序截取（need_a_clue 弱候选）
  */
 export function buildRankedRecallPool(
