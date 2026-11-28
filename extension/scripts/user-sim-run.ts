@@ -39,6 +39,30 @@ function resolveGitHead(): string {
   }
 }
 
+function computeNearNeighbor(
+  cases: Stage2CaseResult[],
+  itemTopics: Record<string, string>,
+  itemAspects: Record<string, string>
+): { rankFailures: number; sameTopicTop1: number; sameAspectTop1: number; sameTopicRate: number } {
+  let rankFailures = 0
+  let sameTopicTop1 = 0
+  let sameAspectTop1 = 0
+  for (const c of cases) {
+    if (c.tier === 'negative' || c.stage !== 'rank' || !c.targetId || c.rankedIds.length === 0)
+      continue
+    rankFailures++
+    const top1 = c.rankedIds[0]!
+    if (itemTopics[top1] && itemTopics[top1] === itemTopics[c.targetId]) sameTopicTop1++
+    if (itemAspects[top1] && itemAspects[top1] === itemAspects[c.targetId]) sameAspectTop1++
+  }
+  return {
+    rankFailures,
+    sameTopicTop1,
+    sameAspectTop1,
+    sameTopicRate: rankFailures > 0 ? sameTopicTop1 / rankFailures : 0
+  }
+}
+
 function stampFromDate(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${date.getUTCFullYear()}-${pad(date.getUTCMonth() + 1)}-${pad(date.getUTCDate())}_${pad(date.getUTCHours())}-${pad(date.getUTCMinutes())}-${pad(date.getUTCSeconds())}`
@@ -74,9 +98,14 @@ export async function runUserSimCli(): Promise<void> {
       cases.push(await runStage2Case({ task, corpus: data.memoryItems, nowMs: NOW_MS }))
     }
     const summary = computeStage2Summary(cases)
-    perPersona[persona.id] = { counts: data.meta.counts, summary, cases }
+    const nearNeighbor = computeNearNeighbor(
+      cases,
+      data.groundTruth.itemTopics,
+      data.groundTruth.itemAspects
+    )
+    perPersona[persona.id] = { counts: data.meta.counts, summary, nearNeighbor, cases }
     console.log(
-      `user-sim · ${persona.id} · saves=${data.meta.counts.saves} · R@1=${summary.positive.recallAt1.toFixed(3)} R@5=${summary.positive.recallAt5.toFixed(3)} MRR=${summary.positive.mrr.toFixed(3)} negFH=${summary.negativeFalseHitRate.toFixed(3)} stages=${JSON.stringify(summary.stageCounts)}`
+      `user-sim · ${persona.id} · saves=${data.meta.counts.saves} · R@1=${summary.positive.recallAt1.toFixed(3)} R@5=${summary.positive.recallAt5.toFixed(3)} MRR=${summary.positive.mrr.toFixed(3)} negFH=${summary.negativeFalseHitRate.toFixed(3)} nnTopic=${nearNeighbor.sameTopicRate.toFixed(3)} stages=${JSON.stringify(summary.stageCounts)}`
     )
   }
 
@@ -95,7 +124,15 @@ export async function runUserSimCli(): Promise<void> {
         cases.push(await runStage2Case({ task, corpus: data.memoryItems, nowMs: NOW_MS }))
       }
       const summary = computeStage2Summary(cases)
-      ;(scaleCurve[persona.id] ??= {})[String(days)] = { counts: data.meta.counts, summary }
+      ;(scaleCurve[persona.id] ??= {})[String(days)] = {
+        counts: data.meta.counts,
+        summary,
+        nearNeighbor: computeNearNeighbor(
+          cases,
+          data.groundTruth.itemTopics,
+          data.groundTruth.itemAspects
+        )
+      }
       console.log(
         `user-sim-scale · ${persona.id} · days=${days} · saves=${data.meta.counts.saves} · R@1=${summary.positive.recallAt1.toFixed(3)} R@5=${summary.positive.recallAt5.toFixed(3)} MRR=${summary.positive.mrr.toFixed(3)} negFH=${summary.negativeFalseHitRate.toFixed(3)}`
       )

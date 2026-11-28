@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "kind": "user-sim-recall",
-  "head": "54a4a4bf88bea1866c74bdb04d60211a362e695b",
-  "startedAt": "2026-11-28T06:35:12.911Z",
-  "finishedAt": "2026-11-28T06:40:40.305Z",
+  "head": "c1a8ab77ac4a34221ab8a2de28843fcf0cb80d81",
+  "startedAt": "2026-11-28T06:46:16.573Z",
+  "finishedAt": "2026-11-28T06:51:46.627Z",
   "seed": 42,
   "endIso": "2026-11-28",
   "track": {
@@ -168,6 +168,12 @@
           "error": 0
         }
       },
+      "nearNeighbor": {
+        "rankFailures": 35,
+        "sameTopicTop1": 33,
+        "sameAspectTop1": 24,
+        "sameTopicRate": 0.9428571428571428
+      },
       "cases": [
         {
           "taskId": "indie-dev-researcher:q-001",
@@ -195,7 +201,7 @@
           "contentTerms": ["streaming", "ux"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 12,
+          "durationMs": 15,
           "error": null
         },
         {
@@ -227,7 +233,7 @@
           "contentTerms": ["sleep", "regularity"],
           "stage": "rank",
           "detail": "目标在邻域第 8（非 Top1）",
-          "durationMs": 4,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -251,7 +257,7 @@
           "contentTerms": ["community", "building"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 3,
+          "durationMs": 4,
           "error": null
         },
         {
@@ -274,7 +280,7 @@
           "contentTerms": ["freemium", "limits"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 5,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -298,7 +304,7 @@
           "contentTerms": ["reranking", "latency"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 3,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -368,7 +374,7 @@
           "contentTerms": ["wasm", "bundle", "size"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 80,
+          "durationMs": 82,
           "error": null
         },
         {
@@ -391,7 +397,7 @@
           "contentTerms": ["trial", "conversion"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 2,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -452,7 +458,7 @@
           "contentTerms": ["eval", "harnesses"],
           "stage": "rank",
           "detail": "目标在邻域第 7（非 Top1）",
-          "durationMs": 5,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -505,7 +511,7 @@
           "contentTerms": ["streaming", "ux"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 5,
+          "durationMs": 6,
           "error": null
         },
         {
@@ -631,7 +637,7 @@
           "contentTerms": ["structured", "outputs"],
           "stage": "rank",
           "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 4,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -777,7 +783,7 @@
           "contentTerms": ["covering", "prompt", "caching", "in", "llm", "engineering"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 219,
+          "durationMs": 220,
           "error": null
         },
         {
@@ -917,7 +923,7 @@
           "contentTerms": ["covering", "prompt", "caching", "in", "llm", "engineering"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 222,
+          "durationMs": 221,
           "error": null
         },
         {
@@ -987,7 +993,7 @@
           "contentTerms": ["covering", "eval", "harnesses", "in", "llm", "engineering"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 130,
+          "durationMs": 133,
           "error": null
         },
         {
@@ -1057,7 +1063,7 @@
           "contentTerms": ["covering", "sleep", "regularity", "in", "health", "and", "habits"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 256,
+          "durationMs": 254,
           "error": null
         },
         {
@@ -1127,7 +1133,7 @@
           "contentTerms": ["covering", "annual", "discounts", "in", "saas", "pricing"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 225,
+          "durationMs": 221,
           "error": null
         },
         {
@@ -1205,7 +1211,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 259,
+          "durationMs": 261,
           "error": null
         },
         {
@@ -1345,7 +1351,7 @@
           "contentTerms": ["covering", "chunking", "in", "human", "memory", "and", "cognition"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 275,
+          "durationMs": 277,
           "error": null
         },
         {
@@ -1415,7 +1421,7 @@
           "contentTerms": ["covering", "memory", "safety", "in", "rust", "and", "wasm"],
           "stage": "rank",
           "detail": "目标在邻域第 6（非 Top1）",
-          "durationMs": 277,
+          "durationMs": 274,
           "error": null
         },
         {
@@ -1493,7 +1499,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 210,
+          "durationMs": 191,
           "error": null
         },
         {
@@ -1563,7 +1569,7 @@
           "contentTerms": ["covering", "walking", "meetings", "in", "health", "and", "habits"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 354,
+          "durationMs": 370,
           "error": null
         },
         {
@@ -1633,7 +1639,7 @@
           "contentTerms": ["covering", "waitlists", "in", "indie", "marketing"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 128,
+          "durationMs": 127,
           "error": null
         },
         {
@@ -1781,7 +1787,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 311,
+          "durationMs": 314,
           "error": null
         },
         {
@@ -1851,7 +1857,7 @@
           "contentTerms": ["covering", "sleep", "regularity", "in", "health", "and", "habits"],
           "stage": "rank",
           "detail": "目标在邻域第 9（非 Top1）",
-          "durationMs": 266,
+          "durationMs": 267,
           "error": null
         },
         {
@@ -1895,7 +1901,7 @@
           "contentTerms": ["during", "evening", "reading", "time"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 47,
+          "durationMs": 45,
           "error": null
         },
         {
@@ -1945,7 +1951,7 @@
           "contentTerms": ["when", "building", "test", "harness"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 39,
+          "durationMs": 40,
           "error": null
         },
         {
@@ -2015,7 +2021,7 @@
           "contentTerms": ["back", "when", "sketching", "storage", "layer", "for", "prototype"],
           "stage": "rank",
           "detail": "目标在邻域第 7（非 Top1）",
-          "durationMs": 149,
+          "durationMs": 152,
           "error": null
         },
         {
@@ -2052,7 +2058,7 @@
           "contentTerms": ["when", "polishing", "onboarding", "for", "launch"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 51,
+          "durationMs": 53,
           "error": null
         },
         {
@@ -2104,7 +2110,7 @@
           "contentTerms": ["when", "reworking", "pricing"],
           "stage": "rank",
           "detail": "目标在邻域第 27（非 Top1）",
-          "durationMs": 15,
+          "durationMs": 16,
           "error": null
         },
         {
@@ -2156,7 +2162,7 @@
           "contentTerms": ["when", "reworking", "pricing"],
           "stage": "rank",
           "detail": "目标在邻域第 6（非 Top1）",
-          "durationMs": 16,
+          "durationMs": 14,
           "error": null
         },
         {
@@ -2226,7 +2232,7 @@
           "contentTerms": ["back", "when", "sketching", "storage", "layer", "for", "prototype"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 146,
+          "durationMs": 152,
           "error": null
         },
         {
@@ -2296,7 +2302,7 @@
           "contentTerms": ["when", "wiring", "up", "first", "version", "of", "side", "project"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 239,
+          "durationMs": 252,
           "error": null
         },
         {
@@ -2321,7 +2327,7 @@
           "contentTerms": ["during", "late-night", "session", "debugging", "prototype"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 13,
+          "durationMs": 14,
           "error": null
         },
         {
@@ -2349,7 +2355,7 @@
           "contentTerms": ["during", "week", "fixing", "review", "feedback"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 67,
+          "durationMs": 72,
           "error": null
         },
         {
@@ -2390,7 +2396,7 @@
           "contentTerms": ["during", "evening", "reading", "time"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 57,
+          "durationMs": 46,
           "error": null
         },
         {
@@ -2456,7 +2462,7 @@
           "contentTerms": ["during", "week", "chasing", "flaky", "eval", "results"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 85,
+          "durationMs": 83,
           "error": null
         },
         {
@@ -2526,7 +2532,7 @@
           "contentTerms": ["when", "wiring", "up", "first", "version", "of", "side", "project"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 245,
+          "durationMs": 247,
           "error": null
         },
         {
@@ -2596,7 +2602,7 @@
           "contentTerms": ["back", "when", "sketching", "storage", "layer", "for", "prototype"],
           "stage": "rank",
           "detail": "目标在邻域第 22（非 Top1）",
-          "durationMs": 153,
+          "durationMs": 154,
           "error": null
         },
         {
@@ -2666,7 +2672,7 @@
           "contentTerms": ["back", "when", "sketching", "storage", "layer", "for", "prototype"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 149,
+          "durationMs": 153,
           "error": null
         },
         {
@@ -2736,7 +2742,7 @@
           "contentTerms": ["back", "when", "sketching", "storage", "layer", "for", "prototype"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 154,
+          "durationMs": 156,
           "error": null
         },
         {
@@ -2806,7 +2812,7 @@
           "contentTerms": ["on", "health", "and", "habits", "from", "5", "weeks", "ago"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 229,
+          "durationMs": 228,
           "error": null
         },
         {
@@ -2876,7 +2882,7 @@
           "contentTerms": ["on", "agent", "memory", "systems", "from", "11", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 275,
+          "durationMs": 280,
           "error": null
         },
         {
@@ -2946,7 +2952,7 @@
           "contentTerms": ["on", "llm", "engineering", "from", "8", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 127,
+          "durationMs": 128,
           "error": null
         },
         {
@@ -3016,7 +3022,7 @@
           "contentTerms": ["on", "product", "design", "from", "8", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 216,
+          "durationMs": 218,
           "error": null
         },
         {
@@ -3086,7 +3092,7 @@
           "contentTerms": ["on", "llm", "engineering", "from", "8", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 126,
+          "durationMs": 127,
           "error": null
         },
         {
@@ -3165,7 +3171,7 @@
           ],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 171,
+          "durationMs": 160,
           "error": null
         },
         {
@@ -3235,7 +3241,7 @@
           "contentTerms": ["on", "llm", "engineering", "from", "7", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 132,
+          "durationMs": 127,
           "error": null
         },
         {
@@ -3315,7 +3321,7 @@
           ],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 238,
+          "durationMs": 233,
           "error": null
         },
         {
@@ -3385,7 +3391,7 @@
           "contentTerms": ["on", "product", "design", "from", "7", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 223,
+          "durationMs": 218,
           "error": null
         },
         {
@@ -3455,7 +3461,7 @@
           "contentTerms": ["on", "product", "design", "from", "10", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 240,
+          "durationMs": 232,
           "error": null
         },
         {
@@ -3525,7 +3531,7 @@
           "contentTerms": ["thing", "rust", "and", "wasm"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 46,
+          "durationMs": 47,
           "error": null
         },
         {
@@ -3564,7 +3570,7 @@
           "contentTerms": ["thing", "saas", "pricing"],
           "stage": "rank",
           "detail": "目标在邻域第 18（非 Top1）",
-          "durationMs": 9,
+          "durationMs": 8,
           "error": null
         },
         {
@@ -3677,7 +3683,7 @@
           "contentTerms": ["thing", "health", "and", "habits"],
           "stage": "rank",
           "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 72,
+          "durationMs": 70,
           "error": null
         },
         {
@@ -3918,7 +3924,7 @@
           "contentTerms": ["thing", "saas", "pricing"],
           "stage": "rank",
           "detail": "目标在邻域第 14（非 Top1）",
-          "durationMs": 8,
+          "durationMs": 7,
           "error": null
         },
         {
@@ -3988,7 +3994,7 @@
           "contentTerms": ["thing", "human", "memory", "and", "cognition"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 83,
+          "durationMs": 82,
           "error": null
         },
         {
@@ -4003,7 +4009,7 @@
           "contentTerms": ["thing", "beekeeping", "basics"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 4,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -4033,7 +4039,7 @@
           "contentTerms": ["thing", "pottery", "glazing"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 2,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -4048,7 +4054,7 @@
           "contentTerms": ["thing", "car", "repair", "manuals"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 6,
+          "durationMs": 4,
           "error": null
         },
         {
@@ -4063,7 +4069,7 @@
           "contentTerms": ["thing", "home", "brewing", "recipes"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 3,
+          "durationMs": 4,
           "error": null
         },
         {
@@ -4078,7 +4084,7 @@
           "contentTerms": ["thing", "mycology", "field", "guides"],
           "stage": "false_hit",
           "detail": "负例误命中 Top1=7269a442-7369-55d5-a069-a11c7169a2af（邻域 1）",
-          "durationMs": 32,
+          "durationMs": 31,
           "error": null
         },
         {
@@ -4093,7 +4099,7 @@
           "contentTerms": ["thing", "orchid", "care"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 3,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -4108,7 +4114,7 @@
           "contentTerms": ["thing", "origami", "cranes"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 4,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -4138,7 +4144,7 @@
           "contentTerms": ["thing", "sailing", "knots"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 3,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -4284,6 +4290,12 @@
           "error": 0
         }
       },
+      "nearNeighbor": {
+        "rankFailures": 25,
+        "sameTopicTop1": 24,
+        "sameAspectTop1": 18,
+        "sameTopicRate": 0.96
+      },
       "cases": [
         {
           "taskId": "academic-researcher:q-001",
@@ -4307,7 +4319,7 @@
           "contentTerms": ["research", "ethics"],
           "stage": "rank",
           "detail": "目标在邻域第 5（非 Top1）",
-          "durationMs": 2,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -4427,7 +4439,7 @@
           "contentTerms": ["peer", "review"],
           "stage": "rank",
           "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 4,
+          "durationMs": 5,
           "error": null
         },
         {
@@ -4485,7 +4497,7 @@
           "contentTerms": ["citation", "management"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 2,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -4520,7 +4532,7 @@
           "contentTerms": ["peer", "review"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 6,
+          "durationMs": 4,
           "error": null
         },
         {
@@ -4545,7 +4557,7 @@
           "contentTerms": ["research", "ethics"],
           "stage": "rank",
           "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 3,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -4576,7 +4588,7 @@
           "contentTerms": ["bayesian", "inference"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 3,
+          "durationMs": 4,
           "error": null
         },
         {
@@ -4611,7 +4623,7 @@
           "contentTerms": ["peer", "review"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 5,
+          "durationMs": 4,
           "error": null
         },
         {
@@ -4682,7 +4694,7 @@
           "contentTerms": ["systematic", "reviews"],
           "stage": "rank",
           "detail": "目标在邻域第 5（非 Top1）",
-          "durationMs": 2,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -4718,7 +4730,7 @@
           "contentTerms": ["systematic", "reviews"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 3,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -4744,7 +4756,7 @@
           "contentTerms": ["regression", "diagnostics"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 1,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -4770,7 +4782,7 @@
           "contentTerms": ["regression", "diagnostics"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 3,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -4848,7 +4860,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 301,
+          "durationMs": 298,
           "error": null
         },
         {
@@ -4918,7 +4930,7 @@
           "contentTerms": ["covering", "reordering", "latency", "in", "information", "retrieval"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 148,
+          "durationMs": 146,
           "error": null
         },
         {
@@ -4988,7 +5000,7 @@
           "contentTerms": ["covering", "eval", "harnesses", "in", "llm", "engineering"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 137,
+          "durationMs": 139,
           "error": null
         },
         {
@@ -5058,7 +5070,7 @@
           "contentTerms": ["covering", "bayesian", "inference", "in", "statistics", "and"],
           "stage": "rank",
           "detail": "目标在邻域第 5（非 Top1）",
-          "durationMs": 181,
+          "durationMs": 189,
           "error": null
         },
         {
@@ -5128,7 +5140,7 @@
           "contentTerms": ["covering", "streaming", "ux", "in", "llm", "engineering"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 115,
+          "durationMs": 118,
           "error": null
         },
         {
@@ -5206,7 +5218,7 @@
           ],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 285,
+          "durationMs": 283,
           "error": null
         },
         {
@@ -5276,7 +5288,7 @@
           "contentTerms": ["covering", "meta-analysis", "in", "statistics", "and", "inference"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 103,
+          "durationMs": 104,
           "error": null
         },
         {
@@ -5424,7 +5436,7 @@
           ],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 296,
+          "durationMs": 297,
           "error": null
         },
         {
@@ -5494,7 +5506,7 @@
           "contentTerms": ["covering", "bayesian", "inference", "in", "statistics", "and"],
           "stage": "rank",
           "detail": "目标在邻域第 7（非 Top1）",
-          "durationMs": 178,
+          "durationMs": 180,
           "error": null
         },
         {
@@ -5572,7 +5584,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 5（非 Top1）",
-          "durationMs": 145,
+          "durationMs": 146,
           "error": null
         },
         {
@@ -5642,7 +5654,7 @@
           "contentTerms": ["covering", "prospective", "memory", "in", "human", "and", "cognition"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 199,
+          "durationMs": 198,
           "error": null
         },
         {
@@ -5720,7 +5732,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 299,
+          "durationMs": 284,
           "error": null
         },
         {
@@ -5860,7 +5872,7 @@
           "contentTerms": ["covering", "chunking", "in", "human", "memory", "and", "cognition"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 278,
+          "durationMs": 284,
           "error": null
         },
         {
@@ -5939,7 +5951,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 273,
+          "durationMs": 280,
           "error": null
         },
         {
@@ -6009,7 +6021,7 @@
           "contentTerms": ["back", "when", "inclusion", "criteria", "kept", "shifting"],
           "stage": "rank",
           "detail": "目标在邻域第 10（非 Top1）",
-          "durationMs": 140,
+          "durationMs": 146,
           "error": null
         },
         {
@@ -6034,7 +6046,7 @@
           "contentTerms": ["during", "grant", "writing", "sprint"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 11,
+          "durationMs": 12,
           "error": null
         },
         {
@@ -6119,7 +6131,7 @@
           "contentTerms": ["when", "screening", "papers", "for", "review"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 82,
+          "durationMs": 85,
           "error": null
         },
         {
@@ -6177,7 +6189,7 @@
           "contentTerms": ["when", "tightening", "work", "section"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 32,
+          "durationMs": 33,
           "error": null
         },
         {
@@ -6247,7 +6259,7 @@
           "contentTerms": ["back", "when", "inclusion", "criteria", "kept", "shifting"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 143,
+          "durationMs": 144,
           "error": null
         },
         {
@@ -6272,7 +6284,7 @@
           "contentTerms": ["during", "grant", "writing", "sprint"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 13,
+          "durationMs": 12,
           "error": null
         },
         {
@@ -6303,7 +6315,7 @@
           "contentTerms": ["during", "week", "redoing", "search", "strategy"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 54,
+          "durationMs": 56,
           "error": null
         },
         {
@@ -6334,7 +6346,7 @@
           "contentTerms": ["during", "week", "redoing", "search", "strategy"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 57,
+          "durationMs": 55,
           "error": null
         },
         {
@@ -6349,7 +6361,7 @@
           "contentTerms": ["while", "preparing", "methods", "lectures"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 5,
+          "durationMs": 4,
           "error": null
         },
         {
@@ -6419,7 +6431,7 @@
           "contentTerms": ["back", "when", "inclusion", "criteria", "kept", "shifting"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 139,
+          "durationMs": 155,
           "error": null
         },
         {
@@ -6452,7 +6464,7 @@
           "contentTerms": ["when", "grading", "midterm", "problem", "sets"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 216,
+          "durationMs": 222,
           "error": null
         },
         {
@@ -6477,7 +6489,7 @@
           "contentTerms": ["during", "grant", "writing", "sprint"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 11,
+          "durationMs": 13,
           "error": null
         },
         {
@@ -6539,7 +6551,7 @@
           "contentTerms": ["during", "week", "redoing", "search", "strategy"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 54,
+          "durationMs": 57,
           "error": null
         },
         {
@@ -6609,7 +6621,7 @@
           "contentTerms": ["back", "when", "inclusion", "criteria", "kept", "shifting"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 138,
+          "durationMs": 141,
           "error": null
         },
         {
@@ -6689,7 +6701,7 @@
           ],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 237,
+          "durationMs": 249,
           "error": null
         },
         {
@@ -6829,7 +6841,7 @@
           "contentTerms": ["on", "statistics", "and", "inference", "from", "10", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 140,
+          "durationMs": 143,
           "error": null
         },
         {
@@ -6908,7 +6920,7 @@
           ],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 199,
+          "durationMs": 203,
           "error": null
         },
         {
@@ -7067,7 +7079,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 30（非 Top1）",
-          "durationMs": 243,
+          "durationMs": 220,
           "error": null
         },
         {
@@ -7147,7 +7159,7 @@
           ],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 225,
+          "durationMs": 222,
           "error": null
         },
         {
@@ -7217,7 +7229,7 @@
           "contentTerms": ["on", "llm", "engineering", "from", "4", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 25（非 Top1）",
-          "durationMs": 136,
+          "durationMs": 135,
           "error": null
         },
         {
@@ -7287,7 +7299,7 @@
           "contentTerms": ["on", "statistics", "and", "inference", "from", "7", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 8（非 Top1）",
-          "durationMs": 133,
+          "durationMs": 127,
           "error": null
         },
         {
@@ -7357,7 +7369,7 @@
           "contentTerms": ["on", "llm", "engineering", "from", "10", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 155,
+          "durationMs": 149,
           "error": null
         },
         {
@@ -7427,7 +7439,7 @@
           "contentTerms": ["thing", "human", "memory", "and", "cognition"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 74,
+          "durationMs": 72,
           "error": null
         },
         {
@@ -7497,7 +7509,7 @@
           "contentTerms": ["thing", "statistics", "and", "inference"],
           "stage": "rank",
           "detail": "目标在邻域第 25（非 Top1）",
-          "durationMs": 28,
+          "durationMs": 27,
           "error": null
         },
         {
@@ -7706,7 +7718,7 @@
           "contentTerms": ["thing", "statistics", "and", "inference"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 28,
+          "durationMs": 27,
           "error": null
         },
         {
@@ -7899,7 +7911,7 @@
           "contentTerms": ["thing", "statistics", "and", "inference"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 29,
+          "durationMs": 28,
           "error": null
         },
         {
@@ -7942,7 +7954,7 @@
           "contentTerms": ["thing", "llm", "engineering"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 15,
+          "durationMs": 14,
           "error": null
         },
         {
@@ -7957,7 +7969,7 @@
           "contentTerms": ["thing", "orchid", "care"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 2,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -7972,7 +7984,7 @@
           "contentTerms": ["thing", "home", "brewing", "recipes"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 3,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -7987,7 +7999,7 @@
           "contentTerms": ["thing", "origami", "cranes"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 3,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -8062,7 +8074,7 @@
           "contentTerms": ["thing", "pottery", "glazing"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 3,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -8077,7 +8089,7 @@
           "contentTerms": ["thing", "mycology", "field", "guides"],
           "stage": "false_hit",
           "detail": "负例误命中 Top1=30d2fed1-2fd2-5d3e-aed2-fbab2dd2fa18（邻域 1）",
-          "durationMs": 36,
+          "durationMs": 34,
           "error": null
         },
         {
@@ -8092,7 +8104,7 @@
           "contentTerms": ["thing", "calligraphy", "strokes"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 3,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -8107,7 +8119,7 @@
           "contentTerms": ["thing", "astronomy", "telescopes"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 2,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -8122,7 +8134,7 @@
           "contentTerms": ["thing", "crypto", "trading", "strategies"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 4,
+          "durationMs": 3,
           "error": null
         }
       ]
@@ -8247,6 +8259,12 @@
           "error": 0
         }
       },
+      "nearNeighbor": {
+        "rankFailures": 35,
+        "sameTopicTop1": 34,
+        "sameAspectTop1": 23,
+        "sameTopicRate": 0.9714285714285714
+      },
       "cases": [
         {
           "taskId": "product-manager:q-001",
@@ -8271,7 +8289,7 @@
           "contentTerms": ["scope", "cuts"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 2,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -8454,7 +8472,7 @@
           "contentTerms": ["survey", "bias"],
           "stage": "rank",
           "detail": "目标在邻域第 5（非 Top1）",
-          "durationMs": 2,
+          "durationMs": 1,
           "error": null
         },
         {
@@ -8481,7 +8499,7 @@
           "contentTerms": ["empty", "states"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 2,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -8622,7 +8640,7 @@
           "contentTerms": ["journey", "maps"],
           "stage": "rank",
           "detail": "目标在邻域第 8（非 Top1）",
-          "durationMs": 6,
+          "durationMs": 5,
           "error": null
         },
         {
@@ -8743,7 +8761,7 @@
           "contentTerms": ["dark", "patterns"],
           "stage": "rank",
           "detail": "目标在邻域第 6（非 Top1）",
-          "durationMs": 2,
+          "durationMs": 1,
           "error": null
         },
         {
@@ -8831,7 +8849,7 @@
           "contentTerms": ["experiment", "design"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 2,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -8901,7 +8919,7 @@
           "contentTerms": ["covering", "launch", "posts", "in", "indie", "marketing"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 139,
+          "durationMs": 137,
           "error": null
         },
         {
@@ -8971,7 +8989,7 @@
           "contentTerms": ["covering", "survey", "bias", "in", "user", "research"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 167,
+          "durationMs": 164,
           "error": null
         },
         {
@@ -9041,7 +9059,7 @@
           "contentTerms": ["covering", "journey", "maps", "in", "user", "research"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 177,
+          "durationMs": 173,
           "error": null
         },
         {
@@ -9111,7 +9129,7 @@
           "contentTerms": ["covering", "funnel", "analysis", "in", "product", "metrics"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 247,
+          "durationMs": 244,
           "error": null
         },
         {
@@ -9181,7 +9199,7 @@
           "contentTerms": ["covering", "interview", "scripts", "in", "user", "research"],
           "stage": "rank",
           "detail": "目标在邻域第 13（非 Top1）",
-          "durationMs": 150,
+          "durationMs": 152,
           "error": null
         },
         {
@@ -9251,7 +9269,7 @@
           "contentTerms": ["covering", "north-star", "metrics", "in", "product"],
           "stage": "rank",
           "detail": "目标在邻域第 9（非 Top1）",
-          "durationMs": 152,
+          "durationMs": 149,
           "error": null
         },
         {
@@ -9321,7 +9339,7 @@
           "contentTerms": ["covering", "retention", "cohorts", "in", "product", "metrics"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 199,
+          "durationMs": 193,
           "error": null
         },
         {
@@ -9461,7 +9479,7 @@
           "contentTerms": ["covering", "experiment", "design", "in", "product", "metrics"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 185,
+          "durationMs": 183,
           "error": null
         },
         {
@@ -9531,7 +9549,7 @@
           "contentTerms": ["covering", "launch", "posts", "in", "indie", "marketing"],
           "stage": "rank",
           "detail": "目标在邻域第 6（非 Top1）",
-          "durationMs": 136,
+          "durationMs": 135,
           "error": null
         },
         {
@@ -9601,7 +9619,7 @@
           "contentTerms": ["covering", "survey", "bias", "in", "user", "research"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 162,
+          "durationMs": 165,
           "error": null
         },
         {
@@ -9671,7 +9689,7 @@
           "contentTerms": ["covering", "experiment", "design", "in", "product", "metrics"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 181,
+          "durationMs": 185,
           "error": null
         },
         {
@@ -9881,7 +9899,7 @@
           "contentTerms": ["covering", "funnel", "analysis", "in", "product", "metrics"],
           "stage": "rank",
           "detail": "目标在邻域第 9（非 Top1）",
-          "durationMs": 239,
+          "durationMs": 242,
           "error": null
         },
         {
@@ -9951,7 +9969,7 @@
           "contentTerms": ["covering", "funnel", "analysis", "in", "product", "metrics"],
           "stage": "rank",
           "detail": "目标在邻域第 7（非 Top1）",
-          "durationMs": 239,
+          "durationMs": 240,
           "error": null
         },
         {
@@ -10015,7 +10033,7 @@
           "contentTerms": ["when", "pricing", "debate", "took", "over", "roadmap", "review"],
           "stage": "rank",
           "detail": "目标在邻域第 34（非 Top1）",
-          "durationMs": 80,
+          "durationMs": 81,
           "error": null
         },
         {
@@ -10085,7 +10103,7 @@
           "contentTerms": ["when", "running", "interview", "round"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 61,
+          "durationMs": 60,
           "error": null
         },
         {
@@ -10155,7 +10173,7 @@
           "contentTerms": ["back", "when", "survey", "results", "surprised", "us"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 103,
+          "durationMs": 105,
           "error": null
         },
         {
@@ -10225,7 +10243,7 @@
           "contentTerms": ["when", "running", "interview", "round"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 59,
+          "durationMs": 64,
           "error": null
         },
         {
@@ -10275,7 +10293,7 @@
           "contentTerms": ["during", "week", "we", "mapped", "journey", "end", "to"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 106,
+          "durationMs": 126,
           "error": null
         },
         {
@@ -10345,7 +10363,7 @@
           "contentTerms": [],
           "stage": "rank",
           "detail": "目标在邻域第 32（非 Top1）",
-          "durationMs": 80,
+          "durationMs": 83,
           "error": null
         },
         {
@@ -10465,7 +10483,7 @@
           "contentTerms": ["during", "week", "we", "mapped", "journey", "end", "to"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 110,
+          "durationMs": 109,
           "error": null
         },
         {
@@ -10535,7 +10553,7 @@
           "contentTerms": ["when", "running", "interview", "round"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 61,
+          "durationMs": 63,
           "error": null
         },
         {
@@ -10585,7 +10603,7 @@
           "contentTerms": ["during", "week", "we", "mapped", "journey", "end", "to"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 111,
+          "durationMs": 112,
           "error": null
         },
         {
@@ -10655,7 +10673,7 @@
           "contentTerms": ["back", "when", "survey", "results", "surprised", "us"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 105,
+          "durationMs": 111,
           "error": null
         },
         {
@@ -10696,7 +10714,7 @@
           "contentTerms": ["when", "rebuilding", "dashboard", "for", "leadership"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 26,
+          "durationMs": 21,
           "error": null
         },
         {
@@ -10766,7 +10784,7 @@
           "contentTerms": ["back", "when", "survey", "results", "surprised", "us"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 110,
+          "durationMs": 108,
           "error": null
         },
         {
@@ -10906,7 +10924,7 @@
           "contentTerms": ["back", "when", "survey", "results", "surprised", "us"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 104,
+          "durationMs": 107,
           "error": null
         },
         {
@@ -10976,7 +10994,7 @@
           "contentTerms": ["back", "when", "survey", "results", "surprised", "us"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 105,
+          "durationMs": 106,
           "error": null
         },
         {
@@ -11116,7 +11134,7 @@
           "contentTerms": ["on", "user", "research", "from", "4", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 5（非 Top1）",
-          "durationMs": 144,
+          "durationMs": 169,
           "error": null
         },
         {
@@ -11186,7 +11204,7 @@
           "contentTerms": ["on", "product", "metrics", "from", "11", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 171,
+          "durationMs": 176,
           "error": null
         },
         {
@@ -11256,7 +11274,7 @@
           "contentTerms": ["on", "user", "research", "from", "10", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 18（非 Top1）",
-          "durationMs": 155,
+          "durationMs": 156,
           "error": null
         },
         {
@@ -11326,7 +11344,7 @@
           "contentTerms": ["on", "indie", "marketing", "from", "9", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 106,
+          "durationMs": 110,
           "error": null
         },
         {
@@ -11396,7 +11414,7 @@
           "contentTerms": ["on", "user", "research", "from", "4", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 16（非 Top1）",
-          "durationMs": 148,
+          "durationMs": 146,
           "error": null
         },
         {
@@ -11466,7 +11484,7 @@
           "contentTerms": ["on", "product", "metrics", "from", "11", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 174,
+          "durationMs": 178,
           "error": null
         },
         {
@@ -11536,7 +11554,7 @@
           "contentTerms": ["on", "user", "research", "from", "10", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 161,
+          "durationMs": 156,
           "error": null
         },
         {
@@ -11606,7 +11624,7 @@
           "contentTerms": ["on", "product", "metrics", "from", "10", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 168,
+          "durationMs": 172,
           "error": null
         },
         {
@@ -11676,7 +11694,7 @@
           "contentTerms": ["on", "product", "design", "from", "12", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 161,
+          "durationMs": 165,
           "error": null
         },
         {
@@ -11784,7 +11802,7 @@
           "contentTerms": ["thing", "product", "metrics"],
           "stage": "rank",
           "detail": "目标在邻域第 29（非 Top1）",
-          "durationMs": 35,
+          "durationMs": 36,
           "error": null
         },
         {
@@ -11822,7 +11840,7 @@
           "contentTerms": ["thing", "indie", "marketing"],
           "stage": "rank",
           "detail": "目标在邻域第 14（非 Top1）",
-          "durationMs": 13,
+          "durationMs": 14,
           "error": null
         },
         {
@@ -11860,7 +11878,7 @@
           "contentTerms": ["thing", "indie", "marketing"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 13,
+          "durationMs": 12,
           "error": null
         },
         {
@@ -12062,7 +12080,7 @@
           "contentTerms": ["thing", "user", "research"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 20,
+          "durationMs": 21,
           "error": null
         },
         {
@@ -12283,7 +12301,7 @@
           "contentTerms": ["waitlists", "used", "to", "have"],
           "stage": "false_hit",
           "detail": "负例误命中 Top1=f7d798ea-f8d7-5a7d-a5d7-95c4f6d79757（邻域 23）",
-          "durationMs": 25,
+          "durationMs": 26,
           "error": null
         },
         {
@@ -12298,7 +12316,7 @@
           "contentTerms": ["thing", "car", "repair", "manuals"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 5,
+          "durationMs": 4,
           "error": null
         },
         {
@@ -12313,7 +12331,7 @@
           "contentTerms": ["thing", "home", "brewing", "recipes"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 2,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -12328,7 +12346,7 @@
           "contentTerms": ["thing", "astronomy", "telescopes"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 2,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -12403,7 +12421,7 @@
           "contentTerms": ["thing", "mycology", "field", "guides"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 24,
+          "durationMs": 23,
           "error": null
         },
         {
@@ -12448,7 +12466,7 @@
           "contentTerms": ["thing", "fencing", "footwork"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 3,
+          "durationMs": 2,
           "error": null
         }
       ]
@@ -12564,6 +12582,12 @@
           "error": 0
         }
       },
+      "nearNeighbor": {
+        "rankFailures": 39,
+        "sameTopicTop1": 39,
+        "sameAspectTop1": 28,
+        "sameTopicRate": 1
+      },
       "cases": [
         {
           "taskId": "creator:q-001",
@@ -12666,7 +12690,7 @@
           "contentTerms": ["drafting", "habits"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 4,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -12738,7 +12762,7 @@
           "contentTerms": ["drafting", "habits"],
           "stage": "rank",
           "detail": "目标在邻域第 11（非 Top1）",
-          "durationMs": 3,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -12776,7 +12800,7 @@
           "contentTerms": ["seo", "long", "tail"],
           "stage": "rank",
           "detail": "目标在邻域第 5（非 Top1）",
-          "durationMs": 5,
+          "durationMs": 7,
           "error": null
         },
         {
@@ -12825,7 +12849,7 @@
           "contentTerms": ["visual", "identity"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 9,
+          "durationMs": 8,
           "error": null
         },
         {
@@ -12995,7 +13019,7 @@
           "contentTerms": ["community", "building"],
           "stage": "rank",
           "detail": "目标在邻域第 5（非 Top1）",
-          "durationMs": 2,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -13029,7 +13053,7 @@
           "contentTerms": ["reference", "managers"],
           "stage": "rank",
           "detail": "目标在邻域第 12（非 Top1）",
-          "durationMs": 3,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -13126,7 +13150,7 @@
           "contentTerms": ["drafting", "habits"],
           "stage": "rank",
           "detail": "目标在邻域第 8（非 Top1）",
-          "durationMs": 2,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -13196,7 +13220,7 @@
           "contentTerms": ["covering", "landing", "pages", "in", "indie", "marketing"],
           "stage": "rank",
           "detail": "目标在邻域第 5（非 Top1）",
-          "durationMs": 200,
+          "durationMs": 204,
           "error": null
         },
         {
@@ -13266,7 +13290,7 @@
           "contentTerms": ["covering", "waitlists", "in", "indie", "marketing"],
           "stage": "rank",
           "detail": "目标在邻域第 11（非 Top1）",
-          "durationMs": 134,
+          "durationMs": 110,
           "error": null
         },
         {
@@ -13336,7 +13360,7 @@
           "contentTerms": ["covering", "scripting", "in", "production"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 79,
+          "durationMs": 75,
           "error": null
         },
         {
@@ -13406,7 +13430,7 @@
           "contentTerms": ["covering", "launch", "posts", "in", "indie", "marketing"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 195,
+          "durationMs": 188,
           "error": null
         },
         {
@@ -13485,7 +13509,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 8（非 Top1）",
-          "durationMs": 331,
+          "durationMs": 325,
           "error": null
         },
         {
@@ -13555,7 +13579,7 @@
           "contentTerms": ["covering", "editing", "rhythm", "in", "production"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 168,
+          "durationMs": 164,
           "error": null
         },
         {
@@ -13625,7 +13649,7 @@
           "contentTerms": ["covering", "drafting", "habits", "in", "writing", "and", "notes"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 274,
+          "durationMs": 271,
           "error": null
         },
         {
@@ -13695,7 +13719,7 @@
           "contentTerms": ["covering", "editing", "passes", "in", "writing", "and", "notes"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 272,
+          "durationMs": 260,
           "error": null
         },
         {
@@ -13835,7 +13859,7 @@
           "contentTerms": ["covering", "plain", "language", "in", "writing", "and", "notes"],
           "stage": "rank",
           "detail": "目标在邻域第 5（非 Top1）",
-          "durationMs": 260,
+          "durationMs": 255,
           "error": null
         },
         {
@@ -13905,7 +13929,7 @@
           "contentTerms": ["covering", "drafting", "habits", "in", "writing", "and", "notes"],
           "stage": "rank",
           "detail": "目标在邻域第 13（非 Top1）",
-          "durationMs": 277,
+          "durationMs": 271,
           "error": null
         },
         {
@@ -13975,7 +13999,7 @@
           "contentTerms": ["covering", "visual", "hierarchy", "in", "product", "design"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 226,
+          "durationMs": 225,
           "error": null
         },
         {
@@ -14054,7 +14078,7 @@
           ],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 278,
+          "durationMs": 282,
           "error": null
         },
         {
@@ -14124,7 +14148,7 @@
           "contentTerms": ["covering", "thumbnails", "in", "production"],
           "stage": "rank",
           "detail": "目标在邻域第 10（非 Top1）",
-          "durationMs": 74,
+          "durationMs": 75,
           "error": null
         },
         {
@@ -14194,7 +14218,7 @@
           "contentTerms": ["covering", "plain", "language", "in", "writing", "and", "notes"],
           "stage": "rank",
           "detail": "目标在邻域第 7（非 Top1）",
-          "durationMs": 254,
+          "durationMs": 255,
           "error": null
         },
         {
@@ -14264,7 +14288,7 @@
           "contentTerms": ["covering", "reference", "managers", "in", "writing", "and", "notes"],
           "stage": "rank",
           "detail": "目标在邻域第 5（非 Top1）",
-          "durationMs": 226,
+          "durationMs": 228,
           "error": null
         },
         {
@@ -14287,7 +14311,7 @@
           "contentTerms": ["during", "week", "rewrote", "every", "case", "study"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 13,
+          "durationMs": 14,
           "error": null
         },
         {
@@ -14310,7 +14334,7 @@
           "contentTerms": ["during", "week", "rewrote", "every", "case", "study"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 11,
+          "durationMs": 15,
           "error": null
         },
         {
@@ -14354,7 +14378,7 @@
           "contentTerms": ["when", "shooting", "third", "episode"],
           "stage": "rank",
           "detail": "目标在邻域第 8（非 Top1）",
-          "durationMs": 56,
+          "durationMs": 63,
           "error": null
         },
         {
@@ -14411,7 +14435,7 @@
           "contentTerms": ["when", "rebuilding", "portfolio"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 5,
+          "durationMs": 6,
           "error": null
         },
         {
@@ -14459,7 +14483,7 @@
           "contentTerms": ["during", "edit", "marathon", "before", "deadline"],
           "stage": "rank",
           "detail": "目标在邻域第 14（非 Top1）",
-          "durationMs": 47,
+          "durationMs": 49,
           "error": null
         },
         {
@@ -14507,7 +14531,7 @@
           "contentTerms": ["during", "edit", "marathon", "before", "deadline"],
           "stage": "rank",
           "detail": "目标在邻域第 9（非 Top1）",
-          "durationMs": 46,
+          "durationMs": 48,
           "error": null
         },
         {
@@ -14600,7 +14624,7 @@
           "contentTerms": ["back", "when", "lighting", "setup", "kept", "failing"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 101,
+          "durationMs": 104,
           "error": null
         },
         {
@@ -14644,7 +14668,7 @@
           "contentTerms": ["when", "shooting", "third", "episode"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 55,
+          "durationMs": 56,
           "error": null
         },
         {
@@ -14688,7 +14712,7 @@
           "contentTerms": ["when", "shooting", "third", "episode"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 55,
+          "durationMs": 56,
           "error": null
         },
         {
@@ -14726,7 +14750,7 @@
           "contentTerms": ["while", "choosing", "new", "type", "pairing"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 77,
+          "durationMs": 78,
           "error": null
         },
         {
@@ -14774,7 +14798,7 @@
           "contentTerms": ["during", "edit", "marathon", "before", "deadline"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 48,
+          "durationMs": 47,
           "error": null
         },
         {
@@ -14946,7 +14970,7 @@
           "contentTerms": ["when", "rebuilding", "portfolio"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 5,
+          "durationMs": 6,
           "error": null
         },
         {
@@ -15016,7 +15040,7 @@
           "contentTerms": ["on", "brand", "and", "visual", "identity", "from", "6", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 46（非 Top1）",
-          "durationMs": 222,
+          "durationMs": 233,
           "error": null
         },
         {
@@ -15086,7 +15110,7 @@
           "contentTerms": ["on", "indie", "marketing", "from", "3", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 107,
+          "durationMs": 114,
           "error": null
         },
         {
@@ -15156,7 +15180,7 @@
           "contentTerms": ["on", "writing", "and", "notes", "from", "8", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 168,
+          "durationMs": 176,
           "error": null
         },
         {
@@ -15226,7 +15250,7 @@
           "contentTerms": ["on", "writing", "and", "notes", "from", "6", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 167,
+          "durationMs": 176,
           "error": null
         },
         {
@@ -15296,7 +15320,7 @@
           "contentTerms": ["on", "indie", "marketing", "from", "10", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 26（非 Top1）",
-          "durationMs": 122,
+          "durationMs": 128,
           "error": null
         },
         {
@@ -15366,7 +15390,7 @@
           "contentTerms": ["on", "writing", "and", "notes", "from", "11", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 181,
+          "durationMs": 190,
           "error": null
         },
         {
@@ -15436,7 +15460,7 @@
           "contentTerms": ["on", "writing", "and", "notes", "from", "8", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 8（非 Top1）",
-          "durationMs": 197,
+          "durationMs": 174,
           "error": null
         },
         {
@@ -15506,7 +15530,7 @@
           "contentTerms": ["on", "brand", "and", "visual", "identity", "from", "2", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 43（非 Top1）",
-          "durationMs": 229,
+          "durationMs": 228,
           "error": null
         },
         {
@@ -15576,7 +15600,7 @@
           "contentTerms": ["on", "writing", "and", "notes", "from", "11", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 22（非 Top1）",
-          "durationMs": 184,
+          "durationMs": 192,
           "error": null
         },
         {
@@ -15646,7 +15670,7 @@
           "contentTerms": ["on", "writing", "and", "notes", "from", "7", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 46（非 Top1）",
-          "durationMs": 168,
+          "durationMs": 177,
           "error": null
         },
         {
@@ -15716,7 +15740,7 @@
           "contentTerms": ["thing", "product", "design"],
           "stage": "rank",
           "detail": "目标在邻域第 12（非 Top1）",
-          "durationMs": 27,
+          "durationMs": 28,
           "error": null
         },
         {
@@ -15786,7 +15810,7 @@
           "contentTerms": ["thing", "writing", "and", "notes"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 86,
+          "durationMs": 85,
           "error": null
         },
         {
@@ -15856,7 +15880,7 @@
           "contentTerms": ["thing", "product", "design"],
           "stage": "rank",
           "detail": "目标在邻域第 48（非 Top1）",
-          "durationMs": 27,
+          "durationMs": 29,
           "error": null
         },
         {
@@ -15926,7 +15950,7 @@
           "contentTerms": ["thing", "writing", "and", "notes"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 82,
+          "durationMs": 88,
           "error": null
         },
         {
@@ -15996,7 +16020,7 @@
           "contentTerms": ["thing", "writing", "and", "notes"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 85,
+          "durationMs": 84,
           "error": null
         },
         {
@@ -16066,7 +16090,7 @@
           "contentTerms": ["thing", "product", "design"],
           "stage": "rank",
           "detail": "目标在邻域第 11（非 Top1）",
-          "durationMs": 29,
+          "durationMs": 27,
           "error": null
         },
         {
@@ -16136,7 +16160,7 @@
           "contentTerms": ["thing", "brand", "and", "visual", "identity"],
           "stage": "rank",
           "detail": "目标在邻域第 10（非 Top1）",
-          "durationMs": 102,
+          "durationMs": 106,
           "error": null
         },
         {
@@ -16206,7 +16230,7 @@
           "contentTerms": ["thing", "product", "design"],
           "stage": "rank",
           "detail": "目标在邻域第 23（非 Top1）",
-          "durationMs": 27,
+          "durationMs": 29,
           "error": null
         },
         {
@@ -16258,7 +16282,7 @@
           "contentTerms": ["thing", "indie", "marketing"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 16,
+          "durationMs": 15,
           "error": null
         },
         {
@@ -16296,7 +16320,7 @@
           "contentTerms": ["thing", "astronomy", "telescopes"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 3,
+          "durationMs": 4,
           "error": null
         },
         {
@@ -16326,7 +16350,7 @@
           "contentTerms": ["thing", "origami", "cranes"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 3,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -16356,7 +16380,7 @@
           "contentTerms": ["thing", "calligraphy", "strokes"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 2,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -16371,7 +16395,7 @@
           "contentTerms": ["thing", "beekeeping", "basics"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 4,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -16407,7 +16431,7 @@
           "contentTerms": ["thing", "mycology", "field", "guides"],
           "stage": "false_hit",
           "detail": "负例误命中 Top1=bca30dd9-bba3-5c46-aaa3-0ab3b9a30920（邻域 2）",
-          "durationMs": 30,
+          "durationMs": 32,
           "error": null
         },
         {
@@ -16437,7 +16461,7 @@
           "contentTerms": ["thing", "crypto", "trading", "strategies"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 4,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -16583,6 +16607,12 @@
           "error": 0
         }
       },
+      "nearNeighbor": {
+        "rankFailures": 35,
+        "sameTopicTop1": 32,
+        "sameAspectTop1": 26,
+        "sameTopicRate": 0.9142857142857143
+      },
       "cases": [
         {
           "taskId": "knowledge-worker:q-001",
@@ -16644,7 +16674,7 @@
           "contentTerms": ["agenda", "design"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 4,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -16677,7 +16707,7 @@
           "contentTerms": ["drafting", "habits"],
           "stage": "rank",
           "detail": "目标在邻域第 7（非 Top1）",
-          "durationMs": 5,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -16707,7 +16737,7 @@
           "contentTerms": ["prospective", "memory"],
           "stage": "rank",
           "detail": "目标在邻域第 5（非 Top1）",
-          "durationMs": 3,
+          "durationMs": 1,
           "error": null
         },
         {
@@ -16740,7 +16770,7 @@
           "contentTerms": ["drafting", "habits"],
           "stage": "rank",
           "detail": "目标在邻域第 9（非 Top1）",
-          "durationMs": 4,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -16773,7 +16803,7 @@
           "contentTerms": ["drafting", "habits"],
           "stage": "rank",
           "detail": "目标在邻域第 5（非 Top1）",
-          "durationMs": 4,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -16799,7 +16829,7 @@
           "contentTerms": ["sleep", "regularity"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 2,
+          "durationMs": 1,
           "error": null
         },
         {
@@ -16823,7 +16853,7 @@
           "contentTerms": ["interference", "theory"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 3,
+          "durationMs": 4,
           "error": null
         },
         {
@@ -16850,7 +16880,7 @@
           "contentTerms": ["editing", "passes"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 3,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -16976,7 +17006,7 @@
           "contentTerms": ["decision", "logs"],
           "stage": "rank",
           "detail": "目标在邻域第 9（非 Top1）",
-          "durationMs": 29,
+          "durationMs": 26,
           "error": null
         },
         {
@@ -17153,7 +17183,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 197,
+          "durationMs": 199,
           "error": null
         },
         {
@@ -17231,7 +17261,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 194,
+          "durationMs": 192,
           "error": null
         },
         {
@@ -17309,7 +17339,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 20（非 Top1）",
-          "durationMs": 179,
+          "durationMs": 176,
           "error": null
         },
         {
@@ -17379,7 +17409,7 @@
           "contentTerms": ["covering", "insurance", "gaps", "in", "personal", "finance"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 182,
+          "durationMs": 181,
           "error": null
         },
         {
@@ -17449,7 +17479,7 @@
           "contentTerms": ["covering", "facilitation", "in", "meetings", "and", "collaboration"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 118,
+          "durationMs": 127,
           "error": null
         },
         {
@@ -17519,7 +17549,7 @@
           "contentTerms": ["covering", "plain", "language", "in", "writing", "and", "notes"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 212,
+          "durationMs": 218,
           "error": null
         },
         {
@@ -17589,7 +17619,7 @@
           "contentTerms": ["covering", "taking", "systems", "in", "writing", "and", "notes"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 218,
+          "durationMs": 216,
           "error": null
         },
         {
@@ -17668,7 +17698,7 @@
           ],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 158,
+          "durationMs": 148,
           "error": null
         },
         {
@@ -17738,7 +17768,7 @@
           "contentTerms": ["covering", "plain", "language", "in", "writing", "and", "notes"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 214,
+          "durationMs": 211,
           "error": null
         },
         {
@@ -17816,7 +17846,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 10（非 Top1）",
-          "durationMs": 180,
+          "durationMs": 174,
           "error": null
         },
         {
@@ -17886,7 +17916,7 @@
           "contentTerms": ["covering", "budgeting", "systems", "in", "personal", "finance"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 197,
+          "durationMs": 196,
           "error": null
         },
         {
@@ -17956,7 +17986,7 @@
           "contentTerms": ["covering", "facilitation", "in", "meetings", "and", "collaboration"],
           "stage": "rank",
           "detail": "目标在邻域第 12（非 Top1）",
-          "durationMs": 115,
+          "durationMs": 117,
           "error": null
         },
         {
@@ -18026,7 +18056,7 @@
           "contentTerms": ["covering", "follow-ups", "in", "meetings", "and", "collaboration"],
           "stage": "rank",
           "detail": "目标在邻域第 46（非 Top1）",
-          "durationMs": 117,
+          "durationMs": 116,
           "error": null
         },
         {
@@ -18096,7 +18126,7 @@
           "contentTerms": ["covering", "emergency", "funds", "in", "personal", "finance"],
           "stage": "rank",
           "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 190,
+          "durationMs": 185,
           "error": null
         },
         {
@@ -18166,7 +18196,7 @@
           "contentTerms": ["covering", "sleep", "regularity", "in", "health", "and", "habits"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 193,
+          "durationMs": 189,
           "error": null
         },
         {
@@ -18236,7 +18266,7 @@
           "contentTerms": ["covering", "drafting", "habits", "in", "writing", "and", "notes"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 232,
+          "durationMs": 228,
           "error": null
         },
         {
@@ -18288,7 +18318,7 @@
           "contentTerms": ["when", "we", "tried", "async", "updates", "for", "month"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 114,
+          "durationMs": 113,
           "error": null
         },
         {
@@ -18316,7 +18346,7 @@
           "contentTerms": ["during", "weekend", "reviewed", "every", "subscription"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 31,
+          "durationMs": 28,
           "error": null
         },
         {
@@ -18422,7 +18452,7 @@
           "contentTerms": ["while", "redesigning", "our", "weekly", "meeting"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 38,
+          "durationMs": 36,
           "error": null
         },
         {
@@ -18450,7 +18480,7 @@
           "contentTerms": ["during", "weekend", "reviewed", "every", "subscription"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 30,
+          "durationMs": 29,
           "error": null
         },
         {
@@ -18476,7 +18506,7 @@
           "contentTerms": ["during", "weekend", "reviewed", "every", "subscription"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 30,
+          "durationMs": 29,
           "error": null
         },
         {
@@ -18542,7 +18572,7 @@
           "contentTerms": ["back", "when", "summary", "kept", "getting", "rewritten"],
           "stage": "rank",
           "detail": "目标在邻域第 22（非 Top1）",
-          "durationMs": 116,
+          "durationMs": 97,
           "error": null
         },
         {
@@ -18585,7 +18615,7 @@
           "contentTerms": ["when", "sorting", "out", "household", "budget"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 38,
+          "durationMs": 37,
           "error": null
         },
         {
@@ -18651,7 +18681,7 @@
           "contentTerms": ["back", "when", "summary", "kept", "getting", "rewritten"],
           "stage": "rank",
           "detail": "目标在邻域第 42（非 Top1）",
-          "durationMs": 96,
+          "durationMs": 95,
           "error": null
         },
         {
@@ -18753,7 +18783,7 @@
           "contentTerms": ["back", "when", "summary", "kept", "getting", "rewritten"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 94,
+          "durationMs": 96,
           "error": null
         },
         {
@@ -18781,7 +18811,7 @@
           "contentTerms": ["during", "week", "of", "back-to-back", "reviews"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 41,
+          "durationMs": 42,
           "error": null
         },
         {
@@ -18807,7 +18837,7 @@
           "contentTerms": ["during", "weekend", "reviewed", "every", "subscription"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 29,
+          "durationMs": 30,
           "error": null
         },
         {
@@ -18879,7 +18909,7 @@
           "contentTerms": ["during", "week", "of", "back-to-back", "reviews"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 41,
+          "durationMs": 40,
           "error": null
         },
         {
@@ -18949,7 +18979,7 @@
           "contentTerms": ["when", "drafting", "quarterly", "report"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 56,
+          "durationMs": 57,
           "error": null
         },
         {
@@ -19029,7 +19059,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 9（非 Top1）",
-          "durationMs": 145,
+          "durationMs": 146,
           "error": null
         },
         {
@@ -19099,7 +19129,7 @@
           "contentTerms": ["on", "writing", "and", "notes", "from", "2", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 140,
+          "durationMs": 142,
           "error": null
         },
         {
@@ -19179,7 +19209,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 5（非 Top1）",
-          "durationMs": 145,
+          "durationMs": 144,
           "error": null
         },
         {
@@ -19249,7 +19279,7 @@
           "contentTerms": ["on", "personal", "finance", "from", "6", "weeks", "ago"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 154,
+          "durationMs": 153,
           "error": null
         },
         {
@@ -19319,7 +19349,7 @@
           "contentTerms": ["on", "writing", "and", "notes", "from", "12", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 26（非 Top1）",
-          "durationMs": 153,
+          "durationMs": 155,
           "error": null
         },
         {
@@ -19389,7 +19419,7 @@
           "contentTerms": ["on", "health", "and", "habits", "from", "6", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 12（非 Top1）",
-          "durationMs": 152,
+          "durationMs": 154,
           "error": null
         },
         {
@@ -19469,7 +19499,7 @@
           ],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 143,
+          "durationMs": 145,
           "error": null
         },
         {
@@ -19539,7 +19569,7 @@
           "contentTerms": ["on", "meetings", "and", "collaboration", "from", "10", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 30（非 Top1）",
-          "durationMs": 137,
+          "durationMs": 145,
           "error": null
         },
         {
@@ -19609,7 +19639,7 @@
           "contentTerms": ["on", "writing", "and", "notes", "from", "6", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 140,
+          "durationMs": 149,
           "error": null
         },
         {
@@ -19679,7 +19709,7 @@
           "contentTerms": ["on", "meetings", "and", "collaboration", "from", "5", "weeks", "ago"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 121,
+          "durationMs": 129,
           "error": null
         },
         {
@@ -19749,7 +19779,7 @@
           "contentTerms": ["thing", "human", "memory", "and", "cognition"],
           "stage": "rank",
           "detail": "目标在邻域第 34（非 Top1）",
-          "durationMs": 52,
+          "durationMs": 53,
           "error": null
         },
         {
@@ -19819,7 +19849,7 @@
           "contentTerms": ["thing", "meetings", "and", "collaboration"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 31,
+          "durationMs": 32,
           "error": null
         },
         {
@@ -19889,7 +19919,7 @@
           "contentTerms": ["thing", "human", "memory", "and", "cognition"],
           "stage": "rank",
           "detail": "目标在邻域第 50（非 Top1）",
-          "durationMs": 51,
+          "durationMs": 54,
           "error": null
         },
         {
@@ -19959,7 +19989,7 @@
           "contentTerms": ["thing", "meetings", "and", "collaboration"],
           "stage": "rank",
           "detail": "目标在邻域第 5（非 Top1）",
-          "durationMs": 30,
+          "durationMs": 33,
           "error": null
         },
         {
@@ -20029,7 +20059,7 @@
           "contentTerms": ["thing", "human", "memory", "and", "cognition"],
           "stage": "rank",
           "detail": "目标在邻域第 9（非 Top1）",
-          "durationMs": 51,
+          "durationMs": 54,
           "error": null
         },
         {
@@ -20099,7 +20129,7 @@
           "contentTerms": ["thing", "meetings", "and", "collaboration"],
           "stage": "rank",
           "detail": "目标在邻域第 29（非 Top1）",
-          "durationMs": 32,
+          "durationMs": 33,
           "error": null
         },
         {
@@ -20169,7 +20199,7 @@
           "contentTerms": ["thing", "human", "memory", "and", "cognition"],
           "stage": "rank",
           "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 51,
+          "durationMs": 54,
           "error": null
         },
         {
@@ -20239,7 +20269,7 @@
           "contentTerms": ["thing", "writing", "and", "notes"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 42,
+          "durationMs": 43,
           "error": null
         },
         {
@@ -20309,7 +20339,7 @@
           "contentTerms": ["thing", "meetings", "and", "collaboration"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 31,
+          "durationMs": 33,
           "error": null
         },
         {
@@ -20379,7 +20409,7 @@
           "contentTerms": ["thing", "human", "memory", "and", "cognition"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 51,
+          "durationMs": 53,
           "error": null
         },
         {
@@ -20477,7 +20507,7 @@
           "contentTerms": ["thing", "home", "brewing", "recipes"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 2,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -20492,7 +20522,7 @@
           "contentTerms": ["thing", "mycology", "field", "guides"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 23,
+          "durationMs": 24,
           "error": null
         },
         {
@@ -20537,7 +20567,7 @@
           "contentTerms": ["thing", "orchid", "care"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 2,
+          "durationMs": 1,
           "error": null
         },
         {
@@ -20683,6 +20713,12 @@
           "error": 0
         }
       },
+      "nearNeighbor": {
+        "rankFailures": 29,
+        "sameTopicTop1": 29,
+        "sameAspectTop1": 24,
+        "sameTopicRate": 1
+      },
       "cases": [
         {
           "taskId": "hoarder:q-001",
@@ -20744,7 +20780,7 @@
           "contentTerms": ["cue-dependent", "recall"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 3,
+          "durationMs": 6,
           "error": null
         },
         {
@@ -20786,7 +20822,7 @@
           "contentTerms": ["budgeting", "systems"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 3,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -20813,7 +20849,7 @@
           "contentTerms": ["strength", "training"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 4,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -20849,7 +20885,7 @@
           "contentTerms": ["drafting", "habits"],
           "stage": "rank",
           "detail": "目标在邻域第 7（非 Top1）",
-          "durationMs": 2,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -20958,7 +20994,7 @@
           "contentTerms": ["spacing", "effect"],
           "stage": "rank",
           "detail": "目标在邻域第 11（非 Top1）",
-          "durationMs": 12,
+          "durationMs": 14,
           "error": null
         },
         {
@@ -21026,7 +21062,7 @@
           "contentTerms": ["budgeting", "systems"],
           "stage": "rank",
           "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 3,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -21076,7 +21112,7 @@
           "contentTerms": ["facilitation"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 0,
+          "durationMs": 1,
           "error": null
         },
         {
@@ -21091,7 +21127,7 @@
           "contentTerms": ["follow-ups"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 4,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -21280,7 +21316,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 20（非 Top1）",
-          "durationMs": 148,
+          "durationMs": 155,
           "error": null
         },
         {
@@ -21350,7 +21386,7 @@
           "contentTerms": ["covering", "screen", "breaks", "in", "health", "and", "habits"],
           "stage": "rank",
           "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 225,
+          "durationMs": 238,
           "error": null
         },
         {
@@ -21420,7 +21456,7 @@
           "contentTerms": ["covering", "budgeting", "systems", "in", "personal", "finance"],
           "stage": "rank",
           "detail": "目标在邻域第 11（非 Top1）",
-          "durationMs": 171,
+          "durationMs": 177,
           "error": null
         },
         {
@@ -21490,7 +21526,7 @@
           "contentTerms": ["covering", "prospective", "memory", "in", "human", "and", "cognition"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 143,
+          "durationMs": 149,
           "error": null
         },
         {
@@ -21560,7 +21596,7 @@
           "contentTerms": ["covering", "emergency", "funds", "in", "personal", "finance"],
           "stage": "rank",
           "detail": "目标在邻域第 10（非 Top1）",
-          "durationMs": 163,
+          "durationMs": 167,
           "error": null
         },
         {
@@ -21630,7 +21666,7 @@
           "contentTerms": ["covering", "desk", "ergonomics", "in", "health", "and", "habits"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 174,
+          "durationMs": 180,
           "error": null
         },
         {
@@ -21700,7 +21736,7 @@
           "contentTerms": ["covering", "reference", "managers", "in", "writing", "and", "notes"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 185,
+          "durationMs": 190,
           "error": null
         },
         {
@@ -21770,7 +21806,7 @@
           "contentTerms": ["covering", "screen", "breaks", "in", "health", "and", "habits"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 228,
+          "durationMs": 233,
           "error": null
         },
         {
@@ -21840,7 +21876,7 @@
           "contentTerms": ["covering", "walking", "meetings", "in", "health", "and", "habits"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 243,
+          "durationMs": 255,
           "error": null
         },
         {
@@ -21910,7 +21946,7 @@
           "contentTerms": ["covering", "budgeting", "systems", "in", "personal", "finance"],
           "stage": "rank",
           "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 175,
+          "durationMs": 176,
           "error": null
         },
         {
@@ -21989,7 +22025,7 @@
           ],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 147,
+          "durationMs": 152,
           "error": null
         },
         {
@@ -22059,7 +22095,7 @@
           "contentTerms": ["covering", "insurance", "gaps", "in", "personal", "finance"],
           "stage": "rank",
           "detail": "目标在邻域第 5（非 Top1）",
-          "durationMs": 162,
+          "durationMs": 166,
           "error": null
         },
         {
@@ -22129,7 +22165,7 @@
           "contentTerms": ["covering", "index", "investing", "in", "personal", "finance"],
           "stage": "rank",
           "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 174,
+          "durationMs": 167,
           "error": null
         },
         {
@@ -22199,7 +22235,7 @@
           "contentTerms": ["covering", "sleep", "regularity", "in", "health", "and", "habits"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 184,
+          "durationMs": 185,
           "error": null
         },
         {
@@ -22269,7 +22305,7 @@
           "contentTerms": ["covering", "plain", "language", "in", "writing", "and", "notes"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 219,
+          "durationMs": 214,
           "error": null
         },
         {
@@ -22347,7 +22383,7 @@
           ],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 202,
+          "durationMs": 193,
           "error": null
         },
         {
@@ -22392,7 +22428,7 @@
           "contentTerms": ["when", "renewal", "notices", "piled", "up"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 47,
+          "durationMs": 49,
           "error": null
         },
         {
@@ -22437,7 +22473,7 @@
           "contentTerms": ["when", "renewal", "notices", "piled", "up"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 48,
+          "durationMs": 49,
           "error": null
         },
         {
@@ -22455,7 +22491,7 @@
           "contentTerms": ["during", "late-night", "tab", "cleanup"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 10,
+          "durationMs": 7,
           "error": null
         },
         {
@@ -22488,7 +22524,7 @@
           "contentTerms": ["during", "late-night", "tab", "cleanup"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 7,
+          "durationMs": 8,
           "error": null
         },
         {
@@ -22551,7 +22587,7 @@
           "contentTerms": ["when", "renewal", "notices", "piled", "up"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 47,
+          "durationMs": 46,
           "error": null
         },
         {
@@ -22587,7 +22623,7 @@
           "contentTerms": ["during", "late-night", "tab", "cleanup"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 7,
+          "durationMs": 8,
           "error": null
         },
         {
@@ -22668,7 +22704,7 @@
           "contentTerms": ["during", "late-night", "tab", "cleanup"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 8,
+          "durationMs": 9,
           "error": null
         },
         {
@@ -22701,7 +22737,7 @@
           "contentTerms": ["during", "late-night", "tab", "cleanup"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 7,
+          "durationMs": 8,
           "error": null
         },
         {
@@ -22764,7 +22800,7 @@
           "contentTerms": ["when", "renewal", "notices", "piled", "up"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 47,
+          "durationMs": 48,
           "error": null
         },
         {
@@ -22914,7 +22950,7 @@
           "contentTerms": ["on", "health", "and", "habits", "from", "2", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 155,
+          "durationMs": 154,
           "error": null
         },
         {
@@ -22984,7 +23020,7 @@
           "contentTerms": ["on", "meetings", "and", "collaboration", "from", "12", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 130,
+          "durationMs": 127,
           "error": null
         },
         {
@@ -23124,7 +23160,7 @@
           "contentTerms": ["on", "personal", "finance", "from", "5", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 9（非 Top1）",
-          "durationMs": 127,
+          "durationMs": 137,
           "error": null
         },
         {
@@ -23204,7 +23240,7 @@
           ],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 131,
+          "durationMs": 129,
           "error": null
         },
         {
@@ -23274,7 +23310,7 @@
           "contentTerms": ["on", "personal", "finance", "from", "2", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 28（非 Top1）",
-          "durationMs": 120,
+          "durationMs": 124,
           "error": null
         },
         {
@@ -23354,7 +23390,7 @@
           ],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 116,
+          "durationMs": 128,
           "error": null
         },
         {
@@ -23424,7 +23460,7 @@
           "contentTerms": ["on", "writing", "and", "notes", "from", "4", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 133,
+          "durationMs": 150,
           "error": null
         },
         {
@@ -23504,7 +23540,7 @@
           ],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 114,
+          "durationMs": 130,
           "error": null
         },
         {
@@ -23574,7 +23610,7 @@
           "contentTerms": ["thing", "human", "memory", "and", "cognition"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 50,
+          "durationMs": 58,
           "error": null
         },
         {
@@ -23644,7 +23680,7 @@
           "contentTerms": ["thing", "health", "and", "habits"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 46,
+          "durationMs": 51,
           "error": null
         },
         {
@@ -23714,7 +23750,7 @@
           "contentTerms": ["thing", "health", "and", "habits"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 47,
+          "durationMs": 51,
           "error": null
         },
         {
@@ -23784,7 +23820,7 @@
           "contentTerms": ["thing", "health", "and", "habits"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 45,
+          "durationMs": 49,
           "error": null
         },
         {
@@ -23854,7 +23890,7 @@
           "contentTerms": ["thing", "health", "and", "habits"],
           "stage": "rank",
           "detail": "目标在邻域第 8（非 Top1）",
-          "durationMs": 45,
+          "durationMs": 51,
           "error": null
         },
         {
@@ -23924,7 +23960,7 @@
           "contentTerms": ["thing", "writing", "and", "notes"],
           "stage": "rank",
           "detail": "目标在邻域第 40（非 Top1）",
-          "durationMs": 42,
+          "durationMs": 47,
           "error": null
         },
         {
@@ -23994,7 +24030,7 @@
           "contentTerms": ["thing", "health", "and", "habits"],
           "stage": "rank",
           "detail": "目标在邻域第 24（非 Top1）",
-          "durationMs": 44,
+          "durationMs": 49,
           "error": null
         },
         {
@@ -24064,7 +24100,7 @@
           "contentTerms": ["thing", "writing", "and", "notes"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 42,
+          "durationMs": 46,
           "error": null
         },
         {
@@ -24121,7 +24157,7 @@
           "contentTerms": ["thing", "personal", "finance"],
           "stage": "rank",
           "detail": "目标在邻域第 20（非 Top1）",
-          "durationMs": 7,
+          "durationMs": 8,
           "error": null
         },
         {
@@ -24191,7 +24227,7 @@
           "contentTerms": ["thing", "human", "memory", "and", "cognition"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 50,
+          "durationMs": 56,
           "error": null
         },
         {
@@ -24206,7 +24242,7 @@
           "contentTerms": ["thing", "origami", "cranes"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 3,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -24221,7 +24257,7 @@
           "contentTerms": ["thing", "car", "repair", "manuals"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 4,
+          "durationMs": 5,
           "error": null
         },
         {
@@ -24236,7 +24272,7 @@
           "contentTerms": ["thing", "crypto", "trading", "strategies"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 3,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -24311,7 +24347,7 @@
           "contentTerms": ["thing", "mycology", "field", "guides"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 22,
+          "durationMs": 24,
           "error": null
         },
         {
@@ -24326,7 +24362,7 @@
           "contentTerms": ["thing", "astronomy", "telescopes"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 2,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -24380,7 +24416,7 @@
           "contentTerms": ["thing", "beekeeping", "basics"],
           "stage": "false_hit",
           "detail": "负例误命中 Top1=8e5bb741-8d5b-55ae-ac5b-b41b8b5bb288（邻域 4）",
-          "durationMs": 3,
+          "durationMs": 4,
           "error": null
         }
       ]
@@ -24496,6 +24532,12 @@
           "error": 0
         }
       },
+      "nearNeighbor": {
+        "rankFailures": 29,
+        "sameTopicTop1": 29,
+        "sameAspectTop1": 22,
+        "sameTopicRate": 1
+      },
       "cases": [
         {
           "taskId": "fragmented-browser:q-001",
@@ -24574,7 +24616,7 @@
           "contentTerms": ["editing", "passes"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 5,
+          "durationMs": 7,
           "error": null
         },
         {
@@ -24606,7 +24648,7 @@
           "contentTerms": ["dark", "patterns"],
           "stage": "rank",
           "detail": "目标在邻域第 8（非 Top1）",
-          "durationMs": 1,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -24667,7 +24709,7 @@
           "contentTerms": ["seo", "long", "tail"],
           "stage": "rank",
           "detail": "目标在邻域第 8（非 Top1）",
-          "durationMs": 3,
+          "durationMs": 4,
           "error": null
         },
         {
@@ -24727,7 +24769,7 @@
           "contentTerms": ["reference", "managers"],
           "stage": "rank",
           "detail": "目标在邻域第 6（非 Top1）",
-          "durationMs": 1,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -24760,7 +24802,7 @@
           "contentTerms": ["landing", "pages"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 3,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -24790,7 +24832,7 @@
           "contentTerms": ["reference", "managers"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 1,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -24878,7 +24920,7 @@
           "contentTerms": ["landing", "pages"],
           "stage": "rank",
           "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 3,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -24917,7 +24959,7 @@
           "contentTerms": ["taking", "systems"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 5,
+          "durationMs": 9,
           "error": null
         },
         {
@@ -24978,7 +25020,7 @@
           "contentTerms": ["lighting", "setups"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 26,
+          "durationMs": 27,
           "error": null
         },
         {
@@ -25009,7 +25051,7 @@
           "contentTerms": ["lighting", "setups"],
           "stage": "rank",
           "detail": "目标在邻域第 5（非 Top1）",
-          "durationMs": 27,
+          "durationMs": 29,
           "error": null
         },
         {
@@ -25079,7 +25121,7 @@
           "contentTerms": ["covering", "visual", "identity", "in", "brand", "and"],
           "stage": "rank",
           "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 173,
+          "durationMs": 177,
           "error": null
         },
         {
@@ -25149,7 +25191,7 @@
           "contentTerms": ["covering", "editing", "rhythm", "in", "production"],
           "stage": "rank",
           "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 120,
+          "durationMs": 121,
           "error": null
         },
         {
@@ -25219,7 +25261,7 @@
           "contentTerms": ["covering", "dark", "patterns", "in", "product", "design"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 206,
+          "durationMs": 208,
           "error": null
         },
         {
@@ -25289,7 +25331,7 @@
           "contentTerms": ["covering", "microcopy", "in", "product", "design"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 134,
+          "durationMs": 133,
           "error": null
         },
         {
@@ -25359,7 +25401,7 @@
           "contentTerms": ["covering", "editing", "rhythm", "in", "production"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 120,
+          "durationMs": 122,
           "error": null
         },
         {
@@ -25429,7 +25471,7 @@
           "contentTerms": ["covering", "editing", "rhythm", "in", "production"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 122,
+          "durationMs": 121,
           "error": null
         },
         {
@@ -25499,7 +25541,7 @@
           "contentTerms": ["covering", "empty", "states", "in", "product", "design"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 199,
+          "durationMs": 202,
           "error": null
         },
         {
@@ -25569,7 +25611,7 @@
           "contentTerms": ["covering", "visual", "hierarchy", "in", "product", "design"],
           "stage": "rank",
           "detail": "目标在邻域第 10（非 Top1）",
-          "durationMs": 167,
+          "durationMs": 176,
           "error": null
         },
         {
@@ -25639,7 +25681,7 @@
           "contentTerms": ["covering", "editing", "rhythm", "in", "production"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 120,
+          "durationMs": 126,
           "error": null
         },
         {
@@ -25705,7 +25747,7 @@
           "contentTerms": ["covering", "seo", "long", "tail", "in", "indie", "marketing"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 135,
+          "durationMs": 142,
           "error": null
         },
         {
@@ -25775,7 +25817,7 @@
           "contentTerms": ["covering", "drafting", "habits", "in", "writing", "and", "notes"],
           "stage": "rank",
           "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 204,
+          "durationMs": 211,
           "error": null
         },
         {
@@ -25845,7 +25887,7 @@
           "contentTerms": ["covering", "lighting", "setups", "in", "production"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 127,
+          "durationMs": 131,
           "error": null
         },
         {
@@ -25915,7 +25957,7 @@
           "contentTerms": ["covering", "visual", "identity", "in", "brand", "and"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 175,
+          "durationMs": 178,
           "error": null
         },
         {
@@ -25985,7 +26027,7 @@
           "contentTerms": ["covering", "taking", "systems", "in", "writing", "and", "notes"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 200,
+          "durationMs": 204,
           "error": null
         },
         {
@@ -26055,7 +26097,7 @@
           "contentTerms": ["covering", "empty", "states", "in", "product", "design"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 199,
+          "durationMs": 216,
           "error": null
         },
         {
@@ -26134,7 +26176,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 16（非 Top1）",
-          "durationMs": 243,
+          "durationMs": 254,
           "error": null
         },
         {
@@ -26160,7 +26202,7 @@
           "contentTerms": ["during", "weekend", "of", "half-finished", "drafts"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 22,
+          "durationMs": 23,
           "error": null
         },
         {
@@ -26233,7 +26275,7 @@
           "contentTerms": ["during", "weekend", "of", "half-finished", "drafts"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 22,
+          "durationMs": 23,
           "error": null
         },
         {
@@ -26263,7 +26305,7 @@
           "contentTerms": ["during", "short-", "rabbit", "hole"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 3,
+          "durationMs": 4,
           "error": null
         },
         {
@@ -26293,7 +26335,7 @@
           "contentTerms": ["while", "bouncing", "between", "tabs"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 2,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -26355,7 +26397,7 @@
           "contentTerms": ["when", "kept", "switching", "projects"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 15,
+          "durationMs": 16,
           "error": null
         },
         {
@@ -26400,7 +26442,7 @@
           "contentTerms": ["during", "weekend", "of", "half-finished", "drafts"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 21,
+          "durationMs": 22,
           "error": null
         },
         {
@@ -26511,7 +26553,7 @@
           "contentTerms": ["on", "production", "from", "8", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 51,
+          "durationMs": 54,
           "error": null
         },
         {
@@ -26581,7 +26623,7 @@
           "contentTerms": ["on", "brand", "and", "visual", "identity", "from", "8", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 26（非 Top1）",
-          "durationMs": 155,
+          "durationMs": 161,
           "error": null
         },
         {
@@ -26651,7 +26693,7 @@
           "contentTerms": ["on", "indie", "marketing", "from", "6", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 79,
+          "durationMs": 81,
           "error": null
         },
         {
@@ -26721,7 +26763,7 @@
           "contentTerms": ["on", "product", "design", "from", "3", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 110,
+          "durationMs": 109,
           "error": null
         },
         {
@@ -26791,7 +26833,7 @@
           "contentTerms": ["on", "writing", "and", "notes", "from", "4", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 121,
+          "durationMs": 120,
           "error": null
         },
         {
@@ -26861,7 +26903,7 @@
           "contentTerms": ["on", "production", "from", "9", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 51,
+          "durationMs": 52,
           "error": null
         },
         {
@@ -27001,7 +27043,7 @@
           "contentTerms": ["on", "indie", "marketing", "from", "7", "weeks", "ago"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 80,
+          "durationMs": 81,
           "error": null
         },
         {
@@ -27214,7 +27256,7 @@
           "contentTerms": ["thing", "product", "design"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 22,
+          "durationMs": 21,
           "error": null
         },
         {
@@ -27284,7 +27326,7 @@
           "contentTerms": ["thing", "brand", "and", "visual", "identity"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 60,
+          "durationMs": 62,
           "error": null
         },
         {
@@ -27309,7 +27351,7 @@
           "contentTerms": ["thing", "production"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 3,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -27372,7 +27414,7 @@
           "contentTerms": ["thing", "product", "design"],
           "stage": "rank",
           "detail": "目标在邻域第 5（非 Top1）",
-          "durationMs": 33,
+          "durationMs": 21,
           "error": null
         },
         {
@@ -27435,7 +27477,7 @@
           "contentTerms": ["thing", "product", "design"],
           "stage": "rank",
           "detail": "目标在邻域第 41（非 Top1）",
-          "durationMs": 27,
+          "durationMs": 23,
           "error": null
         },
         {
@@ -27498,7 +27540,7 @@
           "contentTerms": ["thing", "product", "design"],
           "stage": "rank",
           "detail": "目标在邻域第 42（非 Top1）",
-          "durationMs": 24,
+          "durationMs": 22,
           "error": null
         },
         {
@@ -27568,7 +27610,7 @@
           "contentTerms": ["thing", "brand", "and", "visual", "identity"],
           "stage": "rank",
           "detail": "目标在邻域第 12（非 Top1）",
-          "durationMs": 64,
+          "durationMs": 63,
           "error": null
         },
         {
@@ -27722,7 +27764,7 @@
           "contentTerms": ["thing", "sailing", "knots"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 3,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -27737,7 +27779,7 @@
           "contentTerms": ["thing", "origami", "cranes"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 1,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -27797,7 +27839,7 @@
           "contentTerms": ["thing", "car", "repair", "manuals"],
           "stage": "false_hit",
           "detail": "负例误命中 Top1=6020dae3-5f20-5950-a220-de096120dc76（邻域 1）",
-          "durationMs": 6,
+          "durationMs": 13,
           "error": null
         },
         {
@@ -27812,7 +27854,7 @@
           "contentTerms": ["thing", "orchid", "care"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 2,
+          "durationMs": 1,
           "error": null
         },
         {
@@ -27827,7 +27869,7 @@
           "contentTerms": ["thing", "home", "brewing", "recipes"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 3,
+          "durationMs": 4,
           "error": null
         },
         {
@@ -27842,7 +27884,7 @@
           "contentTerms": ["thing", "beekeeping", "basics"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 1,
+          "durationMs": 4,
           "error": null
         },
         {
@@ -27857,7 +27899,7 @@
           "contentTerms": ["thing", "astronomy", "telescopes"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 2,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -27872,7 +27914,7 @@
           "contentTerms": ["thing", "crypto", "trading", "strategies"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 3,
+          "durationMs": 4,
           "error": null
         },
         {
@@ -27887,7 +27929,7 @@
           "contentTerms": ["thing", "fencing", "footwork"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 2,
+          "durationMs": 3,
           "error": null
         }
       ]
@@ -28003,6 +28045,12 @@
           "error": 0
         }
       },
+      "nearNeighbor": {
+        "rankFailures": 34,
+        "sameTopicTop1": 31,
+        "sameAspectTop1": 23,
+        "sameTopicRate": 0.9117647058823529
+      },
       "cases": [
         {
           "taskId": "misremembering-user:q-001",
@@ -28027,7 +28075,7 @@
           "contentTerms": ["research", "ethics"],
           "stage": "rank",
           "detail": "目标在邻域第 6（非 Top1）",
-          "durationMs": 2,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -28115,7 +28163,7 @@
           "contentTerms": ["peer", "review"],
           "stage": "rank",
           "detail": "目标在邻域第 6（非 Top1）",
-          "durationMs": 2,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -28176,7 +28224,7 @@
           "contentTerms": ["causal", "graphs"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 2,
+          "durationMs": 1,
           "error": null
         },
         {
@@ -28245,7 +28293,7 @@
           "contentTerms": ["spacing", "effect"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 31,
+          "durationMs": 33,
           "error": null
         },
         {
@@ -28394,7 +28442,7 @@
           "contentTerms": ["citation", "management"],
           "stage": "rank",
           "detail": "目标在邻域第 8（非 Top1）",
-          "durationMs": 1,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -28463,7 +28511,7 @@
           "contentTerms": ["spacing", "effect"],
           "stage": "rank",
           "detail": "目标在邻域第 5（非 Top1）",
-          "durationMs": 31,
+          "durationMs": 32,
           "error": null
         },
         {
@@ -28626,7 +28674,7 @@
           "contentTerms": ["covering", "bayesian", "inference", "in", "statistics", "and"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 112,
+          "durationMs": 114,
           "error": null
         },
         {
@@ -28696,7 +28744,7 @@
           "contentTerms": ["covering", "streaming", "ux", "in", "llm", "engineering"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 75,
+          "durationMs": 76,
           "error": null
         },
         {
@@ -28836,7 +28884,7 @@
           "contentTerms": ["covering", "embedding", "drift", "in", "information", "retrieval"],
           "stage": "rank",
           "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 78,
+          "durationMs": 79,
           "error": null
         },
         {
@@ -28906,7 +28954,7 @@
           "contentTerms": ["covering", "prompt", "caching", "in", "llm", "engineering"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 140,
+          "durationMs": 136,
           "error": null
         },
         {
@@ -28984,7 +29032,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 5（非 Top1）",
-          "durationMs": 172,
+          "durationMs": 171,
           "error": null
         },
         {
@@ -29054,7 +29102,7 @@
           "contentTerms": ["covering", "bayesian", "inference", "in", "statistics", "and"],
           "stage": "rank",
           "detail": "目标在邻域第 8（非 Top1）",
-          "durationMs": 112,
+          "durationMs": 114,
           "error": null
         },
         {
@@ -29124,7 +29172,7 @@
           "contentTerms": ["covering", "prompt", "caching", "in", "llm", "engineering"],
           "stage": "rank",
           "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 142,
+          "durationMs": 136,
           "error": null
         },
         {
@@ -29272,7 +29320,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 184,
+          "durationMs": 185,
           "error": null
         },
         {
@@ -29342,7 +29390,7 @@
           "contentTerms": ["covering", "causal", "graphs", "in", "statistics", "and", "inference"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 132,
+          "durationMs": 127,
           "error": null
         },
         {
@@ -29412,7 +29460,7 @@
           "contentTerms": ["covering", "power", "analysis", "in", "statistics", "and", "inference"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 134,
+          "durationMs": 132,
           "error": null
         },
         {
@@ -29491,7 +29539,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 186,
+          "durationMs": 184,
           "error": null
         },
         {
@@ -29561,7 +29609,7 @@
           "contentTerms": ["covering", "bayesian", "inference", "in", "statistics", "and"],
           "stage": "rank",
           "detail": "目标在邻域第 5（非 Top1）",
-          "durationMs": 114,
+          "durationMs": 111,
           "error": null
         },
         {
@@ -29701,7 +29749,7 @@
           "contentTerms": ["covering", "chunking", "in", "human", "memory", "and", "cognition"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 169,
+          "durationMs": 167,
           "error": null
         },
         {
@@ -29728,7 +29776,7 @@
           "contentTerms": ["while", "revising", "for", "course"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 57,
+          "durationMs": 56,
           "error": null
         },
         {
@@ -29798,7 +29846,7 @@
           "contentTerms": ["when", "readings", "all", "blurred", "together"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 85,
+          "durationMs": 77,
           "error": null
         },
         {
@@ -29868,7 +29916,7 @@
           "contentTerms": ["when", "readings", "all", "blurred", "together"],
           "stage": "rank",
           "detail": "目标在邻域第 11（非 Top1）",
-          "durationMs": 79,
+          "durationMs": 78,
           "error": null
         },
         {
@@ -29897,7 +29945,7 @@
           "contentTerms": ["while", "revising", "for", "course"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 58,
+          "durationMs": 66,
           "error": null
         },
         {
@@ -29967,7 +30015,7 @@
           "contentTerms": ["when", "mixed", "up", "two", "similar", "papers"],
           "stage": "rank",
           "detail": "目标在邻域第 13（非 Top1）",
-          "durationMs": 119,
+          "durationMs": 121,
           "error": null
         },
         {
@@ -30037,7 +30085,7 @@
           "contentTerms": ["when", "readings", "all", "blurred", "together"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 79,
+          "durationMs": 77,
           "error": null
         },
         {
@@ -30064,7 +30112,7 @@
           "contentTerms": ["while", "revising", "for", "course"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 58,
+          "durationMs": 57,
           "error": null
         },
         {
@@ -30134,7 +30182,7 @@
           "contentTerms": ["when", "readings", "all", "blurred", "together"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 75,
+          "durationMs": 76,
           "error": null
         },
         {
@@ -30204,7 +30252,7 @@
           "contentTerms": ["when", "mixed", "up", "two", "similar", "papers"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 117,
+          "durationMs": 116,
           "error": null
         },
         {
@@ -30274,7 +30322,7 @@
           "contentTerms": ["when", "readings", "all", "blurred", "together"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 75,
+          "durationMs": 76,
           "error": null
         },
         {
@@ -30344,7 +30392,7 @@
           "contentTerms": ["when", "mixed", "up", "two", "similar", "papers"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 114,
+          "durationMs": 118,
           "error": null
         },
         {
@@ -30499,7 +30547,7 @@
           "contentTerms": ["during", "reading", "group", "weeks"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 5,
+          "durationMs": 4,
           "error": null
         },
         {
@@ -30528,7 +30576,7 @@
           "contentTerms": ["while", "revising", "for", "course"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 56,
+          "durationMs": 57,
           "error": null
         },
         {
@@ -30668,7 +30716,7 @@
           "contentTerms": ["on", "statistics", "and", "inference", "from", "11", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 6（非 Top1）",
-          "durationMs": 87,
+          "durationMs": 88,
           "error": null
         },
         {
@@ -30738,7 +30786,7 @@
           "contentTerms": ["on", "information", "retrieval", "from", "7", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 69,
+          "durationMs": 68,
           "error": null
         },
         {
@@ -30818,7 +30866,7 @@
           ],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 142,
+          "durationMs": 145,
           "error": null
         },
         {
@@ -30967,7 +31015,7 @@
           "contentTerms": ["on", "statistics", "and", "inference", "from", "6", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 35（非 Top1）",
-          "durationMs": 75,
+          "durationMs": 76,
           "error": null
         },
         {
@@ -31047,7 +31095,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 25（非 Top1）",
-          "durationMs": 130,
+          "durationMs": 132,
           "error": null
         },
         {
@@ -31117,7 +31165,7 @@
           "contentTerms": ["on", "statistics", "and", "inference", "from", "6", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 76,
+          "durationMs": 80,
           "error": null
         },
         {
@@ -31187,7 +31235,7 @@
           "contentTerms": ["on", "statistics", "and", "inference", "from", "12", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 8（非 Top1）",
-          "durationMs": 87,
+          "durationMs": 90,
           "error": null
         },
         {
@@ -31257,7 +31305,7 @@
           "contentTerms": ["on", "information", "retrieval", "from", "6", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 69,
+          "durationMs": 73,
           "error": null
         },
         {
@@ -31327,7 +31375,7 @@
           "contentTerms": ["on", "information", "retrieval", "from", "10", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 80,
+          "durationMs": 82,
           "error": null
         },
         {
@@ -31394,7 +31442,7 @@
           "contentTerms": ["thing", "human", "memory", "and", "cognition"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 46,
+          "durationMs": 47,
           "error": null
         },
         {
@@ -31464,7 +31512,7 @@
           "contentTerms": ["thing", "statistics", "and", "inference"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 21,
+          "durationMs": 23,
           "error": null
         },
         {
@@ -31575,7 +31623,7 @@
           "contentTerms": ["thing", "human", "memory", "and", "cognition"],
           "stage": "rank",
           "detail": "目标在邻域第 46（非 Top1）",
-          "durationMs": 45,
+          "durationMs": 48,
           "error": null
         },
         {
@@ -31645,7 +31693,7 @@
           "contentTerms": ["thing", "statistics", "and", "inference"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 20,
+          "durationMs": 23,
           "error": null
         },
         {
@@ -31782,7 +31830,7 @@
           "contentTerms": ["thing", "human", "memory", "and", "cognition"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 46,
+          "durationMs": 47,
           "error": null
         },
         {
@@ -31880,7 +31928,7 @@
           "contentTerms": ["thing", "information", "retrieval"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 8,
+          "durationMs": 10,
           "error": null
         },
         {
@@ -32070,7 +32118,7 @@
           "contentTerms": ["thing", "calligraphy", "strokes"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 1,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -32085,7 +32133,7 @@
           "contentTerms": ["thing", "crypto", "trading", "strategies"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 3,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -32100,7 +32148,7 @@
           "contentTerms": ["thing", "mycology", "field", "guides"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 20,
+          "durationMs": 22,
           "error": null
         },
         {
@@ -32115,7 +32163,7 @@
           "contentTerms": ["thing", "sailing", "knots"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 2,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -32293,6 +32341,12 @@
             "ok": 16,
             "error": 0
           }
+        },
+        "nearNeighbor": {
+          "rankFailures": 30,
+          "sameTopicTop1": 27,
+          "sameAspectTop1": 19,
+          "sameTopicRate": 0.9
         }
       },
       "360": {
@@ -32450,6 +32504,12 @@
             "ok": 13,
             "error": 0
           }
+        },
+        "nearNeighbor": {
+          "rankFailures": 26,
+          "sameTopicTop1": 25,
+          "sameAspectTop1": 20,
+          "sameTopicRate": 0.9615384615384616
         }
       }
     },
@@ -32564,6 +32624,12 @@
             "ok": 14,
             "error": 0
           }
+        },
+        "nearNeighbor": {
+          "rankFailures": 16,
+          "sameTopicTop1": 16,
+          "sameAspectTop1": 14,
+          "sameTopicRate": 1
         }
       },
       "360": {
@@ -32676,6 +32742,12 @@
             "ok": 12,
             "error": 0
           }
+        },
+        "nearNeighbor": {
+          "rankFailures": 18,
+          "sameTopicTop1": 18,
+          "sameAspectTop1": 12,
+          "sameTopicRate": 1
         }
       }
     },
@@ -32799,6 +32871,12 @@
             "ok": 13,
             "error": 0
           }
+        },
+        "nearNeighbor": {
+          "rankFailures": 31,
+          "sameTopicTop1": 29,
+          "sameAspectTop1": 20,
+          "sameTopicRate": 0.9354838709677419
         }
       },
       "360": {
@@ -32920,6 +32998,12 @@
             "ok": 13,
             "error": 0
           }
+        },
+        "nearNeighbor": {
+          "rankFailures": 28,
+          "sameTopicTop1": 28,
+          "sameAspectTop1": 25,
+          "sameTopicRate": 1
         }
       }
     },
@@ -33034,6 +33118,12 @@
             "ok": 11,
             "error": 0
           }
+        },
+        "nearNeighbor": {
+          "rankFailures": 23,
+          "sameTopicTop1": 23,
+          "sameAspectTop1": 19,
+          "sameTopicRate": 1
         }
       },
       "360": {
@@ -33146,6 +33236,12 @@
             "ok": 12,
             "error": 0
           }
+        },
+        "nearNeighbor": {
+          "rankFailures": 27,
+          "sameTopicTop1": 27,
+          "sameAspectTop1": 22,
+          "sameTopicRate": 1
         }
       }
     },
@@ -33260,6 +33356,12 @@
             "ok": 12,
             "error": 0
           }
+        },
+        "nearNeighbor": {
+          "rankFailures": 29,
+          "sameTopicTop1": 29,
+          "sameAspectTop1": 22,
+          "sameTopicRate": 1
         }
       },
       "360": {
@@ -33372,6 +33474,12 @@
             "ok": 13,
             "error": 0
           }
+        },
+        "nearNeighbor": {
+          "rankFailures": 22,
+          "sameTopicTop1": 22,
+          "sameAspectTop1": 20,
+          "sameTopicRate": 1
         }
       }
     },
@@ -33486,6 +33594,12 @@
             "ok": 13,
             "error": 0
           }
+        },
+        "nearNeighbor": {
+          "rankFailures": 29,
+          "sameTopicTop1": 28,
+          "sameAspectTop1": 25,
+          "sameTopicRate": 0.9655172413793104
         }
       },
       "360": {
@@ -33598,6 +33712,12 @@
             "ok": 11,
             "error": 0
           }
+        },
+        "nearNeighbor": {
+          "rankFailures": 32,
+          "sameTopicTop1": 32,
+          "sameAspectTop1": 27,
+          "sameTopicRate": 1
         }
       }
     },
@@ -33712,6 +33832,12 @@
             "ok": 13,
             "error": 0
           }
+        },
+        "nearNeighbor": {
+          "rankFailures": 29,
+          "sameTopicTop1": 29,
+          "sameAspectTop1": 25,
+          "sameTopicRate": 1
         }
       },
       "360": {
@@ -33824,6 +33950,12 @@
             "ok": 13,
             "error": 0
           }
+        },
+        "nearNeighbor": {
+          "rankFailures": 20,
+          "sameTopicTop1": 20,
+          "sameAspectTop1": 19,
+          "sameTopicRate": 1
         }
       }
     },
@@ -33938,6 +34070,12 @@
             "ok": 15,
             "error": 0
           }
+        },
+        "nearNeighbor": {
+          "rankFailures": 29,
+          "sameTopicTop1": 27,
+          "sameAspectTop1": 26,
+          "sameTopicRate": 0.9310344827586207
         }
       },
       "360": {
@@ -34050,6 +34188,12 @@
             "ok": 13,
             "error": 0
           }
+        },
+        "nearNeighbor": {
+          "rankFailures": 25,
+          "sameTopicTop1": 25,
+          "sameAspectTop1": 21,
+          "sameTopicRate": 1
         }
       }
     }
