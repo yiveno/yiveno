@@ -130,5 +130,16 @@ export function validateUserSimDataset(data: UserSimDataset): string[] {
   else ok(c.saves >= 40, `saves too few for scale run: ${c.saves}`)
   ok(c.visits >= 800, `visits too low: ${c.visits}`)
   ok(c.queries === 80, `queries != 80: ${c.queries}`)
+  const fb = data.groundTruth.feedback
+  ok(fb.attempts.length === c.feedbackAttempts, 'feedback attempts count mismatch')
+  ok(fb.successes + fb.failures === fb.attempts.length, 'feedback outcome sum mismatch')
+  ok(fb.successes === c.feedbackSuccesses, 'feedback successes count mismatch')
+  if (data.meta.days >= 90) {
+    ok(fb.attempts.length >= 10, `feedback attempts too few: ${fb.attempts.length}`)
+    ok(fb.successes > 0 && fb.failures > 0, 'feedback outcomes must include both found and missed')
+  }
+  for (const a of fb.attempts) {
+    ok(a.day >= 7 && a.day < data.meta.days, `feedback attempt day out of range: ${a.day}`)
+  }
   return problems
 }

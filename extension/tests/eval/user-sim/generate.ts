@@ -53,6 +53,11 @@ export type UserSimGroundTruth = {
   dreaming: { anchors: { itemId: string; anchor: string }[] }
   itemTopics: Record<string, string>
   itemAspects: Record<string, string>
+  feedback: {
+    attempts: { day: number; itemId: string; success: boolean }[]
+    successes: number
+    failures: number
+  }
 }
 
 export type UserSimDataset = {
@@ -63,7 +68,14 @@ export type UserSimDataset = {
     days: number
     endIso: string
     persona: string
-    counts: { saves: number; visits: number; queries: number; events: number }
+    counts: {
+      saves: number
+      visits: number
+      queries: number
+      events: number
+      feedbackAttempts: number
+      feedbackSuccesses: number
+    }
   }
   events: UserSimEvent[]
   memoryItems: MemoryItem[]
@@ -202,6 +214,7 @@ export function generateUserSimDataset(input: {
   const weeklyLatent: { week: number; topTopics: string[] }[] = []
   const items: HiddenItem[] = []
   const events: UserSimEvent[] = []
+  const feedbackAttempts: { day: number; itemId: string; success: boolean }[] = []
   let itemCounter = 0
   let eventCounter = 0
   const ev = (type: string, day: number, extra: Partial<UserSimEvent>): void => {
@@ -336,6 +349,52 @@ export function generateUserSimDataset(input: {
             itemId: it.id,
             url: it.url,
             dwellMs: Math.round(15000 + rng() * 120000)
+          })
+        }
+      }
+    }
+    // 闭环反馈：中途真实找回尝试，结果反过来改变后续行为（编码强度/回访/兴趣）。
+    if (day >= 7) {
+      const aliveForRecall = items.filter(it => !it.deleted)
+      if (aliveForRecall.length > 0 && rng() < 0.35) {
+        const target = weighted(
+          aliveForRecall.map(
+            x =>
+              [
+                x,
+                0.2 + x.encoding * (activeProjects(day).some(pr => pr.id === x.projectId) ? 2 : 0.6)
+              ] as [HiddenItem, number]
+          )
+        )
+        const ageFactor = Math.min(1, (day - target.savedDay) / 60)
+        const successP = Math.max(
+          0.05,
+          Math.min(
+            0.95,
+            0.2 +
+              0.55 * target.encoding +
+              (0.1 * Math.min(target.revisits, 3)) / 3 -
+              0.25 * ageFactor
+          )
+        )
+        const success = rng() < successP
+        feedbackAttempts.push({ day, itemId: target.id, success })
+        ev('recall_attempt', day, { itemId: target.id, outcome: success ? 'found' : 'missed' })
+        if (success) {
+          target.revisits++
+          target.lastVisitDay = day
+          target.encoding = Math.min(1, target.encoding + 0.05)
+          ev('revisit', day, {
+            itemId: target.id,
+            url: target.url,
+            dwellMs: Math.round(15000 + rng() * 120000)
+          })
+        } else {
+          target.encoding = Math.min(1, target.encoding + 0.12)
+          interest[target.topicId] = Math.min(2, (interest[target.topicId] ?? 0.1) * 1.05)
+          ev('visit', day, {
+            url: `https://${target.domain}/browse-${target.topicId}-${Math.floor(rng() * 40)}`,
+            dwellMs: Math.round(5000 + rng() * 90000)
           })
         }
       }
@@ -594,7 +653,12 @@ export function generateUserSimDataset(input: {
       anchors: alive.filter(it => it.selectedText).map(it => ({ itemId: it.id, anchor: it.claim }))
     },
     itemTopics: Object.fromEntries(alive.map(it => [it.id, it.topicId])),
-    itemAspects: Object.fromEntries(alive.map(it => [it.id, it.aspect]))
+    itemAspects: Object.fromEntries(alive.map(it => [it.id, it.aspect])),
+    feedback: {
+      attempts: feedbackAttempts,
+      successes: feedbackAttempts.filter(a => a.success).length,
+      failures: feedbackAttempts.filter(a => !a.success).length
+    }
   }
   return {
     meta: {
@@ -608,7 +672,9 @@ export function generateUserSimDataset(input: {
         saves: memoryItems.length,
         visits: events.filter(e => e.type === 'visit' || e.type === 'revisit').length,
         queries: queries.length,
-        events: events.length
+        events: events.length,
+        feedbackAttempts: feedbackAttempts.length,
+        feedbackSuccesses: feedbackAttempts.filter(a => a.success).length
       }
     },
     events,
