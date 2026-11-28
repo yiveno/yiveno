@@ -408,7 +408,8 @@ export function generateUserSimDataset(input: {
   plan.forEach((type, i) => {
     const qid = `q-${String(i + 1).padStart(3, '0')}`
     if (type === 'negative') {
-      const deleted = items.filter(it => it.deleted)
+      const aliveAspects = new Set(alive.map(it => it.aspect))
+      const deleted = items.filter(it => it.deleted && !aliveAspects.has(it.aspect))
       if (deleted.length && i % 2 === 0) {
         const it = pick(deleted)
         queries.push({
@@ -416,7 +417,7 @@ export function generateUserSimDataset(input: {
           type,
           clue: `the page about ${it.aspect} I used to have saved`,
           targetId: null,
-          note: 'deleted-item negative',
+          note: `deleted-item negative aspect=${it.aspect}`,
           distractors: []
         })
       } else {
@@ -424,9 +425,9 @@ export function generateUserSimDataset(input: {
         queries.push({
           id: qid,
           type,
-          clue: `that guide to ${nt.label} I saved a while ago`,
+          clue: `the thing about ${nt.label} I saved a while ago`,
           targetId: null,
-          note: 'never-saved topic negative',
+          note: `never-saved topic negative label=${nt.label}`,
           distractors: []
         })
       }

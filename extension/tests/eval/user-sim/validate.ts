@@ -90,6 +90,32 @@ export function validateUserSimDataset(data: UserSimDataset): string[] {
       `query ${q.id} target missing from visible items`
     )
   }
+  const aliveAspects = new Set(Object.values(data.groundTruth.itemAspects))
+  const aliveTokenSets = data.memoryItems.map(
+    m =>
+      new Set([
+        ...userSimTokens(m.clues.title ?? ''),
+        ...userSimTokens(m.clues.textExcerpt ?? ''),
+        ...(m.clues.keywords ?? [])
+      ])
+  )
+  for (const q of data.groundTruth.queries) {
+    if (q.type !== 'negative') continue
+    ok(!userSimTokens(q.clue).has('guide'), `negative clue ${q.id} uses corpus-common token guide`)
+    if (q.note.startsWith('deleted-item negative aspect=')) {
+      const aspect = q.note.slice('deleted-item negative aspect='.length)
+      ok(!aliveAspects.has(aspect), `deleted negative ${q.id} aspect still alive: ${aspect}`)
+    }
+    if (q.note.startsWith('never-saved topic negative label=')) {
+      const labelTokens = [
+        ...userSimTokens(q.note.slice('never-saved topic negative label='.length))
+      ]
+      ok(
+        !aliveTokenSets.some(tokens => labelTokens.every(t => tokens.has(t))),
+        `never-saved negative ${q.id} label present in corpus`
+      )
+    }
+  }
   for (const a of data.groundTruth.dreaming.anchors) {
     const m = byId.get(a.itemId)
     ok(
