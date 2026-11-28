@@ -359,7 +359,16 @@ export const USER_SIM_TOPICS: SimTopic[] = [
 export const USER_SIM_NEGATIVE_TOPICS: { id: string; label: string }[] = [
   { id: 'crypto-trading', label: 'crypto trading strategies' },
   { id: 'home-brewing', label: 'home brewing recipes' },
-  { id: 'car-repair', label: 'car repair manuals' }
+  { id: 'car-repair', label: 'car repair manuals' },
+  { id: 'orchid-care', label: 'orchid care' },
+  { id: 'sailing-knots', label: 'sailing knots' },
+  { id: 'pottery-glazing', label: 'pottery glazing' },
+  { id: 'beekeeping', label: 'beekeeping basics' },
+  { id: 'astronomy', label: 'astronomy telescopes' },
+  { id: 'fencing', label: 'fencing footwork' },
+  { id: 'mycology', label: 'mycology field guides' },
+  { id: 'calligraphy', label: 'calligraphy strokes' },
+  { id: 'origami', label: 'origami cranes' }
 ]
 const BASE_PROJECTS: SimProject[] = [
   {
@@ -661,6 +670,99 @@ export const USER_SIM_PERSONAS: SimPersona[] = [
       bookmarkRatio: 0.6,
       weekendBoost: 0,
       forgetDays: 50
+    }
+  },
+  {
+    id: 'hoarder',
+    label: 'Hoarder',
+    topicIds: ['writing', 'meetings', 'personal-finance', 'health', 'cognition'],
+    projects: [
+      {
+        id: 'someday-pile',
+        label: 'the someday pile',
+        topics: ['writing', 'cognition'],
+        windows: [[0, 89]],
+        revivalDay: null,
+        scenes: ['when I was saving everything for later', 'during a late-night tab cleanup']
+      },
+      {
+        id: 'life-admin',
+        label: 'the life admin sweep',
+        topics: ['personal-finance', 'health', 'meetings'],
+        windows: [[20, 70]],
+        revivalDay: 78,
+        scenes: ['while I was sorting paperwork', 'when the renewal notices piled up']
+      }
+    ],
+    activity: {
+      sessionsMul: 1.15,
+      saveP: 0.85,
+      revisitP: 0.25,
+      bookmarkRatio: 0.9,
+      weekendBoost: 0,
+      forgetDays: 25
+    }
+  },
+  {
+    id: 'fragmented-browser',
+    label: 'Fragmented browser',
+    topicIds: ['video-prod', 'branding', 'writing', 'design', 'marketing'],
+    projects: [
+      {
+        id: 'trend-hopping',
+        label: 'the trend hopping streak',
+        topics: ['video-prod', 'branding'],
+        windows: [[0, 45]],
+        revivalDay: null,
+        scenes: ['while I was bouncing between tabs', 'during a short-video rabbit hole']
+      },
+      {
+        id: 'side-project-drift',
+        label: 'the side project drift',
+        topics: ['design', 'marketing', 'writing'],
+        windows: [[35, 89]],
+        revivalDay: null,
+        scenes: ['when I kept switching projects', 'during a weekend of half-finished drafts']
+      }
+    ],
+    activity: {
+      sessionsMul: 1.3,
+      saveP: 0.5,
+      revisitP: 0.3,
+      bookmarkRatio: 0.75,
+      weekendBoost: 1,
+      forgetDays: 20
+    }
+  },
+  {
+    id: 'misremembering-user',
+    label: 'Misremembering user',
+    topicIds: ['statistics', 'literature', 'cognition', 'retrieval', 'llm-eng'],
+    projects: [
+      {
+        id: 'coursework',
+        label: 'the coursework',
+        topics: ['statistics', 'literature'],
+        windows: [[0, 60]],
+        revivalDay: 75,
+        scenes: ['while I was revising for the course', 'when the readings all blurred together']
+      },
+      {
+        id: 'reading-group',
+        label: 'the reading group',
+        topics: ['cognition', 'retrieval', 'llm-eng'],
+        windows: [[30, 89]],
+        revivalDay: null,
+        scenes: ['during the reading group weeks', 'when I mixed up two similar papers']
+      }
+    ],
+    activity: {
+      sessionsMul: 0.9,
+      saveP: 0.6,
+      revisitP: 0.5,
+      bookmarkRatio: 0.6,
+      weekendBoost: 0,
+      forgetDays: 30
     }
   }
 ]

@@ -405,13 +405,37 @@ export function generateUserSimDataset(input: {
     ...Array<UserSimClueType>(10).fill('vague'),
     ...Array<UserSimClueType>(12).fill('negative')
   ]
+  let negativeQueues: {
+    deleted: HiddenItem[]
+    topics: (typeof USER_SIM_NEGATIVE_TOPICS)[number][]
+  } | null = null
   plan.forEach((type, i) => {
     const qid = `q-${String(i + 1).padStart(3, '0')}`
     if (type === 'negative') {
-      const aliveAspects = new Set(alive.map(it => it.aspect))
-      const deleted = items.filter(it => it.deleted && !aliveAspects.has(it.aspect))
-      if (deleted.length && i % 2 === 0) {
-        const it = pick(deleted)
+      if (!negativeQueues) {
+        const aliveAspects = new Set(alive.map(it => it.aspect))
+        const shuffle = <T>(arr: T[]): T[] => {
+          const a = [...arr]
+          for (let k = a.length - 1; k > 0; k--) {
+            const j = Math.floor(rng() * (k + 1))
+            ;[a[k], a[j]] = [a[j]!, a[k]!]
+          }
+          return a
+        }
+        negativeQueues = {
+          deleted: shuffle(
+            items.filter(
+              (it, idx, arr) =>
+                it.deleted &&
+                !aliveAspects.has(it.aspect) &&
+                arr.findIndex(x => x.aspect === it.aspect) === idx
+            )
+          ),
+          topics: shuffle([...USER_SIM_NEGATIVE_TOPICS])
+        }
+      }
+      const it = i % 2 === 0 ? negativeQueues.deleted.pop() : undefined
+      if (it) {
         queries.push({
           id: qid,
           type,
@@ -421,7 +445,7 @@ export function generateUserSimDataset(input: {
           distractors: []
         })
       } else {
-        const nt = pick(USER_SIM_NEGATIVE_TOPICS)
+        const nt = negativeQueues.topics.pop() ?? pick(USER_SIM_NEGATIVE_TOPICS)
         queries.push({
           id: qid,
           type,
@@ -441,9 +465,15 @@ export function generateUserSimDataset(input: {
     else if (type === 'paraphrase')
       clue = `that write-up covering ${it.aspect.replace('recall', 'remembering').replace('ranking', 'ordering')} in ${t.label}`
     else if (type === 'associative') clue = associativeClue(it)
-    else if (type === 'temporal')
-      clue = `the one on ${t.label} from about ${Math.max(1, Math.round((days - it.savedDay) / 7))} weeks ago`
-    else clue = `that thing about ${t.label} I saved`
+    else if (type === 'temporal') {
+      const weeks = Math.max(1, Math.round((days - it.savedDay) / 7))
+      const shownWeeks = personaId === 'misremembering-user' ? weeks + 2 : weeks
+      clue = `the one on ${t.label} from about ${shownWeeks} weeks ago`
+    } else if (type === 'vague' && personaId === 'misremembering-user') {
+      const idx = topics.findIndex(x => x.id === t.id)
+      const neighbor = topics[(idx + 1) % topics.length]!
+      clue = `that thing about ${neighbor.label} I saved`
+    } else clue = `that thing about ${t.label} I saved`
     const distractors = alive
       .filter(x => x.id !== it.id && x.topicId === it.topicId && x.aspect === it.aspect)
       .map(x => x.id)
