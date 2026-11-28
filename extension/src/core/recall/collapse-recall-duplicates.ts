@@ -4,9 +4,7 @@
  */
 
 import {
-  canonicalizeBookmarkDuplicateUrl,
   getMemoryFoldKey,
-  normalizeDuplicateHostname,
   serializeMemoryFoldKey,
   type MemoryFoldKey
 } from '@/core/memory/derive-memory-duplicate-key'
@@ -17,23 +15,8 @@ import type { NoteProvenance, RecallDuplicateGroup, RecallMatch } from '@/core/r
 /** @deprecated 使用 MemoryFoldKey；保留 Recall 模块别名。 */
 export type RecallDuplicateKey = MemoryFoldKey
 
-export { canonicalizeBookmarkDuplicateUrl, normalizeDuplicateHostname }
-
-/** 书签折叠互斥用域名（与 canonicalize 主机规则一致）。 */
-export function getBookmarkDuplicateDomain(item: MemoryItem): string | null {
-  if (item.type !== 'bookmark') {
-    return null
-  }
-  const fromPayload = item.payload.domain.trim()
-  if (fromPayload) {
-    return normalizeDuplicateHostname(fromPayload)
-  }
-  try {
-    return normalizeDuplicateHostname(new URL(item.payload.url.trim()).hostname)
-  } catch {
-    return null
-  }
-}
+/** 兼容再导出：书签 URL 规范化仍落在 derive-memory-duplicate-key。 */
+export { canonicalizeBookmarkDuplicateUrl } from '@/core/memory/derive-memory-duplicate-key'
 
 /** 取折叠键；无法建键时退化为 singleton。 */
 export function getRecallDuplicateKey(item: MemoryItem): RecallDuplicateKey {
