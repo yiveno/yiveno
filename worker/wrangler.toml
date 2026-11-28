@@ -37,7 +37,6 @@ head_sampling_rate = 0
 [vars]
 SUPABASE_URL = "https://ugxgxytykxblctsyulsg.supabase.co"
 SUPABASE_ANON_KEY = "sb_publishable_2FY9uDfqNbLwUYXxgcu8lw_qQ8SEbXo"
-REDIRECT_URI_ALLOWLIST = "https://yiveno.com,http://localhost:3001,http://localhost:3002"
 AI_HOSTED_MODEL = "deepseek-flash"
 AI_HOSTED_MODEL_DREAMING = "deepseek-flash"
 AI_HOSTED_MONTHLY_QUOTA = "1000"
@@ -58,6 +57,7 @@ DODO_PAYMENTS_ENVIRONMENT = "test_mode"
 BILLING_FOUNDING_ENABLED = "false"
 # 结构化反馈收件：须为 Email Routing 已验证 destination（非 feedback@ 别名）
 FEEDBACK_TO_EMAIL = "hi.yiveno@gmail.com"
+EVAL_MINT_USER_EMAIL = "retrieval-ablation-local@yiveno.dev"
 
 [[kv_namespaces]]
 binding = "AI_USAGE_KV"
@@ -114,7 +114,6 @@ head_sampling_rate = 0
 AI_CLUE_PROXY_ENABLED = "false"
 SUPABASE_URL = "https://ugxgxytykxblctsyulsg.supabase.co"
 SUPABASE_ANON_KEY = "sb_publishable_2FY9uDfqNbLwUYXxgcu8lw_qQ8SEbXo"
-REDIRECT_URI_ALLOWLIST = "https://yiveno.com"
 AI_HOSTED_MODEL = "deepseek-flash"
 AI_HOSTED_MODEL_DREAMING = "deepseek-flash"
 AI_HOSTED_MONTHLY_QUOTA = "1000"
@@ -130,6 +129,7 @@ ANON_CLEANUP_SCHEDULED_ENABLED = "true"
 DODO_PAYMENTS_ENVIRONMENT = "test_mode"
 BILLING_FOUNDING_ENABLED = "false"
 FEEDBACK_TO_EMAIL = "hi.yiveno@gmail.com"
+EVAL_MINT_USER_EMAIL = "retrieval-ablation-local@yiveno.dev"
 
 [[env.production.kv_namespaces]]
 binding = "AI_USAGE_KV"

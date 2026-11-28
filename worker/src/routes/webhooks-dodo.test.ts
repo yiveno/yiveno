@@ -9,7 +9,6 @@ const EVENT_ID = 'evt_01route000000000000000001'
 
 function env(): Env {
   return {
-    JWT_SECRET: 'test-secret',
     SUPABASE_URL: 'https://example.supabase.co',
     SUPABASE_ANON_KEY: 'anon-key',
     SUPABASE_SERVICE_ROLE_KEY: 'service-role-key',

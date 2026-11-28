@@ -5,7 +5,6 @@ import type { Env } from '../types/env'
 
 function env(overrides: Record<string, unknown> = {}): Env {
   return {
-    JWT_SECRET: 'test-secret',
     SUPABASE_URL: 'https://example.supabase.co',
     SUPABASE_ANON_KEY: 'anon-key',
     SUPABASE_SERVICE_ROLE_KEY: 'service-role-key',

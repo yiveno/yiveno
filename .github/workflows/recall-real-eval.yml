@@ -13,9 +13,10 @@
 #   - 消融默认 vs_baseline（对照 B2 real-run；召回/MRR/nDCG 不得降、negFP 不得升）
 #
 # 仓库 Secrets：
-#   - 消融鉴权：SUPABASE_URL + SUPABASE_ANON_KEY + SUPABASE_SERVICE_ROLE_KEY（推荐）
-#     或短期 RETRIEVAL_ABLATION_ACCESS_TOKEN
+#   - 消融鉴权：RETRIEVAL_ABLATION_ACCESS_TOKEN 或 RETRIEVAL_ABLATION_MINT_TOKEN（任一）
+#     （MINT_TOKEN 对应 Worker EVAL_MINT_TOKEN → POST /api/eval/mint-session）
 #   - 可选 RETRIEVAL_ABLATION_API_BASE / RETRIEVAL_ABLATION_USER_EMAIL
+#   - 不再在 Actions 常驻 SUPABASE_SERVICE_ROLE_KEY
 #
 # 说明：理解层定死 clue 批跑（原 `parse-gold:llm` / parse-gold must）已退役；
 # 理解试跑 / 验收：`cd extension && bun run nlu:try -- "<真实 clue>"`。
@@ -61,35 +62,31 @@ jobs:
       - name: Install
         run: bun install --frozen-lockfile
 
-      - name: Require ablation auth (token or Supabase mint)
+      - name: Require ablation auth (access token or worker mint)
         env:
           RETRIEVAL_ABLATION_ACCESS_TOKEN: ${{ secrets.RETRIEVAL_ABLATION_ACCESS_TOKEN }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          RETRIEVAL_ABLATION_MINT_TOKEN: ${{ secrets.RETRIEVAL_ABLATION_MINT_TOKEN }}
         run: |
           set -euo pipefail
           if [ -n "${RETRIEVAL_ABLATION_ACCESS_TOKEN:-}" ]; then
             echo "auth=RETRIEVAL_ABLATION_ACCESS_TOKEN"
             exit 0
           fi
-          if [ -n "${SUPABASE_URL:-}" ] && [ -n "${SUPABASE_ANON_KEY:-}" ] && [ -n "${SUPABASE_SERVICE_ROLE_KEY:-}" ]; then
-            echo "auth=supabase_admin_mint（job 内签发短期会话）"
+          if [ -n "${RETRIEVAL_ABLATION_MINT_TOKEN:-}" ]; then
+            echo "auth=RETRIEVAL_ABLATION_MINT_TOKEN（Worker /api/eval/mint-session）"
             exit 0
           fi
-          echo "缺少消融鉴权：请配 SUPABASE_URL + SUPABASE_ANON_KEY + SUPABASE_SERVICE_ROLE_KEY（推荐），"
-          echo "或配短期 RETRIEVAL_ABLATION_ACCESS_TOKEN"
+          echo "缺少消融鉴权：请配 RETRIEVAL_ABLATION_ACCESS_TOKEN"
+          echo "或 RETRIEVAL_ABLATION_MINT_TOKEN（对应 Worker EVAL_MINT_TOKEN）"
           exit 1
 
       - name: Run retrieval-ablation:real
         working-directory: extension
         env:
           RETRIEVAL_ABLATION_ACCESS_TOKEN: ${{ secrets.RETRIEVAL_ABLATION_ACCESS_TOKEN }}
+          RETRIEVAL_ABLATION_MINT_TOKEN: ${{ secrets.RETRIEVAL_ABLATION_MINT_TOKEN }}
           RETRIEVAL_ABLATION_API_BASE: ${{ secrets.RETRIEVAL_ABLATION_API_BASE }}
           RETRIEVAL_ABLATION_USER_EMAIL: ${{ secrets.RETRIEVAL_ABLATION_USER_EMAIL }}
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           RETRIEVAL_ABLATION_OUT: ${{ github.workspace }}/retrieval-ablation-real-report.json
           # 质量门禁：对照 B2 对齐快照；指标退化 → exit 2
           RETRIEVAL_ABLATION_GATE_MODE: vs_baseline

@@ -9,17 +9,17 @@
 
 /** wrangler 生成的绑定 + 本地可选覆盖键 */
 export type Env = Cloudflare.Env & {
-  /** 本地兜底 JWT secret（优先 JWT_SECRET） */
-  SECRET?: string
   NODE_ENV?: string
-  /** 旧名 allowlist，兼容读取 */
-  REDIRECT_ALLOWLIST?: string
-  AUTH_GOOGLE_AUTH_URL?: string
-  AUTH_GOOGLE_TOKEN_URL?: string
-  AUTH_GOOGLE_USERINFO_URL?: string
-  AUTH_MICROSOFT_AUTH_URL?: string
-  AUTH_MICROSOFT_TOKEN_URL?: string
-  AUTH_MICROSOFT_USERINFO_URL?: string
+  /**
+   * Actions / 评测 mint 共享口令（生产 optional secret）。
+   * 未配置 → POST /api/eval/mint-session 返回 503。
+   */
+  EVAL_MINT_TOKEN?: string
+  /**
+   * 评测 mint 固定邮箱；缺省 retrieval-ablation-local@yiveno.dev。
+   * 写入 wrangler [vars]；禁止由请求体传入。
+   */
+  EVAL_MINT_USER_EMAIL?: string
   /** M1 线索代理开关；"false" 关闭 */
   AI_CLUE_PROXY_ENABLED?: string
   /** 线索理解按 IP 日调用上限 */

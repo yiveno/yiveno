@@ -21,28 +21,19 @@
 - `SUPABASE_URL`（生产项目主库区域：**East US / Ohio · `us-east-2`**；Dashboard Primary Database 为准）
 - `SUPABASE_ANON_KEY`
 - `SUPABASE_SERVICE_ROLE_KEY`
-- `AUTH_GOOGLE_CLIENT_ID`（遗留 Worker OAuth；**用户主路径**已改官网 Supabase Auth）
-- `AUTH_GOOGLE_CLIENT_SECRET`
-- `AUTH_MICROSOFT_CLIENT_ID`
-- `AUTH_MICROSOFT_CLIENT_SECRET`
-- `AUTH_GOOGLE_AUTH_URL`
-- `AUTH_GOOGLE_TOKEN_URL`
-- `AUTH_GOOGLE_USERINFO_URL`
-- `AUTH_MICROSOFT_AUTH_URL`
-- `AUTH_MICROSOFT_TOKEN_URL`
-- `AUTH_MICROSOFT_USERINFO_URL`
 - （官网 Email OTP）Supabase 启用 Email、模板含 `{{ .Token }}`、Redirect 含 `/auth/callback`；生产 SMTP = **阿里云 DirectMail**（见 `docs/AUTH_GUIDE.md`）
 - `PUBLIC_TURNSTILE_SITE_KEY`（共享源文件；同步到 `website/.env` / Pages）— Cloudflare Turnstile **公开 sitekey**
 - `TURNSTILE_SECRET_KEY`（共享源文件 → Worker 必需 secret；与 **Supabase Attack Protection** 使用**同一 secret**）
-- `DODO_PAYMENTS_API_KEY`（checkout / 对账；生产必配；test 前缀 `dodo_test_`，live 前缀 `dodo_live_`；dev-env 按环境校验前缀）
+- `DODO_PAYMENTS_API_KEY`（checkout / 对账；生产必配；test 前缀 `dodo_test_`，live 前缀 `dodo_live_`；dev-env 按环境校验前缀；`live_mode` 下无 `dodo_live_` 标签 → ERR）
 - `DODO_PAYMENTS_WEBHOOK_KEY`（Standard Webhooks signing secret，须以 `whsec_` 开头）
 - `DODO_PAYMENTS_ENVIRONMENT`（`test_mode` | `live_mode`；**生产权威**见下方「权威与轮换」：以 wrangler `[env.production.vars]` 为准）
 - `DODO_PRODUCT_ID_PRO_MONTHLY` / `DODO_PRODUCT_ID_PRO_ANNUAL`
 - `DODO_PRODUCT_ID_FOUNDING_MONTHLY` / `DODO_PRODUCT_ID_FOUNDING_ANNUAL`（仅 Founding 打开时；须同有同无）
 - `BILLING_FOUNDING_ENABLED`（默认 `false`）
-- `REDIRECT_URI_ALLOWLIST`
+- （可选）`EVAL_MINT_TOKEN`（Actions 评测 mint → Worker `POST /api/eval/mint-session`；未配则端点 503）
 - `ALIYUN_DM_ACCESS_KEY_ID` / `ALIYUN_DM_ACCESS_KEY_SECRET`（Pro 欢迎信 DirectMail API；与 Supabase OTP SMTP 分立）
 - （可选）`ALIYUN_DM_ACCOUNT_NAME`（默认 `hello@yiveno.com`）、`ALIYUN_DM_FROM_ALIAS`、`ALIYUN_DM_REPLY_ADDRESS`（默认 `support@yiveno.com`）、`ALIYUN_DM_REGION_ID`、`ALIYUN_DM_ENDPOINT`
+- **已退役（勿再配置）：** 自建 OAuth（`AUTH_GOOGLE_*` / `AUTH_MICROSOFT_*`）、`REDIRECT_URI_ALLOWLIST`、`JWT_SECRET`、`/api/admin/env/check`
 
 ### 2. `.env.development.local`
 
@@ -52,7 +43,6 @@
 - `VITE_WEBSITE_URL`
 - `VITE_API_BASE_URL`
 - `VITE_CLOUDFLARE_WORKER_URL`
-- `JWT_SECRET`
 
 默认应指向本地：
 
@@ -61,14 +51,12 @@
 
 ### 3. `.env.production.local`
 
-只放生产环境覆盖值：
+只放生产环境覆盖值（如需覆盖）：
 
-- `JWT_SECRET`
-- 如需覆盖，也可显式写入：
-  - `WEBSITE_URL`
-  - `VITE_WEBSITE_URL`
-  - `VITE_API_BASE_URL`
-  - `VITE_CLOUDFLARE_WORKER_URL`
+- `WEBSITE_URL`
+- `VITE_WEBSITE_URL`
+- `VITE_API_BASE_URL`
+- `VITE_CLOUDFLARE_WORKER_URL`
 
 默认应指向正式域名：
 
@@ -115,94 +103,83 @@ bun run env:docs:sync
 - `env:check:*`：**只读**校验——不写生成文件；按 target 渲染期望内容与磁盘比对（stale → 失败，提示先 `env:sync`）；无本地源文件（Pages）则跳过 stale。另校验缺字段、`localhost` 混进错误环境、公开键角色门、Supabase wrangler 权威、Dodo 前缀/成组等
 - `env:contract:check`：manifest 自洽、wrangler 双集、Worker 声明键、文档标记表、`.env.example` 键覆盖
 - `env:docs:sync`：按 `KEY_META` 写回下方标记表
-- **公开键角色门（development / production 均生效）：** `SUPABASE_ANON_KEY` / `VITE_SUPABASE_ANON_KEY` 必须为 publishable（`sb_publishable_…`）或 JWT `role=anon`；`sb_secret_…` / `service_role` / 无法判定 → `ERR … invalid role`（只报键名与角色，**永不打印值**）。`target=worker|all` 且存在 `SUPABASE_SERVICE_ROLE_KEY` 时须为 service_role，且不得与 anon 相等。`PUBLIC_TURNSTILE_SITE_KEY` 与合并后 `TURNSTILE_SECRET_KEY` 相等 → 失败。`target=worker|all` + production 且 `JWT_SECRET` 长度 < 32 → WARN（不失败）
-- **target 必需集：** `website` / `extension` 只要求 `SUPABASE_URL` + `SUPABASE_ANON_KEY`；`worker` / `all` 另要求 `SUPABASE_SERVICE_ROLE_KEY` + `JWT_SECRET`（避免 extension `build:prod` 被 worker 机密绑架）
+- **公开键角色门（development / production 均生效）：** `SUPABASE_ANON_KEY` / `VITE_SUPABASE_ANON_KEY` 必须为 publishable（`sb_publishable_…`）或 JWT `role=anon`；`sb_secret_…` / `service_role` / 无法判定 → `ERR … invalid role`（只报键名与角色，**永不打印值**）。`target=worker|all` 且存在 `SUPABASE_SERVICE_ROLE_KEY` 时须为 service_role，且不得与 anon 相等。`PUBLIC_TURNSTILE_SITE_KEY` 与合并后 `TURNSTILE_SECRET_KEY` 相等 → 失败。
+- **target 必需集：** `website` / `extension` 只要求 `SUPABASE_URL` + `SUPABASE_ANON_KEY`；`worker` / `all` 另要求 `SUPABASE_SERVICE_ROLE_KEY`（避免 extension `build:prod` 被 worker 机密绑架）
 - **production 额外硬门：** 合并后的 `PUBLIC_SUPABASE_URL`、`PUBLIC_SUPABASE_ANON_KEY`、`PUBLIC_TURNSTILE_SITE_KEY` 任一为空即失败（官网 `/login` Supabase session + Turnstile；通常来自 `.env.shared.local`，`PUBLIC_SUPABASE_*` 可由 `SUPABASE_*` 映射）。`website` 的 `build:prod` 会先跑该 check；check 日志只报变量名与 `(set)/(missing)`，不打印值。缺失即失败，避免静默部署后出现 `PUBLIC_SUPABASE_ANON_KEY 未配置` / bot check not configured
 - **process.env 覆盖可见性：** check（及 sync 非 quiet）会列出被 `process.env` 覆盖的**键名**（不列值）
-- **Pages Git 构建：** 无本地 `.env.*.local` 时，`scripts/dev-env.mjs` 会从构建环境变量（白名单键）合并进源 env；**变量名与 `.env.shared.local` 一致**（`SUPABASE_URL` / `SUPABASE_ANON_KEY` / `PUBLIC_TURNSTILE_SITE_KEY`），后台 Production 机密即构建输入。旧名 `PUBLIC_SUPABASE_URL` / `PUBLIC_SUPABASE_ANON_KEY` 仍可作为 `SUPABASE_*` 别名。`build:prod` 带 `--target=website` 时只要求官网所需键，不拦 worker-only 机密（`SERVICE_ROLE` / `JWT`）。调用一律 `bun --no-env-file`（避免 Bun 自动灌入本地 `.env.*.local` 污染 production）；遗留 `worker/scripts/sync-env.sh` / `website/dev.sh` 同此
+- **Pages Git 构建：** 无本地 `.env.*.local` 时，`scripts/dev-env.mjs` 会从构建环境变量（白名单键）合并进源 env；**变量名与 `.env.shared.local` 一致**（`SUPABASE_URL` / `SUPABASE_ANON_KEY` / `PUBLIC_TURNSTILE_SITE_KEY`），后台 Production 机密即构建输入。旧名 `PUBLIC_SUPABASE_URL` / `PUBLIC_SUPABASE_ANON_KEY` 仍可作为 `SUPABASE_*` 别名。`build:prod` 带 `--target=website` 时只要求官网所需键，不拦 worker-only 机密（`SERVICE_ROLE`）。调用一律 `bun --no-env-file`（避免 Bun 自动灌入本地 `.env.*.local` 污染 production）；遗留 `worker/scripts/sync-env.sh` / `website/dev.sh` 同此
 
 ## 键表（由 manifest 生成）
 
 <!-- env-manifest:start -->
 
-| Key                                        | Category | Targets                                   | Authority                                                                                |
-| ------------------------------------------ | -------- | ----------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `AI_CLUE_DAILY_LIMIT`                      | config   | worker/.dev.vars.local → worker/.dev.vars | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
-| `AI_DREAMING_FREE_DAILY_CAP`               | config   | worker/.dev.vars.local → worker/.dev.vars | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
-| `AI_DREAMING_FREE_MONTHLY_QUOTA`           | config   | worker/.dev.vars.local → worker/.dev.vars | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
-| `AI_DREAMING_PRO_DAILY_CAP`                | config   | worker/.dev.vars.local → worker/.dev.vars | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
-| `AI_DREAMING_PRO_MONTHLY_QUOTA`            | config   | worker/.dev.vars.local → worker/.dev.vars | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
-| `AI_EMBED_ANONYMOUS_LIFETIME_LIMIT`        | config   | worker/.dev.vars.local → worker/.dev.vars | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
-| `AI_EMBED_DAILY_LIMIT`                     | config   | worker/.dev.vars.local → worker/.dev.vars | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
-| `AI_EMBED_FREE_DAILY_LIMIT`                | config   | worker/.dev.vars.local → worker/.dev.vars | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
-| `AI_ENRICHMENT_DAILY_LIMIT`                | config   | worker/.dev.vars.local → worker/.dev.vars | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
-| `AI_ENRICHMENT_PROXY_ENABLED`              | config   | worker/.dev.vars.local → worker/.dev.vars | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
-| `AI_EXTRACT_FREE_DAILY_CAP`                | config   | worker/.dev.vars.local → worker/.dev.vars | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
-| `AI_EXTRACT_FREE_MONTHLY_QUOTA`            | config   | worker/.dev.vars.local → worker/.dev.vars | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
-| `AI_EXTRACT_PRO_DAILY_CAP`                 | config   | worker/.dev.vars.local → worker/.dev.vars | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
-| `AI_EXTRACT_PRO_MONTHLY_QUOTA`             | config   | worker/.dev.vars.local → worker/.dev.vars | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
-| `AI_GATEWAY_TOKEN`                         | secret   | worker optional / production secret       | 可选；Authenticated Gateway 时需要                                                       |
-| `AI_GS_CLUE_SAMPLES_DAILY_LIMIT`           | config   | worker/.dev.vars.local → worker/.dev.vars | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
-| `AI_GS_CLUE_SAMPLES_PROXY_ENABLED`         | config   | worker/.dev.vars.local → worker/.dev.vars | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
-| `AI_HOSTED_ANONYMOUS_LIFETIME_QUOTA`       | config   | worker/.dev.vars.local → worker/.dev.vars | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
-| `AI_HOSTED_DAILY_CAP`                      | config   | worker/.dev.vars.local → worker/.dev.vars | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
-| `AI_HOSTED_FREE_DAILY_CAP`                 | config   | worker/.dev.vars.local → worker/.dev.vars | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
-| `AI_HOSTED_FREE_MONTHLY_QUOTA`             | config   | worker/.dev.vars.local → worker/.dev.vars | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
-| `AI_HOSTED_MODEL_ENRICHMENT`               | config   | worker/.dev.vars.local → worker/.dev.vars | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
-| `AI_HOSTED_MODEL_EXTRACT`                  | config   | worker/.dev.vars.local → worker/.dev.vars | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
-| `AI_HOSTED_MODEL_GS_SAMPLES`               | config   | worker/.dev.vars.local → worker/.dev.vars | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
-| `AI_HOSTED_MODEL_NLG`                      | config   | worker/.dev.vars.local → worker/.dev.vars | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
-| `AI_HOSTED_MODEL_NLU`                      | config   | worker/.dev.vars.local → worker/.dev.vars | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
-| `AI_HOSTED_QUOTA_EXEMPT_USER_IDS`          | config   | shared/profile → worker                   | 本地源文件 → 生成文件                                                                    |
-| `AI_ROUTING_MODE`                          | config   | worker/.dev.vars.local（可选）            | 本地覆盖层；勿手改生成的 .dev.vars                                                       |
-| `ALIYUN_DM_ACCESS_KEY_ID`                  | secret   | shared/profile → worker                   | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
-| `ALIYUN_DM_ACCESS_KEY_SECRET`              | secret   | shared/profile → worker                   | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
-| `ALIYUN_DM_ACCOUNT_NAME`                   | config   | shared/profile → worker                   | 本地源文件 → 生成文件                                                                    |
-| `ALIYUN_DM_ENDPOINT`                       | config   | shared/profile → worker                   | 本地源文件 → 生成文件                                                                    |
-| `ALIYUN_DM_FROM_ALIAS`                     | config   | shared/profile → worker                   | 本地源文件 → 生成文件                                                                    |
-| `ALIYUN_DM_REGION_ID`                      | config   | shared/profile → worker                   | 本地源文件 → 生成文件                                                                    |
-| `ALIYUN_DM_REPLY_ADDRESS`                  | config   | shared/profile → worker                   | 本地源文件 → 生成文件                                                                    |
-| `AUTH_GOOGLE_AUTH_URL`                     | config   | shared/profile → worker                   | 本地源文件 → 生成文件                                                                    |
-| `AUTH_GOOGLE_CLIENT_ID`                    | secret   | shared/profile → worker                   | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
-| `AUTH_GOOGLE_CLIENT_SECRET`                | secret   | shared/profile → worker                   | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
-| `AUTH_GOOGLE_TOKEN_URL`                    | config   | shared/profile → worker                   | 本地源文件 → 生成文件                                                                    |
-| `AUTH_GOOGLE_USERINFO_URL`                 | config   | shared/profile → worker                   | 本地源文件 → 生成文件                                                                    |
-| `AUTH_MICROSOFT_AUTH_URL`                  | config   | shared/profile → worker                   | 本地源文件 → 生成文件                                                                    |
-| `AUTH_MICROSOFT_CLIENT_ID`                 | secret   | shared/profile → worker                   | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
-| `AUTH_MICROSOFT_CLIENT_SECRET`             | secret   | shared/profile → worker                   | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
-| `AUTH_MICROSOFT_TOKEN_URL`                 | config   | shared/profile → worker                   | 本地源文件 → 生成文件                                                                    |
-| `AUTH_MICROSOFT_USERINFO_URL`              | config   | shared/profile → worker                   | 本地源文件 → 生成文件                                                                    |
-| `BILLING_FOUNDING_ENABLED`                 | config   | shared/profile → worker                   | 本地源文件 → 生成文件                                                                    |
-| `DEEPSEEK_API_KEY`                         | secret   | shared/profile → worker                   | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
-| `DODO_PAYMENTS_API_KEY`                    | secret   | shared/profile → worker                   | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
-| `DODO_PAYMENTS_ENVIRONMENT`                | config   | shared → worker；wrangler production.vars | 生产以 wrangler [env.production.vars] 为权威；dev-env 校验 API key 前缀                  |
-| `DODO_PAYMENTS_WEBHOOK_KEY`                | secret   | shared/profile → worker                   | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
-| `DODO_PRODUCT_ID_FOUNDING_ANNUAL`          | secret   | shared/profile → worker                   | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
-| `DODO_PRODUCT_ID_FOUNDING_MONTHLY`         | secret   | shared/profile → worker                   | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
-| `DODO_PRODUCT_ID_PRO_ANNUAL`               | secret   | shared/profile → worker                   | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
-| `DODO_PRODUCT_ID_PRO_MONTHLY`              | secret   | shared/profile → worker                   | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
-| `GOOGLE_AI_API_KEY`                        | secret   | shared/profile → worker                   | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
-| `GROQ_API_KEY`                             | secret   | shared/profile → worker                   | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
-| `JWT_SECRET`                               | secret   | profile → worker                          | profile 源文件；Worker secret                                                            |
-| `OPENAI_API_KEY`                           | secret   | shared/profile → worker                   | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
-| `PUBLIC_API_BASE_URL`                      | public   | website                                   | 本地源文件 → 生成文件                                                                    |
-| `PUBLIC_SUPABASE_ANON_KEY`                 | public   | website                                   | 本地源文件 → 生成文件                                                                    |
-| `PUBLIC_SUPABASE_URL`                      | public   | website                                   | 本地源文件 → 生成文件                                                                    |
-| `PUBLIC_TURNSTILE_SITE_KEY`                | public   | shared → website                          | 公开 sitekey；同步 website/.env / Pages                                                  |
-| `PUBLIC_WEBSITE_URL`                       | public   | website                                   | 本地源文件 → 生成文件                                                                    |
-| `REDIRECT_URI_ALLOWLIST`                   | config   | shared/profile → worker                   | 本地源文件 → 生成文件                                                                    |
-| `SUBSCRIPTION_RECONCILE_SCHEDULED_ENABLED` | config   | worker/.dev.vars.local → worker/.dev.vars | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
-| `SUPABASE_ANON_KEY`                        | public   | shared → extension/worker/website         | Worker 以 wrangler [vars] 为权威；本地 shared 与 Pages 机密须匹配；须为 publishable/anon |
-| `SUPABASE_SERVICE_ROLE_KEY`                | secret   | shared → worker                           | 仅 Worker secret / 本地 shared；禁止进扩展与官网                                         |
-| `SUPABASE_URL`                             | public   | shared → extension/worker/website         | Worker 以 wrangler [vars] 为权威；本地 shared 与 Pages 机密须匹配                        |
-| `TURNSTILE_SECRET_KEY`                     | secret   | shared → worker                           | Worker 必需 secret；与 Supabase Attack Protection 使用同一 secret                        |
-| `VITE_API_BASE_URL`                        | public   | extension runtime                         | 本地源文件 → 生成文件                                                                    |
-| `VITE_CLOUDFLARE_WORKER_URL`               | public   | extension runtime                         | 本地源文件 → 生成文件                                                                    |
-| `VITE_RUNTIME_ENV`                         | public   | extension runtime                         | 本地源文件 → 生成文件                                                                    |
-| `VITE_SUPABASE_ANON_KEY`                   | public   | extension runtime                         | 本地源文件 → 生成文件                                                                    |
-| `VITE_SUPABASE_URL`                        | public   | extension runtime                         | 本地源文件 → 生成文件                                                                    |
-| `VITE_WEBSITE_URL`                         | public   | extension runtime                         | 本地源文件 → 生成文件                                                                    |
-| `WEBSITE_URL`                              | public   | shared/profile → worker                   | 本地源文件 → 生成文件                                                                    |
+| Key                                        | Category | Targets                                    | Authority                                                                                |
+| ------------------------------------------ | -------- | ------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| `AI_CLUE_DAILY_LIMIT`                      | config   | worker/.dev.vars.local → worker/.dev.vars  | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
+| `AI_DREAMING_FREE_DAILY_CAP`               | config   | worker/.dev.vars.local → worker/.dev.vars  | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
+| `AI_DREAMING_FREE_MONTHLY_QUOTA`           | config   | worker/.dev.vars.local → worker/.dev.vars  | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
+| `AI_DREAMING_PRO_DAILY_CAP`                | config   | worker/.dev.vars.local → worker/.dev.vars  | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
+| `AI_DREAMING_PRO_MONTHLY_QUOTA`            | config   | worker/.dev.vars.local → worker/.dev.vars  | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
+| `AI_EMBED_ANONYMOUS_LIFETIME_LIMIT`        | config   | worker/.dev.vars.local → worker/.dev.vars  | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
+| `AI_EMBED_DAILY_LIMIT`                     | config   | worker/.dev.vars.local → worker/.dev.vars  | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
+| `AI_EMBED_FREE_DAILY_LIMIT`                | config   | worker/.dev.vars.local → worker/.dev.vars  | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
+| `AI_ENRICHMENT_DAILY_LIMIT`                | config   | worker/.dev.vars.local → worker/.dev.vars  | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
+| `AI_ENRICHMENT_PROXY_ENABLED`              | config   | worker/.dev.vars.local → worker/.dev.vars  | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
+| `AI_EXTRACT_FREE_DAILY_CAP`                | config   | worker/.dev.vars.local → worker/.dev.vars  | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
+| `AI_EXTRACT_FREE_MONTHLY_QUOTA`            | config   | worker/.dev.vars.local → worker/.dev.vars  | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
+| `AI_EXTRACT_PRO_DAILY_CAP`                 | config   | worker/.dev.vars.local → worker/.dev.vars  | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
+| `AI_EXTRACT_PRO_MONTHLY_QUOTA`             | config   | worker/.dev.vars.local → worker/.dev.vars  | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
+| `AI_GATEWAY_TOKEN`                         | secret   | worker optional / production secret        | 可选；Authenticated Gateway 时需要                                                       |
+| `AI_GS_CLUE_SAMPLES_DAILY_LIMIT`           | config   | worker/.dev.vars.local → worker/.dev.vars  | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
+| `AI_GS_CLUE_SAMPLES_PROXY_ENABLED`         | config   | worker/.dev.vars.local → worker/.dev.vars  | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
+| `AI_HOSTED_ANONYMOUS_LIFETIME_QUOTA`       | config   | worker/.dev.vars.local → worker/.dev.vars  | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
+| `AI_HOSTED_DAILY_CAP`                      | config   | worker/.dev.vars.local → worker/.dev.vars  | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
+| `AI_HOSTED_FREE_DAILY_CAP`                 | config   | worker/.dev.vars.local → worker/.dev.vars  | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
+| `AI_HOSTED_FREE_MONTHLY_QUOTA`             | config   | worker/.dev.vars.local → worker/.dev.vars  | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
+| `AI_HOSTED_MODEL_ENRICHMENT`               | config   | worker/.dev.vars.local → worker/.dev.vars  | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
+| `AI_HOSTED_MODEL_EXTRACT`                  | config   | worker/.dev.vars.local → worker/.dev.vars  | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
+| `AI_HOSTED_MODEL_GS_SAMPLES`               | config   | worker/.dev.vars.local → worker/.dev.vars  | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
+| `AI_HOSTED_MODEL_NLG`                      | config   | worker/.dev.vars.local → worker/.dev.vars  | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
+| `AI_HOSTED_MODEL_NLU`                      | config   | worker/.dev.vars.local → worker/.dev.vars  | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
+| `AI_HOSTED_QUOTA_EXEMPT_USER_IDS`          | config   | shared/profile → worker                    | 本地源文件 → 生成文件                                                                    |
+| `AI_ROUTING_MODE`                          | config   | worker/.dev.vars.local（可选）             | 本地覆盖层；勿手改生成的 .dev.vars                                                       |
+| `ALIYUN_DM_ACCESS_KEY_ID`                  | secret   | shared/profile → worker                    | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
+| `ALIYUN_DM_ACCESS_KEY_SECRET`              | secret   | shared/profile → worker                    | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
+| `ALIYUN_DM_ACCOUNT_NAME`                   | config   | shared/profile → worker                    | 本地源文件 → 生成文件                                                                    |
+| `ALIYUN_DM_ENDPOINT`                       | config   | shared/profile → worker                    | 本地源文件 → 生成文件                                                                    |
+| `ALIYUN_DM_FROM_ALIAS`                     | config   | shared/profile → worker                    | 本地源文件 → 生成文件                                                                    |
+| `ALIYUN_DM_REGION_ID`                      | config   | shared/profile → worker                    | 本地源文件 → 生成文件                                                                    |
+| `ALIYUN_DM_REPLY_ADDRESS`                  | config   | shared/profile → worker                    | 本地源文件 → 生成文件                                                                    |
+| `BILLING_FOUNDING_ENABLED`                 | config   | shared/profile → worker                    | 本地源文件 → 生成文件                                                                    |
+| `DEEPSEEK_API_KEY`                         | secret   | shared/profile → worker                    | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
+| `DODO_PAYMENTS_API_KEY`                    | secret   | shared/profile → worker                    | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
+| `DODO_PAYMENTS_ENVIRONMENT`                | config   | shared → worker；wrangler production.vars  | 生产以 wrangler [env.production.vars] 为权威；dev-env 校验 API key 前缀                  |
+| `DODO_PAYMENTS_WEBHOOK_KEY`                | secret   | shared/profile → worker                    | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
+| `DODO_PRODUCT_ID_FOUNDING_ANNUAL`          | secret   | shared/profile → worker                    | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
+| `DODO_PRODUCT_ID_FOUNDING_MONTHLY`         | secret   | shared/profile → worker                    | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
+| `DODO_PRODUCT_ID_PRO_ANNUAL`               | secret   | shared/profile → worker                    | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
+| `DODO_PRODUCT_ID_PRO_MONTHLY`              | secret   | shared/profile → worker                    | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
+| `EVAL_MINT_TOKEN`                          | secret   | shared optional → worker production secret | 可选；Actions 评测 mint；缺失时 mint 端点 503                                            |
+| `GOOGLE_AI_API_KEY`                        | secret   | shared/profile → worker                    | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
+| `GROQ_API_KEY`                             | secret   | shared/profile → worker                    | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
+| `OPENAI_API_KEY`                           | secret   | shared/profile → worker                    | 本地源文件 → 生成 / Worker secrets（永不入库）                                           |
+| `PUBLIC_API_BASE_URL`                      | public   | website                                    | 本地源文件 → 生成文件                                                                    |
+| `PUBLIC_SUPABASE_ANON_KEY`                 | public   | website                                    | 本地源文件 → 生成文件                                                                    |
+| `PUBLIC_SUPABASE_URL`                      | public   | website                                    | 本地源文件 → 生成文件                                                                    |
+| `PUBLIC_TURNSTILE_SITE_KEY`                | public   | shared → website                           | 公开 sitekey；同步 website/.env / Pages                                                  |
+| `PUBLIC_WEBSITE_URL`                       | public   | website                                    | 本地源文件 → 生成文件                                                                    |
+| `SUBSCRIPTION_RECONCILE_SCHEDULED_ENABLED` | config   | worker/.dev.vars.local → worker/.dev.vars  | 本地 worker/.dev.vars.local 覆盖；生成产物 .dev.vars                                     |
+| `SUPABASE_ANON_KEY`                        | public   | shared → extension/worker/website          | Worker 以 wrangler [vars] 为权威；本地 shared 与 Pages 机密须匹配；须为 publishable/anon |
+| `SUPABASE_SERVICE_ROLE_KEY`                | secret   | shared → worker                            | 仅 Worker secret / 本地 shared；禁止进扩展与官网                                         |
+| `SUPABASE_URL`                             | public   | shared → extension/worker/website          | Worker 以 wrangler [vars] 为权威；本地 shared 与 Pages 机密须匹配                        |
+| `TURNSTILE_SECRET_KEY`                     | secret   | shared → worker                            | Worker 必需 secret；与 Supabase Attack Protection 使用同一 secret                        |
+| `VITE_API_BASE_URL`                        | public   | extension runtime                          | 本地源文件 → 生成文件                                                                    |
+| `VITE_CLOUDFLARE_WORKER_URL`               | public   | extension runtime                          | 本地源文件 → 生成文件                                                                    |
+| `VITE_RUNTIME_ENV`                         | public   | extension runtime                          | 本地源文件 → 生成文件                                                                    |
+| `VITE_SUPABASE_ANON_KEY`                   | public   | extension runtime                          | 本地源文件 → 生成文件                                                                    |
+| `VITE_SUPABASE_URL`                        | public   | extension runtime                          | 本地源文件 → 生成文件                                                                    |
+| `VITE_WEBSITE_URL`                         | public   | extension runtime                          | 本地源文件 → 生成文件                                                                    |
+| `WEBSITE_URL`                              | public   | shared/profile → worker                    | 本地源文件 → 生成文件                                                                    |
 
 <!-- env-manifest:end -->
 
@@ -214,8 +191,8 @@ bun run env:docs:sync
 - `worker`
   - 本地开发读取 `worker/.dev.vars`
   - Cloudflare 线上环境变量在 Worker Dashboard / Wrangler 环境中维护
-  - **生产 `[env.production]`：** `workers_dev = false`；`REDIRECT_URI_ALLOWLIST` 仅 `https://yiveno.com`（顶层 `[vars]` 本地默认段可含 localhost，勿与生产混淆）。redirect 校验为 origin 精确匹配，禁止 `https://yiveno.com` 前缀匹配到 `yiveno.com.evil.com`
-  - **`bun run deploy`（`worker/package.json`）：** 先跑 `scripts/check-prod-secrets.mjs`（`wrangler secret list --env production`，只对账名称）再 `wrangler deploy --env production`。核心必需：`SUPABASE_SERVICE_ROLE_KEY` / `DEEPSEEK_API_KEY` / `TURNSTILE_SECRET_KEY` / `JWT_SECRET`。Dodo 组部分存在 → 失败；全缺 → WARN（若 `[env.production.vars]` 中 `DODO_PAYMENTS_ENVIRONMENT=live_mode` 则全缺也失败）。遗留 OAuth Google/Microsoft 两组同「部分失败 / 全缺 WARN」
+  - **生产 `[env.production]`：** `workers_dev = false`。`EVAL_MINT_USER_EMAIL` 写入 vars（评测 mint 固定邮箱）
+  - **`bun run deploy`（`worker/package.json`）：** 先跑 `scripts/check-prod-secrets.mjs`（`wrangler secret list --env production`，只对账名称）再 `wrangler deploy --env production`。核心必需：`SUPABASE_SERVICE_ROLE_KEY` / `DEEPSEEK_API_KEY` / `TURNSTILE_SECRET_KEY`。Dodo 组部分存在 → 失败；全缺 → WARN（若 `[env.production.vars]` 中 `DODO_PAYMENTS_ENVIRONMENT=live_mode` 则全缺也失败）。`EVAL_MINT_TOKEN` 缺失 → WARN（评测 schedule 需要）。自建 OAuth / `JWT_SECRET` **已退役**
   - **AI Gateway（非 Secret，写在 `worker/wrangler.toml` `[vars]`）**
     - `AI_PROVIDER`（可选）：聊天补全实现，默认 `deepseek`；换厂商时加 Worker adapter + 改此变量
     - `AI_ROUTING_MODE`（可选 · Batch 3）：`single`（缺省 · kill switch）| `shadow` | `quota`。生产保持缺省 `single`（行为与现行一致；不触账本、不查注册表）。`shadow` 只记候选决策仍走现行单 provider。`quota` 按注册表顺序真实切换候选（隐私门 / reserve / failover）；账本不可用或无合格候选时安全回落 DeepSeek 单路。**生产未启用 quota**；gemini/groq 仍未合格。未知值 → misconfigured
@@ -338,3 +315,21 @@ BGE 消融要打 **Yiveno Worker** `POST /api/ai/embed`（鉴权后才出真实�
 - 禁止把生产域名写进 `.env.development.local`
 - 禁止把 `localhost` 写进 `.env.production.local`
 - 禁止把真实密钥提交进仓库
+
+## Staging 开通手册（未建资源 · 公开真实用户前必须完成）
+
+> 本小节只写步骤与名单；**不**在本批创建 Cloudflare / Supabase staging 资源。
+
+1. **独立 Supabase 项目**（与生产隔离）：新建项目；记下 `SUPABASE_URL` / publishable anon / `service_role`；创建评测用户 `retrieval-ablation-local@yiveno.dev`（或与 `EVAL_MINT_USER_EMAIL` 一致）。
+2. **独立 KV namespace**：为 staging Worker 新建 `AI_USAGE_KV`（及所需 Durable Object）绑定；**禁止**复用生产 KV id。
+3. **wrangler `env.staging`（草案）：**
+   - `workers_dev = false`
+   - cron：关闭，或保留但 `ANON_CLEANUP_DRY_RUN=true` / reconcile dry-run
+   - `[env.staging.vars]`：独立 `SUPABASE_*`、`DODO_PAYMENTS_ENVIRONMENT=test_mode`、`EVAL_MINT_USER_EMAIL=…`
+   - secrets 名单：与生产 core（`SUPABASE_SERVICE_ROLE_KEY` / `DEEPSEEK_API_KEY` / `TURNSTILE_SECRET_KEY`）+ 可选 `EVAL_MINT_TOKEN` / Dodo test 组；**禁止**把生产 live Dodo / 生产 service_role 拷进 staging
+4. **本地邮件：** 只发测试收件箱；DirectMail / Email Routing destination 用测试地址，勿打真实用户。
+5. **本地切 staging：**
+   - 在 profile / shared 源写入 staging 键（或临时 export），`bun run env:sync:dev && bun run env:check:dev`
+   - Worker：`wrangler dev --env staging`（或等价）；扩展 `VITE_API_BASE_URL` 指向 staging API
+6. **回滚：** 恢复生产 shared/profile 源 → `env:sync:*`；停用 staging wrangler 进程；确认扩展 API base 回到生产/本地。
+7. **门禁：** 公开真实用户前必须完成本手册；staging 未就绪不得暗示已有隔离预发环境。

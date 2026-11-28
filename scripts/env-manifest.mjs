@@ -6,16 +6,6 @@
 
 /** @type {readonly string[]} */
 export const SHARED_OPTIONAL_KEYS = Object.freeze([
-  'AUTH_GOOGLE_CLIENT_ID',
-  'AUTH_GOOGLE_CLIENT_SECRET',
-  'AUTH_MICROSOFT_CLIENT_ID',
-  'AUTH_MICROSOFT_CLIENT_SECRET',
-  'AUTH_GOOGLE_AUTH_URL',
-  'AUTH_GOOGLE_TOKEN_URL',
-  'AUTH_GOOGLE_USERINFO_URL',
-  'AUTH_MICROSOFT_AUTH_URL',
-  'AUTH_MICROSOFT_TOKEN_URL',
-  'AUTH_MICROSOFT_USERINFO_URL',
   'DODO_PAYMENTS_API_KEY',
   'DODO_PAYMENTS_WEBHOOK_KEY',
   'DODO_PAYMENTS_ENVIRONMENT',
@@ -24,7 +14,6 @@ export const SHARED_OPTIONAL_KEYS = Object.freeze([
   'DODO_PRODUCT_ID_FOUNDING_MONTHLY',
   'DODO_PRODUCT_ID_FOUNDING_ANNUAL',
   'BILLING_FOUNDING_ENABLED',
-  'REDIRECT_URI_ALLOWLIST',
   'DEEPSEEK_API_KEY',
   'OPENAI_API_KEY',
   'GOOGLE_AI_API_KEY',
@@ -37,7 +26,8 @@ export const SHARED_OPTIONAL_KEYS = Object.freeze([
   'ALIYUN_DM_FROM_ALIAS',
   'ALIYUN_DM_REPLY_ADDRESS',
   'ALIYUN_DM_REGION_ID',
-  'ALIYUN_DM_ENDPOINT'
+  'ALIYUN_DM_ENDPOINT',
+  'EVAL_MINT_TOKEN'
 ])
 
 /** @type {readonly string[]} */
@@ -56,18 +46,6 @@ export const WORKER_KEYS = Object.freeze([
   'SUPABASE_ANON_KEY',
   'SUPABASE_SERVICE_ROLE_KEY',
   'WEBSITE_URL',
-  'JWT_SECRET',
-  'AUTH_GOOGLE_CLIENT_ID',
-  'AUTH_GOOGLE_CLIENT_SECRET',
-  'AUTH_MICROSOFT_CLIENT_ID',
-  'AUTH_MICROSOFT_CLIENT_SECRET',
-  'AUTH_GOOGLE_AUTH_URL',
-  'AUTH_GOOGLE_TOKEN_URL',
-  'AUTH_GOOGLE_USERINFO_URL',
-  'AUTH_MICROSOFT_AUTH_URL',
-  'AUTH_MICROSOFT_TOKEN_URL',
-  'AUTH_MICROSOFT_USERINFO_URL',
-  'REDIRECT_URI_ALLOWLIST',
   'DEEPSEEK_API_KEY',
   'OPENAI_API_KEY',
   'GOOGLE_AI_API_KEY',
@@ -88,7 +66,8 @@ export const WORKER_KEYS = Object.freeze([
   'ALIYUN_DM_FROM_ALIAS',
   'ALIYUN_DM_REPLY_ADDRESS',
   'ALIYUN_DM_REGION_ID',
-  'ALIYUN_DM_ENDPOINT'
+  'ALIYUN_DM_ENDPOINT',
+  'EVAL_MINT_TOKEN'
 ])
 
 /** @type {readonly [string, string][]} */
@@ -106,16 +85,6 @@ export const LEGACY_SHARED_FALLBACK_KEYS = Object.freeze([
   'SUPABASE_URL',
   'SUPABASE_ANON_KEY',
   'SUPABASE_SERVICE_ROLE_KEY',
-  'AUTH_GOOGLE_CLIENT_ID',
-  'AUTH_GOOGLE_CLIENT_SECRET',
-  'AUTH_MICROSOFT_CLIENT_ID',
-  'AUTH_MICROSOFT_CLIENT_SECRET',
-  'AUTH_GOOGLE_AUTH_URL',
-  'AUTH_GOOGLE_TOKEN_URL',
-  'AUTH_GOOGLE_USERINFO_URL',
-  'AUTH_MICROSOFT_AUTH_URL',
-  'AUTH_MICROSOFT_TOKEN_URL',
-  'AUTH_MICROSOFT_USERINFO_URL',
   'DODO_PAYMENTS_API_KEY',
   'DODO_PAYMENTS_WEBHOOK_KEY',
   'DODO_PAYMENTS_ENVIRONMENT',
@@ -124,7 +93,6 @@ export const LEGACY_SHARED_FALLBACK_KEYS = Object.freeze([
   'DODO_PRODUCT_ID_FOUNDING_MONTHLY',
   'DODO_PRODUCT_ID_FOUNDING_ANNUAL',
   'BILLING_FOUNDING_ENABLED',
-  'REDIRECT_URI_ALLOWLIST',
   'ALIYUN_DM_ACCESS_KEY_ID',
   'ALIYUN_DM_ACCESS_KEY_SECRET',
   'ALIYUN_DM_ACCOUNT_NAME',
@@ -140,10 +108,9 @@ export const LEGACY_PROFILE_KEYS = Object.freeze({
     'WEBSITE_URL',
     'VITE_WEBSITE_URL',
     'VITE_API_BASE_URL',
-    'VITE_CLOUDFLARE_WORKER_URL',
-    'JWT_SECRET'
+    'VITE_CLOUDFLARE_WORKER_URL'
   ]),
-  production: Object.freeze(['JWT_SECRET'])
+  production: Object.freeze([])
 })
 
 /** 允许从 process.env 读入的源键（Pages Git 构建无本地 env 文件时用）。 */
@@ -159,7 +126,6 @@ export const PROCESS_ENV_SOURCE_KEYS = Object.freeze([
     'SUPABASE_URL',
     'SUPABASE_ANON_KEY',
     'PUBLIC_TURNSTILE_SITE_KEY',
-    'JWT_SECRET'
   ])
 ])
 
@@ -199,23 +165,13 @@ export const WORKER_OPTIONAL_KEYS = Object.freeze([
 export const WORKER_BINDINGS = Object.freeze(['AI', 'EMAIL', 'AI_USAGE_KV', 'AI_QUOTA_LEDGER'])
 
 /** @type {readonly string[]} */
-export const LEGACY_ENV_KEYS = Object.freeze([
-  'SECRET',
-  'REDIRECT_ALLOWLIST',
-  'AUTH_GOOGLE_AUTH_URL',
-  'AUTH_GOOGLE_TOKEN_URL',
-  'AUTH_GOOGLE_USERINFO_URL',
-  'AUTH_MICROSOFT_AUTH_URL',
-  'AUTH_MICROSOFT_TOKEN_URL',
-  'AUTH_MICROSOFT_USERINFO_URL'
-])
+export const LEGACY_ENV_KEYS = Object.freeze([])
 
 export const PRODUCTION_SECRET_GROUPS = Object.freeze({
   core: Object.freeze([
     'SUPABASE_SERVICE_ROLE_KEY',
     'DEEPSEEK_API_KEY',
-    'TURNSTILE_SECRET_KEY',
-    'JWT_SECRET'
+    'TURNSTILE_SECRET_KEY'
   ]),
   dodo: Object.freeze([
     'DODO_PAYMENTS_API_KEY',
@@ -227,17 +183,14 @@ export const PRODUCTION_SECRET_GROUPS = Object.freeze({
     'DODO_PRODUCT_ID_FOUNDING_MONTHLY',
     'DODO_PRODUCT_ID_FOUNDING_ANNUAL'
   ]),
-  oauth: Object.freeze([
-    Object.freeze(['AUTH_GOOGLE_CLIENT_ID', 'AUTH_GOOGLE_CLIENT_SECRET']),
-    Object.freeze(['AUTH_MICROSOFT_CLIENT_ID', 'AUTH_MICROSOFT_CLIENT_SECRET'])
-  ]),
   optional: Object.freeze([
     'ALIYUN_DM_ACCESS_KEY_ID',
     'ALIYUN_DM_ACCESS_KEY_SECRET',
     'AI_GATEWAY_TOKEN',
     'OPENAI_API_KEY',
     'GOOGLE_AI_API_KEY',
-    'GROQ_API_KEY'
+    'GROQ_API_KEY',
+    'EVAL_MINT_TOKEN'
   ])
 })
 
@@ -247,14 +200,13 @@ export const PRODUCTION_SECRET_NAME_SET = Object.freeze(
     ...PRODUCTION_SECRET_GROUPS.core,
     ...PRODUCTION_SECRET_GROUPS.dodo,
     ...PRODUCTION_SECRET_GROUPS.dodoFounding,
-    ...PRODUCTION_SECRET_GROUPS.oauth.flat(),
     ...PRODUCTION_SECRET_GROUPS.optional
   ])
 )
 
 export const WRANGLER_VAR_DIFF_ALLOWLIST = Object.freeze({
   productionOnly: Object.freeze(['AI_CLUE_PROXY_ENABLED']),
-  valueDiffs: Object.freeze(['REDIRECT_URI_ALLOWLIST'])
+  valueDiffs: Object.freeze([])
 })
 
 /** @type {readonly string[]} */
@@ -302,10 +254,10 @@ const KEY_META_OVERRIDES = Object.freeze({
     targets: 'shared → worker；wrangler production.vars',
     authority: '生产以 wrangler [env.production.vars] 为权威；dev-env 校验 API key 前缀'
   },
-  JWT_SECRET: {
+  EVAL_MINT_TOKEN: {
     category: 'secret',
-    targets: 'profile → worker',
-    authority: 'profile 源文件；Worker secret'
+    targets: 'shared optional → worker production secret',
+    authority: '可选；Actions 评测 mint；缺失时 mint 端点 503'
   },
   AI_ROUTING_MODE: {
     category: 'config',
@@ -324,10 +276,7 @@ const SECRET_KEYS = new Set([
   ...PRODUCTION_SECRET_GROUPS.core,
   ...PRODUCTION_SECRET_GROUPS.dodo,
   ...PRODUCTION_SECRET_GROUPS.dodoFounding,
-  ...PRODUCTION_SECRET_GROUPS.oauth.flat(),
-  ...PRODUCTION_SECRET_GROUPS.optional,
-  'AUTH_GOOGLE_CLIENT_SECRET',
-  'AUTH_MICROSOFT_CLIENT_SECRET'
+  ...PRODUCTION_SECRET_GROUPS.optional
 ])
 
 /** @type {ReadonlySet<string>} */
@@ -400,7 +349,6 @@ export const KEY_META = Object.freeze(
       'SUPABASE_URL',
       'SUPABASE_ANON_KEY',
       'SUPABASE_SERVICE_ROLE_KEY',
-      'JWT_SECRET',
       'PUBLIC_TURNSTILE_SITE_KEY',
       ...SHARED_OPTIONAL_KEYS,
       ...EXTENSION_KEYS,
@@ -429,7 +377,6 @@ export const EXAMPLE_SOURCE_KEYS = Object.freeze([
     'SUPABASE_URL',
     'SUPABASE_ANON_KEY',
     'SUPABASE_SERVICE_ROLE_KEY',
-    'JWT_SECRET',
     'PUBLIC_TURNSTILE_SITE_KEY',
     ...SHARED_OPTIONAL_KEYS,
     ...LEGACY_PROFILE_KEYS.development,

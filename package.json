@@ -75,7 +75,8 @@
     "db:start": "bun run --cwd worker db:start",
     "clean": "bun run --cwd extension clean && bun run --cwd worker clean",
     "knip": "bunx knip -D .",
-    "knip:extension": "bunx knip -D . --workspace extension"
+    "knip:extension": "bunx knip -D . --workspace extension",
+    "secrets:scan": "bash -c 'command -v gitleaks >/dev/null || { echo \"ERR gitleaks not in PATH; install gitleaks 8.x (see .github/workflows/ci.yml secrets-scan)\"; exit 1; }; gitleaks detect --redact --source . --no-banner --exit-code 1'"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.3",

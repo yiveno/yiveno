@@ -14,7 +14,7 @@ import {
 const CORE_REQUIRED = PRODUCTION_SECRET_GROUPS.core
 const DODO_GROUP = PRODUCTION_SECRET_GROUPS.dodo
 const DODO_FOUNDING = PRODUCTION_SECRET_GROUPS.dodoFounding
-const OAUTH_GROUPS = PRODUCTION_SECRET_GROUPS.oauth
+const OPTIONAL = PRODUCTION_SECRET_GROUPS.optional
 
 const workerRoot = path.resolve(import.meta.dirname, '..')
 const wranglerTomlPath = path.join(workerRoot, 'wrangler.toml')
@@ -136,19 +136,17 @@ function main() {
     console.log(`OK founding group absent (optional)`)
   }
 
-  for (const group of OAUTH_GROUPS) {
-    const label = group[0].startsWith('AUTH_GOOGLE') ? 'google' : 'microsoft'
-    const presentInGroup = group.filter(name => present.has(name))
-    const missingInGroup = group.filter(name => !present.has(name))
-    if (presentInGroup.length > 0 && missingInGroup.length > 0) {
-      console.log(
-        `ERR oauth ${label} partial: present=${presentInGroup.join(', ')}; missing=${missingInGroup.join(', ')}`
-      )
-      failed = true
-    } else if (presentInGroup.length === 0) {
-      console.log(`WARN oauth ${label} all missing: ${group.join(', ')}`)
-    } else {
-      console.log(`OK oauth ${label}: ${group.join(', ')}`)
+  // EVAL_MINT_TOKEN：评测 schedule 需要；缺失只 WARN
+  if (!present.has('EVAL_MINT_TOKEN')) {
+    console.log('WARN EVAL_MINT_TOKEN missing (recall-real-eval schedule needs it)')
+  } else {
+    console.log('OK EVAL_MINT_TOKEN present')
+  }
+
+  for (const name of OPTIONAL) {
+    if (name === 'EVAL_MINT_TOKEN') continue
+    if (!present.has(name)) {
+      // 其它 optional 静默；未知组在下方 WARN
     }
   }
 

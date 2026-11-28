@@ -6,10 +6,10 @@
  *
  * Token 解析顺序（均须经 Worker Bearer 鉴权；禁止绕过 / 硬编码入库）：
  *   1. RETRIEVAL_ABLATION_ACCESS_TOKEN
- *   2. 本机 `.env*.local` 的 SUPABASE_* + service role：与生产同源
- *      `admin.generateLink(magiclink)` + `anon.verifyOtp` 签发短会话
+ *   2. worker_mint：RETRIEVAL_ABLATION_MINT_TOKEN → POST /api/eval/mint-session
+ *   3. 本机 `.env*.local` 的 SUPABASE_* + service role：本地 admin mint
  *      （可选 RETRIEVAL_ABLATION_USER_EMAIL；默认 retrieval-ablation-local@yiveno.dev）
- *   3. localhost bridge：等待已登录扩展经 getWorkerApiAccessToken 推送
+ *   4. localhost bridge：等待已登录扩展经 getWorkerApiAccessToken 推送
  *      （RETRIEVAL_ABLATION_TOKEN_BRIDGE=1 或缺 mint 凭据时启用）
  *
  * TLS（FACT）：本机 macOS / Bun 调 Supabase 须与 worker 一致设置
@@ -74,7 +74,7 @@ function resolveAblationBaselinePath(explicit: string | undefined): string {
 const BRIDGE_PORT = Number(process.env.RETRIEVAL_ABLATION_BRIDGE_PORT || '17387')
 const BRIDGE_WAIT_MS = Number(process.env.RETRIEVAL_ABLATION_BRIDGE_WAIT_MS || '90000')
 
-type TokenSource = 'env' | 'supabase_admin_mint' | 'extension_bridge'
+type TokenSource = 'env' | 'worker_mint' | 'supabase_admin_mint' | 'extension_bridge'
 
 function loadLocalEnvFiles(): void {
   const roots = [repoRoot, resolve(scriptDir, '..')]
@@ -227,8 +227,45 @@ function tlsHintIfCertError(message: string): string {
 }
 
 /**
- * 合法 mint：service role generateLink + anon verifyOtp（与 Worker issueSupabaseUserSession 同源）。
- * 优先 generateLink（已存在评测用户时免 listUsers）；失败再 createUser。
+ * Actions 路径：经 Worker POST /api/eval/mint-session（头 x-eval-mint-token）。
+ * 不在 Actions 侧常驻 SUPABASE_SERVICE_ROLE_KEY。
+ */
+async function mintAccessTokenViaWorkerMint(
+  apiBase: string
+): Promise<{ ok: true; token: string; userId: string } | { ok: false; detail: string }> {
+  const mintToken = process.env.RETRIEVAL_ABLATION_MINT_TOKEN?.trim()
+  if (!mintToken) {
+    return { ok: false, detail: '缺少 RETRIEVAL_ABLATION_MINT_TOKEN' }
+  }
+  const base = apiBase.replace(/\/+$/u, '')
+  try {
+    const response = await fetch(`${base}/api/eval/mint-session`, {
+      method: 'POST',
+      headers: { 'x-eval-mint-token': mintToken }
+    })
+    if (!response.ok) {
+      const body = (await response.json().catch(() => null)) as { error?: string } | null
+      return {
+        ok: false,
+        detail: `worker_mint HTTP ${response.status}${body?.error ? `:${body.error}` : ''}`
+      }
+    }
+    const data = (await response.json()) as { accessToken?: string; userId?: string }
+    if (!data.accessToken || !data.userId) {
+      return { ok: false, detail: 'worker_mint response missing accessToken/userId' }
+    }
+    return { ok: true, token: data.accessToken, userId: data.userId }
+  } catch (err) {
+    return {
+      ok: false,
+      detail: `worker_mint fetch failed: ${err instanceof Error ? err.message : String(err)}`
+    }
+  }
+}
+
+/**
+ * 本机合法 mint：service role generateLink + anon verifyOtp（与 Worker issueSupabaseUserSession 同源）。
+ * 仅本地 `.env*.local` 场景；Actions 改走 worker_mint。
  */
 async function mintAccessTokenViaSupabaseAdmin(): Promise<
   { ok: true; token: string; email: string; userId: string } | { ok: false; detail: string }
@@ -424,7 +461,9 @@ async function waitForExtensionBridgeToken(
   }
 }
 
-async function resolveAccessToken(): Promise<
+async function resolveAccessToken(
+  apiBase: string
+): Promise<
   | { ok: true; token: string; source: TokenSource; detail: string }
   | { ok: false; detail: string; tried: string[] }
 > {
@@ -443,7 +482,23 @@ async function resolveAccessToken(): Promise<
 
   const onGitHubActions = process.env.GITHUB_ACTIONS === 'true'
   const forceBridge = process.env.RETRIEVAL_ABLATION_TOKEN_BRIDGE === '1'
+
   if (!forceBridge) {
+    const workerMinted = await mintAccessTokenViaWorkerMint(apiBase)
+    tried.push(
+      workerMinted.ok
+        ? `worker_mint:ok userId=${workerMinted.userId}`
+        : `worker_mint:fail:${workerMinted.detail}`
+    )
+    if (workerMinted.ok) {
+      return {
+        ok: true,
+        token: workerMinted.token,
+        source: 'worker_mint',
+        detail: `POST /api/eval/mint-session userId=${workerMinted.userId}`
+      }
+    }
+
     const minted = await mintAccessTokenViaSupabaseAdmin()
     tried.push(
       minted.ok
@@ -455,7 +510,7 @@ async function resolveAccessToken(): Promise<
         ok: true,
         token: minted.token,
         source: 'supabase_admin_mint',
-        detail: `email=${minted.email} userId=${minted.userId}（generateLink+verifyOtp · 与 Worker mint 同源）`
+        detail: `email=${minted.email} userId=${minted.userId}（本机 generateLink+verifyOtp）`
       }
     }
     // Actions 无本机扩展 bridge：mint 失败应立刻停，勿空等 90s
@@ -463,11 +518,12 @@ async function resolveAccessToken(): Promise<
       return {
         ok: false,
         detail:
-          'GitHub Actions 上 supabase_admin_mint 失败。请核对 Actions Secret：SUPABASE_SERVICE_ROLE_KEY 须为 Dashboard → API → service_role（secret），勿贴成 anon；SUPABASE_URL 须同项目。',
+          'GitHub Actions 上 worker_mint 失败。请核对 Actions Secret：RETRIEVAL_ABLATION_MINT_TOKEN（对应 Worker EVAL_MINT_TOKEN），或配短期 RETRIEVAL_ABLATION_ACCESS_TOKEN。',
         tried
       }
     }
   } else {
+    tried.push('worker_mint:skipped(RETRIEVAL_ABLATION_TOKEN_BRIDGE=1)')
     tried.push('supabase_admin_mint:skipped(RETRIEVAL_ABLATION_TOKEN_BRIDGE=1)')
   }
 
@@ -475,7 +531,7 @@ async function resolveAccessToken(): Promise<
     return {
       ok: false,
       detail:
-        'GitHub Actions 默认不启 extension bridge；请配 SUPABASE_* mint 或 RETRIEVAL_ABLATION_ACCESS_TOKEN',
+        'GitHub Actions 默认不启 extension bridge；请配 RETRIEVAL_ABLATION_MINT_TOKEN 或 RETRIEVAL_ABLATION_ACCESS_TOKEN',
       tried
     }
   }
@@ -518,7 +574,7 @@ export async function runRetrievalAblationRealCli(): Promise<void> {
     return
   }
 
-  const tokenResolved = await resolveAccessToken()
+  const tokenResolved = await resolveAccessToken(apiBase)
   if (!tokenResolved.ok) {
     console.error(
       [
@@ -528,8 +584,9 @@ export async function runRetrievalAblationRealCli(): Promise<void> {
         ...tokenResolved.tried.map(item => `  - ${item}`),
         '合法路径：',
         '  1) export RETRIEVAL_ABLATION_ACCESS_TOKEN=<扩展 getWorkerApiAccessToken>',
-        '  2) 本机 .env.shared.local 含 SUPABASE_* 时自动 mint（不绕过 Worker）',
-        '  3) RETRIEVAL_ABLATION_TOKEN_BRIDGE=1 经 localhost 接收扩展推送',
+        '  2) RETRIEVAL_ABLATION_MINT_TOKEN → Worker /api/eval/mint-session（Actions 推荐）',
+        '  3) 本机 .env.shared.local 含 SUPABASE_* 时自动 admin mint',
+        '  4) RETRIEVAL_ABLATION_TOKEN_BRIDGE=1 经 localhost 接收扩展推送',
         '不得用 fake embedding 代替本实验结论。'
       ].join('\n')
     )

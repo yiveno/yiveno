@@ -1,0 +1,54 @@
+# Yiveno gitleaks 配置（Batch C）
+# 仅 allowlist 已证实的公开键 / 测试假值 / 假阳性；真实 secret 不得加入。
+
+title = "yiveno"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "公开 anon（sb_publishable_）/ 测试假值 / 假阳性 / 已删历史路径中的公开或残缺占位"
+
+# 正则对 secret 本体匹配（永不写真实生产 secret）
+regexes = [
+  # Supabase 公开 publishable anon（wrangler.toml / docs / 历史 .env）
+  '''(?i)sb_publishable_[A-Za-z0-9_]+''',
+  # Dodo webhook 测试假值（base64("test_dodo_webhook_secret")）
+  '''whsec_dGVzdF9kb2RvX3dlYmhvb2tfc2VjcmV0''',
+  # Durable Object 存储键名（非 secret）
+  '''quota-ledger-v1''',
+  # extension embed-api-client 测试假 JWT
+  '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.eyJzdWIiOiJ1c2VyLTEyMyJ9\.aaaaaaaaaaaa''',
+  '''eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.eyJzdWIiOiJ1c2VyLTQ1NiJ9\.bbbbbbbbbbbb''',
+  # 旧文档中仅 JWT header 占位（非完整 token）
+  '''^eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9$''',
+]
+
+paths = [
+  # 当前假阳性：STORAGE_KEY 常量名
+  '''(^|/)worker/src/services/ai/quota-ledger-do\.ts$''',
+  # 历史 mkcert 本地私钥（已删路径）
+  '''(^|/)backend/localhost\+2-key\.pem$''',
+  '''(?i)(^|/)localhost.*\.pem$''',
+  # 已删历史文档 / 旧树（命中均为公开 anon、残缺 header 或测试假值；逐项已核）
+  '''^\.env$''',
+  '''^ENVIRONMENT_SETUP_SUMMARY\.md$''',
+  '''^ENV_VARIABLES\.md$''',
+  '''^LEMON_SQUEEZY_SETUP\.md$''',
+  '''^OAUTH-TROUBLESHOOTING\.md$''',
+  '''^QUICK_START_SUPABASE\.md$''',
+  '''^SUPABASE_SECURITY\.md$''',
+  '''^SUPABASE_SETUP\.md$''',
+  '''^VERIFY_D1_SUPABASE\.md$''',
+  '''^docs/plugin-website-integration\.md$''',
+  '''^website/GET_SUPABASE_KEY\.md$''',
+  '''^supabase/README\.md$''',
+  '''^frontend/''',
+  '''^backend/''',
+]
+
+# website/src/services/supabase.ts 历史两 commit 曾内嵌 role=anon 公开 JWT（现已移除）
+commits = [
+  '61692c25f54ca6da0ba5678f91925f7723985bfa',
+  '723331af74360973331e49b2c6c363884bdb397e',
+]

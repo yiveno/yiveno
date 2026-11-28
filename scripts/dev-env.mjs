@@ -419,7 +419,7 @@ function getRequiredKeysForTarget(target) {
   if (target === 'website' || target === 'extension') {
     return ['SUPABASE_URL', 'SUPABASE_ANON_KEY']
   }
-  return ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY', 'JWT_SECRET']
+  return ['SUPABASE_URL', 'SUPABASE_ANON_KEY', 'SUPABASE_SERVICE_ROLE_KEY']
 }
 
 /**
@@ -431,12 +431,6 @@ function getMissing(env, options = {}) {
   const requiredKeys = getRequiredKeysForTarget(target)
   return {
     required: requiredKeys.filter(key => !env[key]),
-    oauth: [
-      'AUTH_GOOGLE_CLIENT_ID',
-      'AUTH_GOOGLE_CLIENT_SECRET',
-      'AUTH_MICROSOFT_CLIENT_ID',
-      'AUTH_MICROSOFT_CLIENT_SECRET'
-    ].filter(key => !env[key]),
     dodo: [...PRODUCTION_SECRET_GROUPS.dodo].filter(key => !env[key])
   }
 }
@@ -556,15 +550,6 @@ function printSecurityGates(env, options) {
     ok = false
   }
 
-  if (
-    needsWorkerSecrets &&
-    options.profile === 'production' &&
-    env.JWT_SECRET &&
-    env.JWT_SECRET.length < 32
-  ) {
-    console.log('WARN JWT_SECRET length < 32')
-  }
-
   // Supabase 权威门：合并后值须匹配 wrangler [vars]（只报键名）
   if (options.wranglerError) {
     console.log(`ERR wrangler authority: ${options.wranglerError}`)
@@ -598,8 +583,14 @@ function printSecurityGates(env, options) {
           )
           ok = false
         }
+      } else if (dodoEnv === 'live_mode') {
+        // 无标签：live_mode 必须挡门（expected dodo_live_）；test_mode 仍 WARN
+        console.log(
+          `ERR DODO_PAYMENTS_API_KEY unexpected prefix family (expected ${expectedPrefix})`
+        )
+        ok = false
       } else {
-        // 非 dodo_test_/dodo_live_ 族：不挡门，但提示（本地遗留格式）；负例 dodo_live_↔test_mode 仍走上方 ERR
+        // 非 dodo_test_/dodo_live_ 族：test_mode 不挡门，但提示（本地遗留格式）
         console.log(
           `WARN DODO_PAYMENTS_API_KEY unexpected prefix family (expected ${expectedPrefix})`
         )
@@ -667,9 +658,6 @@ function printCheck(profile, env, options = {}) {
   else if (target === 'website' || target === 'extension')
     console.log(`OK required ${target} secrets complete`)
   else console.log('OK required worker secrets complete')
-
-  if (missing.oauth.length) console.log(`WARN oauth missing: ${missing.oauth.join(', ')}`)
-  else console.log('OK oauth credentials complete')
 
   // test_mode 且 dodo 组全缺 → 保持 WARN；部分缺仍 WARN（live 缺由 security 门 ERR）
   if (missing.dodo.length) console.log(`WARN dodo missing: ${missing.dodo.join(', ')}`)

@@ -172,11 +172,6 @@ function checkWranglerDualSets() {
     }
   }
 
-  const prodAllowlist = prodVars.REDIRECT_URI_ALLOWLIST || ''
-  if (/localhost|127\.0\.0\.1/iu.test(prodAllowlist)) {
-    fail('REDIRECT_URI_ALLOWLIST production value must not contain localhost')
-  }
-
   // 供声明键检查复用（顶层 ∪ production，含 productionOnly allowlist 键）
   checkWranglerDualSets._wranglerVarKeys = new Set([...topKeys, ...prodKeys])
 }
@@ -284,6 +279,85 @@ function renderManifestTable() {
   return `${lines.join('\n')}\n`
 }
 
+/**
+ * 解析 Markdown 表行为单元格（trim；忽略分隔行与列对齐空格）。
+ * @param {string} line
+ * @returns {string[] | null} 数据行单元格；分隔行返回 null；非表行返回 null
+ */
+function parseMarkdownTableRow(line) {
+  const trimmed = line.trim()
+  if (!trimmed.startsWith('|')) return null
+  // 分隔行：| --- | --- |
+  if (/^\|[\s|:\-]+\|$/u.test(trimmed)) return null
+  const cells = trimmed
+    .replace(/^\|/u, '')
+    .replace(/\|$/u, '')
+    .split('|')
+    .map(cell => cell.trim())
+  if (cells.length === 0 || cells.every(c => c === '')) return null
+  return cells
+}
+
+/**
+ * 从标记区内提取语义表行（表头 + 数据行，无分隔行）。
+ * @param {string} inner
+ * @returns {string[][]}
+ */
+function extractSemanticTableRows(inner) {
+  /** @type {string[][]} */
+  const rows = []
+  for (const line of inner.split(/\r?\n/u)) {
+    const cells = parseMarkdownTableRow(line)
+    if (cells) rows.push(cells)
+  }
+  return rows
+}
+
+/**
+ * KEY_META 生成表的语义行（表头 + 数据）。
+ * @returns {string[][]}
+ */
+function expectedSemanticTableRows() {
+  /** @type {string[][]} */
+  const rows = [['Key', 'Category', 'Targets', 'Authority']]
+  for (const row of KEY_META) {
+    rows.push([`\`${row.key}\``, row.category, row.targets, row.authority])
+  }
+  return rows
+}
+
+/**
+ * 逐单元格语义比对两表；不一致时 fail。
+ * @param {string[][]} actual
+ * @param {string[][]} expected
+ */
+function compareSemanticTables(actual, expected) {
+  if (actual.length !== expected.length) {
+    fail(
+      `docs/ENVIRONMENT.md env-manifest table out of sync (run bun run env:docs:sync): row count ${actual.length} ≠ ${expected.length}`
+    )
+    return
+  }
+  for (let i = 0; i < expected.length; i++) {
+    const a = actual[i]
+    const e = expected[i]
+    if (a.length !== e.length) {
+      fail(
+        `docs/ENVIRONMENT.md env-manifest table out of sync (run bun run env:docs:sync): row ${i} cell count ${a.length} ≠ ${e.length}`
+      )
+      return
+    }
+    for (let j = 0; j < e.length; j++) {
+      if (a[j] !== e[j]) {
+        fail(
+          `docs/ENVIRONMENT.md env-manifest table out of sync (run bun run env:docs:sync): row ${i} col ${j}`
+        )
+        return
+      }
+    }
+  }
+}
+
 function checkOrWriteDocsTable() {
   let text
   try {
@@ -318,11 +392,7 @@ function checkOrWriteDocsTable() {
     return
   }
 
-  if (currentInner !== expectedBlock) {
-    fail(
-      'docs/ENVIRONMENT.md env-manifest table out of sync (run bun run env:docs:sync)'
-    )
-  }
+  compareSemanticTables(extractSemanticTableRows(currentInner), expectedSemanticTableRows())
 }
 
 function checkEnvExample() {

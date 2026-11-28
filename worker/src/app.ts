@@ -11,10 +11,8 @@ import type { Env } from './types/env'
 import { ALLOWED_ORIGINS } from './middleware/cors'
 import { logRequest, logResponse, logError } from './utils/logger'
 import { secureHeadersMiddleware } from './middleware/secure-headers'
-import { jwtAuth } from './middleware/jwt'
 
 import { healthRouter } from './routes/health'
-import { adminRouter } from './routes/admin'
 import { authRouter } from './routes/auth'
 import { aiRouter } from './routes/ai'
 import { billingRouter } from './routes/billing'
@@ -24,6 +22,7 @@ import { memorySyncRouter } from './routes/memory-sync'
 import { mcpRouter } from './routes/mcp'
 import { researchRouter } from './routes/research'
 import { websiteRouter } from './routes/website'
+import { evalRouter } from './routes/eval'
 
 type AppVariables = {
   /** 日志中间件生成；onError 写入 500 响应体便于扩展侧关联 */
@@ -79,10 +78,8 @@ export function createApp() {
   // ===== 路由注册 =====
   app.route('/', healthRouter)
 
-  app.use('/api/admin/*', jwtAuth())
-  app.route('/api/admin', adminRouter)
-
   app.route('/api/auth', authRouter)
+  app.route('/api/eval', evalRouter)
   app.route('/api/ai', aiRouter)
 
   // Phase C：Cloud Memory 同步（Supabase Auth Bearer）

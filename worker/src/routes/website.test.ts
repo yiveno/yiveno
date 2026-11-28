@@ -16,7 +16,6 @@ function createKvMock(initial: Record<string, string> = {}) {
 }
 
 const baseEnv = {
-  JWT_SECRET: 'test-secret',
   SUPABASE_URL: 'https://example.supabase.co',
   SUPABASE_ANON_KEY: 'anon-key',
   SUPABASE_SERVICE_ROLE_KEY: 'service-role-key',
