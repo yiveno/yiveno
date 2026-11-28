@@ -125,15 +125,6 @@
   "selection_toolbar_saved_hint_generic": {
     "message": "Try finding with any word you remember"
   },
-  "selection_toolbar_saved_hint_edit": {
-    "message": "Opens Find with “$1” ready to edit",
-    "placeholders": {
-      "clue": {
-        "content": "$1",
-        "example": "hydration"
-      }
-    }
-  },
   "selection_toolbar_try_recall": {
     "message": "Find with this"
   },
@@ -317,9 +308,6 @@
   "sidepanel_website_connect_banner": {
     "message": "Signed in on the website. Connect to link this device to your account."
   },
-  "sidepanel_extension_displaced_banner": {
-    "message": "This account signed in elsewhere"
-  },
   "sidepanel_website_connect_cta": {
     "message": "Connect"
   },
@@ -340,9 +328,6 @@
   },
   "sidepanel_website_connect_dismiss_aria": {
     "message": "Close website connect notice"
-  },
-  "sidepanel_extension_displaced_dismiss_aria": {
-    "message": "Dismiss signed-out notice"
   },
   "sidepanel_account_website_mismatch": {
     "message": "The website is signed in with a different account"
@@ -552,9 +537,6 @@
       }
     }
   },
-  "popup_thread_anchor_clear": {
-    "message": "New find"
-  },
   "popup_thread_pivot_prompt": {
     "message": "Looks like a new find. Still on “$1”?",
     "placeholders": {
@@ -584,9 +566,6 @@
   },
   "popup_env_chip_just_opened": {
     "message": "Opened recently"
-  },
-  "sidepanel_page_context_toggle": {
-    "message": "Page context"
   },
   "sidepanel_page_context_none": {
     "message": "Don’t use this page"
@@ -632,9 +611,6 @@
   },
   "popup_submit": {
     "message": "Start finding"
-  },
-  "popup_submitting": {
-    "message": "Finding…"
   },
   "sidepanel_voice_start": {
     "message": "Dictate clue"
@@ -689,9 +665,6 @@
         "example": "500"
       }
     }
-  },
-  "popup_filtering_status": {
-    "message": "Looking through what you saved…"
   },
   "popup_recall_pending": {
     "message": "Looking through what you saved…"
@@ -798,33 +771,6 @@
   "popup_recall_echo_drop_term": {
     "message": "Not this"
   },
-  "popup_shorten_retry": {
-    "message": "Shorten and retry"
-  },
-  "popup_shorten_retry_with_clue": {
-    "message": "Shorten and retry ($clue$)",
-    "placeholders": {
-      "clue": {
-        "content": "$1",
-        "example": "retention"
-      }
-    }
-  },
-  "popup_section_top_pick": {
-    "message": "Closest"
-  },
-  "popup_section_also_possible": {
-    "message": "Also nearby"
-  },
-  "popup_section_possible_matches": {
-    "message": "Closest fits"
-  },
-  "popup_need_a_clue_title": {
-    "message": "Add one more clue"
-  },
-  "popup_need_a_clue_body": {
-    "message": "These might be related, but none stands out yet. Add another detail above, or say none of these."
-  },
   "popup_dismiss_candidates": {
     "message": "None of these"
   },
@@ -919,9 +865,6 @@
       }
     }
   },
-  "popup_show_more_matches": {
-    "message": "Show more"
-  },
   "popup_show_more_count": {
     "message": "Show $1 more",
     "placeholders": {
@@ -967,9 +910,6 @@
       }
     }
   },
-  "popup_reply_uncertain": {
-    "message": "These might be related, but the fit is weak. Refine the clue above, or say none of these."
-  },
   "popup_reply_miss": {
     "message": "Nothing close enough turned up. Try another detail that stuck with you."
   },
@@ -996,18 +936,6 @@
   },
   "popup_reply_after_dismiss": {
     "message": "Okay, let's try a different angle. Add the site, a quote, or something you wrote."
-  },
-  "popup_suggest_site": {
-    "message": "I remember the site was:"
-  },
-  "popup_suggest_quote": {
-    "message": "I remember a line like:"
-  },
-  "popup_suggest_note": {
-    "message": "I think I wrote:"
-  },
-  "popup_suggest_type": {
-    "message": "It felt more like:"
   },
   "popup_followup_miss_constrained_empty": {
     "message": "Nothing in your library matches that time and type. If the day might be wrong, try another time."
@@ -1117,9 +1045,6 @@
   "settings_tab_third_party": {
     "message": "Third-party data"
   },
-  "settings_third_party_intro": {
-    "message": "Bring in what you saved in Raindrop, Pocket, and other services, and manage it all in one place. Imported items stay on this device and never touch your Chrome bookmarks."
-  },
   "settings_third_party_count": {
     "message": "$COUNT$ items imported",
     "placeholders": {
@@ -1147,9 +1072,6 @@
   },
   "settings_third_party_delete_all": {
     "message": "Delete all imports"
-  },
-  "settings_third_party_delete_all_hint": {
-    "message": "Only removes the imported copies in Yiveno; your data in the original service stays untouched. Importing the same file again will bring them back."
   },
   "settings_third_party_delete_confirm": {
     "message": "Delete all $COUNT$ items imported from $SOURCE$? This can't be undone.",
@@ -1205,9 +1127,6 @@
   "settings_tab_language": {
     "message": "Language"
   },
-  "settings_section_language_copy": {
-    "message": "Choose the language for this extension. Defaults follow your browser language — you can override anytime."
-  },
   "settings_language_legend": {
     "message": "Display language"
   },
@@ -1238,14 +1157,8 @@
   "settings_data_import_raindrop": {
     "message": "Import from Raindrop"
   },
-  "settings_data_import_raindrop_hint": {
-    "message": "Upload a Raindrop HTML, CSV, or JSON export (max 50 bookmarks). We’ll add them and keep any notes you already have."
-  },
   "settings_data_import_pocket": {
     "message": "Import from Pocket"
-  },
-  "settings_data_import_pocket_hint": {
-    "message": "Upload a Pocket HTML export (max 50 bookmarks). We’ll add them and keep any notes you already have."
   },
   "settings_data_import_action": {
     "message": "Choose file"
@@ -1293,9 +1206,6 @@
   },
   "settings_data_clear_local": {
     "message": "Clear local memory"
-  },
-  "settings_data_clear_local_hint": {
-    "message": "Permanently delete what’s stored here for this account. Browser bookmarks stay unchanged. Also clears on-device recall ranking signals."
   },
   "settings_data_clear_local_action": {
     "message": "Clear"
@@ -1428,9 +1338,6 @@
   "settings_data_clear_recall_adaptation": {
     "message": "Clear on-device recall adaptation"
   },
-  "settings_data_clear_recall_adaptation_hint": {
-    "message": "Reset Outcome ranking pairs and local timing diagnostics. Your saved library stays; find still works."
-  },
   "settings_data_clear_recall_adaptation_action": {
     "message": "Clear signals"
   },
@@ -1446,14 +1353,8 @@
   "settings_error_local_recall_adaptation_clear": {
     "message": "Failed to clear on-device recall adaptation"
   },
-  "settings_privacy_intro": {
-    "message": "How Yiveno handles your memories, plus backup, on-device recall adaptation, and remove. Browser bookmarks stay untouched."
-  },
   "settings_privacy_banner_title": {
     "message": "We value your privacy"
-  },
-  "settings_privacy_banner_body": {
-    "message": "Learn about the measures we take to protect your information privacy and security."
   },
   "settings_privacy_banner_learn_more": {
     "message": "Learn more"
@@ -1463,9 +1364,6 @@
   },
   "settings_mcp_toggle_hint": {
     "message": "External AI assistants can only read and look up items in your library. They cannot change or delete anything."
-  },
-  "settings_mcp_howto": {
-    "message": "Ask with a natural-language clue; you get 1–5 sourced items—never a full-library dump. Cloud path needs sign-in, Pro sync, and this switch on. Setup details are in the developer docs."
   },
   "settings_mcp_remote_sync_failed": {
     "message": "Couldn't sync the MCP switch to the cloud. Local setting still saved—try again when you're online."
@@ -1488,9 +1386,6 @@
   "settings_privacy_export": {
     "message": "Export full backup"
   },
-  "settings_privacy_export_hint": {
-    "message": "Download all local memories as JSON — content, usage signals, and helpers that make Find work."
-  },
   "settings_privacy_export_action": {
     "message": "Export"
   },
@@ -1504,9 +1399,6 @@
   },
   "settings_privacy_restore": {
     "message": "Restore backup"
-  },
-  "settings_privacy_restore_hint": {
-    "message": "Merge a Yiveno backup JSON into this library. Newer local items stay; missing ones come back, including Dreaming notes when present."
   },
   "settings_privacy_restore_action": {
     "message": "Restore"
@@ -1527,9 +1419,6 @@
   },
   "settings_privacy_delete_cloud": {
     "message": "Delete cloud memories"
-  },
-  "settings_privacy_delete_cloud_hint": {
-    "message": "Deletes cloud memories and backups. Local data stays; sync turns off."
   },
   "settings_privacy_delete_cloud_action": {
     "message": "Delete"
@@ -1586,9 +1475,6 @@
   "settings_error_local_export": {
     "message": "Could not export local memories"
   },
-  "settings_ai_intro": {
-    "message": "Helps understand what you type and fill in a few fields. Your saves stay the source of truth."
-  },
   "settings_ai_details_summary": {
     "message": "How AI is used"
   },
@@ -1628,9 +1514,6 @@
   "settings_ai_bullet_boundary": {
     "message": "We don’t send your entire library to a model by default; models can’t directly change your library."
   },
-  "settings_section_capture_copy": {
-    "message": "Control the save menu on selection and whether browser bookmarks join your library."
-  },
   "settings_loading": {
     "message": "Loading settings…"
   },
@@ -1639,12 +1522,6 @@
   },
   "settings_toggle_selection_toolbar_hint": {
     "message": "Shows a save button when you select text on a web page."
-  },
-  "settings_section_shortcuts_copy": {
-    "message": "Review bindings here; change keys in your browser."
-  },
-  "settings_shortcuts_open_hint": {
-    "message": "Opens this browser’s extension shortcuts page for Yiveno."
   },
   "settings_open_shortcuts_action": {
     "message": "Open browser shortcut settings"
@@ -1657,15 +1534,6 @@
   },
   "settings_opening_shortcuts": {
     "message": "Opening…"
-  },
-  "settings_section_later": {
-    "message": "Coming later"
-  },
-  "settings_upcoming_privacy": {
-    "message": "Privacy — not available yet"
-  },
-  "settings_upcoming_ai": {
-    "message": "AI — not available yet"
   },
   "settings_account_sign_in_hint": {
     "message": "Not signed in. Sign in to manage sync and cloud memories."
@@ -1721,9 +1589,6 @@
   },
   "settings_promote_error_invalid_email": {
     "message": "That doesn't look like a valid email."
-  },
-  "settings_promote_error_email_conflict": {
-    "message": "That email was just claimed. Verify again with a new code."
   },
   "settings_promote_error_failed": {
     "message": "Couldn't bind that email. Check your connection and try again."
@@ -1813,17 +1678,8 @@
   "settings_bind_error_failed": {
     "message": "Couldn't finish binding. Check your connection and try again."
   },
-  "settings_account_waiting_website": {
-    "message": "Finish signing in in the browser tab, then return here."
-  },
   "settings_account_sign_out": {
     "message": "Sign out"
-  },
-  "settings_account_open_delete_account": {
-    "message": "Delete account…"
-  },
-  "settings_account_signing_in": {
-    "message": "Opening…"
   },
   "settings_account_signing_out": {
     "message": "Signing out…"
@@ -1954,9 +1810,6 @@
       }
     }
   },
-  "settings_login_migration_must_choose": {
-    "message": "Pick Import, Export, Delete, or Decide later"
-  },
   "settings_login_migration_delete_confirm_title": {
     "message": "Delete these excerpts?"
   },
@@ -1982,9 +1835,6 @@
   },
   "settings_error_login_migration_status": {
     "message": "Couldn’t check for local saves to import"
-  },
-  "settings_section_sync_copy": {
-    "message": "Off by default. When on, merges this device with the cloud, then syncs about every 15 minutes."
   },
   "settings_section_advanced": {
     "message": "Advanced"
@@ -2036,9 +1886,6 @@
       }
     }
   },
-  "settings_sync_working": {
-    "message": "Working…"
-  },
   "settings_sync_sign_in_required": {
     "message": "Sign in first to manage sync."
   },
@@ -2089,9 +1936,6 @@
   },
   "settings_sync_restore_backup_action": {
     "message": "Restore"
-  },
-  "settings_sync_restore_backup_hint": {
-    "message": "Restore the largest pre-overwrite backup if your cloud library shrank."
   },
   "settings_sync_restore_backup_confirm": {
     "message": "Overwrite the cloud with the largest sync backup, then bring it to this device. Continue?"
@@ -2150,9 +1994,6 @@
         "content": "$5"
       }
     }
-  },
-  "pro_required_for_hybrid": {
-    "message": "Cloud sync and a larger cloud clue-help limit require Pro. Finding on this device works the same on Free."
   },
   "settings_orphan_title": {
     "message": "Leftover data from other accounts"
@@ -2370,9 +2211,6 @@
       }
     }
   },
-  "detail_export_copy_markdown": {
-    "message": "Copy Markdown"
-  },
   "detail_export_copy": {
     "message": "Copy"
   },
@@ -2390,15 +2228,6 @@
   },
   "detail_export_download_menu_aria": {
     "message": "Download, choose format"
-  },
-  "detail_export_copy_json": {
-    "message": "Copy JSON"
-  },
-  "detail_export_download_markdown": {
-    "message": "Download Markdown"
-  },
-  "detail_export_download_json": {
-    "message": "Download JSON"
   },
   "detail_export_cancel": {
     "message": "Cancel"
@@ -2695,20 +2524,8 @@
   "getting_started_excerpt_recall_aria": {
     "message": "Find something from your excerpts"
   },
-  "getting_started_excerpt_empty_title": {
-    "message": "Nothing here yet."
-  },
   "getting_started_excerpt_empty_body": {
     "message": "When you find something worth remembering, save a line to Yiveno."
-  },
-  "getting_started_excerpt_frame": {
-    "message": "Save what you want to remember."
-  },
-  "getting_started_bookmarks_frame": {
-    "message": "Bring in what you’ve already saved."
-  },
-  "getting_started_excerpt_sample_clue_fallback": {
-    "message": "something I highlighted"
   },
   "getting_started_passage_aria": {
     "message": "Practice passage"
@@ -2739,9 +2556,6 @@
   },
   "getting_started_passage_select": {
     "message": "Select this passage"
-  },
-  "getting_started_passage_hint": {
-    "message": "After it’s saved, try the sample clue in the side panel."
   },
   "getting_started_sample_clue": {
     "message": "I remember reading something about missing things that never happened. It had a quiet, almost nostalgic feeling."
@@ -3312,17 +3126,11 @@
   "settings_toggle_chrome_bookmark_sync": {
     "message": "Sync Chrome bookmarks to the local library"
   },
-  "settings_toggle_chrome_bookmark_sync_hint": {
-    "message": "When on, imports your current bookmarks and keeps them in sync. When off, sync stops; imported content stays."
-  },
   "settings_chrome_bookmark_reimport_title": {
     "message": "Chrome bookmarks"
   },
   "settings_action_reimport_chrome_bookmarks": {
     "message": "Re-import bookmarks"
-  },
-  "settings_reimport_chrome_bookmarks_done": {
-    "message": "Re-import complete."
   },
   "settings_reimport_chrome_bookmarks_done_count": {
     "message": "Re-import complete: $COUNT$ bookmarks.",
@@ -3779,9 +3587,6 @@
   "behavior_pref_try_another_hint": {
     "message": "Not this one? Say “try another”."
   },
-  "error_behavior_import_permission_denied": {
-    "message": "History permission wasn’t granted"
-  },
   "error_behavior_import_status_read_failed": {
     "message": "Couldn’t read browsing import status"
   },
@@ -3875,15 +3680,6 @@
       }
     }
   },
-  "portrait_pending_hidden_note": {
-    "message": "$1 more items lack enough evidence and aren’t listed.",
-    "placeholders": {
-      "count": {
-        "content": "$1",
-        "example": "12"
-      }
-    }
-  },
   "portrait_pending_hidden_section": {
     "message": "Low-evidence items ($1)",
     "placeholders": {
@@ -3914,9 +3710,6 @@
   },
   "portrait_decline": {
     "message": "Ignore"
-  },
-  "portrait_in_portrait_badge": {
-    "message": "In portrait"
   },
   "portrait_narrative_verified": {
     "message": "You like $1.",

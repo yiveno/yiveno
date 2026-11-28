@@ -125,15 +125,6 @@
   "selection_toolbar_saved_hint_generic": {
     "message": "用你记得的任何词试试找找"
   },
-  "selection_toolbar_saved_hint_edit": {
-    "message": "会打开侧边栏，并带上「$1」供你改",
-    "placeholders": {
-      "clue": {
-        "content": "$1",
-        "example": "hydration"
-      }
-    }
-  },
   "selection_toolbar_try_recall": {
     "message": "用这段来找"
   },
@@ -317,9 +308,6 @@
   "sidepanel_website_connect_banner": {
     "message": "已在网站登录。连接后将此设备关联到你的账号。"
   },
-  "sidepanel_extension_displaced_banner": {
-    "message": "此账号已在其他地方登录"
-  },
   "sidepanel_website_connect_cta": {
     "message": "连接"
   },
@@ -340,9 +328,6 @@
   },
   "sidepanel_website_connect_dismiss_aria": {
     "message": "关闭网站连接提示"
-  },
-  "sidepanel_extension_displaced_dismiss_aria": {
-    "message": "关闭已退出提示"
   },
   "sidepanel_account_website_mismatch": {
     "message": "官网当前登录的是另一个账号"
@@ -552,9 +537,6 @@
       }
     }
   },
-  "popup_thread_anchor_clear": {
-    "message": "新找"
-  },
   "popup_thread_pivot_prompt": {
     "message": "看起来像新的一次找。还在找「$1」吗？",
     "placeholders": {
@@ -584,9 +566,6 @@
   },
   "popup_env_chip_just_opened": {
     "message": "最近打开过"
-  },
-  "sidepanel_page_context_toggle": {
-    "message": "页面上下文"
   },
   "sidepanel_page_context_none": {
     "message": "不结合当前页"
@@ -632,9 +611,6 @@
   },
   "popup_submit": {
     "message": "开始找东西"
-  },
-  "popup_submitting": {
-    "message": "正在找…"
   },
   "sidepanel_voice_start": {
     "message": "语音输入线索"
@@ -689,9 +665,6 @@
         "example": "500"
       }
     }
-  },
-  "popup_filtering_status": {
-    "message": "正在翻看你存过的内容…"
   },
   "popup_recall_pending": {
     "message": "正在翻看你存过的内容…"
@@ -798,33 +771,6 @@
   "popup_recall_echo_drop_term": {
     "message": "不要这个词"
   },
-  "popup_shorten_retry": {
-    "message": "缩短后重试"
-  },
-  "popup_shorten_retry_with_clue": {
-    "message": "缩短后重试（$clue$）",
-    "placeholders": {
-      "clue": {
-        "content": "$1",
-        "example": "retention"
-      }
-    }
-  },
-  "popup_section_top_pick": {
-    "message": "最接近"
-  },
-  "popup_section_also_possible": {
-    "message": "附近还有"
-  },
-  "popup_section_possible_matches": {
-    "message": "最接近的匹配"
-  },
-  "popup_need_a_clue_title": {
-    "message": "再补一条线索"
-  },
-  "popup_need_a_clue_body": {
-    "message": "这些可能相关，但还没有一条特别突出。在上方再补一个细节，或说都不是。"
-  },
   "popup_dismiss_candidates": {
     "message": "都不是"
   },
@@ -919,9 +865,6 @@
       }
     }
   },
-  "popup_show_more_matches": {
-    "message": "显示更多"
-  },
   "popup_show_more_count": {
     "message": "再显示 $1 条",
     "placeholders": {
@@ -967,9 +910,6 @@
       }
     }
   },
-  "popup_reply_uncertain": {
-    "message": "这些可能相关，但匹配偏弱。在上方细化线索，或说都不是。"
-  },
   "popup_reply_miss": {
     "message": "没有足够接近的结果。试试另一个你记得住的细节。"
   },
@@ -996,18 +936,6 @@
   },
   "popup_reply_after_dismiss": {
     "message": "好，换个角度。补上站点、一句原文，或你写过的话。"
-  },
-  "popup_suggest_site": {
-    "message": "我记得站点是："
-  },
-  "popup_suggest_quote": {
-    "message": "我记得有一句像："
-  },
-  "popup_suggest_note": {
-    "message": "我好像写过："
-  },
-  "popup_suggest_type": {
-    "message": "感觉更像是："
   },
   "popup_followup_miss_constrained_empty": {
     "message": "记忆库里没有同时符合该时间和类型的条目。如果日期可能不对，换个时间再试。"
@@ -1117,9 +1045,6 @@
   "settings_tab_third_party": {
     "message": "第三方数据"
   },
-  "settings_third_party_intro": {
-    "message": "从 Raindrop、Pocket 等服务导入你保存的内容，并在同一处管理它们。导入的条目只存在本机，不会同步到 Chrome 书签。"
-  },
   "settings_third_party_count": {
     "message": "已导入 $COUNT$ 条",
     "placeholders": {
@@ -1147,9 +1072,6 @@
   },
   "settings_third_party_delete_all": {
     "message": "删除全部导入"
-  },
-  "settings_third_party_delete_all_hint": {
-    "message": "只删除 Yiveno 里的导入副本，不动原服务里的数据。再次导入同一文件会重新带回来。"
   },
   "settings_third_party_delete_confirm": {
     "message": "确定要删除全部 $COUNT$ 条从 $SOURCE$ 导入的内容吗？此操作无法撤销。",
@@ -1205,9 +1127,6 @@
   "settings_tab_language": {
     "message": "语言"
   },
-  "settings_section_language_copy": {
-    "message": "选择扩展界面语言。默认跟随浏览器；可随时改。不会改变找东西如何理解线索。"
-  },
   "settings_language_legend": {
     "message": "显示语言"
   },
@@ -1235,14 +1154,8 @@
   "settings_data_import_raindrop": {
     "message": "从 Raindrop 导入"
   },
-  "settings_data_import_raindrop_hint": {
-    "message": "上传 Raindrop 的 HTML、CSV 或 JSON 导出（最多 50 个书签）。我们会加入它们，并保留你已有的附注。"
-  },
   "settings_data_import_pocket": {
     "message": "从 Pocket 导入"
-  },
-  "settings_data_import_pocket_hint": {
-    "message": "上传 Pocket 的 HTML 导出（最多 50 个书签）。我们会加入它们，并保留你已有的附注。"
   },
   "settings_data_import_action": {
     "message": "选择文件"
@@ -1290,9 +1203,6 @@
   },
   "settings_data_clear_local": {
     "message": "清空本机记忆"
-  },
-  "settings_data_clear_local_hint": {
-    "message": "永久删除此账号在本机存储的内容。本浏览器书签保持不变。也会清除本机 Recall 排序信号。"
   },
   "settings_data_clear_local_action": {
     "message": "清空"
@@ -1425,9 +1335,6 @@
   "settings_data_clear_recall_adaptation": {
     "message": "清除本机 Recall 适应信号"
   },
-  "settings_data_clear_recall_adaptation_hint": {
-    "message": "重置 Outcome 排序对与本机计时诊断。记忆库保留；找东西仍可用。"
-  },
   "settings_data_clear_recall_adaptation_action": {
     "message": "清除信号"
   },
@@ -1443,14 +1350,8 @@
   "settings_error_local_recall_adaptation_clear": {
     "message": "清除本机 Recall 适应信号失败"
   },
-  "settings_privacy_intro": {
-    "message": "了解 Yiveno 如何处理你的记忆，以及备份、本机 Recall 适应与清除。本浏览器书签不会被改动。"
-  },
   "settings_privacy_banner_title": {
     "message": "我们重视你的隐私"
-  },
-  "settings_privacy_banner_body": {
-    "message": "了解我们为保护你的信息隐私和安全而采取的措施。"
   },
   "settings_privacy_banner_learn_more": {
     "message": "详细了解"
@@ -1460,9 +1361,6 @@
   },
   "settings_mcp_toggle_hint": {
     "message": "外部 AI 助手只能读取、查阅你的记忆库，不能修改或删除任何内容。"
-  },
-  "settings_mcp_howto": {
-    "message": "用自然语言线索提问；你会得到 1–5 条带出处的条目——绝不会整库倾倒。云端路径需要登录、Pro 同步，以及此开关开启。设置细节见开发者文档。"
   },
   "settings_mcp_remote_sync_failed": {
     "message": "无法将 MCP 开关同步到云端。本机设置已保存——联网后再试。"
@@ -1485,9 +1383,6 @@
   "settings_privacy_export": {
     "message": "导出完整备份"
   },
-  "settings_privacy_export_hint": {
-    "message": "将本机全部记忆下载为 JSON — 含内容、使用信号，以及让找东西工作的辅助数据。"
-  },
   "settings_privacy_export_action": {
     "message": "导出"
   },
@@ -1501,9 +1396,6 @@
   },
   "settings_privacy_restore": {
     "message": "恢复备份"
-  },
-  "settings_privacy_restore_hint": {
-    "message": "把一份 Yiveno 备份 JSON 合并进本库。本地更新的条目保留；缺的会补回来，含文件里的 Dreaming 命题。"
   },
   "settings_privacy_restore_action": {
     "message": "恢复"
@@ -1524,9 +1416,6 @@
   },
   "settings_privacy_delete_cloud": {
     "message": "删除云端记忆"
-  },
-  "settings_privacy_delete_cloud_hint": {
-    "message": "删除云端记忆与备份。本机数据保留；同步会关闭。"
   },
   "settings_privacy_delete_cloud_action": {
     "message": "删除"
@@ -1583,9 +1472,6 @@
   "settings_error_local_export": {
     "message": "无法导出本机记忆"
   },
-  "settings_ai_intro": {
-    "message": "帮助理解你输入的内容，并填写少量字段。你保存的内容始终是事实来源。"
-  },
   "settings_ai_details_summary": {
     "message": "AI 如何使用"
   },
@@ -1625,9 +1511,6 @@
   "settings_ai_bullet_boundary": {
     "message": "默认不会把整库发给模型；模型不能直接改你的记忆库。"
   },
-  "settings_section_capture_copy": {
-    "message": "控制划选时的保存菜单，以及本浏览器书签是否加入记忆库。"
-  },
   "settings_loading": {
     "message": "正在加载设置…"
   },
@@ -1636,12 +1519,6 @@
   },
   "settings_toggle_selection_toolbar_hint": {
     "message": "选中网页文字时，弹出保存按钮。"
-  },
-  "settings_section_shortcuts_copy": {
-    "message": "在此查看绑定；改键请到本浏览器的扩展快捷键页。"
-  },
-  "settings_shortcuts_open_hint": {
-    "message": "打开本浏览器中 Yiveno 的扩展快捷键页。"
   },
   "settings_open_shortcuts_action": {
     "message": "打开浏览器快捷键设置"
@@ -1654,15 +1531,6 @@
   },
   "settings_opening_shortcuts": {
     "message": "正在打开…"
-  },
-  "settings_section_later": {
-    "message": "稍后推出"
-  },
-  "settings_upcoming_privacy": {
-    "message": "隐私 — 尚未开放"
-  },
-  "settings_upcoming_ai": {
-    "message": "AI — 尚未开放"
   },
   "settings_account_sign_in_hint": {
     "message": "未登录。登录后可管理同步与云端记忆。"
@@ -1718,9 +1586,6 @@
   },
   "settings_promote_error_invalid_email": {
     "message": "邮箱格式不对。"
-  },
-  "settings_promote_error_email_conflict": {
-    "message": "该邮箱刚刚被绑定，请重新验证。"
   },
   "settings_promote_error_failed": {
     "message": "绑定失败。请检查网络后再试。"
@@ -1810,17 +1675,8 @@
   "settings_bind_error_failed": {
     "message": "绑定未完成。请检查网络后再试。"
   },
-  "settings_account_waiting_website": {
-    "message": "请在浏览器标签页完成登录，然后回到这里。"
-  },
   "settings_account_sign_out": {
     "message": "退出登录"
-  },
-  "settings_account_open_delete_account": {
-    "message": "删除账号…"
-  },
-  "settings_account_signing_in": {
-    "message": "正在打开…"
   },
   "settings_account_signing_out": {
     "message": "正在退出…"
@@ -1951,9 +1807,6 @@
       }
     }
   },
-  "settings_login_migration_must_choose": {
-    "message": "请选择导入、导出、删除，或稍后再说"
-  },
   "settings_login_migration_delete_confirm_title": {
     "message": "删除这些摘录？"
   },
@@ -1979,9 +1832,6 @@
   },
   "settings_error_login_migration_status": {
     "message": "无法检查可导入的本机保存"
-  },
-  "settings_section_sync_copy": {
-    "message": "默认关闭。开启后先与云端合并，然后大约每 15 分钟同步一次。"
   },
   "settings_section_advanced": {
     "message": "高级"
@@ -2033,9 +1883,6 @@
       }
     }
   },
-  "settings_sync_working": {
-    "message": "处理中…"
-  },
   "settings_sync_sign_in_required": {
     "message": "请先登录再管理同步。"
   },
@@ -2086,9 +1933,6 @@
   },
   "settings_sync_restore_backup_action": {
     "message": "恢复"
-  },
-  "settings_sync_restore_backup_hint": {
-    "message": "若云端库变小，可恢复覆盖前最大的备份。"
   },
   "settings_sync_restore_backup_confirm": {
     "message": "用最大的同步备份覆盖云端，再拉回本机。继续？"
@@ -2147,9 +1991,6 @@
         "content": "$5"
       }
     }
-  },
-  "pro_required_for_hybrid": {
-    "message": "云同步与更大的云端线索帮助限额需要 Pro。本机找东西在 Free 上同样可用。"
   },
   "settings_orphan_title": {
     "message": "其他账号的残留数据"
@@ -2367,9 +2208,6 @@
       }
     }
   },
-  "detail_export_copy_markdown": {
-    "message": "复制 Markdown"
-  },
   "detail_export_copy": {
     "message": "复制"
   },
@@ -2387,15 +2225,6 @@
   },
   "detail_export_download_menu_aria": {
     "message": "下载，选择格式"
-  },
-  "detail_export_copy_json": {
-    "message": "复制 JSON"
-  },
-  "detail_export_download_markdown": {
-    "message": "下载 Markdown"
-  },
-  "detail_export_download_json": {
-    "message": "下载 JSON"
   },
   "detail_export_cancel": {
     "message": "取消"
@@ -2692,20 +2521,8 @@
   "getting_started_excerpt_recall_aria": {
     "message": "从摘录中找某条"
   },
-  "getting_started_excerpt_empty_title": {
-    "message": "这里还没有内容。"
-  },
   "getting_started_excerpt_empty_body": {
     "message": "遇到值得记住的内容时，划存一行到 Yiveno。"
-  },
-  "getting_started_excerpt_frame": {
-    "message": "保存你想记住的内容。"
-  },
-  "getting_started_bookmarks_frame": {
-    "message": "导入你已经存过的内容。"
-  },
-  "getting_started_excerpt_sample_clue_fallback": {
-    "message": "我划存过的东西"
   },
   "getting_started_passage_aria": {
     "message": "练习段落"
@@ -2736,9 +2553,6 @@
   },
   "getting_started_passage_select": {
     "message": "选中这段文字"
-  },
-  "getting_started_passage_hint": {
-    "message": "保存后，在侧边栏试试示例线索。"
   },
   "getting_started_sample_clue": {
     "message": "我记得读过关于「错过了却从未发生过的事」的内容。语气安静，有点怀念。"
@@ -3312,17 +3126,11 @@
   "settings_toggle_chrome_bookmark_sync": {
     "message": "同步 Chrome 书签到本机记忆库"
   },
-  "settings_toggle_chrome_bookmark_sync_hint": {
-    "message": "开启后将导入现有书签并保持同步；关闭后停止同步，已导入的内容保留。"
-  },
   "settings_chrome_bookmark_reimport_title": {
     "message": "Chrome 书签"
   },
   "settings_action_reimport_chrome_bookmarks": {
     "message": "重新导入书签"
-  },
-  "settings_reimport_chrome_bookmarks_done": {
-    "message": "重新导入完成。"
   },
   "settings_reimport_chrome_bookmarks_done_count": {
     "message": "重新导入完成，共 $COUNT$ 条。",
@@ -3779,9 +3587,6 @@
   "behavior_pref_try_another_hint": {
     "message": "不是这个？说「换一个」。"
   },
-  "error_behavior_import_permission_denied": {
-    "message": "未获得浏览记录权限"
-  },
   "error_behavior_import_status_read_failed": {
     "message": "读不到浏览记录导入状态"
   },
@@ -3875,15 +3680,6 @@
       }
     }
   },
-  "portrait_pending_hidden_note": {
-    "message": "另有 $1 项证据不足，未列出",
-    "placeholders": {
-      "count": {
-        "content": "$1",
-        "example": "12"
-      }
-    }
-  },
   "portrait_pending_hidden_section": {
     "message": "证据不足（$1 项）",
     "placeholders": {
@@ -3914,9 +3710,6 @@
   },
   "portrait_decline": {
     "message": "忽略"
-  },
-  "portrait_in_portrait_badge": {
-    "message": "已进画像"
   },
   "portrait_narrative_verified": {
     "message": "你喜欢 $1。",
