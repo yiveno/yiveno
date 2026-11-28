@@ -2393,13 +2393,13 @@ Chrome API / 选区
 - ✅ Preferences（`objectTypes` / `timeRange`）存在且已分层
 - ✅ **Gap 2 已修复（2026-10）：** Framing 层 Topic 独立表述：`RecallFramingUnderstood.topicTerms`（独立于 contentTerms）已加；Narrow 举例注入 `topicTerms` 末尾追加独立 topic 示例；LLM Framing prompt 透传 `topicTerms` fact
 - ✅ **Gap 3 已修复：** `RecallResult.topic` 字段（窄子集）已加；`parsed.topic` → `TopicDescriptor` 填充
-- ✅ **Gap 1 已修复（2026-10）：** Topic 先验预筛已加（候选加载阶段）；Topic 存在时与 contentTerms 候选取并集扩池；仅扩池不做门限/重排
+- ❌ **Gap 1 已拆除（2026-11）：** 原 Topic 先验预筛恒为 no-op、从未扩池，已删除；详见下节「Gap 1（已拆除）」
 - ✅ **Gap 4 已修复（2026-10 · 依 D3-C）：** Topic 语义角色重建：`topicLookup` 独立检索路径已加；Topic 走独立路径（`topicLookup`），contentTerms 走关键词检索（`buildFilterClueFromParsed`）；两路结果并集·去重；`topicEmbedding` 参数预留；详见下节「Gap 4 落地」
 - ✅ **Gap 5 已修复（2026-10 · 依 D3-C）：** Topic embedding 路径真实接入；`deriveTopicEmbedding` + `withRecallTopicAsync` + topicLookup embedding 路径；详见下节「Gap 5 落地」
 - ⚠️ Clues 扁平（无人物/地点/情境结构化槽；对应 P2）
 - ⚠️ 无 Discovery 概念出口（对应 P3）
 
-**落地阶段：** P0（门+文档化）已；P1（Gap 1/2/3/4）已落地；P2（Clues 分层）、P3（Discovery 出口）待后续。
+**落地阶段：** P0（门+文档化）已；P1（Gap 2/3/4）已落地，Gap 1 已拆除；P2（Clues 分层）、P3（Discovery 出口）待后续。
 
 **Gap 2 落地（2026-10）：** Framing 层 Topic 独立表述已加（三处）：
 
