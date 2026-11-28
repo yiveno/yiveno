@@ -31,6 +31,7 @@ describe('user-sim dataset contract', () => {
       const data = generateUserSimDataset({ seed: SEED, endIso: END_ISO, personaId: p.id })
       for (const item of data.memoryItems) {
         expect(MemoryItemSchema.safeParse(item).success).toBe(true)
+        expect(item.clues.embedding).toHaveLength(64)
       }
       for (const row of data.behaviorStats) {
         expect(BehaviorStatsRecordSchema.safeParse(row).success).toBe(true)
@@ -99,7 +100,12 @@ describe('user-sim dataset contract', () => {
     expect(tasks).toHaveLength(80)
     const ids = new Set(data.memoryItems.map(m => m.id))
     for (const task of tasks) {
-      expect(task.embeddingAnchor).toBe(task.clue)
+      if (task.tier === 'negative') {
+        expect(task.embeddingAnchor).toContain('::orthogonal')
+      } else {
+        expect(task.embeddingAnchor).not.toBe(task.clue)
+        expect(task.embeddingAnchor).toContain('::')
+      }
       if (task.tier === 'negative') {
         expect(task.targetId).toBeNull()
       } else {

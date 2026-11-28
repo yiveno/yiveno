@@ -4,6 +4,7 @@
  */
 
 import { USER_SIM_TOPICS } from './personas'
+import { HYBRID_FAKE_EMBEDDING_DIM } from '../hybrid-fake-embedding'
 import { userSimTokens, type UserSimDataset } from './generate'
 
 export function validateUserSimDataset(data: UserSimDataset): string[] {
@@ -26,6 +27,10 @@ export function validateUserSimDataset(data: UserSimDataset): string[] {
   )
   for (const m of data.memoryItems) {
     ok(/^[0-9a-f-]{36}$/.test(m.id), `bad uuid ${m.id}`)
+    ok(
+      Array.isArray(m.clues.embedding) && m.clues.embedding.length === HYBRID_FAKE_EMBEDDING_DIM,
+      `missing fake embedding ${m.id}`
+    )
     if (m.type === 'bookmark') {
       ok(
         m.payload.title.length > 0 && /^https:\/\//.test(m.payload.url),

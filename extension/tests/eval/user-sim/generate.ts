@@ -7,6 +7,7 @@
 import type { MemoryItem } from '@/core/memory/memory-item'
 import type { BehaviorStatsRecord } from '@/infrastructure/indexeddb/behavior-stats-types'
 import { stringHashU32 } from '../string-hash-u32'
+import { HYBRID_FAKE_EMBEDDING_DIM, makeFakeEmbedding } from '../hybrid-fake-embedding'
 import {
   USER_SIM_NEGATIVE_TOPICS,
   USER_SIM_PERSONAS,
@@ -51,6 +52,7 @@ export type UserSimGroundTruth = {
   behavior: { latentTopDomains: string[] }
   dreaming: { anchors: { itemId: string; anchor: string }[] }
   itemTopics: Record<string, string>
+  itemAspects: Record<string, string>
 }
 
 export type UserSimDataset = {
@@ -119,6 +121,23 @@ function uuidFrom(seedStr: string): string {
     .map(i => stringHashU32(`${seedStr}::${i}`).toString(16).padStart(8, '0'))
     .join('')
   return `${h.slice(0, 8)}-${h.slice(8, 12)}-5${h.slice(13, 16)}-a${h.slice(17, 20)}-${h.slice(20, 32)}`
+}
+
+export const userSimAspectSlug = (aspect: string): string =>
+  aspect
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+function fakeEmbeddingFor(topicId: string, aspect: string): number[] {
+  const own = makeFakeEmbedding(
+    `${topicId}::${userSimAspectSlug(aspect)}`,
+    HYBRID_FAKE_EMBEDDING_DIM
+  )
+  const shared = makeFakeEmbedding(`${topicId}::shared`, HYBRID_FAKE_EMBEDDING_DIM)
+  const mixed = own.map((v, i) => v * 0.75 + (shared[i] ?? 0) * 0.25)
+  const norm = Math.sqrt(mixed.reduce((s, v) => s + v * v, 0)) || 1
+  return mixed.map(v => v / norm)
 }
 
 type HiddenItem = {
@@ -441,11 +460,16 @@ export function generateUserSimDataset(input: {
   const memoryItems: MemoryItem[] = alive.map(it => {
     const clues: MemoryItem['clues'] = {
       title: it.title,
-      keywords: [],
+      keywords: userSimAspectSlug(it.aspect)
+        .split('-')
+        .filter(token => token && !USER_SIM_TOPICS.some(t => t.id === token)),
       entities: [],
       tags: [],
       sourceUrl: it.url,
       domain: it.domain,
+      embedding: fakeEmbeddingFor(it.topicId, it.aspect),
+      embeddingModel: 'user-sim-fake',
+      embeddingDim: HYBRID_FAKE_EMBEDDING_DIM,
       openCount: it.revisits,
       lastOpenedAt: it.revisits ? dayIso(it.lastVisitDay) : null,
       settledCount: 0,
@@ -528,7 +552,8 @@ export function generateUserSimDataset(input: {
     dreaming: {
       anchors: alive.filter(it => it.selectedText).map(it => ({ itemId: it.id, anchor: it.claim }))
     },
-    itemTopics: Object.fromEntries(alive.map(it => [it.id, it.topicId]))
+    itemTopics: Object.fromEntries(alive.map(it => [it.id, it.topicId])),
+    itemAspects: Object.fromEntries(alive.map(it => [it.id, it.aspect]))
   }
   return {
     meta: {
