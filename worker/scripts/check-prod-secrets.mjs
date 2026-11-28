@@ -6,25 +6,15 @@
 import fs from 'node:fs'
 import path from 'node:path'
 import { spawnSync } from 'node:child_process'
+import {
+  PRODUCTION_SECRET_GROUPS,
+  PRODUCTION_SECRET_NAME_SET
+} from '../../scripts/env-manifest.mjs'
 
-const CORE_REQUIRED = [
-  'SUPABASE_SERVICE_ROLE_KEY',
-  'DEEPSEEK_API_KEY',
-  'TURNSTILE_SECRET_KEY',
-  'JWT_SECRET'
-]
-
-const DODO_GROUP = [
-  'DODO_PAYMENTS_API_KEY',
-  'DODO_PAYMENTS_WEBHOOK_KEY',
-  'DODO_PRODUCT_ID_PRO_MONTHLY',
-  'DODO_PRODUCT_ID_PRO_ANNUAL'
-]
-
-const OAUTH_GROUPS = [
-  ['AUTH_GOOGLE_CLIENT_ID', 'AUTH_GOOGLE_CLIENT_SECRET'],
-  ['AUTH_MICROSOFT_CLIENT_ID', 'AUTH_MICROSOFT_CLIENT_SECRET']
-]
+const CORE_REQUIRED = PRODUCTION_SECRET_GROUPS.core
+const DODO_GROUP = PRODUCTION_SECRET_GROUPS.dodo
+const DODO_FOUNDING = PRODUCTION_SECRET_GROUPS.dodoFounding
+const OAUTH_GROUPS = PRODUCTION_SECRET_GROUPS.oauth
 
 const workerRoot = path.resolve(import.meta.dirname, '..')
 const wranglerTomlPath = path.join(workerRoot, 'wrangler.toml')
@@ -33,9 +23,7 @@ function readProductionDodoEnvironment() {
   try {
     const raw = fs.readFileSync(wranglerTomlPath, 'utf8')
     // 仅扫 [env.production.vars] 段内的 DODO_PAYMENTS_ENVIRONMENT
-    const prodVarsMatch = raw.match(
-      /\[env\.production\.vars\]([\s\S]*?)(?=\n\[|\n\[\[|$)/u
-    )
+    const prodVarsMatch = raw.match(/\[env\.production\.vars\]([\s\S]*?)(?=\n\[|\n\[\[|$)/u)
     if (!prodVarsMatch) return ''
     const block = prodVarsMatch[1]
     const envMatch = block.match(/^\s*DODO_PAYMENTS_ENVIRONMENT\s*=\s*"([^"]*)"/mu)
@@ -135,6 +123,19 @@ function main() {
     console.log(`OK dodo group: ${DODO_GROUP.join(', ')}`)
   }
 
+  const foundingPresent = DODO_FOUNDING.filter(name => present.has(name))
+  const foundingMissing = DODO_FOUNDING.filter(name => !present.has(name))
+  if (foundingPresent.length > 0 && foundingMissing.length > 0) {
+    console.log(
+      `ERR founding group partial: present=${foundingPresent.join(', ')}; missing=${foundingMissing.join(', ')}`
+    )
+    failed = true
+  } else if (foundingPresent.length === DODO_FOUNDING.length) {
+    console.log(`OK founding group: ${DODO_FOUNDING.join(', ')}`)
+  } else {
+    console.log(`OK founding group absent (optional)`)
+  }
+
   for (const group of OAUTH_GROUPS) {
     const label = group[0].startsWith('AUTH_GOOGLE') ? 'google' : 'microsoft'
     const presentInGroup = group.filter(name => present.has(name))
@@ -149,6 +150,11 @@ function main() {
     } else {
       console.log(`OK oauth ${label}: ${group.join(', ')}`)
     }
+  }
+
+  const unknown = [...present].filter(name => !PRODUCTION_SECRET_NAME_SET.has(name)).sort()
+  if (unknown.length) {
+    console.log(`WARN unknown secrets (not in manifest production set): ${unknown.join(', ')}`)
   }
 
   process.exit(failed ? 1 : 0)

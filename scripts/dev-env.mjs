@@ -5,10 +5,24 @@
  * 调用方须使用 `bun --no-env-file`（见根 / website / extension / worker package.json），
  * 否则 Bun 会自动灌入 `.env.development.local` 等，经 process.env 合并后污染 production profile。
  * Pages 后台机密仍在 process.env，不受 --no-env-file 影响。
+ *
+ * 生成文件为纯输出：不从 worker/.dev.vars 回填源 env。
+ * 本地调参写 worker/.dev.vars.local（仅 WORKER_OPTIONAL_KEYS）。
  */
 
 import fs from 'node:fs/promises'
 import path from 'node:path'
+import {
+  SHARED_OPTIONAL_KEYS,
+  EXTENSION_KEYS,
+  WORKER_KEYS,
+  WEBSITE_KEYS,
+  LEGACY_SHARED_FALLBACK_KEYS,
+  LEGACY_PROFILE_KEYS,
+  PROCESS_ENV_SOURCE_KEYS,
+  WORKER_OPTIONAL_KEYS,
+  PRODUCTION_SECRET_GROUPS
+} from './env-manifest.mjs'
 
 const repoRoot = path.resolve(import.meta.dirname, '..')
 const envSharedPath = path.join(repoRoot, '.env.shared.local')
@@ -16,8 +30,10 @@ const envLegacyDevPath = path.join(repoRoot, '.env.local')
 const envDevelopmentPath = path.join(repoRoot, '.env.development.local')
 const envProductionPath = path.join(repoRoot, '.env.production.local')
 const workerEnvPath = path.join(repoRoot, 'worker', '.dev.vars')
+const workerEnvLocalPath = path.join(repoRoot, 'worker', '.dev.vars.local')
 const websiteEnvPath = path.join(repoRoot, 'website', '.env')
 const extensionRuntimeDir = path.join(repoRoot, '.env.runtime')
+const wranglerTomlPath = path.join(repoRoot, 'worker', 'wrangler.toml')
 
 const PROFILES = /** @type {const} */ (['development', 'production'])
 const VALID_TARGETS = /** @type {const} */ (['all', 'extension', 'website', 'worker'])
@@ -38,168 +54,17 @@ const PROFILE_DEFAULTS = {
     VITE_API_BASE_URL: 'https://api.yiveno.com',
     VITE_CLOUDFLARE_WORKER_URL: 'https://api.yiveno.com',
     PUBLIC_API_BASE_URL: 'https://api.yiveno.com',
-    DODO_PAYMENTS_ENVIRONMENT: 'live_mode',
     VITE_RUNTIME_ENV: 'prod'
   }
 }
-
-const SHARED_OPTIONAL_KEYS = [
-  'AUTH_GOOGLE_CLIENT_ID',
-  'AUTH_GOOGLE_CLIENT_SECRET',
-  'AUTH_MICROSOFT_CLIENT_ID',
-  'AUTH_MICROSOFT_CLIENT_SECRET',
-  'AUTH_GOOGLE_AUTH_URL',
-  'AUTH_GOOGLE_TOKEN_URL',
-  'AUTH_GOOGLE_USERINFO_URL',
-  'AUTH_MICROSOFT_AUTH_URL',
-  'AUTH_MICROSOFT_TOKEN_URL',
-  'AUTH_MICROSOFT_USERINFO_URL',
-  'DODO_PAYMENTS_API_KEY',
-  'DODO_PAYMENTS_WEBHOOK_KEY',
-  'DODO_PAYMENTS_ENVIRONMENT',
-  'DODO_PRODUCT_ID_PRO_MONTHLY',
-  'DODO_PRODUCT_ID_PRO_ANNUAL',
-  'DODO_PRODUCT_ID_FOUNDING_MONTHLY',
-  'DODO_PRODUCT_ID_FOUNDING_ANNUAL',
-  'BILLING_FOUNDING_ENABLED',
-  'REDIRECT_URI_ALLOWLIST',
-  'DEEPSEEK_API_KEY',
-  'OPENAI_API_KEY',
-  'GOOGLE_AI_API_KEY',
-  'GROQ_API_KEY',
-  'TURNSTILE_SECRET_KEY',
-  'AI_HOSTED_QUOTA_EXEMPT_USER_IDS',
-  'ALIYUN_DM_ACCESS_KEY_ID',
-  'ALIYUN_DM_ACCESS_KEY_SECRET',
-  'ALIYUN_DM_ACCOUNT_NAME',
-  'ALIYUN_DM_FROM_ALIAS',
-  'ALIYUN_DM_REPLY_ADDRESS',
-  'ALIYUN_DM_REGION_ID',
-  'ALIYUN_DM_ENDPOINT'
-]
-
-const EXTENSION_KEYS = [
-  'VITE_API_BASE_URL',
-  'VITE_WEBSITE_URL',
-  'VITE_SUPABASE_URL',
-  'VITE_SUPABASE_ANON_KEY',
-  'VITE_CLOUDFLARE_WORKER_URL',
-  'VITE_RUNTIME_ENV'
-]
-
-const WORKER_KEYS = [
-  'SUPABASE_URL',
-  'SUPABASE_ANON_KEY',
-  'SUPABASE_SERVICE_ROLE_KEY',
-  'WEBSITE_URL',
-  'JWT_SECRET',
-  'AUTH_GOOGLE_CLIENT_ID',
-  'AUTH_GOOGLE_CLIENT_SECRET',
-  'AUTH_MICROSOFT_CLIENT_ID',
-  'AUTH_MICROSOFT_CLIENT_SECRET',
-  'AUTH_GOOGLE_AUTH_URL',
-  'AUTH_GOOGLE_TOKEN_URL',
-  'AUTH_GOOGLE_USERINFO_URL',
-  'AUTH_MICROSOFT_AUTH_URL',
-  'AUTH_MICROSOFT_TOKEN_URL',
-  'AUTH_MICROSOFT_USERINFO_URL',
-  'REDIRECT_URI_ALLOWLIST',
-  'DEEPSEEK_API_KEY',
-  'OPENAI_API_KEY',
-  'GOOGLE_AI_API_KEY',
-  'GROQ_API_KEY',
-  'TURNSTILE_SECRET_KEY',
-  'AI_HOSTED_QUOTA_EXEMPT_USER_IDS',
-  'DODO_PAYMENTS_API_KEY',
-  'DODO_PAYMENTS_WEBHOOK_KEY',
-  'DODO_PAYMENTS_ENVIRONMENT',
-  'DODO_PRODUCT_ID_PRO_MONTHLY',
-  'DODO_PRODUCT_ID_PRO_ANNUAL',
-  'DODO_PRODUCT_ID_FOUNDING_MONTHLY',
-  'DODO_PRODUCT_ID_FOUNDING_ANNUAL',
-  'BILLING_FOUNDING_ENABLED',
-  'ALIYUN_DM_ACCESS_KEY_ID',
-  'ALIYUN_DM_ACCESS_KEY_SECRET',
-  'ALIYUN_DM_ACCOUNT_NAME',
-  'ALIYUN_DM_FROM_ALIAS',
-  'ALIYUN_DM_REPLY_ADDRESS',
-  'ALIYUN_DM_REGION_ID',
-  'ALIYUN_DM_ENDPOINT'
-]
-
-const WEBSITE_KEYS = [
-  ['PUBLIC_API_BASE_URL', 'PUBLIC_API_BASE_URL'],
-  ['PUBLIC_SUPABASE_URL', 'SUPABASE_URL'],
-  ['PUBLIC_SUPABASE_ANON_KEY', 'SUPABASE_ANON_KEY'],
-  ['PUBLIC_WEBSITE_URL', 'WEBSITE_URL'],
-  // Turnstile 公钥；Secret 只进 Supabase Dashboard，不同步进官网
-  ['PUBLIC_TURNSTILE_SITE_KEY', 'PUBLIC_TURNSTILE_SITE_KEY']
-]
 
 const SOURCE_FILE_MAP = {
   development: envDevelopmentPath,
   production: envProductionPath
 }
 
-const LEGACY_SHARED_FALLBACK_KEYS = [
-  'SUPABASE_URL',
-  'SUPABASE_ANON_KEY',
-  'SUPABASE_SERVICE_ROLE_KEY',
-  'AUTH_GOOGLE_CLIENT_ID',
-  'AUTH_GOOGLE_CLIENT_SECRET',
-  'AUTH_MICROSOFT_CLIENT_ID',
-  'AUTH_MICROSOFT_CLIENT_SECRET',
-  'AUTH_GOOGLE_AUTH_URL',
-  'AUTH_GOOGLE_TOKEN_URL',
-  'AUTH_GOOGLE_USERINFO_URL',
-  'AUTH_MICROSOFT_AUTH_URL',
-  'AUTH_MICROSOFT_TOKEN_URL',
-  'AUTH_MICROSOFT_USERINFO_URL',
-  'DODO_PAYMENTS_API_KEY',
-  'DODO_PAYMENTS_WEBHOOK_KEY',
-  'DODO_PAYMENTS_ENVIRONMENT',
-  'DODO_PRODUCT_ID_PRO_MONTHLY',
-  'DODO_PRODUCT_ID_PRO_ANNUAL',
-  'DODO_PRODUCT_ID_FOUNDING_MONTHLY',
-  'DODO_PRODUCT_ID_FOUNDING_ANNUAL',
-  'BILLING_FOUNDING_ENABLED',
-  'REDIRECT_URI_ALLOWLIST',
-  'ALIYUN_DM_ACCESS_KEY_ID',
-  'ALIYUN_DM_ACCESS_KEY_SECRET',
-  'ALIYUN_DM_ACCOUNT_NAME',
-  'ALIYUN_DM_FROM_ALIAS',
-  'ALIYUN_DM_REPLY_ADDRESS',
-  'ALIYUN_DM_REGION_ID',
-  'ALIYUN_DM_ENDPOINT'
-]
-
-const LEGACY_PROFILE_KEYS = {
-  development: [
-    'WEBSITE_URL',
-    'VITE_WEBSITE_URL',
-    'VITE_API_BASE_URL',
-    'VITE_CLOUDFLARE_WORKER_URL',
-    'JWT_SECRET'
-  ],
-  production: ['JWT_SECRET']
-}
-
-/** 允许从 process.env 读入的源键（Pages Git 构建无本地 env 文件时用）。 */
-const PROCESS_ENV_SOURCE_KEYS = [
-  ...new Set([
-    ...SHARED_OPTIONAL_KEYS,
-    ...EXTENSION_KEYS,
-    ...WORKER_KEYS,
-    ...LEGACY_SHARED_FALLBACK_KEYS,
-    ...LEGACY_PROFILE_KEYS.development,
-    ...LEGACY_PROFILE_KEYS.production,
-    ...WEBSITE_KEYS.flatMap(([targetKey, sourceKey]) => [targetKey, sourceKey]),
-    'SUPABASE_URL',
-    'SUPABASE_ANON_KEY',
-    'PUBLIC_TURNSTILE_SITE_KEY',
-    'JWT_SECRET'
-  ])
-]
+const WORKER_OPTIONAL_KEY_SET = new Set(WORKER_OPTIONAL_KEYS)
+const WORKER_KEY_SET = new Set(WORKER_KEYS)
 
 /**
  * 判定 Supabase key 角色。
@@ -330,6 +195,44 @@ function getProfileSourcePath(profile) {
 }
 
 /**
+ * 解析 wrangler.toml 某 vars 段内的字符串键值（只取 "…" 字面量）。
+ * @param {string} raw
+ * @param {string} sectionHeader 如 `[vars]` 或 `[env.production.vars]`
+ * @returns {Record<string, string> | null} 段不存在返回 null（fail-closed 由调用方处理）
+ */
+function parseWranglerVarsSection(raw, sectionHeader) {
+  const escaped = sectionHeader.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
+  const re = new RegExp(`${escaped}([\\s\\S]*?)(?=\\n\\[|\\n\\[\\[|$)`, 'u')
+  const match = raw.match(re)
+  if (!match) return null
+  /** @type {Record<string, string>} */
+  const vars = {}
+  for (const line of match[1].split(/\r?\n/u)) {
+    const m = line.match(/^\s*([A-Z][A-Z0-9_]*)\s*=\s*"([^"]*)"/u)
+    if (m) vars[m[1]] = m[2]
+  }
+  return vars
+}
+
+/**
+ * @returns {Promise<{ topVars: Record<string, string>, productionVars: Record<string, string> }>}
+ */
+async function loadWranglerAuthority() {
+  let raw
+  try {
+    raw = await fs.readFile(wranglerTomlPath, 'utf8')
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error)
+    throw new Error(`wrangler.toml read failed: ${reason}`)
+  }
+  const topVars = parseWranglerVarsSection(raw, '[vars]')
+  const productionVars = parseWranglerVarsSection(raw, '[env.production.vars]')
+  if (!topVars) throw new Error('wrangler.toml missing [vars] section')
+  if (!productionVars) throw new Error('wrangler.toml missing [env.production.vars] section')
+  return { topVars, productionVars }
+}
+
+/**
  * 从 process.env 拾取白名单键；仅非空字符串覆盖文件值（空串 / 未设忽略）。
  * 本地无相关环境变量时结果与只读文件一致。
  */
@@ -378,7 +281,13 @@ function pickEnv(env, keys) {
   return result
 }
 
-function normalizeEnv(profile, sourceEnv, workerEnv, websiteEnv) {
+/**
+ * 纯源 env 归一化（不读 worker/.dev.vars）。
+ * @param {'development' | 'production'} profile
+ * @param {Record<string, string>} sourceEnv
+ * @param {{ productionDodoEnvironment?: string }} [wranglerHints]
+ */
+function normalizeEnv(profile, sourceEnv, wranglerHints = {}) {
   const normalized = { ...sourceEnv }
   const defaults = PROFILE_DEFAULTS[profile]
 
@@ -400,25 +309,21 @@ function normalizeEnv(profile, sourceEnv, workerEnv, websiteEnv) {
     normalized.VITE_API_BASE_URL || defaults.PUBLIC_API_BASE_URL
   )
 
-  // 兼容 Pages 旧机密名：PUBLIC_SUPABASE_* 可作为 SUPABASE_* 别名来源（硬门 getChecks 亦有回退）
+  // 兼容 Pages 旧机密名：PUBLIC_SUPABASE_* 可作为 SUPABASE_* 别名来源
   setIfMissing(normalized, 'SUPABASE_URL', normalized.PUBLIC_SUPABASE_URL)
   setIfMissing(normalized, 'SUPABASE_ANON_KEY', normalized.PUBLIC_SUPABASE_ANON_KEY)
 
-  if (profile === 'development') {
-    setIfMissing(normalized, 'SUPABASE_URL', workerEnv.SUPABASE_URL)
-    setIfMissing(normalized, 'SUPABASE_ANON_KEY', workerEnv.SUPABASE_ANON_KEY)
-    setIfMissing(normalized, 'SUPABASE_SERVICE_ROLE_KEY', workerEnv.SUPABASE_SERVICE_ROLE_KEY)
-    setIfMissing(normalized, 'JWT_SECRET', workerEnv.JWT_SECRET)
-  }
-
   setIfMissing(normalized, 'VITE_SUPABASE_URL', normalized.SUPABASE_URL)
   setIfMissing(normalized, 'VITE_SUPABASE_ANON_KEY', normalized.SUPABASE_ANON_KEY)
-  setIfMissing(normalized, 'DODO_PAYMENTS_ENVIRONMENT', defaults.DODO_PAYMENTS_ENVIRONMENT)
-  normalized.VITE_RUNTIME_ENV = defaults.VITE_RUNTIME_ENV
 
-  for (const key of SHARED_OPTIONAL_KEYS) {
-    setIfMissing(normalized, key, workerEnv[key])
+  if (profile === 'development') {
+    setIfMissing(normalized, 'DODO_PAYMENTS_ENVIRONMENT', defaults.DODO_PAYMENTS_ENVIRONMENT)
+  } else {
+    const fromWrangler = (wranglerHints.productionDodoEnvironment || '').trim()
+    setIfMissing(normalized, 'DODO_PAYMENTS_ENVIRONMENT', fromWrangler || 'test_mode')
   }
+
+  normalized.VITE_RUNTIME_ENV = defaults.VITE_RUNTIME_ENV
 
   for (const key of SHARED_OPTIONAL_KEYS) {
     if (!(key in normalized)) normalized[key] = ''
@@ -441,12 +346,21 @@ function buildExtensionEnvFile(profile, env) {
   return renderEnvFile(`Extension Runtime (${profile})`, EXTENSION_KEYS, env)
 }
 
-function buildWorkerEnvFile(env) {
+/**
+ * @param {Record<string, string>} env 源归一化 env（WORKER_KEYS）
+ * @param {Record<string, string>} optionalOverlay 仅 WORKER_OPTIONAL_KEYS
+ */
+function buildWorkerEnvFile(env, optionalOverlay = {}) {
+  /** @type {Record<string, string>} */
   const output = {}
   for (const key of WORKER_KEYS) {
     if (env[key]) output[key] = env[key]
   }
-  return renderEnvFile('Worker Runtime (development)', WORKER_KEYS, output)
+  for (const key of WORKER_OPTIONAL_KEYS) {
+    if (optionalOverlay[key]) output[key] = optionalOverlay[key]
+  }
+  const orderedKeys = [...WORKER_KEYS, ...WORKER_OPTIONAL_KEYS.filter(k => output[k])]
+  return renderEnvFile('Worker Runtime (development)', orderedKeys, output)
 }
 
 function buildWebsiteEnvFile(profile, env) {
@@ -462,15 +376,31 @@ function buildWebsiteEnvFile(profile, env) {
   )
 }
 
-async function writeFileIfChanged(filePath, content) {
+/**
+ * @param {string} filePath
+ * @param {string} content
+ * @param {{ mode?: number }} [options]
+ */
+async function writeFileIfChanged(filePath, content, options = {}) {
+  let changed = false
   try {
     const current = await fs.readFile(filePath, 'utf8')
-    if (current === content) return false
-  } catch {}
+    if (current !== content) {
+      await fs.mkdir(path.dirname(filePath), { recursive: true })
+      await fs.writeFile(filePath, content, 'utf8')
+      changed = true
+    }
+  } catch {
+    await fs.mkdir(path.dirname(filePath), { recursive: true })
+    await fs.writeFile(filePath, content, 'utf8')
+    changed = true
+  }
 
-  await fs.mkdir(path.dirname(filePath), { recursive: true })
-  await fs.writeFile(filePath, content, 'utf8')
-  return true
+  if (typeof options.mode === 'number') {
+    await fs.chmod(filePath, options.mode)
+  }
+
+  return changed
 }
 
 function isLocalHttp(url) {
@@ -507,12 +437,7 @@ function getMissing(env, options = {}) {
       'AUTH_MICROSOFT_CLIENT_ID',
       'AUTH_MICROSOFT_CLIENT_SECRET'
     ].filter(key => !env[key]),
-    dodo: [
-      'DODO_PAYMENTS_API_KEY',
-      'DODO_PAYMENTS_WEBHOOK_KEY',
-      'DODO_PRODUCT_ID_PRO_MONTHLY',
-      'DODO_PRODUCT_ID_PRO_ANNUAL'
-    ].filter(key => !env[key])
+    dodo: [...PRODUCTION_SECRET_GROUPS.dodo].filter(key => !env[key])
   }
 }
 
@@ -527,8 +452,6 @@ function getChecks(profile, env) {
     ]
   }
 
-  // 官网生产硬门：PUBLIC_SUPABASE_* / Turnstile sitekey 任一空则失败。
-  // 值来自合并后 env（通常 .env.shared.local → WEBSITE_KEYS 映射）；展示一律脱敏，禁止刷密钥。
   const publicSupabaseUrl = (env.PUBLIC_SUPABASE_URL || env.SUPABASE_URL || '').trim()
   const publicSupabaseAnonKey = (env.PUBLIC_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY || '').trim()
   const turnstileSiteKey = (env.PUBLIC_TURNSTILE_SITE_KEY || '').trim()
@@ -567,10 +490,22 @@ function hasUnsafeProductionValues(env) {
 }
 
 /**
- * 公开键角色门 / Turnstile 撞 secret / service_role 校验。
- * 只输出键名与角色结论，绝不打印值。
+ * 校验覆盖层：仅允许 WORKER_OPTIONAL_KEYS；WORKER_KEYS / 未知键 → ERR（只列键名）。
+ * @param {Record<string, string>} overlay
+ * @returns {{ ok: boolean, badKeys: string[] }}
+ */
+function validateWorkerOptionalOverlay(overlay) {
+  const badKeys = Object.keys(overlay).filter(
+    key => WORKER_KEY_SET.has(key) || !WORKER_OPTIONAL_KEY_SET.has(key)
+  )
+  return { ok: badKeys.length === 0, badKeys: badKeys.sort() }
+}
+
+/**
+ * 公开键角色门 / Turnstile / Dodo / Supabase wrangler 权威。
+ * 只输出键名与结论，绝不打印值。
  * @param {Record<string, string>} env
- * @param {{ target: string, profile: string }} options
+ * @param {{ target: string, profile: string, wranglerTopVars?: Record<string, string> | null, wranglerError?: string | null }} options
  * @returns {boolean}
  */
 function printSecurityGates(env, options) {
@@ -630,6 +565,75 @@ function printSecurityGates(env, options) {
     console.log('WARN JWT_SECRET length < 32')
   }
 
+  // Supabase 权威门：合并后值须匹配 wrangler [vars]（只报键名）
+  if (options.wranglerError) {
+    console.log(`ERR wrangler authority: ${options.wranglerError}`)
+    ok = false
+  } else if (options.wranglerTopVars) {
+    for (const key of ['SUPABASE_URL', 'SUPABASE_ANON_KEY']) {
+      const expected = (options.wranglerTopVars[key] || '').trim()
+      const actual = (env[key] || '').trim()
+      if (actual && expected && actual !== expected) {
+        console.log(`ERR ${key} does not match wrangler authority`)
+        ok = false
+      }
+    }
+  }
+
+  // Dodo 门（target=worker|all）
+  if (needsWorkerSecrets) {
+    const dodoEnv = (env.DODO_PAYMENTS_ENVIRONMENT || '').trim()
+    if (dodoEnv && dodoEnv !== 'test_mode' && dodoEnv !== 'live_mode') {
+      console.log('ERR DODO_PAYMENTS_ENVIRONMENT must be test_mode or live_mode')
+      ok = false
+    }
+
+    const apiKey = (env.DODO_PAYMENTS_API_KEY || '').trim()
+    if (apiKey) {
+      const expectedPrefix = dodoEnv === 'live_mode' ? 'dodo_live_' : 'dodo_test_'
+      if (apiKey.startsWith('dodo_live_') || apiKey.startsWith('dodo_test_')) {
+        if (!apiKey.startsWith(expectedPrefix)) {
+          console.log(
+            `ERR DODO_PAYMENTS_API_KEY prefix does not match DODO_PAYMENTS_ENVIRONMENT (expected ${expectedPrefix})`
+          )
+          ok = false
+        }
+      } else {
+        // 非 dodo_test_/dodo_live_ 族：不挡门，但提示（本地遗留格式）；负例 dodo_live_↔test_mode 仍走上方 ERR
+        console.log(
+          `WARN DODO_PAYMENTS_API_KEY unexpected prefix family (expected ${expectedPrefix})`
+        )
+      }
+    }
+
+    const webhookKey = (env.DODO_PAYMENTS_WEBHOOK_KEY || '').trim()
+    if (webhookKey && !webhookKey.startsWith('whsec_')) {
+      console.log('ERR DODO_PAYMENTS_WEBHOOK_KEY must start with whsec_')
+      ok = false
+    }
+
+    const dodoGroup = [...PRODUCTION_SECRET_GROUPS.dodo]
+    const dodoMissing = dodoGroup.filter(key => !(env[key] || '').trim())
+    if (dodoEnv === 'live_mode' && dodoMissing.length) {
+      console.log(`ERR live_mode dodo missing: ${dodoMissing.join(', ')}`)
+      ok = false
+    }
+
+    const founding = [...PRODUCTION_SECRET_GROUPS.dodoFounding]
+    const foundingPresent = founding.filter(key => (env[key] || '').trim())
+    const foundingMissing = founding.filter(key => !(env[key] || '').trim())
+    if (foundingPresent.length > 0 && foundingMissing.length > 0) {
+      console.log(
+        `ERR founding product ids partial: present=${foundingPresent.join(', ')}; missing=${foundingMissing.join(', ')}`
+      )
+      ok = false
+    }
+    if ((env.BILLING_FOUNDING_ENABLED || '').trim() === 'true' && foundingMissing.length) {
+      console.log(`ERR BILLING_FOUNDING_ENABLED=true requires: ${founding.join(', ')}`)
+      ok = false
+    }
+  }
+
   return ok
 }
 
@@ -648,7 +652,12 @@ function printCheck(profile, env, options = {}) {
     console.log(`${ok ? 'OK ' : 'ERR'} ${key}=${value || '(missing)'}`)
   }
 
-  const securityOk = printSecurityGates(env, { target, profile })
+  const securityOk = printSecurityGates(env, {
+    target,
+    profile,
+    wranglerTopVars: options.wranglerTopVars,
+    wranglerError: options.wranglerError
+  })
 
   if (profile === 'production' && hasUnsafeProductionValues(env)) {
     console.log('ERR production profile contains localhost / 127.0.0.1')
@@ -662,6 +671,7 @@ function printCheck(profile, env, options = {}) {
   if (missing.oauth.length) console.log(`WARN oauth missing: ${missing.oauth.join(', ')}`)
   else console.log('OK oauth credentials complete')
 
+  // test_mode 且 dodo 组全缺 → 保持 WARN；部分缺仍 WARN（live 缺由 security 门 ERR）
   if (missing.dodo.length) console.log(`WARN dodo missing: ${missing.dodo.join(', ')}`)
   else console.log('OK dodo credentials complete')
 
@@ -674,11 +684,10 @@ function printCheck(profile, env, options = {}) {
 }
 
 /**
- * check 只读：用「仅文件源」渲染期望内容，与磁盘比对（process.env 覆盖不改写磁盘期望，避免负例/临时覆盖误判 stale）。
- * 无本地源文件时跳过（Pages Git 构建场景）。
+ * check 只读：用「仅文件源」渲染期望内容，与磁盘比对。
  * @returns {Promise<boolean>}
  */
-async function verifyGeneratedFiles(options, fileOnlyNormalized) {
+async function verifyGeneratedFiles(options, fileOnlyNormalized, optionalOverlay) {
   const hasLocalSources =
     (await pathExists(envSharedPath)) ||
     (await pathExists(getProfileSourcePath(options.profile))) ||
@@ -710,7 +719,7 @@ async function verifyGeneratedFiles(options, fileOnlyNormalized) {
     comparisons.push({
       rel: 'worker/.dev.vars',
       path: workerEnvPath,
-      expected: buildWorkerEnvFile(fileOnlyNormalized)
+      expected: buildWorkerEnvFile(fileOnlyNormalized, optionalOverlay)
     })
   }
 
@@ -722,7 +731,6 @@ async function verifyGeneratedFiles(options, fileOnlyNormalized) {
     })
   }
 
-  // production + worker：无生成文件，跳过
   let ok = true
   for (const item of comparisons) {
     try {
@@ -738,9 +746,7 @@ async function verifyGeneratedFiles(options, fileOnlyNormalized) {
   }
 
   if (ok && comparisons.length) {
-    console.log(
-      `OK generated files match (${comparisons.map(item => item.rel).join(', ')})`
-    )
+    console.log(`OK generated files match (${comparisons.map(item => item.rel).join(', ')})`)
   } else if (ok) {
     console.log('OK generated file check skipped (no applicable files for target/profile)')
   }
@@ -749,9 +755,22 @@ async function verifyGeneratedFiles(options, fileOnlyNormalized) {
 }
 
 async function sync(options) {
+  let wranglerHints = {}
+  try {
+    const { productionVars } = await loadWranglerAuthority()
+    wranglerHints = {
+      productionDodoEnvironment: productionVars.DODO_PAYMENTS_ENVIRONMENT || ''
+    }
+  } catch {
+    // sync 时 wrangler 失败不阻断写入；check 会 fail-closed
+  }
+
   const sourceEnv = await loadSourceEnv(options.profile)
-  const workerEnv = await readEnvFile(workerEnvPath)
-  const normalizedEnv = normalizeEnv(options.profile, sourceEnv, workerEnv, {})
+  const normalizedEnv = normalizeEnv(options.profile, sourceEnv, wranglerHints)
+  const optionalOverlay =
+    options.profile === 'development' && (await pathExists(workerEnvLocalPath))
+      ? await readEnvFile(workerEnvLocalPath)
+      : {}
 
   const targets = new Set(
     options.target === 'all'
@@ -771,7 +790,12 @@ async function sync(options) {
   }
 
   if (targets.has('worker') && options.profile === 'development') {
-    const updated = await writeFileIfChanged(workerEnvPath, buildWorkerEnvFile(normalizedEnv))
+    // 永不写入 .dev.vars.local；仅生成 .dev.vars 并 chmod 0600
+    const updated = await writeFileIfChanged(
+      workerEnvPath,
+      buildWorkerEnvFile(normalizedEnv, optionalOverlay),
+      { mode: 0o600 }
+    )
     if (updated) changed.push('worker/.dev.vars')
   }
 
@@ -796,15 +820,49 @@ async function runCheck(options) {
   const overrideKeys = Object.keys(pickProcessEnvOverrides()).sort()
   printProcessEnvOverrides(overrideKeys)
 
+  /** @type {Record<string, string> | null} */
+  let wranglerTopVars = null
+  /** @type {string | null} */
+  let wranglerError = null
+  /** @type {string} */
+  let productionDodoEnvironment = ''
+  try {
+    const authority = await loadWranglerAuthority()
+    wranglerTopVars = authority.topVars
+    productionDodoEnvironment = authority.productionVars.DODO_PAYMENTS_ENVIRONMENT || ''
+  } catch (error) {
+    wranglerError = error instanceof Error ? error.message : String(error)
+  }
+
   const sourceEnv = await loadSourceEnv(options.profile)
   const fileOnlySourceEnv = await loadSourceEnv(options.profile, { applyProcessEnv: false })
-  const workerEnv = await readEnvFile(workerEnvPath)
-  const normalizedEnv = normalizeEnv(options.profile, sourceEnv, workerEnv, {})
-  const fileOnlyNormalized = normalizeEnv(options.profile, fileOnlySourceEnv, workerEnv, {})
+  const wranglerHints = { productionDodoEnvironment }
+  const normalizedEnv = normalizeEnv(options.profile, sourceEnv, wranglerHints)
+  const fileOnlyNormalized = normalizeEnv(options.profile, fileOnlySourceEnv, wranglerHints)
 
-  const staleOk = await verifyGeneratedFiles(options, fileOnlyNormalized)
-  const checkOk = printCheck(options.profile, normalizedEnv, { target: options.target })
-  return staleOk && checkOk
+  const optionalOverlay =
+    options.profile === 'development' && (await pathExists(workerEnvLocalPath))
+      ? await readEnvFile(workerEnvLocalPath)
+      : {}
+
+  let overlayOk = true
+  if (Object.keys(optionalOverlay).length) {
+    const validation = validateWorkerOptionalOverlay(optionalOverlay)
+    if (!validation.ok) {
+      console.log(
+        `ERR worker/.dev.vars.local invalid keys (WORKER_KEYS belong in source files): ${validation.badKeys.join(', ')}`
+      )
+      overlayOk = false
+    }
+  }
+
+  const staleOk = await verifyGeneratedFiles(options, fileOnlyNormalized, optionalOverlay)
+  const checkOk = printCheck(options.profile, normalizedEnv, {
+    target: options.target,
+    wranglerTopVars,
+    wranglerError
+  })
+  return overlayOk && staleOk && checkOk
 }
 
 async function main() {

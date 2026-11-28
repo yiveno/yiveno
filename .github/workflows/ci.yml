@@ -15,7 +15,7 @@ permissions:
   contents: read
 
 env:
-  BUN_VERSION: latest
+  BUN_VERSION: 1.4.0
   # eval/*.test.ts 数量地板：防止目录搬迁/清空后 test:must 仍「0 tests 假绿」
   RECALL_EVAL_TEST_FILE_FLOOR: '8'
 
@@ -36,6 +36,9 @@ jobs:
 
       - name: Install
         run: bun install --frozen-lockfile
+
+      - name: Env contract check
+        run: bun run env:contract:check
 
       # packages + worker + website；extension 整图（app+node+vitest）由 build-test 内 vue-tsc -b 覆盖
       - name: Typecheck (ci)

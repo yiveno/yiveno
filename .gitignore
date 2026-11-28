@@ -21,6 +21,7 @@ gha-creds-*.json
 # ============================================
 .env
 .env.*
+!.env.example
 .env.local
 .env.*.local
 .env.runtime/
@@ -32,6 +33,7 @@ website/.env
 
 # Cloudflare Worker 本地开发变量
 worker/.dev.vars
+worker/.dev.vars.local
 
 # 历史备份文件
 *-legacy.*

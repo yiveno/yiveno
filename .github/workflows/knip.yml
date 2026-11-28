@@ -19,7 +19,7 @@ jobs:
       - name: 🔧 设置 Bun
         uses: oven-sh/setup-bun@v1
         with:
-          bun-version: latest
+          bun-version: 1.4.0
 
       - name: 📦 安装依赖
         run: bun install --frozen-lockfile
