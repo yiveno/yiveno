@@ -25,21 +25,6 @@
   transition-delay: 160ms;
 }
 
-.reveal.is-in.d3,
-.reveal.in.d3 {
-  transition-delay: 240ms;
-}
-
-.reveal.is-in.d4,
-.reveal.in.d4 {
-  transition-delay: 320ms;
-}
-
-.reveal.is-in.d5,
-.reveal.in.d5 {
-  transition-delay: 400ms;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .reveal {
     opacity: 1;

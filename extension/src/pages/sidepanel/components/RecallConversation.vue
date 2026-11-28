@@ -1350,31 +1350,6 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
   color: var(--on-surface-muted);
 }
 
-.portrait-summary__list {
-  display: grid;
-  gap: var(--space-2xs);
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.portrait-summary__item {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: var(--space-2xs) var(--space-xs);
-  min-width: 0;
-  font-size: var(--text-body);
-  line-height: var(--leading-snug);
-  color: var(--on-surface);
-  overflow-wrap: anywhere;
-}
-
-.portrait-summary__badge {
-  font-size: var(--text-caption);
-  color: var(--on-surface-muted);
-}
-
 .portrait-summary__actions {
   display: inline-flex;
   flex-wrap: wrap;

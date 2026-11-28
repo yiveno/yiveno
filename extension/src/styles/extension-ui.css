@@ -44,58 +44,12 @@ select {
   font: inherit;
 }
 
-.app-shell {
-  padding: var(--space-md);
-}
-
-.page-title {
-  margin: 0 0 var(--space-xs);
-  font-size: var(--text-title);
-  line-height: var(--leading-tight);
-  color: var(--on-surface);
-}
-
-.page-description {
-  margin: 0;
-  font-size: var(--text-body);
-  line-height: var(--leading-relaxed);
-  color: var(--on-surface-muted);
-}
-
-.surface-panel {
-  padding: var(--space-md);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  background: var(--surface-raised);
-}
-
 /** 白底内容面板（Library / Settings 主区等） */
 .surface-panel-white {
   padding: var(--space-md);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface-white);
-}
-
-.muted-text {
-  margin: 0;
-  font-size: var(--text-meta);
-  line-height: var(--leading-relaxed);
-  color: var(--on-surface-muted);
-}
-
-.error-text {
-  margin: var(--space-xs) 0 0;
-  font-size: var(--text-meta);
-  line-height: var(--leading-snug);
-  color: var(--danger);
-}
-
-.action-row {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-xs);
 }
 
 /*
