@@ -30,6 +30,7 @@
     "clue-chain:stage2": "bun scripts/clue-chain-stage2.mjs",
     "clue-chain:stage2:sweep": "bun scripts/clue-chain-stage2-sweep.mjs",
     "user-sim:run": "bun scripts/user-sim-run.mjs",
+    "user-sim:diagnose": "bun scripts/user-sim-filtered-diagnosis.mjs",
     "user-sim:real": "bun scripts/user-sim-real-run.mjs",
     "user-sim:dreaming": "bun scripts/user-sim-dreaming-run.mjs",
     "behavior-ablation:run": "bun scripts/behavior-ablation-run.mjs",
