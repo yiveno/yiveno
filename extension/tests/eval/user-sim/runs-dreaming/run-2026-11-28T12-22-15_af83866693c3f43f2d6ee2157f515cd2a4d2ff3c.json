@@ -1,0 +1,1877 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-11-28T12:22:15.738Z",
+  "baseCommit": "af83866693c3f43f2d6ee2157f515cd2a4d2ff3c",
+  "track": {
+    "dreaming": "real",
+    "model": "deepseek-flash",
+    "sourceLimit": 40
+  },
+  "personas": {
+    "indie-dev-researcher": {
+      "summary": {
+        "sources": 40,
+        "totalPropositions": 64,
+        "verbatimRate": 1,
+        "anchorCoverage": 1,
+        "emptyRate": 0,
+        "parseFailures": 0,
+        "statusCounts": {
+          "ok": 40
+        }
+      },
+      "rows": [
+        {
+          "sourceId": "9553bda0-9653-5f33-a753-c0c69853c259",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Wasm bundle size drops sharply with link-time optimization.",
+              "sourceQuote": "Wasm bundle size drops sharply with link-time optimization.",
+              "topicAnchor": ["wasm", "bundle size", "link-time optimization"]
+            }
+          ]
+        },
+        {
+          "sourceId": "efc141b7-eec1-5024-a1c1-44ddf0c1434a",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Strength training twice a week preserves muscle during desk work.",
+              "sourceQuote": "Strength training twice a week preserves muscle during desk work.",
+              "topicAnchor": ["strength training", "muscle preservation", "desk work"]
+            }
+          ]
+        },
+        {
+          "sourceId": "2dc6dd9a-2ec6-5f2d-abc6-da742cc6dc07",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Strength training twice a week preserves muscle during desk work.",
+              "sourceQuote": "Strength training twice a week preserves muscle during desk work.",
+              "topicAnchor": ["strength training", "muscle preservation", "desk work"]
+            }
+          ]
+        },
+        {
+          "sourceId": "3d2cc423-3c2c-5290-af2c-c7493e2cc5b6",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Side panels keep context better than popups for long tasks.",
+              "sourceQuote": "Side panels keep context better than popups for long tasks.",
+              "topicAnchor": ["side panels", "popups", "context"]
+            }
+          ]
+        },
+        {
+          "sourceId": "c8d625a6-c9d6-5739-a6d6-2280c7d62413",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "The spacing effect doubles retention compared with massed practice.",
+              "sourceQuote": "The spacing effect doubles retention compared with massed practice.",
+              "topicAnchor": ["spacing effect", "retention", "massed practice"]
+            }
+          ]
+        },
+        {
+          "sourceId": "323e1339-313e-51a6-a03e-10132f3e0e80",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Interference from similar memories is the main cause of everyday forgetting.",
+              "sourceQuote": "Interference from similar memories is the main cause of everyday forgetting.",
+              "topicAnchor": ["interference", "memory", "forgetting"]
+            }
+          ]
+        },
+        {
+          "sourceId": "6324aaaf-6224-591c-a524-add56424ac42",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Wasm bundle size drops sharply with link-time optimization.",
+              "sourceQuote": "Wasm bundle size drops sharply with link-time optimization.",
+              "topicAnchor": ["wasm", "bundle size", "link-time optimization"]
+            }
+          ]
+        },
+        {
+          "sourceId": "f84819dd-f748-584a-a648-16b7f5481524",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Waitlists measure curiosity, not willingness to pay.",
+              "sourceQuote": "Waitlists measure curiosity, not willingness to pay.",
+              "topicAnchor": ["waitlists", "curiosity", "willingness to pay"]
+            }
+          ]
+        },
+        {
+          "sourceId": "27f7e222-28f7-53b5-a5f7-defc26f7e08f",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Empty states teach faster than tooltips for first-time users.",
+              "sourceQuote": "Empty states teach faster than tooltips for first-time users.",
+              "topicAnchor": ["microcopy", "empty states", "tooltips"]
+            },
+            {
+              "text": "The effect of empty states holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["microcopy", "team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "6df7fca4-6ef7-5e37-aff7-ffca70f8015d",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Prompt caching cuts repeated-prefix cost by more than half.",
+              "sourceQuote": "Prompt caching cuts repeated-prefix cost by more than half.",
+              "topicAnchor": ["tool calling reliability", "prompt caching", "cost"]
+            },
+            {
+              "text": "The effect of prompt caching holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["tool calling reliability", "team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "e5418a0b-e441-5878-a741-8d31e6418b9e",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "The spacing effect doubles retention compared with massed practice.",
+              "sourceQuote": "The spacing effect doubles retention compared with massed practice.",
+              "topicAnchor": ["cue-dependent recall", "spacing effect", "retention"]
+            },
+            {
+              "text": "The spacing effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["cue-dependent recall", "team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "64455a8e-6545-5c21-a245-5768634558fb",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "The spacing effect doubles retention compared with massed practice.",
+              "sourceQuote": "The spacing effect doubles retention compared with massed practice.",
+              "topicAnchor": ["cue-dependent recall", "spacing effect", "retention"]
+            },
+            {
+              "text": "The spacing effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["cue-dependent recall", "team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "ca0743b0-cb07-5543-ac07-46d6cd074869",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Query rewriting helps most when the original query is underspecified.",
+              "sourceQuote": "Query rewriting helps most when the original query is underspecified.",
+              "topicAnchor": ["hybrid ranking", "query rewriting"]
+            },
+            {
+              "text": "The effect of query rewriting holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["hybrid ranking", "team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "104241a4-1142-5337-a242-44ca1342465d",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Query rewriting helps most when the original query is underspecified.",
+              "sourceQuote": "Query rewriting helps most when the original query is underspecified.",
+              "topicAnchor": ["hybrid ranking", "query rewriting"]
+            },
+            {
+              "text": "The effect of query rewriting holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["hybrid ranking", "team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "e7fde149-e6fd-5fb6-a5fd-de23e4fddc90",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "The spacing effect doubles retention compared with massed practice.",
+              "sourceQuote": "The spacing effect doubles retention compared with massed practice.",
+              "topicAnchor": ["prospective memory", "spacing effect", "retention"]
+            },
+            {
+              "text": "The spacing effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["prospective memory", "team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "878bcf0b-868b-5d78-a98b-d231888bd09e",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Microcopy that names the next action reduces abandonment.",
+              "sourceQuote": "Microcopy that names the next action reduces abandonment.",
+              "topicAnchor": ["dark patterns", "microcopy", "abandonment"]
+            },
+            {
+              "text": "The effect of action-naming microcopy holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["dark patterns", "team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "9a925edd-9992-5d4a-a892-5bb797925a24",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "The spacing effect doubles retention compared with massed practice.",
+              "sourceQuote": "The spacing effect doubles retention compared with massed practice.",
+              "topicAnchor": ["spacing effect", "retention", "memory"]
+            },
+            {
+              "text": "Practitioners report the spacing effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["spacing effect", "team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "ca422722-cb42-58b5-a842-23fcc942258f",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Hybrid ranking beats pure vector search on short queries.",
+              "sourceQuote": "Hybrid ranking beats pure vector search on short queries.",
+              "topicAnchor": ["hybrid ranking", "vector search", "short queries"]
+            },
+            {
+              "text": "Practitioners report the hybrid ranking effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["hybrid ranking", "team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "9a20e3bf-9920-522c-ac20-e6e59b20e552",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Hybrid ranking beats pure vector search on short queries.",
+              "sourceQuote": "Hybrid ranking beats pure vector search on short queries.",
+              "topicAnchor": ["hybrid ranking", "vector search", "short queries"]
+            },
+            {
+              "text": "Practitioners report the hybrid ranking effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["hybrid ranking", "team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "9b41939e-9c41-5531-a941-90789a41920b",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Hybrid ranking beats pure vector search on short queries.",
+              "sourceQuote": "Hybrid ranking beats pure vector search on short queries.",
+              "topicAnchor": ["hybrid ranking", "vector search", "short queries"]
+            },
+            {
+              "text": "Practitioners report the hybrid ranking effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["hybrid ranking", "team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "eecc4659-edcc-54c6-accc-4333ebcc41a0",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Strength training twice a week preserves muscle during desk work.",
+              "sourceQuote": "Strength training twice a week preserves muscle during desk work.",
+              "topicAnchor": ["strength training", "muscle preservation", "desk work"]
+            },
+            {
+              "text": "The effect of strength training holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["strength training", "team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "23b7cab4-24b7-5c47-a5b7-cdda26b7cf6d",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Strength training twice a week preserves muscle during desk work.",
+              "sourceQuote": "Strength training twice a week preserves muscle during desk work.",
+              "topicAnchor": ["strength training", "muscle preservation", "desk work"]
+            },
+            {
+              "text": "The effect of strength training holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["strength training", "team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "21618d6d-2061-5bda-af61-8a471e6188b4",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Query rewriting helps most when the original query is underspecified.",
+              "sourceQuote": "Query rewriting helps most when the original query is underspecified.",
+              "topicAnchor": ["query rewriting", "underspecified queries"]
+            },
+            {
+              "text": "The effect of hybrid ranking holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["hybrid ranking", "team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "e4a299e3-e3a2-5850-a6a2-9d09e5a29b76",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Strength training twice a week preserves muscle during desk work.",
+              "sourceQuote": "Strength training twice a week preserves muscle during desk work.",
+              "topicAnchor": ["strength training", "muscle preservation", "desk work"]
+            },
+            {
+              "text": "The effect of desk ergonomics holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["desk ergonomics", "team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "704bfb66-714b-5cf9-ae4b-f8406f4bf9d3",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Long-tail search compounds quietly for niche tools.",
+              "sourceQuote": "Long-tail search compounds quietly for niche tools.",
+              "topicAnchor": ["long-tail search", "SEO", "niche tools"]
+            }
+          ]
+        },
+        {
+          "sourceId": "7269a442-7369-55d5-a069-a11c7169a2af",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Interference from similar memories is the main cause of everyday forgetting.",
+              "sourceQuote": "Interference from similar memories is the main cause of everyday forgetting.",
+              "topicAnchor": ["spacing effect", "interference", "forgetting"]
+            }
+          ]
+        },
+        {
+          "sourceId": "b4d64cfd-b3d6-5b6a-a2d6-49d7b1d64844",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Forgetting curves flatten after spaced retrieval practice.",
+              "sourceQuote": "Forgetting curves flatten after spaced retrieval practice.",
+              "topicAnchor": ["forgetting curves", "spaced retrieval", "agent memory"]
+            }
+          ]
+        },
+        {
+          "sourceId": "2bc36444-2cc3-55d7-adc3-676a2ec368fd",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Compile times shape iteration speed more than runtime speed.",
+              "sourceQuote": "Compile times shape iteration speed more than runtime speed.",
+              "topicAnchor": ["async runtimes", "compile times", "iteration speed"]
+            }
+          ]
+        },
+        {
+          "sourceId": "aaaca087-a9ac-5ef4-acac-a3adabaca21a",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Query rewriting helps most when the original query is underspecified.",
+              "sourceQuote": "Query rewriting helps most when the original query is underspecified.",
+              "topicAnchor": ["query rewriting", "underspecified queries"]
+            }
+          ]
+        },
+        {
+          "sourceId": "a35b1aa1-a25b-590e-a15b-177ba05b15e8",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Episodic memory works best when retrieval cues match encoding context.",
+              "sourceQuote": "Episodic memory works best when retrieval cues match encoding context.",
+              "topicAnchor": ["episodic recall", "retrieval cues", "encoding context"]
+            }
+          ]
+        },
+        {
+          "sourceId": "2ba0121c-2ca0-53af-ada0-15422ea016d5",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Episodic memory works best when retrieval cues match encoding context.",
+              "sourceQuote": "Episodic memory works best when retrieval cues match encoding context.",
+              "topicAnchor": ["episodic recall", "retrieval cues", "encoding context"]
+            }
+          ]
+        },
+        {
+          "sourceId": "22e8d603-21e8-5470-a4e8-d92923e8d796",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "The spacing effect doubles retention compared with massed practice.",
+              "sourceQuote": "The spacing effect doubles retention compared with massed practice.",
+              "topicAnchor": ["spacing effect", "retention", "massed practice"]
+            }
+          ]
+        },
+        {
+          "sourceId": "2111ebc8-2211-5d5b-a311-eeee2411f081",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Wasm bundle size drops sharply with link-time optimization.",
+              "sourceQuote": "Wasm bundle size drops sharply with link-time optimization.",
+              "topicAnchor": ["wasm", "bundle size", "link-time optimization"]
+            },
+            {
+              "text": "The effect of link-time optimization on Wasm bundle size holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "17b798bd-16b7-572a-a5b7-959714b79404",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Wasm bundle size drops sharply with link-time optimization.",
+              "sourceQuote": "Wasm bundle size drops sharply with link-time optimization.",
+              "topicAnchor": ["wasm", "bundle size", "link-time optimization"]
+            },
+            {
+              "text": "The effect of link-time optimization on Wasm bundle size holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "8ea4b004-8fa4-5197-a0a4-b32a91a4b4bd",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Cue-dependent recall explains why context reinstatement restores lost details.",
+              "sourceQuote": "Cue-dependent recall explains why context reinstatement restores lost details.",
+              "topicAnchor": ["cue-dependent recall", "context reinstatement"]
+            },
+            {
+              "text": "The effect of cue-dependent recall holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "e65f8629-e55f-5496-a45f-8303e35f8170",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Launch posts convert when they show a concrete before-and-after.",
+              "sourceQuote": "Launch posts convert when they show a concrete before-and-after.",
+              "topicAnchor": ["launch posts", "conversion", "before-and-after"]
+            },
+            {
+              "text": "The effect of showing a concrete before-and-after in launch posts holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "115699eb-1056-5858-a356-9d1112569b7e",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Visual hierarchy fails when every element shouts at once.",
+              "sourceQuote": "Visual hierarchy fails when every element shouts at once.",
+              "topicAnchor": ["visual hierarchy", "failure"]
+            },
+            {
+              "text": "The effect of visual hierarchy holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "c0da65af-bfda-541c-a2da-68d5c1da6742",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Side panels keep context better than popups for long tasks.",
+              "sourceQuote": "Side panels keep context better than popups for long tasks.",
+              "topicAnchor": ["side panels", "popups", "context"]
+            },
+            {
+              "text": "The effect of side panels versus popups holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "f238dd92-f338-5f25-a038-da6cf138dbff",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Side panels keep context better than popups for long tasks.",
+              "sourceQuote": "Side panels keep context better than popups for long tasks.",
+              "topicAnchor": ["side panels", "popups", "context"]
+            },
+            {
+              "text": "The effect of side panels versus popups holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "caa633d8-cba6-556b-aca6-36fecda63891",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Free tiers convert best when limits bite during real work.",
+              "sourceQuote": "Free tiers convert best when limits bite during real work.",
+              "topicAnchor": ["free tiers", "conversion", "limits"]
+            },
+            {
+              "text": "The effect of free tier limits on conversion holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        }
+      ]
+    },
+    "creator": {
+      "summary": {
+        "sources": 40,
+        "totalPropositions": 76,
+        "verbatimRate": 1,
+        "anchorCoverage": 1,
+        "emptyRate": 0,
+        "parseFailures": 0,
+        "statusCounts": {
+          "ok": 40
+        }
+      },
+      "rows": [
+        {
+          "sourceId": "a041b26d-9f41-50da-ae41-af479d41adb4",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Microcopy that names the next action reduces abandonment.",
+              "sourceQuote": "Microcopy that names the next action reduces abandonment.",
+              "topicAnchor": ["microcopy", "abandonment"]
+            },
+            {
+              "text": "The effect of microcopy naming the next action holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "35052b78-3605-5d0b-a705-2e9e38053031",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Editing passes work best when each pass hunts one problem.",
+              "sourceQuote": "Editing passes work best when each pass hunts one problem.",
+              "topicAnchor": ["editing passes"]
+            },
+            {
+              "text": "The effect of single-problem editing passes holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "63f43a01-62f4-586e-a1f4-36db60f43548",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Naming works when it survives being shouted across a room.",
+              "sourceQuote": "Naming works when it survives being shouted across a room.",
+              "topicAnchor": ["naming"]
+            },
+            {
+              "text": "The effect of naming holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "ec39317c-ed39-530f-ae39-34a2ef393635",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Editing passes work best when each pass hunts one problem.",
+              "sourceQuote": "Editing passes work best when each pass hunts one problem.",
+              "topicAnchor": ["editing passes"]
+            },
+            {
+              "text": "The effect of single-problem editing passes holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "797adc80-7a7a-5e13-ab7a-dfa67c7ae139",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Editing passes work best when each pass hunts one problem.",
+              "sourceQuote": "Editing passes work best when each pass hunts one problem.",
+              "topicAnchor": ["editing passes"]
+            },
+            {
+              "text": "The effect of single-problem editing passes holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "715dbdf5-705d-5c62-af5d-bacf6e5db93c",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Editing passes work best when each pass hunts one problem.",
+              "sourceQuote": "Editing passes work best when each pass hunts one problem.",
+              "topicAnchor": ["editing passes"]
+            },
+            {
+              "text": "The effect of single-problem editing passes holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "4ef1479a-4ff1-592d-acf1-44744df14607",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Thumbnails promise what the first thirty seconds must repay.",
+              "sourceQuote": "Thumbnails promise what the first thirty seconds must repay.",
+              "topicAnchor": ["thumbnails", "retention"]
+            },
+            {
+              "text": "The effect of thumbnail promises holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "10ebabb7-0feb-5a24-a2eb-aedd11ebad4a",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Audio cleanup matters more than camera upgrades for retention.",
+              "sourceQuote": "Audio cleanup matters more than camera upgrades for retention.",
+              "topicAnchor": ["audio cleanup", "retention"]
+            },
+            {
+              "text": "The effect of audio cleanup holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "f37a9d51-f27a-5bbe-a17a-9a2bf07a9898",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Background on note-taking systems has shifted quickly this year.",
+              "sourceQuote": "Background on note-taking systems has shifted quickly this year.",
+              "topicAnchor": ["note-taking systems", "background"]
+            },
+            {
+              "text": "Plain language shortens documents without thinning them.",
+              "sourceQuote": "Plain language shortens documents without thinning them.",
+              "topicAnchor": ["plain language", "documents"]
+            },
+            {
+              "text": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "7bbf94cc-7cbf-565f-adbf-97f27ebf9985",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Background on note-taking systems has shifted quickly this year.",
+              "sourceQuote": "Background on note-taking systems has shifted quickly this year.",
+              "topicAnchor": ["note-taking systems", "background"]
+            },
+            {
+              "text": "Plain language shortens documents without thinning them.",
+              "sourceQuote": "Plain language shortens documents without thinning them.",
+              "topicAnchor": ["plain language", "documents"]
+            },
+            {
+              "text": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "a86ae76e-a96a-5901-a66a-e448a76ae5db",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Background on color systems has shifted quickly this year.",
+              "sourceQuote": "Background on color systems has shifted quickly this year.",
+              "topicAnchor": ["color systems", "background"]
+            },
+            {
+              "text": "Typography pairing fails when both faces compete for the same voice.",
+              "sourceQuote": "Typography pairing fails when both faces compete for the same voice.",
+              "topicAnchor": ["typography pairing", "typefaces"]
+            },
+            {
+              "text": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "3df4f6ac-3ef4-583f-aff4-f9d240f4fb65",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Background on microcopy has shifted quickly this year.",
+              "sourceQuote": "Background on microcopy has shifted quickly this year.",
+              "topicAnchor": ["microcopy", "background"]
+            },
+            {
+              "text": "Empty states teach faster than tooltips for first-time users.",
+              "sourceQuote": "Empty states teach faster than tooltips for first-time users.",
+              "topicAnchor": ["empty states", "tooltips", "first-time users"]
+            },
+            {
+              "text": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "43bbd7f0-44bb-5983-a5bb-db1646bbdca9",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Color systems break at the extremes nobody tested.",
+              "sourceQuote": "Color systems break at the extremes nobody tested.",
+              "topicAnchor": ["color systems", "extremes"]
+            },
+            {
+              "text": "The effect of visual identity practices holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "3b9eb965-3a9e-57d2-a99e-b63f389eb4ac",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Color systems break at the extremes nobody tested.",
+              "sourceQuote": "Color systems break at the extremes nobody tested.",
+              "topicAnchor": ["color systems", "extremes"]
+            },
+            {
+              "text": "The effect of visual identity practices holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "cf1378f5-ce13-5762-ad13-75cfcc13743c",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Launch posts convert when they show a concrete before-and-after.",
+              "sourceQuote": "Launch posts convert when they show a concrete before-and-after.",
+              "topicAnchor": ["launch posts", "conversion"]
+            },
+            {
+              "text": "The effect of landing page practices holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "d7309780-d830-5913-a930-9aa6da309c39",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Editing passes work best when each pass hunts one problem.",
+              "sourceQuote": "Editing passes work best when each pass hunts one problem.",
+              "topicAnchor": ["editing passes", "drafting"]
+            },
+            {
+              "text": "The effect of drafting habits holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "f8cbdcad-f7cb-5b1a-a6cb-d987f5cbd7f4",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Empty states teach faster than tooltips for first-time users.",
+              "sourceQuote": "Empty states teach faster than tooltips for first-time users.",
+              "topicAnchor": ["empty states", "tooltips", "first-time users"]
+            }
+          ]
+        },
+        {
+          "sourceId": "025e5f69-015e-5dd6-a05e-5c43ff5e5ab0",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Editing rhythm carries attention more than resolution does.",
+              "sourceQuote": "Editing rhythm carries attention more than resolution does.",
+              "topicAnchor": ["editing rhythm", "resolution", "attention"]
+            }
+          ]
+        },
+        {
+          "sourceId": "abf2a779-aaf2-55e6-a9f2-a453a8f2a2c0",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Editing rhythm carries attention more than resolution does.",
+              "sourceQuote": "Editing rhythm carries attention more than resolution does.",
+              "topicAnchor": ["editing rhythm", "resolution", "attention"]
+            }
+          ]
+        },
+        {
+          "sourceId": "ca74276b-c974-55d8-ac74-2a91cb7428fe",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Waitlists measure curiosity, not willingness to pay.",
+              "sourceQuote": "Waitlists measure curiosity, not willingness to pay.",
+              "topicAnchor": ["waitlists", "curiosity", "willingness to pay"]
+            }
+          ]
+        },
+        {
+          "sourceId": "bf59f3e1-be59-524e-ad59-f0bbbc59ef28",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Thumbnails promise what the first thirty seconds must repay.",
+              "sourceQuote": "Thumbnails promise what the first thirty seconds must repay.",
+              "topicAnchor": ["thumbnails", "first thirty seconds"]
+            }
+          ]
+        },
+        {
+          "sourceId": "479eeb5c-489e-5cef-a99e-ee824a9ef015",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Note-taking systems collapse when capture outruns review.",
+              "sourceQuote": "Note-taking systems collapse when capture outruns review.",
+              "topicAnchor": ["note-taking systems", "capture", "review"]
+            }
+          ]
+        },
+        {
+          "sourceId": "da0c2720-db0c-58b3-ac0c-2a46dd0c2bd9",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Empty states teach faster than tooltips for first-time users.",
+              "sourceQuote": "Empty states teach faster than tooltips for first-time users.",
+              "topicAnchor": ["empty states", "tooltips", "first-time users"]
+            }
+          ]
+        },
+        {
+          "sourceId": "a19e39ba-a29e-5b4d-af9e-3694a09e3827",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Microcopy that names the next action reduces abandonment.",
+              "sourceQuote": "Microcopy that names the next action reduces abandonment.",
+              "topicAnchor": ["microcopy", "next action", "abandonment"]
+            }
+          ]
+        },
+        {
+          "sourceId": "49115bb9-4811-5a26-a711-589346115700",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Visual hierarchy fails when every element shouts at once.",
+              "sourceQuote": "Visual hierarchy fails when every element shouts at once.",
+              "topicAnchor": ["visual hierarchy", "empty states"]
+            },
+            {
+              "text": "The effect of empty states holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["empty states", "team sizes"]
+            }
+          ]
+        },
+        {
+          "sourceId": "f1568594-f256-5727-a356-88baf4568a4d",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Naming works when it survives being shouted across a room.",
+              "sourceQuote": "Naming works when it survives being shouted across a room.",
+              "topicAnchor": ["naming", "color systems"]
+            },
+            {
+              "text": "The effect of color systems holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["color systems", "team sizes"]
+            }
+          ]
+        },
+        {
+          "sourceId": "bcc2463b-bbc2-54a8-aec2-4961bdc247ce",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Note-taking systems collapse when capture outruns review.",
+              "sourceQuote": "Note-taking systems collapse when capture outruns review.",
+              "topicAnchor": ["note-taking systems", "capture", "review"]
+            },
+            {
+              "text": "The effect of note-taking systems holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["note-taking systems", "team sizes"]
+            }
+          ]
+        },
+        {
+          "sourceId": "486ba7be-496b-5951-a66b-a498476ba62b",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Note-taking systems collapse when capture outruns review.",
+              "sourceQuote": "Note-taking systems collapse when capture outruns review.",
+              "topicAnchor": ["note-taking systems", "capture", "review"]
+            },
+            {
+              "text": "The effect of note-taking systems holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["note-taking systems", "team sizes"]
+            }
+          ]
+        },
+        {
+          "sourceId": "9d338ef9-9c33-5d66-ab33-8bd39a338a40",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Thumbnails promise what the first thirty seconds must repay.",
+              "sourceQuote": "Thumbnails promise what the first thirty seconds must repay.",
+              "topicAnchor": ["thumbnails", "audio cleanup"]
+            },
+            {
+              "text": "The effect of audio cleanup holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["audio cleanup", "team sizes"]
+            }
+          ]
+        },
+        {
+          "sourceId": "d7e5f498-d8e5-562b-a9e5-f7bedae5f951",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Waitlists measure curiosity, not willingness to pay.",
+              "sourceQuote": "Waitlists measure curiosity, not willingness to pay.",
+              "topicAnchor": ["waitlists", "willingness to pay"]
+            },
+            {
+              "text": "The effect of seo long tail holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["seo long tail", "team sizes"]
+            }
+          ]
+        },
+        {
+          "sourceId": "38f73226-39f7-53b9-a6f7-2f0037f73093",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Plain language shortens documents without thinning them.",
+              "sourceQuote": "Plain language shortens documents without thinning them.",
+              "topicAnchor": ["plain language", "reference managers"]
+            },
+            {
+              "text": "The effect of reference managers holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["reference managers", "team sizes"]
+            }
+          ]
+        },
+        {
+          "sourceId": "c0546075-bf54-5ee2-ae54-5d4fbd545bbc",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Color systems break at the extremes nobody tested.",
+              "sourceQuote": "Color systems break at the extremes nobody tested.",
+              "topicAnchor": ["color systems", "naming"]
+            },
+            {
+              "text": "The effect of naming holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["naming", "team sizes"]
+            }
+          ]
+        },
+        {
+          "sourceId": "ec630174-ed63-5307-ae63-049aef63062d",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Background on editing rhythm has shifted quickly this year.",
+              "sourceQuote": "Background on editing rhythm has shifted quickly this year.",
+              "topicAnchor": ["editing rhythm", "background"]
+            },
+            {
+              "text": "Thumbnails promise what the first thirty seconds must repay.",
+              "sourceQuote": "Thumbnails promise what the first thirty seconds must repay.",
+              "topicAnchor": ["thumbnails", "first thirty seconds"]
+            },
+            {
+              "text": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "92ed5de2-93ed-5f75-a0ed-5abc91ed5c4f",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Background on editing rhythm has shifted quickly this year.",
+              "sourceQuote": "Background on editing rhythm has shifted quickly this year.",
+              "topicAnchor": ["editing rhythm", "background"]
+            },
+            {
+              "text": "Thumbnails promise what the first thirty seconds must repay.",
+              "sourceQuote": "Thumbnails promise what the first thirty seconds must repay.",
+              "topicAnchor": ["thumbnails", "first thirty seconds"]
+            },
+            {
+              "text": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "5913e927-5813-5794-ab13-ec4d5a13eaba",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Background on visual hierarchy has shifted quickly this year.",
+              "sourceQuote": "Background on visual hierarchy has shifted quickly this year.",
+              "topicAnchor": ["visual hierarchy", "background"]
+            },
+            {
+              "text": "Visual hierarchy fails when every element shouts at once.",
+              "sourceQuote": "Visual hierarchy fails when every element shouts at once.",
+              "topicAnchor": ["visual hierarchy", "failure"]
+            },
+            {
+              "text": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "f1f50b95-f0f5-5a02-aff5-086feef506dc",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Background on drafting habits has shifted quickly this year.",
+              "sourceQuote": "Background on drafting habits has shifted quickly this year.",
+              "topicAnchor": ["drafting habits", "background"]
+            },
+            {
+              "text": "Note-taking systems collapse when capture outruns review.",
+              "sourceQuote": "Note-taking systems collapse when capture outruns review.",
+              "topicAnchor": ["note-taking", "capture", "review"]
+            },
+            {
+              "text": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "86b884a0-87b8-5633-a8b8-87c689b88959",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Note-taking systems collapse when capture outruns review.",
+              "sourceQuote": "Note-taking systems collapse when capture outruns review.",
+              "topicAnchor": ["note-taking", "capture", "review"]
+            }
+          ]
+        },
+        {
+          "sourceId": "a4b64f2a-a5b6-50bd-a2b6-4c04a3b64d97",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Empty states teach faster than tooltips for first-time users.",
+              "sourceQuote": "Empty states teach faster than tooltips for first-time users.",
+              "topicAnchor": ["empty states", "tooltips", "onboarding"]
+            }
+          ]
+        },
+        {
+          "sourceId": "4da9efb6-4ea9-5149-aba9-ec904ca9ee23",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Plain language shortens documents without thinning them.",
+              "sourceQuote": "Plain language shortens documents without thinning them.",
+              "topicAnchor": ["plain language", "editing", "documents"]
+            }
+          ]
+        },
+        {
+          "sourceId": "86dbd6c8-87db-585b-a8db-d9ee89dbdb81",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Plain language shortens documents without thinning them.",
+              "sourceQuote": "Plain language shortens documents without thinning them.",
+              "topicAnchor": ["plain language", "editing", "documents"]
+            }
+          ]
+        }
+      ]
+    },
+    "scene-memory-user": {
+      "summary": {
+        "sources": 40,
+        "totalPropositions": 80,
+        "verbatimRate": 1,
+        "anchorCoverage": 1,
+        "emptyRate": 0,
+        "parseFailures": 0,
+        "statusCounts": {
+          "ok": 40
+        }
+      },
+      "rows": [
+        {
+          "sourceId": "e7cd803a-e8cd-51cd-a5cd-7d14e6cd7ea7",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Audio cleanup matters more than camera upgrades for retention.",
+              "sourceQuote": "Audio cleanup matters more than camera upgrades for retention.",
+              "topicAnchor": ["audio cleanup", "retention", "camera upgrades"]
+            },
+            {
+              "text": "The effect of audio cleanup on retention holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "b66f0857-b56f-56c4-a86f-0b7db76f09ea",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Audio cleanup matters more than camera upgrades for retention.",
+              "sourceQuote": "Audio cleanup matters more than camera upgrades for retention.",
+              "topicAnchor": ["audio cleanup", "retention", "camera upgrades"]
+            },
+            {
+              "text": "The effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "203b6da0-213b-5f33-a23b-70c6233b7259",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Audio cleanup matters more than camera upgrades for retention.",
+              "sourceQuote": "Audio cleanup matters more than camera upgrades for retention.",
+              "topicAnchor": ["audio cleanup", "retention", "camera upgrades"]
+            },
+            {
+              "text": "The effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "fd5c9d77-fc5c-5be4-af5c-a09dfe5c9f0a",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Typography pairing fails when both faces compete for the same voice.",
+              "sourceQuote": "Typography pairing fails when both faces compete for the same voice.",
+              "topicAnchor": ["typography pairing", "visual identity"]
+            },
+            {
+              "text": "The effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "4ac81fe3-49c8-5e50-acc8-23094bc82176",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Audio cleanup matters more than camera upgrades for retention.",
+              "sourceQuote": "Audio cleanup matters more than camera upgrades for retention.",
+              "topicAnchor": ["audio cleanup", "retention", "camera upgrades"]
+            },
+            {
+              "text": "The effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "d6718166-d771-52f9-a471-7e40d5717fd3",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Audio cleanup matters more than camera upgrades for retention.",
+              "sourceQuote": "Audio cleanup matters more than camera upgrades for retention.",
+              "topicAnchor": ["audio cleanup", "retention", "camera upgrades"]
+            },
+            {
+              "text": "The effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "8787136d-8687-51da-a587-104784870eb4",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Naming works when it survives being shouted across a room.",
+              "sourceQuote": "Naming works when it survives being shouted across a room.",
+              "topicAnchor": ["naming", "brand identity"]
+            },
+            {
+              "text": "The effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "1c4a8c78-1d4a-5e0b-ae4a-8f9e1f4a9131",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Typography pairing fails when both faces compete for the same voice.",
+              "sourceQuote": "Typography pairing fails when both faces compete for the same voice.",
+              "topicAnchor": ["typography pairing", "portfolio layout"]
+            },
+            {
+              "text": "The effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "41ff641f-40ff-528c-a3ff-674542ff65b2",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Editing rhythm carries attention more than resolution does.",
+              "sourceQuote": "Editing rhythm carries attention more than resolution does.",
+              "topicAnchor": ["editing rhythm", "attention", "resolution"]
+            },
+            {
+              "text": "The effect of editing rhythm holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "91199629-9019-5496-af19-93038e199170",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Naming works when it survives being shouted across a room.",
+              "sourceQuote": "Naming works when it survives being shouted across a room.",
+              "topicAnchor": ["naming", "portfolio layout"]
+            },
+            {
+              "text": "The effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "98b94505-97b9-5372-a6b9-41df95b9404c",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Audio cleanup matters more than camera upgrades for retention.",
+              "sourceQuote": "Audio cleanup matters more than camera upgrades for retention.",
+              "topicAnchor": ["audio cleanup", "camera upgrades", "retention"]
+            },
+            {
+              "text": "The effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "6b9475af-6a94-541c-ad94-78d56c947742",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Audio cleanup matters more than camera upgrades for retention.",
+              "sourceQuote": "Audio cleanup matters more than camera upgrades for retention.",
+              "topicAnchor": ["audio cleanup", "camera upgrades", "retention"]
+            },
+            {
+              "text": "The effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "756043d8-7660-556b-a760-46fe78604891",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "The spacing effect doubles retention compared with massed practice.",
+              "sourceQuote": "The spacing effect doubles retention compared with massed practice.",
+              "topicAnchor": ["spacing effect", "retention", "massed practice"]
+            },
+            {
+              "text": "The effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "61dc4457-60dc-52c4-a3dc-477d62dc45ea",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Typography pairing fails when both faces compete for the same voice.",
+              "sourceQuote": "Typography pairing fails when both faces compete for the same voice.",
+              "topicAnchor": ["typography pairing", "color systems"]
+            },
+            {
+              "text": "The effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "8e0f2b7a-8f0f-5d0d-ac0f-28548d0f29e7",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Plain language shortens documents without thinning them.",
+              "sourceQuote": "Plain language shortens documents without thinning them.",
+              "topicAnchor": ["plain language", "documents"]
+            },
+            {
+              "text": "The effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "5cb0b397-5bb0-5204-aeb0-b6bd5db0b52a",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Plain language shortens documents without thinning them.",
+              "sourceQuote": "Plain language shortens documents without thinning them.",
+              "topicAnchor": ["plain language", "documents"]
+            },
+            {
+              "text": "The effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "c67d18e0-c77d-5a73-a87d-1c06c97d1d99",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "The spacing effect doubles retention compared with massed practice.",
+              "sourceQuote": "The spacing effect doubles retention compared with massed practice.",
+              "topicAnchor": ["spacing effect", "retention"]
+            },
+            {
+              "text": "Practitioners report the spacing effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["spacing effect", "team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "aa5c7186-ab5c-5319-a85c-6e60a95c6ff3",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Thumbnails promise what the first thirty seconds must repay.",
+              "sourceQuote": "Thumbnails promise what the first thirty seconds must repay.",
+              "topicAnchor": ["thumbnails", "video production"]
+            },
+            {
+              "text": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "abcae5a1-aaca-540e-a9ca-e27ba8cae0e8",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Color systems break at the extremes nobody tested.",
+              "sourceQuote": "Color systems break at the extremes nobody tested.",
+              "topicAnchor": ["color systems", "portfolio layout"]
+            },
+            {
+              "text": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "97c75cd2-98c7-5e65-a5c7-59ac96c75b3f",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Color systems break at the extremes nobody tested.",
+              "sourceQuote": "Color systems break at the extremes nobody tested.",
+              "topicAnchor": ["color systems", "portfolio layout"]
+            },
+            {
+              "text": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "6668e4ef-6568-535c-a868-e8156768e682",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Audio cleanup matters more than camera upgrades for retention.",
+              "sourceQuote": "Audio cleanup matters more than camera upgrades for retention.",
+              "topicAnchor": ["audio cleanup", "retention"]
+            },
+            {
+              "text": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "fc67a219-fb67-5086-aa67-9ef3f9679d60",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Editing rhythm carries attention more than resolution does.",
+              "sourceQuote": "Editing rhythm carries attention more than resolution does.",
+              "topicAnchor": ["editing rhythm", "attention"]
+            },
+            {
+              "text": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "31532674-3253-5807-a353-299a34532b2d",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Audio cleanup matters more than camera upgrades for retention.",
+              "sourceQuote": "Audio cleanup matters more than camera upgrades for retention.",
+              "topicAnchor": ["audio cleanup", "retention"]
+            },
+            {
+              "text": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "289bea5b-279b-58c8-aa9b-ed81299bebee",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "The spacing effect doubles retention compared with massed practice.",
+              "sourceQuote": "The spacing effect doubles retention compared with massed practice.",
+              "topicAnchor": ["spacing effect", "retention"]
+            },
+            {
+              "text": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "a8dcef5e-a9dc-50f1-a6dc-ec38a7dcedcb",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "The spacing effect doubles retention compared with massed practice.",
+              "sourceQuote": "The spacing effect doubles retention compared with massed practice.",
+              "topicAnchor": ["spacing effect", "retention"]
+            },
+            {
+              "text": "Practitioners report the spacing effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["spacing effect", "team sizes"]
+            }
+          ]
+        },
+        {
+          "sourceId": "f2af70c1-f1af-5f2e-a0af-6d9befaf6c08",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Editing passes work best when each pass hunts one problem.",
+              "sourceQuote": "Editing passes work best when each pass hunts one problem.",
+              "topicAnchor": ["editing", "plain language"]
+            },
+            {
+              "text": "Practitioners report the editing effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["editing", "team sizes"]
+            }
+          ]
+        },
+        {
+          "sourceId": "78bbc666-79bb-57f9-a6bb-c34077bbc4d3",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Color systems break at the extremes nobody tested.",
+              "sourceQuote": "Color systems break at the extremes nobody tested.",
+              "topicAnchor": ["color systems", "edge cases"]
+            },
+            {
+              "text": "Practitioners report the color systems effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["color systems", "team sizes"]
+            }
+          ]
+        },
+        {
+          "sourceId": "ed1264e3-ec12-5350-af12-6809ee126676",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Color systems break at the extremes nobody tested.",
+              "sourceQuote": "Color systems break at the extremes nobody tested.",
+              "topicAnchor": ["color systems", "edge cases"]
+            },
+            {
+              "text": "Practitioners report the color systems effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["color systems", "team sizes"]
+            }
+          ]
+        },
+        {
+          "sourceId": "ddac7e5a-deac-5fed-abac-7b34dcac7cc7",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Interference from similar memories is the main cause of everyday forgetting.",
+              "sourceQuote": "Interference from similar memories is the main cause of everyday forgetting.",
+              "topicAnchor": ["interference theory", "forgetting"]
+            },
+            {
+              "text": "Practitioners report the interference effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["interference theory", "team sizes"]
+            }
+          ]
+        },
+        {
+          "sourceId": "9fa6e277-9ea6-50e4-a1a6-e59da0a6e40a",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Naming works when it survives being shouted across a room.",
+              "sourceQuote": "Naming works when it survives being shouted across a room.",
+              "topicAnchor": ["naming", "visual identity"]
+            },
+            {
+              "text": "Practitioners report the naming effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["naming", "team sizes"]
+            }
+          ]
+        },
+        {
+          "sourceId": "2c2795b4-2d27-5747-ae27-98da2f279a6d",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Naming works when it survives being shouted across a room.",
+              "sourceQuote": "Naming works when it survives being shouted across a room.",
+              "topicAnchor": ["naming", "visual identity"]
+            },
+            {
+              "text": "Practitioners report the naming effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["naming", "team sizes"]
+            }
+          ]
+        },
+        {
+          "sourceId": "b31c6b87-b21c-59f4-a51c-6eadb41c6d1a",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Color systems break at the extremes nobody tested.",
+              "sourceQuote": "Color systems break at the extremes nobody tested.",
+              "topicAnchor": ["color systems", "edge cases"]
+            },
+            {
+              "text": "Practitioners report the color systems effect holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["color systems", "team sizes"]
+            }
+          ]
+        },
+        {
+          "sourceId": "fc86da7b-fb86-58e8-ae86-dda1fd86dc0e",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Cue-dependent recall explains why context reinstatement restores lost details.",
+              "sourceQuote": "Cue-dependent recall explains why context reinstatement restores lost details.",
+              "topicAnchor": ["cue-dependent recall", "context reinstatement"]
+            },
+            {
+              "text": "The effect of cue-dependent recall holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["cue-dependent recall", "team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "853d4d14-863d-5ea7-a73d-503a883d51cd",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Plain language shortens documents without thinning them.",
+              "sourceQuote": "Plain language shortens documents without thinning them.",
+              "topicAnchor": ["plain language", "documents"]
+            },
+            {
+              "text": "The effect of note-taking systems holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["note-taking systems", "team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "51d24746-52d2-58d9-afd2-442050d245b3",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Audio cleanup matters more than camera upgrades for retention.",
+              "sourceQuote": "Audio cleanup matters more than camera upgrades for retention.",
+              "topicAnchor": ["audio cleanup", "camera upgrades", "retention"]
+            },
+            {
+              "text": "The effect of lighting setups holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["lighting setups", "team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "a30229dd-a202-584a-a102-26b7a0022524",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Interference from similar memories is the main cause of everyday forgetting.",
+              "sourceQuote": "Interference from similar memories is the main cause of everyday forgetting.",
+              "topicAnchor": ["interference", "forgetting", "memory"]
+            },
+            {
+              "text": "The effect of cue-dependent recall holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["cue-dependent recall", "team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "a290aebf-a190-5d2c-a490-b1e5a390b052",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Note-taking systems collapse when capture outruns review.",
+              "sourceQuote": "Note-taking systems collapse when capture outruns review.",
+              "topicAnchor": ["note-taking systems", "capture", "review"]
+            },
+            {
+              "text": "The effect of reference managers holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["reference managers", "team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "f06dac49-ef6d-5ab6-ae6d-a923ed6da790",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "The spacing effect doubles retention compared with massed practice.",
+              "sourceQuote": "The spacing effect doubles retention compared with massed practice.",
+              "topicAnchor": ["spacing effect", "retention", "massed practice"]
+            },
+            {
+              "text": "The effect of interference theory holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["interference theory", "team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "8ffb9a0b-8efb-5878-a1fb-9d3190fb9b9e",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Typography pairing fails when both faces compete for the same voice.",
+              "sourceQuote": "Typography pairing fails when both faces compete for the same voice.",
+              "topicAnchor": ["typography pairing", "visual identity"]
+            },
+            {
+              "text": "The effect of visual identity holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["visual identity", "team sizes", "setup cost"]
+            }
+          ]
+        },
+        {
+          "sourceId": "6b59d8cf-6a59-573c-ad59-dbf56c59da62",
+          "status": "ok",
+          "propositions": [
+            {
+              "text": "Audio cleanup matters more than camera upgrades for retention.",
+              "sourceQuote": "Audio cleanup matters more than camera upgrades for retention.",
+              "topicAnchor": ["audio cleanup", "camera upgrades", "retention"]
+            },
+            {
+              "text": "The effect of audio cleanup holds across team sizes, though setup cost varies.",
+              "sourceQuote": "Practitioners report the effect holds across team sizes, though setup cost varies.",
+              "topicAnchor": ["audio cleanup", "team sizes", "setup cost"]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

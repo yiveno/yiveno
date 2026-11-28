@@ -31,6 +31,7 @@
     "clue-chain:stage2:sweep": "bun scripts/clue-chain-stage2-sweep.mjs",
     "user-sim:run": "bun scripts/user-sim-run.mjs",
     "user-sim:real": "bun scripts/user-sim-real-run.mjs",
+    "user-sim:dreaming": "bun scripts/user-sim-dreaming-run.mjs",
     "behavior-ablation:run": "bun scripts/behavior-ablation-run.mjs",
     "pressure:try": "bun scripts/pressure-try.mjs",
     "decider-flash:gate-a-eval": "bun scripts/decider-flash-gate-a-eval.mjs",
