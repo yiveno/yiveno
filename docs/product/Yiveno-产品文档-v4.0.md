@@ -965,8 +965,6 @@ Side Panel 内：有命中时**告知相关总数 N**，按符合度排序，**�
 | Settings 分区（`?section=`）   | `extension/src/core/settings/settings-sections.ts`                                          |
 | Side Panel（Recall 主壳）      | `extension/src/pages/sidepanel/`                                                            |
 | Placeholder × 追问芯片双通道   | `docs/engineering/Recall-Placeholder与追问芯片-双通道.md`（实现分期；Normative §7.0）       |
-| 通用键盘意图（↑↓←→/Enter）     | `extension/src/core/ui/keyboard-command.ts`                                                 |
-| 线性列表选中下标               | `extension/src/core/ui/list-selection.ts`                                                   |
 | 摘录详情                       | `extension/src/pages/detail/Detail.vue`                                                     |
 | 记忆库                         | `extension/src/pages/library/Library.vue`                                                   |
 | UI 图标（Lucide 内联）         | `extension/src/infrastructure/ui/icons/`                                                    |

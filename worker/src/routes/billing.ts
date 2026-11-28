@@ -1,15 +1,11 @@
 /**
- * 计费路由：套餐目录、checkout、Customer Portal。
+ * 计费路由：checkout、Customer Portal。
  * 不授 Pro；Pro 只来自已验签的 Dodo webhook / 对账。
  */
 
 import { Hono } from 'hono'
 import { createDodoCheckout, createDodoPortalSession } from '../services/billing/dodo-client'
-import {
-  listPublicPlans,
-  parseBillingPlanId,
-  resolveDodoProductId
-} from '../services/billing/plans'
+import { parseBillingPlanId, resolveDodoProductId } from '../services/billing/plans'
 import { getLatestUserSubscriptionRow } from '../data-access/supabase'
 import { getSubscriptionStatusOrThrow } from '../handlers/subscription'
 import { supabaseAuth } from '../middleware/supabase-auth'
@@ -30,11 +26,6 @@ export const billingRouter = new Hono<BillingVars>()
 function websiteBase(env: Env): string {
   return (env.WEBSITE_URL || '').replace(/\/$/, '') || 'https://yiveno.com'
 }
-
-/** GET /api/billing/plans — 公开目录（无 Product ID） */
-billingRouter.get('/plans', c => {
-  return c.json({ success: true, data: { plans: listPublicPlans(c.env) } })
-})
 
 billingRouter.use('/checkout-session', supabaseAuth())
 billingRouter.use('/portal-session', supabaseAuth())

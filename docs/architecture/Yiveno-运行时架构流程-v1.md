@@ -696,7 +696,6 @@ sequenceDiagram
   - `registerCommandListeners()` → 上列四个自定义 ID
   - `save_selection` / `save_selection_with_note` → `dispatchSelectionToolbarCommand(...)`
 - `extension/src/core/commands/command-ids.ts`：白名单权威；新增须先改此处 + manifest
-- `extension/src/core/ui/keyboard-command.ts`：页内键盘意图（上/下/Enter），非 Chrome commands
 
 ### 3.7 Library / Detail / Side Panel（行为记录落点）
 

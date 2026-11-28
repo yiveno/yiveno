@@ -14,23 +14,6 @@ function env(overrides: Record<string, unknown> = {}): Env {
   } as unknown as Env
 }
 
-describe('GET /api/billing/plans', () => {
-  test('公开目录不含 Product ID，默认无 Founding', async () => {
-    const app = createApp()
-    const response = await app.request('/api/billing/plans', {}, env())
-    expect(response.status).toBe(200)
-    const json = (await response.json()) as {
-      success: boolean
-      data: { plans: Array<{ id: string; displayUsd: string }> }
-    }
-    expect(json.success).toBe(true)
-    expect(json.data.plans.map(plan => plan.id)).toEqual(['pro_monthly', 'pro_annual'])
-    expect(JSON.stringify(json)).not.toContain('pdt_')
-    expect(json.data.plans[0]?.displayUsd).toBe('7.99')
-    expect(json.data.plans[1]?.displayUsd).toBe('59.99')
-  })
-})
-
 describe('POST /api/billing/checkout-session', () => {
   test('未登录 → 401', async () => {
     const app = createApp()

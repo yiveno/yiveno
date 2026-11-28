@@ -1,6 +1,9 @@
 /**
  * LLM 追问 NLG：LLM prompt → completer → JSON → Zod → 门禁映射。
  * 仅 need_a_clue；失败抛错由上层捕获后降级静态文案；不碰数据平面。
+ *
+ * follow-up LLM 链当前休眠（暂停等待 gold 例再启用）。
+ * 休眠期间不得删除、不得接线；重启条件：gold 例就绪后另开批次。
  */
 
 import type { ParsedRecallClue } from '@/core/recall/parse-recall-clue-types'
