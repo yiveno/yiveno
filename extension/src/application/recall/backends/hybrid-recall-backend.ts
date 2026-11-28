@@ -85,7 +85,6 @@ import { enrichEmptyRecallResult } from '@/core/recall/enrich-empty-recall-resul
 import {
   applyParsedClueScoreBoosts,
   buildFilterClueFromParsed,
-  filterItemsByTopicTokens,
   filterMatchesByParsedTimeRange,
   injectTopic,
   recallByKeywordWithParsedClue,
@@ -1464,23 +1463,6 @@ export class HybridRecallBackend implements RecallBackend {
       candidateSource: listedResult.source,
       candidateCount: items.length
     })
-
-    // Gap 1：Topic 先验预筛（仅在 parsed.topic 存在时启用；与 contentTerms 候选取并集）
-    const topicPreFilterEnabled = Boolean(merged.topic?.terms?.length)
-    if (topicPreFilterEnabled) {
-      const topicTermCount = merged.topic!.terms.length
-      const preFilterCount = items.length
-      // Topic 预筛：与现有候选取并集（不是交集，不删 contentTerms 已有候选）
-      const topicFiltered = filterItemsByTopicTokens(items, merged.topic!)
-      const postFilterCount = topicFiltered.length
-      items = topicFiltered
-      trace('info', 'Hybrid Recall：Topic 先验预筛已完成', {
-        topicTermCount,
-        preFilterCount,
-        postFilterCount,
-        extraFromTopic: postFilterCount - preFilterCount
-      })
-    }
 
     reportProgress('checking')
     let usedHybrid = false

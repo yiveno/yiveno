@@ -15,7 +15,6 @@ import { collapseRecallMatches } from '@/core/recall/collapse-recall-duplicates'
 import {
   applyStalePenaltiesToMatches,
   computeBehaviorBoost,
-  filterMemoryItemsByKeyword,
   normalizeRecallText,
   RECALL_TOP_PICK_MIN_SCORE,
   type RecallBehaviorProfile,
@@ -114,45 +113,6 @@ const OBJECT_TYPE_SURFACES = (() => {
 })()
 
 /**
- * Topic 先验预筛（Gap 1 · P0 候选加载阶段）。
- *
- * 当 parsed.topic 存在时，用 Topic terms（检索词面）对候选池做第一轮预筛，
- * 将命中 Topic 词面的条目加入候选集（与 contentTerms 候选取并集）。
- *
- * 机制：复用现有倒排 Phase 1 同 mechanism（`filterMemoryItemsByKeyword`）。
- * - 仅在 Topic 存在时启用；Topic 未提供时返回原池（不变）
- * - 仅做扩池（并集，不是交集），不让 Topic 删掉现有命中
- * - 不做重排、不做门限——预筛产生的候选池变大，供后续 contentTerms / Hybrid 正常打分
- *
- * @param items 原始候选池（全量或倒排预过滤后）
- * @param topic Topic terms（检索词面）；由 parsed.topic.terms 传入
- * @returns 含 Topic 词面命中的候选集（与原池取并集）
- */
-export function filterItemsByTopicTokens(
-  items: MemoryItem[],
-  topic: { terms: readonly string[] }
-): MemoryItem[] {
-  const topicTerms = topic.terms
-  if (!topicTerms || topicTerms.length === 0) {
-    return items
-  }
-
-  const filterText = topicTerms.join(' ')
-  // 复用现有 keyword-filter 机制，不引入新倒排实现
-  const matched = filterMemoryItemsByKeyword(items, filterText, { limit: items.length })
-  if (matched.length === 0) {
-    return items
-  }
-
-  // 取并集：Topic 命中的 + 原池已有的（不删除 contentTerms 已有候选）
-  const existingIds = new Set(items.map(item => item.id))
-  const extraCandidates = matched.filter(m => !existingIds.has(m.item.id)).map(m => m.item)
-  const union = [...items, ...extraCandidates]
-
-  return union
-}
-
-/**
  * 由 parsed.topic 构造 RecallResult.topic 字段（窄子集）。
  * 仅在 parsed.topic 存在时填充；Gap 3/5 落地。
  *
@@ -208,9 +168,9 @@ export function shouldSkipRecallAsZeroAnchor(clue: string, parsed: ParsedRecallC
  * 由解析结果拼 Filter 检索词面（`filterClue`）。不做内容别名扩词。
  *
  * Gap 4（D3-C）变更：filterClue 仅含 contentTerms，不含 Topic terms。
- * - Topic 走独立检索路径（`topicLookup` → 语义邻域）
+ * - topicLookup 并集仅发生在约束邻域分支
+ * - 主关键词 / Hybrid 路径不调用 topicLookup；topic 词面覆盖来自派生 topic.terms 为 contentTerms 子集
  * - contentTerms 走关键词检索（本函数）
- * - 两者结果在 recallByKeywordWithParsedClue 中取并集 · 去重
  */
 export function buildFilterClueFromParsed(parsed: ParsedRecallClue): string {
   const contentTerms = effectiveContentTermsForRecall(parsed)

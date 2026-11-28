@@ -2407,14 +2407,7 @@ Chrome API / 选区
 2. `extractComposerNarrowExamples` → `topicTerms` 参数，末尾追加独立 topic 示例
 3. LLM Framing prompt → `topicTerms` 作为独立 fact 透传（facts JSON 中显式出现）
 
-**Gap 1 落地（2026-10）：** Topic 先验预筛已接入 Hybrid Recall 管线。
-
-- **位置：** 候选加载（`listForKeywordRecall` 返回 items）之后，进入各分支（约束邻域 / 关键词 / Hybrid）之前
-- **机制：** Topic 存在时，用 `filterItemsByTopicTokens` 对候选池做预筛；复用现有 `filterMemoryItemsByKeyword` 倒排 Phase 1 同 mechanism
-- **并集语义：** Topic 命中的条目 + 原池已有的候选取并集；不是交集，不删除现有命中
-- **不做的事：** 不做重排、不做门限、不做索引变更；仅扩池（候选池变大）
-- **Topic 不存在时：** 完全不变，与 Gap 1 落地前行为一致
-- **硬约束：** 沿用 ADR-005；Topic 缩减必须对全用户同一规则，非内容别名灰名单
+**Gap 1（已拆除 · 2026-11）：** 原「Topic 先验预筛」曾接在 Hybrid 候选加载后、各分支前；实现上 matched 恒为入参 items 子集、额外候选恒空，从未扩池。该死代码与误导 trace 已删除；生产行为零变化。Topic 词面覆盖仍来自派生 `topic.terms` ⊆ contentTerms；`topicLookup` 并集仅在约束邻域分支。
 
 **硬约束：** 沿用 ADR-005；Topic 缩减必须对全用户同一规则，非内容别名灰名单。
 
