@@ -11,6 +11,8 @@ Yiveno 维护者当前 AI 编程工具 = **Cursor**（唯一激活的 IDE 入口
 
 其它 IDE（Claude Code / Gemini CLI / Codex CLI 等）的历史薄指针已删除（见 ADR-013）。
 
+**外部协作 Agent（非 IDE 入口）：** Muse —— 不走 IDE 启动文件，不复述项目硬规则；与 Cursor 的分工、交接与审查协议见 [`docs/engineering/Muse-Cursor-协作分工协议.md`](./docs/engineering/Muse-Cursor-协作分工协议.md)。Muse 对本仓的写入只走分支 + PR，由维护者合并。
+
 ## 权威入口（开机必读，按序）
 
 1. **Cursor 开机层**（alwaysApply · 自动注入）：`.cursor/rules/session-boot.mdc`
