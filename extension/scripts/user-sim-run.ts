@@ -8,6 +8,7 @@
  *   cd extension && bun run user-sim:run
  *   USER_SIM_PERSONA=creator bun run user-sim:run
  *   USER_SIM_SEED=7 bun run user-sim:run
+ *   USER_SIM_DAYS=90,180,360 bun run user-sim:run   # 90 为基线，其余天数进 scaleCurve
  */
 
 import { execSync } from 'node:child_process'
@@ -55,6 +56,11 @@ export async function runUserSimCli(): Promise<void> {
   const head = resolveGitHead()
   const startedAt = new Date()
   const perPersona: Record<string, unknown> = {}
+  const scaleDays = (process.env.USER_SIM_DAYS ?? '90')
+    .split(',')
+    .map(s => Number(s.trim()))
+    .filter(n => Number.isFinite(n) && n > 0)
+  const scaleCurve: Record<string, Record<string, unknown>> = {}
 
   for (const persona of personas) {
     const data = generateUserSimDataset({ seed, endIso: END_ISO, personaId: persona.id })
@@ -74,6 +80,28 @@ export async function runUserSimCli(): Promise<void> {
     )
   }
 
+  for (const days of scaleDays.filter(d => d !== 90)) {
+    for (const persona of personas) {
+      const data = generateUserSimDataset({ seed, endIso: END_ISO, personaId: persona.id, days })
+      const problems = validateUserSimDataset(data)
+      if (problems.length > 0) {
+        throw new Error(
+          `user-sim validate failed for ${persona.id}@${days}d: ${problems.join('; ')}`
+        )
+      }
+      const tasks = toStage2Tasks(data)
+      const cases: Stage2CaseResult[] = []
+      for (const task of tasks) {
+        cases.push(await runStage2Case({ task, corpus: data.memoryItems, nowMs: NOW_MS }))
+      }
+      const summary = computeStage2Summary(cases)
+      ;(scaleCurve[persona.id] ??= {})[String(days)] = { counts: data.meta.counts, summary }
+      console.log(
+        `user-sim-scale · ${persona.id} · days=${days} · saves=${data.meta.counts.saves} · R@1=${summary.positive.recallAt1.toFixed(3)} R@5=${summary.positive.recallAt5.toFixed(3)} MRR=${summary.positive.mrr.toFixed(3)} negFH=${summary.negativeFalseHitRate.toFixed(3)}`
+      )
+    }
+  }
+
   const report = {
     schemaVersion: 1,
     kind: 'user-sim-recall',
@@ -83,7 +111,8 @@ export async function runUserSimCli(): Promise<void> {
     seed,
     endIso: END_ISO,
     track: { parse: 'rules', embedding: 'fake-anchor-clue', llm: false },
-    personas: perPersona
+    personas: perPersona,
+    ...(Object.keys(scaleCurve).length > 0 ? { scaleCurve } : {})
   }
   mkdirSync(runsDir, { recursive: true })
   const stamp = stampFromDate(startedAt)

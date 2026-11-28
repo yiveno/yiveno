@@ -126,7 +126,8 @@ export function validateUserSimDataset(data: UserSimDataset): string[] {
   const negativeClues = data.groundTruth.queries.filter(q => q.type === 'negative').map(q => q.clue)
   ok(new Set(negativeClues).size === negativeClues.length, 'duplicate negative clues')
   const c = data.meta.counts
-  ok(c.saves >= 160 && c.saves <= 450, `saves out of range: ${c.saves}`)
+  if (data.meta.days === 90) ok(c.saves >= 160 && c.saves <= 450, `saves out of range: ${c.saves}`)
+  else ok(c.saves >= 40, `saves too few for scale run: ${c.saves}`)
   ok(c.visits >= 800, `visits too low: ${c.visits}`)
   ok(c.queries === 80, `queries != 80: ${c.queries}`)
   return problems
