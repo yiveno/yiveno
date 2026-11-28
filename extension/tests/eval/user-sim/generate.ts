@@ -397,14 +397,24 @@ export function generateUserSimDataset(input: {
     }
     return 'the page I saved a while back and need again'
   }
-  const plan: UserSimClueType[] = [
-    ...Array<UserSimClueType>(16).fill('concrete'),
-    ...Array<UserSimClueType>(16).fill('paraphrase'),
-    ...Array<UserSimClueType>(16).fill('associative'),
-    ...Array<UserSimClueType>(10).fill('temporal'),
-    ...Array<UserSimClueType>(10).fill('vague'),
-    ...Array<UserSimClueType>(12).fill('negative')
-  ]
+  const plan: UserSimClueType[] =
+    personaId === 'scene-memory-user'
+      ? [
+          ...Array<UserSimClueType>(8).fill('concrete'),
+          ...Array<UserSimClueType>(12).fill('paraphrase'),
+          ...Array<UserSimClueType>(28).fill('associative'),
+          ...Array<UserSimClueType>(10).fill('temporal'),
+          ...Array<UserSimClueType>(10).fill('vague'),
+          ...Array<UserSimClueType>(12).fill('negative')
+        ]
+      : [
+          ...Array<UserSimClueType>(16).fill('concrete'),
+          ...Array<UserSimClueType>(16).fill('paraphrase'),
+          ...Array<UserSimClueType>(16).fill('associative'),
+          ...Array<UserSimClueType>(10).fill('temporal'),
+          ...Array<UserSimClueType>(10).fill('vague'),
+          ...Array<UserSimClueType>(12).fill('negative')
+        ]
   let negativeQueues: {
     deleted: HiddenItem[]
     topics: (typeof USER_SIM_NEGATIVE_TOPICS)[number][]

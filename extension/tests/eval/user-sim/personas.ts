@@ -764,5 +764,160 @@ export const USER_SIM_PERSONAS: SimPersona[] = [
       weekendBoost: 0,
       forgetDays: 30
     }
+  },
+  {
+    id: 'deep-researcher',
+    label: 'Deep researcher',
+    topicIds: ['statistics', 'literature', 'cognition', 'retrieval', 'llm-eng'],
+    projects: [
+      {
+        id: 'thesis-core',
+        label: 'the thesis core',
+        topics: ['statistics', 'literature'],
+        windows: [[0, 89]],
+        revivalDay: null,
+        scenes: ['while I was deep in the thesis chapters', 'during the long literature pass']
+      },
+      {
+        id: 'methods-appendix',
+        label: 'the methods appendix',
+        topics: ['retrieval', 'llm-eng', 'cognition'],
+        windows: [[25, 80]],
+        revivalDay: null,
+        scenes: ['when I was cross-checking methods', 'during the appendix rewrite']
+      }
+    ],
+    activity: {
+      sessionsMul: 1,
+      saveP: 0.7,
+      revisitP: 0.85,
+      bookmarkRatio: 0.35,
+      weekendBoost: 0,
+      forgetDays: 60
+    }
+  },
+  {
+    id: 'task-sprinter',
+    label: 'Task sprinter',
+    topicIds: ['user-research', 'roadmapping', 'metrics', 'design', 'marketing'],
+    projects: [
+      {
+        id: 'launch-sprint',
+        label: 'the launch sprint',
+        topics: ['roadmapping', 'metrics'],
+        windows: [[0, 18]],
+        revivalDay: 80,
+        scenes: ['during the launch sprint', 'when the deadline was days away']
+      },
+      {
+        id: 'research-sprint',
+        label: 'the research sprint',
+        topics: ['user-research', 'design', 'marketing'],
+        windows: [[45, 63]],
+        revivalDay: null,
+        scenes: ['while the sprint board was full', 'during the two-week push']
+      }
+    ],
+    activity: {
+      sessionsMul: 1.1,
+      saveP: 0.8,
+      revisitP: 0.45,
+      bookmarkRatio: 0.6,
+      weekendBoost: 0,
+      forgetDays: 20
+    }
+  },
+  {
+    id: 'non-organizer',
+    label: 'Non-organizer',
+    topicIds: ['writing', 'meetings', 'health', 'personal-finance', 'cognition'],
+    projects: [
+      {
+        id: 'everything-pile',
+        label: 'the everything pile',
+        topics: ['writing', 'meetings'],
+        windows: [[0, 89]],
+        revivalDay: null,
+        scenes: ['when everything landed in one folder', 'during a week of unsorted tabs']
+      },
+      {
+        id: 'admin-drift',
+        label: 'the admin drift',
+        topics: ['health', 'personal-finance', 'cognition'],
+        windows: [[15, 75]],
+        revivalDay: null,
+        scenes: ['while I kept postponing the cleanup', 'when the receipts piled up']
+      }
+    ],
+    activity: {
+      sessionsMul: 1,
+      saveP: 0.7,
+      revisitP: 0.35,
+      bookmarkRatio: 0.95,
+      weekendBoost: 0,
+      forgetDays: 15
+    }
+  },
+  {
+    id: 'scene-memory-user',
+    label: 'Scene-memory user',
+    topicIds: ['video-prod', 'branding', 'writing', 'design', 'cognition'],
+    projects: [
+      {
+        id: 'studio-days',
+        label: 'the studio days',
+        topics: ['video-prod', 'branding'],
+        windows: [[0, 50]],
+        revivalDay: 72,
+        scenes: ['back in the studio that week', 'when we shot on location']
+      },
+      {
+        id: 'desk-reset',
+        label: 'the desk reset',
+        topics: ['design', 'writing', 'cognition'],
+        windows: [[40, 89]],
+        revivalDay: null,
+        scenes: ['after I rearranged the desk', 'during the quiet mornings at home']
+      }
+    ],
+    activity: {
+      sessionsMul: 0.95,
+      saveP: 0.6,
+      revisitP: 0.55,
+      bookmarkRatio: 0.65,
+      weekendBoost: 1,
+      forgetDays: 35
+    }
+  },
+  {
+    id: 'casual-light-user',
+    label: 'Casual light user',
+    topicIds: ['health', 'personal-finance', 'writing', 'meetings', 'design'],
+    projects: [
+      {
+        id: 'weekend-reads',
+        label: 'the weekend reads',
+        topics: ['health', 'writing'],
+        windows: [[0, 89]],
+        revivalDay: null,
+        scenes: ['on a slow weekend morning', 'while browsing with coffee']
+      },
+      {
+        id: 'occasional-admin',
+        label: 'the occasional admin',
+        topics: ['personal-finance', 'meetings', 'design'],
+        windows: [[30, 80]],
+        revivalDay: null,
+        scenes: ['when I finally opened the admin tabs', 'during a rare tidy-up']
+      }
+    ],
+    activity: {
+      sessionsMul: 0.85,
+      saveP: 0.6,
+      revisitP: 0.5,
+      bookmarkRatio: 0.7,
+      weekendBoost: 1,
+      forgetDays: 30
+    }
   }
 ]
