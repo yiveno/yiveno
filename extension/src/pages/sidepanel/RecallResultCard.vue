@@ -81,7 +81,6 @@ const props = defineProps<{
   /** detail export 多选：点卡面切换选中 */
   showDetailExportSelection?: boolean
   detailExportItemSelected?: (memoryItemId: string) => boolean
-  detailExportItemDisabled?: (memoryItemId: string) => boolean
 }>()
 
 const emit = defineEmits<{
@@ -163,7 +162,7 @@ function handleOpen(event: MouseEvent, id: string, url: string, rank?: number): 
   event.preventDefault()
   const action = resolveRecallCardClickAction({
     showDetailExportSelection: props.showDetailExportSelection,
-    detailExportDisabled: isDetailExportItemDisabled(id),
+    detailExportDisabled: false,
     memoryItemId: id,
     url,
     ...(rank !== undefined ? { rank } : {}),
@@ -183,10 +182,6 @@ function handleOpen(event: MouseEvent, id: string, url: string, rank?: number): 
 
 function isDetailExportItemSelected(id: string): boolean {
   return props.detailExportItemSelected?.(id) === true
-}
-
-function isDetailExportItemDisabled(id: string): boolean {
-  return props.detailExportItemDisabled?.(id) === true
 }
 
 const cardGroupRef = ref<HTMLElement | null>(null)

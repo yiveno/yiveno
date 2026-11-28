@@ -1,3 +1,0 @@
-/* 已拆为 home-critical.css + home-deferred.css；保留此文件以免旧引用断裂 */
-@import './home-critical.css';
-@import './home-deferred.css';

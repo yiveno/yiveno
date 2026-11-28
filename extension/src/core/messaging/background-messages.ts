@@ -4,7 +4,6 @@ import type {
   AccountSyncBackgroundMessage,
   AccountSyncBackgroundResponse
 } from '@/core/messaging/account-sync-messages'
-import type { LocalProfile } from '@/core/identity/local-profile'
 import { BACKGROUND_MESSAGE_SCOPE } from '@/core/messaging/constants'
 import type {
   CommandsBackgroundMessage,
@@ -46,13 +45,6 @@ import type {
 
 export { BACKGROUND_MESSAGE_SCOPE }
 
-/** 本地身份读取失败。 */
-export const IdentityErrorCodeSchema = z.enum([
-  'IDENTITY_READ_FAILED' // 读取本地身份失败
-])
-
-export type IdentityErrorCode = z.infer<typeof IdentityErrorCodeSchema>
-
 /** 消息分发层失败（未知 type / 未捕获异常）。 */
 export const DispatchErrorCodeSchema = z.enum([
   'UNKNOWN_MESSAGE_TYPE', // 未知消息 type
@@ -60,24 +52,6 @@ export const DispatchErrorCodeSchema = z.enum([
 ])
 
 export type DispatchErrorCode = z.infer<typeof DispatchErrorCodeSchema>
-
-/** 读取本地身份与当前 ownerId。 */
-export type GetLocalIdentityMessage = {
-  scope: typeof BACKGROUND_MESSAGE_SCOPE
-  type: 'GET_LOCAL_IDENTITY'
-}
-
-export type GetLocalIdentityResponse =
-  | {
-      ok: true
-      profile: LocalProfile
-      ownerId: string
-    }
-  | {
-      ok: false
-      errorCode: IdentityErrorCode
-      error?: string
-    }
 
 /** Background 存活探测。 */
 export type PingBackgroundMessage = {
@@ -97,7 +71,6 @@ export type BackgroundDispatchErrorResponse = {
 }
 
 export type BackgroundMessage =
-  | GetLocalIdentityMessage
   | PingBackgroundMessage
   | MemoryBackgroundMessage
   | RecallBackgroundMessage
@@ -111,7 +84,6 @@ export type BackgroundMessage =
   | DebugBackgroundMessage
 
 export type BackgroundMessageResponse =
-  | GetLocalIdentityResponse
   | PingBackgroundResponse
   | MemoryBackgroundResponse
   | RecallBackgroundResponse

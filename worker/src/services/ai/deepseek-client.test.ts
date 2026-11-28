@@ -29,7 +29,7 @@ describe('completeWithDeepSeek', () => {
     globalThis.fetch = fetchMock as unknown as typeof fetch
 
     try {
-      const { completeWithDeepSeek } = await import('./deepseek-client')
+      const { completeWithDeepSeek } = await import('./deepseek-ai-chat-provider')
       const result = await completeWithDeepSeek(createEnv(), 'hello', { maxTokens: 64 })
 
       expect(result.text).toBe('{"ok":true}')
@@ -60,7 +60,7 @@ describe('completeWithDeepSeek', () => {
     globalThis.fetch = fetchMock as unknown as typeof fetch
 
     try {
-      const { completeWithDeepSeek } = await import('./deepseek-client')
+      const { completeWithDeepSeek } = await import('./deepseek-ai-chat-provider')
       const result = await completeWithDeepSeek(createEnv(), 'hello')
 
       expect(result.text).toBe('{"ok":true}')
@@ -84,7 +84,7 @@ describe('completeWithDeepSeek', () => {
     globalThis.fetch = fetchMock as unknown as typeof fetch
 
     try {
-      const { completeWithDeepSeek } = await import('./deepseek-client')
+      const { completeWithDeepSeek } = await import('./deepseek-ai-chat-provider')
       await expect(completeWithDeepSeek(createEnv(), 'hello')).rejects.toThrow(
         'deepseek_empty_response:length'
       )
@@ -110,7 +110,7 @@ describe('completeWithDeepSeek', () => {
     globalThis.fetch = fetchMock as unknown as typeof fetch
 
     try {
-      const { completeWithDeepSeek } = await import('./deepseek-client')
+      const { completeWithDeepSeek } = await import('./deepseek-ai-chat-provider')
       await completeWithDeepSeek(createEnv(), 'hello', { maxTokens: 99999 })
       expect(fetchMock).toHaveBeenCalled()
     } finally {
@@ -136,7 +136,7 @@ describe('completeWithDeepSeek', () => {
     globalThis.fetch = fetchMock as unknown as typeof fetch
 
     try {
-      const { completeWithDeepSeek } = await import('./deepseek-client')
+      const { completeWithDeepSeek } = await import('./deepseek-ai-chat-provider')
       const result = await completeWithDeepSeek(
         createEnv({
           AI_GATEWAY_ACCOUNT_ID: 'acc-test',
@@ -173,7 +173,7 @@ describe('completeWithDeepSeek', () => {
     globalThis.fetch = fetchMock as unknown as typeof fetch
 
     try {
-      const { completeWithDeepSeek } = await import('./deepseek-client')
+      const { completeWithDeepSeek } = await import('./deepseek-ai-chat-provider')
       const result = await completeWithDeepSeek(
         createEnv({
           AI_GATEWAY_ACCOUNT_ID: 'acc-test',
@@ -206,7 +206,7 @@ describe('completeWithDeepSeek', () => {
     globalThis.fetch = fetchMock as unknown as typeof fetch
 
     try {
-      const { completeWithDeepSeek } = await import('./deepseek-client')
+      const { completeWithDeepSeek } = await import('./deepseek-ai-chat-provider')
       const result = await completeWithDeepSeek(
         createEnv({
           AI_GATEWAY_ACCOUNT_ID: 'acc-test',

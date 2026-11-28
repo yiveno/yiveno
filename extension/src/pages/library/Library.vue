@@ -425,10 +425,6 @@ const libraryPanelUsesInnerScroll = computed(() => {
   return listRows.value.length > 0
 })
 
-function canSelectDetailExportItem(_id: string): boolean {
-  return true
-}
-
 function handleToggleDetailExportSelection(id: string): void {
   selectedDetailExportIds.value = toggleDetailExportSelectionSet(selectedDetailExportIds.value, id)
   bumpDetailExportSelectionRevision()
@@ -440,9 +436,6 @@ function handleLibraryRowActivate(
 ): void {
   if (detailExportMode.value) {
     event.preventDefault()
-    if (!canSelectDetailExportItem(row.id)) {
-      return
-    }
     handleToggleDetailExportSelection(row.id)
     return
   }

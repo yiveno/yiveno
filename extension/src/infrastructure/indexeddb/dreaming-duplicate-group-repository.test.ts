@@ -2,7 +2,7 @@ import 'fake-indexeddb/auto'
 
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { buildCaptureDreamingPreprocess } from '@/application/dreaming/capture-dreaming-preprocess'
+import { buildCaptureDreamingPreprocess } from '@/core/dreaming/capture-dreaming-preprocess'
 import { LOCAL_PROFILE_STORAGE_KEY, type LocalProfile } from '@/core/identity/local-profile'
 import { dreamingDuplicateGroupRepository } from '@/infrastructure/indexeddb/dreaming-duplicate-group-repository'
 import { resetMemoryDatabaseInitializationForTests } from '@/infrastructure/indexeddb/memory-db'

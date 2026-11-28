@@ -434,7 +434,7 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 
 **圆角/描边：** `--radius-lg` + `--border`；背景 `--surface`。文件夹行非 `AppLibraryItemCard`。
 
-**实现：** `AppLibraryItemCard.vue` · `library-item-card-content.css` · `library-list-tokens.ts` · `bookmark-library-index.ts`。
+**实现：** `AppLibraryItemCard.vue` · `library-item-card-content.css` · `bookmark-library-index.ts`。
 
 #### 6.2.6 Recall 邻域结果卡壳（类型区分）
 
@@ -602,7 +602,6 @@ Yiveno 追求**长期维护与品牌特色**，不以「标准组件库快速上
 | `packages/design-tokens/css/motion.css`              | 扩展：精简 `--motion-*` 时长/缓动                   |
 | `packages/design-tokens/src/brand.ts`                | Brand Core hex（TS）                                |
 | `website/src/styles/site-critical.css`               | 官网壳：字体 / 布局 / Nav（消费 brand，无重复 hex） |
-| `website/src/styles/site.css`                        | 兼容入口（brand + critical + deferred）             |
 | `extension/src/styles/extension-ui.css`              | 扩展入口：brand + variables + semantic              |
 | `docs/design/Yiveno-logo-asset-generation-prompt.md` | Logo 导出流程（色值须服从本标准）                   |
 | `docs/product/Yiveno-产品文档-v4.0.md` §0            | 产品定位 / 性格（Normative）                        |

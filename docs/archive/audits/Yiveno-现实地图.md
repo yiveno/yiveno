@@ -145,7 +145,7 @@ runtime.onInstalled → ensureSidePanelOpensOnActionClick + ensureBackgroundBoot
   - attachChromeBookmarkSyncListenersAtStartup
 ```
 
-`dispatchBackgroundMessage` 内是一个 `switch (message.type)`，覆盖了 `background-message-types.registry` 中全部 56 个 type（含 `PING` / `GET_LOCAL_IDENTITY` / `*_HANDLER`）。Dev-only 消息 (`DEV_SEED_RECALL_PROBE` 等 5 个) 用 `import.meta.env.DEV` 守门，调用 `handleDebugBackgroundMessage`。
+`dispatchBackgroundMessage` 内是一个 `switch (message.type)`，覆盖了 `background-message-types.registry` 中登记的 type（含 `PING` / `*_HANDLER`）。Dev-only 消息 (`DEV_SEED_RECALL_PROBE` 等 5 个) 用 `import.meta.env.DEV` 守门，调用 `handleDebugBackgroundMessage`。
 
 **Bootstrap 链**：`dispatchBackgroundMessage` → `ensureBackgroundBootstrapped`（非 `PING` / `OPEN_RECALL_SHELL` 阻塞，详见 §4.4 注释）→ handler。
 

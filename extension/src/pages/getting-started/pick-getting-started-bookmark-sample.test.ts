@@ -6,7 +6,7 @@ import {
   pickGettingStartedBookmarkSample,
   resolveGettingStartedSampleClue,
   resolveGettingStartedSampleSuggestions
-} from '@/pages/getting-started/pick-getting-started-bookmark-sample'
+} from '@/core/onboarding/pick-getting-started-bookmark-sample'
 
 describe('pick-getting-started-bookmark-sample', () => {
   it('有标题书签：取 savedAt 最近一条做成口语样句', () => {

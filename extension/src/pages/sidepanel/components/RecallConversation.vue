@@ -430,10 +430,6 @@ function isDetailExportSelected(id: string): boolean {
   return props.selectedDetailExportIds?.has(id) === true
 }
 
-function isDetailExportSelectionDisabled(_id: string): boolean {
-  return false
-}
-
 function handleToggleDetailExportSelection(id: string): void {
   emit('toggleDetailExportSelection', id)
 }
@@ -721,7 +717,6 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
                 top-pick
                 :show-detail-export-selection="detailExportSelectionActive === true"
                 :detail-export-item-selected="isDetailExportSelected"
-                :detail-export-item-disabled="isDetailExportSelectionDisabled"
                 :expanded="expandedDuplicateGroupId === turn.primaryCard.id"
                 :expand-label="expandLabel"
                 :collapse-label="collapseLabel"
@@ -742,7 +737,6 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
                 compact
                 :show-detail-export-selection="detailExportSelectionActive === true"
                 :detail-export-item-selected="isDetailExportSelected"
-                :detail-export-item-disabled="isDetailExportSelectionDisabled"
                 :expanded="expandedDuplicateGroupId === turn.relatedGuessCard.id"
                 :expand-label="expandLabel"
                 :collapse-label="collapseLabel"
@@ -771,7 +765,6 @@ function visibleCapNoteLabel(turn: AssistantTurn): string | null {
                     :compact="!(turn.tone === 'confident' && index === 0)"
                     :show-detail-export-selection="detailExportSelectionActive === true"
                     :detail-export-item-selected="isDetailExportSelected"
-                    :detail-export-item-disabled="isDetailExportSelectionDisabled"
                     :expanded="expandedDuplicateGroupId === item.id"
                     :expand-label="expandLabel"
                     :collapse-label="collapseLabel"

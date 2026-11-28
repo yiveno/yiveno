@@ -1,7 +1,6 @@
 import type {
   BackgroundMessage,
-  BackgroundMessageResponse,
-  GetLocalIdentityResponse
+  BackgroundMessageResponse
 } from '@/core/messaging/background-messages'
 import { isBackgroundScopedMessage } from '@/core/messaging/background-messages'
 import { ensureBackgroundBootstrapped } from '@/background/bootstrap-ready'
@@ -102,29 +101,6 @@ import {
 import { handleGetDailyReview } from '@/background/handlers/daily-review-handler'
 import { flowFail, flowOk, flowStart } from '@/infrastructure/logging/flow-log'
 import { logger } from '@/infrastructure/logging/logger'
-import {
-  getCurrentOwnerId,
-  getOrCreateLocalProfile
-} from '@/infrastructure/identity/local-profile-service'
-
-async function handleGetLocalIdentity(): Promise<GetLocalIdentityResponse> {
-  const startedAt = flowStart('Identity', '读取本地身份')
-  try {
-    const [profile, ownerId] = await Promise.all([getOrCreateLocalProfile(), getCurrentOwnerId()])
-    flowOk('Identity', '读取本地身份', startedAt, {
-      localProfileId: profile.localProfileId,
-      ownerId
-    })
-    return { ok: true, profile, ownerId }
-  } catch (error) {
-    flowFail('Identity', '读取本地身份', startedAt, error)
-    return {
-      ok: false,
-      errorCode: 'IDENTITY_READ_FAILED',
-      ...(error instanceof Error ? { error: error.message } : {})
-    }
-  }
-}
 
 /**
  * 将 sender.tab 的 tabId/windowId 并入 CAPTURE payload（payload 已有则保留）。
@@ -172,8 +148,6 @@ async function dispatchBackgroundMessage(
   switch (message.type) {
     case 'PING':
       return { ok: true }
-    case 'GET_LOCAL_IDENTITY':
-      return handleGetLocalIdentity()
     case 'AUTH_SIGN_IN':
       return handleAuthSignIn()
     case 'AUTH_CONNECT_WEBSITE':

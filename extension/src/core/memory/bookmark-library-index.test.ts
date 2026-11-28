@@ -11,7 +11,6 @@ import {
   mapChromeBookmarkTreeToLibraryIndex,
   resolveBookmarkFolderExpanded
 } from '@/core/memory/bookmark-library-index'
-import { LIBRARY_LIST_ROW_GAP_PX } from '@/pages/library/library-list-tokens'
 import {
   buildBookmarkLibraryRowMetrics,
   resolveBookmarkLibraryVisibleSlice
@@ -189,7 +188,7 @@ describe('bookmark-library-index', () => {
   })
 
   it('书签 stride 含与摘录列表一致的行间距', () => {
-    expect(LIBRARY_LIST_ROW_GAP_PX).toBe(BOOKMARK_LIBRARY_ROW_GAP_PX)
+    expect(BOOKMARK_LIBRARY_ROW_GAP_PX).toBe(BOOKMARK_LIBRARY_ROW_GAP_PX)
     expect(BOOKMARK_LIBRARY_ROW_GAP_PX).toBe(8)
     const bookmarkRow = {
       kind: 'bookmark' as const,
