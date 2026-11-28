@@ -89,6 +89,9 @@ export async function runStage2Case(input: {
   nowMs?: number
   /** 门槛 sweep 覆盖；缺省走产品默认。 */
   evalOverrides?: Stage2EvalOverrides
+  /** 真实 embedding 轨覆盖：外部预计算的 clue 向量与向量文本；缺省走 fake anchor。 */
+  queryVectorOverride?: number[]
+  clueEmbeddingTextOverride?: string
 }): Promise<Stage2CaseResult> {
   const nowMs = input.nowMs ?? CLUE_CHAIN_STAGE2_NOW_MS
   const started = Date.now()
@@ -98,7 +101,9 @@ export async function runStage2Case(input: {
     const parsed = parseRecallClue(clue, { nowMs })
     const contentTerms = [...(parsed.contentTerms ?? [])]
     const filterClue = contentTerms.join(' ').trim() || parsed.raw
-    const queryVector = makeFakeEmbedding(input.task.embeddingAnchor, HYBRID_FAKE_EMBEDDING_DIM)
+    const queryVector =
+      input.queryVectorOverride ??
+      makeFakeEmbedding(input.task.embeddingAnchor, HYBRID_FAKE_EMBEDDING_DIM)
 
     const fused = await fuseHybridMatches({
       displayClue: clue,
@@ -106,7 +111,7 @@ export async function runStage2Case(input: {
       items: [...input.corpus],
       filterClue,
       parsed,
-      clueEmbeddingText: input.task.embeddingAnchor,
+      clueEmbeddingText: input.clueEmbeddingTextOverride ?? input.task.embeddingAnchor,
       queryVector,
       trace: () => {},
       ...(input.evalOverrides ? { evalOverrides: input.evalOverrides } : {})
