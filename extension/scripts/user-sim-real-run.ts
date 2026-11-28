@@ -16,6 +16,8 @@
  */
 
 import { execSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
+import { tmpdir } from 'node:os'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -147,59 +149,126 @@ async function resolveAccessToken(apiBase: string): Promise<string> {
   return data.accessToken
 }
 
+const EMBED_CACHE_PATH = resolve(tmpdir(), 'user-sim-embed-cache.json')
+const EMBED_RETRY_DELAYS_MS = [2000, 5000, 10000]
+
+function loadEmbedCache(): Map<string, number[]> {
+  try {
+    const parsed = JSON.parse(readFileSync(EMBED_CACHE_PATH, 'utf8')) as Record<string, number[]>
+    return new Map(Object.entries(parsed))
+  } catch {
+    return new Map()
+  }
+}
+
+function saveEmbedCache(cache: Map<string, number[]>): void {
+  writeFileSync(EMBED_CACHE_PATH, JSON.stringify(Object.fromEntries(cache)), 'utf8')
+}
+
+function embedCacheKey(text: string): string {
+  return createHash('sha256').update(text).digest('hex')
+}
+
+async function embedBatchWithRetry(
+  apiBase: string,
+  accessToken: string,
+  batch: readonly string[],
+  observed: { model: string | null; dim: number | null }
+): Promise<number[][]> {
+  let lastError: Error | null = null
+  for (let attempt = 0; attempt <= EMBED_RETRY_DELAYS_MS.length; attempt += 1) {
+    try {
+      return await embedBatchOnce(apiBase, accessToken, batch, observed)
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error))
+      const retryable = /embed_failed|http_5\d\d|fetch failed|ECONNRESET|ETIMEDOUT/i.test(
+        lastError.message
+      )
+      if (!retryable || attempt === EMBED_RETRY_DELAYS_MS.length) throw lastError
+      await new Promise(res => setTimeout(res, EMBED_RETRY_DELAYS_MS[attempt]))
+    }
+  }
+  throw lastError ?? new Error('embed_failed')
+}
+
+async function embedBatchOnce(
+  apiBase: string,
+  accessToken: string,
+  batch: readonly string[],
+  observed: { model: string | null; dim: number | null }
+): Promise<number[][]> {
+  const response = await fetch(`${apiBase}/api/ai/embed`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${accessToken}`, 'content-type': 'application/json' },
+    body: JSON.stringify({ texts: [...batch] })
+  })
+  const body: unknown = await response.json().catch(() => null)
+  if (!response.ok) {
+    const errorCode =
+      typeof body === 'object' &&
+      body !== null &&
+      'error' in body &&
+      typeof (body as { error: unknown }).error === 'string'
+        ? (body as { error: string }).error
+        : `http_${response.status}`
+    throw new Error(`embed_failed:${errorCode}`)
+  }
+  if (
+    typeof body !== 'object' ||
+    body === null ||
+    !('success' in body) ||
+    (body as { success: unknown }).success !== true ||
+    !('data' in body)
+  ) {
+    throw new Error('invalid_embed_response')
+  }
+  const data = (body as { data: { model?: string; dim?: number; embeddings?: number[][] } }).data
+  if (!data.model || !Array.isArray(data.embeddings)) throw new Error('invalid_embed_response')
+  if (data.embeddings.length !== batch.length) {
+    throw new Error(`embed_count_mismatch:expected_${batch.length}_got_${data.embeddings.length}`)
+  }
+  for (let j = 0; j < data.embeddings.length; j += 1) {
+    const vector = data.embeddings[j]
+    if (!Array.isArray(vector) || vector.length === 0) {
+      throw new Error(`empty_embedding_at_${j}`)
+    }
+    if (typeof data.dim === 'number' && vector.length !== data.dim) {
+      throw new Error(`dim_mismatch_at_${j}:got_${vector.length}_expected_${data.dim}`)
+    }
+  }
+  observed.model = data.model
+  observed.dim = data.dim ?? data.embeddings[0]?.length ?? null
+  return data.embeddings
+}
+
 async function embedTexts(
   apiBase: string,
   accessToken: string,
   texts: readonly string[],
   observed: { model: string | null; dim: number | null }
 ): Promise<number[][]> {
-  const out: number[][] = []
-  for (let i = 0; i < texts.length; i += EMBED_BATCH) {
-    const batch = texts.slice(i, i + EMBED_BATCH)
-    const response = await fetch(`${apiBase}/api/ai/embed`, {
-      method: 'POST',
-      headers: { authorization: `Bearer ${accessToken}`, 'content-type': 'application/json' },
-      body: JSON.stringify({ texts: [...batch] })
+  const cache = loadEmbedCache()
+  const out: (number[] | undefined)[] = texts.map(t => cache.get(embedCacheKey(t)))
+  const missingIdx = out.flatMap((v, i) => (v === undefined ? [i] : []))
+  for (let k = 0; k < missingIdx.length; k += EMBED_BATCH) {
+    const idxBatch = missingIdx.slice(k, k + EMBED_BATCH)
+    const vectors = await embedBatchWithRetry(
+      apiBase,
+      accessToken,
+      idxBatch.map(i => texts[i]!),
+      observed
+    )
+    idxBatch.forEach((idx, j) => {
+      out[idx] = vectors[j]!
+      cache.set(embedCacheKey(texts[idx]!), vectors[j]!)
     })
-    const body: unknown = await response.json().catch(() => null)
-    if (!response.ok) {
-      const errorCode =
-        typeof body === 'object' &&
-        body !== null &&
-        'error' in body &&
-        typeof (body as { error: unknown }).error === 'string'
-          ? (body as { error: string }).error
-          : `http_${response.status}`
-      throw new Error(`embed_failed:${errorCode}`)
-    }
-    if (
-      typeof body !== 'object' ||
-      body === null ||
-      !('success' in body) ||
-      (body as { success: unknown }).success !== true ||
-      !('data' in body)
-    ) {
-      throw new Error('invalid_embed_response')
-    }
-    const data = (body as { data: { model?: string; dim?: number; embeddings?: number[][] } }).data
-    if (!data.model || !Array.isArray(data.embeddings)) throw new Error('invalid_embed_response')
-    if (data.embeddings.length !== batch.length) {
-      throw new Error(`embed_count_mismatch:expected_${batch.length}_got_${data.embeddings.length}`)
-    }
-    for (let j = 0; j < data.embeddings.length; j += 1) {
-      const vector = data.embeddings[j]
-      if (!Array.isArray(vector) || vector.length === 0) {
-        throw new Error(`empty_embedding_at_${i + j}`)
-      }
-      if (typeof data.dim === 'number' && vector.length !== data.dim) {
-        throw new Error(`dim_mismatch_at_${i + j}:got_${vector.length}_expected_${data.dim}`)
-      }
-    }
-    observed.model = data.model
-    observed.dim = data.dim ?? data.embeddings[0]?.length ?? null
-    out.push(...data.embeddings)
+    saveEmbedCache(cache)
   }
-  return out
+  if (observed.model === null && out[0]) {
+    observed.model = '@cf/baai/bge-m3'
+    observed.dim = out[0].length
+  }
+  return out as number[][]
 }
 
 function computeNearNeighbor(
@@ -247,11 +316,25 @@ export async function runUserSimRealCli(): Promise<void> {
   const startedAt = new Date()
   const perPersona: Record<string, unknown> = {}
 
-  for (const persona of personas) {
-    const data = generateUserSimDataset({ seed, endIso: END_ISO, personaId: persona.id })
+  const scaleDays = (process.env.USER_SIM_DAYS ?? '90')
+    .split(',')
+    .map(s => Number(s.trim()))
+    .filter(n => Number.isFinite(n) && n > 0)
+  const scaleCurve: Record<string, Record<string, unknown>> = {}
+
+  const runPersona = async (
+    personaId: string,
+    days: number
+  ): Promise<{
+    counts: unknown
+    summary: ReturnType<typeof computeStage2Summary>
+    nearNeighbor: ReturnType<typeof computeNearNeighbor>
+    cases: Stage2CaseResult[]
+  }> => {
+    const data = generateUserSimDataset({ seed, endIso: END_ISO, personaId, days })
     const problems = validateUserSimDataset(data)
     if (problems.length > 0) {
-      throw new Error(`user-sim validate failed for ${persona.id}: ${problems.join('; ')}`)
+      throw new Error(`user-sim validate failed for ${personaId}@${days}d: ${problems.join('; ')}`)
     }
     const itemTexts = data.memoryItems.map(item =>
       [item.clues.title, item.clues.textExcerpt].filter(Boolean).join('\n')
@@ -291,10 +374,25 @@ export async function runUserSimRealCli(): Promise<void> {
       data.groundTruth.itemTopics,
       data.groundTruth.itemAspects
     )
-    perPersona[persona.id] = { counts: data.meta.counts, summary, nearNeighbor, cases }
+    return { counts: data.meta.counts, summary, nearNeighbor, cases }
+  }
+
+  for (const persona of personas) {
+    const { counts, summary, nearNeighbor, cases } = await runPersona(persona.id, 90)
+    perPersona[persona.id] = { counts, summary, nearNeighbor, cases }
     console.log(
-      `user-sim-real · ${persona.id} · saves=${data.meta.counts.saves} · R@1=${summary.positive.recallAt1.toFixed(3)} R@5=${summary.positive.recallAt5.toFixed(3)} MRR=${summary.positive.mrr.toFixed(3)} negFH=${summary.negativeFalseHitRate.toFixed(3)} nnTopic=${nearNeighbor.sameTopicRate.toFixed(3)} stages=${JSON.stringify(summary.stageCounts)}`
+      `user-sim-real · ${persona.id} · saves=${(counts as { saves: number }).saves} · R@1=${summary.positive.recallAt1.toFixed(3)} R@5=${summary.positive.recallAt5.toFixed(3)} MRR=${summary.positive.mrr.toFixed(3)} negFH=${summary.negativeFalseHitRate.toFixed(3)} nnTopic=${nearNeighbor.sameTopicRate.toFixed(3)} stages=${JSON.stringify(summary.stageCounts)}`
     )
+  }
+
+  for (const days of scaleDays.filter(d => d !== 90)) {
+    for (const persona of personas) {
+      const { counts, summary, nearNeighbor } = await runPersona(persona.id, days)
+      ;(scaleCurve[persona.id] ??= {})[String(days)] = { counts, summary, nearNeighbor }
+      console.log(
+        `user-sim-real-scale · ${persona.id} · days=${days} · saves=${(counts as { saves: number }).saves} · R@1=${summary.positive.recallAt1.toFixed(3)} R@5=${summary.positive.recallAt5.toFixed(3)} MRR=${summary.positive.mrr.toFixed(3)} negFH=${summary.negativeFalseHitRate.toFixed(3)} nnTopic=${nearNeighbor.sameTopicRate.toFixed(3)}`
+      )
+    }
   }
 
   const report = {
@@ -312,7 +410,8 @@ export async function runUserSimRealCli(): Promise<void> {
       dim: observed.dim,
       llm: false
     },
-    personas: perPersona
+    personas: perPersona,
+    ...(Object.keys(scaleCurve).length > 0 ? { scaleCurve } : {})
   }
   mkdirSync(runsDir, { recursive: true })
   const stamp = stampFromDate(startedAt)

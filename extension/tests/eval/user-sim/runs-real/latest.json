@@ -1,9 +1,9 @@
 {
   "schemaVersion": 1,
   "kind": "user-sim-recall-real",
-  "head": "1ba8b4490bf75a96e6d75c22919c3affe59f5a4e",
-  "startedAt": "2026-11-28T07:50:48.321Z",
-  "finishedAt": "2026-11-28T07:55:22.103Z",
+  "head": "51945ac008571214629e517c3748f8da975bdf61",
+  "startedAt": "2026-11-28T08:57:47.423Z",
+  "finishedAt": "2026-11-28T09:00:04.526Z",
   "seed": 42,
   "endIso": "2026-11-28",
   "track": {
@@ -30,8 +30,8 @@
           "recallAt1": 0.058823529411764705,
           "recallAt3": 0.29411764705882354,
           "recallAt5": 0.39705882352941174,
-          "mrr": 0.20239630272398812,
-          "meanRank": 6.358974358974359,
+          "mrr": 0.20139840356432423,
+          "meanRank": 6.410256410256411,
           "missRate": 0.4264705882352941
         },
         "negativeFalseHitRate": 0.08333333333333333,
@@ -42,8 +42,8 @@
             "recallAt1": 0.125,
             "recallAt3": 0.5,
             "recallAt5": 0.75,
-            "mrr": 0.3669146825396825,
-            "meanRank": 3.5,
+            "mrr": 0.3626736111111111,
+            "meanRank": 3.642857142857143,
             "missRate": 0.125
           },
           "semi_fuzzy": {
@@ -75,8 +75,8 @@
             "recallAt1": 0,
             "recallAt3": 0.25,
             "recallAt5": 0.375,
-            "mrr": 0.17418478260869563,
-            "meanRank": 8.2,
+            "mrr": 0.16793478260869565,
+            "meanRank": 8.4,
             "missRate": 0.375
           },
           "browser-ext": {
@@ -111,8 +111,8 @@
             "recallAt1": 0.125,
             "recallAt3": 0.25,
             "recallAt5": 0.375,
-            "mrr": 0.22569444444444445,
-            "meanRank": 5.2,
+            "mrr": 0.22743055555555555,
+            "meanRank": 5,
             "missRate": 0.375
           },
           "llm-eng": {
@@ -120,8 +120,8 @@
             "recallAt1": 0.07142857142857142,
             "recallAt3": 0.35714285714285715,
             "recallAt5": 0.5,
-            "mrr": 0.23639455782312926,
-            "meanRank": 3.25,
+            "mrr": 0.23412698412698413,
+            "meanRank": 3.5,
             "missRate": 0.42857142857142855
           },
           "marketing": {
@@ -203,7 +203,7 @@
           "contentTerms": ["streaming", "ux"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 20,
+          "durationMs": 14,
           "error": null
         },
         {
@@ -220,8 +220,8 @@
             "23e7a97b-22e7-57e8-a5e7-aca124e7ab0e",
             "6324aaaf-6224-591c-a524-add56424ac42",
             "9b41939e-9c41-5531-a941-90789a41920b",
-            "a3f84d8e-a4f8-5f21-a1f8-4a68a2f84bfb",
             "339453ad-3294-521a-a194-508730944ef4",
+            "a3f84d8e-a4f8-5f21-a1f8-4a68a2f84bfb",
             "3a1c6bba-3b1c-5d4d-a81c-6894391c6a27",
             "2111ebc8-2211-5d5b-a311-eeee2411f081",
             "23b7cab4-24b7-5c47-a5b7-cdda26b7cf6d"
@@ -231,11 +231,11 @@
             "affeee66-b0fe-5ff9-adfe-eb40aefeecd3",
             "c0a8146b-bfa8-52d8-a2a8-1791c1a815fe"
           ],
-          "rank": 9,
+          "rank": 8,
           "contentTerms": ["sleep", "regularity"],
           "stage": "rank",
-          "detail": "目标在邻域第 9（非 Top1）",
-          "durationMs": 5,
+          "detail": "目标在邻域第 8（非 Top1）",
+          "durationMs": 4,
           "error": null
         },
         {
@@ -259,7 +259,7 @@
           "contentTerms": ["community", "building"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 5,
+          "durationMs": 4,
           "error": null
         },
         {
@@ -282,7 +282,7 @@
           "contentTerms": ["freemium", "limits"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 4,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -376,7 +376,7 @@
           "contentTerms": ["wasm", "bundle", "size"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 86,
+          "durationMs": 85,
           "error": null
         },
         {
@@ -399,7 +399,7 @@
           "contentTerms": ["trial", "conversion"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 3,
+          "durationMs": 4,
           "error": null
         },
         {
@@ -415,9 +415,9 @@
             "fc718765-fb71-55d2-aa71-843ff97182ac",
             "5ef41b32-5ff4-5cc5-acf4-180c5df4199f",
             "e9de7156-eade-52e9-a7de-6e30e8de6fc3",
-            "e7fde149-e6fd-5fb6-a5fd-de23e4fddc90",
-            "c7b8dc90-c8b8-5e23-a9b8-dfb6cab8e149",
             "58507280-5950-5413-aa50-75a65b507739",
+            "c7b8dc90-c8b8-5e23-a9b8-dfb6cab8e149",
+            "e7fde149-e6fd-5fb6-a5fd-de23e4fddc90",
             "806601e8-8166-537b-a266-050e836606a1",
             "40e9196e-41e9-5b01-aee9-16483fe917db",
             "dd762bfe-de76-5d91-ab76-28d8dc762a6b",
@@ -456,10 +456,10 @@
             "17b798bd-16b7-572a-a5b7-959714b79404",
             "04b05f35-03b0-5da2-a2b0-5c0f01b05a7c"
           ],
-          "rank": 7,
+          "rank": 9,
           "contentTerms": ["eval", "harnesses"],
           "stage": "rank",
-          "detail": "目标在邻域第 7（非 Top1）",
+          "detail": "目标在邻域第 9（非 Top1）",
           "durationMs": 4,
           "error": null
         },
@@ -526,8 +526,8 @@
             "97317f36-9831-50c9-a531-7c1096317da3",
             "c5e336bc-c6e3-584f-a7e3-39e2c8e33b75",
             "71da8fcd-70da-5e3a-afda-8ca76eda8b14",
-            "c552537a-c652-550d-a352-5054c45251e7",
             "861fcd8f-851f-5bfc-a81f-d0b5871fcf22",
+            "c552537a-c652-550d-a352-5054c45251e7",
             "22b046e8-23b0-587b-a4b0-4a0e25b04ba1",
             "67c759c3-66c7-5830-a9c7-5ce968c75b56",
             "d4361592-d536-5725-a236-126cd33613ff",
@@ -535,8 +535,8 @@
             "51ccca7b-50cc-58e8-a3cc-cda152cccc0e",
             "24f47d0b-23f4-5b78-a6f4-803125f47e9e",
             "378991bf-3689-502c-a989-94e538899352",
-            "3d9e3f41-3c9e-5dae-ab9e-3c1b3a9e3a88",
             "91979eee-9297-5081-af97-9bc890979d5b",
+            "3d9e3f41-3c9e-5dae-ab9e-3c1b3a9e3a88",
             "e880ac3a-e980-5dcd-a680-a914e780aaa7",
             "daf4869e-dbf4-5831-a8f4-8378d9f4850b",
             "115699eb-1056-5858-a356-9d1112569b7e",
@@ -550,11 +550,11 @@
             "c5e336bc-c6e3-584f-a7e3-39e2c8e33b75",
             "71da8fcd-70da-5e3a-afda-8ca76eda8b14"
           ],
-          "rank": 4,
+          "rank": 5,
           "contentTerms": ["episodic", "recall"],
           "stage": "rank",
-          "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 10,
+          "detail": "目标在邻域第 5（非 Top1）",
+          "durationMs": 11,
           "error": null
         },
         {
@@ -577,16 +577,16 @@
             "4642928e-4742-5421-a442-8f68454290fb",
             "0649d5bb-0549-5428-a849-d8e10749d74e",
             "3838f814-3938-59a7-aa38-fb3a3b38fccd",
-            "9d6fe7e7-9c6f-5654-af6f-eb0d9e6fe97a",
             "7e844ef0-7f84-5083-a084-5216818453a9",
+            "9d6fe7e7-9c6f-5654-af6f-eb0d9e6fe97a",
             "64455a8e-6545-5c21-a245-5768634558fb",
-            "ca422722-cb42-58b5-a842-23fcc942258f",
             "323e1339-313e-51a6-a03e-10132f3e0e80",
+            "ca422722-cb42-58b5-a842-23fcc942258f",
             "7416fb5f-7316-59cc-a616-fe857516fcf2",
             "97317f36-9831-50c9-a531-7c1096317da3",
             "dd762bfe-de76-5d91-ab76-28d8dc762a6b",
-            "c5e336bc-c6e3-584f-a7e3-39e2c8e33b75",
             "67c759c3-66c7-5830-a9c7-5ce968c75b56",
+            "c5e336bc-c6e3-584f-a7e3-39e2c8e33b75",
             "51ccca7b-50cc-58e8-a3cc-cda152cccc0e",
             "378991bf-3689-502c-a989-94e538899352",
             "917fbd7b-907f-5be8-a37f-c0a1927fbf0e",
@@ -715,7 +715,7 @@
           "contentTerms": ["waitlists"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 2,
+          "durationMs": 1,
           "error": null
         },
         {
@@ -785,7 +785,7 @@
           "contentTerms": ["covering", "prompt", "caching", "in", "llm", "engineering"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 213,
+          "durationMs": 227,
           "error": null
         },
         {
@@ -855,7 +855,7 @@
           "contentTerms": ["covering", "landing", "pages", "in", "indie", "marketing"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 223,
+          "durationMs": 230,
           "error": null
         },
         {
@@ -925,7 +925,7 @@
           "contentTerms": ["covering", "prompt", "caching", "in", "llm", "engineering"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 212,
+          "durationMs": 219,
           "error": null
         },
         {
@@ -995,7 +995,7 @@
           "contentTerms": ["covering", "eval", "harnesses", "in", "llm", "engineering"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 129,
+          "durationMs": 133,
           "error": null
         },
         {
@@ -1065,7 +1065,7 @@
           "contentTerms": ["covering", "sleep", "regularity", "in", "health", "and", "habits"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 246,
+          "durationMs": 255,
           "error": null
         },
         {
@@ -1135,7 +1135,7 @@
           "contentTerms": ["covering", "annual", "discounts", "in", "saas", "pricing"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 214,
+          "durationMs": 224,
           "error": null
         },
         {
@@ -1213,7 +1213,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 254,
+          "durationMs": 264,
           "error": null
         },
         {
@@ -1283,7 +1283,7 @@
           "contentTerms": ["covering", "waitlists", "in", "indie", "marketing"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 124,
+          "durationMs": 129,
           "error": null
         },
         {
@@ -1353,7 +1353,7 @@
           "contentTerms": ["covering", "chunking", "in", "human", "memory", "and", "cognition"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 264,
+          "durationMs": 271,
           "error": null
         },
         {
@@ -1423,7 +1423,7 @@
           "contentTerms": ["covering", "memory", "safety", "in", "rust", "and", "wasm"],
           "stage": "rank",
           "detail": "目标在邻域第 6（非 Top1）",
-          "durationMs": 264,
+          "durationMs": 273,
           "error": null
         },
         {
@@ -1501,7 +1501,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 185,
+          "durationMs": 188,
           "error": null
         },
         {
@@ -1571,7 +1571,7 @@
           "contentTerms": ["covering", "walking", "meetings", "in", "health", "and", "habits"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 346,
+          "durationMs": 351,
           "error": null
         },
         {
@@ -1711,7 +1711,7 @@
           "contentTerms": ["covering", "prompt", "caching", "in", "llm", "engineering"],
           "stage": "rank",
           "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 212,
+          "durationMs": 221,
           "error": null
         },
         {
@@ -1746,9 +1746,9 @@
             "00904495-ff90-5302-ae90-416ffd903fdc",
             "4642928e-4742-5421-a442-8f68454290fb",
             "3838f814-3938-59a7-aa38-fb3a3b38fccd",
-            "9d6fe7e7-9c6f-5654-af6f-eb0d9e6fe97a",
             "f7d69ebf-f6d6-5d2c-a9d6-a1e5f8d6a052",
             "2f7434b7-2e74-5324-a174-37dd3074364a",
+            "9d6fe7e7-9c6f-5654-af6f-eb0d9e6fe97a",
             "a1eca686-a2ec-5819-afec-a360a0eca4f3",
             "34e30d28-35e3-5ebb-a6e3-104e37e311e1",
             "d834d5f4-d934-5787-aa34-d91adb34daad",
@@ -1789,7 +1789,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 303,
+          "durationMs": 322,
           "error": null
         },
         {
@@ -1900,7 +1900,7 @@
           "contentTerms": ["during", "evening", "reading", "time"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 45,
+          "durationMs": 44,
           "error": null
         },
         {
@@ -1912,8 +1912,8 @@
           "rankedIds": [
             "d0401420-d140-55b3-a240-1746d34018d9",
             "519f5571-509f-53de-af9f-524b4e9f50b8",
-            "e7fde149-e6fd-5fb6-a5fd-de23e4fddc90",
             "58507280-5950-5413-aa50-75a65b507739",
+            "e7fde149-e6fd-5fb6-a5fd-de23e4fddc90",
             "68fcc7d5-67fc-5642-a6fc-c4af65fcc31c",
             "17a1b5ef-16a1-545c-a9a1-b91518a1b782",
             "17b798bd-16b7-572a-a5b7-959714b79404",
@@ -1944,13 +1944,13 @@
           "top3": [
             "d0401420-d140-55b3-a240-1746d34018d9",
             "519f5571-509f-53de-af9f-524b4e9f50b8",
-            "e7fde149-e6fd-5fb6-a5fd-de23e4fddc90"
+            "58507280-5950-5413-aa50-75a65b507739"
           ],
           "rank": null,
           "contentTerms": ["when", "building", "test", "harness"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 39,
+          "durationMs": 41,
           "error": null
         },
         {
@@ -2020,7 +2020,7 @@
           "contentTerms": ["back", "when", "sketching", "storage", "layer", "for", "prototype"],
           "stage": "rank",
           "detail": "目标在邻域第 10（非 Top1）",
-          "durationMs": 146,
+          "durationMs": 148,
           "error": null
         },
         {
@@ -2057,7 +2057,7 @@
           "contentTerms": ["when", "polishing", "onboarding", "for", "launch"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 52,
+          "durationMs": 51,
           "error": null
         },
         {
@@ -2109,7 +2109,7 @@
           "contentTerms": ["when", "reworking", "pricing"],
           "stage": "rank",
           "detail": "目标在邻域第 23（非 Top1）",
-          "durationMs": 16,
+          "durationMs": 15,
           "error": null
         },
         {
@@ -2231,7 +2231,7 @@
           "contentTerms": ["back", "when", "sketching", "storage", "layer", "for", "prototype"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 149,
+          "durationMs": 145,
           "error": null
         },
         {
@@ -2301,7 +2301,7 @@
           "contentTerms": ["when", "wiring", "up", "first", "version", "of", "side", "project"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 241,
+          "durationMs": 238,
           "error": null
         },
         {
@@ -2326,7 +2326,7 @@
           "contentTerms": ["during", "late-night", "session", "debugging", "prototype"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 13,
+          "durationMs": 12,
           "error": null
         },
         {
@@ -2357,7 +2357,7 @@
           "contentTerms": ["during", "week", "fixing", "review", "feedback"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 69,
+          "durationMs": 68,
           "error": null
         },
         {
@@ -2398,7 +2398,7 @@
           "contentTerms": ["during", "evening", "reading", "time"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 45,
+          "durationMs": 43,
           "error": null
         },
         {
@@ -2416,8 +2416,8 @@
             "a7183746-a818-58d9-a518-3420a61835b3",
             "519f5571-509f-53de-af9f-524b4e9f50b8",
             "2ba0121c-2ca0-53af-ada0-15422ea016d5",
-            "c7b8dc90-c8b8-5e23-a9b8-dfb6cab8e149",
             "58507280-5950-5413-aa50-75a65b507739",
+            "c7b8dc90-c8b8-5e23-a9b8-dfb6cab8e149",
             "e7fde149-e6fd-5fb6-a5fd-de23e4fddc90",
             "04b05f35-03b0-5da2-a2b0-5c0f01b05a7c",
             "c3312d69-c231-5bd6-a131-2a43c03128b0",
@@ -2464,7 +2464,7 @@
           "contentTerms": ["during", "week", "chasing", "flaky", "eval", "results"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 82,
+          "durationMs": 83,
           "error": null
         },
         {
@@ -2534,7 +2534,7 @@
           "contentTerms": ["when", "wiring", "up", "first", "version", "of", "side", "project"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 274,
+          "durationMs": 242,
           "error": null
         },
         {
@@ -2604,7 +2604,7 @@
           "contentTerms": ["back", "when", "sketching", "storage", "layer", "for", "prototype"],
           "stage": "rank",
           "detail": "目标在邻域第 23（非 Top1）",
-          "durationMs": 152,
+          "durationMs": 146,
           "error": null
         },
         {
@@ -2674,7 +2674,7 @@
           "contentTerms": ["back", "when", "sketching", "storage", "layer", "for", "prototype"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 149,
+          "durationMs": 145,
           "error": null
         },
         {
@@ -2744,7 +2744,7 @@
           "contentTerms": ["back", "when", "sketching", "storage", "layer", "for", "prototype"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 148,
+          "durationMs": 152,
           "error": null
         },
         {
@@ -2814,7 +2814,7 @@
           "contentTerms": ["on", "health", "and", "habits", "from", "5", "weeks", "ago"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 223,
+          "durationMs": 218,
           "error": null
         },
         {
@@ -2884,7 +2884,7 @@
           "contentTerms": ["on", "agent", "memory", "systems", "from", "11", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 273,
+          "durationMs": 281,
           "error": null
         },
         {
@@ -2896,8 +2896,8 @@
           "rankedIds": [
             "09f51a22-0af5-5bb5-a7f5-16fc08f5188f",
             "f1a9cf63-f0a9-5dd0-a3a9-d289f2a9d0f6",
-            "e7fde149-e6fd-5fb6-a5fd-de23e4fddc90",
             "58507280-5950-5413-aa50-75a65b507739",
+            "e7fde149-e6fd-5fb6-a5fd-de23e4fddc90",
             "f6108893-f510-5700-a810-8bb9f7108a26",
             "806601e8-8166-537b-a266-050e836606a1",
             "3dd2d85c-3ed2-59ef-afd2-db8240d2dd15",
@@ -2948,13 +2948,13 @@
           "top3": [
             "09f51a22-0af5-5bb5-a7f5-16fc08f5188f",
             "f1a9cf63-f0a9-5dd0-a3a9-d289f2a9d0f6",
-            "e7fde149-e6fd-5fb6-a5fd-de23e4fddc90"
+            "58507280-5950-5413-aa50-75a65b507739"
           ],
           "rank": null,
           "contentTerms": ["on", "llm", "engineering", "from", "8", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 126,
+          "durationMs": 129,
           "error": null
         },
         {
@@ -3024,7 +3024,7 @@
           "contentTerms": ["on", "product", "design", "from", "8", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 218,
+          "durationMs": 214,
           "error": null
         },
         {
@@ -3036,8 +3036,8 @@
           "rankedIds": [
             "09f51a22-0af5-5bb5-a7f5-16fc08f5188f",
             "f1a9cf63-f0a9-5dd0-a3a9-d289f2a9d0f6",
-            "e7fde149-e6fd-5fb6-a5fd-de23e4fddc90",
             "58507280-5950-5413-aa50-75a65b507739",
+            "e7fde149-e6fd-5fb6-a5fd-de23e4fddc90",
             "f6108893-f510-5700-a810-8bb9f7108a26",
             "806601e8-8166-537b-a266-050e836606a1",
             "3dd2d85c-3ed2-59ef-afd2-db8240d2dd15",
@@ -3088,13 +3088,13 @@
           "top3": [
             "09f51a22-0af5-5bb5-a7f5-16fc08f5188f",
             "f1a9cf63-f0a9-5dd0-a3a9-d289f2a9d0f6",
-            "e7fde149-e6fd-5fb6-a5fd-de23e4fddc90"
+            "58507280-5950-5413-aa50-75a65b507739"
           ],
           "rank": null,
           "contentTerms": ["on", "llm", "engineering", "from", "8", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 128,
+          "durationMs": 124,
           "error": null
         },
         {
@@ -3106,8 +3106,8 @@
           "rankedIds": [
             "ad7459de-ae74-5b71-ab74-56b8ac74584b",
             "3dd2d85c-3ed2-59ef-afd2-db8240d2dd15",
-            "2eb6532e-2fb6-54c1-acb6-50082db6519b",
             "6b765744-6c76-58d7-ad76-5a6a6e765bfd",
+            "2eb6532e-2fb6-54c1-acb6-50082db6519b",
             "d5de98ad-d4de-571a-a3de-9587d2de93f4",
             "f4893ffd-f389-5e6a-a289-3cd7f1893b44",
             "b4d64cfd-b3d6-5b6a-a2d6-49d7b1d64844",
@@ -3158,7 +3158,7 @@
           "top3": [
             "ad7459de-ae74-5b71-ab74-56b8ac74584b",
             "3dd2d85c-3ed2-59ef-afd2-db8240d2dd15",
-            "2eb6532e-2fb6-54c1-acb6-50082db6519b"
+            "6b765744-6c76-58d7-ad76-5a6a6e765bfd"
           ],
           "rank": null,
           "contentTerms": [
@@ -3173,7 +3173,7 @@
           ],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 165,
+          "durationMs": 154,
           "error": null
         },
         {
@@ -3185,8 +3185,8 @@
           "rankedIds": [
             "09f51a22-0af5-5bb5-a7f5-16fc08f5188f",
             "f1a9cf63-f0a9-5dd0-a3a9-d289f2a9d0f6",
-            "e7fde149-e6fd-5fb6-a5fd-de23e4fddc90",
             "58507280-5950-5413-aa50-75a65b507739",
+            "e7fde149-e6fd-5fb6-a5fd-de23e4fddc90",
             "f6108893-f510-5700-a810-8bb9f7108a26",
             "806601e8-8166-537b-a266-050e836606a1",
             "ad7459de-ae74-5b71-ab74-56b8ac74584b",
@@ -3237,13 +3237,13 @@
           "top3": [
             "09f51a22-0af5-5bb5-a7f5-16fc08f5188f",
             "f1a9cf63-f0a9-5dd0-a3a9-d289f2a9d0f6",
-            "e7fde149-e6fd-5fb6-a5fd-de23e4fddc90"
+            "58507280-5950-5413-aa50-75a65b507739"
           ],
           "rank": null,
           "contentTerms": ["on", "llm", "engineering", "from", "7", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 128,
+          "durationMs": 126,
           "error": null
         },
         {
@@ -3323,7 +3323,7 @@
           ],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 223,
+          "durationMs": 222,
           "error": null
         },
         {
@@ -3342,8 +3342,8 @@
             "0458f239-0358-50a6-a258-ef130158ed80",
             "2d128279-2c12-50e6-ab12-7f532a127dc0",
             "af910afe-b091-5c91-ad91-07d8ae91096b",
-            "9493048b-9393-52f8-a693-07b19593061e",
             "ad7459de-ae74-5b71-ab74-56b8ac74584b",
+            "9493048b-9393-52f8-a693-07b19593061e",
             "09f51a22-0af5-5bb5-a7f5-16fc08f5188f",
             "be0d4de0-bf0d-5f73-a00d-5106c10d5299",
             "8ff3ce39-8ef3-5ca6-adf3-cb138cf3c980",
@@ -3393,7 +3393,7 @@
           "contentTerms": ["on", "product", "design", "from", "7", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 210,
+          "durationMs": 222,
           "error": null
         },
         {
@@ -3463,7 +3463,7 @@
           "contentTerms": ["on", "product", "design", "from", "10", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 225,
+          "durationMs": 234,
           "error": null
         },
         {
@@ -3533,7 +3533,7 @@
           "contentTerms": ["thing", "rust", "and", "wasm"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 45,
+          "durationMs": 46,
           "error": null
         },
         {
@@ -3615,7 +3615,7 @@
           "contentTerms": ["thing", "information", "retrieval"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 7,
+          "durationMs": 8,
           "error": null
         },
         {
@@ -3685,7 +3685,7 @@
           "contentTerms": ["thing", "health", "and", "habits"],
           "stage": "rank",
           "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 68,
+          "durationMs": 72,
           "error": null
         },
         {
@@ -3729,7 +3729,7 @@
           "contentTerms": ["thing", "browser", "extension", "engineering"],
           "stage": "rank",
           "detail": "目标在邻域第 21（非 Top1）",
-          "durationMs": 12,
+          "durationMs": 14,
           "error": null
         },
         {
@@ -3838,7 +3838,7 @@
           "contentTerms": ["thing", "health", "and", "habits"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 67,
+          "durationMs": 71,
           "error": null
         },
         {
@@ -3995,7 +3995,7 @@
           "contentTerms": ["thing", "human", "memory", "and", "cognition"],
           "stage": "rank",
           "detail": "目标在邻域第 28（非 Top1）",
-          "durationMs": 78,
+          "durationMs": 82,
           "error": null
         },
         {
@@ -4010,7 +4010,7 @@
           "contentTerms": ["thing", "beekeeping", "basics"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 7,
+          "durationMs": 6,
           "error": null
         },
         {
@@ -4040,7 +4040,7 @@
           "contentTerms": ["thing", "pottery", "glazing"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 6,
+          "durationMs": 5,
           "error": null
         },
         {
@@ -4055,7 +4055,7 @@
           "contentTerms": ["thing", "car", "repair", "manuals"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 9,
+          "durationMs": 10,
           "error": null
         },
         {
@@ -4097,8 +4097,8 @@
             "67aad522-68aa-56b5-a5aa-d1fc66aad38f",
             "1bbe0b6a-1cbe-5cfd-a9be-08441abe09d7",
             "08bdf3d7-07bd-5244-aabd-f6fd09bdf56a",
-            "323e1339-313e-51a6-a03e-10132f3e0e80",
             "e880ac3a-e980-5dcd-a680-a914e780aaa7",
+            "323e1339-313e-51a6-a03e-10132f3e0e80",
             "d834d5f4-d934-5787-aa34-d91adb34daad",
             "353f89af-343f-581c-a73f-8cd5363f8b42",
             "503353f5-4f33-5262-ae33-50cf4d334f3c",
@@ -4116,7 +4116,7 @@
           "contentTerms": ["thing", "mycology", "field", "guides"],
           "stage": "false_hit",
           "detail": "负例误命中 Top1=6cc57579-6bc5-53e6-aac5-725369c570c0（邻域 26）",
-          "durationMs": 34,
+          "durationMs": 35,
           "error": null
         },
         {
@@ -4206,7 +4206,7 @@
           "contentTerms": ["thing", "crypto", "trading", "strategies"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 7,
+          "durationMs": 8,
           "error": null
         }
       ]
@@ -4227,8 +4227,8 @@
           "recallAt1": 0.029411764705882353,
           "recallAt3": 0.058823529411764705,
           "recallAt5": 0.19117647058823528,
-          "mrr": 0.10827304420974496,
-          "meanRank": 11.575,
+          "mrr": 0.1086397853117802,
+          "meanRank": 11.35,
           "missRate": 0.4117647058823529
         },
         "negativeFalseHitRate": 0.16666666666666666,
@@ -4239,8 +4239,8 @@
             "recallAt1": 0,
             "recallAt3": 0.0625,
             "recallAt5": 0.5,
-            "mrr": 0.16879578754578753,
-            "meanRank": 7.066666666666666,
+            "mrr": 0.16910173160173161,
+            "meanRank": 7,
             "missRate": 0.0625
           },
           "semi_fuzzy": {
@@ -4248,8 +4248,8 @@
             "recallAt1": 0.07692307692307693,
             "recallAt3": 0.11538461538461539,
             "recallAt5": 0.19230769230769232,
-            "mrr": 0.15013191719713462,
-            "meanRank": 15.333333333333334,
+            "mrr": 0.15090281296803038,
+            "meanRank": 14.88888888888889,
             "missRate": 0.3076923076923077
           },
           "vague": {
@@ -4272,8 +4272,8 @@
             "recallAt1": 0,
             "recallAt3": 0,
             "recallAt5": 0.09090909090909091,
-            "mrr": 0.07782044042913606,
-            "meanRank": 18.625,
+            "mrr": 0.07850914566329587,
+            "meanRank": 18.5,
             "missRate": 0.2727272727272727
           },
           "design": {
@@ -4289,9 +4289,9 @@
             "n": 13,
             "recallAt1": 0.07692307692307693,
             "recallAt3": 0.15384615384615385,
-            "recallAt5": 0.46153846153846156,
-            "mrr": 0.19262589262589264,
-            "meanRank": 7.444444444444445,
+            "recallAt5": 0.5384615384615384,
+            "mrr": 0.19643874643874645,
+            "meanRank": 7.333333333333333,
             "missRate": 0.3076923076923077
           },
           "video-prod": {
@@ -4307,9 +4307,9 @@
             "n": 26,
             "recallAt1": 0,
             "recallAt3": 0.038461538461538464,
-            "recallAt5": 0.11538461538461539,
-            "mrr": 0.07348721791029483,
-            "meanRank": 11.642857142857142,
+            "recallAt5": 0.07692307692307693,
+            "mrr": 0.07224858474858474,
+            "meanRank": 11.142857142857142,
             "missRate": 0.46153846153846156
           }
         },
@@ -4343,24 +4343,24 @@
             "55bfacaa-56bf-5e3d-a3bf-a98454bfab17",
             "3d10c508-3e10-569b-af10-c82e4010c9c1",
             "695931ad-6859-501a-a759-2e8766592cf4",
-            "6a97dd46-6b97-5ed9-a897-da206997dbb3",
             "ddd44032-ded4-51c5-abd4-3d0cdcd43e9f",
+            "6a97dd46-6b97-5ed9-a897-da206997dbb3",
+            "f976d99c-fa76-5b2f-ab76-dcc2fc76de55",
+            "0d2abf43-0c2a-5db0-af2a-c2690e2ac0d6",
             "138bbe15-128b-5c82-a18b-baef108bb95c",
             "ca57e28b-c957-50f8-ac57-e5b1cb57e41e",
-            "1a21b89e-1b21-5a31-a821-b5781921b70b",
-            "f976d99c-fa76-5b2f-ab76-dcc2fc76de55",
-            "0d2abf43-0c2a-5db0-af2a-c2690e2ac0d6"
+            "1a21b89e-1b21-5a31-a821-b5781921b70b"
           ],
           "top3": [
             "35052b78-3605-5d0b-a705-2e9e38053031",
             "921bf650-931b-57e3-a41b-f976951bfb09",
             "e28ab0c2-e38a-5255-a08a-ad9ce18aaf2f"
           ],
-          "rank": 10,
+          "rank": 12,
           "contentTerms": ["reference", "managers"],
           "stage": "rank",
-          "detail": "目标在邻域第 10（非 Top1）",
-          "durationMs": 9,
+          "detail": "目标在邻域第 12（非 Top1）",
+          "durationMs": 3,
           "error": null
         },
         {
@@ -4373,15 +4373,15 @@
             "e28a031d-e18a-518a-a089-fff7df89fe64",
             "49115bb9-4811-5a26-a711-589346115700",
             "4da9efb6-4ea9-5149-aba9-ec904ca9ee23",
-            "3a753d35-3975-5ba2-a875-3a0f3775387c",
             "4e8743ce-4f87-5561-ac87-40a84d87423b",
+            "3a753d35-3975-5ba2-a875-3a0f3775387c",
             "9309e283-9209-50f0-a509-e5a99409e416",
             "42713fd1-4171-5e3e-a071-3cab3f713b18",
+            "e6a50d18-e7a5-5eab-a8a5-103ee9a511d1",
             "de87ee8d-dd87-5cfa-ac87-eb67db87e9d4",
             "8c2e8fc6-8d2e-5159-aa2e-8ca08b2e8e33",
-            "e6a50d18-e7a5-5eab-a8a5-103ee9a511d1",
-            "495bb30e-4a5b-54a1-a75b-afe8485bb17b",
             "e11298d0-e212-5a63-a312-9bf6e4129d89",
+            "495bb30e-4a5b-54a1-a75b-afe8485bb17b",
             "62f832db-61f8-5148-a4f8-360163f8346e",
             "bf59f3e1-be59-524e-ad59-f0bbbc59ef28"
           ],
@@ -4394,7 +4394,7 @@
           "contentTerms": ["portfolio", "layout"],
           "stage": "rank",
           "detail": "目标在邻域第 14（非 Top1）",
-          "durationMs": 4,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -4404,33 +4404,33 @@
           "clue": "the excerpt about drafting habits",
           "targetId": "5437d154-5537-52e7-a637-d47a5737d60d",
           "rankedIds": [
-            "3604433c-3704-54cf-a804-4662390447f5",
             "797adc80-7a7a-5e13-ab7a-dfa67c7ae139",
+            "3604433c-3704-54cf-a804-4662390447f5",
             "5437d154-5537-52e7-a637-d47a5737d60d",
             "6ea166b7-6da1-5524-a0a1-69dd6fa1684a",
             "86dbd6c8-87db-585b-a8db-d9ee89dbdb81",
             "10ebabb7-0feb-5a24-a2eb-aedd11ebad4a",
             "2909a4b1-2809-531e-a709-a18b26099ff8",
-            "cab6374c-cbb6-58df-acb6-3a72cdb63c05",
+            "97f4450a-98f4-569d-a5f4-41e496f44377",
             "9d6c5ef4-9e6c-5087-af6c-621aa06c63ad",
             "f79394be-f893-5651-a593-9198f693932b",
-            "97f4450a-98f4-569d-a5f4-41e496f44377",
+            "cab6374c-cbb6-58df-acb6-3a72cdb63c05",
             "c4c52654-c5c5-57e7-a6c5-297ac7c52b0d",
             "e9e44ac6-eae4-5c59-a7e4-47a0e8e44933",
             "aca7029a-ada7-542d-aaa6-ff74aba70107",
-            "7357d747-7257-55b4-a557-da6d7457d8da",
-            "3df4f6ac-3ef4-583f-aff4-f9d240f4fb65"
+            "3df4f6ac-3ef4-583f-aff4-f9d240f4fb65",
+            "7357d747-7257-55b4-a557-da6d7457d8da"
           ],
           "top3": [
-            "3604433c-3704-54cf-a804-4662390447f5",
             "797adc80-7a7a-5e13-ab7a-dfa67c7ae139",
+            "3604433c-3704-54cf-a804-4662390447f5",
             "5437d154-5537-52e7-a637-d47a5737d60d"
           ],
           "rank": 3,
           "contentTerms": ["drafting", "habits"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 5,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -4450,8 +4450,8 @@
             "d7309780-d830-5913-a930-9aa6da309c39",
             "6ae07a43-69e0-58b0-ace0-7d696be07bd6",
             "572ac03e-582a-51d1-a52a-bd18562abeab",
-            "b3180ee6-b418-5079-a118-0bc0b2180d53",
             "adecc0cb-acec-5f38-afec-c3f1aeecc25e",
+            "b3180ee6-b418-5079-a118-0bc0b2180d53",
             "a79f6dcd-a69f-5c3a-a59f-6aa7a49f6914",
             "5ef61e4b-5df6-5cb8-a0f6-21715ff61fde"
           ],
@@ -4464,7 +4464,7 @@
           "contentTerms": ["waitlists"],
           "stage": "rank",
           "detail": "目标在邻域第 5（非 Top1）",
-          "durationMs": 3,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -4482,25 +4482,25 @@
             "10ebabb7-0feb-5a24-a2eb-aedd11ebad4a",
             "2909a4b1-2809-531e-a709-a18b26099ff8",
             "9d6c5ef4-9e6c-5087-af6c-621aa06c63ad",
+            "97f4450a-98f4-569d-a5f4-41e496f44377",
             "f79394be-f893-5651-a593-9198f693932b",
             "cab6374c-cbb6-58df-acb6-3a72cdb63c05",
-            "97f4450a-98f4-569d-a5f4-41e496f44377",
-            "3df4f6ac-3ef4-583f-aff4-f9d240f4fb65",
             "c4c52654-c5c5-57e7-a6c5-297ac7c52b0d",
-            "7357d747-7257-55b4-a557-da6d7457d8da",
+            "3df4f6ac-3ef4-583f-aff4-f9d240f4fb65",
             "aca7029a-ada7-542d-aaa6-ff74aba70107",
-            "e9e44ac6-eae4-5c59-a7e4-47a0e8e44933"
+            "e9e44ac6-eae4-5c59-a7e4-47a0e8e44933",
+            "7357d747-7257-55b4-a557-da6d7457d8da"
           ],
           "top3": [
             "3604433c-3704-54cf-a804-4662390447f5",
             "797adc80-7a7a-5e13-ab7a-dfa67c7ae139",
             "5437d154-5537-52e7-a637-d47a5737d60d"
           ],
-          "rank": 10,
+          "rank": 11,
           "contentTerms": ["drafting", "habits"],
           "stage": "rank",
-          "detail": "目标在邻域第 10（非 Top1）",
-          "durationMs": 4,
+          "detail": "目标在邻域第 11（非 Top1）",
+          "durationMs": 3,
           "error": null
         },
         {
@@ -4516,14 +4516,14 @@
             "276ead63-266e-5bd0-a96e-b089286eaef6",
             "abf2a779-aaf2-55e6-a9f2-a453a8f2a2c0",
             "537627fa-5476-598d-a176-24d452762667",
+            "9be470c4-9ce4-5257-ade4-73ea9ee4757d",
             "4548ae15-4448-5c82-a348-aaef4248a95c",
             "42925bc0-4392-5d53-a492-5ee645926079",
             "f7209c55-f620-5ac2-a520-992ff420979c",
-            "9be470c4-9ce4-5257-ade4-73ea9ee4757d",
-            "fe1caab8-ff1c-5c4b-a01c-adde011caf71",
-            "f2a444c7-f1a4-5334-a4a4-47edf3a4465a",
             "120db306-130d-5499-a00d-afe0110db173",
             "e6eae78a-e7ea-591d-a4ea-e464e5eae5f7",
+            "fe1caab8-ff1c-5c4b-a01c-adde011caf71",
+            "f2a444c7-f1a4-5334-a4a4-47edf3a4465a",
             "1808c6da-1908-586d-a608-c3b41708c547",
             "06523751-0552-55be-a452-342b03523298",
             "6ae07a43-69e0-58b0-ace0-7d696be07bd6",
@@ -4538,7 +4538,7 @@
           "contentTerms": ["seo", "long", "tail"],
           "stage": "rank",
           "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 8,
+          "durationMs": 6,
           "error": null
         },
         {
@@ -4563,11 +4563,11 @@
             "4578b8d4-4678-5a67-a778-bbfa4878bd8d",
             "36c3ea99-35c3-5906-a4c3-e77333c3e5e0",
             "53c92005-52c9-5e72-a1c9-1cdf50c91b4c",
-            "b7777d19-b677-5b86-a577-79f3b4777860",
             "5913e927-5813-5794-ab13-ec4d5a13eaba",
+            "b7777d19-b677-5b86-a577-79f3b4777860",
+            "715dbdf5-705d-5c62-af5d-bacf6e5db93c",
             "4f15438d-4e15-51fa-ad15-40674c153ed4",
             "047f857a-057f-570d-a27f-8254037f83e7",
-            "715dbdf5-705d-5c62-af5d-bacf6e5db93c",
             "bcc2463b-bbc2-54a8-aec2-4961bdc247ce",
             "69185b1e-6a18-5cb1-a718-57f86818598b",
             "1b0d8c1c-1c0d-5daf-ad0d-8f421e0d90d5",
@@ -4587,7 +4587,7 @@
           "contentTerms": ["visual", "identity"],
           "stage": "rank",
           "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 17,
+          "durationMs": 8,
           "error": null
         },
         {
@@ -4603,14 +4603,14 @@
             "8d8f55b8-8e8f-574b-af8f-58de908f5a71",
             "55bfacaa-56bf-5e3d-a3bf-a98454bfab17",
             "3d10c508-3e10-569b-af10-c82e4010c9c1",
+            "ddd44032-ded4-51c5-abd4-3d0cdcd43e9f",
             "6a97dd46-6b97-5ed9-a897-da206997dbb3",
             "695931ad-6859-501a-a759-2e8766592cf4",
-            "ddd44032-ded4-51c5-abd4-3d0cdcd43e9f",
             "1a21b89e-1b21-5a31-a821-b5781921b70b",
-            "138bbe15-128b-5c82-a18b-baef108bb95c",
-            "ca57e28b-c957-50f8-ac57-e5b1cb57e41e",
             "f976d99c-fa76-5b2f-ab76-dcc2fc76de55",
-            "0d2abf43-0c2a-5db0-af2a-c2690e2ac0d6"
+            "0d2abf43-0c2a-5db0-af2a-c2690e2ac0d6",
+            "138bbe15-128b-5c82-a18b-baef108bb95c",
+            "ca57e28b-c957-50f8-ac57-e5b1cb57e41e"
           ],
           "top3": [
             "35052b78-3605-5d0b-a705-2e9e38053031",
@@ -4635,8 +4635,8 @@
             "8cf06590-8df0-5723-aef0-68b68ff06a49",
             "c135a006-c235-5199-af35-9ce0c0359e73",
             "479eeb5c-489e-5cef-a99e-ee824a9ef015",
-            "fae949f9-f9e9-5866-a8e9-46d3f7e94540",
             "3b9eb965-3a9e-57d2-a99e-b63f389eb4ac",
+            "fae949f9-f9e9-5866-a8e9-46d3f7e94540",
             "04d27d85-03d2-5bf2-a2d2-7a5f01d278cc",
             "d3210d97-d221-5c04-a521-10bdd4210f2a",
             "ddf9eece-def9-5061-abf9-eba8dcf9ed3b",
@@ -4664,7 +4664,7 @@
           "contentTerms": ["editing", "rhythm"],
           "stage": "rank",
           "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 14,
+          "durationMs": 7,
           "error": null
         },
         {
@@ -4709,15 +4709,15 @@
             "e28a031d-e18a-518a-a089-fff7df89fe64",
             "49115bb9-4811-5a26-a711-589346115700",
             "4da9efb6-4ea9-5149-aba9-ec904ca9ee23",
-            "3a753d35-3975-5ba2-a875-3a0f3775387c",
             "4e8743ce-4f87-5561-ac87-40a84d87423b",
+            "3a753d35-3975-5ba2-a875-3a0f3775387c",
             "9309e283-9209-50f0-a509-e5a99409e416",
             "42713fd1-4171-5e3e-a071-3cab3f713b18",
+            "e6a50d18-e7a5-5eab-a8a5-103ee9a511d1",
             "de87ee8d-dd87-5cfa-ac87-eb67db87e9d4",
             "8c2e8fc6-8d2e-5159-aa2e-8ca08b2e8e33",
-            "e6a50d18-e7a5-5eab-a8a5-103ee9a511d1",
-            "495bb30e-4a5b-54a1-a75b-afe8485bb17b",
             "e11298d0-e212-5a63-a312-9bf6e4129d89",
+            "495bb30e-4a5b-54a1-a75b-afe8485bb17b",
             "62f832db-61f8-5148-a4f8-360163f8346e",
             "bf59f3e1-be59-524e-ad59-f0bbbc59ef28"
           ],
@@ -4726,11 +4726,11 @@
             "49115bb9-4811-5a26-a711-589346115700",
             "4da9efb6-4ea9-5149-aba9-ec904ca9ee23"
           ],
-          "rank": 12,
+          "rank": 11,
           "contentTerms": ["portfolio", "layout"],
           "stage": "rank",
-          "detail": "目标在邻域第 12（非 Top1）",
-          "durationMs": 4,
+          "detail": "目标在邻域第 11（非 Top1）",
+          "durationMs": 2,
           "error": null
         },
         {
@@ -4774,24 +4774,24 @@
             "55bfacaa-56bf-5e3d-a3bf-a98454bfab17",
             "3d10c508-3e10-569b-af10-c82e4010c9c1",
             "695931ad-6859-501a-a759-2e8766592cf4",
-            "6a97dd46-6b97-5ed9-a897-da206997dbb3",
             "ddd44032-ded4-51c5-abd4-3d0cdcd43e9f",
+            "6a97dd46-6b97-5ed9-a897-da206997dbb3",
+            "f976d99c-fa76-5b2f-ab76-dcc2fc76de55",
+            "0d2abf43-0c2a-5db0-af2a-c2690e2ac0d6",
             "138bbe15-128b-5c82-a18b-baef108bb95c",
             "ca57e28b-c957-50f8-ac57-e5b1cb57e41e",
-            "1a21b89e-1b21-5a31-a821-b5781921b70b",
-            "f976d99c-fa76-5b2f-ab76-dcc2fc76de55",
-            "0d2abf43-0c2a-5db0-af2a-c2690e2ac0d6"
+            "1a21b89e-1b21-5a31-a821-b5781921b70b"
           ],
           "top3": [
             "35052b78-3605-5d0b-a705-2e9e38053031",
             "921bf650-931b-57e3-a41b-f976951bfb09",
             "e28ab0c2-e38a-5255-a08a-ad9ce18aaf2f"
           ],
-          "rank": 13,
+          "rank": 10,
           "contentTerms": ["reference", "managers"],
           "stage": "rank",
-          "detail": "目标在邻域第 13（非 Top1）",
-          "durationMs": 6,
+          "detail": "目标在邻域第 10（非 Top1）",
+          "durationMs": 3,
           "error": null
         },
         {
@@ -4818,7 +4818,7 @@
           "contentTerms": ["community", "building"],
           "stage": "rank",
           "detail": "目标在邻域第 5（非 Top1）",
-          "durationMs": 4,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -4831,15 +4831,15 @@
             "e28a031d-e18a-518a-a089-fff7df89fe64",
             "49115bb9-4811-5a26-a711-589346115700",
             "4da9efb6-4ea9-5149-aba9-ec904ca9ee23",
-            "3a753d35-3975-5ba2-a875-3a0f3775387c",
             "4e8743ce-4f87-5561-ac87-40a84d87423b",
+            "3a753d35-3975-5ba2-a875-3a0f3775387c",
             "9309e283-9209-50f0-a509-e5a99409e416",
             "42713fd1-4171-5e3e-a071-3cab3f713b18",
+            "e6a50d18-e7a5-5eab-a8a5-103ee9a511d1",
             "de87ee8d-dd87-5cfa-ac87-eb67db87e9d4",
             "8c2e8fc6-8d2e-5159-aa2e-8ca08b2e8e33",
-            "e6a50d18-e7a5-5eab-a8a5-103ee9a511d1",
-            "495bb30e-4a5b-54a1-a75b-afe8485bb17b",
             "e11298d0-e212-5a63-a312-9bf6e4129d89",
+            "495bb30e-4a5b-54a1-a75b-afe8485bb17b",
             "62f832db-61f8-5148-a4f8-360163f8346e",
             "bf59f3e1-be59-524e-ad59-f0bbbc59ef28"
           ],
@@ -4852,7 +4852,7 @@
           "contentTerms": ["portfolio", "layout"],
           "stage": "rank",
           "detail": "目标在邻域第 7（非 Top1）",
-          "durationMs": 3,
+          "durationMs": 2,
           "error": null
         },
         {
@@ -4870,14 +4870,14 @@
             "10ebabb7-0feb-5a24-a2eb-aedd11ebad4a",
             "2909a4b1-2809-531e-a709-a18b26099ff8",
             "9d6c5ef4-9e6c-5087-af6c-621aa06c63ad",
+            "97f4450a-98f4-569d-a5f4-41e496f44377",
             "f79394be-f893-5651-a593-9198f693932b",
             "cab6374c-cbb6-58df-acb6-3a72cdb63c05",
-            "97f4450a-98f4-569d-a5f4-41e496f44377",
-            "3df4f6ac-3ef4-583f-aff4-f9d240f4fb65",
             "c4c52654-c5c5-57e7-a6c5-297ac7c52b0d",
-            "7357d747-7257-55b4-a557-da6d7457d8da",
+            "3df4f6ac-3ef4-583f-aff4-f9d240f4fb65",
             "aca7029a-ada7-542d-aaa6-ff74aba70107",
-            "e9e44ac6-eae4-5c59-a7e4-47a0e8e44933"
+            "e9e44ac6-eae4-5c59-a7e4-47a0e8e44933",
+            "7357d747-7257-55b4-a557-da6d7457d8da"
           ],
           "top3": [
             "3604433c-3704-54cf-a804-4662390447f5",
@@ -4902,9 +4902,9 @@
             "06523751-0552-55be-a452-342b03523298",
             "c1bdad51-c0bd-5bbe-afbd-aa2bbebda898",
             "2829e26b-2729-50d8-aa29-e5912929e3fe",
-            "15e1fb5c-16e1-5cef-a7e1-fe8218e20015",
-            "8d9d03e1-8c9d-524e-ab9d-00bb8a9cff28",
             "ea008fa6-eb00-5139-a800-8c80e9008e13",
+            "8d9d03e1-8c9d-524e-ab9d-00bb8a9cff28",
+            "15e1fb5c-16e1-5cef-a7e1-fe8218e20015",
             "cf83734b-ce83-51b8-a183-7671d08374de",
             "1c7ffc79-1b7f-5ae6-aa7f-f953197ff7c0",
             "4d6693ef-4c66-525c-af66-97154e669582",
@@ -4920,8 +4920,8 @@
             "84345d13-8334-5b80-a634-603985345ea6",
             "03382d96-0438-5f29-a138-2a7002382c03",
             "7c4c15ab-7b4c-5418-ae4c-18d17d4c173e",
-            "8c2e8fc6-8d2e-5159-aa2e-8ca08b2e8e33",
             "495bb30e-4a5b-54a1-a75b-afe8485bb17b",
+            "8c2e8fc6-8d2e-5159-aa2e-8ca08b2e8e33",
             "3df4f6ac-3ef4-583f-aff4-f9d240f4fb65",
             "bdeb7fc6-beeb-5159-abeb-7ca0bceb7e33",
             "7061b6cf-6f61-553c-a261-b9f57161b862",
@@ -4935,8 +4935,8 @@
             "cfc8d60d-cec8-547a-adc8-d2e7ccc8d154",
             "1cec1f57-1bec-5dc4-aeec-227d1dec20ea",
             "6880da99-6780-5906-a680-d7736580d5e0",
-            "a4b64f2a-a5b6-50bd-a2b6-4c04a3b64d97",
             "3d10c508-3e10-569b-af10-c82e4010c9c1",
+            "a4b64f2a-a5b6-50bd-a2b6-4c04a3b64d97",
             "f1568594-f256-5727-a356-88baf4568a4d",
             "cf1378f5-ce13-5762-ad13-75cfcc13743c",
             "89352c8a-8a35-5e1d-a735-296488352af7",
@@ -4954,11 +4954,11 @@
             "06523751-0552-55be-a452-342b03523298",
             "c1bdad51-c0bd-5bbe-afbd-aa2bbebda898"
           ],
-          "rank": 7,
+          "rank": 5,
           "contentTerms": ["covering", "landing", "pages", "in", "indie", "marketing"],
           "stage": "rank",
-          "detail": "目标在邻域第 7（非 Top1）",
-          "durationMs": 197,
+          "detail": "目标在邻域第 5（非 Top1）",
+          "durationMs": 194,
           "error": null
         },
         {
@@ -4978,13 +4978,13 @@
             "b3442d5f-b244-5bcc-a544-3085b4442ef2",
             "ef3854ed-ee38-535a-ad38-51c7ec385034",
             "c6ab79c7-c5ab-5834-a8ab-7cedc7ab7b5a",
+            "572ac03e-582a-51d1-a52a-bd18562abeab",
             "adbf4bc1-acbf-5a2e-abbf-489baabf4708",
             "afbc8c58-b0bc-5deb-a1bc-8f7eb2bc9111",
-            "572ac03e-582a-51d1-a52a-bd18562abeab",
             "4d6693ef-4c66-525c-af66-97154e669582",
-            "b3180ee6-b418-5079-a118-0bc0b2180d53",
-            "adecc0cb-acec-5f38-afec-c3f1aeecc25e",
             "2d55732b-2c55-5198-af55-76512e5574be",
+            "adecc0cb-acec-5f38-afec-c3f1aeecc25e",
+            "b3180ee6-b418-5079-a118-0bc0b2180d53",
             "1808c6da-1908-586d-a608-c3b41708c547",
             "a6ebbf72-a7eb-5105-a4eb-bc4ca5ebbddf",
             "c1bdad51-c0bd-5bbe-afbd-aa2bbebda898",
@@ -5024,11 +5024,11 @@
             "6ae07a43-69e0-58b0-ace0-7d696be07bd6",
             "33b671fd-32b6-506a-a1b6-6ed730b66d44"
           ],
-          "rank": 11,
+          "rank": 12,
           "contentTerms": ["covering", "waitlists", "in", "indie", "marketing"],
           "stage": "rank",
-          "detail": "目标在邻域第 11（非 Top1）",
-          "durationMs": 104,
+          "detail": "目标在邻域第 12（非 Top1）",
+          "durationMs": 113,
           "error": null
         },
         {
@@ -5052,8 +5052,8 @@
             "03382d96-0438-5f29-a138-2a7002382c03",
             "486ba7be-496b-5951-a66b-a498476ba62b",
             "2ff58589-2ef5-53f6-adf5-82632cf580d0",
-            "09fe0e45-08fe-5cb2-a7fe-0b1f06fe098c",
             "bc7e6441-bb7e-52ae-aa7e-611bb97e5f88",
+            "09fe0e45-08fe-5cb2-a7fe-0b1f06fe098c",
             "7397b65c-7497-57ef-a597-b9827697bb15",
             "6880da99-6780-5906-a680-d7736580d5e0",
             "c135a006-c235-5199-af35-9ce0c0359e73",
@@ -5098,7 +5098,7 @@
           "contentTerms": ["covering", "scripting", "in", "production"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 68,
+          "durationMs": 72,
           "error": null
         },
         {
@@ -5168,7 +5168,7 @@
           "contentTerms": ["covering", "launch", "posts", "in", "indie", "marketing"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 176,
+          "durationMs": 182,
           "error": null
         },
         {
@@ -5247,7 +5247,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 6（非 Top1）",
-          "durationMs": 298,
+          "durationMs": 315,
           "error": null
         },
         {
@@ -5317,7 +5317,7 @@
           "contentTerms": ["covering", "editing", "rhythm", "in", "production"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 155,
+          "durationMs": 162,
           "error": null
         },
         {
@@ -5387,7 +5387,7 @@
           "contentTerms": ["covering", "drafting", "habits", "in", "writing", "and", "notes"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 259,
+          "durationMs": 257,
           "error": null
         },
         {
@@ -5527,7 +5527,7 @@
           "contentTerms": ["covering", "editing", "passes", "in", "writing", "and", "notes"],
           "stage": "rank",
           "detail": "目标在邻域第 8（非 Top1）",
-          "durationMs": 242,
+          "durationMs": 247,
           "error": null
         },
         {
@@ -5597,7 +5597,7 @@
           "contentTerms": ["covering", "plain", "language", "in", "writing", "and", "notes"],
           "stage": "rank",
           "detail": "目标在邻域第 5（非 Top1）",
-          "durationMs": 236,
+          "durationMs": 240,
           "error": null
         },
         {
@@ -5667,7 +5667,7 @@
           "contentTerms": ["covering", "drafting", "habits", "in", "writing", "and", "notes"],
           "stage": "rank",
           "detail": "目标在邻域第 11（非 Top1）",
-          "durationMs": 256,
+          "durationMs": 260,
           "error": null
         },
         {
@@ -5683,12 +5683,12 @@
             "4578b8d4-4678-5a67-a778-bbfa4878bd8d",
             "c7b8153e-c8b8-56d1-a5b8-1218c6b813ab",
             "7131e221-7031-508e-af31-defb6e31dd68",
-            "1b0d8c1c-1c0d-5daf-ad0d-8f421e0d90d5",
             "c0f0369f-bff0-550c-a2f0-39c5c1f03832",
-            "5913e927-5813-5794-ab13-ec4d5a13eaba",
             "047f857a-057f-570d-a27f-8254037f83e7",
-            "4f15438d-4e15-51fa-ad15-40674c153ed4",
+            "5913e927-5813-5794-ab13-ec4d5a13eaba",
+            "1b0d8c1c-1c0d-5daf-ad0d-8f421e0d90d5",
             "bcc2463b-bbc2-54a8-aec2-4961bdc247ce",
+            "4f15438d-4e15-51fa-ad15-40674c153ed4",
             "a956baec-aa56-5c7f-ab56-be12ac56bfa5",
             "ac75c84f-ab75-56bc-ae75-cb75ad75c9e2",
             "fef5d282-fff5-5415-acf5-cf5cfdf5d0ef",
@@ -5737,7 +5737,7 @@
           "contentTerms": ["covering", "visual", "hierarchy", "in", "product", "design"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 210,
+          "durationMs": 213,
           "error": null
         },
         {
@@ -5816,7 +5816,7 @@
           ],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 264,
+          "durationMs": 268,
           "error": null
         },
         {
@@ -5832,8 +5832,8 @@
             "5ec8a941-5dc8-57ae-acc8-a61b5bc8a488",
             "da2f7948-db2f-5adb-ac2f-7c6edd2f7e01",
             "e21887ff-e118-566c-a418-8b25e3188992",
-            "4ab52c6e-4bb5-5e01-a8b5-294849b52adb",
             "44c35bbc-45c3-5d4f-a6c3-5ee247c36075",
+            "4ab52c6e-4bb5-5e01-a8b5-294849b52adb",
             "c8717f00-c971-5093-aa71-8226cb7183b9",
             "d0d5263d-cfd5-54aa-aed5-2317cdd52184",
             "7c4c15ab-7b4c-5418-ae4c-18d17d4c173e",
@@ -5853,8 +5853,8 @@
             "2ff58589-2ef5-53f6-adf5-82632cf580d0",
             "bc7e6441-bb7e-52ae-aa7e-611bb97e5f88",
             "7397b65c-7497-57ef-a597-b9827697bb15",
-            "7061b6cf-6f61-553c-a261-b9f57161b862",
             "6880da99-6780-5906-a680-d7736580d5e0",
+            "7061b6cf-6f61-553c-a261-b9f57161b862",
             "353dba93-343d-5900-a73d-bdb9363dbc26",
             "aca7029a-ada7-542d-aaa6-ff74aba70107",
             "9d338ef9-9c33-5d66-ab33-8bd39a338a40",
@@ -5886,7 +5886,7 @@
           "contentTerms": ["covering", "thumbnails", "in", "production"],
           "stage": "rank",
           "detail": "目标在邻域第 10（非 Top1）",
-          "durationMs": 70,
+          "durationMs": 72,
           "error": null
         },
         {
@@ -5956,7 +5956,7 @@
           "contentTerms": ["covering", "plain", "language", "in", "writing", "and", "notes"],
           "stage": "rank",
           "detail": "目标在邻域第 6（非 Top1）",
-          "durationMs": 239,
+          "durationMs": 246,
           "error": null
         },
         {
@@ -5970,20 +5970,20 @@
             "35052b78-3605-5d0b-a705-2e9e38053031",
             "1a21b89e-1b21-5a31-a821-b5781921b70b",
             "3d10c508-3e10-569b-af10-c82e4010c9c1",
-            "8d8f55b8-8e8f-574b-af8f-58de908f5a71",
             "6a97dd46-6b97-5ed9-a897-da206997dbb3",
+            "8d8f55b8-8e8f-574b-af8f-58de908f5a71",
             "e28ab0c2-e38a-5255-a08a-ad9ce18aaf2f",
-            "ca57e28b-c957-50f8-ac57-e5b1cb57e41e",
-            "55bfacaa-56bf-5e3d-a3bf-a98454bfab17",
             "f976d99c-fa76-5b2f-ab76-dcc2fc76de55",
+            "55bfacaa-56bf-5e3d-a3bf-a98454bfab17",
+            "ca57e28b-c957-50f8-ac57-e5b1cb57e41e",
             "ddd44032-ded4-51c5-abd4-3d0cdcd43e9f",
             "695931ad-6859-501a-a759-2e8766592cf4",
             "8e687d82-8f68-5f15-ac68-7a5c8d687bef",
+            "0d2abf43-0c2a-5db0-af2a-c2690e2ac0d6",
             "138bbe15-128b-5c82-a18b-baef108bb95c",
             "515501e9-5055-5056-af54-fec34e54fd30",
-            "0d2abf43-0c2a-5db0-af2a-c2690e2ac0d6",
-            "7061b6cf-6f61-553c-a261-b9f57161b862",
             "3df4f6ac-3ef4-583f-aff4-f9d240f4fb65",
+            "7061b6cf-6f61-553c-a261-b9f57161b862",
             "38f73226-39f7-53b9-a6f7-2f0037f73093",
             "84345d13-8334-5b80-a634-603985345ea6",
             "7357d747-7257-55b4-a557-da6d7457d8da",
@@ -6022,11 +6022,11 @@
             "35052b78-3605-5d0b-a705-2e9e38053031",
             "1a21b89e-1b21-5a31-a821-b5781921b70b"
           ],
-          "rank": 5,
+          "rank": 6,
           "contentTerms": ["covering", "reference", "managers", "in", "writing", "and", "notes"],
           "stage": "rank",
-          "detail": "目标在邻域第 5（非 Top1）",
-          "durationMs": 214,
+          "detail": "目标在邻域第 6（非 Top1）",
+          "durationMs": 220,
           "error": null
         },
         {
@@ -6049,7 +6049,7 @@
           "contentTerms": ["during", "week", "rewrote", "every", "case", "study"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 13,
+          "durationMs": 12,
           "error": null
         },
         {
@@ -6072,7 +6072,7 @@
           "contentTerms": ["during", "week", "rewrote", "every", "case", "study"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 11,
+          "durationMs": 16,
           "error": null
         },
         {
@@ -6116,7 +6116,7 @@
           "contentTerms": ["when", "shooting", "third", "episode"],
           "stage": "rank",
           "detail": "目标在邻域第 6（非 Top1）",
-          "durationMs": 52,
+          "durationMs": 59,
           "error": null
         },
         {
@@ -6128,12 +6128,12 @@
           "rankedIds": [
             "e28a031d-e18a-518a-a089-fff7df89fe64",
             "4da9efb6-4ea9-5149-aba9-ec904ca9ee23",
-            "3a753d35-3975-5ba2-a875-3a0f3775387c",
             "49115bb9-4811-5a26-a711-589346115700",
             "9309e283-9209-50f0-a509-e5a99409e416",
+            "3a753d35-3975-5ba2-a875-3a0f3775387c",
+            "4e8743ce-4f87-5561-ac87-40a84d87423b",
             "42713fd1-4171-5e3e-a071-3cab3f713b18",
             "8c2e8fc6-8d2e-5159-aa2e-8ca08b2e8e33",
-            "4e8743ce-4f87-5561-ac87-40a84d87423b",
             "495bb30e-4a5b-54a1-a75b-afe8485bb17b",
             "e6a50d18-e7a5-5eab-a8a5-103ee9a511d1",
             "62f832db-61f8-5148-a4f8-360163f8346e",
@@ -6167,13 +6167,13 @@
           "top3": [
             "e28a031d-e18a-518a-a089-fff7df89fe64",
             "4da9efb6-4ea9-5149-aba9-ec904ca9ee23",
-            "3a753d35-3975-5ba2-a875-3a0f3775387c"
+            "49115bb9-4811-5a26-a711-589346115700"
           ],
           "rank": null,
           "contentTerms": ["when", "rebuilding", "portfolio"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 6,
+          "durationMs": 8,
           "error": null
         },
         {
@@ -6185,9 +6185,9 @@
           "rankedIds": [
             "a86ae76e-a96a-5901-a66a-e448a76ae5db",
             "4e4a973a-4f4a-58cd-ac4a-94144d4a95a7",
+            "43bbd7f0-44bb-5983-a5bb-db1646bbdca9",
             "8cf06590-8df0-5723-aef0-68b68ff06a49",
             "3ee7af43-3de7-5db0-a0e7-b2693fe7b0d6",
-            "43bbd7f0-44bb-5983-a5bb-db1646bbdca9",
             "3b9eb965-3a9e-57d2-a99e-b63f389eb4ac",
             "1fa34f56-20a3-50e9-ada3-4c301ea34dc3",
             "c135a006-c235-5199-af35-9ce0c0359e73",
@@ -6213,13 +6213,13 @@
           "top3": [
             "a86ae76e-a96a-5901-a66a-e448a76ae5db",
             "4e4a973a-4f4a-58cd-ac4a-94144d4a95a7",
-            "8cf06590-8df0-5723-aef0-68b68ff06a49"
+            "43bbd7f0-44bb-5983-a5bb-db1646bbdca9"
           ],
           "rank": 13,
           "contentTerms": ["during", "edit", "marathon", "before", "deadline"],
           "stage": "rank",
           "detail": "目标在邻域第 13（非 Top1）",
-          "durationMs": 43,
+          "durationMs": 47,
           "error": null
         },
         {
@@ -6231,9 +6231,9 @@
           "rankedIds": [
             "a86ae76e-a96a-5901-a66a-e448a76ae5db",
             "4e4a973a-4f4a-58cd-ac4a-94144d4a95a7",
+            "43bbd7f0-44bb-5983-a5bb-db1646bbdca9",
             "8cf06590-8df0-5723-aef0-68b68ff06a49",
             "3ee7af43-3de7-5db0-a0e7-b2693fe7b0d6",
-            "43bbd7f0-44bb-5983-a5bb-db1646bbdca9",
             "3b9eb965-3a9e-57d2-a99e-b63f389eb4ac",
             "1fa34f56-20a3-50e9-ada3-4c301ea34dc3",
             "c135a006-c235-5199-af35-9ce0c0359e73",
@@ -6259,13 +6259,13 @@
           "top3": [
             "a86ae76e-a96a-5901-a66a-e448a76ae5db",
             "4e4a973a-4f4a-58cd-ac4a-94144d4a95a7",
-            "8cf06590-8df0-5723-aef0-68b68ff06a49"
+            "43bbd7f0-44bb-5983-a5bb-db1646bbdca9"
           ],
           "rank": 6,
           "contentTerms": ["during", "edit", "marathon", "before", "deadline"],
           "stage": "rank",
           "detail": "目标在邻域第 6（非 Top1）",
-          "durationMs": 45,
+          "durationMs": 46,
           "error": null
         },
         {
@@ -6288,7 +6288,7 @@
           "contentTerms": ["during", "week", "rewrote", "every", "case", "study"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 12,
+          "durationMs": 13,
           "error": null
         },
         {
@@ -6358,7 +6358,7 @@
           "contentTerms": ["back", "when", "lighting", "setup", "kept", "failing"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 97,
+          "durationMs": 103,
           "error": null
         },
         {
@@ -6402,7 +6402,7 @@
           "contentTerms": ["when", "shooting", "third", "episode"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 53,
+          "durationMs": 55,
           "error": null
         },
         {
@@ -6446,7 +6446,7 @@
           "contentTerms": ["when", "shooting", "third", "episode"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 53,
+          "durationMs": 55,
           "error": null
         },
         {
@@ -6484,7 +6484,7 @@
           "contentTerms": ["while", "choosing", "new", "type", "pairing"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 71,
+          "durationMs": 73,
           "error": null
         },
         {
@@ -6496,9 +6496,9 @@
           "rankedIds": [
             "a86ae76e-a96a-5901-a66a-e448a76ae5db",
             "4e4a973a-4f4a-58cd-ac4a-94144d4a95a7",
+            "43bbd7f0-44bb-5983-a5bb-db1646bbdca9",
             "8cf06590-8df0-5723-aef0-68b68ff06a49",
             "3ee7af43-3de7-5db0-a0e7-b2693fe7b0d6",
-            "43bbd7f0-44bb-5983-a5bb-db1646bbdca9",
             "3b9eb965-3a9e-57d2-a99e-b63f389eb4ac",
             "1fa34f56-20a3-50e9-ada3-4c301ea34dc3",
             "c135a006-c235-5199-af35-9ce0c0359e73",
@@ -6524,13 +6524,13 @@
           "top3": [
             "a86ae76e-a96a-5901-a66a-e448a76ae5db",
             "4e4a973a-4f4a-58cd-ac4a-94144d4a95a7",
-            "8cf06590-8df0-5723-aef0-68b68ff06a49"
+            "43bbd7f0-44bb-5983-a5bb-db1646bbdca9"
           ],
           "rank": null,
           "contentTerms": ["during", "edit", "marathon", "before", "deadline"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 44,
+          "durationMs": 46,
           "error": null
         },
         {
@@ -6553,7 +6553,7 @@
           "contentTerms": ["during", "week", "rewrote", "every", "case", "study"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 12,
+          "durationMs": 11,
           "error": null
         },
         {
@@ -6565,9 +6565,9 @@
           "rankedIds": [
             "a86ae76e-a96a-5901-a66a-e448a76ae5db",
             "4e4a973a-4f4a-58cd-ac4a-94144d4a95a7",
+            "43bbd7f0-44bb-5983-a5bb-db1646bbdca9",
             "8cf06590-8df0-5723-aef0-68b68ff06a49",
             "3ee7af43-3de7-5db0-a0e7-b2693fe7b0d6",
-            "43bbd7f0-44bb-5983-a5bb-db1646bbdca9",
             "3b9eb965-3a9e-57d2-a99e-b63f389eb4ac",
             "1fa34f56-20a3-50e9-ada3-4c301ea34dc3",
             "c135a006-c235-5199-af35-9ce0c0359e73",
@@ -6593,13 +6593,13 @@
           "top3": [
             "a86ae76e-a96a-5901-a66a-e448a76ae5db",
             "4e4a973a-4f4a-58cd-ac4a-94144d4a95a7",
-            "8cf06590-8df0-5723-aef0-68b68ff06a49"
+            "43bbd7f0-44bb-5983-a5bb-db1646bbdca9"
           ],
           "rank": null,
           "contentTerms": ["during", "edit", "marathon", "before", "deadline"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 45,
+          "durationMs": 46,
           "error": null
         },
         {
@@ -6643,7 +6643,7 @@
           "contentTerms": ["when", "shooting", "third", "episode"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 53,
+          "durationMs": 52,
           "error": null
         },
         {
@@ -6655,12 +6655,12 @@
           "rankedIds": [
             "e28a031d-e18a-518a-a089-fff7df89fe64",
             "4da9efb6-4ea9-5149-aba9-ec904ca9ee23",
-            "3a753d35-3975-5ba2-a875-3a0f3775387c",
             "49115bb9-4811-5a26-a711-589346115700",
             "9309e283-9209-50f0-a509-e5a99409e416",
+            "3a753d35-3975-5ba2-a875-3a0f3775387c",
+            "4e8743ce-4f87-5561-ac87-40a84d87423b",
             "42713fd1-4171-5e3e-a071-3cab3f713b18",
             "8c2e8fc6-8d2e-5159-aa2e-8ca08b2e8e33",
-            "4e8743ce-4f87-5561-ac87-40a84d87423b",
             "495bb30e-4a5b-54a1-a75b-afe8485bb17b",
             "e6a50d18-e7a5-5eab-a8a5-103ee9a511d1",
             "62f832db-61f8-5148-a4f8-360163f8346e",
@@ -6694,7 +6694,7 @@
           "top3": [
             "e28a031d-e18a-518a-a089-fff7df89fe64",
             "4da9efb6-4ea9-5149-aba9-ec904ca9ee23",
-            "3a753d35-3975-5ba2-a875-3a0f3775387c"
+            "49115bb9-4811-5a26-a711-589346115700"
           ],
           "rank": null,
           "contentTerms": ["when", "rebuilding", "portfolio"],
@@ -6728,8 +6728,8 @@
             "4578b8d4-4678-5a67-a778-bbfa4878bd8d",
             "4f15438d-4e15-51fa-ad15-40674c153ed4",
             "2829e26b-2729-50d8-aa29-e5912929e3fe",
-            "bcc2463b-bbc2-54a8-aec2-4961bdc247ce",
             "715dbdf5-705d-5c62-af5d-bacf6e5db93c",
+            "bcc2463b-bbc2-54a8-aec2-4961bdc247ce",
             "8d9d03e1-8c9d-524e-ab9d-00bb8a9cff28",
             "06523751-0552-55be-a452-342b03523298",
             "69185b1e-6a18-5cb1-a718-57f86818598b",
@@ -6770,7 +6770,7 @@
           "contentTerms": ["on", "brand", "and", "visual", "identity", "from", "6", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 50（非 Top1）",
-          "durationMs": 206,
+          "durationMs": 208,
           "error": null
         },
         {
@@ -6840,7 +6840,7 @@
           "contentTerms": ["on", "indie", "marketing", "from", "3", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 100,
+          "durationMs": 101,
           "error": null
         },
         {
@@ -6851,9 +6851,9 @@
           "targetId": "3604433c-3704-54cf-a804-4662390447f5",
           "rankedIds": [
             "d8ed7864-d9ed-59f7-aaed-7b8adbed7d1d",
+            "38f73226-39f7-53b9-a6f7-2f0037f73093",
             "99e0b39b-98e0-5208-abe0-b6c19ae0b52e",
             "8e687d82-8f68-5f15-ac68-7a5c8d687bef",
-            "38f73226-39f7-53b9-a6f7-2f0037f73093",
             "515501e9-5055-5056-af54-fec34e54fd30",
             "1a21b89e-1b21-5a31-a821-b5781921b70b",
             "24f7597d-23f7-57ea-a2f7-565721f754c4",
@@ -6864,15 +6864,16 @@
             "7389e217-7289-5084-a589-e53d7489e3aa",
             "6880da99-6780-5906-a680-d7736580d5e0",
             "cfc8d60d-cec8-547a-adc8-d2e7ccc8d154",
+            "ad4dd0a3-ac4d-5f10-af4d-d3c9ae4dd236",
             "e8d7561b-e7d7-5488-aad7-5941e9d757ae",
             "84345d13-8334-5b80-a634-603985345ea6",
-            "ad4dd0a3-ac4d-5f10-af4d-d3c9ae4dd236",
             "8d8f55b8-8e8f-574b-af8f-58de908f5a71",
             "bf59f3e1-be59-524e-ad59-f0bbbc59ef28",
             "55bfacaa-56bf-5e3d-a3bf-a98454bfab17",
             "ddd44032-ded4-51c5-abd4-3d0cdcd43e9f",
             "67d301a7-66d3-5014-a9d3-04cd68d3033a",
             "633d959d-623d-540a-a13d-9277603d90e4",
+            "f79394be-f893-5651-a593-9198f693932b",
             "c1bdad51-c0bd-5bbe-afbd-aa2bbebda898",
             "2e51ac88-2f51-5e1b-a051-afae3151b141",
             "1cec1f57-1bec-5dc4-aeec-227d1dec20ea",
@@ -6898,19 +6899,18 @@
             "09fe0e45-08fe-5cb2-a7fe-0b1f06fe098c",
             "4e4a973a-4f4a-58cd-ac4a-94144d4a95a7",
             "5ef61e4b-5df6-5cb8-a0f6-21715ff61fde",
-            "eb940cc3-ea94-5b30-ad94-0fe9ec940e56",
-            "9d6c5ef4-9e6c-5087-af6c-621aa06c63ad"
+            "eb940cc3-ea94-5b30-ad94-0fe9ec940e56"
           ],
           "top3": [
             "d8ed7864-d9ed-59f7-aaed-7b8adbed7d1d",
-            "99e0b39b-98e0-5208-abe0-b6c19ae0b52e",
-            "8e687d82-8f68-5f15-ac68-7a5c8d687bef"
+            "38f73226-39f7-53b9-a6f7-2f0037f73093",
+            "99e0b39b-98e0-5208-abe0-b6c19ae0b52e"
           ],
           "rank": null,
           "contentTerms": ["on", "writing", "and", "notes", "from", "8", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 156,
+          "durationMs": 157,
           "error": null
         },
         {
@@ -6935,9 +6935,9 @@
             "7389e217-7289-5084-a589-e53d7489e3aa",
             "cfc8d60d-cec8-547a-adc8-d2e7ccc8d154",
             "84345d13-8334-5b80-a634-603985345ea6",
-            "e8d7561b-e7d7-5488-aad7-5941e9d757ae",
-            "8d8f55b8-8e8f-574b-af8f-58de908f5a71",
             "ad4dd0a3-ac4d-5f10-af4d-d3c9ae4dd236",
+            "8d8f55b8-8e8f-574b-af8f-58de908f5a71",
+            "e8d7561b-e7d7-5488-aad7-5941e9d757ae",
             "bf59f3e1-be59-524e-ad59-f0bbbc59ef28",
             "55bfacaa-56bf-5e3d-a3bf-a98454bfab17",
             "ddd44032-ded4-51c5-abd4-3d0cdcd43e9f",
@@ -6980,7 +6980,7 @@
           "contentTerms": ["on", "writing", "and", "notes", "from", "6", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 161,
+          "durationMs": 158,
           "error": null
         },
         {
@@ -7050,7 +7050,7 @@
           "contentTerms": ["on", "indie", "marketing", "from", "10", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 27（非 Top1）",
-          "durationMs": 116,
+          "durationMs": 114,
           "error": null
         },
         {
@@ -7061,10 +7061,10 @@
           "targetId": "7bbf94cc-7cbf-565f-adbf-97f27ebf9985",
           "rankedIds": [
             "d8ed7864-d9ed-59f7-aaed-7b8adbed7d1d",
-            "99e0b39b-98e0-5208-abe0-b6c19ae0b52e",
-            "24f7597d-23f7-57ea-a2f7-565721f754c4",
             "38f73226-39f7-53b9-a6f7-2f0037f73093",
+            "99e0b39b-98e0-5208-abe0-b6c19ae0b52e",
             "515501e9-5055-5056-af54-fec34e54fd30",
+            "24f7597d-23f7-57ea-a2f7-565721f754c4",
             "1a21b89e-1b21-5a31-a821-b5781921b70b",
             "8e687d82-8f68-5f15-ac68-7a5c8d687bef",
             "35052b78-3605-5d0b-a705-2e9e38053031",
@@ -7074,8 +7074,8 @@
             "6880da99-6780-5906-a680-d7736580d5e0",
             "cfc8d60d-cec8-547a-adc8-d2e7ccc8d154",
             "7389e217-7289-5084-a589-e53d7489e3aa",
-            "e8d7561b-e7d7-5488-aad7-5941e9d757ae",
             "ad4dd0a3-ac4d-5f10-af4d-d3c9ae4dd236",
+            "e8d7561b-e7d7-5488-aad7-5941e9d757ae",
             "84345d13-8334-5b80-a634-603985345ea6",
             "8d8f55b8-8e8f-574b-af8f-58de908f5a71",
             "bf59f3e1-be59-524e-ad59-f0bbbc59ef28",
@@ -7113,14 +7113,14 @@
           ],
           "top3": [
             "d8ed7864-d9ed-59f7-aaed-7b8adbed7d1d",
-            "99e0b39b-98e0-5208-abe0-b6c19ae0b52e",
-            "24f7597d-23f7-57ea-a2f7-565721f754c4"
+            "38f73226-39f7-53b9-a6f7-2f0037f73093",
+            "99e0b39b-98e0-5208-abe0-b6c19ae0b52e"
           ],
           "rank": null,
           "contentTerms": ["on", "writing", "and", "notes", "from", "11", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 173,
+          "durationMs": 171,
           "error": null
         },
         {
@@ -7131,9 +7131,9 @@
           "targetId": "24f7597d-23f7-57ea-a2f7-565721f754c4",
           "rankedIds": [
             "d8ed7864-d9ed-59f7-aaed-7b8adbed7d1d",
+            "38f73226-39f7-53b9-a6f7-2f0037f73093",
             "99e0b39b-98e0-5208-abe0-b6c19ae0b52e",
             "8e687d82-8f68-5f15-ac68-7a5c8d687bef",
-            "38f73226-39f7-53b9-a6f7-2f0037f73093",
             "515501e9-5055-5056-af54-fec34e54fd30",
             "1a21b89e-1b21-5a31-a821-b5781921b70b",
             "24f7597d-23f7-57ea-a2f7-565721f754c4",
@@ -7144,15 +7144,16 @@
             "7389e217-7289-5084-a589-e53d7489e3aa",
             "6880da99-6780-5906-a680-d7736580d5e0",
             "cfc8d60d-cec8-547a-adc8-d2e7ccc8d154",
+            "ad4dd0a3-ac4d-5f10-af4d-d3c9ae4dd236",
             "e8d7561b-e7d7-5488-aad7-5941e9d757ae",
             "84345d13-8334-5b80-a634-603985345ea6",
-            "ad4dd0a3-ac4d-5f10-af4d-d3c9ae4dd236",
             "8d8f55b8-8e8f-574b-af8f-58de908f5a71",
             "bf59f3e1-be59-524e-ad59-f0bbbc59ef28",
             "55bfacaa-56bf-5e3d-a3bf-a98454bfab17",
             "ddd44032-ded4-51c5-abd4-3d0cdcd43e9f",
             "67d301a7-66d3-5014-a9d3-04cd68d3033a",
             "633d959d-623d-540a-a13d-9277603d90e4",
+            "f79394be-f893-5651-a593-9198f693932b",
             "c1bdad51-c0bd-5bbe-afbd-aa2bbebda898",
             "2e51ac88-2f51-5e1b-a051-afae3151b141",
             "1cec1f57-1bec-5dc4-aeec-227d1dec20ea",
@@ -7178,19 +7179,18 @@
             "09fe0e45-08fe-5cb2-a7fe-0b1f06fe098c",
             "4e4a973a-4f4a-58cd-ac4a-94144d4a95a7",
             "5ef61e4b-5df6-5cb8-a0f6-21715ff61fde",
-            "eb940cc3-ea94-5b30-ad94-0fe9ec940e56",
-            "9d6c5ef4-9e6c-5087-af6c-621aa06c63ad"
+            "eb940cc3-ea94-5b30-ad94-0fe9ec940e56"
           ],
           "top3": [
             "d8ed7864-d9ed-59f7-aaed-7b8adbed7d1d",
-            "99e0b39b-98e0-5208-abe0-b6c19ae0b52e",
-            "8e687d82-8f68-5f15-ac68-7a5c8d687bef"
+            "38f73226-39f7-53b9-a6f7-2f0037f73093",
+            "99e0b39b-98e0-5208-abe0-b6c19ae0b52e"
           ],
           "rank": 7,
           "contentTerms": ["on", "writing", "and", "notes", "from", "8", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 7（非 Top1）",
-          "durationMs": 170,
+          "durationMs": 160,
           "error": null
         },
         {
@@ -7260,7 +7260,7 @@
           "contentTerms": ["on", "brand", "and", "visual", "identity", "from", "2", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 46（非 Top1）",
-          "durationMs": 218,
+          "durationMs": 210,
           "error": null
         },
         {
@@ -7271,10 +7271,10 @@
           "targetId": "55bfacaa-56bf-5e3d-a3bf-a98454bfab17",
           "rankedIds": [
             "d8ed7864-d9ed-59f7-aaed-7b8adbed7d1d",
-            "99e0b39b-98e0-5208-abe0-b6c19ae0b52e",
-            "24f7597d-23f7-57ea-a2f7-565721f754c4",
             "38f73226-39f7-53b9-a6f7-2f0037f73093",
+            "99e0b39b-98e0-5208-abe0-b6c19ae0b52e",
             "515501e9-5055-5056-af54-fec34e54fd30",
+            "24f7597d-23f7-57ea-a2f7-565721f754c4",
             "1a21b89e-1b21-5a31-a821-b5781921b70b",
             "8e687d82-8f68-5f15-ac68-7a5c8d687bef",
             "35052b78-3605-5d0b-a705-2e9e38053031",
@@ -7284,8 +7284,8 @@
             "6880da99-6780-5906-a680-d7736580d5e0",
             "cfc8d60d-cec8-547a-adc8-d2e7ccc8d154",
             "7389e217-7289-5084-a589-e53d7489e3aa",
-            "e8d7561b-e7d7-5488-aad7-5941e9d757ae",
             "ad4dd0a3-ac4d-5f10-af4d-d3c9ae4dd236",
+            "e8d7561b-e7d7-5488-aad7-5941e9d757ae",
             "84345d13-8334-5b80-a634-603985345ea6",
             "8d8f55b8-8e8f-574b-af8f-58de908f5a71",
             "bf59f3e1-be59-524e-ad59-f0bbbc59ef28",
@@ -7323,14 +7323,14 @@
           ],
           "top3": [
             "d8ed7864-d9ed-59f7-aaed-7b8adbed7d1d",
-            "99e0b39b-98e0-5208-abe0-b6c19ae0b52e",
-            "24f7597d-23f7-57ea-a2f7-565721f754c4"
+            "38f73226-39f7-53b9-a6f7-2f0037f73093",
+            "99e0b39b-98e0-5208-abe0-b6c19ae0b52e"
           ],
           "rank": 22,
           "contentTerms": ["on", "writing", "and", "notes", "from", "11", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 22（非 Top1）",
-          "durationMs": 178,
+          "durationMs": 172,
           "error": null
         },
         {
@@ -7340,9 +7340,9 @@
           "clue": "the one on writing and notes from about 7 weeks ago",
           "targetId": "4e4a973a-4f4a-58cd-ac4a-94144d4a95a7",
           "rankedIds": [
+            "38f73226-39f7-53b9-a6f7-2f0037f73093",
             "d8ed7864-d9ed-59f7-aaed-7b8adbed7d1d",
             "99e0b39b-98e0-5208-abe0-b6c19ae0b52e",
-            "38f73226-39f7-53b9-a6f7-2f0037f73093",
             "8e687d82-8f68-5f15-ac68-7a5c8d687bef",
             "515501e9-5055-5056-af54-fec34e54fd30",
             "1a21b89e-1b21-5a31-a821-b5781921b70b",
@@ -7354,25 +7354,17 @@
             "6880da99-6780-5906-a680-d7736580d5e0",
             "7389e217-7289-5084-a589-e53d7489e3aa",
             "cfc8d60d-cec8-547a-adc8-d2e7ccc8d154",
-            "e8d7561b-e7d7-5488-aad7-5941e9d757ae",
-            "ad4dd0a3-ac4d-5f10-af4d-d3c9ae4dd236",
             "84345d13-8334-5b80-a634-603985345ea6",
-            "8d8f55b8-8e8f-574b-af8f-58de908f5a71",
+            "e8d7561b-e7d7-5488-aad7-5941e9d757ae",
             "bf59f3e1-be59-524e-ad59-f0bbbc59ef28",
-            "55bfacaa-56bf-5e3d-a3bf-a98454bfab17",
-            "ddd44032-ded4-51c5-abd4-3d0cdcd43e9f",
             "67d301a7-66d3-5014-a9d3-04cd68d3033a",
             "f79394be-f893-5651-a593-9198f693932b",
             "633d959d-623d-540a-a13d-9277603d90e4",
-            "9d6c5ef4-9e6c-5087-af6c-621aa06c63ad",
             "c1bdad51-c0bd-5bbe-afbd-aa2bbebda898",
             "2e51ac88-2f51-5e1b-a051-afae3151b141",
             "e9e44ac6-eae4-5c59-a7e4-47a0e8e44933",
             "1cec1f57-1bec-5dc4-aeec-227d1dec20ea",
-            "c0546075-bf54-5ee2-ae54-5d4fbd545bbc",
             "b0a91809-afa9-5676-aea9-14e3ada91350",
-            "e9e71591-e8e7-53fe-a7e7-126be6e710d8",
-            "722c0d0c-732c-5e9f-a42c-1032752c11c5",
             "ce1a266f-cd1a-54dc-a01a-2995cf1a2802",
             "1c7ffc79-1b7f-5ae6-aa7f-f953197ff7c0",
             "a6ebbf72-a7eb-5105-a4eb-bc4ca5ebbddf",
@@ -7389,18 +7381,26 @@
             "33b671fd-32b6-506a-a1b6-6ed730b66d44",
             "82ad147d-81ad-52ea-a0ad-11577fad0fc4",
             "09fe0e45-08fe-5cb2-a7fe-0b1f06fe098c",
-            "4e4a973a-4f4a-58cd-ac4a-94144d4a95a7"
+            "4e4a973a-4f4a-58cd-ac4a-94144d4a95a7",
+            "5ef61e4b-5df6-5cb8-a0f6-21715ff61fde",
+            "eb940cc3-ea94-5b30-ad94-0fe9ec940e56",
+            "ca57e28b-c957-50f8-ac57-e5b1cb57e41e",
+            "6a97dd46-6b97-5ed9-a897-da206997dbb3",
+            "7bbf94cc-7cbf-565f-adbf-97f27ebf9985",
+            "a956baec-aa56-5c7f-ab56-be12ac56bfa5",
+            "ddf9eece-def9-5061-abf9-eba8dcf9ed3b",
+            "bc0ce923-bb0c-5790-ae0c-ec49bd0ceab6"
           ],
           "top3": [
+            "38f73226-39f7-53b9-a6f7-2f0037f73093",
             "d8ed7864-d9ed-59f7-aaed-7b8adbed7d1d",
-            "99e0b39b-98e0-5208-abe0-b6c19ae0b52e",
-            "38f73226-39f7-53b9-a6f7-2f0037f73093"
+            "99e0b39b-98e0-5208-abe0-b6c19ae0b52e"
           ],
-          "rank": 50,
+          "rank": 42,
           "contentTerms": ["on", "writing", "and", "notes", "from", "7", "weeks", "ago"],
           "stage": "rank",
-          "detail": "目标在邻域第 50（非 Top1）",
-          "durationMs": 163,
+          "detail": "目标在邻域第 42（非 Top1）",
+          "durationMs": 156,
           "error": null
         },
         {
@@ -7488,11 +7488,11 @@
             "84345d13-8334-5b80-a634-603985345ea6",
             "7389e217-7289-5084-a589-e53d7489e3aa",
             "35052b78-3605-5d0b-a705-2e9e38053031",
-            "1cec1f57-1bec-5dc4-aeec-227d1dec20ea",
             "6880da99-6780-5906-a680-d7736580d5e0",
+            "1cec1f57-1bec-5dc4-aeec-227d1dec20ea",
             "e8d7561b-e7d7-5488-aad7-5941e9d757ae",
-            "bf59f3e1-be59-524e-ad59-f0bbbc59ef28",
             "f79394be-f893-5651-a593-9198f693932b",
+            "bf59f3e1-be59-524e-ad59-f0bbbc59ef28",
             "cfc8d60d-cec8-547a-adc8-d2e7ccc8d154",
             "e9e44ac6-eae4-5c59-a7e4-47a0e8e44933",
             "1c7ffc79-1b7f-5ae6-aa7f-f953197ff7c0",
@@ -7535,7 +7535,7 @@
           "contentTerms": ["thing", "writing", "and", "notes"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 80,
+          "durationMs": 77,
           "error": null
         },
         {
@@ -7623,81 +7623,11 @@
             "84345d13-8334-5b80-a634-603985345ea6",
             "7389e217-7289-5084-a589-e53d7489e3aa",
             "35052b78-3605-5d0b-a705-2e9e38053031",
-            "1cec1f57-1bec-5dc4-aeec-227d1dec20ea",
             "6880da99-6780-5906-a680-d7736580d5e0",
-            "e8d7561b-e7d7-5488-aad7-5941e9d757ae",
-            "bf59f3e1-be59-524e-ad59-f0bbbc59ef28",
-            "f79394be-f893-5651-a593-9198f693932b",
-            "cfc8d60d-cec8-547a-adc8-d2e7ccc8d154",
-            "e9e44ac6-eae4-5c59-a7e4-47a0e8e44933",
-            "1c7ffc79-1b7f-5ae6-aa7f-f953197ff7c0",
-            "b0a91809-afa9-5676-aea9-14e3ada91350",
-            "09fe0e45-08fe-5cb2-a7fe-0b1f06fe098c",
-            "4e4a973a-4f4a-58cd-ac4a-94144d4a95a7",
-            "03382d96-0438-5f29-a138-2a7002382c03",
-            "a6ebbf72-a7eb-5105-a4eb-bc4ca5ebbddf",
-            "eb940cc3-ea94-5b30-ad94-0fe9ec940e56",
-            "c1bdad51-c0bd-5bbe-afbd-aa2bbebda898",
-            "2e51ac88-2f51-5e1b-a051-afae3151b141",
-            "67d301a7-66d3-5014-a9d3-04cd68d3033a",
-            "6ea166b7-6da1-5524-a0a1-69dd6fa1684a",
-            "8d9d03e1-8c9d-524e-ab9d-00bb8a9cff28",
-            "4231cf83-4131-5df0-a431-d2a94331d116",
-            "633d959d-623d-540a-a13d-9277603d90e4",
-            "eb5b7da8-ec5b-5f3b-ad5b-80ceee5b8261",
-            "06523751-0552-55be-a452-342b03523298",
-            "946b68f1-936b-575e-a26b-65cb916b6438",
-            "6a97dd46-6b97-5ed9-a897-da206997dbb3",
-            "2829e26b-2729-50d8-aa29-e5912929e3fe",
-            "ec39317c-ed39-530f-ae39-34a2ef393635",
-            "86dbd6c8-87db-585b-a8db-d9ee89dbdb81",
-            "3b9eb965-3a9e-57d2-a99e-b63f389eb4ac",
-            "ea008fa6-eb00-5139-a800-8c80e9008e13",
-            "cf83734b-ce83-51b8-a183-7671d08374de",
-            "15e1fb5c-16e1-5cef-a7e1-fe8218e20015",
-            "9c388cd7-9b38-5b44-ae38-8ffd9d388e6a",
-            "e33937de-e439-5971-a139-34b8e239364b",
-            "b0251ffc-b125-518f-a225-2322b32524b5",
-            "04d27d85-03d2-5bf2-a2d2-7a5f01d278cc",
-            "7bbf94cc-7cbf-565f-adbf-97f27ebf9985"
-          ],
-          "top3": [
-            "38f73226-39f7-53b9-a6f7-2f0037f73093",
-            "515501e9-5055-5056-af54-fec34e54fd30",
-            "3df4f6ac-3ef4-583f-aff4-f9d240f4fb65"
-          ],
-          "rank": null,
-          "contentTerms": ["thing", "writing", "and", "notes"],
-          "stage": "filtered",
-          "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 78,
-          "error": null
-        },
-        {
-          "taskId": "creator:q-063",
-          "tier": "vague",
-          "clusterId": "writing",
-          "clue": "that thing about writing and notes I saved",
-          "targetId": "c2a41421-c1a4-528e-a0a4-10fbbfa40f68",
-          "rankedIds": [
-            "38f73226-39f7-53b9-a6f7-2f0037f73093",
-            "515501e9-5055-5056-af54-fec34e54fd30",
-            "3df4f6ac-3ef4-583f-aff4-f9d240f4fb65",
-            "7061b6cf-6f61-553c-a261-b9f57161b862",
-            "7357d747-7257-55b4-a557-da6d7457d8da",
-            "8e687d82-8f68-5f15-ac68-7a5c8d687bef",
-            "99e0b39b-98e0-5208-abe0-b6c19ae0b52e",
-            "1a21b89e-1b21-5a31-a821-b5781921b70b",
-            "24f7597d-23f7-57ea-a2f7-565721f754c4",
-            "d8ed7864-d9ed-59f7-aaed-7b8adbed7d1d",
-            "84345d13-8334-5b80-a634-603985345ea6",
-            "7389e217-7289-5084-a589-e53d7489e3aa",
-            "35052b78-3605-5d0b-a705-2e9e38053031",
             "1cec1f57-1bec-5dc4-aeec-227d1dec20ea",
-            "6880da99-6780-5906-a680-d7736580d5e0",
             "e8d7561b-e7d7-5488-aad7-5941e9d757ae",
-            "bf59f3e1-be59-524e-ad59-f0bbbc59ef28",
             "f79394be-f893-5651-a593-9198f693932b",
+            "bf59f3e1-be59-524e-ad59-f0bbbc59ef28",
             "cfc8d60d-cec8-547a-adc8-d2e7ccc8d154",
             "e9e44ac6-eae4-5c59-a7e4-47a0e8e44933",
             "1c7ffc79-1b7f-5ae6-aa7f-f953197ff7c0",
@@ -7741,6 +7671,76 @@
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
           "durationMs": 79,
+          "error": null
+        },
+        {
+          "taskId": "creator:q-063",
+          "tier": "vague",
+          "clusterId": "writing",
+          "clue": "that thing about writing and notes I saved",
+          "targetId": "c2a41421-c1a4-528e-a0a4-10fbbfa40f68",
+          "rankedIds": [
+            "38f73226-39f7-53b9-a6f7-2f0037f73093",
+            "515501e9-5055-5056-af54-fec34e54fd30",
+            "3df4f6ac-3ef4-583f-aff4-f9d240f4fb65",
+            "7061b6cf-6f61-553c-a261-b9f57161b862",
+            "7357d747-7257-55b4-a557-da6d7457d8da",
+            "8e687d82-8f68-5f15-ac68-7a5c8d687bef",
+            "99e0b39b-98e0-5208-abe0-b6c19ae0b52e",
+            "1a21b89e-1b21-5a31-a821-b5781921b70b",
+            "24f7597d-23f7-57ea-a2f7-565721f754c4",
+            "d8ed7864-d9ed-59f7-aaed-7b8adbed7d1d",
+            "84345d13-8334-5b80-a634-603985345ea6",
+            "7389e217-7289-5084-a589-e53d7489e3aa",
+            "35052b78-3605-5d0b-a705-2e9e38053031",
+            "6880da99-6780-5906-a680-d7736580d5e0",
+            "1cec1f57-1bec-5dc4-aeec-227d1dec20ea",
+            "e8d7561b-e7d7-5488-aad7-5941e9d757ae",
+            "f79394be-f893-5651-a593-9198f693932b",
+            "bf59f3e1-be59-524e-ad59-f0bbbc59ef28",
+            "cfc8d60d-cec8-547a-adc8-d2e7ccc8d154",
+            "e9e44ac6-eae4-5c59-a7e4-47a0e8e44933",
+            "1c7ffc79-1b7f-5ae6-aa7f-f953197ff7c0",
+            "b0a91809-afa9-5676-aea9-14e3ada91350",
+            "09fe0e45-08fe-5cb2-a7fe-0b1f06fe098c",
+            "4e4a973a-4f4a-58cd-ac4a-94144d4a95a7",
+            "03382d96-0438-5f29-a138-2a7002382c03",
+            "a6ebbf72-a7eb-5105-a4eb-bc4ca5ebbddf",
+            "eb940cc3-ea94-5b30-ad94-0fe9ec940e56",
+            "c1bdad51-c0bd-5bbe-afbd-aa2bbebda898",
+            "2e51ac88-2f51-5e1b-a051-afae3151b141",
+            "67d301a7-66d3-5014-a9d3-04cd68d3033a",
+            "6ea166b7-6da1-5524-a0a1-69dd6fa1684a",
+            "8d9d03e1-8c9d-524e-ab9d-00bb8a9cff28",
+            "4231cf83-4131-5df0-a431-d2a94331d116",
+            "633d959d-623d-540a-a13d-9277603d90e4",
+            "eb5b7da8-ec5b-5f3b-ad5b-80ceee5b8261",
+            "06523751-0552-55be-a452-342b03523298",
+            "946b68f1-936b-575e-a26b-65cb916b6438",
+            "6a97dd46-6b97-5ed9-a897-da206997dbb3",
+            "2829e26b-2729-50d8-aa29-e5912929e3fe",
+            "ec39317c-ed39-530f-ae39-34a2ef393635",
+            "86dbd6c8-87db-585b-a8db-d9ee89dbdb81",
+            "3b9eb965-3a9e-57d2-a99e-b63f389eb4ac",
+            "ea008fa6-eb00-5139-a800-8c80e9008e13",
+            "cf83734b-ce83-51b8-a183-7671d08374de",
+            "15e1fb5c-16e1-5cef-a7e1-fe8218e20015",
+            "9c388cd7-9b38-5b44-ae38-8ffd9d388e6a",
+            "e33937de-e439-5971-a139-34b8e239364b",
+            "b0251ffc-b125-518f-a225-2322b32524b5",
+            "04d27d85-03d2-5bf2-a2d2-7a5f01d278cc",
+            "7bbf94cc-7cbf-565f-adbf-97f27ebf9985"
+          ],
+          "top3": [
+            "38f73226-39f7-53b9-a6f7-2f0037f73093",
+            "515501e9-5055-5056-af54-fec34e54fd30",
+            "3df4f6ac-3ef4-583f-aff4-f9d240f4fb65"
+          ],
+          "rank": null,
+          "contentTerms": ["thing", "writing", "and", "notes"],
+          "stage": "filtered",
+          "detail": "目标不在最终邻域（过滤或未过融合门）",
+          "durationMs": 78,
           "error": null
         },
         {
@@ -7805,7 +7805,7 @@
           "contentTerms": ["thing", "product", "design"],
           "stage": "rank",
           "detail": "目标在邻域第 9（非 Top1）",
-          "durationMs": 27,
+          "durationMs": 25,
           "error": null
         },
         {
@@ -7828,8 +7828,8 @@
             "36c3ea99-35c3-5906-a4c3-e77333c3e5e0",
             "4578b8d4-4678-5a67-a778-bbfa4878bd8d",
             "53c92005-52c9-5e72-a1c9-1cdf50c91b4c",
-            "4f15438d-4e15-51fa-ad15-40674c153ed4",
             "c1bdad51-c0bd-5bbe-afbd-aa2bbebda898",
+            "4f15438d-4e15-51fa-ad15-40674c153ed4",
             "bcc2463b-bbc2-54a8-aec2-4961bdc247ce",
             "715dbdf5-705d-5c62-af5d-bacf6e5db93c",
             "69185b1e-6a18-5cb1-a718-57f86818598b",
@@ -7849,10 +7849,10 @@
             "3df4f6ac-3ef4-583f-aff4-f9d240f4fb65",
             "4231cf83-4131-5df0-a431-d2a94331d116",
             "4ef1479a-4ff1-592d-acf1-44744df14607",
+            "9309e283-9209-50f0-a509-e5a99409e416",
             "eb5b7da8-ec5b-5f3b-ad5b-80ceee5b8261",
             "c0f0369f-bff0-550c-a2f0-39c5c1f03832",
             "7061b6cf-6f61-553c-a261-b9f57161b862",
-            "62f832db-61f8-5148-a4f8-360163f8346e",
             "06523751-0552-55be-a452-342b03523298",
             "946b68f1-936b-575e-a26b-65cb916b6438",
             "495bb30e-4a5b-54a1-a75b-afe8485bb17b",
@@ -7875,7 +7875,7 @@
           "contentTerms": ["thing", "brand", "and", "visual", "identity"],
           "stage": "rank",
           "detail": "目标在邻域第 10（非 Top1）",
-          "durationMs": 102,
+          "durationMs": 96,
           "error": null
         },
         {
@@ -7992,7 +7992,7 @@
           "contentTerms": ["thing", "indie", "marketing"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 15,
+          "durationMs": 14,
           "error": null
         },
         {
@@ -8015,7 +8015,7 @@
           "contentTerms": ["thing", "production"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 2,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -8030,7 +8030,7 @@
           "contentTerms": ["thing", "astronomy", "telescopes"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 5,
+          "durationMs": 4,
           "error": null
         },
         {
@@ -8060,7 +8060,7 @@
           "contentTerms": ["thing", "origami", "cranes"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 5,
+          "durationMs": 4,
           "error": null
         },
         {
@@ -8133,46 +8133,42 @@
           "clue": "the thing about mycology field guides I saved a while ago",
           "targetId": null,
           "rankedIds": [
-            "d3158d85-d215-5bf2-a115-8a5fd01588cc",
-            "eb52bee1-ea52-5d4e-a952-bbbbe852ba28",
             "b4492cf0-b549-5e83-a649-3016b74931a9",
+            "d3158d85-d215-5bf2-a115-8a5fd01588cc",
             "a86ae76e-a96a-5901-a66a-e448a76ae5db",
-            "695931ad-6859-501a-a759-2e8766592cf4",
-            "ad4dd0a3-ac4d-5f10-af4d-d3c9ae4dd236",
             "e8d7561b-e7d7-5488-aad7-5941e9d757ae",
-            "2909a4b1-2809-531e-a709-a18b26099ff8",
-            "c4c52654-c5c5-57e7-a6c5-297ac7c52b0d",
             "86dbd6c8-87db-585b-a8db-d9ee89dbdb81",
-            "c6ab79c7-c5ab-5834-a8ab-7cedc7ab7b5a",
-            "3a753d35-3975-5ba2-a875-3a0f3775387c",
+            "9f7d13a9-9e7d-5216-ad7d-10839c7d0ef0",
+            "f66cf26b-f56c-50d8-a86c-f591f76cf3fe",
             "8ceb992c-8deb-5abf-aeeb-9c528feb9de5",
-            "4da9efb6-4ea9-5149-aba9-ec904ca9ee23",
+            "3a753d35-3975-5ba2-a875-3a0f3775387c",
             "276ead63-266e-5bd0-a96e-b089286eaef6",
             "bdeb7fc6-beeb-5159-abeb-7ca0bceb7e33",
             "bca30dd9-bba3-5c46-aaa3-0ab3b9a30920",
             "5b337590-5c33-5723-ad33-78b65e337a49",
-            "2402bcaa-2502-5e3d-a202-b9842302bb17",
+            "5fe24e37-5ee2-5ca4-a1e2-515d60e24fca",
+            "a7007da5-a600-5c12-a500-7a7fa40078ec",
             "4892ce55-4792-5cc2-a692-cb2f4592c99c",
-            "3e82d1d7-3d82-5044-a082-d4fd3f82d36a",
-            "ef3854ed-ee38-535a-ad38-51c7ec385034",
-            "afbc8c58-b0bc-5deb-a1bc-8f7eb2bc9111",
+            "f0bf9d83-efbf-5bf0-a2bf-a0a9f1bf9f16",
             "adbf4bc1-acbf-5a2e-abbf-489baabf4708",
-            "9d338ef9-9c33-5d66-ab33-8bd39a338a40",
+            "ef3854ed-ee38-535a-ad38-51c7ec385034",
             "353dba93-343d-5900-a73d-bdb9363dbc26",
+            "9d338ef9-9c33-5d66-ab33-8bd39a338a40",
             "8cf06590-8df0-5723-aef0-68b68ff06a49",
             "da2f7948-db2f-5adb-ac2f-7c6edd2f7e01",
-            "4ab52c6e-4bb5-5e01-a8b5-294849b52adb"
+            "4ab52c6e-4bb5-5e01-a8b5-294849b52adb",
+            "e6a50d18-e7a5-5eab-a8a5-103ee9a511d1"
           ],
           "top3": [
+            "b4492cf0-b549-5e83-a649-3016b74931a9",
             "d3158d85-d215-5bf2-a115-8a5fd01588cc",
-            "eb52bee1-ea52-5d4e-a952-bbbbe852ba28",
-            "b4492cf0-b549-5e83-a649-3016b74931a9"
+            "a86ae76e-a96a-5901-a66a-e448a76ae5db"
           ],
           "rank": null,
           "contentTerms": ["thing", "mycology", "field", "guides"],
           "stage": "false_hit",
-          "detail": "负例误命中 Top1=d3158d85-d215-5bf2-a115-8a5fd01588cc（邻域 29）",
-          "durationMs": 31,
+          "detail": "负例误命中 Top1=b4492cf0-b549-5e83-a649-3016b74931a9（邻域 25）",
+          "durationMs": 32,
           "error": null
         },
         {
@@ -8187,7 +8183,7 @@
           "contentTerms": ["thing", "sailing", "knots"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 6,
+          "durationMs": 5,
           "error": null
         },
         {
@@ -8217,7 +8213,7 @@
           "contentTerms": ["thing", "home", "brewing", "recipes"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 7,
+          "durationMs": 6,
           "error": null
         },
         {
@@ -8251,10 +8247,10 @@
         "positive": {
           "n": 68,
           "recallAt1": 0.029411764705882353,
-          "recallAt3": 0.1323529411764706,
+          "recallAt3": 0.14705882352941177,
           "recallAt5": 0.23529411764705882,
-          "mrr": 0.12167204524115353,
-          "meanRank": 15.054054054054054,
+          "mrr": 0.12289753543723198,
+          "meanRank": 15.027027027027026,
           "missRate": 0.45588235294117646
         },
         "negativeFalseHitRate": 0.16666666666666666,
@@ -8281,10 +8277,10 @@
           "vague": {
             "n": 38,
             "recallAt1": 0,
-            "recallAt3": 0.02631578947368421,
+            "recallAt3": 0.05263157894736842,
             "recallAt5": 0.05263157894736842,
-            "mrr": 0.039279003636588775,
-            "meanRank": 20.5,
+            "mrr": 0.04147198609272912,
+            "meanRank": 20.428571428571427,
             "missRate": 0.631578947368421
           },
           "negative": {
@@ -8323,10 +8319,10 @@
           "video-prod": {
             "n": 19,
             "recallAt1": 0,
-            "recallAt3": 0.10526315789473684,
+            "recallAt3": 0.15789473684210525,
             "recallAt5": 0.3157894736842105,
-            "mrr": 0.12107577502314343,
-            "meanRank": 11.75,
+            "mrr": 0.12546173993542414,
+            "meanRank": 11.666666666666666,
             "missRate": 0.3684210526315789
           },
           "writing": {
@@ -8379,7 +8375,7 @@
           "contentTerms": ["lighting", "setups"],
           "stage": "rank",
           "detail": "目标在邻域第 7（非 Top1）",
-          "durationMs": 54,
+          "durationMs": 39,
           "error": null
         },
         {
@@ -8443,8 +8439,8 @@
           "targetId": "933abc3a-943a-5dcd-a13a-b914923abaa7",
           "rankedIds": [
             "d856945d-d756-52ca-a656-9137d5568fa4",
-            "0682fbdc-0782-5d6f-a882-ff0209830095",
             "8e0f2b7a-8f0f-5d0d-ac0f-28548d0f29e7",
+            "0682fbdc-0782-5d6f-a882-ff0209830095",
             "933abc3a-943a-5dcd-a13a-b914923abaa7",
             "c3c06238-c4c0-53cb-a5c0-655ec6c066f1",
             "0eff6a8e-0fff-5c21-acff-67680dff68fb",
@@ -8458,8 +8454,8 @@
           ],
           "top3": [
             "d856945d-d756-52ca-a656-9137d5568fa4",
-            "0682fbdc-0782-5d6f-a882-ff0209830095",
-            "8e0f2b7a-8f0f-5d0d-ac0f-28548d0f29e7"
+            "8e0f2b7a-8f0f-5d0d-ac0f-28548d0f29e7",
+            "0682fbdc-0782-5d6f-a882-ff0209830095"
           ],
           "rank": 4,
           "contentTerms": ["typography", "pairing"],
@@ -8520,7 +8516,7 @@
           "contentTerms": ["plain", "language"],
           "stage": "rank",
           "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 15,
+          "durationMs": 12,
           "error": null
         },
         {
@@ -8588,14 +8584,14 @@
             "4333252f-4233-539c-a533-2855443326c2",
             "a5891d98-a689-5f2b-a789-20bea8892251",
             "c36395fa-c463-578d-a163-92d4c2639467",
-            "6d43254d-6c43-53ba-ab43-22276a432094",
             "e5e5f6fe-e6e5-5891-a3e5-f3d8e4e5f56b",
+            "6d43254d-6c43-53ba-ab43-22276a432094",
             "385eed00-395e-5e93-aa5e-f0263b5ef1b9",
             "f2af70c1-f1af-5f2e-a0af-6d9befaf6c08",
             "7af4683c-7bf4-59cf-acf4-6b627df46cf5",
             "395ec004-3a5e-5197-ab5e-c32a3c5ec4bd",
-            "f06dac49-ef6d-5ab6-ae6d-a923ed6da790",
             "3f3d3292-403d-5425-ad3d-2f6c3e3d30ff",
+            "f06dac49-ef6d-5ab6-ae6d-a923ed6da790",
             "5cb0b397-5bb0-5204-aeb0-b6bd5db0b52a",
             "4e067724-4f06-58b7-a006-7a4a51067bdd",
             "09584f55-0858-5dc2-a758-4c2f06584a9c",
@@ -8614,7 +8610,7 @@
           "contentTerms": ["color", "systems"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 5,
+          "durationMs": 4,
           "error": null
         },
         {
@@ -8684,7 +8680,7 @@
           "contentTerms": ["covering", "editing", "rhythm", "in", "production"],
           "stage": "rank",
           "detail": "目标在邻域第 5（非 Top1）",
-          "durationMs": 120,
+          "durationMs": 123,
           "error": null
         },
         {
@@ -8754,7 +8750,7 @@
           "contentTerms": ["covering", "lighting", "setups", "in", "production"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 115,
+          "durationMs": 122,
           "error": null
         },
         {
@@ -8824,7 +8820,7 @@
           "contentTerms": ["covering", "plain", "language", "in", "writing", "and", "notes"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 192,
+          "durationMs": 201,
           "error": null
         },
         {
@@ -8903,7 +8899,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 206,
+          "durationMs": 213,
           "error": null
         },
         {
@@ -8923,8 +8919,8 @@
             "8e0f2b7a-8f0f-5d0d-ac0f-28548d0f29e7",
             "c3c06238-c4c0-53cb-a5c0-655ec6c066f1",
             "933abc3a-943a-5dcd-a13a-b914923abaa7",
-            "0eff6a8e-0fff-5c21-acff-67680dff68fb",
             "2efce92d-2dfc-579a-acfc-e6072bfce474",
+            "0eff6a8e-0fff-5c21-acff-67680dff68fb",
             "041ac646-051a-57d9-a21a-c320031ac4b3",
             "31db44fb-30db-5368-a3db-482132db468e",
             "3f3d3292-403d-5425-ad3d-2f6c3e3d30ff",
@@ -8982,7 +8978,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 8（非 Top1）",
-          "durationMs": 205,
+          "durationMs": 216,
           "error": null
         },
         {
@@ -9014,8 +9010,8 @@
             "10da1d5c-11da-5eef-a2da-208213da2215",
             "a8dcef5e-a9dc-50f1-a6dc-ec38a7dcedcb",
             "74c153b0-75c1-5543-a6c1-56d677c15869",
-            "933abc3a-943a-5dcd-a13a-b914923abaa7",
             "8b77f495-8a77-5302-a977-f16f8877efdc",
+            "933abc3a-943a-5dcd-a13a-b914923abaa7",
             "617c0034-627c-51c7-a37c-035a647c04ed",
             "2efce92d-2dfc-579a-acfc-e6072bfce474",
             "156fe096-166f-5229-a36f-dd70146fdf03",
@@ -9052,7 +9048,7 @@
           "contentTerms": ["covering", "dark", "patterns", "in", "product", "design"],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 203,
+          "durationMs": 215,
           "error": null
         },
         {
@@ -9122,7 +9118,7 @@
           "contentTerms": ["covering", "audio", "cleanup", "in", "production"],
           "stage": "rank",
           "detail": "目标在邻域第 3（非 Top1）",
-          "durationMs": 118,
+          "durationMs": 122,
           "error": null
         },
         {
@@ -9142,8 +9138,8 @@
             "e11f5021-e01f-5e8e-af1f-4cfbde1f4b68",
             "5a3c957b-593c-53e8-ac3c-98a15b3c970e",
             "756043d8-7660-556b-a760-46fe78604891",
-            "2f23d257-2e23-50c4-a123-d57d3023d3ea",
             "b6ee022a-b7ee-53bd-a4ed-ff04b5ee0097",
+            "2f23d257-2e23-50c4-a123-d57d3023d3ea",
             "19cf4dea-1acf-5f7d-a7cf-4ac418cf4c57",
             "09584f55-0858-5dc2-a758-4c2f06584a9c",
             "6c8f76f2-6d8f-5885-aa8f-73cc6b8f755f",
@@ -9192,7 +9188,7 @@
           "contentTerms": ["covering", "editing", "passes", "in", "writing", "and", "notes"],
           "stage": "rank",
           "detail": "目标在邻域第 8（非 Top1）",
-          "durationMs": 197,
+          "durationMs": 201,
           "error": null
         },
         {
@@ -9352,8 +9348,8 @@
             "8e0f2b7a-8f0f-5d0d-ac0f-28548d0f29e7",
             "c3c06238-c4c0-53cb-a5c0-655ec6c066f1",
             "933abc3a-943a-5dcd-a13a-b914923abaa7",
-            "0eff6a8e-0fff-5c21-acff-67680dff68fb",
             "2efce92d-2dfc-579a-acfc-e6072bfce474",
+            "0eff6a8e-0fff-5c21-acff-67680dff68fb",
             "041ac646-051a-57d9-a21a-c320031ac4b3",
             "31db44fb-30db-5368-a3db-482132db468e",
             "3f3d3292-403d-5425-ad3d-2f6c3e3d30ff",
@@ -9411,7 +9407,7 @@
           ],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 213,
+          "durationMs": 218,
           "error": null
         },
         {
@@ -9490,7 +9486,7 @@
           ],
           "stage": "ok",
           "detail": "目标 Top1",
-          "durationMs": 192,
+          "durationMs": 190,
           "error": null
         },
         {
@@ -9560,7 +9556,7 @@
           "contentTerms": ["during", "quiet", "mornings", "at", "home"],
           "stage": "rank",
           "detail": "目标在邻域第 26（非 Top1）",
-          "durationMs": 132,
+          "durationMs": 129,
           "error": null
         },
         {
@@ -9575,7 +9571,7 @@
           "contentTerms": ["after", "rearranged", "desk"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 4,
+          "durationMs": 5,
           "error": null
         },
         {
@@ -9601,9 +9597,9 @@
             "bc10a9eb-bb10-5858-ae10-ad11bd10ab7e",
             "e2f30814-e3f3-59a7-a4f3-0b3ae5f30ccd",
             "978cbff2-988c-5185-a58c-bccc968cbe5f",
-            "10da1d5c-11da-5eef-a2da-208213da2215",
             "18b20ca4-19b2-5e37-aab2-0fca1bb2115d",
             "8787136d-8687-51da-a587-104784870eb4",
+            "10da1d5c-11da-5eef-a2da-208213da2215",
             "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
             "51d24746-52d2-58d9-afd2-442050d245b3",
             "65addafa-66ad-5c8d-a3ad-d7d464add967",
@@ -9619,12 +9615,12 @@
             "889525e1-8795-544e-a695-22bb85952128",
             "0ddebaaf-0cde-591c-afde-bdd50edebc42",
             "b31c6b87-b21c-59f4-a51c-6eadb41c6d1a",
-            "3f28444e-4028-55e1-ad28-41283e2842bb",
             "83699521-8269-538e-a169-91fb80699068",
             "c9015727-c801-5594-ab01-5a4dca0158ba",
             "966c1013-956c-5e80-a86c-1339976c11a6",
             "6c7a88ae-6d7a-5a41-aa7a-85886b7a871b",
             "c550048b-c450-52f8-a750-07b1c650061e",
+            "3f28444e-4028-55e1-ad28-41283e2842bb",
             "91199629-9019-5496-af19-93038e199170",
             "203b6da0-213b-5f33-a23b-70c6233b7259",
             "7e3e0461-7d3e-52ce-ac3e-013b7b3dffa8",
@@ -9715,7 +9711,7 @@
           "contentTerms": ["during", "quiet", "mornings", "at", "home"],
           "stage": "rank",
           "detail": "目标在邻域第 11（非 Top1）",
-          "durationMs": 130,
+          "durationMs": 129,
           "error": null
         },
         {
@@ -9741,9 +9737,9 @@
             "bc10a9eb-bb10-5858-ae10-ad11bd10ab7e",
             "e2f30814-e3f3-59a7-a4f3-0b3ae5f30ccd",
             "978cbff2-988c-5185-a58c-bccc968cbe5f",
-            "10da1d5c-11da-5eef-a2da-208213da2215",
             "18b20ca4-19b2-5e37-aab2-0fca1bb2115d",
             "8787136d-8687-51da-a587-104784870eb4",
+            "10da1d5c-11da-5eef-a2da-208213da2215",
             "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
             "51d24746-52d2-58d9-afd2-442050d245b3",
             "65addafa-66ad-5c8d-a3ad-d7d464add967",
@@ -9759,12 +9755,12 @@
             "889525e1-8795-544e-a695-22bb85952128",
             "0ddebaaf-0cde-591c-afde-bdd50edebc42",
             "b31c6b87-b21c-59f4-a51c-6eadb41c6d1a",
-            "3f28444e-4028-55e1-ad28-41283e2842bb",
             "83699521-8269-538e-a169-91fb80699068",
             "c9015727-c801-5594-ab01-5a4dca0158ba",
             "966c1013-956c-5e80-a86c-1339976c11a6",
             "6c7a88ae-6d7a-5a41-aa7a-85886b7a871b",
             "c550048b-c450-52f8-a750-07b1c650061e",
+            "3f28444e-4028-55e1-ad28-41283e2842bb",
             "91199629-9019-5496-af19-93038e199170",
             "203b6da0-213b-5f33-a23b-70c6233b7259",
             "7e3e0461-7d3e-52ce-ac3e-013b7b3dffa8",
@@ -9785,7 +9781,7 @@
           "contentTerms": ["when", "we", "shot", "on", "location"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 96,
+          "durationMs": 93,
           "error": null
         },
         {
@@ -9811,9 +9807,9 @@
             "bc10a9eb-bb10-5858-ae10-ad11bd10ab7e",
             "e2f30814-e3f3-59a7-a4f3-0b3ae5f30ccd",
             "978cbff2-988c-5185-a58c-bccc968cbe5f",
-            "10da1d5c-11da-5eef-a2da-208213da2215",
             "18b20ca4-19b2-5e37-aab2-0fca1bb2115d",
             "8787136d-8687-51da-a587-104784870eb4",
+            "10da1d5c-11da-5eef-a2da-208213da2215",
             "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
             "51d24746-52d2-58d9-afd2-442050d245b3",
             "65addafa-66ad-5c8d-a3ad-d7d464add967",
@@ -9829,12 +9825,12 @@
             "889525e1-8795-544e-a695-22bb85952128",
             "0ddebaaf-0cde-591c-afde-bdd50edebc42",
             "b31c6b87-b21c-59f4-a51c-6eadb41c6d1a",
-            "3f28444e-4028-55e1-ad28-41283e2842bb",
             "83699521-8269-538e-a169-91fb80699068",
             "c9015727-c801-5594-ab01-5a4dca0158ba",
             "966c1013-956c-5e80-a86c-1339976c11a6",
             "6c7a88ae-6d7a-5a41-aa7a-85886b7a871b",
             "c550048b-c450-52f8-a750-07b1c650061e",
+            "3f28444e-4028-55e1-ad28-41283e2842bb",
             "91199629-9019-5496-af19-93038e199170",
             "203b6da0-213b-5f33-a23b-70c6233b7259",
             "7e3e0461-7d3e-52ce-ac3e-013b7b3dffa8",
@@ -9855,7 +9851,7 @@
           "contentTerms": ["when", "we", "shot", "on", "location"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 94,
+          "durationMs": 93,
           "error": null
         },
         {
@@ -9870,7 +9866,7 @@
           "contentTerms": ["after", "rearranged", "desk"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 4,
+          "durationMs": 5,
           "error": null
         },
         {
@@ -9882,15 +9878,15 @@
           "rankedIds": [
             "d856945d-d756-52ca-a656-9137d5568fa4",
             "bc10a9eb-bb10-5858-ae10-ad11bd10ab7e",
-            "4e067724-4f06-58b7-a006-7a4a51067bdd",
             "a8dcef5e-a9dc-50f1-a6dc-ec38a7dcedcb",
+            "4e067724-4f06-58b7-a006-7a4a51067bdd",
             "8b77f495-8a77-5302-a977-f16f8877efdc",
             "3f28444e-4028-55e1-ad28-41283e2842bb",
             "4ac81fe3-49c8-5e50-acc8-23094bc82176",
-            "20d72d10-21d7-5ea3-a2d7-303623d731c9",
-            "853d4d14-863d-5ea7-a73d-503a883d51cd",
             "617c0034-627c-51c7-a37c-035a647c04ed",
             "156fe096-166f-5229-a36f-dd70146fdf03",
+            "20d72d10-21d7-5ea3-a2d7-303623d731c9",
+            "853d4d14-863d-5ea7-a73d-503a883d51cd",
             "e7cd803a-e8cd-51cd-a5cd-7d14e6cd7ea7",
             "6668e4ef-6568-535c-a868-e8156768e682",
             "3aadde39-39ad-5ca6-a8ad-db1337add980",
@@ -9918,29 +9914,29 @@
             "18b20ca4-19b2-5e37-aab2-0fca1bb2115d",
             "8235d411-8135-527e-a035-d0eb7f35cf58",
             "2b2011e8-2c20-537b-ad20-150e2e2016a1",
-            "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
             "889525e1-8795-544e-a695-22bb85952128",
             "9f234c2c-a023-5dbf-a123-4f52a22350e5",
             "b78a3e91-b68a-5cfe-a58a-3b6bb48a39d8",
             "78bbc666-79bb-57f9-a6bb-c34077bbc4d3",
             "203b6da0-213b-5f33-a23b-70c6233b7259",
             "65addafa-66ad-5c8d-a3ad-d7d464add967",
+            "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
+            "933abc3a-943a-5dcd-a13a-b914923abaa7",
             "38dc03af-37dc-521c-aadc-06d539dc0542",
             "6b59d8cf-6a59-573c-ad59-dbf56c59da62",
             "289bea5b-279b-58c8-aa9b-ed81299bebee",
-            "0682fbdc-0782-5d6f-a882-ff0209830095",
-            "b5db8ef3-b4db-5d60-a7db-9219b6db9086"
+            "0682fbdc-0782-5d6f-a882-ff0209830095"
           ],
           "top3": [
             "d856945d-d756-52ca-a656-9137d5568fa4",
             "bc10a9eb-bb10-5858-ae10-ad11bd10ab7e",
-            "4e067724-4f06-58b7-a006-7a4a51067bdd"
+            "a8dcef5e-a9dc-50f1-a6dc-ec38a7dcedcb"
           ],
           "rank": null,
           "contentTerms": ["back", "in", "studio", "week"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 78,
+          "durationMs": 74,
           "error": null
         },
         {
@@ -10010,7 +10006,7 @@
           "contentTerms": ["during", "quiet", "mornings", "at", "home"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 131,
+          "durationMs": 130,
           "error": null
         },
         {
@@ -10080,7 +10076,7 @@
           "contentTerms": ["during", "quiet", "mornings", "at", "home"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 129,
+          "durationMs": 128,
           "error": null
         },
         {
@@ -10092,15 +10088,15 @@
           "rankedIds": [
             "d856945d-d756-52ca-a656-9137d5568fa4",
             "bc10a9eb-bb10-5858-ae10-ad11bd10ab7e",
-            "4e067724-4f06-58b7-a006-7a4a51067bdd",
             "a8dcef5e-a9dc-50f1-a6dc-ec38a7dcedcb",
+            "4e067724-4f06-58b7-a006-7a4a51067bdd",
             "8b77f495-8a77-5302-a977-f16f8877efdc",
             "3f28444e-4028-55e1-ad28-41283e2842bb",
             "4ac81fe3-49c8-5e50-acc8-23094bc82176",
-            "20d72d10-21d7-5ea3-a2d7-303623d731c9",
-            "853d4d14-863d-5ea7-a73d-503a883d51cd",
             "617c0034-627c-51c7-a37c-035a647c04ed",
             "156fe096-166f-5229-a36f-dd70146fdf03",
+            "20d72d10-21d7-5ea3-a2d7-303623d731c9",
+            "853d4d14-863d-5ea7-a73d-503a883d51cd",
             "e7cd803a-e8cd-51cd-a5cd-7d14e6cd7ea7",
             "6668e4ef-6568-535c-a868-e8156768e682",
             "3aadde39-39ad-5ca6-a8ad-db1337add980",
@@ -10128,29 +10124,29 @@
             "18b20ca4-19b2-5e37-aab2-0fca1bb2115d",
             "8235d411-8135-527e-a035-d0eb7f35cf58",
             "2b2011e8-2c20-537b-ad20-150e2e2016a1",
-            "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
             "889525e1-8795-544e-a695-22bb85952128",
             "9f234c2c-a023-5dbf-a123-4f52a22350e5",
             "b78a3e91-b68a-5cfe-a58a-3b6bb48a39d8",
             "78bbc666-79bb-57f9-a6bb-c34077bbc4d3",
             "203b6da0-213b-5f33-a23b-70c6233b7259",
             "65addafa-66ad-5c8d-a3ad-d7d464add967",
+            "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
+            "933abc3a-943a-5dcd-a13a-b914923abaa7",
             "38dc03af-37dc-521c-aadc-06d539dc0542",
             "6b59d8cf-6a59-573c-ad59-dbf56c59da62",
             "289bea5b-279b-58c8-aa9b-ed81299bebee",
-            "0682fbdc-0782-5d6f-a882-ff0209830095",
-            "b5db8ef3-b4db-5d60-a7db-9219b6db9086"
+            "0682fbdc-0782-5d6f-a882-ff0209830095"
           ],
           "top3": [
             "d856945d-d756-52ca-a656-9137d5568fa4",
             "bc10a9eb-bb10-5858-ae10-ad11bd10ab7e",
-            "4e067724-4f06-58b7-a006-7a4a51067bdd"
+            "a8dcef5e-a9dc-50f1-a6dc-ec38a7dcedcb"
           ],
           "rank": null,
           "contentTerms": ["back", "in", "studio", "week"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 91,
+          "durationMs": 75,
           "error": null
         },
         {
@@ -10220,7 +10216,7 @@
           "contentTerms": ["during", "quiet", "mornings", "at", "home"],
           "stage": "rank",
           "detail": "目标在邻域第 17（非 Top1）",
-          "durationMs": 140,
+          "durationMs": 131,
           "error": null
         },
         {
@@ -10232,15 +10228,15 @@
           "rankedIds": [
             "d856945d-d756-52ca-a656-9137d5568fa4",
             "bc10a9eb-bb10-5858-ae10-ad11bd10ab7e",
-            "4e067724-4f06-58b7-a006-7a4a51067bdd",
             "a8dcef5e-a9dc-50f1-a6dc-ec38a7dcedcb",
+            "4e067724-4f06-58b7-a006-7a4a51067bdd",
             "8b77f495-8a77-5302-a977-f16f8877efdc",
             "3f28444e-4028-55e1-ad28-41283e2842bb",
             "4ac81fe3-49c8-5e50-acc8-23094bc82176",
-            "20d72d10-21d7-5ea3-a2d7-303623d731c9",
-            "853d4d14-863d-5ea7-a73d-503a883d51cd",
             "617c0034-627c-51c7-a37c-035a647c04ed",
             "156fe096-166f-5229-a36f-dd70146fdf03",
+            "20d72d10-21d7-5ea3-a2d7-303623d731c9",
+            "853d4d14-863d-5ea7-a73d-503a883d51cd",
             "e7cd803a-e8cd-51cd-a5cd-7d14e6cd7ea7",
             "6668e4ef-6568-535c-a868-e8156768e682",
             "3aadde39-39ad-5ca6-a8ad-db1337add980",
@@ -10268,29 +10264,29 @@
             "18b20ca4-19b2-5e37-aab2-0fca1bb2115d",
             "8235d411-8135-527e-a035-d0eb7f35cf58",
             "2b2011e8-2c20-537b-ad20-150e2e2016a1",
-            "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
             "889525e1-8795-544e-a695-22bb85952128",
             "9f234c2c-a023-5dbf-a123-4f52a22350e5",
             "b78a3e91-b68a-5cfe-a58a-3b6bb48a39d8",
             "78bbc666-79bb-57f9-a6bb-c34077bbc4d3",
             "203b6da0-213b-5f33-a23b-70c6233b7259",
             "65addafa-66ad-5c8d-a3ad-d7d464add967",
+            "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
+            "933abc3a-943a-5dcd-a13a-b914923abaa7",
             "38dc03af-37dc-521c-aadc-06d539dc0542",
             "6b59d8cf-6a59-573c-ad59-dbf56c59da62",
             "289bea5b-279b-58c8-aa9b-ed81299bebee",
-            "0682fbdc-0782-5d6f-a882-ff0209830095",
-            "b5db8ef3-b4db-5d60-a7db-9219b6db9086"
+            "0682fbdc-0782-5d6f-a882-ff0209830095"
           ],
           "top3": [
             "d856945d-d756-52ca-a656-9137d5568fa4",
             "bc10a9eb-bb10-5858-ae10-ad11bd10ab7e",
-            "4e067724-4f06-58b7-a006-7a4a51067bdd"
+            "a8dcef5e-a9dc-50f1-a6dc-ec38a7dcedcb"
           ],
           "rank": 30,
           "contentTerms": ["back", "in", "studio", "week"],
           "stage": "rank",
           "detail": "目标在邻域第 30（非 Top1）",
-          "durationMs": 74,
+          "durationMs": 75,
           "error": null
         },
         {
@@ -10302,15 +10298,15 @@
           "rankedIds": [
             "d856945d-d756-52ca-a656-9137d5568fa4",
             "bc10a9eb-bb10-5858-ae10-ad11bd10ab7e",
-            "4e067724-4f06-58b7-a006-7a4a51067bdd",
             "a8dcef5e-a9dc-50f1-a6dc-ec38a7dcedcb",
+            "4e067724-4f06-58b7-a006-7a4a51067bdd",
             "8b77f495-8a77-5302-a977-f16f8877efdc",
             "3f28444e-4028-55e1-ad28-41283e2842bb",
             "4ac81fe3-49c8-5e50-acc8-23094bc82176",
-            "20d72d10-21d7-5ea3-a2d7-303623d731c9",
-            "853d4d14-863d-5ea7-a73d-503a883d51cd",
             "617c0034-627c-51c7-a37c-035a647c04ed",
             "156fe096-166f-5229-a36f-dd70146fdf03",
+            "20d72d10-21d7-5ea3-a2d7-303623d731c9",
+            "853d4d14-863d-5ea7-a73d-503a883d51cd",
             "e7cd803a-e8cd-51cd-a5cd-7d14e6cd7ea7",
             "6668e4ef-6568-535c-a868-e8156768e682",
             "3aadde39-39ad-5ca6-a8ad-db1337add980",
@@ -10338,29 +10334,29 @@
             "18b20ca4-19b2-5e37-aab2-0fca1bb2115d",
             "8235d411-8135-527e-a035-d0eb7f35cf58",
             "2b2011e8-2c20-537b-ad20-150e2e2016a1",
-            "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
             "889525e1-8795-544e-a695-22bb85952128",
             "9f234c2c-a023-5dbf-a123-4f52a22350e5",
             "b78a3e91-b68a-5cfe-a58a-3b6bb48a39d8",
             "78bbc666-79bb-57f9-a6bb-c34077bbc4d3",
             "203b6da0-213b-5f33-a23b-70c6233b7259",
             "65addafa-66ad-5c8d-a3ad-d7d464add967",
+            "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
+            "933abc3a-943a-5dcd-a13a-b914923abaa7",
             "38dc03af-37dc-521c-aadc-06d539dc0542",
             "6b59d8cf-6a59-573c-ad59-dbf56c59da62",
             "289bea5b-279b-58c8-aa9b-ed81299bebee",
-            "0682fbdc-0782-5d6f-a882-ff0209830095",
-            "b5db8ef3-b4db-5d60-a7db-9219b6db9086"
+            "0682fbdc-0782-5d6f-a882-ff0209830095"
           ],
           "top3": [
             "d856945d-d756-52ca-a656-9137d5568fa4",
             "bc10a9eb-bb10-5858-ae10-ad11bd10ab7e",
-            "4e067724-4f06-58b7-a006-7a4a51067bdd"
+            "a8dcef5e-a9dc-50f1-a6dc-ec38a7dcedcb"
           ],
           "rank": null,
           "contentTerms": ["back", "in", "studio", "week"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 77,
+          "durationMs": 75,
           "error": null
         },
         {
@@ -10402,15 +10398,15 @@
           "rankedIds": [
             "d856945d-d756-52ca-a656-9137d5568fa4",
             "bc10a9eb-bb10-5858-ae10-ad11bd10ab7e",
-            "4e067724-4f06-58b7-a006-7a4a51067bdd",
             "a8dcef5e-a9dc-50f1-a6dc-ec38a7dcedcb",
+            "4e067724-4f06-58b7-a006-7a4a51067bdd",
             "8b77f495-8a77-5302-a977-f16f8877efdc",
             "3f28444e-4028-55e1-ad28-41283e2842bb",
             "4ac81fe3-49c8-5e50-acc8-23094bc82176",
-            "20d72d10-21d7-5ea3-a2d7-303623d731c9",
-            "853d4d14-863d-5ea7-a73d-503a883d51cd",
             "617c0034-627c-51c7-a37c-035a647c04ed",
             "156fe096-166f-5229-a36f-dd70146fdf03",
+            "20d72d10-21d7-5ea3-a2d7-303623d731c9",
+            "853d4d14-863d-5ea7-a73d-503a883d51cd",
             "e7cd803a-e8cd-51cd-a5cd-7d14e6cd7ea7",
             "6668e4ef-6568-535c-a868-e8156768e682",
             "3aadde39-39ad-5ca6-a8ad-db1337add980",
@@ -10438,29 +10434,29 @@
             "18b20ca4-19b2-5e37-aab2-0fca1bb2115d",
             "8235d411-8135-527e-a035-d0eb7f35cf58",
             "2b2011e8-2c20-537b-ad20-150e2e2016a1",
-            "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
             "889525e1-8795-544e-a695-22bb85952128",
             "9f234c2c-a023-5dbf-a123-4f52a22350e5",
             "b78a3e91-b68a-5cfe-a58a-3b6bb48a39d8",
             "78bbc666-79bb-57f9-a6bb-c34077bbc4d3",
             "203b6da0-213b-5f33-a23b-70c6233b7259",
             "65addafa-66ad-5c8d-a3ad-d7d464add967",
+            "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
+            "933abc3a-943a-5dcd-a13a-b914923abaa7",
             "38dc03af-37dc-521c-aadc-06d539dc0542",
             "6b59d8cf-6a59-573c-ad59-dbf56c59da62",
             "289bea5b-279b-58c8-aa9b-ed81299bebee",
-            "0682fbdc-0782-5d6f-a882-ff0209830095",
-            "b5db8ef3-b4db-5d60-a7db-9219b6db9086"
+            "0682fbdc-0782-5d6f-a882-ff0209830095"
           ],
           "top3": [
             "d856945d-d756-52ca-a656-9137d5568fa4",
             "bc10a9eb-bb10-5858-ae10-ad11bd10ab7e",
-            "4e067724-4f06-58b7-a006-7a4a51067bdd"
+            "a8dcef5e-a9dc-50f1-a6dc-ec38a7dcedcb"
           ],
           "rank": null,
           "contentTerms": ["back", "in", "studio", "week"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 75,
+          "durationMs": 74,
           "error": null
         },
         {
@@ -10472,15 +10468,15 @@
           "rankedIds": [
             "d856945d-d756-52ca-a656-9137d5568fa4",
             "bc10a9eb-bb10-5858-ae10-ad11bd10ab7e",
-            "4e067724-4f06-58b7-a006-7a4a51067bdd",
             "a8dcef5e-a9dc-50f1-a6dc-ec38a7dcedcb",
+            "4e067724-4f06-58b7-a006-7a4a51067bdd",
             "8b77f495-8a77-5302-a977-f16f8877efdc",
             "3f28444e-4028-55e1-ad28-41283e2842bb",
             "4ac81fe3-49c8-5e50-acc8-23094bc82176",
-            "20d72d10-21d7-5ea3-a2d7-303623d731c9",
-            "853d4d14-863d-5ea7-a73d-503a883d51cd",
             "617c0034-627c-51c7-a37c-035a647c04ed",
             "156fe096-166f-5229-a36f-dd70146fdf03",
+            "20d72d10-21d7-5ea3-a2d7-303623d731c9",
+            "853d4d14-863d-5ea7-a73d-503a883d51cd",
             "e7cd803a-e8cd-51cd-a5cd-7d14e6cd7ea7",
             "6668e4ef-6568-535c-a868-e8156768e682",
             "3aadde39-39ad-5ca6-a8ad-db1337add980",
@@ -10508,29 +10504,29 @@
             "18b20ca4-19b2-5e37-aab2-0fca1bb2115d",
             "8235d411-8135-527e-a035-d0eb7f35cf58",
             "2b2011e8-2c20-537b-ad20-150e2e2016a1",
-            "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
             "889525e1-8795-544e-a695-22bb85952128",
             "9f234c2c-a023-5dbf-a123-4f52a22350e5",
             "b78a3e91-b68a-5cfe-a58a-3b6bb48a39d8",
             "78bbc666-79bb-57f9-a6bb-c34077bbc4d3",
             "203b6da0-213b-5f33-a23b-70c6233b7259",
             "65addafa-66ad-5c8d-a3ad-d7d464add967",
+            "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
+            "933abc3a-943a-5dcd-a13a-b914923abaa7",
             "38dc03af-37dc-521c-aadc-06d539dc0542",
             "6b59d8cf-6a59-573c-ad59-dbf56c59da62",
             "289bea5b-279b-58c8-aa9b-ed81299bebee",
-            "0682fbdc-0782-5d6f-a882-ff0209830095",
-            "b5db8ef3-b4db-5d60-a7db-9219b6db9086"
+            "0682fbdc-0782-5d6f-a882-ff0209830095"
           ],
           "top3": [
             "d856945d-d756-52ca-a656-9137d5568fa4",
             "bc10a9eb-bb10-5858-ae10-ad11bd10ab7e",
-            "4e067724-4f06-58b7-a006-7a4a51067bdd"
+            "a8dcef5e-a9dc-50f1-a6dc-ec38a7dcedcb"
           ],
           "rank": 18,
           "contentTerms": ["back", "in", "studio", "week"],
           "stage": "rank",
           "detail": "目标在邻域第 18（非 Top1）",
-          "durationMs": 75,
+          "durationMs": 74,
           "error": null
         },
         {
@@ -10542,15 +10538,15 @@
           "rankedIds": [
             "d856945d-d756-52ca-a656-9137d5568fa4",
             "bc10a9eb-bb10-5858-ae10-ad11bd10ab7e",
-            "4e067724-4f06-58b7-a006-7a4a51067bdd",
             "a8dcef5e-a9dc-50f1-a6dc-ec38a7dcedcb",
+            "4e067724-4f06-58b7-a006-7a4a51067bdd",
             "8b77f495-8a77-5302-a977-f16f8877efdc",
             "3f28444e-4028-55e1-ad28-41283e2842bb",
             "4ac81fe3-49c8-5e50-acc8-23094bc82176",
-            "20d72d10-21d7-5ea3-a2d7-303623d731c9",
-            "853d4d14-863d-5ea7-a73d-503a883d51cd",
             "617c0034-627c-51c7-a37c-035a647c04ed",
             "156fe096-166f-5229-a36f-dd70146fdf03",
+            "20d72d10-21d7-5ea3-a2d7-303623d731c9",
+            "853d4d14-863d-5ea7-a73d-503a883d51cd",
             "e7cd803a-e8cd-51cd-a5cd-7d14e6cd7ea7",
             "6668e4ef-6568-535c-a868-e8156768e682",
             "3aadde39-39ad-5ca6-a8ad-db1337add980",
@@ -10578,29 +10574,29 @@
             "18b20ca4-19b2-5e37-aab2-0fca1bb2115d",
             "8235d411-8135-527e-a035-d0eb7f35cf58",
             "2b2011e8-2c20-537b-ad20-150e2e2016a1",
-            "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
             "889525e1-8795-544e-a695-22bb85952128",
             "9f234c2c-a023-5dbf-a123-4f52a22350e5",
             "b78a3e91-b68a-5cfe-a58a-3b6bb48a39d8",
             "78bbc666-79bb-57f9-a6bb-c34077bbc4d3",
             "203b6da0-213b-5f33-a23b-70c6233b7259",
             "65addafa-66ad-5c8d-a3ad-d7d464add967",
+            "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
+            "933abc3a-943a-5dcd-a13a-b914923abaa7",
             "38dc03af-37dc-521c-aadc-06d539dc0542",
             "6b59d8cf-6a59-573c-ad59-dbf56c59da62",
             "289bea5b-279b-58c8-aa9b-ed81299bebee",
-            "0682fbdc-0782-5d6f-a882-ff0209830095",
-            "b5db8ef3-b4db-5d60-a7db-9219b6db9086"
+            "0682fbdc-0782-5d6f-a882-ff0209830095"
           ],
           "top3": [
             "d856945d-d756-52ca-a656-9137d5568fa4",
             "bc10a9eb-bb10-5858-ae10-ad11bd10ab7e",
-            "4e067724-4f06-58b7-a006-7a4a51067bdd"
+            "a8dcef5e-a9dc-50f1-a6dc-ec38a7dcedcb"
           ],
           "rank": null,
           "contentTerms": ["back", "in", "studio", "week"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 79,
+          "durationMs": 78,
           "error": null
         },
         {
@@ -10612,15 +10608,15 @@
           "rankedIds": [
             "d856945d-d756-52ca-a656-9137d5568fa4",
             "bc10a9eb-bb10-5858-ae10-ad11bd10ab7e",
-            "4e067724-4f06-58b7-a006-7a4a51067bdd",
             "a8dcef5e-a9dc-50f1-a6dc-ec38a7dcedcb",
+            "4e067724-4f06-58b7-a006-7a4a51067bdd",
             "8b77f495-8a77-5302-a977-f16f8877efdc",
             "3f28444e-4028-55e1-ad28-41283e2842bb",
             "4ac81fe3-49c8-5e50-acc8-23094bc82176",
-            "20d72d10-21d7-5ea3-a2d7-303623d731c9",
-            "853d4d14-863d-5ea7-a73d-503a883d51cd",
             "617c0034-627c-51c7-a37c-035a647c04ed",
             "156fe096-166f-5229-a36f-dd70146fdf03",
+            "20d72d10-21d7-5ea3-a2d7-303623d731c9",
+            "853d4d14-863d-5ea7-a73d-503a883d51cd",
             "e7cd803a-e8cd-51cd-a5cd-7d14e6cd7ea7",
             "6668e4ef-6568-535c-a868-e8156768e682",
             "3aadde39-39ad-5ca6-a8ad-db1337add980",
@@ -10648,29 +10644,29 @@
             "18b20ca4-19b2-5e37-aab2-0fca1bb2115d",
             "8235d411-8135-527e-a035-d0eb7f35cf58",
             "2b2011e8-2c20-537b-ad20-150e2e2016a1",
-            "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
             "889525e1-8795-544e-a695-22bb85952128",
             "9f234c2c-a023-5dbf-a123-4f52a22350e5",
             "b78a3e91-b68a-5cfe-a58a-3b6bb48a39d8",
             "78bbc666-79bb-57f9-a6bb-c34077bbc4d3",
             "203b6da0-213b-5f33-a23b-70c6233b7259",
             "65addafa-66ad-5c8d-a3ad-d7d464add967",
+            "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
+            "933abc3a-943a-5dcd-a13a-b914923abaa7",
             "38dc03af-37dc-521c-aadc-06d539dc0542",
             "6b59d8cf-6a59-573c-ad59-dbf56c59da62",
             "289bea5b-279b-58c8-aa9b-ed81299bebee",
-            "0682fbdc-0782-5d6f-a882-ff0209830095",
-            "b5db8ef3-b4db-5d60-a7db-9219b6db9086"
+            "0682fbdc-0782-5d6f-a882-ff0209830095"
           ],
           "top3": [
             "d856945d-d756-52ca-a656-9137d5568fa4",
             "bc10a9eb-bb10-5858-ae10-ad11bd10ab7e",
-            "4e067724-4f06-58b7-a006-7a4a51067bdd"
+            "a8dcef5e-a9dc-50f1-a6dc-ec38a7dcedcb"
           ],
           "rank": null,
           "contentTerms": ["back", "in", "studio", "week"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 75,
+          "durationMs": 74,
           "error": null
         },
         {
@@ -10685,7 +10681,7 @@
           "contentTerms": ["after", "rearranged", "desk"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 4,
+          "durationMs": 5,
           "error": null
         },
         {
@@ -10711,9 +10707,9 @@
             "bc10a9eb-bb10-5858-ae10-ad11bd10ab7e",
             "e2f30814-e3f3-59a7-a4f3-0b3ae5f30ccd",
             "978cbff2-988c-5185-a58c-bccc968cbe5f",
-            "10da1d5c-11da-5eef-a2da-208213da2215",
             "18b20ca4-19b2-5e37-aab2-0fca1bb2115d",
             "8787136d-8687-51da-a587-104784870eb4",
+            "10da1d5c-11da-5eef-a2da-208213da2215",
             "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
             "51d24746-52d2-58d9-afd2-442050d245b3",
             "65addafa-66ad-5c8d-a3ad-d7d464add967",
@@ -10729,12 +10725,12 @@
             "889525e1-8795-544e-a695-22bb85952128",
             "0ddebaaf-0cde-591c-afde-bdd50edebc42",
             "b31c6b87-b21c-59f4-a51c-6eadb41c6d1a",
-            "3f28444e-4028-55e1-ad28-41283e2842bb",
             "83699521-8269-538e-a169-91fb80699068",
             "c9015727-c801-5594-ab01-5a4dca0158ba",
             "966c1013-956c-5e80-a86c-1339976c11a6",
             "6c7a88ae-6d7a-5a41-aa7a-85886b7a871b",
             "c550048b-c450-52f8-a750-07b1c650061e",
+            "3f28444e-4028-55e1-ad28-41283e2842bb",
             "91199629-9019-5496-af19-93038e199170",
             "203b6da0-213b-5f33-a23b-70c6233b7259",
             "7e3e0461-7d3e-52ce-ac3e-013b7b3dffa8",
@@ -10755,7 +10751,7 @@
           "contentTerms": ["when", "we", "shot", "on", "location"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 94,
+          "durationMs": 93,
           "error": null
         },
         {
@@ -10767,15 +10763,15 @@
           "rankedIds": [
             "d856945d-d756-52ca-a656-9137d5568fa4",
             "bc10a9eb-bb10-5858-ae10-ad11bd10ab7e",
-            "4e067724-4f06-58b7-a006-7a4a51067bdd",
             "a8dcef5e-a9dc-50f1-a6dc-ec38a7dcedcb",
+            "4e067724-4f06-58b7-a006-7a4a51067bdd",
             "8b77f495-8a77-5302-a977-f16f8877efdc",
             "3f28444e-4028-55e1-ad28-41283e2842bb",
             "4ac81fe3-49c8-5e50-acc8-23094bc82176",
-            "20d72d10-21d7-5ea3-a2d7-303623d731c9",
-            "853d4d14-863d-5ea7-a73d-503a883d51cd",
             "617c0034-627c-51c7-a37c-035a647c04ed",
             "156fe096-166f-5229-a36f-dd70146fdf03",
+            "20d72d10-21d7-5ea3-a2d7-303623d731c9",
+            "853d4d14-863d-5ea7-a73d-503a883d51cd",
             "e7cd803a-e8cd-51cd-a5cd-7d14e6cd7ea7",
             "6668e4ef-6568-535c-a868-e8156768e682",
             "3aadde39-39ad-5ca6-a8ad-db1337add980",
@@ -10803,29 +10799,29 @@
             "18b20ca4-19b2-5e37-aab2-0fca1bb2115d",
             "8235d411-8135-527e-a035-d0eb7f35cf58",
             "2b2011e8-2c20-537b-ad20-150e2e2016a1",
-            "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
             "889525e1-8795-544e-a695-22bb85952128",
             "9f234c2c-a023-5dbf-a123-4f52a22350e5",
             "b78a3e91-b68a-5cfe-a58a-3b6bb48a39d8",
             "78bbc666-79bb-57f9-a6bb-c34077bbc4d3",
             "203b6da0-213b-5f33-a23b-70c6233b7259",
             "65addafa-66ad-5c8d-a3ad-d7d464add967",
+            "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
+            "933abc3a-943a-5dcd-a13a-b914923abaa7",
             "38dc03af-37dc-521c-aadc-06d539dc0542",
             "6b59d8cf-6a59-573c-ad59-dbf56c59da62",
             "289bea5b-279b-58c8-aa9b-ed81299bebee",
-            "0682fbdc-0782-5d6f-a882-ff0209830095",
-            "b5db8ef3-b4db-5d60-a7db-9219b6db9086"
+            "0682fbdc-0782-5d6f-a882-ff0209830095"
           ],
           "top3": [
             "d856945d-d756-52ca-a656-9137d5568fa4",
             "bc10a9eb-bb10-5858-ae10-ad11bd10ab7e",
-            "4e067724-4f06-58b7-a006-7a4a51067bdd"
+            "a8dcef5e-a9dc-50f1-a6dc-ec38a7dcedcb"
           ],
           "rank": 37,
           "contentTerms": ["back", "in", "studio", "week"],
           "stage": "rank",
           "detail": "目标在邻域第 37（非 Top1）",
-          "durationMs": 76,
+          "durationMs": 73,
           "error": null
         },
         {
@@ -10910,7 +10906,7 @@
           "contentTerms": ["during", "quiet", "mornings", "at", "home"],
           "stage": "rank",
           "detail": "目标在邻域第 35（非 Top1）",
-          "durationMs": 130,
+          "durationMs": 129,
           "error": null
         },
         {
@@ -10925,7 +10921,7 @@
           "contentTerms": ["after", "rearranged", "desk"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 5,
+          "durationMs": 4,
           "error": null
         },
         {
@@ -11010,7 +11006,7 @@
           "contentTerms": ["during", "quiet", "mornings", "at", "home"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 129,
+          "durationMs": 130,
           "error": null
         },
         {
@@ -11080,7 +11076,7 @@
           "contentTerms": ["on", "writing", "and", "notes", "from", "10", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 32（非 Top1）",
-          "durationMs": 159,
+          "durationMs": 151,
           "error": null
         },
         {
@@ -11150,7 +11146,7 @@
           "contentTerms": ["on", "production", "from", "12", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 75,
+          "durationMs": 73,
           "error": null
         },
         {
@@ -11220,7 +11216,7 @@
           "contentTerms": ["on", "production", "from", "9", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 64,
+          "durationMs": 63,
           "error": null
         },
         {
@@ -11235,8 +11231,8 @@
             "c67d18e0-c77d-5a73-a87d-1c06c97d1d99",
             "8d6e83f6-8e6e-5589-ab6e-80d08c6e8263",
             "c02473cb-bf24-5238-a224-76f1c124755e",
-            "f06dac49-ef6d-5ab6-ae6d-a923ed6da790",
             "3f3d3292-403d-5425-ad3d-2f6c3e3d30ff",
+            "f06dac49-ef6d-5ab6-ae6d-a923ed6da790",
             "58c4c41b-57c4-5288-aac4-c74159c4c5ae",
             "fd5c9d77-fc5c-5be4-af5c-a09dfe5c9f0a",
             "fdcbbfc3-fccb-5e30-afcb-c2e9fecbc156",
@@ -11264,8 +11260,8 @@
             "dfb0dc06-e0b0-5d99-adb0-d8e0deb0da73",
             "fbd18360-fcd1-54f3-add1-8686fed18819",
             "4333252f-4233-539c-a533-2855443326c2",
-            "289bea5b-279b-58c8-aa9b-ed81299bebee",
             "88303bfe-8930-5d91-a630-38d887303a6b",
+            "289bea5b-279b-58c8-aa9b-ed81299bebee",
             "d905c91e-da05-5ab1-a705-c5f8d805c78b",
             "9cf2ed92-9df2-5f25-aaf2-ea6c9bf2ebff",
             "1bab9c50-1cab-5de3-adab-9f761eaba109",
@@ -11300,7 +11296,7 @@
           ],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 185,
+          "durationMs": 184,
           "error": null
         },
         {
@@ -11315,8 +11311,8 @@
             "c67d18e0-c77d-5a73-a87d-1c06c97d1d99",
             "8d6e83f6-8e6e-5589-ab6e-80d08c6e8263",
             "c02473cb-bf24-5238-a224-76f1c124755e",
-            "f06dac49-ef6d-5ab6-ae6d-a923ed6da790",
             "3f3d3292-403d-5425-ad3d-2f6c3e3d30ff",
+            "f06dac49-ef6d-5ab6-ae6d-a923ed6da790",
             "fd5c9d77-fc5c-5be4-af5c-a09dfe5c9f0a",
             "58c4c41b-57c4-5288-aac4-c74159c4c5ae",
             "fdcbbfc3-fccb-5e30-afcb-c2e9fecbc156",
@@ -11336,7 +11332,6 @@
             "9cb850b2-9db8-5245-aab8-4d8c9bb84f1f",
             "ee1ebb10-ef1e-5ca3-a01e-be36f11ebfc9",
             "bd84a67e-be84-5811-ab84-a358bc84a4eb",
-            "0eff6a8e-0fff-5c21-acff-67680dff68fb",
             "fc67a219-fb67-5086-aa67-9ef3f9679d60",
             "d856945d-d756-52ca-a656-9137d5568fa4",
             "978cbff2-988c-5185-a58c-bccc968cbe5f",
@@ -11359,7 +11354,8 @@
             "6d43254d-6c43-53ba-ab43-22276a432094",
             "6ca43525-6ba4-5392-aaa4-31ff69a4306c",
             "b6e5192b-b5e5-5798-a8e5-1c51b7e51abe",
-            "8e0f2b7a-8f0f-5d0d-ac0f-28548d0f29e7"
+            "8e0f2b7a-8f0f-5d0d-ac0f-28548d0f29e7",
+            "0eff6a8e-0fff-5c21-acff-67680dff68fb"
           ],
           "top3": [
             "31db44fb-30db-5368-a3db-482132db468e",
@@ -11370,7 +11366,7 @@
           "contentTerms": ["on", "brand", "and", "visual", "identity", "from", "9", "weeks", "ago"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 171,
+          "durationMs": 172,
           "error": null
         },
         {
@@ -11473,8 +11469,8 @@
             "b6e5192b-b5e5-5798-a8e5-1c51b7e51abe",
             "0ddebaaf-0cde-591c-afde-bdd50edebc42",
             "fdcbbfc3-fccb-5e30-afcb-c2e9fecbc156",
-            "fc67a219-fb67-5086-aa67-9ef3f9679d60",
             "6ca43525-6ba4-5392-aaa4-31ff69a4306c",
+            "fc67a219-fb67-5086-aa67-9ef3f9679d60",
             "75c8d77c-76c8-590f-a7c8-daa278c8dc35",
             "9cf2ed92-9df2-5f25-aaf2-ea6c9bf2ebff",
             "17aa88d8-18aa-5a6b-a9aa-8bfe1aaa8d91",
@@ -11483,10 +11479,10 @@
             "18b20ca4-19b2-5e37-aab2-0fca1bb2115d",
             "a8e4a026-a9e4-51b9-a6e4-9d00a7e49e93",
             "08361340-0936-54d3-aa36-16660b3617f9",
-            "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
             "60824a3a-6182-5bcd-ae82-47145f8248a7",
             "44e1d4cd-43e1-533a-a2e1-d1a741e1d014",
             "3b62395a-3c62-5aed-a962-36343a6237c7",
+            "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
             "92051e17-9105-5c84-a405-213d93051faa",
             "7af4683c-7bf4-59cf-acf4-6b627df46cf5",
             "83699521-8269-538e-a169-91fb80699068",
@@ -11510,7 +11506,7 @@
           "contentTerms": ["on", "writing", "and", "notes", "from", "6", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 41（非 Top1）",
-          "durationMs": 140,
+          "durationMs": 143,
           "error": null
         },
         {
@@ -11525,8 +11521,8 @@
             "c67d18e0-c77d-5a73-a87d-1c06c97d1d99",
             "8d6e83f6-8e6e-5589-ab6e-80d08c6e8263",
             "c02473cb-bf24-5238-a224-76f1c124755e",
-            "f06dac49-ef6d-5ab6-ae6d-a923ed6da790",
             "3f3d3292-403d-5425-ad3d-2f6c3e3d30ff",
+            "f06dac49-ef6d-5ab6-ae6d-a923ed6da790",
             "fd5c9d77-fc5c-5be4-af5c-a09dfe5c9f0a",
             "58c4c41b-57c4-5288-aac4-c74159c4c5ae",
             "fdcbbfc3-fccb-5e30-afcb-c2e9fecbc156",
@@ -11580,7 +11576,7 @@
           "contentTerms": ["on", "brand", "and", "visual", "identity", "from", "6", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 49（非 Top1）",
-          "durationMs": 172,
+          "durationMs": 177,
           "error": null
         },
         {
@@ -11615,8 +11611,8 @@
             "e2f30814-e3f3-59a7-a4f3-0b3ae5f30ccd",
             "17aa88d8-18aa-5a6b-a9aa-8bfe1aaa8d91",
             "c02473cb-bf24-5238-a224-76f1c124755e",
-            "f06dac49-ef6d-5ab6-ae6d-a923ed6da790",
             "3f3d3292-403d-5425-ad3d-2f6c3e3d30ff",
+            "f06dac49-ef6d-5ab6-ae6d-a923ed6da790",
             "fc67a219-fb67-5086-aa67-9ef3f9679d60",
             "0ddebaaf-0cde-591c-afde-bdd50edebc42",
             "83699521-8269-538e-a169-91fb80699068",
@@ -11635,11 +11631,11 @@
             "ba91b794-bb91-5927-ac91-bababd91bc4d",
             "2c907bd9-2b90-5a46-aa90-78b329907720",
             "38dc03af-37dc-521c-aadc-06d539dc0542",
-            "617c0034-627c-51c7-a37c-035a647c04ed",
             "f9229a8a-fa22-5c1d-a722-9764f82298f7",
             "8a37fa31-8937-589e-a837-f70b8737f578",
             "4333252f-4233-539c-a533-2855443326c2",
-            "80050002-8105-5195-ae04-fcdc7f04fe6f"
+            "80050002-8105-5195-ae04-fcdc7f04fe6f",
+            "617c0034-627c-51c7-a37c-035a647c04ed"
           ],
           "top3": [
             "3fcf360c-40cf-579f-a1cf-393242cf3ac5",
@@ -11650,7 +11646,7 @@
           "contentTerms": ["on", "product", "design", "from", "2", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 43（非 Top1）",
-          "durationMs": 127,
+          "durationMs": 129,
           "error": null
         },
         {
@@ -11665,8 +11661,8 @@
             "c67d18e0-c77d-5a73-a87d-1c06c97d1d99",
             "8d6e83f6-8e6e-5589-ab6e-80d08c6e8263",
             "c02473cb-bf24-5238-a224-76f1c124755e",
-            "f06dac49-ef6d-5ab6-ae6d-a923ed6da790",
             "3f3d3292-403d-5425-ad3d-2f6c3e3d30ff",
+            "f06dac49-ef6d-5ab6-ae6d-a923ed6da790",
             "fd5c9d77-fc5c-5be4-af5c-a09dfe5c9f0a",
             "58c4c41b-57c4-5288-aac4-c74159c4c5ae",
             "fdcbbfc3-fccb-5e30-afcb-c2e9fecbc156",
@@ -11720,7 +11716,7 @@
           "contentTerms": ["on", "brand", "and", "visual", "identity", "from", "5", "weeks", "ago"],
           "stage": "rank",
           "detail": "目标在邻域第 34（非 Top1）",
-          "durationMs": 175,
+          "durationMs": 174,
           "error": null
         },
         {
@@ -11790,7 +11786,7 @@
           "contentTerms": ["thing", "human", "memory", "and", "cognition"],
           "stage": "rank",
           "detail": "目标在邻域第 9（非 Top1）",
-          "durationMs": 73,
+          "durationMs": 67,
           "error": null
         },
         {
@@ -11803,8 +11799,8 @@
             "31db44fb-30db-5368-a3db-482132db468e",
             "c02739af-bf27-581c-a227-3cd5c1273b42",
             "c02473cb-bf24-5238-a224-76f1c124755e",
-            "f06dac49-ef6d-5ab6-ae6d-a923ed6da790",
             "3f3d3292-403d-5425-ad3d-2f6c3e3d30ff",
+            "f06dac49-ef6d-5ab6-ae6d-a923ed6da790",
             "fd5c9d77-fc5c-5be4-af5c-a09dfe5c9f0a",
             "c67d18e0-c77d-5a73-a87d-1c06c97d1d99",
             "58c4c41b-57c4-5288-aac4-c74159c4c5ae",
@@ -11818,8 +11814,8 @@
             "f9229a8a-fa22-5c1d-a722-9764f82298f7",
             "3f28444e-4028-55e1-ad28-41283e2842bb",
             "5f25c2ed-5e25-515a-ad25-bfc75c25be34",
-            "0eff6a8e-0fff-5c21-acff-67680dff68fb",
             "d856945d-d756-52ca-a656-9137d5568fa4",
+            "0eff6a8e-0fff-5c21-acff-67680dff68fb",
             "2b2011e8-2c20-537b-ad20-150e2e2016a1",
             "2b58a103-2a58-5f70-ad58-a4292c58a296",
             "8dce31dc-8ece-536f-afce-350290ce3695",
@@ -11860,7 +11856,7 @@
           "contentTerms": ["thing", "brand", "and", "visual", "identity"],
           "stage": "rank",
           "detail": "目标在邻域第 8（非 Top1）",
-          "durationMs": 79,
+          "durationMs": 77,
           "error": null
         },
         {
@@ -11872,8 +11868,8 @@
           "rankedIds": [
             "853d4d14-863d-5ea7-a73d-503a883d51cd",
             "18b20ca4-19b2-5e37-aab2-0fca1bb2115d",
-            "10da1d5c-11da-5eef-a2da-208213da2215",
             "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
+            "10da1d5c-11da-5eef-a2da-208213da2215",
             "bc10a9eb-bb10-5858-ae10-ad11bd10ab7e",
             "e7cd803a-e8cd-51cd-a5cd-7d14e6cd7ea7",
             "a8e4a026-a9e4-51b9-a6e4-9d00a7e49e93",
@@ -11882,7 +11878,7 @@
           "top3": [
             "853d4d14-863d-5ea7-a73d-503a883d51cd",
             "18b20ca4-19b2-5e37-aab2-0fca1bb2115d",
-            "10da1d5c-11da-5eef-a2da-208213da2215"
+            "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229"
           ],
           "rank": 8,
           "contentTerms": ["thing", "production"],
@@ -11901,8 +11897,8 @@
             "31db44fb-30db-5368-a3db-482132db468e",
             "c02739af-bf27-581c-a227-3cd5c1273b42",
             "c02473cb-bf24-5238-a224-76f1c124755e",
-            "f06dac49-ef6d-5ab6-ae6d-a923ed6da790",
             "3f3d3292-403d-5425-ad3d-2f6c3e3d30ff",
+            "f06dac49-ef6d-5ab6-ae6d-a923ed6da790",
             "fd5c9d77-fc5c-5be4-af5c-a09dfe5c9f0a",
             "c67d18e0-c77d-5a73-a87d-1c06c97d1d99",
             "58c4c41b-57c4-5288-aac4-c74159c4c5ae",
@@ -11916,8 +11912,8 @@
             "f9229a8a-fa22-5c1d-a722-9764f82298f7",
             "3f28444e-4028-55e1-ad28-41283e2842bb",
             "5f25c2ed-5e25-515a-ad25-bfc75c25be34",
-            "0eff6a8e-0fff-5c21-acff-67680dff68fb",
             "d856945d-d756-52ca-a656-9137d5568fa4",
+            "0eff6a8e-0fff-5c21-acff-67680dff68fb",
             "2b2011e8-2c20-537b-ad20-150e2e2016a1",
             "2b58a103-2a58-5f70-ad58-a4292c58a296",
             "8dce31dc-8ece-536f-afce-350290ce3695",
@@ -11958,7 +11954,7 @@
           "contentTerms": ["thing", "brand", "and", "visual", "identity"],
           "stage": "rank",
           "detail": "目标在邻域第 2（非 Top1）",
-          "durationMs": 76,
+          "durationMs": 75,
           "error": null
         },
         {
@@ -11995,9 +11991,9 @@
             "d2b1f222-d3b1-53b5-a0b1-eefcd1b1f08f",
             "8dce31dc-8ece-536f-afce-350290ce3695",
             "b6e5192b-b5e5-5798-a8e5-1c51b7e51abe",
+            "756043d8-7660-556b-a760-46fe78604891",
             "fc67a219-fb67-5086-aa67-9ef3f9679d60",
             "7af4683c-7bf4-59cf-acf4-6b627df46cf5",
-            "756043d8-7660-556b-a760-46fe78604891",
             "d7e5193f-d6e5-57ac-a9e5-1c65d8e51ad2",
             "d4fb4cf7-d3fb-5b64-a6fb-501dd5fb4e8a",
             "91199629-9019-5496-af19-93038e199170",
@@ -12028,7 +12024,7 @@
           "contentTerms": ["thing", "writing", "and", "notes"],
           "stage": "filtered",
           "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 64,
+          "durationMs": 68,
           "error": null
         },
         {
@@ -12041,8 +12037,8 @@
             "31db44fb-30db-5368-a3db-482132db468e",
             "c02739af-bf27-581c-a227-3cd5c1273b42",
             "c02473cb-bf24-5238-a224-76f1c124755e",
-            "f06dac49-ef6d-5ab6-ae6d-a923ed6da790",
             "3f3d3292-403d-5425-ad3d-2f6c3e3d30ff",
+            "f06dac49-ef6d-5ab6-ae6d-a923ed6da790",
             "fd5c9d77-fc5c-5be4-af5c-a09dfe5c9f0a",
             "c67d18e0-c77d-5a73-a87d-1c06c97d1d99",
             "58c4c41b-57c4-5288-aac4-c74159c4c5ae",
@@ -12056,8 +12052,176 @@
             "f9229a8a-fa22-5c1d-a722-9764f82298f7",
             "3f28444e-4028-55e1-ad28-41283e2842bb",
             "5f25c2ed-5e25-515a-ad25-bfc75c25be34",
-            "0eff6a8e-0fff-5c21-acff-67680dff68fb",
             "d856945d-d756-52ca-a656-9137d5568fa4",
+            "0eff6a8e-0fff-5c21-acff-67680dff68fb",
+            "2b2011e8-2c20-537b-ad20-150e2e2016a1",
+            "2b58a103-2a58-5f70-ad58-a4292c58a296",
+            "8dce31dc-8ece-536f-afce-350290ce3695",
+            "1bab9c50-1cab-5de3-adab-9f761eaba109",
+            "385eed00-395e-5e93-aa5e-f0263b5ef1b9",
+            "0682fbdc-0782-5d6f-a882-ff0209830095",
+            "fbd18360-fcd1-54f3-add1-8686fed18819",
+            "88303bfe-8930-5d91-a630-38d887303a6b",
+            "289bea5b-279b-58c8-aa9b-ed81299bebee",
+            "670e0a55-660e-58c2-a50e-072f640e059c",
+            "aa5c7186-ab5c-5319-a85c-6e60a95c6ff3",
+            "80872473-7f87-52e0-a287-279981872606",
+            "1dacb9c1-1cac-582e-abac-b69b1aacb508",
+            "4e067724-4f06-58b7-a006-7a4a51067bdd",
+            "c36395fa-c463-578d-a163-92d4c2639467",
+            "02f75083-01f7-5ef0-a4f7-53a903f75216",
+            "2efce92d-2dfc-579a-acfc-e6072bfce474",
+            "4333252f-4233-539c-a533-2855443326c2",
+            "bd84a67e-be84-5811-ab84-a358bc84a4eb",
+            "6d43254d-6c43-53ba-ab43-22276a432094",
+            "8e0f2b7a-8f0f-5d0d-ac0f-28548d0f29e7",
+            "8a37fa31-8937-589e-a837-f70b8737f578",
+            "9cb850b2-9db8-5245-aab8-4d8c9bb84f1f",
+            "f2af70c1-f1af-5f2e-a0af-6d9befaf6c08",
+            "c3c06238-c4c0-53cb-a5c0-655ec6c066f1",
+            "8787136d-8687-51da-a587-104784870eb4",
+            "662e480f-652e-567c-a82e-4b35672e49a2",
+            "124c8db9-114c-5c26-a04c-8a930f4c8900",
+            "5dceafb5-5cce-5e22-abce-ac8f5aceaafc",
+            "60747c68-6174-5dfb-a274-7f8e63748121"
+          ],
+          "top3": [
+            "31db44fb-30db-5368-a3db-482132db468e",
+            "c02739af-bf27-581c-a227-3cd5c1273b42",
+            "c02473cb-bf24-5238-a224-76f1c124755e"
+          ],
+          "rank": null,
+          "contentTerms": ["thing", "brand", "and", "visual", "identity"],
+          "stage": "filtered",
+          "detail": "目标不在最终邻域（过滤或未过融合门）",
+          "durationMs": 77,
+          "error": null
+        },
+        {
+          "taskId": "scene-memory-user:q-065",
+          "tier": "vague",
+          "clusterId": "video-prod",
+          "clue": "that thing about video production I saved",
+          "targetId": "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
+          "rankedIds": [
+            "853d4d14-863d-5ea7-a73d-503a883d51cd",
+            "18b20ca4-19b2-5e37-aab2-0fca1bb2115d",
+            "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
+            "10da1d5c-11da-5eef-a2da-208213da2215",
+            "bc10a9eb-bb10-5858-ae10-ad11bd10ab7e",
+            "e7cd803a-e8cd-51cd-a5cd-7d14e6cd7ea7",
+            "a8e4a026-a9e4-51b9-a6e4-9d00a7e49e93",
+            "9cf2ed92-9df2-5f25-aaf2-ea6c9bf2ebff"
+          ],
+          "top3": [
+            "853d4d14-863d-5ea7-a73d-503a883d51cd",
+            "18b20ca4-19b2-5e37-aab2-0fca1bb2115d",
+            "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229"
+          ],
+          "rank": 3,
+          "contentTerms": ["thing", "production"],
+          "stage": "rank",
+          "detail": "目标在邻域第 3（非 Top1）",
+          "durationMs": 4,
+          "error": null
+        },
+        {
+          "taskId": "scene-memory-user:q-066",
+          "tier": "vague",
+          "clusterId": "branding",
+          "clue": "that thing about brand and visual identity I saved",
+          "targetId": "e5e5f6fe-e6e5-5891-a3e5-f3d8e4e5f56b",
+          "rankedIds": [
+            "31db44fb-30db-5368-a3db-482132db468e",
+            "c02739af-bf27-581c-a227-3cd5c1273b42",
+            "c02473cb-bf24-5238-a224-76f1c124755e",
+            "3f3d3292-403d-5425-ad3d-2f6c3e3d30ff",
+            "f06dac49-ef6d-5ab6-ae6d-a923ed6da790",
+            "fd5c9d77-fc5c-5be4-af5c-a09dfe5c9f0a",
+            "c67d18e0-c77d-5a73-a87d-1c06c97d1d99",
+            "58c4c41b-57c4-5288-aac4-c74159c4c5ae",
+            "8d6e83f6-8e6e-5589-ab6e-80d08c6e8263",
+            "7ccf9046-7dcf-51d9-aacf-8d207bcf8eb3",
+            "80050002-8105-5195-ae04-fcdc7f04fe6f",
+            "fdcbbfc3-fccb-5e30-afcb-c2e9fecbc156",
+            "7af4683c-7bf4-59cf-acf4-6b627df46cf5",
+            "75c8d77c-76c8-590f-a7c8-daa278c8dc35",
+            "b56626d4-b666-5867-a766-29fab8662b8d",
+            "f9229a8a-fa22-5c1d-a722-9764f82298f7",
+            "3f28444e-4028-55e1-ad28-41283e2842bb",
+            "5f25c2ed-5e25-515a-ad25-bfc75c25be34",
+            "d856945d-d756-52ca-a656-9137d5568fa4",
+            "0eff6a8e-0fff-5c21-acff-67680dff68fb",
+            "2b2011e8-2c20-537b-ad20-150e2e2016a1",
+            "2b58a103-2a58-5f70-ad58-a4292c58a296",
+            "8dce31dc-8ece-536f-afce-350290ce3695",
+            "1bab9c50-1cab-5de3-adab-9f761eaba109",
+            "385eed00-395e-5e93-aa5e-f0263b5ef1b9",
+            "0682fbdc-0782-5d6f-a882-ff0209830095",
+            "fbd18360-fcd1-54f3-add1-8686fed18819",
+            "88303bfe-8930-5d91-a630-38d887303a6b",
+            "289bea5b-279b-58c8-aa9b-ed81299bebee",
+            "670e0a55-660e-58c2-a50e-072f640e059c",
+            "aa5c7186-ab5c-5319-a85c-6e60a95c6ff3",
+            "80872473-7f87-52e0-a287-279981872606",
+            "1dacb9c1-1cac-582e-abac-b69b1aacb508",
+            "4e067724-4f06-58b7-a006-7a4a51067bdd",
+            "c36395fa-c463-578d-a163-92d4c2639467",
+            "02f75083-01f7-5ef0-a4f7-53a903f75216",
+            "2efce92d-2dfc-579a-acfc-e6072bfce474",
+            "4333252f-4233-539c-a533-2855443326c2",
+            "bd84a67e-be84-5811-ab84-a358bc84a4eb",
+            "6d43254d-6c43-53ba-ab43-22276a432094",
+            "8e0f2b7a-8f0f-5d0d-ac0f-28548d0f29e7",
+            "8a37fa31-8937-589e-a837-f70b8737f578",
+            "9cb850b2-9db8-5245-aab8-4d8c9bb84f1f",
+            "f2af70c1-f1af-5f2e-a0af-6d9befaf6c08",
+            "c3c06238-c4c0-53cb-a5c0-655ec6c066f1",
+            "8787136d-8687-51da-a587-104784870eb4",
+            "662e480f-652e-567c-a82e-4b35672e49a2",
+            "124c8db9-114c-5c26-a04c-8a930f4c8900",
+            "5dceafb5-5cce-5e22-abce-ac8f5aceaafc",
+            "60747c68-6174-5dfb-a274-7f8e63748121"
+          ],
+          "top3": [
+            "31db44fb-30db-5368-a3db-482132db468e",
+            "c02739af-bf27-581c-a227-3cd5c1273b42",
+            "c02473cb-bf24-5238-a224-76f1c124755e"
+          ],
+          "rank": null,
+          "contentTerms": ["thing", "brand", "and", "visual", "identity"],
+          "stage": "filtered",
+          "detail": "目标不在最终邻域（过滤或未过融合门）",
+          "durationMs": 79,
+          "error": null
+        },
+        {
+          "taskId": "scene-memory-user:q-067",
+          "tier": "vague",
+          "clusterId": "branding",
+          "clue": "that thing about brand and visual identity I saved",
+          "targetId": "395ec004-3a5e-5197-ab5e-c32a3c5ec4bd",
+          "rankedIds": [
+            "31db44fb-30db-5368-a3db-482132db468e",
+            "c02739af-bf27-581c-a227-3cd5c1273b42",
+            "c02473cb-bf24-5238-a224-76f1c124755e",
+            "3f3d3292-403d-5425-ad3d-2f6c3e3d30ff",
+            "f06dac49-ef6d-5ab6-ae6d-a923ed6da790",
+            "fd5c9d77-fc5c-5be4-af5c-a09dfe5c9f0a",
+            "c67d18e0-c77d-5a73-a87d-1c06c97d1d99",
+            "58c4c41b-57c4-5288-aac4-c74159c4c5ae",
+            "8d6e83f6-8e6e-5589-ab6e-80d08c6e8263",
+            "7ccf9046-7dcf-51d9-aacf-8d207bcf8eb3",
+            "80050002-8105-5195-ae04-fcdc7f04fe6f",
+            "fdcbbfc3-fccb-5e30-afcb-c2e9fecbc156",
+            "7af4683c-7bf4-59cf-acf4-6b627df46cf5",
+            "75c8d77c-76c8-590f-a7c8-daa278c8dc35",
+            "b56626d4-b666-5867-a766-29fab8662b8d",
+            "f9229a8a-fa22-5c1d-a722-9764f82298f7",
+            "3f28444e-4028-55e1-ad28-41283e2842bb",
+            "5f25c2ed-5e25-515a-ad25-bfc75c25be34",
+            "d856945d-d756-52ca-a656-9137d5568fa4",
+            "0eff6a8e-0fff-5c21-acff-67680dff68fb",
             "2b2011e8-2c20-537b-ad20-150e2e2016a1",
             "2b58a103-2a58-5f70-ad58-a4292c58a296",
             "8dce31dc-8ece-536f-afce-350290ce3695",
@@ -12102,174 +12266,6 @@
           "error": null
         },
         {
-          "taskId": "scene-memory-user:q-065",
-          "tier": "vague",
-          "clusterId": "video-prod",
-          "clue": "that thing about video production I saved",
-          "targetId": "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
-          "rankedIds": [
-            "853d4d14-863d-5ea7-a73d-503a883d51cd",
-            "18b20ca4-19b2-5e37-aab2-0fca1bb2115d",
-            "10da1d5c-11da-5eef-a2da-208213da2215",
-            "a4ea2d70-a5ea-5f03-a6ea-3096a7ea3229",
-            "bc10a9eb-bb10-5858-ae10-ad11bd10ab7e",
-            "e7cd803a-e8cd-51cd-a5cd-7d14e6cd7ea7",
-            "a8e4a026-a9e4-51b9-a6e4-9d00a7e49e93",
-            "9cf2ed92-9df2-5f25-aaf2-ea6c9bf2ebff"
-          ],
-          "top3": [
-            "853d4d14-863d-5ea7-a73d-503a883d51cd",
-            "18b20ca4-19b2-5e37-aab2-0fca1bb2115d",
-            "10da1d5c-11da-5eef-a2da-208213da2215"
-          ],
-          "rank": 4,
-          "contentTerms": ["thing", "production"],
-          "stage": "rank",
-          "detail": "目标在邻域第 4（非 Top1）",
-          "durationMs": 3,
-          "error": null
-        },
-        {
-          "taskId": "scene-memory-user:q-066",
-          "tier": "vague",
-          "clusterId": "branding",
-          "clue": "that thing about brand and visual identity I saved",
-          "targetId": "e5e5f6fe-e6e5-5891-a3e5-f3d8e4e5f56b",
-          "rankedIds": [
-            "31db44fb-30db-5368-a3db-482132db468e",
-            "c02739af-bf27-581c-a227-3cd5c1273b42",
-            "c02473cb-bf24-5238-a224-76f1c124755e",
-            "f06dac49-ef6d-5ab6-ae6d-a923ed6da790",
-            "3f3d3292-403d-5425-ad3d-2f6c3e3d30ff",
-            "fd5c9d77-fc5c-5be4-af5c-a09dfe5c9f0a",
-            "c67d18e0-c77d-5a73-a87d-1c06c97d1d99",
-            "58c4c41b-57c4-5288-aac4-c74159c4c5ae",
-            "8d6e83f6-8e6e-5589-ab6e-80d08c6e8263",
-            "7ccf9046-7dcf-51d9-aacf-8d207bcf8eb3",
-            "80050002-8105-5195-ae04-fcdc7f04fe6f",
-            "fdcbbfc3-fccb-5e30-afcb-c2e9fecbc156",
-            "7af4683c-7bf4-59cf-acf4-6b627df46cf5",
-            "75c8d77c-76c8-590f-a7c8-daa278c8dc35",
-            "b56626d4-b666-5867-a766-29fab8662b8d",
-            "f9229a8a-fa22-5c1d-a722-9764f82298f7",
-            "3f28444e-4028-55e1-ad28-41283e2842bb",
-            "5f25c2ed-5e25-515a-ad25-bfc75c25be34",
-            "0eff6a8e-0fff-5c21-acff-67680dff68fb",
-            "d856945d-d756-52ca-a656-9137d5568fa4",
-            "2b2011e8-2c20-537b-ad20-150e2e2016a1",
-            "2b58a103-2a58-5f70-ad58-a4292c58a296",
-            "8dce31dc-8ece-536f-afce-350290ce3695",
-            "1bab9c50-1cab-5de3-adab-9f761eaba109",
-            "385eed00-395e-5e93-aa5e-f0263b5ef1b9",
-            "0682fbdc-0782-5d6f-a882-ff0209830095",
-            "fbd18360-fcd1-54f3-add1-8686fed18819",
-            "88303bfe-8930-5d91-a630-38d887303a6b",
-            "289bea5b-279b-58c8-aa9b-ed81299bebee",
-            "670e0a55-660e-58c2-a50e-072f640e059c",
-            "aa5c7186-ab5c-5319-a85c-6e60a95c6ff3",
-            "80872473-7f87-52e0-a287-279981872606",
-            "1dacb9c1-1cac-582e-abac-b69b1aacb508",
-            "4e067724-4f06-58b7-a006-7a4a51067bdd",
-            "c36395fa-c463-578d-a163-92d4c2639467",
-            "02f75083-01f7-5ef0-a4f7-53a903f75216",
-            "2efce92d-2dfc-579a-acfc-e6072bfce474",
-            "4333252f-4233-539c-a533-2855443326c2",
-            "bd84a67e-be84-5811-ab84-a358bc84a4eb",
-            "6d43254d-6c43-53ba-ab43-22276a432094",
-            "8e0f2b7a-8f0f-5d0d-ac0f-28548d0f29e7",
-            "8a37fa31-8937-589e-a837-f70b8737f578",
-            "9cb850b2-9db8-5245-aab8-4d8c9bb84f1f",
-            "f2af70c1-f1af-5f2e-a0af-6d9befaf6c08",
-            "c3c06238-c4c0-53cb-a5c0-655ec6c066f1",
-            "8787136d-8687-51da-a587-104784870eb4",
-            "662e480f-652e-567c-a82e-4b35672e49a2",
-            "124c8db9-114c-5c26-a04c-8a930f4c8900",
-            "5dceafb5-5cce-5e22-abce-ac8f5aceaafc",
-            "60747c68-6174-5dfb-a274-7f8e63748121"
-          ],
-          "top3": [
-            "31db44fb-30db-5368-a3db-482132db468e",
-            "c02739af-bf27-581c-a227-3cd5c1273b42",
-            "c02473cb-bf24-5238-a224-76f1c124755e"
-          ],
-          "rank": null,
-          "contentTerms": ["thing", "brand", "and", "visual", "identity"],
-          "stage": "filtered",
-          "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 74,
-          "error": null
-        },
-        {
-          "taskId": "scene-memory-user:q-067",
-          "tier": "vague",
-          "clusterId": "branding",
-          "clue": "that thing about brand and visual identity I saved",
-          "targetId": "395ec004-3a5e-5197-ab5e-c32a3c5ec4bd",
-          "rankedIds": [
-            "31db44fb-30db-5368-a3db-482132db468e",
-            "c02739af-bf27-581c-a227-3cd5c1273b42",
-            "c02473cb-bf24-5238-a224-76f1c124755e",
-            "f06dac49-ef6d-5ab6-ae6d-a923ed6da790",
-            "3f3d3292-403d-5425-ad3d-2f6c3e3d30ff",
-            "fd5c9d77-fc5c-5be4-af5c-a09dfe5c9f0a",
-            "c67d18e0-c77d-5a73-a87d-1c06c97d1d99",
-            "58c4c41b-57c4-5288-aac4-c74159c4c5ae",
-            "8d6e83f6-8e6e-5589-ab6e-80d08c6e8263",
-            "7ccf9046-7dcf-51d9-aacf-8d207bcf8eb3",
-            "80050002-8105-5195-ae04-fcdc7f04fe6f",
-            "fdcbbfc3-fccb-5e30-afcb-c2e9fecbc156",
-            "7af4683c-7bf4-59cf-acf4-6b627df46cf5",
-            "75c8d77c-76c8-590f-a7c8-daa278c8dc35",
-            "b56626d4-b666-5867-a766-29fab8662b8d",
-            "f9229a8a-fa22-5c1d-a722-9764f82298f7",
-            "3f28444e-4028-55e1-ad28-41283e2842bb",
-            "5f25c2ed-5e25-515a-ad25-bfc75c25be34",
-            "0eff6a8e-0fff-5c21-acff-67680dff68fb",
-            "d856945d-d756-52ca-a656-9137d5568fa4",
-            "2b2011e8-2c20-537b-ad20-150e2e2016a1",
-            "2b58a103-2a58-5f70-ad58-a4292c58a296",
-            "8dce31dc-8ece-536f-afce-350290ce3695",
-            "1bab9c50-1cab-5de3-adab-9f761eaba109",
-            "385eed00-395e-5e93-aa5e-f0263b5ef1b9",
-            "0682fbdc-0782-5d6f-a882-ff0209830095",
-            "fbd18360-fcd1-54f3-add1-8686fed18819",
-            "88303bfe-8930-5d91-a630-38d887303a6b",
-            "289bea5b-279b-58c8-aa9b-ed81299bebee",
-            "670e0a55-660e-58c2-a50e-072f640e059c",
-            "aa5c7186-ab5c-5319-a85c-6e60a95c6ff3",
-            "80872473-7f87-52e0-a287-279981872606",
-            "1dacb9c1-1cac-582e-abac-b69b1aacb508",
-            "4e067724-4f06-58b7-a006-7a4a51067bdd",
-            "c36395fa-c463-578d-a163-92d4c2639467",
-            "02f75083-01f7-5ef0-a4f7-53a903f75216",
-            "2efce92d-2dfc-579a-acfc-e6072bfce474",
-            "4333252f-4233-539c-a533-2855443326c2",
-            "bd84a67e-be84-5811-ab84-a358bc84a4eb",
-            "6d43254d-6c43-53ba-ab43-22276a432094",
-            "8e0f2b7a-8f0f-5d0d-ac0f-28548d0f29e7",
-            "8a37fa31-8937-589e-a837-f70b8737f578",
-            "9cb850b2-9db8-5245-aab8-4d8c9bb84f1f",
-            "f2af70c1-f1af-5f2e-a0af-6d9befaf6c08",
-            "c3c06238-c4c0-53cb-a5c0-655ec6c066f1",
-            "8787136d-8687-51da-a587-104784870eb4",
-            "662e480f-652e-567c-a82e-4b35672e49a2",
-            "124c8db9-114c-5c26-a04c-8a930f4c8900",
-            "5dceafb5-5cce-5e22-abce-ac8f5aceaafc",
-            "60747c68-6174-5dfb-a274-7f8e63748121"
-          ],
-          "top3": [
-            "31db44fb-30db-5368-a3db-482132db468e",
-            "c02739af-bf27-581c-a227-3cd5c1273b42",
-            "c02473cb-bf24-5238-a224-76f1c124755e"
-          ],
-          "rank": null,
-          "contentTerms": ["thing", "brand", "and", "visual", "identity"],
-          "stage": "filtered",
-          "detail": "目标不在最终邻域（过滤或未过融合门）",
-          "durationMs": 74,
-          "error": null
-        },
-        {
           "taskId": "scene-memory-user:q-068",
           "tier": "vague",
           "clusterId": "writing",
@@ -12303,9 +12299,9 @@
             "d2b1f222-d3b1-53b5-a0b1-eefcd1b1f08f",
             "8dce31dc-8ece-536f-afce-350290ce3695",
             "b6e5192b-b5e5-5798-a8e5-1c51b7e51abe",
+            "756043d8-7660-556b-a760-46fe78604891",
             "fc67a219-fb67-5086-aa67-9ef3f9679d60",
             "7af4683c-7bf4-59cf-acf4-6b627df46cf5",
-            "756043d8-7660-556b-a760-46fe78604891",
             "d7e5193f-d6e5-57ac-a9e5-1c65d8e51ad2",
             "d4fb4cf7-d3fb-5b64-a6fb-501dd5fb4e8a",
             "91199629-9019-5496-af19-93038e199170",
@@ -12336,7 +12332,7 @@
           "contentTerms": ["thing", "writing", "and", "notes"],
           "stage": "rank",
           "detail": "目标在邻域第 40（非 Top1）",
-          "durationMs": 66,
+          "durationMs": 63,
           "error": null
         },
         {
@@ -12351,7 +12347,7 @@
           "contentTerms": ["thing", "origami", "cranes"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 4,
+          "durationMs": 5,
           "error": null
         },
         {
@@ -12411,7 +12407,7 @@
           "contentTerms": ["thing", "pottery", "glazing"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 4,
+          "durationMs": 3,
           "error": null
         },
         {
@@ -12425,8 +12421,8 @@
             "1d3b3ea3-1c3b-5d10-af3b-41c91e3b4036",
             "d2b1f222-d3b1-53b5-a0b1-eefcd1b1f08f",
             "617c0034-627c-51c7-a37c-035a647c04ed",
-            "e11f5021-e01f-5e8e-af1f-4cfbde1f4b68",
             "756043d8-7660-556b-a760-46fe78604891",
+            "e11f5021-e01f-5e8e-af1f-4cfbde1f4b68",
             "c36395fa-c463-578d-a163-92d4c2639467",
             "8235d411-8135-527e-a035-d0eb7f35cf58",
             "9cb850b2-9db8-5245-aab8-4d8c9bb84f1f",
@@ -12447,7 +12443,7 @@
           "contentTerms": ["thing", "mycology", "field", "guides"],
           "stage": "false_hit",
           "detail": "负例误命中 Top1=2f23d257-2e23-50c4-a123-d57d3023d3ea（邻域 16）",
-          "durationMs": 25,
+          "durationMs": 24,
           "error": null
         },
         {
@@ -12462,7 +12458,7 @@
           "contentTerms": ["thing", "home", "brewing", "recipes"],
           "stage": "ok",
           "detail": "负例无命中",
-          "durationMs": 5,
+          "durationMs": 6,
           "error": null
         },
         {
@@ -12550,6 +12546,812 @@
           "error": null
         }
       ]
+    }
+  },
+  "scaleCurve": {
+    "indie-dev-researcher": {
+      "180": {
+        "counts": {
+          "saves": 498,
+          "visits": 2544,
+          "queries": 80,
+          "events": 3138
+        },
+        "summary": {
+          "totalTasks": 80,
+          "positiveTasks": 68,
+          "negativeTasks": 12,
+          "positive": {
+            "n": 68,
+            "recallAt1": 0.058823529411764705,
+            "recallAt3": 0.14705882352941177,
+            "recallAt5": 0.23529411764705882,
+            "mrr": 0.13047686514695025,
+            "meanRank": 10.558823529411764,
+            "missRate": 0.5
+          },
+          "negativeFalseHitRate": 0.08333333333333333,
+          "negativeFalseHits": 1,
+          "byTier": {
+            "concrete": {
+              "n": 16,
+              "recallAt1": 0.125,
+              "recallAt3": 0.3125,
+              "recallAt5": 0.5,
+              "mrr": 0.2582573676323676,
+              "meanRank": 5.666666666666667,
+              "missRate": 0.25
+            },
+            "semi_fuzzy": {
+              "n": 26,
+              "recallAt1": 0.07692307692307693,
+              "recallAt3": 0.19230769230769232,
+              "recallAt5": 0.2692307692307692,
+              "mrr": 0.16040903540903542,
+              "meanRank": 6.928571428571429,
+              "missRate": 0.46153846153846156
+            },
+            "vague": {
+              "n": 26,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0.038461538461538464,
+              "mrr": 0.02191053950922372,
+              "meanRank": 24.25,
+              "missRate": 0.6923076923076923
+            },
+            "negative": {
+              "n": 12,
+              "falseHitRate": 0.08333333333333333
+            }
+          },
+          "byCluster": {
+            "agent-memory": {
+              "n": 4,
+              "recallAt1": 0,
+              "recallAt3": 0.25,
+              "recallAt5": 0.25,
+              "mrr": 0.09090909090909091,
+              "meanRank": 18,
+              "missRate": 0.5
+            },
+            "browser-ext": {
+              "n": 6,
+              "recallAt1": 0.16666666666666666,
+              "recallAt3": 0.3333333333333333,
+              "recallAt5": 0.3333333333333333,
+              "mrr": 0.2552083333333333,
+              "meanRank": 10.5,
+              "missRate": 0.3333333333333333
+            },
+            "cognition": {
+              "n": 16,
+              "recallAt1": 0,
+              "recallAt3": 0.0625,
+              "recallAt5": 0.1875,
+              "mrr": 0.07484962953712954,
+              "meanRank": 10.625,
+              "missRate": 0.5
+            },
+            "design": {
+              "n": 3,
+              "recallAt1": 0,
+              "recallAt3": 0.3333333333333333,
+              "recallAt5": 0.3333333333333333,
+              "mrr": 0.1111111111111111,
+              "meanRank": 3,
+              "missRate": 0.6666666666666666
+            },
+            "health": {
+              "n": 7,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0,
+              "mrr": 0.02180451127819549,
+              "meanRank": 14.5,
+              "missRate": 0.7142857142857143
+            },
+            "llm-eng": {
+              "n": 4,
+              "recallAt1": 0,
+              "recallAt3": 0.25,
+              "recallAt5": 0.5,
+              "mrr": 0.18009259259259258,
+              "meanRank": 11,
+              "missRate": 0
+            },
+            "marketing": {
+              "n": 6,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0.16666666666666666,
+              "mrr": 0.0447420634920635,
+              "meanRank": 24.666666666666668,
+              "missRate": 0.5
+            },
+            "pricing": {
+              "n": 4,
+              "recallAt1": 0,
+              "recallAt3": 0.25,
+              "recallAt5": 0.5,
+              "mrr": 0.14583333333333331,
+              "meanRank": 3.5,
+              "missRate": 0.5
+            },
+            "retrieval": {
+              "n": 10,
+              "recallAt1": 0.3,
+              "recallAt3": 0.3,
+              "recallAt5": 0.3,
+              "mrr": 0.3378968253968254,
+              "meanRank": 4.5,
+              "missRate": 0.4
+            },
+            "rust-wasm": {
+              "n": 8,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0.125,
+              "mrr": 0.04285714285714286,
+              "meanRank": 6,
+              "missRate": 0.75
+            }
+          },
+          "stageCounts": {
+            "parse": 0,
+            "filtered": 34,
+            "rank": 30,
+            "false_hit": 1,
+            "ok": 15,
+            "error": 0
+          }
+        },
+        "nearNeighbor": {
+          "rankFailures": 30,
+          "sameTopicTop1": 27,
+          "sameAspectTop1": 19,
+          "sameTopicRate": 0.9
+        }
+      },
+      "360": {
+        "counts": {
+          "saves": 913,
+          "visits": 4840,
+          "queries": 80,
+          "events": 5868
+        },
+        "summary": {
+          "totalTasks": 80,
+          "positiveTasks": 68,
+          "negativeTasks": 12,
+          "positive": {
+            "n": 68,
+            "recallAt1": 0.029411764705882353,
+            "recallAt3": 0.058823529411764705,
+            "recallAt5": 0.08823529411764706,
+            "mrr": 0.08045278553243197,
+            "meanRank": 10.407407407407407,
+            "missRate": 0.6029411764705882
+          },
+          "negativeFalseHitRate": 0.08333333333333333,
+          "negativeFalseHits": 1,
+          "byTier": {
+            "concrete": {
+              "n": 16,
+              "recallAt1": 0.0625,
+              "recallAt3": 0.0625,
+              "recallAt5": 0.125,
+              "mrr": 0.13878968253968255,
+              "meanRank": 7.2,
+              "missRate": 0.375
+            },
+            "semi_fuzzy": {
+              "n": 26,
+              "recallAt1": 0.038461538461538464,
+              "recallAt3": 0.11538461538461539,
+              "recallAt5": 0.15384615384615385,
+              "mrr": 0.11493059909051812,
+              "meanRank": 9.307692307692308,
+              "missRate": 0.5
+            },
+            "vague": {
+              "n": 26,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0,
+              "mrr": 0.010075343046807066,
+              "meanRank": 22,
+              "missRate": 0.8461538461538461
+            },
+            "negative": {
+              "n": 12,
+              "falseHitRate": 0.08333333333333333
+            }
+          },
+          "byCluster": {
+            "agent-memory": {
+              "n": 2,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0,
+              "mrr": 0.013157894736842105,
+              "meanRank": 38,
+              "missRate": 0.5
+            },
+            "browser-ext": {
+              "n": 8,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0,
+              "mrr": 0.026976495726495728,
+              "meanRank": 19.333333333333332,
+              "missRate": 0.625
+            },
+            "cognition": {
+              "n": 8,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0,
+              "mrr": 0.017857142857142856,
+              "meanRank": 7,
+              "missRate": 0.875
+            },
+            "design": {
+              "n": 6,
+              "recallAt1": 0.16666666666666666,
+              "recallAt3": 0.16666666666666666,
+              "recallAt5": 0.5,
+              "mrr": 0.2986111111111111,
+              "meanRank": 5.833333333333333,
+              "missRate": 0
+            },
+            "health": {
+              "n": 3,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0,
+              "mrr": 0.047619047619047616,
+              "meanRank": 7,
+              "missRate": 0.6666666666666666
+            },
+            "llm-eng": {
+              "n": 5,
+              "recallAt1": 0.2,
+              "recallAt3": 0.2,
+              "recallAt5": 0.2,
+              "mrr": 0.225,
+              "meanRank": 4.5,
+              "missRate": 0.6
+            },
+            "marketing": {
+              "n": 11,
+              "recallAt1": 0,
+              "recallAt3": 0.09090909090909091,
+              "recallAt5": 0.09090909090909091,
+              "mrr": 0.07196969696969696,
+              "meanRank": 7.8,
+              "missRate": 0.5454545454545454
+            },
+            "pricing": {
+              "n": 13,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0,
+              "mrr": 0.02459847844463229,
+              "meanRank": 10,
+              "missRate": 0.7692307692307693
+            },
+            "retrieval": {
+              "n": 5,
+              "recallAt1": 0,
+              "recallAt3": 0.2,
+              "recallAt5": 0.2,
+              "mrr": 0.1064516129032258,
+              "meanRank": 16.5,
+              "missRate": 0.6
+            },
+            "rust-wasm": {
+              "n": 7,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0,
+              "mrr": 0.054653679653679656,
+              "meanRank": 8.333333333333334,
+              "missRate": 0.5714285714285714
+            }
+          },
+          "stageCounts": {
+            "parse": 0,
+            "filtered": 41,
+            "rank": 25,
+            "false_hit": 1,
+            "ok": 13,
+            "error": 0
+          }
+        },
+        "nearNeighbor": {
+          "rankFailures": 25,
+          "sameTopicTop1": 24,
+          "sameAspectTop1": 19,
+          "sameTopicRate": 0.96
+        }
+      }
+    },
+    "creator": {
+      "180": {
+        "counts": {
+          "saves": 548,
+          "visits": 2706,
+          "queries": 80,
+          "events": 3346
+        },
+        "summary": {
+          "totalTasks": 80,
+          "positiveTasks": 68,
+          "negativeTasks": 12,
+          "positive": {
+            "n": 68,
+            "recallAt1": 0,
+            "recallAt3": 0,
+            "recallAt5": 0.029411764705882353,
+            "mrr": 0.027059928142257526,
+            "meanRank": 13.68421052631579,
+            "missRate": 0.7205882352941176
+          },
+          "negativeFalseHitRate": 0.16666666666666666,
+          "negativeFalseHits": 2,
+          "byTier": {
+            "concrete": {
+              "n": 16,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0.0625,
+              "mrr": 0.04260010822510822,
+              "meanRank": 14,
+              "missRate": 0.5625
+            },
+            "semi_fuzzy": {
+              "n": 26,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0.038461538461538464,
+              "mrr": 0.03903827389239289,
+              "meanRank": 12.9,
+              "missRate": 0.6153846153846154
+            },
+            "vague": {
+              "n": 26,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0,
+              "mrr": 0.005518394648829431,
+              "meanRank": 16.5,
+              "missRate": 0.9230769230769231
+            },
+            "negative": {
+              "n": 12,
+              "falseHitRate": 0.16666666666666666
+            }
+          },
+          "byCluster": {
+            "branding": {
+              "n": 9,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0,
+              "mrr": 0.03232323232323232,
+              "meanRank": 10.333333333333334,
+              "missRate": 0.6666666666666666
+            },
+            "design": {
+              "n": 7,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0,
+              "mrr": 0.03339517625231911,
+              "meanRank": 9,
+              "missRate": 0.7142857142857143
+            },
+            "marketing": {
+              "n": 2,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0,
+              "mrr": 0,
+              "meanRank": null,
+              "missRate": 1
+            },
+            "video-prod": {
+              "n": 31,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0.03225806451612903,
+              "mrr": 0.015792329702235954,
+              "meanRank": 16,
+              "missRate": 0.8064516129032258
+            },
+            "writing": {
+              "n": 19,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0.05263157894736842,
+              "mrr": 0.043465135169940654,
+              "meanRank": 14.375,
+              "missRate": 0.5789473684210527
+            }
+          },
+          "stageCounts": {
+            "parse": 0,
+            "filtered": 49,
+            "rank": 19,
+            "false_hit": 2,
+            "ok": 10,
+            "error": 0
+          }
+        },
+        "nearNeighbor": {
+          "rankFailures": 19,
+          "sameTopicTop1": 19,
+          "sameAspectTop1": 17,
+          "sameTopicRate": 1
+        }
+      },
+      "360": {
+        "counts": {
+          "saves": 1081,
+          "visits": 5423,
+          "queries": 80,
+          "events": 6613
+        },
+        "summary": {
+          "totalTasks": 80,
+          "positiveTasks": 68,
+          "negativeTasks": 12,
+          "positive": {
+            "n": 68,
+            "recallAt1": 0.014705882352941176,
+            "recallAt3": 0.04411764705882353,
+            "recallAt5": 0.10294117647058823,
+            "mrr": 0.060206054015541195,
+            "meanRank": 16.06896551724138,
+            "missRate": 0.5735294117647058
+          },
+          "negativeFalseHitRate": 0.16666666666666666,
+          "negativeFalseHits": 2,
+          "byTier": {
+            "concrete": {
+              "n": 16,
+              "recallAt1": 0.0625,
+              "recallAt3": 0.125,
+              "recallAt5": 0.125,
+              "mrr": 0.11260384432207775,
+              "meanRank": 18.6,
+              "missRate": 0.375
+            },
+            "semi_fuzzy": {
+              "n": 26,
+              "recallAt1": 0,
+              "recallAt3": 0.038461538461538464,
+              "recallAt5": 0.11538461538461539,
+              "mrr": 0.07085962168859837,
+              "meanRank": 15.941176470588236,
+              "missRate": 0.34615384615384615
+            },
+            "vague": {
+              "n": 26,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0.07692307692307693,
+              "mrr": 0.01730769230769231,
+              "meanRank": 4.5,
+              "missRate": 0.9230769230769231
+            },
+            "negative": {
+              "n": 12,
+              "falseHitRate": 0.16666666666666666
+            }
+          },
+          "byCluster": {
+            "branding": {
+              "n": 7,
+              "recallAt1": 0,
+              "recallAt3": 0.14285714285714285,
+              "recallAt5": 0.14285714285714285,
+              "mrr": 0.07894736842105263,
+              "meanRank": 10.5,
+              "missRate": 0.7142857142857143
+            },
+            "design": {
+              "n": 10,
+              "recallAt1": 0.1,
+              "recallAt3": 0.2,
+              "recallAt5": 0.3,
+              "mrr": 0.17559523809523808,
+              "meanRank": 7.4,
+              "missRate": 0.5
+            },
+            "marketing": {
+              "n": 16,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0.125,
+              "mrr": 0.04992532319772913,
+              "meanRank": 17,
+              "missRate": 0.5625
+            },
+            "video-prod": {
+              "n": 20,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0,
+              "mrr": 0.018329375228352207,
+              "meanRank": 19.285714285714285,
+              "missRate": 0.65
+            },
+            "writing": {
+              "n": 15,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0.06666666666666667,
+              "mrr": 0.041335669161756114,
+              "meanRank": 19.25,
+              "missRate": 0.4666666666666667
+            }
+          },
+          "stageCounts": {
+            "parse": 0,
+            "filtered": 39,
+            "rank": 28,
+            "false_hit": 2,
+            "ok": 11,
+            "error": 0
+          }
+        },
+        "nearNeighbor": {
+          "rankFailures": 28,
+          "sameTopicTop1": 28,
+          "sameAspectTop1": 22,
+          "sameTopicRate": 1
+        }
+      }
+    },
+    "scene-memory-user": {
+      "180": {
+        "counts": {
+          "saves": 384,
+          "visits": 2396,
+          "queries": 80,
+          "events": 2880
+        },
+        "summary": {
+          "totalTasks": 80,
+          "positiveTasks": 68,
+          "negativeTasks": 12,
+          "positive": {
+            "n": 68,
+            "recallAt1": 0.058823529411764705,
+            "recallAt3": 0.08823529411764706,
+            "recallAt5": 0.14705882352941177,
+            "mrr": 0.10249926650502098,
+            "meanRank": 10,
+            "missRate": 0.6617647058823529
+          },
+          "negativeFalseHitRate": 0.16666666666666666,
+          "negativeFalseHits": 2,
+          "byTier": {
+            "concrete": {
+              "n": 8,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0.375,
+              "mrr": 0.13645833333333332,
+              "meanRank": 8.285714285714286,
+              "missRate": 0.125
+            },
+            "semi_fuzzy": {
+              "n": 22,
+              "recallAt1": 0.13636363636363635,
+              "recallAt3": 0.13636363636363635,
+              "recallAt5": 0.13636363636363635,
+              "mrr": 0.16132231404958677,
+              "meanRank": 11.666666666666666,
+              "missRate": 0.5909090909090909
+            },
+            "vague": {
+              "n": 38,
+              "recallAt1": 0.02631578947368421,
+              "recallAt3": 0.07894736842105263,
+              "recallAt5": 0.10526315789473684,
+              "mrr": 0.061294540699575024,
+              "meanRank": 9.571428571428571,
+              "missRate": 0.8157894736842105
+            },
+            "negative": {
+              "n": 12,
+              "falseHitRate": 0.16666666666666666
+            }
+          },
+          "byCluster": {
+            "branding": {
+              "n": 30,
+              "recallAt1": 0.06666666666666667,
+              "recallAt3": 0.06666666666666667,
+              "recallAt5": 0.16666666666666666,
+              "mrr": 0.10245646945646944,
+              "meanRank": 13.363636363636363,
+              "missRate": 0.6333333333333333
+            },
+            "cognition": {
+              "n": 3,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0,
+              "mrr": 0.041666666666666664,
+              "meanRank": 8,
+              "missRate": 0.6666666666666666
+            },
+            "design": {
+              "n": 5,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0,
+              "mrr": 0,
+              "meanRank": null,
+              "missRate": 1
+            },
+            "video-prod": {
+              "n": 20,
+              "recallAt1": 0.1,
+              "recallAt3": 0.2,
+              "recallAt5": 0.25,
+              "mrr": 0.17522946859903382,
+              "meanRank": 6.555555555555555,
+              "missRate": 0.55
+            },
+            "writing": {
+              "n": 10,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0,
+              "mrr": 0.026666666666666665,
+              "meanRank": 8,
+              "missRate": 0.8
+            }
+          },
+          "stageCounts": {
+            "parse": 0,
+            "filtered": 45,
+            "rank": 19,
+            "false_hit": 2,
+            "ok": 14,
+            "error": 0
+          }
+        },
+        "nearNeighbor": {
+          "rankFailures": 19,
+          "sameTopicTop1": 17,
+          "sameAspectTop1": 13,
+          "sameTopicRate": 0.8947368421052632
+        }
+      },
+      "360": {
+        "counts": {
+          "saves": 873,
+          "visits": 4909,
+          "queries": 80,
+          "events": 5914
+        },
+        "summary": {
+          "totalTasks": 80,
+          "positiveTasks": 68,
+          "negativeTasks": 12,
+          "positive": {
+            "n": 68,
+            "recallAt1": 0,
+            "recallAt3": 0.014705882352941176,
+            "recallAt5": 0.04411764705882353,
+            "mrr": 0.026509975930183297,
+            "meanRank": 22.7,
+            "missRate": 0.7058823529411765
+          },
+          "negativeFalseHitRate": 0.16666666666666666,
+          "negativeFalseHits": 2,
+          "byTier": {
+            "concrete": {
+              "n": 8,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0.125,
+              "mrr": 0.0575269199191613,
+              "meanRank": 18.833333333333332,
+              "missRate": 0.25
+            },
+            "semi_fuzzy": {
+              "n": 22,
+              "recallAt1": 0,
+              "recallAt3": 0.045454545454545456,
+              "recallAt5": 0.045454545454545456,
+              "mrr": 0.05089707868963189,
+              "meanRank": 24.333333333333332,
+              "missRate": 0.45454545454545453
+            },
+            "vague": {
+              "n": 38,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0.02631578947368421,
+              "mrr": 0.005861244019138756,
+              "meanRank": 24.5,
+              "missRate": 0.9473684210526315
+            },
+            "negative": {
+              "n": 12,
+              "falseHitRate": 0.16666666666666666
+            }
+          },
+          "byCluster": {
+            "branding": {
+              "n": 18,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0.05555555555555555,
+              "mrr": 0.018986641149761715,
+              "meanRank": 29.8,
+              "missRate": 0.7222222222222222
+            },
+            "cognition": {
+              "n": 21,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0.047619047619047616,
+              "mrr": 0.0253381812495113,
+              "meanRank": 21.428571428571427,
+              "missRate": 0.6666666666666666
+            },
+            "design": {
+              "n": 4,
+              "recallAt1": 0,
+              "recallAt3": 0.25,
+              "recallAt5": 0.25,
+              "mrr": 0.125,
+              "meanRank": 2,
+              "missRate": 0.75
+            },
+            "video-prod": {
+              "n": 17,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0,
+              "mrr": 0.015097402597402595,
+              "meanRank": 21,
+              "missRate": 0.7647058823529411
+            },
+            "writing": {
+              "n": 8,
+              "recallAt1": 0,
+              "recallAt3": 0,
+              "recallAt5": 0,
+              "mrr": 0.02152014652014652,
+              "meanRank": 23,
+              "missRate": 0.625
+            }
+          },
+          "stageCounts": {
+            "parse": 0,
+            "filtered": 48,
+            "rank": 20,
+            "false_hit": 2,
+            "ok": 10,
+            "error": 0
+          }
+        },
+        "nearNeighbor": {
+          "rankFailures": 20,
+          "sameTopicTop1": 19,
+          "sameAspectTop1": 16,
+          "sameTopicRate": 0.95
+        }
+      }
     }
   }
 }
